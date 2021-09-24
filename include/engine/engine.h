@@ -2,27 +2,28 @@
 #ifndef __ENGINE_H__
 #define __ENGINE_H__
 
-#include <GLFW/glfw3.h>
 #include <stdint.h>
 #include <stdbool.h>
 
 #include <engine/vec3/header_config.h>
 #include <engine/vec3/vec3.h>
-
 #include <engine/vec2/header_config.h>
 #include <engine/vec2/vec2.h>
-
 #include <engine/mesh.h>
 #include <engine/mesh_renderer.h>
 #include <engine/mesh_filter.h>
 #include <engine/material.h>
 #include <engine/color.h>
+#include <engine/material.h>
+#include <engine/component.h>
+#include <engine/object.h>
+#include <engine/scene.h>
 
 #include <engine/scene_manager.h>
 
 typedef struct engine_t
 {
-	GLFWwindow* window;
+	void* window;
 	scene_manager_t* scene_manager;
 } engine_t;
 

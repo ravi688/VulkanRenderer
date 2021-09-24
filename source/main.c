@@ -5,7 +5,7 @@
 #include "Ammo.h"
 
 
-void prepare_scene(engine_t* engine);
+static void prepare_scene(engine_t* engine);
 
 int main(int argc, char** argv)
 {
@@ -24,9 +24,9 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-scene_manager_t* sceneManager;
+static scene_manager_t* sceneManager;
 
-void prepare_scene(engine_t* engine)
+static void prepare_scene(engine_t* engine)
 {
 	sceneManager = engine_get_scene_manager(engine);
 	scene_t* my_scene = scene_new("MyScene");
