@@ -1,0 +1,21 @@
+
+Built-In Type Name 		TypeID Macro			Type ID
+-------------------------------------------------------------------------------
+Object 					Object_TYPE_ID 				1
+Component 				Component_TYPE_ID			2
+Material  				Material_TYPE_ID   			3
+
+
+
+Derived Type Name 		TypeID Macro			Type ID
+--------------------------------------------------------------------------------
+Player 					Player_TYPE_ID	  	    (1 << 32) | Component_TYPE_ID 
+Animator 				Animator_TYPE_ID		(2 << 32) | Component_TYPE_ID
+Ammo 					Ammo_TYPE_ID			(3 << 32) | Component_TYPE_ID
+GunController 			GunController_TYPE_ID	(4 << 32) | Component_TYPE_ID
+MeshRenderer			MeshRenderer_TYPE_ID	(5 << 32) | Component_TYPE_ID
+MeshFilter 				MeshFilter_TYPE_ID		(6 << 32) | Component_TYPE_ID
+TestMesh 				MeshTest_TYPE_ID 		(7 << 32) | Component_TYPE_ID
+Square 					Square_TYPE_ID 			(8 << 32) | Component_TYPE_ID
+Circle 					Circle_TYPE_ID 			(9 << 32) | Component_TYPE_ID
+TestBehaviour 			TestBehaviour_TYPE_ID 	(10 << 32) | Component_TYPE_ID

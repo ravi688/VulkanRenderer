@@ -1,0 +1,104 @@
+
+/* Documentation
+ * Header Configuration System
+ */
+
+/*DEBUG_MODE Macros*/
+#if defined(HEADER_CONFIGURATION_SYSTEM_DEBUG_MODE)
+#	ifndef DEBUG_MODE
+#		define DEBUG_MODE
+#	endif
+#	ifndef HPML_DEBUG_MODE
+#		define HPML_DEBUG_MODE
+# 	endif
+#	ifndef DEBUG
+#		define DEBUG
+#	endif
+#elif defined(DEBUG_MODE) || defined(HPML_DEBUG_MODE) || defined(DEBUG)
+#	define HEADER_CONFIGURATION_SYSTEM_DEBUG_MODE
+#	ifndef HPML_DEBUG_MODE
+#		define HPML_DEBUG_MODE
+#	endif
+#	ifndef DEBUG_MODE
+#		define DEBUG_MODE
+#	endif
+#	ifndef DEBUG
+#		define DEBUG
+#	endif
+#endif
+
+/*RELEASE_MODE Macros*/
+#if defined(HEADER_CONFIGURATION_SYSTEM_RELEASE_MODE)
+# 	ifndef RELEASE_MODE
+#		define RELEASE_MODE
+# 	endif
+# 	ifndef HPML_RELEASE_MODE
+#		define HPML_RELEASE_MODE
+#	endif
+#	ifndef RELEASE
+#		define RELEASE
+#	endif
+#elif defined(RELEASE_MODE) || defined(HPML_RELEASE_MODE) || defined(RELEASE)
+#	define HEADER_CONFIGURATION_SYSTEM_RELEASE_MODE
+#	ifndef HPML_RELEASE_MODE
+#		define HPML_RELEASE_MODE
+#	endif
+#	ifndef RELEASE_MODE
+#		define RELEASE_MODE
+#	endif
+#	ifndef RELEASE
+#		define RELEASE
+#	endif
+#endif
+
+/*IMPLEMENTATION Macros*/
+#if defined(HEADER_CONFIGURATION_SYSTEM_IMPLEMENTATION)
+#	ifndef IMPLEMENTATION
+#		define IMPLEMENTATION
+# 	endif
+#	ifndef HPML_IMPLEMENTATION
+#		define HPML_IMPLEMENTATION
+#	endif
+#elif defined(IMPLEMENTATION) || defined(HPML_IMPLEMENTATION)
+#	define HEADER_CONFIGURATION_SYSTEM_IMPLEMENTATION
+#	ifndef HPML_IMPLEMENTATION
+#		define HPML_IMPLEMENTATION
+#	endif
+#	ifndef IMPLEMENTATION
+#		define IMPLEMENTATION
+#	endif
+#endif
+
+/*HEADER Macros*/
+#if defined(HEADER_CONFIGURATION_SYSTEM_HEADER)
+#	ifndef HEADER
+#		define HEADER
+# 	endif
+#	ifndef HPML_HEADER
+#		define HPML_HEADER
+# 	endif
+#elif defined(HEADER) || defined(HPML_HEADER)
+#	define HEADER_CONFIGURATION_SYSTEM_HEADER
+#	ifndef HPML_HEADER
+#		define HPML_HEADER
+#	endif
+#	ifndef HEADER
+#		define HEADER
+#	endif
+#endif
+
+
+#if defined(HEADER_CONFIGURATION_SYSTEM_IMPLEMENTATION) && defined(HEADER_CONFIGURATION_SYSTEM_HEADER)
+#	warning "HEADER_CONFIGURATION_SYSTEM_IMPLEMENTATION and HEADER_CONFIGURATION_SYSTEM_HEADER both are defined, switching to HEADER_CONFIGURATION_SYSTEM_HEADER"
+#	undef HEADER_CONFIGURATION_SYSTEM_IMPLEMENTATION
+#	undef IMPLEMENTATION
+#	undef HPML_IMPLEMENTATION
+#endif /*if both are defined HEADER_CONFIGURATION_SYSTEM_IMPLEMENTATION and HEADER_CONFIGURATION_SYSTEM_HEADER*/
+
+#if defined(HEADER_CONFIGURATION_SYSTEM_DEBUG_MODE) && defined(HEADER_CONFIGURATION_SYSTEM_RELEASE_MODE)
+#	warning "HEADER_CONFIGURATION_SYSTEM_DEBUG_MODE and HEADER_CONFIGURATION_SYSTEM_RELEASE_MODE both are defined, switching to HEADER_CONFIGURATION_RELEASE_MODE"
+#	undef HEADER_CONFIGURATION_SYSTEM_DEBUG_MODE
+#	undef DEBUG_MODE
+#	undef HPML_DEBUG_MODE
+#	undef DEBUG
+#endif/*if both are defined HEADER_CONFIGURATION_SYSTEM_DEBUG_MODE and HEADER_CONFIGURATION_SYSTEM_RELEASE_MODE*/

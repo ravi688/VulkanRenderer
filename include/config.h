@@ -1,0 +1,35 @@
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+#define VEC_REQUIRE_PRINT
+#define MESH_REQUIRE_PRINT
+
+// #undef VEC_USE_POINTER_IN_MACRO_PARAMETER
+// #undef VEC_USE_POINTER_IN_FUNCTION_PARAMETER
+// #define VEC_USE_MACROS_WHERE_POSSIBLE
+// #define VEC_REQUIRE_PRINT
+//#define VEC_HEADER_ONLY
+// #define VEC_STRIP_DEMO_FUNCTIONS
+// #define VEC_TREAT_VEC4_AS_VEC3
+
+// #undef MATRIX_USE_POINTER_IN_FUNCTION_PARAMETER
+// #undef MATRIX_USE_POINTER_IN_MACRO_PARAMETER
+// #define MATRIX_USE_MACROS_WHERE_POSSIBLE
+// #define MATRIX_REQUIRE_PRINT
+//#define MATRIX_HEADER_ONLY
+// #define MATRIX_STRIP_DEMO_FUNCTIONS
+
+// #undef MESH_USE_POINTER_IN_MACRO_PARAMETER
+// #undef MESH_USE_POINTER_FUNCTION_PARAMETER
+// #define MESH_USE_MACROS_WHERE_POSSIBLE
+//#define MESH_HEADER_ONLY
+// #define MESH_STRIP_DEMO_FUNCTIONS
+
+// #define PRINT_REQUIRE_ARRAY_PRINT
+
+#include <stdint.h>
+#define REINTERPRET_CAST_PTR_TO_VALUE(ptr, target_type) (*(*target_type)(ptr))
+#define REINTERPRET_CAST_VALUE(value, target_type) (*(*target_type)(&value))
+#define STATIC_CAST(value, target_type)((target_type)((uint64_t)(value)))
+
+#endif/*__CONFIG_H__*/
