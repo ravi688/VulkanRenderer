@@ -4,8 +4,6 @@
 
 #include <tuple/template_definitions.h>
 
-typedef char* pchar_t;
-
 instantiate_tuple_t(int, pchar_t); 
 
 instantiate_declaration_tuple_get1(int, pchar_t);

@@ -1,17 +1,20 @@
 
+#include <garbage_collector/garbage_collector.h>
+
 
 #include <engine/engine.h>
 #include "TestBehaviour.h"
 #include "Ammo.h"
 
-
 static void prepare_scene(engine_t* engine);
 
 int main(int argc, char** argv)
 {
+	GC_START(&argc);
+
 	engine_t* engine = engine_init(600, 500, "Vulkan 3D Engine"); 
 
-	prepare_scene(engine);
+	//prepare_scene(engine);
 
 	engine_start(engine);
 	while(engine_is_running(engine))
@@ -21,6 +24,9 @@ int main(int argc, char** argv)
 	}
 
 	engine_terminate(engine);
+
+	GC_RUN();
+	GC_STOP();
 	return 0;
 }
 

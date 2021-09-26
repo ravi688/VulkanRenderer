@@ -18,13 +18,15 @@
 #include <engine/component.h>
 #include <engine/object.h>
 #include <engine/scene.h>
-
 #include <engine/scene_manager.h>
+#include <engine/renderer/renderer.h>
+
 
 typedef struct engine_t
 {
 	void* window;
-	scene_manager_t* scene_manager;
+	void* scene_manager;
+	void* renderer;
 } engine_t;
 
 
@@ -39,6 +41,7 @@ void engine_update(engine_t* engine);
 
 
 scene_manager_t* engine_get_scene_manager(engine_t* engine); 
+renderer_t* engine_get_renderer(engine_t* engine);
 
 
 #endif/*__ENGINE_H__*/
