@@ -30,3 +30,5 @@ const char* const* string_array(uint32_t count, ...)
 	va_end(args);
 	return buffer;
 }
+
+const char* string_bool(bool value) { return value == true ? "true" : "false"; }
