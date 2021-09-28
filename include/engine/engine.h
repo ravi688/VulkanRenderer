@@ -22,13 +22,7 @@
 #include <engine/renderer/renderer.h>
 
 
-typedef struct engine_t
-{
-	void* window;
-	void* scene_manager;
-	void* renderer;
-} engine_t;
-
+typedef struct engine_t engine_t;
 
 engine_t* engine_init(uint32_t screen_width, uint32_t screen_height, const char* window_name);
 void engine_terminate(engine_t* engine); 
@@ -40,6 +34,7 @@ void engine_update(engine_t* engine);
 
 
 
+void* engine_get_window(engine_t* engine);
 scene_manager_t* engine_get_scene_manager(engine_t* engine); 
 renderer_t* engine_get_renderer(engine_t* engine);
 
