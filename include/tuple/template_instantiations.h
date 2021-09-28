@@ -3,8 +3,11 @@
 
 
 #include <tuple/template_definitions.h>
+#include <stdint.h>
 
 instantiate_tuple_t(int, pchar_t); 
+instantiate_tuple_t(uint32_t, pchar_t);
+instantiate_tuple_t(uint64_t, pchar_t);
 
 instantiate_declaration_tuple_get1(int, pchar_t);
 instantiate_declaration_tuple_get2(int, pchar_t);

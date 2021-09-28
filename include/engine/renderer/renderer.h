@@ -1,13 +1,12 @@
 
 #pragma once
-#include <tuple/tuple.h>
 #include <stdint.h>
 
 typedef struct renderer_t renderer_t;
 
 renderer_t* renderer_init();
 void renderer_terminate(renderer_t* renderer);
-
+void renderer_update(renderer_t* renderer);
 
 //Graphics API specifics
 void renderer_init_surface(renderer_t* renderer, void* surface);

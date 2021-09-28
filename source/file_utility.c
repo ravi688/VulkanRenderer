@@ -7,31 +7,30 @@
 #include <conio.h>
 
 
-static char* load_file(const char* file_name, const char* mode);
+static tuple_t(uint64_t, pchar_t) load_file(const char* file_name, const char* mode);
 
-char* load_binary_from_file(const char* file_name)
+tuple_t(uint64_t, pchar_t) load_binary_from_file(const char* file_name)
 {
 	return load_file(file_name, "rb");
 }
 
-char* load_text_from_file(const char* file_name)
+tuple_t(uint64_t, pchar_t) load_text_from_file(const char* file_name)
 {
  	return load_file(file_name, "r");
 }
 
-static char* load_file(const char* file_name, const char* mode)
+static tuple_t(uint64_t, pchar_t) load_file(const char* file_name, const char* mode)
 {
 	FILE* file = fopen(file_name, mode);
 	if(file == NULL) 
 	{
-		#ifdef DEBUG
 		printf("[Error] File loading failed, file_name: \"%s\", from load_text_from_file\n", file_name);
-		#endif
-		return NULL; 
+		return (tuple_t(uint64_t, pchar_t)) { 0, NULL };; 
 	}
 	char bytes[BUF_BUFFER_OBJECT_SIZE]; 
 	BUFFER* memory_buffer = BUFcreate_object(bytes); 
 	BUFcreate(memory_buffer, sizeof(char), 1, 0);
+	BUFpush_binded();
 	BUFbind(memory_buffer); 
 	char ch = getc(file); 
 	while(ch != EOF)
@@ -42,23 +41,25 @@ static char* load_file(const char* file_name, const char* mode)
 	BUFpush_char(0); 
 	BUFfit();  
 	fclose(file);
-	return (char*)BUFget_ptr(); 
+
+	tuple_t(uint64_t, pchar_t) string = (tuple_t(uint64_t, pchar_t)) { BUFget_element_count(), (char*)BUFget_ptr() };
+	BUFpop_binded();
+	return string;
 }
 
-char* load_text_from_file_exclude_comments(const char* file_name)
+tuple_t(uint64_t, pchar_t) load_text_from_file_exclude_comments(const char* file_name)
 {
 	FILE* file = fopen(file_name, "r"); 
 	if(file == NULL)
 	{
-		#ifdef DEBUG
 		printf("[Error] File loading failed, file_name: \"%s\", from load_text_from_file_exclude_comments\n", file_name);
-		#endif
-		return NULL;
+		return (tuple_t(uint64_t, pchar_t)) { 0, NULL };
 	}
 
 	char bytes[BUF_BUFFER_OBJECT_SIZE];
 	BUFFER* memory_buffer = BUFcreate_object(bytes);
 	BUFcreate(memory_buffer, sizeof(char), 1, 0);
+	BUFpush_binded();
 	BUFbind(memory_buffer);
 	char ch = getc(file);
 	char previous_ch = ch;
@@ -104,5 +105,7 @@ char* load_text_from_file_exclude_comments(const char* file_name)
 	BUFpush_char(0); 
 	BUFfit(); 
 	fclose(file); 
-	return (char*)BUFget_ptr();
+	BUFpop_binded();
+	tuple_t(uint64_t, pchar_t) string = (tuple_t(uint64_t, pchar_t)) { BUFget_element_count(), (char*)BUFget_ptr() };
+	return string;
 }

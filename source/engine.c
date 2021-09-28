@@ -92,7 +92,8 @@ void engine_update(engine_t* engine)
 
 	//rendering
 	scene_manager_for_each_objects_in_all_scenes(engine->scene_manager, object_call_on_pre_render);
-	scene_manager_for_each_objects_in_all_scenes(engine->scene_manager, object_call_on_post_render);	
+	scene_manager_for_each_objects_in_all_scenes(engine->scene_manager, object_call_on_post_render);
+	renderer_update(engine->renderer);
 }
 
 bool engine_is_running(engine_t* engine)
