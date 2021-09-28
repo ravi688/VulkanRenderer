@@ -2,7 +2,7 @@
 #define __MATERIAL_H__
 
 #include <engine/color.h>
-#include <utilities.h>
+#include <utilities/casting_utility.h>
 #include <stdint.h>
 
 #define Material_TYPE_ID ((uint64_t)(3))
