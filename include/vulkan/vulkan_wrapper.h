@@ -7,8 +7,8 @@
 #include <tuple/tuple.h>
 #include <exception/exception.h>
 
-
-#define vkCall(call)\
+#ifdef DEBUG
+#	define vkCall(call)\
 {\
 	VkResult result =  call;\
 	EXCEPTION_BLOCK\
@@ -17,6 +17,10 @@
 			throw_exception(VULKAN_ABORTED);\
 	)\
 }
+
+#else
+#	define vkCall(call) call
+#endif
 
 
 declare_exception(VULKAN_EXTENSION_NOT_SUPPORTED);

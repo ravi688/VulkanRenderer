@@ -296,7 +296,7 @@ static VkSemaphore vk_get_semaphore(renderer_t* renderer)
 	VkSemaphore semaphore;
 	VkSemaphoreCreateInfo createInfo = { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-	vkCall(vkCreateSemaphore(renderer->vk_device, &createInfo, NULL, &semaphore)) 
+	vkCall(vkCreateSemaphore(renderer->vk_device, &createInfo, NULL, &semaphore)); 
 	return semaphore;
 }
 
