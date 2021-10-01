@@ -90,14 +90,26 @@ static VkPipelineMultisampleStateCreateInfo vk_get_pipeline_multisample_state_cr
 static VkPipelineColorBlendStateCreateInfo vk_get_pipeline_color_blend_state_create_info(void);
 static VkPipelineColorBlendAttachmentState vk_get_pipeline_color_blend_attachment_state(void);
 static VkPipelineDynamicStateCreateInfo vk_get_pipeline_dynamic_state_create_info(void);
+static VkPipeline vk_get_graphics_pipeline(renderer_t* renderer, VkPipelineLayout pipelineLayout, VkRenderPass renderPass,
+											VkPipelineShaderStageCreateInfo* shaderStages,
+											VkPipelineVertexInputStateCreateInfo* vertexInputState, 
+											VkPipelineInputAssemblyStateCreateInfo* inputAssemblyState, 
+											VkPipelineViewportStateCreateInfo* viewportState, 
+											VkPipelineRasterizationStateCreateInfo* rasterizationState, 
+											VkPipelineMultisampleStateCreateInfo* multisampleState, 
+											VkPipelineColorBlendStateCreateInfo* colorBlendState);
+static tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(renderer_t* renderer);
+static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_commandbuffers(renderer_t* renderer);
 static VkAttachmentReference vk_get_attachment_reference(void);
 static VkSubpassDependency vk_get_subpass_dependency(void);
+static VkSemaphore vk_get_semaphore(renderer_t* renderer);
 static VkAttachmentDescription vk_get_attachment_description(VkFormat image_format);
 static VkSubpassDescription vk_get_subpass_description(VkAttachmentReference attachment_reference);
-static VkRenderPass vk_get_render_pass(renderer_t* renderer, const VkAttachmentDescription* attachments, const VkSubpassDescription* subpasses, const VkSubpassDependency* subpassDependencies);
+static VkRenderPass vk_get_render_pass(renderer_t* renderer, VkAttachmentDescription* attachments, VkSubpassDescription* subpasses, VkSubpassDependency* subpassDependencies);
 static VkPipelineLayout vk_get_pipeline_layout(renderer_t* renderer);
 static VkViewport vk_get_viewport(uint32_t width, uint32_t height);
 static void vk_setup_fixed_function_pipline(renderer_t* renderer);
+static void record_commands(renderer_t* renderer, tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers);
 
 renderer_t* renderer_init()
 {
@@ -197,8 +209,6 @@ EXCEPTION_BLOCK
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info();
 
-	vk_setup_fixed_function_pipline(renderer);
-
 	//Fixed functions configuration
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
 	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(renderer->vk_extent.width, renderer->vk_extent.height);
@@ -206,14 +216,16 @@ EXCEPTION_BLOCK
 	VkPipelineMultisampleStateCreateInfo multisampling = vk_get_pipeline_multisample_state_create_info();
 	VkPipelineColorBlendStateCreateInfo colorBlending = vk_get_pipeline_color_blend_state_create_info();
 	VkPipelineDynamicStateCreateInfo dynamicState = vk_get_pipeline_dynamic_state_create_info();
+
 	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer);
+
 	VkAttachmentDescription colorAttachment = vk_get_attachment_description(renderer->vk_format);
 	VkAttachmentReference colorAttachmentRef = vk_get_attachment_reference();
 	VkSubpassDescription subpass = vk_get_subpass_description(colorAttachmentRef);
 	VkSubpassDependency dependency = vk_get_subpass_dependency();
 
 	//TODO: why calling vk_get_render_pass isn't working? fix that
-	//renderer->vk_render_pass = vk_get_render_pass(renderer, &colorAttachment, &subpass, &dependency);
+	// renderer->vk_render_pass = vk_get_render_pass(renderer, &colorAttachment, &subpass, &dependency);
  	VkRenderPassCreateInfo renderPassCreateInfo = {};
 	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassCreateInfo.attachmentCount = 1;
@@ -224,104 +236,21 @@ EXCEPTION_BLOCK
 	renderPassCreateInfo.pDependencies = &dependency;
 	vkCall(vkCreateRenderPass(renderer->vk_device, &renderPassCreateInfo, NULL, &(renderer->vk_render_pass)));
 
-	VkGraphicsPipelineCreateInfo pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
+	renderer->vk_pipeline = vk_get_graphics_pipeline(renderer, renderer->vk_pipeline_layout, renderer->vk_render_pass,
+													shaderStages,
+													&vertexInputInfo, 
+													&inputAssembly, 
+													&viewportState, 
+													&rasterizer, 
+													&multisampling,
+													&colorBlending);
 
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
-	pipelineInfo.pViewportState = &viewportState;
-	pipelineInfo.pRasterizationState = &rasterizer;
-	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = NULL; // Optional
-	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.pDynamicState = NULL; // Optional
-	pipelineInfo.layout = renderer->vk_pipeline_layout;
-	pipelineInfo.renderPass = renderer->vk_render_pass;
-	pipelineInfo.subpass = 0;
-	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-	pipelineInfo.basePipelineIndex = -1; // Optional
+    renderer->vk_framebuffers = vk_get_framebuffers(renderer); //swapchainFramebuffers
 
-	VkPipeline graphicsPipeline;
-	vkCall(vkCreateGraphicsPipelines(renderer->vk_device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphicsPipeline));
-	renderer->vk_pipeline = graphicsPipeline;
+	record_commands(renderer,  vk_get_commandbuffers(renderer));
 
-
-	tuple_t(uint32_t, pVkFramebuffer_t) swapChainFramebuffers = (tuple_t(uint32_t, pVkFramebuffer_t)) { renderer->vk_images.value1, GC_NEWV(VkFramebuffer, renderer->vk_images.value1) };
-	for(uint32_t i = 0; i < swapChainFramebuffers.value1; i++)
-	{
-		 VkImageView attachments[] = {
-        	renderer->vk_image_views.value2[i]
-    	};
-
-    	VkFramebufferCreateInfo framebufferInfo = {};
-    	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    	framebufferInfo.renderPass =  renderer->vk_render_pass;
-    	framebufferInfo.attachmentCount = 1;
-    	framebufferInfo.pAttachments = attachments;
-    	framebufferInfo.width = renderer->vk_extent.width;
-    	framebufferInfo.height = renderer->vk_extent.height;
-    	framebufferInfo.layers = 1;
-    	vkCall(vkCreateFramebuffer(renderer->vk_device, &framebufferInfo, NULL, &(swapChainFramebuffers.value2[i])));
-    }
-    renderer->vk_framebuffers = swapChainFramebuffers;
-
-    VkCommandPool commandPool;
-    VkCommandPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.queueFamilyIndex = renderer->vk_graphics_queue_index;
-	poolInfo.flags = 0; // Optional
-	vkCall(vkCreateCommandPool(renderer->vk_device, &poolInfo, NULL, &commandPool));
-	renderer->vk_command_pool = commandPool;
-
-	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = (tuple_t(uint32_t, pVkCommandBuffer_t)) { renderer->vk_framebuffers.value1, GC_NEWV(VkCommandBuffer, renderer->vk_framebuffers.value1) }; 
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = commandPool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t) commandBuffers.value1;
-	vkCall(vkAllocateCommandBuffers(renderer->vk_device, &allocInfo, commandBuffers.value2));
-
-	for (uint32_t i = 0; i < commandBuffers.value1; i++)
-	{
-    	VkCommandBufferBeginInfo beginInfo = {};
-    	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    	beginInfo.flags = 0; // Optional
-    	beginInfo.pInheritanceInfo = NULL; // Optional
-    	vkCall(vkBeginCommandBuffer(commandBuffers.value2[i], &beginInfo));
-
-    	VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass =  renderer->vk_render_pass;
-		renderPassInfo.framebuffer = renderer->vk_framebuffers.value2[i];
-		renderPassInfo.renderArea.offset = (VkOffset2D) {0, 0};
-		renderPassInfo.renderArea.extent = renderer->vk_extent;
-
-		VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
-
-		vkCmdBeginRenderPass(commandBuffers.value2[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(commandBuffers.value2[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
-		vkCmdDraw(commandBuffers.value2[i], 3, 1, 0, 0);
-		vkCmdEndRenderPass(commandBuffers.value2[i]);
-		vkCall(vkEndCommandBuffer(commandBuffers.value2[i]));
-    }
-
-    renderer->vk_command_buffers = commandBuffers;
-
-    VkSemaphore imageAvailableSemaphore;
-	VkSemaphore renderFinishedSemaphore;
-
-	VkSemaphoreCreateInfo semaphoreInfo = {};
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    vkCall(vkCreateSemaphore(renderer->vk_device, &semaphoreInfo, NULL, &imageAvailableSemaphore));
-    vkCall(vkCreateSemaphore(renderer->vk_device, &semaphoreInfo, NULL, &renderFinishedSemaphore));
-
-    renderer->vk_image_available_semaphore = imageAvailableSemaphore;
-    renderer->vk_render_finished_semaphore = renderFinishedSemaphore;
+    renderer->vk_image_available_semaphore = vk_get_semaphore(renderer);
+    renderer->vk_render_finished_semaphore = vk_get_semaphore(renderer);
 }
 
 void renderer_update(renderer_t* renderer)
@@ -362,19 +291,118 @@ void renderer_update(renderer_t* renderer)
 	vkQueuePresentKHR(renderer->vk_graphics_queue, &presentInfo);
 }
 
-static void vk_setup_fixed_function_pipline(renderer_t* renderer)
+static VkSemaphore vk_get_semaphore(renderer_t* renderer)
 {
-	VkPipelineInputAssemblyStateCreateInfo createInfo =  { }; 
-	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO; 
-	createInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	createInfo.primitiveRestartEnable = VK_FALSE;	
+	VkSemaphore semaphore;
+	VkSemaphoreCreateInfo createInfo = { }; 
+	createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	vkCall(vkCreateSemaphore(renderer->vk_device, &createInfo, NULL, &semaphore)) 
+	return semaphore;
+}
 
+static void record_commands(renderer_t* renderer, tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers)
+{
+	for (uint32_t i = 0; i < commandBuffers.value1; i++)
+	{
+    	VkCommandBufferBeginInfo beginInfo = {};
+    	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    	beginInfo.flags = 0; // Optional
+    	beginInfo.pInheritanceInfo = NULL; // Optional
+    	vkCall(vkBeginCommandBuffer(commandBuffers.value2[i], &beginInfo));
+
+    	VkRenderPassBeginInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass =  renderer->vk_render_pass;
+		renderPassInfo.framebuffer = renderer->vk_framebuffers.value2[i];
+		renderPassInfo.renderArea.offset = (VkOffset2D) {0, 0};
+		renderPassInfo.renderArea.extent = renderer->vk_extent;
+
+		VkClearValue clearColor = {{{0.1f, 0.05f, 0.1f, 1.0f}}};
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = &clearColor;
+
+		vkCmdBeginRenderPass(commandBuffers.value2[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(commandBuffers.value2[i], VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->vk_pipeline);
+		vkCmdDraw(commandBuffers.value2[i], 3, 1, 0, 0);
+		vkCmdEndRenderPass(commandBuffers.value2[i]);
+		vkCall(vkEndCommandBuffer(commandBuffers.value2[i]));
+    }
+}
+
+static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_commandbuffers(renderer_t* renderer)
+{
+	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = (tuple_t(uint32_t, pVkCommandBuffer_t)) { renderer->vk_framebuffers.value1, GC_NEWV(VkCommandBuffer, renderer->vk_framebuffers.value1) };
+	VkCommandPool commandPool; 
+	VkCommandPoolCreateInfo commandPoolCreateInfo = { } ; 
+	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO; 
+	commandPoolCreateInfo.queueFamilyIndex = renderer->vk_graphics_queue_index;
+	vkCall(vkCreateCommandPool(renderer->vk_device, &commandPoolCreateInfo, NULL, &commandPool));
+	VkCommandBufferAllocateInfo allocInfo = { }; 
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO; 
+	allocInfo.commandPool = commandPool; 
+	allocInfo.commandBufferCount = commandBuffers.value1;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	vkAllocateCommandBuffers(renderer->vk_device, &allocInfo, commandBuffers.value2);
+	renderer->vk_command_pool = commandPool;
+	renderer->vk_command_buffers = commandBuffers;
+	return commandBuffers;
+}
+
+static tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(renderer_t* renderer)
+{
+	tuple_t(uint32_t, pVkFramebuffer_t) swapchainFramebuffers = (tuple_t(uint32_t, pVkFramebuffer_t)) { renderer->vk_images.value1, GC_NEWV(VkFramebuffer, renderer->vk_images.value1) }; 
+	for(uint32_t i = 0; i < swapchainFramebuffers.value1; i++)
+	{
+		VkFramebufferCreateInfo createInfo = { }; 
+		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		createInfo.renderPass = renderer->vk_render_pass;
+		createInfo.pAttachments = &(renderer->vk_image_views.value2[i]); 
+		createInfo.attachmentCount = 1; 
+		createInfo.width = renderer->vk_extent.width; 
+		createInfo.height = renderer->vk_extent.height; 
+		createInfo.layers = 1;
+		vkCall(vkCreateFramebuffer(renderer->vk_device, &createInfo, NULL, &(swapchainFramebuffers.value2[i])));
+	}
+	return swapchainFramebuffers;
 }
 
 
- static VkRenderPass vk_get_render_pass(renderer_t* renderer, const VkAttachmentDescription* attachments, const VkSubpassDescription* subpasses, const VkSubpassDependency* subpassDependencies)
- {
- 	VkRenderPass renderPass;
+static VkPipeline vk_get_graphics_pipeline(renderer_t* renderer, VkPipelineLayout pipelineLayout, VkRenderPass renderPass,
+											VkPipelineShaderStageCreateInfo* shaderStages,
+											VkPipelineVertexInputStateCreateInfo* vertexInputState, 
+											VkPipelineInputAssemblyStateCreateInfo* inputAssemblyState,
+											VkPipelineViewportStateCreateInfo* viewportState, 
+											VkPipelineRasterizationStateCreateInfo* rasterizationState,
+											VkPipelineMultisampleStateCreateInfo* multisampleState, 
+											VkPipelineColorBlendStateCreateInfo* colorBlendState)
+{
+	VkGraphicsPipelineCreateInfo pipelineInfo = {};
+	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineInfo.stageCount = 2;
+	pipelineInfo.pStages = shaderStages;
+	pipelineInfo.pVertexInputState = vertexInputState;
+	pipelineInfo.pInputAssemblyState = inputAssemblyState;
+	pipelineInfo.pViewportState = viewportState;
+	pipelineInfo.pRasterizationState = rasterizationState;
+	pipelineInfo.pMultisampleState = multisampleState;
+	pipelineInfo.pDepthStencilState = NULL; // Optional
+	pipelineInfo.pColorBlendState = colorBlendState;
+	pipelineInfo.pDynamicState = NULL; // Optional
+	pipelineInfo.layout = pipelineLayout;
+	pipelineInfo.renderPass = renderPass;
+	pipelineInfo.subpass = 0;
+	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+	pipelineInfo.basePipelineIndex = -1; // Optional
+
+	VkPipeline graphicsPipeline;
+	vkCall(vkCreateGraphicsPipelines(renderer->vk_device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphicsPipeline));
+	return graphicsPipeline;
+}
+
+
+static VkRenderPass vk_get_render_pass(renderer_t* renderer, VkAttachmentDescription* attachments, VkSubpassDescription* subpasses, VkSubpassDependency* subpassDependencies)
+{
+	VkRenderPass renderPass;
  	VkRenderPassCreateInfo renderPassCreateInfo = {};
 	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassCreateInfo.attachmentCount = 1;
@@ -384,9 +412,8 @@ static void vk_setup_fixed_function_pipline(renderer_t* renderer)
 	renderPassCreateInfo.dependencyCount = 1;
 	renderPassCreateInfo.pDependencies = subpassDependencies;
 	vkCall(vkCreateRenderPass(renderer->vk_device, &renderPassCreateInfo, NULL, &renderPass));
-	log_msg("vk_get_render_pass");
 	return renderPass;
- }
+}
 
 static VkSubpassDependency vk_get_subpass_dependency()
 {
