@@ -130,7 +130,8 @@ static VkPipeline vk_get_graphics_pipeline(renderer_t* renderer, VkPipelineLayou
 											VkPipelineMultisampleStateCreateInfo* multisampleState, 
 											VkPipelineColorBlendStateCreateInfo* colorBlendState);
 static tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(renderer_t* renderer);
-static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_commandbuffers(renderer_t* renderer);
+static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, VkCommandPool commandPool, uint32_t count);
+static VkCommandPool vk_get_command_pool(VkDevice device, uint32_t queueFamilyIndex);
 static VkAttachmentReference vk_get_attachment_reference(void);
 static VkSubpassDependency vk_get_subpass_dependency(void);
 static VkSemaphore vk_get_semaphore(renderer_t* renderer);
@@ -141,7 +142,8 @@ static VkPipelineLayout vk_get_pipeline_layout(renderer_t* renderer);
 static VkViewport vk_get_viewport(uint32_t width, uint32_t height);
 static void vk_setup_fixed_function_pipline(renderer_t* renderer);
 static void record_commands(renderer_t* renderer, tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers);
-
+static VkBuffer vk_get_buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkSharingMode sharingMode);
+static VkDeviceMemory vk_get_device_memory_for_buffer(VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties);
 static tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(uint32_t stride, VkVertexInputRate vertexInputRate);
 static tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets);
 
@@ -294,59 +296,19 @@ EXCEPTION_BLOCK
     };
 
 
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-
-    VkBufferCreateInfo createInfo = { }; 
-    createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO; 
-    createInfo.size = sizeof(vertices);
-    createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; 
-    createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    vkCall(vkCreateBuffer(renderer->vk_device, &createInfo, NULL, &vertexBuffer));
-    renderer->vk_vertex_buffer = vertexBuffer;
-
-
-    VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(renderer->vk_device, vertexBuffer, &memRequirements);
-
-	VkPhysicalDeviceMemoryProperties memProperties;
-	vkGetPhysicalDeviceMemoryProperties(renderer->vk_physical_device, &memProperties);
-
-	int32_t selectedMemoryType = -1;
-	uint32_t typeFilter = memRequirements.memoryTypeBits;
-	uint32_t properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-	{
-	    if ((typeFilter & (1 << i)) && ((memProperties.memoryTypes[i].propertyFlags & properties) == properties))
-	    {
-	    	selectedMemoryType = (int32_t)i;
-	        break;
-	    }
-	}
-EXCEPTION_BLOCK
-(
-	if(selectedMemoryType == -1)
-		throw_exception(VULKAN_ABORTED);
-)
-
-	VkMemoryAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = (uint32_t)selectedMemoryType;
-	vkCall(vkAllocateMemory(renderer->vk_device, &allocInfo, NULL, &vertexBufferMemory));
-	vkCall(vkBindBufferMemory(renderer->vk_device, vertexBuffer, vertexBufferMemory, 0));
-	renderer->vk_vertex_memory = vertexBufferMemory;
-
+    renderer->vk_vertex_buffer = vk_get_buffer(renderer->vk_device, sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE);
+    renderer->vk_vertex_memory  = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_vertex_buffer, sizeof(vertices), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	void* data;
-	vkMapMemory(renderer->vk_device, vertexBufferMemory, 0, createInfo.size, 0, &data);
-    memcpy(data, vertices, (size_t) createInfo.size);
-	vkUnmapMemory(renderer->vk_device, vertexBufferMemory);
+	vkMapMemory(renderer->vk_device, renderer->vk_vertex_memory, 0, sizeof(vertices), 0, &data);
+    memcpy(data, vertices, (size_t) sizeof(vertices));
+	vkUnmapMemory(renderer->vk_device, renderer->vk_vertex_memory);
 
-	record_commands(renderer,  vk_get_commandbuffers(renderer));
-
-    renderer->vk_image_available_semaphore = vk_get_semaphore(renderer);
+	renderer->vk_command_pool = vk_get_command_pool(renderer->vk_device, renderer->vk_graphics_queue_index);
+	renderer->vk_command_buffers = vk_get_command_buffers(renderer->vk_device, renderer->vk_command_pool, renderer->vk_images.value1);
+	renderer->vk_image_available_semaphore = vk_get_semaphore(renderer);
     renderer->vk_render_finished_semaphore = vk_get_semaphore(renderer);
+
+	record_commands(renderer, renderer->vk_command_buffers);
 }
 
 void renderer_update(renderer_t* renderer)
@@ -385,6 +347,53 @@ void renderer_update(renderer_t* renderer)
 	presentInfo.pResults = NULL; // Optional
 
 	vkQueuePresentKHR(renderer->vk_graphics_queue, &presentInfo);
+}
+
+static VkDeviceMemory vk_get_device_memory_for_buffer(VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties)
+{
+	VkDeviceMemory deviceMemory;
+    VkMemoryRequirements memRequirements;
+	VkPhysicalDeviceMemoryProperties memProperties;
+
+	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+	int32_t selectedMemoryType = -1;
+	uint32_t typeFilter = memRequirements.memoryTypeBits;
+	uint32_t properties = memoryProperties;
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+	{
+	    if ((typeFilter & (1 << i)) && ((memProperties.memoryTypes[i].propertyFlags & properties) == properties))
+	    {
+	    	selectedMemoryType = (int32_t)i;
+	        break;
+	    }
+	}
+EXCEPTION_BLOCK
+(
+	if(selectedMemoryType == -1)
+		throw_exception(VULKAN_ABORTED);
+)
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = (uint32_t)selectedMemoryType;
+	vkCall(vkAllocateMemory(device, &allocInfo, NULL, &deviceMemory));
+	vkCall(vkBindBufferMemory(device, buffer, deviceMemory, 0));
+	return deviceMemory;
+}
+
+static VkBuffer vk_get_buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkSharingMode sharingMode)
+{
+	VkBuffer buffer;
+	VkBufferCreateInfo createInfo = { }; 
+	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO; 
+	createInfo.size = size; 
+	createInfo.usage = usageFlags;
+	createInfo.sharingMode = sharingMode;
+	vkCall(vkCreateBuffer(device, &createInfo, NULL, &buffer));
+	return buffer;
 }
 
 static VkSemaphore vk_get_semaphore(renderer_t* renderer)
@@ -428,22 +437,25 @@ static void record_commands(renderer_t* renderer, tuple_t(uint32_t, pVkCommandBu
     }
 }
 
-static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_commandbuffers(renderer_t* renderer)
+static VkCommandPool vk_get_command_pool(VkDevice device, uint32_t queueFamilyIndex)
 {
-	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = (tuple_t(uint32_t, pVkCommandBuffer_t)) { renderer->vk_framebuffers.value1, GC_NEWV(VkCommandBuffer, renderer->vk_framebuffers.value1) };
-	VkCommandPool commandPool; 
-	VkCommandPoolCreateInfo commandPoolCreateInfo = { } ; 
-	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO; 
-	commandPoolCreateInfo.queueFamilyIndex = renderer->vk_graphics_queue_index;
-	vkCall(vkCreateCommandPool(renderer->vk_device, &commandPoolCreateInfo, NULL, &commandPool));
+	VkCommandPoolCreateInfo createInfo = { };
+	createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	createInfo.queueFamilyIndex = queueFamilyIndex;
+	VkCommandPool commandPool;
+	vkCall(vkCreateCommandPool(device, &createInfo, NULL, &commandPool));
+	return commandPool;
+}
+
+static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, VkCommandPool commandPool, uint32_t count)
+{
+	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = (tuple_t(uint32_t, pVkCommandBuffer_t)) { count, GC_NEWV(VkCommandBuffer, count) };
 	VkCommandBufferAllocateInfo allocInfo = { }; 
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO; 
 	allocInfo.commandPool = commandPool; 
-	allocInfo.commandBufferCount = commandBuffers.value1;
+	allocInfo.commandBufferCount = count;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	vkAllocateCommandBuffers(renderer->vk_device, &allocInfo, commandBuffers.value2);
-	renderer->vk_command_pool = commandPool;
-	renderer->vk_command_buffers = commandBuffers;
+	vkCall(vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.value2));
 	return commandBuffers;
 }
 
