@@ -20,6 +20,9 @@
 
 #include <utilities/file_utility.h>		//for load_binary_from_file()
 
+#include <array/header_config.h>
+#include <array/array.h>
+
 
 typedef VkCommandBuffer* pVkCommandBuffer_t;
 instantiate_tuple_t(uint32_t, pVkCommandBuffer_t);
@@ -38,6 +41,24 @@ instantiate_tuple_t(uint32_t, pVkVertexInputAttributeDescription_t);
 
 typedef VkVertexInputBindingDescription* pVkVertexInputBindingDescription_t;
 instantiate_tuple_t(uint32_t, pVkVertexInputBindingDescription_t);
+
+instantiate_array_struct(VkFormat); 
+instantiate_declaration_array(VkFormat);
+instantiate_implementation_array(VkFormat);
+
+typedef float point_t[2];
+typedef float color_t[3];
+typedef struct 
+{
+	point_t position; 
+	color_t color;
+} vertex_t;
+
+typedef vertex_t* pvertex_t;
+instantiate_tuple_t(uint32_t, pvertex_t);
+
+instantiate_tuple_t(tuple_t(uint32_t, pVkVertexInputBindingDescription_t), tuple_t(uint32_t, pVkVertexInputAttributeDescription_t));
+
 
 define_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND); 
 declare_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND);
@@ -81,13 +102,6 @@ typedef enum
 	FRAGMENT_SHADER
 } shader_type_t;
 
-typedef float point_t[2];
-typedef float color_t[3];
-typedef struct 
-{
-	point_t position; 
-	color_t color;
-} vertex_t;
 
 void* renderer_get_vulkan_instance(renderer_t* renderer) { return (void*)(&(renderer->vk_instance)); }
 void* renderer_get_vulkan_device(renderer_t* renderer) { return (void*)(&(renderer->vk_device)); }
@@ -99,7 +113,7 @@ static tuple_t(uint32_t, pVkImage_t) vk_get_images(renderer_t* renderer);
 static tuple_t(uint32_t, pVkImageView_t) vk_get_image_views(renderer_t* renderer);
 static VkShaderModule vk_get_shader_module(renderer_t* renderer, const char* file_name);
 static VkPipelineShaderStageCreateInfo vk_get_pipeline_shader_stage_create_info(VkShaderModule shader_module, shader_type_t shader_type, const char* entry_point);
-static VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_info(void);
+static VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_info(uint32_t attributeCount, uint32_t stride, VkVertexInputRate vertexInputRate, VkFormat* attributeFormats, uint32_t* attributeOffsets);
 static VkPipelineInputAssemblyStateCreateInfo vk_get_pipeline_input_assembly_state_create_info(void); 
 static VkPipelineViewportStateCreateInfo vk_get_pipeline_viewport_state_create_info(uint32_t viewportWidth, uint32_t viewportHeight);
 static VkPipelineRasterizationStateCreateInfo vk_get_pipeline_rasterization_state_create_info(void);
@@ -128,8 +142,8 @@ static VkViewport vk_get_viewport(uint32_t width, uint32_t height);
 static void vk_setup_fixed_function_pipline(renderer_t* renderer);
 static void record_commands(renderer_t* renderer, tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers);
 
-static tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(void);
-static tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(void);
+static tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(uint32_t stride, VkVertexInputRate vertexInputRate);
+static tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets);
 
 renderer_t* renderer_init()
 {
@@ -227,7 +241,12 @@ EXCEPTION_BLOCK
 		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(renderer, "shaders/fragmentShader.spv"), FRAGMENT_SHADER, "main")
 	};
 
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info();
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(
+															2, 
+															sizeof(vertex_t), 
+															VK_VERTEX_INPUT_RATE_VERTEX, 
+															array(VkFormat)(2, VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT).data, 
+															array(uint32_t)(2, offsetof(vertex_t, position), offsetof(vertex_t, color)).data);
 
 	//Fixed functions configuration
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
@@ -663,34 +682,33 @@ static VkViewport vk_get_viewport(uint32_t width, uint32_t height)
 	return viewport;
 }
 
-static tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(void)
+static tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(uint32_t stride, VkVertexInputRate vertexInputRate)
 {
 	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) bindingDescriptions = (tuple_t(uint32_t, pVkVertexInputBindingDescription_t)) { 1 , GC_NEWV(VkVertexInputBindingDescription, 1) }; 
 	bindingDescriptions.value2[0].binding = 0;
-	bindingDescriptions.value2[0].stride = sizeof(vertex_t); 
-	bindingDescriptions.value2[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	bindingDescriptions.value2[0].stride = stride; 
+	bindingDescriptions.value2[0].inputRate = vertexInputRate;
 	return bindingDescriptions;
 }
 
-static tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(void)
+static tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets)
 {
-	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) attributeDescriptions = (tuple_t(uint32_t, pVkVertexInputAttributeDescription_t)) { 2, GC_NEWV(VkVertexInputAttributeDescription, 2) };
-	attributeDescriptions.value2[0].binding = 0; 
-	attributeDescriptions.value2[0].location = 0;
-	attributeDescriptions.value2[0].format = VK_FORMAT_R32G32_SFLOAT;
-	attributeDescriptions.value2[0].offset = offsetof(vertex_t, position); 
-	attributeDescriptions.value2[1].binding = 0; 
-	attributeDescriptions.value2[1].location = 1;
-	attributeDescriptions.value2[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-	attributeDescriptions.value2[1].offset = offsetof(vertex_t, color); 
+	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) attributeDescriptions = (tuple_t(uint32_t, pVkVertexInputAttributeDescription_t)) { attributeCount, GC_NEWV(VkVertexInputAttributeDescription, attributeCount) };
+	for(uint32_t i = 0; i < attributeDescriptions.value1; i++)
+	{
+		attributeDescriptions.value2[i].binding = 0; 
+		attributeDescriptions.value2[i].location = i;
+		attributeDescriptions.value2[i].format = attributeFormats[i]; 
+		attributeDescriptions.value2[i].offset = attributeOffsets[i];
+	}
 	return attributeDescriptions;
 }
 
 
-static VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_info()
+static VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_info(uint32_t attributeCount, uint32_t stride, VkVertexInputRate vertexInputRate, VkFormat* attributeFormats, uint32_t* attributeOffsets)
 {
-	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vertexBindings = vk_get_vertex_input_binding_descriptions(); 
-	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vertexAttributes = vk_get_vertex_input_attribute_descriptions();
+	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vertexBindings = vk_get_vertex_input_binding_descriptions(stride, vertexInputRate); 
+	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vertexAttributes = vk_get_vertex_input_attribute_descriptions(attributeCount, attributeFormats, attributeOffsets);
 
 	VkPipelineVertexInputStateCreateInfo createInfo =  { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO; 
