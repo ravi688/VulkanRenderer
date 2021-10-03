@@ -20,6 +20,9 @@
 
 #include <utilities/file_utility.h>		//for load_binary_from_file()
 
+#include <array/header_config.h>
+#include <array/array.h>
+
 
 typedef VkCommandBuffer* pVkCommandBuffer_t;
 instantiate_tuple_t(uint32_t, pVkCommandBuffer_t);
@@ -32,6 +35,30 @@ instantiate_tuple_t(uint32_t, pVkImage_t);
 
 typedef VkImageView* pVkImageView_t;
 instantiate_tuple_t(uint32_t, pVkImageView_t);
+
+typedef VkVertexInputAttributeDescription* pVkVertexInputAttributeDescription_t; 
+instantiate_tuple_t(uint32_t, pVkVertexInputAttributeDescription_t);
+
+typedef VkVertexInputBindingDescription* pVkVertexInputBindingDescription_t;
+instantiate_tuple_t(uint32_t, pVkVertexInputBindingDescription_t);
+
+instantiate_array_struct(VkFormat); 
+instantiate_declaration_array(VkFormat);
+instantiate_implementation_array(VkFormat);
+
+typedef float point_t[2];
+typedef float color_t[3];
+typedef struct 
+{
+	point_t position; 
+	color_t color;
+} vertex_t;
+
+typedef vertex_t* pvertex_t;
+instantiate_tuple_t(uint32_t, pvertex_t);
+
+instantiate_tuple_t(tuple_t(uint32_t, pVkVertexInputBindingDescription_t), tuple_t(uint32_t, pVkVertexInputAttributeDescription_t));
+
 
 define_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND); 
 declare_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND);
@@ -64,6 +91,9 @@ typedef struct renderer_t
 	VkCommandPool vk_command_pool;
 	VkSemaphore vk_image_available_semaphore;
 	VkSemaphore vk_render_finished_semaphore;
+
+	VkBuffer vk_vertex_buffer;
+	VkDeviceMemory vk_vertex_memory;
 } renderer_t;
 
 typedef enum
@@ -71,6 +101,7 @@ typedef enum
 	VERTEX_SHADER,
 	FRAGMENT_SHADER
 } shader_type_t;
+
 
 void* renderer_get_vulkan_instance(renderer_t* renderer) { return (void*)(&(renderer->vk_instance)); }
 void* renderer_get_vulkan_device(renderer_t* renderer) { return (void*)(&(renderer->vk_device)); }
@@ -82,7 +113,7 @@ static tuple_t(uint32_t, pVkImage_t) vk_get_images(renderer_t* renderer);
 static tuple_t(uint32_t, pVkImageView_t) vk_get_image_views(renderer_t* renderer);
 static VkShaderModule vk_get_shader_module(renderer_t* renderer, const char* file_name);
 static VkPipelineShaderStageCreateInfo vk_get_pipeline_shader_stage_create_info(VkShaderModule shader_module, shader_type_t shader_type, const char* entry_point);
-static VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_info(void);
+static VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_info(uint32_t attributeCount, uint32_t stride, VkVertexInputRate vertexInputRate, VkFormat* attributeFormats, uint32_t* attributeOffsets);
 static VkPipelineInputAssemblyStateCreateInfo vk_get_pipeline_input_assembly_state_create_info(void); 
 static VkPipelineViewportStateCreateInfo vk_get_pipeline_viewport_state_create_info(uint32_t viewportWidth, uint32_t viewportHeight);
 static VkPipelineRasterizationStateCreateInfo vk_get_pipeline_rasterization_state_create_info(void);
@@ -99,7 +130,8 @@ static VkPipeline vk_get_graphics_pipeline(renderer_t* renderer, VkPipelineLayou
 											VkPipelineMultisampleStateCreateInfo* multisampleState, 
 											VkPipelineColorBlendStateCreateInfo* colorBlendState);
 static tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(renderer_t* renderer);
-static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_commandbuffers(renderer_t* renderer);
+static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, VkCommandPool commandPool, uint32_t count);
+static VkCommandPool vk_get_command_pool(VkDevice device, uint32_t queueFamilyIndex);
 static VkAttachmentReference vk_get_attachment_reference(void);
 static VkSubpassDependency vk_get_subpass_dependency(void);
 static VkSemaphore vk_get_semaphore(renderer_t* renderer);
@@ -110,6 +142,10 @@ static VkPipelineLayout vk_get_pipeline_layout(renderer_t* renderer);
 static VkViewport vk_get_viewport(uint32_t width, uint32_t height);
 static void vk_setup_fixed_function_pipline(renderer_t* renderer);
 static void record_commands(renderer_t* renderer, tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers);
+static VkBuffer vk_get_buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkSharingMode sharingMode);
+static VkDeviceMemory vk_get_device_memory_for_buffer(VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties);
+static tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(uint32_t stride, VkVertexInputRate vertexInputRate);
+static tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets);
 
 renderer_t* renderer_init()
 {
@@ -207,7 +243,12 @@ EXCEPTION_BLOCK
 		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(renderer, "shaders/fragmentShader.spv"), FRAGMENT_SHADER, "main")
 	};
 
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info();
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(
+															2, 
+															sizeof(vertex_t), 
+															VK_VERTEX_INPUT_RATE_VERTEX, 
+															array(VkFormat)(2, VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT).data, 
+															array(uint32_t)(2, offsetof(vertex_t, position), offsetof(vertex_t, color)).data);
 
 	//Fixed functions configuration
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
@@ -247,10 +288,27 @@ EXCEPTION_BLOCK
 
     renderer->vk_framebuffers = vk_get_framebuffers(renderer); //swapchainFramebuffers
 
-	record_commands(renderer,  vk_get_commandbuffers(renderer));
+    vertex_t vertices[3] =
+    {
+    {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    };
 
-    renderer->vk_image_available_semaphore = vk_get_semaphore(renderer);
+
+    renderer->vk_vertex_buffer = vk_get_buffer(renderer->vk_device, sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE);
+    renderer->vk_vertex_memory  = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_vertex_buffer, sizeof(vertices), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	void* data;
+	vkMapMemory(renderer->vk_device, renderer->vk_vertex_memory, 0, sizeof(vertices), 0, &data);
+    memcpy(data, vertices, (size_t) sizeof(vertices));
+	vkUnmapMemory(renderer->vk_device, renderer->vk_vertex_memory);
+
+	renderer->vk_command_pool = vk_get_command_pool(renderer->vk_device, renderer->vk_graphics_queue_index);
+	renderer->vk_command_buffers = vk_get_command_buffers(renderer->vk_device, renderer->vk_command_pool, renderer->vk_images.value1);
+	renderer->vk_image_available_semaphore = vk_get_semaphore(renderer);
     renderer->vk_render_finished_semaphore = vk_get_semaphore(renderer);
+
+	record_commands(renderer, renderer->vk_command_buffers);
 }
 
 void renderer_update(renderer_t* renderer)
@@ -291,6 +349,53 @@ void renderer_update(renderer_t* renderer)
 	vkQueuePresentKHR(renderer->vk_graphics_queue, &presentInfo);
 }
 
+static VkDeviceMemory vk_get_device_memory_for_buffer(VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties)
+{
+	VkDeviceMemory deviceMemory;
+    VkMemoryRequirements memRequirements;
+	VkPhysicalDeviceMemoryProperties memProperties;
+
+	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+	int32_t selectedMemoryType = -1;
+	uint32_t typeFilter = memRequirements.memoryTypeBits;
+	uint32_t properties = memoryProperties;
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+	{
+	    if ((typeFilter & (1 << i)) && ((memProperties.memoryTypes[i].propertyFlags & properties) == properties))
+	    {
+	    	selectedMemoryType = (int32_t)i;
+	        break;
+	    }
+	}
+EXCEPTION_BLOCK
+(
+	if(selectedMemoryType == -1)
+		throw_exception(VULKAN_ABORTED);
+)
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = (uint32_t)selectedMemoryType;
+	vkCall(vkAllocateMemory(device, &allocInfo, NULL, &deviceMemory));
+	vkCall(vkBindBufferMemory(device, buffer, deviceMemory, 0));
+	return deviceMemory;
+}
+
+static VkBuffer vk_get_buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkSharingMode sharingMode)
+{
+	VkBuffer buffer;
+	VkBufferCreateInfo createInfo = { }; 
+	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO; 
+	createInfo.size = size; 
+	createInfo.usage = usageFlags;
+	createInfo.sharingMode = sharingMode;
+	vkCall(vkCreateBuffer(device, &createInfo, NULL, &buffer));
+	return buffer;
+}
+
 static VkSemaphore vk_get_semaphore(renderer_t* renderer)
 {
 	VkSemaphore semaphore;
@@ -323,28 +428,34 @@ static void record_commands(renderer_t* renderer, tuple_t(uint32_t, pVkCommandBu
 
 		vkCmdBeginRenderPass(commandBuffers.value2[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffers.value2[i], VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->vk_pipeline);
+		VkBuffer vertexBuffers[] = { renderer->vk_vertex_buffer };
+		VkDeviceSize offsets[] = {0};
+		vkCmdBindVertexBuffers(commandBuffers.value2[i], 0, 1, vertexBuffers, offsets);
 		vkCmdDraw(commandBuffers.value2[i], 3, 1, 0, 0);
 		vkCmdEndRenderPass(commandBuffers.value2[i]);
 		vkCall(vkEndCommandBuffer(commandBuffers.value2[i]));
     }
 }
 
-static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_commandbuffers(renderer_t* renderer)
+static VkCommandPool vk_get_command_pool(VkDevice device, uint32_t queueFamilyIndex)
 {
-	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = (tuple_t(uint32_t, pVkCommandBuffer_t)) { renderer->vk_framebuffers.value1, GC_NEWV(VkCommandBuffer, renderer->vk_framebuffers.value1) };
-	VkCommandPool commandPool; 
-	VkCommandPoolCreateInfo commandPoolCreateInfo = { } ; 
-	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO; 
-	commandPoolCreateInfo.queueFamilyIndex = renderer->vk_graphics_queue_index;
-	vkCall(vkCreateCommandPool(renderer->vk_device, &commandPoolCreateInfo, NULL, &commandPool));
+	VkCommandPoolCreateInfo createInfo = { };
+	createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	createInfo.queueFamilyIndex = queueFamilyIndex;
+	VkCommandPool commandPool;
+	vkCall(vkCreateCommandPool(device, &createInfo, NULL, &commandPool));
+	return commandPool;
+}
+
+static tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, VkCommandPool commandPool, uint32_t count)
+{
+	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = (tuple_t(uint32_t, pVkCommandBuffer_t)) { count, GC_NEWV(VkCommandBuffer, count) };
 	VkCommandBufferAllocateInfo allocInfo = { }; 
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO; 
 	allocInfo.commandPool = commandPool; 
-	allocInfo.commandBufferCount = commandBuffers.value1;
+	allocInfo.commandBufferCount = count;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	vkAllocateCommandBuffers(renderer->vk_device, &allocInfo, commandBuffers.value2);
-	renderer->vk_command_pool = commandPool;
-	renderer->vk_command_buffers = commandBuffers;
+	vkCall(vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.value2));
 	return commandBuffers;
 }
 
@@ -583,14 +694,40 @@ static VkViewport vk_get_viewport(uint32_t width, uint32_t height)
 	return viewport;
 }
 
-static VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_info()
+static tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(uint32_t stride, VkVertexInputRate vertexInputRate)
 {
+	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) bindingDescriptions = (tuple_t(uint32_t, pVkVertexInputBindingDescription_t)) { 1 , GC_NEWV(VkVertexInputBindingDescription, 1) }; 
+	bindingDescriptions.value2[0].binding = 0;
+	bindingDescriptions.value2[0].stride = stride; 
+	bindingDescriptions.value2[0].inputRate = vertexInputRate;
+	return bindingDescriptions;
+}
+
+static tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets)
+{
+	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) attributeDescriptions = (tuple_t(uint32_t, pVkVertexInputAttributeDescription_t)) { attributeCount, GC_NEWV(VkVertexInputAttributeDescription, attributeCount) };
+	for(uint32_t i = 0; i < attributeDescriptions.value1; i++)
+	{
+		attributeDescriptions.value2[i].binding = 0; 
+		attributeDescriptions.value2[i].location = i;
+		attributeDescriptions.value2[i].format = attributeFormats[i]; 
+		attributeDescriptions.value2[i].offset = attributeOffsets[i];
+	}
+	return attributeDescriptions;
+}
+
+
+static VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_info(uint32_t attributeCount, uint32_t stride, VkVertexInputRate vertexInputRate, VkFormat* attributeFormats, uint32_t* attributeOffsets)
+{
+	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vertexBindings = vk_get_vertex_input_binding_descriptions(stride, vertexInputRate); 
+	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vertexAttributes = vk_get_vertex_input_attribute_descriptions(attributeCount, attributeFormats, attributeOffsets);
+
 	VkPipelineVertexInputStateCreateInfo createInfo =  { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO; 
-	createInfo.vertexBindingDescriptionCount = 0; 
-	createInfo.pVertexBindingDescriptions = NULL; 
-	createInfo.vertexAttributeDescriptionCount = 0; 
-	createInfo.pVertexAttributeDescriptions = NULL; 
+	createInfo.vertexBindingDescriptionCount = vertexBindings.value1; 
+	createInfo.pVertexBindingDescriptions = vertexBindings.value2; 
+	createInfo.vertexAttributeDescriptionCount = vertexAttributes.value1; 
+	createInfo.pVertexAttributeDescriptions = vertexAttributes.value2; 
 	return createInfo;
 }
 
@@ -714,6 +851,8 @@ EXCEPTION_BLOCK
 
 void renderer_terminate(renderer_t* renderer)
 {
+	vkFreeMemory(renderer->vk_device, renderer->vk_vertex_memory, NULL);
+	vkDestroyBuffer(renderer->vk_device, renderer->vk_vertex_buffer, NULL);
     vkDestroySemaphore(renderer->vk_device, renderer->vk_image_available_semaphore, NULL);
 	vkDestroySemaphore(renderer->vk_device, renderer->vk_render_finished_semaphore, NULL);
 	vkDestroyCommandPool(renderer->vk_device, renderer->vk_command_pool, NULL);

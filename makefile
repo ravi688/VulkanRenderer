@@ -1,6 +1,8 @@
 
-# DEFINES= -DHPML_DEBUG_MODE -DLOG_DEBUG -DGLOBAL_DEBUG -DDEBUG
-DEFINES= -DHPML_RELEASE_MODE -DLOG_RELEASE -DGLOBAL_RELEASE -DRELEASE
+DEBUG_DEFINES = -DHPML_DEBUG_MODE -DLOG_DEBUG -DGLOBAL_DEBUG -DDEBUG
+RELEASE_DEFINES = -DHPML_RELEASE_MODE -DLOG_RELEASE -DGLOBAL_RELEASE -DRELEASE
+
+DEFINES = 
 
 COMPILATION_CONFIG= -m64
 
@@ -10,6 +12,9 @@ SCRIPT_FILES = $(wildcard scripts/*.c)
 SOURCES= $(wildcard source/*.c)
 SCRIPT_OBJECTS = $(addsuffix .o, $(basename $(SCRIPT_FILES)))
 OBJECTS= $(addsuffix .o, $(basename $(SOURCES)))
+
+
+#Shaders
 
 FRAGMENT_SHADERS = $(wildcard ./shaders/*.frag)
 VERTEX_SHADERS = $(wildcard ./shaders/*.vert)
@@ -22,7 +27,13 @@ all: main shader
 
 .PHONY: recompile
 
-recompile: clean main shader
+recompile-debug: DEFINES += $(DEBUG_DEFINES)
+recompile-debug:  clean main shader
+
+recompile-release: DEFINES += $(RELEASE_DEFINES)
+recompile-release: clean main shader
+
+recompile : recompile-debug
 
 %.spv : %.frag
 	glslc $< -o $@
