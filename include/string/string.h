@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 const char* string(uint32_t length, const char* format, ...);
 const char* const* string_array(uint32_t count, ...);

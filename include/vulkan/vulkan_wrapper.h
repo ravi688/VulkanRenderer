@@ -78,8 +78,10 @@ typedef VkVertexInputBindingDescription* pVkVertexInputBindingDescription_t;
 instantiate_tuple_t(uint32_t, pVkVertexInputBindingDescription_t);
 
 
+#define vk_create_instance() __vk_create_instance(2, string_array(2, "VK_KHR_surface", "VK_KHR_win32_surface"))
+VkInstance __vk_create_instance(uint32_t enabledExtensionCount, const char* const* enabledExtensionNames);
+
 void vk_setup_validation_layers();
-VkInstance vk_create_instance(); 
 tuple_t(uint32_t, pVkPhysicalDevice_t) vk_get_physical_devices(VkInstance instance);
 tuple_t(uint32_t, pVkExtensionProperties_t) vk_get_instance_extension_properties();
 tuple_t(uint32_t, pVkExtensionProperties_t) vk_get_physical_device_extension_properties(VkPhysicalDevice physical_device);

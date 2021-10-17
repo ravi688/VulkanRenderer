@@ -498,7 +498,7 @@ bool vk_check_instance_extension_support(tuple_t(uint32_t, ppVkChar_t) extension
 	return true;
 }
 
-VkInstance vk_create_instance()
+VkInstance __vk_create_instance(uint32_t enabledExtensionCount, const char* const* enabledExtensionNames)
 {
 	VkInstanceCreateInfo instance_create_info =  { };
 	instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO; 
@@ -507,8 +507,8 @@ VkInstance vk_create_instance()
 	instance_create_info.pApplicationInfo = NULL; 
 	instance_create_info.enabledLayerCount = 0;
 	instance_create_info.ppEnabledLayerNames = NULL; 
-	instance_create_info.enabledExtensionCount = 2; 
-	instance_create_info.ppEnabledExtensionNames = string_array(2, "VK_KHR_surface", "VK_KHR_win32_surface"); 
+	instance_create_info.enabledExtensionCount = enabledExtensionCount; 
+	instance_create_info.ppEnabledExtensionNames = enabledExtensionNames; 
 	VkInstance instance; 
 	vkCall(vkCreateInstance(&instance_create_info, NULL, &instance));
 	return instance;

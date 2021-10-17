@@ -38,7 +38,7 @@
 
 #ifdef LOG_FETAL_ERR
 #define log_fatal_err(...)do {\
- printf("[Error]: ");\
+ printf("[Fetal Error]: ");\
  printf(__VA_ARGS__);\
  printf("\t, AT %s, LINE: %d, FILE: %s\n",__PRETTY_FUNCTION__, __LINE__, __FILE__);\
  exit(1);\
@@ -46,6 +46,8 @@
 #else
 #define log_fatal_err(...)
 #endif
+
+#define log_fetal_err(...) log_fatal_err(__VA_ARGS__)
 
 #ifdef LOG_MSG
 #define log_msg(...)do {\

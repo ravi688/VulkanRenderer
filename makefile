@@ -13,6 +13,9 @@ SOURCES= $(wildcard source/*.c)
 SCRIPT_OBJECTS = $(addsuffix .o, $(basename $(SCRIPT_FILES)))
 OBJECTS= $(addsuffix .o, $(basename $(SOURCES)))
 
+TEST_SOURCES = $(wildcard source/test/*.c)
+TEST_OBJECTS = $(addsuffix .o, $(basename $(TEST_SOURCES)))
+
 
 #Shaders
 
@@ -21,6 +24,12 @@ VERTEX_SHADERS = $(wildcard ./shaders/*.vert)
 
 FRAGMENT_SPIRV_SHADERS = $(addsuffix .spv, $(basename $(FRAGMENT_SHADERS)))
 VERTEX_SPIRV_SHADERS = $(addsuffix .spv,   $(basename $(VERTEX_SHADERS)))
+
+TEST_FRAGMENT_SHADERS = $(wildcard ./shaders/test/*.frag)
+TEST_VERTEX_SHADERS = $(wildcard ./shaders/test/*.vert)
+
+TEST_FRAGMENT_SPIRV_SHADERS = $(addsuffix .spv, $(basename $(TEST_FRAGMENT_SHADERS)))
+TEST_VERTEX_SPIRV_SHADERS = $(addsuffix .spv, $(basename $(TEST_VERTEX_SHADERS)))
 
 
 all: main shader
@@ -53,7 +62,25 @@ shader : $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS)
 main: $(OBJECTS) $(SCRIPT_OBJECTS)
 	gcc $(COMPILATION_CONFIG) $(OBJECTS) $(SCRIPT_OBJECTS) $(LIBS) -o $@
 
+.PHONY : test
+
+
+test: test-shader
+test: DEFINES += $(DEBUG_DEFINES)
+	TEST_OBJECTS += $(filter-out source/main.o, $(OBJECTS))
+test: $(TEST_OBJECTS)
+	gcc $(COMPILATION_CONFIG) $(TEST_OBJECTS) $(LIBS) -o $@
+
+.PHONY: test-shader
+
+test-shader: $(TEST_FRAGMENT_SPIRV_SHADERS) $(TEST_VERTEX_SPIRV_SHADERS)
+
 .PHONY: clean
 
 clean: 
-	del $(addprefix source\, $(notdir $(OBJECTS))) $(addprefix scripts\, $(notdir $(SCRIPT_OBJECTS))) $(addprefix shaders\, $(notdir $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS))) main.exe 
+	del $(addprefix source\, $(notdir $(OBJECTS)))
+	del $(addprefix scripts\, $(notdir $(SCRIPT_OBJECTS)))
+	del $(addprefix shaders\, $(notdir $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS)))
+	del $(addprefix source\test\, $(notdir $(TEST_OBJECTS)))
+	del $(addprefix shaders\test\, $(notdir $(TEST_FRAGMENT_SPIRV_SHADERS) $(TEST_VERTEX_SPIRV_SHADERS)))
+	del main.exe test.exe
