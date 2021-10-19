@@ -51,11 +51,17 @@ typedef struct renderer_t
 	VkSemaphore vk_image_available_semaphore;
 	VkSemaphore vk_render_finished_semaphore;
 
+	//Vertex Buffer
 	VkBuffer vk_vertex_buffer;
 	VkDeviceMemory vk_vertex_memory;
 
+	//Vertex Staging Buffer
 	VkBuffer vk_staging_buffer; 
 	VkDeviceMemory vk_staging_memory;
+
+	//Index Buffer
+	VkBuffer vk_index_buffer; 
+	VkDeviceMemory vk_index_memory;
 
 	tuple_t(uint32_t, pvertex_t) vertices;
 } renderer_t;
@@ -145,13 +151,16 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 	vertex_t vertices[] = 
 	{
 		{ { 0.5f, 0.5f 	}, { 	0.0f, 0.0f, 1.0f 	} },
-		{ { -0.5f, -0.5f }, {	0.0f, 1.0f, 0.0f 	} },
-		{ { 0.5f, -0.5f 	}, { 	1.0f, 0.0f, 0.0f 	} },
-		{ { 0.5f, 0.5f }, { 1, 1, 0 } }, 
 		{ { -0.5f, 0.5f }, { 1, 1, 0 } }, 
-		{ { -0.5f, -0.5f }, { 0, 0.5f, 0.2f } }
+		{ { -0.5f, -0.5f }, {	0.0f, 1.0f, 0.0f 	} },
+		{ { 0.5f, -0.5f 	}, { 	1.0f, 0.0f, 0.0f 	} }
 	}; 
 	u32 vertexCount = sizeof(vertices) / sizeof(vertex_t);
+	u32 indices[] = 
+	{
+		0, 1, 2, 0, 2, 3
+	}; 
+	u32 indexCount = sizeof(indices) / sizeof(u32);
 
 	//Staging buffer preparation
 	renderer->vk_staging_buffer = vk_get_buffer(renderer->vk_device, sizeof(vertices), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE); 
@@ -204,9 +213,34 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 	}; 
 	vkQueueSubmit(renderer->vk_graphics_queue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(renderer->vk_graphics_queue);
+	//Destroy Staging Buffer
 	vkDestroyBuffer(renderer->vk_device, renderer->vk_staging_buffer, NULL); 
+	//Free the staging buffer memory 
+	vkFreeMemory(renderer->vk_device, renderer->vk_staging_memory, NULL); 
+	//Destroy the transfer Command buffer
 	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, 1, &transferCommandBuffer);
 
+	renderer->vk_staging_buffer = vk_get_buffer(renderer->vk_device, sizeof(indices), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE); 
+	renderer->vk_staging_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_staging_buffer, sizeof(indices), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT); 
+
+	vkMapMemory(renderer->vk_device, renderer->vk_staging_memory, 0, sizeof(indices), 0, &data);
+	memcpy(data, indices, sizeof(indices)); 
+	vkUnmapMemory(renderer->vk_device, renderer->vk_staging_memory);
+
+	renderer->vk_index_buffer = vk_get_buffer(renderer->vk_device, sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE); 
+	renderer->vk_staging_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_index_buffer, sizeof(indices), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+
+	vkCall(vkAllocateCommandBuffers(renderer->vk_device, &allocInfo, &transferCommandBuffer));
+	vkCall(vkBeginCommandBuffer(transferCommandBuffer, &beginInfo));
+	copyRegion.size = sizeof(indices); 
+	vkCmdCopyBuffer(transferCommandBuffer, renderer->vk_staging_buffer, renderer->vk_index_buffer, 1, &copyRegion);
+	vkCall(vkEndCommandBuffer(transferCommandBuffer)); 
+	vkQueueSubmit(renderer->vk_graphics_queue, 1, &submitInfo, VK_NULL_HANDLE); 
+	vkQueueWaitIdle(renderer->vk_graphics_queue); 
+	vkDestroyBuffer(renderer->vk_device, renderer->vk_staging_buffer, NULL); 
+	vkFreeMemory(renderer->vk_device, renderer->vk_staging_memory, NULL); 
+	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, 1, &transferCommandBuffer);
 
 
 	//Recording commands
@@ -234,7 +268,9 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 		VkBuffer vertexBuffers[1] =  { renderer->vk_vertex_buffer };
 		VkDeviceSize offsets[1] = { 0 };
 		vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[i], 0, 1, vertexBuffers, offsets);
-		vkCmdDraw(renderer->vk_command_buffers.value2[i], vertexCount, 1, 0, 0);
+		vkCmdBindIndexBuffer(renderer->vk_command_buffers.value2[i], renderer->vk_index_buffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdDrawIndexed(renderer->vk_command_buffers.value2[i], sizeof(indices), 1, 0, 0, 0);
+		// vkCmdDraw(renderer->vk_command_buffers.value2[i], vertexCount, 1, 0, 0);
 		vkCmdEndRenderPass(renderer->vk_command_buffers.value2[i]);
 		vkCall(vkEndCommandBuffer(renderer->vk_command_buffers.value2[i]));
 	}
