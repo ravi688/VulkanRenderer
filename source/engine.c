@@ -27,6 +27,8 @@ engine_t* engine_init(uint32_t screen_width, uint32_t screen_height, const char*
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	//TODO: Swapchain recreation when window get resized
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	engine_t* engine = GC_NEW(engine_t);

@@ -54,6 +54,9 @@ typedef struct renderer_t
 	VkBuffer vk_vertex_buffer;
 	VkDeviceMemory vk_vertex_memory;
 
+	VkBuffer vk_staging_buffer; 
+	VkDeviceMemory vk_staging_memory;
+
 	tuple_t(uint32_t, pvertex_t) vertices;
 } renderer_t;
 
@@ -138,20 +141,72 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 														&multisampling,
 														&colorBlending
 													);
-	//Vertex Buffer
-	vertex_t vertices[3] = 
+	//Geometry Data
+	vertex_t vertices[] = 
 	{
-		{ { 0.0f, 0.5f 	}, { 	0.0f, 0.0f, 1.0f 	} },
-		{ { -0.5f, 0.0f }, {	0.0f, 1.0f, 0.0f 	} },
-		{ { 0.5f, 0.0f 	}, { 	1.0f, 0.0f, 0.0f 	} }
+		{ { 0.5f, 0.5f 	}, { 	0.0f, 0.0f, 1.0f 	} },
+		{ { -0.5f, -0.5f }, {	0.0f, 1.0f, 0.0f 	} },
+		{ { 0.5f, -0.5f 	}, { 	1.0f, 0.0f, 0.0f 	} },
+		{ { 0.5f, 0.5f }, { 1, 1, 0 } }, 
+		{ { -0.5f, 0.5f }, { 1, 1, 0 } }, 
+		{ { -0.5f, -0.5f }, { 0, 0.5f, 0.2f } }
 	}; 
-	renderer->vk_vertex_buffer = vk_get_buffer(renderer->vk_device, sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE);
-	renderer->vk_vertex_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_vertex_buffer, sizeof(vertices), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	u32 vertexCount = sizeof(vertices) / sizeof(vertex_t);
+
+	//Staging buffer preparation
+	renderer->vk_staging_buffer = vk_get_buffer(renderer->vk_device, sizeof(vertices), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE); 
+	renderer->vk_staging_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_staging_buffer, sizeof(vertices), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	void* data;
-	vkMapMemory(renderer->vk_device, renderer->vk_vertex_memory, 0, sizeof(vertices), 0, &data);
+	vkMapMemory(renderer->vk_device, renderer->vk_staging_memory, 0, sizeof(vertices), 0, &data);
 	memcpy(data, vertices, sizeof(vertices));
-	vkUnmapMemory(renderer->vk_device, renderer->vk_vertex_memory);
+	vkUnmapMemory(renderer->vk_device, renderer->vk_staging_memory);
+
+
+	//Vertex Buffer
+	renderer->vk_vertex_buffer = vk_get_buffer(renderer->vk_device, sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_SHARING_MODE_EXCLUSIVE);
+	renderer->vk_vertex_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_vertex_buffer, sizeof(vertices), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+
+	//Recording commands to copy the staging buffer to vertex buffer
+	VkCommandBufferAllocateInfo allocInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, 
+		.commandPool = renderer->vk_command_pool, 
+		.commandBufferCount = 1, 
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY
+	}; 
+	VkCommandBuffer transferCommandBuffer;
+	vkCall(vkAllocateCommandBuffers(renderer->vk_device, &allocInfo, &transferCommandBuffer));
+
+	VkCommandBufferBeginInfo beginInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT 
+	}; 
+
+	vkCall(vkBeginCommandBuffer(transferCommandBuffer, &beginInfo));
+	VkBufferCopy copyRegion = 
+	{
+		.srcOffset = 0, 
+		.dstOffset = 0, 
+		.size = sizeof(vertices)
+	}; 
+
+	vkCmdCopyBuffer(transferCommandBuffer, renderer->vk_staging_buffer, renderer->vk_vertex_buffer, 1, &copyRegion); 
+	vkCall(vkEndCommandBuffer(transferCommandBuffer));
+
+	VkSubmitInfo submitInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO, 
+		.commandBufferCount = 1, 
+		.pCommandBuffers = &transferCommandBuffer,
+	}; 
+	vkQueueSubmit(renderer->vk_graphics_queue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(renderer->vk_graphics_queue);
+	vkDestroyBuffer(renderer->vk_device, renderer->vk_staging_buffer, NULL); 
+	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, 1, &transferCommandBuffer);
+
 
 
 	//Recording commands
@@ -179,7 +234,7 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 		VkBuffer vertexBuffers[1] =  { renderer->vk_vertex_buffer };
 		VkDeviceSize offsets[1] = { 0 };
 		vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[i], 0, 1, vertexBuffers, offsets);
-		vkCmdDraw(renderer->vk_command_buffers.value2[i], 3, 1, 0, 0);
+		vkCmdDraw(renderer->vk_command_buffers.value2[i], vertexCount, 1, 0, 0);
 		vkCmdEndRenderPass(renderer->vk_command_buffers.value2[i]);
 		vkCall(vkEndCommandBuffer(renderer->vk_command_buffers.value2[i]));
 	}
