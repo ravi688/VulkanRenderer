@@ -88,7 +88,7 @@ VkCommandPool vk_get_command_pool(VkDevice device, uint32_t queueFamilyIndex)
 
 tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, VkCommandPool commandPool, uint32_t count)
 {
-	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = (tuple_t(uint32_t, pVkCommandBuffer_t)) { count, GC_NEWV(VkCommandBuffer, count) };
+	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = { count, GC_NEWV(VkCommandBuffer, count) };
 	VkCommandBufferAllocateInfo allocInfo = { }; 
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO; 
 	allocInfo.commandPool = commandPool; 
@@ -98,22 +98,39 @@ tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, Vk
 	return commandBuffers;
 }
 
-tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(VkDevice device, uint32_t count, VkRenderPass* renderPasses, VkExtent2D* extents, uint32_t* layers, tuple_t(uint32_t, pVkImageView_t)* attachments)
+tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments)
 {
-	tuple_t(uint32_t, pVkFramebuffer_t) framebuffers = (tuple_t(uint32_t, pVkFramebuffer_t)) { count, GC_NEWV(VkFramebuffer, count) };
+	tuple_t(uint32_t, pVkFramebuffer_t) framebuffers = { count, GC_NEWV(VkFramebuffer, count) };
 	for(uint32_t i = 0; i < count; i++)
 	{
 		VkFramebufferCreateInfo createInfo = { }; 
 		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		createInfo.renderPass = renderPasses[i];
-		createInfo.pAttachments = attachments[i].value2; 
-		createInfo.attachmentCount = attachments[i].value1; 
-		createInfo.width = extents[i].width; 
-		createInfo.height = extents[i].height;
-		createInfo.layers = layers[i];
-		vkCall(vkCreateFramebuffer(device, &createInfo, NULL, &(framebuffers.value2[i])));
+		createInfo.renderPass = renderPass;
+		createInfo.pAttachments = &attachments[i]; 
+		createInfo.attachmentCount = 1; 
+		createInfo.width = extent.width; 
+		createInfo.height = extent.height;
+		createInfo.layers = layer;
+		VkFramebuffer framebuffer;
+		vkCall(vkCreateFramebuffer(device, &createInfo, NULL, &framebuffer));
+		framebuffers.value2[i] = framebuffer;
+
 	}
 	return framebuffers;
+}
+
+VkQueue vk_get_device_queue(VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex)
+{
+	VkQueue queue; 
+	vkGetDeviceQueue(device, queueFamilyIndex, queueIndex, &queue); 
+	return queue;
+}
+
+VkSwapchainKHR vk_get_swapchain(VkDevice device, VkSwapchainCreateInfoKHR* createInfo)
+{
+	VkSwapchainKHR swapchain;
+	vkCall(vkCreateSwapchainKHR(device, createInfo, NULL, &swapchain)); 
+	return swapchain;
 }
 
 VkPipeline vk_get_graphics_pipeline(VkDevice device, VkPipelineLayout pipelineLayout, VkRenderPass renderPass,
@@ -148,17 +165,26 @@ VkPipeline vk_get_graphics_pipeline(VkDevice device, VkPipelineLayout pipelineLa
 	return graphicsPipeline;
 }
 
-VkRenderPass vk_get_render_pass(VkDevice device, VkAttachmentDescription* attachments, VkSubpassDescription* subpasses, VkSubpassDependency* subpassDependencies)
+VkRenderPass vk_get_render_pass(VkDevice device, VkFormat format)
 {
+	VkAttachmentDescription colorAttachmentDescription = vk_get_attachment_description(format);
+	VkAttachmentReference colorAttachmentReference = vk_get_attachment_reference();  //TODO: this should be like vk_get_attachment_reference(index: 0);
+	VkSubpassDescription subpass  = 
+	{
+		.pColorAttachments = &colorAttachmentReference,
+		.colorAttachmentCount = 1, 
+		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS
+	};
+
 	VkRenderPass renderPass;
  	VkRenderPassCreateInfo renderPassCreateInfo = {};
 	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassCreateInfo.attachmentCount = 1;
-	renderPassCreateInfo.pAttachments = attachments;
+	renderPassCreateInfo.pAttachments = &colorAttachmentDescription;
 	renderPassCreateInfo.subpassCount = 1;
-	renderPassCreateInfo.pSubpasses = subpasses;
-	renderPassCreateInfo.dependencyCount = 1;
-	renderPassCreateInfo.pDependencies = subpassDependencies;
+	renderPassCreateInfo.pSubpasses = &subpass;
+	renderPassCreateInfo.dependencyCount = 0;
+	renderPassCreateInfo.pDependencies = VK_NULL_HANDLE;
 	vkCall(vkCreateRenderPass(device, &renderPassCreateInfo, NULL, &renderPass));
 	return renderPass;
 }
@@ -270,7 +296,7 @@ VkPipelineMultisampleStateCreateInfo vk_get_pipeline_multisample_state_create_in
 	VkPipelineMultisampleStateCreateInfo createInfo =  { };
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	createInfo.sampleShadingEnable = VK_FALSE;
-	createInfo.rasterizationSamples = VK_SAMPLE_COUNT_2_BIT;
+	createInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 	createInfo.minSampleShading = 1.0f; // Optional
 	createInfo.pSampleMask = NULL; // Optional
 	createInfo.alphaToCoverageEnable = VK_FALSE; // Optional
@@ -333,7 +359,7 @@ VkViewport vk_get_viewport(uint32_t width, uint32_t height)
 
 tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(uint32_t stride, VkVertexInputRate vertexInputRate)
 {
-	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) bindingDescriptions = (tuple_t(uint32_t, pVkVertexInputBindingDescription_t)) { 1 , GC_NEWV(VkVertexInputBindingDescription, 1) }; 
+	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) bindingDescriptions =  { 1 , GC_NEWV(VkVertexInputBindingDescription, 1) }; 
 	bindingDescriptions.value2[0].binding = 0;
 	bindingDescriptions.value2[0].stride = stride; 
 	bindingDescriptions.value2[0].inputRate = vertexInputRate;
@@ -342,7 +368,7 @@ tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_bindin
 
 tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets)
 {
-	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) attributeDescriptions = (tuple_t(uint32_t, pVkVertexInputAttributeDescription_t)) { attributeCount, GC_NEWV(VkVertexInputAttributeDescription, attributeCount) };
+	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) attributeDescriptions = { attributeCount, GC_NEWV(VkVertexInputAttributeDescription, attributeCount) };
 	for(uint32_t i = 0; i < attributeDescriptions.value1; i++)
 	{
 		attributeDescriptions.value2[i].binding = 0; 
@@ -357,7 +383,6 @@ VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_i
 {
 	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vertexBindings = vk_get_vertex_input_binding_descriptions(stride, vertexInputRate); 
 	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vertexAttributes = vk_get_vertex_input_attribute_descriptions(attributeCount, attributeFormats, attributeOffsets);
-
 	VkPipelineVertexInputStateCreateInfo createInfo =  { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO; 
 	createInfo.vertexBindingDescriptionCount = vertexBindings.value1; 
@@ -422,13 +447,51 @@ tuple_t(uint32_t, pVkImageView_t) vk_get_image_views(VkDevice device, VkFormat f
 	return imageViews;
 }
 
+uint32_t vk_get_graphics_queue_family_index(VkPhysicalDevice physicalDevice)
+{
+	tuple_t(uint32_t, pVkQueueFamilyProperties_t) queueFamilyProperites = vk_get_queue_family_properties(physicalDevice);
+	for(uint32_t i = 0; i < queueFamilyProperites.value1; i++)
+		if(queueFamilyProperites.value2[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+			return i;
+	return UINT32_MAX;
+}
 
+VkDevice vk_get_device(VkPhysicalDevice physicalDevice)
+{
+	VkPhysicalDeviceFeatures features =  { };
 
+	float priority = 1.0f;
+	VkDeviceQueueCreateInfo graphicsQueueCreateInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+		.queueFamilyIndex = vk_get_graphics_queue_family_index(physicalDevice),
+		.queueCount = 1, 
+		.pQueuePriorities = &priority
+	};
 
+EXCEPTION_BLOCK
+(
+	if(graphicsQueueCreateInfo.queueFamilyIndex == UINT32_MAX)
+		throw_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND);
+)
 
+	VkDeviceCreateInfo deviceCreateInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+		.pEnabledFeatures = &features,
+		.queueCreateInfoCount = 1,
+		.pQueueCreateInfos = &graphicsQueueCreateInfo,
+		.enabledLayerCount = 0, 
+		.ppEnabledLayerNames = NULL, 
+		.enabledExtensionCount = 1,
+		.ppEnabledExtensionNames = string_array(1, "VK_KHR_swapchain")
+	} ;
+	VkDevice device;
+	vkCall(vkCreateDevice(physicalDevice, &deviceCreateInfo, NULL, &device)); 
+	return device;
+}
 
-
-VkPhysicalDevice vk_select_suitable_device(tuple_t(uint32_t, pVkPhysicalDevice_t) physical_devices)
+VkPhysicalDevice vk_get_suitable_physical_device(tuple_t(uint32_t, pVkPhysicalDevice_t) physical_devices)
 {
 	EXCEPTION_BLOCK(
 		if(physical_devices.value1 <= 0)

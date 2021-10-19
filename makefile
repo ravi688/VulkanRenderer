@@ -32,15 +32,25 @@ TEST_FRAGMENT_SPIRV_SHADERS = $(addsuffix .spv, $(basename $(TEST_FRAGMENT_SHADE
 TEST_VERTEX_SPIRV_SHADERS = $(addsuffix .spv, $(basename $(TEST_VERTEX_SHADERS)))
 
 
-all: main shader
+all: release shader
 
 .PHONY: recompile
+.PHONY: recompile-debug
+.PHONY: recompile-release
+.PHONY: debug
+.PHONY: release
 
 recompile-debug: DEFINES += $(DEBUG_DEFINES)
 recompile-debug:  clean main shader
 
 recompile-release: DEFINES += $(RELEASE_DEFINES)
 recompile-release: clean main shader
+
+release: DEFINES += $(RELEASE_DEFINES)
+release: main shader
+
+debug: DEFINES += $(DEBUG_DEFINES)
+debug: main shader
 
 recompile : recompile-debug
 
