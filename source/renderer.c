@@ -1,4 +1,4 @@
-
+//TODO: Write a numeric type conversion warning systme; because of this printf("%u", <float> value) => outputs zero if <float> value < 1
 
 #include <engine/renderer/renderer.h>
 #include <exception/exception.h>
@@ -20,13 +20,21 @@
 
 #include <defines.h>
 
+#include <math.h>
+
 typedef struct 
 {
 	float position[2]; 
 	float color[3];
-} vertex_t;
+} vertex2d_t;
 
-typedef vertex_t* pvertex_t;
+typedef struct  
+{
+	float position[3]; 
+	float color[3];
+} vertex3d_t;
+
+typedef vertex2d_t* pvertex_t;
 instantiate_tuple_t(uint32_t, pvertex_t);
 
 typedef struct renderer_t
@@ -75,6 +83,202 @@ void* renderer_get_vulkan_instance(renderer_t* renderer) { return (void*)(&(rend
 void* renderer_get_vulkan_device(renderer_t* renderer) { return (void*)(&(renderer->vk_device)); }
 void* renderer_get_vulkan_surface(renderer_t* renderer) { return (void*)(&(renderer->vk_surface)); }
 void* renderer_get_vulkan_swapchain(renderer_t* renderer) { return (void*)(&(renderer->vk_swapchain)); }
+
+
+typedef struct { float x, y, z; } vec3_t;
+
+typedef struct 
+{
+	float r0[4]; 
+	float r1[4]; 
+	float r2[4]; 
+	float r3[4];
+} mat4_t;
+
+typedef struct 
+{
+	union 
+	{
+		struct 
+		{
+			float x; 
+			float y; 
+			float z;
+		};
+		vec3_t v;
+	};
+
+	float w;
+} quat_t;
+
+
+//Vector mathematics functions
+static vec3_t vec3_scale(vec3_t v, float r) { return (vec3_t) { v.x * r, v.y * r, v.z * r }; }
+static float vec3_dot(vec3_t v1, vec3_t v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z; }
+static vec3_t vec3_cross(vec3_t from, vec3_t to) { return (vec3_t) { from.y * to.z - from.z * to.y, from.x * to.z - from.z * to.x, from.x * to.y - from.y * to.x }; }
+static vec3_t __vec3_add(vec3_t v1, vec3_t v2) { return (vec3_t) { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z }; }
+static vec3_t vec3_add(u32 count, ...)
+{
+	va_list args; 
+	vec3_t result = { };
+	va_start(args, count);
+	while(count > 0)
+	{
+		vec3_t v = va_arg(args, vec3_t);
+		v = __vec3_add(result, v);
+		--count;
+	}
+	va_end(args);
+	return result;
+}
+static vec3_t vec3_sub(vec3_t v1, vec3_t v2) { return (vec3_t) { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z }; }
+
+//Quaternion mathematics functions
+static quat_t quat_conjugate(quat_t q) { return (quat_t) { -q.x, -q.y, -q.z, q.w }; }
+static float quat_sqrmagnitude(quat_t q) { return q.x * q.x + q.y * q.y + q.z * q.z; }
+static quat_t quat_inverse(quat_t q) { float m = 1 / quat_sqrmagnitude(q); return (quat_t) { q.x * m, q.y * m, q.z * m, q.w * m }; }
+static quat_t quat_mul(quat_t q1, quat_t q2) { return (quat_t) { .w = q1.w * q2.w - vec3_dot(q1.v, q2.v), .v =  vec3_add(3, vec3_scale(q1.v, q2.w), vec3_scale(q2.v, q1.w), vec3_cross(q1.v, q2.v)) }; }
+static quat_t quat_angle_axis(float angle, vec3_t axis) { return (quat_t) { .v = vec3_scale(axis, sin(angle * 0.5f)), .w = cos(angle * 0.5f) }; }
+static vec3_t quat_mul_vec3(quat_t q, vec3_t v) { return quat_mul(q, quat_mul((quat_t) { .v = v, .w = 0 }, quat_inverse(q))).v; }
+
+
+//Matrix 4x4 mathematics functions
+static mat4_t __mat4_mul(mat4_t m1, mat4_t m2)
+{
+	return (mat4_t)
+	{
+		m1.r0[0] * m2.r0[0] + m1.r0[1] * m2.r1[0] + m1.r0[2] * m2.r2[0] + m1.r0[3] * m2.r3[0],
+		m1.r0[0] * m2.r0[1] + m1.r0[1] * m2.r1[1] + m1.r0[2] * m2.r2[1] + m1.r0[3] * m2.r3[1],
+		m1.r0[0] * m2.r0[2] + m1.r0[1] * m2.r1[2] + m1.r0[2] * m2.r2[2] + m1.r0[3] * m2.r3[2],
+		m1.r0[0] * m2.r0[3] + m1.r0[1] * m2.r1[3] + m1.r0[2] * m2.r2[3] + m1.r0[3] * m2.r3[3],
+
+		m1.r1[0] * m2.r0[0] + m1.r1[1] * m2.r1[0] + m1.r1[2] * m2.r2[0] + m1.r1[3] * m2.r3[0],
+		m1.r1[0] * m2.r0[1] + m1.r1[1] * m2.r1[1] + m1.r1[2] * m2.r2[1] + m1.r1[3] * m2.r3[1],
+		m1.r1[0] * m2.r0[2] + m1.r1[1] * m2.r1[2] + m1.r1[2] * m2.r2[2] + m1.r1[3] * m2.r3[2],
+		m1.r1[0] * m2.r0[3] + m1.r1[1] * m2.r1[3] + m1.r1[2] * m2.r2[3] + m1.r1[3] * m2.r3[3],
+
+		m1.r2[0] * m2.r0[0] + m1.r2[1] * m2.r1[0] + m1.r2[2] * m2.r2[0] + m1.r2[3] * m2.r3[0],
+		m1.r2[0] * m2.r0[1] + m1.r2[1] * m2.r1[1] + m1.r2[2] * m2.r2[1] + m1.r2[3] * m2.r3[1],
+		m1.r2[0] * m2.r0[2] + m1.r2[1] * m2.r1[2] + m1.r2[2] * m2.r2[2] + m1.r2[3] * m2.r3[2],
+		m1.r2[0] * m2.r0[3] + m1.r2[1] * m2.r1[3] + m1.r2[2] * m2.r2[3] + m1.r2[3] * m2.r3[3],
+
+		m1.r3[0] * m2.r0[0] + m1.r3[1] * m2.r1[0] + m1.r3[2] * m2.r2[0] + m1.r3[3] * m2.r3[0],
+		m1.r3[0] * m2.r0[1] + m1.r3[1] * m2.r1[1] + m1.r3[2] * m2.r2[1] + m1.r3[3] * m2.r3[1],
+		m1.r3[0] * m2.r0[2] + m1.r3[1] * m2.r1[2] + m1.r3[2] * m2.r2[2] + m1.r3[3] * m2.r3[2],
+		m1.r3[0] * m2.r0[3] + m1.r3[1] * m2.r1[3] + m1.r3[2] * m2.r2[3] + m1.r3[3] * m2.r3[3],
+	};
+}; 
+static mat4_t mat4_identity() { return (mat4_t) { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } }; }
+static mat4_t mat4_mul(u32 count, ...)
+{
+	mat4_t result = mat4_identity();
+	va_list args; 
+	va_start(args, count); 
+	while(count > 0)
+	{
+		result = __mat4_mul(result, va_arg(args, mat4_t));
+		--count;
+	}
+	va_end(args);
+	return result;
+}
+static vec3_t mat4_mul_vec3(mat4_t m, vec3_t v)
+{
+	vec3_t vector = 
+	{
+		m.r0[0] * v.x + m.r0[1] * v.y + m.r0[2] * v.z + m.r0[3], 
+		m.r1[0] * v.x + m.r1[1] * v.y + m.r1[2] * v.z + m.r1[3], 
+		m.r2[0] * v.x + m.r2[1] * v.y + m.r2[2] * v.z + m.r2[3]
+	};
+	return vector;
+}
+static mat4_t mat4_translation(vec3_t v)
+{
+	return (mat4_t)
+	{
+		1, 0, 0, v.x, 
+		0, 1, 0, v.y,
+		0, 0, 1, v.z, 
+		0, 0, 1, 0
+	}; 
+}
+static mat4_t mat4_rotationX(float angle)
+{
+	float s = sin(angle); 
+	float c = cos(angle);
+	return (mat4_t) 
+	{
+		1,  0, 0, 0,
+		 c, 0, s, 0
+		-s, 0, c, 0, 
+		 0, 0, 0, 1
+	};
+}
+static mat4_t mat4_rotationY(float angle)
+{
+	float s = sin(angle); 
+	float c = cos(angle);	
+	return (mat4_t) 
+	{
+		 c, 0, s, 0, 
+		 0, 1, 0, 0, 
+		-s, 0, c, 0, 
+		 0, 0, 0, 1
+	};
+}
+static mat4_t mat4_rotationZ(float angle)
+{
+	float s = sin(angle); 
+	float c = cos(angle);
+	return (mat4_t)
+	{
+		 c, 0, s, 0, 
+		-s, 0, c, 0, 
+		 0, 0, 1, 0, 
+		 0, 0, 0, 1
+	};
+}
+static mat4_t mat4_rotation(vec3_t eulerRotation) { return mat4_mul(3, mat4_rotationX(eulerRotation.x), mat4_rotationY(eulerRotation.y), mat4_rotationZ(eulerRotation.z)); }
+static mat4_t mat4_transform(vec3_t position, vec3_t eulerRotation) { return mat4_mul(2, mat4_translation(position), mat4_rotation(eulerRotation)); }
+
+static mat4_t mat4_ortho_projection(vec3_t cameraPosition, vec3_t cameraRotation)
+{
+	mat4_t cameraTransform = mat4_transform(cameraPosition, cameraRotation); 
+	
+}
+
+static mat4_t mat4_persp_projection(vec3_t cameraPosition, vec3_t cameraRotation)
+{
+	return (mat4_t) { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+}
+
+static void mat4_dump(mat4_t m)
+{
+	log_msg("Row[0] => { %f, %f, %f, %f }", m.r0[0], m.r0[1], m.r0[2], m.r0[3]);
+	log_msg("Row[1] => { %f, %f, %f, %f }", m.r1[0], m.r1[1], m.r1[2], m.r1[3]);
+	log_msg("Row[2] => { %f, %f, %f, %f }", m.r2[0], m.r2[1], m.r2[2], m.r2[3]);
+	log_msg("Row[3] => { %f, %f, %f, %f }", m.r3[0], m.r3[1], m.r3[2], m.r3[3]);
+}
+
+static vertex2d_t* foreach_vertex3d(u32 count, vertex3d_t* vertices, mat4_t m)
+{
+	mat4_dump(m);
+	vertex2d_t* vertices2d = GC_NEWV(vertex2d_t, count);
+	for(u32 i = 0; i < count; i++)
+	{
+		vec3_t v = mat4_mul_vec3(m, (vec3_t) { vertices[i].position[0], vertices[i].position[1], vertices[i].position[2] });
+		log_msg("Vec2D { %f, %f }", v.x, v.y);
+		vertices2d[i].position[0] = v.x; 
+		vertices2d[i].position[1] = v.y;
+
+		//TODO: this should be like vertices2d[i].color = vertices[i].color
+		//but compiler denies because of the array type; write a function array_copy(T, count)(vertices2d[i].color, vertices[i].color)
+		vertices2d[i].color[0] = vertices[i].color[0];
+		vertices2d[i].color[1] = vertices[i].color[1];
+		vertices2d[i].color[2] = vertices[i].color[2];
+	}
+	return vertices2d;
+}
 
 //TODO: Wrapp this physical device selection & creation of logical device into a single function
 renderer_t* renderer_init()
@@ -127,9 +331,9 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 	};
 
 	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
-	uint32_t offsets[2] = { offsetof(vertex_t, position), offsetof(vertex_t, color) };
+	uint32_t offsets[2] = { offsetof(vertex2d_t, position), offsetof(vertex2d_t, color) };
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(	3, 
-																											sizeof(vertex_t), 
+																											sizeof(vertex2d_t), 
 																											VK_VERTEX_INPUT_RATE_VERTEX, 
 																											formats, 
 																											offsets);
@@ -148,14 +352,16 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 														&colorBlending
 													);
 	//Geometry Data
-	vertex_t vertices[] = 
+	vertex3d_t geometry3D[4] = 
 	{
-		{ { 0.5f, 0.5f 	}, { 	0.0f, 0.0f, 1.0f 	} },
-		{ { -0.5f, 0.5f }, { 1, 1, 0 } }, 
-		{ { -0.5f, -0.5f }, {	0.0f, 1.0f, 0.0f 	} },
-		{ { 0.5f, -0.5f 	}, { 	1.0f, 0.0f, 0.0f 	} }
+		{ { 0.5f, 0.0f, 0.5f }, { 1, 0, 1 } }, 
+		{ { 0.5f, 0.0f, -0.5f }, { 0, 1, 0 } },
+		{ { -0.5f, 0.0f, -0.5f }, { 1, 0, 0 } },
+		{ { -0.5f, 0.0f, 0.5f }, { 0, 0, 1 } }
 	}; 
-	u32 vertexCount = sizeof(vertices) / sizeof(vertex_t);
+
+	vertex2d_t* vertices = foreach_vertex3d(4, geometry3D, mat4_persp_projection((vec3_t) { 0.0f, 0.5f, 2.0f }, (vec3_t) { -30.0f, 0.0f, 0.0f }) );
+	u32 vertexCount = 4;
 	u32 indices[] = 
 	{
 		0, 1, 2, 0, 2, 3
@@ -220,6 +426,8 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 	//Destroy the transfer Command buffer
 	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, 1, &transferCommandBuffer);
 
+
+	//TODO: We can record the copy buffer commands of vertex and index buffers both in a record pass ^^ above
 	renderer->vk_staging_buffer = vk_get_buffer(renderer->vk_device, sizeof(indices), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE); 
 	renderer->vk_staging_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_staging_buffer, sizeof(indices), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT); 
 
