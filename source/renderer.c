@@ -22,6 +22,9 @@
 
 #include <math.h>
 
+#define DEG2RAD 0.01745f
+#define RAD2DEG 57.29577f
+
 typedef struct 
 {
 	float position[2]; 
@@ -87,6 +90,7 @@ void* renderer_get_vulkan_swapchain(renderer_t* renderer) { return (void*)(&(ren
 
 typedef struct { float x, y, z; } vec3_t;
 
+
 typedef struct 
 {
 	float r0[4]; 
@@ -94,6 +98,8 @@ typedef struct
 	float r2[4]; 
 	float r3[4];
 } mat4_t;
+
+#define mat4_data(m) ((float* const*)&m)
 
 typedef struct 
 {
@@ -176,21 +182,75 @@ static mat4_t mat4_mul(u32 count, ...)
 	va_start(args, count); 
 	while(count > 0)
 	{
-		result = __mat4_mul(result, va_arg(args, mat4_t));
+		result =  __mat4_mul(result, va_arg(args, mat4_t));
 		--count;
 	}
 	va_end(args);
 	return result;
 }
-static vec3_t mat4_mul_vec3(mat4_t m, vec3_t v)
+static vec3_t mat4_mul_vec4(mat4_t m, float x, float y, float z, float w)
 {
 	vec3_t vector = 
 	{
-		m.r0[0] * v.x + m.r0[1] * v.y + m.r0[2] * v.z + m.r0[3], 
-		m.r1[0] * v.x + m.r1[1] * v.y + m.r1[2] * v.z + m.r1[3], 
-		m.r2[0] * v.x + m.r2[1] * v.y + m.r2[2] * v.z + m.r2[3]
+		m.r0[0] * x + m.r0[1] * y + m.r0[2] * z + m.r0[3] * w, 
+		m.r1[0] * x + m.r1[1] * y + m.r1[2] * z + m.r1[3] * w, 
+		m.r2[0] * x + m.r2[1] * y + m.r2[2] * z + m.r2[3] * w
 	};
 	return vector;
+}
+
+static mat4_t mat4_transpose(mat4_t m)
+{
+	float* const* v = mat4_data(m);
+	return (mat4_t)
+	{
+		v[0][0], v[1][0], v[2][0], v[3][0],
+		v[0][1], v[1][1], v[2][1], v[3][1],
+		v[0][2], v[1][2], v[2][2], v[3][2], 
+		v[0][3], v[1][3], v[2][3], v[3][3] 
+	};
+}
+
+static float mat4_determinant(float* const* const mat, uint8_t n)
+{
+	if(n <= 1)
+		return 0;
+
+	if(n == 2)
+		return mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+
+	float result = 0;
+	for(u32 i = 0; i < n; i++)
+	{
+		float element = mat[0][i];
+		//Construct a matrix with order n -1
+		float _mat[n - 1][n - 1];
+		for(u32 l = 0; l < (n - 1); l++)
+		{
+			for(u32 j = 0, k = 0; j < (n - 1); j++, k++)
+			{
+				if(k == i) k++;
+				_mat[l][j] = mat[1 + l][k];
+			}
+		}
+		result += element * mat4_determinant(mat, n - 1);
+	}
+	return result;
+}
+
+static mat4_t mat4_inverse(mat4_t m)
+{
+	/*
+	Matrix inverse: 
+	 = transpose(Confactor matrix (M)) / Det (M)
+	*/
+	return (mat4_t) 
+	{
+		1, 0, 0, 0 , 
+		0, 1, 0, 0 , 
+		0, 0, 1, 0 , 
+		0, 0, 0, 1 
+	};
 }
 static mat4_t mat4_translation(vec3_t v)
 {
@@ -209,8 +269,8 @@ static mat4_t mat4_rotationX(float angle)
 	return (mat4_t) 
 	{
 		1,  0, 0, 0,
-		 c, 0, s, 0
-		-s, 0, c, 0, 
+		 0, c, -s, 0,
+		0, s, c, 0, 
 		 0, 0, 0, 1
 	};
 }
@@ -220,9 +280,9 @@ static mat4_t mat4_rotationY(float angle)
 	float c = cos(angle);	
 	return (mat4_t) 
 	{
-		 c, 0, s, 0, 
+		 c, 0, -s, 0, 
 		 0, 1, 0, 0, 
-		-s, 0, c, 0, 
+		s, 0, c, 0, 
 		 0, 0, 0, 1
 	};
 }
@@ -232,8 +292,8 @@ static mat4_t mat4_rotationZ(float angle)
 	float c = cos(angle);
 	return (mat4_t)
 	{
-		 c, 0, s, 0, 
-		-s, 0, c, 0, 
+		 c, -s, 0, 0, 
+		s, c, 0, 0, 
 		 0, 0, 1, 0, 
 		 0, 0, 0, 1
 	};
@@ -260,15 +320,19 @@ static void mat4_dump(mat4_t m)
 	log_msg("Row[3] => { %f, %f, %f, %f }", m.r3[0], m.r3[1], m.r3[2], m.r3[3]);
 }
 
+static void convert_to_vulkan_clipspace(vertex2d_t *  const vertices, u32 count)
+{
+	for(u32 i = 0; i < count; i++)
+		vertices[i].position[1] = -vertices[i].position[1];
+}
+
 static vertex2d_t* foreach_vertex3d(u32 count, vertex3d_t* vertices, mat4_t m)
 {
-	mat4_dump(m);
 	vertex2d_t* vertices2d = GC_NEWV(vertex2d_t, count);
 	for(u32 i = 0; i < count; i++)
 	{
-		vec3_t v = mat4_mul_vec3(m, (vec3_t) { vertices[i].position[0], vertices[i].position[1], vertices[i].position[2] });
-		log_msg("Vec2D { %f, %f }", v.x, v.y);
-		vertices2d[i].position[0] = v.x; 
+		vec3_t v = mat4_mul_vec4(m, vertices[i].position[0], vertices[i].position[1], vertices[i].position[2], 1);
+		vertices2d[i].position[0] = v.z; 
 		vertices2d[i].position[1] = v.y;
 
 		//TODO: this should be like vertices2d[i].color = vertices[i].color
@@ -354,33 +418,38 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 	//Geometry Data
 	vertex3d_t geometry3D[4] = 
 	{
-		{ { 0.5f, 0.0f, 0.5f }, { 1, 0, 1 } }, 
-		{ { 0.5f, 0.0f, -0.5f }, { 0, 1, 0 } },
-		{ { -0.5f, 0.0f, -0.5f }, { 1, 0, 0 } },
-		{ { -0.5f, 0.0f, 0.5f }, { 0, 0, 1 } }
+		{ { 0.5f, 0,  0.5f }, { 1, 1, 1 } }, 
+	 	{ { 0.5f, 0,  -0.5f }, { 1, 0, 0} },
+	 	{ { -0.5f, 0,  -0.5f }, { 0, 0, 0 } },
+	 	{ { -0.5f, 0, 0.5f }, { 0, 0,0 } }
 	}; 
 
-	vertex2d_t* vertices = foreach_vertex3d(4, geometry3D, mat4_persp_projection((vec3_t) { 0.0f, 0.5f, 2.0f }, (vec3_t) { -30.0f, 0.0f, 0.0f }) );
 	u32 vertexCount = 4;
+	mat4_t cameraTransform = mat4_transform((vec3_t) { -2.0f, 0, 0 }, (vec3_t) { 0, 0, 90 * DEG2RAD } );
+	mat4_dump(cameraTransform);
+	vertex2d_t* vertices = foreach_vertex3d(vertexCount, geometry3D, cameraTransform);
+	
+	convert_to_vulkan_clipspace(vertices, vertexCount); 
 	u32 indices[] = 
 	{
-		0, 1, 2, 0, 2, 3
+		//clockwise order
+		2, 1, 0, 3, 2, 0
 	}; 
 	u32 indexCount = sizeof(indices) / sizeof(u32);
 
 	//Staging buffer preparation
-	renderer->vk_staging_buffer = vk_get_buffer(renderer->vk_device, sizeof(vertices), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE); 
-	renderer->vk_staging_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_staging_buffer, sizeof(vertices), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	renderer->vk_staging_buffer = vk_get_buffer(renderer->vk_device, vertexCount * sizeof(vertex2d_t), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE); 
+	renderer->vk_staging_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_staging_buffer, vertexCount * sizeof(vertex2d_t), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	void* data;
-	vkMapMemory(renderer->vk_device, renderer->vk_staging_memory, 0, sizeof(vertices), 0, &data);
-	memcpy(data, vertices, sizeof(vertices));
+	vkMapMemory(renderer->vk_device, renderer->vk_staging_memory, 0, vertexCount * sizeof(vertex2d_t), 0, &data);
+	memcpy(data, vertices, sizeof(vertex2d_t) * vertexCount);
 	vkUnmapMemory(renderer->vk_device, renderer->vk_staging_memory);
 
 
 	//Vertex Buffer
-	renderer->vk_vertex_buffer = vk_get_buffer(renderer->vk_device, sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_SHARING_MODE_EXCLUSIVE);
-	renderer->vk_vertex_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_vertex_buffer, sizeof(vertices), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	renderer->vk_vertex_buffer = vk_get_buffer(renderer->vk_device, vertexCount * sizeof(vertex2d_t), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_SHARING_MODE_EXCLUSIVE);
+	renderer->vk_vertex_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_vertex_buffer, vertexCount * sizeof(vertex2d_t), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 
 	//Recording commands to copy the staging buffer to vertex buffer
@@ -405,7 +474,7 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 	{
 		.srcOffset = 0, 
 		.dstOffset = 0, 
-		.size = sizeof(vertices)
+		.size = vertexCount * sizeof(vertex2d_t)
 	}; 
 
 	vkCmdCopyBuffer(transferCommandBuffer, renderer->vk_staging_buffer, renderer->vk_vertex_buffer, 1, &copyRegion); 
