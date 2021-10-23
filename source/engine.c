@@ -39,7 +39,7 @@ engine_t* engine_init(uint32_t screen_width, uint32_t screen_height, const char*
 	glfw_dump_required_extensions();
 #endif
 	VkSurfaceKHR surface = glfw_get_vulkan_surface((GLFWwindow*)(engine->window), engine->renderer);
-	renderer_init_surface(engine->renderer, (void*)(&surface));
+	renderer_init_surface(engine->renderer, (void*)(&surface), screen_width, screen_height);
 	return engine;
 }
 

@@ -27,8 +27,27 @@
 
 typedef struct 
 {
-	float position[2]; 
-	float color[3];
+	union
+	{
+		float position[2]; 
+		struct 
+		{
+			float x; 
+			float y; 
+			float z;
+		};
+	};
+
+	union 
+	{
+		float color[3];
+		struct
+		{
+			float r; 
+			float g;
+			float b;
+		};
+	};
 } vertex2d_t;
 
 typedef struct  
@@ -42,6 +61,9 @@ instantiate_tuple_t(uint32_t, pvertex_t);
 
 typedef struct renderer_t
 {
+	uint32_t width; 
+	uint32_t height;
+
 	VkInstance vk_instance;
 	VkPhysicalDevice vk_physical_device;
 	VkDevice vk_device;
@@ -89,6 +111,18 @@ void* renderer_get_vulkan_swapchain(renderer_t* renderer) { return (void*)(&(ren
 
 
 typedef struct { float x, y, z; } vec3_t;
+typedef struct { float x, y, z, w; } vec4_t;
+
+vec3_t vec4_vec3(vec4_t v)
+{
+	if(v.w == 0)
+		return (vec3_t) { v.x, v.y, v.z }; 
+	else
+	{
+		float t = 1 / v.w;
+		return (vec3_t)  { v.x * t, v.y * t, v.z * t };
+	}
+}
 
 
 typedef struct 
@@ -208,13 +242,14 @@ static mat4_t mat4_mul(u32 count, ...)
 	va_end(args);
 	return result;
 }
-static vec3_t mat4_mul_vec4(mat4_t m, float x, float y, float z, float w)
+static vec4_t mat4_mul_vec4(mat4_t m, float x, float y, float z, float w)
 {
-	vec3_t vector = 
+	vec4_t vector = 
 	{
 		m.r0[0] * x + m.r0[1] * y + m.r0[2] * z + m.r0[3] * w, 
 		m.r1[0] * x + m.r1[1] * y + m.r1[2] * z + m.r1[3] * w, 
-		m.r2[0] * x + m.r2[1] * y + m.r2[2] * z + m.r2[3] * w
+		m.r2[0] * x + m.r2[1] * y + m.r2[2] * z + m.r2[3] * w, 
+		m.r3[0] * x + m.r3[1] * y + m.r3[2] * z + m.r3[3] * w
 	};
 	return vector;
 }
@@ -366,18 +401,61 @@ static mat4_t mat4_rotationZ(float angle)
 		 0, 0, 0, 1
 	};
 }
+
+static mat4_t mat4_scale(vec3_t scale)
+{
+	return (mat4_t)
+	{
+		scale.x, 0, 0, 0, 
+		0, scale.y, 0, 0, 
+		0, 0, scale.z, 0,
+		0, 0, 0, 1
+	};
+}
 static mat4_t mat4_rotation(vec3_t eulerRotation) { return mat4_mul(3, mat4_rotationX(eulerRotation.x), mat4_rotationY(eulerRotation.y), mat4_rotationZ(eulerRotation.z)); }
 static mat4_t mat4_transform(vec3_t position, vec3_t eulerRotation) { return mat4_mul(2, mat4_translation(position), mat4_rotation(eulerRotation)); }
 
-static mat4_t mat4_ortho_projection(vec3_t cameraPosition, vec3_t cameraRotation)
+
+static mat4_t mat4_ortho_projection(float nearClipPlane, float farClipPlane, float height, float aspectRatio)
 {
-	mat4_t cameraTransform = mat4_transform(cameraPosition, cameraRotation); 
-	
+	vec3_t box = { (farClipPlane - nearClipPlane),  height,  aspectRatio * height };
+EXCEPTION_BLOCK
+(
+	if((box.x == 0) || (box.y == 0) || (box.z == 0))
+		throw_exception(DIVIDE_BY_ZERO);
+	if((box.x < 0) || (box.y < 0) || (box.z < 0))
+		throw_exception(NEGATIVE_VALUE);
+)
+	return mat4_scale((vec3_t) { 1 / box.x, 2 / box.y, 2 / box.z }); 
 }
 
-static mat4_t mat4_persp_projection(vec3_t cameraPosition, vec3_t cameraRotation)
+static mat4_t mat4_persp_projection(float nearClipPlane, float farClipPlane, float fieldOfView, float aspectRatio)
 {
-	return (mat4_t) { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+	/*width / point.x = tan(fieldOfView)
+	width = point.x * tan(fieldOfView)
+	*/
+	// vec3_t _point = 
+	// {
+	// 	point.x / (nearClipPlane - farClipPlane),
+	// 	aspectRatio * 2 * point.y / (point.x * tan(fieldOfView)),
+	// 	2 * point.z / (point.x * tan(fieldOfView)) 
+	// }
+EXCEPTION_BLOCK
+(
+	if((farClipPlane < nearClipPlane) || (fieldOfView < 0))
+		throw_exception(NEGATIVE_VALUE);
+	if((farClipPlane == nearClipPlane) || (fieldOfView == 0))
+		throw_exception(DIVIDE_BY_ZERO);
+)
+	float depth = 1 / (farClipPlane - nearClipPlane);
+	float temp = 2 / tan(fieldOfView * 0.5f);
+	return (mat4_t)
+	{
+		depth, 0, 0, 0,
+		0, aspectRatio * temp, 0, 0,
+		0, 0, temp, 0,
+		1, 0, 0, 0,
+	};
 }
 
 static void mat4_dump(mat4_t m)
@@ -400,7 +478,7 @@ static vertex2d_t* foreach_vertex3d(u32 count, vertex3d_t* vertices, mat4_t m)
 	vertex2d_t* vertices2d = GC_NEWV(vertex2d_t, count);
 	for(u32 i = 0; i < count; i++)
 	{
-		vec3_t v = mat4_mul_vec4(m, vertices[i].position[0], vertices[i].position[1], vertices[i].position[2], 1);
+		vec3_t v = vec4_vec3(mat4_mul_vec4(m, vertices[i].position[0], vertices[i].position[1], vertices[i].position[2], 1));
 		vertices2d[i].position[0] = v.z; 
 		vertices2d[i].position[1] = v.y;
 
@@ -423,16 +501,18 @@ renderer_t* renderer_init()
 	return renderer;
 }
 
-void renderer_init_surface(renderer_t* renderer, void* surface)
+void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_width, uint32_t screen_height)
 {
 	//Surfaces and Swapchains
 	renderer->vk_surface = *((VkSurfaceKHR*)surface);
+	renderer->width = screen_width; 
+	renderer->height = screen_height;
 	VkSwapchainCreateInfoKHR swapchainCreateInfo  = 
 	{
 		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
 		.minImageCount = 3, 
 		.imageFormat = VK_FORMAT_B8G8R8A8_SRGB,
-		.imageExtent = { 600, 500 }, 
+		.imageExtent = { renderer->width, renderer->height }, 
 		.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
 		.imageArrayLayers = 1, 
 		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
@@ -447,7 +527,7 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 	renderer->vk_render_pass = vk_get_render_pass(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB);
 	renderer->vk_images = vk_get_images(renderer->vk_device, renderer->vk_swapchain);
 	renderer->vk_image_views = vk_get_image_views(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB, renderer->vk_images.value1, renderer->vk_images.value2);
-	renderer->vk_framebuffers = vk_get_framebuffers(renderer->vk_device, 3, renderer->vk_render_pass, (VkExtent2D) { 600, 500 }, 1, renderer->vk_image_views.value2);
+	renderer->vk_framebuffers = vk_get_framebuffers(renderer->vk_device, 3, renderer->vk_render_pass, (VkExtent2D) { renderer->width, renderer->height }, 1, renderer->vk_image_views.value2);
 	renderer->vk_command_pool = vk_get_command_pool(renderer->vk_device, vk_get_graphics_queue_family_index(renderer->vk_physical_device)); 
 	renderer->vk_command_buffers = vk_get_command_buffers(renderer->vk_device, renderer->vk_command_pool, 3);
 	renderer->vk_image_available_semaphore = vk_get_semaphore(renderer->vk_device); 
@@ -472,7 +552,7 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 																											offsets);
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
 	VkPipelineRasterizationStateCreateInfo rasterizer = vk_get_pipeline_rasterization_state_create_info();
-	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(600, 500);
+	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(renderer->width, renderer->height);
 	VkPipelineMultisampleStateCreateInfo multisampling = vk_get_pipeline_multisample_state_create_info();
 	VkPipelineColorBlendStateCreateInfo colorBlending = vk_get_pipeline_color_blend_state_create_info();
 	renderer->vk_pipeline = vk_get_graphics_pipeline(	renderer->vk_device, renderer->vk_pipeline_layout, renderer->vk_render_pass,
@@ -493,9 +573,13 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 	 	{ { -0.5f, 0, 0.5f }, { 0, 0,0 } }
 	}; 
 
-	u32 vertexCount = 4;
-	mat4_t cameraTransform = mat4_transform((vec3_t) { -1, 1, 0 }, (vec3_t) { 0, 0, -30 * DEG2RAD } );
-	vertex2d_t* vertices = foreach_vertex3d(vertexCount, geometry3D, mat4_inverse(cameraTransform));
+	u32 vertexCount = sizeof(geometry3D) / sizeof(vertex3d_t);
+	mat4_t cameraTransform = mat4_transform((vec3_t) { -3, 2, 0 }, (vec3_t) { 0, 0, -30 * DEG2RAD } );
+	mat4_t viewMatrix = mat4_inverse(cameraTransform);
+	mat4_t projectionMatrix = 
+	// mat4_ortho_projection(0, 10, 5, (float)renderer->width / renderer->height);
+	mat4_persp_projection(0, 10, 65 * DEG2RAD, (float)renderer->width/renderer->height);
+	vertex2d_t* vertices = foreach_vertex3d(vertexCount, geometry3D, mat4_mul(2, projectionMatrix, viewMatrix));
 
 	convert_to_vulkan_clipspace(vertices, vertexCount); 
 	u32 indices[] = 
@@ -602,7 +686,7 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 		{
 			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
 			.renderArea.offset = (VkOffset2D) { 0, 0 }, 
-			.renderArea.extent = (VkExtent2D) { 600, 500 }, 
+			.renderArea.extent = (VkExtent2D) { renderer->width, renderer->height }, 
 			.framebuffer = renderer->vk_framebuffers.value2[i], 
 			.renderPass = renderer->vk_render_pass,
 			.clearValueCount = 1,
