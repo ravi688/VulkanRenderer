@@ -97,9 +97,28 @@ typedef struct
 	float r1[4]; 
 	float r2[4]; 
 	float r3[4];
+
+	float* const data[4]; 
 } mat4_t;
 
-#define mat4_data(m) ((float* const*)&m)
+#define IGNORE_CONST(type, value) *(type*)(&value)
+
+#define mat4_data(m) __mat4_data(&m)
+float* const* const __mat4_data(mat4_t* m)
+{
+	IGNORE_CONST(float*, m->data[0]) = &m->r0[0]; 
+	IGNORE_CONST(float*, m->data[1]) = &m->r1[0]; 
+	IGNORE_CONST(float*, m->data[2]) = &m->r2[0]; 
+	IGNORE_CONST(float*, m->data[3]) = &m->r3[0]; 
+	return m->data;
+}
+
+#define mat4_copy(dst, src) __mat4_copy(&dst, &src)
+void __mat4_copy(mat4_t* dst, mat4_t* src)  { memcpy(dst, src, sizeof(float) * 16); }
+
+
+#define mat4_move(dst, src) __mat4_move(&dst, src)
+void __mat4_move(mat4_t* dst, mat4_t src) { __mat4_copy(dst, &src); }
 
 typedef struct 
 {
@@ -182,7 +201,8 @@ static mat4_t mat4_mul(u32 count, ...)
 	va_start(args, count); 
 	while(count > 0)
 	{
-		result =  __mat4_mul(result, va_arg(args, mat4_t));
+		//TODO: this should be like: move(,)
+		mat4_move(result, __mat4_mul(result, va_arg(args, mat4_t)));
 		--count;
 	}
 	va_end(args);
@@ -199,9 +219,10 @@ static vec3_t mat4_mul_vec4(mat4_t m, float x, float y, float z, float w)
 	return vector;
 }
 
+
 static mat4_t mat4_transpose(mat4_t m)
 {
-	float* const* v = mat4_data(m);
+	float* const* const v = mat4_data(m);
 	return (mat4_t)
 	{
 		v[0][0], v[1][0], v[2][0], v[3][0],
@@ -211,46 +232,93 @@ static mat4_t mat4_transpose(mat4_t m)
 	};
 }
 
-static float mat4_determinant(float* const* const mat, uint8_t n)
+#define mat4_build_cofactor(m, out_mptr, row, column) __mat4_build_cofactor(mat4_data(m), __mat4_data(out_mptr), 4, row, column)
+void __mat4_build_cofactor(float* const* const baseMatrix, float* const* const cofactorMatrix,  u32 n, u32 row, u32 column)
+{
+	for(u32 i = 0, g = 0; i < (n - 1); i++, g++)
+	{
+		if(g == row) g++;
+		for(u32 j = 0, h = 0; j < (n - 1); j++, h++)
+		{
+			if(h == column) h++;
+			cofactorMatrix[i][j] = baseMatrix[g][h];
+		}
+	}
+}
+
+#define mat4_determinant(m) __mat4_determinant(mat4_data(m), 4)
+static float __mat4_determinant(float* const* const mat, u32 n)
 {
 	if(n <= 1)
 		return 0;
-
 	if(n == 2)
 		return mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
 
 	float result = 0;
-	for(u32 i = 0; i < n; i++)
+	signed char sign = 1;
+	for(u32 i = 0; i < n; i++, sign *= -1)
 	{
 		float element = mat[0][i];
+		if(element == 0) continue;
 		//Construct a matrix with order n -1
 		float _mat[n - 1][n - 1];
+		float* const data[n - 1];
 		for(u32 l = 0; l < (n - 1); l++)
-		{
-			for(u32 j = 0, k = 0; j < (n - 1); j++, k++)
-			{
-				if(k == i) k++;
-				_mat[l][j] = mat[1 + l][k];
-			}
-		}
-		result += element * mat4_determinant(mat, n - 1);
+			IGNORE_CONST(float*, data[l]) = &_mat[l][0];
+		__mat4_build_cofactor(mat, (float* const* const)data, n, 0, i);
+		result += element * sign * __mat4_determinant((float* const* const)data, n - 1);
 	}
 	return result;
+}
+
+#define mat4_cofactor(m, row, column) __mat4_cofactor(mat4_data(m), 4, row, column)
+static float __mat4_cofactor(float* const* const m, u32 n, u32 row, u32 column)
+{
+	float _m[n - 1][n - 1]; 
+	float* const data[n - 1]; 
+	for(u32 i = 0; i < (n - 1); i++)
+		IGNORE_CONST(float*, data[i]) = &_m[i][0]; 
+	__mat4_build_cofactor(m, (float* const* const)data, n, row, column); 
+	return __mat4_determinant((float* const* const)data, n - 1) * ((((row + column) % 2 )== 0) ? 1 : -1);
+}
+
+static mat4_t mat4_cofactor_matrix(mat4_t m)
+{
+	mat4_t cofactorMatrix;
+	float* const* const data = mat4_data(cofactorMatrix);
+	for(u32 i = 0; i < 4; i++)
+		for(u32 j = 0; j < 4; j++)
+			//TODO: optimize this, we can get the mat4_data out of this loop, see the macro definition of mat4_cofactor
+			data[i][j] = mat4_cofactor(m, i, j); 
+	return cofactorMatrix;
+}
+
+static mat4_t mat4_mul_with_scalar(mat4_t m, float x)
+{
+	float* const* const v = mat4_data(m);
+	return (mat4_t)
+	{
+		v[0][0] * x, v[0][1] * x, v[0][2] * x, v[0][3] * x,
+		v[1][0] * x, v[1][1] * x, v[1][2] * x, v[1][3] * x,
+		v[2][0] * x, v[2][1] * x, v[2][2] * x, v[2][3] * x,
+		v[3][0] * x, v[3][1] * x, v[3][2] * x, v[3][3] * x,
+	};
 }
 
 static mat4_t mat4_inverse(mat4_t m)
 {
 	/*
 	Matrix inverse: 
-	 = transpose(Confactor matrix (M)) / Det (M)
+	 = transpose(Confactor matrix (M)) / Det (M) or Adjoint(m) / Det(m)
 	*/
-	return (mat4_t) 
-	{
-		1, 0, 0, 0 , 
-		0, 1, 0, 0 , 
-		0, 0, 1, 0 , 
-		0, 0, 0, 1 
-	};
+	float det = mat4_determinant(m);
+EXCEPTION_BLOCK
+(
+	if(det == 0)
+		throw_exception(DIVIDE_BY_ZERO);
+)
+	mat4_move(m, mat4_transpose(mat4_cofactor_matrix(m))); 
+	return mat4_mul_with_scalar(m, 1 / det);
 }
 static mat4_t mat4_translation(vec3_t v)
 {
@@ -259,7 +327,7 @@ static mat4_t mat4_translation(vec3_t v)
 		1, 0, 0, v.x, 
 		0, 1, 0, v.y,
 		0, 0, 1, v.z, 
-		0, 0, 1, 0
+		0, 0, 0, 1
 	}; 
 }
 static mat4_t mat4_rotationX(float angle)
@@ -314,10 +382,11 @@ static mat4_t mat4_persp_projection(vec3_t cameraPosition, vec3_t cameraRotation
 
 static void mat4_dump(mat4_t m)
 {
-	log_msg("Row[0] => { %f, %f, %f, %f }", m.r0[0], m.r0[1], m.r0[2], m.r0[3]);
-	log_msg("Row[1] => { %f, %f, %f, %f }", m.r1[0], m.r1[1], m.r1[2], m.r1[3]);
-	log_msg("Row[2] => { %f, %f, %f, %f }", m.r2[0], m.r2[1], m.r2[2], m.r2[3]);
-	log_msg("Row[3] => { %f, %f, %f, %f }", m.r3[0], m.r3[1], m.r3[2], m.r3[3]);
+	float* const* const v = mat4_data(m);
+	log_msg("Row[0] => { %.2f, %.2f, %.2f, %.2f }", v[0][0], v[0][1], v[0][2], v[0][3]);
+	log_msg("Row[1] => { %.2f, %.2f, %.2f, %.2f }", v[1][0], v[1][1], v[1][2], v[1][3]);
+	log_msg("Row[2] => { %.2f, %.2f, %.2f, %.2f }", v[2][0], v[2][1], v[2][2], v[2][3]);
+	log_msg("Row[3] => { %.2f, %.2f, %.2f, %.2f }", v[3][0], v[3][1], v[3][2], v[3][3]);
 }
 
 static void convert_to_vulkan_clipspace(vertex2d_t *  const vertices, u32 count)
@@ -425,10 +494,9 @@ void renderer_init_surface(renderer_t* renderer, void* surface)
 	}; 
 
 	u32 vertexCount = 4;
-	mat4_t cameraTransform = mat4_transform((vec3_t) { -2.0f, 0, 0 }, (vec3_t) { 0, 0, 90 * DEG2RAD } );
-	mat4_dump(cameraTransform);
-	vertex2d_t* vertices = foreach_vertex3d(vertexCount, geometry3D, cameraTransform);
-	
+	mat4_t cameraTransform = mat4_transform((vec3_t) { -1, 1, 0 }, (vec3_t) { 0, 0, -30 * DEG2RAD } );
+	vertex2d_t* vertices = foreach_vertex3d(vertexCount, geometry3D, mat4_inverse(cameraTransform));
+
 	convert_to_vulkan_clipspace(vertices, vertexCount); 
 	u32 indices[] = 
 	{
