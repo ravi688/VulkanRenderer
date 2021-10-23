@@ -383,9 +383,9 @@ static mat4_t mat4_rotationY(float angle)
 	float c = cos(angle);	
 	return (mat4_t) 
 	{
-		 c, 0, -s, 0, 
+		 c, 0, s, 0, 
 		 0, 1, 0, 0, 
-		s, 0, c, 0, 
+		-s, 0, c, 0, 
 		 0, 0, 0, 1
 	};
 }
@@ -565,27 +565,72 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 														&colorBlending
 													);
 	//Geometry Data
-	vertex3d_t geometry3D[4] = 
+	// vertex3d_t geometry3D[4] = 
+	// {
+	// 	{ { 0.5f, 0,  0.5f }, { 1, 1, 1 } }, 
+	//  	{ { 0.5f, 0,  -0.5f }, { 1, 0, 0} },
+	//  	{ { -0.5f, 0,  -0.5f }, { 0, 0, 0 } },
+	//  	{ { -0.5f, 0, 0.5f }, { 0, 0,0 } }
+	// }; 
+
+	vertex3d_t geometry3D[] = 
 	{
-		{ { 0.5f, 0,  0.5f }, { 1, 1, 1 } }, 
-	 	{ { 0.5f, 0,  -0.5f }, { 1, 0, 0} },
-	 	{ { -0.5f, 0,  -0.5f }, { 0, 0, 0 } },
-	 	{ { -0.5f, 0, 0.5f }, { 0, 0,0 } }
-	}; 
+		 //Bottom
+		 { { -0.5f, 0, 0.5f },  { 0.1f, 0.7f, 0 } },
+		 { { -0.5f, 0, -0.5f },  { 0.1f, 0.7f, 0 } },
+		 { { 0.5f, 0, -0.5f },  { 0.1f, 0.7f, 0 } },
+		 { { 0.5f, 0, 0.5f },  { 0.1f, 0.7f, 0 } },
+
+		 //Top
+		 { { 0.5f, 1, 0.5f },  { 0.4f, 0.2f, 1 } },
+		 { { 0.5f, 1, -0.5f },  { 0.4f, 0.2f, 1 } },
+		 { { -0.5f, 1, -0.5f },  { 0.4f, 0.2f, 1 } },
+		 { { -0.5f, 1, 0.5f },  { 0.4f, 0.2f, 1 } },
+
+		 //Front
+		 { { -0.5f, 1, -0.5f },  { 0, 0, 1 } },
+		 { { -0.5f, 1, 0.5f },  { 0, 0, 1 } },
+		 { { -0.5f, 0, 0.5f },  { 0, 0, 1 } },
+		 { { -0.5f, 0, -0.5f },  { 0, 0, 1 } },
+
+		 //Left
+		 { { 0.5f, 1, -0.5f },  { 0.1f, 0, 0.4f } },
+		 { { -0.5f, 1, -0.5f },  { 0.1f, 0, 0.4f } },
+		 { { -0.5f, 0, -0.5f },  { 0.1f, 0, 0.4f } },
+		 { { 0.5f, 0, -0.5f },  { 0.1f, 0, 0.4f } },
+
+		 //Right
+		 { { -0.5f, 1, 0.5f },  { 0.1f, 0, 0.4f } },
+		 { { 0.5f, 1, 0.5f },  { 0.1f, 0, 0.4f } },
+		 { { 0.5f, 0, 0.5f },  { 0.1f, 0, 0.4f } },
+		 { { -0.5f, 0, 0.5f },  { 0.1f, 0, 0.4f } },
+
+		 //Back
+		 { { 0.5f, 1, 0.5f },  { 1, 0, 0.3f } },
+		 { { 0.5f, 1, -0.5f }, { 1, 0, 0.3f } },
+		 { { 0.5f, 0, -0.5f }, { 1, 0, 0.3f } },
+		 { { 0.5f, 0, 0.5f },  { 1, 0, 0.3f } },
+	};
 
 	u32 vertexCount = sizeof(geometry3D) / sizeof(vertex3d_t);
 	mat4_t cameraTransform = mat4_transform((vec3_t) { -3, 2, 0 }, (vec3_t) { 0, 0, -30 * DEG2RAD } );
 	mat4_t viewMatrix = mat4_inverse(cameraTransform);
+	mat4_t modelMatrix = mat4_transform((vec3_t) { 0, 0, 0 }, (vec3_t) { 0, -30 * DEG2RAD, 0 });
 	mat4_t projectionMatrix = 
 	// mat4_ortho_projection(0, 10, 5, (float)renderer->width / renderer->height);
 	mat4_persp_projection(0, 10, 65 * DEG2RAD, (float)renderer->width/renderer->height);
-	vertex2d_t* vertices = foreach_vertex3d(vertexCount, geometry3D, mat4_mul(2, projectionMatrix, viewMatrix));
+	vertex2d_t* vertices = foreach_vertex3d(vertexCount, geometry3D, mat4_mul(3, projectionMatrix, viewMatrix, modelMatrix));
 
 	convert_to_vulkan_clipspace(vertices, vertexCount); 
 	u32 indices[] = 
 	{
 		//clockwise order
-		2, 1, 0, 3, 2, 0
+		2, 1, 0, 3, 2, 0, 
+		6, 5, 4, 7, 6, 4, 
+		8, 9, 10, 8, 10, 11, 
+		12, 13, 14, 12, 14, 15, 
+		16, 17, 18, 16, 18, 19, 
+		20, 21, 22, 20, 22, 23
 	}; 
 	u32 indexCount = sizeof(indices) / sizeof(u32);
 
@@ -679,8 +724,8 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 		vkCall(vkBeginCommandBuffer(renderer->vk_command_buffers.value2[i], &beginInfo));
 		VkClearValue clearValue;
 		clearValue.color.float32[0] = 0;
-		clearValue.color.float32[1] = 0.3f;
-		clearValue.color.float32[2] = 1;
+		clearValue.color.float32[1] = 0;
+		clearValue.color.float32[2] = 0;
 		clearValue.color.float32[3] = 1;
 		VkRenderPassBeginInfo renderPassBeginInfo =  
 		{
