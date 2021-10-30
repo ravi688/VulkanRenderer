@@ -4,3 +4,6 @@
 # [submodule "dependencies/tgc"]
 # 	path = dependencies/tgc
 # 	url = https://github.com/orangeduck/tgc.git
+[submodule "dependencies/tgc"]
+	path = dependencies/tgc
+	url = https://github.com/ravi688/tgc.git
