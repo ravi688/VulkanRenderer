@@ -1,5 +1,5 @@
-DEPENDENCY_LIBS = ./dependencies/HPML/lib/hpml.a
-DEPENDENCY_INCLUDES = ./dependencies/HPML/include
+DEPENDENCY_LIBS = ./dependencies/HPML/lib/hpml.a ./dependencies/tgc/lib/tgc.a
+DEPENDENCY_INCLUDES = ./dependencies/HPML/include ./dependencies/
 
 
 DEBUG_DEFINES = -DHPML_DEBUG_MODE -DLOG_DEBUG -DGLOBAL_DEBUG -DDEBUG
@@ -100,4 +100,5 @@ clean:
 	del $(addprefix source\test\, $(notdir $(TEST_OBJECTS)))
 	del $(addprefix shaders\test\, $(notdir $(TEST_FRAGMENT_SPIRV_SHADERS) $(TEST_VERTEX_SPIRV_SHADERS)))
 	del main.exe test.exe
-	$(MAKE) --directory=$(subst lib/, ,$(dir $(DEPENDENCY_LIBS))) clean
+	$(MAKE) --directory=./dependencies/HPML clean
+	$(MAKE) --directory=./dependencies/tgc clean
