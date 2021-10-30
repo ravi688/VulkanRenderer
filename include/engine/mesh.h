@@ -13,11 +13,11 @@
 #include "print.h"
 #endif
 
-#include <engine/vec3/header_config.h>
-#include <engine/vec3/vec3.h>
+#include <vec3/header_config.h>
+#include <vec3/vec3.h>
 
-#include <engine/vec2/header_config.h>
-#include <engine/vec2/vec2.h>
+#include <vec2/header_config.h>
+#include <vec2/vec2.h>
 #include <buffer.h>
 
 #define MESH_DEBUG

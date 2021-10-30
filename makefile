@@ -1,3 +1,6 @@
+DEPENDENCY_LIBS = ./dependencies/HPML/lib/hpml.a
+DEPENDENCY_INCLUDES = ./dependencies/HPML/include
+
 
 DEBUG_DEFINES = -DHPML_DEBUG_MODE -DLOG_DEBUG -DGLOBAL_DEBUG -DDEBUG
 RELEASE_DEFINES = -DHPML_RELEASE_MODE -DLOG_RELEASE -DGLOBAL_RELEASE -DRELEASE
@@ -6,7 +9,7 @@ DEFINES =
 
 COMPILATION_CONFIG= -m64
 
-INCLUDES= -I.\include -I.\include\engine -I.\scripts
+INCLUDES= -I.\include -I.\include\engine -I.\scripts $(addprefix -I, $(DEPENDENCY_INCLUDES))
 LIBS= -L.\lib -lvulkan-1 -lglfw3 -lgdi32
 SCRIPT_FILES = $(wildcard scripts/*.c)
 SOURCES= $(wildcard source/*.c)
@@ -67,10 +70,13 @@ shader : $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS)
 %.o : %.c
 	gcc $(COMPILATION_CONFIG) $(DEFINES) $(INCLUDES) -c $< -o $@
 
+%.a:
+	$(MAKE) --directory=$(subst lib/, ,$(dir $@)) lib-static
+
 .PHONY: main
 
-main: $(OBJECTS) $(SCRIPT_OBJECTS)
-	gcc $(COMPILATION_CONFIG) $(OBJECTS) $(SCRIPT_OBJECTS) $(LIBS) -o $@
+main: $(DEPENDENCY_LIBS) $(OBJECTS) $(SCRIPT_OBJECTS)
+	gcc $(COMPILATION_CONFIG) $(OBJECTS) $(SCRIPT_OBJECTS) $(LIBS) $(addprefix -L, $(dir $(DEPENDENCY_LIBS))) $(addprefix -l:, $(notdir $(DEPENDENCY_LIBS))) -o $@
 
 .PHONY : test
 
@@ -94,3 +100,4 @@ clean:
 	del $(addprefix source\test\, $(notdir $(TEST_OBJECTS)))
 	del $(addprefix shaders\test\, $(notdir $(TEST_FRAGMENT_SPIRV_SHADERS) $(TEST_VERTEX_SPIRV_SHADERS)))
 	del main.exe test.exe
+	$(MAKE) --directory=$(subst lib/, ,$(dir $(DEPENDENCY_LIBS))) clean

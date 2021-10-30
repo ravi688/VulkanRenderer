@@ -35,7 +35,7 @@ engine_t* engine_init(uint32_t screen_width, uint32_t screen_height, const char*
 	engine->window = glfwCreateWindow(screen_width, screen_height, window_name, NULL, NULL);
 	engine->scene_manager = scene_manager_init();
 	engine->renderer = renderer_init();
-#if DEBUG
+#ifdef DEBUG
 	glfw_dump_required_extensions();
 #endif
 	VkSurfaceKHR surface = glfw_get_vulkan_surface((GLFWwindow*)(engine->window), engine->renderer);

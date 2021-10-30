@@ -2,7 +2,7 @@
 #include "Square.h"
 #include "Circle.h"
 
-#include <engine/vec3/vec3.h>
+#include <vec3/vec3.h>
 
 OnInstantiate(MeshTest,
 	BindOnAwake(MeshTest);
