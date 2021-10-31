@@ -115,6 +115,10 @@ typedef struct renderer_t
 	VkBuffer vk_index_buffer; 
 	VkDeviceMemory vk_index_memory;
 
+	//Shader Modules
+	VkShaderModule vk_vertex_shader_module; 
+	VkShaderModule vk_fragment_shader_module;
+
 	tuple_t(uint32_t, pvertex_t) vertices;
 } renderer_t;
 
@@ -211,11 +215,12 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 
 	//Graphics Pipeline
 	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer->vk_device);
-
+	renderer->vk_vertex_shader_module = vk_get_shader_module(renderer->vk_device, "shaders/vertexShader.vert");
+	renderer->vk_fragment_shader_module = vk_get_shader_module(renderer->vk_device, "shaders/fragmentShader.frag");
 	VkPipelineShaderStageCreateInfo shaderStages[2] = 
 	{
-		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(renderer->vk_device, "shaders/vertexShader.vert"), VERTEX_SHADER, "main"),
-		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(renderer->vk_device, "shaders/fragmentShader.frag"), FRAGMENT_SHADER, "main")
+		vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main"),
+		vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main")
 	};
 
 	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
@@ -460,5 +465,36 @@ void renderer_update(renderer_t* renderer)
 
 void renderer_terminate(renderer_t* renderer)
 {
+	vkDestroySurfaceKHR(renderer->vk_instance, renderer->vk_surface, NULL);
+	vkDestroySwapchainKHR(renderer->vk_device, renderer->vk_swapchain, NULL);
 
+	vkDestroyRenderPass(renderer->vk_device, renderer->vk_render_pass, NULL);
+	vkDestroyPipelineLayout(renderer->vk_device, renderer->vk_pipeline_layout, NULL);
+	vkDestroyPipeline(renderer->vk_device, renderer->vk_pipeline, NULL);
+	vkDestroyShaderModule(renderer->vk_device, renderer->vk_vertex_shader_module, NULL);
+	vkDestroyShaderModule(renderer->vk_device, renderer->vk_fragment_shader_module, NULL);
+
+	for(u32 i = 0; i < 3; i++)
+		vkDestroyFramebuffer(renderer->vk_device, renderer->vk_framebuffers.value2[i], NULL);
+	for(u32 i = 0; i < 3; i++)
+		vkDestroyImageView(renderer->vk_device, renderer->vk_image_views.value2[i], NULL);
+	
+	//NOTE: VkImage(s) were already destroyed by vkDestroySwapchainKHR
+	// for(u32 i = 0; i < 3; i++)
+	// 	vkDestroyImage(renderer->vk_device, renderer->vk_images.value2[i], NULL);
+
+	vkFreeMemory(renderer->vk_device, renderer->vk_vertex_memory, NULL);
+	vkFreeMemory(renderer->vk_device, renderer->vk_index_memory, NULL);
+	vkDestroyBuffer(renderer->vk_device, renderer->vk_vertex_buffer, NULL);
+	vkDestroyBuffer(renderer->vk_device, renderer->vk_index_buffer, NULL);
+	
+	vkDestroySemaphore(renderer->vk_device, renderer->vk_render_finished_semaphore, NULL);
+	vkDestroySemaphore(renderer->vk_device, renderer->vk_image_available_semaphore, NULL);
+
+	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, renderer->vk_command_buffers.value1, renderer->vk_command_buffers.value2);
+	vkDestroyCommandPool(renderer->vk_device, renderer->vk_command_pool, NULL);
+
+	//Instance and Device are destroyed at last
+	vkDestroyDevice(renderer->vk_device, NULL);
+	vkDestroyInstance(renderer->vk_instance, NULL);
 }
