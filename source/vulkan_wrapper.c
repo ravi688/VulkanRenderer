@@ -144,6 +144,7 @@ VkPipeline vk_get_graphics_pipeline(VkDevice device, VkPipelineLayout pipelineLa
 {
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	//TODO: Make this customizable; for more shader stages in the pipeline
 	pipelineInfo.stageCount = 2;
 	pipelineInfo.pStages = shaderStages;
 	pipelineInfo.pVertexInputState = vertexInputState;

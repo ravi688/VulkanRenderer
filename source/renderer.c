@@ -77,6 +77,8 @@ typedef struct
 
 typedef vertex2d_t* pvertex_t;
 instantiate_tuple_t(uint32_t, pvertex_t);
+typedef VkPipelineShaderStageCreateInfo* pVkPipelineShaderStageCreateInfo;
+instantiate_tuple_t(u32, pVkPipelineShaderStageCreateInfo);
 
 typedef struct renderer_t
 {
@@ -94,6 +96,7 @@ typedef struct renderer_t
 	tuple_t(uint32_t, pVkImageView_t) vk_image_views;
 	tuple_t(uint32_t, pVkFramebuffer_t) vk_framebuffers;
 	tuple_t(uint32_t, pVkCommandBuffer_t) vk_command_buffers;
+	tuple_t(u32, pVkPipelineShaderStageCreateInfo) vk_shader_stages;
 	VkFormat vk_format; 
 	VkExtent2D vk_extent;
 	VkPipelineLayout vk_pipeline_layout;
@@ -214,15 +217,16 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 	renderer->vk_graphics_queue = vk_get_device_queue(renderer->vk_device, vk_get_graphics_queue_family_index(renderer->vk_physical_device), 0);
 
 	//Graphics Pipeline
-	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer->vk_device);
 	renderer->vk_vertex_shader_module = vk_get_shader_module(renderer->vk_device, "shaders/vertexShader.vert");
 	renderer->vk_fragment_shader_module = vk_get_shader_module(renderer->vk_device, "shaders/fragmentShader.frag");
-	VkPipelineShaderStageCreateInfo shaderStages[2] = 
-	{
-		vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main"),
-		vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main")
-	};
-
+	
+	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer->vk_device);
+	renderer->vk_shader_stages.value1 = 2;
+	renderer->vk_shader_stages.value2 = GC_NEWV(VkPipelineShaderStageCreateInfo, 2);
+	VkPipelineShaderStageCreateInfo info0 = vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main");
+	VkPipelineShaderStageCreateInfo info1 = vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main");
+	memcpy(&(renderer->vk_shader_stages.value2[0]), &info0, sizeof(VkPipelineShaderStageCreateInfo));
+	memcpy(&(renderer->vk_shader_stages.value2[1]), &info1, sizeof(VkPipelineShaderStageCreateInfo));
 	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
 	uint32_t offsets[2] = { offsetof(vertex2d_t, position), offsetof(vertex2d_t, color) };
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(	3, 
@@ -236,7 +240,7 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 	VkPipelineMultisampleStateCreateInfo multisampling = vk_get_pipeline_multisample_state_create_info();
 	VkPipelineColorBlendStateCreateInfo colorBlending = vk_get_pipeline_color_blend_state_create_info();
 	renderer->vk_pipeline = vk_get_graphics_pipeline(	renderer->vk_device, renderer->vk_pipeline_layout, renderer->vk_render_pass,
-														shaderStages,
+														renderer->vk_shader_stages.value2,
 														&vertexInputInfo,
 														&inputAssembly,
 														&viewportState,
@@ -380,7 +384,7 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 	vkUnmapMemory(renderer->vk_device, renderer->vk_staging_memory);
 
 	renderer->vk_index_buffer = vk_get_buffer(renderer->vk_device, sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE); 
-	renderer->vk_staging_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_index_buffer, sizeof(indices), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	renderer->vk_index_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, renderer->vk_index_buffer, sizeof(indices), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 
 	vkCall(vkAllocateCommandBuffers(renderer->vk_device, &allocInfo, &transferCommandBuffer));
@@ -431,10 +435,8 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 void renderer_update(renderer_t* renderer)
 {
 	uint32_t imageIndex;
-	VkResult result = vkAcquireNextImageKHR(renderer->vk_device, renderer->vk_swapchain, UINT64_MAX, renderer->vk_image_available_semaphore, VK_NULL_HANDLE, &imageIndex);
-	if(result == VK_ERROR_OUT_OF_DATE_KHR)
-		log_err("VK_ERROR_OUT_OF_DATE_KHR");
-
+	vkAcquireNextImageKHR(renderer->vk_device, renderer->vk_swapchain, UINT64_MAX, renderer->vk_image_available_semaphore, VK_NULL_HANDLE, &imageIndex);
+	
 	uint32_t waitDstMask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	VkSubmitInfo submitInfo = 
 	{
@@ -448,7 +450,7 @@ void renderer_update(renderer_t* renderer)
 		.pSignalSemaphores = &(renderer->vk_render_finished_semaphore)
 	}; 
 
-	vkCall(vkQueueSubmit(renderer->vk_graphics_queue, 1, &submitInfo, VK_NULL_HANDLE));
+	vkQueueSubmit(renderer->vk_graphics_queue, 1, &submitInfo, VK_NULL_HANDLE);
 
 	VkPresentInfoKHR presentInfo =  
 	{
@@ -460,20 +462,24 @@ void renderer_update(renderer_t* renderer)
 		.pImageIndices = &imageIndex
 	};
 
-	vkCall(vkQueuePresentKHR(renderer->vk_graphics_queue, &presentInfo));
+	vkQueuePresentKHR(renderer->vk_graphics_queue, &presentInfo);
 }
 
-void renderer_terminate(renderer_t* renderer)
+static void renderer_destroy_swapchain(renderer_t* renderer);
+static void renderer_create_swapchain(renderer_t* renderer);
+
+void renderer_on_window_resize(renderer_t* renderer, u32 width, u32 height)
 {
-	vkDestroySurfaceKHR(renderer->vk_instance, renderer->vk_surface, NULL);
+	log_msg("Window is resized: %u, %u", width, height);
+	renderer_destroy_swapchain(renderer); 
+	renderer->width = width;
+	renderer->height = height;
+	renderer_create_swapchain(renderer);
+}
+
+static void renderer_destroy_swapchain(renderer_t* renderer)
+{
 	vkDestroySwapchainKHR(renderer->vk_device, renderer->vk_swapchain, NULL);
-
-	vkDestroyRenderPass(renderer->vk_device, renderer->vk_render_pass, NULL);
-	vkDestroyPipelineLayout(renderer->vk_device, renderer->vk_pipeline_layout, NULL);
-	vkDestroyPipeline(renderer->vk_device, renderer->vk_pipeline, NULL);
-	vkDestroyShaderModule(renderer->vk_device, renderer->vk_vertex_shader_module, NULL);
-	vkDestroyShaderModule(renderer->vk_device, renderer->vk_fragment_shader_module, NULL);
-
 	for(u32 i = 0; i < 3; i++)
 		vkDestroyFramebuffer(renderer->vk_device, renderer->vk_framebuffers.value2[i], NULL);
 	for(u32 i = 0; i < 3; i++)
@@ -483,6 +489,117 @@ void renderer_terminate(renderer_t* renderer)
 	// for(u32 i = 0; i < 3; i++)
 	// 	vkDestroyImage(renderer->vk_device, renderer->vk_images.value2[i], NULL);
 
+	vkDestroyRenderPass(renderer->vk_device, renderer->vk_render_pass, NULL);
+	vkDestroyPipelineLayout(renderer->vk_device, renderer->vk_pipeline_layout, NULL);
+	vkDestroyPipeline(renderer->vk_device, renderer->vk_pipeline, NULL);
+	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, renderer->vk_command_buffers.value1, renderer->vk_command_buffers.value2);	
+}
+
+static void renderer_create_swapchain(renderer_t* renderer)
+{
+	VkSwapchainCreateInfoKHR swapchainCreateInfo  = 
+	{
+		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+		.minImageCount = 3, 
+		.imageFormat = VK_FORMAT_B8G8R8A8_SRGB,
+		.imageExtent = { renderer->width, renderer->height }, 
+		.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+		.imageArrayLayers = 1, 
+		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
+		.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE, 
+		.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, 
+		.presentMode = VK_PRESENT_MODE_MAILBOX_KHR, 
+		.clipped = VK_TRUE,
+		.surface = renderer->vk_surface,
+		.oldSwapchain = VK_NULL_HANDLE
+	};
+	renderer->vk_swapchain = vk_get_swapchain(renderer->vk_device, &swapchainCreateInfo);
+	renderer->vk_render_pass = vk_get_render_pass(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB);
+	renderer->vk_images = vk_get_images(renderer->vk_device, renderer->vk_swapchain);
+	renderer->vk_image_views = vk_get_image_views(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB, renderer->vk_images.value1, renderer->vk_images.value2);
+	renderer->vk_framebuffers = vk_get_framebuffers(renderer->vk_device, 3, renderer->vk_render_pass, (VkExtent2D) { renderer->width, renderer->height }, 1, renderer->vk_image_views.value2);	
+	renderer->vk_command_buffers = vk_get_command_buffers(renderer->vk_device, renderer->vk_command_pool, 3);
+
+	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer->vk_device);
+	renderer->vk_shader_stages.value1 = 2;
+	renderer->vk_shader_stages.value2 = GC_NEWV(VkPipelineShaderStageCreateInfo, 2);
+	VkPipelineShaderStageCreateInfo info0 = vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main");
+	VkPipelineShaderStageCreateInfo info1 = vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main");
+	memcpy(&(renderer->vk_shader_stages.value2[0]), &info0, sizeof(VkPipelineShaderStageCreateInfo));
+	memcpy(&(renderer->vk_shader_stages.value2[1]), &info1, sizeof(VkPipelineShaderStageCreateInfo));
+	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
+	uint32_t offsets[2] = { offsetof(vertex2d_t, position), offsetof(vertex2d_t, color) };
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(	3, 
+																											sizeof(vertex2d_t), 
+																											VK_VERTEX_INPUT_RATE_VERTEX, 
+																											formats, 
+																											offsets);
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
+	VkPipelineRasterizationStateCreateInfo rasterizer = vk_get_pipeline_rasterization_state_create_info();
+	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(renderer->width, renderer->height);
+	VkPipelineMultisampleStateCreateInfo multisampling = vk_get_pipeline_multisample_state_create_info();
+	VkPipelineColorBlendStateCreateInfo colorBlending = vk_get_pipeline_color_blend_state_create_info();
+	renderer->vk_pipeline = vk_get_graphics_pipeline(	renderer->vk_device, renderer->vk_pipeline_layout, renderer->vk_render_pass,
+														renderer->vk_shader_stages.value2,
+														&vertexInputInfo,
+														&inputAssembly,
+														&viewportState,
+														&rasterizer,
+														&multisampling,
+														&colorBlending
+													);
+	u32 indices[] = 
+	{
+		//clockwise order
+		2, 1, 0, 3, 2, 0, 
+		6, 5, 4, 7, 6, 4, 
+		8, 9, 10, 8, 10, 11, 
+		12, 13, 14, 12, 14, 15, 
+		16, 17, 18, 16, 18, 19, 
+		20, 21, 22, 20, 22, 23
+	}; 
+		//Recording commands
+	for(uint32_t i = 0; i < 3; i++)
+	{
+		VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO }; 
+		vkCall(vkBeginCommandBuffer(renderer->vk_command_buffers.value2[i], &beginInfo));
+		VkClearValue clearValue;
+		clearValue.color.float32[0] = 0;
+		clearValue.color.float32[1] = 0;
+		clearValue.color.float32[2] = 0;
+		clearValue.color.float32[3] = 1;
+		VkRenderPassBeginInfo renderPassBeginInfo =  
+		{
+			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+			.renderArea.offset = (VkOffset2D) { 0, 0 }, 
+			.renderArea.extent = (VkExtent2D) { renderer->width, renderer->height }, 
+			.framebuffer = renderer->vk_framebuffers.value2[i], 
+			.renderPass = renderer->vk_render_pass,
+			.clearValueCount = 1,
+			.pClearValues = &clearValue
+		};
+		vkCmdBeginRenderPass(renderer->vk_command_buffers.value2[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE); 
+		vkCmdBindPipeline(renderer->vk_command_buffers.value2[i], VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->vk_pipeline);
+		VkBuffer vertexBuffers[1] =  { renderer->vk_vertex_buffer };
+		VkDeviceSize offsets[1] = { 0 };
+		vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[i], 0, 1, vertexBuffers, offsets);
+		vkCmdBindIndexBuffer(renderer->vk_command_buffers.value2[i], renderer->vk_index_buffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdDrawIndexed(renderer->vk_command_buffers.value2[i], sizeof(indices), 1, 0, 0, 0);
+		// vkCmdDraw(renderer->vk_command_buffers.value2[i], vertexCount, 1, 0, 0);
+		vkCmdEndRenderPass(renderer->vk_command_buffers.value2[i]);
+		vkCall(vkEndCommandBuffer(renderer->vk_command_buffers.value2[i]));
+	}
+}
+
+void renderer_terminate(renderer_t* renderer)
+{
+	renderer_destroy_swapchain(renderer);
+	vkDestroySurfaceKHR(renderer->vk_instance, renderer->vk_surface, NULL);
+	vkDestroyShaderModule(renderer->vk_device, renderer->vk_vertex_shader_module, NULL);
+	vkDestroyShaderModule(renderer->vk_device, renderer->vk_fragment_shader_module, NULL);
+
+	
+
 	vkFreeMemory(renderer->vk_device, renderer->vk_vertex_memory, NULL);
 	vkFreeMemory(renderer->vk_device, renderer->vk_index_memory, NULL);
 	vkDestroyBuffer(renderer->vk_device, renderer->vk_vertex_buffer, NULL);
@@ -491,7 +608,6 @@ void renderer_terminate(renderer_t* renderer)
 	vkDestroySemaphore(renderer->vk_device, renderer->vk_render_finished_semaphore, NULL);
 	vkDestroySemaphore(renderer->vk_device, renderer->vk_image_available_semaphore, NULL);
 
-	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, renderer->vk_command_buffers.value1, renderer->vk_command_buffers.value2);
 	vkDestroyCommandPool(renderer->vk_device, renderer->vk_command_pool, NULL);
 
 	//Instance and Device are destroyed at last

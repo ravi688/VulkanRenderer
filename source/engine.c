@@ -23,16 +23,32 @@ static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, renderer_t* rend
 static tuple_t(uint32_t, ppVkChar_t) glfw_get_required_instance_extensions();
 static void glfw_dump_required_extensions();
 
+#if GLOBAL_DEBUG
+static void glfwErrorCallback(int code, const char* description)
+{
+	log_err("GLFW: %d, %s", code, description);
+}
+#endif
+
+static void glfwOnWindowResizeCallback(GLFWwindow* window, int width, int height)
+{
+	engine_t* engine = (engine_t*)glfwGetWindowUserPointer(window);
+	renderer_on_window_resize(engine->renderer, (uint32_t)width, (uint32_t)height);
+}
+
 engine_t* engine_init(uint32_t screen_width, uint32_t screen_height, const char* window_name)
 {
 	glfwInit();
+	glfwSetErrorCallback(glfwErrorCallback);
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 	//TODO: Swapchain recreation when window get resized
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 	engine_t* engine = GC_NEW(engine_t);
 	engine->window = glfwCreateWindow(screen_width, screen_height, window_name, NULL, NULL);
+	glfwSetWindowUserPointer(engine->window, (void*)engine);
+	glfwSetFramebufferSizeCallback(engine->window, glfwOnWindowResizeCallback);
 	engine->scene_manager = scene_manager_init();
 	engine->renderer = renderer_init();
 #ifdef DEBUG
