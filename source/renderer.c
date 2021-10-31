@@ -291,10 +291,7 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 	mat4_t(float) cameraTransform = mat4_transform((vec3_t(float)) { -3, 2, 0 }, (vec3_t(float)) { 0, 0, -30 * DEG2RAD } );
 	mat4_t(float) viewMatrix = mat4_inverse(float)(cameraTransform);
 	mat4_t(float) modelMatrix = mat4_transform((vec3_t(float)) { 0, 0, 0 }, (vec3_t(float)) { 0, -30 * DEG2RAD, 0 });
-	mat4_t(float) projectionMatrix = 
-	 // mat4_ortho_projection(float)(0, 10, 5, (float)renderer->width / renderer->height);
-	
-	mat4_persp_projection(float)(0, 10, 65 * DEG2RAD, (float)renderer->width/renderer->height);
+	mat4_t(float) projectionMatrix = mat4_persp_projection(float)(0, 10, 65 * DEG2RAD, (float)renderer->width/renderer->height);
 	vertex2d_t* vertices = foreach_vertex3d(vertexCount, geometry3D, mat4_mul(float)(3, projectionMatrix, viewMatrix, modelMatrix));
 
 	convert_to_vulkan_clipspace(vertices, vertexCount); 

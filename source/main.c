@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 {
 	GC_START(&argc);
 
-	engine_t* engine = engine_init(800, 600, "Vulkan 3D Engine"); 
+	engine_t* engine = engine_init(800, 800, "Vulkan 3D Engine"); 
 
 	//prepare_scene(engine);
 
