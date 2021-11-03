@@ -7,3 +7,6 @@
 [submodule "dependencies/tgc"]
 	path = dependencies/tgc
 	url = https://github.com/ravi688/tgc.git
+[submodule "dependencies/BufferLib"]
+	path = dependencies/BufferLib
+	url = https://github.com/ravi688/BufferLib
