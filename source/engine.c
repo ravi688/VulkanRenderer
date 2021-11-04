@@ -39,7 +39,9 @@ static void glfwOnWindowResizeCallback(GLFWwindow* window, int width, int height
 engine_t* engine_init(uint32_t screen_width, uint32_t screen_height, const char* window_name)
 {
 	glfwInit();
+#if GLOBAL_DEBUG
 	glfwSetErrorCallback(glfwErrorCallback);
+#endif
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 	//TODO: Swapchain recreation when window get resized
