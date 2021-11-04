@@ -40,6 +40,9 @@
 #include <affine_transformation/header_config.h>
 #include <affine_transformation/affine_transformation.h>
 
+instantiate_declaration_move(VkPipelineShaderStageCreateInfo);
+instantiate_implementation_move(VkPipelineShaderStageCreateInfo);
+
 
 #define DEG2RAD 0.01745f
 #define RAD2DEG 57.29577f
@@ -223,13 +226,11 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer->vk_device);
 	renderer->vk_shader_stages.value1 = 2;
 	renderer->vk_shader_stages.value2 = GC_NEWV(VkPipelineShaderStageCreateInfo, 2);
-	VkPipelineShaderStageCreateInfo info0 = vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main");
-	VkPipelineShaderStageCreateInfo info1 = vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main");
-	memcpy(&(renderer->vk_shader_stages.value2[0]), &info0, sizeof(VkPipelineShaderStageCreateInfo));
-	memcpy(&(renderer->vk_shader_stages.value2[1]), &info1, sizeof(VkPipelineShaderStageCreateInfo));
+	move(VkPipelineShaderStageCreateInfo)(&(renderer->vk_shader_stages.value2[0]), vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main"));
+	move(VkPipelineShaderStageCreateInfo)(&(renderer->vk_shader_stages.value2[1]), vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main"));
 	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
 	uint32_t offsets[2] = { offsetof(vertex2d_t, position), offsetof(vertex2d_t, color) };
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(	3, 
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(	2, 
 																											sizeof(vertex2d_t), 
 																											VK_VERTEX_INPUT_RATE_VERTEX, 
 																											formats, 

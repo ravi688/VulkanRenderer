@@ -1,5 +1,5 @@
-DEPENDENCY_LIBS = ./dependencies/HPML/lib/hpml.a ./dependencies/tgc/lib/tgc.a
-DEPENDENCY_INCLUDES = ./dependencies/HPML/include ./dependencies/
+DEPENDENCY_LIBS = HPML/lib/hpml.a tgc/lib/tgc.a BufferLib/lib/bufferlib.a
+DEPENDENCY_INCLUDES =  HPML/include BufferLib/include
 
 
 DEBUG_DEFINES = -DHPML_DEBUG_MODE -DLOG_DEBUG -DGLOBAL_DEBUG -DDEBUG
@@ -7,10 +7,10 @@ RELEASE_DEFINES = -DHPML_RELEASE_MODE -DLOG_RELEASE -DGLOBAL_RELEASE -DRELEASE
 
 DEFINES = 
 
-COMPILATION_CONFIG= -m64
+COMPILATION_CONFIG= -m64 
 
-INCLUDES= -I.\include -I.\include\engine -I.\scripts $(addprefix -I, $(DEPENDENCY_INCLUDES))
-LIBS= -L.\lib -lvulkan-1 -lglfw3 -lgdi32
+INCLUDES= -I.\include -I.\include\engine -I.\scripts -I./dependencies/ $(addprefix -I./dependencies/, $(DEPENDENCY_INCLUDES))
+LIBS= -L.\lib -lvulkan-1 -lglfw3 -lgdi32 
 SCRIPT_FILES = $(wildcard scripts/*.c)
 SOURCES= $(wildcard source/*.c)
 SCRIPT_OBJECTS = $(addsuffix .o, $(basename $(SCRIPT_FILES)))
@@ -43,16 +43,15 @@ all: release shader
 .PHONY: debug
 .PHONY: release
 
-recompile-debug: DEFINES += $(DEBUG_DEFINES)
-recompile-debug:  clean main shader
-
-recompile-release: DEFINES += $(RELEASE_DEFINES)
-recompile-release: clean main shader
+recompile-debug:  clean debug shader
+recompile-release: clean release shader
 
 release: DEFINES += $(RELEASE_DEFINES)
+release: __STATIC_LIB_COMMAND = lib-static-release
 release: main shader
 
 debug: DEFINES += $(DEBUG_DEFINES)
+debug: __STATIC_LIB_COMMAND = lib-static-debug
 debug: main shader
 
 recompile : recompile-debug
@@ -70,13 +69,14 @@ shader : $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS)
 %.o : %.c
 	gcc $(COMPILATION_CONFIG) $(DEFINES) $(INCLUDES) -c $< -o $@
 
-%.a:
-	$(MAKE) --directory=$(subst lib/, ,$(dir $@)) lib-static
+./dependencies/%.a:
+	$(MAKE) --directory=$(subst lib/, ,$(dir $@)) $(__STATIC_LIB_COMMAND)
 
 .PHONY: main
 
-main: $(DEPENDENCY_LIBS) $(OBJECTS) $(SCRIPT_OBJECTS)
-	gcc $(COMPILATION_CONFIG) $(OBJECTS) $(SCRIPT_OBJECTS) $(LIBS) $(addprefix -L, $(dir $(DEPENDENCY_LIBS))) $(addprefix -l:, $(notdir $(DEPENDENCY_LIBS))) -o $@
+__DEPENDENCY_LIBS = $(addprefix ./dependencies/, $(DEPENDENCY_LIBS))
+main: $(__DEPENDENCY_LIBS) $(OBJECTS) $(SCRIPT_OBJECTS)
+	gcc $(COMPILATION_CONFIG) $(OBJECTS) $(SCRIPT_OBJECTS) $(LIBS) $(addprefix -L, $(dir $(__DEPENDENCY_LIBS))) $(addprefix -l:, $(notdir $(DEPENDENCY_LIBS))) -o $@
 
 .PHONY : test
 
@@ -102,3 +102,4 @@ clean:
 	del main.exe test.exe
 	$(MAKE) --directory=./dependencies/HPML clean
 	$(MAKE) --directory=./dependencies/tgc clean
+	$(MAKE) --directory=./dependencies/BufferLib clean
