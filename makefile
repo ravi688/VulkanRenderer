@@ -1,5 +1,7 @@
-DEPENDENCY_LIBS = HPML/lib/hpml.a tgc/lib/tgc.a BufferLib/lib/bufferlib.a
-DEPENDENCY_INCLUDES =  HPML/include BufferLib/include
+DEPENDENCY_LIBS = ./dependencies/HPML/lib/hpml.a ./dependencies/tgc/lib/tgc.a ./dependencies/SafeMemory/lib/safemem.a ./shared-dependencies/BufferLib/lib/bufferlib.a
+
+#TODO: Move CallTrace to VulkanRenderer's shared-dependencies
+DEPENDENCY_INCLUDES =  ./dependencies/HPML/include ./dependencies/SafeMemory/include ./dependencies/SafeMemory/shared-dependencies/CallTrace/include ./shared-dependencies/BufferLib/include
 
 
 DEBUG_DEFINES = -DHPML_DEBUG_MODE -DLOG_DEBUG -DGLOBAL_DEBUG -DDEBUG
@@ -9,7 +11,7 @@ DEFINES =
 
 COMPILATION_CONFIG= -m64 
 
-INCLUDES= -I.\include -I.\include\engine -I.\scripts -I./dependencies/ $(addprefix -I./dependencies/, $(DEPENDENCY_INCLUDES))
+INCLUDES= -I.\include -I.\include\engine -I.\scripts -I./dependencies/ -I./shared-dependencies $(addprefix -I, $(DEPENDENCY_INCLUDES))
 LIBS= -L.\lib -lvulkan-1 -lglfw3 -lgdi32 
 SCRIPT_FILES = $(wildcard scripts/*.c)
 SOURCES= $(wildcard source/*.c)
@@ -69,14 +71,15 @@ shader : $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS)
 %.o : %.c
 	gcc $(COMPILATION_CONFIG) $(DEFINES) $(INCLUDES) -c $< -o $@
 
-./dependencies/%.a:
+./dependencies/%.a ./shared-dependencies/%.a:
+	@echo [Log] Building $@ ...
 	$(MAKE) --directory=$(subst lib/, ,$(dir $@)) $(__STATIC_LIB_COMMAND)
+	@echo [Log] $@ built successfully!
 
 .PHONY: main
 
-__DEPENDENCY_LIBS = $(addprefix ./dependencies/, $(DEPENDENCY_LIBS))
-main: $(__DEPENDENCY_LIBS) $(OBJECTS) $(SCRIPT_OBJECTS)
-	gcc $(COMPILATION_CONFIG) $(OBJECTS) $(SCRIPT_OBJECTS) $(LIBS) $(addprefix -L, $(dir $(__DEPENDENCY_LIBS))) $(addprefix -l:, $(notdir $(DEPENDENCY_LIBS))) -o $@
+main: $(DEPENDENCY_LIBS) $(OBJECTS) $(SCRIPT_OBJECTS)
+	gcc $(COMPILATION_CONFIG) $(OBJECTS) $(SCRIPT_OBJECTS) $(LIBS) $(addprefix -L, $(dir $(DEPENDENCY_LIBS))) $(addprefix -l:, $(notdir $(DEPENDENCY_LIBS))) -o $@
 
 .PHONY : test
 
@@ -102,4 +105,5 @@ clean:
 	del main.exe test.exe
 	$(MAKE) --directory=./dependencies/HPML clean
 	$(MAKE) --directory=./dependencies/tgc clean
-	$(MAKE) --directory=./dependencies/BufferLib clean
+	$(MAKE) --directory=./dependencies/SafeMemory clean
+	$(MAKE) --directory=./shared-dependencies/BufferLib clean

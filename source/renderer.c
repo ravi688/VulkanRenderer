@@ -40,6 +40,8 @@
 #include <affine_transformation/header_config.h>
 #include <affine_transformation/affine_transformation.h>
 
+#include <safe_memory/safe_memory.h>
+
 instantiate_declaration_move(VkPipelineShaderStageCreateInfo);
 instantiate_implementation_move(VkPipelineShaderStageCreateInfo);
 

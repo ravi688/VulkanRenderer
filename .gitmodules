@@ -7,6 +7,9 @@
 [submodule "dependencies/tgc"]
 	path = dependencies/tgc
 	url = https://github.com/ravi688/tgc.git
-[submodule "dependencies/BufferLib"]
-	path = dependencies/BufferLib
+[submodule "dependencies/SafeMemory"]
+	path = dependencies/SafeMemory
+	url = https://github.com/ravi688/SafeMemory.git
+[submodule "shared-dependencies/BufferLib"]
+	path = shared-dependencies/BufferLib
 	url = https://github.com/ravi688/BufferLib
