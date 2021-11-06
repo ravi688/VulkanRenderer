@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <string/string.h>		//custom string library
 #include <string.h>				//standard string library
-#include <garbage_collector/garbage_collector.h>
+#include <memory_allocator/memory_allocator.h>
 #include <utilities/file_utility.h>
 #include <debug.h>
 
@@ -88,7 +88,7 @@ VkCommandPool vk_get_command_pool(VkDevice device, uint32_t queueFamilyIndex)
 
 tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, VkCommandPool commandPool, uint32_t count)
 {
-	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = { count, GC_NEWV(VkCommandBuffer, count) };
+	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = { count, heap_newv(VkCommandBuffer, count) };
 	VkCommandBufferAllocateInfo allocInfo = { }; 
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO; 
 	allocInfo.commandPool = commandPool; 
@@ -100,7 +100,7 @@ tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, Vk
 
 tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments)
 {
-	tuple_t(uint32_t, pVkFramebuffer_t) framebuffers = { count, GC_NEWV(VkFramebuffer, count) };
+	tuple_t(uint32_t, pVkFramebuffer_t) framebuffers = { count, heap_newv(VkFramebuffer, count) };
 	for(uint32_t i = 0; i < count; i++)
 	{
 		VkFramebufferCreateInfo createInfo = { }; 
@@ -113,8 +113,7 @@ tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(VkDevice device, uint32_
 		createInfo.layers = layer;
 		VkFramebuffer framebuffer;
 		vkCall(vkCreateFramebuffer(device, &createInfo, NULL, &framebuffer));
-		framebuffers.value2[i] = framebuffer;
-
+		ref(VkFramebuffer, framebuffers.value2, i) = framebuffer;
 	}
 	return framebuffers;
 }
@@ -250,9 +249,9 @@ VkPipelineLayout vk_get_pipeline_layout(VkDevice device)
 
 VkPipelineDynamicStateCreateInfo vk_get_pipeline_dynamic_state_create_info(void)
 {
-	VkDynamicState* dynamicStates = GC_NEWV(VkDynamicState, 2);
-	dynamicStates[0] = VK_DYNAMIC_STATE_VIEWPORT;
-	dynamicStates[1] = VK_DYNAMIC_STATE_LINE_WIDTH;
+	VkDynamicState* dynamicStates = heap_newv(VkDynamicState, 2);
+	ref(VkDynamicState, dynamicStates, 0) = VK_DYNAMIC_STATE_VIEWPORT;
+	ref(VkDynamicState, dynamicStates, 1) = VK_DYNAMIC_STATE_LINE_WIDTH;
 
 	VkPipelineDynamicStateCreateInfo createInfo =  { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -268,8 +267,8 @@ VkPipelineColorBlendStateCreateInfo vk_get_pipeline_color_blend_state_create_inf
 	createInfo.logicOpEnable = VK_FALSE;
 	createInfo.logicOp = VK_LOGIC_OP_COPY; // Optional
 	createInfo.attachmentCount = 1;
-	VkPipelineColorBlendAttachmentState* state = GC_NEW(VkPipelineColorBlendAttachmentState); 
-	*state = vk_get_pipeline_color_blend_attachment_state();
+	VkPipelineColorBlendAttachmentState* state = heap_new(VkPipelineColorBlendAttachmentState); 
+	ref(VkPipelineColorBlendAttachmentState, state, 0) = vk_get_pipeline_color_blend_attachment_state();
 	createInfo.pAttachments = state;
 	createInfo.blendConstants[0] = 0.0f; // Optional
 	createInfo.blendConstants[1] = 0.0f; // Optional
@@ -327,10 +326,10 @@ VkPipelineViewportStateCreateInfo vk_get_pipeline_viewport_state_create_info(uin
 	VkPipelineViewportStateCreateInfo createInfo =  { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	createInfo.viewportCount = 1;
-	VkViewport* viewport = GC_NEW(VkViewport);
-	*viewport = vk_get_viewport(viewportWidth, viewportHeight);
-	VkRect2D* scissor = GC_NEW(VkRect2D);
-	*scissor =  (VkRect2D) { .offset =  { 0, 0 }, .extent =  { viewportWidth, viewportHeight } };
+	VkViewport* viewport = heap_new(VkViewport);
+	ref(VkViewport, viewport, 0) = vk_get_viewport(viewportWidth, viewportHeight);
+	VkRect2D* scissor = heap_new(VkRect2D);
+	ref(VkRect2D, scissor, 0) =  (VkRect2D) { .offset =  { 0, 0 }, .extent =  { viewportWidth, viewportHeight } };
 	createInfo.pViewports = viewport;
 	createInfo.scissorCount = 1; 
 	createInfo.pScissors = scissor;
@@ -360,22 +359,22 @@ VkViewport vk_get_viewport(uint32_t width, uint32_t height)
 
 tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(uint32_t stride, VkVertexInputRate vertexInputRate)
 {
-	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) bindingDescriptions =  { 1 , GC_NEWV(VkVertexInputBindingDescription, 1) }; 
-	bindingDescriptions.value2[0].binding = 0;
-	bindingDescriptions.value2[0].stride = stride; 
-	bindingDescriptions.value2[0].inputRate = vertexInputRate;
+	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) bindingDescriptions =  { 1 , heap_newv(VkVertexInputBindingDescription, 1) }; 
+	ref(VkVertexInputBindingDescription, bindingDescriptions.value2, 0).binding = 0;
+	ref(VkVertexInputBindingDescription, bindingDescriptions.value2, 0).stride = stride; 
+	ref(VkVertexInputBindingDescription, bindingDescriptions.value2, 0).inputRate = vertexInputRate;
 	return bindingDescriptions;
 }
 
 tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets)
 {
-	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) attributeDescriptions = { attributeCount, GC_NEWV(VkVertexInputAttributeDescription, attributeCount) };
+	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) attributeDescriptions = { attributeCount, heap_newv(VkVertexInputAttributeDescription, attributeCount) };
 	for(uint32_t i = 0; i < attributeDescriptions.value1; i++)
 	{
-		attributeDescriptions.value2[i].binding = 0; 
-		attributeDescriptions.value2[i].location = i;
-		attributeDescriptions.value2[i].format = attributeFormats[i]; 
-		attributeDescriptions.value2[i].offset = attributeOffsets[i];
+		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).binding = 0; 
+		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).location = i;
+		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).format = ref(VkFormat, attributeFormats, i); 
+		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).offset = ref(uint32_t, attributeOffsets, i);
 	}
 	return attributeDescriptions;
 }
@@ -419,14 +418,14 @@ tuple_t(uint32_t, pVkImage_t) vk_get_images(VkDevice device, VkSwapchainKHR swap
 {
 	tuple_t(uint32_t, pVkImage_t) pair; 
 	vkCall(vkGetSwapchainImagesKHR(device, swapchain, &(pair.value1), NULL)); 
-	pair.value2 = GC_NEWV(VkImage, pair.value1); 
+	pair.value2 = heap_newv(VkImage, pair.value1); 
 	vkCall(vkGetSwapchainImagesKHR(device, swapchain, &(pair.value1), pair.value2)); 
 	return pair;
 }
 
 tuple_t(uint32_t, pVkImageView_t) vk_get_image_views(VkDevice device, VkFormat format, uint32_t imageCount, VkImage* images)
 {
-	tuple_t(uint32_t, pVkImageView_t) imageViews  =  { imageCount, GC_NEWV(VkImageView, imageCount) }; 
+	tuple_t(uint32_t, pVkImageView_t) imageViews  =  { imageCount, heap_newv(VkImageView, imageCount) }; 
 	for(uint32_t i = 0; i < imageCount; i++)
 	{
 		VkImageViewCreateInfo createInfo =  { };
@@ -443,7 +442,7 @@ tuple_t(uint32_t, pVkImageView_t) vk_get_image_views(VkDevice device, VkFormat f
 		createInfo.subresourceRange.levelCount = 1;
 		createInfo.subresourceRange.baseArrayLayer = 0;
 		createInfo.subresourceRange.layerCount = 1;
-		vkCall(vkCreateImageView(device, &createInfo, NULL, &(imageViews.value2[i])));
+		vkCall(vkCreateImageView(device, &createInfo, NULL, &ref(VkImageView, imageViews.value2, i)));
 	}
 	return imageViews;
 }
@@ -452,7 +451,7 @@ uint32_t vk_get_graphics_queue_family_index(VkPhysicalDevice physicalDevice)
 {
 	tuple_t(uint32_t, pVkQueueFamilyProperties_t) queueFamilyProperites = vk_get_queue_family_properties(physicalDevice);
 	for(uint32_t i = 0; i < queueFamilyProperites.value1; i++)
-		if(queueFamilyProperites.value2[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		if(ref(VkQueueFamilyProperties, queueFamilyProperites.value2, i).queueFlags & VK_QUEUE_GRAPHICS_BIT)
 			return i;
 	return UINT32_MAX;
 }
@@ -498,7 +497,7 @@ VkPhysicalDevice vk_get_suitable_physical_device(tuple_t(uint32_t, pVkPhysicalDe
 		if(physical_devices.value1 <= 0)
 			throw_exception(VULKAN_DEVICE_NOT_FOUND);
 	);
-	return physical_devices.value2[0];
+	return ref(VkPhysicalDevice, physical_devices.value2, 0);
 }
 
 bool vk_check_layer_support(tuple_t(uint32_t, ppVkChar_t) layers)
@@ -509,7 +508,7 @@ bool vk_check_layer_support(tuple_t(uint32_t, ppVkChar_t) layers)
 		bool contains = false;
 		for(uint32_t j = 0; j < layer_properties.value1; j++)
 		{
-			if(strcmp(layers.value2[i], layer_properties.value2[j].layerName) == 0)
+			if(strcmp(ref(char*, layers.value2, i), ref(VkLayerProperties, layer_properties.value2, j).layerName) == 0)
 			{
 				contains = true;
 				break;
@@ -530,7 +529,7 @@ bool vk_check_physical_device_extension_support(VkPhysicalDevice device, tuple_t
 		bool contains = false; 
 		for(uint32_t j = 0; j < extension_properties.value1; j++)
 		{
-			if(strcmp(extensions.value2[i], extension_properties.value2[j].extensionName) == 0)
+			if(strcmp(ref(char*, extensions.value2, i), ref(VkExtensionProperties, extension_properties.value2, j).extensionName) == 0)
 			{
 				contains = true; 
 				break;
@@ -550,7 +549,7 @@ bool vk_check_instance_extension_support(tuple_t(uint32_t, ppVkChar_t) extension
 		bool contains = false; 
 		for(uint32_t j = 0; j < extension_properties.value1; j++)
 		{
-			if(strcmp(extensions.value2[i], extension_properties.value2[j].extensionName) == 0)
+			if(strcmp(extensions.value2[i], ref(VkExtensionProperties, extension_properties.value2, j).extensionName) == 0)
 			{
 				contains = true; 
 				break;
@@ -582,7 +581,7 @@ tuple_t(uint32_t, pVkPhysicalDevice_t) vk_get_physical_devices(VkInstance instan
 {
 	tuple_t(uint32_t, pVkPhysicalDevice_t) pair;
 	vkCall(vkEnumeratePhysicalDevices(instance, &(pair.value1), NULL)); 
-	pair.value2 = (pVkPhysicalDevice_t)GC_ALLOC(sizeof(VkPhysicalDevice) * pair.value1);
+	pair.value2 = (pVkPhysicalDevice_t)heap_alloc(sizeof(VkPhysicalDevice) * pair.value1);
 	vkCall(vkEnumeratePhysicalDevices(instance, &(pair.value1), pair.value2));
 	return pair;
 }
@@ -591,7 +590,7 @@ tuple_t(uint32_t, pVkExtensionProperties_t) vk_get_instance_extension_properties
 {
 	tuple_t(uint32_t, pVkExtensionProperties_t) pair;
 	vkCall(vkEnumerateInstanceExtensionProperties(NULL, &(pair.value1), NULL));
-	pair.value2 = GC_NEWV(VkExtensionProperties, pair.value1);
+	pair.value2 = heap_newv(VkExtensionProperties, pair.value1);
 	vkCall(vkEnumerateInstanceExtensionProperties(NULL, &(pair.value1), pair.value2));
 	return pair;
 }
@@ -600,7 +599,7 @@ tuple_t(uint32_t, pVkExtensionProperties_t) vk_get_physical_device_extension_pro
 {
 	tuple_t(uint32_t, pVkExtensionProperties_t) pair; 
 	vkCall(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &(pair.value1), NULL)); 
-	pair.value2 = GC_NEWV(VkExtensionProperties, pair.value1); 
+	pair.value2 = heap_newv(VkExtensionProperties, pair.value1); 
 	vkCall(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &(pair.value1), pair.value2)); 
 	return pair;
 }
@@ -609,7 +608,7 @@ tuple_t(uint32_t, pVkLayerProperties_t) vk_get_instance_layer_properties()
 {
 	tuple_t(uint32_t, pVkLayerProperties_t) pair; 
 	vkCall(vkEnumerateInstanceLayerProperties(&(pair.value1), NULL)); 
-	pair.value2 = GC_NEWV(VkLayerProperties, pair.value1);
+	pair.value2 = heap_newv(VkLayerProperties, pair.value1);
 	vkCall(vkEnumerateInstanceLayerProperties(&(pair.value1), pair.value2));
 	return pair;
 }
@@ -646,7 +645,7 @@ tuple_t(uint32_t, pVkQueueFamilyProperties_t) vk_get_queue_family_properties(VkP
 {
 	tuple_t(uint32_t, pVkQueueFamilyProperties_t) pair; 
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &(pair.value1), NULL);
-	pair.value2 = GC_NEWV(VkQueueFamilyProperties, pair.value1); 
+	pair.value2 = heap_newv(VkQueueFamilyProperties, pair.value1); 
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &(pair.value1), pair.value2); 
 	return pair;
 }
@@ -655,7 +654,7 @@ tuple_t(uint32_t, pVkSurfaceFormatKHR_t) vk_get_physical_device_surface_formats(
 {
 	tuple_t(uint32_t, pVkSurfaceFormatKHR_t) pair;
 	vkCall(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &(pair.value1), NULL)); 
-	pair.value2 = GC_NEWV(VkSurfaceFormatKHR, pair.value1); 
+	pair.value2 = heap_newv(VkSurfaceFormatKHR, pair.value1); 
 	vkCall(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &(pair.value1), pair.value2)); 
 	return pair;
 }
@@ -664,7 +663,7 @@ tuple_t(uint32_t, pVkPresentModeKHR_t) vk_get_physical_device_surface_present_mo
 {
 	tuple_t(uint32_t, pVkPresentModeKHR_t) pair; 
 	vkCall(vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &(pair.value1), NULL)); 
-	pair.value2 = GC_NEWV(VkPresentModeKHR, pair.value1); 
+	pair.value2 = heap_newv(VkPresentModeKHR, pair.value1); 
 	vkCall(vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &(pair.value1), pair.value2)); 
 	return pair;
 }
@@ -686,7 +685,7 @@ void vk_dump_physical_devices(tuple_t(uint32_t, pVkPhysicalDevice_t)* physical_d
 {
 	for(uint32_t i = 0; i < physical_devices->value1; i++)
 	{
-		VkPhysicalDevice device = physical_devices->value2[i];
+		VkPhysicalDevice device = ref(VkPhysicalDevice, physical_devices->value2, i);
 		VkPhysicalDeviceProperties properties = vk_get_physical_device_properties(device);
 		VkPhysicalDeviceMemoryProperties memory_properties = vk_get_physical_device_memory_properties(device);
 		VkPhysicalDeviceFeatures features = vk_get_physical_device_features(device); 
@@ -704,7 +703,7 @@ void vk_dump_queue_families(tuple_t(uint32_t, pVkQueueFamilyProperties_t)* queue
 {
 	puts("Physical Device Queue Family::QueueFlags---------");
 	for(uint32_t i = 0; i < queue_families->value1; i++)
-		puts(vk_physical_device_queue_family_to_string(queue_families->value2[i]));
+		puts(vk_physical_device_queue_family_to_string(ref(VkQueueFamilyProperties, queue_families->value2, i)));
 }
 
 void vk_dump_instance_layers()
@@ -712,7 +711,7 @@ void vk_dump_instance_layers()
 	tuple_t(uint32_t, pVkLayerProperties_t) layer_properties = vk_get_instance_layer_properties();
 	puts("Instance Layer Properties----------------------"); 
 	for(uint32_t i = 0; i < layer_properties.value1; i++)
-		puts(layer_properties.value2[i].layerName);
+		puts(ref(VkLayerProperties, layer_properties.value2, i).layerName);
 }
 
 void vk_dump_instance_extensions()
@@ -720,7 +719,7 @@ void vk_dump_instance_extensions()
 	tuple_t(uint32_t, pVkExtensionProperties_t) extension_properties = vk_get_instance_extension_properties();
 	puts("Instance Extension Properties----------------------");
 	for(uint32_t i = 0; i < extension_properties.value1; i++)
-		puts(extension_properties.value2[i].extensionName);
+		puts(ref(VkExtensionProperties, extension_properties.value2, i).extensionName);
 }
 
 void vk_dump_physical_device_extensions(VkPhysicalDevice* physicalDevice)
@@ -728,13 +727,13 @@ void vk_dump_physical_device_extensions(VkPhysicalDevice* physicalDevice)
 	log_msg("Physical Device Extensions-----------------------");
 	tuple_t(uint32_t, pVkExtensionProperties_t) extensions = vk_get_physical_device_extension_properties(*physicalDevice);
 	for(uint32_t i = 0; i < extensions.value1; i++)
-		log_msg(extensions.value2[i].extensionName);
+		log_msg(ref(VkExtensionProperties, extensions.value2, i).extensionName);
 }
 
 
 const char* vk_physical_device_queue_family_to_string(VkQueueFamilyProperties properties)
 {
-	char* buffer = GC_NEWV(char, 1024);		//1KB
+	char* buffer = heap_newv(char, 1024);		//1KB
 	sprintf(buffer, "Queue Count: %u, ", properties.queueCount);
 	strcat(buffer, "Queue Flags: ");
 	if(properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)

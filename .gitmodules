@@ -13,3 +13,6 @@
 [submodule "shared-dependencies/BufferLib"]
 	path = shared-dependencies/BufferLib
 	url = https://github.com/ravi688/BufferLib
+[submodule "dependencies/TemplateSystem"]
+	path = dependencies/TemplateSystem
+	url = https://github.com/ravi688/TemplateSystem.git

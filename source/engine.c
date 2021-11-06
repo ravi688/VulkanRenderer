@@ -1,7 +1,7 @@
 #include <engine/engine.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <garbage_collector/garbage_collector.h>
+#include <memory_allocator/memory_allocator.h>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -47,7 +47,7 @@ engine_t* engine_init(uint32_t screen_width, uint32_t screen_height, const char*
 	//TODO: Swapchain recreation when window get resized
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	engine_t* engine = GC_NEW(engine_t);
+	engine_t* engine = heap_new(engine_t);
 	engine->window = glfwCreateWindow(screen_width, screen_height, window_name, NULL, NULL);
 	glfwSetWindowUserPointer(engine->window, (void*)engine);
 	glfwSetFramebufferSizeCallback(engine->window, glfwOnWindowResizeCallback);
@@ -73,7 +73,7 @@ static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, renderer_t* rend
 static tuple_t(uint32_t, ppVkChar_t) glfw_get_required_instance_extensions()
 {
 	tuple_t(uint32_t, ppVkChar_t) pair;
-	pair.value2 = (ppVkChar_t)glfwGetRequiredInstanceExtensions(&(pair.value1));
+	pair.value2 = add_alloc((ppVkChar_t)glfwGetRequiredInstanceExtensions(&(pair.value1)), pair.value1);
 	return pair;
 }
 

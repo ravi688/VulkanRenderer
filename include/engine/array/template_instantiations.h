@@ -20,7 +20,7 @@ instantiate_implementation_array(int);
 
 array_t(char) array(char)(uint32_t count, ...)
 {
-	char* buffer = GC_NEWV(char, count);
+	char* buffer = heap_newv(char, count);
 	va_list args;
 	va_start(args, count);
 	uint32_t i = 0;
@@ -34,7 +34,7 @@ array_t(char) array(char)(uint32_t count, ...)
 
 array_t(float) array(float)(uint32_t count, ...)
 {
-	float* buffer = GC_NEWV(float, count);
+	float* buffer = heap_newv(float, count);
 	va_list args;
 	va_start(args, count);
 	uint32_t i = 0;

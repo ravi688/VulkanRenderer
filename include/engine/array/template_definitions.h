@@ -3,7 +3,6 @@
 
 #include <template_system.h>
 #include <no_compile_header.h>
-#include <garbage_collector/garbage_collector.h>
 #include <stdint.h>
 #include <stdarg.h>
 
@@ -22,7 +21,7 @@ typedef struct array_t(T)\
 #define instantiate_implementation_array(T)\
 array_t(T) array(T)(uint32_t count, ...)\
 {\
-	T* buffer = GC_NEWV(T, count);\
+	T* buffer = heap_newv(T, count);\
 	va_list args;\
 	va_start(args, count);\
 	uint32_t i = 0;\

@@ -9,7 +9,7 @@
 #include <string/string.h>		//custom string library
 #include <string.h>				//standard string library
 
-#include <garbage_collector/garbage_collector.h>
+#include <memory_allocator/memory_allocator.h>
 #include <vulkan/vulkan_wrapper.h>
 
 #include <exception/exception.h>
@@ -40,11 +40,9 @@
 #include <affine_transformation/header_config.h>
 #include <affine_transformation/affine_transformation.h>
 
-#include <safe_memory/safe_memory.h>
 
 instantiate_declaration_move(VkPipelineShaderStageCreateInfo);
 instantiate_implementation_move(VkPipelineShaderStageCreateInfo);
-
 
 #define DEG2RAD 0.01745f
 #define RAD2DEG 57.29577f
@@ -79,6 +77,11 @@ typedef struct
 	vec3_t(float) position;
 	vec3_t(float) color;
 } vertex3d_t;
+
+instantiate_stack_array(vertex3d_t);
+instantiate_stack_array(VkFormat);
+instantiate_stack_array(VkPipelineShaderStageCreateInfo);
+
 
 typedef vertex2d_t* pvertex_t;
 instantiate_tuple_t(uint32_t, pvertex_t);
@@ -162,18 +165,19 @@ static void convert_to_vulkan_clipspace(vertex2d_t *  const vertices, u32 count)
 
 static vertex2d_t* foreach_vertex3d(u32 count, vertex3d_t* vertices, mat4_t(float) m)
 {
-	vertex2d_t* vertices2d = GC_NEWV(vertex2d_t, count);
+	vertex2d_t* vertices2d = heap_newv(vertex2d_t, count);
 	for(u32 i = 0; i < count; i++)
 	{
-		vec3_t(float) v = vec4_vec3(mat4_mul_vec4(float)(m, vertices[i].position.x, vertices[i].position.y, vertices[i].position.z, 1));
-		vertices2d[i].position.x = v.z; 
-		vertices2d[i].position.y = v.y;
+		vertex3d_t vertex = ref(vertex3d_t, vertices, i);
+		vec3_t(float) v = vec4_vec3(mat4_mul_vec4(float)(m, vertex.position.x, vertex.position.y, vertex.position.z, 1));
+		ref(vertex2d_t, vertices2d, i).position.x = v.z; 
+		ref(vertex2d_t, vertices2d, i).position.y = v.y;
 
 		//TODO: this should be like vertices2d[i].color = vertices[i].color
 		//but compiler denies because of the array type; write a function array_copy(T, count)(vertices2d[i].color, vertices[i].color)
-		vertices2d[i].color.x = vertices[i].color.x;
-		vertices2d[i].color.y = vertices[i].color.y;
-		vertices2d[i].color.z = vertices[i].color.z;
+		ref(vertex2d_t, vertices2d, i).color.x = vertices[i].color.x;
+		ref(vertex2d_t, vertices2d, i).color.y = vertices[i].color.y;
+		ref(vertex2d_t, vertices2d, i).color.z = vertices[i].color.z;
 	}
 	return vertices2d;
 }
@@ -181,7 +185,7 @@ static vertex2d_t* foreach_vertex3d(u32 count, vertex3d_t* vertices, mat4_t(floa
 //TODO: Wrapp this physical device selection & creation of logical device into a single function
 renderer_t* renderer_init()
 {
-	renderer_t* renderer = GC_NEW(renderer_t);
+	renderer_t* renderer = heap_new(renderer_t);
 	renderer->vk_instance = vk_create_instance(); 
 	renderer->vk_physical_device = vk_get_suitable_physical_device(vk_get_physical_devices(renderer->vk_instance));
 	renderer->vk_device = vk_get_device(renderer->vk_physical_device);
@@ -227,11 +231,12 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 	
 	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer->vk_device);
 	renderer->vk_shader_stages.value1 = 2;
-	renderer->vk_shader_stages.value2 = GC_NEWV(VkPipelineShaderStageCreateInfo, 2);
-	move(VkPipelineShaderStageCreateInfo)(&(renderer->vk_shader_stages.value2[0]), vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main"));
-	move(VkPipelineShaderStageCreateInfo)(&(renderer->vk_shader_stages.value2[1]), vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main"));
-	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
-	uint32_t offsets[2] = { offsetof(vertex2d_t, position), offsetof(vertex2d_t, color) };
+	renderer->vk_shader_stages.value2 = stack_array(VkPipelineShaderStageCreateInfo, 2,
+		vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main"),
+		vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main")
+	);
+	VkFormat* formats = stack_array(VkFormat, 2, VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT );
+	u32* offsets = stack_array(u32, 2, offsetof(vertex2d_t, position), offsetof(vertex2d_t, color));
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(	2, 
 																											sizeof(vertex2d_t), 
 																											VK_VERTEX_INPUT_RATE_VERTEX, 
@@ -251,55 +256,46 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 														&multisampling,
 														&colorBlending
 													);
-	//Geometry Data
-	// vertex3d_t geometry3D[4] = 
-	// {
-	// 	{ { 0.5f, 0,  0.5f }, { 1, 1, 1 } }, 
-	//  	{ { 0.5f, 0,  -0.5f }, { 1, 0, 0} },
-	//  	{ { -0.5f, 0,  -0.5f }, { 0, 0, 0 } },
-	//  	{ { -0.5f, 0, 0.5f }, { 0, 0,0 } }
-	// }; 
 
-	vertex3d_t geometry3D[] = 
-	{
+	u32 vertexCount = 24;
+	vertex3d_t* geometry3D = stack_array(vertex3d_t, vertexCount,
 		 //Bottom
-		 { { -0.5f, 0, 0.5f },  { 0.1f, 0.7f, 0 } },
-		 { { -0.5f, 0, -0.5f },  { 0.1f, 0.7f, 0 } },
-		 { { 0.5f, 0, -0.5f },  { 0.1f, 0.7f, 0 } },
-		 { { 0.5f, 0, 0.5f },  { 0.1f, 0.7f, 0 } },
+		 (vertex3d_t) { { -0.5f, 0, 0.5f },  { 0.1f, 0.7f, 0 } },
+		 (vertex3d_t) { { -0.5f, 0, -0.5f },  { 0.1f, 0.7f, 0 } },
+		 (vertex3d_t) { { 0.5f, 0, -0.5f },  { 0.1f, 0.7f, 0 } },
+		 (vertex3d_t) { { 0.5f, 0, 0.5f },  { 0.1f, 0.7f, 0 } },
 
 		 //Top
-		 { { 0.5f, 1, 0.5f },  { 0.4f, 0.2f, 1 } },
-		 { { 0.5f, 1, -0.5f },  { 0.4f, 0.2f, 1 } },
-		 { { -0.5f, 1, -0.5f },  { 0.4f, 0.2f, 1 } },
-		 { { -0.5f, 1, 0.5f },  { 0.4f, 0.2f, 1 } },
+		 (vertex3d_t) { { 0.5f, 1, 0.5f },  { 0.4f, 0.2f, 1 } },
+		 (vertex3d_t) { { 0.5f, 1, -0.5f },  { 0.4f, 0.2f, 1 } },
+		 (vertex3d_t) { { -0.5f, 1, -0.5f },  { 0.4f, 0.2f, 1 } },
+		 (vertex3d_t) { { -0.5f, 1, 0.5f },  { 0.4f, 0.2f, 1 } },
 
 		 //Front
-		 { { -0.5f, 1, -0.5f },  { 0, 0, 1 } },
-		 { { -0.5f, 1, 0.5f },  { 0, 0, 1 } },
-		 { { -0.5f, 0, 0.5f },  { 0, 0, 1 } },
-		 { { -0.5f, 0, -0.5f },  { 0, 0, 1 } },
+		 (vertex3d_t) { { -0.5f, 1, -0.5f },  { 0, 0, 1 } },
+		 (vertex3d_t) { { -0.5f, 1, 0.5f },  { 0, 0, 1 } },
+		 (vertex3d_t) { { -0.5f, 0, 0.5f },  { 0, 0, 1 } },
+		 (vertex3d_t) { { -0.5f, 0, -0.5f },  { 0, 0, 1 } },
 
 		 //Left
-		 { { 0.5f, 1, -0.5f },  { 0.1f, 0, 0.4f } },
-		 { { -0.5f, 1, -0.5f },  { 0.1f, 0, 0.4f } },
-		 { { -0.5f, 0, -0.5f },  { 0.1f, 0, 0.4f } },
-		 { { 0.5f, 0, -0.5f },  { 0.1f, 0, 0.4f } },
+		 (vertex3d_t) { { 0.5f, 1, -0.5f },  { 0.1f, 0, 0.4f } },
+		 (vertex3d_t) { { -0.5f, 1, -0.5f },  { 0.1f, 0, 0.4f } },
+		 (vertex3d_t) { { -0.5f, 0, -0.5f },  { 0.1f, 0, 0.4f } },
+		 (vertex3d_t) { { 0.5f, 0, -0.5f },  { 0.1f, 0, 0.4f } },
 
 		 //Right
-		 { { -0.5f, 1, 0.5f },  { 0.1f, 0, 0.4f } },
-		 { { 0.5f, 1, 0.5f },  { 0.1f, 0, 0.4f } },
-		 { { 0.5f, 0, 0.5f },  { 0.1f, 0, 0.4f } },
-		 { { -0.5f, 0, 0.5f },  { 0.1f, 0, 0.4f } },
+		 (vertex3d_t) { { -0.5f, 1, 0.5f },  { 0.1f, 0, 0.4f } },
+		 (vertex3d_t) { { 0.5f, 1, 0.5f },  { 0.1f, 0, 0.4f } },
+		 (vertex3d_t) { { 0.5f, 0, 0.5f },  { 0.1f, 0, 0.4f } },
+		 (vertex3d_t) { { -0.5f, 0, 0.5f },  { 0.1f, 0, 0.4f } },
 
 		 //Back
-		 { { 0.5f, 1, 0.5f },  { 1, 0, 0.3 } },
-		 { { 0.5f, 1, -0.5f }, { 1, 0, 0.3 } },
-		 { { 0.5f, 0, -0.5f }, { 1, 0, 0.3 } },
-		 { { 0.5f, 0, 0.5f },  { 1, 0, 0.3 } },
-	};
+		 (vertex3d_t) { { 0.5f, 1, 0.5f },  { 1, 0, 0.3 } },
+		 (vertex3d_t) { { 0.5f, 1, -0.5f }, { 1, 0, 0.3 } },
+		 (vertex3d_t) { { 0.5f, 0, -0.5f }, { 1, 0, 0.3 } },
+		 (vertex3d_t) { { 0.5f, 0, 0.5f },  { 1, 0, 0.3 } }
+	);
 
-	u32 vertexCount = sizeof(geometry3D) / sizeof(vertex3d_t);
 	mat4_t(float) cameraTransform = mat4_transform((vec3_t(float)) { -3, 2, 0 }, (vec3_t(float)) { 0, 0, -30 * DEG2RAD } );
 	mat4_t(float) viewMatrix = mat4_inverse(float)(cameraTransform);
 	mat4_t(float) modelMatrix = mat4_transform((vec3_t(float)) { 0, 0, 0 }, (vec3_t(float)) { 0, -30 * DEG2RAD, 0 });
@@ -525,7 +521,7 @@ static void renderer_create_swapchain(renderer_t* renderer)
 
 	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer->vk_device);
 	renderer->vk_shader_stages.value1 = 2;
-	renderer->vk_shader_stages.value2 = GC_NEWV(VkPipelineShaderStageCreateInfo, 2);
+	renderer->vk_shader_stages.value2 = heap_newv(VkPipelineShaderStageCreateInfo, 2);
 	VkPipelineShaderStageCreateInfo info0 = vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main");
 	VkPipelineShaderStageCreateInfo info1 = vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main");
 	memcpy(&(renderer->vk_shader_stages.value2[0]), &info0, sizeof(VkPipelineShaderStageCreateInfo));
