@@ -1,4 +1,4 @@
-DEPENDENCY_LIBS = ./dependencies/HPML/lib/hpml.a ./dependencies/tgc/lib/tgc.a ./dependencies/SafeMemory/lib/safemem.a ./shared-dependencies/BufferLib/lib/bufferlib.a
+DEPENDENCY_LIBS = ./dependencies/HPML/lib/hpml.a ./dependencies/tgc/lib/tgc.a ./dependencies/SafeMemory/lib/safemem.a  ./dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a ./shared-dependencies/BufferLib/lib/bufferlib.a
 
 #TODO: Move CallTrace to VulkanRenderer's shared-dependencies
 DEPENDENCY_INCLUDES =  ./dependencies/TemplateSystem/include ./dependencies/HPML/include ./dependencies/SafeMemory/include ./dependencies/SafeMemory/shared-dependencies/CallTrace/include ./shared-dependencies/BufferLib/include
