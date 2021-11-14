@@ -85,9 +85,9 @@ EXCEPTION_BLOCK
 	if(!vk_check_instance_extension_support(required_extensions))
 		throw_exception(VULKAN_EXTENSION_NOT_SUPPORTED);
 )
-	puts("GLFW required_extensions ----------------");
+	log_msg("GLFW required_extensions ----------------\n");
 	for(uint32_t i = 0; i < required_extensions.value1; i++)
-		puts(required_extensions.value2[i]);
+		log_msg("%s\n", required_extensions.value2[i]);
 }
 
 void engine_terminate(engine_t* engine)

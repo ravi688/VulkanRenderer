@@ -2,8 +2,8 @@
 #include <memory_allocator/memory_allocator.h>
 #include <engine/engine.h>
 
-#include "TestBehaviour.h"
-#include "Ammo.h"
+// #include "TestBehaviour.h"
+// #include "Ammo.h"
 
 static void prepare_scene(engine_t* engine);
 
@@ -36,7 +36,7 @@ static void prepare_scene(engine_t* engine)
 	scene_manager_add_active_scene(sceneManager, my_scene);
 
 	object_t* object = object_new("Cube"); 
-	object_attach_component(object, TestBehaviour);
+	// object_attach_component(object, TestBehaviour);
 	object_attach_component(object, mesh_renderer_t);
 	object_attach_component(object, mesh_filter_t);
 	scene_add_object(my_scene, object); 

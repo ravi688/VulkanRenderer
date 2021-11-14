@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <vec3/header_config.h>
-#include <vec3/vec3.h>
-#include <vec2/header_config.h>
-#include <vec2/vec2.h>
+#include <hpml/vec3/header_config.h>
+#include <hpml/vec3/vec3.h>
+#include <hpml/vec2/header_config.h>
+#include <hpml/vec2/vec2.h>
 #include <engine/mesh.h>
 #include <engine/mesh_renderer.h>
 #include <engine/mesh_filter.h>
