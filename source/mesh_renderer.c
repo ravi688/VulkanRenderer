@@ -1,6 +1,6 @@
 #include <engine/mesh_renderer.h>
 
-static void mesh_renderer_render(mesh_t* mesh, material_t* material);
+static void mesh_renderer_render(mesh3d_t* mesh, material_t* material);
 
 OnInstantiate(mesh_renderer_t,
 	
@@ -43,10 +43,10 @@ OnPreRender(mesh_renderer_t,
 		BUFbind(meshes);
 		uint32_t count = BUFget_element_count(); 
 		material_t* material = NULL;
-		mesh_t* mesh = NULL;
+		mesh3d_t* mesh = NULL;
 		for(int i = 0; i < count; i++)
 		{
-			mesh = *((mesh_t**)BUFget_ptr_at(i));
+			mesh = *((mesh3d_t**)BUFget_ptr_at(i));
 			if(materials != NULL)
 			{
 				BUFbind(materials);
@@ -63,7 +63,7 @@ OnPreRender(mesh_renderer_t,
 )
 
 
-static void mesh_renderer_render(mesh_t* mesh, material_t* material)
+static void mesh_renderer_render(mesh3d_t* mesh, material_t* material)
 {
 	BUFFER* list = BUFget_binded();
 	//cairo_set_source_rgb(cairo_context, material->color.r, material->color.g, material->color.b);

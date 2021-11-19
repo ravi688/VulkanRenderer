@@ -32,7 +32,7 @@ void mesh_filter_meshes_new(mesh_filter_t* mesh_filter, uint32_t mesh_count)
 			LIST_BIND(mesh_filter->meshes); 
 			LIST_DESTROY();
 		}
-		mesh_filter->meshes = LIST_NEW(mesh_t*, mesh_count);
+		mesh_filter->meshes = LIST_NEW(mesh3d_t*, mesh_count);
 		BUFbind(mesh_filter->meshes); 
 		BUFset_element_count(mesh_count);
 		LIST_BIND(_list);
@@ -53,7 +53,7 @@ void mesh_filter_destroy(mesh_filter_t* mesh_filter)
 	}
 }
 
-void mesh_filter_set_mesh(mesh_filter_t* mesh_filter, mesh_t* mesh, uint32_t index)
+void mesh_filter_set_mesh(mesh_filter_t* mesh_filter, mesh3d_t* mesh, uint32_t index)
 {
 	if((mesh_filter != NULL) && (mesh_filter->meshes != NULL))
 	{
@@ -64,7 +64,7 @@ void mesh_filter_set_mesh(mesh_filter_t* mesh_filter, mesh_t* mesh, uint32_t ind
 	}
 }
 
-LIST(mesh_t*) mesh_filter_get_mesh_list(mesh_filter_t* mesh_filter)
+LIST(mesh3d_t*) mesh_filter_get_mesh_list(mesh_filter_t* mesh_filter)
 {
 	if(mesh_filter != NULL)
 		return mesh_filter->meshes;

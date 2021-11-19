@@ -469,7 +469,7 @@ static void renderer_create_swapchain(renderer_t* renderer);
 
 void renderer_on_window_resize(renderer_t* renderer, u32 width, u32 height)
 {
-	log_msg("Window is resized: %u, %u", width, height);
+	log_msg("Window is resized: %u, %u\n", width, height);
 	renderer_destroy_swapchain(renderer); 
 	renderer->width = width;
 	renderer->height = height;
@@ -521,14 +521,13 @@ static void renderer_create_swapchain(renderer_t* renderer)
 
 	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer->vk_device);
 	renderer->vk_shader_stages.value1 = 2;
-	renderer->vk_shader_stages.value2 = heap_newv(VkPipelineShaderStageCreateInfo, 2);
-	VkPipelineShaderStageCreateInfo info0 = vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main");
-	VkPipelineShaderStageCreateInfo info1 = vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main");
-	memcpy(&(renderer->vk_shader_stages.value2[0]), &info0, sizeof(VkPipelineShaderStageCreateInfo));
-	memcpy(&(renderer->vk_shader_stages.value2[1]), &info1, sizeof(VkPipelineShaderStageCreateInfo));
-	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
-	uint32_t offsets[2] = { offsetof(vertex2d_t, position), offsetof(vertex2d_t, color) };
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(	3, 
+	renderer->vk_shader_stages.value2 = stack_array(VkPipelineShaderStageCreateInfo, 2,
+		vk_get_pipeline_shader_stage_create_info(renderer->vk_vertex_shader_module, VERTEX_SHADER, "main"),
+		vk_get_pipeline_shader_stage_create_info(renderer->vk_fragment_shader_module, FRAGMENT_SHADER, "main")
+	);
+	VkFormat* formats = stack_array(VkFormat, 2, VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT);
+	u32* offsets = stack_array(u32, 2, offsetof(vertex2d_t, position), offsetof(vertex2d_t, color));
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(	2, 
 																											sizeof(vertex2d_t), 
 																											VK_VERTEX_INPUT_RATE_VERTEX, 
 																											formats, 

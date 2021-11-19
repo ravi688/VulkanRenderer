@@ -9,7 +9,7 @@
 #include <hpml/vec3/vec3.h>
 #include <hpml/vec2/header_config.h>
 #include <hpml/vec2/vec2.h>
-#include <engine/mesh.h>
+#include <engine/mesh3d.h>
 #include <engine/mesh_renderer.h>
 #include <engine/mesh_filter.h>
 #include <engine/material.h>

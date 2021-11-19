@@ -20,8 +20,9 @@ define_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND);
 define_exception(VULKAN_SURFACE_NOT_SUPPORTED);
 define_exception(VULKAN_PHYSICAL_DEVICE_EXTENSION_NOT_SUPPORTED);
 
-VkDeviceMemory vk_get_device_memory_for_buffer(VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties)
+function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties)
 {
+	CALLTRACE_BEGIN();
 	VkDeviceMemory deviceMemory;
     VkMemoryRequirements memRequirements;
 	VkPhysicalDeviceMemoryProperties memProperties;
@@ -52,11 +53,12 @@ EXCEPTION_BLOCK
 	allocInfo.memoryTypeIndex = (uint32_t)selectedMemoryType;
 	vkCall(vkAllocateMemory(device, &allocInfo, NULL, &deviceMemory));
 	vkCall(vkBindBufferMemory(device, buffer, deviceMemory, 0));
-	return deviceMemory;
+	CALLTRACE_RETURN(deviceMemory);
 }
 
-VkBuffer vk_get_buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkSharingMode sharingMode)
+function_signature(VkBuffer, vk_get_buffer, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkSharingMode sharingMode)
 {
+	CALLTRACE_BEGIN();
 	VkBuffer buffer;
 	VkBufferCreateInfo createInfo = { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO; 
@@ -64,30 +66,33 @@ VkBuffer vk_get_buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags us
 	createInfo.usage = usageFlags;
 	createInfo.sharingMode = sharingMode;
 	vkCall(vkCreateBuffer(device, &createInfo, NULL, &buffer));
-	return buffer;
+	CALLTRACE_RETURN(buffer);
 }
 
-VkSemaphore vk_get_semaphore(VkDevice device)
+function_signature(VkSemaphore, vk_get_semaphore, VkDevice device)
 {
+	CALLTRACE_BEGIN();
 	VkSemaphore semaphore;
 	VkSemaphoreCreateInfo createInfo = { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	vkCall(vkCreateSemaphore(device, &createInfo, NULL, &semaphore)); 
-	return semaphore;
+	CALLTRACE_RETURN(semaphore);
 }
 
-VkCommandPool vk_get_command_pool(VkDevice device, uint32_t queueFamilyIndex)
+function_signature(VkCommandPool, vk_get_command_pool, VkDevice device, uint32_t queueFamilyIndex)
 {
+	CALLTRACE_BEGIN();
 	VkCommandPoolCreateInfo createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	createInfo.queueFamilyIndex = queueFamilyIndex;
 	VkCommandPool commandPool;
 	vkCall(vkCreateCommandPool(device, &createInfo, NULL, &commandPool));
-	return commandPool;
+	CALLTRACE_RETURN(commandPool);
 }
 
-tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, VkCommandPool commandPool, uint32_t count)
+function_signature(tuple_t(uint32_t,  pVkCommandBuffer_t), vk_get_command_buffers, VkDevice device, VkCommandPool commandPool, uint32_t count)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkCommandBuffer_t) commandBuffers = { count, heap_newv(VkCommandBuffer, count) };
 	VkCommandBufferAllocateInfo allocInfo = { }; 
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO; 
@@ -95,11 +100,12 @@ tuple_t(uint32_t, pVkCommandBuffer_t) vk_get_command_buffers(VkDevice device, Vk
 	allocInfo.commandBufferCount = count;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	vkCall(vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.value2));
-	return commandBuffers;
+	CALLTRACE_RETURN(commandBuffers);
 }
 
-tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments)
+function_signature(tuple_t(uint32_t,  pVkFramebuffer_t), vk_get_framebuffers, VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkFramebuffer_t) framebuffers = { count, heap_newv(VkFramebuffer, count) };
 	for(uint32_t i = 0; i < count; i++)
 	{
@@ -115,24 +121,26 @@ tuple_t(uint32_t, pVkFramebuffer_t) vk_get_framebuffers(VkDevice device, uint32_
 		vkCall(vkCreateFramebuffer(device, &createInfo, NULL, &framebuffer));
 		ref(VkFramebuffer, framebuffers.value2, i) = framebuffer;
 	}
-	return framebuffers;
+	CALLTRACE_RETURN(framebuffers);
 }
 
-VkQueue vk_get_device_queue(VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex)
+function_signature(VkQueue, vk_get_device_queue, VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex)
 {
+	CALLTRACE_BEGIN();
 	VkQueue queue; 
 	vkGetDeviceQueue(device, queueFamilyIndex, queueIndex, &queue); 
-	return queue;
+	CALLTRACE_RETURN(queue);
 }
 
-VkSwapchainKHR vk_get_swapchain(VkDevice device, VkSwapchainCreateInfoKHR* createInfo)
+function_signature(VkSwapchainKHR, vk_get_swapchain, VkDevice device, VkSwapchainCreateInfoKHR* createInfo)
 {
+	CALLTRACE_BEGIN();
 	VkSwapchainKHR swapchain;
 	vkCall(vkCreateSwapchainKHR(device, createInfo, NULL, &swapchain)); 
-	return swapchain;
+	CALLTRACE_RETURN(swapchain);
 }
 
-VkPipeline vk_get_graphics_pipeline(VkDevice device, VkPipelineLayout pipelineLayout, VkRenderPass renderPass,
+function_signature(VkPipeline, vk_get_graphics_pipeline, VkDevice device, VkPipelineLayout pipelineLayout, VkRenderPass renderPass,
 											VkPipelineShaderStageCreateInfo* shaderStages,
 											VkPipelineVertexInputStateCreateInfo* vertexInputState, 
 											VkPipelineInputAssemblyStateCreateInfo* inputAssemblyState,
@@ -141,6 +149,7 @@ VkPipeline vk_get_graphics_pipeline(VkDevice device, VkPipelineLayout pipelineLa
 											VkPipelineMultisampleStateCreateInfo* multisampleState, 
 											VkPipelineColorBlendStateCreateInfo* colorBlendState)
 {
+	CALLTRACE_BEGIN();
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	//TODO: Make this customizable; for more shader stages in the pipeline
@@ -162,11 +171,12 @@ VkPipeline vk_get_graphics_pipeline(VkDevice device, VkPipelineLayout pipelineLa
 
 	VkPipeline graphicsPipeline;
 	vkCall(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphicsPipeline));
-	return graphicsPipeline;
+	CALLTRACE_RETURN(graphicsPipeline);
 }
 
-VkRenderPass vk_get_render_pass(VkDevice device, VkFormat format)
+function_signature(VkRenderPass, vk_get_render_pass, VkDevice device, VkFormat format)
 {
+	CALLTRACE_BEGIN();
 	VkAttachmentDescription colorAttachmentDescription = vk_get_attachment_description(format);
 	VkAttachmentReference colorAttachmentReference = vk_get_attachment_reference();  //TODO: this should be like vk_get_attachment_reference(index: 0);
 	VkSubpassDescription subpass  = 
@@ -186,11 +196,12 @@ VkRenderPass vk_get_render_pass(VkDevice device, VkFormat format)
 	renderPassCreateInfo.dependencyCount = 0;
 	renderPassCreateInfo.pDependencies = VK_NULL_HANDLE;
 	vkCall(vkCreateRenderPass(device, &renderPassCreateInfo, NULL, &renderPass));
-	return renderPass;
+	CALLTRACE_RETURN(renderPass);
 }
 
-VkSubpassDependency vk_get_subpass_dependency()
+function_signature_void(VkSubpassDependency, vk_get_subpass_dependency)
 {
+	CALLTRACE_BEGIN();
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0;
@@ -198,28 +209,31 @@ VkSubpassDependency vk_get_subpass_dependency()
 	dependency.srcAccessMask = 0;
 	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	return dependency;
+	CALLTRACE_RETURN(dependency);
 }
 
-VkSubpassDescription vk_get_subpass_description(VkAttachmentReference attachment_reference)
+function_signature(VkSubpassDescription, vk_get_subpass_description, VkAttachmentReference attachment_reference)
 {
+	CALLTRACE_BEGIN();
 	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &attachment_reference;
-	return subpass;
+	CALLTRACE_RETURN(subpass);
 }
 
-VkAttachmentReference vk_get_attachment_reference()
+function_signature_void(VkAttachmentReference, vk_get_attachment_reference)
 {
+	CALLTRACE_BEGIN();
 	VkAttachmentReference colorAttachmentRef = {};
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	return colorAttachmentRef;
+	CALLTRACE_RETURN(colorAttachmentRef);
 }
 
-VkAttachmentDescription vk_get_attachment_description(VkFormat image_format)
+function_signature(VkAttachmentDescription, vk_get_attachment_description, VkFormat image_format)
 {
+	CALLTRACE_BEGIN();
 	VkAttachmentDescription colorAttachment = {};
     colorAttachment.format = image_format;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -229,11 +243,12 @@ VkAttachmentDescription vk_get_attachment_description(VkFormat image_format)
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	return colorAttachment;
+	CALLTRACE_RETURN(colorAttachment);
 }
 
-VkPipelineLayout vk_get_pipeline_layout(VkDevice device)
+function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device)
 {
+	CALLTRACE_BEGIN();
 	VkPipelineLayout pipelineLayout;
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
@@ -244,11 +259,12 @@ VkPipelineLayout vk_get_pipeline_layout(VkDevice device)
 	pipelineLayoutInfo.pPushConstantRanges = NULL; // Optional
 
 	vkCall(vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &pipelineLayout));
-	return pipelineLayout;
+	CALLTRACE_RETURN(pipelineLayout);
 }
 
-VkPipelineDynamicStateCreateInfo vk_get_pipeline_dynamic_state_create_info(void)
+function_signature_void(VkPipelineDynamicStateCreateInfo, vk_get_pipeline_dynamic_state_create_info)
 {
+	CALLTRACE_BEGIN();
 	VkDynamicState* dynamicStates = heap_newv(VkDynamicState, 2);
 	ref(VkDynamicState, dynamicStates, 0) = VK_DYNAMIC_STATE_VIEWPORT;
 	ref(VkDynamicState, dynamicStates, 1) = VK_DYNAMIC_STATE_LINE_WIDTH;
@@ -257,11 +273,12 @@ VkPipelineDynamicStateCreateInfo vk_get_pipeline_dynamic_state_create_info(void)
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	createInfo.dynamicStateCount = 1; 
 	createInfo.pDynamicStates = dynamicStates;
-	return createInfo;
+	CALLTRACE_RETURN(createInfo);
 }
 
-VkPipelineColorBlendStateCreateInfo vk_get_pipeline_color_blend_state_create_info(void)
+function_signature_void(VkPipelineColorBlendStateCreateInfo, vk_get_pipeline_color_blend_state_create_info)
 {
+	CALLTRACE_BEGIN();
 	VkPipelineColorBlendStateCreateInfo createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	createInfo.logicOpEnable = VK_FALSE;
@@ -274,11 +291,12 @@ VkPipelineColorBlendStateCreateInfo vk_get_pipeline_color_blend_state_create_inf
 	createInfo.blendConstants[1] = 0.0f; // Optional
 	createInfo.blendConstants[2] = 0.0f; // Optional
 	createInfo.blendConstants[3] = 0.0f; // Optional
-	return createInfo;
+	CALLTRACE_RETURN(createInfo);
 }
 
-VkPipelineColorBlendAttachmentState vk_get_pipeline_color_blend_attachment_state(void)
+function_signature_void(VkPipelineColorBlendAttachmentState, vk_get_pipeline_color_blend_attachment_state)
 {
+	CALLTRACE_BEGIN();
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	colorBlendAttachment.blendEnable = VK_FALSE;
@@ -288,11 +306,12 @@ VkPipelineColorBlendAttachmentState vk_get_pipeline_color_blend_attachment_state
 	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
 	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
 	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional	
-	return colorBlendAttachment;
+	CALLTRACE_RETURN(colorBlendAttachment);
 }
 
-VkPipelineMultisampleStateCreateInfo vk_get_pipeline_multisample_state_create_info(void)
+function_signature_void(VkPipelineMultisampleStateCreateInfo, vk_get_pipeline_multisample_state_create_info)
 {
+	CALLTRACE_BEGIN();
 	VkPipelineMultisampleStateCreateInfo createInfo =  { };
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	createInfo.sampleShadingEnable = VK_FALSE;
@@ -301,11 +320,12 @@ VkPipelineMultisampleStateCreateInfo vk_get_pipeline_multisample_state_create_in
 	createInfo.pSampleMask = NULL; // Optional
 	createInfo.alphaToCoverageEnable = VK_FALSE; // Optional
 	createInfo.alphaToOneEnable = VK_FALSE; // Optional
-	return createInfo;
+	CALLTRACE_RETURN(createInfo);
 }
 
-VkPipelineRasterizationStateCreateInfo vk_get_pipeline_rasterization_state_create_info(void)
+function_signature_void(VkPipelineRasterizationStateCreateInfo, vk_get_pipeline_rasterization_state_create_info)
 {
+	CALLTRACE_BEGIN();
 	VkPipelineRasterizationStateCreateInfo createInfo =  { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	createInfo.depthClampEnable = VK_FALSE;
@@ -318,11 +338,12 @@ VkPipelineRasterizationStateCreateInfo vk_get_pipeline_rasterization_state_creat
 	createInfo.depthBiasConstantFactor = 0.0f; // Optional
 	createInfo.depthBiasClamp = 0.0f; // Optional
 	createInfo.depthBiasSlopeFactor = 0.0f; // Optional
-	return createInfo;
+	CALLTRACE_RETURN(createInfo);
 }
 
-VkPipelineViewportStateCreateInfo vk_get_pipeline_viewport_state_create_info(uint32_t viewportWidth, uint32_t viewportHeight)
+function_signature(VkPipelineViewportStateCreateInfo, vk_get_pipeline_viewport_state_create_info, uint32_t viewportWidth, uint32_t viewportHeight)
 {
+	CALLTRACE_BEGIN();
 	VkPipelineViewportStateCreateInfo createInfo =  { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	createInfo.viewportCount = 1;
@@ -333,20 +354,22 @@ VkPipelineViewportStateCreateInfo vk_get_pipeline_viewport_state_create_info(uin
 	createInfo.pViewports = viewport;
 	createInfo.scissorCount = 1; 
 	createInfo.pScissors = scissor;
-	return createInfo;
+	CALLTRACE_RETURN(createInfo);
 }
 
-VkPipelineInputAssemblyStateCreateInfo vk_get_pipeline_input_assembly_state_create_info()
+function_signature_void(VkPipelineInputAssemblyStateCreateInfo, vk_get_pipeline_input_assembly_state_create_info)
 {
+	CALLTRACE_BEGIN();
 	VkPipelineInputAssemblyStateCreateInfo createInfo  = {  }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	createInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST; 
 	createInfo.primitiveRestartEnable = VK_FALSE;
-	return createInfo;
+	CALLTRACE_RETURN(createInfo);
 }
 
-VkViewport vk_get_viewport(uint32_t width, uint32_t height)
+function_signature(VkViewport, vk_get_viewport, uint32_t width, uint32_t height)
 {
+	CALLTRACE_BEGIN();
 	VkViewport viewport = { }; 
 	viewport.x = 0; 
 	viewport.y = 0; 
@@ -354,20 +377,22 @@ VkViewport vk_get_viewport(uint32_t width, uint32_t height)
 	viewport.height = height; 
 	viewport.minDepth = 0.0f; 
 	viewport.maxDepth = 1.0f;
-	return viewport;
+	CALLTRACE_RETURN(viewport);
 }
 
-tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vk_get_vertex_input_binding_descriptions(uint32_t stride, VkVertexInputRate vertexInputRate)
+function_signature(tuple_t(uint32_t,  pVkVertexInputBindingDescription_t), vk_get_vertex_input_binding_descriptions, uint32_t stride, VkVertexInputRate vertexInputRate)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) bindingDescriptions =  { 1 , heap_newv(VkVertexInputBindingDescription, 1) }; 
 	ref(VkVertexInputBindingDescription, bindingDescriptions.value2, 0).binding = 0;
 	ref(VkVertexInputBindingDescription, bindingDescriptions.value2, 0).stride = stride; 
 	ref(VkVertexInputBindingDescription, bindingDescriptions.value2, 0).inputRate = vertexInputRate;
-	return bindingDescriptions;
+	CALLTRACE_RETURN(bindingDescriptions);
 }
 
-tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attribute_descriptions(uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets)
+function_signature(tuple_t(uint32_t,  pVkVertexInputAttributeDescription_t), vk_get_vertex_input_attribute_descriptions, uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) attributeDescriptions = { attributeCount, heap_newv(VkVertexInputAttributeDescription, attributeCount) };
 	for(uint32_t i = 0; i < attributeDescriptions.value1; i++)
 	{
@@ -376,11 +401,12 @@ tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vk_get_vertex_input_attr
 		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).format = ref(VkFormat, attributeFormats, i); 
 		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).offset = ref(uint32_t, attributeOffsets, i);
 	}
-	return attributeDescriptions;
+	CALLTRACE_RETURN(attributeDescriptions);
 }
 
-VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_info(uint32_t attributeCount, uint32_t stride, VkVertexInputRate vertexInputRate, VkFormat* attributeFormats, uint32_t* attributeOffsets)
+function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_input_state_create_info, uint32_t attributeCount, uint32_t stride, VkVertexInputRate vertexInputRate, VkFormat* attributeFormats, uint32_t* attributeOffsets)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vertexBindings = vk_get_vertex_input_binding_descriptions(stride, vertexInputRate); 
 	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vertexAttributes = vk_get_vertex_input_attribute_descriptions(attributeCount, attributeFormats, attributeOffsets);
 	VkPipelineVertexInputStateCreateInfo createInfo =  { }; 
@@ -389,21 +415,23 @@ VkPipelineVertexInputStateCreateInfo vk_get_pipeline_vertex_input_state_create_i
 	createInfo.pVertexBindingDescriptions = vertexBindings.value2; 
 	createInfo.vertexAttributeDescriptionCount = vertexAttributes.value1; 
 	createInfo.pVertexAttributeDescriptions = vertexAttributes.value2; 
-	return createInfo;
+	CALLTRACE_RETURN(createInfo);
 }
 
-VkPipelineShaderStageCreateInfo vk_get_pipeline_shader_stage_create_info(VkShaderModule shader_module, shader_type_t shader_type, const char* entry_point)
+function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, shader_type_t shader_type, const char* entry_point)
 {
+	CALLTRACE_BEGIN();
 	VkPipelineShaderStageCreateInfo createInfo = { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	createInfo.pName = entry_point; 
 	createInfo.module = shader_module; 
 	createInfo.stage = (shader_type == VERTEX_SHADER) ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT; 
-	return createInfo;
+	CALLTRACE_RETURN(createInfo);
 }
 
-VkShaderModule vk_get_shader_module(VkDevice device, const char* file_name)
+function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, const char* file_name)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint64_t, pchar_t) shader_bytes = load_binary_from_file(file_name);
 	VkShaderModuleCreateInfo createInfo = {}; 
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO; 
@@ -411,20 +439,22 @@ VkShaderModule vk_get_shader_module(VkDevice device, const char* file_name)
 	createInfo.pCode = (const uint32_t*)shader_bytes.value2; 		//convert from char* to uint32_t* 
 	VkShaderModule shaderModule;
 	vkCreateShaderModule(device, &createInfo, NULL, &shaderModule); 
-	return shaderModule;
+	CALLTRACE_RETURN(shaderModule);
 }
 
-tuple_t(uint32_t, pVkImage_t) vk_get_images(VkDevice device, VkSwapchainKHR swapchain)
+function_signature(tuple_t(uint32_t,  pVkImage_t), vk_get_images, VkDevice device, VkSwapchainKHR swapchain)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkImage_t) pair; 
 	vkCall(vkGetSwapchainImagesKHR(device, swapchain, &(pair.value1), NULL)); 
 	pair.value2 = heap_newv(VkImage, pair.value1); 
 	vkCall(vkGetSwapchainImagesKHR(device, swapchain, &(pair.value1), pair.value2)); 
-	return pair;
+	CALLTRACE_RETURN(pair);
 }
 
-tuple_t(uint32_t, pVkImageView_t) vk_get_image_views(VkDevice device, VkFormat format, uint32_t imageCount, VkImage* images)
+function_signature(tuple_t(uint32_t,  pVkImageView_t), vk_get_image_views, VkDevice device, VkFormat format, uint32_t imageCount, VkImage* images)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkImageView_t) imageViews  =  { imageCount, heap_newv(VkImageView, imageCount) }; 
 	for(uint32_t i = 0; i < imageCount; i++)
 	{
@@ -444,20 +474,22 @@ tuple_t(uint32_t, pVkImageView_t) vk_get_image_views(VkDevice device, VkFormat f
 		createInfo.subresourceRange.layerCount = 1;
 		vkCall(vkCreateImageView(device, &createInfo, NULL, &ref(VkImageView, imageViews.value2, i)));
 	}
-	return imageViews;
+	CALLTRACE_RETURN(imageViews);
 }
 
-uint32_t vk_get_graphics_queue_family_index(VkPhysicalDevice physicalDevice)
+function_signature(uint32_t, vk_get_graphics_queue_family_index, VkPhysicalDevice physicalDevice)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkQueueFamilyProperties_t) queueFamilyProperites = vk_get_queue_family_properties(physicalDevice);
 	for(uint32_t i = 0; i < queueFamilyProperites.value1; i++)
 		if(ref(VkQueueFamilyProperties, queueFamilyProperites.value2, i).queueFlags & VK_QUEUE_GRAPHICS_BIT)
-			return i;
-	return UINT32_MAX;
+			CALLTRACE_RETURN(i);
+	CALLTRACE_RETURN(UINT32_MAX);
 }
 
-VkDevice vk_get_device(VkPhysicalDevice physicalDevice)
+function_signature(VkDevice, vk_get_device, VkPhysicalDevice physicalDevice)
 {
+	CALLTRACE_BEGIN();
 	VkPhysicalDeviceFeatures features =  { };
 
 	float priority = 1.0f;
@@ -488,20 +520,22 @@ EXCEPTION_BLOCK
 	} ;
 	VkDevice device;
 	vkCall(vkCreateDevice(physicalDevice, &deviceCreateInfo, NULL, &device)); 
-	return device;
+	CALLTRACE_RETURN(device);
 }
 
-VkPhysicalDevice vk_get_suitable_physical_device(tuple_t(uint32_t, pVkPhysicalDevice_t) physical_devices)
+function_signature(VkPhysicalDevice, vk_get_suitable_physical_device, tuple_t(uint32_t, pVkPhysicalDevice_t) physical_devices)
 {
+	CALLTRACE_BEGIN();
 	EXCEPTION_BLOCK(
 		if(physical_devices.value1 <= 0)
 			throw_exception(VULKAN_DEVICE_NOT_FOUND);
 	);
-	return ref(VkPhysicalDevice, physical_devices.value2, 0);
+	CALLTRACE_RETURN(ref(VkPhysicalDevice, physical_devices.value2, 0));
 }
 
-bool vk_check_layer_support(tuple_t(uint32_t, ppVkChar_t) layers)
+function_signature(bool, vk_check_layer_support, tuple_t(uint32_t, ppVkChar_t) layers)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkLayerProperties_t) layer_properties = vk_get_instance_layer_properties(); 
 	for(uint32_t i = 0; i < layers.value1; i++)
 	{
@@ -515,14 +549,15 @@ bool vk_check_layer_support(tuple_t(uint32_t, ppVkChar_t) layers)
 			}
 		}
 		if(!contains)
-			return false;
+			CALLTRACE_RETURN(false);
 	}
-	return true;
+	CALLTRACE_RETURN(true);
 }
 
 
-bool vk_check_physical_device_extension_support(VkPhysicalDevice device, tuple_t(uint32_t, ppVkChar_t) extensions)
+function_signature(bool, vk_check_physical_device_extension_support, VkPhysicalDevice device, tuple_t(uint32_t, ppVkChar_t) extensions)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkExtensionProperties_t) extension_properties = vk_get_physical_device_extension_properties(device); 
 	for (uint32_t i = 0; i < extensions.value1; ++i)
 	{
@@ -536,13 +571,14 @@ bool vk_check_physical_device_extension_support(VkPhysicalDevice device, tuple_t
 			}
 		}
 		if(!contains)
-			return false;
+			CALLTRACE_RETURN(false);
 	}
-	return true;
+	CALLTRACE_RETURN(true);
 }
 
-bool vk_check_instance_extension_support(tuple_t(uint32_t, ppVkChar_t) extensions)
+function_signature(bool, vk_check_instance_extension_support, tuple_t(uint32_t, ppVkChar_t) extensions)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkExtensionProperties_t) extension_properties = vk_get_instance_extension_properties();
 	for(uint32_t i = 0; i < extensions.value1; i++)
 	{
@@ -556,13 +592,14 @@ bool vk_check_instance_extension_support(tuple_t(uint32_t, ppVkChar_t) extension
 			}
 		}
 		if(!contains)
-			return false;
+			CALLTRACE_RETURN(false);
 	}
-	return true;
+	CALLTRACE_RETURN(true);
 }
 
-VkInstance __vk_create_instance(uint32_t enabledExtensionCount, const char* const* enabledExtensionNames)
+function_signature(VkInstance, __vk_create_instance, uint32_t enabledExtensionCount, const char* const* enabledExtensionNames)
 {
+	CALLTRACE_BEGIN();
 	VkInstanceCreateInfo instance_create_info =  { };
 	instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO; 
 	instance_create_info.pNext = NULL; 
@@ -574,102 +611,114 @@ VkInstance __vk_create_instance(uint32_t enabledExtensionCount, const char* cons
 	instance_create_info.ppEnabledExtensionNames = enabledExtensionNames; 
 	VkInstance instance; 
 	vkCall(vkCreateInstance(&instance_create_info, NULL, &instance));
-	return instance;
+	CALLTRACE_RETURN(instance);
 }
 
-tuple_t(uint32_t, pVkPhysicalDevice_t) vk_get_physical_devices(VkInstance instance)
+function_signature(tuple_t(uint32_t,  pVkPhysicalDevice_t), vk_get_physical_devices, VkInstance instance)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkPhysicalDevice_t) pair;
 	vkCall(vkEnumeratePhysicalDevices(instance, &(pair.value1), NULL)); 
 	pair.value2 = (pVkPhysicalDevice_t)heap_alloc(sizeof(VkPhysicalDevice) * pair.value1);
 	vkCall(vkEnumeratePhysicalDevices(instance, &(pair.value1), pair.value2));
-	return pair;
+	CALLTRACE_RETURN(pair);
 }
 
-tuple_t(uint32_t, pVkExtensionProperties_t) vk_get_instance_extension_properties()
+function_signature_void(tuple_t(uint32_t,  pVkExtensionProperties_t), vk_get_instance_extension_properties)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkExtensionProperties_t) pair;
 	vkCall(vkEnumerateInstanceExtensionProperties(NULL, &(pair.value1), NULL));
 	pair.value2 = heap_newv(VkExtensionProperties, pair.value1);
 	vkCall(vkEnumerateInstanceExtensionProperties(NULL, &(pair.value1), pair.value2));
-	return pair;
+	CALLTRACE_RETURN(pair);
 }
 
-tuple_t(uint32_t, pVkExtensionProperties_t) vk_get_physical_device_extension_properties(VkPhysicalDevice physical_device)
+function_signature(tuple_t(uint32_t,  pVkExtensionProperties_t), vk_get_physical_device_extension_properties, VkPhysicalDevice physical_device)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkExtensionProperties_t) pair; 
 	vkCall(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &(pair.value1), NULL)); 
 	pair.value2 = heap_newv(VkExtensionProperties, pair.value1); 
 	vkCall(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &(pair.value1), pair.value2)); 
-	return pair;
+	CALLTRACE_RETURN(pair);
 }
 
-tuple_t(uint32_t, pVkLayerProperties_t) vk_get_instance_layer_properties()
+function_signature_void(tuple_t(uint32_t,  pVkLayerProperties_t), vk_get_instance_layer_properties)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkLayerProperties_t) pair; 
 	vkCall(vkEnumerateInstanceLayerProperties(&(pair.value1), NULL)); 
 	pair.value2 = heap_newv(VkLayerProperties, pair.value1);
 	vkCall(vkEnumerateInstanceLayerProperties(&(pair.value1), pair.value2));
-	return pair;
+	CALLTRACE_RETURN(pair);
 }
 
-VkPhysicalDeviceProperties vk_get_physical_device_properties(VkPhysicalDevice physical_device)
+function_signature(VkPhysicalDeviceProperties, vk_get_physical_device_properties, VkPhysicalDevice physical_device)
 {
+	CALLTRACE_BEGIN();
 	VkPhysicalDeviceProperties properties; 
 	vkGetPhysicalDeviceProperties(physical_device, &properties);
-	return properties;
+	CALLTRACE_RETURN(properties);
 }
 
-VkSurfaceCapabilitiesKHR vk_get_physical_device_surface_capabilities(VkPhysicalDevice physical_device, VkSurfaceKHR surface)
+function_signature(VkSurfaceCapabilitiesKHR, vk_get_physical_device_surface_capabilities, VkPhysicalDevice physical_device, VkSurfaceKHR surface)
 {
+	CALLTRACE_BEGIN();
 	VkSurfaceCapabilitiesKHR capabilities; 
 	vkCall(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities));
-	return capabilities;
+	CALLTRACE_RETURN(capabilities);
 }
 
-VkPhysicalDeviceFeatures vk_get_physical_device_features(VkPhysicalDevice physical_device)
+function_signature(VkPhysicalDeviceFeatures, vk_get_physical_device_features, VkPhysicalDevice physical_device)
 {
+	CALLTRACE_BEGIN();
 	VkPhysicalDeviceFeatures features;
 	vkGetPhysicalDeviceFeatures(physical_device, &features); 
-	return features;
+	CALLTRACE_RETURN(features);
 }
 
-VkPhysicalDeviceMemoryProperties vk_get_physical_device_memory_properties(VkPhysicalDevice physical_device)
+function_signature(VkPhysicalDeviceMemoryProperties, vk_get_physical_device_memory_properties, VkPhysicalDevice physical_device)
 {
+	CALLTRACE_BEGIN();
 	VkPhysicalDeviceMemoryProperties memory_properties;
 	vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
-	return memory_properties;
+	CALLTRACE_RETURN(memory_properties);
 }
 
-tuple_t(uint32_t, pVkQueueFamilyProperties_t) vk_get_queue_family_properties(VkPhysicalDevice physical_device)
+function_signature(tuple_t(uint32_t,  pVkQueueFamilyProperties_t), vk_get_queue_family_properties, VkPhysicalDevice physical_device)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkQueueFamilyProperties_t) pair; 
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &(pair.value1), NULL);
 	pair.value2 = heap_newv(VkQueueFamilyProperties, pair.value1); 
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &(pair.value1), pair.value2); 
-	return pair;
+	CALLTRACE_RETURN(pair);
 }
 
-tuple_t(uint32_t, pVkSurfaceFormatKHR_t) vk_get_physical_device_surface_formats(VkPhysicalDevice physical_device, VkSurfaceKHR surface)
+function_signature(tuple_t(uint32_t,  pVkSurfaceFormatKHR_t), vk_get_physical_device_surface_formats, VkPhysicalDevice physical_device, VkSurfaceKHR surface)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkSurfaceFormatKHR_t) pair;
 	vkCall(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &(pair.value1), NULL)); 
 	pair.value2 = heap_newv(VkSurfaceFormatKHR, pair.value1); 
 	vkCall(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &(pair.value1), pair.value2)); 
-	return pair;
+	CALLTRACE_RETURN(pair);
 }
 
-tuple_t(uint32_t, pVkPresentModeKHR_t) vk_get_physical_device_surface_present_modes(VkPhysicalDevice physical_device, VkSurfaceKHR surface)
+function_signature(tuple_t(uint32_t,  pVkPresentModeKHR_t), vk_get_physical_device_surface_present_modes, VkPhysicalDevice physical_device, VkSurfaceKHR surface)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkPresentModeKHR_t) pair; 
 	vkCall(vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &(pair.value1), NULL)); 
 	pair.value2 = heap_newv(VkPresentModeKHR, pair.value1); 
 	vkCall(vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &(pair.value1), pair.value2)); 
-	return pair;
+	CALLTRACE_RETURN(pair);
 }
 
-void vk_setup_validation_layers()
+function_signature_void(void, vk_setup_validation_layers)
 {
+	CALLTRACE_BEGIN();
 	EXCEPTION_BLOCK
 	(
 		if(!vk_check_layer_support((tuple_t(uint32_t, ppVkChar_t)){ 1, string_array(1, "VK_LAYER_KHRONOS_validation") }))
@@ -678,11 +727,13 @@ void vk_setup_validation_layers()
 		if(!vk_check_instance_extension_support((tuple_t(uint32_t, ppVkChar_t)) { 1, string_array(1, "My Extension") } ))
 			throw_exception(VULKAN_EXTENSION_NOT_SUPPORTED);
 	);
+	CALLTRACE_END();
 }
 
 
-void vk_dump_physical_devices(tuple_t(uint32_t, pVkPhysicalDevice_t)* physical_devices)
+function_signature(void, vk_dump_physical_devices, tuple_t(uint32_t, pVkPhysicalDevice_t)* physical_devices)
 {
+	CALLTRACE_BEGIN();
 	for(uint32_t i = 0; i < physical_devices->value1; i++)
 	{
 		VkPhysicalDevice device = ref(VkPhysicalDevice, physical_devices->value2, i);
@@ -699,31 +750,35 @@ void vk_dump_physical_devices(tuple_t(uint32_t, pVkPhysicalDevice_t)* physical_d
 	}
 }
 
-void vk_dump_queue_families(tuple_t(uint32_t, pVkQueueFamilyProperties_t)* queue_families)
+function_signature(void, vk_dump_queue_families, tuple_t(uint32_t, pVkQueueFamilyProperties_t)* queue_families)
 {
+	CALLTRACE_BEGIN();
 	puts("Physical Device Queue Family::QueueFlags---------");
 	for(uint32_t i = 0; i < queue_families->value1; i++)
 		puts(vk_physical_device_queue_family_to_string(ref(VkQueueFamilyProperties, queue_families->value2, i)));
 }
 
-void vk_dump_instance_layers()
+function_signature_void(void, vk_dump_instance_layers)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkLayerProperties_t) layer_properties = vk_get_instance_layer_properties();
 	puts("Instance Layer Properties----------------------"); 
 	for(uint32_t i = 0; i < layer_properties.value1; i++)
 		puts(ref(VkLayerProperties, layer_properties.value2, i).layerName);
 }
 
-void vk_dump_instance_extensions()
+function_signature_void(void, vk_dump_instance_extensions)
 {
+	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkExtensionProperties_t) extension_properties = vk_get_instance_extension_properties();
 	puts("Instance Extension Properties----------------------");
 	for(uint32_t i = 0; i < extension_properties.value1; i++)
 		puts(ref(VkExtensionProperties, extension_properties.value2, i).extensionName);
 }
 
-void vk_dump_physical_device_extensions(VkPhysicalDevice* physicalDevice)
+function_signature(void, vk_dump_physical_device_extensions, VkPhysicalDevice* physicalDevice)
 {
+	CALLTRACE_BEGIN();
 	log_msg("Physical Device Extensions-----------------------");
 	tuple_t(uint32_t, pVkExtensionProperties_t) extensions = vk_get_physical_device_extension_properties(*physicalDevice);
 	for(uint32_t i = 0; i < extensions.value1; i++)
@@ -731,8 +786,9 @@ void vk_dump_physical_device_extensions(VkPhysicalDevice* physicalDevice)
 }
 
 
-const char* vk_physical_device_queue_family_to_string(VkQueueFamilyProperties properties)
+function_signature(const char*,  vk_physical_device_queue_family_to_string, VkQueueFamilyProperties properties)
 {
+	CALLTRACE_BEGIN();
 	char* buffer = heap_newv(char, 1024);		//1KB
 	sprintf(buffer, "Queue Count: %u, ", properties.queueCount);
 	strcat(buffer, "Queue Flags: ");
@@ -745,20 +801,22 @@ const char* vk_physical_device_queue_family_to_string(VkQueueFamilyProperties pr
 	strcat(buffer, ", ");
 	VkExtent3D extents = properties.minImageTransferGranularity;
 	sprintf(buffer + strlen(buffer), "minImageTransferGranularity: (%u, %u, %u)", extents.width, extents.height, extents.depth);
-	return buffer;
+	CALLTRACE_RETURN(buffer);
 }
 
-const char* vk_physical_device_memory_properties_to_string(VkPhysicalDeviceMemoryProperties* memory_properties)
+function_signature(const char*,  vk_physical_device_memory_properties_to_string, VkPhysicalDeviceMemoryProperties* memory_properties)
 {
-	return string(128, 
+	CALLTRACE_BEGIN();
+	CALLTRACE_RETURN(string(128, 
 		"Memory Type Count: %u\n", 
 		memory_properties->memoryTypeCount
-		);
+		));
 }
 
-const char* vk_physical_device_limits_to_string(VkPhysicalDeviceLimits* device_limits)
+function_signature(const char*,  vk_physical_device_limits_to_string, VkPhysicalDeviceLimits* device_limits)
 {
-	return string(512, 
+	CALLTRACE_BEGIN();
+	CALLTRACE_RETURN(string(512, 
 		"Max Image Dimension 1D [width]: %u\n"
 		"Max Image Dimension 2D max(width, height): %u\n"
 		"Max Image Dimension 3D max(width, height, depth): %u\n"
@@ -781,13 +839,14 @@ const char* vk_physical_device_limits_to_string(VkPhysicalDeviceLimits* device_l
 		// device_limits->sparseAddressSpaceSize, 
 		// device_limits->maxBoundDescriptorSets,
 		// device_limits->maxPerStageDescriptorSampler,
-		);
+		));
 }
 
-const char* vk_physical_device_features_to_string(VkPhysicalDeviceFeatures* device_features)
+function_signature(const char*,  vk_physical_device_features_to_string, VkPhysicalDeviceFeatures* device_features)
 {
+	CALLTRACE_BEGIN();
 	//2KB of memory
-	return string(2048,
+	CALLTRACE_RETURN(string(2048,
 	"robustBufferAccess = %s\n"
     "fullDrawIndexUint32 = %s\n"
     "imageCubeArray = %s\n"
@@ -897,31 +956,34 @@ const char* vk_physical_device_features_to_string(VkPhysicalDeviceFeatures* devi
     ,string_bool(device_features->sparseResidency16Samples)
     ,string_bool(device_features->sparseResidencyAliased)
     ,string_bool(device_features->variableMultisampleRate)
-    ,string_bool(device_features->inheritedQueries));
+    ,string_bool(device_features->inheritedQueries)));
 }
 
-const char* vk_physical_device_type_to_string(VkPhysicalDeviceType *device_type)
+#define vk_physical_device_limits_to_string(...) define_alias_function_macro(vk_physical_device_limits_to_string, __VA_ARGS__)
+function_signature(const char*,  vk_physical_device_type_to_string, VkPhysicalDeviceType *device_type)
 {
+	CALLTRACE_BEGIN();
 	switch(*device_type)
 	{
 		case VK_PHYSICAL_DEVICE_TYPE_OTHER: 
-			return "VK_PHYSICAL_DEVICE_TYPE_OTHER";
+			CALLTRACE_RETURN("VK_PHYSICAL_DEVICE_TYPE_OTHER");
 		case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-			return "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU";
+			CALLTRACE_RETURN("VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU");
 		case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: 
-			return "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU";
+			CALLTRACE_RETURN("VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU");
 		case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-			return "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU";
+			CALLTRACE_RETURN("VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU");
 		case VK_PHYSICAL_DEVICE_TYPE_CPU:
-			return "VK_PHYSICAL_DEVICE_TYPE_CPU";
+			CALLTRACE_RETURN("VK_PHYSICAL_DEVICE_TYPE_CPU");
 		default: 
-			return "(Unknown)";
+			CALLTRACE_RETURN("(Unknown)");
 	}
 }
 
-const char* vk_physical_device_properties_to_string(VkPhysicalDeviceProperties* properties)
+function_signature(const char*,  vk_physical_device_properties_to_string, VkPhysicalDeviceProperties* properties)
 {
-	return string(1024,
+	CALLTRACE_BEGIN();
+	CALLTRACE_RETURN(string(1024,
 			"API Version: %d\n"
 			"Driver Version: %d\n"
 			"Vendor ID: %d\n"
@@ -938,5 +1000,5 @@ const char* vk_physical_device_properties_to_string(VkPhysicalDeviceProperties* 
 			properties->deviceName,
 			vk_physical_device_type_to_string(&(properties->deviceType)),
 			properties->pipelineCacheUUID,
-			vk_physical_device_limits_to_string(&(properties->limits)));
+			vk_physical_device_limits_to_string(&(properties->limits))));
 }
