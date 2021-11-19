@@ -27,6 +27,9 @@ digraph VulkanRenderer
 	#include <CallTrace.gv>
 	#undef digraph
 
+	#define digraph subgraph
+	#include <MeshLib.gv>
+	#undef digraph
 
 	HPML -> VulkanRenderer;
 	SafeMemory -> VulkanRenderer;
@@ -34,4 +37,5 @@ digraph VulkanRenderer
 	tgc -> VulkanRenderer;
 	BufferLib -> VulkanRenderer;
 	CallTrace -> VulkanRenderer;
+	MeshLib -> VulkanRenderer;
 }
