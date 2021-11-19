@@ -17,8 +17,8 @@ DYNAMIC_LIB_NAME = #vulkanrenderer.dll
 EXECUTABLE_NAME = main.exe
 EXTERNAL_LIBRARIES = -L.\external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32
 EXTERNAL_INCLUDES = -I.\include\engine -I./dependencies/ -I./shared-dependencies
-DEPENDENCIES = HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem
-DEPENDENCY_LIBS = HPML/lib/hpml.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a SafeMemory/lib/safemem.a tgc/lib/tgc.a
+DEPENDENCIES = MeshLib HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem
+DEPENDENCY_LIBS = MeshLib/lib/meshlib.a HPML/lib/hpml.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a SafeMemory/lib/safemem.a tgc/lib/tgc.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS = BufferLib/lib/bufferlib.a
@@ -180,6 +180,7 @@ bin-clean:
 	$(MAKE) --directory=./dependencies/HPML clean
 	$(MAKE) --directory=./dependencies/tgc clean
 	$(MAKE) --directory=./dependencies/SafeMemory clean
+	$(MAKE) --directory=./dependencies/MeshLib clean
 	$(MAKE) --directory=./shared-dependencies/BufferLib clean
 #-------------------------------------------
 

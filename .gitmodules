@@ -16,3 +16,6 @@
 [submodule "dependencies/TemplateSystem"]
 	path = dependencies/TemplateSystem
 	url = https://github.com/ravi688/TemplateSystem.git
+[submodule "dependencies/MeshLib"]
+	path = dependencies/MeshLib
+	url = https://github.com/ravi688/MeshLib.git
