@@ -156,7 +156,7 @@ function_signature(void, vk_dump_physical_device_extensions, VkPhysicalDevice* p
 
 #define __vk_create_instance(...) define_alias_function_macro(__vk_create_instance, __VA_ARGS__)
 
-#define vk_setup_validation_layers(...) define_alias_function_void_macro(vk_setup_validation_layers);
+#define vk_setup_validation_layers(...) define_alias_function_void_macro(vk_setup_validation_layers)
 #define vk_get_physical_devices(...) define_alias_function_macro(vk_get_physical_devices, __VA_ARGS__)
 #define vk_get_instance_extension_properties(...) define_alias_function_void_macro(vk_get_instance_extension_properties)
 #define vk_get_physical_device_extension_properties(...) define_alias_function_macro(vk_get_physical_device_extension_properties, __VA_ARGS__)
