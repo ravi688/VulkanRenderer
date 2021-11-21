@@ -511,6 +511,7 @@ void renderer_terminate(renderer_t* renderer)
 	vkDestroyInstance(renderer->vk_instance, NULL);
 
 	render_window_destroy(renderer->window);
+	heap_free(renderer);
 	memory_allocator_terminate();
 }
 

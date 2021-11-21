@@ -3,6 +3,7 @@
 #include <debug.h>
 #include <exception/exception.h>
 #include <memory_allocator/memory_allocator.h>
+#include <tuple/header_config.h>
 #include <tuple/tuple.h>
 #include <stdio.h>
 
@@ -66,6 +67,7 @@ void render_window_destroy(render_window_t* window)
 {
 	glfwDestroyWindow(window->handle);
 	glfwTerminate();
+	heap_free(window);
 }
 
 void __render_window_set_resize_callback(render_window_t* window, void (*callback)(void* window))
