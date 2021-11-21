@@ -1,6 +1,5 @@
 //TODO: Write a numeric type conversion warning systme; because of this printf("%u", <float> value) => outputs zero if <float> value < 1
 
-#include <engine/renderer/renderer.h>
 #include <exception/exception.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,6 +7,9 @@
 #include <stdbool.h>
 #include <string/string.h>		//custom string library
 #include <string.h>				//standard string library
+
+#include <renderer/renderer.h>
+#include <renderer/render_window.h>
 
 #include <memory_allocator/memory_allocator.h>
 #include <vulkan/vulkan_wrapper.h>
@@ -93,6 +95,8 @@ typedef struct renderer_t
 	uint32_t width; 
 	uint32_t height;
 
+	render_window_t* window;
+
 	VkInstance vk_instance;
 	VkPhysicalDevice vk_physical_device;
 	VkDevice vk_device;
@@ -138,11 +142,6 @@ instantiate_array_struct(VkFormat);
 instantiate_declaration_array(VkFormat);
 instantiate_implementation_array(VkFormat);
 
-void* renderer_get_vulkan_instance(renderer_t* renderer) { return (void*)(&(renderer->vk_instance)); }
-void* renderer_get_vulkan_device(renderer_t* renderer) { return (void*)(&(renderer->vk_device)); }
-void* renderer_get_vulkan_surface(renderer_t* renderer) { return (void*)(&(renderer->vk_surface)); }
-void* renderer_get_vulkan_swapchain(renderer_t* renderer) { return (void*)(&(renderer->vk_swapchain)); }
-
 vec3_t(float) vec4_vec3(vec4_t(float) v)
 {
 	if(v.w == 0)
@@ -182,17 +181,34 @@ static vertex2d_t* foreach_vertex3d(u32 count, vertex3d_t* vertices, mat4_t(floa
 	return vertices2d;
 }
 
+static void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_width, uint32_t screen_height);
+static void renderer_on_window_resize(render_window_t* window);
+static void renderer_destroy_swapchain(renderer_t* renderer);
+static void renderer_create_swapchain(renderer_t* renderer);
+static void* renderer_get_vulkan_instance(renderer_t* renderer) { return (void*)(&(renderer->vk_instance)); }
+static void* renderer_get_vulkan_device(renderer_t* renderer) { return (void*)(&(renderer->vk_device)); }
+static void* renderer_get_vulkan_surface(renderer_t* renderer) { return (void*)(&(renderer->vk_surface)); }
+static void* renderer_get_vulkan_swapchain(renderer_t* renderer) { return (void*)(&(renderer->vk_swapchain)); }
+
+
 //TODO: Wrapp this physical device selection & creation of logical device into a single function
-renderer_t* renderer_init()
+renderer_t* renderer_init(u32 width, u32 height, const char* title)
 {
+	memory_allocator_init(&width);
 	renderer_t* renderer = heap_new(renderer_t);
 	renderer->vk_instance = vk_create_instance(); 
 	renderer->vk_physical_device = vk_get_suitable_physical_device(vk_get_physical_devices(renderer->vk_instance));
 	renderer->vk_device = vk_get_device(renderer->vk_physical_device);
+	renderer->window = render_window_init(width, height, title);
+	renderer->window->user_data = renderer;
+	render_window_set_resize_callback(renderer->window, renderer_on_window_resize);
+	VkSurfaceKHR surface;
+	render_window_get_vulkan_surface(renderer->window, &(renderer->vk_instance), &surface);
+	renderer_init_surface(renderer, &surface, width, width);
 	return renderer;
 }
 
-void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_width, uint32_t screen_height)
+static void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_width, uint32_t screen_height)
 {
 	//Surfaces and Swapchains
 	renderer->vk_surface = *((VkSurfaceKHR*)surface);
@@ -226,8 +242,8 @@ void renderer_init_surface(renderer_t* renderer, void* surface, uint32_t screen_
 	renderer->vk_graphics_queue = vk_get_device_queue(renderer->vk_device, vk_get_graphics_queue_family_index(renderer->vk_physical_device), 0);
 
 	//Graphics Pipeline
-	renderer->vk_vertex_shader_module = vk_get_shader_module(renderer->vk_device, "shaders/vertexShader.vert");
-	renderer->vk_fragment_shader_module = vk_get_shader_module(renderer->vk_device, "shaders/fragmentShader.frag");
+	renderer->vk_vertex_shader_module = vk_get_shader_module(renderer->vk_device, "shaders/vertexShader.spv");
+	renderer->vk_fragment_shader_module = vk_get_shader_module(renderer->vk_device, "shaders/fragmentShader.spv");
 	
 	renderer->vk_pipeline_layout = vk_get_pipeline_layout(renderer->vk_device);
 	renderer->vk_shader_stages.value1 = 2;
@@ -462,17 +478,49 @@ void renderer_update(renderer_t* renderer)
 	};
 
 	vkQueuePresentKHR(renderer->vk_graphics_queue, &presentInfo);
+
+	render_window_poll_events(renderer->window);
 }
 
-static void renderer_destroy_swapchain(renderer_t* renderer);
-static void renderer_create_swapchain(renderer_t* renderer);
-
-void renderer_on_window_resize(renderer_t* renderer, u32 width, u32 height)
+bool renderer_is_running(renderer_t* renderer)
 {
-	log_msg("Window is resized: %u, %u\n", width, height);
+	return !render_window_should_close(renderer->window);
+}
+
+void renderer_terminate(renderer_t* renderer)
+{
+	renderer_destroy_swapchain(renderer);
+	vkDestroySurfaceKHR(renderer->vk_instance, renderer->vk_surface, NULL);
+	vkDestroyShaderModule(renderer->vk_device, renderer->vk_vertex_shader_module, NULL);
+	vkDestroyShaderModule(renderer->vk_device, renderer->vk_fragment_shader_module, NULL);
+
+	
+
+	vkFreeMemory(renderer->vk_device, renderer->vk_vertex_memory, NULL);
+	vkFreeMemory(renderer->vk_device, renderer->vk_index_memory, NULL);
+	vkDestroyBuffer(renderer->vk_device, renderer->vk_vertex_buffer, NULL);
+	vkDestroyBuffer(renderer->vk_device, renderer->vk_index_buffer, NULL);
+	
+	vkDestroySemaphore(renderer->vk_device, renderer->vk_render_finished_semaphore, NULL);
+	vkDestroySemaphore(renderer->vk_device, renderer->vk_image_available_semaphore, NULL);
+
+	vkDestroyCommandPool(renderer->vk_device, renderer->vk_command_pool, NULL);
+
+	//Instance and Device are destroyed at last
+	vkDestroyDevice(renderer->vk_device, NULL);
+	vkDestroyInstance(renderer->vk_instance, NULL);
+
+	render_window_destroy(renderer->window);
+	memory_allocator_terminate();
+}
+
+static void renderer_on_window_resize(render_window_t* window)
+{
+	renderer_t* renderer = window->user_data;
+	log_msg("Window is resized: %u, %u\n", window->width, window->height);
 	renderer_destroy_swapchain(renderer); 
-	renderer->width = width;
-	renderer->height = height;
+	renderer->width = window->width;
+	renderer->height = window->height;
 	renderer_create_swapchain(renderer);
 }
 
@@ -589,26 +637,3 @@ static void renderer_create_swapchain(renderer_t* renderer)
 	}
 }
 
-void renderer_terminate(renderer_t* renderer)
-{
-	renderer_destroy_swapchain(renderer);
-	vkDestroySurfaceKHR(renderer->vk_instance, renderer->vk_surface, NULL);
-	vkDestroyShaderModule(renderer->vk_device, renderer->vk_vertex_shader_module, NULL);
-	vkDestroyShaderModule(renderer->vk_device, renderer->vk_fragment_shader_module, NULL);
-
-	
-
-	vkFreeMemory(renderer->vk_device, renderer->vk_vertex_memory, NULL);
-	vkFreeMemory(renderer->vk_device, renderer->vk_index_memory, NULL);
-	vkDestroyBuffer(renderer->vk_device, renderer->vk_vertex_buffer, NULL);
-	vkDestroyBuffer(renderer->vk_device, renderer->vk_index_buffer, NULL);
-	
-	vkDestroySemaphore(renderer->vk_device, renderer->vk_render_finished_semaphore, NULL);
-	vkDestroySemaphore(renderer->vk_device, renderer->vk_image_available_semaphore, NULL);
-
-	vkDestroyCommandPool(renderer->vk_device, renderer->vk_command_pool, NULL);
-
-	//Instance and Device are destroyed at last
-	vkDestroyDevice(renderer->vk_device, NULL);
-	vkDestroyInstance(renderer->vk_instance, NULL);
-}

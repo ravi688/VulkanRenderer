@@ -1,4 +1,4 @@
-#include <engine/material.h>
+#include <renderer/material.h>
 #include <debug.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +28,7 @@ material_t* material_new(char* name)
 	if(name != NULL)
 		strcpy(material->name, name);
 	else strcpy(material->name, "Untitled");
-	log_msg("material_t is created");
+	log_msg("material_t is created\n");
 	return material;
 }
 
@@ -42,5 +42,5 @@ void material_destroy(material_t* material)
 	material->color.b = 0.0f;
 	material->color.a = 0.0f;
 	free(material);
-	log_msg("material_t destroyed");
+	log_msg("material_t destroyed\n");
 }
