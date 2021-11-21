@@ -204,7 +204,7 @@ renderer_t* renderer_init(u32 width, u32 height, const char* title)
 	render_window_set_resize_callback(renderer->window, renderer_on_window_resize);
 	VkSurfaceKHR surface;
 	render_window_get_vulkan_surface(renderer->window, &(renderer->vk_instance), &surface);
-	renderer_init_surface(renderer, &surface, width, width);
+	renderer_init_surface(renderer, &surface, width, height);
 	return renderer;
 }
 

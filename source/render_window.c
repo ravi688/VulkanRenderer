@@ -43,6 +43,8 @@ render_window_t* render_window_init(u32 width, u32 height, const char* title)
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	window->handle = glfwCreateWindow(width, height, title, NULL, NULL);
+	glfwSetFramebufferSizeCallback(window->handle, glfwOnWindowResizeCallback);
+	glfwSetWindowUserPointer(window->handle, window);
 	window->width = width;
 	window->height = height;
 	window->resize_callback = NULL;
@@ -77,7 +79,7 @@ void render_window_get_vulkan_surface(render_window_t* window, void* vk_instance
 	VkInstance instance;
 	memcpy(&instance, vk_instance, sizeof(VkInstance));
 	surface = glfw_get_vulkan_surface(window->handle, instance);
-	memcpy(out_surface, &surface, sizeof(surface));
+	memcpy(out_surface, &surface, sizeof(VkSurfaceKHR));
 }
 
 static void glfw_dump_required_extensions()
