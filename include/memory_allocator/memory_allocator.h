@@ -40,6 +40,7 @@
 #	define stack_array(type, count, ...)  safe_array(type)(checked_alloca(sizeof(type) * (count)), (count), __VA_ARGS__)
 #	define heap_array(type, count, ...)  safe_array(type)(checked_malloc(sizeof(type) * (count)), (count), __VA_ARGS__)
 #	define ref(type, validPtr, index) checked_ref(type, validPtr, index)
+#   define refp(type, validPtr, index) checked_refp(type, validPtr, index)
 #   define instantiate_stack_array(type) instantiate_declaration_safe_array(type); instantiate_implementation_safe_array(type)
 #endif
 
@@ -61,6 +62,7 @@
 #	define stack_array(type, count, ...) memory_allocator_array(type)(checked_alloca(sizeof(type) * (count)), (count), __VA_ARGS__)
 #	define heap_array(type, count, ...) memory_allocator_array(type)(checked_malloc(sizeof(type) * (count)), (count), __VA_ARGS__)
 #	define ref(type, validPtr, index) validPtr[index]
+#   define refp(type, validPtr, index) (&validPtr[index])
 #   define instantiate_stack_array(type)
 #endif
 
@@ -76,6 +78,7 @@
 #   define stack_array(type, count, ...) memory_allocator_array(type)(checked_alloca(sizeof(type) * (count)), (count), __VA_ARGS__)
 #   define heap_array(type, count, ...) memory_allocator_array(type)(checked_malloc(sizeof(type) * (count)), (count), __VA_ARGS__)
 #	define ref(type, validPtr, index) validPtr[index]
+#   define refp(type, validPtr, index) (&validPtr[index])
 #   define instantiate_stack_array(type)
 #endif
 
