@@ -1,46 +1,22 @@
+
+
 #include <renderer/material.h>
-#include <debug.h>
-#include <stdlib.h>
-#include <string.h>
+#include <renderer/shader.h>
 
-void material_set_color4(material_t* material, float r, float g, float b, float a)
-{
-	ensure_material_is_not_NULL();
-	ensure_passed_value_is_material();
-	color_assign(&(material->color), r, g, b, a);
-}
+#include <memory_allocator/memory_allocator.h>
 
-void material_set_color(material_t* material, color_t* color)
+typedef struct material_t
 {
-	ensure_material_is_not_NULL();
-	ensure_passed_value_is_material();
-	color_assign(&(material->color), color->r, color->g, color->b, color->a);
-} 
+	shader_t* shader;
+} material_t;
 
-material_t* material_new(char* name)
+material_t* material_new(renderer_t* renderer)
 {
-	material_t* material = (material_t*)malloc(sizeof(material_t));
-	material->id = Material_TYPE_ID;
-	material->color.r = 0.0f;
-	material->color.g = 0.0f; 
-	material->color.b = 0.0f;
-	material->color.a = 0.0f; 
-	if(name != NULL)
-		strcpy(material->name, name);
-	else strcpy(material->name, "Untitled");
-	log_msg("material_t is created\n");
+	material_t* material = heap_new(material_t);
 	return material;
 }
 
-void material_destroy(material_t* material)
+void material_destroy(renderer_t* renderer, material_t* material)
 {
-	ensure_material_is_not_NULL();
-	ensure_passed_value_is_material();
-	material->id = -1;
-	material->color.r = 0.0f;
-	material->color.g = 0.0f; 
-	material->color.b = 0.0f;
-	material->color.a = 0.0f;
-	free(material);
-	log_msg("material_t destroyed\n");
+	heap_free(material);
 }

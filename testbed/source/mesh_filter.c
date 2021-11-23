@@ -1,5 +1,5 @@
 #include <mesh_filter.h>
-#include <debug.h>
+#include <renderer/debug.h>
 
 OnInstantiate(mesh_filter_t,
 	BindOnDestroy(mesh_filter_t);

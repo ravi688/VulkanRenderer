@@ -24,8 +24,10 @@ int main(int argc, char** argv)
 	{
 		//TODO: updates for each entity should run on separate thread -> main thread
 		scene_manager_for_each_objects_in_all_scenes(scene_manager, object_call_update);
-		
+
+		scene_manager_for_each_objects_in_all_scenes(scene_manager, object_call_on_pre_render);
 		renderer_update(renderer);
+		scene_manager_for_each_objects_in_all_scenes(scene_manager, object_call_on_post_render);
 	}
 	renderer_terminate(renderer);
 	

@@ -1,7 +1,7 @@
 
 #pragma once
-#include <stdbool.h>
-#include <defines.h>
+
+#include <renderer/defines.h>
 
 typedef struct renderer_t renderer_t;
 

@@ -1,6 +1,7 @@
 
 #include <renderer/render_window.h>
-#include <debug.h>
+#include <renderer/debug.h>
+
 #include <exception/exception.h>
 #include <memory_allocator/memory_allocator.h>
 #include <tuple/header_config.h>

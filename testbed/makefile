@@ -173,7 +173,7 @@ $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB)
 	@echo [Log] $(PROJECT_NAME) built successfully!
 
 bin-clean: 
-	del $(addprefix source\, $(notdir $(OBJECTS)))
+	del $(subst /,\ $(OBJECTS)))
 	del $(__EXECUTABLE_NAME)
 	del $(subst /,\, $(TARGET_STATIC_LIB))
 	rmdir $(subst /,\, $(TARGET_STATIC_LIB_DIR))

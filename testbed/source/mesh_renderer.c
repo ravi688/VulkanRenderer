@@ -1,5 +1,5 @@
 #include <mesh_renderer.h>
-#include <debug.h>
+#include <renderer/debug.h>
 
 OnInstantiate(mesh_renderer_t,	
 	BindOnDestroy(mesh_renderer_t); 
@@ -24,9 +24,9 @@ OnStart(mesh_renderer_t,
 )
 
 OnUpdate(mesh_renderer_t, 
-	// log_msg("OnUpdate\n");
+
 )
 
 OnPreRender(mesh_renderer_t, 
-	log_msg("OnPreRender\n");
+
 )

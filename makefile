@@ -103,7 +103,7 @@ DEPENDENCY_INCLUDES = $(addsuffix /include, $(__DEPENDENCIES))
 SHARED_DEPENDENCY_INCLUDES = $(addsuffix /include, $(__SHARED_DEPENDENCIES))
 
 INCLUDES= -I./include $(EXTERNAL_INCLUDES) $(addprefix -I, $(DEPENDENCY_INCLUDES) $(SHARED_DEPENDENCY_INCLUDES))
-SOURCES= $(wildcard source/*.c)
+SOURCES= $(wildcard source/*.c source/*/*.c source/*/*/*.c)
 OBJECTS= $(addsuffix .o, $(basename $(SOURCES)))
 LIBS = $(EXTERNAL_LIBRARIES)
 
@@ -172,7 +172,7 @@ $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB)
 	@echo [Log] $(PROJECT_NAME) built successfully!
 
 bin-clean: 
-	del $(addprefix source\, $(notdir $(OBJECTS)))
+	del $(subst /,\ $(OBJECTS))
 	del $(__EXECUTABLE_NAME)
 	del $(subst /,\, $(TARGET_STATIC_LIB))
 	rmdir $(subst /,\, $(TARGET_STATIC_LIB_DIR))

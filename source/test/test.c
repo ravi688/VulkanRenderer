@@ -2,13 +2,14 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan_wrapper.h>
-#include <debug.h>
+#include <renderer/debug.h>
 #include <string/string.h>
 #include <garbage_collector/garbage_collector.h>
+
+#include <memory_allocator/memory_allocator.h>
 #include <array/header_config.h>
 #include <array/array.h>
-#include <utilities/file_utility.h>
-#include <defines.h>
+#include <renderer/defines.h>
 
 #define BIT(flag, bit) ((flag & bit) == bit)
 

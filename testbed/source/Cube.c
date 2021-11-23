@@ -1,9 +1,9 @@
 #include <Cube.h>
-#include <ecs/object.h>
-
 #include <mesh_filter.h>
 #include <mesh_renderer.h>
-#include <debug.h>
+
+#include <renderer/debug.h>
+#include <ecs/object.h>
 
 
 OnInstantiate(Cube, 

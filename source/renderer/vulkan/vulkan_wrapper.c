@@ -1,5 +1,5 @@
 
-
+#include <renderer/debug.h>
 #include <vulkan/vulkan_wrapper.h>
 #include <exception/exception.h>
 #include <stdlib.h>
@@ -9,8 +9,7 @@
 #include <string/string.h>		//custom string library
 #include <string.h>				//standard string library
 #include <memory_allocator/memory_allocator.h>
-#include <utilities/file_utility.h>
-#include <debug.h>
+#include <disk_manager/file_reader.h>
 
 define_exception(VULKAN_ABORTED);
 define_exception(VULKAN_LAYER_NOT_SUPPORTED);
@@ -432,13 +431,14 @@ function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage
 function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, const char* file_name)
 {
 	CALLTRACE_BEGIN();
-	tuple_t(uint64_t, pchar_t) shader_bytes = load_binary_from_file(file_name);
+	BUFFER* shader_bytes = load_binary_from_file(file_name);
 	VkShaderModuleCreateInfo createInfo = {}; 
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO; 
-	createInfo.codeSize = shader_bytes.value1;
-	createInfo.pCode = (const uint32_t*)shader_bytes.value2; 		//convert from char* to uint32_t* 
+	createInfo.codeSize = shader_bytes->element_count;
+	createInfo.pCode = (const uint32_t*)shader_bytes->bytes; 		//convert from char* to uint32_t*
 	VkShaderModule shaderModule;
 	vkCreateShaderModule(device, &createInfo, NULL, &shaderModule); 
+	buf_free(shader_bytes);
 	CALLTRACE_RETURN(shaderModule);
 }
 

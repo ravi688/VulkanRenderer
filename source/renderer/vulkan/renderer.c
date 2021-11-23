@@ -1,6 +1,11 @@
 //TODO: Write a numeric type conversion warning systme; because of this printf("%u", <float> value) => outputs zero if <float> value < 1
 
-#include <exception/exception.h>
+#include <renderer/renderer.h>
+#include <renderer/render_window.h>
+#include <renderer/debug.h>
+#include <renderer/defines.h>
+#include <renderer/internal/vulkan.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -8,19 +13,14 @@
 #include <string/string.h>		//custom string library
 #include <string.h>				//standard string library
 
-#include <renderer/renderer.h>
-#include <renderer/render_window.h>
 
 #include <memory_allocator/memory_allocator.h>
 #include <vulkan/vulkan_wrapper.h>
 
 #include <exception/exception.h>
-#include <debug.h>
 
 #include <array/header_config.h>
 #include <array/array.h>
-
-#include <defines.h>
 
 #include <math.h>
 
@@ -87,55 +87,6 @@ instantiate_stack_array(VkPipelineShaderStageCreateInfo);
 
 typedef vertex2d_t* pvertex_t;
 instantiate_tuple_t(uint32_t, pvertex_t);
-typedef VkPipelineShaderStageCreateInfo* pVkPipelineShaderStageCreateInfo;
-instantiate_tuple_t(u32, pVkPipelineShaderStageCreateInfo);
-
-typedef struct renderer_t
-{
-	uint32_t width; 
-	uint32_t height;
-
-	render_window_t* window;
-
-	VkInstance vk_instance;
-	VkPhysicalDevice vk_physical_device;
-	VkDevice vk_device;
-	VkQueue vk_graphics_queue; 
-	VkSurfaceKHR vk_surface;
-	VkSwapchainKHR vk_swapchain;
-	uint32_t vk_graphics_queue_index;
-	tuple_t(uint32_t, pVkImage_t) vk_images;
-	tuple_t(uint32_t, pVkImageView_t) vk_image_views;
-	tuple_t(uint32_t, pVkFramebuffer_t) vk_framebuffers;
-	tuple_t(uint32_t, pVkCommandBuffer_t) vk_command_buffers;
-	tuple_t(u32, pVkPipelineShaderStageCreateInfo) vk_shader_stages;
-	VkFormat vk_format; 
-	VkExtent2D vk_extent;
-	VkPipelineLayout vk_pipeline_layout;
-	VkRenderPass vk_render_pass;
-	VkPipeline vk_pipeline;
-	VkCommandPool vk_command_pool;
-	VkSemaphore vk_image_available_semaphore;
-	VkSemaphore vk_render_finished_semaphore;
-
-	//Vertex Buffer
-	VkBuffer vk_vertex_buffer;
-	VkDeviceMemory vk_vertex_memory;
-
-	//Vertex Staging Buffer
-	VkBuffer vk_staging_buffer; 
-	VkDeviceMemory vk_staging_memory;
-
-	//Index Buffer
-	VkBuffer vk_index_buffer; 
-	VkDeviceMemory vk_index_memory;
-
-	//Shader Modules
-	VkShaderModule vk_vertex_shader_module; 
-	VkShaderModule vk_fragment_shader_module;
-
-	tuple_t(uint32_t, pvertex_t) vertices;
-} renderer_t;
 
 
 instantiate_array_struct(VkFormat); 
