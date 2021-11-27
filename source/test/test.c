@@ -360,8 +360,8 @@ int main(int argc, char** argv)
 
 	VkPipelineShaderStageCreateInfo shaderStages[2] = 
 	{
-		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/vertexShader.vert"), VERTEX_SHADER, "main"),
-		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/fragmentShader.frag"), FRAGMENT_SHADER, "main"),
+		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/vertexShader.vert"), VULKAN_SHADER_TYPE_VERTEX, "main"),
+		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/fragmentShader.frag"), VULKAN_SHADER_TYPE_FRAGMENT, "main"),
 	};
 	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
 	u32 offsets[2] = { offsetof(vertex_t, position), offsetof(vertex_t, color) };

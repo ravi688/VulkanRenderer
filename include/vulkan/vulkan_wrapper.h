@@ -54,11 +54,13 @@ instantiate_tuple_t(uint32_t, pVkSurfaceFormatKHR_t);
 typedef VkPresentModeKHR* pVkPresentModeKHR_t; 
 instantiate_tuple_t(uint32_t, pVkPresentModeKHR_t);
 
-typedef enum
+typedef enum vulkan_vulkan_shader_type_t
 {
-	VERTEX_SHADER,
-	FRAGMENT_SHADER
-} shader_type_t;
+	VULKAN_SHADER_TYPE_VERTEX,
+	VULKAN_SHADER_TYPE_FRAGMENT,
+	VULKAN_SHADER_TYPE_GEOMETRY,
+	VULKAN_SHADER_TYPE_TESSELLATION
+} vulkan_vulkan_shader_type_t;
 
 typedef VkCommandBuffer* pVkCommandBuffer_t;
 instantiate_tuple_t(uint32_t, pVkCommandBuffer_t);
@@ -91,8 +93,11 @@ function_signature(tuple_t(uint32_t, pVkQueueFamilyProperties_t), vk_get_queue_f
 function_signature(tuple_t(uint32_t, pVkSurfaceFormatKHR_t), vk_get_physical_device_surface_formats, VkPhysicalDevice physical_device, VkSurfaceKHR surface);
 function_signature(tuple_t(uint32_t, pVkPresentModeKHR_t), vk_get_physical_device_surface_present_modes, VkPhysicalDevice physical_device, VkSurfaceKHR surface);
 function_signature(tuple_t(uint32_t, pVkImage_t), vk_get_images, VkDevice device, VkSwapchainKHR swapchain);
+function_signature(void, vk_get_images_out, VkDevice device, VkSwapchainKHR swapchain, VkImage* out_images, u32 check_image_count);
 function_signature(tuple_t(uint32_t, pVkImageView_t), vk_get_image_views, VkDevice device, VkFormat format, uint32_t imageCount, VkImage* images);
+function_signature(void, vk_get_image_views_out, VkDevice device, VkFormat format, uint32_t imageCount, VkImage* images, VkImageView* out_image_views);
 function_signature(tuple_t(uint32_t, pVkFramebuffer_t), vk_get_framebuffers, VkDevice device, uint32_t count, VkRenderPass renderPasse, VkExtent2D extent, uint32_t layer, VkImageView* attachments);
+function_signature(void, vk_get_framebuffers_out, VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments, VkFramebuffer* out_framebuffers);
 function_signature(tuple_t(uint32_t, pVkCommandBuffer_t), vk_get_command_buffers, VkDevice device, VkCommandPool commandPool, uint32_t count);
 function_signature(tuple_t(uint32_t, pVkVertexInputBindingDescription_t), vk_get_vertex_input_binding_descriptions, uint32_t stride, VkVertexInputRate vertexInputRate);
 function_signature(tuple_t(uint32_t, pVkVertexInputAttributeDescription_t), vk_get_vertex_input_attribute_descriptions, uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets);
@@ -112,7 +117,7 @@ function_signature(uint32_t, vk_get_graphics_queue_family_index, VkPhysicalDevic
 function_signature(VkQueue, vk_get_device_queue, VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex);
 function_signature(VkSwapchainKHR, vk_get_swapchain, VkDevice device, VkSwapchainCreateInfoKHR* createInfo);
 function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, const char* file_name);
-function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, shader_type_t shader_type, const char* entry_point);
+function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, vulkan_vulkan_shader_type_t vulkan_shader_type, const char* entry_point);
 function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_input_state_create_info, uint32_t attributeCount, uint32_t stride, VkVertexInputRate vertexInputRate, VkFormat* attributeFormats, uint32_t* attributeOffsets);
 function_signature_void(VkPipelineInputAssemblyStateCreateInfo, vk_get_pipeline_input_assembly_state_create_info); 
 function_signature(VkPipelineViewportStateCreateInfo, vk_get_pipeline_viewport_state_create_info, uint32_t viewportWidth, uint32_t viewportHeight);
@@ -165,8 +170,11 @@ function_signature(void, vk_dump_physical_device_extensions, VkPhysicalDevice* p
 #define vk_get_physical_device_surface_formats(...) define_alias_function_macro(vk_get_physical_device_surface_formats, __VA_ARGS__)
 #define vk_get_physical_device_surface_present_modes(...) define_alias_function_macro(vk_get_physical_device_surface_present_modes, __VA_ARGS__)
 #define vk_get_images(...) define_alias_function_macro(vk_get_images, __VA_ARGS__)
+#define vk_get_images_out(...) define_alias_function_macro(vk_get_images_out, __VA_ARGS__)
 #define vk_get_image_views(...) define_alias_function_macro(vk_get_image_views, __VA_ARGS__)
+#define vk_get_image_views_out(...) define_alias_function_macro(vk_get_image_views_out, __VA_ARGS__)
 #define vk_get_framebuffers(...) define_alias_function_macro(vk_get_framebuffers, __VA_ARGS__)
+#define vk_get_framebuffers_out(...) define_alias_function_macro(vk_get_framebuffers_out, __VA_ARGS__)
 #define vk_get_command_buffers(...) define_alias_function_macro(vk_get_command_buffers, __VA_ARGS__)
 #define vk_get_vertex_input_binding_descriptions(...) define_alias_function_macro(vk_get_vertex_input_binding_descriptions, __VA_ARGS__)
 #define vk_get_vertex_input_attribute_descriptions(...) define_alias_function_macro(vk_get_vertex_input_attribute_descriptions, __VA_ARGS__)

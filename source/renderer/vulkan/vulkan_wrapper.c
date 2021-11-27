@@ -1,5 +1,6 @@
 
 #include <renderer/debug.h>
+#include <renderer/assert.h>
 #include <vulkan/vulkan_wrapper.h>
 #include <exception/exception.h>
 #include <stdlib.h>
@@ -18,6 +19,7 @@ define_exception(VULKAN_EXTENSION_NOT_SUPPORTED);
 define_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND); 
 define_exception(VULKAN_SURFACE_NOT_SUPPORTED);
 define_exception(VULKAN_PHYSICAL_DEVICE_EXTENSION_NOT_SUPPORTED);
+define_exception(VULKAN_UNSUPPORTED_SHADER_TYPE);
 
 function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties)
 {
@@ -102,24 +104,31 @@ function_signature(tuple_t(uint32_t,  pVkCommandBuffer_t), vk_get_command_buffer
 	CALLTRACE_RETURN(commandBuffers);
 }
 
-function_signature(tuple_t(uint32_t,  pVkFramebuffer_t), vk_get_framebuffers, VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments)
+function_signature(void, vk_get_framebuffers_out, VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments, VkFramebuffer* out_framebuffers)
 {
 	CALLTRACE_BEGIN();
-	tuple_t(uint32_t, pVkFramebuffer_t) framebuffers = { count, heap_newv(VkFramebuffer, count) };
 	for(uint32_t i = 0; i < count; i++)
 	{
-		VkFramebufferCreateInfo createInfo = { }; 
+		VkFramebufferCreateInfo createInfo = { };
 		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		createInfo.renderPass = renderPass;
-		createInfo.pAttachments = &attachments[i]; 
-		createInfo.attachmentCount = 1; 
-		createInfo.width = extent.width; 
+		createInfo.pAttachments = &attachments[i];
+		createInfo.attachmentCount = 1;
+		createInfo.width = extent.width;
 		createInfo.height = extent.height;
 		createInfo.layers = layer;
 		VkFramebuffer framebuffer;
 		vkCall(vkCreateFramebuffer(device, &createInfo, NULL, &framebuffer));
-		ref(VkFramebuffer, framebuffers.value2, i) = framebuffer;
+		ref(VkFramebuffer, out_framebuffers, i) = framebuffer;
 	}
+	CALLTRACE_END();
+}
+
+function_signature(tuple_t(uint32_t,  pVkFramebuffer_t), vk_get_framebuffers, VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments)
+{
+	CALLTRACE_BEGIN();
+	tuple_t(uint32_t, pVkFramebuffer_t) framebuffers = { count, heap_newv(VkFramebuffer, count) };
+	vk_get_framebuffers_out(device, count, renderPass, extent, layer, attachments, framebuffers.value2);
 	CALLTRACE_RETURN(framebuffers);
 }
 
@@ -417,14 +426,32 @@ function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_
 	CALLTRACE_RETURN(createInfo);
 }
 
-function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, shader_type_t shader_type, const char* entry_point)
+function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, vulkan_vulkan_shader_type_t vulkan_shader_type, const char* entry_point)
 {
 	CALLTRACE_BEGIN();
 	VkPipelineShaderStageCreateInfo createInfo = { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	createInfo.pName = entry_point; 
 	createInfo.module = shader_module; 
-	createInfo.stage = (shader_type == VERTEX_SHADER) ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT; 
+	switch(vulkan_shader_type)
+	{
+		case VULKAN_SHADER_TYPE_VERTEX:
+			createInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+			break;
+		case VULKAN_SHADER_TYPE_FRAGMENT:
+			createInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+			break;
+		case VULKAN_SHADER_TYPE_GEOMETRY:
+			createInfo.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+			break;
+		case VULKAN_SHADER_TYPE_TESSELLATION:
+			createInfo.stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+			break;
+		default:
+			throw_exception(VULKAN_UNSUPPORTED_SHADER_TYPE);
+			break;
+	}
+	createInfo.stage = (vulkan_shader_type == VULKAN_SHADER_TYPE_VERTEX) ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
 	CALLTRACE_RETURN(createInfo);
 }
 
@@ -442,6 +469,15 @@ function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, const 
 	CALLTRACE_RETURN(shaderModule);
 }
 
+function_signature(void, vk_get_images_out, VkDevice device, VkSwapchainKHR swapchain, VkImage* out_images, u32 check_image_count)
+{
+	CALLTRACE_BEGIN();
+	u32 image_count = check_image_count;
+	vkCall(vkGetSwapchainImagesKHR(device, swapchain, &check_image_count, out_images));
+	ASSERT(check_image_count == image_count, "check_image_count != image_count\n");
+	CALLTRACE_END();
+}
+
 function_signature(tuple_t(uint32_t,  pVkImage_t), vk_get_images, VkDevice device, VkSwapchainKHR swapchain)
 {
 	CALLTRACE_BEGIN();
@@ -452,28 +488,35 @@ function_signature(tuple_t(uint32_t,  pVkImage_t), vk_get_images, VkDevice devic
 	CALLTRACE_RETURN(pair);
 }
 
-function_signature(tuple_t(uint32_t,  pVkImageView_t), vk_get_image_views, VkDevice device, VkFormat format, uint32_t imageCount, VkImage* images)
+function_signature(void, vk_get_image_views_out, VkDevice device, VkFormat format, uint32_t imageCount, VkImage* images, VkImageView* out_image_views)
 {
 	CALLTRACE_BEGIN();
-	tuple_t(uint32_t, pVkImageView_t) imageViews  =  { imageCount, heap_newv(VkImageView, imageCount) }; 
 	for(uint32_t i = 0; i < imageCount; i++)
 	{
 		VkImageViewCreateInfo createInfo =  { };
-		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO; 
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		createInfo.image = images[i];
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		createInfo.format = format;
-		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY; 
+		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; 
+		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		createInfo.subresourceRange.baseMipLevel = 0;
 		createInfo.subresourceRange.levelCount = 1;
 		createInfo.subresourceRange.baseArrayLayer = 0;
 		createInfo.subresourceRange.layerCount = 1;
-		vkCall(vkCreateImageView(device, &createInfo, NULL, &ref(VkImageView, imageViews.value2, i)));
+		vkCall(vkCreateImageView(device, &createInfo, NULL, &ref(VkImageView, out_image_views, i)));
 	}
+	CALLTRACE_END();
+}
+
+function_signature(tuple_t(uint32_t,  pVkImageView_t), vk_get_image_views, VkDevice device, VkFormat format, uint32_t imageCount, VkImage* images)
+{
+	CALLTRACE_BEGIN();
+	tuple_t(uint32_t, pVkImageView_t) imageViews  =  { imageCount, heap_newv(VkImageView, imageCount) };
+	vk_get_image_views_out(device, format, imageViews.value1, images, imageViews.value2);
 	CALLTRACE_RETURN(imageViews);
 }
 

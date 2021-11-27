@@ -32,12 +32,15 @@ static void glfwOnWindowResizeCallback(GLFWwindow* window, int width, int height
 	_window->height = height;
 	if(_window->resize_callback != NULL)
 		_window->resize_callback(_window);
+	if(_window->resize_callback1 != NULL)
+		_window->resize_callback1(_window);
 }
 
 render_window_t* render_window_init(u32 width, u32 height, const char* title)
 {
 	render_window_t* window = heap_new(render_window_t);
-	glfwInit(); 
+	memset(window, 0, sizeof(render_window_t));
+	glfwInit();
 #if GLOBAL_DEBUG
 	glfwSetErrorCallback(glfwErrorCallback);
 	glfw_dump_required_extensions();

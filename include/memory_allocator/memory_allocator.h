@@ -29,6 +29,7 @@
 #	elif defined(GLOBAL_RELEASE) && !defined(SAFE_MEMORY_RELEASE)
 #		define SAFE_MEMORY_RELEASE
 #	endif
+#   include <stdarg.h>
 #	include <safe_memory/safe_memory.h>
 #	define memory_allocator_init(x) safe_memory_init()
 #	define memory_allocator_terminate() safe_memory_terminate()
