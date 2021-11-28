@@ -121,7 +121,7 @@ renderer_t* renderer_init(u32 width, u32 height, const char* title)
 	//Create render window
 	renderer->window = render_window_init(width, height, title);
 	renderer->window->user_data = renderer;
-	render_window_set_resize_callback(renderer->window, renderer_on_window_resize);
+	render_window_subscribe_on_resize(renderer->window, renderer_on_window_resize);
 
 	//Create Renderpass
 	renderer->vk_render_pass = vk_get_render_pass(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB);

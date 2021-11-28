@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 {
 	memory_allocator_init(&argc);
 	renderer = renderer_init(800, 800, "Vulkan 3D Renderer");
-	renderer->window->resize_callback1 = destroy_material;
+	render_window_subscribe_on_resize(renderer->window, destroy_material);
 
  	//Prepare shaders
 	vulkan_shader_t** shaders = stack_array(pvulkan_shader_t, 2,
@@ -114,16 +114,11 @@ int main(int argc, char** argv)
 		{ { -0.5f, 0.5f }, { 0, 0.1f, 0.4f } }
 	};
 
-	u32 indices2[3] = { 0, 1, 2 };
-
 	vulkan_mesh_create_info_t mesh_info2 =
 	{
 		.p_vertex_data = vertices2,
-		.p_index_data = indices2,
 		.vertex_stride = sizeof(vertex2d_t),
-		.index_stride = sizeof(u32),
 		.vertex_count = 3,
-		.index_count = 3
 	};
 
 	vulkan_mesh_t* mesh = vulkan_mesh_create(renderer, &mesh_info);
@@ -136,7 +131,7 @@ int main(int argc, char** argv)
 	{
 		renderer_begin_frame(renderer, 0.1f, 0.3f, 0.1f, 1.0f);
 		vulkan_material_bind(material, renderer);
-		vulkan_mesh_draw(mesh, renderer);
+		vulkan_mesh_draw_indexed(mesh, renderer);
 		vulkan_mesh_draw(mesh2, renderer);
 		renderer_end_frame(renderer);
 

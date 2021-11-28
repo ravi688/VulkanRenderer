@@ -30,10 +30,9 @@ static void glfwOnWindowResizeCallback(GLFWwindow* window, int width, int height
 	render_window_t* _window = glfwGetWindowUserPointer(window);
 	_window->width = width;
 	_window->height = height;
-	if(_window->resize_callback != NULL)
-		_window->resize_callback(_window);
-	if(_window->resize_callback1 != NULL)
-		_window->resize_callback1(_window);
+	if(_window->resize_event != NULL)
+		for(int i = 0; i < _window->resize_event->element_count; i++)
+			(*(void (**)(void*))buf_getptr_at(_window->resize_event, i))(_window);
 }
 
 render_window_t* render_window_init(u32 width, u32 height, const char* title)
@@ -52,9 +51,14 @@ render_window_t* render_window_init(u32 width, u32 height, const char* title)
 	glfwSetWindowUserPointer(window->handle, window);
 	window->width = width;
 	window->height = height;
-	window->resize_callback = NULL;
-	window->user_data = NULL;
 	return window;
+}
+
+void render_window_subscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window))
+{
+	if(window->resize_event == NULL)
+		window->resize_event = BUFcreate(NULL, sizeof(callback), 0, 0);
+	buf_push(window->resize_event, &callback);
 }
 
 bool render_window_should_close(render_window_t* window)
@@ -71,12 +75,9 @@ void render_window_destroy(render_window_t* window)
 {
 	glfwDestroyWindow(window->handle);
 	glfwTerminate();
+	if(window->resize_event != NULL)
+		buf_free(window->resize_event);
 	heap_free(window);
-}
-
-void __render_window_set_resize_callback(render_window_t* window, void (*callback)(void* window))
-{
-	window->resize_callback = callback;
 }
 
 void render_window_get_vulkan_surface(render_window_t* window, void* vk_instance, void* out_surface)
