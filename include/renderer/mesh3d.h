@@ -1,5 +1,18 @@
 #pragma once
 
+#ifdef GLOBAL_DEBUG
+#	define MESH3D_DEBUG
+#elif defined(GLOBAL_RELEASE)
+#	define MESH3D_RELEASE
+#endif
+
+#if !defined(MESH3D_RELEASE) && !defined(MESH3D_DEBUG)
+#	warning "None of MESH3D_RELEASE or MESH3D_DEBUG is defined, using MESH3D_DEBUG"
+#	define MESH3D_DEBUG
+#elif defined(MESH3D_DEBUG) && defined(MESH3D_RELEASE)
+#	warning "Both of MESH3D_RELEASE and MESH3D_DEBUG are defined, using MESH3D_DEBUG"
+#	undef MESH3D_RELEASE
+#endif
 
 #ifdef MESH3d_REQUIRE_PRINT
 #define PRINT_REQUIRE_ARRAY_PRINT
@@ -102,8 +115,8 @@ function_signature(float, mesh3d_uv_get_y, index_t index);
 function_signature(float, mesh3d_uv_get_x, index_t index);
 
 
-#define mesh3d_new(...) define_alias_function_void_macro(mesh3d_new, __VA_ARGS__)
-#define mesh3d_get_binded(...) define_alias_function_void_macro(mesh3d_get_binded, __VA_ARGS__)
+#define mesh3d_new(...) define_alias_function_void_macro(mesh3d_new)
+#define mesh3d_get_binded(...) define_alias_function_void_macro(mesh3d_get_binded)
 #define mesh3d_bind(...) define_alias_function_macro(mesh3d_bind, __VA_ARGS__)
 #define mesh3d_unbind(...) define_alias_function_void_macro(mesh3d_unbind)
 #define mesh3d_push_binded(...) define_alias_function_void_macro(mesh3d_push_binded)

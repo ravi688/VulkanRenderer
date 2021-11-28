@@ -10,6 +10,7 @@
 #include <array/header_config.h>
 #include <array/array.h>
 #include <renderer/defines.h>
+#include <renderer/assert.h>
 
 #define BIT(flag, bit) ((flag & bit) == bit)
 

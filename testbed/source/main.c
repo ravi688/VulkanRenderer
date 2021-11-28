@@ -68,16 +68,8 @@ int main(int argc, char** argv)
 	memory_allocator_init(&argc);
 	renderer = renderer_init(800, 800, "Vulkan 3D Renderer");
 	renderer->window->resize_callback1 = destroy_material;
-	scene_manager_t* scene_manager = scene_manager_init();
-	object_t* cube = object_new("Cube");
-	scene_t* world = scene_new("3D World");
-	object_attach_component(cube, Cube);
-	scene_add_object(world, cube);
-	scene_manager_add_active_scene(scene_manager, world);
-	scene_manager_for_each_objects_in_all_scenes(scene_manager, object_call_awake);
-	scene_manager_for_each_objects_in_all_scenes(scene_manager, object_call_start);
 
-	//Prepare shaders
+ 	//Prepare shaders
 	vulkan_shader_t** shaders = stack_array(pvulkan_shader_t, 2,
 											vulkan_shader_create(renderer, "shaders/fragmentShader.spv", VULKAN_SHADER_TYPE_FRAGMENT),
 											vulkan_shader_create(renderer, "shaders/vertexShader.spv", VULKAN_SHADER_TYPE_VERTEX));
@@ -142,17 +134,12 @@ int main(int argc, char** argv)
 	//TODO: render loop should run on separate thread -> render thread
 	while(renderer_is_running(renderer))
 	{
-		//TODO: updates for each entity should run on separate thread -> main thread
-		scene_manager_for_each_objects_in_all_scenes(scene_manager, object_call_update);
-		scene_manager_for_each_objects_in_all_scenes(scene_manager, object_call_on_pre_render);
-
 		renderer_begin_frame(renderer, 0.1f, 0.3f, 0.1f, 1.0f);
 		vulkan_material_bind(material, renderer);
 		vulkan_mesh_draw(mesh, renderer);
 		vulkan_mesh_draw(mesh2, renderer);
 		renderer_end_frame(renderer);
 
-		scene_manager_for_each_objects_in_all_scenes(scene_manager, object_call_on_post_render);
 		renderer_update(renderer);
 	}
 
@@ -167,7 +154,6 @@ int main(int argc, char** argv)
 	stack_free(shaders);
 	
 	renderer_terminate(renderer);
-	scene_manager_destroy(scene_manager);
 	memory_allocator_terminate();
 	return 0;
 }
