@@ -21,8 +21,10 @@ typedef struct vulkan_swapchain_t
 	VkSemaphore render_finished_semaphore;
 } vulkan_swapchain_t;
 
+vulkan_swapchain_t* vulkan_swapchain_new();
 vulkan_swapchain_t* vulkan_swapchain_create(render_window_t* window, renderer_t* renderer);
 void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain, renderer_t* renderer);
+void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain);
 void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, renderer_t* renderer);
 u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, renderer_t* renderer);
 

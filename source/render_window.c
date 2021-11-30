@@ -1,6 +1,7 @@
 
 #include <renderer/render_window.h>
 #include <renderer/debug.h>
+#include <renderer/assert.h>
 
 #include <exception/exception.h>
 #include <memory_allocator/memory_allocator.h>
@@ -13,6 +14,11 @@
 #include <vulkan/vulkan_wrapper.h>
 #include <memory.h>
 
+typedef struct event_args_t
+{
+	void* user_data;
+	void (*callback)(render_window_t* window, void* user_data);
+} event_args_t;
 
 static void glfw_dump_required_extensions();
 static tuple_t(uint32_t, ppVkChar_t) glfw_get_required_instance_extensions();
@@ -32,7 +38,10 @@ static void glfwOnWindowResizeCallback(GLFWwindow* window, int width, int height
 	_window->height = height;
 	if(_window->resize_event != NULL)
 		for(int i = 0; i < _window->resize_event->element_count; i++)
-			(*(void (**)(void*))buf_getptr_at(_window->resize_event, i))(_window);
+		{
+			event_args_t* args = buf_getptr_at(_window->resize_event, i);
+			args->callback(_window, args->user_data);
+		}
 }
 
 render_window_t* render_window_init(u32 width, u32 height, const char* title)
@@ -54,11 +63,21 @@ render_window_t* render_window_init(u32 width, u32 height, const char* title)
 	return window;
 }
 
-void render_window_subscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window))
+void render_window_subscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window, void* user_data), void* user_data)
 {
 	if(window->resize_event == NULL)
-		window->resize_event = BUFcreate(NULL, sizeof(callback), 0, 0);
-	buf_push(window->resize_event, &callback);
+		window->resize_event = BUFcreate(NULL, sizeof(event_args_t), 0, 0);
+	event_args_t args = { .user_data = user_data, .callback = callback };
+	buf_push(window->resize_event, &args);
+}
+
+static bool comparer(void* callback, event_args_t* args) { return callback == (void*)args->callback; }
+
+void render_window_unsubscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window, void* user_data))
+{
+	if(window->resize_event == NULL) return;
+	bool result = buf_remove(window->resize_event, callback, (bool (*)(void*, void*))comparer);
+	ASSERT(result == true, "Failed to unsubscribe %u from render_window_t::resize_event\n", callback);
 }
 
 bool render_window_should_close(render_window_t* window)

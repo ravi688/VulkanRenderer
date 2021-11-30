@@ -55,32 +55,32 @@
 #	include <stdlib.h>
 #	define memory_allocator_init(x) GC_START(x)
 #	define memory_allocator_terminate() GC_STOP()
-#   define add_alloc(basePtr, size)
+#   define add_alloc(basePtr, size) basePtr
 #	define heap_alloc(size) GC_ALLOC(size)
 #	define stack_alloc(size) alloca(size)
 #	define stack_free(basePtr)
 #	define heap_free(basePtr) GC_FREE(basePtr)
-#	define stack_array(type, count, ...) memory_allocator_array(type)(checked_alloca(sizeof(type) * (count)), (count), __VA_ARGS__)
-#	define heap_array(type, count, ...) memory_allocator_array(type)(checked_malloc(sizeof(type) * (count)), (count), __VA_ARGS__)
+#	define stack_array(type, count, ...) memory_allocator_array(type)(alloca(sizeof(type) * (count)), (count), __VA_ARGS__)
+#	define heap_array(type, count, ...) memory_allocator_array(type)(malloc(sizeof(type) * (count)), (count), __VA_ARGS__)
 #	define ref(type, validPtr, index) validPtr[index]
-#   define refp(type, validPtr, index) (&validPtr[index])
-#   define instantiate_stack_array(type)
+#   define refp(type, validPtr, index) (&(validPtr[index]))
+#   define instantiate_stack_array(type) instantiate_declaration_memory_allocator_array(type); instantiate_implementation_memory_allocator_array(type)
 #endif
 
 #ifdef USE_STDLIB
 #	include <stdlib.h>
 #	define memory_allocator_init(x)
 #	define memory_allocator_terminate()
-#   define add_alloc(basePtr, size)
+#   define add_alloc(basePtr, size) basePtr
 #	define heap_alloc(size) malloc(size)
 #	define stack_alloc(size) alloca(size)
 #	define stack_free(basePtr) 
 #	define heap_free(basePtr) free(basePtr)
-#   define stack_array(type, count, ...) memory_allocator_array(type)(checked_alloca(sizeof(type) * (count)), (count), __VA_ARGS__)
-#   define heap_array(type, count, ...) memory_allocator_array(type)(checked_malloc(sizeof(type) * (count)), (count), __VA_ARGS__)
+#   define stack_array(type, count, ...) memory_allocator_array(type)(alloca(sizeof(type) * (count)), (count), __VA_ARGS__)
+#   define heap_array(type, count, ...) memory_allocator_array(type)(malloc(sizeof(type) * (count)), (count), __VA_ARGS__)
 #	define ref(type, validPtr, index) validPtr[index]
-#   define refp(type, validPtr, index) (&validPtr[index])
-#   define instantiate_stack_array(type)
+#   define refp(type, validPtr, index) (&(validPtr[index]))
+#   define instantiate_stack_array(type) instantiate_declaration_memory_allocator_array(type); instantiate_implementation_memory_allocator_array(type)
 #endif
 
 #define stack_new(type) ((type*)stack_alloc(sizeof(type)))
@@ -89,3 +89,4 @@
 #define heap_newv(type, count) ((type*)heap_alloc(sizeof(type) * count))
 
 #include <memory_allocator/template_instantiations.h>
+#include <memory.h>
