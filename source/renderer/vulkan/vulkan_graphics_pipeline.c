@@ -29,12 +29,15 @@ void vulkan_graphics_pipeline_create_non_alloc(renderer_t* renderer, vulkan_grap
 	VkPipelineShaderStageCreateInfo* shader_stages = stack_newv(VkPipelineShaderStageCreateInfo, create_info->shader_count);
 	for(u32 i = 0; i < create_info->shader_count; i++)
 		ref(VkPipelineShaderStageCreateInfo, shader_stages, i) = (*refp(vulkan_shader_t*, create_info->shaders, i))->stage;
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(	create_info->vertex_info.attribute_count,
-																											create_info->vertex_info.size,
-																											VK_VERTEX_INPUT_RATE_VERTEX,
-																											create_info->vertex_info.attribute_formats,
-																											create_info->vertex_info.attribute_offsets);
 
+	vertex_attribute_binding_info_t* vertex_attribute_info = stack_alloc(sizeof(vertex_attribute_binding_info_t));
+	memset(vertex_attribute_info, 0, sizeof(vertex_attribute_binding_info_t));
+	vertex_attribute_info->attribute_count = 2;
+	vertex_attribute_info->attribute_offsets = create_info->vertex_info.attribute_offsets;
+	vertex_attribute_info->attribute_formats = create_info->vertex_info.attribute_formats;
+	uint32_t* strides = stack_alloc(sizeof(uint32_t));
+	ref(uint32_t, strides, 0) = create_info->vertex_info.size;
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(1, strides, vertex_attribute_info);
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
 	VkPipelineRasterizationStateCreateInfo rasterizer = vk_get_pipeline_rasterization_state_create_info();
@@ -52,6 +55,7 @@ void vulkan_graphics_pipeline_create_non_alloc(renderer_t* renderer, vulkan_grap
 														&colorBlending
 													);
 	stack_free(shader_stages);
+	stack_free(vertex_attribute_info);
 }
 
 vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)

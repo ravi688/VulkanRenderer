@@ -3,14 +3,11 @@
 #include <renderer/assert.h>
 #include <vulkan/vulkan_wrapper.h>
 #include <exception/exception.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdbool.h>
 #include <string/string.h>		//custom string library
 #include <string.h>				//standard string library
 #include <memory_allocator/memory_allocator.h>
 #include <disk_manager/file_reader.h>
+#include <buffer.h>
 
 define_exception(VULKAN_ABORTED);
 define_exception(VULKAN_LAYER_NOT_SUPPORTED);
@@ -388,35 +385,49 @@ function_signature(VkViewport, vk_get_viewport, uint32_t width, uint32_t height)
 	CALLTRACE_RETURN(viewport);
 }
 
-function_signature(tuple_t(uint32_t,  pVkVertexInputBindingDescription_t), vk_get_vertex_input_binding_descriptions, uint32_t stride, VkVertexInputRate vertexInputRate)
+function_signature(tuple_t(uint32_t,  pVkVertexInputBindingDescription_t), vk_get_vertex_input_binding_descriptions, uint32_t binding_count, uint32_t* strides, VkVertexInputRate vertexInputRate)
 {
 	CALLTRACE_BEGIN();
-	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) bindingDescriptions =  { 1 , heap_newv(VkVertexInputBindingDescription, 1) }; 
-	ref(VkVertexInputBindingDescription, bindingDescriptions.value2, 0).binding = 0;
-	ref(VkVertexInputBindingDescription, bindingDescriptions.value2, 0).stride = stride; 
-	ref(VkVertexInputBindingDescription, bindingDescriptions.value2, 0).inputRate = vertexInputRate;
+	//TODO: heap_newv() is used here, it must be freed using heap_free()
+	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) bindingDescriptions =  { binding_count , heap_newv(VkVertexInputBindingDescription, binding_count) };
+	for(uint32_t i = 0; i < bindingDescriptions.value1; i++)
+	{
+		ref(VkVertexInputBindingDescription, bindingDescriptions.value2, i).binding = i;
+		ref(VkVertexInputBindingDescription, bindingDescriptions.value2, i).stride = ref(uint32_t, strides, i);
+		ref(VkVertexInputBindingDescription, bindingDescriptions.value2, i).inputRate = vertexInputRate;
+	}
 	CALLTRACE_RETURN(bindingDescriptions);
 }
 
-function_signature(tuple_t(uint32_t,  pVkVertexInputAttributeDescription_t), vk_get_vertex_input_attribute_descriptions, uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets)
+function_signature(tuple_t(uint32_t,  pVkVertexInputAttributeDescription_t), vk_get_vertex_input_attribute_descriptions, uint32_t binding_count, vertex_attribute_binding_info_t* attribute_infos)
 {
 	CALLTRACE_BEGIN();
-	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) attributeDescriptions = { attributeCount, heap_newv(VkVertexInputAttributeDescription, attributeCount) };
-	for(uint32_t i = 0; i < attributeDescriptions.value1; i++)
+	BUFFER attribute_descriptions = buf_create(sizeof(VkVertexInputAttributeDescription), 0, 0);
+	for(uint32_t i = 0; i < binding_count; i++)
 	{
-		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).binding = 0; 
-		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).location = i;
-		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).format = ref(VkFormat, attributeFormats, i); 
-		ref(VkVertexInputAttributeDescription, attributeDescriptions.value2, i).offset = ref(uint32_t, attributeOffsets, i);
+		vertex_attribute_binding_info_t info = ref(vertex_attribute_binding_info_t, attribute_infos, i);
+		for(uint32_t j = 0; j < info.attribute_count; j++)
+		{
+			VkVertexInputAttributeDescription description =
+			{
+				.binding = i,
+				.location = j,
+				.format = ref(VkFormat, info.attribute_formats, j),
+				.offset = ref(uint32_t, info.attribute_offsets, j)
+			};
+			buf_push(&attribute_descriptions, &description);
+		}
 	}
-	CALLTRACE_RETURN(attributeDescriptions);
+	buf_fit(&attribute_descriptions);
+	//TODO: We are returning the internal bytes of BUFFER, which should be freed using free() (stdlib.h) after being used.
+	CALLTRACE_RETURN((tuple_t(uint32_t, pVkVertexInputAttributeDescription_t)) { attribute_descriptions.element_count, attribute_descriptions.bytes });
 }
 
-function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_input_state_create_info, uint32_t attributeCount, uint32_t stride, VkVertexInputRate vertexInputRate, VkFormat* attributeFormats, uint32_t* attributeOffsets)
+function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_input_state_create_info, uint32_t binding_count, uint32_t* strides, vertex_attribute_binding_info_t* attribute_infos)
 {
 	CALLTRACE_BEGIN();
-	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vertexBindings = vk_get_vertex_input_binding_descriptions(stride, vertexInputRate); 
-	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vertexAttributes = vk_get_vertex_input_attribute_descriptions(attributeCount, attributeFormats, attributeOffsets);
+	tuple_t(uint32_t, pVkVertexInputBindingDescription_t) vertexBindings = vk_get_vertex_input_binding_descriptions(binding_count, strides, VK_VERTEX_INPUT_RATE_VERTEX);
+	tuple_t(uint32_t, pVkVertexInputAttributeDescription_t) vertexAttributes = vk_get_vertex_input_attribute_descriptions(binding_count, attribute_infos);
 	VkPipelineVertexInputStateCreateInfo createInfo =  { }; 
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO; 
 	createInfo.vertexBindingDescriptionCount = vertexBindings.value1; 

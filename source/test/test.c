@@ -366,12 +366,13 @@ int main(int argc, char** argv)
 	};
 	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
 	u32 offsets[2] = { offsetof(vertex_t, position), offsetof(vertex_t, color) };
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(
-															2, 
-															sizeof(vertex_t), 
-															VK_VERTEX_INPUT_RATE_VERTEX, 
-															formats, 
-															offsets);
+	vertex_attribute_binding_info_t* vertex_attribute_info = stack_new(vertex_attribute_binding_info_t);
+	vertex_attribute_info->attribute_count = 2;
+	vertex_attribute_info->attribute_formats = formats;
+	vertex_attribute_info->attribute_offsets = offsets;
+	uint32_t* strides = stack_new(uint32_t);
+	*strides = sizeof(vertex_t);
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(1, strides, vertex_attribute_info);
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
 	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(WINDOW_WIDTH, WINDOW_HEIGHT); 
 	VkPipelineRasterizationStateCreateInfo rasterizer = vk_get_pipeline_rasterization_state_create_info();
@@ -386,6 +387,8 @@ int main(int argc, char** argv)
 													&rasterizer, 
 													&multisampling,
 													&colorBlending);
+	stack_free(strides);
+	stack_free(vertex_attribute_info);
 	log_msg("Graphics Pipeline Created!");
 
 

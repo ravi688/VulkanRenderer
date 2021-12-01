@@ -32,6 +32,21 @@ declare_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND);
 declare_exception(VULKAN_SURFACE_NOT_SUPPORTED);
 declare_exception(VULKAN_PHYSICAL_DEVICE_EXTENSION_NOT_SUPPORTED);
 
+typedef enum vulkan_vulkan_shader_type_t
+{
+	VULKAN_SHADER_TYPE_VERTEX,
+	VULKAN_SHADER_TYPE_FRAGMENT,
+	VULKAN_SHADER_TYPE_GEOMETRY,
+	VULKAN_SHADER_TYPE_TESSELLATION
+} vulkan_vulkan_shader_type_t;
+
+typedef struct vertex_attribute_binding_info_t
+{
+	uint32_t stride;
+	uint32_t attribute_count;
+	VkFormat* attribute_formats;
+	uint32_t* attribute_offsets;
+} vertex_attribute_binding_info_t;
 
 typedef VkPhysicalDevice* pVkPhysicalDevice_t; 
 instantiate_tuple_t(uint32_t, pVkPhysicalDevice_t);
@@ -53,14 +68,6 @@ instantiate_tuple_t(uint32_t, pVkSurfaceFormatKHR_t);
 
 typedef VkPresentModeKHR* pVkPresentModeKHR_t; 
 instantiate_tuple_t(uint32_t, pVkPresentModeKHR_t);
-
-typedef enum vulkan_vulkan_shader_type_t
-{
-	VULKAN_SHADER_TYPE_VERTEX,
-	VULKAN_SHADER_TYPE_FRAGMENT,
-	VULKAN_SHADER_TYPE_GEOMETRY,
-	VULKAN_SHADER_TYPE_TESSELLATION
-} vulkan_vulkan_shader_type_t;
 
 typedef VkCommandBuffer* pVkCommandBuffer_t;
 instantiate_tuple_t(uint32_t, pVkCommandBuffer_t);
@@ -99,8 +106,8 @@ function_signature(void, vk_get_image_views_out, VkDevice device, VkFormat forma
 function_signature(tuple_t(uint32_t, pVkFramebuffer_t), vk_get_framebuffers, VkDevice device, uint32_t count, VkRenderPass renderPasse, VkExtent2D extent, uint32_t layer, VkImageView* attachments);
 function_signature(void, vk_get_framebuffers_out, VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments, VkFramebuffer* out_framebuffers);
 function_signature(tuple_t(uint32_t, pVkCommandBuffer_t), vk_get_command_buffers, VkDevice device, VkCommandPool commandPool, uint32_t count);
-function_signature(tuple_t(uint32_t, pVkVertexInputBindingDescription_t), vk_get_vertex_input_binding_descriptions, uint32_t stride, VkVertexInputRate vertexInputRate);
-function_signature(tuple_t(uint32_t, pVkVertexInputAttributeDescription_t), vk_get_vertex_input_attribute_descriptions, uint32_t attributeCount, VkFormat* attributeFormats, uint32_t* attributeOffsets);
+function_signature(tuple_t(uint32_t, pVkVertexInputBindingDescription_t), vk_get_vertex_input_binding_descriptions, uint32_t binding_count, uint32_t* strides, VkVertexInputRate vertexInputRate);
+function_signature(tuple_t(uint32_t, pVkVertexInputAttributeDescription_t), vk_get_vertex_input_attribute_descriptions, uint32_t binding_count, vertex_attribute_binding_info_t* attribute_infos);
 
 function_signature(bool, vk_check_layer_support, tuple_t(uint32_t, ppVkChar_t) layers);
 function_signature(bool, vk_check_instance_extension_support, tuple_t(uint32_t, ppVkChar_t) extensions);
@@ -118,7 +125,7 @@ function_signature(VkQueue, vk_get_device_queue, VkDevice device, uint32_t queue
 function_signature(VkSwapchainKHR, vk_get_swapchain, VkDevice device, VkSwapchainCreateInfoKHR* createInfo);
 function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, const char* file_name);
 function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, vulkan_vulkan_shader_type_t vulkan_shader_type, const char* entry_point);
-function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_input_state_create_info, uint32_t attributeCount, uint32_t stride, VkVertexInputRate vertexInputRate, VkFormat* attributeFormats, uint32_t* attributeOffsets);
+function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_input_state_create_info, uint32_t binding_count, uint32_t* strides, vertex_attribute_binding_info_t* attribute_infos);
 function_signature_void(VkPipelineInputAssemblyStateCreateInfo, vk_get_pipeline_input_assembly_state_create_info); 
 function_signature(VkPipelineViewportStateCreateInfo, vk_get_pipeline_viewport_state_create_info, uint32_t viewportWidth, uint32_t viewportHeight);
 function_signature_void(VkPipelineRasterizationStateCreateInfo, vk_get_pipeline_rasterization_state_create_info);

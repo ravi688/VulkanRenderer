@@ -94,8 +94,8 @@ static mesh3d_t* load_stl(const char* file_name)
 {
 	mesh3d_t* mesh = mesh3d_new();
 	mesh3d_positions_new(mesh, 0);
-	mesh3d_normals_new(mesh, 0);
 	mesh3d_triangles_new(mesh, 0);
+	mesh3d_colors_new(mesh, 0);
 	// BUFFER* file_data = load_text_from_file(file_name);
 	// stl_parse_callbacks_t parse_callbacks =
 	// {
@@ -146,7 +146,7 @@ static mesh3d_t* load_stl(const char* file_name)
 	mesh3d_position_add_vec3(mesh, vec3(float)(0.5f, 0, 0.5f ));
 
 
-		//clockwise order
+	//clockwise order
 	mesh3d_triangle_add_vec3(mesh, vec3(int)(2, 1, 0));
 	mesh3d_triangle_add_vec3(mesh, vec3(int)(3, 2, 0));
 	mesh3d_triangle_add_vec3(mesh, vec3(int)(6, 5, 4)),
@@ -159,6 +159,37 @@ static mesh3d_t* load_stl(const char* file_name)
 	mesh3d_triangle_add_vec3(mesh, vec3(int)(16, 18, 19));
 	mesh3d_triangle_add_vec3(mesh, vec3(int)(20, 21, 22));
 	mesh3d_triangle_add_vec3(mesh, vec3(int)(20, 22, 23));
+
+	mesh3d_color_add(mesh, 1, 0, 0);
+	mesh3d_color_add(mesh, 1, 0, 0);
+	mesh3d_color_add(mesh, 1, 0, 0);
+	mesh3d_color_add(mesh, 1, 0, 0);
+
+	mesh3d_color_add(mesh, 0, 0.5f, 0);
+	mesh3d_color_add(mesh, 0, 0.5f, 0);
+	mesh3d_color_add(mesh, 0, 0.5f, 0);
+	mesh3d_color_add(mesh, 0, 0.5f, 0);
+
+	mesh3d_color_add(mesh, 0.1f, 0, 0.2f);
+	mesh3d_color_add(mesh, 0.1f, 0, 0.2f);
+	mesh3d_color_add(mesh, 0.1f, 0, 0.2f);
+	mesh3d_color_add(mesh, 0.1f, 0, 0.2f);
+
+	mesh3d_color_add(mesh, 0, 0.1f, 0.5f);
+	mesh3d_color_add(mesh, 0, 0.1f, 0.5f);
+	mesh3d_color_add(mesh, 0, 0.1f, 0.5f);
+	mesh3d_color_add(mesh, 0, 0.1f, 0.5f);
+
+	mesh3d_color_add(mesh, 0, 0, 1);
+	mesh3d_color_add(mesh, 0, 0, 1);
+	mesh3d_color_add(mesh, 0, 0, 1);
+	mesh3d_color_add(mesh, 0, 0, 1);
+
+	mesh3d_color_add(mesh, 0.7f, 0.1f, 0);
+	mesh3d_color_add(mesh, 0.7f, 0.1f, 0);
+	mesh3d_color_add(mesh, 0.7f, 0.1f, 0);
+	mesh3d_color_add(mesh, 0.7f, 0.1f, 0);
+	mesh3d_optimize_buffer(mesh);
 	return mesh;
 }
 
