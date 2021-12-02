@@ -42,7 +42,6 @@ typedef enum vulkan_vulkan_shader_type_t
 
 typedef struct vertex_attribute_binding_info_t
 {
-	uint32_t stride;
 	uint32_t attribute_count;
 	VkFormat* attribute_formats;
 	uint32_t* attribute_offsets;

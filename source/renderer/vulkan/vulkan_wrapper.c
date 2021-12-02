@@ -403,15 +403,16 @@ function_signature(tuple_t(uint32_t,  pVkVertexInputAttributeDescription_t), vk_
 {
 	CALLTRACE_BEGIN();
 	BUFFER attribute_descriptions = buf_create(sizeof(VkVertexInputAttributeDescription), 0, 0);
+	uint32_t count = 0;
 	for(uint32_t i = 0; i < binding_count; i++)
 	{
 		vertex_attribute_binding_info_t info = ref(vertex_attribute_binding_info_t, attribute_infos, i);
-		for(uint32_t j = 0; j < info.attribute_count; j++)
+		for(uint32_t j = 0; j < info.attribute_count; j++, count++)
 		{
 			VkVertexInputAttributeDescription description =
 			{
 				.binding = i,
-				.location = j,
+				.location = count,
 				.format = ref(VkFormat, info.attribute_formats, j),
 				.offset = ref(uint32_t, info.attribute_offsets, j)
 			};

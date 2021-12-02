@@ -12,7 +12,8 @@ typedef struct vulkan_material_create_info_t
 {
 	vulkan_shader_t** shaders;
 	u64 shader_count;
-	vulkan_vertex_info_t vertex_info;
+	uint32_t vertex_info_count;
+	vulkan_vertex_info_t* vertex_infos;
 } vulkan_material_create_info_t;
 
 typedef struct vulkan_material_t

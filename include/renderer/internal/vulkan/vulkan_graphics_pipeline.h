@@ -14,7 +14,8 @@ typedef struct vulkan_graphics_pipeline_create_info_t
 {
 	vulkan_shader_t** shaders;
 	u32 shader_count;
-	vulkan_vertex_info_t vertex_info;
+	uint32_t vertex_info_count;
+	vulkan_vertex_info_t* vertex_infos;
 } vulkan_graphics_pipeline_create_info_t;
 
 typedef struct vulkan_graphics_pipeline_t
