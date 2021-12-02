@@ -785,6 +785,93 @@ function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->uvs, vec2_t(float), index)->x);
 }
 
+function_signature(mesh3d_t*, mesh3d_cube, float size)
+{
+	CALLTRACE_BEGIN();
+	mesh3d_t* mesh = mesh3d_new();
+	mesh3d_positions_new(mesh, 0);
+	mesh3d_triangles_new(mesh, 0);
+	mesh3d_colors_new(mesh, 0);
+	mesh3d_normals_new(mesh, 0);
+
+	float half_size = 0.5f * size;
+
+	//Bottom
+	mesh3d_position_add(mesh, -half_size, 0, half_size );
+	mesh3d_position_add(mesh, -half_size, 0, -half_size);
+	mesh3d_position_add(mesh, half_size, 0, -half_size );
+	mesh3d_position_add(mesh, half_size, 0, half_size  );
+
+	//Top
+	mesh3d_position_add(mesh, half_size, size, half_size  );
+	mesh3d_position_add(mesh, half_size, size, -half_size );
+	mesh3d_position_add(mesh, -half_size, size, -half_size);
+	mesh3d_position_add(mesh, -half_size, size, half_size );
+
+	//Front
+	mesh3d_position_add(mesh, -half_size, size, -half_size);
+	mesh3d_position_add(mesh, -half_size, size, half_size );
+	mesh3d_position_add(mesh, -half_size, 0, half_size );
+	mesh3d_position_add(mesh, -half_size, 0, -half_size);
+
+	//Left
+	mesh3d_position_add(mesh, half_size, size, -half_size );
+	mesh3d_position_add(mesh, -half_size, size, -half_size);
+	mesh3d_position_add(mesh, -half_size, 0, -half_size);
+	mesh3d_position_add(mesh, half_size, 0, -half_size );
+
+	//Right
+	mesh3d_position_add(mesh, -half_size, size, half_size);
+	mesh3d_position_add(mesh, half_size, size, half_size );
+	mesh3d_position_add(mesh, half_size, 0, half_size );
+	mesh3d_position_add(mesh, -half_size, 0, half_size);
+
+	//Back
+	mesh3d_position_add(mesh, half_size, size, half_size );
+	mesh3d_position_add(mesh, half_size, size, -half_size);
+	mesh3d_position_add(mesh, half_size, 0, -half_size);
+	mesh3d_position_add(mesh, half_size, 0, half_size );
+
+
+	//clockwise order
+	mesh3d_triangle_add(mesh, 2, 1, 0);
+	mesh3d_triangle_add(mesh, 3, 2, 0);
+	mesh3d_triangle_add(mesh, 6, 5, 4),
+	mesh3d_triangle_add(mesh, 7, 6, 4);
+	mesh3d_triangle_add(mesh, 8, 9, 10);
+	mesh3d_triangle_add(mesh, 8, 10, 11);
+	mesh3d_triangle_add(mesh, 12, 13, 14);
+	mesh3d_triangle_add(mesh, 12, 14, 15);
+	mesh3d_triangle_add(mesh, 16, 17, 18);
+	mesh3d_triangle_add(mesh, 16, 18, 19);
+	mesh3d_triangle_add(mesh, 20, 21, 22);
+	mesh3d_triangle_add(mesh, 20, 22, 23);
+
+	for(int i = 0; i < 4; i++)
+		mesh3d_normal_add(mesh, 0, -1.0f, 0);
+
+	for(int i = 0; i < 4; i++)
+		mesh3d_normal_add(mesh, 0, 1.0f, 0);
+
+	for(int i = 0; i < 4; i++)
+		mesh3d_normal_add(mesh, 0, 0, 1.0f);
+
+	for(int i = 0; i < 4; i++)
+		mesh3d_normal_add(mesh, -1.0f, 0, 0);
+
+	for(int i = 0; i < 4; i++)
+		mesh3d_normal_add(mesh, 1.0f, 0, 0);
+
+	for(int i = 0; i < 4; i++)
+		mesh3d_normal_add(mesh, 0, 0, -1.0f);
+
+	for(int i = 0; i < mesh3d_positions_count(mesh); i++)
+		mesh3d_color_add(mesh, 1, 1, 1);
+
+	mesh3d_optimize_buffer(mesh);
+	CALLTRACE_RETURN(mesh);
+}
+
 /*TODO:
 New Feature and Performance improvement request, must be implemented in BUFFERlib version 1.2
 	1. contiguous and same type of data memory blocks defragmentation

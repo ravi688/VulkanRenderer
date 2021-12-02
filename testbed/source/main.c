@@ -34,12 +34,6 @@ instantiate_stack_array(VkFormat);
 #define DEG2RAD 0.01745f
 #define RAD2DEG 57.29577f
 
-typedef struct
-{
-	vec2_t(float) position;
-	vec3_t(float) color;
-} vertex2d_t;
-
 vec3_t(float) vec4_vec3(vec4_t(float) v)
 {
 	if(v.w == 0)
@@ -83,90 +77,31 @@ static void vertex_normal(vec3_t(float) normal, void* mesh)
 	mesh3d_normal_add_vec3(mesh, normal);
 }
 
-static mesh3d_t* mesh3d_cube(float size)
+vulkan_mesh_t* get_vulkan_mesh(renderer_t* renderer, mesh3d_t* mesh, vec3_t(float) position, vec3_t(float) rotation, mat4_t(float) projection_matrix, mat4_t(float) view_matrix)
 {
-	mesh3d_t* mesh = mesh3d_new();
-	mesh3d_positions_new(mesh, 0);
-	mesh3d_triangles_new(mesh, 0);
-	mesh3d_colors_new(mesh, 0);
-	mesh3d_normals_new(mesh, 0);
+	vec2_t(float)* vertices = foreach_vertex3d(mesh, mat4_mul(float)(3, projection_matrix, view_matrix, mat4_transform(position, rotation)));
+	convert_to_vulkan_clipspace(vertices, mesh3d_positions_count(mesh));
 
-	float half_size = 0.5f * size;
+	vulkan_mesh_create_info_t mesh_info =
+	{
+		.vertex_count = mesh3d_positions_count(mesh),
 
-	//Bottom
-	mesh3d_position_add(mesh, -half_size, 0, half_size );
-	mesh3d_position_add(mesh, -half_size, 0, -half_size);
-	mesh3d_position_add(mesh, half_size, 0, -half_size );
-	mesh3d_position_add(mesh, half_size, 0, half_size  );
+		.p_position_data = vertices,
+		.position_stride = sizeof(vec2_t(float)),
 
-	//Top
-	mesh3d_position_add(mesh, half_size, size, half_size  );
-	mesh3d_position_add(mesh, half_size, size, -half_size );
-	mesh3d_position_add(mesh, -half_size, size, -half_size);
-	mesh3d_position_add(mesh, -half_size, size, half_size );
+		.p_color_data = mesh->colors->bytes,
+		.color_stride = sizeof(vec3_t(float)),
 
-	//Front
-	mesh3d_position_add(mesh, -half_size, size, -half_size);
-	mesh3d_position_add(mesh, -half_size, size, half_size );
-	mesh3d_position_add(mesh, -half_size, 0, half_size );
-	mesh3d_position_add(mesh, -half_size, 0, -half_size);
+		.p_normal_data = mesh->normals->bytes,
+		.normal_stride = sizeof(vec3_t(float)),
 
-	//Left
-	mesh3d_position_add(mesh, half_size, size, -half_size );
-	mesh3d_position_add(mesh, -half_size, size, -half_size);
-	mesh3d_position_add(mesh, -half_size, 0, -half_size);
-	mesh3d_position_add(mesh, half_size, 0, -half_size );
-
-	//Right
-	mesh3d_position_add(mesh, -half_size, size, half_size);
-	mesh3d_position_add(mesh, half_size, size, half_size );
-	mesh3d_position_add(mesh, half_size, 0, half_size );
-	mesh3d_position_add(mesh, -half_size, 0, half_size);
-
-	//Back
-	mesh3d_position_add(mesh, half_size, size, half_size );
-	mesh3d_position_add(mesh, half_size, size, -half_size);
-	mesh3d_position_add(mesh, half_size, 0, -half_size);
-	mesh3d_position_add(mesh, half_size, 0, half_size );
-
-
-	//clockwise order
-	mesh3d_triangle_add(mesh, 2, 1, 0);
-	mesh3d_triangle_add(mesh, 3, 2, 0);
-	mesh3d_triangle_add(mesh, 6, 5, 4),
-	mesh3d_triangle_add(mesh, 7, 6, 4);
-	mesh3d_triangle_add(mesh, 8, 9, 10);
-	mesh3d_triangle_add(mesh, 8, 10, 11);
-	mesh3d_triangle_add(mesh, 12, 13, 14);
-	mesh3d_triangle_add(mesh, 12, 14, 15);
-	mesh3d_triangle_add(mesh, 16, 17, 18);
-	mesh3d_triangle_add(mesh, 16, 18, 19);
-	mesh3d_triangle_add(mesh, 20, 21, 22);
-	mesh3d_triangle_add(mesh, 20, 22, 23);
-
-	for(int i = 0; i < 4; i++)
-		mesh3d_normal_add(mesh, 0, -1.0f, 0);
-
-	for(int i = 0; i < 4; i++)
-		mesh3d_normal_add(mesh, 0, 1.0f, 0);
-
-	for(int i = 0; i < 4; i++)
-		mesh3d_normal_add(mesh, 0, 0, 1.0f);
-
-	for(int i = 0; i < 4; i++)
-		mesh3d_normal_add(mesh, -1.0f, 0, 0);
-
-	for(int i = 0; i < 4; i++)
-		mesh3d_normal_add(mesh, 1.0f, 0, 0);
-
-	for(int i = 0; i < 4; i++)
-		mesh3d_normal_add(mesh, 0, 0, -1.0f);
-
-	for(int i = 0; i < mesh3d_positions_count(mesh); i++)
-		mesh3d_color_add(mesh, 1, 1, 1);
-
-	mesh3d_optimize_buffer(mesh);
-	return mesh;
+		.p_index_data = mesh->triangles->bytes,
+		.index_stride = sizeof(int),
+		.index_count = mesh3d_triangles_count(mesh) * 3
+	};
+	vulkan_mesh_t* vulkan_mesh = vulkan_mesh_create(renderer, &mesh_info);
+	heap_free(vertices);
+	return vulkan_mesh;
 }
 
 int main(int argc, char** argv)
@@ -200,44 +135,40 @@ int main(int argc, char** argv)
 	};
 	vulkan_material_t* material = vulkan_material_create(renderer, &material_info);
 
-	//Prepare Mesh
-	mesh3d_t* mesh = mesh3d_cube(0.7f);
+	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -3, 2, 0 }, (vec3_t(float)) { 0, 0, -30 * DEG2RAD } );
+	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
+	mat4_t(float) projection_matrix = mat4_persp_projection(float)(0, 10, 65 * DEG2RAD, (float)renderer->window->width/renderer->window->height);
+	mesh3d_t* cube_mesh1 = mesh3d_cube(0.5f);
+	mesh3d_t* cube_mesh2 = mesh3d_cube(0.5f);
+	mesh3d_t* cube_mesh3 = mesh3d_cube(0.5f);
+	mesh3d_t* cube_mesh4 = mesh3d_cube(0.5f);
+	mesh3d_t* cube_mesh5 = mesh3d_cube(0.5f);
+	mesh3d_t* cube_mesh6 = mesh3d_cube(0.5f);
+	mesh3d_t* cube_mesh7 = mesh3d_cube(0.5f);
+	mesh3d_t* cube_mesh8 = mesh3d_cube(0.5f);
+	vulkan_mesh_t* cube1 = get_vulkan_mesh(renderer, cube_mesh1, vec3(float)(0, 0, 0.3f), vec3_zero(float)(), projection_matrix, view_matrix);
+	vulkan_mesh_t* cube2 = get_vulkan_mesh(renderer, cube_mesh2, vec3(float)(0, 0, -0.3f), vec3_zero(float)(), projection_matrix, view_matrix);
+	vulkan_mesh_t* cube3 = get_vulkan_mesh(renderer, cube_mesh2, vec3(float)(0, 0.6f, 0.3f), vec3_zero(float)(), projection_matrix, view_matrix);
+	vulkan_mesh_t* cube4 = get_vulkan_mesh(renderer, cube_mesh2, vec3(float)(0, 0.6f, -0.3f), vec3_zero(float)(), projection_matrix, view_matrix);
+	vulkan_mesh_t* cube5 = get_vulkan_mesh(renderer, cube_mesh1, vec3(float)(-0.6f, 0, 0.3f), vec3_zero(float)(), projection_matrix, view_matrix);
+	vulkan_mesh_t* cube6 = get_vulkan_mesh(renderer, cube_mesh2, vec3(float)(-0.6f, 0, -0.3f), vec3_zero(float)(), projection_matrix, view_matrix);
+	vulkan_mesh_t* cube7 = get_vulkan_mesh(renderer, cube_mesh2, vec3(float)(-0.6f, 0.6f, 0.3f), vec3_zero(float)(), projection_matrix, view_matrix);
+	vulkan_mesh_t* cube8 = get_vulkan_mesh(renderer, cube_mesh2, vec3(float)(-0.6f, 0.6f, -0.3f), vec3_zero(float)(), projection_matrix, view_matrix);
 
-	//Prepare Transformation Matrices
-	mat4_t(float) cameraTransform = mat4_transform((vec3_t(float)) { -3, 2, 0 }, (vec3_t(float)) { 0, 0, -30 * DEG2RAD } );
-	mat4_t(float) viewMatrix = mat4_inverse(float)(cameraTransform);
-	mat4_t(float) modelMatrix = mat4_transform((vec3_t(float)) { 0, 0, 0 }, (vec3_t(float)) { 0, -30 * DEG2RAD, 0 });
-	mat4_t(float) projectionMatrix = mat4_persp_projection(float)(0, 10, 65 * DEG2RAD, (float)renderer->window->width/renderer->window->height);
-
-	//Prepare Vulkan Render Mesh
-	vec2_t(float)* vertices2 = foreach_vertex3d(mesh, mat4_mul(float)(3, projectionMatrix, viewMatrix, modelMatrix));
-	convert_to_vulkan_clipspace(vertices2, mesh3d_positions_count(mesh));
-
-	vulkan_mesh_create_info_t mesh_info =
-	{
-		.vertex_count = mesh3d_positions_count(mesh),
-
-		.p_position_data = vertices2,
-		.position_stride = sizeof(vec2_t(float)),
-
-		.p_color_data = mesh->colors->bytes,
-		.color_stride = sizeof(vec3_t(float)),
-
-		.p_normal_data = mesh->normals->bytes,
-		.normal_stride = sizeof(vec3_t(float)),
-
-		.p_index_data = mesh->triangles->bytes,
-		.index_stride = sizeof(int),
-		.index_count = mesh3d_triangles_count(mesh) * 3
-	};
-	vulkan_mesh_t* render_mesh = vulkan_mesh_create(renderer, &mesh_info);
 
 	//TODO: render loop should run on separate thread -> render thread
 	while(renderer_is_running(renderer))
 	{
 		renderer_begin_frame(renderer, 0.0f, 0.0f, 0.0f, 0.0f);
 		vulkan_material_bind(material, renderer);
-		vulkan_mesh_draw_indexed(render_mesh, renderer);
+		vulkan_mesh_draw_indexed(cube1, renderer);
+		vulkan_mesh_draw_indexed(cube2, renderer);
+		vulkan_mesh_draw_indexed(cube3, renderer);
+		vulkan_mesh_draw_indexed(cube4, renderer);
+		vulkan_mesh_draw_indexed(cube5, renderer);
+		vulkan_mesh_draw_indexed(cube6, renderer);
+		vulkan_mesh_draw_indexed(cube7, renderer);
+		vulkan_mesh_draw_indexed(cube8, renderer);
 		renderer_end_frame(renderer);
 
 		renderer_update(renderer);
@@ -246,9 +177,23 @@ int main(int argc, char** argv)
 	for(u32 i = 0; i < 2; i++)
 		vulkan_shader_destroy(shaders[i], renderer);
 	vulkan_material_destroy(material, renderer);
-	vulkan_mesh_destroy(render_mesh, renderer);
+	vulkan_mesh_destroy(cube1, renderer);
+	vulkan_mesh_destroy(cube2, renderer);
+	vulkan_mesh_destroy(cube3, renderer);
+	vulkan_mesh_destroy(cube4, renderer);
+	vulkan_mesh_destroy(cube5, renderer);
+	vulkan_mesh_destroy(cube6, renderer);
+	vulkan_mesh_destroy(cube7, renderer);
+	vulkan_mesh_destroy(cube8, renderer);
 
-	vulkan_mesh_release_resources(render_mesh);
+	vulkan_mesh_release_resources(cube1);
+	vulkan_mesh_release_resources(cube2);
+	vulkan_mesh_release_resources(cube3);
+	vulkan_mesh_release_resources(cube4);
+	vulkan_mesh_release_resources(cube5);
+	vulkan_mesh_release_resources(cube6);
+	vulkan_mesh_release_resources(cube7);
+	vulkan_mesh_release_resources(cube8);
 	vulkan_material_release_resources(material);
 	for(u32 i = 0; i < 2; i++)
 		vulkan_shader_release_resources(shaders[i]);
@@ -257,7 +202,14 @@ int main(int argc, char** argv)
 	stack_free(attribute_formats2);
 	stack_free(attribute_offsets2);
 	stack_free(shaders);
-	mesh3d_destroy(mesh);
+	mesh3d_destroy(cube_mesh1);
+	mesh3d_destroy(cube_mesh2);
+	mesh3d_destroy(cube_mesh3);
+	mesh3d_destroy(cube_mesh4);
+	mesh3d_destroy(cube_mesh5);
+	mesh3d_destroy(cube_mesh6);
+	mesh3d_destroy(cube_mesh7);
+	mesh3d_destroy(cube_mesh8);
 	renderer_terminate(renderer);
 	memory_allocator_terminate();
 	return 0;
