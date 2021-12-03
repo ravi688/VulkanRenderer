@@ -19,3 +19,4 @@ TestMesh 				MeshTest_TYPE_ID 		(7 << 32) | Component_TYPE_ID
 Square 					Square_TYPE_ID 			(8 << 32) | Component_TYPE_ID
 Circle 					Circle_TYPE_ID 			(9 << 32) | Component_TYPE_ID
 TestBehaviour 			TestBehaviour_TYPE_ID 	(10 << 32) | Component_TYPE_ID
+Cube					Cube_TYPE_ID 			(11 << 32) | Component_TYPE_ID

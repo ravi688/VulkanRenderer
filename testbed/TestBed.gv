@@ -1,0 +1,10 @@
+#pragma once
+
+
+digraph TestBed
+{
+	#define digraph subgraph
+	#include <VulkanRenderer.gv>
+	#undef digraph
+	VulkanRenderer -> TestBed;
+}

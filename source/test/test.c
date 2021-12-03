@@ -2,13 +2,15 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan_wrapper.h>
-#include <debug.h>
+#include <renderer/debug.h>
 #include <string/string.h>
 #include <garbage_collector/garbage_collector.h>
+
+#include <memory_allocator/memory_allocator.h>
 #include <array/header_config.h>
 #include <array/array.h>
-#include <utilities/file_utility.h>
-#include <defines.h>
+#include <renderer/defines.h>
+#include <renderer/assert.h>
 
 #define BIT(flag, bit) ((flag & bit) == bit)
 
@@ -355,21 +357,22 @@ int main(int argc, char** argv)
 	VkCommandBuffer* commandBuffers = vk_get_command_buffers(device, commandPool, imageCount).value2;
 
 	//Graphics Pipeline
-	VkPipelineLayout pipelineLayout = vk_get_pipeline_layout(device);
+	VkPipelineLayout pipelineLayout = vk_get_pipeline_layout(device, 0, NULL);
 
 	VkPipelineShaderStageCreateInfo shaderStages[2] = 
 	{
-		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/vertexShader.vert"), VERTEX_SHADER, "main"),
-		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/fragmentShader.frag"), FRAGMENT_SHADER, "main"),
+		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/vertexShader.vert"), VULKAN_SHADER_TYPE_VERTEX, "main"),
+		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/fragmentShader.frag"), VULKAN_SHADER_TYPE_FRAGMENT, "main"),
 	};
 	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
 	u32 offsets[2] = { offsetof(vertex_t, position), offsetof(vertex_t, color) };
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(
-															2, 
-															sizeof(vertex_t), 
-															VK_VERTEX_INPUT_RATE_VERTEX, 
-															formats, 
-															offsets);
+	vertex_attribute_binding_info_t* vertex_attribute_info = stack_new(vertex_attribute_binding_info_t);
+	vertex_attribute_info->attribute_count = 2;
+	vertex_attribute_info->attribute_formats = formats;
+	vertex_attribute_info->attribute_offsets = offsets;
+	uint32_t* strides = stack_new(uint32_t);
+	*strides = sizeof(vertex_t);
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(1, strides, vertex_attribute_info);
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
 	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(WINDOW_WIDTH, WINDOW_HEIGHT); 
 	VkPipelineRasterizationStateCreateInfo rasterizer = vk_get_pipeline_rasterization_state_create_info();
@@ -384,6 +387,8 @@ int main(int argc, char** argv)
 													&rasterizer, 
 													&multisampling,
 													&colorBlending);
+	stack_free(strides);
+	stack_free(vertex_attribute_info);
 	log_msg("Graphics Pipeline Created!");
 
 

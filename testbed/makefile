@@ -11,18 +11,19 @@
 #-------------------------------------------
 #		Project Configuration
 #-------------------------------------------
-PROJECT_NAME = VulkanRenderer
-STATIC_LIB_NAME = vulkanrenderer.a
-DYNAMIC_LIB_NAME = #vulkanrenderer.dll
+PROJECT_NAME = TestBed
+STATIC_LIB_NAME = testbed.a
+DYNAMIC_LIB_NAME = #testbed.dll
 EXECUTABLE_NAME = main.exe
-EXTERNAL_LIBRARIES = -L.\external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32
+EXTERNAL_LIBRARIES = -L..\external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32
 EXTERNAL_INCLUDES = -I.\include\engine -I./dependencies/ -I./shared-dependencies
-DEPENDENCIES = MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager
-DEPENDENCY_LIBS = MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a SafeMemory/lib/safemem.a tgc/lib/tgc.a
-DEPENDENCIES_DIR = ./dependencies
+#TODO: Move EntityComponentSystem from VulkanRenderer to TestBed
+DEPENDENCIES = .. ../testbed/dependencies/EntityComponentSystem MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager
+DEPENDENCY_LIBS = ../lib/vulkanrenderer.a ../testbed/dependencies/EntityComponentSystem/lib/ecs.a MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a SafeMemory/lib/safemem.a tgc/lib/tgc.a
+DEPENDENCIES_DIR = ../dependencies
 SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS = BufferLib/lib/bufferlib.a
-SHARED_DEPENDENCIES_DIR = ./shared-dependencies
+SHARED_DEPENDENCIES_DIR = ../shared-dependencies
 #-------------------------------------------
 
 #-------------------------------------------
@@ -102,8 +103,8 @@ TARGET = $(__EXECUTABLE_NAME)
 DEPENDENCY_INCLUDES = $(addsuffix /include, $(__DEPENDENCIES))
 SHARED_DEPENDENCY_INCLUDES = $(addsuffix /include, $(__SHARED_DEPENDENCIES))
 
-INCLUDES= -I./include $(EXTERNAL_INCLUDES) $(addprefix -I, $(DEPENDENCY_INCLUDES) $(SHARED_DEPENDENCY_INCLUDES))
-SOURCES= $(wildcard source/*.c source/*/*.c source/*/*/*.c)
+INCLUDES= -I./include -I./scripts $(EXTERNAL_INCLUDES) $(addprefix -I, $(DEPENDENCY_INCLUDES) $(SHARED_DEPENDENCY_INCLUDES))
+SOURCES= $(wildcard source/*.c)
 OBJECTS= $(addsuffix .o, $(basename $(SOURCES)))
 LIBS = $(EXTERNAL_LIBRARIES)
 
@@ -177,11 +178,8 @@ bin-clean:
 	del $(subst /,\, $(TARGET_STATIC_LIB))
 	rmdir $(subst /,\, $(TARGET_STATIC_LIB_DIR))
 	@echo [Log] Binaries cleaned successfully!
-	$(MAKE) --directory=./dependencies/HPML clean
-	$(MAKE) --directory=./dependencies/tgc clean
-	$(MAKE) --directory=./dependencies/SafeMemory clean
-	$(MAKE) --directory=./dependencies/MeshLib clean
-	$(MAKE) --directory=./shared-dependencies/BufferLib clean
+	$(MAKE) --directory=.. clean
+	$(MAKE) --directory=./dependencies/EntityComponentSystem clean
 #-------------------------------------------
 
 #-------------------------------------------
