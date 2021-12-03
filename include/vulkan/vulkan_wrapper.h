@@ -32,13 +32,13 @@ declare_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND);
 declare_exception(VULKAN_SURFACE_NOT_SUPPORTED);
 declare_exception(VULKAN_PHYSICAL_DEVICE_EXTENSION_NOT_SUPPORTED);
 
-typedef enum vulkan_vulkan_shader_type_t
+typedef enum vulkan_shader_type_t
 {
 	VULKAN_SHADER_TYPE_VERTEX,
 	VULKAN_SHADER_TYPE_FRAGMENT,
 	VULKAN_SHADER_TYPE_GEOMETRY,
 	VULKAN_SHADER_TYPE_TESSELLATION
-} vulkan_vulkan_shader_type_t;
+} vulkan_shader_type_t;
 
 typedef struct vertex_attribute_binding_info_t
 {
@@ -123,7 +123,7 @@ function_signature(uint32_t, vk_get_graphics_queue_family_index, VkPhysicalDevic
 function_signature(VkQueue, vk_get_device_queue, VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex);
 function_signature(VkSwapchainKHR, vk_get_swapchain, VkDevice device, VkSwapchainCreateInfoKHR* createInfo);
 function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, const char* file_name);
-function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, vulkan_vulkan_shader_type_t vulkan_shader_type, const char* entry_point);
+function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point);
 function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_input_state_create_info, uint32_t binding_count, uint32_t* strides, vertex_attribute_binding_info_t* attribute_infos);
 function_signature_void(VkPipelineInputAssemblyStateCreateInfo, vk_get_pipeline_input_assembly_state_create_info); 
 function_signature(VkPipelineViewportStateCreateInfo, vk_get_pipeline_viewport_state_create_info, uint32_t viewportWidth, uint32_t viewportHeight);

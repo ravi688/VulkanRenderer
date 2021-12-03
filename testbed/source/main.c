@@ -1,10 +1,12 @@
 //For handling rendering
 #include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_shader.h>
-#include <renderer/internal/vulkan/vulkan_material.h>
-#include <renderer/internal/vulkan/vulkan_mesh.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/material.h>
+#include <renderer/shader.h>
+#include <renderer/mesh.h>
 #include <renderer/render_window.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
+
+#include <renderer/internal/vulkan/vulkan_mesh.h>
 #include <renderer/mesh3d.h>
 #include <renderer/defines.h>
 
@@ -27,9 +29,9 @@
 #include <hpml/affine_transformation/header_config.h>
 #include <hpml/affine_transformation/affine_transformation.h>
 
-typedef vulkan_shader_t* pvulkan_shader_t;
-instantiate_stack_array(pvulkan_shader_t);
-instantiate_stack_array(VkFormat);
+typedef shader_t* pshader_t;
+instantiate_static_stack_array(pshader_t);
+instantiate_static_stack_array(VkFormat);
 
 #define DEG2RAD 0.01745f
 #define RAD2DEG 57.29577f
@@ -110,30 +112,12 @@ int main(int argc, char** argv)
 	renderer_t* renderer = renderer_init(800, 800, "Vulkan 3D Renderer");
 
  	//Prepare shaders
-	vulkan_shader_t** shaders = stack_array(pvulkan_shader_t, 2,
-											vulkan_shader_create(renderer, "shaders/fragmentShader.spv", VULKAN_SHADER_TYPE_FRAGMENT),
-											vulkan_shader_create(renderer, "shaders/vertexShader.spv", VULKAN_SHADER_TYPE_VERTEX));
+	shader_t** shaders = stack_array(pshader_t, 2,
+											shader_create(renderer, "shaders/fragmentShader.spv", SHADER_TYPE_FRAGMENT),
+											shader_create(renderer, "shaders/vertexShader.spv", SHADER_TYPE_VERTEX));
 
 	//Prepare Material
-	VkFormat* attribute_formats1 = stack_array(VkFormat, 1, VK_FORMAT_R32G32_SFLOAT);
-	VkFormat* attribute_formats2 = stack_array(VkFormat, 1, VK_FORMAT_R32G32B32_SFLOAT);
-	VkFormat* attribute_formats3 = stack_array(VkFormat, 1, VK_FORMAT_R32G32B32_SFLOAT);
-	u32* attribute_offsets1 = stack_array(u32, 1, 0);
-	u32* attribute_offsets2 = stack_array(u32, 1, 0);
-	u32* attribute_offsets3 = stack_array(u32, 1, 0);
-	vulkan_vertex_info_t* vertex_infos = stack_newv(vulkan_vertex_info_t, 3);
-	ref(vulkan_vertex_info_t, vertex_infos, 0) = (vulkan_vertex_info_t) { sizeof(vec2_t(float)), 1, attribute_formats1, attribute_offsets1 };
-	ref(vulkan_vertex_info_t, vertex_infos, 1) = (vulkan_vertex_info_t) { sizeof(vec3_t(float)), 1, attribute_formats2, attribute_offsets2 };
-	ref(vulkan_vertex_info_t, vertex_infos, 2) = (vulkan_vertex_info_t) { sizeof(vec3_t(float)), 1, attribute_formats3, attribute_offsets3 };
-
-	vulkan_material_create_info_t material_info =
-	{
-		.shaders = shaders,
-		.shader_count = 2,
-		.vertex_info_count = 3,
-		.vertex_infos = vertex_infos
-	};
-	vulkan_material_t* material = vulkan_material_create(renderer, &material_info);
+	material_t* material = material_create(renderer, 2, shaders);
 
 	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -3, 2, 0 }, (vec3_t(float)) { 0, 0, -30 * DEG2RAD } );
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
@@ -160,7 +144,7 @@ int main(int argc, char** argv)
 	while(renderer_is_running(renderer))
 	{
 		renderer_begin_frame(renderer, 0.0f, 0.0f, 0.0f, 0.0f);
-		vulkan_material_bind(material, renderer);
+		material_bind(material, renderer);
 		vulkan_mesh_draw_indexed(cube1, renderer);
 		vulkan_mesh_draw_indexed(cube2, renderer);
 		vulkan_mesh_draw_indexed(cube3, renderer);
@@ -173,10 +157,6 @@ int main(int argc, char** argv)
 
 		renderer_update(renderer);
 	}
-
-	for(u32 i = 0; i < 2; i++)
-		vulkan_shader_destroy(shaders[i], renderer);
-	vulkan_material_destroy(material, renderer);
 	vulkan_mesh_destroy(cube1, renderer);
 	vulkan_mesh_destroy(cube2, renderer);
 	vulkan_mesh_destroy(cube3, renderer);
@@ -194,14 +174,16 @@ int main(int argc, char** argv)
 	vulkan_mesh_release_resources(cube6);
 	vulkan_mesh_release_resources(cube7);
 	vulkan_mesh_release_resources(cube8);
-	vulkan_material_release_resources(material);
+
 	for(u32 i = 0; i < 2; i++)
-		vulkan_shader_release_resources(shaders[i]);
-	stack_free(attribute_formats1);
-	stack_free(attribute_offsets1);
-	stack_free(attribute_formats2);
-	stack_free(attribute_offsets2);
+		shader_destroy(shaders[i], renderer);
+	for(u32 i = 0; i < 2; i++)
+		shader_release_resources(shaders[i]);
 	stack_free(shaders);
+
+	material_destroy(material, renderer);
+	material_release_resources(material);
+
 	mesh3d_destroy(cube_mesh1);
 	mesh3d_destroy(cube_mesh2);
 	mesh3d_destroy(cube_mesh3);

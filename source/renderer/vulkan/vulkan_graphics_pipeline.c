@@ -18,13 +18,13 @@ vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 	return pipeline;
 }
 
-void vulkan_graphics_pipeline_create_non_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline)
+void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline)
 {
 	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
 	ASSERT(renderer->vk_render_pass != VK_NULL_HANDLE, "renderer->vk_render_pass == VK_NULL_HANDLE\n");
 	ASSERT(renderer->window != NULL, "renderer->window == NULL\n");
 
-	vulkan_pipeline_layout_create_non_alloc(renderer, refp(vulkan_pipeline_layout_t, refp(vulkan_graphics_pipeline_t, pipeline, 0)->layout, 0));
+	vulkan_pipeline_layout_create_no_alloc(renderer, refp(vulkan_pipeline_layout_t, refp(vulkan_graphics_pipeline_t, pipeline, 0)->layout, 0));
 
 	VkPipelineShaderStageCreateInfo* shader_stages = stack_newv(VkPipelineShaderStageCreateInfo, create_info->shader_count);
 	for(u32 i = 0; i < create_info->shader_count; i++)
@@ -66,7 +66,7 @@ void vulkan_graphics_pipeline_create_non_alloc(renderer_t* renderer, vulkan_grap
 vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
 {
 	vulkan_graphics_pipeline_t* pipeline = vulkan_graphics_pipeline_new();
-	vulkan_graphics_pipeline_create_non_alloc(renderer, create_info, refp(vulkan_graphics_pipeline_t, pipeline, 0));
+	vulkan_graphics_pipeline_create_no_alloc(renderer, create_info, refp(vulkan_graphics_pipeline_t, pipeline, 0));
 	return pipeline;
 }
 

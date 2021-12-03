@@ -14,7 +14,7 @@ vulkan_mesh_t* vulkan_mesh_new()
 	return mesh;
 }
 
-void vulkan_mesh_create_non_alloc(renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
+void vulkan_mesh_create_no_alloc(renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
 {
 	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
 
@@ -77,7 +77,7 @@ void vulkan_mesh_create_non_alloc(renderer_t* renderer, vulkan_mesh_create_info_
 vulkan_mesh_t* vulkan_mesh_create(renderer_t* renderer, vulkan_mesh_create_info_t* create_info)
 {
 	vulkan_mesh_t* mesh = vulkan_mesh_new();
-	vulkan_mesh_create_non_alloc(renderer, create_info, mesh);
+	vulkan_mesh_create_no_alloc(renderer, create_info, mesh);
 	return mesh;
 }
 
@@ -93,6 +93,11 @@ void vulkan_mesh_destroy(vulkan_mesh_t* mesh, renderer_t* renderer)
 	vkFreeMemory(renderer->vk_device, mesh->index_buffer_memory, NULL);
 }
 
+void vulkan_mesh_sync(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_mesh_create_info_t* create_info)
+{
+	LOG_FETAL_ERR("Method not defined\n");
+}
+
 void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 {
 	heap_free(mesh);
@@ -100,10 +105,7 @@ void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 
 void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh, renderer_t* renderer)
 {
-	if(mesh->index_buffer == VK_NULL_HANDLE)
-	{
-		log_fetal_err("vulkan_mesh_t doesn't have indices but you are calling vulkan_mesh_draw_index\n");
-	}
+	ASSERT(mesh->index_buffer != VK_NULL_HANDLE, "vulkan_mesh_t doesn't have indices but you are calling vulkan_mesh_draw_index\n");
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 0, 1, &(mesh->position_buffer), offsets);
 	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 1, 1, &(mesh->color_buffer), offsets);

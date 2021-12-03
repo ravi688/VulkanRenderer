@@ -438,7 +438,7 @@ function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_
 	CALLTRACE_RETURN(createInfo);
 }
 
-function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, vulkan_vulkan_shader_type_t vulkan_shader_type, const char* entry_point)
+function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point)
 {
 	CALLTRACE_BEGIN();
 	VkPipelineShaderStageCreateInfo createInfo = { }; 

@@ -26,7 +26,7 @@ typedef struct vulkan_graphics_pipeline_t
 
 vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new();
 vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info);
-void vulkan_graphics_pipeline_create_non_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline);
+void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline);
 void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer);
 void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline);
 void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer);

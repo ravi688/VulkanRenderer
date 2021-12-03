@@ -4,8 +4,6 @@
 #include <renderer/defines.h>
 
 typedef struct renderer_t renderer_t;
-typedef struct mesh3d_t mesh3d_t;
-typedef struct material_t material_t;
 
 renderer_t* renderer_init(u32 width, u32 height, const char* title);
 void renderer_terminate(renderer_t* renderer);

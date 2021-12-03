@@ -785,6 +785,38 @@ function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->uvs, vec2_t(float), index)->x);
 }
 
+
+function_signature(u32, mesh3d_sizeof_position, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh->positions != NULL, __POSITIONS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_element_size(mesh->positions));
+}
+function_signature(u32, mesh3d_sizeof_normal, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh->normals != NULL, __NORMALS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_element_size(mesh->normals));
+}
+function_signature(u32, mesh3d_sizeof_color, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_element_size(mesh->colors));
+}
+function_signature(u32, mesh3d_sizeof_uv, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh->uvs != NULL, __UVS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_element_size(mesh->uvs));
+}
+function_signature(u32, mesh3d_sizeof_index, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh->triangles != NULL, __TRIANGLES_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_element_size(mesh->triangles) / 3);
+}
+
 function_signature(mesh3d_t*, mesh3d_cube, float size)
 {
 	CALLTRACE_BEGIN();

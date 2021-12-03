@@ -11,7 +11,7 @@ vulkan_pipeline_layout_t* vulkan_pipeline_layout_new()
 	return layout;
 }
 
-void vulkan_pipeline_layout_create_non_alloc(renderer_t* renderer, vulkan_pipeline_layout_t* layout)
+void vulkan_pipeline_layout_create_no_alloc(renderer_t* renderer, vulkan_pipeline_layout_t* layout)
 {
 	refp(vulkan_pipeline_layout_t, layout, 0)->layout = vk_get_pipeline_layout(renderer->vk_device);
 }
@@ -19,7 +19,7 @@ void vulkan_pipeline_layout_create_non_alloc(renderer_t* renderer, vulkan_pipeli
 vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(renderer_t* renderer)
 {
 	vulkan_pipeline_layout_t* layout = vulkan_pipeline_layout_new();
-	vulkan_pipeline_layout_create_non_alloc(renderer, refp(vulkan_pipeline_layout_t, layout, 0));
+	vulkan_pipeline_layout_create_no_alloc(renderer, refp(vulkan_pipeline_layout_t, layout, 0));
 	return layout;
 }
 

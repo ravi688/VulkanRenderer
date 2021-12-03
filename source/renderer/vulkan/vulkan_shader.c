@@ -13,18 +13,18 @@ vulkan_shader_t* vulkan_shader_new()
 	return refp(vulkan_shader_t, shader, 0);
 }
 
-void vulkan_shader_create_non_alloc(renderer_t* renderer, const char* file_name, vulkan_vulkan_shader_type_t vulkan_shader_type, vulkan_shader_t* shader)
+void vulkan_shader_create_no_alloc(renderer_t* renderer, const char* file_name, vulkan_shader_type_t vulkan_shader_type, vulkan_shader_t* shader)
 {
 	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
 	refp(vulkan_shader_t, shader, 0)->module = vk_get_shader_module(renderer->vk_device, file_name);
 	refp(vulkan_shader_t, shader, 0)->stage = vk_get_pipeline_shader_stage_create_info(refp(vulkan_shader_t, shader, 0)->module, vulkan_shader_type, "main");
 }
 
-vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, const char* file_name, vulkan_vulkan_shader_type_t vulkan_shader_type)
+vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, const char* file_name, vulkan_shader_type_t vulkan_shader_type)
 {
 	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
 	vulkan_shader_t* shader = vulkan_shader_new();
-	vulkan_shader_create_non_alloc(renderer, file_name, vulkan_shader_type, refp(vulkan_shader_t, shader, 0));
+	vulkan_shader_create_no_alloc(renderer, file_name, vulkan_shader_type, refp(vulkan_shader_t, shader, 0));
 	return shader;
 }
 

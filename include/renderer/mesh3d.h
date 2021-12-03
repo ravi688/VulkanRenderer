@@ -215,3 +215,15 @@ function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index);
 function_signature(mesh3d_t*, mesh3d_cube, float size);
 #define mesh3d_cube(...) define_alias_function_macro(mesh3d_cube, __VA_ARGS__)
 
+function_signature(u32, mesh3d_sizeof_position, mesh3d_t* mesh);
+function_signature(u32, mesh3d_sizeof_normal, mesh3d_t* mesh);
+function_signature(u32, mesh3d_sizeof_color, mesh3d_t* mesh);
+function_signature(u32, mesh3d_sizeof_uv, mesh3d_t* mesh);
+function_signature(u32, mesh3d_sizeof_index, mesh3d_t* mesh);
+
+
+#define mesh3d_sizeof_position(...) define_alias_function_macro(mesh3d_sizeof_position, __VA_ARGS__)
+#define mesh3d_sizeof_normal(...) define_alias_function_macro(mesh3d_sizeof_normal, __VA_ARGS__)
+#define mesh3d_sizeof_color(...) define_alias_function_macro(mesh3d_sizeof_color, __VA_ARGS__)
+#define mesh3d_sizeof_uv(...) define_alias_function_macro(mesh3d_sizeof_uv, __VA_ARGS__)
+#define mesh3d_sizeof_index(...) define_alias_function_macro(mesh3d_sizeof_index, __VA_ARGS__)
