@@ -357,7 +357,7 @@ int main(int argc, char** argv)
 	VkCommandBuffer* commandBuffers = vk_get_command_buffers(device, commandPool, imageCount).value2;
 
 	//Graphics Pipeline
-	VkPipelineLayout pipelineLayout = vk_get_pipeline_layout(device);
+	VkPipelineLayout pipelineLayout = vk_get_pipeline_layout(device, 0, NULL);
 
 	VkPipelineShaderStageCreateInfo shaderStages[2] = 
 	{

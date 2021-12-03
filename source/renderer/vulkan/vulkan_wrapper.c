@@ -251,7 +251,7 @@ function_signature(VkAttachmentDescription, vk_get_attachment_description, VkFor
 	CALLTRACE_RETURN(colorAttachment);
 }
 
-function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device)
+function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device, uint32_t push_constant_range_count, VkPushConstantRange* push_constant_ranges)
 {
 	CALLTRACE_BEGIN();
 	VkPipelineLayout pipelineLayout;
@@ -260,8 +260,8 @@ function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device)
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 0; // Optional
 	pipelineLayoutInfo.pSetLayouts = NULL; // Optional
-	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-	pipelineLayoutInfo.pPushConstantRanges = NULL; // Optional
+	pipelineLayoutInfo.pushConstantRangeCount = push_constant_range_count;
+	pipelineLayoutInfo.pPushConstantRanges = refp(VkPushConstantRange, push_constant_ranges, 0);
 
 	vkCall(vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &pipelineLayout));
 	CALLTRACE_RETURN(pipelineLayout);

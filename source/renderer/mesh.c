@@ -16,7 +16,7 @@ vulkan_mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 	ASSERT(mesh3d_has_positions(mesh_data), "!mesh3d_has_positions(mesh_data)\n");
 	ASSERT(mesh3d_has_normals(mesh_data), "!mesh3d_has_normals(mesh_data)\n");
 	ASSERT(mesh3d_has_colors(mesh_data), "!mesh3d_has_colors(mesh_data)\n");
-	ASSERT(mesh3d_has_uvs(mesh_data), "!mesh3d_has_uvs(mesh_data)\n");
+	// ASSERT(mesh3d_has_uvs(mesh_data), "!mesh3d_has_uvs(mesh_data)\n");
 	vulkan_mesh_create_info_t create_info =
 	{
 		.vertex_count = mesh3d_positions_count(mesh_data),
@@ -46,7 +46,7 @@ void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mes
 	ASSERT(mesh3d_has_positions(mesh_data), "!mesh3d_has_positions(mesh_data)\n");
 	ASSERT(mesh3d_has_normals(mesh_data), "!mesh3d_has_normals(mesh_data)\n");
 	ASSERT(mesh3d_has_colors(mesh_data), "!mesh3d_has_colors(mesh_data)\n");
-	ASSERT(mesh3d_has_uvs(mesh_data), "!mesh3d_has_uvs(mesh_data)\n");
+	// ASSERT(mesh3d_has_uvs(mesh_data), "!mesh3d_has_uvs(mesh_data)\n");
 	vulkan_mesh_create_info_t create_info =
 	{
 		.vertex_count = mesh3d_positions_count(mesh_data),

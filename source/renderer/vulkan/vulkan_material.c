@@ -2,6 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_material.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
+#include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
 #include <renderer/render_window.h>
 #include <renderer/assert.h>
 #include <memory_allocator/memory_allocator.h>
@@ -58,10 +59,6 @@ vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_
 }
 
 
-void vulkan_material_bind(vulkan_material_t* material, renderer_t* renderer)
-{
-	vulkan_graphics_pipeline_bind(material->pipeline, renderer);
-}
 
 void vulkan_material_destroy(vulkan_material_t* material, renderer_t* renderer)
 {
@@ -81,6 +78,17 @@ void vulkan_material_release_resources(vulkan_material_t* material)
 	}
 	heap_free(material->create_info.vertex_infos);
 	heap_free(material);
+}
+
+
+void vulkan_material_bind(vulkan_material_t* material, renderer_t* renderer)
+{
+	vulkan_graphics_pipeline_bind(material->pipeline, renderer);
+}
+
+void vulkan_material_push_constants(vulkan_material_t* material, renderer_t* renderer, void* bytes)
+{
+	vulkan_pipeline_layout_push_constants(material->pipeline->layout, renderer, bytes);
 }
 
 static void recreate_material(render_window_t* window, void* user_data)
