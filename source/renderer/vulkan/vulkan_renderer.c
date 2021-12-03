@@ -45,7 +45,6 @@ renderer_t* renderer_init(u32 width, u32 height, const char* title)
 
 void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float a)
 {
-	vkQueueWaitIdle(renderer->vk_graphics_queue);
 	vulkan_swapchain_acquire_next_image(renderer->swapchain, renderer);
 	vkCall(vkResetCommandBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT));
 	VkCommandBufferBeginInfo begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
@@ -58,7 +57,7 @@ void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float
 	clear_value.color.float32[3] = a;
 	VkRenderPassBeginInfo render_pass_begin_info =
 	{
-		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 		.renderArea.offset = (VkOffset2D) { 0, 0 },
 		.renderArea.extent = (VkExtent2D) { renderer->window->width, renderer->window->height },
 		.framebuffer = renderer->swapchain->framebuffers[renderer->swapchain->current_image_index],
@@ -100,6 +99,7 @@ void renderer_end_frame(renderer_t* renderer)
 	};
 
 	vkQueuePresentKHR(renderer->vk_graphics_queue, &present_info);
+	vkQueueWaitIdle(renderer->vk_graphics_queue);
 }
 
 void renderer_update(renderer_t* renderer)

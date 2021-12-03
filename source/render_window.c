@@ -62,16 +62,22 @@ render_window_t* render_window_init(u32 width, u32 height, const char* title)
 	window->height = height;
 	return window;
 }
+static bool comparer(void* callback, event_args_t* args) { return callback == (void*)args->callback; }
 
 void render_window_subscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window, void* user_data), void* user_data)
 {
 	if(window->resize_event == NULL)
 		window->resize_event = BUFcreate(NULL, sizeof(event_args_t), 0, 0);
 	event_args_t args = { .user_data = user_data, .callback = callback };
+#if GLOBAL_DEBUG
+	if(buf_find_index_of(window->resize_event, callback, (bool (*)(void*, void*))comparer) != BUF_INVALID_INDEX)
+	{
+		log_wrn("Event Handler is already subscribed\n");
+	}
+#endif
 	buf_push(window->resize_event, &args);
 }
 
-static bool comparer(void* callback, event_args_t* args) { return callback == (void*)args->callback; }
 
 void render_window_unsubscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window, void* user_data))
 {

@@ -32,7 +32,6 @@ static mat4_t(float) projection_matrix;
 
 static void recreate_matrix(render_window_t* window, void* user_data)
 {
-	// printf("Aspect ratio: %f\n", (float)window->width / window->height);
 	mat4_move(float)(&projection_matrix,  mat4_persp_projection(float)(0, 10, 65 * DEG2RAD, (float)window->width/window->height));
 }
 
