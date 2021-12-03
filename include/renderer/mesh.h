@@ -34,6 +34,7 @@ void mesh_destroy(mesh_t* mesh, renderer_t*);
 void mesh_release_resources(mesh_t* mesh);
 
 void mesh_sync(mesh_t* mesh, renderer_t*, mesh3d_t* mesh_data);
+__attribute__((deprecated))
 void mesh_draw(mesh_t* mesh, renderer_t*);
 void mesh_draw_indexed(mesh_t* mesh, renderer_t*);
 

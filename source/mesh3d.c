@@ -829,40 +829,40 @@ function_signature(mesh3d_t*, mesh3d_cube, float size)
 	float half_size = 0.5f * size;
 
 	//Bottom
-	mesh3d_position_add(mesh, -half_size, 0, half_size );
-	mesh3d_position_add(mesh, -half_size, 0, -half_size);
-	mesh3d_position_add(mesh, half_size, 0, -half_size );
-	mesh3d_position_add(mesh, half_size, 0, half_size  );
+	mesh3d_position_add(mesh, -half_size, -half_size, half_size );
+	mesh3d_position_add(mesh, -half_size, -half_size, -half_size);
+	mesh3d_position_add(mesh, half_size, -half_size, -half_size );
+	mesh3d_position_add(mesh, half_size, -half_size, half_size  );
 
 	//Top
-	mesh3d_position_add(mesh, half_size, size, half_size  );
-	mesh3d_position_add(mesh, half_size, size, -half_size );
-	mesh3d_position_add(mesh, -half_size, size, -half_size);
-	mesh3d_position_add(mesh, -half_size, size, half_size );
+	mesh3d_position_add(mesh, half_size, half_size, half_size  );
+	mesh3d_position_add(mesh, half_size, half_size, -half_size );
+	mesh3d_position_add(mesh, -half_size, half_size, -half_size);
+	mesh3d_position_add(mesh, -half_size, half_size, half_size );
 
 	//Front
-	mesh3d_position_add(mesh, -half_size, size, -half_size);
-	mesh3d_position_add(mesh, -half_size, size, half_size );
-	mesh3d_position_add(mesh, -half_size, 0, half_size );
-	mesh3d_position_add(mesh, -half_size, 0, -half_size);
+	mesh3d_position_add(mesh, -half_size, half_size, -half_size);
+	mesh3d_position_add(mesh, -half_size, half_size, half_size );
+	mesh3d_position_add(mesh, -half_size, -half_size, half_size );
+	mesh3d_position_add(mesh, -half_size, -half_size, -half_size);
 
 	//Left
-	mesh3d_position_add(mesh, half_size, size, -half_size );
-	mesh3d_position_add(mesh, -half_size, size, -half_size);
-	mesh3d_position_add(mesh, -half_size, 0, -half_size);
-	mesh3d_position_add(mesh, half_size, 0, -half_size );
+	mesh3d_position_add(mesh, half_size, half_size, -half_size );
+	mesh3d_position_add(mesh, -half_size, half_size, -half_size);
+	mesh3d_position_add(mesh, -half_size, -half_size, -half_size);
+	mesh3d_position_add(mesh, half_size, -half_size, -half_size );
 
 	//Right
-	mesh3d_position_add(mesh, -half_size, size, half_size);
-	mesh3d_position_add(mesh, half_size, size, half_size );
-	mesh3d_position_add(mesh, half_size, 0, half_size );
-	mesh3d_position_add(mesh, -half_size, 0, half_size);
+	mesh3d_position_add(mesh, -half_size, half_size, half_size);
+	mesh3d_position_add(mesh, half_size, half_size, half_size );
+	mesh3d_position_add(mesh, half_size, -half_size, half_size );
+	mesh3d_position_add(mesh, -half_size, -half_size, half_size);
 
 	//Back
-	mesh3d_position_add(mesh, half_size, size, half_size );
-	mesh3d_position_add(mesh, half_size, size, -half_size);
-	mesh3d_position_add(mesh, half_size, 0, -half_size);
-	mesh3d_position_add(mesh, half_size, 0, half_size );
+	mesh3d_position_add(mesh, half_size, half_size, half_size );
+	mesh3d_position_add(mesh, half_size, half_size, -half_size);
+	mesh3d_position_add(mesh, half_size, -half_size, -half_size);
+	mesh3d_position_add(mesh, half_size, -half_size, half_size );
 
 
 	//clockwise order

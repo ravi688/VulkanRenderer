@@ -16,7 +16,7 @@ layout(location = 1) out vec3 normal;
 void main()
 {
     vec4 v = push.mvp_matrix * vec4(inPosition, 1.0);
-    gl_Position = vec4(v.z, v.y, 0, v.w);
+    gl_Position = v;
     fragColor = inColor;
     normal = inNormal;
 }
