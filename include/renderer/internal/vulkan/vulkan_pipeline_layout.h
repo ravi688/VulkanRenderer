@@ -20,3 +20,5 @@ void vulkan_pipeline_layout_create_no_alloc(renderer_t* renderer, vulkan_pipelin
 void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* layout, renderer_t* renderer);
 void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* layout);
 
+void vulkan_pipeline_layout_push_constants(vulkan_pipeline_layout_t* layout, renderer_t* renderer, void* bytes);
+

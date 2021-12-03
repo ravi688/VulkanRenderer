@@ -148,7 +148,7 @@ function_signature(VkSemaphore, vk_get_semaphore, VkDevice device);
 function_signature(VkAttachmentDescription, vk_get_attachment_description, VkFormat image_format);
 function_signature(VkSubpassDescription, vk_get_subpass_description, VkAttachmentReference attachment_reference);
 function_signature(VkRenderPass, vk_get_render_pass, VkDevice device, VkFormat format);
-function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device);
+function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device, uint32_t phush_constant_range_count, VkPushConstantRange* push_constant_ranges);
 function_signature(VkViewport, vk_get_viewport, uint32_t width, uint32_t height);
 function_signature(VkBuffer, vk_get_buffer, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkSharingMode sharingMode);
 function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties);

@@ -29,3 +29,4 @@ void material_destroy(material_t* material, renderer_t* renderer);
 void material_release_resources(material_t* material);
 
 void material_bind(material_t* material, renderer_t* renderer);
+void material_push_constants(material_t* material, renderer_t* renderer, void* bytes);
