@@ -8,8 +8,6 @@ typedef struct render_window_t
 {
 	void* handle;
 	BUFFER* resize_event;
-	void (*resize_callback)(void* window);
-	void (*resize_callback1)(void* window);
 	u32 width;
 	u32 height;
 	void* user_data;

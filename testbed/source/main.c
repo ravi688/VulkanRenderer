@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 		renderer_end_frame(renderer);
 
 		renderer_update(renderer);
-		angle += 1.0f;
+		angle += 0.1f;
 		if(angle >= 360.0f)
 			angle = 0.0f;
 	}

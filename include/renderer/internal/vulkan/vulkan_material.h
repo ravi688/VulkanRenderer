@@ -33,3 +33,4 @@ void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_creat
 void vulkan_material_destroy(vulkan_material_t* material, renderer_t* renderer);
 void vulkan_material_release_resources(vulkan_material_t* material);
 void vulkan_material_bind(vulkan_material_t* material, renderer_t* renderer);
+void vulkan_material_push_constants(vulkan_material_t* material, renderer_t* renderer, void* bytes);
