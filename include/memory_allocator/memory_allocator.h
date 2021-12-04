@@ -23,13 +23,14 @@
 #	define USE_SAFE_MEMORY /*MEMORY_ALLOCATION_SAFETY_LEVEL_2*/
 #endif
 
+#include <stdarg.h>
+
 #ifdef USE_SAFE_MEMORY
 #	if defined(GLOBAL_DEBUG) && !defined(SAFE_MEMORY_DEBUG)
 #		define SAFE_MEMORY_DEBUG
 #	elif defined(GLOBAL_RELEASE) && !defined(SAFE_MEMORY_RELEASE)
 #		define SAFE_MEMORY_RELEASE
 #	endif
-#   include <stdarg.h>
 #	include <safe_memory/safe_memory.h>
 #	define memory_allocator_init(x) safe_memory_init()
 #	define memory_allocator_terminate() safe_memory_terminate()
