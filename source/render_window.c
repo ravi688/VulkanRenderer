@@ -72,7 +72,7 @@ void render_window_subscribe_on_resize(render_window_t* window, void (*callback)
 #if GLOBAL_DEBUG
 	if(buf_find_index_of(window->resize_event, callback, (bool (*)(void*, void*))comparer) != BUF_INVALID_INDEX)
 	{
-		log_wrn("Event Handler is already subscribed\n");
+		log_wrn("Event Handler %u is already subscribed\n", callback);
 	}
 #endif
 	buf_push(window->resize_event, &args);

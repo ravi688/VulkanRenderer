@@ -31,7 +31,6 @@ void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_creat
 		.vertex_infos = create_info->vertex_infos
 	};
 	vulkan_graphics_pipeline_create_no_alloc(renderer, &pipeline_create_info, material->pipeline);
-	render_window_subscribe_on_resize(renderer->window, recreate_material, material);
 }
 
 vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_create_info_t* create_info)
@@ -55,6 +54,7 @@ vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_
 		dst_info->attribute_formats = attribute_formats;
 	}
 	material->renderer = renderer;
+	render_window_subscribe_on_resize(renderer->window, recreate_material, material);
 	return material;
 }
 
@@ -94,6 +94,6 @@ void vulkan_material_push_constants(vulkan_material_t* material, renderer_t* ren
 static void recreate_material(render_window_t* window, void* user_data)
 {
 	vulkan_material_t* material = user_data;
-	vulkan_material_destroy(material, material->renderer);
+	vulkan_graphics_pipeline_destroy(material->pipeline, material->renderer);
 	vulkan_material_create_no_alloc(material->renderer, &(material->create_info), material);
 }
