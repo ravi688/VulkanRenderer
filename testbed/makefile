@@ -210,3 +210,13 @@ shader-clean:
 clean: bin-clean
 	@echo [Log] All cleaned successfully!
 #-------------------------------------------
+
+.PHONY: build
+.PHONY: build-run
+
+build:
+	$(MAKE) --directory=.. lib-static-debug
+	$(MAKE) debug
+
+build-run: build
+	$(__EXECUTABLE_NAME)

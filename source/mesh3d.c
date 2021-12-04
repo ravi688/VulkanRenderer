@@ -923,6 +923,18 @@ function_signature(mesh3d_t*, mesh3d_cube, float size)
 	CALLTRACE_RETURN(mesh);
 }
 
+function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh)
+{
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(mesh3d_has_positions(mesh), "!mesh3d_has_positions(mesh)\n");
+	vec3_t(float) centroid = vec3_zero(float)();
+	for(buf_ucount_t i = 0; i < mesh3d_positions_count(mesh); i++)
+		centroid = vec3_add(float)(centroid, mesh3d_position_get(mesh, i));
+	centroid = vec3_scale(float)(centroid, (float)1 / mesh3d_positions_count(mesh));
+	for(buf_ucount_t i = 0; i < mesh3d_positions_count(mesh); i++)
+		mesh3d_position_set_vec3(mesh, i, vec3_sub(float)(mesh3d_position_get(mesh, i), centroid));
+}
+
 static void stl_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh);
 static void stl_vertex_position(vec3_t(float) position, mesh3d_t* mesh);
 static void obj_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh);
@@ -972,8 +984,10 @@ function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
 			stl_parse_binary(buffer->bytes, buffer->element_count, &parse_callbacks);
 		}
 	}
+	//TODO: Obj implementation is incomplete because obj_parse_ascii is not generic; can't load all the obj files
 	else if(!strcmp(extension, EXTENSION_OBJ))
 	{
+		LOG_FETAL_ERR("Currently only .stl files are supported, OBJ supported is yet to be implemented\n");
 		buffer = load_text_from_file(file_path);
 		ASSERT(buf_get_element_count(buffer) > OBJ_MINIMUM_ASCII_FILE_LENGTH, "length of the file \"%s\" is less than OBJ_MINIMUM_ASCII_FILE_LENGTH\n", file_path);
 		obj_parse_callbacks_t parse_callbacks =
