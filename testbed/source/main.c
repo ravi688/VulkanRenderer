@@ -33,6 +33,7 @@ static mat4_t(float) projection_matrix;
 static void recreate_matrix(render_window_t* window, void* user_data)
 {
 	mat4_move(float)(&projection_matrix,  mat4_persp_projection(float)(0, 10, 65 * DEG2RAD, (float)window->width/window->height));
+	// mat4_move(float)(&projection_matrix,  mat4_ortho_projection(float)(0, 10, 3, (float)window->width/window->height));
 }
 
 int main(int argc, char** argv)
@@ -48,7 +49,7 @@ int main(int argc, char** argv)
 	//Prepare Material
 	material_t* material = material_create(renderer, 2, shaders);
 
-	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -3, 1.7f, 0 }, (vec3_t(float)) { 0, 0, -30 * DEG2RAD } );
+	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -3, 1.2f, 0 }, (vec3_t(float)) { 0, 0, -20 * DEG2RAD } );
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
 	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
 
@@ -66,15 +67,15 @@ int main(int argc, char** argv)
 		mat4_t(float) vp = mat4_mul(float)(3, clip_matrix, projection_matrix, view_matrix);
 		vec3_t(float) eulerRotation = vec3_scale(float)(vec3(float)(0, 1, 0), angle * DEG2RAD);
 		renderer_begin_frame(renderer, 0.0f, 0.0f, 0.0f, 0.0f);
-		material_bind(material, renderer);
 
+		material_bind(material, renderer);
 
 		mat4_t(float) mvp1 = mat4_mul(float)(2, vp, mat4_transform(vec3(float)(0, 0, 0), eulerRotation));
 		mat4_move(float)(&mvp1, mat4_transpose(float)(mvp1));
 		material_push_constants(material, renderer, &mvp1);
 		mesh_draw_indexed(cube, renderer);
-		renderer_end_frame(renderer);
 
+		renderer_end_frame(renderer);
 		renderer_update(renderer);
 		angle += 0.05f;
 		if(angle >= 360.0f)
