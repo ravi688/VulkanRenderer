@@ -227,3 +227,7 @@ function_signature(u32, mesh3d_sizeof_index, mesh3d_t* mesh);
 #define mesh3d_sizeof_color(...) define_alias_function_macro(mesh3d_sizeof_color, __VA_ARGS__)
 #define mesh3d_sizeof_uv(...) define_alias_function_macro(mesh3d_sizeof_uv, __VA_ARGS__)
 #define mesh3d_sizeof_index(...) define_alias_function_macro(mesh3d_sizeof_index, __VA_ARGS__)
+
+
+#define mesh3d_load(...) define_alias_function_macro(mesh3d_load, __VA_ARGS__)
+function_signature(mesh3d_t*, mesh3d_load, const char* file_path);

@@ -1,9 +1,25 @@
 
 #include <renderer/mesh3d.h>
-#include <renderer/defines.h>
-#include <renderer/assert.h>
 #include <memory.h>
 #include <stdlib.h>
+
+//For mesh3d_load()
+#include <disk_manager/file_reader.h>
+#include <meshlib/stl/readers/ascii.h>
+#include <meshlib/stl/readers/binary.h>
+#include <meshlib/obj/readers/ascii.h>
+#include <meshlib/stl/parse_callbacks.h>
+#include <meshlib/obj/parse_callbacks.h>
+#include <string.h>
+#define EXTENSION_STL ".stl"
+#define EXTENSION_OBJ ".obj"
+#define STL_MINIMUM_FILE_LENGTH 0
+#define OBJ_MINIMUM_FILE_LENGTH 0
+
+
+//These header should be include at the last because there maybe previous definitions of ASSERT from other library headers
+#include <renderer/defines.h>
+#include <renderer/assert.h>
 
 #define __UVS_ARE_NOT_FOUND__ "mesh3d_t::uvs are not found, make sure to call mesh3d_uvs_new(count) first\n"
 #define __NORMALS_ARE_NOT_FOUND__ "mesh3d_t::normals are not found, make sure to call mesh3d_normals_new(count) first\n"
@@ -57,7 +73,7 @@ function_signature_void(mesh3d_t*, mesh3d_new)
 	mesh3d_t* mesh3d  = (mesh3d_t*)malloc(sizeof(mesh3d_t)); 
 	memset(mesh3d, 0, sizeof(mesh3d_t));
 	#ifdef MESH3D_DEBUG
-	log_msg("mesh3d_t created successfully"); 
+	log_msg("mesh3d_t created successfully\n");
 	#endif
 	CALLTRACE_RETURN(mesh3d);
 }
@@ -74,7 +90,7 @@ function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, u32 count)
 	mesh->positions = BUFcreate(NULL, sizeof(vec3_t(float)), count, 0);
 	ASSERT(mesh->positions != NULL, "mesh->positions == NULL\n");
 	#ifdef MESH3D_DEBUG
-	log_msg("New Position buffer created, length: %d", count);
+	log_msg("New Position buffer created, length: %d\n", count);
 	#endif
 	CALLTRACE_END();
 }
@@ -90,7 +106,7 @@ function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, u32 count)
 	}
 	mesh->normals = BUFcreate(NULL, sizeof(vec3_t(float)), count, 0);
 	#ifdef MESH3D_DEBUG
-	log_msg("New Normals buffer created, length: %d", count);
+	log_msg("New Normals buffer created, length: %d\n", count);
 	#endif
 	CALLTRACE_END();
 }
@@ -106,7 +122,7 @@ function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, u32 count)
 	}
 	mesh->colors = BUFcreate(NULL, sizeof(vec3_t(float)), count, 0);
 	#ifdef MESH3D_DEBUG
-	log_msg("New Colors buffer created, length: %d", count);
+	log_msg("New Colors buffer created, length: %d\n", count);
 	#endif
 	CALLTRACE_END();
 }
@@ -123,7 +139,7 @@ function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, u32 count)
 	}
 	mesh->triangles = BUFcreate(NULL, sizeof(vec3_t(int)), count, 0);
 	#ifdef MESH3D_DEBUG
-	log_msg("New Triangle buffer created, length: %d", count);
+	log_msg("New Triangle buffer created, length: %d\n", count);
 	#endif	
 	CALLTRACE_END();
 }
@@ -903,6 +919,100 @@ function_signature(mesh3d_t*, mesh3d_cube, float size)
 	mesh3d_optimize_buffer(mesh);
 	CALLTRACE_RETURN(mesh);
 }
+
+static void stl_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh);
+static void stl_vertex_position(vec3_t(float) position, mesh3d_t* mesh);
+static void obj_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh);
+static void obj_vertex_position(vec3_t(float) position, mesh3d_t* mesh);
+static void obj_vertex_texcoord(vec3_t(float) texcoord, mesh3d_t* mesh);
+static void obj_facet(vec4_t(vec3_t(int)) facet, mesh3d_t* mesh);
+
+function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
+{
+	CALLTRACE_BEGIN();
+	const char* extension = strrchr(file_path, '.');
+	mesh3d_t* mesh = mesh3d_new();
+	BUFFER* buffer = NULL;
+	if(!strcmp(extension, EXTENSION_STL))
+	{
+		mesh3d_positions_new(mesh, 0);
+		mesh3d_normals_new(mesh, 0);
+		mesh3d_triangles_new(mesh, 0);
+		mesh3d_colors_new(mesh, 0);
+		buffer = load_text_from_file(file_path);
+		ASSERT(buf_get_element_count(buffer) > STL_MINIMUM_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_FILE_LENGTH\n", file_path);
+		stl_parse_callbacks_t parse_callbacks =
+		{
+			.user_data = mesh,
+			.vertex_normal_callback = (void*)stl_vertex_normal,
+			.vertex_position_callback = (void*)stl_vertex_position
+		};
+		stl_parse_ascii(buffer->bytes, &parse_callbacks);
+	}
+	else if(!strcmp(extension, EXTENSION_OBJ))
+	{
+		buffer = load_text_from_file(file_path);
+		ASSERT(buf_get_element_count(buffer) > OBJ_MINIMUM_FILE_LENGTH, "length of the file \"%s\" is less than OBJ_MINIMUM_FILE_LENGTH\n", file_path);
+		obj_parse_callbacks_t parse_callbacks =
+		{
+			.user_data = mesh,
+			.vertex_normal_callback = (void*)obj_vertex_normal,
+			.vertex_position_callback = (void*)obj_vertex_position,
+			.vertex_texcoord_callback = (void*)obj_vertex_texcoord,
+			.facet_callback = (void*)obj_facet
+		};
+		obj_parse_ascii(buffer->bytes, buf_get_element_count(buffer), &parse_callbacks);
+	}
+	else
+	{
+		LOG_FETAL_ERR("Failed to open \"%s\", Unsupported file format\n", file_path);
+	}
+	if(buffer != NULL)
+		buf_free(buffer);
+	mesh3d_optimize_buffer(mesh);
+	CALLTRACE_RETURN(mesh);
+}
+
+static void stl_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh)
+{
+	mesh3d_normal_add(mesh, normal.y, normal.z, normal.x);
+	mesh3d_normal_add(mesh, normal.y, normal.z, normal.x);
+	mesh3d_normal_add(mesh, normal.y, normal.z, normal.x);
+	u32 count = mesh3d_triangles_count(mesh) * 3;
+	u32 vertex_count = mesh3d_positions_count(mesh) + 3;
+	mesh3d_triangle_add(mesh, (count + 2) % vertex_count, count + 1, count + 0);
+}
+
+static void stl_vertex_position(vec3_t(float) position, mesh3d_t* mesh)
+{
+	vec3_t(float) normal = mesh3d_normal_get(mesh, mesh3d_positions_count(mesh));
+	mesh3d_position_add(mesh, position.y, position.z, position.x);
+	normal.x = (normal.x < 0) ? 1 : normal.x;
+	normal.y = (normal.y < 0) ? 1 : normal.y;
+	normal.z = (normal.z < 0) ? 1 : normal.z;
+	mesh3d_color_add_vec3(mesh, normal);
+}
+
+static void obj_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh)
+{
+
+}
+
+static void obj_vertex_position(vec3_t(float) position, mesh3d_t* mesh)
+{
+
+}
+
+static void obj_vertex_texcoord(vec3_t(float) texcoord, mesh3d_t* mesh)
+{
+
+}
+
+static void obj_facet(vec4_t(vec3_t(int)) facet, mesh3d_t* mesh)
+{
+
+}
+
 
 /*TODO:
 New Feature and Performance improvement request, must be implemented in BUFFERlib version 1.2
