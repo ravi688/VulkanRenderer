@@ -13,8 +13,11 @@
 #include <string.h>
 #define EXTENSION_STL ".stl"
 #define EXTENSION_OBJ ".obj"
-#define STL_MINIMUM_FILE_LENGTH 0
-#define OBJ_MINIMUM_FILE_LENGTH 0
+#define STL_ASCII_HEADER "solid"
+#define STL_MINIMUM_ASCII_FILE_LENGTH 0
+#define STL_MINIMUM_BINARY_FILE_LENGTH 0
+#define OBJ_MINIMUM_ASCII_FILE_LENGTH 0
+#define OBJ_MINIMUM_BINAIRY_FILE_LEGTH 0
 
 
 //These header should be include at the last because there maybe previous definitions of ASSERT from other library headers
@@ -70,7 +73,7 @@ function_signature_void(mesh3d_t*, mesh3d_new)
 {
 	CALLTRACE_BEGIN();
 	//TODO: Allocation must be done with heap_new(mesh3d_t)
-	mesh3d_t* mesh3d  = (mesh3d_t*)malloc(sizeof(mesh3d_t)); 
+	mesh3d_t* mesh3d  = (mesh3d_t*)malloc(sizeof(mesh3d_t));
 	memset(mesh3d, 0, sizeof(mesh3d_t));
 	#ifdef MESH3D_DEBUG
 	log_msg("mesh3d_t created successfully\n");
@@ -83,7 +86,7 @@ function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, u32 count)
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	if(mesh->positions != NULL)
-	{	
+	{
 		buf_free(mesh->positions);
 		mesh->positions = NULL;
 	}
@@ -140,7 +143,7 @@ function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, u32 count)
 	mesh->triangles = BUFcreate(NULL, sizeof(vec3_t(int)), count, 0);
 	#ifdef MESH3D_DEBUG
 	log_msg("New Triangle buffer created, length: %d\n", count);
-	#endif	
+	#endif
 	CALLTRACE_END();
 }
 
@@ -156,7 +159,7 @@ function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, u32 count)
 	mesh->uvs = BUFcreate(NULL, sizeof(vec2_t(float)), count, 0);
 	#ifdef MESH3D_DEBUG
 	log_msg("New UV buffer created, length: %d\n", count);
-	#endif	
+	#endif
 	CALLTRACE_END();
 }
 
@@ -200,7 +203,7 @@ function_signature(u32, mesh3d_triangles_count, mesh3d_t* mesh)
 }
 
 function_signature(void, mesh3d_destroy, mesh3d_t* mesh)
-{	
+{
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 
@@ -939,20 +942,40 @@ function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
 		mesh3d_normals_new(mesh, 0);
 		mesh3d_triangles_new(mesh, 0);
 		mesh3d_colors_new(mesh, 0);
-		buffer = load_text_from_file(file_path);
-		ASSERT(buf_get_element_count(buffer) > STL_MINIMUM_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_FILE_LENGTH\n", file_path);
 		stl_parse_callbacks_t parse_callbacks =
 		{
 			.user_data = mesh,
 			.vertex_normal_callback = (void*)stl_vertex_normal,
 			.vertex_position_callback = (void*)stl_vertex_position
 		};
-		stl_parse_ascii(buffer->bytes, &parse_callbacks);
+
+		buffer = load_text_from_file(file_path);
+
+		//Assume file is ascii
+		char* ptr = buffer->bytes;
+		//skip any whitespaces
+		while(strchr(" \t", *ptr) != NULL)
+			ptr++;
+		u8 len = strlen(STL_ASCII_HEADER);
+		char temp[len + 1]; memcpy(temp, ptr, len); temp[len] = 0;
+		//This may be true in binary case also, but that would mean the binary file is corrupted or someone has tried to fake it as ASCII
+		if(!strcmp(temp, STL_ASCII_HEADER))
+		{
+			//parse the file as ascii
+			ASSERT(buf_get_element_count(buffer) > STL_MINIMUM_ASCII_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_ASCII_FILE_LENGTH\n", file_path);
+			stl_parse_ascii(buffer->bytes, buffer->element_count, &parse_callbacks);
+		}
+		else
+		{
+			//parse the file as binary
+			ASSERT(buf_get_element_count(buffer) > STL_MINIMUM_BINARY_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_BINARY_FILE_LENGTH\n", file_path);
+			stl_parse_binary(buffer->bytes, buffer->element_count, &parse_callbacks);
+		}
 	}
 	else if(!strcmp(extension, EXTENSION_OBJ))
 	{
 		buffer = load_text_from_file(file_path);
-		ASSERT(buf_get_element_count(buffer) > OBJ_MINIMUM_FILE_LENGTH, "length of the file \"%s\" is less than OBJ_MINIMUM_FILE_LENGTH\n", file_path);
+		ASSERT(buf_get_element_count(buffer) > OBJ_MINIMUM_ASCII_FILE_LENGTH, "length of the file \"%s\" is less than OBJ_MINIMUM_ASCII_FILE_LENGTH\n", file_path);
 		obj_parse_callbacks_t parse_callbacks =
 		{
 			.user_data = mesh,

@@ -57,8 +57,8 @@ int main(int argc, char** argv)
 	render_window_subscribe_on_resize(renderer->window, recreate_matrix, NULL);
 
 	// mesh3d_t* cube_mesh = mesh3d_cube(2);
+	mesh3d_t* cube_mesh = mesh3d_load("resource/Binary-box.stl");
 	mesh3d_t* cone_mesh = mesh3d_load("resource/ASCII-Cone.stl");
-	mesh3d_t* cube_mesh = mesh3d_load("resource/ASCII-box.stl");
 	mesh_t* cube = mesh_create(renderer, cube_mesh);
 	mesh_t* cone = mesh_create(renderer, cone_mesh);
 
