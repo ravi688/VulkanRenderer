@@ -19,3 +19,6 @@
 [submodule "testbed/dependencies/EntityComponentSystem"]
 	path = testbed/dependencies/EntityComponentSystem
 	url = https://github.com/ravi688/EntityComponentSystem.git
+[submodule "dependencies/MeshLib"]
+	path = dependencies/MeshLib
+	url = https://github.com/ravi688/MeshLib
