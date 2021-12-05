@@ -39,7 +39,7 @@ static void recreate_matrix(render_window_t* window, void* user_data)
 int main(int argc, char** argv)
 {
 	memory_allocator_init(&argc);
-	renderer_t* renderer = renderer_init(600, 600, "Vulkan 3D Renderer");
+	renderer_t* renderer = renderer_init(800, 800, "Vulkan 3D Renderer", false);
 
  	//Prepare shaders
 	shader_t** shaders = stack_newv(shader_t*, 2);
@@ -49,14 +49,18 @@ int main(int argc, char** argv)
 	//Prepare Material
 	material_t* material = material_create(renderer, 2, shaders);
 
-	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -3, 1.2f, 0 }, (vec3_t(float)) { 0, 0, -20 * DEG2RAD } );
+	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -700, 100, 0 }, (vec3_t(float)) { 0, 0, -10 * DEG2RAD } );
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
 	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
 
 	recreate_matrix(renderer->window, NULL);
 	render_window_subscribe_on_resize(renderer->window, recreate_matrix, NULL);
 
-	mesh3d_t* cube_mesh = mesh3d_cube(1);
+	// mesh3d_t* cube_mesh = mesh3d_cube(2);
+	mesh3d_t* cube_mesh = mesh3d_load("resource/Crankshaft HD.stl");
+	// mesh3d_t* cube_mesh = mesh3d_load("resource/Binary-box.stl");
+	mesh3d_make_centroid_origin(cube_mesh);
+	mesh3d_transform_set(cube_mesh, mat4_mul(float)(2, mat4_rotation(float)(45 * DEG2RAD, 0, 0), mat4_scale(float)(1, 1, 1)));
 	mesh_t* cube = mesh_create(renderer, cube_mesh);
 
 
@@ -77,7 +81,7 @@ int main(int argc, char** argv)
 
 		renderer_end_frame(renderer);
 		renderer_update(renderer);
-		angle += 0.05f;
+		angle += 0.2f;
 		if(angle >= 360.0f)
 			angle = 0.0f;
 	}

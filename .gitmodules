@@ -7,18 +7,18 @@
 [submodule "dependencies/tgc"]
 	path = dependencies/tgc
 	url = https://github.com/ravi688/tgc.git
-[submodule "dependencies/SafeMemory"]
-	path = dependencies/SafeMemory
-	url = https://github.com/ravi688/SafeMemory.git
 [submodule "shared-dependencies/BufferLib"]
 	path = shared-dependencies/BufferLib
 	url = https://github.com/ravi688/BufferLib
 [submodule "dependencies/TemplateSystem"]
 	path = dependencies/TemplateSystem
 	url = https://github.com/ravi688/TemplateSystem.git
-[submodule "dependencies/MeshLib"]
-	path = dependencies/MeshLib
-	url = https://github.com/ravi688/MeshLib.git
 [submodule "testbed/dependencies/EntityComponentSystem"]
 	path = testbed/dependencies/EntityComponentSystem
 	url = https://github.com/ravi688/EntityComponentSystem.git
+[submodule "dependencies/MeshLib"]
+	path = dependencies/MeshLib
+	url = https://github.com/ravi688/MeshLib
+[submodule "dependencies/SafeMemory"]
+	path = dependencies/SafeMemory
+	url = https://github.com/ravi688/SafeMemory.git

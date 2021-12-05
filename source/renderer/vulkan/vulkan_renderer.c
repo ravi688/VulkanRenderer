@@ -12,7 +12,7 @@
 static void renderer_on_window_resize(render_window_t* window, void* renderer);
 
 //TODO: Wrapp this physical device selection & creation of logical device into a single function
-renderer_t* renderer_init(u32 width, u32 height, const char* title)
+renderer_t* renderer_init(u32 width, u32 height, const char* title, bool full_screen)
 {
 	renderer_t* renderer = heap_new(renderer_t);
 	memset(renderer, 0, sizeof(renderer_t));
@@ -23,7 +23,7 @@ renderer_t* renderer_init(u32 width, u32 height, const char* title)
 	renderer->vk_device = vk_get_device(renderer->vk_physical_device);
 
 	//Create render window
-	renderer->window = render_window_init(width, height, title);
+	renderer->window = render_window_init(width, height, title, full_screen);
 	render_window_subscribe_on_resize(renderer->window, renderer_on_window_resize, renderer);
 
 	//Create Renderpass
@@ -100,6 +100,7 @@ void renderer_end_frame(renderer_t* renderer)
 
 	vkQueuePresentKHR(renderer->vk_graphics_queue, &present_info);
 	vkQueueWaitIdle(renderer->vk_graphics_queue);
+	vkDeviceWaitIdle(renderer->vk_device);
 }
 
 void renderer_update(renderer_t* renderer)
