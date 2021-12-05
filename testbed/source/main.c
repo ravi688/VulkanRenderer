@@ -39,7 +39,7 @@ static void recreate_matrix(render_window_t* window, void* user_data)
 int main(int argc, char** argv)
 {
 	memory_allocator_init(&argc);
-	renderer_t* renderer = renderer_init(800, 600, "Vulkan 3D Renderer", false);
+	renderer_t* renderer = renderer_init(800, 800, "Vulkan 3D Renderer", false);
 
  	//Prepare shaders
 	shader_t** shaders = stack_newv(shader_t*, 2);
@@ -58,11 +58,10 @@ int main(int argc, char** argv)
 
 	// mesh3d_t* cube_mesh = mesh3d_cube(2);
 	mesh3d_t* cube_mesh = mesh3d_load("resource/Crankshaft HD.stl");
-	mesh3d_t* cone_mesh = mesh3d_load("resource/Binary-Sphere.stl");
+	// mesh3d_t* cube_mesh = mesh3d_load("resource/Binary-box.stl");
 	mesh3d_make_centroid_origin(cube_mesh);
-	mesh3d_make_centroid_origin(cone_mesh);
+	mesh3d_transform_set(cube_mesh, mat4_mul(float)(2, mat4_rotation(float)(45 * DEG2RAD, 0, 0), mat4_scale(float)(1, 1, 1)));
 	mesh_t* cube = mesh_create(renderer, cube_mesh);
-	mesh_t* cone = mesh_create(renderer, cone_mesh);
 
 
 	float angle = 0;
@@ -75,11 +74,6 @@ int main(int argc, char** argv)
 
 		material_bind(material, renderer);
 
-		mat4_t(float) mvp2 = mat4_mul(float)(2, vp, mat4_transform(vec3(float)(0, 0, 0), vec3_negate(float)(eulerRotation)));
-		mat4_move(float)(&mvp2, mat4_transpose(float)(mvp2));
-		material_push_constants(material, renderer, &mvp2);
-		mesh_draw_indexed(cone, renderer);
-
 		mat4_t(float) mvp1 = mat4_mul(float)(2, vp, mat4_transform(vec3(float)(0, 0, 0), eulerRotation));
 		mat4_move(float)(&mvp1, mat4_transpose(float)(mvp1));
 		material_push_constants(material, renderer, &mvp1);
@@ -87,7 +81,7 @@ int main(int argc, char** argv)
 
 		renderer_end_frame(renderer);
 		renderer_update(renderer);
-		angle += 1.0f;
+		angle += 0.2f;
 		if(angle >= 360.0f)
 			angle = 0.0f;
 	}
@@ -95,10 +89,6 @@ int main(int argc, char** argv)
 	mesh_destroy(cube, renderer);
 	mesh_release_resources(cube);
 	mesh3d_destroy(cube_mesh);
-
-	mesh_destroy(cone, renderer);
-	mesh_release_resources(cone);
-	mesh3d_destroy(cone_mesh);
 
 	for(u32 i = 0; i < 2; i++)
 	{

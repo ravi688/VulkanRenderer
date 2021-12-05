@@ -3,6 +3,12 @@
 #include <memory.h>
 #include <stdlib.h>
 
+//For mat4_vec4_visitor
+#include <hpml/vec4/header_config.h>
+#include <hpml/vec4/vec4.h>
+#include <hpml/affine_transformation/header_config.h>
+#include <hpml/affine_transformation/affine_transformation.h>
+
 //For mesh3d_load()
 #include <disk_manager/file_reader.h>
 #include <disk_manager/file_writer.h>
@@ -31,58 +37,25 @@
 #define __POSITIONS_ARE_NOT_FOUND__ "mesh3d_t::positions are not found, make sure to call mesh3d_positions_new(count) first\n"
 #define __TRIANGLES_ARE_NOT_FOUND__ "mesh3d_t::triangles are not found, make sure to call mesh3d_triangles_new(count) first\n"
 
+#define mesh3d_foreach(...) define_alias_function_macro(mesh3d_foreach, __VA_ARGS__)
+function_signature(static void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, func_ptr_sig(void*, getter, mesh3d_t*, index_t), void (*visitor)(void*, void*), void* user_data);
 
-#ifdef MESH3d_REQUIRE_PRINT
-function_signature(void, mesh3d_print, mesh3d_t* mesh)
-{
-	CALLTRACE_BEGIN();
-	ASSERT(mesh != NULL, "mesh == NULL\n");
-	if(mesh->positions != NULL)
-	{
-		log_msg("[Positions]");
-		print_array(buf_get_ptr(mesh->positions), sizeof(vec3_t(float)), buf_get_element_count(mesh->positions), vec3float_print);
-	}
-
-	if(mesh->triangles != NULL)
-	{
-		log_msg("[Triangles]");
-		print_array(buf_get_ptr(mesh->triangles), sizeof(vec3_t(int)), buf_get_element_count(mesh->triangles), vec3int_print);
-	}
-
-	if(mesh->normals != NULL)
-	{
-		log_msg("[Normals]");
-		print_array(buf_get_ptr(mesh->normals), sizeof(vec3_t(float)), buf_get_element_count(mesh->normals), vec3float_print);
-	}
-
-	if(mesh->colors != NULL)
-	{
-		log_msg("[Colors]");
-		print_array(buf_get_ptr(mesh->colors), sizeof(vec3_t(float)), buf_get_element_count(mesh->colors), vec3float_print);
-	}
-
-	if(mesh->uvs != NULL)
-	{
-		log_msg("[UVs]");
-		print_array(buf_get_ptr(mesh->uvs), sizeof(vec2_t(float)), buf_get_element_count(mesh->uvs), vec2float_print);
-	}
-	CALLTRACE_END();
-}
-#endif
 
 function_signature_void(mesh3d_t*, mesh3d_new)
 {
 	CALLTRACE_BEGIN();
+	ASSERT(sizeof(buf_ucount_t) == sizeof(u64), "sizeof(buf_ucount_t) != sizeof(u64), this has to be 8 bytes because of VK_INDEX_TYPE_U64\n");
 	//TODO: Allocation must be done with heap_new(mesh3d_t)
-	mesh3d_t* mesh3d  = (mesh3d_t*)malloc(sizeof(mesh3d_t));
-	memset(mesh3d, 0, sizeof(mesh3d_t));
+	mesh3d_t* mesh  = (mesh3d_t*)malloc(sizeof(mesh3d_t));
+	memset(mesh, 0, sizeof(mesh3d_t));
+	mat4_move(float)(&(mesh->transform), mat4_identity(float)());
 	#ifdef MESH3D_DEBUG
 	log_msg("mesh3d_t created successfully\n");
 	#endif
-	CALLTRACE_RETURN(mesh3d);
+	CALLTRACE_RETURN(mesh);
 }
 
-function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, u32 count)
+function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -99,7 +72,7 @@ function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, u32 count)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, u32 count)
+function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -115,7 +88,7 @@ function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, u32 count)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, u32 count)
+function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -132,7 +105,7 @@ function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, u32 count)
 }
 
 
-function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, u32 count)
+function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -141,14 +114,14 @@ function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, u32 count)
 		buf_free(mesh->triangles);
 		mesh->triangles = NULL;
 	}
-	mesh->triangles = BUFcreate(NULL, sizeof(vec3_t(int)), count, 0);
+	mesh->triangles = BUFcreate(NULL, sizeof(vec3_t(index_t)), count, 0);
 	#ifdef MESH3D_DEBUG
 	log_msg("New Triangle buffer created, length: %d\n", count);
 	#endif
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, u32 count)
+function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -164,7 +137,7 @@ function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, u32 count)
 	CALLTRACE_END();
 }
 
-function_signature(u32, mesh3d_positions_count, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_positions_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -172,7 +145,7 @@ function_signature(u32, mesh3d_positions_count, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_count(mesh->positions));
 }
 
-function_signature(u32, mesh3d_normals_count, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_normals_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -180,7 +153,7 @@ function_signature(u32, mesh3d_normals_count, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_count(mesh->normals));
 }
 
-function_signature(u32, mesh3d_uvs_count, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_uvs_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -188,14 +161,14 @@ function_signature(u32, mesh3d_uvs_count, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_count(mesh->uvs));
 }
 
-function_signature(u32, mesh3d_colors_count, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_colors_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_count(mesh->colors));
 }
-function_signature(u32, mesh3d_triangles_count, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_triangles_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -617,12 +590,12 @@ function_signature(void, mesh3d_triangle_add, mesh3d_t* mesh, index_t i0, index_
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	vec3_t(int) i = {i0, i1, i2};
+	vec3_t(index_t) i = {i0, i1, i2};
 	buf_push(mesh->triangles, &i);
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, vec3_t(int)  v)
+function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, vec3_t(index_t)  v)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -636,12 +609,12 @@ function_signature(void, mesh3d_triangle_set, mesh3d_t* mesh, index_t index, ind
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	vec3_t(int)* t =  buf_get_ptr_at_typeof(mesh->triangles, vec3_t(int), index);
+	vec3_t(index_t)* t =  buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index);
 	t->x = i0; t->y = i1; t->z = i2;
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_triangle_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(int)  v)
+function_signature(void, mesh3d_triangle_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(index_t)  v)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -655,7 +628,7 @@ function_signature(void, mesh3d_triangle_set_0, mesh3d_t* mesh, index_t index, i
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	buf_get_ptr_at_typeof(mesh->triangles, vec3_t(int), index)->x = i0;
+	buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index)->x = i0;
 	CALLTRACE_END();
 }
 
@@ -664,7 +637,7 @@ function_signature(void, mesh3d_triangle_set_1, mesh3d_t* mesh, index_t index, i
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	buf_get_ptr_at_typeof(mesh->triangles, vec3_t(int), index)->x = i1;
+	buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index)->x = i1;
 	CALLTRACE_END();
 }
 
@@ -673,24 +646,24 @@ function_signature(void, mesh3d_triangle_set_2, mesh3d_t* mesh, index_t index, i
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	buf_get_ptr_at_typeof(mesh->triangles, vec3_t(int), index)->x = i2;
+	buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index)->x = i2;
 	CALLTRACE_END();
 }
 
-function_signature(vec3_t(int),  mesh3d_triangle_get, mesh3d_t* mesh, index_t index)
+function_signature(vec3_t(index_t),  mesh3d_triangle_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->triangles, vec3_t(int), index));
+	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index));
 }
 
-function_signature(vec3_t(int)*, mesh3d_triangle_get_ptr, mesh3d_t* mesh, index_t index)
+function_signature(vec3_t(index_t)*, mesh3d_triangle_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(int), index));
+	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index));
 }
 
 function_signature(int, mesh3d_triangle_get_0, mesh3d_t* mesh, index_t index)
@@ -698,7 +671,7 @@ function_signature(int, mesh3d_triangle_get_0, mesh3d_t* mesh, index_t index)
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(int), index)->x);
+	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index)->x);
 }
 
 function_signature(int, mesh3d_triangle_get_1, mesh3d_t* mesh, index_t index)
@@ -706,7 +679,7 @@ function_signature(int, mesh3d_triangle_get_1, mesh3d_t* mesh, index_t index)
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(int), index)->y);
+	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index)->y);
 }
 
 function_signature(int, mesh3d_triangle_get_2, mesh3d_t* mesh, index_t index)
@@ -714,7 +687,7 @@ function_signature(int, mesh3d_triangle_get_2, mesh3d_t* mesh, index_t index)
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(int), index)->z);
+	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index)->z);
 }
 
 function_signature(void, mesh3d_uv_add, mesh3d_t* mesh, float x, float y)
@@ -806,31 +779,31 @@ function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t index)
 }
 
 
-function_signature(u32, mesh3d_sizeof_position, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_sizeof_position, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->positions != NULL, __POSITIONS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->positions));
 }
-function_signature(u32, mesh3d_sizeof_normal, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_sizeof_normal, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->normals != NULL, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->normals));
 }
-function_signature(u32, mesh3d_sizeof_color, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_sizeof_color, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->colors));
 }
-function_signature(u32, mesh3d_sizeof_uv, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_sizeof_uv, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->uvs != NULL, __UVS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->uvs));
 }
-function_signature(u32, mesh3d_sizeof_index, mesh3d_t* mesh)
+function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->triangles != NULL, __TRIANGLES_ARE_NOT_FOUND__);
@@ -924,8 +897,74 @@ function_signature(mesh3d_t*, mesh3d_cube, float size)
 	CALLTRACE_RETURN(mesh);
 }
 
+
+function_signature(void, mesh3d_positions_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* position, void* user_data), void* user_data)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(mesh3d_has_positions(mesh), "!mesh3d_has_positions(mesh)\n");
+	mesh3d_foreach(mesh, mesh->positions, (void*)func_ptr(mesh3d_position_get_ptr), (void*)visitor, user_data);
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(mesh3d_has_normals(mesh), "!mesh3d_has_normals(mesh)\n");
+	mesh3d_foreach(mesh, mesh->normals, (void*)func_ptr(mesh3d_normal_get_ptr), (void*)visitor, user_data);
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* color, void* user_data), void* user_data)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(mesh3d_has_colors(mesh), "!mesh3d_has_colors(mesh)\n");
+	mesh3d_foreach(mesh, mesh->colors, (void*)func_ptr(mesh3d_color_get_ptr), (void*)visitor, user_data);
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (*visitor)(vec2_t(float)* uv, void* user_data), void* user_data)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(mesh3d_has_uvs(mesh), "!mesh3d_has_uvs(mesh)\n");
+	mesh3d_foreach(mesh, mesh->uvs, (void*)func_ptr(mesh3d_uv_get_ptr), (void*)visitor, user_data);
+ 	CALLTRACE_END();
+}
+
+
+function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(index_t)* triangle, void* user_data), void* user_data)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(mesh3d_has_triangles(mesh), "!mesh3d_has_triangles(mesh)\n");
+	mesh3d_foreach(mesh, mesh->triangles, (void*)func_ptr(mesh3d_triangle_get_ptr), (void*)visitor, user_data);
+	CALLTRACE_END();
+}
+
+/*[CurrentlyNotUsed]*/
+static void direction_visitor(vec3_t(float)* v, mat4_t(float)* m);
+static void position_visitor(vec3_t(float)* v, mat4_t(float)* m);
+
+function_signature(void, mesh3d_transform_set, mesh3d_t* mesh, mat4_t(float) transform)
+{
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	mesh3d_positions_foreach(mesh, (void*)position_visitor, &transform);
+	//TODO: mesh3d_normals_foreach(mesh, (void*)direction_visitor, &transform);
+	mat4_move(float)(&(mesh->transform), transform);
+}
+
+function_signature(mat4_t(float), mesh3d_transform_get, mesh3d_t* mesh)
+{
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	return mesh->transform;
+}
+
 function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh)
 {
+	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(mesh3d_has_positions(mesh), "!mesh3d_has_positions(mesh)\n");
 	vec3_t(float) centroid = vec3_zero(float)();
@@ -934,6 +973,7 @@ function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh)
 	centroid = vec3_scale(float)(centroid, (float)1 / mesh3d_positions_count(mesh));
 	for(buf_ucount_t i = 0; i < mesh3d_positions_count(mesh); i++)
 		mesh3d_position_set_vec3(mesh, i, vec3_sub(float)(mesh3d_position_get(mesh, i), centroid));
+	CALLTRACE_END();
 }
 
 static void stl_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh);
@@ -1031,8 +1071,8 @@ static void stl_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh)
 	mesh3d_normal_add(mesh, normal.y, normal.z, normal.x);
 	mesh3d_normal_add(mesh, normal.y, normal.z, normal.x);
 	mesh3d_normal_add(mesh, normal.y, normal.z, normal.x);
-	u32 count = mesh3d_triangles_count(mesh) * 3;
-	u32 vertex_count = mesh3d_positions_count(mesh) + 3;
+	index_t count = mesh3d_triangles_count(mesh) * 3;
+	index_t vertex_count = mesh3d_positions_count(mesh) + 3;
 	mesh3d_triangle_add(mesh, (count + 2) % vertex_count, count + 1, count + 0);
 }
 
@@ -1061,9 +1101,43 @@ static void obj_vertex_texcoord(vec3_t(float) texcoord, mesh3d_t* mesh)
 
 }
 
+//TODO: vec4_t(vec3_t(int)) should be vec4_t(vec3_t(index_t)) to hold large values
 static void obj_facet(vec4_t(vec3_t(int)) facet, mesh3d_t* mesh)
 {
 
+}
+
+#define getter(...) define_alias_function_macro(getter, __VA_ARGS__)
+function_signature(static void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, func_ptr_sig(void*, getter, mesh3d_t*, index_t), void (*visitor)(void*, void*), void* user_data)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(visitor != NULL, "visitor == NULL\n");
+	ASSERT(func_ptr(getter) != NULL, "getter == NULL\n");
+	buf_ucount_t count = buf_get_element_count(buffer);
+	for(buf_ucount_t i = 0; i < count; i++)
+		visitor(getter(mesh, i), user_data);
+	CALLTRACE_END();
+}
+
+/*[CurrentlyNotUsed]*/
+static void direction_visitor(vec3_t(float)* v, mat4_t(float)* m)
+{
+	//TODO: This should be like:
+	//		*v = mat4_mul_vec4(float)(*m, v->x, v->y, v->z, 0).xyz;
+	vec4_t(float) _v = mat4_mul_vec4(float)(*m, v->x, v->y, v->z, 0);
+	v->x = _v.x;
+	v->y = _v.y;
+	v->z = _v.z;
+}
+
+static void position_visitor(vec3_t(float)* v, mat4_t(float)* m)
+{
+	//TODO: This should be like:
+	//		*v = mat4_mul_vec4(float)(*m, v->x, v->y, v->z, 0).xyz;
+	vec4_t(float) _v = mat4_mul_vec4(float)(*m, v->x, v->y, v->z, 1.0f);
+	v->x = _v.x;
+	v->y = _v.y;
+	v->z = _v.z;
 }
 
 
