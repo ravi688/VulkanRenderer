@@ -5,6 +5,7 @@
 
 //For mesh3d_load()
 #include <disk_manager/file_reader.h>
+#include <disk_manager/file_writer.h>
 #include <meshlib/stl/readers/ascii.h>
 #include <meshlib/stl/readers/binary.h>
 #include <meshlib/obj/readers/ascii.h>
@@ -961,25 +962,40 @@ function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
 			.vertex_position_callback = (void*)stl_vertex_position
 		};
 
-		buffer = load_text_from_file(file_path);
-
-		//Assume file is ascii
-		char* ptr = buffer->bytes;
+		//DETERMINE WHETHER THE FILE IS ASCII TEXT OR BINARY
+		//Assume file is ascii text
+		FILE* file = fopen(file_path, "r");
 		//skip any whitespaces
-		while(strchr(" \t", *ptr) != NULL)
-			ptr++;
+		char ch = 0;
+		do
+		{
+			ch = getc(file);
+		} while((strchr(" \t", ch) != NULL) && (!feof(file)));
+		if(ftell(file) > 0) fseek(file, -1, SEEK_CUR);
+		//Read the header assuming text file
 		u8 len = strlen(STL_ASCII_HEADER);
-		char temp[len + 1]; memcpy(temp, ptr, len); temp[len] = 0;
+		char temp[len + 1]; temp[len] = 0;
+		u8 count = 0;
+		while((!feof(file)) && (count < len))
+		{
+			temp[count] = getc(file);
+			++count;
+		}
+		ASSERT(count == len, "File \"%s\" is too short to parse\n", file_path);
+		rewind(file); fclose(file);
+
 		//This may be true in binary case also, but that would mean the binary file is corrupted or someone has tried to fake it as ASCII
 		if(!strcmp(temp, STL_ASCII_HEADER))
 		{
 			//parse the file as ascii
+			buffer = load_text_from_file(file_path);
 			ASSERT(buf_get_element_count(buffer) > STL_MINIMUM_ASCII_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_ASCII_FILE_LENGTH\n", file_path);
 			stl_parse_ascii(buffer->bytes, buffer->element_count, &parse_callbacks);
 		}
 		else
 		{
 			//parse the file as binary
+			buffer = load_binary_from_file(file_path);
 			ASSERT(buf_get_element_count(buffer) > STL_MINIMUM_BINARY_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_BINARY_FILE_LENGTH\n", file_path);
 			stl_parse_binary(buffer->bytes, buffer->element_count, &parse_callbacks);
 		}
