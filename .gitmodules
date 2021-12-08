@@ -19,3 +19,6 @@
 [submodule "dependencies/SafeMemory"]
 	path = dependencies/SafeMemory
 	url = https://github.com/ravi688/SafeMemory.git
+[submodule "dependencies/MeshLib"]
+	path = dependencies/MeshLib
+	url = https://github.com/ravi688/MeshLib.git
