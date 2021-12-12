@@ -134,7 +134,7 @@ static tuple_t(uint32_t, ppVkChar_t) glfw_get_required_instance_extensions()
 {
 	tuple_t(uint32_t, ppVkChar_t) pair;
 	//TODO: SafeMemory improvement: there should be remove_alloc also to unregister the pointer
-	pair.value2 = add_alloc((ppVkChar_t)glfwGetRequiredInstanceExtensions(&(pair.value1)), pair.value1);
+	pair.value2 = (ppVkChar_t)glfwGetRequiredInstanceExtensions(&(pair.value1));
 	return pair;
 }
 

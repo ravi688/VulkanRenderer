@@ -21,7 +21,7 @@ typedef struct vulkan_graphics_pipeline_create_info_t
 typedef struct vulkan_graphics_pipeline_t
 {
 	VkPipeline pipeline;
-	vulkan_pipeline_layout_t* layout;
+	vulkan_pipeline_layout_t* pipeline_layout;
 } vulkan_graphics_pipeline_t;
 
 vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new();

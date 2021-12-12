@@ -141,6 +141,7 @@ function_signature(VkPipeline, vk_get_graphics_pipeline, VkDevice device, VkPipe
 											VkPipelineMultisampleStateCreateInfo* multisampleState, 
 											VkPipelineColorBlendStateCreateInfo* colorBlendState);
 
+function_signature(VkDescriptorPool, vk_get_descripter_pool, VkDevice device);
 function_signature(VkCommandPool, vk_get_command_pool, VkDevice device, uint32_t queueFamilyIndex);
 function_signature_void(VkAttachmentReference, vk_get_attachment_reference);
 function_signature_void(VkSubpassDependency, vk_get_subpass_dependency);
@@ -148,10 +149,14 @@ function_signature(VkSemaphore, vk_get_semaphore, VkDevice device);
 function_signature(VkAttachmentDescription, vk_get_attachment_description, VkFormat image_format);
 function_signature(VkSubpassDescription, vk_get_subpass_description, VkAttachmentReference attachment_reference);
 function_signature(VkRenderPass, vk_get_render_pass, VkDevice device, VkFormat format);
-function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device, uint32_t phush_constant_range_count, VkPushConstantRange* push_constant_ranges);
+function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device, uint32_t set_layout_count, VkDescriptorSetLayout* set_layouts, uint32_t push_constant_range_count, VkPushConstantRange* push_constant_ranges);
 function_signature(VkViewport, vk_get_viewport, uint32_t width, uint32_t height);
 function_signature(VkBuffer, vk_get_buffer, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkSharingMode sharingMode);
 function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties);
+function_signature(VkDeviceMemory, vk_get_device_memory_for_image, VkDevice device, VkPhysicalDevice physical_device, VkImage image, uint32_t size, uint32_t memory_properties);
+function_signature(uint32_t, vk_find_physical_device_memory_type, VkPhysicalDevice physical_device, uint32_t required_memory_type_bits, uint32_t required_memory_properties);
+function_signature(VkCommandBuffer, vk_get_begin_single_time_command_buffer, VkDevice device, VkCommandPool command_pool);
+function_signature(void, vk_end_single_time_command_buffer, VkDevice device, VkCommandPool command_pool, VkCommandBuffer command_buffer, VkQueue queue);
 
 function_signature(const char*, vk_physical_device_memory_properties_to_string, VkPhysicalDeviceMemoryProperties *memory_properties);
 function_signature(const char*, vk_physical_device_properties_to_string, VkPhysicalDeviceProperties* properties);
@@ -211,6 +216,7 @@ function_signature(void, vk_dump_physical_device_extensions, VkPhysicalDevice* p
 #define vk_get_pipeline_dynamic_state_create_info(...) define_alias_function_void_macro(vk_get_pipeline_dynamic_state_create_info)
 #define vk_get_graphics_pipeline(...) define_alias_function_macro(vk_get_graphics_pipeline, __VA_ARGS__)
 
+#define vk_get_descripter_pool(...) define_alias_function_macro(vk_get_descripter_pool, __VA_ARGS__)
 #define vk_get_command_pool(...) define_alias_function_macro(vk_get_command_pool, __VA_ARGS__)
 #define vk_get_attachment_reference(...) define_alias_function_void_macro(vk_get_attachment_reference)
 #define vk_get_subpass_dependency(...) define_alias_function_macro(vk_get_subpass_dependency, __VA_ARGS__)
@@ -222,6 +228,10 @@ function_signature(void, vk_dump_physical_device_extensions, VkPhysicalDevice* p
 #define vk_get_viewport(...) define_alias_function_macro(vk_get_viewport, __VA_ARGS__)
 #define vk_get_buffer(...) define_alias_function_macro(vk_get_buffer, __VA_ARGS__)
 #define vk_get_device_memory_for_buffer(...) define_alias_function_macro(vk_get_device_memory_for_buffer, __VA_ARGS__)
+#define vk_get_device_memory_for_image(...) define_alias_function_macro(vk_get_device_memory_for_image, __VA_ARGS__)
+#define vk_find_physical_device_memory_type(...) define_alias_function_macro(vk_find_physical_device_memory_type, __VA_ARGS__)
+#define vk_get_begin_single_time_command_buffer(...) define_alias_function_macro(vk_get_begin_single_time_command_buffer, __VA_ARGS__)
+#define vk_end_single_time_command_buffer(...) define_alias_function_macro(vk_end_single_time_command_buffer, __VA_ARGS__)
 
 #define vk_physical_device_memory_properties_to_string(...) define_alias_function_macro(vk_physical_device_memory_properties_to_string, __VA_ARGS__)
 #define vk_physical_device_properties_to_string(...) define_alias_function_macro(vk_physical_device_properties_to_string, __VA_ARGS__)

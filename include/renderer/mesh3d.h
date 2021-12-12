@@ -226,6 +226,8 @@ function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index);
 
 function_signature(mesh3d_t*, mesh3d_cube, float size);
 #define mesh3d_cube(...) define_alias_function_macro(mesh3d_cube, __VA_ARGS__)
+function_signature(mesh3d_t*, mesh3d_plane, float size);
+#define mesh3d_plane(...) define_alias_function_macro(mesh3d_plane, __VA_ARGS__)
 
 function_signature(index_t, mesh3d_sizeof_position, mesh3d_t* mesh);
 function_signature(index_t, mesh3d_sizeof_normal, mesh3d_t* mesh);

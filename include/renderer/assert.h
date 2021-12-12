@@ -27,6 +27,14 @@
 #endif
 
 #if defined(GLOBAL_DEBUG)
+#	define assert(condition) ASSERT((condition) != false, "\"%s\" is found to be false\n", #condition)
+#	define ASSERT_NOT_NULL(ptr) assert(ptr != NULL)
+#else
+#	define assert(condition)
+#	define ASSERT_NOT_NULL(ptr)
+#endif
+	
+#if defined(GLOBAL_DEBUG)
 #	define LOG_MSG(...) log_msg(__VA_ARGS__)
 #	define LOG_ERR(...) log_err(__VA_ARGS__)
 #	define LOG_FETAL_ERR(...) log_fetal_err(__VA_ARGS__)

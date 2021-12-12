@@ -810,6 +810,45 @@ function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_size(mesh->triangles) / 3);
 }
 
+function_signature(mesh3d_t*, mesh3d_plane, float size)
+{
+	CALLTRACE_BEGIN();
+	mesh3d_t* mesh = mesh3d_new();
+	mesh3d_positions_new(mesh, 4);
+	mesh3d_triangles_new(mesh, 2);
+	mesh3d_colors_new(mesh, 4);
+	mesh3d_normals_new(mesh, 4);
+	mesh3d_uvs_new(mesh, 4);
+
+	float half_size = size * 0.5f;
+
+	mesh3d_position_add(mesh, half_size,  0, half_size);
+	mesh3d_position_add(mesh, half_size,  0, -half_size);
+	mesh3d_position_add(mesh, -half_size, 0, -half_size);
+	mesh3d_position_add(mesh, -half_size, 0, half_size);
+
+	mesh3d_uv_add(mesh, 1, 1);
+	mesh3d_uv_add(mesh, 0, 1);
+	mesh3d_uv_add(mesh, 0, 0);
+	mesh3d_uv_add(mesh, 1, 0);
+
+	mesh3d_triangle_add(mesh, 3, 1, 0);
+	mesh3d_triangle_add(mesh, 3, 2, 1);
+
+	mesh3d_normal_add(mesh, 0, 1, 0);
+	mesh3d_normal_add(mesh, 0, 1, 0);
+	mesh3d_normal_add(mesh, 0, 1, 0);
+	mesh3d_normal_add(mesh, 0, 1, 0);
+
+	mesh3d_color_add(mesh, 1, 1, 1);
+	mesh3d_color_add(mesh, 1, 1, 1);
+	mesh3d_color_add(mesh, 1, 1, 1);
+	mesh3d_color_add(mesh, 1, 1, 1);
+
+	mesh3d_optimize_buffer(mesh);
+	CALLTRACE_RETURN(mesh);
+}
+
 function_signature(mesh3d_t*, mesh3d_cube, float size)
 {
 	CALLTRACE_BEGIN();

@@ -39,6 +39,9 @@ renderer_t* renderer_init(u32 width, u32 height, const char* title, bool full_sc
 	//Set up graphics queue
 	renderer->vk_graphics_queue = vk_get_device_queue(renderer->vk_device, vk_get_graphics_queue_family_index(renderer->vk_physical_device), 0);
 
+	//Create descripter pool
+	renderer->vk_descriptor_pool = vk_get_descripter_pool(renderer->vk_device);
+
 	return renderer;
 }
 
@@ -118,7 +121,7 @@ void renderer_terminate(renderer_t* renderer)
 	render_window_destroy(renderer->window);
 	vulkan_swapchain_destroy(renderer->swapchain, renderer);
 	vulkan_swapchain_release_resources(renderer->swapchain);
-
+	vkDestroyDescriptorPool(renderer->vk_device, renderer->vk_descriptor_pool, NULL);
 	vkDestroyRenderPass(renderer->vk_device, renderer->vk_render_pass, NULL);
 	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, renderer->swapchain->image_count, renderer->vk_command_buffers.value2);
 	vkDestroyCommandPool(renderer->vk_device, renderer->vk_command_pool, NULL);

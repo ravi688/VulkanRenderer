@@ -22,6 +22,7 @@ vulkan_swapchain_t* vulkan_swapchain_create(render_window_t* window, renderer_t*
 	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
 	vulkan_swapchain_t* swapchain = vulkan_swapchain_new();
 	refp(vulkan_swapchain_t, swapchain, 0)->window = window;
+	//TODO: Make swapchain image count configurable
 	refp(vulkan_swapchain_t, swapchain, 0)->image_count = 3;
 	render_window_get_vulkan_surface(window, &(renderer->vk_instance), &(refp(vulkan_swapchain_t, swapchain, 0)->surface));
 	create_swapchain(refp(vulkan_swapchain_t, swapchain, 0), renderer);

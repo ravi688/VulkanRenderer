@@ -16,7 +16,7 @@ vulkan_mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 	ASSERT(mesh3d_has_positions(mesh_data), "!mesh3d_has_positions(mesh_data)\n");
 	ASSERT(mesh3d_has_normals(mesh_data), "!mesh3d_has_normals(mesh_data)\n");
 	ASSERT(mesh3d_has_colors(mesh_data), "!mesh3d_has_colors(mesh_data)\n");
-	// ASSERT(mesh3d_has_uvs(mesh_data), "!mesh3d_has_uvs(mesh_data)\n");
+	ASSERT(mesh3d_has_uvs(mesh_data), "!mesh3d_has_uvs(mesh_data)\n");
 	vulkan_mesh_create_info_t create_info =
 	{
 		.vertex_count = mesh3d_positions_count(mesh_data),
@@ -30,6 +30,9 @@ vulkan_mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 		.p_normal_data = mesh_data->normals->bytes,
 		.normal_stride = mesh3d_sizeof_normal(mesh_data),
 
+		.p_uv_data = mesh_data->uvs->bytes,
+		.uv_stride = mesh3d_sizeof_uv(mesh_data),
+
 		.p_index_data = mesh_data->triangles->bytes,
 		.index_stride = mesh3d_sizeof_index(mesh_data),
 		.index_count = mesh3d_triangles_count(mesh_data) * 3
@@ -37,6 +40,7 @@ vulkan_mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 	ASSERT(create_info.color_stride == (sizeof(float) * 3), "create_info.color_stride != (sizeof(float) * 3)\n");
 	ASSERT(create_info.normal_stride == (sizeof(float) * 3), "create_info.normal_stride != (sizeof(float) * 3)\n");
 	ASSERT(create_info.position_stride == (sizeof(float) * 3), "create_info.position_stride != (sizeof(float) * 3)\n");
+	ASSERT(create_info.uv_stride == (sizeof(float) * 2), "create_info.uv_stride != (sizeof(float) * 2)\n");
 	vulkan_mesh_t* vulkan_mesh = vulkan_mesh_create(renderer, &create_info);
 	return vulkan_mesh;
 }
