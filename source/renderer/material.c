@@ -105,3 +105,7 @@ void material_push_constants(material_t* material, renderer_t* renderer, void* b
 	vulkan_material_push_constants(material, renderer, bytes);
 }
 
+void material_set_texture(material_t* material, renderer_t* renderer, texture_t* texture)
+{
+	vulkan_material_set_texture(material, renderer, texture);
+}

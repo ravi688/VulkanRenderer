@@ -3,17 +3,12 @@
 #include <renderer/material.h>
 #include <renderer/shader.h>
 #include <renderer/mesh.h>
-// #include <renderer/texture.h>
+#include <renderer/texture.h>
 #include <renderer/render_window.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_material.h>
-#include <renderer/internal/vulkan/vulkan_texture.h>
 
 #include <renderer/mesh3d.h>
 #include <renderer/defines.h>
-
-#include <renderer/png.h>
-#include <renderer/bmp.h>
 
 #include <memory_allocator/memory_allocator.h>
 #include <hpml/memory/header_config.h>
@@ -61,18 +56,12 @@ int main(int argc, char** argv)
 	material_t* material = material_create(renderer, 2, shaders);
 
 	//Prepare Textures
-	bmp_t image1 = bmp_load("resource/textures/green.bmp");
-	bmp_t image2 = bmp_load("resource/textures/linuxlogo.bmp");
-	vulkan_texture_create_info_t create_info1 = { .data = image1.data, .width = image1.width, .height = image1.height, .channel_count = image1.channel_count };
-	vulkan_texture_t* texture1 = vulkan_texture_create(renderer, &create_info1);
-	vulkan_texture_create_info_t create_info2 = { .data = image2.data, .width = image2.width, .height = image2.height, .channel_count = image2.channel_count };
-	vulkan_texture_t* texture2 = vulkan_texture_create(renderer, &create_info2);
-	// vulkan_material_set_texture(material, renderer, texture1);
-	vulkan_material_set_texture(material, renderer, texture2);
+	texture_t* texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
+	material_set_texture(material, renderer, texture);
 
 	//Prepare Mesh
-	// mesh3d_t* cube_mesh = mesh3d_plane(1);
-	mesh3d_t* cube_mesh = mesh3d_cube(1);
+	mesh3d_t* cube_mesh = mesh3d_plane(1);
+	// mesh3d_t* cube_mesh = mesh3d_cube(1);
 	// mesh3d_t* cube_mesh = mesh3d_load("resource/Crankshaft HD.stl");
 	// mesh3d_t* cube_mesh = mesh3d_load("resource/Binary-box.stl");
 	mesh3d_make_centroid_origin(cube_mesh);
@@ -115,11 +104,8 @@ int main(int argc, char** argv)
 
 	material_destroy(material, renderer);
 	material_release_resources(material);
-	vulkan_texture_destroy(texture1, renderer);
-	vulkan_texture_release_resources(texture1);
-	vulkan_texture_destroy(texture2, renderer);
-	vulkan_texture_release_resources(texture2);
-	bmp_destroy(image1);
+	texture_destroy(texture, renderer);
+	texture_release_resources(texture);
 
 	renderer_terminate(renderer);
 	memory_allocator_terminate();
