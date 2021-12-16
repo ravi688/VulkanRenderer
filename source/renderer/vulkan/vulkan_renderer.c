@@ -11,6 +11,8 @@
 
 static void renderer_on_window_resize(render_window_t* window, void* renderer);
 
+render_window_t* renderer_get_window(renderer_t* renderer) { return renderer->window; }
+
 //TODO: Wrapp this physical device selection & creation of logical device into a single function
 renderer_t* renderer_init(u32 width, u32 height, const char* title, bool full_screen)
 {
