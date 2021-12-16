@@ -5,7 +5,6 @@
 #include <renderer/mesh.h>
 #include <renderer/texture.h>
 #include <renderer/render_window.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
 
 #include <renderer/mesh3d.h>
 #include <renderer/defines.h>
@@ -41,33 +40,19 @@ int main(int argc, char** argv)
 {
 	memory_allocator_init(&argc);
 	renderer_t* renderer = renderer_init(800, 800, "Vulkan 3D Renderer", false);
-	recreate_matrix(renderer->window, NULL);
-	render_window_subscribe_on_resize(renderer->window, recreate_matrix, NULL);
+	recreate_matrix(renderer_get_window(renderer), NULL);
+	render_window_subscribe_on_resize(renderer_get_window(renderer), recreate_matrix, NULL);
 	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -3, 1, 0 }, (vec3_t(float)) { 0, 0, -20 * DEG2RAD } );
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
 	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
 
- 	//Prepare shaders
-	shader_t** shaders = stack_newv(shader_t*, 2);
-	ref(shader_t*, shaders, 0) = shader_create(renderer, "shaders/fragmentShader.spv", SHADER_TYPE_FRAGMENT);
-	ref(shader_t*, shaders, 1) = shader_create(renderer, "shaders/vertexShader.spv", SHADER_TYPE_VERTEX);
-
-	//Prepare Material
-	material_t* material = material_create(renderer, 2, shaders);
-
-	//Prepare Textures
+ 	shader_t* shader = shader_load(renderer, "resource/shaders/diffuse.sb");
+	material_t* material = material_create(renderer, shader->stage_count, shader->stage_shaders);
 	texture_t* texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
 	material_set_texture(material, renderer, texture);
-
-	//Prepare Mesh
 	mesh3d_t* cube_mesh = mesh3d_plane(1);
-	// mesh3d_t* cube_mesh = mesh3d_cube(1);
-	// mesh3d_t* cube_mesh = mesh3d_load("resource/Crankshaft HD.stl");
-	// mesh3d_t* cube_mesh = mesh3d_load("resource/Binary-box.stl");
 	mesh3d_make_centroid_origin(cube_mesh);
-	// mesh3d_transform_set(cube_mesh, mat4_mul(float)(2, mat4_rotation(float)(45 * DEG2RAD, 0, 0), mat4_scale(float)(1, 1, 1)));
 	mesh_t* cube = mesh_create(renderer, cube_mesh);
-
 
 	float angle = 0;
 	//TODO: render loop should run on separate thread -> render thread
@@ -75,7 +60,7 @@ int main(int argc, char** argv)
 	{
 		mat4_t(float) vp = mat4_mul(float)(3, clip_matrix, projection_matrix, view_matrix);
 		vec3_t(float) eulerRotation = vec3_scale(float)(vec3(float)(0, 1, 0), angle * DEG2RAD);
-		renderer_begin_frame(renderer, 0.0f, 0.0f, 0.0f, 0.0f);
+		renderer_begin_frame(renderer, 0.1f, 0.3f, 0.1f, 0.0f);
 
 		material_bind(material, renderer);
 
@@ -95,12 +80,8 @@ int main(int argc, char** argv)
 	mesh_release_resources(cube);
 	mesh3d_destroy(cube_mesh);
 
-	for(u32 i = 0; i < 2; i++)
-	{
-		shader_destroy(shaders[i], renderer);
-		shader_release_resources(shaders[i]);
-	}
-	stack_free(shaders);
+	shader_destroy(shader, renderer);
+	shader_release_resources(shader);
 
 	material_destroy(material, renderer);
 	material_release_resources(material);

@@ -10,7 +10,7 @@ instantiate_static_stack_array(VkFormat);
 
 material_t* material_new() { return vulkan_material_new(); }
 
-material_t* material_create(renderer_t* renderer, u32 shader_count, shader_t** shaders)
+material_t* material_create(renderer_t* renderer, u32 shader_count, stage_shader_t** shaders)
 {
 	VkFormat* attribute_formats1 = stack_array(VkFormat, 1, VK_FORMAT_R32G32B32_SFLOAT);
 	VkFormat* attribute_formats2 = stack_array(VkFormat, 1, VK_FORMAT_R32G32B32_SFLOAT);
@@ -48,7 +48,7 @@ material_t* material_create(renderer_t* renderer, u32 shader_count, shader_t** s
 	return material;
 }
 
-void material_create_no_alloc(renderer_t* renderer, u32 shader_count, shader_t** shaders, material_t* material)
+void material_create_no_alloc(renderer_t* renderer, u32 shader_count, stage_shader_t** shaders, material_t* material)
 {
 	VkFormat* attribute_formats1 = stack_array(VkFormat, 1, VK_FORMAT_R32G32B32_SFLOAT);
 	VkFormat* attribute_formats2 = stack_array(VkFormat, 1, VK_FORMAT_R32G32B32_SFLOAT);

@@ -185,22 +185,19 @@ bin-clean:
 #-------------------------------------------
 #		Shader Compilation
 #-------------------------------------------
-FRAGMENT_SHADERS = $(wildcard ./shaders/*.frag)
-VERTEX_SHADERS = $(wildcard ./shaders/*.vert)
-FRAGMENT_SPIRV_SHADERS = $(addsuffix .spv, $(basename $(FRAGMENT_SHADERS)))
-VERTEX_SPIRV_SHADERS = $(addsuffix .spv,   $(basename $(VERTEX_SHADERS)))
+SHADER_COMPILER = shader_compiler
+SHADER_SOURCES = $(wildcard ./resource/shaders/*.glsl)
+SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
 
-%.spv: %.frag
-	glslc $< -o $@
-%.spv: %.vert
-	glslc $< -o $@
+%.sb: %.glsl
+	$(SHADER_COMPILER) $< $@
 
 .PHONY: shader
 .PHONY: shader-clean
-shader: $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS)
+shader: $(SHADER_BINARIES) 
 
 shader-clean:
-	del $(addprefix shaders\, $(notdir $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS)))
+	del $(addprefix resource\shaders\, $(notdir $(SHADER_BINARIES)))
 #-------------------------------------------
 
 #-------------------------------------------
