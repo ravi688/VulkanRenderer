@@ -544,7 +544,18 @@ function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage
 	CALLTRACE_RETURN(createInfo);
 }
 
-function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, const char* file_name)
+function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, void* spirv, uint32_t length, vulkan_shader_type_t shader_type)
+{
+	VkShaderModuleCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = length;
+	createInfo.pCode = spirv;
+	VkShaderModule shader_module;
+	vkCall(vkCreateShaderModule(device, &createInfo, NULL, &shader_module));
+	return shader_module;
+}
+
+function_signature(VkShaderModule, vk_get_shader_module_load, VkDevice device, const char* file_name)
 {
 	CALLTRACE_BEGIN();
 	BUFFER* shader_bytes = load_binary_from_file(file_name);
