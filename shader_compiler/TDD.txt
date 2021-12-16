@@ -1,0 +1,48 @@
+
+
+Shader Source Syntax:
+----------------------------------------------------
+//file.shader
+
+#stage fragment
+
+//Fragement shader goes here
+void main()
+{
+	
+}
+
+
+#stage vertex
+
+//Vertex shader goes here
+void main()
+{
+	
+}
+
+#stage fragment
+
+//Fragment shader goes here
+void main()
+{
+	
+}
+
+Shader Binary(sb) Format:
+---------------------------------------------------
+
+13 bytes -> SHADER BINARY
+1 byte -> shader mask [ 1 -> vertex, 2 -> tessellation, 3 -> geometry, 4 -> fragment ]
+4 bytes -> Vertex shader offset
+4 bytes -> Vertex shader length
+4 bytes -> fragment shader offset
+4 bytes -> fragment shader length
+
+53 48 41 44 45 52 20 42 49 4e 41 52 59
+00 00 00 11b
+0000 0000
+0000 0000
+Vertex Shader Bytes
+Fragment Shader Bytes
+

@@ -357,12 +357,12 @@ int main(int argc, char** argv)
 	VkCommandBuffer* commandBuffers = vk_get_command_buffers(device, commandPool, imageCount).value2;
 
 	//Graphics Pipeline
-	VkPipelineLayout pipelineLayout = vk_get_pipeline_layout(device, 0, NULL);
+	VkPipelineLayout pipelineLayout = vk_get_pipeline_layout(device, 0, NULL, 0, NULL);
 
 	VkPipelineShaderStageCreateInfo shaderStages[2] = 
 	{
-		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/vertexShader.vert"), VULKAN_SHADER_TYPE_VERTEX, "main"),
-		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module(device, "shaders/test/fragmentShader.frag"), VULKAN_SHADER_TYPE_FRAGMENT, "main"),
+		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module_load(device, "shaders/test/vertexShader.vert"), VULKAN_SHADER_TYPE_VERTEX, "main"),
+		vk_get_pipeline_shader_stage_create_info(vk_get_shader_module_load(device, "shaders/test/fragmentShader.frag"), VULKAN_SHADER_TYPE_FRAGMENT, "main"),
 	};
 	VkFormat formats[2] = { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
 	u32 offsets[2] = { offsetof(vertex_t, position), offsetof(vertex_t, color) };

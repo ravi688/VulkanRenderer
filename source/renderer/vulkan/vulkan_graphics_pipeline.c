@@ -14,7 +14,7 @@ vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 {
 	vulkan_graphics_pipeline_t* pipeline = heap_new(vulkan_graphics_pipeline_t);
 	memset(pipeline, 0, sizeof(vulkan_graphics_pipeline_t));
-	refp(vulkan_graphics_pipeline_t, pipeline, 0)->layout = vulkan_pipeline_layout_new();
+	pipeline->pipeline_layout = vulkan_pipeline_layout_new();
 	return pipeline;
 }
 
@@ -24,7 +24,7 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 	ASSERT(renderer->vk_render_pass != VK_NULL_HANDLE, "renderer->vk_render_pass == VK_NULL_HANDLE\n");
 	ASSERT(renderer->window != NULL, "renderer->window == NULL\n");
 
-	vulkan_pipeline_layout_create_no_alloc(renderer, refp(vulkan_pipeline_layout_t, refp(vulkan_graphics_pipeline_t, pipeline, 0)->layout, 0));
+	vulkan_pipeline_layout_create_no_alloc(renderer, pipeline->pipeline_layout);
 
 	VkPipelineShaderStageCreateInfo* shader_stages = stack_newv(VkPipelineShaderStageCreateInfo, create_info->shader_count);
 	for(u32 i = 0; i < create_info->shader_count; i++)
@@ -49,8 +49,8 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(renderer->window->width, renderer->window->height);
 	VkPipelineMultisampleStateCreateInfo multisampling = vk_get_pipeline_multisample_state_create_info();
 	VkPipelineColorBlendStateCreateInfo colorBlending = vk_get_pipeline_color_blend_state_create_info();
-	pipeline->pipeline = vk_get_graphics_pipeline(	renderer->vk_device, refp(vulkan_pipeline_layout_t, refp(vulkan_graphics_pipeline_t, pipeline, 0)->layout, 0)->layout, renderer->vk_render_pass,
-														refp(VkPipelineShaderStageCreateInfo, shader_stages, 0),
+	pipeline->pipeline = vk_get_graphics_pipeline(	renderer->vk_device, pipeline->pipeline_layout->pipeline_layout, renderer->vk_render_pass,
+														shader_stages,
 														&vertexInputInfo,
 														&inputAssembly,
 														&viewportState,
@@ -66,7 +66,7 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
 {
 	vulkan_graphics_pipeline_t* pipeline = vulkan_graphics_pipeline_new();
-	vulkan_graphics_pipeline_create_no_alloc(renderer, create_info, refp(vulkan_graphics_pipeline_t, pipeline, 0));
+	vulkan_graphics_pipeline_create_no_alloc(renderer, create_info, pipeline);
 	return pipeline;
 }
 
@@ -77,18 +77,18 @@ void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, rendere
 	ASSERT(renderer->swapchain != NULL, "renderer->swapchain == NULL\n");
 
 	u32 image_index = renderer->swapchain->current_image_index;
-	vkCmdBindPipeline(renderer->vk_command_buffers.value2[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, refp(vulkan_graphics_pipeline_t, pipeline, 0)->pipeline);
+	vkCmdBindPipeline(renderer->vk_command_buffers.value2[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
 }
 
 void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer)
 {
 	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
-	vulkan_pipeline_layout_destroy(refp(vulkan_pipeline_layout_t, refp(vulkan_graphics_pipeline_t, pipeline, 0)->layout, 0), renderer);
-	vkDestroyPipeline(renderer->vk_device, refp(vulkan_graphics_pipeline_t, pipeline, 0)->pipeline, NULL);
+	vulkan_pipeline_layout_destroy(pipeline->pipeline_layout, renderer);
+	vkDestroyPipeline(renderer->vk_device, pipeline->pipeline, NULL);
 }
 
 void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)
 {
-	heap_free(pipeline->layout);
+	vulkan_pipeline_layout_release_resources(pipeline->pipeline_layout);
 	heap_free(pipeline);
 }

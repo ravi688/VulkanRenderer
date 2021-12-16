@@ -18,40 +18,100 @@ define_exception(VULKAN_SURFACE_NOT_SUPPORTED);
 define_exception(VULKAN_PHYSICAL_DEVICE_EXTENSION_NOT_SUPPORTED);
 define_exception(VULKAN_UNSUPPORTED_SHADER_TYPE);
 
-function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer, uint64_t size, uint32_t memoryProperties)
+/*---------- COMMAND BUFFERS ------------ */
+function_signature(VkCommandBuffer, vk_get_begin_single_time_command_buffer, VkDevice device, VkCommandPool command_pool)
+{
+	VkCommandBufferAllocateInfo alloc_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		.commandPool = command_pool,
+		.commandBufferCount = 1
+	};
+
+	VkCommandBuffer command_buffer;
+	vkCall(vkAllocateCommandBuffers(device, &alloc_info, &command_buffer));
+
+	VkCommandBufferBeginInfo begin_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+	};
+	vkCall(vkBeginCommandBuffer(command_buffer, &begin_info));
+	return command_buffer;
+}
+
+function_signature(void, vk_end_single_time_command_buffer, VkDevice device, VkCommandPool command_pool, VkCommandBuffer command_buffer, VkQueue queue)
+{
+	vkEndCommandBuffer(command_buffer);
+
+	VkSubmitInfo submit_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &command_buffer
+	};
+
+	vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
+	vkQueueWaitIdle(queue);
+	vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
+}
+/*-----------------------------------------*/
+function_signature(uint32_t, vk_find_physical_device_memory_type, VkPhysicalDevice physical_device, uint32_t required_memory_type_bits, uint32_t required_memory_properties)
 {
 	CALLTRACE_BEGIN();
-	VkDeviceMemory deviceMemory;
-    VkMemoryRequirements memRequirements;
-	VkPhysicalDeviceMemoryProperties memProperties;
+	VkPhysicalDeviceMemoryProperties memory_properties;
+	vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
 
-	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
-	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-
-	int32_t selectedMemoryType = -1;
-	uint32_t typeFilter = memRequirements.memoryTypeBits;
-	uint32_t properties = memoryProperties;
-	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+	int32_t selected_memory_type = -1;
+	for(uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
 	{
-	    if ((typeFilter & (1 << i)) && ((memProperties.memoryTypes[i].propertyFlags & properties) == properties))
-	    {
-	    	selectedMemoryType = (int32_t)i;
-	        break;
-	    }
+		if((required_memory_type_bits & (1 << 0)) && ((memory_properties.memoryTypes[i].propertyFlags & required_memory_properties) == required_memory_properties))
+		{
+			selected_memory_type = (int32_t)i;
+			break;
+		}
 	}
-EXCEPTION_BLOCK
-(
-	if(selectedMemoryType == -1)
-		throw_exception(VULKAN_ABORTED);
-)
+	EXCEPTION_BLOCK
+	(
+		if(selected_memory_type == -1)
+			throw_exception(VULKAN_ABORTED);
+	)
+	CALLTRACE_RETURN((uint32_t)selected_memory_type);
+}
 
-	VkMemoryAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = (uint32_t)selectedMemoryType;
-	vkCall(vkAllocateMemory(device, &allocInfo, NULL, &deviceMemory));
-	vkCall(vkBindBufferMemory(device, buffer, deviceMemory, 0));
-	CALLTRACE_RETURN(deviceMemory);
+function_signature(VkDeviceMemory, vk_get_device_memory_for_image, VkDevice device, VkPhysicalDevice physical_device, VkImage image, uint32_t size, uint32_t memory_properties)
+{
+	CALLTRACE_BEGIN();
+	VkMemoryRequirements memory_requirements;
+	vkGetImageMemoryRequirements(device, image, &memory_requirements);
+
+	VkMemoryAllocateInfo alloc_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.allocationSize = memory_requirements.size,
+		.memoryTypeIndex = vk_find_physical_device_memory_type(physical_device, memory_requirements.memoryTypeBits, memory_properties)
+	};
+	VkDeviceMemory device_memory;
+	vkCall(vkAllocateMemory(device, &alloc_info, NULL, &device_memory));
+	vkCall(vkBindImageMemory(device, image, device_memory, 0));
+	CALLTRACE_RETURN(device_memory);
+}
+
+function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physical_device, VkBuffer buffer, uint64_t size, uint32_t memory_properties)
+{
+	CALLTRACE_BEGIN();
+    VkMemoryRequirements memory_requirements;
+	vkGetBufferMemoryRequirements(device, buffer, &memory_requirements);
+
+	VkMemoryAllocateInfo alloc_info = {};
+	alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	alloc_info.allocationSize = memory_requirements.size;
+	alloc_info.memoryTypeIndex = vk_find_physical_device_memory_type(physical_device, memory_requirements.memoryTypeBits, memory_properties);
+	VkDeviceMemory device_memory;
+	vkCall(vkAllocateMemory(device, &alloc_info, NULL, &device_memory));
+	vkCall(vkBindBufferMemory(device, buffer, device_memory, 0));
+	CALLTRACE_RETURN(device_memory);
 }
 
 function_signature(VkBuffer, vk_get_buffer, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkSharingMode sharingMode)
@@ -75,6 +135,22 @@ function_signature(VkSemaphore, vk_get_semaphore, VkDevice device)
 	createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	vkCall(vkCreateSemaphore(device, &createInfo, NULL, &semaphore)); 
 	CALLTRACE_RETURN(semaphore);
+}
+
+function_signature(VkDescriptorPool, vk_get_descripter_pool, VkDevice device)
+{
+	CALLTRACE_BEGIN();
+	VkDescriptorPoolSize pool_size = { .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 3 };
+	VkDescriptorPoolCreateInfo pool_create_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.poolSizeCount = 1,
+		.pPoolSizes = &pool_size,
+		.maxSets = 3
+	};
+	VkDescriptorPool descriptor_pool;
+	vkCall(vkCreateDescriptorPool(device, &pool_create_info, NULL, &descriptor_pool));
+	CALLTRACE_RETURN(descriptor_pool);
 }
 
 function_signature(VkCommandPool, vk_get_command_pool, VkDevice device, uint32_t queueFamilyIndex)
@@ -252,20 +328,20 @@ function_signature(VkAttachmentDescription, vk_get_attachment_description, VkFor
 	CALLTRACE_RETURN(colorAttachment);
 }
 
-function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device, uint32_t push_constant_range_count, VkPushConstantRange* push_constant_ranges)
+function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device, uint32_t set_layout_count, VkDescriptorSetLayout* set_layouts, uint32_t push_constant_range_count, VkPushConstantRange* push_constant_ranges)
 {
 	CALLTRACE_BEGIN();
-	VkPipelineLayout pipelineLayout;
-
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0; // Optional
-	pipelineLayoutInfo.pSetLayouts = NULL; // Optional
-	pipelineLayoutInfo.pushConstantRangeCount = push_constant_range_count;
-	pipelineLayoutInfo.pPushConstantRanges = refp(VkPushConstantRange, push_constant_ranges, 0);
-
-	vkCall(vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &pipelineLayout));
-	CALLTRACE_RETURN(pipelineLayout);
+	VkPipelineLayoutCreateInfo pipeline_layout_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+		.setLayoutCount = set_layout_count,
+		.pSetLayouts = set_layouts,
+		.pushConstantRangeCount = push_constant_range_count,
+		.pPushConstantRanges = refp(VkPushConstantRange, push_constant_ranges, 0)
+	};
+	VkPipelineLayout pipeline_layout;
+	vkCall(vkCreatePipelineLayout(device, &pipeline_layout_info, NULL, &pipeline_layout));
+	CALLTRACE_RETURN(pipeline_layout);
 }
 
 function_signature_void(VkPipelineDynamicStateCreateInfo, vk_get_pipeline_dynamic_state_create_info)
@@ -468,7 +544,18 @@ function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage
 	CALLTRACE_RETURN(createInfo);
 }
 
-function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, const char* file_name)
+function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, void* spirv, uint32_t length, vulkan_shader_type_t shader_type)
+{
+	VkShaderModuleCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = length;
+	createInfo.pCode = spirv;
+	VkShaderModule shader_module;
+	vkCall(vkCreateShaderModule(device, &createInfo, NULL, &shader_module));
+	return shader_module;
+}
+
+function_signature(VkShaderModule, vk_get_shader_module_load, VkDevice device, const char* file_name)
 {
 	CALLTRACE_BEGIN();
 	BUFFER* shader_bytes = load_binary_from_file(file_name);

@@ -17,8 +17,8 @@ DYNAMIC_LIB_NAME = #vulkanrenderer.dll
 EXECUTABLE_NAME = main.exe
 EXTERNAL_LIBRARIES = -L.\external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32
 EXTERNAL_INCLUDES = -I.\include\engine -I./dependencies/ -I./shared-dependencies
-DEPENDENCIES = MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager
-DEPENDENCY_LIBS = MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a SafeMemory/lib/safemem.a tgc/lib/tgc.a
+DEPENDENCIES = MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ../shader_compiler
+DEPENDENCY_LIBS = MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a SafeMemory/lib/safemem.a tgc/lib/tgc.a ../shader_compiler/lib/shader_compiler.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS = BufferLib/lib/bufferlib.a
@@ -182,6 +182,7 @@ bin-clean:
 	$(MAKE) --directory=./dependencies/SafeMemory clean
 	$(MAKE) --directory=./dependencies/MeshLib clean
 	$(MAKE) --directory=./shared-dependencies/BufferLib clean
+	$(MAKE) --directory=./shader_compiler clean
 #-------------------------------------------
 
 #-------------------------------------------

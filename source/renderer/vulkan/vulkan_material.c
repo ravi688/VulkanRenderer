@@ -3,6 +3,8 @@
 #include <renderer/internal/vulkan/vulkan_material.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
+#include <renderer/internal/vulkan/vulkan_swapchain.h>
+#include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/render_window.h>
 #include <renderer/assert.h>
 #include <memory_allocator/memory_allocator.h>
@@ -15,7 +17,7 @@ vulkan_material_t* vulkan_material_new()
 {
 	vulkan_material_t* material = heap_new(vulkan_material_t);
 	memset(material, 0, sizeof(vulkan_material_t));
-	material->pipeline = vulkan_graphics_pipeline_new();
+	material->graphics_pipeline = vulkan_graphics_pipeline_new();
 	material->self_reference = material;
 	return material;
 }
@@ -30,7 +32,7 @@ void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_creat
 		.vertex_info_count = create_info->vertex_info_count,
 		.vertex_infos = create_info->vertex_infos
 	};
-	vulkan_graphics_pipeline_create_no_alloc(renderer, &pipeline_create_info, material->pipeline);
+	vulkan_graphics_pipeline_create_no_alloc(renderer, &pipeline_create_info, material->graphics_pipeline);
 }
 
 vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_create_info_t* create_info)
@@ -58,17 +60,15 @@ vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_
 	return material;
 }
 
-
-
 void vulkan_material_destroy(vulkan_material_t* material, renderer_t* renderer)
 {
-	vulkan_graphics_pipeline_destroy(material->pipeline, renderer);
+	vulkan_graphics_pipeline_destroy(material->graphics_pipeline, renderer);
 	render_window_unsubscribe_on_resize(renderer->window, recreate_material);
 }
 
 void vulkan_material_release_resources(vulkan_material_t* material)
 {
-	vulkan_graphics_pipeline_release_resources(material->pipeline);
+	vulkan_graphics_pipeline_release_resources(material->graphics_pipeline);
 	u32 vertex_info_count = material->create_info.vertex_info_count;
 	for(u32 i = 0; i < vertex_info_count; i++)
 	{
@@ -77,23 +77,63 @@ void vulkan_material_release_resources(vulkan_material_t* material)
 		heap_free(info->attribute_offsets);
 	}
 	heap_free(material->create_info.vertex_infos);
+	if(material->descriptor_sets != NULL)
+		heap_free(material->descriptor_sets);
 	heap_free(material);
 }
 
-
 void vulkan_material_bind(vulkan_material_t* material, renderer_t* renderer)
 {
-	vulkan_graphics_pipeline_bind(material->pipeline, renderer);
+	u32 image_index = renderer->swapchain->current_image_index;
+	vulkan_graphics_pipeline_bind(material->graphics_pipeline, renderer);
+	vkCmdBindDescriptorSets(renderer->vk_command_buffers.value2[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, material->graphics_pipeline->pipeline_layout->pipeline_layout, 0, 1, refp(VkDescriptorSet, material->descriptor_sets, image_index), 0, NULL);
 }
 
 void vulkan_material_push_constants(vulkan_material_t* material, renderer_t* renderer, void* bytes)
 {
-	vulkan_pipeline_layout_push_constants(material->pipeline->layout, renderer, bytes);
+	vulkan_pipeline_layout_push_constants(material->graphics_pipeline->pipeline_layout, renderer, bytes);
+}
+
+void vulkan_material_set_texture(vulkan_material_t* material, renderer_t* renderer, vulkan_texture_t* texture)
+{
+	material->descriptor_set_count = 3;
+	material->descriptor_sets = heap_newv(VkDescriptorSet, 3);
+
+	for(u32 i = 0; i < 3; i++)
+	{
+		VkDescriptorSetAllocateInfo alloc_info =
+		{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.descriptorPool = renderer->vk_descriptor_pool,
+			.descriptorSetCount = 1,
+			.pSetLayouts = &(material->graphics_pipeline->pipeline_layout->descriptor_set_layout)
+		};
+		vkCall(vkAllocateDescriptorSets(renderer->vk_device, &alloc_info, refp(VkDescriptorSet, material->descriptor_sets, i)));
+		VkDescriptorImageInfo image_info =
+		{
+			.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			.imageView = texture->image_view,
+			.sampler = texture->image_sampler
+		};
+		VkWriteDescriptorSet descriptor_write =
+		{
+			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+			.dstSet = ref(VkDescriptorSet, material->descriptor_sets, i),
+			.dstBinding = 0,
+			.dstArrayElement = 0,
+			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			.descriptorCount = 1,
+			.pBufferInfo = NULL, //Optional
+			.pImageInfo = &image_info,
+			.pTexelBufferView = NULL // Optional
+		};
+		vkUpdateDescriptorSets(renderer->vk_device, 1, &descriptor_write, 0, NULL);
+	}
 }
 
 static void recreate_material(render_window_t* window, void* user_data)
 {
 	vulkan_material_t* material = user_data;
-	vulkan_graphics_pipeline_destroy(material->pipeline, material->renderer);
+	vulkan_graphics_pipeline_destroy(material->graphics_pipeline, material->renderer);
 	vulkan_material_create_no_alloc(material->renderer, &(material->create_info), material);
 }

@@ -3,6 +3,7 @@
 
 #include <renderer/defines.h>
 
+typedef struct render_window_t render_window_t;
 typedef struct renderer_t renderer_t;
 
 renderer_t* renderer_init(u32 width, u32 height, const char* title, bool full_screen);
@@ -12,3 +13,6 @@ bool renderer_is_running(renderer_t* renderer);
 
 void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float a);
 void renderer_end_frame(renderer_t* renderer);
+
+
+render_window_t* renderer_get_window(renderer_t* renderer);

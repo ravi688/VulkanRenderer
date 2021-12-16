@@ -1,0 +1,9 @@
+
+digraph ShaderCompiler
+{
+	#define digraph subgraph
+	#include <DiskManager.gv>
+	#undef digraph
+
+	DiskManager -> ShaderCompiler;
+}

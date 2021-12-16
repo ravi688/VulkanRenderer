@@ -17,6 +17,7 @@ typedef struct renderer_t
 	VkQueue vk_graphics_queue;
 	VkRenderPass vk_render_pass;
 	VkCommandPool vk_command_pool;
+	VkDescriptorPool vk_descriptor_pool;
 
 	render_window_t* window;
 	vulkan_swapchain_t* swapchain;
