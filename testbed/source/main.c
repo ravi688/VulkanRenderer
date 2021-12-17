@@ -6,6 +6,9 @@
 #include <renderer/texture.h>
 #include <renderer/render_window.h>
 
+//For handling text/font rendering
+#include <renderer/font.h>
+
 #include <renderer/mesh3d.h>
 #include <renderer/defines.h>
 
@@ -48,6 +51,15 @@ int main(int argc, char** argv)
 
  	shader_t* shader = shader_load(renderer, "resource/shaders/diffuse.sb");
 	material_t* material = material_create(renderer, shader->stage_count, shader->stage_shaders);
+
+	font_t* font = font_load_and_create("resource/fonts/arial.ttf");
+
+
+
+	font_destroy(font);
+	font_release_resources(font);
+
+
 	texture_t* texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
 	material_set_texture(material, renderer, texture);
 	mesh3d_t* cube_mesh = mesh3d_plane(1);
