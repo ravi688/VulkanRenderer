@@ -59,16 +59,18 @@ shader_t* shader_load(renderer_t* renderer, const char* file_path)
 				LOG_FETAL_ERR("Shader binary loading error: Invalid shader bit \"%u\" in shader_mask\n", bit);
 		}
 	}
+	shader_t* shader = shader_create(renderer, shaders, shader_count);
 	stack_free(shaders);
 	buf_free(shader_binary);
-	return shader_create(renderer, shaders, shader_count);
+	return shader;
 }
 
 shader_t* shader_create(renderer_t* renderer, stage_shader_t** stage_shaders, u8 stage_count)
 {
-	shader_t* shader = heap_new(shader_t); memset(shader, 0, sizeof(shader_t));
+	shader_t* shader = heap_new(shader_t);
+	memset(shader, 0, sizeof(shader_t));
 	shader->stage_shaders = heap_newv(stage_shader_t*, stage_count);
-	memcpy(shader->stage_shaders, stage_shaders, sizeof(stage_shader_t*) * stage_count);
+	memcpy(shader->stage_shaders, refp(stage_shader_t*, stage_shaders, 0), sizeof(stage_shader_t*) * stage_count);
 	shader->stage_count = stage_count;
 	return shader;
 }
@@ -76,7 +78,7 @@ shader_t* shader_create(renderer_t* renderer, stage_shader_t** stage_shaders, u8
 void shader_destroy(shader_t* shader, renderer_t* renderer)
 {
 	for(u8 i = 0; i < shader->stage_count; i++)
-		stage_shader_destroy(shader->stage_shaders[i], renderer);
+		stage_shader_destroy(ref(stage_shader_t*, shader->stage_shaders, i), renderer);
 }
 
 void shader_release_resources(shader_t* shader)
