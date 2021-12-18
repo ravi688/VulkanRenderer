@@ -372,7 +372,9 @@ int main(int argc, char** argv)
 	vertex_attribute_info->attribute_offsets = offsets;
 	uint32_t* strides = stack_new(uint32_t);
 	*strides = sizeof(vertex_t);
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(1, strides, vertex_attribute_info);
+	VkVertexInputRate* input_rates = stack_new(VkVertexInputRate);
+	*input_rates = VK_VERTEX_INPUT_RATE_VERTEX;
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(1, strides, input_rates, vertex_attribute_info);
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
 	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(WINDOW_WIDTH, WINDOW_HEIGHT); 
 	VkPipelineRasterizationStateCreateInfo rasterizer = vk_get_pipeline_rasterization_state_create_info();

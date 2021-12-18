@@ -59,4 +59,5 @@ void vulkan_mesh_sync(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_mesh_cre
 void vulkan_mesh_release_resources(vulkan_mesh_t* mesh);
 void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh, renderer_t* renderer);
 void vulkan_mesh_draw(vulkan_mesh_t* mesh, renderer_t* renderer);
-
+void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count);
+void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count);

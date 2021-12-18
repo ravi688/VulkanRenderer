@@ -86,7 +86,8 @@ void vulkan_material_bind(vulkan_material_t* material, renderer_t* renderer)
 {
 	u32 image_index = renderer->swapchain->current_image_index;
 	vulkan_graphics_pipeline_bind(material->graphics_pipeline, renderer);
-	vkCmdBindDescriptorSets(renderer->vk_command_buffers.value2[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, material->graphics_pipeline->pipeline_layout->pipeline_layout, 0, 1, refp(VkDescriptorSet, material->descriptor_sets, image_index), 0, NULL);
+	if(material->descriptor_sets != NULL)
+		vkCmdBindDescriptorSets(renderer->vk_command_buffers.value2[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, material->graphics_pipeline->pipeline_layout->pipeline_layout, 0, 1, refp(VkDescriptorSet, material->descriptor_sets, image_index), 0, NULL);
 }
 
 void vulkan_material_push_constants(vulkan_material_t* material, renderer_t* renderer, void* bytes)
