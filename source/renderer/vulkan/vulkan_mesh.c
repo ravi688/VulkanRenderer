@@ -120,6 +120,16 @@ void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 
 void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh, renderer_t* renderer)
 {
+	vulkan_mesh_draw_indexed_instanced(mesh, renderer, 1);
+}
+
+void vulkan_mesh_draw(vulkan_mesh_t* mesh, renderer_t* renderer)
+{
+	vulkan_mesh_draw_instanced(mesh, renderer, 1);
+}
+
+void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
+{
 	assert(mesh != NULL);
 	ASSERT(mesh->index_buffer != VK_NULL_HANDLE, "vulkan_mesh_t doesn't have indices but you are calling vulkan_mesh_draw_index\n");
 	VkDeviceSize offsets[] = { 0 };
@@ -128,14 +138,14 @@ void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh, renderer_t* renderer)
 	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 2, 1, &(mesh->normal_buffer), offsets);
 	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 3, 1, &(mesh->uv_buffer), offsets);
 	vkCmdBindIndexBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], mesh->index_buffer, 0, VK_INDEX_TYPE_UINT32);
-	vkCmdDrawIndexed(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], mesh->index_count, 1, 0, 0, 0);
+	vkCmdDrawIndexed(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], mesh->index_count, instance_count, 0, 0, 0);
 }
 
-void vulkan_mesh_draw(vulkan_mesh_t* mesh, renderer_t* renderer)
+void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
 {
 	assert(mesh != NULL);
 	VkBuffer vertex_buffers[1] = { mesh->position_buffer };
 	VkDeviceSize offsets[1] = { 0 };
 	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 0, 1, vertex_buffers, offsets);
-	vkCmdDraw(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], mesh->vertex_count, 1, 0, 0);
+	vkCmdDraw(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], mesh->vertex_count, instance_count, 0, 0);
 }

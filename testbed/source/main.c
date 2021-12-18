@@ -71,6 +71,9 @@ int main(int argc, char** argv)
 	shader_t* color_shader = shader_load(renderer, "resource/shaders/color_shader.sb");
 	material_t* color_material = material_create(renderer, color_shader->stage_count, color_shader->stage_shaders);
 
+	shader_t* instanced_color_shader = shader_load(renderer, "resource/shaders/instanced_color_shader.sb");
+	material_t* instanced_color_material = material_create(renderer, instanced_color_shader->stage_count, instanced_color_shader->stage_shaders);
+
 	mesh3d_t* cube_mesh = mesh3d_cube(1);
 	mesh_t* cube = mesh_create(renderer, cube_mesh);
 
@@ -86,7 +89,7 @@ int main(int argc, char** argv)
 	text_mesh_set_string(text, "Hello World");
 	text_mesh_set_size(text, 100);
 
-	int index = ttf_find_glyph(font->handle, L'$');
+	int index = ttf_find_glyph(font->handle, L'&');
 	assert(index >= 0);
 
 	ttf_mesh_t* mesh;
@@ -106,7 +109,7 @@ int main(int argc, char** argv)
 		if(mesh->vert[i].x < min_x)
 			min_x = mesh->vert[i].x;
 
-		mesh3d_position_add(char_mesh, 0, mesh->vert[i].y * 800, mesh->vert[i].x * 800);
+		mesh3d_position_add(char_mesh, 0, mesh->vert[i].y * 100, mesh->vert[i].x * 100 + 200);
 		mesh3d_color_add(char_mesh, 1, 1, 1);
 		mesh3d_normal_add(char_mesh, 0, 1, 0);
 		mesh3d_uv_add(char_mesh, 0, 0);
@@ -165,19 +168,25 @@ int main(int argc, char** argv)
 		float delta_time = time_get_delta_time(&frame_time_handle);
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
 
-		material_bind(texture_material, renderer);
-		mat4_t(float) model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_rotation(float)(0, angle	* DEG2RAD, 0));
-		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
-		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-		material_push_constants(texture_material, renderer, &mvp);
-		mesh_draw_indexed(cube, renderer);
+		// material_bind(texture_material, renderer);
+		// mat4_t(float) model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_rotation(float)(0, angle	* DEG2RAD, 0));
+		// mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
+		// mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
+		// material_push_constants(texture_material, renderer, &mvp);
+		// mesh_draw_indexed(cube, renderer);
 
-		material_bind(color_material, renderer);
+		material_bind(instanced_color_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
-		mat4_move(float)(&canvas_transform, mat4_transpose(float)(canvas_transform));
-		material_push_constants(texture_material, renderer, &canvas_transform);
-		mesh_draw_indexed(bounds, renderer);
-		mesh_draw_indexed(char_render_mesh, renderer);
+
+		mat4_t(float) instance1;
+		mat4_move(float)(&instance1, mat4_transpose(float)(canvas_transform));
+		material_push_constants(instanced_color_material, renderer, &instance1);
+		// mesh_draw_indexed(bounds, renderer);
+		mesh_draw_indexed_instanced(char_render_mesh, renderer, 2);
+
+		// mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, mat4_translation(float)(0, 0, -400))));
+		// material_push_constants(color_material, renderer, &canvas_transform);
+		// mesh_draw_indexed(char_render_mesh, renderer);
 
 		renderer_end_frame(renderer);
 		renderer_update(renderer);

@@ -5,8 +5,10 @@
 
 typedef enum VkFormat VkFormat;
 
+
 typedef struct vulkan_vertex_info_t
 {
+	uint32_t input_rate;
 	u32 size;
 	u32 attribute_count;
 	VkFormat* attribute_formats;

@@ -21,10 +21,10 @@ material_t* material_create(renderer_t* renderer, u32 shader_count, stage_shader
 	u32* attribute_offsets3 = stack_array(u32, 1, 0);
 	u32* attribute_offsets4 = stack_array(u32, 1, 0);
 	vulkan_vertex_info_t* vertex_infos = stack_newv(vulkan_vertex_info_t, VERTEX_INFO_COUNT);
-	ref(vulkan_vertex_info_t, vertex_infos, 0) = (vulkan_vertex_info_t) { sizeof(float) * 3, 1, attribute_formats1, attribute_offsets1 };
-	ref(vulkan_vertex_info_t, vertex_infos, 1) = (vulkan_vertex_info_t) { sizeof(float) * 3, 1, attribute_formats2, attribute_offsets2 };
-	ref(vulkan_vertex_info_t, vertex_infos, 2) = (vulkan_vertex_info_t) { sizeof(float) * 3, 1, attribute_formats3, attribute_offsets3 };
-	ref(vulkan_vertex_info_t, vertex_infos, 3) = (vulkan_vertex_info_t) { sizeof(float) * 2, 1, attribute_formats4, attribute_offsets4 };
+	ref(vulkan_vertex_info_t, vertex_infos, 0) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 3, 1, attribute_formats1, attribute_offsets1 };
+	ref(vulkan_vertex_info_t, vertex_infos, 1) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 3, 1, attribute_formats2, attribute_offsets2 };
+	ref(vulkan_vertex_info_t, vertex_infos, 2) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 3, 1, attribute_formats3, attribute_offsets3 };
+	ref(vulkan_vertex_info_t, vertex_infos, 3) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 2, 1, attribute_formats4, attribute_offsets4 };
 
 	vulkan_material_create_info_t material_info =
 	{
@@ -59,10 +59,10 @@ void material_create_no_alloc(renderer_t* renderer, u32 shader_count, stage_shad
 	u32* attribute_offsets3 = stack_array(u32, 1, 0);
 	u32* attribute_offsets4 = stack_array(u32, 1, 0);
 	vulkan_vertex_info_t* vertex_infos = stack_newv(vulkan_vertex_info_t, VERTEX_INFO_COUNT);
-	ref(vulkan_vertex_info_t, vertex_infos, 0) = (vulkan_vertex_info_t) { sizeof(float) * 3, 1, attribute_formats1, attribute_offsets1 };
-	ref(vulkan_vertex_info_t, vertex_infos, 1) = (vulkan_vertex_info_t) { sizeof(float) * 3, 1, attribute_formats2, attribute_offsets2 };
-	ref(vulkan_vertex_info_t, vertex_infos, 2) = (vulkan_vertex_info_t) { sizeof(float) * 3, 1, attribute_formats3, attribute_offsets3 };
-	ref(vulkan_vertex_info_t, vertex_infos, 3) = (vulkan_vertex_info_t) { sizeof(float) * 2, 1, attribute_formats4, attribute_offsets4 };
+	ref(vulkan_vertex_info_t, vertex_infos, 0) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 3, 1, attribute_formats1, attribute_offsets1 };
+	ref(vulkan_vertex_info_t, vertex_infos, 1) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 3, 1, attribute_formats2, attribute_offsets2 };
+	ref(vulkan_vertex_info_t, vertex_infos, 2) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 3, 1, attribute_formats3, attribute_offsets3 };
+	ref(vulkan_vertex_info_t, vertex_infos, 3) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 2, 1, attribute_formats4, attribute_offsets4 };
 
 	vulkan_material_create_info_t material_info =
 	{

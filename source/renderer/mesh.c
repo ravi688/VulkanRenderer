@@ -113,3 +113,12 @@ void mesh_draw_indexed(mesh_t* mesh, renderer_t* renderer)
 {
 	vulkan_mesh_draw_indexed(mesh, renderer);
 }
+
+void mesh_draw_instanced(mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
+{
+	vulkan_mesh_draw_instanced(mesh, renderer, instance_count);
+}
+void mesh_draw_indexed_instanced(mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
+{
+	vulkan_mesh_draw_indexed_instanced(mesh, renderer, instance_count);
+}
