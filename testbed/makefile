@@ -18,8 +18,8 @@ EXECUTABLE_NAME = main.exe
 EXTERNAL_LIBRARIES = -L..\external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies
 #TODO: Move EntityComponentSystem from VulkanRenderer to TestBed
-DEPENDENCIES = .. ../testbed/dependencies/EntityComponentSystem MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager
-DEPENDENCY_LIBS = ../lib/vulkanrenderer.a ../testbed/dependencies/EntityComponentSystem/lib/ecs.a MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a SafeMemory/lib/safemem.a tgc/lib/tgc.a
+DEPENDENCIES = .. ../testbed/dependencies/EntityComponentSystem MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh
+DEPENDENCY_LIBS = ../lib/vulkanrenderer.a ../testbed/dependencies/EntityComponentSystem/lib/ecs.a MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a SafeMemory/lib/safemem.a tgc/lib/tgc.a ttf2mesh/lib/ttf2mesh.a
 DEPENDENCIES_DIR = ../dependencies
 SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS = BufferLib/lib/bufferlib.a

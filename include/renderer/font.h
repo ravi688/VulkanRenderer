@@ -3,11 +3,16 @@
 
 #include <renderer/defines.h>
 
+#include <ttf2mesh.h>
+
+typedef struct font_t font_t;
+
+
 typedef struct font_t
 {
+	ttf_t* handle;
 
 } font_t;
-
 
 
 font_t* font_create(void* bytes, u64 length);

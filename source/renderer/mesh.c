@@ -83,6 +83,7 @@ void mesh_release_resources(mesh_t* mesh)
 
 void mesh_sync(mesh_t* mesh, renderer_t* renderer, mesh3d_t* mesh_data)
 {
+	assert(mesh != NULL);
 	vulkan_mesh_create_info_t mesh_info =
 	{
 		.vertex_count = mesh3d_positions_count(mesh_data),
