@@ -63,16 +63,35 @@ int main(int argc, char** argv)
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
 	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
 
-	shader_t* texture_shader = shader_load(renderer, "resource/shaders/texture_shader.sb");
-	texture_t* texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
-	material_t* texture_material = material_create(renderer, texture_shader->stage_count, texture_shader->stage_shaders);
-	material_set_texture(texture_material, renderer, texture);
+	shader_t* albedo_shader = shader_load(renderer, "resource/shaders/albedo_shader.sb");
+	texture_t* albedo_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
+
+	material_create_info_t albedo_material_info =
+	{
+		.per_vertex_attributes = MATERIAL_POSITION | MATERIAL_NORMAL | MATERIAL_COLOR | MATERIAL_TEXCOORD,
+		// | MATERIAL_ALIGN(MATERIAL_MAT4, 4) | MATERIAL_ALIGN(MATERIAL_MAT2, 5) | MATERIAL_ALIGN(MATERIAL_MAT3, 6),
+		// .per_instance_attributes = MATERIAL_ALIGN(MATERIAL_MAT4, 0) | MATERIAL_ALIGN(MATERIAL_MAT2, 1),
+		.shader = albedo_shader
+	};
+	material_t* albedo_material = material_create(renderer, &albedo_material_info);
+	material_set_texture(albedo_material, renderer, albedo_texture);
 
 	shader_t* color_shader = shader_load(renderer, "resource/shaders/color_shader.sb");
-	material_t* color_material = material_create(renderer, color_shader->stage_count, color_shader->stage_shaders);
+	material_create_info_t color_material_info =
+	{
+		.per_vertex_attributes = MATERIAL_POSITION | MATERIAL_COLOR,
+		.shader = color_shader
+	};
+	material_t* color_material = material_create(renderer, &color_material_info);
 
 	shader_t* instanced_color_shader = shader_load(renderer, "resource/shaders/instanced_color_shader.sb");
-	material_t* instanced_color_material = material_create(renderer, instanced_color_shader->stage_count, instanced_color_shader->stage_shaders);
+	material_create_info_t instanced_color_material_info =
+	{
+		.per_vertex_attributes = MATERIAL_POSITION | MATERIAL_COLOR,
+		.per_instance_attributes = MATERIAL_ALIGN(MATERIAL_VEC2, 0),
+		.shader = instanced_color_shader
+	};
+	material_t* instanced_color_material = material_create(renderer, &instanced_color_material_info);
 
 	mesh3d_t* cube_mesh = mesh3d_cube(1);
 	mesh_t* cube = mesh_create(renderer, cube_mesh);
@@ -168,12 +187,12 @@ int main(int argc, char** argv)
 		float delta_time = time_get_delta_time(&frame_time_handle);
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
 
-		// material_bind(texture_material, renderer);
-		// mat4_t(float) model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_rotation(float)(0, angle	* DEG2RAD, 0));
-		// mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
-		// mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-		// material_push_constants(texture_material, renderer, &mvp);
-		// mesh_draw_indexed(cube, renderer);
+		material_bind(albedo_material, renderer);
+		mat4_t(float) model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_rotation(float)(0, angle	* DEG2RAD, 0));
+		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
+		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
+		material_push_constants(albedo_material, renderer, &mvp);
+		mesh_draw_indexed_instanced(cube, renderer, 1);
 
 		material_bind(instanced_color_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
@@ -183,10 +202,6 @@ int main(int argc, char** argv)
 		material_push_constants(instanced_color_material, renderer, &instance1);
 		// mesh_draw_indexed(bounds, renderer);
 		mesh_draw_indexed_instanced(char_render_mesh, renderer, 2);
-
-		// mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, mat4_translation(float)(0, 0, -400))));
-		// material_push_constants(color_material, renderer, &canvas_transform);
-		// mesh_draw_indexed(char_render_mesh, renderer);
 
 		renderer_end_frame(renderer);
 		renderer_update(renderer);
@@ -226,12 +241,12 @@ int main(int argc, char** argv)
 	material_destroy(color_material, renderer);
 	material_release_resources(color_material);
 
-	shader_destroy(texture_shader, renderer);
-	shader_release_resources(texture_shader);
-	material_destroy(texture_material, renderer);
-	material_release_resources(texture_material);
-	texture_destroy(texture, renderer);
-	texture_release_resources(texture);
+	shader_destroy(albedo_shader, renderer);
+	shader_release_resources(albedo_shader);
+	material_destroy(albedo_material, renderer);
+	material_release_resources(albedo_material);
+	texture_destroy(albedo_texture, renderer);
+	texture_release_resources(albedo_texture);
 
 	renderer_terminate(renderer);
 	memory_allocator_terminate();
