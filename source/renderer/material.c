@@ -42,16 +42,13 @@ static void decode_vulkan_vertex_infos(u64 packed_attributes, VkVertexInputRate 
 		info->attribute_count = 1;
 		switch(attribute_type | BIT64(63))
 		{
-			case MATERIAL_MAT2:
-			break;
-
 			case MATERIAL_MAT3:
 			break;
 
 			case MATERIAL_MAT4:
 			break;
 
-			default:
+			default:/*or MATERIAL_MAT2*/
 				//WARNING: this should be like this: ref(VkFormat, formats, i)
 				formats[i] = vulkan_format;
 				//WARNING: this should be like this: refp(VkFormat, formats, i)
@@ -97,20 +94,6 @@ material_t* material_create(renderer_t* renderer, material_create_info_t* create
 
 static material_t* __material_create(renderer_t* renderer, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, u32 shader_count, stage_shader_t** shaders)
 {
-	// VkFormat* attribute_formats1 = stack_array(VkFormat, 1, VK_FORMAT_R32G32B32_SFLOAT);
-	// VkFormat* attribute_formats2 = stack_array(VkFormat, 1, VK_FORMAT_R32G32B32_SFLOAT);
-	// VkFormat* attribute_formats3 = stack_array(VkFormat, 1, VK_FORMAT_R32G32B32_SFLOAT);
-	// VkFormat* attribute_formats4 = stack_array(VkFormat, 1, VK_FORMAT_R32G32_SFLOAT);
-	// u32* attribute_offsets1 = stack_array(u32, 1, 0);
-	// u32* attribute_offsets2 = stack_array(u32, 1, 0);
-	// u32* attribute_offsets3 = stack_array(u32, 1, 0);
-	// u32* attribute_offsets4 = stack_array(u32, 1, 0);
-	// vulkan_vertex_info_t* vertex_infos = stack_newv(vulkan_vertex_info_t, VERTEX_INFO_COUNT);
-	// ref(vulkan_vertex_info_t, vertex_infos, 0) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 3, 1, attribute_formats1, attribute_offsets1 };
-	// ref(vulkan_vertex_info_t, vertex_infos, 1) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 3, 1, attribute_formats2, attribute_offsets2 };
-	// ref(vulkan_vertex_info_t, vertex_infos, 2) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 3, 1, attribute_formats3, attribute_offsets3 };
-	// ref(vulkan_vertex_info_t, vertex_infos, 3) = (vulkan_vertex_info_t) { VK_VERTEX_INPUT_RATE_VERTEX, sizeof(float) * 2, 1, attribute_formats4, attribute_offsets4 };
-
 	vulkan_material_create_info_t material_info =
 	{
 		.shaders = shaders,
@@ -120,16 +103,6 @@ static material_t* __material_create(renderer_t* renderer, u32 vertex_info_count
 		.vertex_infos = vertex_infos
 	};
 	vulkan_material_t* material = vulkan_material_create(renderer, &material_info);
-
-	// stack_free(attribute_offsets1);
-	// stack_free(attribute_offsets2);
-	// stack_free(attribute_offsets3);
-	// stack_free(attribute_offsets4);
-	// stack_free(attribute_formats1);
-	// stack_free(attribute_formats2);
-	// stack_free(attribute_formats3);
-	// stack_free(attribute_formats4);
-	// stack_free(vertex_infos);
 	return material;
 }
 

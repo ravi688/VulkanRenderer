@@ -19,30 +19,26 @@ void vulkan_mesh_create_no_alloc(renderer_t* renderer, vulkan_mesh_create_info_t
 {
 	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
 	assert(create_info != 0);
-	assert(create_info->vertex_buffer_infos != 0);
-	assert(create_info->vertex_buffer_info_count != 0);
 	assert(mesh != NULL);
 
 	//create vertex buffers
-	mesh->vertex_buffers = heap_newv(vulkan_buffer_t*, create_info->vertex_buffer_info_count);
-	mesh->vertex_buffer_count = create_info->vertex_buffer_info_count;
-	uint32_t vertex_count = refp(vulkan_vertex_buffer_create_info_t, create_info->vertex_buffer_infos, 0)->count;
-	for(uint32_t i = 0; i < create_info->vertex_buffer_info_count; i++)
+	mesh->vertex_buffers = buf_create(sizeof(vulkan_buffer_t*), create_info->vertex_buffer_info_count, 0);
+	if((create_info->vertex_buffer_info_count != 0) && (create_info->vertex_buffer_infos != NULL))
 	{
-		vulkan_vertex_buffer_create_info_t* info = refp(vulkan_vertex_buffer_create_info_t, create_info->vertex_buffer_infos, i);
-		if(vertex_count != info->count)
+		uint32_t vertex_count = refp(vulkan_vertex_buffer_create_info_t, create_info->vertex_buffer_infos, 0)->count;
+		for(uint32_t i = 0; i < create_info->vertex_buffer_info_count; i++)
 		{
-			LOG_FETAL_ERR("Vertex buffer creation failed, all vertex buffers should have the same count\n");
+			vulkan_vertex_buffer_create_info_t* info = refp(vulkan_vertex_buffer_create_info_t, create_info->vertex_buffer_infos, i);
+			if(vertex_count != info->count)
+			{
+				LOG_FETAL_ERR("Vertex buffer creation failed, all the per-vertex vertex buffers should have the same count\n");
+			}
+			vulkan_mesh_create_and_add_vertex_buffer(mesh, renderer, info);
 		}
-		vulkan_buffer_create_info_t buffer_create_info =
-		{
-			.data = info->data,
-			.stride = info->stride,
-			.count = info->count,
-			.usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-			.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-		};
-		ref(vulkan_buffer_t*, mesh->vertex_buffers, i) = vulkan_buffer_create(renderer, &buffer_create_info);
+	}
+	else
+	{
+		log_wrn("there is no vertex buffers in vulkan_mesh_create_info_t* create_info\n");
 	}
 
 	//create index buffer
@@ -77,10 +73,8 @@ vulkan_mesh_t* vulkan_mesh_create(renderer_t* renderer, vulkan_mesh_create_info_
 void vulkan_mesh_destroy(vulkan_mesh_t* mesh, renderer_t* renderer)
 {
 	assert(mesh != NULL);
-	assert(mesh->vertex_buffers != NULL);
-	assert(mesh->vertex_buffer_count != 0);
-	for(uint32_t i = 0; i < mesh->vertex_buffer_count; i++)
-		vulkan_buffer_destroy(ref(vulkan_buffer_t*, mesh->vertex_buffers, i), renderer);
+	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++)
+		vulkan_buffer_destroy(*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, i), renderer);
 	if(mesh->index_buffer != NULL)
 		vulkan_buffer_destroy(refp(vulkan_buffer_t, mesh->index_buffer, 0), renderer);
 }
@@ -94,11 +88,9 @@ void vulkan_mesh_sync(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_mesh_cre
 void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 {
 	assert(mesh != NULL);
-	assert(mesh->vertex_buffers != NULL);
-	assert(mesh->vertex_buffer_count != 0);
-	for(uint32_t i = 0; i < mesh->vertex_buffer_count; i++)
-		vulkan_buffer_release_resources(ref(vulkan_buffer_t*, mesh->vertex_buffers, i));
-	heap_free(mesh->vertex_buffers);
+	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++)
+		vulkan_buffer_release_resources(*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, i));
+	buf_free(&mesh->vertex_buffers);
 	if(mesh->index_buffer != NULL)
 		vulkan_buffer_release_resources(refp(vulkan_buffer_t, mesh->index_buffer, 0));
 	heap_free(mesh);
@@ -122,8 +114,8 @@ void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, renderer_t* rendere
 	VkDeviceSize offsets[1] = { 0 };
 	uint32_t first_binding = 0;
 	VkCommandBuffer command_buffer = renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index];
-	for(uint32_t i = 0; i < mesh->vertex_buffer_count; i++, first_binding++)
-		vkCmdBindVertexBuffers(command_buffer, first_binding, 1, &(ref(vulkan_buffer_t*, mesh->vertex_buffers, i)->handle), offsets);
+	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++, first_binding++)
+		vkCmdBindVertexBuffers(command_buffer, first_binding, 1, &((*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, i))->handle), offsets);
 	vkCmdBindIndexBuffer(command_buffer, mesh->index_buffer->handle, 0, mesh->index_type);
 	vkCmdDrawIndexed(command_buffer, mesh->index_buffer->count, instance_count, 0, 0, 0);
 }
@@ -134,9 +126,27 @@ void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint3
 	VkDeviceSize offsets[1] = { 0 };
 	uint32_t first_binding = 0;
 	VkCommandBuffer command_buffer = renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index];
-	for(uint32_t i = 0; i < mesh->vertex_buffer_count; i++, first_binding++)
-		vkCmdBindVertexBuffers(command_buffer, first_binding, 1, &(ref(vulkan_buffer_t*, mesh->vertex_buffers, i)->handle), offsets);
-	vkCmdDraw(command_buffer, ref(vulkan_buffer_t*, mesh->vertex_buffers, 0)->count, instance_count, 0, 0);
+	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++, first_binding++)
+		vkCmdBindVertexBuffers(command_buffer, first_binding, 1, &((*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, i))->handle), offsets);
+	vkCmdDraw(command_buffer, (*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, 0))->count, instance_count, 0, 0);
+}
+
+void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_vertex_buffer_create_info_t* create_info)
+{
+	assert(mesh != NULL);
+	assert(create_info != NULL);
+	assert(create_info->count != 0);
+	assert(create_info->data != NULL);
+	vulkan_buffer_create_info_t buffer_create_info =
+	{
+		.data = create_info->data,
+		.stride = create_info->stride,
+		.count = create_info->count,
+		.usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+	};
+	vulkan_buffer_t* buffer = vulkan_buffer_create(renderer, &buffer_create_info);
+	buf_push(&mesh->vertex_buffers, &buffer);
 }
 
 static uint32_t get_index_stride(VkIndexType index_type)

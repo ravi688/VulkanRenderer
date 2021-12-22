@@ -2,6 +2,7 @@
 #pragma once
 
 #include <renderer/internal/vulkan/vulkan_buffer.h>
+#include <buffer.h>
 
 typedef struct renderer_t renderer_t;
 typedef struct vulkan_mesh_t vulkan_mesh_t;
@@ -31,8 +32,7 @@ typedef struct vulkan_mesh_create_info_t
 
 typedef struct vulkan_mesh_t
 {
-	vulkan_buffer_t** vertex_buffers;
-	uint32_t vertex_buffer_count;
+	BUFFER /*typeof(vulkan_buffer_t*)*/ vertex_buffers;
 	vulkan_buffer_t* index_buffer;
 	VkIndexType index_type;
 } vulkan_mesh_t;
@@ -48,3 +48,4 @@ void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh, renderer_t* renderer);
 void vulkan_mesh_draw(vulkan_mesh_t* mesh, renderer_t* renderer);
 void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count);
 void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count);
+void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_vertex_buffer_create_info_t* create_info);
