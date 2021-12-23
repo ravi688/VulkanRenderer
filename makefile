@@ -35,6 +35,7 @@ __SHARED_DEPENDENCY_LIBS = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEP
 __EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
 .PHONY: all
 .PHONY: init
+.PHONY: setup
 all: dgraph release
 
 %.gv:
@@ -48,6 +49,13 @@ $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR):
 
 init: $(PROJECT_NAME).gv $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR)
 	@echo [Log] $(PROJECT_NAME) init successfully!
+
+setup:
+	git submodule update --init
+	git -C ./dependencies/SafeMemory submodule update --init shared-dependencies/CallTrace
+	git -C ./dependencies/MeshLib submodule update --init dependencies/DiskManager
+	git -C ./dependencies/SafeMemory submodule update --init dependencies/TemplateSystem
+	@echo [Log] Setup successfully!
 #-------------------------------------------
 
 
