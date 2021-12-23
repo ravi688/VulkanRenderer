@@ -34,6 +34,9 @@
 #include <renderer/defines.h>
 #include <renderer/debug.h>
 
+#define MESH3D_MAX_ATTRIBUTE_COUNT 4
+#define MESH3D_INDEX_SIZE 4 //sizeof(u32)
+
 typedef u32 index_t;
 
 #ifndef VEC3_index_t_struct
@@ -43,12 +46,13 @@ instantiate_vec3_struct(index_t);
 
 typedef struct mesh3d_t
 {
-	mat4_t(float) transform;
+	//Ordering is important here, see: mesh_create
 	BUFFER* positions; 
 	BUFFER* normals;
-	BUFFER* uvs;
 	BUFFER* colors;
+	BUFFER* uvs;
 	BUFFER* triangles;
+	mat4_t(float) transform;
 } mesh3d_t;
 
 function_signature_void(mesh3d_t*, mesh3d_new);

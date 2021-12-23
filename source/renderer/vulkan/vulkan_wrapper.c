@@ -80,7 +80,7 @@ function_signature(uint32_t, vk_find_physical_device_memory_type, VkPhysicalDevi
 	CALLTRACE_RETURN((uint32_t)selected_memory_type);
 }
 
-function_signature(VkDeviceMemory, vk_get_device_memory_for_image, VkDevice device, VkPhysicalDevice physical_device, VkImage image, uint32_t size, uint32_t memory_properties)
+function_signature(VkDeviceMemory, vk_get_device_memory_for_image, VkDevice device, VkPhysicalDevice physical_device, VkImage image, uint32_t size, VkMemoryPropertyFlags memory_properties)
 {
 	CALLTRACE_BEGIN();
 	VkMemoryRequirements memory_requirements;
@@ -98,7 +98,7 @@ function_signature(VkDeviceMemory, vk_get_device_memory_for_image, VkDevice devi
 	CALLTRACE_RETURN(device_memory);
 }
 
-function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physical_device, VkBuffer buffer, uint64_t size, uint32_t memory_properties)
+function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physical_device, VkBuffer buffer, uint64_t size, VkMemoryPropertyFlags memory_properties)
 {
 	CALLTRACE_BEGIN();
     VkMemoryRequirements memory_requirements;
@@ -476,6 +476,7 @@ function_signature(tuple_t(uint32_t,  pVkVertexInputBindingDescription_t), vk_ge
 	CALLTRACE_RETURN(bindingDescriptions);
 }
 
+//WARNING: It's an unsafe function, it doesn't checks for invalid memory access due to incomplete safe memory module implementation
 function_signature(tuple_t(uint32_t,  pVkVertexInputAttributeDescription_t), vk_get_vertex_input_attribute_descriptions, uint32_t binding_count, vertex_attribute_binding_info_t* attribute_infos)
 {
 	CALLTRACE_BEGIN();
@@ -483,15 +484,19 @@ function_signature(tuple_t(uint32_t,  pVkVertexInputAttributeDescription_t), vk_
 	uint32_t count = 0;
 	for(uint32_t i = 0; i < binding_count; i++)
 	{
-		vertex_attribute_binding_info_t info = ref(vertex_attribute_binding_info_t, attribute_infos, i);
+		//TODO: this should be vertex_attribute_binding_info_t info = ref(vertex_attribute_binding_info_t, attribute_infos, i);
+		//currently safe memory doesn't support checks for intermediate memory access apart from the base address
+		vertex_attribute_binding_info_t info = attribute_infos[i];
 		for(uint32_t j = 0; j < info.attribute_count; j++, count++)
 		{
 			VkVertexInputAttributeDescription description =
 			{
 				.binding = i,
 				.location = count,
-				.format = ref(VkFormat, info.attribute_formats, j),
-				.offset = ref(uint32_t, info.attribute_offsets, j)
+				//TODO: this should be .format = ref(VkFormat, info.attribute_formats, j), currently safe memory doesn't support checks for intermediate memory access apart from the base address
+				.format = info.attribute_formats[j],
+				//TODO: this should be .offset = ref(uint32_t, info.attribute_offsets, j), currently safe memory doesn't support checks for intermediate memory access apart from the base address
+				.offset = info.attribute_offsets[j]
 			};
 			buf_push(&attribute_descriptions, &description);
 		}

@@ -4,70 +4,52 @@
 #include <renderer/mesh.h>
 #include <renderer/mesh3d.h>
 #include <renderer/assert.h>
+#include <memory_allocator/memory_allocator.h>
 
-vulkan_mesh_t* mesh_new()
+static u32 get_vulkan_index_from_stride(u32 stride);
+
+mesh_t* mesh_new()
 {
 	return vulkan_mesh_new();
 }
 
-vulkan_mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
+mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 {
-	ASSERT(mesh_data != NULL, "Failed to create mesh_t, mesh3d_t* mesh_data == NULL\n");
-	ASSERT(mesh3d_has_positions(mesh_data), "!mesh3d_has_positions(mesh_data)\n");
-	ASSERT(mesh3d_has_normals(mesh_data), "!mesh3d_has_normals(mesh_data)\n");
-	ASSERT(mesh3d_has_colors(mesh_data), "!mesh3d_has_colors(mesh_data)\n");
-	ASSERT(mesh3d_has_uvs(mesh_data), "!mesh3d_has_uvs(mesh_data)\n");
-	vulkan_mesh_create_info_t create_info =
-	{
-		.vertex_count = mesh3d_positions_count(mesh_data),
-
-		.p_position_data = mesh_data->positions->bytes,
-		.position_stride = mesh3d_sizeof_position(mesh_data),
-
-		.p_color_data = mesh_data->colors->bytes,
-		.color_stride = mesh3d_sizeof_color(mesh_data),
-
-		.p_normal_data = mesh_data->normals->bytes,
-		.normal_stride = mesh3d_sizeof_normal(mesh_data),
-
-		.p_uv_data = mesh_data->uvs->bytes,
-		.uv_stride = mesh3d_sizeof_uv(mesh_data),
-
-		.p_index_data = mesh_data->triangles->bytes,
-		.index_stride = mesh3d_sizeof_index(mesh_data),
-		.index_count = mesh3d_triangles_count(mesh_data) * 3
-	};
-	ASSERT(create_info.color_stride == (sizeof(float) * 3), "create_info.color_stride != (sizeof(float) * 3)\n");
-	ASSERT(create_info.normal_stride == (sizeof(float) * 3), "create_info.normal_stride != (sizeof(float) * 3)\n");
-	ASSERT(create_info.position_stride == (sizeof(float) * 3), "create_info.position_stride != (sizeof(float) * 3)\n");
-	ASSERT(create_info.uv_stride == (sizeof(float) * 2), "create_info.uv_stride != (sizeof(float) * 2)\n");
-	vulkan_mesh_t* vulkan_mesh = vulkan_mesh_create(renderer, &create_info);
+	mesh_t* vulkan_mesh = vulkan_mesh_new();
+	mesh_create_no_alloc(renderer, mesh_data, vulkan_mesh);
 	return vulkan_mesh;
 }
 
 void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
 {
-	ASSERT(mesh3d_has_positions(mesh_data), "!mesh3d_has_positions(mesh_data)\n");
-	ASSERT(mesh3d_has_normals(mesh_data), "!mesh3d_has_normals(mesh_data)\n");
-	ASSERT(mesh3d_has_colors(mesh_data), "!mesh3d_has_colors(mesh_data)\n");
-	// ASSERT(mesh3d_has_uvs(mesh_data), "!mesh3d_has_uvs(mesh_data)\n");
+	ASSERT(mesh_data != NULL, "Failed to create mesh_t, mesh3d_t* mesh_data == NULL\n");
+	vulkan_vertex_buffer_create_info_t* vertex_buffer_infos = stack_newv(vulkan_vertex_buffer_create_info_t, MESH3D_MAX_ATTRIBUTE_COUNT);
+	BUFFER** buffers = (BUFFER**)mesh_data;
+	u8 buffer_count = 0;
+	for(u8 i = 0; i < MESH3D_MAX_ATTRIBUTE_COUNT; i++)
+	{
+		if((buffers[i] == NULL) || (buffers[i]->element_count == 0)) continue;
+		vulkan_vertex_buffer_create_info_t* create_info = refp(vulkan_vertex_buffer_create_info_t, vertex_buffer_infos, buffer_count);
+		create_info->data = buffers[i]->bytes;
+		create_info->stride = buffers[i]->element_size;
+		create_info->count = buffers[i]->element_count;
+		++buffer_count;
+	}
 	vulkan_mesh_create_info_t create_info =
 	{
-		.vertex_count = mesh3d_positions_count(mesh_data),
-
-		.p_position_data = mesh_data->positions->bytes,
-		.position_stride = mesh3d_sizeof_position(mesh_data),
-
-		.p_color_data = mesh_data->colors->bytes,
-		.color_stride = mesh3d_sizeof_color(mesh_data),
-
-		.p_normal_data = mesh_data->normals->bytes,
-		.normal_stride = mesh3d_sizeof_normal(mesh_data),
-
-		.p_index_data = mesh_data->triangles->bytes,
-		.index_stride = mesh3d_sizeof_index(mesh_data),
-		.index_count = mesh3d_triangles_count(mesh_data) * 3
+		.vertex_buffer_infos = vertex_buffer_infos,
+		.vertex_buffer_info_count = buffer_count
 	};
+	BUFFER* index_buffer = buffers[MESH3D_MAX_ATTRIBUTE_COUNT];
+	if((index_buffer != NULL) && (index_buffer->element_count != 0))
+	{
+		create_info.index_buffer_info = (vulkan_index_buffer_create_info_t)
+		{
+			.data = index_buffer->bytes,
+			.index_type = get_vulkan_index_from_stride(MESH3D_INDEX_SIZE),
+			.count = index_buffer->element_count * 3 //element_size = sizeof(vec3_t(index_t)), and element_count = count of vec3_t(index_t)
+		};
+	}
 	vulkan_mesh_create_no_alloc(renderer, &create_info, mesh);
 }
 
@@ -84,24 +66,7 @@ void mesh_release_resources(mesh_t* mesh)
 void mesh_sync(mesh_t* mesh, renderer_t* renderer, mesh3d_t* mesh_data)
 {
 	assert(mesh != NULL);
-	vulkan_mesh_create_info_t mesh_info =
-	{
-		.vertex_count = mesh3d_positions_count(mesh_data),
-
-		.p_position_data = mesh_data->positions->bytes,
-		.position_stride = mesh3d_sizeof_position(mesh_data),
-
-		.p_color_data = mesh_data->colors->bytes,
-		.color_stride = mesh3d_sizeof_color(mesh_data),
-
-		.p_normal_data = mesh_data->normals->bytes,
-		.normal_stride = mesh3d_sizeof_normal(mesh_data),
-
-		.p_index_data = mesh_data->triangles->bytes,
-		.index_stride = mesh3d_sizeof_index(mesh_data),
-		.index_count = mesh3d_triangles_count(mesh_data) * 3
-	};
-	vulkan_mesh_sync(mesh, renderer, &mesh_info);
+	// vulkan_mesh_sync(mesh, renderer, &mesh_info);
 }
 
 void mesh_draw(mesh_t* mesh, renderer_t* renderer)
@@ -122,3 +87,16 @@ void mesh_draw_indexed_instanced(mesh_t* mesh, renderer_t* renderer, uint32_t in
 {
 	vulkan_mesh_draw_indexed_instanced(mesh, renderer, instance_count);
 }
+
+
+static VkIndexType get_vulkan_index_from_stride(u32 stride)
+{
+	switch(stride)
+	{
+		case sizeof(u16): return VK_INDEX_TYPE_UINT16;
+		case sizeof(u32): return VK_INDEX_TYPE_UINT32;
+		case sizeof(u8): return VK_INDEX_TYPE_UINT8_EXT;
+		default: LOG_FETAL_ERR("There is no Vulkan Index Type corresponding to the stride \"%u\"\n", stride);
+	}
+}
+

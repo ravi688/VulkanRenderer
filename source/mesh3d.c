@@ -49,9 +49,6 @@ function_signature_void(mesh3d_t*, mesh3d_new)
 	mesh3d_t* mesh  = (mesh3d_t*)malloc(sizeof(mesh3d_t));
 	memset(mesh, 0, sizeof(mesh3d_t));
 	mat4_move(float)(&(mesh->transform), mat4_identity(float)());
-	#ifdef MESH3D_DEBUG
-	log_msg("mesh3d_t created successfully\n");
-	#endif
 	CALLTRACE_RETURN(mesh);
 }
 
@@ -66,9 +63,6 @@ function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, index_t count)
 	}
 	mesh->positions = BUFcreate(NULL, sizeof(vec3_t(float)), count, 0);
 	ASSERT(mesh->positions != NULL, "mesh->positions == NULL\n");
-	#ifdef MESH3D_DEBUG
-	log_msg("New Position buffer created, length: %d\n", count);
-	#endif
 	CALLTRACE_END();
 }
 
@@ -82,9 +76,6 @@ function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, index_t count)
 		mesh->normals = NULL;
 	}
 	mesh->normals = BUFcreate(NULL, sizeof(vec3_t(float)), count, 0);
-	#ifdef MESH3D_DEBUG
-	log_msg("New Normals buffer created, length: %d\n", count);
-	#endif
 	CALLTRACE_END();
 }
 
@@ -98,9 +89,6 @@ function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, index_t count)
 		mesh->colors = NULL;
 	}
 	mesh->colors = BUFcreate(NULL, sizeof(vec3_t(float)), count, 0);
-	#ifdef MESH3D_DEBUG
-	log_msg("New Colors buffer created, length: %d\n", count);
-	#endif
 	CALLTRACE_END();
 }
 
@@ -115,9 +103,6 @@ function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, index_t count)
 		mesh->triangles = NULL;
 	}
 	mesh->triangles = BUFcreate(NULL, sizeof(vec3_t(index_t)), count, 0);
-	#ifdef MESH3D_DEBUG
-	log_msg("New Triangle buffer created, length: %d\n", count);
-	#endif
 	CALLTRACE_END();
 }
 
@@ -131,9 +116,6 @@ function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, index_t count)
 		mesh->uvs = NULL;
 	}
 	mesh->uvs = BUFcreate(NULL, sizeof(vec2_t(float)), count, 0);
-	#ifdef MESH3D_DEBUG
-	log_msg("New UV buffer created, length: %d\n", count);
-	#endif
 	CALLTRACE_END();
 }
 
@@ -196,9 +178,6 @@ function_signature(void, mesh3d_destroy, mesh3d_t* mesh)
 	if(mesh->positions != NULL)
 		buf_free(mesh->triangles);
 
-	#ifdef MESH3D_DEBUG
-	log_msg("mesh3d_t is destroyed successfully\n");
-	#endif
 	CALLTRACE_END();
 }
 
@@ -217,9 +196,6 @@ function_signature(void, mesh3d_optimize_buffer, mesh3d_t* mesh)
 	if(mesh->normals != NULL)
 		buf_fit(mesh->normals);
 
-	#ifdef MESH3D_DEBUG
-	log_msg("mesh3d_t optimized successfully\n");
-	#endif
 	CALLTRACE_END();
 }
 

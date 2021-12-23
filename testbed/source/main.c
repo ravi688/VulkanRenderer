@@ -6,6 +6,7 @@
 #include <renderer/texture.h>
 #include <renderer/render_window.h>
 #include <renderer/time.h>
+#include <renderer/internal/vulkan/vulkan_mesh.h>
 
 //For handling text/font rendering
 #include <renderer/font.h>
@@ -27,6 +28,8 @@
 #include <hpml/vec4/vec4.h>
 #include <hpml/mat4/header_config.h>
 #include <hpml/mat4/mat4.h>
+#include <hpml/mat2/header_config.h>
+#include <hpml/mat2/mat2.h>
 #include <hpml/affine_transformation/header_config.h>
 #include <hpml/affine_transformation/affine_transformation.h>
 
@@ -63,24 +66,8 @@ int main(int argc, char** argv)
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
 	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
 
-	shader_t* texture_shader = shader_load(renderer, "resource/shaders/texture_shader.sb");
-	texture_t* texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
-	material_t* texture_material = material_create(renderer, texture_shader->stage_count, texture_shader->stage_shaders);
-	material_set_texture(texture_material, renderer, texture);
-
-	shader_t* color_shader = shader_load(renderer, "resource/shaders/color_shader.sb");
-	material_t* color_material = material_create(renderer, color_shader->stage_count, color_shader->stage_shaders);
-
-	shader_t* instanced_color_shader = shader_load(renderer, "resource/shaders/instanced_color_shader.sb");
-	material_t* instanced_color_material = material_create(renderer, instanced_color_shader->stage_count, instanced_color_shader->stage_shaders);
-
-	mesh3d_t* cube_mesh = mesh3d_cube(1);
-	mesh_t* cube = mesh_create(renderer, cube_mesh);
-
 	mesh3d_t* char_mesh = mesh3d_new();
 	mesh3d_positions_new(char_mesh, 0);
-	mesh3d_normals_new(char_mesh, 0);
-	mesh3d_uvs_new(char_mesh, 0);
 	mesh3d_colors_new(char_mesh, 0);
 	mesh3d_triangles_new(char_mesh, 0);
 
@@ -111,8 +98,6 @@ int main(int argc, char** argv)
 
 		mesh3d_position_add(char_mesh, 0, mesh->vert[i].y * 100, mesh->vert[i].x * 100 + 200);
 		mesh3d_color_add(char_mesh, 1, 1, 1);
-		mesh3d_normal_add(char_mesh, 0, 1, 0);
-		mesh3d_uv_add(char_mesh, 0, 0);
 	}
 	for(int i = 0; i < mesh->nfaces; i++)
 		mesh3d_triangle_add(char_mesh, mesh->faces[i].v3, mesh->faces[i].v2, mesh->faces[i].v1);
@@ -122,41 +107,27 @@ int main(int argc, char** argv)
 	ttf_free_mesh(mesh);
 	mesh_t* char_render_mesh = mesh_create(renderer, char_mesh);
 
+	shader_t* font_shader = shader_load(renderer, "resource/shaders/font_shader.sb");
+	material_create_info_t font_material_info =
+	{
+		.per_vertex_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0) //position
+								| MATERIAL_ALIGN(MATERIAL_VEC3, 1), //color
+		.per_instance_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0), //offset
+		.shader = font_shader
+	};
+	material_t* font_material = material_create(renderer, &font_material_info);
 
-	mesh3d_t* mesh_bounds = mesh3d_new();
-	mesh3d_positions_new(mesh_bounds, 4);
-	mesh3d_normals_new(mesh_bounds, 4);
-	mesh3d_uvs_new(mesh_bounds, 4);
-	mesh3d_colors_new(mesh_bounds, 4);
-	mesh3d_triangles_new(mesh_bounds, 6);
-
-	mesh3d_position_add(mesh_bounds, 0, max_y * 800, max_x * 800);
-	mesh3d_position_add(mesh_bounds, 0, max_y * 800, min_x * 800);
-	mesh3d_position_add(mesh_bounds, 0, min_y * 800, min_x * 800);
-	mesh3d_position_add(mesh_bounds, 0, min_y * 800, max_x * 800);
-
-	mesh3d_uv_add(mesh_bounds, 1, 1);
-	mesh3d_uv_add(mesh_bounds, 0, 1);
-	mesh3d_uv_add(mesh_bounds, 0, 0);
-	mesh3d_uv_add(mesh_bounds, 1, 0);
-
-	mesh3d_triangle_add(mesh_bounds, 3, 1, 0);
-	mesh3d_triangle_add(mesh_bounds, 3, 2, 1);
-
-	mesh3d_normal_add(mesh_bounds, 0, 1, 0);
-	mesh3d_normal_add(mesh_bounds, 0, 1, 0);
-	mesh3d_normal_add(mesh_bounds, 0, 1, 0);
-	mesh3d_normal_add(mesh_bounds, 0, 1, 0);
-
-	mesh3d_color_add(mesh_bounds, 0, 0.1f, 0.5f);
-	mesh3d_color_add(mesh_bounds, 0, 0.1f, 0.5f);
-	mesh3d_color_add(mesh_bounds, 0, 0.1f, 0.5f);
-	mesh3d_color_add(mesh_bounds, 0, 0.1f, 0.5f);
-	mesh3d_optimize_buffer(mesh_bounds);
-	mesh3d_make_centroid_origin(mesh_bounds);
-
-	mesh_t* bounds = mesh_create(renderer, mesh_bounds);
-
+	vec3_t(float) offsets[2] =
+	{
+		{ 0, 0, -200 }, { 0, 0, 200 },
+	};
+	vulkan_vertex_buffer_create_info_t offset_create_info =
+	{
+		.data = offsets,
+		.stride = sizeof(vec3_t(float)),
+		.count = 2
+	};
+	vulkan_mesh_create_and_add_vertex_buffer(char_render_mesh, renderer, &offset_create_info);
 
 	time_handle_t frame_time_handle = time_get_handle();
 	time_handle_t second_time_handle = time_get_handle();
@@ -168,25 +139,12 @@ int main(int argc, char** argv)
 		float delta_time = time_get_delta_time(&frame_time_handle);
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
 
-		// material_bind(texture_material, renderer);
-		// mat4_t(float) model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_rotation(float)(0, angle	* DEG2RAD, 0));
-		// mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
-		// mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-		// material_push_constants(texture_material, renderer, &mvp);
-		// mesh_draw_indexed(cube, renderer);
-
-		material_bind(instanced_color_material, renderer);
+		material_bind(font_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
 
-		mat4_t(float) instance1;
-		mat4_move(float)(&instance1, mat4_transpose(float)(canvas_transform));
-		material_push_constants(instanced_color_material, renderer, &instance1);
-		// mesh_draw_indexed(bounds, renderer);
+		mat4_move(float)(&canvas_transform, mat4_transpose(float)(canvas_transform));
+		material_push_constants(font_material, renderer, &canvas_transform);
 		mesh_draw_indexed_instanced(char_render_mesh, renderer, 2);
-
-		// mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, mat4_translation(float)(0, 0, -400))));
-		// material_push_constants(color_material, renderer, &canvas_transform);
-		// mesh_draw_indexed(char_render_mesh, renderer);
 
 		renderer_end_frame(renderer);
 		renderer_update(renderer);
@@ -209,29 +167,14 @@ int main(int argc, char** argv)
 	text_mesh_destroy(text, renderer);
 	text_mesh_release_resources(text);
 
-	mesh_destroy(bounds, renderer);
-	mesh_release_resources(bounds);
-	mesh3d_destroy(mesh_bounds);
-
-	mesh_destroy(cube, renderer);
-	mesh_release_resources(cube);
-	mesh3d_destroy(cube_mesh);
-
 	mesh_destroy(char_render_mesh, renderer);
 	mesh_release_resources(char_render_mesh);
 	mesh3d_destroy(char_mesh);
 
-	shader_destroy(color_shader, renderer);
-	shader_release_resources(color_shader);
-	material_destroy(color_material, renderer);
-	material_release_resources(color_material);
-
-	shader_destroy(texture_shader, renderer);
-	shader_release_resources(texture_shader);
-	material_destroy(texture_material, renderer);
-	material_release_resources(texture_material);
-	texture_destroy(texture, renderer);
-	texture_release_resources(texture);
+	shader_destroy(font_shader, renderer);
+	shader_release_resources(font_shader);
+	material_destroy(font_material, renderer);
+	material_release_resources(font_material);
 
 	renderer_terminate(renderer);
 	memory_allocator_terminate();

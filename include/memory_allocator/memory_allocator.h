@@ -88,9 +88,9 @@
 #endif
 
 #define stack_new(type) ((type*)stack_alloc(sizeof(type)))
-#define stack_newv(type, count) ((type*)heap_alloc(sizeof(type) * count))
+#define stack_newv(type, count) ((type*)stack_alloc(sizeof(type) * (count)))
 #define heap_new(type) ((type*)heap_alloc(sizeof(type)))
-#define heap_newv(type, count) ((type*)heap_alloc(sizeof(type) * count))
+#define heap_newv(type, count) ((type*)heap_alloc(sizeof(type) * (count)))
 
 #include <memory_allocator/template_instantiations.h>
 #include <memory.h>

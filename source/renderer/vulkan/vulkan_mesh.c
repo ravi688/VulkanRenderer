@@ -6,6 +6,7 @@
 #include <memory.h>
 #include <renderer/assert.h>
 
+static uint32_t get_index_stride(VkIndexType index_type);
 
 vulkan_mesh_t* vulkan_mesh_new()
 {
@@ -17,69 +18,47 @@ vulkan_mesh_t* vulkan_mesh_new()
 void vulkan_mesh_create_no_alloc(renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
 {
 	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
-	assert(create_info->vertex_count != 0);
-	assert(create_info->p_position_data != 0);
+	assert(create_info != 0);
 	assert(mesh != NULL);
 
-	mesh->vertex_count = create_info->vertex_count;
-
-	//create position buffer object
-	u32 position_buffer_size = create_info->position_stride * create_info->vertex_count;
-	mesh->position_buffer = vk_get_buffer(renderer->vk_device, position_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE);
-	mesh->position_buffer_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, mesh->position_buffer, position_buffer_size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	void* data;
-	vkMapMemory(renderer->vk_device, mesh->position_buffer_memory, 0, position_buffer_size, 0, &data);
-	memcpy(data, create_info->p_position_data, position_buffer_size);
-	vkUnmapMemory(renderer->vk_device, mesh->position_buffer_memory);
-	mesh->position_stride = create_info->position_stride;
-
-	if(create_info->p_color_data != NULL)
+	//create vertex buffers
+	mesh->vertex_buffers = buf_create(sizeof(vulkan_buffer_t*), create_info->vertex_buffer_info_count, 0);
+	if((create_info->vertex_buffer_info_count != 0) && (create_info->vertex_buffer_infos != NULL))
 	{
-		//create color buffer object
-		u32 color_buffer_size = create_info->color_stride * create_info->vertex_count;
-		mesh->color_buffer = vk_get_buffer(renderer->vk_device, color_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE);
-		mesh->color_buffer_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, mesh->color_buffer, color_buffer_size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		vkMapMemory(renderer->vk_device, mesh->color_buffer_memory, 0, color_buffer_size, 0, &data);
-		memcpy(data, create_info->p_color_data, color_buffer_size);
-		vkUnmapMemory(renderer->vk_device, mesh->color_buffer_memory);
-		mesh->color_stride = create_info->color_stride;
+		uint32_t vertex_count = refp(vulkan_vertex_buffer_create_info_t, create_info->vertex_buffer_infos, 0)->count;
+		for(uint32_t i = 0; i < create_info->vertex_buffer_info_count; i++)
+		{
+			vulkan_vertex_buffer_create_info_t* info = refp(vulkan_vertex_buffer_create_info_t, create_info->vertex_buffer_infos, i);
+			if(vertex_count != info->count)
+			{
+				LOG_FETAL_ERR("Vertex buffer creation failed, all the per-vertex vertex buffers should have the same count\n");
+			}
+			vulkan_mesh_create_and_add_vertex_buffer(mesh, renderer, info);
+		}
+	}
+	else
+	{
+		log_wrn("there is no vertex buffers in vulkan_mesh_create_info_t* create_info\n");
 	}
 
-	if(create_info->p_normal_data != NULL)
+	//create index buffer
+	if(create_info->index_buffer_info.count != 0)
 	{
-		//create normal buffer object
-		u32 normal_buffer_size = create_info->normal_stride * create_info->vertex_count;
-		mesh->normal_buffer = vk_get_buffer(renderer->vk_device, normal_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE);
-		mesh->normal_buffer_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, mesh->normal_buffer, normal_buffer_size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		vkMapMemory(renderer->vk_device, mesh->normal_buffer_memory, 0, normal_buffer_size, 0, &data);
-		memcpy(data, create_info->p_normal_data, normal_buffer_size);
-		vkUnmapMemory(renderer->vk_device, mesh->normal_buffer_memory);
-		mesh->normal_stride = create_info->normal_stride;
+		vulkan_buffer_create_info_t buffer_create_info =
+		{
+			.data = create_info->index_buffer_info.data,
+			.stride = get_index_stride(create_info->index_buffer_info.index_type),
+			.count = create_info->index_buffer_info.count,
+			.usage_flags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		};
+		mesh->index_buffer = vulkan_buffer_create(renderer, &buffer_create_info);
+		mesh->index_type = create_info->index_buffer_info.index_type;
 	}
-
-	if(create_info->p_uv_data != NULL)
+	else
 	{
-		//create uv buffer object
-		u32 uv_buffer_size = create_info->uv_stride * create_info->vertex_count;
-		mesh->uv_buffer = vk_get_buffer(renderer->vk_device, uv_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE);
-		mesh->uv_buffer_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, mesh->uv_buffer, uv_buffer_size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		vkMapMemory(renderer->vk_device, mesh->uv_buffer_memory, 0, uv_buffer_size, 0, &data);
-		memcpy(data, create_info->p_uv_data, uv_buffer_size);
-		vkUnmapMemory(renderer->vk_device, mesh->uv_buffer_memory);
-		mesh->uv_stride = create_info->uv_stride;
-	}
-
-	if(create_info->p_index_data != NULL)
-	{
-		//create index buffer object
-		u32 index_buffer_size = create_info->index_stride * create_info->index_count;
-		mesh->index_buffer = vk_get_buffer(renderer->vk_device, index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE);
-		mesh->index_buffer_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, mesh->index_buffer, index_buffer_size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		vkMapMemory(renderer->vk_device, mesh->index_buffer_memory, 0, index_buffer_size, 0, &data);
-		memcpy(data, create_info->p_index_data, index_buffer_size);
-		vkUnmapMemory(renderer->vk_device, mesh->index_buffer_memory);
-		mesh->index_count = create_info->index_count;
-		mesh->index_stride = create_info->index_stride;
+		mesh->index_buffer = NULL;
+		mesh->index_type = VK_INDEX_TYPE_MAX_ENUM; 	//invalid index type
 	}
 }
 
@@ -94,16 +73,10 @@ vulkan_mesh_t* vulkan_mesh_create(renderer_t* renderer, vulkan_mesh_create_info_
 void vulkan_mesh_destroy(vulkan_mesh_t* mesh, renderer_t* renderer)
 {
 	assert(mesh != NULL);
-	vkDestroyBuffer(renderer->vk_device, mesh->position_buffer, NULL);
-	vkDestroyBuffer(renderer->vk_device, mesh->color_buffer, NULL);
-	vkDestroyBuffer(renderer->vk_device, mesh->normal_buffer, NULL);
-	vkDestroyBuffer(renderer->vk_device, mesh->uv_buffer, NULL);
-	vkDestroyBuffer(renderer->vk_device, mesh->index_buffer, NULL);
-	vkFreeMemory(renderer->vk_device, mesh->position_buffer_memory, NULL);
-	vkFreeMemory(renderer->vk_device, mesh->color_buffer_memory, NULL);
-	vkFreeMemory(renderer->vk_device, mesh->normal_buffer_memory, NULL);
-	vkFreeMemory(renderer->vk_device, mesh->uv_buffer_memory, NULL);
-	vkFreeMemory(renderer->vk_device, mesh->index_buffer_memory, NULL);
+	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++)
+		vulkan_buffer_destroy(*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, i), renderer);
+	if(mesh->index_buffer != NULL)
+		vulkan_buffer_destroy(refp(vulkan_buffer_t, mesh->index_buffer, 0), renderer);
 }
 
 void vulkan_mesh_sync(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_mesh_create_info_t* create_info)
@@ -115,6 +88,11 @@ void vulkan_mesh_sync(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_mesh_cre
 void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 {
 	assert(mesh != NULL);
+	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++)
+		vulkan_buffer_release_resources(*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, i));
+	buf_free(&mesh->vertex_buffers);
+	if(mesh->index_buffer != NULL)
+		vulkan_buffer_release_resources(refp(vulkan_buffer_t, mesh->index_buffer, 0));
 	heap_free(mesh);
 }
 
@@ -131,21 +109,54 @@ void vulkan_mesh_draw(vulkan_mesh_t* mesh, renderer_t* renderer)
 void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
 {
 	assert(mesh != NULL);
-	ASSERT(mesh->index_buffer != VK_NULL_HANDLE, "vulkan_mesh_t doesn't have indices but you are calling vulkan_mesh_draw_index\n");
-	VkDeviceSize offsets[] = { 0 };
-	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 0, 1, &(mesh->position_buffer), offsets);
-	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 1, 1, &(mesh->color_buffer), offsets);
-	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 2, 1, &(mesh->normal_buffer), offsets);
-	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 3, 1, &(mesh->uv_buffer), offsets);
-	vkCmdBindIndexBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], mesh->index_buffer, 0, VK_INDEX_TYPE_UINT32);
-	vkCmdDrawIndexed(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], mesh->index_count, instance_count, 0, 0, 0);
+	assert(mesh->index_buffer != NULL);
+	assert(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
+	VkDeviceSize offsets[1] = { 0 };
+	uint32_t first_binding = 0;
+	VkCommandBuffer command_buffer = renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index];
+	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++, first_binding++)
+		vkCmdBindVertexBuffers(command_buffer, first_binding, 1, &((*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, i))->handle), offsets);
+	vkCmdBindIndexBuffer(command_buffer, mesh->index_buffer->handle, 0, mesh->index_type);
+	vkCmdDrawIndexed(command_buffer, mesh->index_buffer->count, instance_count, 0, 0, 0);
 }
 
 void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
 {
 	assert(mesh != NULL);
-	VkBuffer vertex_buffers[1] = { mesh->position_buffer };
 	VkDeviceSize offsets[1] = { 0 };
-	vkCmdBindVertexBuffers(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], 0, 1, vertex_buffers, offsets);
-	vkCmdDraw(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], mesh->vertex_count, instance_count, 0, 0);
+	uint32_t first_binding = 0;
+	VkCommandBuffer command_buffer = renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index];
+	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++, first_binding++)
+		vkCmdBindVertexBuffers(command_buffer, first_binding, 1, &((*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, i))->handle), offsets);
+	vkCmdDraw(command_buffer, (*(vulkan_buffer_t**)buf_get_ptr_at(&mesh->vertex_buffers, 0))->count, instance_count, 0, 0);
+}
+
+void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_vertex_buffer_create_info_t* create_info)
+{
+	assert(mesh != NULL);
+	assert(create_info != NULL);
+	assert(create_info->count != 0);
+	assert(create_info->data != NULL);
+	vulkan_buffer_create_info_t buffer_create_info =
+	{
+		.data = create_info->data,
+		.stride = create_info->stride,
+		.count = create_info->count,
+		.usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+	};
+	vulkan_buffer_t* buffer = vulkan_buffer_create(renderer, &buffer_create_info);
+	buf_push(&mesh->vertex_buffers, &buffer);
+}
+
+static uint32_t get_index_stride(VkIndexType index_type)
+{
+	switch(index_type)
+	{
+		case VK_INDEX_TYPE_UINT16: return sizeof(uint16_t);
+		case VK_INDEX_TYPE_UINT32: return sizeof(uint32_t);
+		case VK_INDEX_TYPE_UINT8_EXT: return sizeof(uint8_t);
+		case VK_INDEX_TYPE_NONE_KHR: LOG_FETAL_ERR("Index buffer creation failed, VK_INDEX_TYPE_NONE_KHR or VK_INDEX_TYPE_NONE_NV isn't supported\n");
+		default: LOG_FETAL_ERR("Index buffer creation failed, \"%u\" index type isn't defined\n", index_type);
+	}
 }
