@@ -6,7 +6,6 @@
 #include <renderer/texture.h>
 #include <renderer/render_window.h>
 #include <renderer/time.h>
-#include <renderer/internal/vulkan/vulkan_mesh.h>
 
 //For handling text/font rendering
 #include <renderer/font.h>
@@ -69,7 +68,7 @@ int main(int argc, char** argv)
 	shader_t* text_shader = shader_load(renderer, "resource/shaders/text_shader.sb");
 	font_t* font = font_load_and_create("resource/fonts/arial.ttf");
 	text_mesh_t* text = text_mesh_create(font);
-	text_mesh_set_string(text, renderer, "Vulkan_3D_Engine_Vehicle_Simulation_Prototype");
+	text_mesh_set_string(text, renderer, "Vulkan 3D Engine");
 	// text_mesh_set_size(text, 100);
 
 	material_create_info_t text_material_info =
@@ -116,7 +115,7 @@ int main(int argc, char** argv)
 
 		material_bind(text_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
-		mat4_t(float) model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, -500), mat4_scale(float)(0, 50, 50));
+		mat4_t(float) model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, -700), mat4_scale(float)(0, 70, 70));
 		mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, model_matrix)));
 		material_push_constants(text_material, renderer, &canvas_transform);
 		text_mesh_draw(text, renderer);

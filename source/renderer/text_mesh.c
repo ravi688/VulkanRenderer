@@ -7,6 +7,7 @@
 #include <renderer/font.h>
 #include <memory_allocator/memory_allocator.h>
 #include <renderer/assert.h>
+#include <ctype.h>
 
 static void build_meshes(BUFFER* meshes, font_t* font);
 
@@ -67,19 +68,23 @@ void text_mesh_set_string(text_mesh_t* text, renderer_t* renderer, const char* s
 	for(u8 i = 0; i < unique_char_count; i++)
 		instance_buffers[i] = buf_create(sizeof(vec3_t(float)), 0, 0);
 
-	float cursor = 0;
+	float horizontal_pen = 0;
 	while(*string != 0)
 	{
 		char ch = *string;
-		assert(ch > 32);
-		count_mask[ch - 33]++;
+		assert((ch >= 32) && (ch <= 126));
 		font_glyph_info_t info;
 		font_get_glyph_info(text->font, ch, &info);
 
-		BUFFER* buffer = &instance_buffers[ch - 33];
-		vec3_t(float) v = { 0, 0, cursor };
-		cursor += info.advance_width;
-		buf_push(buffer, &v);
+		vec3_t(float) v = { 0, 0, horizontal_pen };
+		horizontal_pen += info.advance_width;
+
+		if(ch != 32)
+		{
+			BUFFER* buffer = &instance_buffers[ch - 33];
+			count_mask[ch - 33]++;
+			buf_push(buffer, &v);
+		}
 		string++;
 	}
 
