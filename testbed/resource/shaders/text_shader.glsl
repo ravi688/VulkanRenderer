@@ -1,22 +1,27 @@
 
+
 #stage vertex
 
 #version 450
 
 layout(push_constant) uniform Push
 {
-    mat4 mvp_matrix;
+	//model view project matrix
+	mat4 mvp;
 } push;
 
+
+//Inputs
+//per vertex
 layout(location = 0) in vec3 position;
+
+//per instance
 layout(location = 1) in vec3 offset;
+
 
 void main()
 {
-    vec2 v = vec2(position.z, position.y);
-    v.x += offset.z;
-    v.y += offset.y;
-    gl_Position =  push.mvp_matrix * vec4(0, v.y, v.x, 1);
+	gl_Position = push.mvp * vec4(position + offset, 1);
 }
 
 
@@ -26,7 +31,7 @@ void main()
 
 layout(location = 0) out vec3 color;
 
-void main() {
-    color = vec3(1, 1, 1);
+void main()
+{
+	color = vec3(1, 1, 1);
 }
-

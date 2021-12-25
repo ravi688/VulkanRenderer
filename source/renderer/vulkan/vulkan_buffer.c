@@ -4,17 +4,21 @@
 #include <memory_allocator/memory_allocator.h>
 #include <renderer/assert.h>
 
+void vulkan_buffer_init(vulkan_buffer_t* buffer)
+{
+	memset(buffer, 0, sizeof(vulkan_buffer_t));
+}
+
 vulkan_buffer_t* vulkan_buffer_new()
 {
 	vulkan_buffer_t* buffer = heap_new(vulkan_buffer_t);
-	memset(buffer, 0, sizeof(vulkan_buffer_t));
+	vulkan_buffer_init(buffer);
 	return buffer;
 }
 
 
 vulkan_buffer_t* vulkan_buffer_create(renderer_t* renderer, vulkan_buffer_create_info_t* create_info)
 {
-
 	vulkan_buffer_t* buffer = vulkan_buffer_new();
 	vulkan_buffer_create_no_alloc(renderer, create_info, buffer);
 	return buffer;

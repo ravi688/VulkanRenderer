@@ -2,6 +2,7 @@
 
 #include <renderer/font.h>
 #include <renderer/mesh.h>
+#include <buffer.h>
 
 typedef struct renderer_t renderer_t;
 typedef struct font_t font_t;
@@ -9,9 +10,10 @@ typedef struct mesh3d_t mesh3d_t;
 
 typedef struct text_mesh_t
 {
-	mesh3d_t* handle;
-	mesh_t* render_handle;
 	font_t* font;
+	BUFFER/*typeof(mesh3d_t*)*/ meshes;
+	BUFFER/*typeof(mesh_t*)*/ render_meshes;
+	BUFFER/*typeof(u32)*/ instance_counts;
 } text_mesh_t;
 
 
@@ -21,6 +23,6 @@ void text_mesh_release_resources(text_mesh_t* text);
 
 void text_mesh_draw(text_mesh_t* text, renderer_t* renderer);
 
-void text_mesh_set_string(text_mesh_t* text, const char* string);
+void text_mesh_set_string(text_mesh_t* text, renderer_t* renderer, const char* string);
 void text_mesh_set_size(text_mesh_t* text, u32 size);
 
