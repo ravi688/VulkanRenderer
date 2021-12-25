@@ -125,7 +125,7 @@ void renderer_terminate(renderer_t* renderer)
 	vulkan_swapchain_release_resources(renderer->swapchain);
 	vkDestroyDescriptorPool(renderer->vk_device, renderer->vk_descriptor_pool, NULL);
 	vkDestroyRenderPass(renderer->vk_device, renderer->vk_render_pass, NULL);
-	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, renderer->swapchain->image_count, renderer->vk_command_buffers.value2);
+	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, renderer->vk_command_buffers.value1, renderer->vk_command_buffers.value2);
 	vkDestroyCommandPool(renderer->vk_device, renderer->vk_command_pool, NULL);
 	vkDestroyDevice(renderer->vk_device, NULL);
 	vkDestroyInstance(renderer->vk_instance, NULL);

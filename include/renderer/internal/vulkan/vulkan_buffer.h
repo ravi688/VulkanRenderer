@@ -23,7 +23,7 @@ typedef struct vulkan_buffer_t
 	uint32_t count;
 } vulkan_buffer_t;
 
-
+void vulkan_buffer_init(vulkan_buffer_t* buffer);
 vulkan_buffer_t* vulkan_buffer_new();
 vulkan_buffer_t* vulkan_buffer_create(renderer_t* renderer, vulkan_buffer_create_info_t* create_info);
 void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer);
