@@ -78,6 +78,10 @@ void renderer_end_frame(renderer_t* renderer)
 {
 	vkCmdEndRenderPass(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index]);
 	vkCall(vkEndCommandBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index]));
+}
+
+void renderer_update(renderer_t* renderer)
+{
 	uint32_t wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	VkSubmitInfo submit_info =
 	{
@@ -106,10 +110,6 @@ void renderer_end_frame(renderer_t* renderer)
 	vkQueuePresentKHR(renderer->vk_graphics_queue, &present_info);
 	vkQueueWaitIdle(renderer->vk_graphics_queue);
 	vkDeviceWaitIdle(renderer->vk_device);
-}
-
-void renderer_update(renderer_t* renderer)
-{
 	render_window_poll_events(renderer->window);
 }
 

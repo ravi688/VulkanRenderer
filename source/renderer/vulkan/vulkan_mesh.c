@@ -163,7 +163,6 @@ void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* r
 	//otherwise, allocate new memory block and init the internal fields
 	else
 	{
-		//WARNING: buf_push_pseudo(&mesh->vertex_buffers, 1) doesn't seems to be working!
 		vulkan_buffer_t __buffer;
 		vulkan_buffer_init(&__buffer);
 		buf_push(&mesh->vertex_buffers, &__buffer);
