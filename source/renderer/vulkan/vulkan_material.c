@@ -43,8 +43,7 @@ void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_creat
 
 	if(create_info->binding_count != 0 && material->descriptor_set == NULL)
 	{
-		if(material->descriptor_set == NULL)
-			material->descriptor_set = vulkan_descriptor_set_new();
+		material->descriptor_set = vulkan_descriptor_set_new();
 		vulkan_descriptor_set_create_info_t set_create_info =
 		{
 			.pool = renderer->vk_descriptor_pool,

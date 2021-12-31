@@ -1,12 +1,16 @@
-
+#section SHADER
 
 #stage vertex
 
 #version 450
 
+layout(binding = 0) uniform UniformBufferObject
+{
+	float time;
+} ubo;
+
 layout(push_constant) uniform Push
 {
-	//model view project matrix
 	mat4 mvp;
 } push;
 
@@ -35,3 +39,5 @@ void main()
 {
 	color = vec3(1, 1, 1);
 }
+
+

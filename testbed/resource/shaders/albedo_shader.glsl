@@ -1,3 +1,36 @@
+#section SETTINGS DEFAULT
+
+wireframe true
+line_thickness 5
+blend true
+winding clockwise
+
+per-vertex [0] vec3 position;
+per-vertex [1] vec3 normal;
+per-vertex [2] vec3 color;
+per-vertex [3] vec2 tex_coord;
+
+per-instance[0] vec3 offset;
+
+#section LAYOUT
+
+vertex fragment [1, 4] uniform Matrices
+{
+    mat4 projection_matrix;
+    mat4 view_matrix;
+    mat4 model_matrix;
+} matrices;
+
+fragment[2, 6] uniform sampler2D albedo_texture[2];
+fragment vertex[12, 7] uniform SceneData
+{
+    float time;
+    vec3 light_dir;
+    float light_intensity;
+} scene_data[3];
+
+#section SHADER
+
 
 #stage vertex
 
@@ -6,7 +39,19 @@
 layout(push_constant) uniform Push
 {
     mat4 mvp_matrix;
-} push;
+};
+
+layout(set = 0, binding = 1) uniform UBO
+{
+    float time;
+} ubo;
+
+layout(set = 0, binding = 0) uniform Matrices
+{
+    mat4 projection_matrix;
+    mat4 view_matrix;
+    mat4 model_matrix;
+} matrices;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -19,7 +64,7 @@ layout(location = 2) out vec2 texCoord;
 
 void main()
 {
-    vec4 v = push.mvp_matrix * vec4(inPosition, 1.0);
+    vec4 v = mvp_matrix * vec4(inPosition, 1.0);
     gl_Position = v;
     fragColor = inColor;
     normal = inNormal;
@@ -37,7 +82,14 @@ layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoord;
 
-layout(binding = 0) uniform sampler2D texSampler;
+layout(set = 0, binding = 0) uniform sampler2D texSampler;
+
+layout(set = 0, binding = 1) uniform UBO
+{
+    float time;
+    vec3 light_dir;
+    float light_intensity;
+} ubo1;
 
 float dot_product(vec3 v1, vec3 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z; }
 

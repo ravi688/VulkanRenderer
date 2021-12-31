@@ -33,7 +33,7 @@ Shader Binary(sb) Format:
 ---------------------------------------------------
 
 13 bytes -> SHADER BINARY
-1 byte -> shader mask [ 1 -> vertex, 2 -> tessellation, 3 -> geometry, 4 -> fragment ]
+1 byte -> shader mask [ BIT(0) -> vertex, BIT(1) -> tessellation, BIT(2) -> geometry, BIT(3) -> fragment ]
 4 bytes -> Vertex shader offset
 4 bytes -> Vertex shader length
 4 bytes -> fragment shader offset

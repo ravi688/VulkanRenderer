@@ -15,6 +15,7 @@
 #include <renderer/mesh3d.h>
 #include <renderer/defines.h>
 #include <renderer/assert.h>
+#include <renderer/Serialization.h>
 
 #include <memory_allocator/memory_allocator.h>
 #include <hpml/memory/header_config.h>
@@ -54,9 +55,41 @@ static void offset_visitor(vec3_t(float)* position, void* user_data)
 	*position = vec3_mul(float)(*position, vec3(float)(0, 100, 100));
 }
 
+typedef struct Page
+{
+	const char* label;
+	const char* header;
+	const char* content;
+	float value;
+	uint32_t value2;
+	long long int value3;
+} Page;
+
+typedef struct data_t
+{
+	float v;
+	char c;
+	float v2;
+	uint64_t v3;
+} data_t;
+
 int main(int argc, char** argv)
 {
+	// load_serialization_source_file(__FILE__);
+	// struct_serialize("data_t");
+	// data_t* data = instantiate_object("data_t");
+	// serialized_struct_print("data_t");
+	// destroy_serialization_data();
+	// exit(0);
+
 	memory_allocator_init(&argc);
+
+	puts("STRUCT LAYOUT");
+	log_u32(offsetof(data_t, v));
+	log_u32(offsetof(data_t, c));
+	log_u32(offsetof(data_t, v2));
+	log_u32(offsetof(data_t, v3));
+
 	renderer_t* renderer = renderer_init(800, 800, "Vulkan 3D Renderer", false);
 	recreate_matrix(renderer_get_window(renderer), NULL);
 	render_window_subscribe_on_resize(renderer_get_window(renderer), recreate_matrix, NULL);

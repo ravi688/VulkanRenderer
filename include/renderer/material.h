@@ -24,7 +24,7 @@ typedef vulkan_material_t material_t;
 #endif
 
 #include <renderer/stage_shader.h>
-
+#include <renderer/struct_descriptor.h>
 #include <buffer.h>
 #include <hpml/vec2/header_config.h>
 #include <hpml/vec2/vec2.h>
@@ -63,16 +63,11 @@ enum
 	MATERIAL_UVEC3 	= BIT64(63) | BIT64(61) | 20,
 	MATERIAL_UVEC4 	= BIT64(63) | BIT64(61) | 21,
 
-	MATERIAL_SAMPLER2D = BIT64(63) | BIT64(61) | 22,
-	MATERIAL_SAMPLER3D = BIT64(63) | BIT64(61) | 23,
-
 	MATERIAL_POSITION = MATERIAL_ALIGN(MATERIAL_VEC3, 0),
 	MATERIAL_NORMAL = MATERIAL_ALIGN(MATERIAL_VEC3, 1),
 	MATERIAL_COLOR = MATERIAL_ALIGN(MATERIAL_VEC3, 2),
 	MATERIAL_TEXCOORD = MATERIAL_ALIGN(MATERIAL_VEC2, 3)
 };
-
-typedef BUFFER material_data_layout_t;
 
 typedef struct material_create_info_t
 {
@@ -80,6 +75,8 @@ typedef struct material_create_info_t
 	u64 per_vertex_attributes;
 	u64 per_instance_attributes;
 	shader_t* shader;
+	struct_descriptor_t* struct_descriptors;
+	u32 struct_descriptor_count;
 } material_create_info_t;
 
 material_t* material_new();

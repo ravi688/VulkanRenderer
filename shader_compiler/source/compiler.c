@@ -7,7 +7,7 @@
 #include <string.h> 					//strncmp, strchr, strlen
 #include <ctype.h>						//isspace
 
-#define log_u32(value) printf("%s: %u\n", #value, value)
+#define log_u32(value) LOG_MSG("%s: %u\n", #value, value)
 
 #define SHADER_BINARY_HEADER "SHADER BINARY"
 
@@ -74,6 +74,8 @@ static void buffer_write_string(BUFFER* buffer, const char* string, u32 len, boo
 static void buffer_write_u8(BUFFER* buffer, u8 value);
 static void buffer_write_u16(BUFFER* buffer, u16 value);
 static void buffer_write_u32(BUFFER* buffer, u32 value);
+static bool is_empty(const char* start, const char* const end);
+static void remove_comments(char* start, buf_ucount_t length);
 
 function_signature(BUFFER*, shader_compiler_load_and_compile, const char* file_path)
 {
@@ -129,13 +131,15 @@ fragment[0, 1] uniform
 
 //tessellation shader code goes here
 
+ 0b 00010001 00000001
+ 0x 11 01 
 
  		*-------------------------------OUTPUT BINARY FORMAT---------------------------*
 
  Byte Index | Interpretation 			| Description
  ___________|___________________________|________________________________________
  0 			| string of length 13 bytes | "SHADER BINARY"
- 			| section mask byte 		| BIT(0) = settings, BIT(1) = layout, BIT(2) = shader
+ 			| u32, section masks  		| 32 bits are divided into 3 bits group with BIT(0) = settings, BIT(1) = layout, BIT(2) = shader
  			| u32, settings offset 		| settings section offset if BIT(0) is set
  			| u32, layout offset 		| layout section offset if BIT(1) is set
  			| u32, shader offset 		| shader section offset if BIT(2) is set
@@ -153,14 +157,16 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 {
 	CALLTRACE_BEGIN();
 
+	remove_comments((char*)_source, length);
+
 	BUFFER* buffer = BUFcreate(NULL, sizeof(uint8_t), 0, 0);
 
 	//Write the shader binary header "SHADER BINARY" to the buffer, 13 BYTES
 	buffer_write_string(buffer, (char*)SHADER_BINARY_HEADER, strlen(SHADER_BINARY_HEADER), false);
 
-	//Reserve 1 BYTE for section mask
+	//Reserve 4 BYTES for section mask
 	buf_ucount_t section_mask_index = buf_get_element_count(buffer);
-	buf_push_pseudo(buffer, 1);
+	buf_push_pseudo(buffer, 4);
 
 	//Store index for section offsets to insert at later
 	buf_resize(buffer, buf_get_element_count(buffer) + 1);
@@ -173,10 +179,11 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 	u8 shader_section_count = 0;
 	u8 layout_section_count = 0;
 	u8 settings_section_count = 0;
-	u8 section_mask = 0x00;
+	u32 section_mask = 0x00;
+	u8 section_count = 0;
 	while((source = strchr(source, PREPROCESSOR)) != NULL)
 	{
-		temp2 = source - 1;
+		temp2 = source;
 		source += 1;
 		while((*source == ' ') || (*source == '\t')) source++;
 		if(strncmp(source, SECTION_DIRECTIVE, strlen(SECTION_DIRECTIVE)) != 0)
@@ -189,10 +196,12 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 
 		if(strncmp(source, SECTION_SETTINGS, count) == 0)
 		{
+			LOG_MSG("SETTINGS section found, parsing ...\n");
 			if(settings_section_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_SETTINGS_SECTION_FOUND);
 			source += count;
-			source = strchr(source, '\n') + 1;
+			source = strchr(source, '\n');
 			if(source == NULL) break; //if the file ended
+			source++;
 			const char* __source = source;
 			if(func_ptr(parse) != NULL)
 			{
@@ -203,15 +212,18 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 			func_ptr(parse) = func_ptr(parse_settings);
 			temp1 = __source;
 			settings_section_count++;
-			section_mask |= 1 << 0;
+			section_mask |= (1UL << 0) << (section_count * 3);
+			section_count++;
 			continue;
 		}
 		else if(strncmp(source, SECTION_LAYOUT, count) == 0)
 		{
+			LOG_MSG("LAYOUT section found, parsing ...\n");
 			if(layout_section_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_LAYOUT_SECTION_FOUND);
 			source += count;
-			source = strchr(source, '\n') + 1;
+			source = strchr(source, '\n');
 			if(source == NULL) break; //if the file ended
+			source++;
 			const char* __source = source;
 			if(func_ptr(parse) != NULL)
 			{
@@ -222,15 +234,18 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 			func_ptr(parse) = func_ptr(parse_layout);
 			temp1 = __source;
 			layout_section_count++;
-			section_mask |= 1 << 1;
+			section_mask |= (1UL << 1) << (section_count * 3);
+			section_count++;
 			continue;
 		}
 		else if(strncmp(source, SECTION_SHADER, count) == 0)
 		{
+			LOG_MSG("SHADER section found, parsing ...\n");
 			if(shader_section_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_SHADER_SECTION_FOUND);
 			source += count;
-			source = strchr(source, '\n') + 1;
+			source = strchr(source, '\n');
 			if(source == NULL) break; //if the file ended
+			source++;
 			const char* __source = source;
 			if(func_ptr(parse) != NULL)
 			{
@@ -241,11 +256,15 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 			func_ptr(parse) = func_ptr(parse_shader);
 			temp1 = __source;
 			shader_section_count++;
-			section_mask |= 1 << 2;
+			section_mask |= (1UL << 2) << (section_count * 3);
+			section_count++;
 			continue;
 		}
 		LOG_FETAL_ERR("shader parse error: Unsupported section: %.*s\n", count, source);
 	}
+
+	if(shader_section_count == 0)
+		LOG_FETAL_ERR("shader parse error: Shader section not found\n");
 
 	if(func_ptr(parse) != NULL)
 	{
@@ -254,11 +273,10 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 		source = func_ptr(parse) params(temp1, _source + length - temp1, buffer);
 	}
 
-	//Write section mask to the buffer, 1 BYTE
-	*(u8*)buf_get_ptr_at(buffer, section_mask_index) = section_mask;
+	//Write section mask to the buffer, 4 BYTES
+	*(u32*)buf_get_ptr_at(buffer, section_mask_index) = section_mask;
 
 	//Reverse the offsets (array of u32)
-	u8 section_count = layout_section_count + shader_section_count + settings_section_count;
 	u32* offsets = (u32*)buf_get_ptr_at(buffer, section_offsets_index);
 	for(u8 i = 0; i < (section_count >> 1); i++)
 	{
@@ -274,7 +292,13 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 function_signature(static const char*, parse_settings, const char* _source, buf_ucount_t length, BUFFER* buffer)
 {
 	CALLTRACE_BEGIN();
-	// serialize_settings();
+	const char* string = _source;
+	const char* const end = string + length;
+	if(is_empty(string, end))
+	{
+		LOG_MSG("SETTINGS section is empty, skipping\n");
+		CALLTRACE_RETURN(_source + length);
+	}
 	CALLTRACE_RETURN(_source + length);
 }
 
@@ -315,7 +339,12 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 {
 	CALLTRACE_BEGIN();
 	const char* string = _source;
-	const char* end = string + length;
+	const char* const end = string + length;
+	if(is_empty(string, end))
+	{
+		LOG_MSG("LAYOUT section is empty, skipping\n");
+		CALLTRACE_RETURN(_source + length);
+	}
 
 	//Reserve 2 BYTES for descriptor count in the buffer
 	buf_ucount_t descriptor_count_index = buf_get_element_count(buffer);
@@ -367,12 +396,6 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 		descriptor_offsets[i] = descriptor_offsets[descriptor_count - i - 1];
 		descriptor_offsets[descriptor_count - i - 1] = temp;
 	}
-
-	log_u32(descriptor_offsets_index);
-	log_u32(*(u32*)buf_get_ptr_at(buffer, descriptor_offsets_index));
-	log_u32(*(u32*)buf_get_ptr_at(buffer, descriptor_offsets_index + 4));
-	log_u32(*(u32*)buf_get_ptr_at(buffer, descriptor_offsets_index + 8));
-
 	CALLTRACE_RETURN(_source + length);
 }
 
@@ -459,10 +482,12 @@ static const char* parse_type(const char* string, u16 mask, BUFFER* buffer)
 
 	while(isspace(*string)) string++;
 	count = get_word_length(string, ';');
+	if((count == 0) || is_empty(string, string + count))
+		LOG_FETAL_ERR("shader layout parse error: Identifier name cannot be empty\n");
 
 	//Write identifier name to the buffer, count + 1 BYTES
 	buffer_write_string(buffer, string, count, true);
-	printf("Identifier: %.*s\n", count, string);
+	LOG_MSG("Identifier: %.*s\n", count, string);
 
 	string += count;
 	while(*string != ';')
@@ -474,7 +499,7 @@ static const char* parse_type(const char* string, u16 mask, BUFFER* buffer)
 		}
 		string++;
 	}
-	string = strchr(string, ';') + 1;
+	string++;
 	return string;
 }
 
@@ -524,15 +549,22 @@ static const char* parse_array_operator(const char* string, u32* out_data, u8 re
 	while(isspace(*string)) string++;
 	u8 count = 0;
 	u32 arr_len = 0;
+	bool found = false;
 	if(strncmp(string, "[", 1) == 0)
 	{
+		found = true;
 PARSE_NUMBER:
 		string++;
 		while(isspace(*string)) string++;
 		u8 len = 0;
 		while(isdigit(*string)) { string++; len++; };
 		char sub_str[len + 1];
-		strncpy(sub_str, string - len, len);
+		/*	
+			WARNING: 	Don't use strncpy(sub_str, string - len, len) here!
+		 	strncpy: 	No null-character is implicitly appended at the end of destination if source is longer than num. 
+		 				Thus, in this case, destination shall not be considered a null terminated C string (reading it as such would overflow).
+		*/
+		memcpy(sub_str, string - len, len); sub_str[len] = 0;
 		arr_len = strtoul(sub_str, NULL, 0);
 		out_data[count] = arr_len;
 		log_u32(arr_len);
@@ -541,13 +573,18 @@ PARSE_NUMBER:
 			LOG_FETAL_ERR("shader layout parse error: More than required elements found in the array index operator, \"%u\"\n", arr_len);
 		while(*string != ']')
 		{
-			if(*string == ',')
+			if(*string == ',')	
 				goto PARSE_NUMBER;
 			if(!isspace(*string))
 				shader_data_layout_parse_error(SHADER_DATA_LAYOUT_PARSE_ERROR_INVALID_SYMBOLE_IN_ARRAY_SIZE, 1, string + 1);
 			string++;
 		}
 		string++;
+	}
+	if(!found)
+	{
+		u32 len = get_word_length(string, 0);
+		LOG_FETAL_ERR("shader layout parse error: Expected open square bracket '[' before \"%.*s\"\n", count, string);
 	}
 	if(count < required)
 		LOG_FETAL_ERR("shader layout parse error: Less than required elements found in the array index operator, \"%u\"\n", arr_len);
@@ -608,13 +645,72 @@ static void buffer_write_u32(BUFFER* buffer, u32 value)
 	*(u32*)buf_get_ptr_at(buffer, index) = value;
 }
 
+static bool is_empty(const char* start, const char* const end)
+{
+	bool empty = true;
+	while(start < end)
+	{
+		if(!isspace(*start))
+		{
+			empty = false;
+			break;
+		}
+		++start;
+	}
+	return empty;
+}
+
+static void remove_comments(char* start, buf_ucount_t length)
+{
+	const char* const end = start + length;
+	bool single_line_comment_begin = false; 
+	bool multiple_line_comment_begin = false;
+
+	while(start < end)
+	{
+		if(!multiple_line_comment_begin && !single_line_comment_begin)
+		{
+			if(strncmp(start, "//", 2) == 0)
+				single_line_comment_begin = true;
+			else if(strncmp(start, "/*", 2) == 0)
+				multiple_line_comment_begin = true;
+			else
+				start += 2;
+			continue;
+		}
+		if(multiple_line_comment_begin && (strncmp(start, "*/", 2) == 0))
+		{
+			multiple_line_comment_begin = false;
+			start[0] = ' ';
+			start[1] = ' ';
+			start += 2;
+			continue;
+		}
+		else if(single_line_comment_begin && (*start == '\n'))
+		{
+			single_line_comment_begin = false;
+			start += 1;
+			continue;
+		}
+		*start = ' ';
+		start++;
+	}
+}
+
 function_signature(static const char*, parse_shader, const char* _source, buf_ucount_t length, BUFFER* buffer)
 {
 	CALLTRACE_BEGIN();
+	const char* string = _source;
+	if(is_empty(string, string + length))
+	{
+		LOG_MSG("SHADER section is empty, skipping\n");
+		CALLTRACE_RETURN(_source + length);
+	}
+	LOG_MSG("Shader section offset: %u\n", buf_get_element_count(buffer));
+
 	//Parse the _source string to separate vertex, tessellation, geometry, and fragment shaders
 	const char* stage_strings[SHADER_COMPILER_SHADER_STAGE_MAX] = { "vertex", "tessellation", "geometry", "fragment" };
 	shader_source_t sources[SHADER_COMPILER_SHADER_STAGE_MAX]; memset(sources, 0, sizeof(shader_source_t) * SHADER_COMPILER_SHADER_STAGE_MAX);
-	const char* source = _source;
 	const char* temp = NULL;
 	shader_source_t* previous_source = NULL;
 	uint8_t shader_count = 0;
@@ -622,17 +718,17 @@ function_signature(static const char*, parse_shader, const char* _source, buf_uc
 	u8 tessellation_shader_count = 0;
 	u8 geometry_shader_count = 0;
 	u8 fragment_shader_count = 0;
-	while((source = strchr(source, PREPROCESSOR)) != NULL)
+	while((string = strchr(string, PREPROCESSOR)) != NULL)
 	{
-		temp = source - 1;
-		source += 1;
-		while((*source == ' ') || (*source == '\t')) source++;
-		if(strncmp(source, STAGE_DIRECTIVE, strlen(STAGE_DIRECTIVE)) != 0)
+		temp = string - 1;
+		string += 1;
+		while((*string == ' ') || (*string == '\t')) string++;
+		if(strncmp(string, STAGE_DIRECTIVE, strlen(STAGE_DIRECTIVE)) != 0)
 			continue;
-		source += strlen(STAGE_DIRECTIVE);
-		while((*source == ' ') || (*source == '\t')) source++;
+		string += strlen(STAGE_DIRECTIVE);
+		while((*string == ' ') || (*string == '\t')) string++;
 		uint32_t count = 0;
-		while(!isspace(*source)) { source++; count++; }
+		while(!isspace(*string)) { string++; count++; }
 		if(count > strlen(SHADER_STAGE_TESSELLATION_STR))
 			LOG_FETAL_ERR(	"Shader parse error: Shader stage name must one of the followings:\n"
 							"1. %s\n"
@@ -646,15 +742,15 @@ function_signature(static const char*, parse_shader, const char* _source, buf_uc
 						 );
 		if(previous_source != NULL)
 			previous_source->length = temp - previous_source->source;
-		source -= count;
-		if(strncmp(source, SHADER_STAGE_VERTEX_STR, count) == 0)
+		string -= count;
+		if(strncmp(string, SHADER_STAGE_VERTEX_STR, count) == 0)
 		{
 			if(vertex_shader_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_VERTEX_SHADER_FOUND);
 			//set vertex shader
-			source = strchr(source, '\n') + 1;
+			string = strchr(string, '\n') + 1;
 			sources[SHADER_COMPILER_SHADER_STAGE_VERTEX] = (shader_source_t)
 			{
-				.source = source,
+				.source = string,
 				.stage = SHADER_COMPILER_SHADER_STAGE_VERTEX,
 			};
 			previous_source = &sources[SHADER_COMPILER_SHADER_STAGE_VERTEX];
@@ -662,14 +758,14 @@ function_signature(static const char*, parse_shader, const char* _source, buf_uc
 			vertex_shader_count++;
 			continue;
 		}
-		if(strncmp(source, SHADER_STAGE_TESSELLATION_STR, count) == 0)
+		if(strncmp(string, SHADER_STAGE_TESSELLATION_STR, count) == 0)
 		{
 			if(tessellation_shader_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_TESSELLATION_SHADER_FOUND);
 			//set tessellation shader
-			source = strchr(source, '\n') + 1;
+			string = strchr(string, '\n') + 1;
 			sources[SHADER_COMPILER_SHADER_STAGE_TESSELLATION] = (shader_source_t)
 			{
-				.source = source,
+				.source = string,
 				.stage = SHADER_COMPILER_SHADER_STAGE_TESSELLATION,
 			};
 			previous_source = &sources[SHADER_COMPILER_SHADER_STAGE_TESSELLATION];
@@ -677,14 +773,14 @@ function_signature(static const char*, parse_shader, const char* _source, buf_uc
 			tessellation_shader_count++;
 			continue;
 		}
-		if(strncmp(source, SHADER_STAGE_GEOMETRY_STR, count) == 0)
+		if(strncmp(string, SHADER_STAGE_GEOMETRY_STR, count) == 0)
 		{
 			if(geometry_shader_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_GEOMETRY_SHADER_FOUND);
 			//set geometry shader
-			source = strchr(source, '\n') + 1;
+			string = strchr(string, '\n') + 1;
 			sources[SHADER_COMPILER_SHADER_STAGE_GEOMETRY] = (shader_source_t)
 			{
-				.source = source,
+				.source = string,
 				.stage = SHADER_COMPILER_SHADER_STAGE_GEOMETRY,
 			};
 			previous_source = &sources[SHADER_COMPILER_SHADER_STAGE_GEOMETRY];
@@ -692,14 +788,14 @@ function_signature(static const char*, parse_shader, const char* _source, buf_uc
 			geometry_shader_count++;
 			continue;
 		}
-		if(strncmp(source, SHADER_STAGE_FRAGMENT_STR, count) == 0)
+		if(strncmp(string, SHADER_STAGE_FRAGMENT_STR, count) == 0)
 		{
 			if(fragment_shader_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_FRAGMENT_SHADER_FOUND);
 			//set fragment shader
-			source = strchr(source, '\n') + 1;
+			string = strchr(string, '\n') + 1;
 			sources[SHADER_COMPILER_SHADER_STAGE_FRAGMENT] = (shader_source_t)
 			{
-				.source = source,
+				.source = string,
 				.stage = SHADER_COMPILER_SHADER_STAGE_FRAGMENT,
 			};
 			previous_source = &sources[SHADER_COMPILER_SHADER_STAGE_FRAGMENT];
@@ -730,6 +826,8 @@ function_signature(static void, serialize_shader, const char* const* stage_strin
 
 	//Write the shader mask 0 0 0 0  1 0 0 1 -> fragment & vertex shaders
 	buf_push(buffer, &shader_mask);
+
+	log_u32(shader_mask);
 
 	//Allocate space for offsets and lengths for each shader SPIRV binary
 	uint64_t indices[shader_count];
@@ -764,6 +862,7 @@ function_signature(static void, serialize_shader, const char* const* stage_strin
 		uint64_t length = shaderc_result_get_length(result);
 		assert(length > 0);
 		uint32_t offset = buf_get_element_count(buffer);
+		log_u32(offset);
 
 		//Write offset
 		memcpy(buf_get_ptr_at(buffer, indices[j]), &offset, 4);
@@ -772,7 +871,7 @@ function_signature(static void, serialize_shader, const char* const* stage_strin
 		memcpy(buf_get_ptr_at(buffer, indices[j]) + 4, &length, 4);
 
 		//Write SPIRV binary
-		while(length > 0) { buf_push(buffer, bytes); bytes++; --length; }
+		buf_pushv(buffer, bytes, length);
 
 		shaderc_result_release(result);
 		j++;

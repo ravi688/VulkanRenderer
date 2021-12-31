@@ -1,12 +1,10 @@
 #section SETTINGS DEFAULT
-
 wireframe true
 line_thickness 5
 blend true
 winding clockwise
 
 #section LAYOUT
-
 vertex fragment [1, 4] uniform Matrices
 {
     mat4 projection_matrix;
@@ -22,8 +20,8 @@ fragment vertex[12, 34] uniform SceneData
     float light_intensity;
 } scene_data[3];
 
-#section SHADER
 
+#section SHADER
 #stage vertex
 
 #version 450
