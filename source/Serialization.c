@@ -81,7 +81,7 @@ void load_serialization_source_file(const char* file_name)
 {
 	if(freeable_source_buffer != NULL)
 		free(freeable_source_buffer);
-	freeable_source_buffer = load_text_from_file_exclude_comments(file_name); 
+	freeable_source_buffer = defs_load_text_from_file_exclude_comments(file_name); 
 	if(freeable_source_buffer != NULL)
 	{
 		#ifdef DEBUG

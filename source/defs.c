@@ -165,7 +165,7 @@ bool istype(const char* string, _type_specifiers* type)
 	}
 }
 
-char* load_text_from_file(const char* file_name)
+char* defs_load_text_from_file(const char* file_name)
 {
 	FILE* file = fopen(file_name, "r");
 	if(file == NULL) 
@@ -191,7 +191,7 @@ char* load_text_from_file(const char* file_name)
 	return (char*)BUFget_ptr();  	
 }
 
-char* load_text_from_file_exclude_comments(const char* file_name)
+char* defs_load_text_from_file_exclude_comments(const char* file_name)
 {
 	FILE* file = fopen(file_name, "r"); 
 	if(file == NULL)

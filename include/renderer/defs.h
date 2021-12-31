@@ -85,8 +85,8 @@ typedef struct
 	BUFFER* properties;						//list of properties
 } SerializedStruct; 
 
-char* load_text_from_file(const char* file_name);
-char* load_text_from_file_exclude_comments(const char* file_name);
+char* defs_load_text_from_file(const char* file_name);
+char* defs_load_text_from_file_exclude_comments(const char* file_name);
 
 int __sizeof(SerializedProperty* property); 
 bool isstorage(const char* string, _storage_specifiers* storage);
