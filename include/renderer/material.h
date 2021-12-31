@@ -23,6 +23,16 @@ typedef vulkan_material_t material_t;
 #error "Metal is not supported yet!"
 #endif
 
+#include <renderer/stage_shader.h>
+
+#include <buffer.h>
+#include <hpml/vec2/header_config.h>
+#include <hpml/vec2/vec2.h>
+#include <hpml/vec3/header_config.h>
+#include <hpml/vec3/vec3.h>
+#include <hpml/vec4/header_config.h>
+#include <hpml/vec4/vec4.h>
+
 #define BIT64(x) (1ULL << (x))
 #define MATERIAL_TYPE_BITS_MASK (~(0xFFFFFFFFFFFFFFFFULL >> 3))
 #define MATERIAL_TYPE_BITS(value) (((~(0xFFFFFFFFFFFFFFFFULL >> 3)) & (value)) >> 61)
@@ -53,14 +63,20 @@ enum
 	MATERIAL_UVEC3 	= BIT64(63) | BIT64(61) | 20,
 	MATERIAL_UVEC4 	= BIT64(63) | BIT64(61) | 21,
 
+	MATERIAL_SAMPLER2D = BIT64(63) | BIT64(61) | 22,
+	MATERIAL_SAMPLER3D = BIT64(63) | BIT64(61) | 23,
+
 	MATERIAL_POSITION = MATERIAL_ALIGN(MATERIAL_VEC3, 0),
 	MATERIAL_NORMAL = MATERIAL_ALIGN(MATERIAL_VEC3, 1),
 	MATERIAL_COLOR = MATERIAL_ALIGN(MATERIAL_VEC3, 2),
 	MATERIAL_TEXCOORD = MATERIAL_ALIGN(MATERIAL_VEC2, 3)
 };
 
+typedef BUFFER material_data_layout_t;
+
 typedef struct material_create_info_t
 {
+	const char* shader_data_layout_source;
 	u64 per_vertex_attributes;
 	u64 per_instance_attributes;
 	shader_t* shader;
@@ -75,3 +91,32 @@ void material_release_resources(material_t* material);
 void material_bind(material_t* material, renderer_t* renderer);
 void material_push_constants(material_t* material, renderer_t* renderer, void* bytes);
 void material_set_texture(material_t* material, renderer_t* renderer, texture_t* texture);
+
+void material_set_string_alias(material_t* material, shader_stage_t shader_stage, u32 binding_index, const char* string);
+void material_set_float	(material_t* material, const char* string, float value);
+void material_set_int 	(material_t* material, const char* string, int value);
+void material_set_uint	(material_t* material, const char* string, uint value);
+
+void material_set_float2	(material_t* material, const char* string, float x, float y);
+void material_set_float3	(material_t* material, const char* string, float x, float y, float z);
+void material_set_float4	(material_t* material, const char* string, float x, float y, float z, float w);
+
+void material_set_vec2(material_t* material, const char* string, vec2_t(float) v);
+void material_set_vec3(material_t* material, const char* string, vec3_t(float) v);
+void material_set_vec4(material_t* material, const char* string, vec4_t(float) v);
+
+void material_set_texture2d(material_t* material, const char* string, texture_t* texture);
+// void material_set_texture3d(material_t* material, const char* string, texture3d_t* texture);
+
+// void material_set_mat2(material_t* material, const char* string, mat2_t(float) m);
+// void material_set_mat3(material_t* material, const char* string, mat3_t(float) m);
+// void material_set_mat4(material_t* material, const char* string, mat4_t(float) m);
+
+const char* material_get_string_alias(material_t* material, shader_stage_t shader_stage, u32 binding_index);
+float 			material_get_float	(material_t* material, const char* string);
+int 			material_get_int 	(material_t* material, const char* string);
+uint 			material_get_uint	(material_t* material, const char* string);
+
+vec2_t(float) 	material_get_vec2	(material_t* material, const char* string);
+vec3_t(float) 	material_get_vec3	(material_t* material, const char* string);
+vec4_t(float) 	material_get_vec4	(material_t* material, const char* string);

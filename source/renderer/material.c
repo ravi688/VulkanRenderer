@@ -7,65 +7,22 @@
 #include <renderer/debug.h>
 #include <renderer/assert.h>
 
+#include <string.h>
+#include <ctype.h>
+
 #define VERTEX_INFO_COUNT 4
 
 instantiate_static_stack_array(VkFormat);
 static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices);
-static void __material_create_no_alloc(renderer_t* renderer, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, u32 shader_count, stage_shader_t** shaders, material_t* material);
-static material_t* __material_create(renderer_t* renderer, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, u32 shader_count, stage_shader_t** shaders);
+static void __material_create_no_alloc(renderer_t* renderer, u32 binding_count, VkDescriptorSetLayoutBinding* bindings, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, u32 shader_count, stage_shader_t** shaders, material_t* material);
+static material_t* __material_create(renderer_t* renderer, u32 binding_count, VkDescriptorSetLayoutBinding* bindings, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, u32 shader_count, stage_shader_t** shaders);
 static u32 decode_attribute_count(u64 packed_attributes);
-static void decode_vulkan_vertex_infos(u64 packed_attributes, VkVertexInputRate input_rate, vulkan_vertex_info_t* out_vertex_infos, VkFormat* formats, u32* offsets)
-{
-	VkFormat* vulkan_formats = stack_newv(u32, 26);
-	u32* sizes = stack_newv(u32, 22);
-	u32* indices = stack_newv(u32, 22);
-	get_vulkan_constants(vulkan_formats, sizes, indices);
+static void decode_vulkan_vertex_infos(u64 packed_attributes, VkVertexInputRate input_rate, vulkan_vertex_info_t* out_vertex_infos, VkFormat* formats, u32* offsets);
 
-	u8 bits_per_type = MATERIAL_TYPE_BITS(packed_attributes);
-	packed_attributes &= ~MATERIAL_TYPE_BITS_MASK;
-	u64 bits_mask = ~(0xFFFFFFFFFFFFFFFFULL << bits_per_type);
-
-	u32 i = 0;
-	while(packed_attributes != 0)
-	{
-		//WARNING: this should be like this: refp(vulkan_vertex_info_t, out_vertex_infos, i)
-		vulkan_vertex_info_t* info = &out_vertex_infos[i];
-		u64 attribute_type = (packed_attributes & bits_mask);
-		if(attribute_type == 0)
-		{
-			packed_attributes >>= bits_per_type;
-			continue;
-		}
-		VkFormat vulkan_format = ref(VkFormat, vulkan_formats, ref(u32, indices, attribute_type));
-		info->input_rate = input_rate;
-		info->size = ref(u32, sizes, attribute_type);
-		info->attribute_count = 1;
-		switch(attribute_type | BIT64(63))
-		{
-			case MATERIAL_MAT3:
-			break;
-
-			case MATERIAL_MAT4:
-			break;
-
-			default:/*or MATERIAL_MAT2*/
-				//WARNING: this should be like this: ref(VkFormat, formats, i)
-				formats[i] = vulkan_format;
-				//WARNING: this should be like this: refp(VkFormat, formats, i)
-				info->attribute_formats = &formats[i];
-				//WARNING: this should be like this: ref(u32, offsets, i)
-				offsets[i] = 0;
-				//WARNING: this should be like this: refp(u32, offsets, i)
-				info->attribute_offsets = &offsets[i];
-			break;
-		}
-		packed_attributes >>= bits_per_type;
-		i++;
-	}
-	stack_free(vulkan_formats);
-	stack_free(indices);
-}
-
+static void shader_data_layout_parse_error(u32 err, u32 len, const char* string);
+static BUFFER shader_data_layout_parse(const char* string);
+static u32 shader_data_layout_get_total_binding_count(void* bytes, u32 length);
+static void shader_data_layout_deserialize(void* bytes, u32 length, VkDescriptorSetLayoutBinding* layout_bindings);
 
 material_t* material_new() { return vulkan_material_new(); }
 
@@ -85,14 +42,29 @@ material_t* material_create(renderer_t* renderer, material_create_info_t* create
 		decode_vulkan_vertex_infos(create_info->per_vertex_attributes, VK_VERTEX_INPUT_RATE_VERTEX, vertex_infos, formats, offsets);
 	if(per_instance_attribute_count > 0)
 		decode_vulkan_vertex_infos(create_info->per_instance_attributes, VK_VERTEX_INPUT_RATE_INSTANCE, vertex_infos + per_vertex_attribute_count, formats + per_vertex_attribute_count, offsets + per_vertex_attribute_count);
-	material_t* material =  __material_create(renderer, total_attribute_count, vertex_infos, create_info->shader->stage_count, create_info->shader->stage_shaders);
+
+	u32 binding_count = 0;
+	VkDescriptorSetLayoutBinding* bindings = NULL;
+	if(create_info->shader_data_layout_source != NULL)
+	{
+		binding_count = 1;//shader_data_layout_get_total_binding_count(serialized_bytes.bytes, serialized_bytes.element_count);
+		bindings = stack_newv(VkDescriptorSetLayoutBinding, binding_count);
+		memset(bindings, 0, sizeof(VkDescriptorSetLayoutBinding) * binding_count);
+		bindings->binding = 0;
+		bindings->descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		bindings->descriptorCount = 1;
+		bindings->stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	}
+	material_t* material =  __material_create(renderer, binding_count, bindings, total_attribute_count, vertex_infos, create_info->shader->stage_count, create_info->shader->stage_shaders);
+	if(bindings != NULL)
+		stack_free(bindings);
 	stack_free(formats);
 	stack_free(offsets);
 	stack_free(vertex_infos);
 	return material;
 }
 
-static material_t* __material_create(renderer_t* renderer, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, u32 shader_count, stage_shader_t** shaders)
+static material_t* __material_create(renderer_t* renderer, u32 binding_count, VkDescriptorSetLayoutBinding* bindings, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, u32 shader_count, stage_shader_t** shaders)
 {
 	vulkan_material_create_info_t material_info =
 	{
@@ -100,13 +72,15 @@ static material_t* __material_create(renderer_t* renderer, u32 vertex_info_count
 		.shader_count = shader_count,
 		.vertex_info_count = vertex_info_count,
 		//NOTE: calling vulkan_material_create() creates a deep copy of vertex_infos
-		.vertex_infos = vertex_infos
+		.vertex_infos = vertex_infos,
+		.bindings = bindings,
+		.binding_count = binding_count
 	};
 	vulkan_material_t* material = vulkan_material_create(renderer, &material_info);
 	return material;
 }
 
-static void __material_create_no_alloc(renderer_t* renderer, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, u32 shader_count, stage_shader_t** shaders, material_t* material)
+static void __material_create_no_alloc(renderer_t* renderer, u32 binding_count, VkDescriptorSetLayoutBinding* bindings, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, u32 shader_count, stage_shader_t** shaders, material_t* material)
 {
 	vulkan_material_create_info_t material_info =
 	{
@@ -114,7 +88,9 @@ static void __material_create_no_alloc(renderer_t* renderer, u32 vertex_info_cou
 		.shader_count = shader_count,
 		.vertex_info_count = vertex_info_count,
 		//NOTE: calling vulkan_material_create_no_alloc() doesn't creates a deep copy of vertex_infos
-		.vertex_infos = vertex_infos
+		.vertex_infos = vertex_infos,
+		.bindings = bindings,
+		.binding_count = binding_count
 	};
 	vulkan_material_create_no_alloc(renderer, &material_info, material);
 }
@@ -141,8 +117,98 @@ void material_push_constants(material_t* material, renderer_t* renderer, void* b
 
 void material_set_texture(material_t* material, renderer_t* renderer, texture_t* texture)
 {
-	vulkan_material_set_texture(material, renderer, texture);
+	vulkan_material_set_texture(material, renderer, 0, texture);
 }
+
+void material_set_string_alias(material_t* material, shader_stage_t shader_stage, u32 binding_index, const char* string)
+{
+
+}
+
+void material_set_float(material_t* material, const char* string, float value)
+{
+
+}
+void material_set_int(material_t* material, const char* string, int value)
+{
+
+}
+
+void material_set_uint(material_t* material, const char* string, uint value)
+{
+
+}
+
+void material_set_float2(material_t* material, const char* string, float x, float y)
+{
+
+}
+
+void material_set_float3(material_t* material, const char* string, float x, float y, float z)
+{
+
+}
+
+void material_set_float4(material_t* material, const char* string, float x, float y, float z, float w)
+{
+
+}
+
+void material_set_vec2(material_t* material, const char* string, vec2_t(float) v)
+{
+
+}
+
+void material_set_vec3(material_t* material, const char* string, vec3_t(float) v)
+{
+
+}
+
+void material_set_vec4(material_t* material, const char* string, vec4_t(float) v)
+{
+
+}
+
+void material_set_texture2d(material_t* material, const char* string, texture_t* texture)
+{
+
+}
+
+const char* material_get_string_alias(material_t* material, shader_stage_t shader_stage, u32 binding_index)
+{
+	return "/0";
+}
+
+float material_get_float(material_t* material, const char* string)
+{
+	return 0.0f;
+}
+
+int material_get_int(material_t* material, const char* string)
+{
+	return 0L;
+}
+
+uint material_get_uint(material_t* material, const char* string)
+{
+	return 0UL;
+}
+
+vec2_t(float) material_get_vec2(material_t* material, const char* string)
+{
+	return vec2_zero(float)();
+}
+
+vec3_t(float) material_get_vec3(material_t* material, const char* string)
+{
+	return vec3_zero(float)();
+}
+
+vec4_t(float) material_get_vec4(material_t* material, const char* string)
+{
+	return vec4_zero(float)();
+}
+
 
 static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices)
 {
@@ -232,4 +298,56 @@ static u32 decode_attribute_count(u64 packed_attributes)
 		packed_attributes >>= bits_per_type;
 	}
 	return count;
+}
+
+static void decode_vulkan_vertex_infos(u64 packed_attributes, VkVertexInputRate input_rate, vulkan_vertex_info_t* out_vertex_infos, VkFormat* formats, u32* offsets)
+{
+	VkFormat* vulkan_formats = stack_newv(u32, 26);
+	u32* sizes = stack_newv(u32, 22);
+	u32* indices = stack_newv(u32, 22);
+	get_vulkan_constants(vulkan_formats, sizes, indices);
+
+	u8 bits_per_type = MATERIAL_TYPE_BITS(packed_attributes);
+	packed_attributes &= ~MATERIAL_TYPE_BITS_MASK;
+	u64 bits_mask = ~(0xFFFFFFFFFFFFFFFFULL << bits_per_type);
+
+	u32 i = 0;
+	while(packed_attributes != 0)
+	{
+		//WARNING: this should be like this: refp(vulkan_vertex_info_t, out_vertex_infos, i)
+		vulkan_vertex_info_t* info = &out_vertex_infos[i];
+		u64 attribute_type = (packed_attributes & bits_mask);
+		if(attribute_type == 0)
+		{
+			packed_attributes >>= bits_per_type;
+			continue;
+		}
+		VkFormat vulkan_format = ref(VkFormat, vulkan_formats, ref(u32, indices, attribute_type));
+		info->input_rate = input_rate;
+		info->size = ref(u32, sizes, attribute_type);
+		info->attribute_count = 1;
+		switch(attribute_type | BIT64(63))
+		{
+			case MATERIAL_MAT3:
+			break;
+
+			case MATERIAL_MAT4:
+			break;
+
+			default:/*or MATERIAL_MAT2*/
+				//WARNING: this should be like this: ref(VkFormat, formats, i)
+				formats[i] = vulkan_format;
+				//WARNING: this should be like this: refp(VkFormat, formats, i)
+				info->attribute_formats = &formats[i];
+				//WARNING: this should be like this: ref(u32, offsets, i)
+				offsets[i] = 0;
+				//WARNING: this should be like this: refp(u32, offsets, i)
+				info->attribute_offsets = &offsets[i];
+			break;
+		}
+		packed_attributes >>= bits_per_type;
+		i++;
+	}
+	stack_free(vulkan_formats);
+	stack_free(indices);
 }

@@ -17,3 +17,4 @@ typedef int8_t s8;
 
 typedef float f32;
 typedef double f64;
+typedef u32 uint;

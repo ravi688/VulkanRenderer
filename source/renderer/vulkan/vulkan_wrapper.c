@@ -18,6 +18,21 @@ define_exception(VULKAN_SURFACE_NOT_SUPPORTED);
 define_exception(VULKAN_PHYSICAL_DEVICE_EXTENSION_NOT_SUPPORTED);
 define_exception(VULKAN_UNSUPPORTED_SHADER_TYPE);
 
+
+function_signature(VkDescriptorSetLayout, vk_get_descriptor_set_layout, VkDevice device, VkDescriptorSetLayoutBinding* bindings, uint32_t binding_count)
+{
+	CALLTRACE_BEGIN();
+	VkDescriptorSetLayoutCreateInfo layout_create_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.bindingCount = binding_count,
+		.pBindings = bindings
+	};
+	VkDescriptorSetLayout set_layout;
+	vkCall(vkCreateDescriptorSetLayout(device, &layout_create_info, NULL, &set_layout));
+	CALLTRACE_RETURN(set_layout);
+}
+
 /*---------- COMMAND BUFFERS ------------ */
 function_signature(VkCommandBuffer, vk_get_begin_single_time_command_buffer, VkDevice device, VkCommandPool command_pool)
 {
@@ -137,16 +152,20 @@ function_signature(VkSemaphore, vk_get_semaphore, VkDevice device)
 	CALLTRACE_RETURN(semaphore);
 }
 
-function_signature(VkDescriptorPool, vk_get_descripter_pool, VkDevice device)
+function_signature(VkDescriptorPool, vk_get_descriptor_pool, VkDevice device)
 {
 	CALLTRACE_BEGIN();
-	VkDescriptorPoolSize pool_size = { .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 3 };
+	VkDescriptorPoolSize sizes[2] =
+	{
+		{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 1 },
+		{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 1 }
+	};
 	VkDescriptorPoolCreateInfo pool_create_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-		.poolSizeCount = 1,
-		.pPoolSizes = &pool_size,
-		.maxSets = 3
+		.poolSizeCount = 2,
+		.pPoolSizes = &sizes[0],
+		.maxSets = 6
 	};
 	VkDescriptorPool descriptor_pool;
 	vkCall(vkCreateDescriptorPool(device, &pool_create_info, NULL, &descriptor_pool));

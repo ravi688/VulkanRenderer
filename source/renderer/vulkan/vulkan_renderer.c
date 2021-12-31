@@ -42,7 +42,7 @@ renderer_t* renderer_init(u32 width, u32 height, const char* title, bool full_sc
 	renderer->vk_graphics_queue = vk_get_device_queue(renderer->vk_device, vk_get_graphics_queue_family_index(renderer->vk_physical_device), 0);
 
 	//Create descripter pool
-	renderer->vk_descriptor_pool = vk_get_descripter_pool(renderer->vk_device);
+	renderer->vk_descriptor_pool = vk_get_descriptor_pool(renderer->vk_device);
 
 	return renderer;
 }

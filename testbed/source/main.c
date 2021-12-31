@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	{
 		.per_vertex_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0), //position
 		.per_instance_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0), //offset
-		.shader = text_shader
+		.shader = text_shader,
 	};
 	material_t* text_material = material_create(renderer, &text_material_info);
 	/*---------------------------------------*/
@@ -85,37 +85,54 @@ int main(int argc, char** argv)
 	mesh3d_t* cube_mesh3d = mesh3d_cube(1);
 	mesh_t* cube = mesh_create(renderer, cube_mesh3d);
 	texture_t* linux_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
+	const char* data_source =
+	"#stage vertex\n"
+	"float \n"
+	"#stage fragment\n"
+	"float\n"
+	"sampler2D\n";
 	material_create_info_t cube_material_info =
 	{
 		.per_vertex_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0) //position
 								| MATERIAL_ALIGN(MATERIAL_VEC3, 1) //normal
 								| MATERIAL_ALIGN(MATERIAL_VEC3, 2) //color
 								| MATERIAL_ALIGN(MATERIAL_VEC2, 3), //texture coordinates
-		.shader = albedo_shader
+		.shader = albedo_shader,
+		.shader_data_layout_source = data_source
 	};
 	material_t* cube_material = material_create(renderer, &cube_material_info);
-	material_set_texture(cube_material,renderer, linux_texture);
+	material_set_string_alias(cube_material, SHADER_STAGE_VERTEX, 0, "vert-time");
+	material_set_string_alias(cube_material, SHADER_STAGE_FRAGMENT, 1, "frag-time");
+	material_set_string_alias(cube_material, SHADER_STAGE_FRAGMENT, 0, "texture-albedo");
+
+	material_set_texture(cube_material, renderer, linux_texture);
+	material_set_texture2d(cube_material, "texture-albedo", linux_texture);
 	/*---------------------------------------*/
 
 	time_handle_t frame_time_handle = time_get_handle();
 	time_handle_t second_time_handle = time_get_handle();
+	time_handle_t game_time_handle = time_get_handle();
 	u32 frame_count = 0;
 	float angle = 0;
 	//TODO: render loop should run on separate thread -> render thread
 	while(renderer_is_running(renderer))
 	{
 		float delta_time = time_get_delta_time(&frame_time_handle);
+		float time = time_get_seconds(game_time_handle);
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
 
+		material_set_float(cube_material, "frag-time", time);
+		material_set_float(cube_material, "vert-time", time);
+
 		material_bind(cube_material, renderer);
-		mat4_t(float) mvp = mat4_mul(float)(3, clip_matrix, projection_matrix, view_matrix);
+		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, mat4_rotation(float)(0, angle * DEG2RAD, 0));
 		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
 		material_push_constants(cube_material, renderer, &mvp);
 		mesh_draw_indexed(cube, renderer);
 
 		material_bind(text_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
-		mat4_t(float) model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, -700), mat4_scale(float)(0, 70, 70));
+		mat4_t(float) model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, -300), mat4_scale(float)(0, 70, 70));
 		mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, model_matrix)));
 		material_push_constants(text_material, renderer, &canvas_transform);
 		text_mesh_draw(text, renderer);

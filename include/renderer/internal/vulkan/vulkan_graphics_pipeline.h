@@ -16,6 +16,8 @@ typedef struct vulkan_graphics_pipeline_create_info_t
 	u32 shader_count;
 	uint32_t vertex_info_count;
 	vulkan_vertex_info_t* vertex_infos;
+	VkDescriptorSetLayoutBinding* bindings;
+	uint32_t binding_count;
 } vulkan_graphics_pipeline_create_info_t;
 
 typedef struct vulkan_graphics_pipeline_t
