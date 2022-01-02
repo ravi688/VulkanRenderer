@@ -32,13 +32,13 @@ typedef struct shader_source_t
 } shader_source_t;
 
 #define serialize_shader(...) define_alias_function_macro(serialize_shader, __VA_ARGS__)
-function_signature(static void, serialize_shader, const char* const* stage_strings, shader_source_t* sources, uint8_t shader_count, BUFFER* buffer);
+function_signature(static void, serialize_shader, const char* const* stage_strings, shader_source_t* sources, uint8_t shader_count, BUFFER* buffer, BUFFER* offsets_buffer);
 #define parse_shader(...) define_alias_function_macro(parse_shader, __VA_ARGS__)
-function_signature(static const char*, parse_shader, const char* _source, buf_ucount_t length, BUFFER* buffer);
+function_signature(static const char*, parse_shader, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer);
 #define parse_layout(...) define_alias_function_macro(parse_layout, __VA_ARGS__)
-function_signature(static const char*, parse_layout, const char* _source, buf_ucount_t length, BUFFER* buffer);
+function_signature(static const char*, parse_layout, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer);
 #define parse_settings(...) define_alias_function_macro(parse_settings, __VA_ARGS__)
-function_signature(static const char*, parse_settings, const char* _source, buf_ucount_t length, BUFFER* buffer);
+function_signature(static const char*, parse_settings, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer);
 
 #define SHADER_PARSE_ERROR_MORE_THAN_ONE_SETTINGS_SECTION_FOUND "More than one settings section found"
 #define SHADER_PARSE_ERROR_MORE_THAN_ONE_LAYOUT_SECTION_FOUND "More than one layout section found"
@@ -68,12 +68,14 @@ static void shader_data_layout_parse_error(u32 err, u32 len, const char* string)
 static u32 get_word_length(const char* string, const char delimiter);
 static const char* parse_shader_stage(const char* string, u16* out_mask);
 static const char* parse_array_operator(const char* string, u32* out_data, u8 required);
-static const char* parse_type(const char* string, u16 mask, BUFFER* buffer);
+static const char* parse_type(const char* string, u16 mask, BUFFER* buffer, BUFFER* offsets_buffer);
 static const char* parse_storage_qualifiers(const char* string, u16* out_info);
 static void buffer_write_string(BUFFER* buffer, const char* string, u32 len, bool null_terminate);
 static void buffer_write_u8(BUFFER* buffer, u8 value);
 static void buffer_write_u16(BUFFER* buffer, u16 value);
 static void buffer_write_u32(BUFFER* buffer, u32 value);
+static void buffer_insert_offset(BUFFER* buffer, BUFFER* offsets_buffer, buf_ucount_t index);
+static void buffer_insert_bytes(BUFFER* buffer, BUFFER* offsets_buffer, buf_ucount_t index, const u8* bytes, u32 count);
 static bool is_empty(const char* start, const char* const end);
 static void remove_comments(char* start, buf_ucount_t length);
 
@@ -131,8 +133,8 @@ fragment[0, 1] uniform
 
 //tessellation shader code goes here
 
- 0b 00010001 00000001
- 0x 11 01 
+ 0b 0000 0000 0101 0100
+ 0x  54 
 
  		*-------------------------------OUTPUT BINARY FORMAT---------------------------*
 
@@ -160,6 +162,7 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 	remove_comments((char*)_source, length);
 
 	BUFFER* buffer = BUFcreate(NULL, sizeof(uint8_t), 0, 0);
+	BUFFER* offsets_buffer = BUFcreate(NULL, sizeof(buf_ucount_t), 0, 0);
 
 	//Write the shader binary header "SHADER BINARY" to the buffer, 13 BYTES
 	buffer_write_string(buffer, (char*)SHADER_BINARY_HEADER, strlen(SHADER_BINARY_HEADER), false);
@@ -175,7 +178,7 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 	const char* source = _source;
 	const char* temp1 = source;
 	const char* temp2 = source;
-	func_ptr_sig(const char* , parse, const char* source, buf_ucount_t length, BUFFER* buffer) = NULL;
+	func_ptr_sig(const char* , parse, const char* source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer) = NULL;
 	u8 shader_section_count = 0;
 	u8 layout_section_count = 0;
 	u8 settings_section_count = 0;
@@ -205,9 +208,8 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 			const char* __source = source;
 			if(func_ptr(parse) != NULL)
 			{
-				buf_insert_pseudo(buffer, section_offsets_index, 4);
-				*(u32*)buf_get_ptr_at(buffer, section_offsets_index) = buf_get_element_count(buffer);
-				func_ptr(parse) params(temp1, temp2 - temp1, buffer);
+				buffer_insert_offset(buffer, offsets_buffer, section_offsets_index);
+				func_ptr(parse) params(temp1, temp2 - temp1, buffer, offsets_buffer);
 			}
 			func_ptr(parse) = func_ptr(parse_settings);
 			temp1 = __source;
@@ -227,9 +229,8 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 			const char* __source = source;
 			if(func_ptr(parse) != NULL)
 			{
-				buf_insert_pseudo(buffer, section_offsets_index, 4);
-				*(u32*)buf_get_ptr_at(buffer, section_offsets_index) = buf_get_element_count(buffer);
-				func_ptr(parse) params(temp1, temp2 - temp1, buffer);
+				buffer_insert_offset(buffer, offsets_buffer, section_offsets_index);
+				func_ptr(parse) params(temp1, temp2 - temp1, buffer, offsets_buffer);
 			}
 			func_ptr(parse) = func_ptr(parse_layout);
 			temp1 = __source;
@@ -249,9 +250,8 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 			const char* __source = source;
 			if(func_ptr(parse) != NULL)
 			{
-				buf_insert_pseudo(buffer, section_offsets_index, 4);
-				*(u32*)buf_get_ptr_at(buffer, section_offsets_index) = buf_get_element_count(buffer);
-				func_ptr(parse) params(temp1, temp2 - temp1, buffer);
+				buffer_insert_offset(buffer, offsets_buffer, section_offsets_index);
+				func_ptr(parse) params(temp1, temp2 - temp1, buffer, offsets_buffer);
 			}
 			func_ptr(parse) = func_ptr(parse_shader);
 			temp1 = __source;
@@ -268,9 +268,8 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 
 	if(func_ptr(parse) != NULL)
 	{
-		buf_insert_pseudo(buffer, section_offsets_index, 4);
-		*(u32*)buf_get_ptr_at(buffer, section_offsets_index) = buf_get_element_count(buffer);
-		source = func_ptr(parse) params(temp1, _source + length - temp1, buffer);
+		buffer_insert_offset(buffer, offsets_buffer, section_offsets_index);
+		source = func_ptr(parse) params(temp1, _source + length - temp1, buffer, offsets_buffer);
 	}
 
 	//Write section mask to the buffer, 4 BYTES
@@ -286,10 +285,52 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 	}
 
 	buf_fit(buffer);
+	buf_free(offsets_buffer);
 	CALLTRACE_RETURN(buffer);
 }
 
-function_signature(static const char*, parse_settings, const char* _source, buf_ucount_t length, BUFFER* buffer)
+static void buffer_insert_bytes(BUFFER* buffer, BUFFER* offsets_buffer, buf_ucount_t index, const u8* bytes, u32 size)
+{
+	buf_ucount_t count = buf_get_element_count(offsets_buffer);
+	for(buf_ucount_t i = 0; i < count; i++)
+	{
+		buf_ucount_t _index;
+		buf_get_at(offsets_buffer, i, &_index);
+		if(_index < index)
+			continue;
+		*(u32*)buf_get_ptr_at(buffer, _index) += size;
+		_index += size;
+		buf_set_at(offsets_buffer, i, &_index);
+	}
+	buf_insert_pseudo(buffer, index, size);
+	char* const ptr = buf_get_ptr_at(buffer, index);
+	memcpy(ptr, bytes, size);
+}
+
+static void buffer_insert_offset(BUFFER* buffer, BUFFER* offsets_buffer, buf_ucount_t index)
+{
+	// update all the previous offsets
+	buf_ucount_t count = buf_get_element_count(offsets_buffer);
+	for(buf_ucount_t i = 0; i < count; i++)
+	{
+		buf_ucount_t _index;
+		buf_get_at(offsets_buffer, i, &_index);
+		if(_index < index)
+			continue;
+		*(u32*)buf_get_ptr_at(buffer, _index) += 4;
+		_index += 4;
+		buf_set_at(offsets_buffer, i, &_index);
+	}
+
+	// register for next update
+	buf_push(offsets_buffer, &index);
+	
+	// insert 4 bytes into "buffer"
+	buf_insert_pseudo(buffer, index, 4);
+	*(u32*)buf_get_ptr_at(buffer, index) = buf_get_element_count(buffer);
+}
+
+function_signature(static const char*, parse_settings, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
 {
 	CALLTRACE_BEGIN();
 	const char* string = _source;
@@ -328,14 +369,14 @@ fragment vertex [0, 1] uniform SceneData
  1 				| u8 						| descriptor binding number/index
  2 				| u16						| BIT(15) set if the type is an opaque type
  				| 							| BIT(14) set if the type is an uniform
-  				| 							| BIT(13) = vertex shader, BIT(12) = fragment shader, BIT(11) = geometry shader, BIT(10) = tessellation shader
+  				| 							| BIT(13) = vertex shader, BIT(12) = tessellation shader, BIT(11) = geometry shader, BIT(10) = fragment shader
   				| 							| Lower 8 Bits contains the type information
- 3 				| null terminated string 	| block name
+ 3 				| null terminated string 	| if the type is block then it would be block name
  len0() + 4		| null terminated string 	| identifier name
  len01() + 5	| u16						| contains number of members in the block if the type is a block
  len01() + 7 	| u32 						| contains length of the array if the type is an array
  */
-function_signature(static const char*, parse_layout, const char* _source, buf_ucount_t length, BUFFER* buffer)
+function_signature(static const char*, parse_layout, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
 {
 	CALLTRACE_BEGIN();
 	const char* string = _source;
@@ -370,8 +411,7 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 		string = parse_storage_qualifiers(string, &storage_mask);
 
 		//Write offset (byte count), 4 BYTES
-		buf_insert_pseudo(buffer, descriptor_offsets_index, 4);
-		*(u32*)buf_get_ptr_at(buffer, descriptor_offsets_index) = buf_get_element_count(buffer);
+		buffer_insert_offset(buffer, offsets_buffer, descriptor_offsets_index);
 		log_u32(buf_get_element_count(buffer));
 
 		//Write descriptor set number/index, 1 BYTE
@@ -380,7 +420,7 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 		//Write descriptor binding number/index, 1 BYTE
 		buffer_write_u8(buffer, (u8)set_info[1]);
 
-		string = parse_type(string, storage_mask | shader_mask, buffer);
+		string = parse_type(string, storage_mask | shader_mask, buffer, offsets_buffer);
 		descriptor_count++;
 	}
 
@@ -408,14 +448,15 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 	    float light_intensity;
 	} scene_data;
  */
-static const char* parse_type(const char* string, u16 mask, BUFFER* buffer)
+static const char* parse_type(const char* string, u16 mask, BUFFER* buffer, BUFFER* offsets_buffer)
 {
 	while(isspace(*string)) string++;
 	u32 count = get_word_length(string, 0);
 	bool found = true;
 	u16 type;
-	if(strncmp(string, "sampler2D", count) == 0) { type = (1 << 15) | (u16)SHADER_COMPILER_SAMPLER2D;  }
-	else if(strncmp(string, "sampler3D", count) == 0) { type = (1 << 15) | (u16)SHADER_COMPILER_SAMPLER3D; }
+	buf_ucount_t identifier_name_index;
+	if(strncmp(string, "sampler2D", count) == 0) { type = (1UL << 15) | (u16)SHADER_COMPILER_SAMPLER2D;  }
+	else if(strncmp(string, "sampler3D", count) == 0) { type = (1UL << 15) | (u16)SHADER_COMPILER_SAMPLER3D; }
 	else if(strncmp(string, "vec4", count) == 0) { type = (u16)SHADER_COMPILER_VEC4; }
 	else if(strncmp(string, "vec3", count) == 0) { type = (u16)SHADER_COMPILER_VEC3; }
 	else if(strncmp(string, "vec2", count) == 0) { type = (u16)SHADER_COMPILER_VEC2; }
@@ -445,14 +486,19 @@ static const char* parse_type(const char* string, u16 mask, BUFFER* buffer)
 			}
 			string++;
 		}
+		if((count == 0) || is_empty(block_name, block_name + count))
+			LOG_FETAL_ERR("shader layout parse error: Block name cannot be empty\n");
 		string++;
 		type = (u16)SHADER_COMPILER_BLOCK;
 
 		//Write type info to the buffer, 2 BYTES
 		buffer_write_u16(buffer, type | mask);
+		log_u32(type | mask);
 
 		//Write block name to the buffer, count + 1 BYTES
 		buffer_write_string(buffer, block_name, count, true);
+
+		identifier_name_index = buf_get_element_count(buffer);
 
 		//Reserve 2 BYTES for element count in the buffer
 		buf_ucount_t index = buf_get_element_count(buffer);
@@ -462,7 +508,7 @@ static const char* parse_type(const char* string, u16 mask, BUFFER* buffer)
 		while(*string != '}')
 		{
 			u16 info;
-			string = parse_type(string, mask, buffer);
+			string = parse_type(string, mask, buffer, offsets_buffer);
 			while(isspace(*string)) string++;
 			num_elements++;
 		}
@@ -477,6 +523,7 @@ static const char* parse_type(const char* string, u16 mask, BUFFER* buffer)
 	{
 		//Write type info to the buffer, 2 BYTES
 		buffer_write_u16(buffer, type | mask);
+		identifier_name_index = buf_get_element_count(buffer);
 		string += count;
 	}
 
@@ -486,8 +533,9 @@ static const char* parse_type(const char* string, u16 mask, BUFFER* buffer)
 		LOG_FETAL_ERR("shader layout parse error: Identifier name cannot be empty\n");
 
 	//Write identifier name to the buffer, count + 1 BYTES
-	buffer_write_string(buffer, string, count, true);
-	LOG_MSG("Identifier: %.*s\n", count, string);
+	char identifier_name[count + 1]; memcpy(identifier_name, string, count); identifier_name[count] = 0;
+	buffer_insert_bytes(buffer, offsets_buffer, identifier_name_index, identifier_name, count + 1);
+	LOG_MSG("Identifier: %s\n", identifier_name);
 
 	string += count;
 	while(*string != ';')
@@ -509,9 +557,10 @@ static const char* parse_storage_qualifiers(const char* string, u16* out_info)
 	u16 mask = 0;
 	u32 count = get_word_length(string, 0);
 	if(strncmp(string, "uniform", count) == 0)
-		mask |= (1 << 14);
+		mask |= (1UL << 14);
 	else
 		LOG_FETAL_ERR("shader data layout parse error: Unrecognized storage qualifier \"%.*s\"\n", count, string);
+	*out_info = mask;
 	return string + count;
 }
 
@@ -527,13 +576,13 @@ static const char* parse_shader_stage(const char* string, u16* out_mask)
 		count = get_word_length(string, '[');
 		if(count == 0) break;
 		if(strncmp(string, SHADER_STAGE_VERTEX_STR, count) == 0)
-			mask |= 1 << (13 - SHADER_COMPILER_SHADER_STAGE_VERTEX);
+			mask |= 1UL << (13 - SHADER_COMPILER_SHADER_STAGE_VERTEX);
 		else if(strncmp(string, SHADER_STAGE_TESSELLATION_STR, count) == 0)
-			mask |= 1 << (13 - SHADER_COMPILER_SHADER_STAGE_TESSELLATION);
+			mask |= 1UL << (13 - SHADER_COMPILER_SHADER_STAGE_TESSELLATION);
 		else if(strncmp(string, SHADER_STAGE_GEOMETRY_STR, count) == 0)
-			mask |= 1 << (13 - SHADER_COMPILER_SHADER_STAGE_GEOMETRY);
+			mask |= 1UL << (13 - SHADER_COMPILER_SHADER_STAGE_GEOMETRY);
 		else if(strncmp(string, SHADER_STAGE_FRAGMENT_STR, count) == 0)
-			mask |= 1 << (13 - SHADER_COMPILER_SHADER_STAGE_FRAGMENT);
+			mask |= 1UL << (13 - SHADER_COMPILER_SHADER_STAGE_FRAGMENT);
 		else break;
 		string += count;
 		stage_count++;
@@ -670,34 +719,45 @@ static void remove_comments(char* start, buf_ucount_t length)
 	{
 		if(!multiple_line_comment_begin && !single_line_comment_begin)
 		{
+			bool found = true;
 			if(strncmp(start, "//", 2) == 0)
 				single_line_comment_begin = true;
 			else if(strncmp(start, "/*", 2) == 0)
 				multiple_line_comment_begin = true;
-			else
-				start += 2;
+			else found = false;
+			if(found)
+			{
+				start[0] = ' ';
+				start[1] = ' ';
+				start++;
+			}
+			start++;
 			continue;
 		}
-		if(multiple_line_comment_begin && (strncmp(start, "*/", 2) == 0))
+		if(multiple_line_comment_begin)
 		{
-			multiple_line_comment_begin = false;
+			if(strncmp(start, "*/", 2) == 0)
+				multiple_line_comment_begin = false;
 			start[0] = ' ';
 			start[1] = ' ';
 			start += 2;
 			continue;
 		}
-		else if(single_line_comment_begin && (*start == '\n'))
+		else if(single_line_comment_begin)
 		{
+			const char* ptr = strchr(start, '\n');
+			if(ptr == NULL)
+				ptr = end;
+			if(ptr != start)
+				memset(start, ' ', ptr - start);
+			start = (char*)(ptr + 1);
 			single_line_comment_begin = false;
-			start += 1;
 			continue;
 		}
-		*start = ' ';
-		start++;
 	}
 }
 
-function_signature(static const char*, parse_shader, const char* _source, buf_ucount_t length, BUFFER* buffer)
+function_signature(static const char*, parse_shader, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
 {
 	CALLTRACE_BEGIN();
 	const char* string = _source;
@@ -706,7 +766,6 @@ function_signature(static const char*, parse_shader, const char* _source, buf_uc
 		LOG_MSG("SHADER section is empty, skipping\n");
 		CALLTRACE_RETURN(_source + length);
 	}
-	LOG_MSG("Shader section offset: %u\n", buf_get_element_count(buffer));
 
 	//Parse the _source string to separate vertex, tessellation, geometry, and fragment shaders
 	const char* stage_strings[SHADER_COMPILER_SHADER_STAGE_MAX] = { "vertex", "tessellation", "geometry", "fragment" };
@@ -808,11 +867,11 @@ function_signature(static const char*, parse_shader, const char* _source, buf_uc
 	}
 	if(previous_source != NULL)
 		previous_source->length = _source + length - previous_source->source;
-	serialize_shader(stage_strings, sources, shader_count, buffer);
+	serialize_shader(stage_strings, sources, shader_count, buffer, offsets_buffer);
 	CALLTRACE_RETURN(_source + length);
 }
 
-function_signature(static void, serialize_shader, const char* const* stage_strings, shader_source_t* sources, uint8_t shader_count, BUFFER* buffer)
+function_signature(static void, serialize_shader, const char* const* stage_strings, shader_source_t* sources, uint8_t shader_count, BUFFER* buffer, BUFFER* offsets_buffer)
 {
 	CALLTRACE_BEGIN();
 
@@ -830,11 +889,13 @@ function_signature(static void, serialize_shader, const char* const* stage_strin
 	log_u32(shader_mask);
 
 	//Allocate space for offsets and lengths for each shader SPIRV binary
-	uint64_t indices[shader_count];
+	buf_ucount_t indices[shader_count];
 	for(uint8_t i = 0; i < shader_count; i++)
 	{
 		indices[i] = buf_get_element_count(buffer);
 		buf_push_pseudo(buffer, 8);
+		// register for next update
+		buf_push(offsets_buffer, &indices[i]);
 	}
 
 	shaderc_compiler_t compiler = shaderc_compiler_initialize();
@@ -863,6 +924,7 @@ function_signature(static void, serialize_shader, const char* const* stage_strin
 		assert(length > 0);
 		uint32_t offset = buf_get_element_count(buffer);
 		log_u32(offset);
+		log_u32(length);
 
 		//Write offset
 		memcpy(buf_get_ptr_at(buffer, indices[j]), &offset, 4);

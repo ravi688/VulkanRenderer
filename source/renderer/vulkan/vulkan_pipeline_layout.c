@@ -26,8 +26,8 @@ void vulkan_pipeline_layout_create_no_alloc(renderer_t* renderer, vulkan_pipelin
 	u32 set_layout_count = 0;
 	if(create_info->binding_count != 0)
 	{
-		VkDescriptorSetLayoutBinding* binding = refp(VkDescriptorSetLayoutBinding, create_info->bindings, 0);
-		VkDescriptorSetLayout set_layout = vk_get_descriptor_set_layout(renderer->vk_device, binding, create_info->binding_count);
+		VkDescriptorSetLayoutBinding* bindings = refp(VkDescriptorSetLayoutBinding, create_info->bindings, 0);
+		VkDescriptorSetLayout set_layout = vk_get_descriptor_set_layout(renderer->vk_device, bindings, create_info->binding_count);
 		pipeline_layout->descriptor_set_layout = set_layout;
 		set_layout_count = 1;
 	}

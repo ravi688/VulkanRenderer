@@ -210,6 +210,7 @@ clean: bin-clean
 
 .PHONY: build
 .PHONY: build-run
+.PHONY: run
 
 build:
 	$(MAKE) --directory=.. lib-static-debug
@@ -217,3 +218,6 @@ build:
 
 build-run: build
 	$(__EXECUTABLE_NAME)
+
+run: build-run
+	

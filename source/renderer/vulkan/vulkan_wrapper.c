@@ -157,7 +157,7 @@ function_signature(VkDescriptorPool, vk_get_descriptor_pool, VkDevice device)
 	CALLTRACE_BEGIN();
 	VkDescriptorPoolSize sizes[2] =
 	{
-		{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 1 },
+		{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 2 },
 		{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 1 }
 	};
 	VkDescriptorPoolCreateInfo pool_create_info =
