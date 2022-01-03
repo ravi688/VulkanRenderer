@@ -2,13 +2,14 @@
 #pragma once
 
 typedef struct renderer_t renderer_t;
-typedef struct shader_t shader_t;
-typedef struct material_t material_t;
 
 #ifdef RENDERER_VULKAN_DRIVER
 typedef struct vulkan_material_t vulkan_material_t;
 typedef struct vulkan_texture_t vulkan_texture_t;
+typedef struct vulkan_shader_t vulkan_shader_t;
 typedef vulkan_texture_t texture_t;
+typedef vulkan_shader_t shader_t;
+typedef vulkan_material_t material_t;
 #endif
 
 #ifdef RENDERER_OPENGL_DRIVER
@@ -23,9 +24,6 @@ typedef vulkan_texture_t texture_t;
 #error "Metal is not supported yet!"
 #endif
 
-#include <renderer/stage_shader.h>
-#include <renderer/struct_descriptor.h>
-#include <buffer.h>
 #include <hpml/vec2/header_config.h>
 #include <hpml/vec2/vec2.h>
 #include <hpml/vec3/header_config.h>
@@ -38,6 +36,8 @@ typedef vulkan_texture_t texture_t;
 #include <hpml/memory/memory.h>
 #include <hpml/mat4/header_config.h>
 #include <hpml/mat4/mat4.h>
+
+#include <renderer/struct_descriptor.h>
 
 #define MATERIAL_ALIGN(value, index) ((value) << ((index) * 5))
 
@@ -74,7 +74,6 @@ enum
 
 typedef struct material_create_info_t
 {
-	const char* shader_data_layout_source;
 	u64 per_vertex_attributes;
 	u64 per_instance_attributes;
 	shader_t* shader;

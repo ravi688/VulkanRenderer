@@ -19,6 +19,7 @@ typedef struct vulkan_descriptor_set_create_info_t
 typedef struct vulkan_descriptor_set_t
 {
 	VkDescriptorSet handle;
+	VkDescriptorPool pool; //the pool from it has been allocated
 } vulkan_descriptor_set_t;
 
 

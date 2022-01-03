@@ -123,7 +123,7 @@ function_signature(VkDevice, vk_get_device, VkPhysicalDevice physicalDevice);
 function_signature(uint32_t, vk_get_graphics_queue_family_index, VkPhysicalDevice physicalDevice);
 function_signature(VkQueue, vk_get_device_queue, VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex);
 function_signature(VkSwapchainKHR, vk_get_swapchain, VkDevice device, VkSwapchainCreateInfoKHR* createInfo);
-function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, void* spirv, uint32_t length, vulkan_shader_type_t shader_type);
+function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, void* spirv, uint32_t length);
 function_signature(VkShaderModule, vk_get_shader_module_load, VkDevice device, const char* file_name);
 function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point);
 function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_input_state_create_info, uint32_t binding_count, uint32_t* strides, VkVertexInputRate* input_rates, vertex_attribute_binding_info_t* attribute_infos);

@@ -1,29 +1,19 @@
 
 #include <renderer/internal/vulkan/vulkan_material.h>
-#include <renderer/stage_shader.h>
-#include <renderer/shader.h>
+#include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/material.h>
 #include <memory_allocator/memory_allocator.h>
 #include <renderer/debug.h>
 #include <renderer/assert.h>
-#include <shader_compiler/compiler.h> //for SHADER_COMPILER_* defines
 
 #include <string.h>
-#include <ctype.h>
 
 #define VERTEX_INFO_COUNT 4
 
-typedef struct material_t
-{
-	vulkan_material_t* handle;
-	shader_t* shader;
-} material_t;
-
-
 instantiate_static_stack_array(VkFormat);
 static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices);
-static void __material_create_no_alloc(renderer_t* renderer, u32 binding_count, VkDescriptorSetLayoutBinding* bindings, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, material_t* material);
-static material_t* __material_create(renderer_t* renderer, u32 binding_count, VkDescriptorSetLayoutBinding* bindings, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader);
+static material_t* __material_create(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader);
+static void __material_create_no_alloc(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, material_t* material);
 static u32 decode_attribute_count(u64 packed_attributes);
 static void decode_vulkan_vertex_infos(u64 packed_attributes, VkVertexInputRate input_rate, vulkan_vertex_info_t* out_vertex_infos, VkFormat* formats, u32* offsets);
 
@@ -40,7 +30,7 @@ material_t* material_new()
 {
 	material_t* material = heap_new(material_t);
 	memset(material, 0, sizeof(material_t));
-	material->handle = vulkan_material_new();
+	material = vulkan_material_new();
 	return material;
 }
 
@@ -61,77 +51,64 @@ material_t* material_create(renderer_t* renderer, material_create_info_t* create
 	if(per_instance_attribute_count > 0)
 		decode_vulkan_vertex_infos(create_info->per_instance_attributes, VK_VERTEX_INPUT_RATE_INSTANCE, vertex_infos + per_vertex_attribute_count, formats + per_vertex_attribute_count, offsets + per_vertex_attribute_count);
 
-	u32 binding_count;
-	VkDescriptorSetLayoutBinding* bindings = get_set_layout_bindings(create_info->shader, &binding_count);
-	material_t* material =  __material_create(renderer, binding_count, bindings, total_attribute_count, vertex_infos, create_info->shader);
-	if(bindings != NULL)
-		heap_free(bindings);
+	material_t* material =  __material_create(renderer, create_info->shader->vk_set_layout, total_attribute_count, vertex_infos, create_info->shader);
 	stack_free(formats);
 	stack_free(offsets);
 	stack_free(vertex_infos);
 	return material;
 }
 
-static material_t* __material_create(renderer_t* renderer, u32 binding_count, VkDescriptorSetLayoutBinding* bindings, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader)
+static material_t* __material_create(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader)
 {
 	material_t* material = material_new();
 	vulkan_material_create_info_t material_info =
 	{
-		.shaders = shader->stage_shaders,
-		.shader_count = shader->stage_count,
+		.shader = shader,
 		.vertex_info_count = vertex_info_count,
 		//NOTE: calling vulkan_material_create() creates a deep copy of vertex_infos
 		.vertex_infos = vertex_infos,
-		//NOTE: calling vulkan_material_create() creates a copy of bindings
-		.bindings = bindings,
-		.binding_count = binding_count
+		.vk_set_layout = vk_set_layout
 	};
-	material->handle = vulkan_material_create(renderer, &material_info);
-	material->shader = shader;
+	material = vulkan_material_create(renderer, &material_info);
 	return material;
 }
 
-static void __material_create_no_alloc(renderer_t* renderer, u32 binding_count, VkDescriptorSetLayoutBinding* bindings, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, material_t* material)
+static void __material_create_no_alloc(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, material_t* material)
 {
 	vulkan_material_create_info_t material_info =
 	{
-		.shaders = shader->stage_shaders,
-		.shader_count = shader->stage_count,
+		.shader = shader,
 		.vertex_info_count = vertex_info_count,
 		//NOTE: calling vulkan_material_create_no_alloc() doesn't creates a deep copy of vertex_infos
 		.vertex_infos = vertex_infos,
-		.bindings = bindings,
-		.binding_count = binding_count
+		.vk_set_layout = vk_set_layout
 	};
-	vulkan_material_create_no_alloc(renderer, &material_info, material->handle);
-	material->shader = shader;
+	vulkan_material_create_no_alloc(renderer, &material_info, material);
 }
 
 void material_destroy(material_t* material, renderer_t* renderer)
 {
-	vulkan_material_destroy(material->handle, renderer);
-	material->shader = NULL;
+	vulkan_material_destroy(material, renderer);
 }
 
 void material_release_resources(material_t* material)
 {
-	vulkan_material_release_resources(material->handle);
-	heap_free(material);
+	vulkan_material_release_resources(material);
 }
 
 void material_bind(material_t* material, renderer_t* renderer)
 {
-	vulkan_material_bind(material->handle, renderer);
+	vulkan_material_bind(material, renderer);
 }
 
 void material_push_constants(material_t* material, renderer_t* renderer, void* bytes)
 {
-	vulkan_material_push_constants(material->handle, renderer, bytes);
+	vulkan_material_push_constants(material, renderer, bytes);
 }
 
 void material_set_texture(material_t* material, renderer_t* renderer, texture_t* texture)
 {
-	vulkan_material_set_texture(material->handle, renderer, 0, texture);
+	vulkan_material_set_texture(material, renderer, 0, texture);
 }
 
 material_field_handle_t material_get_field_handle(material_t* material, const char* name)
@@ -147,10 +124,10 @@ material_field_handle_t material_get_field_handle(material_t* material, const ch
 	get_record_and_field_name(name, struct_name, field_name);
 
 	u16 descriptor_count = material->shader->descriptor_count;
-	shader_resource_descriptor_t* descriptors = material->shader->descriptors;
+	vulkan_shader_resource_descriptor_t* descriptors = material->shader->descriptors;
 	for(u16 i = 0; i < descriptor_count; i++)
 	{
-		shader_resource_descriptor_t descriptor = ref(shader_resource_descriptor_t, descriptors, i);
+		vulkan_shader_resource_descriptor_t descriptor = ref(vulkan_shader_resource_descriptor_t, descriptors, i);
 		if(strcmp(descriptor.handle.name, struct_name) == 0)
 		{
 			return (material_field_handle_t)
@@ -217,9 +194,9 @@ void material_set_texture2dH(material_t* material, material_field_handle_t handl
 {
 	check_precondition(material);
 	assert(handle.descriptor_index < material->shader->descriptor_count);
-	shader_resource_descriptor_t descriptor = material->shader->descriptors[handle.descriptor_index];
+	vulkan_shader_resource_descriptor_t descriptor = material->shader->descriptors[handle.descriptor_index];
 	assert(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
-	vulkan_material_set_texture(material->handle, material->handle->renderer, descriptor.binding_number, texture);
+	vulkan_material_set_texture(material, material->renderer, descriptor.binding_number, texture);
 }
 
 float material_get_floatH(material_t* material, material_field_handle_t handle)
@@ -382,51 +359,6 @@ mat4_t(float) material_get_mat4(material_t* material, const char* name)
 texture_t* material_get_texture2d(material_t* material, const char* name)
 {
 	return material_get_texture2dH(material, material_get_field_handle(material, name));
-}
-
-static VkDescriptorSetLayoutBinding* get_set_layout_bindings(shader_t* shader, u32* out_binding_count)
-{
-	u32 binding_count = shader->descriptor_count;
-	*out_binding_count = binding_count;
-	if(binding_count == 0)
-		return NULL;
-	VkDescriptorSetLayoutBinding* bindings = heap_newv(VkDescriptorSetLayoutBinding, binding_count);
-	memset(bindings, 0, sizeof(VkDescriptorSetLayoutBinding) * binding_count);
-	for(u32 i = 0; i < binding_count; i++)
-	{
-		VkDescriptorSetLayoutBinding* binding = refp(VkDescriptorSetLayoutBinding, bindings, i);
-		shader_resource_descriptor_t* descriptor = refp(shader_resource_descriptor_t, shader->descriptors, i);
-		binding->binding = descriptor->binding_number;
-		binding->descriptorCount = 1;	//for now we are not using arrays
-		binding->stageFlags = 0;
-		if(descriptor->stage_flags & (1 << SHADER_STAGE_VERTEX))
-			binding->stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-		if(descriptor->stage_flags & (1 << SHADER_STAGE_TESSELLATION))
-			binding->stageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-		if(descriptor->stage_flags & (1 << SHADER_STAGE_GEOMETRY))
-			binding->stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-		if(descriptor->stage_flags & (1 << SHADER_STAGE_FRAGMENT))
-			binding->stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-		switch(descriptor->handle.type)
-		{
-			case SHADER_COMPILER_BLOCK:
-				binding->descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			break;
-			
-			case SHADER_COMPILER_SAMPLER2D:
-				binding->descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			break;
-			
-			case SHADER_COMPILER_SAMPLER3D:
-				LOG_FETAL_ERR("Cannot create set layout binding for the type SHADER_COMPILER_SAMPLER3D, because the implementation is still in development\n");
-			break;
-			
-			default:
-				LOG_FETAL_ERR("Cannot create set layout binding for the type \"%u\", because it is not recognized\n", descriptor->handle.type);
-			break;
-		}
-	}
-	return bindings;
 }
 
 

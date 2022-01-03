@@ -26,6 +26,7 @@ void vulkan_descriptor_set_create_no_alloc(renderer_t* renderer,  vulkan_descrip
 		.pSetLayouts = &create_info->layout
 	};
 	vkCall(vkAllocateDescriptorSets(renderer->vk_device, &alloc_info, &set->handle));
+	set->pool = create_info->pool;
 }
 
 vulkan_descriptor_set_t* vulkan_descriptor_set_create(renderer_t* renderer, vulkan_descriptor_set_create_info_t* create_info)
@@ -37,7 +38,7 @@ vulkan_descriptor_set_t* vulkan_descriptor_set_create(renderer_t* renderer, vulk
 
 void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, renderer_t* renderer)
 {
-
+	vkCall(vkFreeDescriptorSets(renderer->vk_device, set->pool, 1, &set->handle));
 }
 
 void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_t* set)

@@ -8,15 +8,13 @@ typedef struct renderer_t renderer_t;
 
 typedef struct vulkan_pipeline_layout_create_info_t
 {
-	VkDescriptorSetLayoutBinding* bindings;
-	u32 binding_count;
+	/* For now, we will be using only one descriptor set layout per pipeline layout */
+	VkDescriptorSetLayout vk_set_layout;
 } vulkan_pipeline_layout_create_info_t;
 
 typedef struct vulkan_pipeline_layout_t
 {
 	VkPipelineLayout handle;
-	/* For now, we will be using only one descriptor set layout per pipeline layout */
-	VkDescriptorSetLayout descriptor_set_layout;
 } vulkan_pipeline_layout_t;
 
 

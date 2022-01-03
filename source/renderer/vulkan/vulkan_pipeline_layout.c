@@ -23,15 +23,8 @@ void vulkan_pipeline_layout_create_no_alloc(renderer_t* renderer, vulkan_pipelin
 	push_constant_range->offset = 0;
 	push_constant_range->stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	u32 set_layout_count = 0;
-	if(create_info->binding_count != 0)
-	{
-		VkDescriptorSetLayoutBinding* bindings = refp(VkDescriptorSetLayoutBinding, create_info->bindings, 0);
-		VkDescriptorSetLayout set_layout = vk_get_descriptor_set_layout(renderer->vk_device, bindings, create_info->binding_count);
-		pipeline_layout->descriptor_set_layout = set_layout;
-		set_layout_count = 1;
-	}
-	pipeline_layout->handle = vk_get_pipeline_layout(renderer->vk_device, set_layout_count, &pipeline_layout->descriptor_set_layout, 1, push_constant_range);
+	u32 set_layout_count = create_info->vk_set_layout == VK_NULL_HANDLE ? 0 : 1;
+	pipeline_layout->handle = vk_get_pipeline_layout(renderer->vk_device, set_layout_count, &create_info->vk_set_layout, 1, push_constant_range);
 	stack_free(push_constant_range);
 }
 
@@ -45,7 +38,6 @@ vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(renderer_t* renderer, vu
 
 void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* pipeline_layout, renderer_t* renderer)
 {
-	vkDestroyDescriptorSetLayout(renderer->vk_device, pipeline_layout->descriptor_set_layout, NULL);
 	vkDestroyPipelineLayout(renderer->vk_device, pipeline_layout->handle, NULL);
 }
 

@@ -133,7 +133,6 @@ int main(int argc, char** argv)
 								| MATERIAL_ALIGN(MATERIAL_VEC3, 2) //color
 								| MATERIAL_ALIGN(MATERIAL_VEC2, 3), //texture coordinates
 		.shader = albedo_shader,
-		.shader_data_layout_source = data_source
 	};
 	material_t* cube_material = material_create(renderer, &cube_material_info);
 

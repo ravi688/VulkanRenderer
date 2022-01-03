@@ -14,12 +14,10 @@ typedef struct vulkan_buffer_t vulkan_buffer_t;
 
 typedef struct vulkan_material_create_info_t
 {
-	vulkan_shader_t** shaders;
-	u64 shader_count;
+	vulkan_shader_t* shader;
 	uint32_t vertex_info_count;
 	vulkan_vertex_info_t* vertex_infos;
-	VkDescriptorSetLayoutBinding* bindings;
-	uint32_t binding_count;
+	VkDescriptorSetLayout vk_set_layout;
 } vulkan_material_create_info_t;
 
 typedef struct vulkan_material_t
@@ -29,10 +27,10 @@ typedef struct vulkan_material_t
 	void* self_reference; 	//self_reference
 
 	//For recreating the graphics pipeline on render window resize
-	vulkan_material_create_info_t create_info;
-
-	//For now we will be using only one descriptor set and descriptor layout
-	vulkan_descriptor_set_t* descriptor_set;
+	uint32_t vertex_info_count;
+	vulkan_vertex_info_t* vertex_infos;
+	
+	vulkan_shader_t* shader;
 	vulkan_graphics_pipeline_t* graphics_pipeline;
 } vulkan_material_t;
 

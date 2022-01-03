@@ -165,7 +165,8 @@ function_signature(VkDescriptorPool, vk_get_descriptor_pool, VkDevice device)
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		.poolSizeCount = 2,
 		.pPoolSizes = &sizes[0],
-		.maxSets = 6
+		.maxSets = 6,
+		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 	};
 	VkDescriptorPool descriptor_pool;
 	vkCall(vkCreateDescriptorPool(device, &pool_create_info, NULL, &descriptor_pool));
@@ -564,11 +565,10 @@ function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage
 			throw_exception(VULKAN_UNSUPPORTED_SHADER_TYPE);
 			break;
 	}
-	createInfo.stage = (vulkan_shader_type == VULKAN_SHADER_TYPE_VERTEX) ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
 	CALLTRACE_RETURN(createInfo);
 }
 
-function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, void* spirv, uint32_t length, vulkan_shader_type_t shader_type)
+function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, void* spirv, uint32_t length)
 {
 	VkShaderModuleCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
