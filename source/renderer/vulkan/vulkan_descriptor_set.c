@@ -77,7 +77,7 @@ void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, re
 	{
 		.buffer = buffer->handle,
 		.offset = 0,
-		.range = buffer->stride * buffer->count
+		.range = buffer->size
 	};
 	VkWriteDescriptorSet descriptor_write =
 	{

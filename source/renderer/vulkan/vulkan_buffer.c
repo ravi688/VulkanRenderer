@@ -28,19 +28,16 @@ void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_in
 {
 	assert(renderer != NULL);
 	assert(buffer != NULL);
-	assert(create_info->data != NULL);
-	assert(create_info->stride != 0);
-	assert(create_info->count != 0);
+	assert(((create_info->stride != 0) && (create_info->count != 0)) || (create_info->size != 0));
 
-	u32 buffer_size = create_info->stride * create_info->count;
+	u32 buffer_size = (create_info->size == 0) ? (create_info->stride * create_info->count) : create_info->size;
 	buffer->handle = vk_get_buffer(renderer->vk_device, buffer_size, create_info->usage_flags, create_info->sharing_mode);
 	buffer->memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, buffer->handle, buffer_size, create_info->memory_property_flags);
-	void* ptr;
-	vkMapMemory(renderer->vk_device, buffer->memory, 0, buffer_size, 0, &ptr);
-	memcpy(ptr, create_info->data, buffer_size);
-	vkUnmapMemory(renderer->vk_device, buffer->memory);
 	buffer->stride = create_info->stride;
 	buffer->count = create_info->count;
+	buffer->size = buffer_size;
+	if(create_info->data != NULL)
+		vulkan_buffer_copy_data(buffer, renderer, create_info->data, 0, buffer->size);
 }
 
 void vulkan_buffer_destroy(vulkan_buffer_t* buffer, renderer_t* renderer)
@@ -56,4 +53,31 @@ void vulkan_buffer_release_resources(vulkan_buffer_t* buffer)
 {
 	assert(buffer != NULL);
 	heap_free(buffer);
+}
+
+void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, renderer_t* renderer, void* data, u32 start_offset, u32 size)
+{
+	assert(buffer != NULL);
+	assert(data != NULL);
+	assert((start_offset + size) <= buffer->size);
+	assert_wrn(size != 0);
+
+	void* ptr;
+	vkMapMemory(renderer->vk_device, buffer->memory, 0, buffer->size, 0, &ptr);
+	memcpy(ptr, data + start_offset, size);
+	vkUnmapMemory(renderer->vk_device, buffer->memory);
+}
+
+void* vulkan_buffer_map(vulkan_buffer_t* buffer, renderer_t* renderer)
+{
+	assert(buffer != NULL);
+	assert_wrn(buffer->size != 0);
+	void* ptr;
+	vkMapMemory(renderer->vk_device, buffer->memory, 0, buffer->size, 0, &ptr);
+	return ptr;
+}
+
+void vulkan_buffer_unmap(vulkan_buffer_t* buffer, renderer_t* renderer)
+{
+	vkUnmapMemory(renderer->vk_device, buffer->memory);
 }

@@ -1,6 +1,7 @@
 
 #include <renderer/struct_descriptor.h>
 #include <renderer/assert.h>
+#include <renderer/debug.h>
 #include <string.h>
 
 /*
@@ -20,7 +21,7 @@
 void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 {
 	assert(descriptor != NULL);
-	if((descriptor->fields == 0) || (descriptor->field_count == 0))
+	if((descriptor->fields == 0) || (descriptor->field_count == 0) || (descriptor->field_count == 0xFFFF))
 		return;
 	struct_field_t* fields = descriptor->fields;
 	u32 offset = 0;
@@ -40,6 +41,12 @@ void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr)
 	descriptor->ptr = ptr;
 }
 
+void struct_descriptor_unmap(struct_descriptor_t* descriptor)
+{
+	assert(descriptor != NULL);
+	descriptor->ptr = NULL;
+}
+
 u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor)
 {
 	assert(descriptor != NULL);
@@ -49,9 +56,11 @@ u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor)
 struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* field_name)
 {
 	assert(descriptor != NULL);
+	assert(descriptor->field_count < 0xFFFF);
 	for(u16 i = 0; i < descriptor->field_count; i++)
 		if(strcmp(descriptor->fields[i].name, field_name) == 0)
 			return i;
+	LOG_WRN("Returning STRUCT_FIELD_INVALID_HANDLE, field_name: %s\n", field_name);
 	return STRUCT_FIELD_INVALID_HANDLE;
 }
 

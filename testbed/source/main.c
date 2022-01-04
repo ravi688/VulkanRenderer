@@ -55,40 +55,9 @@ static void offset_visitor(vec3_t(float)* position, void* user_data)
 	*position = vec3_mul(float)(*position, vec3(float)(0, 100, 100));
 }
 
-typedef struct Page
-{
-	const char* label;
-	const char* header;
-	const char* content;
-	float value;
-	uint32_t value2;
-	long long int value3;
-} Page;
-
-typedef struct data_t
-{
-	float v;
-	char c;
-	float v2;
-	uint64_t v3;
-} data_t;
-
 int main(int argc, char** argv)
 {
-	// load_serialization_source_file(__FILE__);
-	// struct_serialize("data_t");
-	// data_t* data = instantiate_object("data_t");
-	// serialized_struct_print("data_t");
-	// destroy_serialization_data();
-	// exit(0);
-
 	memory_allocator_init(&argc);
-
-	puts("STRUCT LAYOUT");
-	log_u32(offsetof(data_t, v));
-	log_u32(offsetof(data_t, c));
-	log_u32(offsetof(data_t, v2));
-	log_u32(offsetof(data_t, v3));
 
 	renderer_t* renderer = renderer_init(800, 800, "Vulkan 3D Renderer", false);
 	recreate_matrix(renderer_get_window(renderer), NULL);
@@ -120,12 +89,6 @@ int main(int argc, char** argv)
 	texture_t* linux_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
 	texture_t* windows_texture = texture_load(renderer, "resource/textures/windowslogo.bmp");
 	texture_t* apple_texture = texture_load(renderer, "resource/textures/applelogo.bmp");
-	const char* data_source =
-	"#stage vertex\n"
-	"float \n"
-	"#stage fragment\n"
-	"float\n"
-	"sampler2D\n";
 	material_create_info_t cube_material_info =
 	{
 		.per_vertex_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0) //position
@@ -137,6 +100,7 @@ int main(int argc, char** argv)
 	material_t* cube_material = material_create(renderer, &cube_material_info);
 
 	material_set_texture2d(cube_material, "texture", linux_texture);
+	material_set_texture2d(cube_material, "texture2", windows_texture);
 	/*---------------------------------------*/
 
 	time_handle_t frame_time_handle = time_get_handle();
@@ -145,19 +109,18 @@ int main(int argc, char** argv)
 	u32 frame_count = 0;
 	float angle = 0;
 	u32 texture_index = 0;
+	material_field_handle_t handle = material_get_field_handle(cube_material, "scene_data.time");
 	//TODO: render loop should run on separate thread -> render thread
 	while(renderer_is_running(renderer))
 	{
 		float delta_time = time_get_delta_time(&frame_time_handle);
 		float game_time = time_get_seconds(game_time_handle);
 		mat4_t(float) model_matrix = mat4_rotation(float)(0, angle * DEG2RAD, 0);
-		// material_set_float(cube_material, "scene_data.time", game_time);
-		// material_set_vec3(cube_material, "scene_data.light_dir", vec3_normalize(float)(vec3(float)(1, -1, 0.1)));
-		// material_set_float(cube_material, "scene_data.light_intensity", 1.0f);
-		// material_set_mat4(cube_material, "matrices.model_matrix", mat4_transpose(float)(model_matrix));
-		// material_set_mat4(cube_material, "matrices.view_matrix", mat4_transpose(float)(view_matrix));
-		// material_set_mat4(cube_material, "matrices.projection_matrix", mat4_transpose(float)(projection_matrix));
-		// material_set_mat4(cube_material, "matrices.clip_matrix", mat4_transpose(float)(clip_matrix));
+		material_set_floatH(cube_material, handle, game_time);
+		material_set_uint(cube_material, "scene_data.value", 2);
+		material_set_vec3(cube_material, "scene_data.green_color", vec3(float)(1, 1, 0));
+		material_set_vec3(cube_material, "light.dir", vec3(float)(0, -1, 0));
+		material_set_float(cube_material, "light.intensity", 1.0f);
 
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
 
@@ -169,7 +132,7 @@ int main(int argc, char** argv)
 
 		material_bind(text_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
-		mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, -300), mat4_scale(float)(0, 70, 70));
+		mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, -(int)renderer_get_window(renderer)->height * 0.5f + 40, -250), mat4_scale(float)(0, 50, 50));
 		mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
 		material_push_constants(text_material, renderer, &canvas_transform);
 		text_mesh_draw(text, renderer);
@@ -184,7 +147,7 @@ int main(int argc, char** argv)
 		float seconds = time_get_seconds(second_time_handle);
 		if(seconds >= 1)
 		{
-			printf("FPS: %u\n", (int)((int)frame_count / seconds));
+			printf("FPS: %u, TIME: %.3f\n", (int)((int)frame_count / seconds), game_time);
 			second_time_handle = time_get_handle();
 			frame_count = 0;
 			texture_index++;

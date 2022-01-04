@@ -317,6 +317,7 @@ typedef struct struct_descriptor_t
 typedef u16 struct_field_handle_t;
 
 void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr);
+void struct_descriptor_unmap(struct_descriptor_t* descriptor);
 void struct_descriptor_recalculate(struct_descriptor_t* descriptor);
 u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor);
 struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* field_name);

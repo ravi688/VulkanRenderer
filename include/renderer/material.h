@@ -2,14 +2,13 @@
 #pragma once
 
 typedef struct renderer_t renderer_t;
+typedef struct material_t material_t;
 
 #ifdef RENDERER_VULKAN_DRIVER
-typedef struct vulkan_material_t vulkan_material_t;
 typedef struct vulkan_texture_t vulkan_texture_t;
 typedef struct vulkan_shader_t vulkan_shader_t;
 typedef vulkan_texture_t texture_t;
 typedef vulkan_shader_t shader_t;
-typedef vulkan_material_t material_t;
 #endif
 
 #ifdef RENDERER_OPENGL_DRIVER
@@ -87,7 +86,6 @@ void material_release_resources(material_t* material);
 
 void material_bind(material_t* material, renderer_t* renderer);
 void material_push_constants(material_t* material, renderer_t* renderer, void* bytes);
-void material_set_texture(material_t* material, renderer_t* renderer, texture_t* texture);
 
 typedef struct material_field_handle_t
 {

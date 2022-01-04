@@ -155,10 +155,8 @@ static vulkan_stage_shader_t** create_stage_shaders(renderer_t* renderer, BUFFER
 static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_binary, u32 cursor, u16* out_descriptor_count)
 {
 	assert(cursor != 0xFFFFFFFF);
-	log_u32(cursor);
 	u16 descriptor_count = *(u16*)buf_get_ptr_at(shader_binary, cursor); cursor += 2;
 	*out_descriptor_count = descriptor_count;
-	log_u32(descriptor_count);
 	if(descriptor_count == 0)
 	{
 		assert_wrn(descriptor_count != 0);
@@ -228,10 +226,14 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 				struct_field_t field = { .type = type, .size = sizeof_glsl_type(type), .alignment = alignof_glsl_type(type) };
 				strcpy(field.name, name);
 				buf_push(&fields, &field);
-				LOG_MSG("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, field.type, field.size, field.alignment, name);
+				LOG_MSG("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, field.type, field.size, field.alignment, field.name);
 			}
 		}
 	}
+	if(buf_get_element_count(&fields) == 0)
+		buf_free(&fields);
+	else
+		buf_fit(&fields);
 	for(u16 i = 0; i < descriptor_count; i++)
 	{
 		if(indices[i] == BUF_INVALID_INDEX)
@@ -240,10 +242,6 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 		struct_descriptor_recalculate(&descriptors[i].handle);
 		LOG_MSG("Struct \"%s\", size = %u\n", descriptors[i].handle.name, struct_descriptor_sizeof(&descriptors[i].handle));
 	}
-	if(buf_get_element_count(&fields) == 0)
-		buf_free(&fields);
-	else
-		buf_fit(&fields);
 	stack_free(indices);
 	return descriptors;
 }

@@ -17,29 +17,24 @@ per-instance[0] vec3 offset;
 
 #section LAYOUT
 
-// vertex[0, 0] uniform Matrices
-// {
-//     mat4 model_matrix;
-//     mat4 view_matrix;
-//     mat4 projection_matrix;
-//     mat4 clip_matrix;
-// } matrices;
-
 fragment[0, 0] uniform sampler2D texture;
-// fragment[0, 0] uniform sampler2D windows_texture;
-// fragment[0, 1] uniform sampler2D apple_texture;
-// fragment vertex[0, 1] uniform SceneData
-// {
-//     //TODO: Add default value support to shader_compiler
-//     float time;             //float time = 0.0f
-//     vec3 light_dir;         //vec3 light_dir = (1.0f, 0.0f, 0.0f)
-//     float light_intensity;  //float light_intensity = 1.0f
-// } scene_data;
+fragment[0, 1] uniform sampler2D texture2;
+fragment[0, 2] uniform SceneData
+{
+    vec3 green_color;
+    float time;
+    uint value;
+} scene_data;
+
+fragment[0, 3] uniform Light
+{
+    vec3 dir;
+    float intensity;
+} light;
 
 
 
 #section SHADER
-
 
 #stage vertex
 
@@ -49,20 +44,6 @@ layout(push_constant) uniform Push
 {
     mat4 mvp_matrix;
 };
-
-// layout(set = 0, binding = 0) uniform Matrices
-// {
-//     mat4 projection_matrix;
-//     mat4 view_matrix;
-//     mat4 model_matrix;
-// } matrices;
-
-// layout(set = 0, binding = 1) uniform SceneData
-// {
-//     float time;
-//     vec3 light_dir;
-//     float light_intensity;
-// } scene_data;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -94,22 +75,24 @@ layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoord;
 
 layout(set = 0, binding = 0) uniform sampler2D texSampler;
-// layout(set = 0, binding = 0) uniform sampler2D texSampler2;
-// layout(set = 0, binding = 1) uniform sampler2D texSampler3;
+layout(set = 0, binding = 1) uniform sampler2D texSampler2;
+layout(set = 0, binding = 2) uniform SceneData
+{
+    vec3 green_color;
+    float time;
+    uint value;
+};
+layout(set = 0, binding = 3) uniform Light
+{
+    vec3 dir;
+    float intensity;
+} light;
 
-// layout(set = 0, binding = 1) uniform SceneData
-// {
-//     float time;
-//     vec3 light_dir;
-//     float light_intensity;
-// } scene_data;
-
-float dot_product(vec3 v1, vec3 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z; }
 
 void main() {
-    vec3 lightDir = normalize(vec3(1, -1, 0.1));
-    color = fragColor * (max(0, dot(lightDir, -normal)) + 0.1f);
-    color = color * texture(texSampler, texCoord).xyz;
+    color = fragColor * (max(0, dot(light.dir, -normal)) + 0.1f);
+    float t = (1 - sin(time)) * 0.5;
+    vec3 texture_color = (texture(texSampler, texCoord).xyz * t + (1 - t) * texture(texSampler2, texCoord).xyz);
+    color = color * green_color * light.intensity * texture_color;
 }
-
 
