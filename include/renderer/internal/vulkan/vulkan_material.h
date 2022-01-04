@@ -9,13 +9,15 @@ typedef struct renderer_t renderer_t;
 typedef struct vulkan_graphics_pipeline_t vulkan_graphics_pipeline_t;
 typedef struct vulkan_shader_t vulkan_shader_t;
 typedef struct vulkan_texture_t vulkan_texture_t;
+typedef struct vulkan_descriptor_set_t vulkan_descriptor_set_t;
+typedef struct vulkan_buffer_t vulkan_buffer_t;
 
 typedef struct vulkan_material_create_info_t
 {
-	vulkan_shader_t** shaders;
-	u64 shader_count;
+	vulkan_shader_t* shader;
 	uint32_t vertex_info_count;
 	vulkan_vertex_info_t* vertex_infos;
+	VkDescriptorSetLayout vk_set_layout;
 } vulkan_material_create_info_t;
 
 typedef struct vulkan_material_t
@@ -25,10 +27,10 @@ typedef struct vulkan_material_t
 	void* self_reference; 	//self_reference
 
 	//For recreating the graphics pipeline on render window resize
-	vulkan_material_create_info_t create_info;
-
-	uint32_t descriptor_set_count;
-	VkDescriptorSet* descriptor_sets;
+	uint32_t vertex_info_count;
+	vulkan_vertex_info_t* vertex_infos;
+	
+	vulkan_shader_t* shader;
 	vulkan_graphics_pipeline_t* graphics_pipeline;
 } vulkan_material_t;
 
@@ -39,4 +41,5 @@ void vulkan_material_destroy(vulkan_material_t* material, renderer_t* renderer);
 void vulkan_material_release_resources(vulkan_material_t* material);
 void vulkan_material_bind(vulkan_material_t* material, renderer_t* renderer);
 void vulkan_material_push_constants(vulkan_material_t* material, renderer_t* renderer, void* bytes);
-void vulkan_material_set_texture(vulkan_material_t* material, renderer_t* renderer, vulkan_texture_t* texture);
+void vulkan_material_set_texture(vulkan_material_t* material, renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture);
+void vulkan_material_set_uniform_buffer(vulkan_material_t* material, renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer);

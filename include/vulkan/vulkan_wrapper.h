@@ -123,7 +123,7 @@ function_signature(VkDevice, vk_get_device, VkPhysicalDevice physicalDevice);
 function_signature(uint32_t, vk_get_graphics_queue_family_index, VkPhysicalDevice physicalDevice);
 function_signature(VkQueue, vk_get_device_queue, VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex);
 function_signature(VkSwapchainKHR, vk_get_swapchain, VkDevice device, VkSwapchainCreateInfoKHR* createInfo);
-function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, void* spirv, uint32_t length, vulkan_shader_type_t shader_type);
+function_signature(VkShaderModule, vk_get_shader_module, VkDevice device, void* spirv, uint32_t length);
 function_signature(VkShaderModule, vk_get_shader_module_load, VkDevice device, const char* file_name);
 function_signature(VkPipelineShaderStageCreateInfo, vk_get_pipeline_shader_stage_create_info, VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point);
 function_signature(VkPipelineVertexInputStateCreateInfo, vk_get_pipeline_vertex_input_state_create_info, uint32_t binding_count, uint32_t* strides, VkVertexInputRate* input_rates, vertex_attribute_binding_info_t* attribute_infos);
@@ -143,7 +143,8 @@ function_signature(VkPipeline, vk_get_graphics_pipeline, VkDevice device, VkPipe
 											VkPipelineMultisampleStateCreateInfo* multisampleState, 
 											VkPipelineColorBlendStateCreateInfo* colorBlendState);
 
-function_signature(VkDescriptorPool, vk_get_descripter_pool, VkDevice device);
+function_signature(VkDescriptorSetLayout, vk_get_descriptor_set_layout, VkDevice device, VkDescriptorSetLayoutBinding* bindings, uint32_t binding_count);
+function_signature(VkDescriptorPool, vk_get_descriptor_pool, VkDevice device);
 function_signature(VkCommandPool, vk_get_command_pool, VkDevice device, uint32_t queueFamilyIndex);
 function_signature_void(VkAttachmentReference, vk_get_attachment_reference);
 function_signature_void(VkSubpassDependency, vk_get_subpass_dependency);
@@ -219,7 +220,8 @@ function_signature(void, vk_dump_physical_device_extensions, VkPhysicalDevice* p
 #define vk_get_pipeline_dynamic_state_create_info(...) define_alias_function_void_macro(vk_get_pipeline_dynamic_state_create_info)
 #define vk_get_graphics_pipeline(...) define_alias_function_macro(vk_get_graphics_pipeline, __VA_ARGS__)
 
-#define vk_get_descripter_pool(...) define_alias_function_macro(vk_get_descripter_pool, __VA_ARGS__)
+#define vk_get_descriptor_set_layout(...) define_alias_function_macro(vk_get_descriptor_set_layout, __VA_ARGS__)
+#define vk_get_descriptor_pool(...) define_alias_function_macro(vk_get_descriptor_pool, __VA_ARGS__)
 #define vk_get_command_pool(...) define_alias_function_macro(vk_get_command_pool, __VA_ARGS__)
 #define vk_get_attachment_reference(...) define_alias_function_void_macro(vk_get_attachment_reference)
 #define vk_get_subpass_dependency(...) define_alias_function_macro(vk_get_subpass_dependency, __VA_ARGS__)

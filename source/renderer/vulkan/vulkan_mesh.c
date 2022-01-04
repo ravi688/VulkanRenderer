@@ -30,16 +30,12 @@ void vulkan_mesh_create_no_alloc(renderer_t* renderer, vulkan_mesh_create_info_t
 		{
 			vulkan_vertex_buffer_create_info_t* info = refp(vulkan_vertex_buffer_create_info_t, create_info->vertex_buffer_infos, i);
 			if(vertex_count != info->count)
-			{
 				LOG_FETAL_ERR("Vertex buffer creation failed, all the per-vertex vertex buffers should have the same count\n");
-			}
 			vulkan_mesh_create_and_add_vertex_buffer(mesh, renderer, info);
 		}
 	}
 	else
-	{
-		log_wrn("there is no vertex buffers in vulkan_mesh_create_info_t* create_info\n");
-	}
+		LOG_FETAL_ERR("there is no vertex buffers in vulkan_mesh_create_info_t* create_info\n");
 
 	//create index buffer
 	if(create_info->index_buffer_info.count != 0)
@@ -163,7 +159,6 @@ void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* r
 	//otherwise, allocate new memory block and init the internal fields
 	else
 	{
-		//WARNING: buf_push_pseudo(&mesh->vertex_buffers, 1) doesn't seems to be working!
 		vulkan_buffer_t __buffer;
 		vulkan_buffer_init(&__buffer);
 		buf_push(&mesh->vertex_buffers, &__buffer);

@@ -1,4 +1,6 @@
 
+#section SHADER
+
 #stage vertex
 
 #version 450

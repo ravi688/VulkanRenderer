@@ -24,11 +24,12 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 	ASSERT(renderer->vk_render_pass != VK_NULL_HANDLE, "renderer->vk_render_pass == VK_NULL_HANDLE\n");
 	ASSERT(renderer->window != NULL, "renderer->window == NULL\n");
 
-	vulkan_pipeline_layout_create_no_alloc(renderer, pipeline->pipeline_layout);
+	vulkan_pipeline_layout_create_info_t layout_create_info = { .vk_set_layout = create_info->shader->vk_set_layout };
+	vulkan_pipeline_layout_create_no_alloc(renderer, &layout_create_info, pipeline->pipeline_layout);
 
-	VkPipelineShaderStageCreateInfo* shader_stages = stack_newv(VkPipelineShaderStageCreateInfo, create_info->shader_count);
-	for(u32 i = 0; i < create_info->shader_count; i++)
-		ref(VkPipelineShaderStageCreateInfo, shader_stages, i) = (*refp(vulkan_shader_t*, create_info->shaders, i))->stage;
+	VkPipelineShaderStageCreateInfo* shader_stages = stack_newv(VkPipelineShaderStageCreateInfo, create_info->shader->stage_count);
+	for(u32 i = 0; i < create_info->shader->stage_count; i++)
+		ref(VkPipelineShaderStageCreateInfo, shader_stages, i) = (*refp(vulkan_stage_shader_t*, create_info->shader->stage_shaders, i))->stage;
 
 	vertex_attribute_binding_info_t* vertex_attribute_infos = stack_alloc(sizeof(vertex_attribute_binding_info_t) * create_info->vertex_info_count);
 	memset(vertex_attribute_infos, 0, sizeof(vertex_attribute_binding_info_t) * create_info->vertex_info_count);
@@ -50,7 +51,7 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(renderer->window->width, renderer->window->height);
 	VkPipelineMultisampleStateCreateInfo multisampling = vk_get_pipeline_multisample_state_create_info();
 	VkPipelineColorBlendStateCreateInfo colorBlending = vk_get_pipeline_color_blend_state_create_info();
-	pipeline->pipeline = vk_get_graphics_pipeline(	renderer->vk_device, pipeline->pipeline_layout->pipeline_layout, renderer->vk_render_pass,
+	pipeline->pipeline = vk_get_graphics_pipeline(	renderer->vk_device, pipeline->pipeline_layout->handle, renderer->vk_render_pass,
 														shader_stages,
 														&vertexInputInfo,
 														&inputAssembly,

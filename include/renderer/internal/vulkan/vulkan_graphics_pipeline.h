@@ -12,10 +12,10 @@ typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;
 
 typedef struct vulkan_graphics_pipeline_create_info_t
 {
-	vulkan_shader_t** shaders;
-	u32 shader_count;
+	vulkan_shader_t* shader;
 	uint32_t vertex_info_count;
 	vulkan_vertex_info_t* vertex_infos;
+	VkDescriptorSetLayout vk_set_layout;
 } vulkan_graphics_pipeline_create_info_t;
 
 typedef struct vulkan_graphics_pipeline_t
