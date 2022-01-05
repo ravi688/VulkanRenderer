@@ -1,5 +1,6 @@
 # VulkanRenderer
-Educational Vulkan Renderer
+3D renderer built on Vulkan API
+NOTE: Currently only nvidia dedicated gpus are supported.
 
 ## Building shaders
 1. change the working directory to VulkanRenderer/shader_compiler
