@@ -74,6 +74,7 @@ void vulkan_mesh_destroy(vulkan_mesh_t* mesh, renderer_t* renderer)
 	assert(mesh != NULL);
 	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++)
 		vulkan_buffer_destroy((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i), renderer);
+	buf_clear(&mesh->vertex_buffers, NULL);
 	if(mesh->index_buffer != NULL)
 		vulkan_buffer_destroy(refp(vulkan_buffer_t, mesh->index_buffer, 0), renderer);
 }
@@ -147,23 +148,9 @@ void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* r
 		.usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
-
-	vulkan_buffer_t* buffer;
-	//if there is already allocated memory, i.e. the buffer has enough capacity already
-	if(buf_get_capacity(&mesh->vertex_buffers) > buf_get_element_count(&mesh->vertex_buffers))
-	{
-		//reuse the memory
-		buf_set_element_count(&mesh->vertex_buffers, buf_get_element_count(&mesh->vertex_buffers) + 1);
-		buffer = buf_peek_ptr(&mesh->vertex_buffers);
-	}
-	//otherwise, allocate new memory block and init the internal fields
-	else
-	{
-		vulkan_buffer_t __buffer;
-		vulkan_buffer_init(&__buffer);
-		buf_push(&mesh->vertex_buffers, &__buffer);
-		buffer = buf_peek_ptr(&mesh->vertex_buffers);
-	}
+	buf_push_pseudo(&mesh->vertex_buffers, 1);
+	vulkan_buffer_t* buffer = buf_peek_ptr(&mesh->vertex_buffers);
+	vulkan_buffer_init(buffer);
 	vulkan_buffer_create_no_alloc(renderer, &buffer_create_info, buffer);
 }
 
