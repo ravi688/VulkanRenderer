@@ -1,133 +1,305 @@
 
-
-#include <renderer/text_mesh.h>
-#include <renderer/mesh.h>
-#include <renderer/internal/vulkan/vulkan_mesh.h>
-#include <renderer/mesh3d.h>
-#include <renderer/font.h>
+#include <renderer/text_mesh.h>									// text_mesh_t
+#include <renderer/glyph_mesh_pool.h> 							// glyph_mesh_pool_t
+#include <renderer/mesh3d.h>									// mesh3d_t
+#include <renderer/internal/vulkan/vulkan_mesh.h> 				// vulkan_mesh_create_and_vertex_buffer
+#include <renderer/internal/vulkan/vulkan_instance_buffer.h> 	// vulkan_instance_buffer_t
 #include <memory_allocator/memory_allocator.h>
 #include <renderer/assert.h>
-#include <ctype.h>
+#include <dictionary.h>											// dictionary_t
+#include <multi_buffer.h>										// mult_buffer_t
+#include <string.h>												// strlen
+#include <ctype.h> 												// isspace
 
-static void build_meshes(BUFFER* meshes, font_t* font);
+#include <hpml/vec3/header_config.h>
+#include <hpml/vec3/vec3.h>
+#include <hpml/vec4/header_config.h>							// dependency to affine_transformation
+#include <hpml/vec4/vec4.h>
+#include <hpml/affine_transformation/header_config.h> 			// mat4_translation
+#include <hpml/affine_transformation/affine_transformation.h>
 
-text_mesh_t* text_mesh_create(font_t* font)
+#ifndef GLOBAL_DEBUG
+#	define check_pre_condition(text_mesh)
+#else
+	static void check_pre_condition(text_mesh_t* text_mesh);
+#endif /*GLOBAL_DEBUG*/
+
+typedef struct text_mesh_string_t
 {
-	assert(font != NULL);
-	text_mesh_t* text = heap_new(text_mesh_t);
-	memset(text, 0, sizeof(text_mesh_t));
-	text->meshes = buf_create(sizeof(mesh3d_t*), 0, 0);
-	text->render_meshes = buf_create(sizeof(mesh_t*), 0, 0);
-	text->instance_counts = buf_create(sizeof(u32), 0, 0);
-	text->font = font;
-	build_meshes(&text->meshes, font);
-	return text;
+	buf_ucount_t next_index;												// 	index of the next string in the buffer
+	dictionary_t/*(u16, sub_buffer_handle_t)*/ glyph_sub_buffer_handles;	//	dictionary of sub_buffer handles in the multi_buffer of glyphs
+	BUFFER str; 															//	buffer of characters to store the supplied string
+	mat4_t(float) transform;												//	transform
+} text_mesh_string_t;
+
+typedef struct text_mesh_t
+{
+	renderer_t* renderer;
+	glyph_mesh_pool_t* pool;												// pool from which the mesh_t should be queried from for a particular glyph
+	dictionary_t /*(u16, vulkan_instance_buffer_t)*/ instance_buffers;		// array of instance_buffer mapped to each unique glyph considering all the strings
+	BUFFER /*text_mesh_string_t*/ strings;									// array of string (text_mesh_string_t) instances
+	buf_ucount_t free_list;
+	buf_ucount_t inuse_list;
+} text_mesh_t;
+
+
+static sub_buffer_handle_t get_sub_buffer_handle(multi_buffer_t* multi_buffer, dictionary_t* handles, u16 key);
+static vulkan_instance_buffer_t* get_instance_buffer(renderer_t* renderer, dictionary_t* buffers, u16 key);
+
+// constructors and destructors
+text_mesh_t* text_mesh_new()
+{
+	text_mesh_t* mesh = heap_new(text_mesh_t);
+	memset(mesh, 0, sizeof(text_mesh_t));
+	return mesh;
 }
 
-void text_mesh_destroy(text_mesh_t* text, renderer_t* renderer)
+text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool)
 {
-	assert(text != NULL);
-	for(u32 i = 0; i < text->meshes.element_count; i++)
-		mesh3d_destroy(*(mesh3d_t**)buf_get_ptr_at(&text->meshes, i));
-	for(u32 i = 0; i < text->render_meshes.element_count; i++)
-		mesh_destroy(*(mesh_t**)buf_get_ptr_at(&text->render_meshes, i), renderer);
+	assert(pool != NULL);
+	text_mesh_t* text_mesh = text_mesh_new();
+	text_mesh->renderer = renderer;
+	text_mesh->instance_buffers = dictionary_create(u16, vulkan_instance_buffer_t, 0, dictionary_key_comparer_u16);
+	text_mesh->strings = buf_create(sizeof(text_mesh_string_t), 1, 0);
+	text_mesh->pool = pool;
+	text_mesh->free_list = BUF_INVALID_INDEX; 		// free list
+	text_mesh->inuse_list = BUF_INVALID_INDEX; 		// inuse list
+	return text_mesh;
 }
 
-void text_mesh_release_resources(text_mesh_t* text)
+void text_mesh_destroy(text_mesh_t* text_mesh)
 {
-	assert(text != NULL);
-	for(u32 i = 0; i < text->render_meshes.element_count; i++)
-		mesh_release_resources(*(mesh_t**)buf_get_ptr_at(&text->render_meshes, i));
-	buf_free(&text->render_meshes);
-	buf_free(&text->meshes);
-	heap_free(text);
+	check_pre_condition(text_mesh);
+	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
+	BUFFER* strings = &text_mesh->strings;
+	for(buf_ucount_t i = 0; i < dictionary_get_count(instance_buffers); i++)
+		vulkan_buffer_destroy(&((vulkan_instance_buffer_t*)dictionary_get_value_ptr_at(instance_buffers, i))->device_buffer, text_mesh->renderer);
+	for(buf_ucount_t i = 0; i < buf_get_element_count(strings); i++)
+		dictionary_clear(&((text_mesh_string_t*)buf_get_ptr_at(strings, i))->glyph_sub_buffer_handles);
+	buf_clear(strings, NULL);
 }
 
-
-void text_mesh_draw(text_mesh_t* text, renderer_t* renderer)
+void text_mesh_release_resources(text_mesh_t* text_mesh)
 {
-	assert(text != NULL);
-	for(u32 i = 0; i < text->render_meshes.element_count; i++)
-		mesh_draw_indexed_instanced(*(mesh_t**)buf_get_ptr_at(&text->render_meshes, i), renderer, *(u32*)buf_get_ptr_at(&text->instance_counts, i));
+	check_pre_condition(text_mesh);
+	dictionary_t* dic = &text_mesh->instance_buffers;
+	BUFFER* strings = &text_mesh->strings;
+	for(buf_ucount_t i = 0; i < buf_get_element_count(strings); i++)
+		dictionary_free(&((text_mesh_string_t*)buf_get_ptr_at(strings, i))->glyph_sub_buffer_handles);
+	buf_free(strings);
+	dictionary_free(dic);
+	heap_free(text_mesh);
 }
 
-
-void text_mesh_set_string(text_mesh_t* text, renderer_t* renderer, const char* string)
+// logic functions
+void text_mesh_draw(text_mesh_t* text_mesh)
 {
-	assert(text != NULL);
-
-	//maximum number of characters in the character set
-	u8 unique_char_count = 126 - 33 + 1;
-
-	//create a count_mask,
-	u32 count_mask[unique_char_count];
-	memset(count_mask, 0UL, sizeof(u32) * unique_char_count);
-
-	//create instance buffers for each possible character in the character set
-	BUFFER instance_buffers[unique_char_count];
-	for(u8 i = 0; i < unique_char_count; i++)
-		instance_buffers[i] = buf_create(sizeof(vec3_t(float)), 0, 0);
-
-	float horizontal_pen = 0;
-	while(*string != 0)
+	check_pre_condition(text_mesh);
+	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
+	buf_ucount_t count = dictionary_get_count(instance_buffers);
+	for(buf_ucount_t i = 0; i < count; i++)
 	{
-		char ch = *string;
-		assert((ch >= 32) && (ch <= 126));
+		u16 glyph = *(u16*)dictionary_get_key_ptr_at(instance_buffers, i);
+		vulkan_instance_buffer_t* instance_buffer = dictionary_get_value_ptr_at(instance_buffers, i);
+		if(!vulkan_instance_buffer_commit(instance_buffer))
+			continue;
+		mesh_t* mesh = glyph_mesh_pool_get_mesh(text_mesh->pool, glyph);
+		vulkan_mesh_bind_all_vertex_buffers(mesh, text_mesh->renderer);
+		vulkan_mesh_bind_vertex_buffer(mesh, text_mesh->renderer, &instance_buffer->device_buffer);
+		vulkan_mesh_draw_indexed_instanced_only(mesh, text_mesh->renderer, instance_buffer->device_buffer.count);
+	}
+}
+
+// constructors and destructors
+text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh)
+{
+	check_pre_condition(text_mesh);
+	BUFFER* strings = &text_mesh->strings;
+	text_mesh_string_t* string; 
+	if(text_mesh->free_list != BUF_INVALID_INDEX)
+	{	
+		log_msg("Returning pre-allocated string\n");
+		buf_ucount_t index = text_mesh->free_list;
+		string = buf_get_ptr_at(strings, index);
+		
+		// remove from free list
+		text_mesh->free_list = string->next_index;
+
+		// add in inuse list
+		string->next_index = text_mesh->inuse_list;
+		text_mesh->inuse_list = index;
+	}
+	else
+	{
+		log_msg("Allocating new string\n");
+		// WARNING: Can't use buf_push_pseudo here because it doesn't take care of offset bytes at the end of the internal buffer
+		text_mesh_string_t _string;
+		buf_push(strings, &_string);
+		string = buf_peek_ptr(strings);
+		string->glyph_sub_buffer_handles = dictionary_create(u16, buf_ucount_t, 0, dictionary_key_comparer_u16);
+		string->str = buf_create(sizeof(char), 0, 0);
+		mat4_move(float)(&string->transform, mat4_identity(float)());
+		
+		// add in inuse list
+		string->next_index = text_mesh->inuse_list;
+		text_mesh->inuse_list = buf_get_element_count(strings) - 1;
+	}
+	return text_mesh->inuse_list;
+}
+
+void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+{
+	check_pre_condition(text_mesh);
+	BUFFER* strings = &text_mesh->strings;
+	buf_ucount_t index = text_mesh->inuse_list;
+	text_mesh_string_t* prev_string = NULL;
+	while((index != handle) && (index != BUF_INVALID_INDEX))
+	{
+		prev_string = buf_get_ptr_at(strings, index);
+		index = prev_string->next_index;
+	}
+	assert(index != BUF_INVALID_INDEX);			// failed to find a string with index "handle"
+
+	text_mesh_string_t* string = buf_get_ptr_at(strings, index);
+	
+	// reset the string for re-use later
+	dictionary_clear(&string->glyph_sub_buffer_handles);
+	buf_clear(&string->str, NULL);
+	mat4_move(float)(&string->transform, mat4_identity(float)());
+
+	// remove from inuse list
+	if(prev_string != NULL)
+		prev_string->next_index = string->next_index;
+	else
+		text_mesh->inuse_list = BUF_INVALID_INDEX;
+	
+	// add to free list
+	string->next_index = text_mesh->free_list;
+	text_mesh->free_list = index;
+}
+
+// setters
+void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* str)
+{
+	check_pre_condition(text_mesh);
+	// TODO: ensure handle isn't in the free-list, meaning it has been already destroyed, this check should be in debug mode only
+	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
+	u32 len = strlen(str);
+	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
+
+	// clear the sub buffers
+	for(u32 i = 0; i < dictionary_get_count(&string->glyph_sub_buffer_handles); i++)
+	{
+		u16 ch;
+		dictionary_get_key_at(&string->glyph_sub_buffer_handles, i, &ch);
+		multi_buffer_t* buffer = &(get_instance_buffer(text_mesh->renderer, instance_buffers, ch)->host_buffer);
+		sub_buffer_clear(buffer, get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch));
+	}
+
+	// re-write on the sub buffers
+	float horizontal_pen = 0.0f;
+	for(u32 i = 0; i < len; i++)
+	{
+		u16 ch = str[i];
 		font_glyph_info_t info;
-		font_get_glyph_info(text->font, ch, &info);
-
-		vec3_t(float) v = { 0, 0, horizontal_pen };
-		horizontal_pen += info.advance_width;
-
-		if(ch != 32)
+		font_get_glyph_info(glyph_mesh_pool_get_font(text_mesh->pool), ch, &info);
+		if(isspace(ch))
 		{
-			BUFFER* buffer = &instance_buffers[ch - 33];
-			count_mask[ch - 33]++;
-			buf_push(buffer, &v);
+			horizontal_pen += info.advance_width;
+			continue;
 		}
-		string++;
+		vulkan_instance_buffer_t* instance_buffer = get_instance_buffer(text_mesh->renderer, instance_buffers, ch);
+		multi_buffer_t* buffer = &instance_buffer->host_buffer;
+		sub_buffer_handle_t handle = get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch);
+		//mat4_t(float) transform = mat4_transpose(float)(mat4_mul(float)(2, string->transform, mat4_translation(float)(0, 0, horizontal_pen)));
+		vec3_t(float) offset = { 0, 0, horizontal_pen };
+		sub_buffer_push(buffer, handle, &offset);
+		horizontal_pen += info.advance_width;
 	}
+}
 
-	for(u8 i = 0; i < unique_char_count; i++)
+void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) scale)
+{
+	check_pre_condition(text_mesh);
+}
+void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) position)
+{
+	check_pre_condition(text_mesh);
+}
+void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) rotation)
+{
+	check_pre_condition(text_mesh);
+}
+void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t(float) transform)
+{
+	check_pre_condition(text_mesh);
+}
+
+// getters
+const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+{
+	check_pre_condition(text_mesh);
+	return NULL;
+}
+vec3_t(float) text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+{
+	check_pre_condition(text_mesh);
+	return vec3_zero(float)();
+}
+vec3_t(float) text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+{
+	check_pre_condition(text_mesh);
+	return vec3_zero(float)();
+}
+vec3_t(float) text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+{
+	check_pre_condition(text_mesh);
+	return vec3_zero(float)();
+}
+mat4_t(float) text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+{
+	check_pre_condition(text_mesh);
+	return mat4_identity(float)();
+}
+
+
+#ifdef GLOBAL_DEBUG
+static void check_pre_condition(text_mesh_t* text_mesh)
+{
+	assert(text_mesh != NULL);
+}
+#endif /*GLOBAL_DEBUG*/
+
+
+
+static sub_buffer_handle_t get_sub_buffer_handle(multi_buffer_t* multi_buffer, dictionary_t* handles, u16 key)
+{
+	buf_ucount_t index = dictionary_find_index_of(handles, &key);
+	if(index == BUF_INVALID_INDEX)
 	{
-		if(count_mask[i] == 0UL) continue;
-		mesh_t* mesh = mesh_create(renderer, *(mesh3d_t**)buf_get_ptr_at(&text->meshes, i));
-		vulkan_vertex_buffer_create_info_t create_info =
+		// create new
+		sub_buffer_handle_t handle = sub_buffer_create(multi_buffer, 32);
+		dictionary_add(handles, &key, &handle);
+		index = dictionary_get_count(handles) - 1;
+	}
+	return *(sub_buffer_handle_t*)dictionary_get_value_ptr_at(handles, index);
+}
+
+static vulkan_instance_buffer_t* get_instance_buffer(renderer_t* renderer, dictionary_t* buffers, u16 key)
+{
+	buf_ucount_t index = dictionary_find_index_of(buffers, &key);
+	if(index == BUF_INVALID_INDEX)
+	{
+		// create new
+		vulkan_instance_buffer_t buffer;
+		vulkan_instance_buffer_create_info_t create_info = 
 		{
-			.data = instance_buffers[i].bytes,
-			.stride = sizeof(vec3_t(float)),
-			.count = instance_buffers[i].element_count
+			.stride = sizeof(float) * 3, //sizeof(float) * 16, // TODO: sizeof(float) * 16 should be HPML_SIZEOF_MAT4
+			.capacity = 10,
 		};
-		vulkan_mesh_create_and_add_vertex_buffer(mesh, renderer, &create_info);
-		buf_free(&instance_buffers[i]);
-		buf_push(&text->render_meshes, &mesh);
+		vulkan_instance_buffer_create(renderer, &create_info, &buffer);
+		dictionary_add(buffers, &key, &buffer);
+		index = dictionary_get_count(buffers) - 1;
 	}
-
-	for(u8 i = 0; i < unique_char_count; i++)
-		if(count_mask[i] != 0UL)
-			buf_push(&text->instance_counts, &count_mask[i]);
+	return dictionary_get_value_ptr_at(buffers, index);
 }
-
-void text_mesh_set_size(text_mesh_t* text, const u32 size)
-{
-	assert(text != NULL);
-
-}
-
-
-static void build_meshes(BUFFER* meshes, font_t* font)
-{
-	/*NOTE: 32 is space, not printable character*/
-	u16 A = 33;
-	buf_clear(meshes, NULL);
-	while(A <= 126)
-	{
-		font_glyph_info_t info;
-		font_get_glyph_info(font, A, &info);
-		mesh3d_t* mesh = mesh3d_new();
-		font_get_glyph_mesh(font, A, FONT_GLYPH_MESH_QUALITY_LOW, mesh);
-		buf_push(meshes, &mesh);
-		A++;
-	}
-}
-

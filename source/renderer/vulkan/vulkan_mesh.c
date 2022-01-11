@@ -46,6 +46,7 @@ void vulkan_mesh_create_no_alloc(renderer_t* renderer, vulkan_mesh_create_info_t
 			.stride = get_index_stride(create_info->index_buffer_info.index_type),
 			.count = create_info->index_buffer_info.count,
 			.usage_flags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			.sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
 			.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		};
 		if(mesh->index_buffer != NULL)
@@ -120,6 +121,26 @@ void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* renderer, v
 	mesh->binding_index++;
 }
 
+void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
+{
+	assert(mesh != NULL);
+	assert(mesh->index_buffer != NULL);
+	assert(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
+	VkCommandBuffer command_buffer = renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index];
+	vkCmdBindIndexBuffer(command_buffer, mesh->index_buffer->handle, 0, mesh->index_type);
+	vkCmdDrawIndexed(command_buffer, mesh->index_buffer->count, instance_count, 0, 0, 0);
+	mesh->binding_index = 0;
+}
+
+void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh, renderer_t* renderer)
+{
+	assert(mesh != NULL);
+	VkDeviceSize offsets[1] = { 0 };
+	VkCommandBuffer command_buffer = renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index];
+	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++, mesh->binding_index++)
+		vkCmdBindVertexBuffers(command_buffer, mesh->binding_index, 1, &(((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i))->handle), offsets);	
+}
+
 void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
 {
 	assert(mesh != NULL);
@@ -157,6 +178,7 @@ void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* r
 		.stride = create_info->stride,
 		.count = create_info->count,
 		.usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
 		.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
 	buf_push_pseudo(&mesh->vertex_buffers, 1);

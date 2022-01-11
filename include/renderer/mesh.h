@@ -25,6 +25,7 @@ typedef vulkan_mesh_t mesh_t;
 #error "Metal is not supported yet!"
 #endif
 
+#include <renderer/defines.h>
 
 
 mesh_t* mesh_new();
@@ -37,6 +38,5 @@ void mesh_sync(mesh_t* mesh, renderer_t* renderer, mesh3d_t* mesh_data);
 __attribute__((deprecated))
 void mesh_draw(mesh_t* mesh, renderer_t* renderer);
 void mesh_draw_indexed(mesh_t* mesh, renderer_t* renderer);
-void mesh_draw_instanced(mesh_t* mesh, renderer_t* renderer, uint32_t instance_count);
-void mesh_draw_indexed_instanced(mesh_t* mesh, renderer_t* renderer, uint32_t instance_count);
-
+void mesh_draw_instanced(mesh_t* mesh, renderer_t* renderer, u32 instance_count);
+void mesh_draw_indexed_instanced(mesh_t* mesh, renderer_t* renderer, u32 instance_count);
