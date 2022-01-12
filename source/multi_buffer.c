@@ -129,7 +129,7 @@ void multi_buffer_sub_buffer_clear(multi_buffer_t* multi_buffer, sub_buffer_hand
 	check_pre_condition(multi_buffer);
 	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
 	void* bytes = buf_get_ptr(&multi_buffer->buffer);
-	memset(bytes + sub_buffer->ptr, sub_buffer->count, buf_get_element_size(&multi_buffer->buffer) * sub_buffer->count);
+	memset(bytes + sub_buffer->ptr * buf_get_element_size(&multi_buffer->buffer), 0, buf_get_element_size(&multi_buffer->buffer) * sub_buffer->count);
 	sub_buffer->count = 0;
 }
 
