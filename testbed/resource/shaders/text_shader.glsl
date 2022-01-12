@@ -1,10 +1,21 @@
+#section SETTINGS
+
+
+#section LAYOUT
+
+vertex [0, 0] uniform UBO
+{
+	float time;
+} ubo;
+
+
 #section SHADER
 
 #stage vertex
 
 #version 450
 
-layout(binding = 0) uniform UniformBufferObject
+layout(binding = 0) uniform UBO
 {
 	float time;
 } ubo;
@@ -25,7 +36,7 @@ layout(location = 1) in vec3 offset;
 
 void main()
 {
-	gl_Position = push.mvp * vec4(position + offset, 1);
+	gl_Position = push.mvp * vec4(position + offset + vec3(0, cos(ubo.time), sin(ubo.time)), 1);
 }
 
 

@@ -33,8 +33,6 @@
 #include <hpml/affine_transformation/header_config.h>
 #include <hpml/affine_transformation/affine_transformation.h>
 
-#include <ttf2mesh.h>
-
 #define DEG2RAD 0.01745f
 #define RAD2DEG 57.29577f
 
@@ -55,6 +53,16 @@ static void offset_visitor(vec3_t(float)* position, void* user_data)
 	*position = vec3_mul(float)(*position, vec3(float)(0, 100, 100));
 }
 
+bool char_comparer(void* ptr1, void* ptr2)
+{
+	return (*(char*)ptr1) == (*(char*)ptr2);
+}
+
+static void u32_to_string(u32 value, char* string)
+{
+	sprintf(string, "FPS: %u", value);
+}
+
 int main(int argc, char** argv)
 {
 	memory_allocator_init(&argc);
@@ -66,20 +74,30 @@ int main(int argc, char** argv)
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
 	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
 
+
 	/*------TEXT-----------------------------*/
 	shader_t* text_shader = shader_load(renderer, "resource/shaders/text_shader.sb");
-	font_t* font = font_load_and_create("resource/fonts/arial.ttf");
-	text_mesh_t* text = text_mesh_create(font);
-	text_mesh_set_string(text, renderer, "Vulkan 3D Renderer");
-	// text_mesh_set_size(text, 100);
+	font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
+	glyph_mesh_pool_t* pool = glyph_mesh_pool_create(renderer, font);
+	mesh_t* glyph_A = glyph_mesh_pool_get_mesh(pool, 'A');
+	mesh_t* glyph_B = glyph_mesh_pool_get_mesh(pool, 'B');
+	text_mesh_t* text_mesh = text_mesh_create(renderer, pool);
+	text_mesh_string_handle_t fps_string_handle = text_mesh_string_create(text_mesh);
+	text_mesh_string_set_positionH(text_mesh, fps_string_handle, vec3(float)(0, 0, -3));
+	text_mesh_string_handle_t module_name_handle = text_mesh_string_create(text_mesh);
+	text_mesh_string_set_positionH(text_mesh, module_name_handle, vec3(float)(0, 2, -3));
+	text_mesh_string_setH(text_mesh, module_name_handle, "Vulkan 3D Renderer");
 
 	material_create_info_t text_material_info =
 	{
 		.per_vertex_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0), //position
-		.per_instance_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0), //offset
+		.per_instance_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0),  //offset
 		.shader = text_shader,
 	};
 	material_t* text_material = material_create(renderer, &text_material_info);
+	/*---------------------------------------*/
+
+	/*--------PLAYGROUND----------------------*/
 	/*---------------------------------------*/
 
 	/*------CUBE-----------------------------*/
@@ -115,12 +133,13 @@ int main(int argc, char** argv)
 	{
 		float delta_time = time_get_delta_time(&frame_time_handle);
 		float game_time = time_get_seconds(game_time_handle);
-		mat4_t(float) model_matrix = mat4_rotation(float)(0, angle * DEG2RAD, 0);
+		mat4_t(float) model_matrix = mat4_rotation(float)(0, sin(angle * DEG2RAD) * 1.57f, 0);
 		material_set_floatH(cube_material, handle, game_time);
 		material_set_uint(cube_material, "scene_data.value", 2);
-		material_set_vec3(cube_material, "scene_data.green_color", vec3(float)(1, 1, 0));
+		material_set_vec3(cube_material, "scene_data.green_color", vec3(float)(1, 1, 1));
 		material_set_vec3(cube_material, "light.dir", vec3(float)(0, -1, 0));
 		material_set_float(cube_material, "light.intensity", 1.0f);
+		material_set_float(text_material, "ubo.time", game_time);
 
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
 
@@ -132,10 +151,12 @@ int main(int argc, char** argv)
 
 		material_bind(text_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
-		mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, -(int)renderer_get_window(renderer)->height * 0.5f + 40, -250), mat4_scale(float)(0, 50, 50));
+		mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_scale(float)(0, 50, 50));
 		mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
 		material_push_constants(text_material, renderer, &canvas_transform);
-		text_mesh_draw(text, renderer);
+		text_mesh_draw(text_mesh);
+		// mesh_draw_indexed(glyph_A, renderer);
+		// mesh_draw_indexed(glyph_B, renderer);
 
 		renderer_end_frame(renderer);
 
@@ -145,29 +166,37 @@ int main(int argc, char** argv)
 			angle = 0.0f;
 
 		float seconds = time_get_seconds(second_time_handle);
-		if(seconds >= 1)
+		if(seconds >= 0.05f)
 		{
-			printf("FPS: %u, TIME: %.3f\n", (int)((int)frame_count / seconds), game_time);
+			u32 fps = (u32)((int)frame_count / seconds);
+			char fps_string[32];
+			u32_to_string(fps, fps_string);
+			text_mesh_string_setH(text_mesh, fps_string_handle, fps_string);
+			// printf("FPS: %u, TIME: %.3f\n", fps, game_time);
 			second_time_handle = time_get_handle();
 			frame_count = 0;
 			texture_index++;
 			texture_index = texture_index % 3;
-			switch(texture_index)
-			{
-				case 0: material_set_texture2d(cube_material, "texture", linux_texture); break;
-				case 1: material_set_texture2d(cube_material, "texture", windows_texture); break;
-				case 2: material_set_texture2d(cube_material, "texture", apple_texture); break;
-				default:
-					assert(false);
-			}
+			// switch(texture_index)
+			// {
+			// 	case 0: material_set_texture2d(cube_material, "texture", linux_texture); break;
+			// 	case 1: material_set_texture2d(cube_material, "texture", windows_texture); break;
+			// 	case 2: material_set_texture2d(cube_material, "texture", apple_texture); break;
+			// 	default:
+			// 		assert(false);
+			// }
 		}
 		++frame_count;
 	}
 
+
+	glyph_mesh_pool_destroy(pool);
+	glyph_mesh_pool_release_resources(pool);
+
 	font_destroy(font);
 	font_release_resources(font);
-	text_mesh_destroy(text, renderer);
-	text_mesh_release_resources(text);
+	text_mesh_destroy(text_mesh);
+	text_mesh_release_resources(text_mesh);
 	shader_destroy(text_shader, renderer);
 	shader_release_resources(text_shader);
 	material_destroy(text_material, renderer);

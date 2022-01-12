@@ -60,7 +60,7 @@ struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* de
 	for(u16 i = 0; i < descriptor->field_count; i++)
 		if(strcmp(descriptor->fields[i].name, field_name) == 0)
 			return i;
-	LOG_WRN("Returning STRUCT_FIELD_INVALID_HANDLE, field_name: %s\n", field_name);
+	// LOG_WRN("Returning STRUCT_FIELD_INVALID_HANDLE, field_name: %s\n", field_name);
 	return STRUCT_FIELD_INVALID_HANDLE;
 }
 
