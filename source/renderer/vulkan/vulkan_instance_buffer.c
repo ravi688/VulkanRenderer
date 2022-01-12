@@ -88,6 +88,7 @@ bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer)
 	for(u32 i = 0; i < sub_buffer_count; i++)
 	{
 		u32 num_bytes = sub_buffer_get_count(host_buffer, i) * device_buffer->stride;
+		if(num_bytes == 0) continue;
 		memcpy(ptr, sub_buffer_get_ptr(host_buffer, i), num_bytes);
 		ptr += num_bytes;
 	}

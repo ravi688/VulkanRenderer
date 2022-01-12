@@ -77,15 +77,16 @@ int main(int argc, char** argv)
 
 	/*------TEXT-----------------------------*/
 	shader_t* text_shader = shader_load(renderer, "resource/shaders/text_shader.sb");
-	font_t* font = font_load_and_create("resource/fonts/arial.ttf");
+	font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
 	glyph_mesh_pool_t* pool = glyph_mesh_pool_create(renderer, font);
 	mesh_t* glyph_A = glyph_mesh_pool_get_mesh(pool, 'A');
 	mesh_t* glyph_B = glyph_mesh_pool_get_mesh(pool, 'B');
 	text_mesh_t* text_mesh = text_mesh_create(renderer, pool);
-	text_mesh_string_handle_t fps_handle = text_mesh_string_create(text_mesh);
-	text_mesh_string_setH(text_mesh, fps_handle, "FPS: 456");
-
-
+	text_mesh_string_handle_t fps_string_handle = text_mesh_string_create(text_mesh);
+	text_mesh_string_set_positionH(text_mesh, fps_string_handle, vec3(float)(0, 0, -3));
+	text_mesh_string_handle_t module_name_handle = text_mesh_string_create(text_mesh);
+	text_mesh_string_set_positionH(text_mesh, module_name_handle, vec3(float)(0, 2, -3));
+	text_mesh_string_setH(text_mesh, module_name_handle, "Vulkan 3D Renderer");
 
 	material_create_info_t text_material_info =
 	{
@@ -138,6 +139,7 @@ int main(int argc, char** argv)
 		material_set_vec3(cube_material, "scene_data.green_color", vec3(float)(1, 1, 1));
 		material_set_vec3(cube_material, "light.dir", vec3(float)(0, -1, 0));
 		material_set_float(cube_material, "light.intensity", 1.0f);
+		material_set_float(text_material, "ubo.time", game_time);
 
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
 
@@ -169,7 +171,7 @@ int main(int argc, char** argv)
 			u32 fps = (u32)((int)frame_count / seconds);
 			char fps_string[32];
 			u32_to_string(fps, fps_string);
-			text_mesh_string_setH(text_mesh, fps_handle, fps_string);
+			text_mesh_string_setH(text_mesh, fps_string_handle, fps_string);
 			// printf("FPS: %u, TIME: %.3f\n", fps, game_time);
 			second_time_handle = time_get_handle();
 			frame_count = 0;
