@@ -28,15 +28,19 @@ layout(push_constant) uniform Push
 
 //Inputs
 //per vertex
-layout(location = 0) in vec3 position;
+layout(location = 0) in vec3 norm_position;
 
 //per instance
 layout(location = 1) in vec3 offset;
-
+layout(location = 2) in vec3 scale;
+layout(location = 3) in vec3 rotation;
 
 void main()
 {
-	gl_Position = push.mvp * vec4(position + offset + vec3(0, cos(ubo.time), sin(ubo.time)), 1);
+	vec3 pos = offset;
+	pos += norm_position;
+	pos = pos * scale;
+	gl_Position = push.mvp * vec4(pos + vec3(0, cos(ubo.time), sin(ubo.time)), 1);
 }
 
 

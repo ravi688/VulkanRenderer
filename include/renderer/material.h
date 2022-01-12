@@ -73,9 +73,11 @@ enum
 
 typedef struct material_create_info_t
 {
-	u64 per_vertex_attributes;
-	u64 per_instance_attributes;
+	u64* per_vertex_attribute_bindings;
+	u64* per_instance_attribute_bindings;
 	shader_t* shader;
+	u32 per_vertex_attribute_binding_count;
+	u32 per_instance_attribute_binding_count;
 } material_create_info_t;
 
 material_t* material_new();

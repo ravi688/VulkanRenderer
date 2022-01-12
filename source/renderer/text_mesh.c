@@ -141,7 +141,9 @@ text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh)
 		string->glyph_sub_buffer_handles = dictionary_create(u16, buf_ucount_t, 0, dictionary_key_comparer_u16);
 		string->str = buf_create(sizeof(char), 0, 0);
 		string->position = vec3_zero(float)();
-		
+		string->rotation = vec3_zero(float)();
+		string->scale = vec3(float)(1, 1, 1);
+
 		// add in inuse list
 		string->next_index = text_mesh->inuse_list;
 		text_mesh->inuse_list = buf_get_element_count(strings) - 1;
@@ -168,6 +170,8 @@ void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t
 	dictionary_clear(&string->glyph_sub_buffer_handles);
 	buf_clear(&string->str, NULL);
 	string->position = vec3_zero(float)();
+	string->rotation = vec3_zero(float)();
+	string->scale = vec3(float)(1, 1, 1);
 
 	// remove from inuse list
 	if(prev_string != NULL)
@@ -213,9 +217,13 @@ void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t han
 		vulkan_instance_buffer_t* instance_buffer = get_instance_buffer(text_mesh->renderer, instance_buffers, ch);
 		multi_buffer_t* buffer = &instance_buffer->host_buffer;
 		sub_buffer_handle_t handle = get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch);
-		vec3_t(float) offset = { 0, 0, horizontal_pen };
+		vec3_t(float) offset = { 0, 0, horizontal_pen};
 		offset = vec3_add(float)(offset, string->position);
-		sub_buffer_push(buffer, handle, &offset);
+		char bytes[36];
+		memcpy(bytes, &offset, 12);
+		memcpy(bytes + 12, &string->scale, 12);
+		memcpy(bytes + 24, &string->rotation, 12);
+		sub_buffer_push(buffer, handle, bytes);
 		horizontal_pen += info.advance_width;
 	}
 }
@@ -308,7 +316,7 @@ static vulkan_instance_buffer_t* get_instance_buffer(renderer_t* renderer, dicti
 		vulkan_instance_buffer_t buffer;
 		vulkan_instance_buffer_create_info_t create_info = 
 		{
-			.stride = sizeof(float) * 3, //sizeof(float) * 16, // TODO: sizeof(float) * 16 should be HPML_SIZEOF_MAT4
+			.stride = 36,		// vec3 offset, vec3 scale, vec3 rotation
 			.capacity = 10,
 		};
 		vulkan_instance_buffer_create(renderer, &create_info, &buffer);
