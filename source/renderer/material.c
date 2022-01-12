@@ -13,11 +13,11 @@
 #define VERTEX_INFO_COUNT 4
 
 instantiate_static_stack_array(VkFormat);
-static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices);
+static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices, u32* out_aligments);
 static material_t* __material_create(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader);
 static void __material_create_no_alloc(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, material_t* material);
 static u32 decode_attribute_count(u64 packed_attributes);
-static void decode_vulkan_vertex_infos(u64 packed_attributes, VkVertexInputRate input_rate, vulkan_vertex_info_t* out_vertex_infos, VkFormat* formats, u32* offsets);
+static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, VkVertexInputRate input_rate);
 
 static void get_record_and_field_name(const char* const full_name, char out_struct_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE], char out_field_name[STRUCT_FIELD_MAX_NAME_SIZE]);
 static VkDescriptorSetLayoutBinding* get_set_layout_bindings(shader_t* shader, u32* out_binding_count);
@@ -55,25 +55,23 @@ material_t* material_new()
 
 material_t* material_create(renderer_t* renderer, material_create_info_t* create_info)
 {
-	u32 per_vertex_attribute_count = decode_attribute_count(create_info->per_vertex_attributes);
-	u32 per_instance_attribute_count = decode_attribute_count(create_info->per_instance_attributes);
-	log_u32(per_vertex_attribute_count);
-	log_u32(per_instance_attribute_count);
-	u32 total_attribute_count = per_vertex_attribute_count + per_instance_attribute_count;
+	u32 total_attribute_count = create_info->per_vertex_attribute_binding_count + create_info->per_instance_attribute_binding_count;
 	if(total_attribute_count == 0)
 		LOG_FETAL_ERR("Material create error: total_attribute_count is equals to 0\n");
-	VkFormat* formats = stack_newv(VkFormat, total_attribute_count + 5);
-	u32* offsets = stack_newv(u32, total_attribute_count + 5);
 	vulkan_vertex_info_t* vertex_infos = stack_newv(vulkan_vertex_info_t, total_attribute_count);
-	if(per_vertex_attribute_count > 0)
-		decode_vulkan_vertex_infos(create_info->per_vertex_attributes, VK_VERTEX_INPUT_RATE_VERTEX, vertex_infos, formats, offsets);
-	if(per_instance_attribute_count > 0)
-		decode_vulkan_vertex_infos(create_info->per_instance_attributes, VK_VERTEX_INPUT_RATE_INSTANCE, vertex_infos + per_vertex_attribute_count, formats + per_vertex_attribute_count, offsets + per_vertex_attribute_count);
+	for(u32 i = 0; i < create_info->per_vertex_attribute_binding_count; i++)
+	{
+		u32 attribute_count = decode_attribute_count(create_info->per_vertex_attribute_bindings[i]);
+		vertex_infos[i] = decode_vulkan_vertex_info(create_info->per_vertex_attribute_bindings[i], VK_VERTEX_INPUT_RATE_VERTEX);
+	}
+	for(u32 i = 0; i < create_info->per_instance_attribute_binding_count; i++)
+	{
+		u32 attribute_count = decode_attribute_count(create_info->per_instance_attribute_bindings[i]);
+		vertex_infos[i + create_info->per_vertex_attribute_binding_count] = decode_vulkan_vertex_info(create_info->per_instance_attribute_bindings[i], VK_VERTEX_INPUT_RATE_INSTANCE);
+	}
 
 	material_t* material =  __material_create(renderer, create_info->shader->vk_set_layout, total_attribute_count, vertex_infos, create_info->shader);
 	material_set_up_shader_resources(material);
-	stack_free(formats);
-	stack_free(offsets);
 	stack_free(vertex_infos);
 	return material;
 }
@@ -479,7 +477,7 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 	memcpy(out_field_name, ptr + 1, field_name_len);
 }
 
-static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices)
+static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices, u32* out_aligments)
 {
 	{
 		u32 indices[21 + 1] =
@@ -487,7 +485,7 @@ static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
 			13, 16, 20, 21, 22, 23, 24, 26
 		};
-		memcpy(refp(u32, out_indices, 0), indices, sizeof(u32) * 22);
+		memcpy(&out_indices[0], indices, sizeof(u32) * 22);
 	};
 	{
 		u32 sizes[21 + 1] =
@@ -496,7 +494,17 @@ static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out
 			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 12, 16, 16,
 			36, 64, 8, 12, 16, 8, 12, 16
 		};
-		memcpy(refp(u32, out_sizes, 0), sizes, sizeof(u32) * 22);
+		memcpy(&out_sizes[0], sizes, sizeof(u32) * 22);
+	};
+
+	{
+		u32 aligments[21 + 1] = 
+		{
+			0,
+			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 12, 16, 16,
+			64, 64, 8, 12, 16, 8, 12, 16
+		};
+		memcpy(&out_aligments[0], aligments, sizeof(u32) * 22);
 	};
 	VkFormat vulkan_formats[26] =
 	{
@@ -551,7 +559,7 @@ static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out
 		//UVEC4
 		VK_FORMAT_R32G32B32A32_UINT,
 	};
-	memcpy(refp(VkFormat, out_formats, 0), vulkan_formats, sizeof(VkFormat) * 26);
+	memcpy(&out_formats[0], vulkan_formats, sizeof(VkFormat) * 26);
 }
 
 static u32 decode_attribute_count(u64 packed_attributes)
@@ -569,31 +577,33 @@ static u32 decode_attribute_count(u64 packed_attributes)
 	return count;
 }
 
-static void decode_vulkan_vertex_infos(u64 packed_attributes, VkVertexInputRate input_rate, vulkan_vertex_info_t* out_vertex_infos, VkFormat* formats, u32* offsets)
+static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, VkVertexInputRate input_rate)
 {
-	VkFormat* vulkan_formats = stack_newv(u32, 26);
-	u32* sizes = stack_newv(u32, 22);
-	u32* indices = stack_newv(u32, 22);
-	get_vulkan_constants(vulkan_formats, sizes, indices);
+	VkFormat vulkan_formats[26];
+	u32 sizes[22];
+	u32 indices[22];
+	u32 alignments[22];
+	get_vulkan_constants(vulkan_formats, sizes, indices, alignments);
+
+	VkFormat formats[12];
+	u32 offsets[12];
 
 	u8 bits_per_type = 5;
 	u64 bits_mask = ~(0xFFFFFFFFFFFFFFFFULL << bits_per_type);
 
 	u32 i = 0;
+	u32 offset = 0;
 	while(packed_attributes != 0)
 	{
-		//WARNING: this should be like this: refp(vulkan_vertex_info_t, out_vertex_infos, i)
-		vulkan_vertex_info_t* info = &out_vertex_infos[i];
 		u64 attribute_type = (packed_attributes & bits_mask);
 		if(attribute_type == 0)
 		{
 			packed_attributes >>= bits_per_type;
 			continue;
 		}
-		VkFormat vulkan_format = ref(VkFormat, vulkan_formats, ref(u32, indices, attribute_type));
-		info->input_rate = input_rate;
-		info->size = ref(u32, sizes, attribute_type);
-		info->attribute_count = 1;
+		VkFormat vulkan_format = vulkan_formats[indices[attribute_type]];
+		u32 align = alignments[attribute_type];
+		u32 field_offset = ((align - (offset % align)) % align) + offset;
 		switch(attribute_type)
 		{
 			case MATERIAL_MAT3:
@@ -605,19 +615,21 @@ static void decode_vulkan_vertex_infos(u64 packed_attributes, VkVertexInputRate 
 			break;
 
 			default:/*or MATERIAL_MAT2*/
-				//WARNING: this should be like this: ref(VkFormat, formats, i)
 				formats[i] = vulkan_format;
-				//WARNING: this should be like this: refp(VkFormat, formats, i)
-				info->attribute_formats = &formats[i];
-				//WARNING: this should be like this: ref(u32, offsets, i)
-				offsets[i] = 0;
-				//WARNING: this should be like this: refp(u32, offsets, i)
-				info->attribute_offsets = &offsets[i];
+				offsets[i] = field_offset;
 			break;
 		}
 		packed_attributes >>= bits_per_type;
+		offset = field_offset + sizes[attribute_type];
 		i++;
 	}
-	stack_free(vulkan_formats);
-	stack_free(indices);
+	vulkan_vertex_info_t info;
+	info.input_rate = input_rate;
+	info.attribute_count = i;
+	info.size = offset;
+	info.attribute_formats = heap_newv(VkFormat, info.attribute_count);
+	info.attribute_offsets = heap_newv(u32, info.attribute_count);
+	memcpy(info.attribute_offsets, offsets, sizeof(u32) * info.attribute_count);
+	memcpy(info.attribute_formats, formats, sizeof(VkFormat) * info.attribute_count);
+	return info;
 }

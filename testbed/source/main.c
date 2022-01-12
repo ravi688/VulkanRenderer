@@ -76,7 +76,6 @@ int main(int argc, char** argv)
 
 
 	/*------TEXT-----------------------------*/
-	shader_t* text_shader = shader_load(renderer, "resource/shaders/text_shader.sb");
 	font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
 	glyph_mesh_pool_t* pool = glyph_mesh_pool_create(renderer, font);
 	mesh_t* glyph_A = glyph_mesh_pool_get_mesh(pool, 'A');
@@ -86,12 +85,26 @@ int main(int argc, char** argv)
 	text_mesh_string_set_positionH(text_mesh, fps_string_handle, vec3(float)(0, 0, -3));
 	text_mesh_string_handle_t module_name_handle = text_mesh_string_create(text_mesh);
 	text_mesh_string_set_positionH(text_mesh, module_name_handle, vec3(float)(0, 2, -3));
-	text_mesh_string_setH(text_mesh, module_name_handle, "Vulkan 3D Renderer");
+	text_mesh_string_set_scaleH(text_mesh, module_name_handle, vec3(float)(1.5f, 1.5f, 1.5f));
+	text_mesh_string_setH(text_mesh, module_name_handle, "Hello World");
+	text_mesh_string_handle_t version_name_handle = text_mesh_string_create(text_mesh);
+	text_mesh_string_set_positionH(text_mesh, version_name_handle, vec3(float)(0, -2, -3));
+	text_mesh_string_set_scaleH(text_mesh, version_name_handle, vec3(float)(0.7f, 0.7f, 0.7f));
+	text_mesh_string_setH(text_mesh, version_name_handle, "v1.0.0.0.0");
+	text_mesh_string_handle_t cpu_usage = text_mesh_string_create(text_mesh);
+	text_mesh_string_set_positionH(text_mesh, cpu_usage, vec3(float)(0, -4, -3));
+	text_mesh_string_set_scaleH(text_mesh, cpu_usage, vec3(float)(0.7f, 0.7f, 0.7f));
+	text_mesh_string_setH(text_mesh, cpu_usage, "10.99999%");
 
+	shader_t* text_shader = shader_load(renderer, "resource/shaders/text_shader.sb");
+	u64 per_vertex_attributes[4] = { MATERIAL_ALIGN(MATERIAL_VEC3, 0) };
+	u64 per_instance_attributes[1] = { MATERIAL_ALIGN(MATERIAL_VEC3, 0) | MATERIAL_ALIGN(MATERIAL_VEC3, 1) | MATERIAL_ALIGN(MATERIAL_VEC3, 2) };
 	material_create_info_t text_material_info =
 	{
-		.per_vertex_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0), //position
-		.per_instance_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0),  //offset
+		.per_vertex_attribute_binding_count = 1,
+		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
+		.per_instance_attribute_binding_count = 1,
+		.per_instance_attribute_bindings = &per_instance_attributes[0],
 		.shader = text_shader,
 	};
 	material_t* text_material = material_create(renderer, &text_material_info);
@@ -101,18 +114,21 @@ int main(int argc, char** argv)
 	/*---------------------------------------*/
 
 	/*------CUBE-----------------------------*/
-	shader_t* albedo_shader = shader_load(renderer, "resource/shaders/albedo_shader.sb");
 	mesh3d_t* cube_mesh3d = mesh3d_cube(1);
 	mesh_t* cube = mesh_create(renderer, cube_mesh3d);
 	texture_t* linux_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
 	texture_t* windows_texture = texture_load(renderer, "resource/textures/windowslogo.bmp");
 	texture_t* apple_texture = texture_load(renderer, "resource/textures/applelogo.bmp");
+
+	shader_t* albedo_shader = shader_load(renderer, "resource/shaders/albedo_shader.sb");
+	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); //position
+	per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); //normal
+	per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC3, 2); //color
+	per_vertex_attributes[3] = MATERIAL_ALIGN(MATERIAL_VEC2, 3); //texture coordinates
 	material_create_info_t cube_material_info =
 	{
-		.per_vertex_attributes = MATERIAL_ALIGN(MATERIAL_VEC3, 0) //position
-								| MATERIAL_ALIGN(MATERIAL_VEC3, 1) //normal
-								| MATERIAL_ALIGN(MATERIAL_VEC3, 2) //color
-								| MATERIAL_ALIGN(MATERIAL_VEC2, 3), //texture coordinates
+		.per_vertex_attribute_binding_count = 4,
+		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
 		.shader = albedo_shader,
 	};
 	material_t* cube_material = material_create(renderer, &cube_material_info);
