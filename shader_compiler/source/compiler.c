@@ -384,6 +384,7 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 	if(is_empty(string, end))
 	{
 		LOG_MSG("LAYOUT section is empty, skipping\n");
+		buffer_write_u16(buffer, 0);
 		CALLTRACE_RETURN(_source + length);
 	}
 
