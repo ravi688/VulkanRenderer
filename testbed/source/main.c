@@ -60,7 +60,7 @@ bool char_comparer(void* ptr1, void* ptr2)
 
 static void u32_to_string(u32 value, char* string)
 {
-	sprintf(string, "FPS: %u", value);
+	sprintf(string, "%u", value);
 }
 
 int main(int argc, char** argv)
@@ -110,6 +110,16 @@ int main(int argc, char** argv)
 	material_t* text_material = material_create(renderer, &text_material_info);
 	/*---------------------------------------*/
 
+	/*-----------GAME UI----------------------*/
+	shader_t* game_ui_shader = shader_load(renderer, "resource/shaders/game_ui_shader.sb");
+	text_material_info.shader = game_ui_shader;
+	material_t* game_ui_material = material_create(renderer, &text_material_info);
+
+	text_mesh_t* game_ui = text_mesh_create(renderer, pool);
+	text_mesh_string_handle_t score_text = text_mesh_string_create(game_ui);
+	text_mesh_string_set_positionH(game_ui, score_text, vec3(float)(0, 7, 5));
+	text_mesh_string_set_scaleH(game_ui, score_text, vec3(float)(0.8f, 0.8f, 0.8f));
+
 	/*--------PLAYGROUND----------------------*/
 	/*---------------------------------------*/
 
@@ -156,6 +166,7 @@ int main(int argc, char** argv)
 		material_set_vec3(cube_material, "light.dir", vec3(float)(0, -1, 0));
 		material_set_float(cube_material, "light.intensity", 1.0f);
 		material_set_float(text_material, "ubo.time", game_time);
+		material_set_float(game_ui_material, "ubo.time", game_time);
 
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
 
@@ -171,6 +182,11 @@ int main(int argc, char** argv)
 		mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
 		material_push_constants(text_material, renderer, &canvas_transform);
 		text_mesh_draw(text_mesh);
+
+
+		material_bind(game_ui_material, renderer);
+		material_push_constants(game_ui_material, renderer, &canvas_transform);
+		text_mesh_draw(game_ui);
 		// mesh_draw_indexed(glyph_A, renderer);
 		// mesh_draw_indexed(glyph_B, renderer);
 
@@ -186,8 +202,12 @@ int main(int argc, char** argv)
 		{
 			u32 fps = (u32)((int)frame_count / seconds);
 			char fps_string[32];
-			u32_to_string(fps, fps_string);
+			strcpy(fps_string, "FPS: ");
+			u32_to_string(fps, fps_string + strlen("FPS: "));
 			text_mesh_string_setH(text_mesh, fps_string_handle, fps_string);
+			strcpy(fps_string, "Score: ");
+			u32_to_string(frame_count, fps_string + strlen("Score: "));
+			text_mesh_string_setH(game_ui, score_text, fps_string);
 			// printf("FPS: %u, TIME: %.3f\n", fps, game_time);
 			second_time_handle = time_get_handle();
 			frame_count = 0;
@@ -208,6 +228,14 @@ int main(int argc, char** argv)
 
 	glyph_mesh_pool_destroy(pool);
 	glyph_mesh_pool_release_resources(pool);
+
+	text_mesh_destroy(game_ui);
+	text_mesh_release_resources(game_ui);
+
+	shader_destroy(game_ui_shader, renderer);
+	shader_release_resources(game_ui_shader);
+	material_destroy(game_ui_material, renderer);
+	material_release_resources(game_ui_material);
 
 	font_destroy(font);
 	font_release_resources(font);
