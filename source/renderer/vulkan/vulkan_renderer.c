@@ -55,11 +55,11 @@ void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float
 	VkCommandBufferBeginInfo begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 	vkCall(vkBeginCommandBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], &begin_info));
 
-	VkClearValue clear_value;
-	clear_value.color.float32[0] = r;
-	clear_value.color.float32[1] = g;
-	clear_value.color.float32[2] = b;
-	clear_value.color.float32[3] = a;
+	VkClearValue clear_values[2] = 
+	{
+		{ .color = { .float32 = { r, g, b, a } } },
+		{ .depthStencil = { .depth = 1, .stencil = 0 } } 		// depth clear, every fragment would pass the depth test i.e. < 1
+	};
 	VkRenderPassBeginInfo render_pass_begin_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -68,7 +68,7 @@ void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float
 		.framebuffer = renderer->swapchain->framebuffers[renderer->swapchain->current_image_index],
 		.renderPass = renderer->vk_render_pass,
 		.clearValueCount = 1,
-		.pClearValues = &clear_value
+		.pClearValues = &clear_values[0]
 	};
 
 	vkCmdBeginRenderPass(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);

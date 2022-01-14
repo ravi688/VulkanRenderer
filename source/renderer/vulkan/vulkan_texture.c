@@ -1,8 +1,17 @@
 
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_texture.h>
+#include <renderer/internal/vulkan/vulkan_image.h>
+#include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <memory_allocator/memory_allocator.h>
 #include <renderer/assert.h>
+
+vulkan_texture_t* vulkan_texture_new()
+{
+	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
+	memset(texture, 0, sizeof(vulkan_texture_t));
+	return texture;
+}
 
 vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_create_info_t* create_info)
 {
@@ -11,8 +20,7 @@ vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_cre
 	ASSERT_NOT_NULL(create_info->data);
 	assert(create_info->channel_count == 4);
 
-	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
-	memset(texture, 0, sizeof(vulkan_texture_t));
+	vulkan_texture_t* texture = vulkan_texture_new();
 
 	/* ------------------- COPY HOST IMAGE MEMORY TO THE GPU LOCAL MEMORY -----------------------------------*/
 	void* texture_data = create_info->data;
@@ -20,112 +28,49 @@ vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_cre
 	uint32_t texture_size = texture_width * texture_height * 4;
 
 	/* Staging Buffer */
-	VkBuffer staging_buffer = vk_get_buffer(renderer->vk_device, texture_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE);
-	VkDeviceMemory staging_buffer_memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, staging_buffer, texture_size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	void* data;
-	vkMapMemory(renderer->vk_device, staging_buffer_memory, 0, texture_size, 0, &data);
-	memcpy(data, texture_data, texture_size);
-	vkUnmapMemory(renderer->vk_device, staging_buffer_memory);
+	vulkan_buffer_create_info_t staging_buffer_info = 
+	{
+		.data = texture_data,
+		.size = texture_size,
+		.usage_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		.sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+		.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+	};
+	vulkan_buffer_t* staging_buffer = vulkan_buffer_create(renderer, &staging_buffer_info);
 
 	/* Image */
-	VkImageCreateInfo image_info =
+	vulkan_image_create_info_t image_info =
 	{
-		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-		.imageType = VK_IMAGE_TYPE_2D,
-		.extent = (VkExtent3D) { .width = texture_width, .height = texture_height, .depth = 1 },
-		.mipLevels = 1,
-		.arrayLayers = 1,
+		.type = VK_IMAGE_TYPE_2D,
+		.width = texture_width,
+		.height = texture_height,
+		.depth = 1,
 		.format = VK_FORMAT_B8G8R8A8_SRGB,
 		.tiling = VK_IMAGE_TILING_OPTIMAL,
-		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.samples = VK_SAMPLE_COUNT_1_BIT,
-		.flags = 0 //optional
+		.layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.usage_mask = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		.memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		.aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT
 	};
-	vkCall(vkCreateImage(renderer->vk_device, &image_info, NULL, &(texture->image)));
-	texture->image_memory = vk_get_device_memory_for_image(renderer->vk_device, renderer->vk_physical_device, texture->image, texture_size, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	texture->image = vulkan_image_create(renderer, &image_info);
 
 	/* Transition Image Layout from Undefined to Transfer Destination Optimal */
-	VkCommandBuffer command_buffer = vk_get_begin_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool);
-	VkImageMemoryBarrier barrier =
-	{
-		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-		.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		.image = texture->image,
-		.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-		.subresourceRange.baseMipLevel = 0,
-		.subresourceRange.levelCount = 1,
-		.subresourceRange.baseArrayLayer = 0,
-		.subresourceRange.layerCount = 1,
-		.srcAccessMask = 0,
-		.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT
-	};
-	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
-	vk_end_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
+	vulkan_image_transition_layout_to(texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	/* Copy staging buffer to image buffer */
-	command_buffer = vk_get_begin_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool);
-	VkBufferImageCopy region =
-	{
-		.bufferOffset = 0,
-		.bufferRowLength = 0,
-		.bufferImageHeight = 0,
-		.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-		.imageSubresource.mipLevel = 0,
-		.imageSubresource.baseArrayLayer = 0,
-		.imageSubresource.layerCount = 1,
-
-		.imageOffset = (VkOffset3D){ 0, 0, 0 },
-		.imageExtent = (VkExtent3D) { texture_width, texture_height, 1 }
-	};
-	vkCmdCopyBufferToImage(command_buffer, staging_buffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-	vk_end_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
+	vulkan_image_copy_from_buffer(texture->image, staging_buffer);
 
 	/* Transition Image Layout from Transfer Destination Optimal to Shader Read Only Optimal */
-	command_buffer = vk_get_begin_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool);
-	barrier = (VkImageMemoryBarrier)
-	{
-		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-		.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		.image = texture->image,
-		.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-		.subresourceRange.baseMipLevel = 0,
-		.subresourceRange.levelCount = 1,
-		.subresourceRange.baseArrayLayer = 0,
-		.subresourceRange.layerCount = 1,
-		.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-		.dstAccessMask = VK_ACCESS_SHADER_READ_BIT
-	};
-	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
-	vk_end_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
+	vulkan_image_transition_layout_to(texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	/* Destroy Staging buffer and memory */
-	vkDestroyBuffer(renderer->vk_device, staging_buffer, NULL);
-	vkFreeMemory(renderer->vk_device, staging_buffer_memory, NULL);
+	vulkan_buffer_destroy(staging_buffer, renderer);
+	vulkan_buffer_release_resources(staging_buffer);
 	/*--------------------------------------------------------------------------------------------------*/
 
 	/*------------------------------------IMAGE VIEWS AND SAMPLERS--------------------------------------*/
-	VkImageViewCreateInfo view_create_info  =
-	{
-		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-		.image = texture->image,
-		.viewType = VK_IMAGE_VIEW_TYPE_2D,
-		.format = VK_FORMAT_B8G8R8A8_SRGB,
-		.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-		.subresourceRange.baseMipLevel = 0,
-		.subresourceRange.levelCount = 1,
-		.subresourceRange.baseArrayLayer = 0,
-		.subresourceRange.layerCount = 1
-	};
-	vkCall(vkCreateImageView(renderer->vk_device, &view_create_info, NULL, &(texture->image_view)));
-
+	texture->image_view = vulkan_image_create_image_view(texture->image);
+	
 	VkSamplerCreateInfo sampler_create_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -157,12 +102,12 @@ void vulkan_texture_destroy(vulkan_texture_t* texture, renderer_t* renderer)
 	vkDestroySampler(renderer->vk_device, texture->image_sampler, NULL);
 	/* NOTE: VkImageView should be destroyed before VkImage */
 	vkDestroyImageView(renderer->vk_device, texture->image_view, NULL);
-	vkDestroyImage(renderer->vk_device, texture->image, NULL);
-	vkFreeMemory(renderer->vk_device, texture->image_memory, NULL);
+	vulkan_image_destroy(texture->image);
 }
 
 void vulkan_texture_release_resources(vulkan_texture_t* texture)
 {
 	ASSERT_NOT_NULL(texture);
+	vulkan_image_release_resources(texture->image);
 	heap_free(texture);
 }

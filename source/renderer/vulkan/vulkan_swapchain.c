@@ -54,7 +54,18 @@ void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, renderer_t* rendere
 	swapchain->swapchain = vk_get_swapchain(renderer->vk_device, &create_info);
 	vk_get_images_out(renderer->vk_device, swapchain->swapchain, swapchain->images, swapchain->image_count);
 	vk_get_image_views_out(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB, swapchain->image_count, swapchain->images, swapchain->image_views);
-	vk_get_framebuffers_out(renderer->vk_device, swapchain->image_count, renderer->vk_render_pass, (VkExtent2D) { renderer->window->width, renderer->window->height }, 1, swapchain->image_views, swapchain->framebuffers);
+	VkImageView* attachments_lists[swapchain->image_count];
+	uint32_t attachments_count[swapchain->image_count];
+	for(uint32_t i = 0; i < swapchain->image_count; i++) 
+	{
+		attachments_lists[i] = swapchain->image_views + i;
+		attachments_count[i] = 1;
+	}
+	vk_get_framebuffers_out(	renderer->vk_device, renderer->vk_render_pass, 
+								(VkExtent2D) { renderer->window->width, renderer->window->height }, 
+								1, 
+								&attachments_lists[0], &attachments_count[0], 
+								swapchain->image_count, swapchain->framebuffers);
 }
 
 void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain, renderer_t* renderer)
@@ -175,7 +186,18 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 	swapchain->swapchain = vk_get_swapchain(renderer->vk_device, &create_info);
 	swapchain->images = vk_get_images(renderer->vk_device, swapchain->swapchain).value2;
 	swapchain->image_views = vk_get_image_views(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB, swapchain->image_count, swapchain->images).value2;
-	swapchain->framebuffers = vk_get_framebuffers(renderer->vk_device, swapchain->image_count, renderer->vk_render_pass, (VkExtent2D) { renderer->window->width, renderer->window->height }, 1, swapchain->image_views).value2;
+	VkImageView* attachments_lists[swapchain->image_count];
+	uint32_t attachments_count[swapchain->image_count];
+	for(uint32_t i = 0; i < swapchain->image_count; i++) 
+	{
+		attachments_lists[i] = swapchain->image_views + i;
+		attachments_count[i] = 1;
+	}
+	swapchain->framebuffers = vk_get_framebuffers(	renderer->vk_device, renderer->vk_render_pass, 
+													(VkExtent2D) { renderer->window->width, renderer->window->height },
+													1,
+													&attachments_lists[0],
+													&attachments_count[0], swapchain->image_count).value2;
 	swapchain->current_image_index = 0;
 }
 

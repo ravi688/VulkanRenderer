@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 		material_set_float(text_material, "ubo.time", game_time);
 		material_set_float(game_ui_material, "ubo.time", game_time);
 
-		renderer_begin_frame(renderer, 0, 0, 0, 0);
+		renderer_begin_frame(renderer, 0.1f, 0.1f, 0.3f, 0);
 
 		material_bind(cube_material, renderer);
 		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);

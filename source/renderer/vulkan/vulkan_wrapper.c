@@ -17,7 +17,36 @@ define_exception(VULKAN_GRAPHICS_QUEUE_NOT_FOUND);
 define_exception(VULKAN_SURFACE_NOT_SUPPORTED);
 define_exception(VULKAN_PHYSICAL_DEVICE_EXTENSION_NOT_SUPPORTED);
 define_exception(VULKAN_UNSUPPORTED_SHADER_TYPE);
+define_exception(VULKAN_UNSUPPORTED_IMAGE_TILING);
 
+function_signature(VkFormat, vk_find_supported_format, VkPhysicalDevice physical_device, const VkFormat* const formats, uint32_t format_count, VkImageTiling tiling, VkFormatFeatureFlags format_features)
+{
+	CALLTRACE_BEGIN();
+	VkFormat format;
+	VkFormatProperties properties;
+	for(uint32_t i = 0; i < format_count; i++)
+	{
+		vkGetPhysicalDeviceFormatProperties(physical_device, ref(VkFormat, formats, i), &properties);
+		switch(tiling)
+		{
+			case VK_IMAGE_TILING_LINEAR:
+				if(properties.linearTilingFeatures & format_features)
+					CALLTRACE_RETURN(format);
+			break;
+			
+			case VK_IMAGE_TILING_OPTIMAL:
+				if(properties.optimalTilingFeatures & format_features)
+					CALLTRACE_RETURN(format);
+			break;
+
+			default:
+				EXCEPTION_BLOCK(throw_exception(VULKAN_UNSUPPORTED_IMAGE_TILING));
+			break;
+		}
+	}
+	log_wrn("No vulkan format is found for image tiling: %u, format features: %u\n", tiling, format_features);
+	CALLTRACE_RETURN(VK_FORMAT_MAX_ENUM); // invalid
+}
 
 function_signature(VkDescriptorSetLayout, vk_get_descriptor_set_layout, VkDevice device, VkDescriptorSetLayoutBinding* bindings, uint32_t binding_count)
 {
@@ -95,7 +124,7 @@ function_signature(uint32_t, vk_find_physical_device_memory_type, VkPhysicalDevi
 	CALLTRACE_RETURN((uint32_t)selected_memory_type);
 }
 
-function_signature(VkDeviceMemory, vk_get_device_memory_for_image, VkDevice device, VkPhysicalDevice physical_device, VkImage image, uint32_t size, VkMemoryPropertyFlags memory_properties)
+function_signature(VkDeviceMemory, vk_get_device_memory_for_image, VkDevice device, VkPhysicalDevice physical_device, VkImage image, VkMemoryPropertyFlags memory_properties)
 {
 	CALLTRACE_BEGIN();
 	VkMemoryRequirements memory_requirements;
@@ -113,7 +142,7 @@ function_signature(VkDeviceMemory, vk_get_device_memory_for_image, VkDevice devi
 	CALLTRACE_RETURN(device_memory);
 }
 
-function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physical_device, VkBuffer buffer, uint64_t size, VkMemoryPropertyFlags memory_properties)
+function_signature(VkDeviceMemory, vk_get_device_memory_for_buffer, VkDevice device, VkPhysicalDevice physical_device, VkBuffer buffer, VkMemoryPropertyFlags memory_properties)
 {
 	CALLTRACE_BEGIN();
     VkMemoryRequirements memory_requirements;
@@ -198,16 +227,16 @@ function_signature(tuple_t(uint32_t,  pVkCommandBuffer_t), vk_get_command_buffer
 	CALLTRACE_RETURN(commandBuffers);
 }
 
-function_signature(void, vk_get_framebuffers_out, VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments, VkFramebuffer* out_framebuffers)
+function_signature(void, vk_get_framebuffers_out, VkDevice device, VkRenderPass render_pass, VkExtent2D extent, uint32_t layer, VkImageView** attachments_list, uint32_t* attachments_count,  uint32_t count, VkFramebuffer* out_framebuffers)
 {
 	CALLTRACE_BEGIN();
 	for(uint32_t i = 0; i < count; i++)
 	{
 		VkFramebufferCreateInfo createInfo = { };
 		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		createInfo.renderPass = renderPass;
-		createInfo.pAttachments = &attachments[i];
-		createInfo.attachmentCount = 1;
+		createInfo.renderPass = render_pass;
+		createInfo.pAttachments = attachments_list[i];
+		createInfo.attachmentCount = attachments_count[i];
 		createInfo.width = extent.width;
 		createInfo.height = extent.height;
 		createInfo.layers = layer;
@@ -218,11 +247,11 @@ function_signature(void, vk_get_framebuffers_out, VkDevice device, uint32_t coun
 	CALLTRACE_END();
 }
 
-function_signature(tuple_t(uint32_t,  pVkFramebuffer_t), vk_get_framebuffers, VkDevice device, uint32_t count, VkRenderPass renderPass, VkExtent2D extent, uint32_t layer, VkImageView* attachments)
+function_signature(tuple_t(uint32_t,  pVkFramebuffer_t), vk_get_framebuffers, VkDevice device, VkRenderPass render_pass, VkExtent2D extent, uint32_t layer, VkImageView** attachments_list, uint32_t* attachments_count, uint32_t count)
 {
 	CALLTRACE_BEGIN();
 	tuple_t(uint32_t, pVkFramebuffer_t) framebuffers = { count, heap_newv(VkFramebuffer, count) };
-	vk_get_framebuffers_out(device, count, renderPass, extent, layer, attachments, framebuffers.value2);
+	vk_get_framebuffers_out(device, render_pass, extent, layer, attachments_list, attachments_count, count, framebuffers.value2);
 	CALLTRACE_RETURN(framebuffers);
 }
 
@@ -249,7 +278,8 @@ function_signature(VkPipeline, vk_get_graphics_pipeline, VkDevice device, VkPipe
 											VkPipelineViewportStateCreateInfo* viewportState, 
 											VkPipelineRasterizationStateCreateInfo* rasterizationState,
 											VkPipelineMultisampleStateCreateInfo* multisampleState, 
-											VkPipelineColorBlendStateCreateInfo* colorBlendState)
+											VkPipelineColorBlendStateCreateInfo* colorBlendState, 
+											VkPipelineDepthStencilStateCreateInfo* depthStencilState)
 {
 	CALLTRACE_BEGIN();
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
@@ -262,7 +292,7 @@ function_signature(VkPipeline, vk_get_graphics_pipeline, VkDevice device, VkPipe
 	pipelineInfo.pViewportState = viewportState;
 	pipelineInfo.pRasterizationState = rasterizationState;
 	pipelineInfo.pMultisampleState = multisampleState;
-	pipelineInfo.pDepthStencilState = NULL; // Optional
+	pipelineInfo.pDepthStencilState = depthStencilState;
 	pipelineInfo.pColorBlendState = colorBlendState;
 	pipelineInfo.pDynamicState = NULL; // Optional
 	pipelineInfo.layout = pipelineLayout;
@@ -394,6 +424,25 @@ function_signature_void(VkPipelineColorBlendStateCreateInfo, vk_get_pipeline_col
 	createInfo.blendConstants[2] = 0.0f; // Optional
 	createInfo.blendConstants[3] = 0.0f; // Optional
 	CALLTRACE_RETURN(createInfo);
+}
+
+function_signature_void(VkPipelineDepthStencilStateCreateInfo, vk_get_pipeline_depth_stencil_state_create_info)
+{
+	CALLTRACE_BEGIN();
+	VkPipelineDepthStencilStateCreateInfo create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+		.depthTestEnable = VK_TRUE,
+		.depthWriteEnable = VK_TRUE,
+		.depthCompareOp = VK_COMPARE_OP_LESS,
+		.depthBoundsTestEnable = VK_FALSE,
+		.minDepthBounds = 0.0f, 	// optional
+		.maxDepthBounds = 1.0f,		// optional
+		.stencilTestEnable = VK_FALSE,
+		.front = (VkStencilOpState) { }, // optional
+		.back = (VkStencilOpState) { } 	 // optional
+	};
+	CALLTRACE_RETURN(create_info);
 }
 
 function_signature_void(VkPipelineColorBlendAttachmentState, vk_get_pipeline_color_blend_attachment_state)

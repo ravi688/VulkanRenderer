@@ -43,22 +43,22 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 		strides[i] = create_info->vertex_infos[i].size;
 		input_rates[i] = create_info->vertex_infos[i].input_rate;
 	}
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk_get_pipeline_vertex_input_state_create_info(create_info->vertex_info_count, strides, input_rates, vertex_attribute_infos);
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = vk_get_pipeline_input_assembly_state_create_info();
+	VkPipelineVertexInputStateCreateInfo vertex_info_info = vk_get_pipeline_vertex_input_state_create_info(create_info->vertex_info_count, strides, input_rates, vertex_attribute_infos);
+	VkPipelineInputAssemblyStateCreateInfo input_assembly = vk_get_pipeline_input_assembly_state_create_info();
 	VkPipelineRasterizationStateCreateInfo rasterizer = vk_get_pipeline_rasterization_state_create_info();
-
-	VkPipelineViewportStateCreateInfo viewportState = vk_get_pipeline_viewport_state_create_info(renderer->window->width, renderer->window->height);
-	VkPipelineMultisampleStateCreateInfo multisampling = vk_get_pipeline_multisample_state_create_info();
-	VkPipelineColorBlendStateCreateInfo colorBlending = vk_get_pipeline_color_blend_state_create_info();
+	VkPipelineViewportStateCreateInfo viewport_state = vk_get_pipeline_viewport_state_create_info(renderer->window->width, renderer->window->height);
+	VkPipelineMultisampleStateCreateInfo multi_sampling = vk_get_pipeline_multisample_state_create_info();
+	VkPipelineColorBlendStateCreateInfo color_blending = vk_get_pipeline_color_blend_state_create_info();
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vk_get_pipeline_depth_stencil_state_create_info();
 	pipeline->pipeline = vk_get_graphics_pipeline(	renderer->vk_device, pipeline->pipeline_layout->handle, renderer->vk_render_pass,
 														shader_stages,
-														&vertexInputInfo,
-														&inputAssembly,
-														&viewportState,
+														&vertex_info_info,
+														&input_assembly,
+														&viewport_state,
 														&rasterizer,
-														&multisampling,
-														&colorBlending
+														&multi_sampling,
+														&color_blending,
+														NULL
 													);
 	stack_free(shader_stages);
 	stack_free(vertex_attribute_infos);
