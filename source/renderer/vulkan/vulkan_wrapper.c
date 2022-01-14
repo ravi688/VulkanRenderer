@@ -22,20 +22,20 @@ define_exception(VULKAN_UNSUPPORTED_IMAGE_TILING);
 function_signature(VkFormat, vk_find_supported_format, VkPhysicalDevice physical_device, const VkFormat* const formats, uint32_t format_count, VkImageTiling tiling, VkFormatFeatureFlags format_features)
 {
 	CALLTRACE_BEGIN();
-	VkFormat format;
 	VkFormatProperties properties;
 	for(uint32_t i = 0; i < format_count; i++)
 	{
-		vkGetPhysicalDeviceFormatProperties(physical_device, ref(VkFormat, formats, i), &properties);
+		VkFormat format = ref(VkFormat, formats, i);
+		vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
 		switch(tiling)
 		{
 			case VK_IMAGE_TILING_LINEAR:
-				if(properties.linearTilingFeatures & format_features)
+				if((properties.linearTilingFeatures & format_features) == format_features)
 					CALLTRACE_RETURN(format);
 			break;
 			
 			case VK_IMAGE_TILING_OPTIMAL:
-				if(properties.optimalTilingFeatures & format_features)
+				if((properties.optimalTilingFeatures & format_features) == format_features)
 					CALLTRACE_RETURN(format);
 			break;
 
@@ -45,7 +45,7 @@ function_signature(VkFormat, vk_find_supported_format, VkPhysicalDevice physical
 		}
 	}
 	log_wrn("No vulkan format is found for image tiling: %u, format features: %u\n", tiling, format_features);
-	CALLTRACE_RETURN(VK_FORMAT_MAX_ENUM); // invalid
+	CALLTRACE_RETURN(VK_FORMAT_UNDEFINED); // invalid
 }
 
 function_signature(VkDescriptorSetLayout, vk_get_descriptor_set_layout, VkDevice device, VkDescriptorSetLayoutBinding* bindings, uint32_t binding_count)
@@ -309,25 +309,25 @@ function_signature(VkPipeline, vk_get_graphics_pipeline, VkDevice device, VkPipe
 function_signature(VkRenderPass, vk_get_render_pass, VkDevice device, VkFormat format)
 {
 	CALLTRACE_BEGIN();
-	VkAttachmentDescription colorAttachmentDescription = vk_get_attachment_description(format);
-	VkAttachmentReference colorAttachmentReference = vk_get_attachment_reference();  //TODO: this should be like vk_get_attachment_reference(index: 0);
-	VkSubpassDescription subpass  = 
-	{
-		.pColorAttachments = &colorAttachmentReference,
-		.colorAttachmentCount = 1, 
-		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS
-	};
-
+	VkAttachmentDescription color_attachment = vk_get_attachment_description(VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, format);
+	VkAttachmentDescription depth_attachment = vk_get_attachment_description(VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_FORMAT_D32_SFLOAT);
+	VkAttachmentReference color_attachment_reference = vk_get_attachment_reference(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	VkAttachmentReference depth_attachment_reference = vk_get_attachment_reference(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	VkSubpassDescription subpass  = vk_get_subpass_description(&color_attachment_reference, 1, &depth_attachment_reference);
+	VkAttachmentDescription attachments[2] = { color_attachment, depth_attachment };
+	VkSubpassDependency dependency = vk_get_subpass_dependency();
 	VkRenderPass renderPass;
- 	VkRenderPassCreateInfo renderPassCreateInfo = {};
-	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassCreateInfo.attachmentCount = 1;
-	renderPassCreateInfo.pAttachments = &colorAttachmentDescription;
-	renderPassCreateInfo.subpassCount = 1;
-	renderPassCreateInfo.pSubpasses = &subpass;
-	renderPassCreateInfo.dependencyCount = 0;
-	renderPassCreateInfo.pDependencies = VK_NULL_HANDLE;
-	vkCall(vkCreateRenderPass(device, &renderPassCreateInfo, NULL, &renderPass));
+ 	VkRenderPassCreateInfo create_info =
+ 	{
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		.attachmentCount = 2,
+		.pAttachments = &attachments[0],
+		.subpassCount = 1,
+		.pSubpasses = &subpass,
+		.dependencyCount = 1,
+		.pDependencies = &dependency
+	};
+	vkCall(vkCreateRenderPass(device, &create_info, NULL, &renderPass));
 	CALLTRACE_RETURN(renderPass);
 }
 
@@ -337,44 +337,45 @@ function_signature_void(VkSubpassDependency, vk_get_subpass_dependency)
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	CALLTRACE_RETURN(dependency);
 }
 
-function_signature(VkSubpassDescription, vk_get_subpass_description, VkAttachmentReference attachment_reference)
+function_signature(VkSubpassDescription, vk_get_subpass_description, VkAttachmentReference* color_attachments, uint32_t color_attachment_count, VkAttachmentReference* depth_stencil_attachment)
 {
 	CALLTRACE_BEGIN();
 	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &attachment_reference;
+	subpass.colorAttachmentCount = color_attachment_count;
+	subpass.pColorAttachments = color_attachments;
+	subpass.pDepthStencilAttachment = depth_stencil_attachment;
 	CALLTRACE_RETURN(subpass);
 }
 
-function_signature_void(VkAttachmentReference, vk_get_attachment_reference)
+function_signature(VkAttachmentReference, vk_get_attachment_reference, uint32_t index, VkImageLayout layout)
 {
 	CALLTRACE_BEGIN();
 	VkAttachmentReference colorAttachmentRef = {};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorAttachmentRef.attachment = index;
+	colorAttachmentRef.layout = layout;
 	CALLTRACE_RETURN(colorAttachmentRef);
 }
 
-function_signature(VkAttachmentDescription, vk_get_attachment_description, VkFormat image_format)
+function_signature(VkAttachmentDescription, vk_get_attachment_description, VkAttachmentStoreOp store_op, VkImageLayout final_layout, VkFormat image_format)
 {
 	CALLTRACE_BEGIN();
 	VkAttachmentDescription colorAttachment = {};
     colorAttachment.format = image_format;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.storeOp = store_op;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	colorAttachment.finalLayout = final_layout;
 	CALLTRACE_RETURN(colorAttachment);
 }
 

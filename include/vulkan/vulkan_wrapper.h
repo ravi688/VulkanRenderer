@@ -149,11 +149,11 @@ function_signature(VkPipeline, vk_get_graphics_pipeline, VkDevice device, VkPipe
 function_signature(VkDescriptorSetLayout, vk_get_descriptor_set_layout, VkDevice device, VkDescriptorSetLayoutBinding* bindings, uint32_t binding_count);
 function_signature(VkDescriptorPool, vk_get_descriptor_pool, VkDevice device);
 function_signature(VkCommandPool, vk_get_command_pool, VkDevice device, uint32_t queueFamilyIndex);
-function_signature_void(VkAttachmentReference, vk_get_attachment_reference);
+function_signature(VkAttachmentReference, vk_get_attachment_reference, uint32_t index, VkImageLayout layout);
 function_signature_void(VkSubpassDependency, vk_get_subpass_dependency);
 function_signature(VkSemaphore, vk_get_semaphore, VkDevice device);
-function_signature(VkAttachmentDescription, vk_get_attachment_description, VkFormat image_format);
-function_signature(VkSubpassDescription, vk_get_subpass_description, VkAttachmentReference attachment_reference);
+function_signature(VkAttachmentDescription, vk_get_attachment_description, VkAttachmentStoreOp store_op, VkImageLayout final_layout, VkFormat image_format);
+function_signature(VkSubpassDescription, vk_get_subpass_description, VkAttachmentReference* color_attachments, uint32_t color_attachment_count, VkAttachmentReference* depth_stencil_attachment);
 function_signature(VkRenderPass, vk_get_render_pass, VkDevice device, VkFormat format);
 function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device, uint32_t set_layout_count, VkDescriptorSetLayout* set_layouts, uint32_t push_constant_range_count, VkPushConstantRange* push_constant_ranges);
 function_signature(VkViewport, vk_get_viewport, uint32_t width, uint32_t height);
@@ -207,6 +207,7 @@ function_signature(void, vk_dump_physical_device_extensions, VkPhysicalDevice* p
 #define vk_get_suitable_physical_device(...) define_alias_function_macro(vk_get_suitable_physical_device, __VA_ARGS__)
 #define vk_get_device(...) define_alias_function_macro(vk_get_device, __VA_ARGS__)
 
+#define vk_find_supported_format(...) define_alias_function_macro(vk_find_supported_format, __VA_ARGS__)
 #define vk_get_graphics_queue_family_index(...) define_alias_function_macro(vk_get_graphics_queue_family_index, __VA_ARGS__)
 #define vk_get_device_queue(...) define_alias_function_macro(vk_get_device_queue, __VA_ARGS__)
 #define vk_get_swapchain(...) define_alias_function_macro(vk_get_swapchain, __VA_ARGS__)
@@ -227,8 +228,8 @@ function_signature(void, vk_dump_physical_device_extensions, VkPhysicalDevice* p
 #define vk_get_descriptor_set_layout(...) define_alias_function_macro(vk_get_descriptor_set_layout, __VA_ARGS__)
 #define vk_get_descriptor_pool(...) define_alias_function_macro(vk_get_descriptor_pool, __VA_ARGS__)
 #define vk_get_command_pool(...) define_alias_function_macro(vk_get_command_pool, __VA_ARGS__)
-#define vk_get_attachment_reference(...) define_alias_function_void_macro(vk_get_attachment_reference)
-#define vk_get_subpass_dependency(...) define_alias_function_macro(vk_get_subpass_dependency, __VA_ARGS__)
+#define vk_get_attachment_reference(...) define_alias_function_macro(vk_get_attachment_reference, __VA_ARGS__)
+#define vk_get_subpass_dependency(...) define_alias_function_void_macro(vk_get_subpass_dependency)
 #define vk_get_semaphore(...) define_alias_function_macro(vk_get_semaphore, __VA_ARGS__)
 #define vk_get_attachment_description(...) define_alias_function_macro(vk_get_attachment_description, __VA_ARGS__)
 #define vk_get_subpass_description(...) define_alias_function_macro(vk_get_subpass_description, __VA_ARGS__)

@@ -58,7 +58,7 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 														&rasterizer,
 														&multi_sampling,
 														&color_blending,
-														NULL
+														&depth_stencil_state
 													);
 	stack_free(shader_stages);
 	stack_free(vertex_attribute_infos);

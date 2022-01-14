@@ -69,8 +69,8 @@ vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_cre
 	/*--------------------------------------------------------------------------------------------------*/
 
 	/*------------------------------------IMAGE VIEWS AND SAMPLERS--------------------------------------*/
-	texture->image_view = vulkan_image_create_image_view(texture->image);
-	
+	texture->image_view = vulkan_image_get_image_view(texture->image);
+
 	VkSamplerCreateInfo sampler_create_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,

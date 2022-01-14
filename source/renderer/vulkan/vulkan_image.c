@@ -11,13 +11,13 @@ vulkan_image_t* vulkan_image_new()
 	return image;
 }
 
-vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_info_t* create_info)
+void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image)
 {
 	assert(create_info != NULL);
 	assert(!((create_info->type == VK_IMAGE_TYPE_2D) && (create_info->depth > 1)));
 	assert(create_info->depth != 0);
-	vulkan_image_t* image = vulkan_image_new();
-	image->renderer = renderer;
+	assert(out_image != NULL);
+	out_image->renderer = renderer;
 	VkImageCreateInfo image_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -33,15 +33,22 @@ vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_in
 		.samples = VK_SAMPLE_COUNT_1_BIT,
 		.flags = 0 //optional
 	};
-	vkCall(vkCreateImage(renderer->vk_device, &image_info, NULL, &image->handle));
-	image->memory = vk_get_device_memory_for_image(renderer->vk_device, renderer->vk_physical_device, image->handle, create_info->memory_properties_mask);
-	image->type = create_info->type;
-	image->format = create_info->format;
-	image->aspect_mask = create_info->aspect_mask;
-	image->layout = create_info->layout;
-	image->width = create_info->width;
-	image->height = create_info->height;
-	image->depth = create_info->depth;
+	vkCall(vkCreateImage(renderer->vk_device, &image_info, NULL, &out_image->handle));
+	out_image->memory = vk_get_device_memory_for_image(renderer->vk_device, renderer->vk_physical_device, out_image->handle, create_info->memory_properties_mask);
+	out_image->type = create_info->type;
+	out_image->format = create_info->format;
+	out_image->aspect_mask = create_info->aspect_mask;
+	out_image->layout = create_info->layout;
+	out_image->width = create_info->width;
+	out_image->height = create_info->height;
+	out_image->depth = create_info->depth;
+}
+
+
+vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_info_t* create_info)
+{
+	vulkan_image_t* image = vulkan_image_new();
+	vulkan_image_create_no_alloc(renderer, create_info, image);
 	return image;
 }
 
@@ -97,6 +104,13 @@ void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layo
 		src_pipeline_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		dst_pipeline_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
+	else if((image->layout == VK_IMAGE_LAYOUT_UNDEFINED) && (layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL))
+	{
+		barrier.srcAccessMask = 0;
+    	barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		src_pipeline_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		dst_pipeline_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	}
 	else
 		LOG_FETAL_ERR("Image layout transition error | transition from %u to %u isn't defined\n", image->layout, layout);
 	
@@ -127,7 +141,7 @@ void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffe
 	vk_end_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
 }
 
-VkImageView vulkan_image_create_image_view(vulkan_image_t* image)
+VkImageView vulkan_image_get_image_view(vulkan_image_t* image)
 {
 	VkImageViewCreateInfo view_create_info  =
 	{
@@ -144,4 +158,20 @@ VkImageView vulkan_image_create_image_view(vulkan_image_t* image)
 	VkImageView image_view;
 	vkCall(vkCreateImageView(image->renderer->vk_device, &view_create_info, NULL, &image_view));
 	return image_view;
+}
+
+VkAttachmentDescription vulkan_image_get_attachment_description(vulkan_image_t* image)
+{
+	VkAttachmentDescription attachment =
+	{
+    	.format = image->format,
+    	.samples = VK_SAMPLE_COUNT_1_BIT,
+    	.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+	};
+	return attachment;
 }

@@ -39,10 +39,12 @@ typedef struct vulkan_image_t
 // constructors and destructors
 vulkan_image_t* vulkan_image_new();
 vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_info_t* create_info);
+void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image);
 void vulkan_image_destroy(vulkan_image_t* image);
 void vulkan_image_release_resources(vulkan_image_t* image);
 
-VkImageView vulkan_image_create_image_view(vulkan_image_t* image);
+VkImageView vulkan_image_get_image_view(vulkan_image_t* image);
+VkAttachmentDescription vulkan_image_get_attachment_description(vulkan_image_t* image);
 
 // logic functions
 void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layout);

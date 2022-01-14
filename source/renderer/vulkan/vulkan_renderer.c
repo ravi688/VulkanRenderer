@@ -67,7 +67,7 @@ void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float
 		.renderArea.extent = (VkExtent2D) { renderer->window->width, renderer->window->height },
 		.framebuffer = renderer->swapchain->framebuffers[renderer->swapchain->current_image_index],
 		.renderPass = renderer->vk_render_pass,
-		.clearValueCount = 1,
+		.clearValueCount = 2,
 		.pClearValues = &clear_values[0]
 	};
 
