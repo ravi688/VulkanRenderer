@@ -5,6 +5,7 @@
 #include <renderer/defines.h>
 
 typedef struct renderer_t renderer_t;
+typedef struct vulkan_image_t vulkan_image_t;
 
 typedef struct vulkan_texture_create_info_t
 {
@@ -16,7 +17,7 @@ typedef struct vulkan_texture_create_info_t
 
 typedef struct vulkan_texture_t
 {
-	VkImage image;
+	vulkan_image_t* image;
 	VkImageView image_view;
 	VkSampler image_sampler;
 	VkDeviceMemory image_memory;

@@ -6,14 +6,18 @@
 
 typedef struct renderer_t renderer_t;
 typedef struct render_window_t render_window_t;
+typedef struct vulkan_image_t vulkan_image_t;
 
 typedef struct vulkan_swapchain_t
 {
 	VkSwapchainKHR swapchain;
 	VkSurfaceKHR surface;
+	vulkan_image_t* depth_image;
+	VkImageView depth_image_view;
 	VkImage* images;
 	VkImageView* image_views;
 	VkFramebuffer* framebuffers;
+	VkImageView* framebuffer_image_views;
 	render_window_t* window;
 	u32 image_count;
 	u32 current_image_index;

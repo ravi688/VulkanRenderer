@@ -1,10 +1,12 @@
 
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
+#include <renderer/internal/vulkan/vulkan_image.h>
 #include <renderer/render_window.h>
 #include <memory_allocator/memory_allocator.h>
 #include <memory.h>
 #include <renderer/assert.h>
+#include <renderer/debug.h>
 
 static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer);
 static void destroy_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer);
@@ -54,7 +56,43 @@ void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, renderer_t* rendere
 	swapchain->swapchain = vk_get_swapchain(renderer->vk_device, &create_info);
 	vk_get_images_out(renderer->vk_device, swapchain->swapchain, swapchain->images, swapchain->image_count);
 	vk_get_image_views_out(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB, swapchain->image_count, swapchain->images, swapchain->image_views);
-	vk_get_framebuffers_out(renderer->vk_device, swapchain->image_count, renderer->vk_render_pass, (VkExtent2D) { renderer->window->width, renderer->window->height }, 1, swapchain->image_views, swapchain->framebuffers);
+	VkFormat* formats = stack_newv(VkFormat, 3);
+	formats[0] = VK_FORMAT_D32_SFLOAT;
+	formats[1] = VK_FORMAT_D32_SFLOAT_S8_UINT;
+	formats[2] = VK_FORMAT_D24_UNORM_S8_UINT;
+	vulkan_image_create_info_t depth_create_info = 
+	{
+		.type = VK_IMAGE_TYPE_2D,
+		.format = vk_find_supported_format(renderer->vk_physical_device, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT),
+		.width = swapchain->window->width,
+		.height = swapchain->window->height,
+		.depth = 1,
+		.tiling = VK_IMAGE_TILING_OPTIMAL,
+		.layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.usage_mask = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		.memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		.aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT
+	};
+	if((depth_create_info.format == VK_FORMAT_D24_UNORM_S8_UINT) || (depth_create_info.format == VK_FORMAT_D32_SFLOAT_S8_UINT))
+		depth_create_info.aspect_mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+	vulkan_image_create_no_alloc(renderer, &depth_create_info, swapchain->depth_image);
+	swapchain->depth_image_view = vulkan_image_get_image_view(swapchain->depth_image);
+
+	VkImageView* attachments_lists[swapchain->image_count];
+	uint32_t attachments_count[swapchain->image_count];
+	for(uint32_t i = 0; i < swapchain->image_count; i++) 
+	{
+		swapchain->framebuffer_image_views[2 * i + 0] = *(swapchain->image_views + i);
+		swapchain->framebuffer_image_views[2 * i + 1] = swapchain->depth_image_view;
+		attachments_lists[i] = &swapchain->framebuffer_image_views[2 * i];
+		attachments_count[i] = 2;
+	}
+	vk_get_framebuffers_out(	renderer->vk_device, renderer->vk_render_pass, 
+								(VkExtent2D) { renderer->window->width, renderer->window->height }, 
+								1, 
+								&attachments_lists[0], &attachments_count[0], 
+								swapchain->image_count, swapchain->framebuffers);
+	stack_free(formats);
 }
 
 void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain, renderer_t* renderer)
@@ -74,6 +112,8 @@ u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, renderer_
 
 void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain)
 {
+	vulkan_image_release_resources(swapchain->depth_image);
+	heap_free(swapchain->framebuffer_image_views);
 	heap_free(swapchain->image_views);
 	heap_free(swapchain->images);
 	heap_free(swapchain->framebuffers);
@@ -175,8 +215,45 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 	swapchain->swapchain = vk_get_swapchain(renderer->vk_device, &create_info);
 	swapchain->images = vk_get_images(renderer->vk_device, swapchain->swapchain).value2;
 	swapchain->image_views = vk_get_image_views(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB, swapchain->image_count, swapchain->images).value2;
-	swapchain->framebuffers = vk_get_framebuffers(renderer->vk_device, swapchain->image_count, renderer->vk_render_pass, (VkExtent2D) { renderer->window->width, renderer->window->height }, 1, swapchain->image_views).value2;
+	VkFormat* formats = stack_newv(VkFormat, 3);
+	formats[0] = VK_FORMAT_D32_SFLOAT;
+	formats[1] = VK_FORMAT_D32_SFLOAT_S8_UINT;
+	formats[2] = VK_FORMAT_D24_UNORM_S8_UINT;
+	vulkan_image_create_info_t depth_create_info = 
+	{
+		.type = VK_IMAGE_TYPE_2D,
+		.format = vk_find_supported_format(renderer->vk_physical_device, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT),
+		.width = swapchain->window->width,
+		.height = swapchain->window->height,
+		.depth = 1,
+		.tiling = VK_IMAGE_TILING_OPTIMAL,
+		.layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.usage_mask = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		.memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		.aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT
+	};
+	if((depth_create_info.format == VK_FORMAT_D24_UNORM_S8_UINT) || (depth_create_info.format == VK_FORMAT_D32_SFLOAT_S8_UINT))
+		depth_create_info.aspect_mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+	swapchain->depth_image = vulkan_image_create(renderer, &depth_create_info);
+	swapchain->depth_image_view = vulkan_image_get_image_view(swapchain->depth_image);
+
+	VkImageView* attachments_lists[swapchain->image_count];
+	uint32_t attachments_count[swapchain->image_count];
+	swapchain->framebuffer_image_views = heap_newv(VkImageView, 2 * swapchain->image_count);
+	for(uint32_t i = 0; i < swapchain->image_count; i++) 
+	{
+		swapchain->framebuffer_image_views[2 * i + 0] = *(swapchain->image_views + i);
+		swapchain->framebuffer_image_views[2 * i + 1] = swapchain->depth_image_view;
+		attachments_lists[i] = &swapchain->framebuffer_image_views[2 * i];
+		attachments_count[i] = 2;
+	}
+	swapchain->framebuffers = vk_get_framebuffers(	renderer->vk_device, renderer->vk_render_pass, 
+													(VkExtent2D) { renderer->window->width, renderer->window->height },
+													1,
+													&attachments_lists[0],
+													&attachments_count[0], swapchain->image_count).value2;
 	swapchain->current_image_index = 0;
+	stack_free(formats);
 }
 
 
@@ -193,4 +270,6 @@ static void destroy_swapchain(vulkan_swapchain_t* swapchain, renderer_t* rendere
 		vkDestroyFramebuffer(renderer->vk_device, swapchain->framebuffers[i], NULL);
 	for(u32 i = 0; i < swapchain->image_count; i++)
 		vkDestroyImageView(renderer->vk_device, swapchain->image_views[i], NULL);
+	vkDestroyImageView(renderer->vk_device, swapchain->depth_image_view, NULL);
+	vulkan_image_destroy(swapchain->depth_image);
 }

@@ -43,9 +43,9 @@ static mat4_t(float) screen_space_matrix;
 
 static void recreate_matrix(render_window_t* window, void* user_data)
 {
-	mat4_move(float)(&projection_matrix,  mat4_persp_projection(float)(0, 10, 65 * DEG2RAD, (float)window->width/window->height));
+	mat4_move(float)(&projection_matrix,  mat4_persp_projection(float)(0.04f, 100, 60 * DEG2RAD, (float)window->width/window->height));
 	// mat4_move(float)(&projection_matrix,  mat4_ortho_projection(float)(0, 10, 3, (float)window->width/window->height));
-	mat4_move(float)(&screen_space_matrix, mat4_ortho_projection(float)(0, 100, window->height, (float)window->width / window->height));
+	mat4_move(float)(&screen_space_matrix, mat4_ortho_projection(float)(-0.04f, 100, window->height, (float)window->width / window->height));
 }
 
 static void offset_visitor(vec3_t(float)* position, void* user_data)
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 	renderer_t* renderer = renderer_init(800, 800, "Vulkan 3D Renderer", false);
 	recreate_matrix(renderer_get_window(renderer), NULL);
 	render_window_subscribe_on_resize(renderer_get_window(renderer), recreate_matrix, NULL);
-	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -3, 1, 0 }, (vec3_t(float)) { 0, 0, -20 * DEG2RAD } );
+	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -1.8f, 0.8f, 0 }, (vec3_t(float)) { 0, 0, -25 * DEG2RAD } );
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
 	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
 
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 		material_set_float(text_material, "ubo.time", game_time);
 		material_set_float(game_ui_material, "ubo.time", game_time);
 
-		renderer_begin_frame(renderer, 0, 0, 0, 0);
+		renderer_begin_frame(renderer, 0.1f, 0.1f, 0.3f, 0);
 
 		material_bind(cube_material, renderer);
 		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);

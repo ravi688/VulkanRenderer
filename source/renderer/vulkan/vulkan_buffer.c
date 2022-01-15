@@ -32,7 +32,7 @@ void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_in
 
 	u32 buffer_size = (create_info->size == 0) ? (create_info->stride * create_info->count) : create_info->size;
 	buffer->handle = vk_get_buffer(renderer->vk_device, buffer_size, create_info->usage_flags, create_info->sharing_mode);
-	buffer->memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, buffer->handle, buffer_size, create_info->memory_property_flags);
+	buffer->memory = vk_get_device_memory_for_buffer(renderer->vk_device, renderer->vk_physical_device, buffer->handle, create_info->memory_property_flags);
 	buffer->stride = create_info->stride;
 	buffer->count = create_info->count;
 	buffer->size = buffer_size;
