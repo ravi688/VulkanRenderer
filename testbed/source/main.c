@@ -139,13 +139,27 @@ int main(int argc, char** argv)
 	{
 		.per_vertex_attribute_binding_count = 4,
 		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
-		.shader = albedo_shader,
+		.shader = albedo_shader
 	};
 	material_t* cube_material = material_create(renderer, &cube_material_info);
 
 	material_set_texture2d(cube_material, "texture", linux_texture);
 	material_set_texture2d(cube_material, "texture2", windows_texture);
 	/*---------------------------------------*/
+
+	/*----------- QUAD ----------------------*/
+	mesh3d_t* quad_mesh3d = mesh3d_plane(0.6f);
+	mesh_t* quad = mesh_create(renderer, quad_mesh3d);
+	shader_t* quad_shader = shader_load(renderer, "resource/shaders/transparent_shader.sb");
+	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); //position
+	material_create_info_t quad_material_info =
+	{
+		.per_vertex_attribute_binding_count = 1,
+		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
+		.shader = quad_shader,
+		.is_transparent = true
+	};
+	material_t* quad_material = material_create(renderer, &quad_material_info);
 
 	time_handle_t frame_time_handle = time_get_handle();
 	time_handle_t second_time_handle = time_get_handle();
@@ -175,6 +189,13 @@ int main(int argc, char** argv)
 		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
 		material_push_constants(cube_material, renderer, &mvp);
 		mesh_draw_indexed(cube, renderer);
+
+		material_bind(quad_material, renderer);
+		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
+		mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
+		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
+		material_push_constants(quad_material, renderer, &mvp);
+		mesh_draw_indexed(quad, renderer);
 
 		material_bind(text_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
@@ -245,6 +266,14 @@ int main(int argc, char** argv)
 	shader_release_resources(text_shader);
 	material_destroy(text_material, renderer);
 	material_release_resources(text_material);
+
+	mesh_destroy(quad, renderer);
+	mesh_release_resources(quad);
+	mesh3d_destroy(quad_mesh3d);
+	shader_destroy(quad_shader, renderer);
+	shader_release_resources(quad_shader);
+	material_destroy(quad_material, renderer);
+	material_release_resources(quad_material);
 
 	mesh_destroy(cube, renderer);
 	mesh_release_resources(cube);

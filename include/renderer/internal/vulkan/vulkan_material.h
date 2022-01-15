@@ -18,6 +18,7 @@ typedef struct vulkan_material_create_info_t
 	uint32_t vertex_info_count;
 	vulkan_vertex_info_t* vertex_infos;
 	VkDescriptorSetLayout vk_set_layout;
+	bool is_transparent;
 } vulkan_material_create_info_t;
 
 typedef struct vulkan_material_t
@@ -29,6 +30,7 @@ typedef struct vulkan_material_t
 	//For recreating the graphics pipeline on render window resize
 	uint32_t vertex_info_count;
 	vulkan_vertex_info_t* vertex_infos;
+	bool is_transparent;
 	
 	vulkan_shader_t* shader;
 	vulkan_graphics_pipeline_t* graphics_pipeline;

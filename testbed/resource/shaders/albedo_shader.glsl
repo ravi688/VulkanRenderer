@@ -68,7 +68,7 @@ void main()
 
 #version 450
 
-layout(location = 0) out vec3 color;
+layout(location = 0) out vec4 color;
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 normal;
@@ -90,9 +90,8 @@ layout(set = 0, binding = 3) uniform Light
 
 
 void main() {
-    color = fragColor * (max(0, dot(light.dir, -normal)) + 0.1f);
+    color = vec4(fragColor * (max(0, dot(light.dir, -normal)) + 0.1f), 1);
     float t = (1 - sin(time)) * 0.5;
     vec3 texture_color = (texture(texSampler, texCoord).xyz * t + (1 - t) * texture(texSampler2, texCoord).xyz);
-    color = color * green_color * light.intensity * texture_color;
+    color = vec4(color.rgb * green_color * light.intensity * texture_color, 1);
 }
-

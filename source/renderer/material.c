@@ -14,8 +14,8 @@
 
 instantiate_static_stack_array(VkFormat);
 static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices, u32* out_aligments);
-static material_t* __material_create(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader);
-static void __material_create_no_alloc(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, material_t* material);
+static material_t* __material_create(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, bool is_transparent);
+static void __material_create_no_alloc(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, bool is_transparent, material_t* material);
 static u32 decode_attribute_count(u64 packed_attributes);
 static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, VkVertexInputRate input_rate);
 
@@ -70,13 +70,13 @@ material_t* material_create(renderer_t* renderer, material_create_info_t* create
 		vertex_infos[i + create_info->per_vertex_attribute_binding_count] = decode_vulkan_vertex_info(create_info->per_instance_attribute_bindings[i], VK_VERTEX_INPUT_RATE_INSTANCE);
 	}
 
-	material_t* material =  __material_create(renderer, create_info->shader->vk_set_layout, total_attribute_count, vertex_infos, create_info->shader);
+	material_t* material =  __material_create(renderer, create_info->shader->vk_set_layout, total_attribute_count, vertex_infos, create_info->shader, create_info->is_transparent);
 	material_set_up_shader_resources(material);
 	stack_free(vertex_infos);
 	return material;
 }
 
-static material_t* __material_create(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader)
+static material_t* __material_create(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, bool is_transparent)
 {
 	material_t* material = material_new();
 	vulkan_material_create_info_t material_info =
@@ -85,13 +85,14 @@ static material_t* __material_create(renderer_t* renderer, VkDescriptorSetLayout
 		.vertex_info_count = vertex_info_count,
 		//NOTE: calling vulkan_material_create() creates a deep copy of vertex_infos
 		.vertex_infos = vertex_infos,
-		.vk_set_layout = vk_set_layout
+		.vk_set_layout = vk_set_layout,
+		.is_transparent = is_transparent
 	};
 	material->handle = vulkan_material_create(renderer, &material_info);
 	return material;
 }
 
-static void __material_create_no_alloc(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, material_t* material)
+static void __material_create_no_alloc(renderer_t* renderer, VkDescriptorSetLayout vk_set_layout, u32 vertex_info_count, vulkan_vertex_info_t* vertex_infos, shader_t* shader, bool is_transparent, material_t* material)
 {
 	vulkan_material_create_info_t material_info =
 	{
@@ -99,7 +100,8 @@ static void __material_create_no_alloc(renderer_t* renderer, VkDescriptorSetLayo
 		.vertex_info_count = vertex_info_count,
 		//NOTE: calling vulkan_material_create_no_alloc() doesn't creates a deep copy of vertex_infos
 		.vertex_infos = vertex_infos,
-		.vk_set_layout = vk_set_layout
+		.vk_set_layout = vk_set_layout,
+		.is_transparent = is_transparent
 	};
 	vulkan_material_create_no_alloc(renderer, &material_info, material->handle);
 }

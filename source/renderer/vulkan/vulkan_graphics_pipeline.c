@@ -48,7 +48,36 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 	VkPipelineRasterizationStateCreateInfo rasterizer = vk_get_pipeline_rasterization_state_create_info();
 	VkPipelineViewportStateCreateInfo viewport_state = vk_get_pipeline_viewport_state_create_info(renderer->window->width, renderer->window->height);
 	VkPipelineMultisampleStateCreateInfo multi_sampling = vk_get_pipeline_multisample_state_create_info();
-	VkPipelineColorBlendStateCreateInfo color_blending = vk_get_pipeline_color_blend_state_create_info();
+	VkPipelineColorBlendAttachmentState color_blend_attachmentment_state;
+	if(!create_info->blend_enabled)
+		color_blend_attachmentment_state = vk_get_pipeline_color_blend_attachment_state();
+	else 
+	{
+		VkPipelineColorBlendAttachmentState state = 
+		{
+			.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+			.blendEnable = VK_TRUE,
+			.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+			.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+			.colorBlendOp = VK_BLEND_OP_ADD,
+			.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+			.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+			.alphaBlendOp = VK_BLEND_OP_ADD
+		};
+		color_blend_attachmentment_state = state;
+	}
+	VkPipelineColorBlendStateCreateInfo color_blending = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+		.logicOpEnable = VK_FALSE,
+		.logicOp = VK_LOGIC_OP_COPY, // Optional
+		.attachmentCount = 1,
+		.pAttachments = &color_blend_attachmentment_state,
+		.blendConstants[0] = 0.0f, // Optional
+		.blendConstants[1] = 0.0f, // Optional
+		.blendConstants[2] = 0.0f, // Optional
+		.blendConstants[3] = 0.0f // Optional
+	};
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vk_get_pipeline_depth_stencil_state_create_info();
 	pipeline->pipeline = vk_get_graphics_pipeline(	renderer->vk_device, pipeline->pipeline_layout->handle, renderer->vk_render_pass,
 														shader_stages,
