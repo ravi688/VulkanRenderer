@@ -31,11 +31,13 @@ void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_creat
 	assert(create_info->vertex_infos != NULL);
 	material->renderer = renderer;
 	material->shader = create_info->shader;
+	material->is_transparent = create_info->is_transparent;
 	vulkan_graphics_pipeline_create_info_t pipeline_create_info =
 	{
 		.shader = create_info->shader,
 		.vertex_info_count = create_info->vertex_info_count,
 		.vertex_infos = create_info->vertex_infos,
+		.blend_enabled = create_info->is_transparent
 	};
 	vulkan_graphics_pipeline_create_no_alloc(renderer, &pipeline_create_info, material->graphics_pipeline);
 }
@@ -127,6 +129,7 @@ static void recreate_material(render_window_t* window, void* user_data)
 		.shader = material->shader,
 		.vertex_info_count = material->vertex_info_count,
 		.vertex_infos = material->vertex_infos,
+		.blend_enabled = material->is_transparent
 	};
 	vulkan_graphics_pipeline_create_no_alloc(material->renderer, &pipeline_create_info, material->graphics_pipeline);
 }

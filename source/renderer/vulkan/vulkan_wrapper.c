@@ -418,7 +418,7 @@ function_signature_void(VkPipelineColorBlendStateCreateInfo, vk_get_pipeline_col
 	createInfo.logicOp = VK_LOGIC_OP_COPY; // Optional
 	createInfo.attachmentCount = 1;
 	VkPipelineColorBlendAttachmentState* state = heap_new(VkPipelineColorBlendAttachmentState); 
-	ref(VkPipelineColorBlendAttachmentState, state, 0) = vk_get_pipeline_color_blend_attachment_state();
+	*state = vk_get_pipeline_color_blend_attachment_state();
 	createInfo.pAttachments = state;
 	createInfo.blendConstants[0] = 0.0f; // Optional
 	createInfo.blendConstants[1] = 0.0f; // Optional

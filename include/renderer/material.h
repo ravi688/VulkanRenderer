@@ -78,6 +78,7 @@ typedef struct material_create_info_t
 	shader_t* shader;
 	u32 per_vertex_attribute_binding_count;
 	u32 per_instance_attribute_binding_count;
+	bool is_transparent;
 } material_create_info_t;
 
 material_t* material_new();
