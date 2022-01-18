@@ -173,11 +173,11 @@ int main(int argc, char** argv)
 	{
 		float delta_time = time_get_delta_time(&frame_time_handle);
 		float game_time = time_get_seconds(game_time_handle);
-		mat4_t(float) model_matrix = mat4_rotation(float)(0, sin(angle * DEG2RAD) * 1.57f, 0);
+		mat4_t(float) model_matrix = mat4_rotation(float)(0, angle * DEG2RAD, 0);
 		material_set_floatH(cube_material, handle, game_time);
 		material_set_uint(cube_material, "scene_data.value", 2);
 		material_set_vec3(cube_material, "scene_data.green_color", vec3(float)(1, 1, 1));
-		material_set_vec3(cube_material, "light.dir", vec3(float)(0, -1, 0));
+		material_set_vec3(cube_material, "light.dir", vec3(float)(1, -1, 0));
 		material_set_float(cube_material, "light.intensity", 1.0f);
 		material_set_float(text_material, "ubo.time", game_time);
 		material_set_float(game_ui_material, "ubo.time", game_time);
@@ -187,21 +187,22 @@ int main(int argc, char** argv)
 		material_bind(cube_material, renderer);
 		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
 		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-		material_push_constants(cube_material, renderer, &mvp);
+		material_set_push_mat4(cube_material, "push.mvp_matrix", mvp);
+		material_set_push_float(cube_material, "push.intensity", 1.0f);
 		mesh_draw_indexed(cube, renderer);
 
 		material_bind(quad_material, renderer);
 		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
 		mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
 		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-		material_push_constants(quad_material, renderer, &mvp);
+		material_set_push_mat4(quad_material, "push.mvp_matrix", mvp);
 		mesh_draw_indexed(quad, renderer);
 
 		material_bind(text_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
 		mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_scale(float)(0, 50, 50));
 		mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
-		material_push_constants(text_material, renderer, &canvas_transform);
+		material_set_push_mat4(text_material, "push.mvp_matrix", canvas_transform);
 		text_mesh_draw(text_mesh);
 
 

@@ -66,10 +66,11 @@ enum
 };
 static void shader_data_layout_parse_error(u32 err, u32 len, const char* string);
 static u32 get_word_length(const char* string, const char delimiter);
-static const char* parse_shader_stage(const char* string, u16* out_mask);
+static const char* parse_shader_stage(const char* string, u32* out_mask);
 static const char* parse_array_operator(const char* string, u32* out_data, u8 required);
-static const char* parse_type(const char* string, u16 mask, BUFFER* buffer, BUFFER* offsets_buffer);
-static const char* parse_storage_qualifiers(const char* string, u16* out_info);
+static const char* parse_square_brackets(const char* string, bool* is_found, u32* layout_info_mask);
+static const char* parse_type(const char* string, u32 mask, BUFFER* buffer, BUFFER* offsets_buffer);
+static const char* parse_storage_qualifiers(const char* string, u32* out_info);
 static void buffer_write_string(BUFFER* buffer, const char* string, u32 len, bool null_terminate);
 static void buffer_write_u8(BUFFER* buffer, u8 value);
 static void buffer_write_u16(BUFFER* buffer, u16 value);
@@ -95,25 +96,31 @@ function_signature(BUFFER*, shader_compiler_load_and_compile, const char* file_p
 
 #section LAYOUT
 
-vertex[0, 0] uniform
+vertex [push_constant] uniform Push
+{
+	mat4 mvp_matrix; 		// 64 bytes
+	mat4 model_matrix; 		// 64 bytes
+} push;
+
+vertex[0, 0] uniform Data
 {
     float time;
-};
+} data;
 
-vertex[0, 1] uniform
+vertex[0, 1] uniform Matrices
 {
     mat4 projection_matrix;
     mat4 view_matrix;
     mat4 model_matrix;
-};
+} matrices;
 
-fragment[0, 0] uniform sampler2D albedo_texture;
-fragment[0, 1] uniform
+fragment[0, 0] uniform Sampler2D albedo_texture;
+fragment[0, 1] uniform Light
 {
     float time;
     vec3 light_dir;
     float light_intensity;
-};
+} light;
 
 #section SHADER
 
@@ -345,6 +352,13 @@ function_signature(static const char*, parse_settings, const char* _source, buf_
 
 /*
   		*---------------------------INPUT STRING FORMAT---------------------------*
+
+vertex [push_constant] uniform Push
+{
+	mat4 mvp_matrix; 		// 64 bytes
+	mat4 model_matrix; 		// 64 bytes
+} push;
+
 vertex[0, 0] uniform Matrices
 {
     mat4 projection_matrix;
@@ -365,9 +379,10 @@ fragment vertex [0, 1] uniform SceneData
  _______________|___________________________|___________________________________________
  0 				| u16 						| descriptor count
  ...			| array of u32 				| offsets for each serialized descriptor
- 0 				| u8 						| descriptor set number/index
- 1 				| u8 						| descriptor binding number/index
- 2 				| u16						| BIT(15) set if the type is an opaque type
+ 0 				| u8 						| descriptor set number/index, if the type is push_constant then it would be the offset
+ 1 				| u8 						| descriptor binding number/index, if the type is push_constant then it would be 0xFF
+ 2 				| u32 						| BIT(16) set if the type is a push_constant
+  				| u32						| BIT(15) set if the type is an opaque type
  				| 							| BIT(14) set if the type is an uniform
   				| 							| BIT(13) = vertex shader, BIT(12) = tessellation shader, BIT(11) = geometry shader, BIT(10) = fragment shader
   				| 							| Lower 8 Bits contains the type information
@@ -401,14 +416,15 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 	{
 		while(isspace(*string)) string++;
 		if(string >= end) break; //end of the file reached
-		u16 shader_mask = 0;
-		u16 storage_mask = 0;
-		u32 set_info[2] = { 0xFF, 0xFF };
+		u32 shader_mask = 0;
+		u32 storage_mask = 0;
+		u32 layout_info_mask = 0;
+		u32 values[2] = { 0xFF, 0xFF };
 
 		string = parse_shader_stage(string, &shader_mask);
-		string = parse_array_operator(string, &set_info[0], 2);
-		assert(set_info[0] < 0xFF);
-		assert(set_info[1] < 0xFF);
+		bool is_found = false;
+		string = parse_square_brackets(string, &is_found, &layout_info_mask);
+		string = parse_array_operator(string, &values[0], is_found ? 1 : 2);
 		string = parse_storage_qualifiers(string, &storage_mask);
 
 		//Write offset (byte count), 4 BYTES
@@ -416,12 +432,12 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 		log_u32(buf_get_element_count(buffer));
 
 		//Write descriptor set number/index, 1 BYTE
-		buffer_write_u8(buffer, (u8)set_info[0]);
+		buffer_write_u8(buffer, (u8)values[0]);
 
 		//Write descriptor binding number/index, 1 BYTE
-		buffer_write_u8(buffer, (u8)set_info[1]);
+		buffer_write_u8(buffer, (u8)values[1]);
 
-		string = parse_type(string, storage_mask | shader_mask, buffer, offsets_buffer);
+		string = parse_type(string, layout_info_mask | storage_mask | shader_mask, buffer, offsets_buffer);
 		descriptor_count++;
 	}
 
@@ -449,12 +465,12 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 	    float light_intensity;
 	} scene_data;
  */
-static const char* parse_type(const char* string, u16 mask, BUFFER* buffer, BUFFER* offsets_buffer)
+static const char* parse_type(const char* string, u32 mask, BUFFER* buffer, BUFFER* offsets_buffer)
 {
 	while(isspace(*string)) string++;
 	u32 count = get_word_length(string, 0);
 	bool found = true;
-	u16 type;
+	u32 type;
 	buf_ucount_t identifier_name_index;
 	if(strncmp(string, "sampler2D", count) == 0) { type = (1UL << 15) | (u16)SHADER_COMPILER_SAMPLER2D;  }
 	else if(strncmp(string, "sampler3D", count) == 0) { type = (1UL << 15) | (u16)SHADER_COMPILER_SAMPLER3D; }
@@ -492,8 +508,8 @@ static const char* parse_type(const char* string, u16 mask, BUFFER* buffer, BUFF
 		string++;
 		type = (u16)SHADER_COMPILER_BLOCK;
 
-		//Write type info to the buffer, 2 BYTES
-		buffer_write_u16(buffer, type | mask);
+		//Write type info to the buffer, 4 BYTES
+		buffer_write_u32(buffer, type | mask);
 		log_u32(type | mask);
 
 		//Write block name to the buffer, count + 1 BYTES
@@ -522,8 +538,8 @@ static const char* parse_type(const char* string, u16 mask, BUFFER* buffer, BUFF
 
 	if(found)
 	{
-		//Write type info to the buffer, 2 BYTES
-		buffer_write_u16(buffer, type | mask);
+		//Write type info to the buffer, 4 BYTES
+		buffer_write_u32(buffer, type | mask);
 		identifier_name_index = buf_get_element_count(buffer);
 		string += count;
 	}
@@ -552,10 +568,10 @@ static const char* parse_type(const char* string, u16 mask, BUFFER* buffer, BUFF
 	return string;
 }
 
-static const char* parse_storage_qualifiers(const char* string, u16* out_info)
+static const char* parse_storage_qualifiers(const char* string, u32* out_info)
 {
 	while(isspace(*string)) string++;
-	u16 mask = 0;
+	u32 mask = 0;
 	u32 count = get_word_length(string, 0);
 	if(strncmp(string, "uniform", count) == 0)
 		mask |= (1UL << 14);
@@ -565,12 +581,12 @@ static const char* parse_storage_qualifiers(const char* string, u16* out_info)
 	return string + count;
 }
 
-static const char* parse_shader_stage(const char* string, u16* out_mask)
+static const char* parse_shader_stage(const char* string, u32* out_mask)
 {
 	const char* stage_strings[SHADER_COMPILER_SHADER_STAGE_MAX] = { "vertex", "tessellation", "geometry", "fragment" };
 	u32 count = 0;
-	u16 mask = 0;
 	u8 stage_count = 0;
+	u32 mask = 0;
 	while(true)
 	{
 		while(isspace(*string)) string++;
@@ -591,6 +607,37 @@ static const char* parse_shader_stage(const char* string, u16* out_mask)
 	if(stage_count == 0)
 		LOG_FETAL_ERR("shader layout parse error: Unrecognized symbol \"%.*s\", expected shader stage!\n", count, string);
 	*out_mask = mask;
+	return string;
+}
+
+static const char* parse_square_brackets(const char* string, bool* is_found, u32* layout_info_mask)
+{
+	const char* origin = string;
+	while(isspace(*string)) string++;
+	if(strncmp(string, "[", 1) == 0)
+	{
+		string++;
+		while(isspace(*string)) string++;
+		u8 len = get_word_length(string, ']');
+		if(strncmp(string, "push_constant", len) == 0)
+		{
+			*is_found = true;
+			*layout_info_mask = (1UL << 16);
+		}
+		else
+			return origin;
+		string += len;
+		while(*string != ']')
+		{
+			if(!isspace(*string))
+			{
+				len = get_word_length(string, 0);
+				LOG_FETAL_ERR("shader layout parse error: Unrecognized symbol \"%.*s\" in square brackets\n", len, string);
+			}
+			string++;
+		}
+		string++;
+	}
 	return string;
 }
 

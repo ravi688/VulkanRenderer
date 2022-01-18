@@ -17,15 +17,8 @@ vulkan_pipeline_layout_t* vulkan_pipeline_layout_new()
 void vulkan_pipeline_layout_create_no_alloc(renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info, vulkan_pipeline_layout_t* pipeline_layout)
 {
 	assert(create_info != NULL);
-	VkPushConstantRange* push_constant_range = stack_new(VkPushConstantRange);
-	/*TODO: push_constant_range->size = sizeof(mat4_t(float));*/
-	push_constant_range->size = sizeof(float) * 16;
-	push_constant_range->offset = 0;
-	push_constant_range->stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-
 	u32 set_layout_count = create_info->vk_set_layout == VK_NULL_HANDLE ? 0 : 1;
-	pipeline_layout->handle = vk_get_pipeline_layout(renderer->vk_device, set_layout_count, &create_info->vk_set_layout, 1, push_constant_range);
-	stack_free(push_constant_range);
+	pipeline_layout->handle = vk_get_pipeline_layout(renderer->vk_device, set_layout_count, &create_info->vk_set_layout, create_info->push_constant_range_count, create_info->push_constant_ranges);
 }
 
 vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info)
@@ -47,7 +40,8 @@ void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* pipeline
 }
 
 
-void vulkan_pipeline_layout_push_constants(vulkan_pipeline_layout_t* pipeline_layout, renderer_t* renderer, void* bytes)
+void vulkan_pipeline_layout_push_constants(vulkan_pipeline_layout_t* pipeline_layout, renderer_t* renderer, VkShaderStageFlagBits stage_flags, u32 offset, u32 size, void* bytes)
 {
-	vkCmdPushConstants(ref(VkCommandBuffer, renderer->vk_command_buffers.value2, renderer->swapchain->current_image_index), pipeline_layout->handle, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float) * 16, bytes);
+	VkCommandBuffer command_buffer = renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index];
+	vkCmdPushConstants(command_buffer, pipeline_layout->handle, stage_flags, offset, size, bytes);
 }

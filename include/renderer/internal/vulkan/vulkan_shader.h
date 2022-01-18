@@ -11,10 +11,15 @@ typedef struct vulkan_descriptor_set_t vulkan_descriptor_set_t;
 typedef struct vulkan_shader_resource_descriptor_t
 {
 	struct_descriptor_t handle;
+	bool is_push_constant;
 	bool is_opaque;
 	bool is_uniform;
 	u8 binding_number;
-	u8 set_number;
+	union 
+	{
+		u8 set_number;
+		u8 push_constant_range_offset;
+	};
 	//NOTE: These bit descriptions are based on the vulkan_vulkan_shader_stage_t and vulkan_shader_stage_t enums
 	u8 stage_flags; 	// BIT(0) = vertex shader, BIT(1) = fragment shader, BIT(2) = geometry shader, BIT(3) = tessellation shader
 } vulkan_shader_resource_descriptor_t;
