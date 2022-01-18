@@ -24,12 +24,13 @@ per-instance[0] vec3 offset;
 vertex [push_constant] [0] uniform Push
 {
     mat4 mvp_matrix;
+    mat4 model_matrix;
 } push;
 
-fragment [push_constant] [64] uniform Push
-{
-    float intensity;
-} push;
+// fragment [push_constant] [64] uniform Push
+// {
+//     mat4 model_matrix;
+// } push;
 
 
 fragment[0, 0] uniform sampler2D texture;
@@ -58,6 +59,7 @@ fragment[0, 3] uniform Light
 layout(push_constant) uniform Push
 {
     mat4 mvp_matrix;
+    mat4 model_matrix;
 };
 
 layout(location = 0) in vec3 inPosition;
@@ -74,7 +76,7 @@ void main()
     vec4 v = mvp_matrix * vec4(inPosition, 1.0);
     gl_Position = v;
     fragColor = inColor;
-    normal = inNormal;
+    normal = (transpose(inverse(model_matrix)) * vec4(inNormal, 0)).xyz;
     texCoord = inTexCoord;
 }
 
@@ -82,13 +84,6 @@ void main()
 #stage fragment
 
 #version 450
-
-layout(push_constant) uniform Push
-{
-    mat4 _1;
-
-    float intensity;
-};
 
 layout(location = 0) out vec4 color;
 
@@ -112,8 +107,9 @@ layout(set = 0, binding = 3) uniform Light
 
 
 void main() {
+
     color = vec4(fragColor * (dot(-normalize(light.dir), normal) + 1) * 0.5, 1);
     float t = (1 - sin(time)) * 0.5;
     vec3 texture_color = (texture(texSampler, texCoord).xyz * t + (1 - t) * texture(texSampler2, texCoord).xyz);
-    color = vec4(color.rgb * green_color * texture_color * light.intensity * intensity, 1);
+    color = vec4(color.rgb * green_color * texture_color * light.intensity, 1);
 }

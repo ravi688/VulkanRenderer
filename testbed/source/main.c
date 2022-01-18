@@ -177,7 +177,7 @@ int main(int argc, char** argv)
 		material_set_floatH(cube_material, handle, game_time);
 		material_set_uint(cube_material, "scene_data.value", 2);
 		material_set_vec3(cube_material, "scene_data.green_color", vec3(float)(1, 1, 1));
-		material_set_vec3(cube_material, "light.dir", vec3(float)(1, -1, 0));
+		material_set_vec3(cube_material, "light.dir", vec3_normalize(float)(vec3(float)(-1, -1, 1)));
 		material_set_float(cube_material, "light.intensity", 1.0f);
 		material_set_float(text_material, "ubo.time", game_time);
 		material_set_float(game_ui_material, "ubo.time", game_time);
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
 		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
 		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
 		material_set_push_mat4(cube_material, "push.mvp_matrix", mvp);
-		material_set_push_float(cube_material, "push.intensity", 1.0f);
+		material_set_push_mat4(cube_material, "push.model_matrix", model_matrix);
 		mesh_draw_indexed(cube, renderer);
 
 		material_bind(quad_material, renderer);
