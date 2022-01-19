@@ -129,6 +129,7 @@ int main(int argc, char** argv)
 	texture_t* linux_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
 	texture_t* windows_texture = texture_load(renderer, "resource/textures/windowslogo.bmp");
 	texture_t* apple_texture = texture_load(renderer, "resource/textures/applelogo.bmp");
+	texture_t* normal_map_texture = texture_load(renderer, "resource/textures/normal_map.bmp");
 
 	shader_t* albedo_shader = shader_load(renderer, "resource/shaders/albedo_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); //position
@@ -145,6 +146,7 @@ int main(int argc, char** argv)
 
 	material_set_texture2d(cube_material, "texture", linux_texture);
 	material_set_texture2d(cube_material, "texture2", windows_texture);
+	material_set_texture2d(cube_material, "normal_map", normal_map_texture);
 	/*---------------------------------------*/
 
 	/*----------- QUAD ----------------------*/
@@ -173,11 +175,11 @@ int main(int argc, char** argv)
 	{
 		float delta_time = time_get_delta_time(&frame_time_handle);
 		float game_time = time_get_seconds(game_time_handle);
-		mat4_t(float) model_matrix = mat4_rotation(float)(0, angle * DEG2RAD, 0);
+		mat4_t(float) model_matrix = mat4_rotation(float)(0, angle * DEG2RAD * 0.5f, 0);
 		material_set_floatH(cube_material, handle, game_time);
 		material_set_uint(cube_material, "scene_data.value", 2);
 		material_set_vec3(cube_material, "scene_data.green_color", vec3(float)(1, 1, 1));
-		material_set_vec3(cube_material, "light.dir", vec3_normalize(float)(vec3(float)(-1, -1, 1)));
+		material_set_vec3(cube_material, "light.dir", vec3_normalize(float)(vec3(float)(0, -1, 1)));
 		material_set_float(cube_material, "light.intensity", 1.0f);
 		material_set_float(text_material, "ubo.time", game_time);
 		material_set_float(game_ui_material, "ubo.time", game_time);
@@ -289,6 +291,8 @@ int main(int argc, char** argv)
 	texture_release_resources(windows_texture);
 	texture_destroy(apple_texture, renderer);
 	texture_release_resources(apple_texture);
+	texture_destroy(normal_map_texture, renderer);
+	texture_release_resources(normal_map_texture);
 
 	renderer_terminate(renderer);
 	memory_allocator_terminate();
