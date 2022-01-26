@@ -180,16 +180,16 @@ static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* 
 		VkShaderStageFlagBits stage_flags = 0;
 		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_VERTEX))
 			stage_flags |= VK_SHADER_STAGE_VERTEX_BIT;
-		else if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_FRAGMENT))
+		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_FRAGMENT))
 			stage_flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-		else if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_GEOMETRY))
+		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_GEOMETRY))
 			stage_flags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-		else if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_TESSELLATION))
+		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_TESSELLATION))
 			stage_flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 		ref(VkPushConstantRange, ranges, range_count) = (VkPushConstantRange)
 		{
 			.stageFlags = stage_flags,
-			.offset = descriptor->set_number,
+			.offset = descriptor->push_constant_range_offset,
 			.size = struct_descriptor_sizeof(&descriptor->handle)
 		};
 		descriptor_indices[range_count] = i;
@@ -332,11 +332,11 @@ static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags)
 	VkShaderStageFlagBits flags = 0;
 	if(_flags & (1 << VULKAN_SHADER_TYPE_VERTEX))
 		flags |= VK_SHADER_STAGE_VERTEX_BIT;
-	else if(_flags & (1 << VULKAN_SHADER_TYPE_FRAGMENT))
+	if(_flags & (1 << VULKAN_SHADER_TYPE_FRAGMENT))
 		flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-	else if(_flags & (1 << VULKAN_SHADER_TYPE_GEOMETRY))
+	if(_flags & (1 << VULKAN_SHADER_TYPE_GEOMETRY))
 		flags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-	else if(_flags & (1 << VULKAN_SHADER_TYPE_TESSELLATION))
+	if(_flags & (1 << VULKAN_SHADER_TYPE_TESSELLATION))
 		flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 	return flags;
 }

@@ -184,13 +184,13 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 		descriptor->handle.type = descriptor_info & 0xFFU;
 		descriptor->stage_flags = 0;
 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_VERTEX)))
-			descriptor->stage_flags |= 1UL << VULKAN_SHADER_TYPE_VERTEX;
+			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_VERTEX);
 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_TESSELLATION)))
-			descriptor->stage_flags |= 1UL << VULKAN_SHADER_TYPE_TESSELLATION;
+			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_TESSELLATION);
 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_GEOMETRY)))
-			descriptor->stage_flags |= 1UL << VULKAN_SHADER_TYPE_GEOMETRY;
+			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_GEOMETRY);
 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_FRAGMENT)))
-			descriptor->stage_flags |= 1UL << VULKAN_SHADER_TYPE_FRAGMENT;
+			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_FRAGMENT);
 		
 		const char* name = buf_get_ptr_at(shader_binary, temp_cursor);
 		u32 len = strlen(name);
@@ -206,7 +206,7 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 		}
 		strcpy(descriptor->handle.name, name);
 
-		LOG_MSG("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
+		log_msg("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
 			i, descriptor->set_number, descriptor->binding_number, descriptor->stage_flags,
 			descriptor->is_push_constant ? "true" : "false", descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", (descriptor->handle.type == SHADER_COMPILER_BLOCK) ? "true" : "false",
 			descriptor->handle.name);
@@ -214,7 +214,7 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 		if(descriptor->handle.type == SHADER_COMPILER_BLOCK)
 		{
 			descriptor->handle.field_count = *(u16*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 2;
-			LOG_MSG("Field Count: %u\n", descriptor->handle.field_count);
+			log_msg("Field Count: %u\n", descriptor->handle.field_count);
 			indices[i] = buf_get_element_count(&fields);
 			for(u16 j = 0; j < descriptor->handle.field_count; j++)
 			{
@@ -227,7 +227,7 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 				struct_field_t field = { .type = type, .size = sizeof_glsl_type(type), .alignment = alignof_glsl_type(type) };
 				strcpy(field.name, name);
 				buf_push(&fields, &field);
-				LOG_MSG("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, field.type, field.size, field.alignment, field.name);
+				log_msg("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, field.type, field.size, field.alignment, field.name);
 			}
 		}
 	}
@@ -241,7 +241,7 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 			continue;
 		descriptors[i].handle.fields = buf_get_ptr_at(&fields, indices[i]);
 		struct_descriptor_recalculate(&descriptors[i].handle);
-		LOG_MSG("Struct \"%s\", size = %u\n", descriptors[i].handle.name, struct_descriptor_sizeof(&descriptors[i].handle));
+		log_msg("Struct \"%s\", size = %u\n", descriptors[i].handle.name, struct_descriptor_sizeof(&descriptors[i].handle));
 	}
 	stack_free(indices);
 	return descriptors;
