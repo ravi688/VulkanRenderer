@@ -121,6 +121,22 @@ int main(int argc, char** argv)
 	text_mesh_string_set_scaleH(game_ui, score_text, vec3(float)(0.8f, 0.8f, 0.8f));
 
 	/*--------PLAYGROUND----------------------*/
+	mesh3d_t* box_mesh3d = mesh3d_load("resource/Monkey.obj");
+	mesh3d_make_centroid_origin(box_mesh3d);
+	mesh_t* box = mesh_create(renderer, box_mesh3d);
+	shader_t* box_shader = shader_load(renderer, "resource/shaders/box_shader.sb");
+	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); // position
+	per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); // normal
+	per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC2, 2); // texture coordinates
+	material_create_info_t box_material_info = 
+	{
+		.per_vertex_attribute_binding_count = 3,
+		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
+		.shader = box_shader
+	};
+	material_t* box_material = material_create(renderer, &box_material_info);
+	texture_t* box_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
+	material_set_texture2d(box_material, "albedo", box_texture);
 	/*---------------------------------------*/
 
 	/*------CUBE-----------------------------*/
@@ -175,7 +191,6 @@ int main(int argc, char** argv)
 	{
 		float delta_time = time_get_delta_time(&frame_time_handle);
 		float game_time = time_get_seconds(game_time_handle);
-		mat4_t(float) model_matrix = mat4_rotation(float)(0, angle * DEG2RAD * 0.5f, 0);
 		material_set_floatH(cube_material, handle, game_time);
 		material_set_uint(cube_material, "scene_data.value", 2);
 		material_set_vec3(cube_material, "scene_data.green_color", vec3(float)(1, 1, 1));
@@ -184,10 +199,23 @@ int main(int argc, char** argv)
 		material_set_float(text_material, "ubo.time", game_time);
 		material_set_float(game_ui_material, "ubo.time", game_time);
 
-		renderer_begin_frame(renderer, 0.1f, 0.1f, 0.3f, 0);
+		material_set_vec3(box_material, "light.color", vec3(float)(1, 1, 1));
+		material_set_vec3(box_material, "light.dir", vec3_normalize(float)(vec3(float)(0, -1, 1)));
+		material_set_float(box_material, "light.intensity", 1.0f);
+
+		renderer_begin_frame(renderer, 0, 0, 0, 0);
+
+		material_bind(box_material, renderer);
+		mat4_t(float) model_matrix;
+		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_rotation(float)(0, angle * DEG2RAD, 0), mat4_scale(float)(0.5f, 0.5f, 0.5f)));
+		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
+		material_set_push_mat4(box_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
+		material_set_push_mat4(box_material, "push.model_matrix", mat4_transpose(float)(model_matrix));
+		mesh_draw_indexed(box, renderer);
 
 		material_bind(cube_material, renderer);
-		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
+		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(1, 0, 1.0f), mat4_rotation(float)(0, -180 * DEG2RAD * 0.5f, 0)));
+		mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
 		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
 		material_set_push_mat4(cube_material, "push.mvp_matrix", mvp);
 		material_set_push_mat4(cube_material, "push.model_matrix", model_matrix);
@@ -203,13 +231,13 @@ int main(int argc, char** argv)
 		material_bind(text_material, renderer);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
 		mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_scale(float)(0, 50, 50));
-		mat4_move(float)(&canvas_transform, mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
-		material_set_push_mat4(text_material, "push.mvp_matrix", canvas_transform);
+		material_set_push_mat4(text_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
 		text_mesh_draw(text_mesh);
 
 
 		material_bind(game_ui_material, renderer);
-		material_push_constants(game_ui_material, renderer, &canvas_transform);
+		mat4_move(float)(&_model_matrix, mat4_mul(float)(2, mat4_scale(float)(50, 50, 50), mat4_identity(float)()));
+		material_set_push_mat4(game_ui_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
 		text_mesh_draw(game_ui);
 		// mesh_draw_indexed(glyph_A, renderer);
 		// mesh_draw_indexed(glyph_B, renderer);
@@ -217,7 +245,7 @@ int main(int argc, char** argv)
 		renderer_end_frame(renderer);
 
 		renderer_update(renderer);
-		angle += 180 * delta_time;
+		angle += 180 * delta_time * 0.3f;
 		if(angle >= 360.0f)
 			angle = 0.0f;
 
@@ -269,6 +297,16 @@ int main(int argc, char** argv)
 	shader_release_resources(text_shader);
 	material_destroy(text_material, renderer);
 	material_release_resources(text_material);
+
+	mesh_destroy(box, renderer);
+	mesh_release_resources(box);
+	mesh3d_destroy(box_mesh3d);
+	shader_destroy(box_shader, renderer);
+	shader_release_resources(box_shader);
+	texture_destroy(box_texture, renderer);
+	texture_release_resources(box_texture);
+	material_destroy(box_material, renderer);
+	material_release_resources(box_material);
 
 	mesh_destroy(quad, renderer);
 	mesh_release_resources(quad);

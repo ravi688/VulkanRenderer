@@ -53,7 +53,6 @@ function_signature(bmp_t, bmp_load, const char* file_path)
 	binary_parser_skip_bytes(offset);
 
 	u8 channel_count = (bpp >> 3); /* (Bits Per Pixels) / Bits per byte*/
-	printf("Width: %u, Height: %u\n", width, height);
 	u8* data = heap_newv(u8, 4 * width * height);
 	u8* dst = data;
 	const u8* src = parser.bytes;

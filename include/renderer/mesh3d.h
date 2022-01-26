@@ -64,6 +64,12 @@ function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, index_t count);
 function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, index_t count);
 function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, index_t count);
 
+function_signature(void, mesh3d_positions_free, mesh3d_t* mesh);
+function_signature(void, mesh3d_normals_free, mesh3d_t* mesh);
+function_signature(void, mesh3d_colors_free, mesh3d_t* mesh);
+function_signature(void, mesh3d_triangles_free, mesh3d_t* mesh);
+function_signature(void, mesh3d_uvs_free, mesh3d_t* mesh);
+
 function_signature(bool, mesh3d_has_uvs, mesh3d_t* mesh); 
 function_signature(bool, mesh3d_has_positions, mesh3d_t* mesh); 
 function_signature(bool, mesh3d_has_normals, mesh3d_t* mesh); 
@@ -149,6 +155,12 @@ function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index);
 #define mesh3d_triangles_new(...) define_alias_function_macro(mesh3d_triangles_new, __VA_ARGS__)
 #define mesh3d_uvs_new(...) define_alias_function_macro(mesh3d_uvs_new, __VA_ARGS__)
 #define mesh3d_colors_new(...) define_alias_function_macro(mesh3d_colors_new, __VA_ARGS__)
+
+#define mesh3d_positions_free(...) define_alias_function_macro(mesh3d_positions_free, __VA_ARGS__)
+#define mesh3d_normals_free(...) define_alias_function_macro(mesh3d_normals_free, __VA_ARGS__)
+#define mesh3d_triangles_free(...) define_alias_function_macro(mesh3d_triangles_free, __VA_ARGS__)
+#define mesh3d_uvs_free(...) define_alias_function_macro(mesh3d_uvs_free, __VA_ARGS__)
+#define mesh3d_colors_free(...) define_alias_function_macro(mesh3d_colors_free, __VA_ARGS__)
 
 #define mesh3d_has_uvs(...) define_alias_function_macro(mesh3d_has_uvs, __VA_ARGS__) 
 #define mesh3d_has_positions(...) define_alias_function_macro(mesh3d_has_positions, __VA_ARGS__) 

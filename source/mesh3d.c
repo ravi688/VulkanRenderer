@@ -119,6 +119,51 @@ function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, index_t count)
 	CALLTRACE_END();
 }
 
+function_signature(void, mesh3d_positions_free, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	if(mesh->positions == NULL) return;
+	buf_free(mesh->positions);
+	mesh->positions = NULL;
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_normals_free, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	if(mesh->normals == NULL) return;
+	buf_free(mesh->normals);
+	mesh->normals = NULL;
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_colors_free, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	if(mesh->colors == NULL) return;
+	buf_free(mesh->colors);
+	mesh->colors = NULL;
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_triangles_free, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	if(mesh->triangles == NULL) return;
+	buf_free(mesh->triangles);
+	mesh->triangles = NULL;
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_uvs_free, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	if(mesh->uvs == NULL) return;
+	buf_free(mesh->uvs);
+	mesh->uvs = NULL;
+	CALLTRACE_END();
+}
+
 function_signature(index_t, mesh3d_positions_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
@@ -1021,10 +1066,10 @@ function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh)
 
 static void stl_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh);
 static void stl_vertex_position(vec3_t(float) position, mesh3d_t* mesh);
-static void obj_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh);
-static void obj_vertex_position(vec3_t(float) position, mesh3d_t* mesh);
-static void obj_vertex_texcoord(vec3_t(float) texcoord, mesh3d_t* mesh);
-static void obj_facet(vec4_t(vec3_t(int)) facet, mesh3d_t* mesh);
+static void obj_vertex_normal(float* normal, void* user_data);
+static void obj_vertex_position(float* position, void* user_data);
+static void obj_vertex_texcoord(float* texcoord, void* user_data);
+static void obj_facet(u32* facet, u32 attribute_count, u32 face_vertex_count, void* user_data);
 
 function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
 {
@@ -1037,7 +1082,6 @@ function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
 		mesh3d_positions_new(mesh, 0);
 		mesh3d_normals_new(mesh, 0);
 		mesh3d_triangles_new(mesh, 0);
-		mesh3d_colors_new(mesh, 0);
 		stl_parse_callbacks_t parse_callbacks =
 		{
 			.user_data = mesh,
@@ -1086,23 +1130,42 @@ function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
 	//TODO: Obj implementation is incomplete because obj_parse_ascii is not generic; can't load all the obj files
 	else if(!strcmp(extension, EXTENSION_OBJ))
 	{
-		LOG_FETAL_ERR("Currently only .stl files are supported, OBJ supported is yet to be implemented\n");
 		buffer = load_text_from_file(file_path);
 		ASSERT(buf_get_element_count(buffer) > OBJ_MINIMUM_ASCII_FILE_LENGTH, "length of the file \"%s\" is less than OBJ_MINIMUM_ASCII_FILE_LENGTH\n", file_path);
+		mesh3d_positions_new(mesh, 0);
+		mesh3d_triangles_new(mesh, 0);
+		mesh3d_uvs_new(mesh, 0);
+		mesh3d_normals_new(mesh, 0);
+		struct 
+		{ 
+			mesh3d_t* mesh;
+			BUFFER normal_buffer; 		// temporary buffer to store normals
+			BUFFER position_buffer; 	// temporary buffer to store positions
+			BUFFER texcoord_buffer;		// temporary buffer to store texture coordinates
+		} user_data;
+		user_data.mesh = mesh;
+		user_data.normal_buffer = buf_create(sizeof(float) * 3, 0, 0);
+		user_data.position_buffer = buf_create(sizeof(float) * 3, 0, 0);
+		user_data.texcoord_buffer = buf_create(sizeof(float) * 2, 0, 0);
 		obj_parse_callbacks_t parse_callbacks =
 		{
-			.user_data = mesh,
+			.user_data = &user_data,
 			.vertex_normal_callback = (void*)obj_vertex_normal,
 			.vertex_position_callback = (void*)obj_vertex_position,
 			.vertex_texcoord_callback = (void*)obj_vertex_texcoord,
 			.facet_callback = (void*)obj_facet
 		};
 		obj_parse_ascii(buffer->bytes, buf_get_element_count(buffer), &parse_callbacks);
+		buf_free(&user_data.normal_buffer);
+		buf_free(&user_data.position_buffer);
+		buf_free(&user_data.texcoord_buffer);
+		if(!mesh3d_has_uvs(mesh))
+			mesh3d_uvs_free(mesh);
+		if(!mesh3d_has_normals(mesh))
+			mesh3d_normals_free(mesh);
 	}
 	else
-	{
 		LOG_FETAL_ERR("Failed to open \"%s\", Unsupported file format\n", file_path);
-	}
 	if(buffer != NULL)
 		buf_free(buffer);
 	mesh3d_optimize_buffer(mesh);
@@ -1129,25 +1192,106 @@ static void stl_vertex_position(vec3_t(float) position, mesh3d_t* mesh)
 	mesh3d_color_add_vec3(mesh, normal);
 }
 
-static void obj_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh)
+static void print_normal(float* normal, void* ptr)
 {
-
+	printf("NORMAL -> (%f, %f, %f)\n", normal[0], normal[1], normal[2]);
 }
 
-static void obj_vertex_position(vec3_t(float) position, mesh3d_t* mesh)
+static void print_position(float* position, void* ptr)
 {
-
+	printf("POSITION -> (%f, %f, %f)\n", position[0], position[1], position[2]);
 }
 
-static void obj_vertex_texcoord(vec3_t(float) texcoord, mesh3d_t* mesh)
+static void print_texcoord(float* texcoord, void* ptr)
 {
-
+	printf("TEXCOORD -> (%f, %f)\n", texcoord[0], texcoord[1]);
 }
 
-//TODO: vec4_t(vec3_t(int)) should be vec4_t(vec3_t(index_t)) to hold large values
-static void obj_facet(vec4_t(vec3_t(int)) facet, mesh3d_t* mesh)
+static void print_facet(u32* facet, u32 attrib_count, u32 face_vertex_count, void* ptr)
 {
+	printf("FACET -> ");
+	for(int i = 0; i < face_vertex_count; i++)
+	{
+		printf("(");
+		for(int j = 0; j < attrib_count; j++)
+			printf(" %u", facet[i * attrib_count + j]);
+		printf(" ) ");
+	}
+	puts("");
+}
 
+static void obj_vertex_normal(float* normal, void* user_data)
+{
+	// print_normal(normal, NULL);
+	buf_push(&((BUFFER*)(user_data + sizeof(mesh3d_t*)))[0], normal);
+}
+
+static void obj_vertex_position(float* position, void* user_data)
+{
+	// print_position(position, NULL);
+	buf_push(&((BUFFER*)(user_data + sizeof(mesh3d_t*)))[1], position);
+}
+
+static void obj_vertex_texcoord(float* texcoord, void* user_data)
+{
+	// print_texcoord(texcoord, NULL);
+	buf_push(&((BUFFER*)(user_data + sizeof(mesh3d_t*)))[2], texcoord);
+}
+
+static void obj_facet(u32* facet, u32 attribute_count, u32 face_vertex_count, void* user_data)
+{
+	// print_facet(facet, attribute_count, face_vertex_count, NULL);
+	mesh3d_t* mesh = *(mesh3d_t**)user_data;
+	BUFFER* normal_buffer = user_data + sizeof(mesh3d_t*);
+	BUFFER* position_buffer = normal_buffer + 1;
+	BUFFER* texcoord_buffer = normal_buffer + 2;
+	bool has_uvs = buf_get_element_count(texcoord_buffer) > 0;
+	bool has_normals = buf_get_element_count(normal_buffer) > 0;
+
+	u32 attrib_ptr = 0;
+	buf_ucount_t position_count = buf_get_element_count(mesh->positions);
+	buf_push(mesh->positions, buf_get_ptr_at(position_buffer, facet[attribute_count * 0 + attrib_ptr] - 1));
+	buf_push(mesh->positions, buf_get_ptr_at(position_buffer, facet[attribute_count * 1 + attrib_ptr] - 1));
+	buf_push(mesh->positions, buf_get_ptr_at(position_buffer, facet[attribute_count * 2 + attrib_ptr] - 1));
+	++attrib_ptr;
+	if(has_uvs)
+	{
+		buf_push(mesh->uvs, buf_get_ptr_at(texcoord_buffer, facet[attribute_count * 0 + attrib_ptr] - 1));
+		buf_push(mesh->uvs, buf_get_ptr_at(texcoord_buffer, facet[attribute_count * 1 + attrib_ptr] - 1));
+		buf_push(mesh->uvs, buf_get_ptr_at(texcoord_buffer, facet[attribute_count * 2 + attrib_ptr] - 1));
+		++attrib_ptr;
+	}
+	if(has_normals)
+	{
+		buf_push(mesh->normals, buf_get_ptr_at(normal_buffer, facet[attribute_count * 0 + attrib_ptr] - 1));
+		buf_push(mesh->normals, buf_get_ptr_at(normal_buffer, facet[attribute_count * 1 + attrib_ptr] - 1));
+		buf_push(mesh->normals, buf_get_ptr_at(normal_buffer, facet[attribute_count * 2 + attrib_ptr] - 1));
+	}
+	vec3_t(index_t) triangle;
+	triangle.z = position_count + 0;
+	triangle.y = position_count + 1;
+	triangle.x = position_count + 2;
+	buf_push(mesh->triangles, &triangle);
+	if(face_vertex_count == 4)
+	{
+		attrib_ptr = 0;
+		buf_push(mesh->positions, buf_get_ptr_at(position_buffer, facet[attribute_count * 3 + attrib_ptr] - 1));
+		++attrib_ptr;
+		if(has_uvs)
+		{
+			buf_push(mesh->uvs, buf_get_ptr_at(texcoord_buffer, facet[attribute_count * 3 + attrib_ptr] - 1));
+			++attrib_ptr;
+		}
+		if(has_normals)
+		{
+			buf_push(mesh->normals, buf_get_ptr_at(normal_buffer, facet[attribute_count * 3 + attrib_ptr] - 1));
+			++attrib_ptr;
+		}
+		triangle.z = position_count + 0;
+		triangle.y = position_count + 3;
+		triangle.x = position_count + 1;
+		buf_push(mesh->triangles, &triangle);
+	}
 }
 
 #define getter(...) define_alias_function_macro(getter, __VA_ARGS__)
