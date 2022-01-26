@@ -48,16 +48,6 @@ static void recreate_matrix(render_window_t* window, void* user_data)
 	mat4_move(float)(&screen_space_matrix, mat4_ortho_projection(float)(-0.04f, 100, window->height, (float)window->width / window->height));
 }
 
-static void offset_visitor(vec3_t(float)* position, void* user_data)
-{
-	*position = vec3_mul(float)(*position, vec3(float)(0, 100, 100));
-}
-
-bool char_comparer(void* ptr1, void* ptr2)
-{
-	return (*(char*)ptr1) == (*(char*)ptr2);
-}
-
 static void u32_to_string(u32 value, char* string)
 {
 	sprintf(string, "%u", value);
@@ -121,10 +111,10 @@ int main(int argc, char** argv)
 	text_mesh_string_set_scaleH(game_ui, score_text, vec3(float)(0.8f, 0.8f, 0.8f));
 
 	/*--------PLAYGROUND----------------------*/
-	mesh3d_t* box_mesh3d = mesh3d_load("resource/Monkey.obj");
+	mesh3d_t* box_mesh3d = mesh3d_load("resource/Box.obj");
 	mesh3d_make_centroid_origin(box_mesh3d);
 	mesh_t* box = mesh_create(renderer, box_mesh3d);
-	shader_t* box_shader = shader_load(renderer, "resource/shaders/box_shader.sb");
+	shader_t* box_shader = shader_load(renderer, "resource/shaders/gouraud_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); // position
 	per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); // normal
 	per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC2, 2); // texture coordinates

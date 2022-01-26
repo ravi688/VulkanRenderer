@@ -1287,9 +1287,9 @@ static void obj_facet(u32* facet, u32 attribute_count, u32 face_vertex_count, vo
 			buf_push(mesh->normals, buf_get_ptr_at(normal_buffer, facet[attribute_count * 3 + attrib_ptr] - 1));
 			++attrib_ptr;
 		}
-		triangle.z = position_count + 0;
+		triangle.z = position_count + 2;
 		triangle.y = position_count + 3;
-		triangle.x = position_count + 1;
+		triangle.x = position_count + 0;
 		buf_push(mesh->triangles, &triangle);
 	}
 }
