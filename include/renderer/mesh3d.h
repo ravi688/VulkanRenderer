@@ -34,7 +34,7 @@
 #include <renderer/defines.h>
 #include <renderer/debug.h>
 
-#define MESH3D_MAX_ATTRIBUTE_COUNT 4
+#define MESH3D_MAX_ATTRIBUTE_COUNT 5
 #define MESH3D_INDEX_SIZE 4 //sizeof(u32)
 
 typedef u32 index_t;
@@ -47,25 +47,29 @@ instantiate_vec3_struct(index_t);
 typedef struct mesh3d_t
 {
 	//Ordering is important here, see: mesh_create
-	BUFFER* positions; 
-	BUFFER* normals;
-	BUFFER* colors;
-	BUFFER* uvs;
+	BUFFER* positions; 	// location = 0
+	BUFFER* normals; 	// location = 1
+	BUFFER* colors;		// location = 2
+	BUFFER* uvs;		// location = 3
+	BUFFER* tangents; 	// location = 4
 	BUFFER* triangles;
 	mat4_t(float) transform;
 } mesh3d_t;
 
+// constructors and destructors
 function_signature_void(mesh3d_t*, mesh3d_new);
 function_signature(void, mesh3d_destroy, mesh3d_t* mesh);
 
 function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, index_t count);
 function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, index_t count);
+function_signature(void, mesh3d_tangents_new, mesh3d_t* mesh, index_t count);
 function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, index_t count);
 function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, index_t count);
 function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, index_t count);
 
 function_signature(void, mesh3d_positions_free, mesh3d_t* mesh);
 function_signature(void, mesh3d_normals_free, mesh3d_t* mesh);
+function_signature(void, mesh3d_tangents_free, mesh3d_t* mesh);
 function_signature(void, mesh3d_colors_free, mesh3d_t* mesh);
 function_signature(void, mesh3d_triangles_free, mesh3d_t* mesh);
 function_signature(void, mesh3d_uvs_free, mesh3d_t* mesh);
@@ -73,6 +77,7 @@ function_signature(void, mesh3d_uvs_free, mesh3d_t* mesh);
 function_signature(bool, mesh3d_has_uvs, mesh3d_t* mesh); 
 function_signature(bool, mesh3d_has_positions, mesh3d_t* mesh); 
 function_signature(bool, mesh3d_has_normals, mesh3d_t* mesh); 
+function_signature(bool, mesh3d_has_tangents, mesh3d_t* mesh); 
 function_signature(bool, mesh3d_has_triangles, mesh3d_t* mesh);
 function_signature(bool, mesh3d_has_colors, mesh3d_t* mesh);
 function_signature(index_t, mesh3d_positions_count, mesh3d_t* mesh);
@@ -82,6 +87,7 @@ function_signature(index_t, mesh3d_colors_count, mesh3d_t* mesh);
 function_signature(index_t, mesh3d_triangles_count, mesh3d_t* mesh);
 
 function_signature(void, mesh3d_calculate_normals, mesh3d_t* mesh);
+function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh);
 function_signature(void, mesh3d_optimize_buffer, mesh3d_t* mesh);
 
 function_signature(void, mesh3d_position_add, mesh3d_t* mesh, float x, float y, float z);
@@ -109,6 +115,19 @@ function_signature(vec3_t(float)*, mesh3d_normal_get_ptr, mesh3d_t* mesh, index_
 function_signature(float, mesh3d_normal_get_x, mesh3d_t* mesh, index_t index);
 function_signature(float, mesh3d_normal_get_y, mesh3d_t* mesh, index_t index);
 function_signature(float, mesh3d_normal_get_z, mesh3d_t* mesh, index_t index);
+
+function_signature(void, mesh3d_tangent_add, mesh3d_t* mesh, float x, float y, float z);
+function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, vec3_t(float) tangent);
+function_signature(void, mesh3d_tangent_set, mesh3d_t* mesh, index_t index, float x, float y, float z);
+function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  tangent);
+function_signature(void, mesh3d_tangent_set_x, mesh3d_t* mesh, index_t index, float x);
+function_signature(void, mesh3d_tangent_set_y, mesh3d_t* mesh, index_t index, float y); 
+function_signature(void, mesh3d_tangent_set_z, mesh3d_t* mesh, index_t index, float z);
+function_signature(vec3_t(float), mesh3d_tangent_get, mesh3d_t* mesh, index_t index);
+function_signature(vec3_t(float)*, mesh3d_tangent_get_ptr, mesh3d_t* mesh, index_t index);
+function_signature(float, mesh3d_tangent_get_x, mesh3d_t* mesh, index_t index);
+function_signature(float, mesh3d_tangent_get_y, mesh3d_t* mesh, index_t index);
+function_signature(float, mesh3d_tangent_get_z, mesh3d_t* mesh, index_t index);
 
 function_signature(void, mesh3d_triangle_add, mesh3d_t* mesh, index_t i0, index_t i1, index_t i2);
 function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, vec3_t(index_t) triangle);
@@ -152,12 +171,14 @@ function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index);
 
 #define mesh3d_positions_new(...) define_alias_function_macro(mesh3d_positions_new, __VA_ARGS__)
 #define mesh3d_normals_new(...) define_alias_function_macro(mesh3d_normals_new, __VA_ARGS__)
+#define mesh3d_tangents_new(...) define_alias_function_macro(mesh3d_tangents_new, __VA_ARGS__)
 #define mesh3d_triangles_new(...) define_alias_function_macro(mesh3d_triangles_new, __VA_ARGS__)
 #define mesh3d_uvs_new(...) define_alias_function_macro(mesh3d_uvs_new, __VA_ARGS__)
 #define mesh3d_colors_new(...) define_alias_function_macro(mesh3d_colors_new, __VA_ARGS__)
 
 #define mesh3d_positions_free(...) define_alias_function_macro(mesh3d_positions_free, __VA_ARGS__)
 #define mesh3d_normals_free(...) define_alias_function_macro(mesh3d_normals_free, __VA_ARGS__)
+#define mesh3d_tangents_free(...) define_alias_function_macro(mesh3d_tangents_free, __VA_ARGS__)
 #define mesh3d_triangles_free(...) define_alias_function_macro(mesh3d_triangles_free, __VA_ARGS__)
 #define mesh3d_uvs_free(...) define_alias_function_macro(mesh3d_uvs_free, __VA_ARGS__)
 #define mesh3d_colors_free(...) define_alias_function_macro(mesh3d_colors_free, __VA_ARGS__)
@@ -165,15 +186,18 @@ function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index);
 #define mesh3d_has_uvs(...) define_alias_function_macro(mesh3d_has_uvs, __VA_ARGS__) 
 #define mesh3d_has_positions(...) define_alias_function_macro(mesh3d_has_positions, __VA_ARGS__) 
 #define mesh3d_has_normals(...) define_alias_function_macro(mesh3d_has_normals, __VA_ARGS__) 
+#define mesh3d_has_tangents(...) define_alias_function_macro(mesh3d_has_tangents, __VA_ARGS__) 
 #define mesh3d_has_triangles(...) define_alias_function_macro(mesh3d_has_triangles, __VA_ARGS__)
 #define mesh3d_has_colors(...) define_alias_function_macro(mesh3d_has_colors, __VA_ARGS__)
 #define mesh3d_positions_count(...) define_alias_function_macro(mesh3d_positions_count, __VA_ARGS__)
 #define mesh3d_normals_count(...) define_alias_function_macro(mesh3d_normals_count, __VA_ARGS__)
+#define mesh3d_tangents_count(...) define_alias_function_macro(mesh3d_tangents_count, __VA_ARGS__)
 #define mesh3d_uvs_count(...) define_alias_function_macro(mesh3d_uvs_count, __VA_ARGS__)
 #define mesh3d_colors_count(...) define_alias_function_macro(mesh3d_colors_count, __VA_ARGS__)
 #define mesh3d_triangles_count(...) define_alias_function_macro(mesh3d_triangles_count, __VA_ARGS__)
 
 #define mesh3d_calculate_normals(...) define_alias_function_macro(mesh3d_calculate_normals, __VA_ARGS__)
+#define mesh3d_calculate_tangents(...) define_alias_function_macro(mesh3d_calculate_tangents, __VA_ARGS__)
 #define mesh3d_optimize_buffer(...) define_alias_function_macro(mesh3d_optimize_buffer, __VA_ARGS__)
 
 #define mesh3d_position_add(...) define_alias_function_macro(mesh3d_position_add, __VA_ARGS__)
@@ -201,6 +225,19 @@ function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index);
 #define mesh3d_normal_get_x(...) define_alias_function_macro(mesh3d_normal_get_x, __VA_ARGS__)
 #define mesh3d_normal_get_y(...) define_alias_function_macro(mesh3d_normal_get_y, __VA_ARGS__)
 #define mesh3d_normal_get_z(...) define_alias_function_macro(mesh3d_normal_get_z, __VA_ARGS__)
+
+#define mesh3d_tangent_add(...) define_alias_function_macro(mesh3d_tangent_add, __VA_ARGS__)
+#define mesh3d_tangent_add_vec3(...) define_alias_function_macro(mesh3d_tangent_add_vec3, __VA_ARGS__)
+#define mesh3d_tangent_set(...) define_alias_function_macro(mesh3d_tangent_set, __VA_ARGS__)
+#define mesh3d_tangent_set_vec3(...) define_alias_function_macro(mesh3d_tangent_set_vec3, __VA_ARGS__)
+#define mesh3d_tangent_set_x(...) define_alias_function_macro(mesh3d_tangent_set_x, __VA_ARGS__)
+#define mesh3d_tangent_set_y(...) define_alias_function_macro(mesh3d_tangent_set_y, __VA_ARGS__)
+#define mesh3d_tangent_set_z(...) define_alias_function_macro(mesh3d_tangent_set_z, __VA_ARGS__)
+#define mesh3d_tangent_get(...) define_alias_function_macro(mesh3d_tangent_get, __VA_ARGS__)
+#define mesh3d_tangent_get_ptr(...) define_alias_function_macro(mesh3d_tangent_get_ptr, __VA_ARGS__)
+#define mesh3d_tangent_get_x(...) define_alias_function_macro(mesh3d_tangent_get_x, __VA_ARGS__)
+#define mesh3d_tangent_get_y(...) define_alias_function_macro(mesh3d_tangent_get_y, __VA_ARGS__)
+#define mesh3d_tangent_get_z(...) define_alias_function_macro(mesh3d_tangent_get_z, __VA_ARGS__)
 
 #define mesh3d_triangle_add(...) define_alias_function_macro(mesh3d_triangle_add, __VA_ARGS__)
 #define mesh3d_triangle_add_vec3(...) define_alias_function_macro(mesh3d_triangle_add_vec3, __VA_ARGS__)
@@ -247,6 +284,7 @@ function_signature(mesh3d_t*, mesh3d_plane, float size);
 
 function_signature(index_t, mesh3d_sizeof_position, mesh3d_t* mesh);
 function_signature(index_t, mesh3d_sizeof_normal, mesh3d_t* mesh);
+function_signature(index_t, mesh3d_sizeof_tangent, mesh3d_t* mesh);
 function_signature(index_t, mesh3d_sizeof_color, mesh3d_t* mesh);
 function_signature(index_t, mesh3d_sizeof_uv, mesh3d_t* mesh);
 function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh);
@@ -254,6 +292,7 @@ function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh);
 
 #define mesh3d_sizeof_position(...) define_alias_function_macro(mesh3d_sizeof_position, __VA_ARGS__)
 #define mesh3d_sizeof_normal(...) define_alias_function_macro(mesh3d_sizeof_normal, __VA_ARGS__)
+#define mesh3d_sizeof_tangent(...) define_alias_function_macro(mesh3d_sizeof_tangent, __VA_ARGS__)
 #define mesh3d_sizeof_color(...) define_alias_function_macro(mesh3d_sizeof_color, __VA_ARGS__)
 #define mesh3d_sizeof_uv(...) define_alias_function_macro(mesh3d_sizeof_uv, __VA_ARGS__)
 #define mesh3d_sizeof_index(...) define_alias_function_macro(mesh3d_sizeof_index, __VA_ARGS__)
@@ -273,12 +312,14 @@ function_signature(mat4_t(float), mesh3d_transform_get, mesh3d_t* mesh);
 
 #define mesh3d_positions_foreach(...) define_alias_function_macro(mesh3d_positions_foreach, __VA_ARGS__)
 #define mesh3d_normals_foreach(...) define_alias_function_macro(mesh3d_normals_foreach, __VA_ARGS__)
+#define mesh3d_tangents_foreach(...) define_alias_function_macro(mesh3d_tangents_foreach, __VA_ARGS__)
 #define mesh3d_colors_foreach(...) define_alias_function_macro(mesh3d_colors_foreach, __VA_ARGS__)
 #define mesh3d_uvs_foreach(...) define_alias_function_macro(mesh3d_uvs_foreach, __VA_ARGS__)
 #define mesh3d_triangles_foreach(...) define_alias_function_macro(mesh3d_triangles_foreach, __VA_ARGS__)
 
 function_signature(void, mesh3d_positions_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* position, void* user_data), void* user_data);
 function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data);
+function_signature(void, mesh3d_tangents_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data);
 function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* color, void* user_data), void* user_data);
 function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (*visitor)(vec2_t(float)* uv, void* user_data), void* user_data);
 function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(index_t)* triangle, void* user_data), void* user_data);

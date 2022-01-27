@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 	renderer_t* renderer = renderer_init(800, 800, "Vulkan 3D Renderer", false);
 	recreate_matrix(renderer_get_window(renderer), NULL);
 	render_window_subscribe_on_resize(renderer_get_window(renderer), recreate_matrix, NULL);
-	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -1.8f, 0.8f, 0 }, (vec3_t(float)) { 0, 0, -25 * DEG2RAD } );
+	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -1.8f, 0.6f, 0 }, (vec3_t(float)) { 0, 0, -22 * DEG2RAD } );
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
 	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
 
@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 	text_mesh_string_setH(text_mesh, cpu_usage, "10.99999%");
 
 	shader_t* text_shader = shader_load(renderer, "resource/shaders/text_shader.sb");
-	u64 per_vertex_attributes[4] = { MATERIAL_ALIGN(MATERIAL_VEC3, 0) };
+	u64 per_vertex_attributes[5] = { MATERIAL_ALIGN(MATERIAL_VEC3, 0) };
 	u64 per_instance_attributes[1] = { MATERIAL_ALIGN(MATERIAL_VEC3, 0) | MATERIAL_ALIGN(MATERIAL_VEC3, 1) | MATERIAL_ALIGN(MATERIAL_VEC3, 2) };
 	material_create_info_t text_material_info =
 	{
@@ -113,24 +113,32 @@ int main(int argc, char** argv)
 	/*--------PLAYGROUND----------------------*/
 	mesh3d_t* box_mesh3d = mesh3d_load("resource/Box.obj");
 	mesh3d_make_centroid_origin(box_mesh3d);
+	mesh3d_calculate_tangents(box_mesh3d);
 	mesh_t* box = mesh_create(renderer, box_mesh3d);
-	shader_t* box_shader = shader_load(renderer, "resource/shaders/gouraud_shader.sb");
+	shader_t* box_shader = shader_load(renderer, "resource/shaders/bump_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); // position
 	per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); // normal
 	per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC2, 2); // texture coordinates
+	per_vertex_attributes[3] = MATERIAL_ALIGN(MATERIAL_VEC3, 3); // tangent
 	material_create_info_t box_material_info = 
 	{
-		.per_vertex_attribute_binding_count = 3,
+		.per_vertex_attribute_binding_count = 4,
 		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
 		.shader = box_shader
 	};
 	material_t* box_material = material_create(renderer, &box_material_info);
-	texture_t* box_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
-	material_set_texture2d(box_material, "albedo", box_texture);
+	texture_t* box_textures[] = 
+	{ 
+		texture_load(renderer, "resource/textures/white.bmp"),
+		texture_load(renderer, "resource/textures/normal_map.bmp")
+	};
+	material_set_texture2d(box_material, "albedo", box_textures[0]);
+	material_set_texture2d(box_material, "normal_map", box_textures[1]);
 	/*---------------------------------------*/
 
 	/*------CUBE-----------------------------*/
 	mesh3d_t* cube_mesh3d = mesh3d_cube(1);
+	// mesh3d_calculate_tangents(cube_mesh3d);
 	mesh_t* cube = mesh_create(renderer, cube_mesh3d);
 	texture_t* linux_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
 	texture_t* windows_texture = texture_load(renderer, "resource/textures/windowslogo.bmp");
@@ -142,6 +150,7 @@ int main(int argc, char** argv)
 	per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); //normal
 	per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC3, 2); //color
 	per_vertex_attributes[3] = MATERIAL_ALIGN(MATERIAL_VEC2, 3); //texture coordinates
+	// per_vertex_attributes[4] = MATERIAL_ALIGN(MATERIAL_VEC3, 4); //tangent
 	material_create_info_t cube_material_info =
 	{
 		.per_vertex_attribute_binding_count = 4,
@@ -190,7 +199,7 @@ int main(int argc, char** argv)
 		material_set_float(game_ui_material, "ubo.time", game_time);
 
 		material_set_vec3(box_material, "light.color", vec3(float)(1, 1, 1));
-		material_set_vec3(box_material, "light.dir", vec3_normalize(float)(vec3(float)(0, -1, 1)));
+		material_set_vec3(box_material, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 0)));
 		material_set_float(box_material, "light.intensity", 1.0f);
 
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
@@ -235,7 +244,7 @@ int main(int argc, char** argv)
 		renderer_end_frame(renderer);
 
 		renderer_update(renderer);
-		angle += 180 * delta_time * 0.3f;
+		angle += 180 * delta_time * 0.05f;
 		if(angle >= 360.0f)
 			angle = 0.0f;
 
@@ -293,10 +302,13 @@ int main(int argc, char** argv)
 	mesh3d_destroy(box_mesh3d);
 	shader_destroy(box_shader, renderer);
 	shader_release_resources(box_shader);
-	texture_destroy(box_texture, renderer);
-	texture_release_resources(box_texture);
 	material_destroy(box_material, renderer);
 	material_release_resources(box_material);
+	for(int i = 0; i < 2; i++)
+	{
+		texture_destroy(box_textures[i], renderer);
+		texture_release_resources(box_textures[i]);
+	}
 
 	mesh_destroy(quad, renderer);
 	mesh_release_resources(quad);

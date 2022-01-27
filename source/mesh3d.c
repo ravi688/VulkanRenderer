@@ -33,6 +33,7 @@
 
 #define __UVS_ARE_NOT_FOUND__ "mesh3d_t::uvs are not found, make sure to call mesh3d_uvs_new(count) first\n"
 #define __NORMALS_ARE_NOT_FOUND__ "mesh3d_t::normals are not found, make sure to call mesh3d_normals_new(count) first\n"
+#define __TANGENTS_ARE_NOT_FOUND__ "mesh3d_t::tangents are not found, make sure to call mesh3d_tangents_new(count) first\n"
 #define __COLORS_ARE_NOT_FOUND__ "mesh3d_t::colors are not found, make sure to call mesh3d_colors_new(count) first\n"
 #define __POSITIONS_ARE_NOT_FOUND__ "mesh3d_t::positions are not found, make sure to call mesh3d_positions_new(count) first\n"
 #define __TRIANGLES_ARE_NOT_FOUND__ "mesh3d_t::triangles are not found, make sure to call mesh3d_triangles_new(count) first\n"
@@ -76,6 +77,19 @@ function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, index_t count)
 		mesh->normals = NULL;
 	}
 	mesh->normals = BUFcreate(NULL, sizeof(vec3_t(float)), count, 0);
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_tangents_new, mesh3d_t* mesh, index_t count)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	if(mesh->tangents != NULL)
+	{
+		buf_free(mesh->tangents);
+		mesh->tangents = NULL;
+	}
+	mesh->tangents = BUFcreate(NULL, sizeof(vec3_t(float)), count, 0);
 	CALLTRACE_END();
 }
 
@@ -137,6 +151,15 @@ function_signature(void, mesh3d_normals_free, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
+function_signature(void, mesh3d_tangents_free, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	if(mesh->tangents == NULL) return;
+	buf_free(mesh->tangents);
+	mesh->tangents = NULL;
+	CALLTRACE_END();
+}
+
 function_signature(void, mesh3d_colors_free, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
@@ -180,6 +203,14 @@ function_signature(index_t, mesh3d_normals_count, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_count(mesh->normals));
 }
 
+function_signature(index_t, mesh3d_tangents_count, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(mesh->tangents != NULL, __NORMALS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_element_count(mesh->tangents));
+}
+
 function_signature(index_t, mesh3d_uvs_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
@@ -214,6 +245,9 @@ function_signature(void, mesh3d_destroy, mesh3d_t* mesh)
 	if(mesh->normals != NULL)
 		buf_free(mesh->normals);
 
+	if(mesh->tangents != NULL)
+		buf_free(mesh->tangents);
+
 	if(mesh->colors != NULL)
 		buf_free(mesh->colors);
 
@@ -240,6 +274,8 @@ function_signature(void, mesh3d_optimize_buffer, mesh3d_t* mesh)
 		buf_fit(mesh->uvs);
 	if(mesh->normals != NULL)
 		buf_fit(mesh->normals);
+	if(mesh->tangents != NULL)
+		buf_fit(mesh->tangents);
 
 	CALLTRACE_END();
 }
@@ -251,6 +287,12 @@ function_signature(bool, mesh3d_has_normals, mesh3d_t* mesh)
 	CALLTRACE_RETURN((mesh->normals != NULL) && (buf_get_element_count(mesh->normals) > 0));
 }
 
+function_signature(bool, mesh3d_has_tangents, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	CALLTRACE_RETURN((mesh->tangents != NULL) && (buf_get_element_count(mesh->tangents) > 0));
+}
 
 function_signature(bool, mesh3d_has_colors, mesh3d_t* mesh)
 {
@@ -286,6 +328,80 @@ function_signature(void, mesh3d_calculate_normals, mesh3d_t* mesh)
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	log_fetal_err("Undefined method\n");
+	CALLTRACE_END();
+}
+
+/*
+	CALCULATING TANGENTS
+
+	let dE1 = V1 - V0
+	let dE2 = V2 - V0
+	let d1(s) = s1 - s0
+	let d2(s) = s2 - s0
+	let d1(t) = t1 - t0
+	let d2(t) = t2 - t0
+
+	then, 
+	dot(dE1, B) = d1(s)
+	dot(dE2, B) = d2(s)
+	dot(dE1, T) = d1(t)
+	dot(dE2, T) = d2(t)
+
+	meaning,
+	B * d1(s) + T * d1(t) = dE1
+	B * d2(s) + T * d2(t) = dE2
+
+	solving for B and T,
+
+	B = (dE1 * d2(t) - dE2 * d1(t)) / (d1(s) * d2(t) - d1(t) * d2(s))
+	T = (dE1 * d2(s) - dE2 * d1(s)) / (d1(t) * d2(s) - d1(s) * d2(t))
+
+ */
+
+static vec3_t(float) get_tangent(mesh3d_t* mesh, index_t i0, index_t i1, index_t i2)
+{
+	vec2_t(float) d1 = vec2_sub(float)(mesh3d_uv_get(mesh, i1), mesh3d_uv_get(mesh, i0));
+	vec2_t(float) d2 = vec2_sub(float)(mesh3d_uv_get(mesh, i2), mesh3d_uv_get(mesh, i0));
+	vec3_t(float) dE1 = vec3_sub(float)(mesh3d_position_get(mesh, i1), mesh3d_position_get(mesh, i0));
+	vec3_t(float) dE2 = vec3_sub(float)(mesh3d_position_get(mesh, i2), mesh3d_position_get(mesh, i0));
+	vec3_t(float) tangent = vec3_sub(float)(vec3_scale(float)(dE1, d2.x), vec3_scale(float)(dE2, d1.x));
+	float value = 1 / (d1.y * d2.x - d1.x * d2.y);
+	tangent = vec3_scale(float)(tangent, value);
+	return tangent;
+}
+function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	assert(mesh != NULL);
+	assert_wrn(mesh3d_positions_count(mesh) >= 3); 		// there should be at least one triangle
+
+	// allocate memory for tangents and initialize them with vec3_zero
+	buf_ucount_t vertex_count = mesh3d_positions_count(mesh);
+	mesh3d_tangents_new(mesh, vertex_count);
+	for(buf_ucount_t i = 0; i < vertex_count; i++)
+		mesh3d_tangent_add_vec3(mesh, vec3_zero(float)());
+
+	buf_ucount_t triangle_count = mesh3d_triangles_count(mesh);
+	for(buf_ucount_t i = 0; i < triangle_count; i++)
+	{
+		vec3_t(index_t) triangle = mesh3d_triangle_get(mesh, i);
+		// calculate the tangent for this triangle
+		vec3_t(float) tangent = get_tangent(mesh, triangle.x, triangle.y, triangle.z);
+		// add this tangent to each corner/vertex of this triangle
+		mesh3d_tangent_set_vec3(mesh, triangle.x, vec3_add(float)(mesh3d_tangent_get(mesh, triangle.x), tangent));
+		mesh3d_tangent_set_vec3(mesh, triangle.y, vec3_add(float)(mesh3d_tangent_get(mesh, triangle.y), tangent));
+		mesh3d_tangent_set_vec3(mesh, triangle.z, vec3_add(float)(mesh3d_tangent_get(mesh, triangle.z), tangent));
+	}
+
+	// normalize all the tangents and Gram-Schimdt orthogonalize
+	for(buf_ucount_t i = 0; i < vertex_count; i++)
+	{
+		vec3_t(float) tangent = mesh3d_tangent_get(mesh, i);
+		vec3_t(float) normal = mesh3d_normal_get(mesh, i);
+		tangent = vec3_sub(float)(tangent, vec3_scale(float)(normal, vec3_dot(float)(tangent, normal)));
+		mesh3d_tangent_set_vec3(mesh, i, vec3_normalize(float)(tangent));
+	}
+	
 	CALLTRACE_END();
 }
 
@@ -499,6 +615,111 @@ function_signature(float, mesh3d_normal_get_z, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->normals, vec3_t(float), index)->z);
 }
 
+
+function_signature(void, mesh3d_tangents_add, mesh3d_t* mesh, float x, float y, float z)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	vec3_t(float) n = {x, y, z};
+	buf_push(mesh->tangents, &n);
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, vec3_t(float)  v)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	buf_push(mesh->tangents, (void*)(&v));
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_tangent_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	vec3_t(float)* n = buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index);
+	n->x = x; n->y = y; n->z = z;
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  tangent)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+ 	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+ 	buf_set_at(mesh->tangents, index, (void*)(&tangent));
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_tangent_set_x, mesh3d_t* mesh, index_t index, float x)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index)->x = x;
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_tangent_set_y, mesh3d_t* mesh, index_t index, float y)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index)->y = y;
+	CALLTRACE_END();
+}
+
+function_signature(void, mesh3d_tangent_set_z, mesh3d_t* mesh, index_t index, float z)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index)->z = z;
+	CALLTRACE_END();
+}
+
+function_signature(vec3_t(float), mesh3d_tangent_get, mesh3d_t* mesh, index_t index)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index));
+}
+
+function_signature(vec3_t(float)*, mesh3d_tangent_get_ptr, mesh3d_t* mesh, index_t index)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index));
+}
+
+function_signature(float, mesh3d_tangent_get_x, mesh3d_t* mesh, index_t index)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index)->x);
+}
+
+function_signature(float, mesh3d_tangent_get_y, mesh3d_t* mesh, index_t index)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index)->y);
+}
+
+function_signature(float, mesh3d_tangent_get_z, mesh3d_t* mesh, index_t index)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index)->z);
+}
 
 function_signature(void, mesh3d_color_add, mesh3d_t* mesh, float x, float y, float z)
 {
@@ -812,6 +1033,12 @@ function_signature(index_t, mesh3d_sizeof_normal, mesh3d_t* mesh)
 	ASSERT(mesh->normals != NULL, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->normals));
 }
+function_signature(index_t, mesh3d_sizeof_tangent, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh->tangents != NULL, __TANGENTS_ARE_NOT_FOUND__);
+	CALLTRACE_RETURN(buf_get_element_size(mesh->tangents));
+}
 function_signature(index_t, mesh3d_sizeof_color, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
@@ -1004,6 +1231,15 @@ function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, void (*visitor)
 	CALLTRACE_END();
 }
 
+function_signature(void, mesh3d_tangents_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data)
+{
+	CALLTRACE_BEGIN();
+	ASSERT(mesh != NULL, "mesh == NULL\n");
+	ASSERT(mesh3d_has_tangents(mesh), "!mesh3d_has_tangents(mesh)\n");
+	mesh3d_foreach(mesh, mesh->tangents, (void*)func_ptr(mesh3d_tangent_get_ptr), (void*)visitor, user_data);
+	CALLTRACE_END();
+}
+
 function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* color, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
@@ -1064,8 +1300,8 @@ function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-static void stl_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh);
-static void stl_vertex_position(vec3_t(float) position, mesh3d_t* mesh);
+static void stl_vertex_normal(float* normal, mesh3d_t* mesh);
+static void stl_vertex_position(float* position, mesh3d_t* mesh);
 static void obj_vertex_normal(float* normal, void* user_data);
 static void obj_vertex_position(float* position, void* user_data);
 static void obj_vertex_texcoord(float* texcoord, void* user_data);
@@ -1172,26 +1408,27 @@ function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
 	CALLTRACE_RETURN(mesh);
 }
 
-static void stl_vertex_normal(vec3_t(float) normal, mesh3d_t* mesh)
+static void stl_vertex_normal(float* normal, mesh3d_t* mesh)
 {
-	mesh3d_normal_add(mesh, normal.y, normal.z, normal.x);
-	mesh3d_normal_add(mesh, normal.y, normal.z, normal.x);
-	mesh3d_normal_add(mesh, normal.y, normal.z, normal.x);
+	mesh3d_normal_add(mesh, normal[1], normal[2], normal[0]);
+	mesh3d_normal_add(mesh, normal[1], normal[2], normal[0]);
+	mesh3d_normal_add(mesh, normal[1], normal[2], normal[0]);
 	index_t count = mesh3d_triangles_count(mesh) * 3;
 	index_t vertex_count = mesh3d_positions_count(mesh) + 3;
 	mesh3d_triangle_add(mesh, (count + 2) % vertex_count, count + 1, count + 0);
 }
 
-static void stl_vertex_position(vec3_t(float) position, mesh3d_t* mesh)
+static void stl_vertex_position(float* position, mesh3d_t* mesh)
 {
 	vec3_t(float) normal = mesh3d_normal_get(mesh, mesh3d_positions_count(mesh));
-	mesh3d_position_add(mesh, position.y, position.z, position.x);
+	mesh3d_position_add(mesh, position[1], position[2], position[0]);
 	normal.x = (normal.x < 0) ? 1 : normal.x;
 	normal.y = (normal.y < 0) ? 1 : normal.y;
 	normal.z = (normal.z < 0) ? 1 : normal.z;
 	mesh3d_color_add_vec3(mesh, normal);
 }
 
+#ifdef GLOBAL_DEBUG
 static void print_normal(float* normal, void* ptr)
 {
 	printf("NORMAL -> (%f, %f, %f)\n", normal[0], normal[1], normal[2]);
@@ -1219,6 +1456,7 @@ static void print_facet(u32* facet, u32 attrib_count, u32 face_vertex_count, voi
 	}
 	puts("");
 }
+#endif /* GLOBAL_DEBUG */
 
 static void obj_vertex_normal(float* normal, void* user_data)
 {
@@ -1238,6 +1476,7 @@ static void obj_vertex_texcoord(float* texcoord, void* user_data)
 	buf_push(&((BUFFER*)(user_data + sizeof(mesh3d_t*)))[2], texcoord);
 }
 
+// TODO: Currently this creates duplicated vertices for smoothed polygon meshes, so create another version to load smoothed meshes (per vertex normals)
 static void obj_facet(u32* facet, u32 attribute_count, u32 face_vertex_count, void* user_data)
 {
 	// print_facet(facet, attribute_count, face_vertex_count, NULL);
