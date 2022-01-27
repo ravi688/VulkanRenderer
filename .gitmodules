@@ -24,4 +24,4 @@
 	url = https://github.com/ravi688/ttf2mesh.git
 [submodule "dependencies/MeshLib"]
 	path = dependencies/MeshLib
-	url = https://github.com/ravi688/MeshLib.git
+	url = https://github.com/ravi688/MeshLib

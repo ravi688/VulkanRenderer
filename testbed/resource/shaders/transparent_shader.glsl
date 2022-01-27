@@ -1,3 +1,11 @@
+
+#section LAYOUT
+
+vertex [push_constant] [0] uniform Push
+{
+	mat4 mvp_matrix;
+} push;
+
 #section SHADER
 
 #stage vertex

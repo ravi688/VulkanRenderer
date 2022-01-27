@@ -175,21 +175,22 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 		memset(&descriptor->handle, 0, sizeof(struct_descriptor_t));
 		descriptor->set_number = *(u8*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 1;
 		descriptor->binding_number = *(u8*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 1;
-		assert(descriptor->set_number < 255);
-		assert(descriptor->binding_number < 255);
-		u16 descriptor_info = *(u16*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 2;
+		// assert(descriptor->set_number < 255);
+		// assert(descriptor->binding_number < 255);
+		u32 descriptor_info = *(u32*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 4;
+		descriptor->is_push_constant = (descriptor_info & (1U << 16)) ? true : false;
 		descriptor->is_opaque = (descriptor_info & (1U << 15)) ? true : false;
 		descriptor->is_uniform = (descriptor_info & (1U << 14)) ? true : false;
 		descriptor->handle.type = descriptor_info & 0xFFU;
 		descriptor->stage_flags = 0;
-		if(descriptor_info & (1U << (13 - SHADER_COMPILER_SHADER_STAGE_VERTEX)))
-			descriptor->stage_flags |= 1U << VULKAN_SHADER_TYPE_VERTEX;
-		if(descriptor_info & (1U << (13 - SHADER_COMPILER_SHADER_STAGE_TESSELLATION)))
-			descriptor->stage_flags |= 1U << VULKAN_SHADER_TYPE_TESSELLATION;
-		if(descriptor_info & (1U << (13 - SHADER_COMPILER_SHADER_STAGE_GEOMETRY)))
-			descriptor->stage_flags |= 1U << VULKAN_SHADER_TYPE_GEOMETRY;
-		if(descriptor_info & (1U << (13 - SHADER_COMPILER_SHADER_STAGE_FRAGMENT)))
-			descriptor->stage_flags |= 1U << VULKAN_SHADER_TYPE_FRAGMENT;
+		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_VERTEX)))
+			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_VERTEX);
+		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_TESSELLATION)))
+			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_TESSELLATION);
+		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_GEOMETRY)))
+			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_GEOMETRY);
+		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_FRAGMENT)))
+			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_FRAGMENT);
 		
 		const char* name = buf_get_ptr_at(shader_binary, temp_cursor);
 		u32 len = strlen(name);
@@ -205,28 +206,28 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 		}
 		strcpy(descriptor->handle.name, name);
 
-		LOG_MSG("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
+		log_msg("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
 			i, descriptor->set_number, descriptor->binding_number, descriptor->stage_flags,
-			descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", (descriptor->handle.type == SHADER_COMPILER_BLOCK) ? "true" : "false",
+			descriptor->is_push_constant ? "true" : "false", descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", (descriptor->handle.type == SHADER_COMPILER_BLOCK) ? "true" : "false",
 			descriptor->handle.name);
 
 		if(descriptor->handle.type == SHADER_COMPILER_BLOCK)
 		{
 			descriptor->handle.field_count = *(u16*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 2;
-			LOG_MSG("Field Count: %u\n", descriptor->handle.field_count);
+			log_msg("Field Count: %u\n", descriptor->handle.field_count);
 			indices[i] = buf_get_element_count(&fields);
 			for(u16 j = 0; j < descriptor->handle.field_count; j++)
 			{
-				u16 descriptor_info = *(u16*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 2;
+				u32 descriptor_info = *(u16*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 4;
 				const char* name = buf_get_ptr_at(shader_binary, temp_cursor);
 				u32 len = strlen(name);
 				assert(len < STRUCT_FIELD_MAX_NAME_SIZE);
 				temp_cursor += len + 1;
-				u8 type = descriptor_info & 0xFFU;
+				u8 type = descriptor_info & 0xFFUL;
 				struct_field_t field = { .type = type, .size = sizeof_glsl_type(type), .alignment = alignof_glsl_type(type) };
 				strcpy(field.name, name);
 				buf_push(&fields, &field);
-				LOG_MSG("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, field.type, field.size, field.alignment, field.name);
+				log_msg("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, field.type, field.size, field.alignment, field.name);
 			}
 		}
 	}
@@ -240,26 +241,29 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 			continue;
 		descriptors[i].handle.fields = buf_get_ptr_at(&fields, indices[i]);
 		struct_descriptor_recalculate(&descriptors[i].handle);
-		LOG_MSG("Struct \"%s\", size = %u\n", descriptors[i].handle.name, struct_descriptor_sizeof(&descriptors[i].handle));
+		log_msg("Struct \"%s\", size = %u\n", descriptors[i].handle.name, struct_descriptor_sizeof(&descriptors[i].handle));
 	}
 	stack_free(indices);
 	return descriptors;
 }
 
 
-static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(renderer_t* renderer, vulkan_shader_resource_descriptor_t* descriptors, u32 binding_count)
+static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(renderer_t* renderer, vulkan_shader_resource_descriptor_t* descriptors, u32 descriptor_count)
 {
-	if(binding_count == 0)
+	if(descriptor_count == 0)
 	{
-		assert_wrn(binding_count != 0);
+		assert_wrn(descriptor_count != 0);
 		return VK_NULL_HANDLE;
 	}
-	VkDescriptorSetLayoutBinding* bindings = stack_newv(VkDescriptorSetLayoutBinding, binding_count);
-	memset(bindings, 0, sizeof(VkDescriptorSetLayoutBinding) * binding_count);
-	for(u32 i = 0; i < binding_count; i++)
+	VkDescriptorSetLayoutBinding* bindings = stack_newv(VkDescriptorSetLayoutBinding, descriptor_count);
+	memset(bindings, 0, sizeof(VkDescriptorSetLayoutBinding) * descriptor_count);
+	u32 binding_count = 0;
+	for(u32 i = 0; i < descriptor_count; i++)
 	{
-		VkDescriptorSetLayoutBinding* binding = refp(VkDescriptorSetLayoutBinding, bindings, i);
 		vulkan_shader_resource_descriptor_t* descriptor = refp(vulkan_shader_resource_descriptor_t, descriptors, i);
+		if(descriptor->is_push_constant)
+			continue;
+		VkDescriptorSetLayoutBinding* binding = refp(VkDescriptorSetLayoutBinding, bindings, binding_count);
 		binding->binding = descriptor->binding_number;
 		binding->descriptorCount = 1;	//for now we are not using arrays
 		binding->stageFlags = 0;
@@ -289,6 +293,7 @@ static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(renderer_t* render
 				LOG_FETAL_ERR("Cannot create set layout binding for the type \"%u\", because it is not recognized\n", descriptor->handle.type);
 			break;
 		}
+		binding_count++;
 	}
 	VkDescriptorSetLayout vk_set_layout = vk_get_descriptor_set_layout(renderer->vk_device, bindings, binding_count);
 	stack_free(bindings);

@@ -24,7 +24,12 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 	ASSERT(renderer->vk_render_pass != VK_NULL_HANDLE, "renderer->vk_render_pass == VK_NULL_HANDLE\n");
 	ASSERT(renderer->window != NULL, "renderer->window == NULL\n");
 
-	vulkan_pipeline_layout_create_info_t layout_create_info = { .vk_set_layout = create_info->shader->vk_set_layout };
+	vulkan_pipeline_layout_create_info_t layout_create_info = 
+	{ 
+		.vk_set_layout = create_info->shader->vk_set_layout,
+		.push_constant_ranges = create_info->push_constant_ranges,
+		.push_constant_range_count = create_info->push_constant_range_count
+	};
 	vulkan_pipeline_layout_create_no_alloc(renderer, &layout_create_info, pipeline->pipeline_layout);
 
 	VkPipelineShaderStageCreateInfo* shader_stages = stack_newv(VkPipelineShaderStageCreateInfo, create_info->shader->stage_count);

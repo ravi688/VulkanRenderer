@@ -37,6 +37,8 @@ void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_creat
 		.shader = create_info->shader,
 		.vertex_info_count = create_info->vertex_info_count,
 		.vertex_infos = create_info->vertex_infos,
+		.push_constant_ranges = create_info->push_constant_ranges,
+		.push_constant_range_count = create_info->push_constant_range_count,
 		.blend_enabled = create_info->is_transparent
 	};
 	vulkan_graphics_pipeline_create_no_alloc(renderer, &pipeline_create_info, material->graphics_pipeline);
@@ -46,6 +48,9 @@ vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_
 {
 	vulkan_material_t* material = vulkan_material_new();
 	vulkan_material_create_no_alloc(renderer, create_info, material);
+	material->push_constant_ranges = heap_newv(VkPushConstantRange, create_info->push_constant_range_count);
+	material->push_constant_range_count = create_info->push_constant_range_count;
+	memcpy(material->push_constant_ranges, create_info->push_constant_ranges, sizeof(VkPushConstantRange) * material->push_constant_range_count);
 	material->vertex_infos = heap_newv(vulkan_vertex_info_t, create_info->vertex_info_count);
 	material->vertex_info_count = create_info->vertex_info_count;
 	//TODO: This should be like safe_memcpy()
@@ -84,6 +89,7 @@ void vulkan_material_release_resources(vulkan_material_t* material)
 		heap_free(info->attribute_offsets);
 	}
 	heap_free(material->vertex_infos);
+	heap_free(material->push_constant_ranges);
 	heap_free(material);
 }
 
@@ -97,7 +103,7 @@ void vulkan_material_bind(vulkan_material_t* material, renderer_t* renderer)
 
 void vulkan_material_push_constants(vulkan_material_t* material, renderer_t* renderer, void* bytes)
 {
-	vulkan_pipeline_layout_push_constants(material->graphics_pipeline->pipeline_layout, renderer, bytes);
+	vulkan_pipeline_layout_push_constants(material->graphics_pipeline->pipeline_layout, renderer, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(float) * 16, bytes);
 }
 
 void vulkan_material_set_texture(vulkan_material_t* material, renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture)
@@ -129,7 +135,9 @@ static void recreate_material(render_window_t* window, void* user_data)
 		.shader = material->shader,
 		.vertex_info_count = material->vertex_info_count,
 		.vertex_infos = material->vertex_infos,
-		.blend_enabled = material->is_transparent
+		.blend_enabled = material->is_transparent,
+		.push_constant_ranges = material->push_constant_ranges,
+		.push_constant_range_count = material->push_constant_range_count
 	};
 	vulkan_graphics_pipeline_create_no_alloc(material->renderer, &pipeline_create_info, material->graphics_pipeline);
 }
