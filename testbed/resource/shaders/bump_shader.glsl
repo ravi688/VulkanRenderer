@@ -79,5 +79,5 @@ void main()
 {
 	vec3 normal = unpack_normal(normal_map, _texcoord);
 	float t = 0.5f * dot(normal, -light.dir) + 0.5f;
-	color = texture(albedo, _texcoord).xyz * light.color * light.intensity * (t + (1 - t) * 0);
+	color = texture(albedo, _texcoord).xyz * light.color * light.intensity * t;
 }

@@ -212,13 +212,13 @@ int main(int argc, char** argv)
 		material_set_push_mat4(box_material, "push.model_matrix", mat4_transpose(float)(model_matrix));
 		mesh_draw_indexed(box, renderer);
 
-		material_bind(cube_material, renderer);
-		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(1, 0, 1.0f), mat4_rotation(float)(0, -180 * DEG2RAD * 0.5f, 0)));
-		mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
-		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-		material_set_push_mat4(cube_material, "push.mvp_matrix", mvp);
-		material_set_push_mat4(cube_material, "push.model_matrix", model_matrix);
-		mesh_draw_indexed(cube, renderer);
+		// material_bind(cube_material, renderer);
+		// mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(1, 0, 1.0f), mat4_rotation(float)(0, -180 * DEG2RAD * 0.5f, 0)));
+		// mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
+		// mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
+		// material_set_push_mat4(cube_material, "push.mvp_matrix", mvp);
+		// material_set_push_mat4(cube_material, "push.model_matrix", model_matrix);
+		// mesh_draw_indexed(cube, renderer);
 
 		material_bind(quad_material, renderer);
 		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
@@ -244,7 +244,7 @@ int main(int argc, char** argv)
 		renderer_end_frame(renderer);
 
 		renderer_update(renderer);
-		angle += 180 * delta_time * 0.05f;
+		angle += 180 * delta_time * 0.1f;
 		if(angle >= 360.0f)
 			angle = 0.0f;
 
