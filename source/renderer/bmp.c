@@ -4,6 +4,7 @@
 #include <disk_manager/file_reader.h>
 #include <meshlib/parsers/binary.h>
 #include <memory_allocator/memory_allocator.h>
+#include <renderer/debug.h>
 
 #define PARSE_ASSERT(boolean, ERROR) if(!(boolean)) bmp_parse_error(ERROR)
 
@@ -46,7 +47,6 @@ function_signature(bmp_t, bmp_load, const char* file_path)
 	binary_parser_skip_bytes(4);
 	/* Size of the raw bitmap data */
 	u32 raw_bitmap_data_size = binary_parser_u32();
-
 	/* Reset the internal cursor to the initial position */
 	binary_parser_rewind();
 	/* Move to Pixel Array*/
@@ -59,7 +59,8 @@ function_signature(bmp_t, bmp_load, const char* file_path)
 	u8 pad_channel_count = 4 - channel_count;
 	assert(pad_channel_count >= 0);
 	assert(pad_channel_count <= 4);
-	while(raw_bitmap_data_size > 0)
+	u32 pixel_count = width * height;
+	while(pixel_count > 0)
 	{
 		memcpy(dst, src, channel_count);
 		dst += channel_count;
@@ -75,7 +76,7 @@ function_signature(bmp_t, bmp_load, const char* file_path)
 				case 3: *dst = 0; dst++; break;
 			}
 		}
-		raw_bitmap_data_size -= channel_count;
+		--pixel_count;
 	}
 	assert((void*)dst <= ((void*)data + 4 * width * height));
 	buf_free(file_data);
