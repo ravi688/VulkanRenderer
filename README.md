@@ -3,21 +3,23 @@
 Note: Currently only nvidia dedicated gpus are supported.
 
 ## Setting up dependencies/submodules
-1. change the working directory to VulkanRenderer
-2. run "make setup"
+1. change the working directory to `VulkanRenderer`
+2. run `make setup`
 
 ## Building shaders
-1. change the working directory to VulkanRenderer/shader_compiler
-2. run "make debug"
-3. include VulkanRenderer/shader_compiler/shader_compiler.exe in your PATH environment variable (Windows)
-4. change the working directory to VulkanRenderer/testbed
-5. run "make shader"
+1. change the working directory to `VulkanRenderer/shader_compiler`
+2. run `make debug`
+3. include `VulkanRenderer/shader_compiler/shader_compiler.exe` in your PATH environment variable (Windows)
+4. change the working directory to `VulkanRenderer/testbed`
+5. run `make shader`
 
 ## Building executable
-1. change the working directory to VulkanRenderer/testbed
-2. run "make debug"
-3. run "main.exe"
+1. change the working directory to `VulkanRenderer/testbed`
+2. run `make debug`
+3. run `main.exe`
 
+## Where to go for examples?
+You can check `VulkanRenderer/testbed' directory
 
 ## Features
 
@@ -301,3 +303,9 @@ text_mesh_destroy(game_ui);
 text_mesh_release_resources(game_ui);
 
 ```
+
+## More?
+#### [Youtube](https://www.youtube.com/channel/UCWe_os3p4z3DBnQ4B5DUTfw/videos)
+
+## About Me
+#### [LinkedIn](https://www.linkedin.com/in/ravi-prakash-095a271a8/)
