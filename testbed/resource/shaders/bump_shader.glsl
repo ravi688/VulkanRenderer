@@ -34,19 +34,16 @@ layout(location = 2) in vec2 texcoord;
 layout(location = 3) in vec3 tangent;
 
 layout(location = 0) out vec2 _texcoord;
-layout(location = 1) out mat3 _tbn_matrix;
-
-mat3 build_tbn_matrix(vec3 tangent, vec3 normal)
-{
-    return mat3(tangent, cross(tangent, normal), normal);
-}
+layout(location = 1) out vec3 _tangent;
+layout(location = 2) out vec3 _normal;
+layout(location = 3) out vec3 _bitangent;
 
 void main()
 {
 	mat4 normal_matrix = transpose(inverse(model_matrix));
-	vec3 t = normalize((normal_matrix * vec4(tangent, 0)).xyz);
-    vec3 n = normalize((normal_matrix * vec4(normal, 0)).xyz);
-    _tbn_matrix = build_tbn_matrix(t, n);
+	_tangent = normalize((normal_matrix * vec4(tangent, 0)).xyz);
+ 	_normal = normalize((normal_matrix * vec4(normal, 0)).xyz);
+    _bitangent = cross(_normal, _tangent);
 	_texcoord = texcoord;
 	gl_Position = mvp_matrix * vec4(position, 1);
 }
@@ -55,6 +52,7 @@ void main()
 #stage fragment
 
 #version 450
+#extension GL_EXT_debug_printf : enable
 
 layout(set = 0, binding = 0) uniform sampler2D albedo;
 layout(set = 0, binding = 1) uniform sampler2D normal_map;
@@ -66,18 +64,22 @@ layout(set = 0, binding = 2) uniform Light
 } light;
 
 layout(location = 0) in vec2 _texcoord;
-layout(location = 1) in mat3 _tbn_matrix;
+layout(location = 1) in vec3 _tangent;
+layout(location = 2) in vec3 _normal;
+layout(location = 3) in vec3 _bitangent;
 
-layout(location = 0) out vec3 color;
-
-vec3 unpack_normal(sampler2D normal_map, vec2 uv)
-{
-    return normalize(_tbn_matrix * normalize(texture(normal_map, uv).xyz * 2 - 1));
-}
+layout(location = 0) out vec4 color;
 
 void main()
 {
-	vec3 normal = unpack_normal(normal_map, _texcoord);
+	vec3 n = (texture(normal_map, _texcoord).rgb * 2 - 1);
+	vec3 normal = _bitangent * n.g + _tangent * n.r + _normal * n.b;
 	float t = 0.5f * dot(normal, -light.dir) + 0.5f;
-	color = texture(albedo, _texcoord).xyz * light.color * light.intensity * t;
+	t = t + (1 - t) * 0.1f;
+
+	//	Bug description:
+	//	 all the calculations are correct but when the result has been assigned to color, it changed!
+	//	Fix:
+	//	 No fix found till now.
+	color = vec4(texture(albedo, _texcoord).rgb * light.color * light.intensity * t, 1);
 }
