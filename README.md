@@ -53,7 +53,13 @@ Currently `tessellation` and `geometry` are not supported.
 
 #section SHADER         // mandatory
 
-// GLSL shader
+#stage vertex 			// mendatory for now
+
+// GLSL vertex shader
+
+#stage fragment 		// mendatory for now
+
+// GLSL fragment shader
 ```
 
 #### Push Constants
