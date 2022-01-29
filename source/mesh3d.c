@@ -334,38 +334,38 @@ function_signature(void, mesh3d_calculate_normals, mesh3d_t* mesh)
 /*
 	CALCULATING TANGENTS
 
-	let dE1 = V1 - V0
-	let dE2 = V2 - V0
-	let d1(s) = s1 - s0
-	let d2(s) = s2 - s0
-	let d1(t) = t1 - t0
-	let d2(t) = t2 - t0
+	v0 = (-1.5f, 0, 1.5f)
+	v1 = (1.5f, 0, -1.5f)
+	v2 = (1.5f, 0, 1.5f)
 
-	then, 
-	dot(dE1, B) = d1(s)
-	dot(dE2, B) = d2(s)
-	dot(dE1, T) = d1(t)
-	dot(dE2, T) = d2(t)
+	(s0, t0) = (1, 0)
+	(s1, t1) = (0, 1)
+	(s2, t2) = (1, 1)
 
-	meaning,
-	B * d1(s) + T * d1(t) = dE1
-	B * d2(s) + T * d2(t) = dE2
+	e1 = (3, 0, -3)
+	e2 = (3, 0, 0)
+	duv1 (s, t) = (-1, 1)
+	duv2 (s, t) = (0, 1)
 
-	solving for B and T,
+	B = (1, 0, 0) 		- Expected
+	T = (0, 0, 1) 		- Expected
 
-	B = (dE1 * d2(t) - dE2 * d1(t)) / (d1(s) * d2(t) - d1(t) * d2(s))
-	T = (dE1 * d2(s) - dE2 * d1(s)) / (d1(t) * d2(s) - d1(s) * d2(t))
+	B * duv1.t + T * duv1.s = e1
+	B * duv2.t + T * duv2.s = e2
+
+	B = (e1 * duv2.s - e2 * duv1.s)	/ (duv1.t * duv2.s - duv1.s * duv2.t)
+	T = (e1 * duv2.t - e2 * duv1.t) / (duv1.s * duv2.t - duv1.t * duv2.s)
 
  */
 
 static vec3_t(float) get_tangent(mesh3d_t* mesh, index_t i0, index_t i1, index_t i2)
 {
-	vec2_t(float) d1 = vec2_sub(float)(mesh3d_uv_get(mesh, i1), mesh3d_uv_get(mesh, i0));
-	vec2_t(float) d2 = vec2_sub(float)(mesh3d_uv_get(mesh, i2), mesh3d_uv_get(mesh, i0));
-	vec3_t(float) dE1 = vec3_sub(float)(mesh3d_position_get(mesh, i1), mesh3d_position_get(mesh, i0));
-	vec3_t(float) dE2 = vec3_sub(float)(mesh3d_position_get(mesh, i2), mesh3d_position_get(mesh, i0));
-	vec3_t(float) tangent = vec3_sub(float)(vec3_scale(float)(dE1, d2.x), vec3_scale(float)(dE2, d1.x));
-	float value = 1 / (d1.y * d2.x - d1.x * d2.y);
+	vec2_t(float) duv1 = vec2_sub(float)(mesh3d_uv_get(mesh, i1), mesh3d_uv_get(mesh, i0));
+	vec2_t(float) duv2 = vec2_sub(float)(mesh3d_uv_get(mesh, i2), mesh3d_uv_get(mesh, i0));
+	vec3_t(float) e1 = vec3_sub(float)(mesh3d_position_get(mesh, i1), mesh3d_position_get(mesh, i0));
+	vec3_t(float) e2 = vec3_sub(float)(mesh3d_position_get(mesh, i2), mesh3d_position_get(mesh, i0));
+	vec3_t(float) tangent = vec3_sub(float)(vec3_scale(float)(e1, duv2.y), vec3_scale(float)(e2, duv1.y));
+	float value = 1 / (duv1.x * duv2.y - duv1.y * duv2.x);
 	tangent = vec3_scale(float)(tangent, value);
 	return tangent;
 }
@@ -1064,7 +1064,6 @@ function_signature(mesh3d_t*, mesh3d_plane, float size)
 	mesh3d_t* mesh = mesh3d_new();
 	mesh3d_positions_new(mesh, 4);
 	mesh3d_triangles_new(mesh, 2);
-	mesh3d_colors_new(mesh, 4);
 	mesh3d_normals_new(mesh, 4);
 	mesh3d_uvs_new(mesh, 4);
 
@@ -1088,11 +1087,6 @@ function_signature(mesh3d_t*, mesh3d_plane, float size)
 	mesh3d_normal_add(mesh, 0, 1, 0);
 	mesh3d_normal_add(mesh, 0, 1, 0);
 
-	mesh3d_color_add(mesh, 1, 1, 1);
-	mesh3d_color_add(mesh, 1, 1, 1);
-	mesh3d_color_add(mesh, 1, 1, 1);
-	mesh3d_color_add(mesh, 1, 1, 1);
-
 	mesh3d_optimize_buffer(mesh);
 	CALLTRACE_RETURN(mesh);
 }
@@ -1103,7 +1097,6 @@ function_signature(mesh3d_t*, mesh3d_cube, float size)
 	mesh3d_t* mesh = mesh3d_new();
 	mesh3d_positions_new(mesh, 24);
 	mesh3d_triangles_new(mesh, 12);
-	mesh3d_colors_new(mesh, 24);
 	mesh3d_normals_new(mesh, 24);
 	mesh3d_uvs_new(mesh, 24);
 
@@ -1204,9 +1197,6 @@ function_signature(mesh3d_t*, mesh3d_cube, float size)
 
 	for(int i = 0; i < 4; i++)
 		mesh3d_normal_add(mesh, 0, 0, -1.0f);
-
-	for(int i = 0; i < mesh3d_positions_count(mesh); i++)
-		mesh3d_color_add(mesh, 1, 1, 1);
 
 	mesh3d_optimize_buffer(mesh);
 	CALLTRACE_RETURN(mesh);
