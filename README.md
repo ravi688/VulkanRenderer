@@ -39,7 +39,9 @@ shader_release_resources(example_shader); // releases some extra heap allocated 
 ### Shader defintiion
 
 #### Sections
-Shader definition has been devided into 3 sections: `SETTINGS` `LAYOUT` `SHADER`.
+Shader definition has been devided into 3 sections: `SETTINGS` `LAYOUT` `SHADER`. <br>
+`SHADER` section is devided into stages: `vertex` `tessellation` `geometry` `fragment`. <br>
+Currently `tessellation` and `geometry` are not supported.
 ```GLSL
 #section SETTINGS       // optional, to be added. As of now it is always ignored.
 
