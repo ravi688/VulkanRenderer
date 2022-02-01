@@ -23,7 +23,7 @@ void vulkan_descriptor_set_create_no_alloc(renderer_t* renderer,  vulkan_descrip
 		.descriptorSetCount = 1,
 		.pSetLayouts = &create_info->layout
 	};
-	vkCall(vkAllocateDescriptorSets(renderer->vk_device, &alloc_info, &set->handle));
+	vkCall(vkAllocateDescriptorSets(renderer->logical_device->handle, &alloc_info, &set->handle));
 	set->pool = create_info->pool;
 }
 
@@ -36,7 +36,7 @@ vulkan_descriptor_set_t* vulkan_descriptor_set_create(renderer_t* renderer, vulk
 
 void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, renderer_t* renderer)
 {
-	vkCall(vkFreeDescriptorSets(renderer->vk_device, set->pool, 1, &set->handle));
+	vkCall(vkFreeDescriptorSets(renderer->logical_device->handle, set->pool, 1, &set->handle));
 }
 
 void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_t* set)
@@ -68,7 +68,7 @@ void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, renderer_
 		.descriptorCount = 1,
 		.pImageInfo = &image_info,
 	};
-	vkUpdateDescriptorSets(renderer->vk_device, 1, &descriptor_write, 0, NULL);
+	vkUpdateDescriptorSets(renderer->logical_device->handle, 1, &descriptor_write, 0, NULL);
 }
 
 void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer)
@@ -89,5 +89,5 @@ void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, re
 		.descriptorCount = 1,
 		.pBufferInfo = &buffer_info,
 	};
-	vkUpdateDescriptorSets(renderer->vk_device, 1, &descriptor_write, 0, NULL);
+	vkUpdateDescriptorSets(renderer->logical_device->handle, 1, &descriptor_write, 0, NULL);
 }

@@ -52,25 +52,26 @@
 #	define LOG_WRN(...) log_wrn(__VA_ARGS__)
 #	define LOG_FETAL_ERR(...) log_fetal_err(__VA_ARGS__)
 #else
-#	define LOG_WRN(...)\
-	{\
-		printf("[Warning]: ");\
-		printf(__VA_ARGS__);\
-	}
-#	define LOG_MSG(...)\
-	{\
-		printf("[Log]: ");\
-		printf(__VA_ARGS__);\
-	}
-#	define LOG_ERR(...)\
-	{\
-		printf("[Error]: ");\
-		printf(__VA_ARGS__);\
-	}
-#	define LOG_FETAL_ERR(...)\
-	{\
-		printf("[Fetal Error]: ");\
-		printf(__VA_ARGS__);\
-		exit(0);\
-	}
+#	define LOG_WRN(...) debug_log("[Warning]: ", __VA_ARGS__)
+#	define LOG_MSG(...) debug_log("[Log]: ", __VA_ARGS__)
+#	define LOG_ERR(...) debug_log("[Error]: ", __VA_ARGS__)
+#	define LOG_FETAL_ERR(...) debug_log_exit("[Fetal Error]: ", __VA_ARGS__)
 #endif
+
+static void debug_log(const char* description, const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	printf(description);
+	vprintf(format, args);
+	va_end(args);
+}
+
+static void debug_log_exit(const char* description, const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	debug_log(description, format, args);
+	va_end(args);
+	exit(0);
+}

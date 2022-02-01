@@ -89,7 +89,7 @@ void vulkan_shader_destroy(vulkan_shader_t* shader, renderer_t* renderer)
 	for(u8 i = 0; i < shader->stage_count; i++)
 		vulkan_stage_shader_destroy(ref(vulkan_stage_shader_t*, shader->stage_shaders, i), renderer);
 	if(shader->vk_set_layout != VK_NULL_HANDLE)
-		vkDestroyDescriptorSetLayout(renderer->vk_device, shader->vk_set_layout, NULL);
+		vkDestroyDescriptorSetLayout(renderer->logical_device->handle, shader->vk_set_layout, NULL);
 	if(shader->vk_set != NULL)
 		vulkan_descriptor_set_destroy(shader->vk_set, renderer);
 }
@@ -295,7 +295,7 @@ static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(renderer_t* render
 		}
 		binding_count++;
 	}
-	VkDescriptorSetLayout vk_set_layout = vk_get_descriptor_set_layout(renderer->vk_device, bindings, binding_count);
+	VkDescriptorSetLayout vk_set_layout = vk_get_descriptor_set_layout(renderer->logical_device->handle, bindings, binding_count);
 	stack_free(bindings);
 	return vk_set_layout;
 }

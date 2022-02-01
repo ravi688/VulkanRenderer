@@ -90,7 +90,7 @@ vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_cre
 		.minLod = 0.0f,
 		.maxLod = 0.0f,
 	};
-	vkCall(vkCreateSampler(renderer->vk_device, &sampler_create_info, NULL, &texture->image_sampler));
+	vkCall(vkCreateSampler(renderer->logical_device->handle, &sampler_create_info, NULL, &texture->image_sampler));
 	/*------------------------------------------------------------------------------------*/
 	return texture;
 }
@@ -99,9 +99,9 @@ void vulkan_texture_destroy(vulkan_texture_t* texture, renderer_t* renderer)
 {
 	ASSERT_NOT_NULL(texture);
 	ASSERT_NOT_NULL(renderer);
-	vkDestroySampler(renderer->vk_device, texture->image_sampler, NULL);
+	vkDestroySampler(renderer->logical_device->handle, texture->image_sampler, NULL);
 	/* NOTE: VkImageView should be destroyed before VkImage */
-	vkDestroyImageView(renderer->vk_device, texture->image_view, NULL);
+	vkDestroyImageView(renderer->logical_device->handle, texture->image_view, NULL);
 	vulkan_image_destroy(texture->image);
 }
 

@@ -18,7 +18,7 @@ vulkan_mesh_t* vulkan_mesh_new()
 
 void vulkan_mesh_create_no_alloc(renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
 {
-	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
+	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
 	assert(create_info != 0);
 	assert(mesh != NULL);
 	buf_clear(&mesh->vertex_buffers, NULL);
