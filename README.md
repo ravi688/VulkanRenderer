@@ -1,6 +1,5 @@
 # VulkanRenderer
 3D renderer built on Vulkan API <br>
-~~Note: Currently only nvidia dedicated gpus are supported.~~
 
 ## Setting up dependencies/submodules
 1. change the working directory to `VulkanRenderer`
