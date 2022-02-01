@@ -3,15 +3,57 @@
 #include <renderer/renderer.h>
 #include <renderer/render_window.h>
 #include <renderer/debug.h>
+#include <renderer/assert.h>
 #include <renderer/defines.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <memory_allocator/memory_allocator.h>
 #include <string/string.h>
 
+
+#include <renderer/internal/vulkan/vulkan_instance.h>
+#include <renderer/internal/vulkan/vulkan_physical_device.h>
+
+#include <stdio.h> 		// puts
+
 static void renderer_on_window_resize(render_window_t* window, void* renderer);
 
 render_window_t* renderer_get_window(renderer_t* renderer) { return renderer->window; }
+
+vulkan_physical_device_t* get_lowest_score_device(vulkan_physical_device_t** devices, u32 count);
+
+vulkan_physical_device_t* get_highest_score_device(vulkan_physical_device_t** devices, u32 count)
+{
+	if(count == 0)
+		LOG_FETAL_ERR("No vulkan physical device found\n");
+
+	vulkan_physical_device_t* integrated_gpu = NULL;
+	vulkan_physical_device_t* discrete_gpu = NULL;
+	for(int i = 0; i < count; i++)
+	{
+		VkPhysicalDeviceFeatures* features = vulkan_physical_device_get_features(devices[i]);
+		VkPhysicalDeviceProperties* properties = vulkan_physical_device_get_properties(devices[i]);
+		switch(properties->deviceType)
+		{
+			case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+				integrated_gpu = devices[i];
+				break;
+			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+				discrete_gpu = devices[i];
+				break;
+		}
+	}
+	if((integrated_gpu == NULL) && (discrete_gpu == NULL))
+		LOG_FETAL_ERR("No integrated or discrete vulkan gpu found!\n");
+
+DEBUG_BLOCK
+(
+	void* gpu = (discrete_gpu == NULL) ? integrated_gpu : discrete_gpu;
+	log_msg("Using the gpu: %s\n", vulkan_physical_device_get_properties(gpu)->deviceName);
+)
+
+	return gpu;
+}
 
 //TODO: Wrapp this physical device selection & creation of logical device into a single function
 renderer_t* renderer_init(u32 width, u32 height, const char* title, bool full_screen)
@@ -19,14 +61,59 @@ renderer_t* renderer_init(u32 width, u32 height, const char* title, bool full_sc
 	renderer_t* renderer = heap_new(renderer_t);
 	memset(renderer, 0, sizeof(renderer_t));
 
-	//Create vulkan context
-	renderer->vk_instance = vk_create_instance();
-	renderer->vk_physical_device = vk_get_suitable_physical_device(vk_get_physical_devices(renderer->vk_instance));
-	renderer->vk_device = vk_get_device(renderer->vk_physical_device);
+	//Create vulkan instance and choose a physical device
+	const char* extensions[2] = { "VK_KHR_surface", "VK_KHR_win32_surface" };
+	renderer->instance = vulkan_instance_create(extensions, 2);
+	vulkan_physical_device_t** physical_devices = vulkan_instance_get_physical_devices(renderer->instance);
+	u32 physical_device_count = vulkan_instance_get_physical_device_count(renderer->instance);
 
-	//Create render window
+DEBUG_BLOCK
+(	
+	BUFFER log_buffer = buf_create(sizeof(char), 0, 0);
+	vulkan_instance_to_string(renderer->instance, &log_buffer);
+	for(u32 i = 0; i < physical_device_count; i++)
+		vulkan_physical_device_to_string(physical_devices[i], &log_buffer);
+	buf_push_char(&log_buffer, 0);
+	log_msg(buf_get_ptr(&log_buffer));
+)
+	
+	vulkan_physical_device_t* physical_device = get_highest_score_device(physical_devices, physical_device_count);
+	renderer->vk_physical_device = physical_device->handle;
+
+
+	// create window
 	renderer->window = render_window_init(width, height, title, full_screen);
 	render_window_subscribe_on_resize(renderer->window, renderer_on_window_resize, renderer);
+
+	// create surface
+	render_window_get_vulkan_surface(renderer->window, &(renderer->instance->handle), &(renderer->surface));
+	
+	// create logical device
+	VkPhysicalDeviceFeatures* minimum_required_features = heap_new(VkPhysicalDeviceFeatures);
+	memset(minimum_required_features, 0, sizeof(VkPhysicalDeviceFeatures));
+
+	u32 queue_family_indices[2] =
+	{
+		vulkan_physical_device_find_queue_family_index(physical_device, VK_QUEUE_GRAPHICS_BIT),			// graphics queue family index
+		vulkan_physical_device_find_queue_family_index_for_surface(physical_device, renderer->surface)	// presentation queue family index
+	};
+	if(queue_family_indices[0] == U32_MAX)
+		LOG_FETAL_ERR("No queue found supporting graphics capabilities\n");
+	if(queue_family_indices[1] == U32_MAX)
+		LOG_FETAL_ERR("No queue found supporting presentation capabilities to the created surface\n");
+
+	extensions[0] = "VK_KHR_swapchain";
+
+	vulkan_logical_device_create_info_t logical_device_create_info =
+	{
+		.queue_family_indices = queue_family_indices,
+		.queue_family_indice_count = 2,
+		.extensions = extensions,
+		.extension_count = 1,
+		.features = minimum_required_features
+	};
+	renderer->vk_device = vulkan_logical_device_create(physical_device, &logical_device_create_info)->handle;
+	heap_free(minimum_required_features);
 
 	//Create Renderpass
 	renderer->vk_render_pass = vk_get_render_pass(renderer->vk_device, VK_FORMAT_B8G8R8A8_SRGB);
@@ -120,6 +207,7 @@ bool renderer_is_running(renderer_t* renderer)
 
 void renderer_terminate(renderer_t* renderer)
 {
+	vkDestroySurfaceKHR(renderer->instance->handle, renderer->surface, NULL);
 	render_window_destroy(renderer->window);
 	vulkan_swapchain_destroy(renderer->swapchain, renderer);
 	vulkan_swapchain_release_resources(renderer->swapchain);
@@ -128,8 +216,8 @@ void renderer_terminate(renderer_t* renderer)
 	vkFreeCommandBuffers(renderer->vk_device, renderer->vk_command_pool, renderer->vk_command_buffers.value1, renderer->vk_command_buffers.value2);
 	vkDestroyCommandPool(renderer->vk_device, renderer->vk_command_pool, NULL);
 	vkDestroyDevice(renderer->vk_device, NULL);
-	vkDestroyInstance(renderer->vk_instance, NULL);
-
+	vulkan_instance_destroy(renderer->instance);
+	vulkan_instance_release_resources(renderer->instance);
 	heap_free(renderer);
 }
 

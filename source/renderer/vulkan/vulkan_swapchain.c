@@ -26,10 +26,11 @@ vulkan_swapchain_t* vulkan_swapchain_create(render_window_t* window, renderer_t*
 	swapchain->window = window;
 	//TODO: Make swapchain image count configurable
 	swapchain->image_count = 3;
-	render_window_get_vulkan_surface(window, &(renderer->vk_instance), &(swapchain->surface));
+	swapchain->surface = renderer->surface;
 	create_swapchain(swapchain, renderer);
 	swapchain->image_available_semaphore = vk_get_semaphore(renderer->vk_device);
 	swapchain->render_finished_semaphore = vk_get_semaphore(renderer->vk_device);
+	log_msg("Swapchain created successfully\n");
 	return swapchain;
 }
 
@@ -100,7 +101,7 @@ void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain, renderer_t* rendere
 	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
 	destroy_semaphores(swapchain, renderer);
 	destroy_swapchain(swapchain, renderer);
-	vkDestroySurfaceKHR(renderer->vk_instance, swapchain->surface, NULL);
+	log_msg("Swapchain destroyed successfully\n");
 }
 
 u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, renderer_t* renderer)
@@ -211,6 +212,8 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 		.oldSwapchain = VK_NULL_HANDLE,
 		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
 	};
+	log_msg("Swapchain image count: %u\n", swapchain->image_count);
+	log_msg("Swapchain image size: (%u, %u)\n", swapchain->window->width, swapchain->window->height);
 
 	swapchain->swapchain = vk_get_swapchain(renderer->vk_device, &create_info);
 	swapchain->images = vk_get_images(renderer->vk_device, swapchain->swapchain).value2;
