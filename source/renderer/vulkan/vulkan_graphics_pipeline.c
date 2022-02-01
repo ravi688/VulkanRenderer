@@ -20,7 +20,7 @@ vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 
 void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline)
 {
-	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
+	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
 	ASSERT(renderer->vk_render_pass != VK_NULL_HANDLE, "renderer->vk_render_pass == VK_NULL_HANDLE\n");
 	ASSERT(renderer->window != NULL, "renderer->window == NULL\n");
 
@@ -84,7 +84,7 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 		.blendConstants[3] = 0.0f // Optional
 	};
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vk_get_pipeline_depth_stencil_state_create_info();
-	pipeline->pipeline = vk_get_graphics_pipeline(	renderer->vk_device, pipeline->pipeline_layout->handle, renderer->vk_render_pass,
+	pipeline->pipeline = vk_get_graphics_pipeline(	renderer->logical_device->handle, pipeline->pipeline_layout->handle, renderer->vk_render_pass,
 														shader_stages,
 														&vertex_info_info,
 														&input_assembly,
@@ -110,7 +110,7 @@ vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer
 
 void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer)
 {
-	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
+	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
 	ASSERT(renderer->swapchain != NULL, "renderer->swapchain == NULL\n");
 
 	u32 image_index = renderer->swapchain->current_image_index;
@@ -119,9 +119,9 @@ void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, rendere
 
 void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer)
 {
-	ASSERT(renderer->vk_device != VK_NULL_HANDLE, "renderer->vk_device == VK_NULL_HANDLE\n");
+	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
 	vulkan_pipeline_layout_destroy(pipeline->pipeline_layout, renderer);
-	vkDestroyPipeline(renderer->vk_device, pipeline->pipeline, NULL);
+	vkDestroyPipeline(renderer->logical_device->handle, pipeline->pipeline, NULL);
 }
 
 void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)

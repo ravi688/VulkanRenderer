@@ -11,7 +11,7 @@ typedef struct vulkan_logical_device_create_info_t
 {
 	// queues to create
 	u32* queue_family_indices;
-	u32 queue_family_indice_count;
+	u32 queue_family_index_count;
 
 	// extensions to enable
 	const char* const* extensions;

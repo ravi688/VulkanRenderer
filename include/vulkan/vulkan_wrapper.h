@@ -164,11 +164,11 @@ function_signature(uint32_t, vk_find_physical_device_memory_type, VkPhysicalDevi
 function_signature(VkCommandBuffer, vk_get_begin_single_time_command_buffer, VkDevice device, VkCommandPool command_pool);
 function_signature(void, vk_end_single_time_command_buffer, VkDevice device, VkCommandPool command_pool, VkCommandBuffer command_buffer, VkQueue queue);
 
-function_signature(const char*, vk_physical_device_memory_properties_to_string, VkPhysicalDeviceMemoryProperties *memory_properties);
-function_signature(const char*, vk_physical_device_properties_to_string, VkPhysicalDeviceProperties* properties);
-function_signature(const char*, vk_physical_device_type_to_string, VkPhysicalDeviceType* deviceType);
-function_signature(const char*, vk_physical_device_features_to_string, VkPhysicalDeviceFeatures* device_features);
-function_signature(const char*, vk_physical_device_queue_family_to_string, VkQueueFamilyProperties properties);
+// function_signature(const char*, vk_physical_device_memory_properties_to_string, VkPhysicalDeviceMemoryProperties *memory_properties);
+// function_signature(const char*, vk_physical_device_properties_to_string, VkPhysicalDeviceProperties* properties);
+// function_signature(const char*, vk_physical_device_type_to_string, VkPhysicalDeviceType* deviceType);
+// function_signature(const char*, vk_physical_device_features_to_string, VkPhysicalDeviceFeatures* device_features);
+// function_signature(const char*, vk_physical_device_queue_family_to_string, VkQueueFamilyProperties properties);
 
 function_signature_void(void, vk_dump_instance_extensions); 
 function_signature_void(void, vk_dump_instance_layers);
@@ -243,14 +243,14 @@ function_signature(void, vk_dump_physical_device_extensions, VkPhysicalDevice* p
 #define vk_get_begin_single_time_command_buffer(...) define_alias_function_macro(vk_get_begin_single_time_command_buffer, __VA_ARGS__)
 #define vk_end_single_time_command_buffer(...) define_alias_function_macro(vk_end_single_time_command_buffer, __VA_ARGS__)
 
-#define vk_physical_device_memory_properties_to_string(...) define_alias_function_macro(vk_physical_device_memory_properties_to_string, __VA_ARGS__)
-#define vk_physical_device_properties_to_string(...) define_alias_function_macro(vk_physical_device_properties_to_string, __VA_ARGS__)
-#define vk_physical_device_type_to_string(...) define_alias_function_macro(vk_physical_device_type_to_string, __VA_ARGS__)
-#define vk_physical_device_features_to_string(...) define_alias_function_macro(vk_physical_device_features_to_string, __VA_ARGS__)
-#define vk_physical_device_queue_family_to_string(...) define_alias_function_macro(vk_physical_device_queue_family_to_string, __VA_ARGS__)
+// #define vk_physical_device_memory_properties_to_string(...) define_alias_function_macro(vk_physical_device_memory_properties_to_string, __VA_ARGS__)
+// #define vk_physical_device_properties_to_string(...) define_alias_function_macro(vk_physical_device_properties_to_string, __VA_ARGS__)
+// #define vk_physical_device_type_to_string(...) define_alias_function_macro(vk_physical_device_type_to_string, __VA_ARGS__)
+// #define vk_physical_device_features_to_string(...) define_alias_function_macro(vk_physical_device_features_to_string, __VA_ARGS__)
+// #define vk_physical_device_queue_family_to_string(...) define_alias_function_macro(vk_physical_device_queue_family_to_string, __VA_ARGS__)
 
-#define vk_physical_device_memory_properties_to_string(...) define_alias_function_macro(vk_physical_device_memory_properties_to_string, __VA_ARGS__)
-#define vk_physical_device_properties_to_string(...) define_alias_function_macro(vk_physical_device_properties_to_string, __VA_ARGS__)
-#define vk_physical_device_type_to_string(...) define_alias_function_macro(vk_physical_device_type_to_string, __VA_ARGS__)
-#define vk_physical_device_features_to_string(...) define_alias_function_macro(vk_physical_device_features_to_string, __VA_ARGS__)
-#define vk_physical_device_queue_family_to_string(...) define_alias_function_macro(vk_physical_device_queue_family_to_string, __VA_ARGS__)
+// #define vk_physical_device_memory_properties_to_string(...) define_alias_function_macro(vk_physical_device_memory_properties_to_string, __VA_ARGS__)
+// #define vk_physical_device_properties_to_string(...) define_alias_function_macro(vk_physical_device_properties_to_string, __VA_ARGS__)
+// #define vk_physical_device_type_to_string(...) define_alias_function_macro(vk_physical_device_type_to_string, __VA_ARGS__)
+// #define vk_physical_device_features_to_string(...) define_alias_function_macro(vk_physical_device_features_to_string, __VA_ARGS__)
+// #define vk_physical_device_queue_family_to_string(...) define_alias_function_macro(vk_physical_device_queue_family_to_string, __VA_ARGS__)

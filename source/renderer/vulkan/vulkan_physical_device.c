@@ -69,6 +69,53 @@ void vulkan_physical_device_release_resources(vulkan_physical_device_t* device)
 
 
 // getters
+VkPresentModeKHR* vulkan_physical_device_get_present_modes(vulkan_physical_device_t* device, VkSurfaceKHR surface, u32* out_count)
+{
+	check_pre_condition(device);
+	u32 count;
+	VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->handle, surface, &count, NULL);
+	vulkan_result_assert_success(result);
+	*out_count = count;
+	if(count == 0)
+	{
+		LOG_WRN("Present mode count is zero\n");
+		return NULL;
+	}
+	VkPresentModeKHR* modes = heap_newv(VkPresentModeKHR, count);
+	result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->handle, surface, &count, modes);
+	vulkan_result_assert_success(result);
+	vulkan_result_assert_complete(result);
+	return modes;
+}
+
+VkSurfaceFormatKHR* vulkan_physical_device_get_surface_formats(vulkan_physical_device_t* device, VkSurfaceKHR surface, u32* out_count)
+{
+	check_pre_condition(device);
+	u32 count;
+	VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->handle, surface, &count, NULL);
+	vulkan_result_assert_success(result);
+	*out_count = count;
+	if(count == 0)
+	{
+		LOG_WRN("Surface format count is zero\n");
+		return NULL;
+	}
+	VkSurfaceFormatKHR* formats = heap_newv(VkSurfaceFormatKHR, count);
+	result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->handle, surface, &count, formats);
+	vulkan_result_assert_success(result);
+	vulkan_result_assert_complete(result);
+	return formats;
+}
+
+VkSurfaceCapabilitiesKHR vulkan_physical_device_get_surface_capabilities(vulkan_physical_device_t* device, VkSurfaceKHR surface)
+{
+	check_pre_condition(device);
+	VkSurfaceCapabilitiesKHR capabilities;
+	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->handle, surface, &capabilities);
+	vulkan_result_assert_success(result);
+	return capabilities;
+}
+
 VkPhysicalDeviceLimits* vulkan_physical_device_get_limits(vulkan_physical_device_t* device)
 {
 	return &(vulkan_physical_device_get_properties(device)->limits);

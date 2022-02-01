@@ -75,9 +75,7 @@ void render_window_subscribe_on_resize(render_window_t* window, void (*callback)
 	event_args_t args = { .user_data = user_data, .callback = callback };
 #if GLOBAL_DEBUG
 	if(buf_find_index_of(window->resize_event, callback, (bool (*)(void*, void*))comparer) != BUF_INVALID_INDEX)
-	{
 		log_wrn("Event Handler %u is already subscribed\n", callback);
-	}
 #endif
 	buf_push(window->resize_event, &args);
 }
@@ -108,6 +106,11 @@ void render_window_destroy(render_window_t* window)
 		buf_free(window->resize_event);
 	heap_free(window);
 	log_msg("Render window destroyed successfully\n");
+}
+
+void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height)
+{
+	glfwGetFramebufferSize(window->handle, out_width, out_height);
 }
 
 void render_window_get_vulkan_surface(render_window_t* window, void* vk_instance, void* out_surface)

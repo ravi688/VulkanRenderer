@@ -1,6 +1,578 @@
 
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 
+void vk_present_mode_to_string(const char* description, VkPresentModeKHR present_mode, BUFFER* string_buffer)
+{
+    buf_push_string(string_buffer, description);
+    switch(present_mode)
+    {
+        case VK_PRESENT_MODE_IMMEDIATE_KHR:
+            buf_push_string(string_buffer, "VK_PRESENT_MODE_IMMEDIATE_KHR\n");
+            break;
+        case VK_PRESENT_MODE_MAILBOX_KHR:
+            buf_push_string(string_buffer, "VK_PRESENT_MODE_MAILBOX_KHR\n");
+            break;
+        case VK_PRESENT_MODE_FIFO_KHR:
+            buf_push_string(string_buffer, "VK_PRESENT_MODE_FIFO_KHR\n");
+            break;
+        case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
+            buf_push_string(string_buffer, "VK_PRESENT_MODE_FIFO_RELAXED_KHR\n");
+            break;
+        case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR:
+            buf_push_string(string_buffer, "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR\n");
+            break;
+        default:
+            buf_push_string(string_buffer, "Invalid present mode\n");
+            break;
+    }
+}
+
+void vk_format_to_string(const char* description, VkFormat format, BUFFER* string_buffer)
+{
+    buf_push_string(string_buffer, description);
+    switch(format)
+    {
+        case VK_FORMAT_UNDEFINED:
+            buf_push_string(string_buffer, "VK_FORMAT_UNDEFINED");
+            break;
+        case VK_FORMAT_R4G4_UNORM_PACK8:
+            buf_push_string(string_buffer, "VK_FORMAT_R4G4_UNORM_PACK8");
+            break;
+        case VK_FORMAT_R4G4B4A4_UNORM_PACK16:
+            buf_push_string(string_buffer, "VK_FORMAT_R4G4B4A4_UNORM_PACK16");
+            break;
+        case VK_FORMAT_B4G4R4A4_UNORM_PACK16:
+            buf_push_string(string_buffer, "VK_FORMAT_B4G4R4A4_UNORM_PACK16");
+            break;
+        case VK_FORMAT_R5G6B5_UNORM_PACK16:
+            buf_push_string(string_buffer, "VK_FORMAT_R5G6B5_UNORM_PACK16");
+            break;
+        case VK_FORMAT_B5G6R5_UNORM_PACK16:
+            buf_push_string(string_buffer, "VK_FORMAT_B5G6R5_UNORM_PACK16");
+            break;
+        case VK_FORMAT_R5G5B5A1_UNORM_PACK16:
+            buf_push_string(string_buffer, "VK_FORMAT_R5G5B5A1_UNORM_PACK16");
+            break;
+        case VK_FORMAT_B5G5R5A1_UNORM_PACK16:
+            buf_push_string(string_buffer, "VK_FORMAT_B5G5R5A1_UNORM_PACK16");
+            break;
+        case VK_FORMAT_A1R5G5B5_UNORM_PACK16:
+            buf_push_string(string_buffer, "VK_FORMAT_A1R5G5B5_UNORM_PACK16");
+            break;
+        case VK_FORMAT_R8_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R8_UNORM");
+            break;
+        case VK_FORMAT_R8_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R8_SNORM");
+            break;
+        case VK_FORMAT_R8_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R8_USCALED");
+            break;
+        case VK_FORMAT_R8_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R8_SSCALED");
+            break;
+        case VK_FORMAT_R8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R8_UINT");
+            break;
+        case VK_FORMAT_R8_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R8_SINT");
+            break;
+        case VK_FORMAT_R8_SRGB:
+            buf_push_string(string_buffer, "VK_FORMAT_R8_SRGB");
+            break;
+        case VK_FORMAT_R8G8_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8_UNORM");
+            break;
+        case VK_FORMAT_R8G8_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8_SNORM");
+            break;
+        case VK_FORMAT_R8G8_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8_USCALED");
+            break;
+        case VK_FORMAT_R8G8_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8_SSCALED");
+            break;
+        case VK_FORMAT_R8G8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8_UINT");
+            break;
+        case VK_FORMAT_R8G8_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8_SINT");
+            break;
+        case VK_FORMAT_R8G8_SRGB:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8_SRGB");
+            break;
+        case VK_FORMAT_R8G8B8_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8_UNORM");
+            break;
+        case VK_FORMAT_R8G8B8_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8_SNORM");
+            break;
+        case VK_FORMAT_R8G8B8_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8_USCALED");
+            break;
+        case VK_FORMAT_R8G8B8_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8_SSCALED");
+            break;
+        case VK_FORMAT_R8G8B8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8_UINT");
+            break;
+        case VK_FORMAT_R8G8B8_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8_SINT");
+            break;
+        case VK_FORMAT_R8G8B8_SRGB:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8_SRGB");
+            break;
+        case VK_FORMAT_B8G8R8_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8_UNORM");
+            break;
+        case VK_FORMAT_B8G8R8_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8_SNORM");
+            break;
+        case VK_FORMAT_B8G8R8_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8_USCALED");
+            break;
+        case VK_FORMAT_B8G8R8_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8_SSCALED");
+            break;
+        case VK_FORMAT_B8G8R8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8_UINT");
+            break;
+        case VK_FORMAT_B8G8R8_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8_SINT");
+            break;
+        case VK_FORMAT_B8G8R8_SRGB:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8_SRGB");
+            break;
+        case VK_FORMAT_R8G8B8A8_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8A8_UNORM");
+            break;
+        case VK_FORMAT_R8G8B8A8_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8A8_SNORM");
+            break;
+        case VK_FORMAT_R8G8B8A8_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8A8_USCALED");
+            break;
+        case VK_FORMAT_R8G8B8A8_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8A8_SSCALED");
+            break;
+        case VK_FORMAT_R8G8B8A8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8A8_UINT");
+            break;
+        case VK_FORMAT_R8G8B8A8_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8A8_SINT");
+            break;
+        case VK_FORMAT_R8G8B8A8_SRGB:
+            buf_push_string(string_buffer, "VK_FORMAT_R8G8B8A8_SRGB");
+            break;
+        case VK_FORMAT_B8G8R8A8_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8A8_UNORM");
+            break;
+        case VK_FORMAT_B8G8R8A8_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8A8_SNORM");
+            break;
+        case VK_FORMAT_B8G8R8A8_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8A8_USCALED");
+            break;
+        case VK_FORMAT_B8G8R8A8_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8A8_SSCALED");
+            break;
+        case VK_FORMAT_B8G8R8A8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8A8_UINT");
+            break;
+        case VK_FORMAT_B8G8R8A8_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8A8_SINT");
+            break;
+        case VK_FORMAT_B8G8R8A8_SRGB:
+            buf_push_string(string_buffer, "VK_FORMAT_B8G8R8A8_SRGB");
+            break;
+        case VK_FORMAT_A8B8G8R8_UNORM_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A8B8G8R8_UNORM_PACK32");
+            break;
+        case VK_FORMAT_A8B8G8R8_SNORM_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A8B8G8R8_SNORM_PACK32");
+            break;
+        case VK_FORMAT_A8B8G8R8_USCALED_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A8B8G8R8_USCALED_PACK32");
+            break;
+        case VK_FORMAT_A8B8G8R8_SSCALED_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A8B8G8R8_SSCALED_PACK32");
+            break;
+        case VK_FORMAT_A8B8G8R8_UINT_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A8B8G8R8_UINT_PACK32");
+            break;
+        case VK_FORMAT_A8B8G8R8_SINT_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A8B8G8R8_SINT_PACK32");
+            break;
+        case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A8B8G8R8_SRGB_PACK32");
+            break;
+        case VK_FORMAT_A2R10G10B10_UNORM_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2R10G10B10_UNORM_PACK32");
+            break;
+        case VK_FORMAT_A2R10G10B10_SNORM_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2R10G10B10_SNORM_PACK32");
+            break;
+        case VK_FORMAT_A2R10G10B10_USCALED_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2R10G10B10_USCALED_PACK32");
+            break;
+        case VK_FORMAT_A2R10G10B10_SSCALED_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2R10G10B10_SSCALED_PACK32");
+            break;
+        case VK_FORMAT_A2R10G10B10_UINT_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2R10G10B10_UINT_PACK32");
+            break;
+        case VK_FORMAT_A2R10G10B10_SINT_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2R10G10B10_SINT_PACK32");
+            break;
+        case VK_FORMAT_A2B10G10R10_UNORM_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2B10G10R10_UNORM_PACK32");
+            break;
+        case VK_FORMAT_A2B10G10R10_SNORM_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2B10G10R10_SNORM_PACK32");
+            break;
+        case VK_FORMAT_A2B10G10R10_USCALED_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2B10G10R10_USCALED_PACK32");
+            break;
+        case VK_FORMAT_A2B10G10R10_SSCALED_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2B10G10R10_SSCALED_PACK32");
+            break;
+        case VK_FORMAT_A2B10G10R10_UINT_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2B10G10R10_UINT_PACK32");
+            break;
+        case VK_FORMAT_A2B10G10R10_SINT_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_A2B10G10R10_SINT_PACK32");
+            break;
+        case VK_FORMAT_R16_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R16_UNORM");
+            break;
+        case VK_FORMAT_R16_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R16_SNORM");
+            break;
+        case VK_FORMAT_R16_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R16_USCALED");
+            break;
+        case VK_FORMAT_R16_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R16_SSCALED");
+            break;
+        case VK_FORMAT_R16_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16_UINT");
+            break;
+        case VK_FORMAT_R16_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16_SINT");
+            break;
+        case VK_FORMAT_R16_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16_SFLOAT");
+            break;
+        case VK_FORMAT_R16G16_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16_UNORM");
+            break;
+        case VK_FORMAT_R16G16_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16_SNORM");
+            break;
+        case VK_FORMAT_R16G16_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16_USCALED");
+            break;
+        case VK_FORMAT_R16G16_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16_SSCALED");
+            break;
+        case VK_FORMAT_R16G16_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16_UINT");
+            break;
+        case VK_FORMAT_R16G16_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16_SINT");
+            break;
+        case VK_FORMAT_R16G16_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16_SFLOAT");
+            break;
+        case VK_FORMAT_R16G16B16_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16_UNORM");
+            break;
+        case VK_FORMAT_R16G16B16_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16_SNORM");
+            break;
+        case VK_FORMAT_R16G16B16_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16_USCALED");
+            break;
+        case VK_FORMAT_R16G16B16_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16_SSCALED");
+            break;
+        case VK_FORMAT_R16G16B16_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16_UINT");
+            break;
+        case VK_FORMAT_R16G16B16_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16_SINT");
+            break;
+        case VK_FORMAT_R16G16B16_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16_SFLOAT");
+            break;
+        case VK_FORMAT_R16G16B16A16_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16A16_UNORM");
+            break;
+        case VK_FORMAT_R16G16B16A16_SNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16A16_SNORM");
+            break;
+        case VK_FORMAT_R16G16B16A16_USCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16A16_USCALED");
+            break;
+        case VK_FORMAT_R16G16B16A16_SSCALED:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16A16_SSCALED");
+            break;
+        case VK_FORMAT_R16G16B16A16_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16A16_UINT");
+            break;
+        case VK_FORMAT_R16G16B16A16_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16A16_SINT");
+            break;
+        case VK_FORMAT_R16G16B16A16_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R16G16B16A16_SFLOAT");
+            break;
+        case VK_FORMAT_R32_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32_UINT");
+            break;
+        case VK_FORMAT_R32_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32_SINT");
+            break;
+        case VK_FORMAT_R32_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32_SFLOAT");
+            break;
+        case VK_FORMAT_R32G32_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32G32_UINT");
+            break;
+        case VK_FORMAT_R32G32_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32G32_SINT");
+            break;
+        case VK_FORMAT_R32G32_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32G32_SFLOAT");
+            break;
+        case VK_FORMAT_R32G32B32_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32G32B32_UINT");
+            break;
+        case VK_FORMAT_R32G32B32_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32G32B32_SINT");
+            break;
+        case VK_FORMAT_R32G32B32_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32G32B32_SFLOAT");
+            break;
+        case VK_FORMAT_R32G32B32A32_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32G32B32A32_UINT");
+            break;
+        case VK_FORMAT_R32G32B32A32_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32G32B32A32_SINT");
+            break;
+        case VK_FORMAT_R32G32B32A32_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R32G32B32A32_SFLOAT");
+            break;
+        case VK_FORMAT_R64_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64_UINT");
+            break;
+        case VK_FORMAT_R64_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64_SINT");
+            break;
+        case VK_FORMAT_R64_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64_SFLOAT");
+            break;
+        case VK_FORMAT_R64G64_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64G64_UINT");
+            break;
+        case VK_FORMAT_R64G64_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64G64_SINT");
+            break;
+        case VK_FORMAT_R64G64_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64G64_SFLOAT");
+            break;
+        case VK_FORMAT_R64G64B64_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64G64B64_UINT");
+            break;
+        case VK_FORMAT_R64G64B64_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64G64B64_SINT");
+            break;
+        case VK_FORMAT_R64G64B64_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64G64B64_SFLOAT");
+            break;
+        case VK_FORMAT_R64G64B64A64_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64G64B64A64_UINT");
+            break;
+        case VK_FORMAT_R64G64B64A64_SINT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64G64B64A64_SINT");
+            break;
+        case VK_FORMAT_R64G64B64A64_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_R64G64B64A64_SFLOAT");
+            break;
+        case VK_FORMAT_B10G11R11_UFLOAT_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_B10G11R11_UFLOAT_PACK32");
+            break;
+        case VK_FORMAT_E5B9G9R9_UFLOAT_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_E5B9G9R9_UFLOAT_PACK32");
+            break;
+        case VK_FORMAT_D16_UNORM:
+            buf_push_string(string_buffer, "VK_FORMAT_D16_UNORM");
+            break;
+        case VK_FORMAT_X8_D24_UNORM_PACK32:
+            buf_push_string(string_buffer, "VK_FORMAT_X8_D24_UNORM_PACK32");
+            break;
+        case VK_FORMAT_D32_SFLOAT:
+            buf_push_string(string_buffer, "VK_FORMAT_D32_SFLOAT");
+            break;
+        case VK_FORMAT_S8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_S8_UINT");
+            break;
+        case VK_FORMAT_D16_UNORM_S8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_D16_UNORM_S8_UINT");
+            break;
+        case VK_FORMAT_D24_UNORM_S8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_D24_UNORM_S8_UINT");
+            break;
+        case VK_FORMAT_D32_SFLOAT_S8_UINT:
+            buf_push_string(string_buffer, "VK_FORMAT_D32_SFLOAT_S8_UINT");
+            break;
+    }
+}
+
+void vk_color_space_to_string(const char* description, VkColorSpaceKHR color_space, BUFFER* string_buffer)
+{
+    buf_push_string(string_buffer, description);
+    switch(color_space)
+    {
+        case VK_COLOR_SPACE_SRGB_NONLINEAR_KHR: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_SRGB_NONLINEAR_KHR");
+            break;
+        case VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_BT709_LINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_BT709_LINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_BT709_NONLINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_BT709_NONLINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_BT2020_LINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_BT2020_LINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_HDR10_ST2084_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_HDR10_ST2084_EXT");
+            break;
+        case VK_COLOR_SPACE_DOLBYVISION_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_DOLBYVISION_EXT");
+            break;
+        case VK_COLOR_SPACE_HDR10_HLG_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_HDR10_HLG_EXT");
+            break;
+        case VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_PASS_THROUGH_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_PASS_THROUGH_EXT");
+            break;
+        case VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT");
+            break;
+        case VK_COLOR_SPACE_DISPLAY_NATIVE_AMD: 
+            buf_push_string(string_buffer, "VK_COLOR_SPACE_DISPLAY_NATIVE_AMD");
+            break;
+        default:
+            buf_push_string(string_buffer, "Unvalid color space");
+            break;
+    }
+}
+
+void vk_surface_format_to_string(const char* description, VkSurfaceFormatKHR surface_format, BUFFER* string_buffer)
+{
+    buf_push_string(string_buffer, description);
+    buf_push_char(string_buffer, '(');
+    vk_format_to_string(" ", surface_format.format, string_buffer);
+    buf_push_string(string_buffer, ", ");
+    vk_color_space_to_string(" ", surface_format.colorSpace, string_buffer);
+    buf_push_char(string_buffer, ')');
+    buf_push_newline(string_buffer);
+}
+
+void vk_surface_transform_flag_bits_to_string(const char* description, VkSurfaceTransformFlagBitsKHR transform, BUFFER* string_buffer)
+{
+    buf_push_string(string_buffer, description);
+    switch(transform)
+    {
+        case VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR:
+            buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR\n");
+            break;
+        case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
+            buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR\n");
+            break;
+        case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
+            buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR\n");
+            break;
+        case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
+            buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR\n");
+            break;
+        case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR:
+            buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR\n");
+            break;
+        case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR:
+            buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR\n");
+            break;
+        case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR:
+            buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR\n");
+            break;
+        case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR:
+            buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR\n");
+            break;
+        case VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR:
+            buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR\n");
+            break;
+        default:
+            buf_push_string(string_buffer, "Unkown surface transform flag bit\n");
+    }
+}
+
+void vk_surface_transform_flags_to_string(const char* description, VkSurfaceTransformFlagsKHR transform_flags, BUFFER* string_buffer)
+{
+    buf_push_string(string_buffer, description);
+    if(transform_flags & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+        buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ");
+    if(transform_flags & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+        buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ");
+    if(transform_flags & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
+        buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR ");
+    if(transform_flags & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+        buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR ");
+    if(transform_flags & VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR)
+        buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR ");
+    if(transform_flags & VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR)
+        buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR ");
+    if(transform_flags & VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR)
+        buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR ");
+    if(transform_flags & VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR)
+        buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR ");
+    if(transform_flags & VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR)
+        buf_push_string(string_buffer, "VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR ");
+    buf_push_newline(string_buffer);
+}
+
+void vk_surface_capabilities_to_string(const char* description, VkSurfaceCapabilitiesKHR* capabilities, BUFFER* string_buffer)
+{
+    buf_push_string(string_buffer, description);
+    char stage_buffer[512];
+    buf_printf(string_buffer, stage_buffer, "\t\tminImageCount: %lu\n", capabilities->minImageCount);
+    buf_printf(string_buffer, stage_buffer, "\t\tmaxImageCount: %lu\n", capabilities->maxImageCount);
+    buf_printf(string_buffer, stage_buffer, "\t\tcurrentExtent: (%lu, %lu)\n", capabilities->currentExtent.width, capabilities->currentExtent.height);
+    buf_printf(string_buffer, stage_buffer, "\t\tminImageExtent: (%lu, %lu)\n", capabilities->minImageExtent.width, capabilities->minImageExtent.height);
+    buf_printf(string_buffer, stage_buffer, "\t\tmaxImageExtent: (%lu, %lu)\n", capabilities->maxImageExtent.width, capabilities->maxImageExtent.height);
+    buf_printf(string_buffer, stage_buffer, "\t\tmaxImageArrayLayers: %lu\n", capabilities->maxImageArrayLayers);
+    vk_surface_transform_flags_to_string("\t\tsupportedTransforms: ", capabilities->supportedTransforms, string_buffer);
+    vk_surface_transform_flag_bits_to_string("\t\tcurrentTransform: ", capabilities->currentTransform, string_buffer);
+}
+
 void vk_bool32_to_string(const char* name, VkBool32 value, BUFFER* string_buffer)
 {
 	buf_push_string(string_buffer, name);

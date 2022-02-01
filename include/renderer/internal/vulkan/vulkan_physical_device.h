@@ -27,6 +27,9 @@ void vulkan_physical_device_destroy(vulkan_physical_device_t* device);
 void vulkan_physical_device_release_resources(vulkan_physical_device_t* device);
 
 // getters
+VkPresentModeKHR* vulkan_physical_device_get_present_modes(vulkan_physical_device_t* device, VkSurfaceKHR surface, u32* out_count);
+VkSurfaceFormatKHR* vulkan_physical_device_get_surface_formats(vulkan_physical_device_t* device, VkSurfaceKHR surface, u32* out_count);
+VkSurfaceCapabilitiesKHR vulkan_physical_device_get_surface_capabilities(vulkan_physical_device_t* device, VkSurfaceKHR surface);
 VkPhysicalDeviceLimits* vulkan_physical_device_get_limits(vulkan_physical_device_t* device);
 VkPhysicalDeviceProperties* vulkan_physical_device_get_properties(vulkan_physical_device_t* device);
 VkPhysicalDeviceFeatures* vulkan_physical_device_get_features(vulkan_physical_device_t* device);

@@ -18,7 +18,7 @@ void vulkan_pipeline_layout_create_no_alloc(renderer_t* renderer, vulkan_pipelin
 {
 	assert(create_info != NULL);
 	u32 set_layout_count = create_info->vk_set_layout == VK_NULL_HANDLE ? 0 : 1;
-	pipeline_layout->handle = vk_get_pipeline_layout(renderer->vk_device, set_layout_count, &create_info->vk_set_layout, create_info->push_constant_range_count, create_info->push_constant_ranges);
+	pipeline_layout->handle = vk_get_pipeline_layout(renderer->logical_device->handle, set_layout_count, &create_info->vk_set_layout, create_info->push_constant_range_count, create_info->push_constant_ranges);
 }
 
 vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info)
@@ -31,7 +31,7 @@ vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(renderer_t* renderer, vu
 
 void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* pipeline_layout, renderer_t* renderer)
 {
-	vkDestroyPipelineLayout(renderer->vk_device, pipeline_layout->handle, NULL);
+	vkDestroyPipelineLayout(renderer->logical_device->handle, pipeline_layout->handle, NULL);
 }
 
 void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* pipeline_layout)

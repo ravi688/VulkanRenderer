@@ -23,19 +23,19 @@ vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* 
 	assert(device_create_info != NULL);
 	vulkan_logical_device_t* device = vulkan_logical_device_new();
 	u32* family_indices = device_create_info->queue_family_indices;
-	u32 family_indice_count = device_create_info->queue_family_indice_count;
+	u32 family_index_count = device_create_info->queue_family_index_count;
 	
 	// union operation, complexity O(n) == linear
 
 	u32 max_index = (family_indices == NULL) ? 0 : family_indices[0];
-	for(u32 i = 1; i < family_indice_count; i++)		// find the max index
+	for(u32 i = 1; i < family_index_count; i++)		// find the max index
 		if(family_indices[i] > max_index) max_index = family_indices[i];
 
 	u32 look_up[max_index + 1];
 	memset(look_up, 0, sizeof(u32) * (max_index + 1));	// intiailize the look up table with zeros
-	u32 union_result[family_indice_count]; 				// allocate for maximum possible elements in the final result
+	u32 union_result[family_index_count]; 				// allocate for maximum possible elements in the final result
 	u32 queue_family_count = 0;
-	for(u32 i = 0; i < family_indice_count; i++) 		// union operation
+	for(u32 i = 0; i < family_index_count; i++) 		// union operation
 	{
 		if(look_up[family_indices[i]] == 1)
 			continue;

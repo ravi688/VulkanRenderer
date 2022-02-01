@@ -33,8 +33,8 @@ void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info
 		.samples = VK_SAMPLE_COUNT_1_BIT,
 		.flags = 0 //optional
 	};
-	vkCall(vkCreateImage(renderer->vk_device, &image_info, NULL, &out_image->handle));
-	out_image->memory = vk_get_device_memory_for_image(renderer->vk_device, renderer->vk_physical_device, out_image->handle, create_info->memory_properties_mask);
+	vkCall(vkCreateImage(renderer->logical_device->handle, &image_info, NULL, &out_image->handle));
+	out_image->memory = vk_get_device_memory_for_image(renderer->logical_device->handle, renderer->physical_device->handle, out_image->handle, create_info->memory_properties_mask);
 	out_image->type = create_info->type;
 	out_image->format = create_info->format;
 	out_image->aspect_mask = create_info->aspect_mask;
@@ -55,8 +55,8 @@ vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_in
 void vulkan_image_destroy(vulkan_image_t* image)
 {
 	assert(image != NULL);
-	vkDestroyImage(image->renderer->vk_device, image->handle, NULL);
-	vkFreeMemory(image->renderer->vk_device, image->memory, NULL);
+	vkDestroyImage(image->renderer->logical_device->handle, image->handle, NULL);
+	vkFreeMemory(image->renderer->logical_device->handle, image->memory, NULL);
 }
 
 void vulkan_image_release_resources(vulkan_image_t* image)
@@ -73,7 +73,7 @@ void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layo
 		return;
 	}
 	renderer_t* renderer = image->renderer;
-	VkCommandBuffer command_buffer = vk_get_begin_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool);
+	VkCommandBuffer command_buffer = vk_get_begin_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool);
 	VkImageMemoryBarrier barrier =
 	{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -115,7 +115,7 @@ void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layo
 		LOG_FETAL_ERR("Image layout transition error | transition from %u to %u isn't defined\n", image->layout, layout);
 	
 	vkCmdPipelineBarrier(command_buffer, src_pipeline_stage, dst_pipeline_stage, 0, 0, NULL, 0, NULL, 1, &barrier);
-	vk_end_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
+	vk_end_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
 	image->layout = layout;
 }
 
@@ -123,7 +123,7 @@ void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffe
 {
 	assert(image->layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	renderer_t* renderer = image->renderer;
-	VkCommandBuffer command_buffer = vk_get_begin_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool);
+	VkCommandBuffer command_buffer = vk_get_begin_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool);
 	VkBufferImageCopy region =
 	{
 		.bufferOffset = 0,
@@ -138,7 +138,7 @@ void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffe
 		.imageExtent = (VkExtent3D){ image->width, image->height, image->depth }
 	};
 	vkCmdCopyBufferToImage(command_buffer, buffer->handle, image->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-	vk_end_single_time_command_buffer(renderer->vk_device, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
+	vk_end_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
 }
 
 VkImageView vulkan_image_get_image_view(vulkan_image_t* image)
@@ -156,7 +156,7 @@ VkImageView vulkan_image_get_image_view(vulkan_image_t* image)
 		.subresourceRange.layerCount = 1
 	};
 	VkImageView image_view;
-	vkCall(vkCreateImageView(image->renderer->vk_device, &view_create_info, NULL, &image_view));
+	vkCall(vkCreateImageView(image->renderer->logical_device->handle, &view_create_info, NULL, &image_view));
 	return image_view;
 }
 
