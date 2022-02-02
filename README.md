@@ -1,5 +1,6 @@
 # VulkanRenderer
 3D renderer built on Vulkan API <br>
+Currently, it is tested only on **Windows**.
 
 ## Setting up dependencies/submodules
 1. change the working directory to `VulkanRenderer`
