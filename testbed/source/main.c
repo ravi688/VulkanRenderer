@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 	mesh3d_make_centroid_origin(box_mesh3d);
 	mesh3d_calculate_tangents(box_mesh3d);
 	mesh_t* box = mesh_create(renderer, box_mesh3d);
-	shader_t* box_shader = shader_load(renderer, "resource/shaders/bump_shader.sb");
+	shader_t* box_shader = shader_load(renderer, "resource/shaders/specular_bump_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); // position
 	per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); // normal
 	per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC2, 2); // texture coordinates
@@ -129,8 +129,8 @@ int main(int argc, char** argv)
 	material_t* box_material = material_create(renderer, &box_material_info);
 	texture_t* box_textures[] = 
 	{ 
-		texture_load(renderer, "resource/textures/white.bmp"),
-		texture_load(renderer, "resource/textures/normal_map.bmp")
+		texture_load(renderer, "resource/textures/white.bmp", TEXTURE_TYPE_ALBEDO),
+		texture_load(renderer, "resource/textures/normal_map.bmp", TEXTURE_TYPE_NORMAL)
 	};
 	material_set_texture2d(box_material, "albedo", box_textures[0]);
 	material_set_texture2d(box_material, "normal_map", box_textures[1]);
@@ -140,10 +140,10 @@ int main(int argc, char** argv)
 	mesh3d_t* cube_mesh3d = mesh3d_cube(1);
 	// mesh3d_calculate_tangents(cube_mesh3d);
 	mesh_t* cube = mesh_create(renderer, cube_mesh3d);
-	texture_t* linux_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
-	texture_t* windows_texture = texture_load(renderer, "resource/textures/windowslogo.bmp");
-	texture_t* apple_texture = texture_load(renderer, "resource/textures/applelogo.bmp");
-	texture_t* normal_map_texture = texture_load(renderer, "resource/textures/normal_map.bmp");
+	texture_t* linux_texture = texture_load(renderer, "resource/textures/linuxlogo.bmp", TEXTURE_TYPE_ALBEDO);
+	texture_t* windows_texture = texture_load(renderer, "resource/textures/windowslogo.bmp", TEXTURE_TYPE_ALBEDO);
+	texture_t* apple_texture = texture_load(renderer, "resource/textures/applelogo.bmp", TEXTURE_TYPE_ALBEDO);
+	texture_t* normal_map_texture = texture_load(renderer, "resource/textures/normal_map.bmp", TEXTURE_TYPE_ALBEDO);
 
 	shader_t* albedo_shader = shader_load(renderer, "resource/shaders/albedo_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); //position
@@ -202,6 +202,12 @@ int main(int argc, char** argv)
 		material_set_vec3(box_material, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 0)));
 		material_set_float(box_material, "light.intensity", 1.0f);
 
+		vec4_t(float) eye_dir = mat4_mul_vec4(float)(camera_transform, 1, 0, 0, 0);
+		material_set_vec3(box_material, "misc.eye_dir", vec3_normalize(float)(vec3(float)(eye_dir.x, eye_dir.y, eye_dir.z)));
+
+		material_set_vec3(box_material, "properties.specular_color", vec3(float)(1, 1, 1));
+		material_set_float(box_material, "properties.specularity", 2);
+
 		renderer_begin_frame(renderer, 0, 0, 0, 0);
 
 		material_bind(box_material, renderer);
@@ -220,24 +226,24 @@ int main(int argc, char** argv)
 		// material_set_push_mat4(cube_material, "push.model_matrix", model_matrix);
 		// mesh_draw_indexed(cube, renderer);
 
-		material_bind(quad_material, renderer);
-		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
-		mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
-		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-		material_set_push_mat4(quad_material, "push.mvp_matrix", mvp);
-		mesh_draw_indexed(quad, renderer);
+		// material_bind(quad_material, renderer);
+		// mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
+		// mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
+		// mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
+		// material_set_push_mat4(quad_material, "push.mvp_matrix", mvp);
+		// mesh_draw_indexed(quad, renderer);
 
-		material_bind(text_material, renderer);
-		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
-		mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_scale(float)(0, 50, 50));
-		material_set_push_mat4(text_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
-		text_mesh_draw(text_mesh);
+		// material_bind(text_material, renderer);
+		// mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
+		// mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_scale(float)(0, 50, 50));
+		// material_set_push_mat4(text_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
+		// text_mesh_draw(text_mesh);
 
 
-		material_bind(game_ui_material, renderer);
-		mat4_move(float)(&_model_matrix, mat4_mul(float)(2, mat4_scale(float)(50, 50, 50), mat4_identity(float)()));
-		material_set_push_mat4(game_ui_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
-		text_mesh_draw(game_ui);
+		// material_bind(game_ui_material, renderer);
+		// mat4_move(float)(&_model_matrix, mat4_mul(float)(2, mat4_scale(float)(50, 50, 50), mat4_identity(float)()));
+		// material_set_push_mat4(game_ui_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
+		// text_mesh_draw(game_ui);
 		// mesh_draw_indexed(glyph_A, renderer);
 		// mesh_draw_indexed(glyph_B, renderer);
 

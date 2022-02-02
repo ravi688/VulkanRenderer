@@ -15,7 +15,7 @@ texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_in
 	return vulkan_texture_create(renderer, &vulkan_create_info);
 }
 
-texture_t* texture_load(renderer_t* renderer, const char* file_path)
+texture_t* texture_load(renderer_t* renderer, const char* file_path, texture_type_t type)
 {
 	bmp_t image = bmp_load(file_path);
 	vulkan_texture_create_info_t create_info =
@@ -23,7 +23,8 @@ texture_t* texture_load(renderer_t* renderer, const char* file_path)
 		.data = image.data,
 		.width = image.width,
 		.height = image.height,
-		.channel_count = image.channel_count
+		.channel_count = image.channel_count,
+		.type = (vulkan_texture_type_t)type
 	};
 	vulkan_texture_t* texture = vulkan_texture_create(renderer, &create_info);
 	bmp_destroy(image);
