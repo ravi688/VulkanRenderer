@@ -86,8 +86,9 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 	};
 	swapchain->handle = vk_get_swapchain(renderer->logical_device->handle, &swapchain_create_info);
 	swapchain->image_count = create_info->image_count;
+	swapchain->image_extent = create_info->image_extent;
 	log_msg("Swapchain image count: %u\n", swapchain->image_count);
-	log_msg("Swapchain image size: (%u, %u)\n", create_info->image_extent.width, create_info->image_extent.height);
+	log_msg("Swapchain image size: (%u, %u)\n", swapchain->image_extent.width, swapchain->image_extent.height);
 
 	// if the swapchain has to be recreated then no allocation should happen, use *_out versions instead
 	if(swapchain->images == NULL)

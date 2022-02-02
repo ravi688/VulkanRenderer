@@ -29,6 +29,7 @@ typedef struct vulkan_swapchain_t
 	VkImageView* image_views;
 	VkFramebuffer* framebuffers;
 	VkImageView* framebuffer_image_views;
+	VkExtent2D image_extent;
 	u32 image_count;
 	u32 current_image_index;
 	VkSemaphore image_available_semaphore;

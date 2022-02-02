@@ -256,7 +256,7 @@ void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 		.renderArea.offset = (VkOffset2D) { 0, 0 },
-		.renderArea.extent = (VkExtent2D) { renderer->window->width, renderer->window->height },
+		.renderArea.extent = renderer->swapchain->image_extent,
 		.framebuffer = renderer->swapchain->framebuffers[renderer->swapchain->current_image_index],
 		.renderPass = renderer->vk_render_pass,
 		.clearValueCount = 2,
