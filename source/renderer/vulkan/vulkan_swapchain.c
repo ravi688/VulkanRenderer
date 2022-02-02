@@ -100,14 +100,10 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 		swapchain->image_views = vk_get_image_views(renderer->logical_device->handle, create_info->image_format, swapchain->image_count, swapchain->images).value2;
 	else vk_get_image_views_out(renderer->logical_device->handle, create_info->image_format, swapchain->image_count, swapchain->images, swapchain->image_views);
 
-	VkFormat* formats = stack_newv(VkFormat, 3);
-	formats[0] = VK_FORMAT_D32_SFLOAT;
-	formats[1] = VK_FORMAT_D32_SFLOAT_S8_UINT;
-	formats[2] = VK_FORMAT_D24_UNORM_S8_UINT;
 	vulkan_image_create_info_t depth_create_info = 
 	{
 		.type = VK_IMAGE_TYPE_2D,
-		.format = vk_find_supported_format(renderer->physical_device->handle, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT),
+		.format = create_info->depth_format,
 		.width = create_info->image_extent.width,
 		.height = create_info->image_extent.height,
 		.depth = 1,
@@ -146,18 +142,17 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 	// if the swapchain has to be recreated then no allocation should happen, use *_out versions instead
 	if(swapchain->framebuffers == NULL)
 		swapchain->framebuffers = vk_get_framebuffers(	renderer->logical_device->handle, renderer->vk_render_pass, 
-														(VkExtent2D) { renderer->window->width, renderer->window->height },
+														swapchain->image_extent,
 														1,
 														&attachments_lists[0],
 														&attachments_count[0], swapchain->image_count).value2;
 	else
 		vk_get_framebuffers_out(	renderer->logical_device->handle, renderer->vk_render_pass, 
-									(VkExtent2D) { renderer->window->width, renderer->window->height }, 
+									swapchain->image_extent, 
 									1, 
 									&attachments_lists[0], &attachments_count[0], 
 									swapchain->image_count, swapchain->framebuffers);
 	swapchain->current_image_index = 0;
-	stack_free(formats);
 }
 
 

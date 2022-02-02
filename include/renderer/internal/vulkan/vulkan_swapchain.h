@@ -11,6 +11,7 @@ typedef struct vulkan_image_t vulkan_image_t;
 typedef struct vulkan_swapchain_create_info_t
 {
 	VkFormat image_format;
+	VkFormat depth_format;
 	VkColorSpaceKHR image_color_space;
 	u32 image_count;
 	VkExtent2D image_extent;

@@ -208,14 +208,23 @@ DEBUG_BLOCK
 	renderer->logical_device = vulkan_logical_device_create(physical_device, &logical_device_create_info);
 	heap_free(minimum_required_features);
 
+	// setup depth buffer format
+	VkFormat* formats = stack_newv(VkFormat, 3);
+	formats[0] = VK_FORMAT_D32_SFLOAT;
+	formats[1] = VK_FORMAT_D32_SFLOAT_S8_UINT;
+	formats[2] = VK_FORMAT_D24_UNORM_S8_UINT;
+	VkFormat depth_format = vk_find_supported_format(renderer->physical_device->handle, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	stack_free(formats);
+
 	//Create Renderpass
-	renderer->vk_render_pass = vk_get_render_pass(renderer->logical_device->handle, VK_FORMAT_B8G8R8A8_SRGB);
+	renderer->vk_render_pass = vk_get_render_pass(renderer->logical_device->handle, surface_format.format, depth_format);
 
 	//Create Swapchain
 	vulkan_swapchain_create_info_t swapchain_info =
 	{
 		.image_count = image_count,
 		.image_format = surface_format.format,
+		.depth_format = depth_format,
 		.image_color_space = surface_format.colorSpace,
 		.image_extent = image_extent,
 		.image_sharing_mode = (queue_family_indices[0] == queue_family_indices[1]) ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT,
