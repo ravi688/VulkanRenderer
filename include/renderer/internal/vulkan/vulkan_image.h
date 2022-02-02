@@ -44,7 +44,6 @@ void vulkan_image_destroy(vulkan_image_t* image);
 void vulkan_image_release_resources(vulkan_image_t* image);
 
 VkImageView vulkan_image_get_image_view(vulkan_image_t* image);
-VkAttachmentDescription vulkan_image_get_attachment_description(vulkan_image_t* image);
 
 // logic functions
 void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layout);

@@ -173,19 +173,3 @@ VkImageView vulkan_image_get_image_view(vulkan_image_t* image)
 	vkCall(vkCreateImageView(image->renderer->logical_device->handle, &view_create_info, NULL, &image_view));
 	return image_view;
 }
-
-VkAttachmentDescription vulkan_image_get_attachment_description(vulkan_image_t* image)
-{
-	VkAttachmentDescription attachment =
-	{
-    	.format = image->format,
-    	.samples = VK_SAMPLE_COUNT_1_BIT,
-    	.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-	};
-	return attachment;
-}
