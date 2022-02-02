@@ -155,6 +155,20 @@ VkImageView vulkan_image_get_image_view(vulkan_image_t* image)
 		.subresourceRange.baseArrayLayer = 0,
 		.subresourceRange.layerCount = 1
 	};
+
+	// swap the blue and red components with each other
+	switch(image->format)
+	{
+		case VK_FORMAT_R8G8B8A8_UNORM:
+    	case VK_FORMAT_R8G8B8A8_SNORM:
+    	case VK_FORMAT_R8G8B8A8_USCALED:
+    	case VK_FORMAT_R8G8B8A8_SSCALED:
+    	case VK_FORMAT_R8G8B8A8_UINT:
+    	case VK_FORMAT_R8G8B8A8_SINT:
+    	case VK_FORMAT_R8G8B8A8_SRGB:
+    		view_create_info.components = (VkComponentMapping) { VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_R };
+    	break;
+	}
 	VkImageView image_view;
 	vkCall(vkCreateImageView(image->renderer->logical_device->handle, &view_create_info, NULL, &image_view));
 	return image_view;

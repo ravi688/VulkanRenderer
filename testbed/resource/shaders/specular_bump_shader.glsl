@@ -16,6 +16,17 @@ fragment [0, 2] uniform Light
 	vec3 color;
 } light;
 
+fragment [0, 3] uniform Misc
+{
+	vec3 eye_dir;
+} misc;
+
+fragment [0, 4] uniform Properties
+{
+	float specularity;
+	vec3 specular_color;
+} properties;
+
 #section SHADER
 
 #stage vertex
@@ -62,6 +73,17 @@ layout(set = 0, binding = 2) uniform Light
 	vec3 color;
 } light;
 
+layout(set = 0, binding = 3) uniform Misc
+{
+	vec3 eye_dir;
+} misc;
+
+layout(set = 0, binding = 4) uniform Properties
+{
+	float specularity;
+	vec3 specular_color;
+} properties;
+
 layout(location = 0) in vec2 _texcoord;
 layout(location = 1) in vec3 _tangent;
 layout(location = 2) in vec3 _normal;
@@ -73,7 +95,15 @@ void main()
 {
 	vec3 n = normalize(texture(normal_map, _texcoord).rgb * 2 - 1);
 	vec3 normal = _bitangent * n.g + _tangent * n.r + _normal * n.b;
-	float t = max(0, dot(normal, -light.dir));
-	t = t * 1.05 + (1 - t) * 0.05;
-	color = vec4(texture(albedo, _texcoord).rgb * light.color * light.intensity * t, 1);
+	vec3 light_dir = -light.dir;
+	float incoming_light = max(0, dot(normal, light_dir));
+	incoming_light = incoming_light * 1.05 + (1 - incoming_light) * 0.1;
+
+	vec3 reflection_vector = -light_dir + 2 * (dot(normal, light_dir) * normal);
+	float specular_dot = pow(max(0, dot(reflection_vector, normal)), properties.specularity);
+	specular_dot = specular_dot + (1 - specular_dot) * 0.1;
+
+	vec3 diffuse = texture(albedo, _texcoord).rgb;
+	
+	color = vec4(diffuse * incoming_light * light.color * light.intensity * properties.specular_color * specular_dot, 1);
 }

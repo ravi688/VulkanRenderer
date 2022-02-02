@@ -7,12 +7,19 @@
 typedef struct renderer_t renderer_t;
 typedef struct vulkan_image_t vulkan_image_t;
 
+typedef enum vulkan_texture_type_t
+{
+	VULKAN_TEXTURE_TYPE_ALBEDO = 0,
+	VULKAN_TEXTURE_TYPE_NORMAL
+} vulkan_texture_type_t;
+
 typedef struct vulkan_texture_create_info_t
 {
 	void* data;
 	u32 width;
 	u32 height;
 	u8 channel_count;
+	vulkan_texture_type_t type;
 } vulkan_texture_create_info_t;
 
 typedef struct vulkan_texture_t

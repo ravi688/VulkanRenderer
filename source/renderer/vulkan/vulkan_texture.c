@@ -6,6 +6,8 @@
 #include <memory_allocator/memory_allocator.h>
 #include <renderer/assert.h>
 
+static VkFormat get_format_from_type(vulkan_texture_type_t type);
+
 vulkan_texture_t* vulkan_texture_new()
 {
 	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
@@ -45,7 +47,7 @@ vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_cre
 		.width = texture_width,
 		.height = texture_height,
 		.depth = 1,
-		.format = VK_FORMAT_B8G8R8A8_SRGB,
+		.format = get_format_from_type(create_info->type),
 		.tiling = VK_IMAGE_TILING_OPTIMAL,
 		.layout = VK_IMAGE_LAYOUT_UNDEFINED,
 		.usage_mask = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -110,4 +112,19 @@ void vulkan_texture_release_resources(vulkan_texture_t* texture)
 	ASSERT_NOT_NULL(texture);
 	vulkan_image_release_resources(texture->image);
 	heap_free(texture);
+}
+
+
+static VkFormat get_format_from_type(vulkan_texture_type_t type)
+{
+	switch(type)
+	{
+		case VULKAN_TEXTURE_TYPE_ALBEDO:
+			return VK_FORMAT_R8G8B8A8_SRGB;
+		case VULKAN_TEXTURE_TYPE_NORMAL:
+			return VK_FORMAT_R8G8B8A8_UNORM;
+		default:
+			log_wrn("Vulkan texture type is invalid, using VK_FORMAT_R8G8B8A8_SRGB format\n");
+			return VK_FORMAT_R8G8B8A8_SRGB;
+	}
 }

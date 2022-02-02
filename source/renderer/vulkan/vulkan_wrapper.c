@@ -306,13 +306,41 @@ function_signature(VkPipeline, vk_get_graphics_pipeline, VkDevice device, VkPipe
 	CALLTRACE_RETURN(graphicsPipeline);
 }
 
-function_signature(VkRenderPass, vk_get_render_pass, VkDevice device, VkFormat format)
+function_signature(VkRenderPass, vk_get_render_pass, VkDevice device, VkFormat format, VkFormat depth_format)
 {
 	CALLTRACE_BEGIN();
-	VkAttachmentDescription color_attachment = vk_get_attachment_description(VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, format);
-	VkAttachmentDescription depth_attachment = vk_get_attachment_description(VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_FORMAT_D32_SFLOAT);
-	VkAttachmentReference color_attachment_reference = vk_get_attachment_reference(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-	VkAttachmentReference depth_attachment_reference = vk_get_attachment_reference(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	VkAttachmentDescription color_attachment = 
+	{
+		.format = format,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+	};
+	VkAttachmentDescription depth_attachment = 
+	{
+		.format = depth_format,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
+	VkAttachmentReference color_attachment_reference =
+	{
+		.attachment = 0,
+		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	};
+	VkAttachmentReference depth_attachment_reference = 
+	{
+		.attachment = 1,
+		.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
 	VkSubpassDescription subpass  = vk_get_subpass_description(&color_attachment_reference, 1, &depth_attachment_reference);
 	VkAttachmentDescription attachments[2] = { color_attachment, depth_attachment };
 	VkSubpassDependency dependency = vk_get_subpass_dependency();
@@ -353,30 +381,6 @@ function_signature(VkSubpassDescription, vk_get_subpass_description, VkAttachmen
 	subpass.pColorAttachments = color_attachments;
 	subpass.pDepthStencilAttachment = depth_stencil_attachment;
 	CALLTRACE_RETURN(subpass);
-}
-
-function_signature(VkAttachmentReference, vk_get_attachment_reference, uint32_t index, VkImageLayout layout)
-{
-	CALLTRACE_BEGIN();
-	VkAttachmentReference colorAttachmentRef = {};
-	colorAttachmentRef.attachment = index;
-	colorAttachmentRef.layout = layout;
-	CALLTRACE_RETURN(colorAttachmentRef);
-}
-
-function_signature(VkAttachmentDescription, vk_get_attachment_description, VkAttachmentStoreOp store_op, VkImageLayout final_layout, VkFormat image_format)
-{
-	CALLTRACE_BEGIN();
-	VkAttachmentDescription colorAttachment = {};
-    colorAttachment.format = image_format;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = store_op;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = final_layout;
-	CALLTRACE_RETURN(colorAttachment);
 }
 
 function_signature(VkPipelineLayout, vk_get_pipeline_layout, VkDevice device, uint32_t set_layout_count, VkDescriptorSetLayout* set_layouts, uint32_t push_constant_range_count, VkPushConstantRange* push_constant_ranges)

@@ -22,15 +22,22 @@ typedef vulkan_texture_t texture_t;
 
 #include <renderer/defines.h>
 
+typedef enum texture_type_t
+{
+	TEXTURE_TYPE_ALBEDO = 0,
+	TEXTURE_TYPE_NORMAL
+} texture_type_t;
+
 typedef struct texture_create_info_t
 {
 	void* data;
 	u32 width;
 	u32 height;
 	u8 channel_count;
+	texture_type_t type;
 } texture_create_info_t;
 
 texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info);
-texture_t* texture_load(renderer_t* renderer, const char* file_path);
+texture_t* texture_load(renderer_t* renderer, const char* file_path, texture_type_t type);
 void texture_destroy(texture_t* texture, renderer_t* renderer);
 void texture_release_resources(texture_t* texture);
