@@ -147,14 +147,17 @@ Supported file formats are: `Windows BMP`
 
 ```GLSL
 // load the texture data and create required vulkan objects
-texture_t* texture = texture_load(renderer, "resource/textures/linuxlogo.bmp");
+texture_t* texture = texture_load(renderer, "resource/textures/linuxlogo.bmp", TEXTURE_TYPE_ALBEDO);
+texture_t* normal_map = texture_load(renderer, "resource/textures/normal_map.bmp", TEXTURE_TYPE_NORMAL);
 
 // use the texture somewhere
 
 // destroy vulkan objects
 texture_destroy(texture, renderer);
+texture_destroy(normal_map, renderer);
 // release heap allocated memory
 texture_release_resources(texture);
+texture_release_resources(normal_map);
 ```
 
 #### Materials
