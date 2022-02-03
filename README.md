@@ -20,27 +20,27 @@
 4. Disk space - No data as of now
 
 ### Building steps
-1. run `git clone https://github.com/ravi688/VulkanRenderer.git`
-1. change the working directory to `VulkanRenderer`
-2. run `make -s setup` this will clone all the dependency submodules
-3. change the working directory to `VulkanRenderer/testbed`
-4. run `make -s run`
+1. Run `git clone https://github.com/ravi688/VulkanRenderer.git`
+1. Change the working directory to `VulkanRenderer`
+2. Run `make -s setup` this will clone all the dependency submodules
+3. Change the working directory to `VulkanRenderer/testbed`
+4. Run `make -s run`
 
 ### Building shaders manually (Optional)
-1. change the working directory to `VulkanRenderer/shader_compiler`
-2. run `make -s debug`
-4. change the working directory to `VulkanRenderer/testbed`
-5. run `make -s shader`
+1. Change the working directory to `VulkanRenderer/shader_compiler`
+2. Run `make -s debug`
+4. Change the working directory to `VulkanRenderer/testbed`
+5. Run `make -s shader`
 
 ### Building executable manually (Optional)
-1. change the working directory to `VulkanRenderer/testbed`
-2. run `make -s debug`
-3. run `main.exe`
+1. Change the working directory to `VulkanRenderer/testbed`
+2. Run `make -s debug`
+3. Run `main.exe`
 
 ### Cleaning everything (Optional)
-1. change the working directory to `VulkanRenderer/testbed`
-2. run `make -s -i clean`
-3. run `make shader-clean`
+1. Change the working directory to `VulkanRenderer/testbed`
+2. Run `make -s -i clean`
+3. Run `make shader-clean`
 
 
 ### Where to go for examples?
