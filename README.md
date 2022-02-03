@@ -180,7 +180,7 @@ fragment [0, 5] uniform samplerCube skybox;
 
 ```
 
-#### 3D Mesh loading
+### 3D Mesh loading
 Supported file formats are `ASCII STL` `Binary STL` `ASCII OBJ` <br>
 STL files could be ASCII or Binary, it is automatically detected when we load the file.
 As of now only polygonal 3d models are supported, no curves and surfaces as it could be in the OBJ files.
@@ -209,6 +209,7 @@ mesh_destroy(monkey_mesh, renderer); // destroy vulkan objects
 mesh_release_resources(moneky_mesh); // release heap memory
 ```
 
+### Textures
 #### 2D Textures
 Supported file formats are: `Windows BMP`
 
@@ -254,7 +255,7 @@ texture_release_resources(skybox_texture);
 ```
 
 
-#### Materials
+### Materials
 
 All the descriptors defined in the shader definition file could be set by material_set_* functions.
 All the push constants defined in the shader definition file could be set by material_set_push_* functions.
@@ -318,7 +319,7 @@ material_destroy(box_material, renderer);
 material_release_resources(box_material);
 ```
 
-#### Text Rendering
+### Text Rendering
 
 Currently on text meshes are support, meaning all the glyphs are being tessellated and rendered as complex polygons.
 
