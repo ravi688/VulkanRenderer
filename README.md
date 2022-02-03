@@ -325,7 +325,7 @@ Currently on text meshes are support, meaning all the glyphs are being tessellat
 
 Texts are being accomplished by `font_t` `text_mesh_t` `glyph_mesh_pool_t` and `text_mesh_string_handle_t` objects. <br>
 
-**Font**: 
+#### Font
 ```C
 
 // load the font data and allocate the required memory
@@ -339,7 +339,7 @@ font_destroy(font);
 font_release_resources(font);
 ```
 
-**Glyph Mesh Pool**:
+#### Glyph Mesh Pool
 ```C
 
 // load the font data and allocate the required memory
@@ -369,7 +369,7 @@ glyph_mesh_pool_release_resources(pool);
 
 ```
 
-**Text Mesh and String Handles**:
+#### Text Mesh and String Handles
 ```C
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
