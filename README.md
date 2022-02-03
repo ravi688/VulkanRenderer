@@ -7,7 +7,8 @@ Currently, it is tested only on **Windows**.
 2. run `make -s setup`
 
 ## Building in just one command
-1. run `make -s build`
+1. change the working directory to `VulkanRenderer/testbed`
+2. run `make -s build`
 
 ## Building shaders manually (Optional)
 1. change the working directory to `VulkanRenderer/shader_compiler`
@@ -21,8 +22,9 @@ Currently, it is tested only on **Windows**.
 3. run `main.exe`
 
 ## Cleaning everything
-1. run 'make -s -i clean'
-2. run 'make shader-clean'
+1. change the working directory to `VulkanRenderer/testbed`
+2. run 'make -s -i clean'
+3. run 'make shader-clean'
 
 
 ## Where to go for examples?
