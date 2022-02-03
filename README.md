@@ -19,14 +19,14 @@ Currently, it is tested only on **Windows**.
 3. run `main.exe`
 
 ## Where to go for examples?
-You can check `VulkanRenderer/testbed' directory
+You can check `VulkanRenderer/testbed' directory.
 
 ## Features
 
 ### Shader Binary
 `Shader defintion` (`example_shader.glsl`) source files are first compiled into a `Shader Binary` files (`example_shader.sb`) by `shader_compiler.exe` executable.
 After the compilation, the shader binary files consumed as follows:
-```GLSL 
+```C 
 
 shader_t* example_shader = shader_load(renderer, "resource/shaders/example_shader.sb");
 
@@ -110,6 +110,7 @@ fragment vertex [0, 2] uniform Sphere
 
 fragment [0, 3] uniform sampler2D albedo;
 fragment [0, 4] uniform sampler2D normal_map;
+fragment [0, 5] uniform samplerCube skybox;
 
 ```
 
@@ -117,7 +118,7 @@ fragment [0, 4] uniform sampler2D normal_map;
 Supported file formats are `ASCII STL` `Binary STL` `ASCII OBJ` <br>
 STL files could be ASCII or Binary, it is automatically detected when we load the file.
 As of now only polygonal 3d models are supported, no curves and surfaces as it could be in the OBJ files.
-```GLSL
+```C
 // load stl file, it automatically detects ASCII and Binary stl files.
 mesh3d_t* sphere = mesh3d_load("resources/Sphere.stl"); 
 
@@ -145,27 +146,54 @@ mesh_release_resources(moneky_mesh); // release heap memory
 #### 2D Textures
 Supported file formats are: `Windows BMP`
 
-```GLSL
+```C
 // load the texture data and create required vulkan objects
-texture_t* texture = texture_load(renderer, "resource/textures/linuxlogo.bmp", TEXTURE_TYPE_ALBEDO);
-texture_t* normal_map = texture_load(renderer, "resource/textures/normal_map.bmp", TEXTURE_TYPE_NORMAL);
+texture_t* texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "resource/textures/linuxlogo.bmp");
+texture_t* normal_map = texture_load(renderer, TEXTURE_TYPE_NORMAL, "resource/textures/normal_map.bmp");
 
-// use the texture somewhere
+// use the texture somewhere, 
+// i.e. material_set_texture(some_material, "albedo", texture);
+// samplerCube should be used in the shader
 
 // destroy vulkan objects
-texture_destroy(texture, renderer);
-texture_destroy(normal_map, renderer);
+texture_destroy(texture);
+texture_destroy(normal_map);
 // release heap allocated memory
 texture_release_resources(texture);
 texture_release_resources(normal_map);
 ```
+
+### CubeMap Textures
+Supported file formats are: 'Windows BMP'
+
+```C
+// load the 6 textures for each face and create required vulkan objects
+texture_t* skybox_texture = texture_load(renderer, TEXTURE_TYPE_CUBE,
+                                        "resource/skybox_textures/skybox/right.bmp",
+                                        "resource/skybox_textures/skybox/left.bmp",
+                                        "resource/skybox_textures/skybox/bottom.bmp",
+                                        "resource/skybox_textures/skybox/top.bmp",
+                                        "resource/skybox_textures/skybox/front.bmp", 
+                                        "resource/skybox_textures/skybox/back.bmp");
+
+// use the cubemap texture somewhere, 
+// i.e. material_set_texture(some_material, "skybox", skybox_texture);
+// samplerCube should be used in the shader
+
+// destroy vulkan objects
+texture_destroy(skybox_texture);
+
+// release heap allocated memory
+texture_release_resources(skybox_texture);
+```
+
 
 #### Materials
 
 All the descriptors defined in the shader definition file could be set by material_set_* functions.
 All the push constants defined in the shader definition file could be set by material_set_push_* functions.
 
-```GLSL
+```C
 // prepare the mesh data structure
 mesh3d_t* box_mesh3d = mesh3d_load("resource/Box.obj");
 mesh3d_make_centroid_origin(box_mesh3d); // set the model's origin equal to its centroid, optional
@@ -203,10 +231,10 @@ texture_t* box_textures[] =
 };
 
 // set the albedo texture to its corresponding slot in the shader
-material_set_texture2d(box_material, "albedo", box_textures[0]);
+material_set_texture(box_material, "albedo", box_textures[0]);
 
 // set the normal map texture to its corresponding slot in the shader
-material_set_texture2d(box_material, "normal_map", box_textures[1]);
+material_set_texture(box_material, "normal_map", box_textures[1]);
 
 // set the transformation matrices, note: uniform buffers could also be used instead of push constants
 material_set_push_mat4(box_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
@@ -231,7 +259,7 @@ Currently on text meshes are support, meaning all the glyphs are being tessellat
 Texts are being accomplished by `font_t` `text_mesh_t` `glyph_mesh_pool_t` and `text_mesh_string_handle_t` objects. <br>
 
 **Font**: 
-```GLSL
+```C
 
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
@@ -245,7 +273,7 @@ font_release_resources(font);
 ```
 
 **Glyph Mesh Pool**:
-```GLSL
+```C
 
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
@@ -275,7 +303,7 @@ glyph_mesh_pool_release_resources(pool);
 ```
 
 **Text Mesh and String Handles**:
-```GLSL
+```C
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
 
