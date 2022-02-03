@@ -2,32 +2,32 @@
 3D renderer built on Vulkan API <br>
 Currently, it is tested only on **Windows**.
 
-## Setting up dependencies/submodules
+### Setting up dependencies/submodules
 1. change the working directory to `VulkanRenderer`
 2. run `make -s setup`
 
-## Building in just one command
+### Building in just one command
 1. change the working directory to `VulkanRenderer/testbed`
 2. run `make -s build`
 
-## Building shaders manually (Optional)
+### Building shaders manually (Optional)
 1. change the working directory to `VulkanRenderer/shader_compiler`
 2. run `make -s debug`
 4. change the working directory to `VulkanRenderer/testbed`
 5. run `make -s shader`
 
-## Building executable manually (Optional)
+### Building executable manually (Optional)
 1. change the working directory to `VulkanRenderer/testbed`
 2. run `make -s debug`
 3. run `main.exe`
 
-## Cleaning everything
+### Cleaning everything
 1. change the working directory to `VulkanRenderer/testbed`
 2. run 'make -s -i clean'
 3. run 'make shader-clean'
 
 
-## Where to go for examples?
+### Where to go for examples?
 You can check `VulkanRenderer/testbed' directory.
 
 ## Features
