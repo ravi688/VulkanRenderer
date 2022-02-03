@@ -9,11 +9,13 @@ typedef struct vulkan_buffer_t vulkan_buffer_t;
 
 typedef struct vulkan_image_create_info_t
 {
-	VkImageType type;							// VK_IMAGE_TYPE_2D or VK_IMAGE_TYPE_3D
+	VkImageCreateFlags flags;						// VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT for cube map images
+	VkImageType type;								// VK_IMAGE_TYPE_1D, VK_IMAGE_TYPE_2D or VK_IMAGE_TYPE_3D
 	VkFormat format;
 	u32 width;
 	u32 height;
 	u32 depth;
+	u32 layer_count;
 	VkImageTiling tiling; 							// VK_IMAGE_TILING_LINEAR or VK_IMAGE_TILING_OPTIMAL
 	VkImageLayout layout;	 						// VK_IMAGE_LAYOUT_UNDEFINED or VK_IMAGE_LAYOUT_PREINITIALIZED
 	VkImageUsageFlags usage_mask; 					// VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
@@ -33,6 +35,7 @@ typedef struct vulkan_image_t
 	u32 width;
 	u32 height;
 	u32 depth;
+	u32 layer_count;
 } vulkan_image_t;
 
 
@@ -42,9 +45,6 @@ vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_in
 void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image);
 void vulkan_image_destroy(vulkan_image_t* image);
 void vulkan_image_release_resources(vulkan_image_t* image);
-
-VkImageView vulkan_image_get_image_view(vulkan_image_t* image);
-VkAttachmentDescription vulkan_image_get_attachment_description(vulkan_image_t* image);
 
 // logic functions
 void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layout);

@@ -21,10 +21,11 @@ void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info
 	VkImageCreateInfo image_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+		.flags = create_info->flags,
 		.imageType = create_info->type,
 		.extent = { .width = create_info->width, .height = create_info->height, .depth = create_info->depth },
 		.mipLevels = 1,
-		.arrayLayers = 1,
+		.arrayLayers = create_info->layer_count,
 		.format = create_info->format,
 		.tiling = create_info->tiling,
 		.initialLayout = create_info->layout,
@@ -42,6 +43,7 @@ void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info
 	out_image->width = create_info->width;
 	out_image->height = create_info->height;
 	out_image->depth = create_info->depth;
+	out_image->layer_count = create_info->layer_count;
 }
 
 
@@ -86,7 +88,7 @@ void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layo
 		.subresourceRange.baseMipLevel = 0,
 		.subresourceRange.levelCount = 1,
 		.subresourceRange.baseArrayLayer = 0,
-		.subresourceRange.layerCount = 1,
+		.subresourceRange.layerCount = image->layer_count,
 	};
 	VkPipelineStageFlags src_pipeline_stage;
 	VkPipelineStageFlags dst_pipeline_stage;
@@ -132,60 +134,11 @@ void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffe
 		.imageSubresource.aspectMask = image->aspect_mask,
 		.imageSubresource.mipLevel = 0,
 		.imageSubresource.baseArrayLayer = 0,
-		.imageSubresource.layerCount = 1,
+		.imageSubresource.layerCount = image->layer_count,
 
 		.imageOffset = (VkOffset3D){ 0, 0, 0 },
 		.imageExtent = (VkExtent3D){ image->width, image->height, image->depth }
 	};
 	vkCmdCopyBufferToImage(command_buffer, buffer->handle, image->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 	vk_end_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
-}
-
-VkImageView vulkan_image_get_image_view(vulkan_image_t* image)
-{
-	VkImageViewCreateInfo view_create_info  =
-	{
-		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-		.image = image->handle,
-		.viewType = image->type,
-		.format = image->format,
-		.subresourceRange.aspectMask = image->aspect_mask,
-		.subresourceRange.baseMipLevel = 0,
-		.subresourceRange.levelCount = 1,
-		.subresourceRange.baseArrayLayer = 0,
-		.subresourceRange.layerCount = 1
-	};
-
-	// swap the blue and red components with each other
-	switch(image->format)
-	{
-		case VK_FORMAT_R8G8B8A8_UNORM:
-    	case VK_FORMAT_R8G8B8A8_SNORM:
-    	case VK_FORMAT_R8G8B8A8_USCALED:
-    	case VK_FORMAT_R8G8B8A8_SSCALED:
-    	case VK_FORMAT_R8G8B8A8_UINT:
-    	case VK_FORMAT_R8G8B8A8_SINT:
-    	case VK_FORMAT_R8G8B8A8_SRGB:
-    		view_create_info.components = (VkComponentMapping) { VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_R };
-    	break;
-	}
-	VkImageView image_view;
-	vkCall(vkCreateImageView(image->renderer->logical_device->handle, &view_create_info, NULL, &image_view));
-	return image_view;
-}
-
-VkAttachmentDescription vulkan_image_get_attachment_description(vulkan_image_t* image)
-{
-	VkAttachmentDescription attachment =
-	{
-    	.format = image->format,
-    	.samples = VK_SAMPLE_COUNT_1_BIT,
-    	.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-	};
-	return attachment;
 }

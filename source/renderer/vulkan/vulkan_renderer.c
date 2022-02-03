@@ -23,7 +23,7 @@ render_window_t* renderer_get_window(renderer_t* renderer) { return renderer->wi
 
 static vulkan_physical_device_t* get_lowest_score_device(vulkan_physical_device_t** devices, u32 count);
 
-static vulkan_physical_device_t* get_highest_score_device(vulkan_physical_device_t** devices, u32 count)
+static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t** devices, u32 count, renderer_gpu_type_t type)
 {
 	if(count == 0)
 		LOG_FETAL_ERR("No vulkan physical device found\n");
@@ -47,8 +47,19 @@ static vulkan_physical_device_t* get_highest_score_device(vulkan_physical_device
 	if((integrated_gpu == NULL) && (discrete_gpu == NULL))
 		LOG_FETAL_ERR("No integrated or discrete vulkan gpu found!\n");
 
-	void* gpu = (discrete_gpu == NULL) ? integrated_gpu : discrete_gpu;
-	// gpu = integrated_gpu;
+	void* gpu = NULL;
+	switch(type)
+	{
+		case RENDERER_GPU_TYPE_INTEGRATED:
+			gpu = (integrated_gpu == NULL) ? discrete_gpu : integrated_gpu;
+			break;
+		case RENDERER_GPU_TYPE_DISCRETE:
+			gpu = (discrete_gpu == NULL) ? integrated_gpu : discrete_gpu;
+			break;
+		default:
+			gpu = (discrete_gpu == NULL) ? integrated_gpu : discrete_gpu;
+			break;
+	}
 	LOG_MSG("Using the gpu: %s\n", vulkan_physical_device_get_properties(gpu)->deviceName);
 	return gpu;
 }
@@ -102,7 +113,7 @@ static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, re
 	};
 }
 
-renderer_t* renderer_init(u32 width, u32 height, const char* title, bool full_screen)
+renderer_t* renderer_init(renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen)
 {
 	renderer_t* renderer = heap_new(renderer_t);
 	memset(renderer, 0, sizeof(renderer_t));
@@ -123,7 +134,7 @@ DEBUG_BLOCK
 	log_msg(buf_get_ptr(&log_buffer));
 )
 	
-	vulkan_physical_device_t* physical_device = get_highest_score_device(physical_devices, physical_device_count);
+	vulkan_physical_device_t* physical_device = find_physical_device(physical_devices, physical_device_count, preferred_gpu_type);
 	renderer->physical_device = physical_device;
 
 
@@ -259,7 +270,10 @@ void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float
 	VkClearValue clear_values[2] = 
 	{
 		{ .color = { .float32 = { r, g, b, a } } },
-		{ .depthStencil = { .depth = 1, .stencil = 0 } } 		// depth clear, every fragment would pass the depth test i.e. < 1
+
+		// TODO: depth value should be 1.0,
+		// 		it is 1.1 right now because the compare operation is hard coded as less than (skybox rendering)
+		{ .depthStencil = { .depth = 1.1f, .stencil = 0 } }
 	};
 	VkRenderPassBeginInfo render_pass_begin_info =
 	{

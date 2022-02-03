@@ -7,6 +7,7 @@
 typedef struct renderer_t renderer_t;
 typedef struct render_window_t render_window_t;
 typedef struct vulkan_image_t vulkan_image_t;
+typedef struct vulkan_image_view_t vulkan_image_view_t; 
 
 typedef struct vulkan_swapchain_create_info_t
 {
@@ -25,7 +26,7 @@ typedef struct vulkan_swapchain_t
 {
 	VkSwapchainKHR handle;
 	vulkan_image_t* depth_image;
-	VkImageView depth_image_view;
+	vulkan_image_view_t* depth_image_view;
 	VkImage* images;
 	VkImageView* image_views;
 	VkFramebuffer* framebuffers;

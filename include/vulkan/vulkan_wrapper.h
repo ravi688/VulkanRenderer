@@ -7,16 +7,13 @@
 #include <tuple/tuple.h>
 #include <exception/exception.h>
 #include <calltrace/calltrace.h>
+#include <renderer/internal/vulkan/vulkan_result.h>
 
 #ifdef DEBUG
 #	define vkCall(call)\
 {\
 	VkResult result =  call;\
-	EXCEPTION_BLOCK\
-	(\
-		if(result != VK_SUCCESS)\
-			throw_exception(VULKAN_ABORTED);\
-	)\
+	vulkan_result_assert_success(result);\
 }
 
 #else

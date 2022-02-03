@@ -37,7 +37,7 @@ void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_in
 	buffer->count = create_info->count;
 	buffer->size = buffer_size;
 	if(create_info->data != NULL)
-		vulkan_buffer_copy_data(buffer, renderer, create_info->data, 0, buffer->size);
+		vulkan_buffer_copy_data(buffer, renderer, 0, create_info->data, buffer->size);
 }
 
 void vulkan_buffer_destroy(vulkan_buffer_t* buffer, renderer_t* renderer)
@@ -55,16 +55,16 @@ void vulkan_buffer_release_resources(vulkan_buffer_t* buffer)
 	heap_free(buffer);
 }
 
-void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, renderer_t* renderer, void* data, u32 start_offset, u32 size)
+void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, renderer_t* renderer, u32 buffer_offset, void* data, u32 data_size)
 {
 	assert(buffer != NULL);
 	assert(data != NULL);
-	assert((start_offset + size) <= buffer->size);
-	assert_wrn(size != 0);
+	assert_wrn(data_size != 0);
+	assert((buffer_offset + data_size) <= buffer->size);
 
 	void* ptr;
 	vkMapMemory(renderer->logical_device->handle, buffer->memory, 0, buffer->size, 0, &ptr);
-	memcpy(ptr, data + start_offset, size);
+	memcpy(ptr + buffer_offset, data, data_size);
 	vkUnmapMemory(renderer->logical_device->handle, buffer->memory);
 }
 
@@ -81,3 +81,4 @@ void vulkan_buffer_unmap(vulkan_buffer_t* buffer, renderer_t* renderer)
 {
 	vkUnmapMemory(renderer->logical_device->handle, buffer->memory);
 }
+

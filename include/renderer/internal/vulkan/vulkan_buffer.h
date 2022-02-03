@@ -32,6 +32,6 @@ void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_in
 void vulkan_buffer_destroy(vulkan_buffer_t* buffer, renderer_t* renderer);
 void vulkan_buffer_release_resources(vulkan_buffer_t* buffer);
 
-void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, renderer_t* renderer, void* data, u32 start_offset, u32 size);
+void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, renderer_t* renderer, u32 buffer_offset, void* data, u32 data_size);
 void* vulkan_buffer_map(vulkan_buffer_t* buffer, renderer_t* renderer);
 void vulkan_buffer_unmap(vulkan_buffer_t* buffer, renderer_t* renderer);
