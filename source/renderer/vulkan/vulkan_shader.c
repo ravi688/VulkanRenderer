@@ -281,12 +281,10 @@ static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(renderer_t* render
 				binding->descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			break;
 			
-			case SHADER_COMPILER_SAMPLER2D:
+			case SHADER_COMPILER_SAMPLER_2D:
+			case SHADER_COMPILER_SAMPLER_3D:
+			case SHADER_COMPILER_SAMPLER_CUBE:
 				binding->descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			break;
-			
-			case SHADER_COMPILER_SAMPLER3D:
-				LOG_FETAL_ERR("Cannot create set layout binding for the type SHADER_COMPILER_SAMPLER3D, because the implementation is still in development\n");
 			break;
 			
 			default:
@@ -325,26 +323,27 @@ static u16 sizeof_glsl_type(u8 type)
 {
 	switch(type)
 	{
-		case SHADER_COMPILER_BLOCK 		: LOG_FETAL_ERR("getting size of non glsl type \"SHADER_COMPILER_BLOCK\" is a invalid operation\n");
-		case SHADER_COMPILER_FLOAT 		:
-		case SHADER_COMPILER_INT 		:
-		case SHADER_COMPILER_UINT 		: return 4;
-		case SHADER_COMPILER_DOUBLE 	: LOG_FETAL_ERR("\"double\" isn't supported yet\n");
-		case SHADER_COMPILER_VEC4 		:
-		case SHADER_COMPILER_IVEC4 		:
-		case SHADER_COMPILER_UVEC4 		:
-		case SHADER_COMPILER_MAT2 		: return 16;
-		case SHADER_COMPILER_IVEC3 		:
-		case SHADER_COMPILER_UVEC3 		:
-		case SHADER_COMPILER_VEC3 		: return 12;
-		case SHADER_COMPILER_IVEC2 		:
-		case SHADER_COMPILER_UVEC2 		:
-		case SHADER_COMPILER_VEC2 		: return 8;
-		case SHADER_COMPILER_MAT4 		: return 64;
-		case SHADER_COMPILER_MAT3 		: return 36;
-		case SHADER_COMPILER_SAMPLER2D 	:
-		case SHADER_COMPILER_SAMPLER3D	: LOG_FETAL_ERR("getting size of opaque types are invalid operation\n");
-		default							: LOG_FETAL_ERR("Unrecognized glsl type \"%u\"\n", type);
+		case SHADER_COMPILER_BLOCK 			: LOG_FETAL_ERR("getting size of non glsl type \"SHADER_COMPILER_BLOCK\" is a invalid operation\n");
+		case SHADER_COMPILER_FLOAT 			:
+		case SHADER_COMPILER_INT 			:
+		case SHADER_COMPILER_UINT 			: return 4;
+		case SHADER_COMPILER_DOUBLE 		: LOG_FETAL_ERR("\"double\" isn't supported yet\n");
+		case SHADER_COMPILER_VEC4 			:
+		case SHADER_COMPILER_IVEC4 			:
+		case SHADER_COMPILER_UVEC4 			:
+		case SHADER_COMPILER_MAT2 			: return 16;
+		case SHADER_COMPILER_IVEC3 			:
+		case SHADER_COMPILER_UVEC3 			:
+		case SHADER_COMPILER_VEC3 			: return 12;
+		case SHADER_COMPILER_IVEC2 			:
+		case SHADER_COMPILER_UVEC2 			:
+		case SHADER_COMPILER_VEC2 			: return 8;
+		case SHADER_COMPILER_MAT4 			: return 64;
+		case SHADER_COMPILER_MAT3 			: return 36;
+		case SHADER_COMPILER_SAMPLER_2D 	:
+		case SHADER_COMPILER_SAMPLER_3D		: 
+		case SHADER_COMPILER_SAMPLER_CUBE	: LOG_FETAL_ERR("getting size of opaque types are invalid operation\n");
+		default								: LOG_FETAL_ERR("Unrecognized glsl type \"%u\"\n", type);
 	};
 }
 
@@ -369,25 +368,26 @@ static u16 alignof_glsl_type(u8 type)
 {
 	switch(type)
 	{
-		case SHADER_COMPILER_BLOCK 		: LOG_FETAL_ERR("getting alignment of non glsl type \"SHADER_COMPILER_BLOCK\" is a invalid operation\n");
-		case SHADER_COMPILER_FLOAT 		:
-		case SHADER_COMPILER_INT 		:
-		case SHADER_COMPILER_UINT 		: return 4;
-		case SHADER_COMPILER_DOUBLE 	: LOG_FETAL_ERR("\"double\" isn't supported yet\n");
-		case SHADER_COMPILER_VEC4 		:
-		case SHADER_COMPILER_IVEC4 		:
-		case SHADER_COMPILER_UVEC4 		:
-		case SHADER_COMPILER_IVEC3 		:
-		case SHADER_COMPILER_UVEC3 		:
-		case SHADER_COMPILER_VEC3 		:
-		case SHADER_COMPILER_MAT4 		:
-		case SHADER_COMPILER_MAT3 		: return 16;
-		case SHADER_COMPILER_IVEC2 		:
-		case SHADER_COMPILER_UVEC2 		:
-		case SHADER_COMPILER_VEC2 		:
-		case SHADER_COMPILER_MAT2 		: return 8;
-		case SHADER_COMPILER_SAMPLER2D 	:
-		case SHADER_COMPILER_SAMPLER3D	: LOG_FETAL_ERR("getting alignment of opaque types are invalid operation\n");
-		default							: LOG_FETAL_ERR("Unrecognized glsl type \"%u\"\n", type);
+		case SHADER_COMPILER_BLOCK 			: LOG_FETAL_ERR("getting alignment of non glsl type \"SHADER_COMPILER_BLOCK\" is a invalid operation\n");
+		case SHADER_COMPILER_FLOAT 			:
+		case SHADER_COMPILER_INT 			:
+		case SHADER_COMPILER_UINT 			: return 4;
+		case SHADER_COMPILER_DOUBLE 		: LOG_FETAL_ERR("\"double\" isn't supported yet\n");
+		case SHADER_COMPILER_VEC4 			:
+		case SHADER_COMPILER_IVEC4 			:
+		case SHADER_COMPILER_UVEC4 			:
+		case SHADER_COMPILER_IVEC3 			:
+		case SHADER_COMPILER_UVEC3 			:
+		case SHADER_COMPILER_VEC3 			:
+		case SHADER_COMPILER_MAT4 			:
+		case SHADER_COMPILER_MAT3 			: return 16;
+		case SHADER_COMPILER_IVEC2 			:
+		case SHADER_COMPILER_UVEC2 			:
+		case SHADER_COMPILER_VEC2 			:
+		case SHADER_COMPILER_MAT2 			: return 8;
+		case SHADER_COMPILER_SAMPLER_2D 	:
+		case SHADER_COMPILER_SAMPLER_3D		: 
+		case SHADER_COMPILER_SAMPLER_CUBE	: LOG_FETAL_ERR("getting alignment of opaque types are invalid operation\n");
+		default								: LOG_FETAL_ERR("Unrecognized glsl type \"%u\"\n", type);
 	};
 }

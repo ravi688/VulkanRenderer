@@ -143,7 +143,7 @@ void material_set_vec3H(material_t* material, material_field_handle_t handle, ve
 void material_set_vec4H(material_t* material, material_field_handle_t handle, vec4_t(float) v);
 void material_set_mat2H(material_t* material, material_field_handle_t handle, mat2_t(float) m);
 void material_set_mat4H(material_t* material, material_field_handle_t handle, mat4_t(float) m);
-void material_set_texture2dH(material_t* material, material_field_handle_t handle, texture_t* texture);
+void material_set_textureH(material_t* material, material_field_handle_t handle, texture_t* texture);
 
 void material_set_float(material_t* material, const char* name, float value);
 void material_set_int(material_t* material, const char* name, int value);
@@ -153,7 +153,7 @@ void material_set_vec3(material_t* material, const char* name, vec3_t(float) v);
 void material_set_vec4(material_t* material, const char* name, vec4_t(float) v);
 void material_set_mat2(material_t* material, const char* name, mat2_t(float) m);
 void material_set_mat4(material_t* material, const char* name, mat4_t(float) m);
-void material_set_texture2d(material_t* material, const char* name, texture_t* texture);
+void material_set_texture(material_t* material, const char* name, texture_t* texture);
 
 
 float material_get_floatH(material_t* material, material_field_handle_t handle);

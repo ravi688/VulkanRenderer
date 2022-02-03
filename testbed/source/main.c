@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 {
 	memory_allocator_init(&argc);
 
-	renderer_t* renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Vulkan 3D Renderer", false);
+	renderer_t* renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 1920, 1080, "Vulkan 3D Renderer", false);
 	recreate_matrix(renderer_get_window(renderer), NULL);
 	render_window_subscribe_on_resize(renderer_get_window(renderer), recreate_matrix, NULL);
 	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -1.8f, 0.6f, 0 }, (vec3_t(float)) { 0, 0, -22 * DEG2RAD } );
@@ -111,11 +111,11 @@ int main(int argc, char** argv)
 	text_mesh_string_set_scaleH(game_ui, score_text, vec3(float)(0.8f, 0.8f, 0.8f));
 
 	/*--------PLAYGROUND----------------------*/
-	mesh3d_t* box_mesh3d = mesh3d_load("resource/Box.obj");
+	mesh3d_t* box_mesh3d = mesh3d_load("resource/Rock/Rock.obj");
 	mesh3d_make_centroid_origin(box_mesh3d);
 	mesh3d_calculate_tangents(box_mesh3d);
 	mesh_t* box = mesh_create(renderer, box_mesh3d);
-	shader_t* box_shader = shader_load(renderer, "resource/shaders/specular_bump_shader.sb");
+	shader_t* box_shader = shader_load(renderer, "resource/shaders/bump_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); // position
 	per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); // normal
 	per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC2, 2); // texture coordinates
@@ -129,12 +129,35 @@ int main(int argc, char** argv)
 	material_t* box_material = material_create(renderer, &box_material_info);
 	texture_t* box_textures[] = 
 	{ 
-		texture_load(renderer, "resource/textures/white.bmp", TEXTURE_TYPE_ALBEDO),
-		texture_load(renderer, "resource/textures/normal_map.bmp", TEXTURE_TYPE_NORMAL)
+		texture_load(renderer, TEXTURE_TYPE_ALBEDO, "resource/Rock/albedo.bmp"),
+		texture_load(renderer, TEXTURE_TYPE_NORMAL, "resource/Rock/normal.bmp")
 	};
-	material_set_texture2d(box_material, "albedo", box_textures[0]);
-	material_set_texture2d(box_material, "normal_map", box_textures[1]);
+	material_set_texture(box_material, "albedo", box_textures[0]);
+	material_set_texture(box_material, "normal_map", box_textures[1]);
 	/*---------------------------------------*/
+
+	/*----------- CUBEMAP - SKYBOX ----------------------*/
+	texture_t* skybox_texture = texture_load(renderer, TEXTURE_TYPE_CUBE,
+											"resource/skybox_textures/skybox/right.bmp",
+											"resource/skybox_textures/skybox/left.bmp",
+											"resource/skybox_textures/skybox/bottom.bmp",
+											"resource/skybox_textures/skybox/top.bmp",
+											"resource/skybox_textures/skybox/front.bmp", 
+											"resource/skybox_textures/skybox/back.bmp");
+	mesh3d_t* skybox_mesh3d = mesh3d_cube(5);
+	mesh3d_flip_triangles(skybox_mesh3d);
+	mesh_t* skybox = mesh_create(renderer, skybox_mesh3d);
+	shader_t* skybox_shader = shader_load(renderer, "resource/shaders/skybox_shader.sb");
+	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); 	// position
+	material_create_info_t skybox_material_info = 
+	{
+		.per_vertex_attribute_binding_count = 1,
+		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
+		.shader = skybox_shader
+	};
+	material_t* skybox_material = material_create(renderer, &skybox_material_info);
+	material_set_texture(skybox_material, "skybox", skybox_texture);
+
 
 	/*----------- QUAD ----------------------*/
 	mesh3d_t* quad_mesh3d = mesh3d_plane(0.6f);
@@ -165,24 +188,37 @@ int main(int argc, char** argv)
 		material_set_float(game_ui_material, "ubo.time", game_time);
 
 		material_set_vec3(box_material, "light.color", vec3(float)(1, 1, 1));
-		material_set_vec3(box_material, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 0)));
-		material_set_float(box_material, "light.intensity", 1.0f);
+		material_set_vec3(box_material, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 3)));
+		material_set_float(box_material, "light.intensity", 4.0f);
 
-		vec4_t(float) eye_dir = mat4_mul_vec4(float)(camera_transform, 1, 0, 0, 0);
-		material_set_vec3(box_material, "misc.eye_dir", vec3_normalize(float)(vec3(float)(eye_dir.x, eye_dir.y, eye_dir.z)));
+		// vec4_t(float) eye_dir = mat4_mul_vec4(float)(camera_transform, 1, 0, 0, 0);
+		// material_set_vec3(box_material, "misc.eye_dir", vec3_normalize(float)(vec3(float)(eye_dir.x, eye_dir.y, eye_dir.z)));
 
-		material_set_vec3(box_material, "properties.specular_color", vec3(float)(1, 1, 1));
-		material_set_float(box_material, "properties.specularity", 2);
+		// material_set_vec3(box_material, "properties.specular_color", vec3(float)(1, 1, 1));
+		// material_set_float(box_material, "properties.specularity", 2);
 
-		renderer_begin_frame(renderer, 0, 0, 0, 0);
+		renderer_begin_frame(renderer, 0.01f, 0.1f, 0.2f, 0.4f);
 
 		material_bind(box_material, renderer);
 		mat4_t(float) model_matrix;
-		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_rotation(float)(0, angle * DEG2RAD, 0), mat4_scale(float)(0.5f, 0.5f, 0.5f)));
+		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_rotation(float)(0, 0 * DEG2RAD, 0), mat4_scale(float)(2.2, 2.2, 2.2)));
 		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
 		material_set_push_mat4(box_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
 		material_set_push_mat4(box_material, "push.model_matrix", mat4_transpose(float)(model_matrix));
 		mesh_draw_indexed(box, renderer);
+
+		material_bind(skybox_material, renderer);
+
+		mat4_t(float) skybox_matrix = view_matrix;
+		// skybox should remain at origin, so set the last column of the view_matrix to zero
+		float** elements = (float**)mat4_data(float)(&skybox_matrix);
+		elements[0][3] = 0;
+		elements[1][3] = 0;
+		elements[2][3] = 0;
+		elements[3][3] = 1;
+		mat4_move(float)(&mvp, mat4_mul(float)(3, clip_matrix, projection_matrix, skybox_matrix));
+		material_set_push_mat4(skybox_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
+		mesh_draw_indexed(skybox, renderer);
 
 		material_bind(quad_material, renderer);
 		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
@@ -261,7 +297,7 @@ int main(int argc, char** argv)
 	material_release_resources(box_material);
 	for(int i = 0; i < 2; i++)
 	{
-		texture_destroy(box_textures[i], renderer);
+		texture_destroy(box_textures[i]);
 		texture_release_resources(box_textures[i]);
 	}
 
@@ -272,6 +308,16 @@ int main(int argc, char** argv)
 	shader_release_resources(quad_shader);
 	material_destroy(quad_material, renderer);
 	material_release_resources(quad_material);
+
+	mesh3d_destroy(skybox_mesh3d);
+	mesh_destroy(skybox, renderer);
+	mesh_release_resources(skybox);
+	shader_destroy(skybox_shader, renderer);
+	shader_release_resources(skybox_shader);
+	material_destroy(skybox_material, renderer);
+	material_release_resources(skybox_material);
+	texture_destroy(skybox_texture);
+	texture_release_resources(skybox_texture);
 
 	renderer_terminate(renderer);
 	memory_allocator_terminate();

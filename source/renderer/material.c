@@ -619,7 +619,7 @@ void material_set_mat4H(material_t* material, material_field_handle_t handle, ma
 	unmap_descriptor(material, handle);
 }
 
-void material_set_texture2dH(material_t* material, material_field_handle_t handle, texture_t* texture)
+void material_set_textureH(material_t* material, material_field_handle_t handle, texture_t* texture)
 {
 	check_precondition(material);
 	assert(handle.descriptor_index < material->handle->shader->descriptor_count);
@@ -740,9 +740,9 @@ void material_set_mat4(material_t* material, const char* name, mat4_t(float) m)
 	material_set_mat4H(material, material_get_field_handle(material, name), m);
 }
 
-void material_set_texture2d(material_t* material, const char* name, texture_t* texture)
+void material_set_texture(material_t* material, const char* name, texture_t* texture)
 {
-	material_set_texture2dH(material, material_get_field_handle(material, name), texture);
+	material_set_textureH(material, material_get_field_handle(material, name), texture);
 }
 
 float material_get_float(material_t* material, const char* name)

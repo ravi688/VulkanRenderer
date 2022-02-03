@@ -270,7 +270,10 @@ void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float
 	VkClearValue clear_values[2] = 
 	{
 		{ .color = { .float32 = { r, g, b, a } } },
-		{ .depthStencil = { .depth = 1, .stencil = 0 } } 		// depth clear, every fragment would pass the depth test i.e. < 1
+
+		// TODO: depth value should be 1.0,
+		// 		it is 1.1 right now because the compare operation is hard coded as less than (skybox rendering)
+		{ .depthStencil = { .depth = 1.1f, .stencil = 0 } }
 	};
 	VkRenderPassBeginInfo render_pass_begin_info =
 	{

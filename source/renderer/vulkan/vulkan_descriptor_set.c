@@ -55,7 +55,7 @@ void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, renderer_
 	VkDescriptorImageInfo image_info =
 	{
 		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		.imageView = texture->image_view,
+		.imageView = texture->image_view->handle,
 		.sampler = texture->image_sampler
 	};
 	VkWriteDescriptorSet descriptor_write =

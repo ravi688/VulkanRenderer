@@ -2,6 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <renderer/internal/vulkan/vulkan_image.h>
+#include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/render_window.h>
 #include <memory_allocator/memory_allocator.h>
 #include <memory.h>
@@ -56,6 +57,7 @@ u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, renderer_
 
 void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain)
 {
+	vulkan_image_view_release_resources(swapchain->depth_image_view);
 	vulkan_image_release_resources(swapchain->depth_image);
 	heap_free(swapchain->framebuffer_image_views);
 	heap_free(swapchain->image_views);
@@ -102,11 +104,13 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 
 	vulkan_image_create_info_t depth_create_info = 
 	{
+		.flags = 0, 		// optional 
 		.type = VK_IMAGE_TYPE_2D,
 		.format = create_info->depth_format,
 		.width = create_info->image_extent.width,
 		.height = create_info->image_extent.height,
 		.depth = 1,
+		.layer_count = 1,
 		.tiling = VK_IMAGE_TILING_OPTIMAL,
 		.layout = VK_IMAGE_LAYOUT_UNDEFINED,
 		.usage_mask = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -122,7 +126,10 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 	else 
 		vulkan_image_create_no_alloc(renderer, &depth_create_info, swapchain->depth_image);
 	
-	swapchain->depth_image_view = vulkan_image_get_image_view(swapchain->depth_image);
+	if(swapchain->depth_image_view == NULL)
+		swapchain->depth_image_view = vulkan_image_view_create(swapchain->depth_image, VULKAN_IMAGE_VIEW_TYPE_2D);
+	else
+		vulkan_image_view_create_no_alloc(swapchain->depth_image, VULKAN_IMAGE_VIEW_TYPE_2D, swapchain->depth_image_view);
 
 	VkImageView* attachments_lists[swapchain->image_count];
 	uint32_t attachments_count[swapchain->image_count];
@@ -134,7 +141,7 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 	for(uint32_t i = 0; i < swapchain->image_count; i++) 
 	{
 		swapchain->framebuffer_image_views[2 * i + 0] = *(swapchain->image_views + i);
-		swapchain->framebuffer_image_views[2 * i + 1] = swapchain->depth_image_view;
+		swapchain->framebuffer_image_views[2 * i + 1] = swapchain->depth_image_view->handle;
 		attachments_lists[i] = &swapchain->framebuffer_image_views[2 * i];
 		attachments_count[i] = 2;
 	}
@@ -169,6 +176,6 @@ static void destroy_swapchain(vulkan_swapchain_t* swapchain, renderer_t* rendere
 		vkDestroyFramebuffer(renderer->logical_device->handle, swapchain->framebuffers[i], NULL);
 	for(u32 i = 0; i < swapchain->image_count; i++)
 		vkDestroyImageView(renderer->logical_device->handle, swapchain->image_views[i], NULL);
-	vkDestroyImageView(renderer->logical_device->handle, swapchain->depth_image_view, NULL);
+	vulkan_image_view_destroy(swapchain->depth_image_view);
 	vulkan_image_destroy(swapchain->depth_image);
 }
