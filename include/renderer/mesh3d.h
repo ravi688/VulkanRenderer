@@ -86,6 +86,7 @@ function_signature(index_t, mesh3d_uvs_count, mesh3d_t* mesh);
 function_signature(index_t, mesh3d_colors_count, mesh3d_t* mesh);
 function_signature(index_t, mesh3d_triangles_count, mesh3d_t* mesh);
 
+function_signature(void, mesh3d_flip_triangles, mesh3d_t* mesh);
 function_signature(void, mesh3d_calculate_normals, mesh3d_t* mesh);
 function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh);
 function_signature(void, mesh3d_optimize_buffer, mesh3d_t* mesh);
@@ -196,6 +197,7 @@ function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index);
 #define mesh3d_colors_count(...) define_alias_function_macro(mesh3d_colors_count, __VA_ARGS__)
 #define mesh3d_triangles_count(...) define_alias_function_macro(mesh3d_triangles_count, __VA_ARGS__)
 
+#define mesh3d_flip_triangles(...) define_alias_function_macro(mesh3d_flip_triangles, __VA_ARGS__)
 #define mesh3d_calculate_normals(...) define_alias_function_macro(mesh3d_calculate_normals, __VA_ARGS__)
 #define mesh3d_calculate_tangents(...) define_alias_function_macro(mesh3d_calculate_tangents, __VA_ARGS__)
 #define mesh3d_optimize_buffer(...) define_alias_function_macro(mesh3d_optimize_buffer, __VA_ARGS__)

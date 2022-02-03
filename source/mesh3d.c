@@ -323,6 +323,21 @@ function_signature(bool, mesh3d_has_triangles, mesh3d_t* mesh)
 	CALLTRACE_RETURN((mesh->triangles != NULL) && (buf_get_element_count(mesh->triangles) > 0));
 }
 
+function_signature(void, mesh3d_flip_triangles, mesh3d_t* mesh)
+{
+	CALLTRACE_BEGIN();
+	assert(mesh != NULL);
+	buf_ucount_t triangle_count = mesh3d_triangles_count(mesh);
+	for(buf_ucount_t i = 0; i < triangle_count; i++)
+	{
+		vec3_t(index_t)* triangle = mesh3d_triangle_get_ptr(mesh, i);
+		index_t t = triangle->x;
+		triangle->x = triangle->y;
+		triangle->y = t;
+	}
+	CALLTRACE_END();
+}
+
 function_signature(void, mesh3d_calculate_normals, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
