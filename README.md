@@ -20,7 +20,7 @@
 4. Disk space - No data as of now
 
 ### Building steps
-1. Run `git clone https://github.com/ravi688/VulkanRenderer.git`
+1. Run ```git clone https://github.com/ravi688/VulkanRenderer.git```
 1. Change the working directory to `VulkanRenderer`
 2. Run `make -s setup` this will clone all the dependency submodules
 3. Change the working directory to `VulkanRenderer/testbed`
