@@ -2,13 +2,17 @@
 3D renderer built on Vulkan API <br>
 Currently, it is tested only on **Windows**.
 
-### Setting up dependencies/submodules
-1. change the working directory to `VulkanRenderer`
-2. run `make -s setup`
+### Requirements for building (MinGW64 and Git)
+1. GCC 11.2.0 (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running `gcc --version`.
+2. GNU Make 4.3, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 'mingw32-make --version'.
+3. Git 2.33.1.windows.1, git should be installed in your machine, you can check if it is already installed by running `git --version`.
 
-### Building and running in just one two step
-1. change the working directory to `VulkanRenderer/testbed`
-2. run `make -s run`
+### Building
+1. run 'git clone https://github.com/ravi688/VulkanRenderer.git'
+1. change the working directory to `VulkanRenderer`
+2. run `make -s setup` this will clone all the dependency submodules
+3. change the working directory to `VulkanRenderer/testbed`
+4. run `make -s run`
 
 ### Building shaders manually (Optional)
 1. change the working directory to `VulkanRenderer/shader_compiler`
@@ -21,7 +25,7 @@ Currently, it is tested only on **Windows**.
 2. run `make -s debug`
 3. run `main.exe`
 
-### Cleaning everything
+### Cleaning everything (Optional)
 1. change the working directory to `VulkanRenderer/testbed`
 2. run `make -s -i clean`
 3. run `make shader-clean`
