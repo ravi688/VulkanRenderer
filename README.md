@@ -8,7 +8,7 @@ Currently, it is tested only on **Windows**.
 3. Git 2.33.1.windows.1, git should be installed in your machine, you can check if it is already installed by running `git --version`.
 
 ### Building
-1. run 'git clone https://github.com/ravi688/VulkanRenderer.git'
+1. run `git clone https://github.com/ravi688/VulkanRenderer.git`
 1. change the working directory to `VulkanRenderer`
 2. run `make -s setup` this will clone all the dependency submodules
 3. change the working directory to `VulkanRenderer/testbed`
