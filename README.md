@@ -6,9 +6,9 @@ Currently, it is tested only on **Windows**.
 1. change the working directory to `VulkanRenderer`
 2. run `make -s setup`
 
-### Building in just one command
+### Building and running in just one two step
 1. change the working directory to `VulkanRenderer/testbed`
-2. run `make -s build`
+2. run `make -s run`
 
 ### Building shaders manually (Optional)
 1. change the working directory to `VulkanRenderer/shader_compiler`
