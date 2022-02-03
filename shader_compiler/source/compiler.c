@@ -472,8 +472,9 @@ static const char* parse_type(const char* string, u32 mask, BUFFER* buffer, BUFF
 	bool found = true;
 	u32 type;
 	buf_ucount_t identifier_name_index;
-	if(strncmp(string, "sampler2D", count) == 0) { type = (1UL << 15) | (u16)SHADER_COMPILER_SAMPLER2D;  }
-	else if(strncmp(string, "sampler3D", count) == 0) { type = (1UL << 15) | (u16)SHADER_COMPILER_SAMPLER3D; }
+	if(strncmp(string, "sampler2D", count) == 0) { type = (1UL << 15) | (u16)SHADER_COMPILER_SAMPLER_2D;  }
+	else if(strncmp(string, "sampler3D", count) == 0) { type = (1UL << 15) | (u16)SHADER_COMPILER_SAMPLER_3D; }
+	else if(strncmp(string, "samplerCube", count) == 0) { type = (1UL << 15) | (u16)SHADER_COMPILER_SAMPLER_CUBE; }
 	else if(strncmp(string, "vec4", count) == 0) { type = (u16)SHADER_COMPILER_VEC4; }
 	else if(strncmp(string, "vec3", count) == 0) { type = (u16)SHADER_COMPILER_VEC3; }
 	else if(strncmp(string, "vec2", count) == 0) { type = (u16)SHADER_COMPILER_VEC2; }
