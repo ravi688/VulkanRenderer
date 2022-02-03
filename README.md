@@ -28,7 +28,7 @@ Currently, it is tested only on **Windows**.
 
 
 ### Where to go for examples?
-You can check `VulkanRenderer/testbed' directory.
+You can check `VulkanRenderer/testbed` directory.
 
 ## Features
 
