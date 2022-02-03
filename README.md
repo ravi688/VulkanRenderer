@@ -9,9 +9,19 @@
 5. AMD Vega 8 Graphics 512 MB (VRAM) Integrated Mobile GPU  + 12 GB of Main Memory (RAM)
 
 ### Requirements for building (MinGW64 and Git)
-1. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running `gcc --version`.
-2. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running `mingw32-make --version`. As of now you have to rename `mingw32-make` to `make`.
-4. **Git 2.33.1.windows.1**, git should be installed in your machine, you can check if it is already installed by running `git --version`.
+1. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
+```
+gcc --version
+```
+2. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
+```
+mingw32-make --version
+``` 
+3. As of now you have to rename `mingw32-make` to `make` on Windows.
+4. **Git 2.33.1.windows.1**, git must be installed in your machine, you can check if it is already installed by running <br>
+```
+git --version
+```
 
 ### Runtime requirements
 1. Windows 64 bit
@@ -20,27 +30,56 @@
 4. Disk space - No data as of now
 
 ### Building steps
-1. Run ```git clone https://github.com/ravi688/VulkanRenderer.git```
-1. Change the working directory to `VulkanRenderer`
-2. Run `make -s setup` this will clone all the dependency submodules
-3. Change the working directory to `VulkanRenderer/testbed`
-4. Run `make -s run`
+1. Clone the repository by running the following command <br>
+```
+git clone https://github.com/ravi688/VulkanRenderer.git
+```
+3. Change the working directory to `VulkanRenderer` and setup all the dependency git submodules by running the following command
+```
+cd VulkanRenderer
+make -s setup
+```
+4. Change the working directory to `VulkanRenderer/testbed` and start building by running the following command
+```
+cd testbed
+make -s run
+```
 
 ### Building shaders manually (Optional)
-1. Change the working directory to `VulkanRenderer/shader_compiler`
-2. Run `make -s debug`
-4. Change the working directory to `VulkanRenderer/testbed`
-5. Run `make -s shader`
+1. Change the working directory to `VulkanRenderer/shader_compiler` and build the `shader_compiler.exe` executable by running the following command
+```
+cd shader_compiler
+make -s debug
+```
+4. Change the working directory to `VulkanRenderer/testbed` and build the shaders `.glsl to .sb` by running the following command
+```
+cd testbed
+make -s shader
+```
 
 ### Building executable manually (Optional)
-1. Change the working directory to `VulkanRenderer/testbed`
-2. Run `make -s debug`
-3. Run `main.exe`
+1. Change the working directory to `VulkanRenderer/testbed` and build the `main.exe` executable by running the following command
+```
+make -s debug
+```
+2. Now run the `main.exe` executable by running the following command
+```
+main.exe
+```
 
-### Cleaning everything (Optional)
-1. Change the working directory to `VulkanRenderer/testbed`
-2. Run `make -s -i clean`
-3. Run `make shader-clean`
+### Cleaning shaders (Optional)
+1. Change the working directory to `VulkanRenderer/testbed` and clean the shaders `.sb files` by running the folliwng command
+```
+cd testbed
+make -i -s shader-clean
+```
+
+### Cleaning everything else (Optional)
+1. Change the working directory to `VulkanRenderer/testbed` and run the following command
+```
+cd testbed
+make -i -s clean
+```
 
 
 ### Where to go for examples?
