@@ -4,19 +4,26 @@ Currently, it is tested only on **Windows**.
 
 ## Setting up dependencies/submodules
 1. change the working directory to `VulkanRenderer`
-2. run `make setup`
+2. run `make -s setup`
 
-## Building shaders
+## Building in just one command
+1. run `make -s build`
+
+## Building shaders manually (Optional)
 1. change the working directory to `VulkanRenderer/shader_compiler`
-2. run `make debug`
-3. include `VulkanRenderer/shader_compiler/shader_compiler.exe` in your PATH environment variable (Windows)
+2. run `make -s debug`
 4. change the working directory to `VulkanRenderer/testbed`
-5. run `make shader`
+5. run `make -s shader`
 
-## Building executable
+## Building executable manually (Optional)
 1. change the working directory to `VulkanRenderer/testbed`
-2. run `make debug`
+2. run `make -s debug`
 3. run `main.exe`
+
+## Cleaning everything
+1. run 'make -s -i clean'
+2. run 'make shader-clean'
+
 
 ## Where to go for examples?
 You can check `VulkanRenderer/testbed' directory.
