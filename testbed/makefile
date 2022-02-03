@@ -185,7 +185,7 @@ bin-clean:
 #-------------------------------------------
 #		Shader Compilation
 #-------------------------------------------
-SHADER_COMPILER = shader_compiler
+SHADER_COMPILER = ../shader_compiler/shader_compiler.exe
 SHADER_SOURCES = $(wildcard ./resource/shaders/*.glsl)
 SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
 
