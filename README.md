@@ -1,7 +1,7 @@
 # VulkanRenderer
 3D renderer built on Vulkan API <br>
 
-### Tested with
+### Tested on
 1. Windows 11 64 bit
 2. Windows 10 64 bit
 3. Nvidia GeForce GTX 1650 4 GB (VRAM) Discrete Mobile GPU + 8 GB of Main Memory (RAM)
