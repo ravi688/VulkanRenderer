@@ -1,11 +1,23 @@
 # VulkanRenderer
 3D renderer built on Vulkan API <br>
-Currently, it is tested only on **Windows**.
+
+### Tested with
+1. Windows 11 64 bit
+2. Windows 10 64 bit
+3. Nvidia GeForce GTX 1650 4 GB (VRAM) Discrete Mobile GPU + 8 GB of Main Memory (RAM)
+4. AMD Radeon(TM) Graphics 512 MB (VRAM) Integratred Mobile GPU + 8 GB of Main Memory (RAM)
+5. AMD Vega 8 Graphics 512 MB (VRAM) Integrated Mobile GPU  + 12 GB of Main Memory (RAM)
 
 ### Requirements for building (MinGW64 and Git)
-1. GCC 11.2.0 (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running `gcc --version`.
-2. GNU Make 4.3, you can check if it is already installed, though it already comes with mingw64 binutils package, by running `mingw32-make --version`. As of now you have to rename `mingw32-make` to `make`.
-4. Git 2.33.1.windows.1, git should be installed in your machine, you can check if it is already installed by running `git --version`.
+1. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running `gcc --version`.
+2. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running `mingw32-make --version`. As of now you have to rename `mingw32-make` to `make`.
+4. **Git 2.33.1.windows.1**, git should be installed in your machine, you can check if it is already installed by running `git --version`.
+
+### Runtime requirements
+1. Windows 64 bit
+2. Gpu supporting vulkan api (integrated or discrete)
+3. Main memory (RAM) - No data as of now
+4. Disk space - No data as of now
 
 ### Building
 1. run `git clone https://github.com/ravi688/VulkanRenderer.git`
