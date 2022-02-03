@@ -26,7 +26,7 @@ git --version
 
 ### Runtime requirements
 1. Windows 64 bit
-2. Gpu supporting vulkan api (integrated or discrete)
+2. GPU supporting vulkan api (integrated or discrete)
 3. Main memory (RAM) - No data as of now
 4. Disk space - No data as of now
 5. Better to have Vulkan LunarG SDK installed for additional debugging and vulkan configuration (validation layers), but it is not a requirement because the static library and headers are already included in the repository and would be updated as new updates will come in future.
