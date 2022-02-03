@@ -23,8 +23,8 @@ Currently, it is tested only on **Windows**.
 
 ### Cleaning everything
 1. change the working directory to `VulkanRenderer/testbed`
-2. run 'make -s -i clean'
-3. run 'make shader-clean'
+2. run `make -s -i clean`
+3. run `make shader-clean`
 
 
 ### Where to go for examples?
