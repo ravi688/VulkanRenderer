@@ -164,7 +164,7 @@ texture_release_resources(normal_map);
 ```
 
 #### Cube map Textures
-Supported file formats are: 'Windows BMP'
+Supported file formats are: `Windows BMP`
 
 ```C
 // load the 6 textures for each face and create required vulkan objects
