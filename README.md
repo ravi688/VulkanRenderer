@@ -153,7 +153,7 @@ texture_t* normal_map = texture_load(renderer, TEXTURE_TYPE_NORMAL, "resource/te
 
 // use the texture somewhere, 
 // i.e. material_set_texture(some_material, "albedo", texture);
-// samplerCube should be used in the shader
+// sampler2D should be used in the shader
 
 // destroy vulkan objects
 texture_destroy(texture);
