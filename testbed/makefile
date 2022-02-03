@@ -189,7 +189,10 @@ SHADER_COMPILER = ../shader_compiler/shader_compiler.exe
 SHADER_SOURCES = $(wildcard ./resource/shaders/*.glsl)
 SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
 
-%.sb: %.glsl
+$(SHADER_COMPILER):
+	make --directory=../shader_compiler debug
+
+%.sb: %.glsl $(SHADER_COMPILER)
 	$(SHADER_COMPILER) $< $@
 
 .PHONY: shader
@@ -212,7 +215,7 @@ clean: bin-clean
 .PHONY: build-run
 .PHONY: run
 
-build:
+build: shader
 	$(MAKE) --directory=.. lib-static-debug
 	$(MAKE) debug
 
