@@ -163,7 +163,7 @@ texture_release_resources(texture);
 texture_release_resources(normal_map);
 ```
 
-### CubeMap Textures
+#### Cube map Textures
 Supported file formats are: 'Windows BMP'
 
 ```C
