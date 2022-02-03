@@ -19,7 +19,7 @@
 3. Main memory (RAM) - No data as of now
 4. Disk space - No data as of now
 
-### Building
+### Build steps
 1. run `git clone https://github.com/ravi688/VulkanRenderer.git`
 1. change the working directory to `VulkanRenderer`
 2. run `make -s setup` this will clone all the dependency submodules
