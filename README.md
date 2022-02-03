@@ -4,8 +4,8 @@ Currently, it is tested only on **Windows**.
 
 ### Requirements for building (MinGW64 and Git)
 1. GCC 11.2.0 (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running `gcc --version`.
-2. GNU Make 4.3, you can check if it is already installed, though it already comes with mingw64 binutils package, by running `mingw32-make --version`.
-3. Git 2.33.1.windows.1, git should be installed in your machine, you can check if it is already installed by running `git --version`.
+2. GNU Make 4.3, you can check if it is already installed, though it already comes with mingw64 binutils package, by running `mingw32-make --version`. As of now you have to rename `mingw32-make` to `make`.
+4. Git 2.33.1.windows.1, git should be installed in your machine, you can check if it is already installed by running `git --version`.
 
 ### Building
 1. run `git clone https://github.com/ravi688/VulkanRenderer.git`
