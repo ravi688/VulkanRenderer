@@ -190,7 +190,7 @@ SHADER_SOURCES = $(wildcard ./resource/shaders/*.glsl)
 SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
 
 $(SHADER_COMPILER):
-	make --directory=../shader_compiler debug
+	$(MAKE) --directory=../shader_compiler debug
 
 %.sb: %.glsl $(SHADER_COMPILER)
 	$(SHADER_COMPILER) $< $@
