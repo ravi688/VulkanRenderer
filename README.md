@@ -24,8 +24,7 @@
    ```
    mingw32-make --version
    ```
-3. As of now you have to rename `mingw32-make` to `make` on Windows.
-4. **Git 2.33.1.windows.1**, git must be installed in your machine, you can check if it is already installed by running <br>
+3. **Git 2.33.1.windows.1**, git must be installed in your machine, you can check if it is already installed by running <br>
    
    ```
    git --version
@@ -50,13 +49,13 @@
    
    ```
    cd VulkanRenderer
-   make -s setup
+   mingw32-make -s setup
    ```
 3. Change the working directory to `VulkanRenderer/testbed` and start building by running the following command
    
    ```
    cd testbed
-   make -s run
+   mingw32-make -s run
    ```
 
 ### Building shaders manually (Optional)
@@ -65,13 +64,13 @@
    
    ```
    cd shader_compiler
-   make -s debug
+   mingw32-make -s debug
    ```
 2. Change the working directory to `VulkanRenderer/testbed` and build the shaders `.glsl to .sb` by running the following command
    
    ```
    cd testbed
-   make -s shader
+   mingw32-make -s shader
    ```
 
 ### Building executable manually (Optional)
@@ -79,7 +78,7 @@
 1. Change the working directory to `VulkanRenderer/testbed` and build the `main.exe` executable by running the following command
    
    ```
-   make -s debug
+   mingw32-make -s debug
    ```
 2. Now run the `main.exe` executable by running the following command
    
@@ -93,7 +92,7 @@
    
    ```
    cd testbed
-   make -i -s shader-clean
+   mingw32-make -i -s shader-clean
    ```
 
 ### Cleaning everything else (Optional)
@@ -102,7 +101,7 @@
    
    ```
    cd testbed
-   make -i -s clean
+   mingw32-make -i -s clean
    ```
 
 ### Where to go for examples?
