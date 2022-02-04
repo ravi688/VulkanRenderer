@@ -111,29 +111,30 @@ int main(int argc, char** argv)
 	text_mesh_string_set_scaleH(game_ui, score_text, vec3(float)(0.8f, 0.8f, 0.8f));
 
 	/*--------PLAYGROUND----------------------*/
-	mesh3d_t* box_mesh3d = mesh3d_load("resource/Rock/Rock.obj");
-	mesh3d_make_centroid_origin(box_mesh3d);
-	mesh3d_calculate_tangents(box_mesh3d);
-	mesh_t* box = mesh_create(renderer, box_mesh3d);
-	shader_t* box_shader = shader_load(renderer, "resource/shaders/bump_shader.sb");
+	mesh3d_t* rock_mesh3d = mesh3d_load("resource/Rock/Rock.obj");
+	mesh3d_make_centroid_origin(rock_mesh3d);
+	mesh3d_calculate_tangents(rock_mesh3d);
+	mesh_t* rock = mesh_create(renderer, rock_mesh3d);
+	mesh3d_destroy(rock_mesh3d);
+	shader_t* rock_shader = shader_load(renderer, "resource/shaders/bump_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); // position
 	per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); // normal
 	per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC2, 2); // texture coordinates
 	per_vertex_attributes[3] = MATERIAL_ALIGN(MATERIAL_VEC3, 3); // tangent
-	material_create_info_t box_material_info = 
+	material_create_info_t rock_material_info = 
 	{
 		.per_vertex_attribute_binding_count = 4,
 		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
-		.shader = box_shader
+		.shader = rock_shader
 	};
-	material_t* box_material = material_create(renderer, &box_material_info);
-	texture_t* box_textures[] = 
+	material_t* rock_material = material_create(renderer, &rock_material_info);
+	texture_t* rock_textures[] = 
 	{ 
 		texture_load(renderer, TEXTURE_TYPE_ALBEDO, "resource/Rock/albedo.bmp"),
 		texture_load(renderer, TEXTURE_TYPE_NORMAL, "resource/Rock/normal.bmp")
 	};
-	material_set_texture(box_material, "albedo", box_textures[0]);
-	material_set_texture(box_material, "normal_map", box_textures[1]);
+	material_set_texture(rock_material, "albedo", rock_textures[0]);
+	material_set_texture(rock_material, "normal_map", rock_textures[1]);
 	/*---------------------------------------*/
 
 	/*----------- CUBEMAP - SKYBOX ----------------------*/
@@ -147,6 +148,8 @@ int main(int argc, char** argv)
 	mesh3d_t* skybox_mesh3d = mesh3d_cube(5);
 	mesh3d_flip_triangles(skybox_mesh3d);
 	mesh_t* skybox = mesh_create(renderer, skybox_mesh3d);
+	mesh3d_destroy(skybox_mesh3d);
+
 	shader_t* skybox_shader = shader_load(renderer, "resource/shaders/skybox_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); 	// position
 	material_create_info_t skybox_material_info = 
@@ -162,6 +165,7 @@ int main(int argc, char** argv)
 	/*----------- QUAD ----------------------*/
 	mesh3d_t* quad_mesh3d = mesh3d_plane(0.6f);
 	mesh_t* quad = mesh_create(renderer, quad_mesh3d);
+	mesh3d_destroy(quad_mesh3d);
 	shader_t* quad_shader = shader_load(renderer, "resource/shaders/transparent_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); //position
 	material_create_info_t quad_material_info =
@@ -187,27 +191,27 @@ int main(int argc, char** argv)
 		material_set_float(text_material, "ubo.time", game_time);
 		material_set_float(game_ui_material, "ubo.time", game_time);
 
-		material_set_vec3(box_material, "light.color", vec3(float)(1, 1, 1));
-		material_set_vec3(box_material, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 3)));
-		material_set_float(box_material, "light.intensity", 4.0f);
+		material_set_vec3(rock_material, "light.color", vec3(float)(1, 1, 1));
+		material_set_vec3(rock_material, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 3)));
+		material_set_float(rock_material, "light.intensity", 4.0f);
 
 		// vec4_t(float) eye_dir = mat4_mul_vec4(float)(camera_transform, 1, 0, 0, 0);
-		// material_set_vec3(box_material, "misc.eye_dir", vec3_normalize(float)(vec3(float)(eye_dir.x, eye_dir.y, eye_dir.z)));
+		// material_set_vec3(rock_material, "misc.eye_dir", vec3_normalize(float)(vec3(float)(eye_dir.x, eye_dir.y, eye_dir.z)));
 
-		// material_set_vec3(box_material, "properties.specular_color", vec3(float)(1, 1, 1));
-		// material_set_float(box_material, "properties.specularity", 2);
+		// material_set_vec3(rock_material, "properties.specular_color", vec3(float)(1, 1, 1));
+		// material_set_float(rock_material, "properties.specularity", 2);
 
 		renderer_begin_frame(renderer, 0.01f, 0.1f, 0.2f, 0.4f);
 
-		material_bind(box_material, renderer);
+		material_bind(rock_material);
 		mat4_t(float) model_matrix;
 		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_rotation(float)(0, 0 * DEG2RAD, 0), mat4_scale(float)(2.2, 2.2, 2.2)));
 		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
-		material_set_push_mat4(box_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
-		material_set_push_mat4(box_material, "push.model_matrix", mat4_transpose(float)(model_matrix));
-		mesh_draw_indexed(box, renderer);
+		material_set_push_mat4(rock_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
+		material_set_push_mat4(rock_material, "push.model_matrix", mat4_transpose(float)(model_matrix));
+		mesh_draw_indexed(rock);
 
-		material_bind(skybox_material, renderer);
+		material_bind(skybox_material);
 
 		mat4_t(float) skybox_matrix = view_matrix;
 		// skybox should remain at origin, so set the last column of the view_matrix to zero
@@ -218,28 +222,28 @@ int main(int argc, char** argv)
 		elements[3][3] = 1;
 		mat4_move(float)(&mvp, mat4_mul(float)(3, clip_matrix, projection_matrix, skybox_matrix));
 		material_set_push_mat4(skybox_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
-		mesh_draw_indexed(skybox, renderer);
+		mesh_draw_indexed(skybox);
 
-		material_bind(quad_material, renderer);
+		material_bind(quad_material);
 		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
 		mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
 		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
 		material_set_push_mat4(quad_material, "push.mvp_matrix", mvp);
-		mesh_draw_indexed(quad, renderer);
+		mesh_draw_indexed(quad);
 
-		material_bind(text_material, renderer);
+		material_bind(text_material);
 		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
 		mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_scale(float)(0, 50, 50));
 		material_set_push_mat4(text_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
 		text_mesh_draw(text_mesh);
 
 
-		material_bind(game_ui_material, renderer);
+		material_bind(game_ui_material);
 		mat4_move(float)(&_model_matrix, mat4_mul(float)(2, mat4_scale(float)(50, 50, 50), mat4_identity(float)()));
 		material_set_push_mat4(game_ui_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
 		text_mesh_draw(game_ui);
-		// mesh_draw_indexed(glyph_A, renderer);
-		// mesh_draw_indexed(glyph_B, renderer);
+		// mesh_draw_indexed(glyph_A);
+		// mesh_draw_indexed(glyph_B);
 
 		renderer_end_frame(renderer);
 
@@ -267,56 +271,62 @@ int main(int argc, char** argv)
 		++frame_count;
 	}
 
-
-	glyph_mesh_pool_destroy(pool);
-	glyph_mesh_pool_release_resources(pool);
-
-	text_mesh_destroy(game_ui);
-	text_mesh_release_resources(game_ui);
-
-	shader_destroy(game_ui_shader, renderer);
-	shader_release_resources(game_ui_shader);
-	material_destroy(game_ui_material, renderer);
-	material_release_resources(game_ui_material);
-
+	// destroy fonts
 	font_destroy(font);
-	font_release_resources(font);
+
+	// destroy meshes
+	glyph_mesh_pool_destroy(pool);
+	text_mesh_destroy(game_ui);
 	text_mesh_destroy(text_mesh);
-	text_mesh_release_resources(text_mesh);
-	shader_destroy(text_shader, renderer);
-	shader_release_resources(text_shader);
-	material_destroy(text_material, renderer);
-	material_release_resources(text_material);
+	mesh_destroy(rock);
+	mesh_destroy(quad);
+	mesh_destroy(skybox);
 
-	mesh_destroy(box, renderer);
-	mesh_release_resources(box);
-	mesh3d_destroy(box_mesh3d);
-	shader_destroy(box_shader, renderer);
-	shader_release_resources(box_shader);
-	material_destroy(box_material, renderer);
-	material_release_resources(box_material);
-	for(int i = 0; i < 2; i++)
-	{
-		texture_destroy(box_textures[i]);
-		texture_release_resources(box_textures[i]);
-	}
+	// destroy shaders
+	shader_destroy(text_shader);
+	shader_destroy(game_ui_shader);
+	shader_destroy(rock_shader);
+	shader_destroy(quad_shader);
+	shader_destroy(skybox_shader);
 
-	mesh_destroy(quad, renderer);
-	mesh_release_resources(quad);
-	mesh3d_destroy(quad_mesh3d);
-	shader_destroy(quad_shader, renderer);
-	shader_release_resources(quad_shader);
-	material_destroy(quad_material, renderer);
-	material_release_resources(quad_material);
+	// destroy materials
+	material_destroy(game_ui_material);
+	material_destroy(text_material);
+	material_destroy(rock_material);
+	material_destroy(quad_material);
+	material_destroy(skybox_material);
 
-	mesh3d_destroy(skybox_mesh3d);
-	mesh_destroy(skybox, renderer);
-	mesh_release_resources(skybox);
-	shader_destroy(skybox_shader, renderer);
-	shader_release_resources(skybox_shader);
-	material_destroy(skybox_material, renderer);
-	material_release_resources(skybox_material);
+	// destroy textures
 	texture_destroy(skybox_texture);
+	for(int i = 0; i < 2; i++)
+		texture_destroy(rock_textures[i]);
+
+
+	// release resources (extra heap allocated memory)
+	
+	font_release_resources(font);
+
+	glyph_mesh_pool_release_resources(pool);
+	text_mesh_release_resources(game_ui);
+	text_mesh_release_resources(text_mesh);
+	mesh_release_resources(rock);
+	mesh_release_resources(quad);
+	mesh_release_resources(skybox);
+	
+	shader_release_resources(text_shader);
+	shader_release_resources(game_ui_shader);
+	shader_release_resources(rock_shader);
+	shader_release_resources(quad_shader);
+	shader_release_resources(skybox_shader);
+	
+	material_release_resources(text_material);
+	material_release_resources(game_ui_material);
+	material_release_resources(rock_material);
+	material_release_resources(quad_material);
+	material_release_resources(skybox_material);
+
+	for(int i = 0; i < 2; i++)
+		texture_release_resources(rock_textures[i]);
 	texture_release_resources(skybox_texture);
 
 	renderer_terminate(renderer);

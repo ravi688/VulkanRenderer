@@ -23,15 +23,17 @@ void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer)
 {
 	check_pre_condition(instance_buffer);
 	if(instance_buffer->has_device_buffer)
-		vulkan_buffer_destroy(&instance_buffer->device_buffer, instance_buffer->renderer);
+		vulkan_buffer_destroy(&instance_buffer->device_buffer);
 	multi_buffer_clear(&instance_buffer->host_buffer);
 }
 
 void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer)
 {
 	check_pre_condition(instance_buffer);
-	if(instance_buffer->has_device_buffer)
-		vulkan_buffer_release_resources(&instance_buffer->device_buffer);
+
+	// not need to call _release_resources for instance_buffer->device_buffer because it is already inlined inside vulkan_instance_buffer_t object
+	// if(instance_buffer->has_device_buffer)
+	// 	vulkan_buffer_release_resources(&instance_buffer->device_buffer);
 	multi_buffer_free(&instance_buffer->host_buffer);
 }
 
@@ -64,7 +66,7 @@ bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer)
 	if(count > device_buffer->count)
 	{
 		if(instance_buffer->has_device_buffer)
-			vulkan_buffer_destroy(device_buffer, instance_buffer->renderer);
+			vulkan_buffer_destroy(device_buffer);
 		vulkan_buffer_create_info_t create_info = 
 		{
 			.stride = buf_get_element_size(&host_buffer->buffer),
@@ -84,7 +86,7 @@ bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer)
 	if(device_buffer->count == 0) return false;
 	
 	// copy the elements from all the sub buffers to the device buffer contiguously (no gaps, as there could be due to capacities of the sub buffers)
-	void* ptr = vulkan_buffer_map(device_buffer, instance_buffer->renderer);
+	void* ptr = vulkan_buffer_map(device_buffer);
 	for(u32 i = 0; i < sub_buffer_count; i++)
 	{
 		u32 num_bytes = sub_buffer_get_count(host_buffer, i) * device_buffer->stride;
@@ -92,7 +94,7 @@ bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer)
 		memcpy(ptr, sub_buffer_get_ptr(host_buffer, i), num_bytes);
 		ptr += num_bytes;
 	}
-	vulkan_buffer_unmap(device_buffer, instance_buffer->renderer);
+	vulkan_buffer_unmap(device_buffer);
 	return true;
 }
 

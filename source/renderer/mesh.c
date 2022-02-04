@@ -56,9 +56,9 @@ void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mes
 	stack_free(vertex_buffer_infos);
 }
 
-void mesh_destroy(mesh_t* mesh, renderer_t* renderer)
+void mesh_destroy(mesh_t* mesh)
 {
-	vulkan_mesh_destroy(mesh, renderer);
+	vulkan_mesh_destroy(mesh);
 }
 
 void mesh_release_resources(mesh_t* mesh)
@@ -66,29 +66,23 @@ void mesh_release_resources(mesh_t* mesh)
 	vulkan_mesh_release_resources(mesh);
 }
 
-void mesh_sync(mesh_t* mesh, renderer_t* renderer, mesh3d_t* mesh_data)
+void mesh_draw(mesh_t* mesh)
 {
-	assert(mesh != NULL);
-	// vulkan_mesh_sync(mesh, renderer, &mesh_info);
+	vulkan_mesh_draw(mesh);
 }
 
-void mesh_draw(mesh_t* mesh, renderer_t* renderer)
+void mesh_draw_indexed(mesh_t* mesh)
 {
-	vulkan_mesh_draw(mesh, renderer);
+	vulkan_mesh_draw_indexed(mesh);
 }
 
-void mesh_draw_indexed(mesh_t* mesh, renderer_t* renderer)
+void mesh_draw_instanced(mesh_t* mesh, uint32_t instance_count)
 {
-	vulkan_mesh_draw_indexed(mesh, renderer);
+	vulkan_mesh_draw_instanced(mesh, instance_count);
 }
-
-void mesh_draw_instanced(mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
+void mesh_draw_indexed_instanced(mesh_t* mesh, uint32_t instance_count)
 {
-	vulkan_mesh_draw_instanced(mesh, renderer, instance_count);
-}
-void mesh_draw_indexed_instanced(mesh_t* mesh, renderer_t* renderer, uint32_t instance_count)
-{
-	vulkan_mesh_draw_indexed_instanced(mesh, renderer, instance_count);
+	vulkan_mesh_draw_indexed_instanced(mesh, instance_count);
 }
 
 
