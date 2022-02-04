@@ -75,7 +75,7 @@ void text_mesh_destroy(text_mesh_t* text_mesh)
 	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
 	BUFFER* strings = &text_mesh->strings;
 	for(buf_ucount_t i = 0; i < dictionary_get_count(instance_buffers); i++)
-		vulkan_buffer_destroy(&((vulkan_instance_buffer_t*)dictionary_get_value_ptr_at(instance_buffers, i))->device_buffer, text_mesh->renderer);
+		vulkan_instance_buffer_destroy(dictionary_get_value_ptr_at(instance_buffers, i));
 	for(buf_ucount_t i = 0; i < buf_get_element_count(strings); i++)
 		dictionary_clear(&((text_mesh_string_t*)buf_get_ptr_at(strings, i))->glyph_sub_buffer_handles);
 	buf_clear(strings, NULL);
@@ -84,12 +84,14 @@ void text_mesh_destroy(text_mesh_t* text_mesh)
 void text_mesh_release_resources(text_mesh_t* text_mesh)
 {
 	check_pre_condition(text_mesh);
-	dictionary_t* dic = &text_mesh->instance_buffers;
+	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
 	BUFFER* strings = &text_mesh->strings;
+	for(buf_ucount_t i = 0; i < dictionary_get_count(instance_buffers); i++)
+		vulkan_instance_buffer_release_resources(dictionary_get_value_ptr_at(instance_buffers, i));
 	for(buf_ucount_t i = 0; i < buf_get_element_count(strings); i++)
 		dictionary_free(&((text_mesh_string_t*)buf_get_ptr_at(strings, i))->glyph_sub_buffer_handles);
 	buf_free(strings);
-	dictionary_free(dic);
+	dictionary_free(instance_buffers);
 	heap_free(text_mesh);
 }
 

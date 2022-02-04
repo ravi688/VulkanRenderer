@@ -74,10 +74,10 @@ void vulkan_mesh_destroy(vulkan_mesh_t* mesh, renderer_t* renderer)
 {
 	assert(mesh != NULL);
 	for(uint32_t i = 0; i < mesh->vertex_buffers.element_count; i++)
-		vulkan_buffer_destroy((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i), renderer);
+		vulkan_buffer_destroy((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i));
 	buf_clear(&mesh->vertex_buffers, NULL);
 	if(mesh->index_buffer != NULL)
-		vulkan_buffer_destroy(refp(vulkan_buffer_t, mesh->index_buffer, 0), renderer);
+		vulkan_buffer_destroy(refp(vulkan_buffer_t, mesh->index_buffer, 0));
 	mesh->binding_index = 0;
 }
 

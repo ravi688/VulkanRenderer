@@ -265,7 +265,7 @@ void material_destroy(material_t* material, renderer_t* renderer)
 	{
 		if(material->uniform_resources[i].descriptor_index == 0xFFFF)
 			continue;
-		vulkan_buffer_destroy(&material->uniform_resources[i].buffer, renderer);
+		vulkan_buffer_destroy(&material->uniform_resources[i].buffer);
 	}
 }
 
@@ -807,14 +807,14 @@ static void unmap_descriptor(material_t* material, material_field_handle_t handl
 	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.descriptor_index].buffer);
 	struct_descriptor_t* descriptor = &(material->handle->shader->descriptors[handle.descriptor_index].handle);
 	struct_descriptor_unmap(descriptor);
-	vulkan_buffer_unmap(buffer, material->handle->renderer);
+	vulkan_buffer_unmap(buffer);
 }
 
 static struct_descriptor_t* map_descriptor(material_t* material, material_field_handle_t handle)
 {
 	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.descriptor_index].buffer);
 	struct_descriptor_t* descriptor = &(material->handle->shader->descriptors[handle.descriptor_index].handle);
-	struct_descriptor_map(descriptor, vulkan_buffer_map(buffer, material->handle->renderer));
+	struct_descriptor_map(descriptor, vulkan_buffer_map(buffer));
 	return descriptor;
 }
 

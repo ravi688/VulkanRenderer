@@ -18,6 +18,7 @@ typedef struct vulkan_buffer_create_info_t
 
 typedef struct vulkan_buffer_t
 {
+	renderer_t* renderer;
 	VkBuffer handle;
 	VkDeviceMemory memory;
 	uint32_t size;
@@ -29,9 +30,9 @@ void vulkan_buffer_init(vulkan_buffer_t* buffer);
 vulkan_buffer_t* vulkan_buffer_new();
 vulkan_buffer_t* vulkan_buffer_create(renderer_t* renderer, vulkan_buffer_create_info_t* create_info);
 void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer);
-void vulkan_buffer_destroy(vulkan_buffer_t* buffer, renderer_t* renderer);
+void vulkan_buffer_destroy(vulkan_buffer_t* buffer);
 void vulkan_buffer_release_resources(vulkan_buffer_t* buffer);
 
-void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, renderer_t* renderer, u32 buffer_offset, void* data, u32 data_size);
-void* vulkan_buffer_map(vulkan_buffer_t* buffer, renderer_t* renderer);
-void vulkan_buffer_unmap(vulkan_buffer_t* buffer, renderer_t* renderer);
+void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* data, u32 data_size);
+void* vulkan_buffer_map(vulkan_buffer_t* buffer);
+void vulkan_buffer_unmap(vulkan_buffer_t* buffer);
