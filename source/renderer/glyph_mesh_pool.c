@@ -50,7 +50,7 @@ void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool)
 	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
 	{
 		glyph_mesh_t* ptr = dictionary_get_value_ptr_at(&pool->glyph_meshes, i);
-		mesh_destroy(ptr->mesh, pool->renderer);
+		mesh_destroy(ptr->mesh);
 		mesh3d_destroy(ptr->mesh3d);
 	}
 }

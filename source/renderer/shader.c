@@ -12,9 +12,9 @@ shader_t* shader_load_and_create(renderer_t* renderer, const char* file_path)
 	return vulkan_shader_load_and_create(renderer, file_path);
 }
 
-void shader_destroy(shader_t* shader, renderer_t* renderer)
+void shader_destroy(shader_t* shader)
 {
-	vulkan_shader_destroy(shader, renderer);
+	vulkan_shader_destroy(shader);
 }
 
 void shader_release_resources(shader_t* shader)

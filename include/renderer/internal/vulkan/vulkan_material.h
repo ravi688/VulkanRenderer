@@ -40,12 +40,14 @@ typedef struct vulkan_material_t
 	vulkan_graphics_pipeline_t* graphics_pipeline;
 } vulkan_material_t;
 
+// constructors and destructors
 vulkan_material_t* vulkan_material_new();
 vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_create_info_t* create_info);
 void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_create_info_t* create_info, vulkan_material_t* material);
-void vulkan_material_destroy(vulkan_material_t* material, renderer_t* renderer);
+void vulkan_material_destroy(vulkan_material_t* material);
 void vulkan_material_release_resources(vulkan_material_t* material);
-void vulkan_material_bind(vulkan_material_t* material, renderer_t* renderer);
-void vulkan_material_push_constants(vulkan_material_t* material, renderer_t* renderer, void* bytes);
-void vulkan_material_set_texture(vulkan_material_t* material, renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture);
-void vulkan_material_set_uniform_buffer(vulkan_material_t* material, renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer);
+
+void vulkan_material_bind(vulkan_material_t* material);
+void vulkan_material_push_constants(vulkan_material_t* material, void* bytes);
+void vulkan_material_set_texture(vulkan_material_t* material, u32 binding_index, vulkan_texture_t* texture);
+void vulkan_material_set_uniform_buffer(vulkan_material_t* material, u32 binding_index, vulkan_buffer_t* buffer);

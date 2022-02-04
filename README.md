@@ -1,8 +1,11 @@
 ![](VulkanRendererLogo.png)
+
 ## Summary
+
 **Vulkan 3D renderer** is built on Vulkan API <br>
 
 ### Tested on
+
 1. Windows 11 64 bit
 2. Windows 10 64 bit
 3. Nvidia GeForce GTX 1650 4 GB (VRAM) Discrete Mobile GPU + 8 GB of Main Memory (RAM)
@@ -10,21 +13,26 @@
 5. AMD Vega 8 Graphics 512 MB (VRAM) Integrated Mobile GPU  + 12 GB of Main Memory (RAM)
 
 ### Requirements for building (MinGW64 and Git)
+
 1. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
-```
-gcc --version
-```
+   
+   ```
+   gcc --version
+   ```
 2. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
-```
-mingw32-make --version
-``` 
+   
+   ```
+   mingw32-make --version
+   ```
 3. As of now you have to rename `mingw32-make` to `make` on Windows.
 4. **Git 2.33.1.windows.1**, git must be installed in your machine, you can check if it is already installed by running <br>
-```
-git --version
-```
+   
+   ```
+   git --version
+   ```
 
 ### Runtime requirements
+
 1. Windows 64 bit
 2. GPU supporting vulkan api (integrated or discrete)
 3. Main memory (RAM) - No data as of now
@@ -32,82 +40,99 @@ git --version
 5. Better to have Vulkan LunarG SDK installed for additional debugging and vulkan configuration (validation layers), but it is not a requirement because the static library and headers are already included in the repository and would be updated as new updates will come in future.
 
 ### Building steps
+
 1. Clone the repository by running the following command <br>
-```
-git clone https://github.com/ravi688/VulkanRenderer.git
-```
-3. Change the working directory to `VulkanRenderer` and setup all the dependency git submodules by running the following command
-```
-cd VulkanRenderer
-make -s setup
-```
-4. Change the working directory to `VulkanRenderer/testbed` and start building by running the following command
-```
-cd testbed
-make -s run
-```
+   
+   ```
+   git clone https://github.com/ravi688/VulkanRenderer.git
+   ```
+2. Change the working directory to `VulkanRenderer` and setup all the dependency git submodules by running the following command
+   
+   ```
+   cd VulkanRenderer
+   make -s setup
+   ```
+3. Change the working directory to `VulkanRenderer/testbed` and start building by running the following command
+   
+   ```
+   cd testbed
+   make -s run
+   ```
 
 ### Building shaders manually (Optional)
+
 1. Change the working directory to `VulkanRenderer/shader_compiler` and build the `shader_compiler.exe` executable by running the following command
-```
-cd shader_compiler
-make -s debug
-```
-4. Change the working directory to `VulkanRenderer/testbed` and build the shaders `.glsl to .sb` by running the following command
-```
-cd testbed
-make -s shader
-```
+   
+   ```
+   cd shader_compiler
+   make -s debug
+   ```
+2. Change the working directory to `VulkanRenderer/testbed` and build the shaders `.glsl to .sb` by running the following command
+   
+   ```
+   cd testbed
+   make -s shader
+   ```
 
 ### Building executable manually (Optional)
+
 1. Change the working directory to `VulkanRenderer/testbed` and build the `main.exe` executable by running the following command
-```
-make -s debug
-```
+   
+   ```
+   make -s debug
+   ```
 2. Now run the `main.exe` executable by running the following command
-```
-main.exe
-```
+   
+   ```
+   main.exe
+   ```
 
 ### Cleaning shaders (Optional)
+
 1. Change the working directory to `VulkanRenderer/testbed` and clean the shaders `.sb files` by running the folliwng command
-```
-cd testbed
-make -i -s shader-clean
-```
+   
+   ```
+   cd testbed
+   make -i -s shader-clean
+   ```
 
 ### Cleaning everything else (Optional)
-1. Change the working directory to `VulkanRenderer/testbed` and run the following command
-```
-cd testbed
-make -i -s clean
-```
 
+1. Change the working directory to `VulkanRenderer/testbed` and run the following command
+   
+   ```
+   cd testbed
+   make -i -s clean
+   ```
 
 ### Where to go for examples?
+
 You can check `VulkanRenderer/testbed` directory.
 
 ## Features
 
 ### Shader Binary
+
 `Shader defintion` (`example_shader.glsl`) source files are first compiled into a `Shader Binary` files (`example_shader.sb`) by `shader_compiler.exe` executable.
 After the compilation, the shader binary files consumed as follows:
-```C 
 
+```C
 shader_t* example_shader = shader_load(renderer, "resource/shaders/example_shader.sb");
 
 // use the shader
 
-shader_destroy(renderer, example_shader); // destroys the vulkan objects
+shader_destroy(example_shader); // destroys the vulkan objects
 shader_release_resources(example_shader); // releases some extra heap allocated memory
 ```
 
 ### Shader defintiion
 
 #### Sections
+
 Shader definition has been devided into 3 sections: `SETTINGS` `LAYOUT` `SHADER`. <br>
 `SHADER` section is devided into stages: `vertex` `tessellation` `geometry` `fragment`. <br>
 Currently `tessellation` and `geometry` are not supported.
+
 ```GLSL
 #section SETTINGS       // optional, to be added. As of now it is always ignored.
 
@@ -119,18 +144,20 @@ Currently `tessellation` and `geometry` are not supported.
 
 #section SHADER         // mandatory
 
-#stage vertex 			// mendatory for now
+#stage vertex             // mendatory for now
 
 // GLSL vertex shader
 
-#stage fragment 		// mendatory for now
+#stage fragment         // mendatory for now
 
 // GLSL fragment shader
 ```
 
 #### Push Constants
+
    Each block represents a push constant range having an offset and the size would automatically be calculated.
    Numerical value in the square brackets after `[push_constant]` represents the offset of the push constant range in the supported buffer size by the GPU.
+
 ```GLSL
 vertex fragment [push_constant] [0] uniform Push
 {
@@ -138,6 +165,7 @@ vertex fragment [push_constant] [0] uniform Push
     mat4 model_matrix;
 } push;
 ```
+
 ```GLSL
 vertex [push_constant] [0] uniform Push
 {
@@ -151,7 +179,9 @@ fragment [push_constant] [64] uniform Push
 ```
 
 #### Descriptor Sets
+
    First value in the square brackets represents the descriptor set number and the second value represents the binding number.
+
 ```GLSL
 fragment [0, 0] uniform Light
 {
@@ -177,13 +207,14 @@ fragment vertex [0, 2] uniform Sphere
 fragment [0, 3] uniform sampler2D albedo;
 fragment [0, 4] uniform sampler2D normal_map;
 fragment [0, 5] uniform samplerCube skybox;
-
 ```
 
 ### 3D Mesh loading
+
 Supported file formats are `ASCII STL` `Binary STL` `ASCII OBJ` <br>
 STL files could be ASCII or Binary, it is automatically detected when we load the file.
 As of now only polygonal 3d models are supported, no curves and surfaces as it could be in the OBJ files.
+
 ```C
 // load stl file, it automatically detects ASCII and Binary stl files.
 mesh3d_t* sphere = mesh3d_load("resources/Sphere.stl"); 
@@ -202,15 +233,17 @@ mesh3d_destroy(monkey);       // destroy and release memory
 // no mesh3d_release_resources kind of function because mesh3d_t object isn't related to vulkan at all. 
 // mesh3d is just a data structure to store 3d meshes.
 
-mesh_destroy(sphere_mesh, renderer); // destroy vulkan objects
+mesh_destroy(sphere_mesh); // destroy vulkan objects
 mesh_release_resources(sphere_mesh); // release heap memory
 
-mesh_destroy(monkey_mesh, renderer); // destroy vulkan objects
+mesh_destroy(monkey_mesh); // destroy vulkan objects
 mesh_release_resources(moneky_mesh); // release heap memory
 ```
 
 ### Textures
+
 #### 2D Textures
+
 Supported file formats are: `Windows BMP`
 
 ```C
@@ -231,6 +264,7 @@ texture_release_resources(normal_map);
 ```
 
 #### Cube map Textures
+
 Supported file formats are: `Windows BMP`
 
 ```C
@@ -253,7 +287,6 @@ texture_destroy(skybox_texture);
 // release heap allocated memory
 texture_release_resources(skybox_texture);
 ```
-
 
 ### Materials
 
@@ -281,9 +314,9 @@ per_vertex_attributes[3] = MATERIAL_ALIGN(MATERIAL_VEC3, 3); // vertex buffore f
 // prepare the material create info
 material_create_info_t box_material_info = 
 {
-	.per_vertex_attribute_binding_count = 4,     // we want four separate vertex buffers, not interleaved
-	.per_vertex_attribute_bindings = &per_vertex_attributes[0],
-	.shader = box_shader, 
+    .per_vertex_attribute_binding_count = 4,     // we want four separate vertex buffers, not interleaved
+    .per_vertex_attribute_bindings = &per_vertex_attributes[0],
+    .shader = box_shader, 
    .is_transparent = false    // optional
 };
 
@@ -293,8 +326,8 @@ material_t* box_material = material_create(renderer, &box_material_info);
 // load the required textures
 texture_t* box_textures[] = 
 { 
-	texture_load(renderer, "resource/textures/white.bmp"),
-	texture_load(renderer, "resource/textures/normal_map.bmp")
+    texture_load(renderer, "resource/textures/white.bmp"),
+    texture_load(renderer, "resource/textures/normal_map.bmp")
 };
 
 // set the albedo texture to its corresponding slot in the shader
@@ -313,7 +346,7 @@ material_set_push_mat4(box_material, "push.model_matrix", mat4_transpose(float)(
 // destroy and release mesh_t, mesh3d_t, shader, and textures
 
 // destroy vulkan objects
-material_destroy(box_material, renderer);
+material_destroy(box_material);
 
 // release heap allocated memory
 material_release_resources(box_material);
@@ -326,8 +359,8 @@ Currently on text meshes are support, meaning all the glyphs are being tessellat
 Texts are being accomplished by `font_t` `text_mesh_t` `glyph_mesh_pool_t` and `text_mesh_string_handle_t` objects. <br>
 
 #### Font
-```C
 
+```C
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
 
@@ -340,8 +373,8 @@ font_release_resources(font);
 ```
 
 #### Glyph Mesh Pool
-```C
 
+```C
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
 
@@ -366,10 +399,10 @@ font_release_resources(font);
 glyph_mesh_pool_destroy(pool); 
 // release heap allocated memory
 glyph_mesh_pool_release_resources(pool); 
-
 ```
 
 #### Text Mesh and String Handles
+
 ```C
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
@@ -407,11 +440,12 @@ glyph_mesh_pool_release_resources(pool);
 text_mesh_destroy(game_ui);
 // release heap allocated memory
 text_mesh_release_resources(game_ui);
-
 ```
 
 ## More?
+
 #### [Youtube](https://www.youtube.com/channel/UCWe_os3p4z3DBnQ4B5DUTfw/videos)
 
 ## About Me
+
 #### [LinkedIn](https://www.linkedin.com/in/ravi-prakash-095a271a8/)

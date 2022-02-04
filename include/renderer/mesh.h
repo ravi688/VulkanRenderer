@@ -27,16 +27,15 @@ typedef vulkan_mesh_t mesh_t;
 
 #include <renderer/defines.h>
 
-
+// constructors and destructors
 mesh_t* mesh_new();
 mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data);
 void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
-void mesh_destroy(mesh_t* mesh, renderer_t* renderer);
+void mesh_destroy(mesh_t* mesh);
 void mesh_release_resources(mesh_t* mesh);
 
-void mesh_sync(mesh_t* mesh, renderer_t* renderer, mesh3d_t* mesh_data);
-__attribute__((deprecated))
-void mesh_draw(mesh_t* mesh, renderer_t* renderer);
-void mesh_draw_indexed(mesh_t* mesh, renderer_t* renderer);
-void mesh_draw_instanced(mesh_t* mesh, renderer_t* renderer, u32 instance_count);
-void mesh_draw_indexed_instanced(mesh_t* mesh, renderer_t* renderer, u32 instance_count);
+// draw calls
+DEPRECATED void mesh_draw(mesh_t* mesh);
+void mesh_draw_indexed(mesh_t* mesh);
+void mesh_draw_instanced(mesh_t* mesh, u32 instance_count);
+void mesh_draw_indexed_instanced(mesh_t* mesh, u32 instance_count);

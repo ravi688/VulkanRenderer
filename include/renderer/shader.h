@@ -26,5 +26,5 @@ typedef vulkan_shader_t shader_t;
 #define shader_load(renderer, file_path) shader_load_and_create(renderer, file_path)
 shader_t* shader_create(renderer_t* renderer, BUFFER* shader_binary);
 shader_t* shader_load_and_create(renderer_t* renderer, const char* file_path);
-void shader_destroy(shader_t* shader, renderer_t* renderer);
+void shader_destroy(shader_t* shader);
 void shader_release_resources(shader_t* shader);

@@ -175,7 +175,7 @@ static void vulkan_texture_create_2d(vulkan_texture_t* texture, vulkan_texture_d
 	vulkan_image_transition_layout_to(texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	// destroy staging buffer and it's device memory
-	vulkan_buffer_destroy(staging_buffer, texture->renderer);
+	vulkan_buffer_destroy(staging_buffer);
 	vulkan_buffer_release_resources(staging_buffer);
 
 	// create 2d image view
@@ -215,7 +215,7 @@ static void vulkan_texture_create_cube(vulkan_texture_t* texture, vulkan_texture
 
 	// copy textures sequentially into the staging buffer
 	for(u32 i = 0; i < 6; i++)
-		vulkan_buffer_copy_data(staging_buffer, texture->renderer, texture_size * i, data[i].data, texture_size);
+		vulkan_buffer_copy_data(staging_buffer, texture_size * i, data[i].data, texture_size);
 
 	// create image
 	vulkan_image_create_info_t image_info =
@@ -246,7 +246,7 @@ static void vulkan_texture_create_cube(vulkan_texture_t* texture, vulkan_texture
 	vulkan_image_transition_layout_to(texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	// destroy staging buffer and it's device memory
-	vulkan_buffer_destroy(staging_buffer, texture->renderer);
+	vulkan_buffer_destroy(staging_buffer);
 	vulkan_buffer_release_resources(staging_buffer);
 
 	// create 2d image view

@@ -63,3 +63,6 @@ typedef u32 uint;
 #	define DEBUG_BLOCK(x)
 #endif /*GLOBAL_DEBUG*/
 
+
+
+#define DEPRECATED __attribute__((deprecated))

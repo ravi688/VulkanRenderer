@@ -32,6 +32,7 @@ typedef struct vulkan_mesh_create_info_t
 
 typedef struct vulkan_mesh_t
 {
+	renderer_t* renderer;
 	BUFFER /*typeof(vulkan_buffer_t*)*/ vertex_buffers;
 	vulkan_buffer_t* index_buffer;
 	VkIndexType index_type;
@@ -40,17 +41,22 @@ typedef struct vulkan_mesh_t
 } vulkan_mesh_t;
 
 
+
+// constructors and destructors
 vulkan_mesh_t* vulkan_mesh_new();
 vulkan_mesh_t* vulkan_mesh_create(renderer_t* renderer, vulkan_mesh_create_info_t* create_info);
 void vulkan_mesh_create_no_alloc(renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh);
-void vulkan_mesh_destroy(vulkan_mesh_t* mesh, renderer_t* renderer);
-void vulkan_mesh_sync(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_mesh_create_info_t* create_info);
+void vulkan_mesh_destroy(vulkan_mesh_t* mesh);
 void vulkan_mesh_release_resources(vulkan_mesh_t* mesh);
-void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh, renderer_t* renderer);
-void vulkan_mesh_draw(vulkan_mesh_t* mesh, renderer_t* renderer);
-void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count);
-void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count);
-void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, renderer_t* renderer, uint32_t instance_count);
-void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_vertex_buffer_create_info_t* create_info);
-void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, renderer_t* renderer, vulkan_buffer_t* buffer);
-void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh, renderer_t* renderer);
+
+
+// draw calls
+void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh);
+void vulkan_mesh_draw(vulkan_mesh_t* mesh);
+void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 instance_count);
+void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u32 instance_count);
+void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_count);
+
+void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_vertex_buffer_create_info_t* create_info);
+void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer);
+void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh);
