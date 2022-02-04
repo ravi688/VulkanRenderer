@@ -108,9 +108,9 @@ void text_mesh_draw(text_mesh_t* text_mesh)
 		if(!vulkan_instance_buffer_commit(instance_buffer))
 			continue;
 		mesh_t* mesh = glyph_mesh_pool_get_mesh(text_mesh->pool, glyph);
-		vulkan_mesh_bind_all_vertex_buffers(mesh, text_mesh->renderer);
-		vulkan_mesh_bind_vertex_buffer(mesh, text_mesh->renderer, &instance_buffer->device_buffer);
-		vulkan_mesh_draw_indexed_instanced_only(mesh, text_mesh->renderer, instance_buffer->device_buffer.count);
+		vulkan_mesh_bind_all_vertex_buffers(mesh);
+		vulkan_mesh_bind_vertex_buffer(mesh, &instance_buffer->device_buffer);
+		vulkan_mesh_draw_indexed_instanced_only(mesh, instance_buffer->device_buffer.count);
 	}
 }
 

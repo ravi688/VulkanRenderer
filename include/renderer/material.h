@@ -81,14 +81,14 @@ typedef struct material_create_info_t
 	bool is_transparent;
 } material_create_info_t;
 
+// constructors and destructors
 material_t* material_new();
 material_t* material_create(renderer_t* renderer, material_create_info_t* create_info);
 void material_create_no_alloc(renderer_t* renderer, material_create_info_t* create_info, material_t* material);
-void material_destroy(material_t* material, renderer_t* renderer);
+void material_destroy(material_t* material);
 void material_release_resources(material_t* material);
 
-void material_bind(material_t* material, renderer_t* renderer);
-void material_push_constants(material_t* material, renderer_t* renderer, void* bytes);
+void material_bind(material_t* material);
 
 typedef struct material_field_handle_t
 {

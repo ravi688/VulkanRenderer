@@ -12,6 +12,7 @@
 
 void vulkan_buffer_init(vulkan_buffer_t* buffer)
 {
+	// initialize memory to zero
 	memset(buffer, 0, sizeof(vulkan_buffer_t));
 }
 
@@ -87,7 +88,6 @@ void vulkan_buffer_unmap(vulkan_buffer_t* buffer)
 	check_pre_condition(buffer);
 	vkUnmapMemory(buffer->renderer->logical_device->handle, buffer->memory);
 }
-
 
 
 #ifdef GLOBAL_DEBUG

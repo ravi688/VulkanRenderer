@@ -58,6 +58,7 @@ typedef struct uniform_resource_t
 
 typedef struct material_t
 {
+	renderer_t* renderer;
 	vulkan_material_t* handle;
 	uniform_resource_t* uniform_resources;
 	u16 uniform_resource_count;
@@ -92,10 +93,6 @@ material_t* material_create(renderer_t* renderer, material_create_info_t* create
 
 	VkPushConstantRange* push_constant_ranges = stack_newv(VkPushConstantRange, create_info->shader->descriptor_count);
 	u32 push_constant_range_count;
-	/*TODO: push_constant_range->size = HPML_SIZEOF_MAT4;*/
-	// push_constant_range->size = sizeof(float) * 16;
-	// push_constant_range->offset = 0;
-	// push_constant_range->stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	u32 push_constant_buffer_size;
 	void* push_constant_buffer = shader_setup_push_constants(create_info->shader, push_constant_ranges, &push_constant_range_count, &push_constant_buffer_size);
 	material_t* material =  __material_create(renderer, 
@@ -124,7 +121,7 @@ static material_t* __material_create(renderer_t* renderer,
 										bool is_transparent)
 {
 	material_t* material = material_new();
-
+	material->renderer = renderer;
 	vulkan_material_create_info_t material_info =
 	{
 		.shader = shader,
@@ -150,6 +147,7 @@ static void __material_create_no_alloc(renderer_t* renderer,
 										bool is_transparent, 
 										material_t* material)
 {
+	material->renderer = renderer;
 	vulkan_material_create_info_t material_info =
 	{
 		.shader = shader,
@@ -248,8 +246,8 @@ static void material_set_up_shader_resources(material_t* material)
 				.usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 			};
-			vulkan_buffer_create_no_alloc(material->handle->renderer, &create_info, &resource->buffer);
-			vulkan_material_set_uniform_buffer(material->handle, material->handle->renderer, descriptor->binding_number, &resource->buffer);
+			vulkan_buffer_create_no_alloc(material->renderer, &create_info, &resource->buffer);
+			vulkan_material_set_uniform_buffer(material->handle, descriptor->binding_number, &resource->buffer);
 		}
 		else
 			resource->descriptor_index = 0xFFFF;
@@ -258,9 +256,9 @@ static void material_set_up_shader_resources(material_t* material)
 	material->uniform_resource_count = material->handle->shader->descriptor_count;
 }
 
-void material_destroy(material_t* material, renderer_t* renderer)
+void material_destroy(material_t* material)
 {
-	vulkan_material_destroy(material->handle, renderer);
+	vulkan_material_destroy(material->handle);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
 	{
 		if(material->uniform_resources[i].descriptor_index == 0xFFFF)
@@ -279,14 +277,9 @@ void material_release_resources(material_t* material)
 	heap_free(material);
 }
 
-void material_bind(material_t* material, renderer_t* renderer)
+void material_bind(material_t* material)
 {
-	vulkan_material_bind(material->handle, renderer);
-}
-
-void material_push_constants(material_t* material, renderer_t* renderer, void* bytes)
-{
-	vulkan_material_push_constants(material->handle, renderer, bytes);
+	vulkan_material_bind(material->handle);
 }
 
 material_field_handle_t material_get_field_handle(material_t* material, const char* name)
@@ -345,7 +338,7 @@ static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags)
 static void set_push_constants(material_t* material, vulkan_shader_resource_descriptor_t* descriptor)
 {
 	vulkan_pipeline_layout_push_constants(material->handle->graphics_pipeline->pipeline_layout, 
-											material->handle->renderer, 
+											material->renderer, 
 											get_vulkan_shader_flags(descriptor->stage_flags), 
 											descriptor->push_constant_range_offset, 
 											struct_descriptor_sizeof(&descriptor->handle), 
@@ -625,7 +618,7 @@ void material_set_textureH(material_t* material, material_field_handle_t handle,
 	assert(handle.descriptor_index < material->handle->shader->descriptor_count);
 	vulkan_shader_resource_descriptor_t descriptor = material->handle->shader->descriptors[handle.descriptor_index];
 	assert(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
-	vulkan_material_set_texture(material->handle, material->handle->renderer, descriptor.binding_number, texture);
+	vulkan_material_set_texture(material->handle, descriptor.binding_number, texture);
 }
 
 float material_get_floatH(material_t* material, material_field_handle_t handle)
@@ -795,6 +788,7 @@ texture_t* material_get_texture2d(material_t* material, const char* name)
 static void check_precondition(material_t* material)
 {
 	assert(material != NULL);
+	assert(material->renderer != NULL);
 	assert(material->handle->shader != NULL);
 	assert(material->handle->shader->descriptors != NULL);
 	assert_wrn(material->handle->shader->descriptor_count != 0);

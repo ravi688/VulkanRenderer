@@ -60,6 +60,7 @@ vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER* shader_binar
 		LOG_WRN("Shader binary loading warning: LAYOUT section not found!\n");
 
 	vulkan_shader_t* shader = vulkan_shader_new();
+	shader->renderer = renderer;
 	shader->stage_shaders = create_stage_shaders(renderer, shader_binary, shader_offset, &shader->stage_count);
 	if(layout_found)
 	{
@@ -84,14 +85,14 @@ vulkan_shader_t* vulkan_shader_load_and_create(renderer_t* renderer, const char*
 	return shader;
 }
 
-void vulkan_shader_destroy(vulkan_shader_t* shader, renderer_t* renderer)
+void vulkan_shader_destroy(vulkan_shader_t* shader)
 {
 	for(u8 i = 0; i < shader->stage_count; i++)
-		vulkan_stage_shader_destroy(ref(vulkan_stage_shader_t*, shader->stage_shaders, i), renderer);
+		vulkan_stage_shader_destroy(ref(vulkan_stage_shader_t*, shader->stage_shaders, i), shader->renderer);
 	if(shader->vk_set_layout != VK_NULL_HANDLE)
-		vkDestroyDescriptorSetLayout(renderer->logical_device->handle, shader->vk_set_layout, NULL);
+		vkDestroyDescriptorSetLayout(shader->renderer->logical_device->handle, shader->vk_set_layout, NULL);
 	if(shader->vk_set != NULL)
-		vulkan_descriptor_set_destroy(shader->vk_set, renderer);
+		vulkan_descriptor_set_destroy(shader->vk_set, shader->renderer);
 }
 
 void vulkan_shader_release_resources(vulkan_shader_t* shader)

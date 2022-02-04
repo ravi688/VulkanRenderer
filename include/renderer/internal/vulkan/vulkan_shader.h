@@ -26,6 +26,7 @@ typedef struct vulkan_shader_resource_descriptor_t
 
 typedef struct vulkan_shader_t
 {
+	renderer_t* renderer;
 	vulkan_stage_shader_t** stage_shaders;
 	u8 stage_count;
 	//For now we will be using only one descriptor set and descriptor layout
@@ -40,5 +41,5 @@ typedef struct vulkan_shader_t
 vulkan_shader_t* vulkan_shader_new();
 vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER* vulkan_shader_binary);
 vulkan_shader_t* vulkan_shader_load_and_create(renderer_t* renderer, const char* file_path);
-void vulkan_shader_destroy(vulkan_shader_t* shader, renderer_t* renderer);
+void vulkan_shader_destroy(vulkan_shader_t* shader);
 void vulkan_shader_release_resources(vulkan_shader_t* shader);
