@@ -9,19 +9,36 @@
 #-------------------------------------------
 
 #-------------------------------------------
+#		Supported commands
+#-------------------------------------------
+#	1. 	lib-static-debug				For building static library (vulkanrenderer.a) in debug mode
+#	2. 	lib-static-release				For buliding static library (vulkanrenderer.a) in release mode
+#	3. 	lib-dynamic-debug				For building dynamic library (vulkanrenderer.dll) in debug mode
+#	4. 	lib-dynamic-release				For building dynamic library (vulkanrenderer.dll) in release mode
+#	5. 	debug 							For building executable (main.exe) in debug mode
+#	6. 	release 						For building executable (main.exe) in release mode
+#	7. 	clean 							For cleaning the object files (.obj)
+#	8. 	shader-clean 					For cleaning the shader binaries (.sb)
+#	9. 	shader 							For building shader binaries (.sb)
+#	10. setup 							For fetching (downloading) the submodules
+#	11. run 							For building executable in debug mode and launching it
+#-------------------------------------------
+
+
+#-------------------------------------------
 #		Project Configuration
 #-------------------------------------------
 PROJECT_NAME = VulkanRenderer
 STATIC_LIB_NAME = vulkanrenderer.a
-DYNAMIC_LIB_NAME = #vulkanrenderer.dll
+DYNAMIC_LIB_NAME = vulkanrenderer.dll
 EXECUTABLE_NAME = main.exe
-EXTERNAL_LIBRARIES = -L.\external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
-EXTERNAL_INCLUDES = -I.\include\engine -I./dependencies/ -I./shared-dependencies -I./include/freetype
-DEPENDENCIES = MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ../shader_compiler ttf2mesh
-DEPENDENCY_LIBS = MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a SafeMemory/lib/safemem.a tgc/lib/tgc.a ../shader_compiler/lib/shader_compiler.a ttf2mesh/lib/ttf2mesh.a
+EXTERNAL_LIBRARIES = -L./external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
+EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies
+DEPENDENCIES = ../shader_compiler MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
+DEPENDENCY_LIBS = MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a tgc/lib/tgc.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = BufferLib
-SHARED_DEPENDENCY_LIBS = BufferLib/lib/bufferlib.a
+SHARED_DEPENDENCY_LIBS =  BufferLib/lib/bufferlib.a
 SHARED_DEPENDENCIES_DIR = ./shared-dependencies
 #-------------------------------------------
 
@@ -35,7 +52,6 @@ __SHARED_DEPENDENCY_LIBS = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEP
 __EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
 .PHONY: all
 .PHONY: init
-.PHONY: setup
 all: dgraph release
 
 %.gv:
@@ -49,13 +65,6 @@ $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR):
 
 init: $(PROJECT_NAME).gv $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR)
 	@echo [Log] $(PROJECT_NAME) init successfully!
-
-setup:
-	git submodule update --init
-	git -C ./dependencies/SafeMemory submodule update --init shared-dependencies/CallTrace
-	git -C ./dependencies/MeshLib submodule update --init dependencies/DiskManager
-	git -C ./dependencies/SafeMemory submodule update --init dependencies/TemplateSystem
-	@echo [Log] Setup successfully!
 #-------------------------------------------
 
 
@@ -102,8 +111,9 @@ dgraph-clean:
 #-------------------------------------------
 #		Binary Generation
 #-------------------------------------------
-TARGET_STATIC_LIB = $(join ./lib/, $(STATIC_LIB_NAME))
-TARGET_STATIC_LIB_DIR = ./lib
+TARGET_LIB_DIR = ./lib
+TARGET_STATIC_LIB = $(join $(TARGET_LIB_DIR)/, $(STATIC_LIB_NAME))
+TARGET_DYNAMIC_LIB = $(join $(TARGET_LIB_DIR)/, $(DYNAMIC_LIB_NAME))
 TARGET = $(__EXECUTABLE_NAME)
 
 #Dependencies
@@ -121,14 +131,20 @@ RELEASE_DEFINES = -DHPML_RELEASE_MODE -DLOG_RELEASE -DGLOBAL_RELEASE -DRELEASE
 DEFINES = -DMEMORY_ALLOCATION_SAFETY_LEVEL_2 -DRENDERER_VULKAN_DRIVER
 
 COMPILER_FLAGS= -m64
+DYNAMIC_LIBRARY_COMPILATION_FLAG = -shared
+DYNAMIC_IMPORT_LIBRARY_FLAG = -Wl,--out-implib,
 COMPILER = gcc
 ARCHIVER_FLAGS = -rc
 ARCHIVER = ar
 
+TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefix lib, $(notdir $(TARGET_DYNAMIC_LIB).a)))
 
 .PHONY: lib-static
 .PHONY: lib-static-debug
 .PHONY: lib-static-release
+.PHONY: lib-dynamic
+.PHONY: lib-dynamic-debug
+.PHONY: lib-dynamic-release
 .PHONY: release
 .PHONY: debug
 .PHONY: $(TARGET)	
@@ -137,17 +153,28 @@ ARCHIVER = ar
 
 all: release
 lib-static: lib-static-release
-lib-static-debug: DEFINES += $(DEBUG_DEFINES)
+lib-static-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_STATIC_LIBRARY
 lib-static-debug: __STATIC_LIB_COMMAND = lib-static-debug
 lib-static-debug: COMPILER_FLAGS += -g
 lib-static-debug: $(TARGET_STATIC_LIB)
-lib-static-release: DEFINES += $(RELEASE_DEFINES)
+lib-static-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_STATIC_LIBRARY
 lib-static-release: __STATIC_LIB_COMMAND = lib-static-release
 lib-static-release: $(TARGET_STATIC_LIB)
-release: DEFINES += $(RELEASE_DEFINES)
+
+lib-dynamic: lib-dynamic-release
+lib-dynamic-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
+lib-dynamic-debug: __STATIC_LIB_COMMAND = lib-static-debug
+lib-dynamic-debug: COMPILER_FLAGS += -g -fPIC
+lib-dynamic-debug: $(TARGET_DYNAMIC_LIB)
+lib-dynamic-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_DYNAMIC_LIBRARY
+lib-dynamic-release: __STATIC_LIB_COMMAND = lib-static-release
+lib-dynamic-release: COMPILER_FLAGS += -fPIC
+lib-dynamic-release: $(TARGET_DYNAMIC_LIB)
+
+release: DEFINES += $(RELEASE_DEFINES) -DBUILD_EXECUTABLE
 release: __STATIC_LIB_COMMAND = lib-static-release
 release: $(TARGET)
-debug: DEFINES += $(DEBUG_DEFINES)
+debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_EXECUTABLE
 debug: __STATIC_LIB_COMMAND = lib-static-debug
 debug: COMPILER_FLAGS += -g
 debug: $(TARGET)
@@ -161,29 +188,44 @@ debug: $(TARGET)
 	$(MAKE) --directory=$(subst lib/, ,$(dir $@)) $(__STATIC_LIB_COMMAND)
 	@echo [Log] $@ built successfully!
 
-$(TARGET_STATIC_LIB_DIR): 
+$(TARGET_LIB_DIR): 
 	mkdir $@
 
-PRINT_MESSAGE1: 
+PRINT_STATIC_INFO: 
 	@echo [Log] Building $(TARGET_STATIC_LIB) ...
 
-$(TARGET_STATIC_LIB) : PRINT_MESSAGE1 $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_STATIC_LIB_DIR) 
+PRINT_DYNAMIC_INFO: 
+	@echo [Log] Building $(TARGET_DYNAMIC_LIB) ...
+
+$(TARGET_STATIC_LIB) : PRINT_STATIC_INFO $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_LIB_DIR) 
 	$(ARCHIVER) $(ARCHIVER_FLAGS) $@ $(filter-out $<, $^)
 	@echo [Log] $@ built successfully!
+
+$(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_LIB_DIR)
+	@echo [Log] Linking $@ ...
+	$(COMPILER) $(COMPILER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(filter-out source/main.o, $(OBJECTS)) \
+	$(addprefix -L, $(dir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
+	$(addprefix -l:, $(notdir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
+	$(LIBS) \
+	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
+	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
 
 $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) source/main.o
 	@echo [Log] Linking $@ ...
 	$(COMPILER) $(COMPILER_FLAGS) source/main.o \
 	$(addprefix -L, $(dir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
-	$(LIBS) -o $@
+	$(LIBS) \
+	-o $@
 	@echo [Log] $(PROJECT_NAME) built successfully!
 
 bin-clean: 
 	del $(subst /,\, $(OBJECTS))
 	del $(__EXECUTABLE_NAME)
 	del $(subst /,\, $(TARGET_STATIC_LIB))
-	rmdir $(subst /,\, $(TARGET_STATIC_LIB_DIR))
+	del $(subst /,\, $(TARGET_DYNAMIC_LIB))
+	del $(subst /,\, $(TARGET_DYNAMIC_IMPORT_LIB))
+	rmdir $(subst /,\, $(TARGET_LIB_DIR))
 	@echo [Log] Binaries cleaned successfully!
 	$(MAKE) --directory=./dependencies/ttf2mesh clean
 	$(MAKE) --directory=./dependencies/HPML clean
@@ -197,28 +239,42 @@ bin-clean:
 #-------------------------------------------
 #		Shader Compilation
 #-------------------------------------------
-FRAGMENT_SHADERS = $(wildcard ./shaders/*.frag)
-VERTEX_SHADERS = $(wildcard ./shaders/*.vert)
-FRAGMENT_SPIRV_SHADERS = $(addsuffix .spv, $(basename $(FRAGMENT_SHADERS)))
-VERTEX_SPIRV_SHADERS = $(addsuffix .spv,   $(basename $(VERTEX_SHADERS)))
+SHADER_COMPILER = ./shader_compiler/shader_compiler.exe
+SHADER_SOURCES = $(wildcard ./resource/shaders/*.glsl)
+SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
 
-%.spv: %.frag
-	glslc $< -o $@
-%.spv: %.vert
-	glslc $< -o $@
+$(SHADER_COMPILER):
+	$(MAKE) --directory=./shader_compiler debug
+
+%.sb: %.glsl $(SHADER_COMPILER)
+	$(SHADER_COMPILER) $< $@
 
 .PHONY: shader
 .PHONY: shader-clean
-shader: $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS)
+shader: $(SHADER_BINARIES) 
 
 shader-clean:
-	del $(addprefix shaders\, $(notdir $(FRAGMENT_SPIRV_SHADERS) $(VERTEX_SPIRV_SHADERS)))
+	del $(subst /,\, $(SHADER_BINARIES))
 #-------------------------------------------
 
 #-------------------------------------------
 #		Cleaning
 #-------------------------------------------
 .PHONY: clean
-clean: bin-clean
+clean: bin-clean 
 	@echo [Log] All cleaned successfully!
 #-------------------------------------------
+
+
+.PHONY: build
+.PHONY: build-run
+.PHONY: run
+
+build: shader
+	$(MAKE) lib-static-debug
+	$(MAKE) debug
+
+build-run: build
+	$(__EXECUTABLE_NAME)
+
+run: build-run
