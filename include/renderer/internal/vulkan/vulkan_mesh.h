@@ -40,7 +40,7 @@ typedef struct vulkan_mesh_t
 	u32 binding_index;  // INTERNAL 
 } vulkan_mesh_t;
 
-
+BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
 vulkan_mesh_t* vulkan_mesh_new();
@@ -51,12 +51,14 @@ void vulkan_mesh_release_resources(vulkan_mesh_t* mesh);
 
 
 // draw calls
-void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh);
-void vulkan_mesh_draw(vulkan_mesh_t* mesh);
-void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 instance_count);
-void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u32 instance_count);
-void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_count);
+RENDERER_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh);
+RENDERER_API void vulkan_mesh_draw(vulkan_mesh_t* mesh);
+RENDERER_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 instance_count);
+RENDERER_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u32 instance_count);
+RENDERER_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_count);
 
-void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_vertex_buffer_create_info_t* create_info);
-void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer);
-void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh);
+RENDERER_API void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_vertex_buffer_create_info_t* create_info);
+RENDERER_API void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh);
+
+END_CPP_COMPATIBLE

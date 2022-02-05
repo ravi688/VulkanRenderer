@@ -3,8 +3,13 @@
 
 
 #include <tgc/tgc.h>
+#include <renderer/defines.h>
 
-extern tgc_t gc;
+BEGIN_CPP_COMPATIBLE
+
+RENDERER_API extern tgc_t gc;
+
+END_CPP_COMPATIBLE
 
 #ifndef DEBUG
 #	define GC_START(stack_address) tgc_start(&gc, (void*)(stack_address))

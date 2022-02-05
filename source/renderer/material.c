@@ -66,7 +66,7 @@ typedef struct material_t
 	u32 push_constant_buffer_size;
 } material_t;
 
-material_t* material_new()
+RENDERER_API material_t* material_new()
 {
 	material_t* material = heap_new(material_t);
 	memset(material, 0, sizeof(material_t));
@@ -74,7 +74,7 @@ material_t* material_new()
 	return material;
 }
 
-material_t* material_create(renderer_t* renderer, material_create_info_t* create_info)
+RENDERER_API material_t* material_create(renderer_t* renderer, material_create_info_t* create_info)
 {
 	u32 total_attribute_count = create_info->per_vertex_attribute_binding_count + create_info->per_instance_attribute_binding_count;
 	if(total_attribute_count == 0)
@@ -256,7 +256,7 @@ static void material_set_up_shader_resources(material_t* material)
 	material->uniform_resource_count = material->handle->shader->descriptor_count;
 }
 
-void material_destroy(material_t* material)
+RENDERER_API void material_destroy(material_t* material)
 {
 	vulkan_material_destroy(material->handle);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
@@ -267,7 +267,7 @@ void material_destroy(material_t* material)
 	}
 }
 
-void material_release_resources(material_t* material)
+RENDERER_API void material_release_resources(material_t* material)
 {
 	vulkan_material_release_resources(material->handle);
 	if(material->uniform_resources != NULL)
@@ -277,12 +277,12 @@ void material_release_resources(material_t* material)
 	heap_free(material);
 }
 
-void material_bind(material_t* material)
+RENDERER_API void material_bind(material_t* material)
 {
 	vulkan_material_bind(material->handle);
 }
 
-material_field_handle_t material_get_field_handle(material_t* material, const char* name)
+RENDERER_API material_field_handle_t material_get_field_handle(material_t* material, const char* name)
 {
 	assert(material != NULL);
 	assert(material->handle->shader != NULL);
@@ -353,49 +353,49 @@ static void __set_push_value(material_t* material, material_field_handle_t handl
 	set_push_constants(material, descriptor);
 }
 
-void material_set_push_floatH(material_t* material, material_field_handle_t handle, float value)
+RENDERER_API void material_set_push_floatH(material_t* material, material_field_handle_t handle, float value)
 {
 	check_precondition(material);
 	set_push_value(material, handle, struct_descriptor_set_float, &value);
 }
 
-void material_set_push_intH(material_t* material, material_field_handle_t handle, int value)
+RENDERER_API void material_set_push_intH(material_t* material, material_field_handle_t handle, int value)
 {
 	check_precondition(material);
 	set_push_value(material, handle, struct_descriptor_set_int, &value);
 }
 
-void material_set_push_uintH(material_t* material, material_field_handle_t handle, uint value)
+RENDERER_API void material_set_push_uintH(material_t* material, material_field_handle_t handle, uint value)
 {
 	check_precondition(material);
 	set_push_value(material, handle, struct_descriptor_set_uint, &value);
 }
 
-void material_set_push_vec2H(material_t* material, material_field_handle_t handle, vec2_t(float) value)
+RENDERER_API void material_set_push_vec2H(material_t* material, material_field_handle_t handle, vec2_t(float) value)
 {
 	check_precondition(material);
 	set_push_value(material, handle, struct_descriptor_set_vec2, &value);
 }
 
-void material_set_push_vec3H(material_t* material, material_field_handle_t handle, vec3_t(float) value)
+RENDERER_API void material_set_push_vec3H(material_t* material, material_field_handle_t handle, vec3_t(float) value)
 {
 	check_precondition(material);
 	set_push_value(material, handle, struct_descriptor_set_vec3, &value);
 }
 
-void material_set_push_vec4H(material_t* material, material_field_handle_t handle, vec4_t(float) value)
+RENDERER_API void material_set_push_vec4H(material_t* material, material_field_handle_t handle, vec4_t(float) value)
 {
 	check_precondition(material);
 	set_push_value(material, handle, struct_descriptor_set_vec4, &value);
 }
 
-void material_set_push_mat2H(material_t* material, material_field_handle_t handle, mat2_t(float) value)
+RENDERER_API void material_set_push_mat2H(material_t* material, material_field_handle_t handle, mat2_t(float) value)
 {
 	check_precondition(material);
 	set_push_value(material, handle, struct_descriptor_set_mat2, &value);
 }
 
-void material_set_push_mat4H(material_t* material, material_field_handle_t handle, mat4_t(float) value)
+RENDERER_API void material_set_push_mat4H(material_t* material, material_field_handle_t handle, mat4_t(float) value)
 {
 	check_precondition(material);
 	set_push_value(material, handle, struct_descriptor_set_mat4, &value);
@@ -409,7 +409,7 @@ static void __get_push_value(material_t* material, material_field_handle_t handl
 	getter(&descriptor->handle, handle.field_handle, out);
 }
 
-float material_get_push_floatH(material_t* material, material_field_handle_t handle)
+RENDERER_API float material_get_push_floatH(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	float value;
@@ -417,7 +417,7 @@ float material_get_push_floatH(material_t* material, material_field_handle_t han
 	return value;
 }
 
-int material_get_push_intH(material_t* material, material_field_handle_t handle)
+RENDERER_API int material_get_push_intH(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	int value;
@@ -425,7 +425,7 @@ int material_get_push_intH(material_t* material, material_field_handle_t handle)
 	return value;
 }
 
-uint material_get_push_uintH(material_t* material, material_field_handle_t handle)
+RENDERER_API uint material_get_push_uintH(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	uint value;
@@ -433,7 +433,7 @@ uint material_get_push_uintH(material_t* material, material_field_handle_t handl
 	return value;
 }
 
-vec2_t(float) material_get_push_vec2H(material_t* material, material_field_handle_t handle)
+RENDERER_API vec2_t(float) material_get_push_vec2H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	vec2_t(float) value;
@@ -441,7 +441,7 @@ vec2_t(float) material_get_push_vec2H(material_t* material, material_field_handl
 	return value;
 }
 
-vec3_t(float) material_get_push_vec3H(material_t* material, material_field_handle_t handle)
+RENDERER_API vec3_t(float) material_get_push_vec3H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	vec3_t(float) value;
@@ -449,7 +449,7 @@ vec3_t(float) material_get_push_vec3H(material_t* material, material_field_handl
 	return value;
 }
 
-vec4_t(float) material_get_push_vec4H(material_t* material, material_field_handle_t handle)
+RENDERER_API vec4_t(float) material_get_push_vec4H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	vec4_t(float) value;
@@ -457,7 +457,7 @@ vec4_t(float) material_get_push_vec4H(material_t* material, material_field_handl
 	return value;
 }
 
-mat2_t(float) material_get_push_mat2H(material_t* material, material_field_handle_t handle)
+RENDERER_API mat2_t(float) material_get_push_mat2H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	mat2_t(float) value;
@@ -465,7 +465,7 @@ mat2_t(float) material_get_push_mat2H(material_t* material, material_field_handl
 	return value;
 }
 
-mat4_t(float) material_get_push_mat4H(material_t* material, material_field_handle_t handle)
+RENDERER_API mat4_t(float) material_get_push_mat4H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	mat4_t(float) value;
@@ -474,145 +474,145 @@ mat4_t(float) material_get_push_mat4H(material_t* material, material_field_handl
 }
 
 /* functions accepting strings */
-void material_set_push_float(material_t* material, const char* name, float value)
+RENDERER_API void material_set_push_float(material_t* material, const char* name, float value)
 {
 	material_set_push_floatH(material, material_get_field_handle(material, name), value);
 }
 
-void material_set_push_int(material_t* material, const char* name, int value)
+RENDERER_API void material_set_push_int(material_t* material, const char* name, int value)
 {
 	material_set_push_intH(material, material_get_field_handle(material, name), value);
 }
 
-void material_set_push_uint(material_t* material, const char* name, uint value)
+RENDERER_API void material_set_push_uint(material_t* material, const char* name, uint value)
 {
 	material_set_push_uintH(material, material_get_field_handle(material, name), value);
 }
 
-void material_set_push_vec2(material_t* material, const char* name, vec2_t(float) v)
+RENDERER_API void material_set_push_vec2(material_t* material, const char* name, vec2_t(float) v)
 {
 	material_set_push_vec2H(material, material_get_field_handle(material, name), v);
 }
 
-void material_set_push_vec3(material_t* material, const char* name, vec3_t(float) v)
+RENDERER_API void material_set_push_vec3(material_t* material, const char* name, vec3_t(float) v)
 {
 	material_set_push_vec3H(material, material_get_field_handle(material, name), v);
 }
 
-void material_set_push_vec4(material_t* material, const char* name, vec4_t(float) v)
+RENDERER_API void material_set_push_vec4(material_t* material, const char* name, vec4_t(float) v)
 {
 	material_set_push_vec4H(material, material_get_field_handle(material, name), v);
 }
 
-void material_set_push_mat2(material_t* material, const char* name, mat2_t(float) m)
+RENDERER_API void material_set_push_mat2(material_t* material, const char* name, mat2_t(float) m)
 {
 	material_set_push_mat2H(material, material_get_field_handle(material, name), m);
 }
 
-void material_set_push_mat4(material_t* material, const char* name, mat4_t(float) m)
+RENDERER_API void material_set_push_mat4(material_t* material, const char* name, mat4_t(float) m)
 {
 	material_set_push_mat4H(material, material_get_field_handle(material, name), m);
 }
 
-float material_get_push_float(material_t* material, const char* name)
+RENDERER_API float material_get_push_float(material_t* material, const char* name)
 {
 	return material_get_push_floatH(material, material_get_field_handle(material, name));
 }
 
-int material_get_push_int(material_t* material, const char* name)
+RENDERER_API int material_get_push_int(material_t* material, const char* name)
 {
 	return material_get_push_intH(material, material_get_field_handle(material, name));
 }
 
-uint material_get_push_uint(material_t* material, const char* name)
+RENDERER_API uint material_get_push_uint(material_t* material, const char* name)
 {
 	return material_get_push_uintH(material, material_get_field_handle(material, name));
 }
 
-vec2_t(float) material_get_push_vec2(material_t* material, const char* name)
+RENDERER_API vec2_t(float) material_get_push_vec2(material_t* material, const char* name)
 {
 	return material_get_push_vec2H(material, material_get_field_handle(material, name));
 }
 
-vec3_t(float) material_get_push_vec3(material_t* material, const char* name)
+RENDERER_API vec3_t(float) material_get_push_vec3(material_t* material, const char* name)
 {
 	return material_get_push_vec3H(material, material_get_field_handle(material, name));
 }
 
-vec4_t(float) material_get_push_vec4(material_t* material, const char* name)
+RENDERER_API vec4_t(float) material_get_push_vec4(material_t* material, const char* name)
 {
 	return material_get_push_vec4H(material, material_get_field_handle(material, name));
 }
 
-mat2_t(float) material_get_push_mat2(material_t* material, const char* name)
+RENDERER_API mat2_t(float) material_get_push_mat2(material_t* material, const char* name)
 {
 	return material_get_push_mat2H(material, material_get_field_handle(material, name));
 }
 
-mat4_t(float) material_get_push_mat4(material_t* material, const char* name)
+RENDERER_API mat4_t(float) material_get_push_mat4(material_t* material, const char* name)
 {
 	return material_get_push_mat4H(material, material_get_field_handle(material, name));
 }
 
 /* ------------------------------------------ END: PUSH CONSTANTS -------------------------------------------*/
 
-void material_set_floatH(material_t* material, material_field_handle_t handle, float value)
+RENDERER_API void material_set_floatH(material_t* material, material_field_handle_t handle, float value)
 {
 	check_precondition(material);
 	struct_descriptor_set_float(map_descriptor(material, handle), handle.field_handle, &value);
 	unmap_descriptor(material, handle);
 }
 
-void material_set_intH(material_t* material, material_field_handle_t handle, int value)
+RENDERER_API void material_set_intH(material_t* material, material_field_handle_t handle, int value)
 {
 	check_precondition(material);
 	struct_descriptor_set_int(map_descriptor(material, handle), handle.field_handle, &value);
 	unmap_descriptor(material, handle);
 }
 
-void material_set_uintH(material_t* material, material_field_handle_t handle, uint value)
+RENDERER_API void material_set_uintH(material_t* material, material_field_handle_t handle, uint value)
 {
 	check_precondition(material);
 	struct_descriptor_set_uint(map_descriptor(material, handle), handle.field_handle, &value);
 	unmap_descriptor(material, handle);
 }
 
-void material_set_vec2H(material_t* material, material_field_handle_t handle, vec2_t(float) value)
+RENDERER_API void material_set_vec2H(material_t* material, material_field_handle_t handle, vec2_t(float) value)
 {
 	check_precondition(material);
 	struct_descriptor_set_vec2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-void material_set_vec3H(material_t* material, material_field_handle_t handle, vec3_t(float) value)
+RENDERER_API void material_set_vec3H(material_t* material, material_field_handle_t handle, vec3_t(float) value)
 {
 	check_precondition(material);
 	struct_descriptor_set_vec3(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-void material_set_vec4H(material_t* material, material_field_handle_t handle, vec4_t(float) value)
+RENDERER_API void material_set_vec4H(material_t* material, material_field_handle_t handle, vec4_t(float) value)
 {
 	check_precondition(material);
 	struct_descriptor_set_vec4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-void material_set_mat2H(material_t* material, material_field_handle_t handle, mat2_t(float) value)
+RENDERER_API void material_set_mat2H(material_t* material, material_field_handle_t handle, mat2_t(float) value)
 {
 	check_precondition(material);
 	struct_descriptor_set_mat2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-void material_set_mat4H(material_t* material, material_field_handle_t handle, mat4_t(float) value)
+RENDERER_API void material_set_mat4H(material_t* material, material_field_handle_t handle, mat4_t(float) value)
 {
 	check_precondition(material);
 	struct_descriptor_set_mat4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-void material_set_textureH(material_t* material, material_field_handle_t handle, texture_t* texture)
+RENDERER_API void material_set_textureH(material_t* material, material_field_handle_t handle, texture_t* texture)
 {
 	check_precondition(material);
 	assert(handle.descriptor_index < material->handle->shader->descriptor_count);
@@ -621,7 +621,7 @@ void material_set_textureH(material_t* material, material_field_handle_t handle,
 	vulkan_material_set_texture(material->handle, descriptor.binding_number, texture);
 }
 
-float material_get_floatH(material_t* material, material_field_handle_t handle)
+RENDERER_API float material_get_floatH(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	float value;
@@ -629,7 +629,7 @@ float material_get_floatH(material_t* material, material_field_handle_t handle)
 	return value;
 }
 
-int material_get_intH(material_t* material, material_field_handle_t handle)
+RENDERER_API int material_get_intH(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	int value;
@@ -637,7 +637,7 @@ int material_get_intH(material_t* material, material_field_handle_t handle)
 	return value;
 }
 
-uint material_get_uintH(material_t* material, material_field_handle_t handle)
+RENDERER_API uint material_get_uintH(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	uint value;
@@ -645,7 +645,7 @@ uint material_get_uintH(material_t* material, material_field_handle_t handle)
 	return value;
 }
 
-vec2_t(float) material_get_vec2H(material_t* material, material_field_handle_t handle)
+RENDERER_API vec2_t(float) material_get_vec2H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	vec2_t(float) value;
@@ -653,7 +653,7 @@ vec2_t(float) material_get_vec2H(material_t* material, material_field_handle_t h
 	return value;
 }
 
-vec3_t(float) material_get_vec3H(material_t* material, material_field_handle_t handle)
+RENDERER_API vec3_t(float) material_get_vec3H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	vec3_t(float) value;
@@ -661,7 +661,7 @@ vec3_t(float) material_get_vec3H(material_t* material, material_field_handle_t h
 	return value;
 }
 
-vec4_t(float) material_get_vec4H(material_t* material, material_field_handle_t handle)
+RENDERER_API vec4_t(float) material_get_vec4H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	vec4_t(float) value;
@@ -669,7 +669,7 @@ vec4_t(float) material_get_vec4H(material_t* material, material_field_handle_t h
 	return value;
 }
 
-mat2_t(float) material_get_mat2H(material_t* material, material_field_handle_t handle)
+RENDERER_API mat2_t(float) material_get_mat2H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	mat2_t(float) value;
@@ -677,7 +677,7 @@ mat2_t(float) material_get_mat2H(material_t* material, material_field_handle_t h
 	return value;
 }
 
-mat4_t(float) material_get_mat4H(material_t* material, material_field_handle_t handle)
+RENDERER_API mat4_t(float) material_get_mat4H(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	mat4_t(float) value;
@@ -685,7 +685,7 @@ mat4_t(float) material_get_mat4H(material_t* material, material_field_handle_t h
 	return value;
 }
 
-texture_t* material_get_texture2dH(material_t* material, material_field_handle_t handle)
+RENDERER_API texture_t* material_get_texture2dH(material_t* material, material_field_handle_t handle)
 {
 	check_precondition(material);
 	LOG_WRN("material_get_texture2dH isn't defined, for now it will return NULL\n");
@@ -693,92 +693,92 @@ texture_t* material_get_texture2dH(material_t* material, material_field_handle_t
 }
 
 /* functions accepting strings */
-void material_set_float(material_t* material, const char* name, float value)
+RENDERER_API void material_set_float(material_t* material, const char* name, float value)
 {
 	material_set_floatH(material, material_get_field_handle(material, name), value);
 }
 
-void material_set_int(material_t* material, const char* name, int value)
+RENDERER_API void material_set_int(material_t* material, const char* name, int value)
 {
 	material_set_intH(material, material_get_field_handle(material, name), value);
 }
 
-void material_set_uint(material_t* material, const char* name, uint value)
+RENDERER_API void material_set_uint(material_t* material, const char* name, uint value)
 {
 	material_set_uintH(material, material_get_field_handle(material, name), value);
 }
 
-void material_set_vec2(material_t* material, const char* name, vec2_t(float) v)
+RENDERER_API void material_set_vec2(material_t* material, const char* name, vec2_t(float) v)
 {
 	material_set_vec2H(material, material_get_field_handle(material, name), v);
 }
 
-void material_set_vec3(material_t* material, const char* name, vec3_t(float) v)
+RENDERER_API void material_set_vec3(material_t* material, const char* name, vec3_t(float) v)
 {
 	material_set_vec3H(material, material_get_field_handle(material, name), v);
 }
 
-void material_set_vec4(material_t* material, const char* name, vec4_t(float) v)
+RENDERER_API void material_set_vec4(material_t* material, const char* name, vec4_t(float) v)
 {
 	material_set_vec4H(material, material_get_field_handle(material, name), v);
 }
 
-void material_set_mat2(material_t* material, const char* name, mat2_t(float) m)
+RENDERER_API void material_set_mat2(material_t* material, const char* name, mat2_t(float) m)
 {
 	material_set_mat2H(material, material_get_field_handle(material, name), m);
 }
 
-void material_set_mat4(material_t* material, const char* name, mat4_t(float) m)
+RENDERER_API void material_set_mat4(material_t* material, const char* name, mat4_t(float) m)
 {
 	material_set_mat4H(material, material_get_field_handle(material, name), m);
 }
 
-void material_set_texture(material_t* material, const char* name, texture_t* texture)
+RENDERER_API void material_set_texture(material_t* material, const char* name, texture_t* texture)
 {
 	material_set_textureH(material, material_get_field_handle(material, name), texture);
 }
 
-float material_get_float(material_t* material, const char* name)
+RENDERER_API float material_get_float(material_t* material, const char* name)
 {
 	return material_get_floatH(material, material_get_field_handle(material, name));
 }
 
-int material_get_int(material_t* material, const char* name)
+RENDERER_API int material_get_int(material_t* material, const char* name)
 {
 	return material_get_intH(material, material_get_field_handle(material, name));
 }
 
-uint material_get_uint(material_t* material, const char* name)
+RENDERER_API uint material_get_uint(material_t* material, const char* name)
 {
 	return material_get_uintH(material, material_get_field_handle(material, name));
 }
 
-vec2_t(float) material_get_vec2(material_t* material, const char* name)
+RENDERER_API vec2_t(float) material_get_vec2(material_t* material, const char* name)
 {
 	return material_get_vec2H(material, material_get_field_handle(material, name));
 }
 
-vec3_t(float) material_get_vec3(material_t* material, const char* name)
+RENDERER_API vec3_t(float) material_get_vec3(material_t* material, const char* name)
 {
 	return material_get_vec3H(material, material_get_field_handle(material, name));
 }
 
-vec4_t(float) material_get_vec4(material_t* material, const char* name)
+RENDERER_API vec4_t(float) material_get_vec4(material_t* material, const char* name)
 {
 	return material_get_vec4H(material, material_get_field_handle(material, name));
 }
 
-mat2_t(float) material_get_mat2(material_t* material, const char* name)
+RENDERER_API mat2_t(float) material_get_mat2(material_t* material, const char* name)
 {
 	return material_get_mat2H(material, material_get_field_handle(material, name));
 }
 
-mat4_t(float) material_get_mat4(material_t* material, const char* name)
+RENDERER_API mat4_t(float) material_get_mat4(material_t* material, const char* name)
 {
 	return material_get_mat4H(material, material_get_field_handle(material, name));
 }
 
-texture_t* material_get_texture2d(material_t* material, const char* name)
+RENDERER_API texture_t* material_get_texture2d(material_t* material, const char* name)
 {
 	return material_get_texture2dH(material, material_get_field_handle(material, name));
 }

@@ -11,7 +11,7 @@
 #include <disk_manager/file_reader.h>
 #include <string.h>
 
-vulkan_shader_t* vulkan_shader_new()
+RENDERER_API vulkan_shader_t* vulkan_shader_new()
 {
 	vulkan_shader_t* shader = heap_new(vulkan_shader_t);
 	memset(shader, 0, sizeof(vulkan_shader_t));
@@ -23,7 +23,7 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 static u16 sizeof_glsl_type(u8 type);
 static u16 alignof_glsl_type(u8 type);
 
-vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER* shader_binary)
+RENDERER_API vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER* shader_binary)
 {
 	const char* header = "SHADER BINARY"; u8 header_len = strlen(header);
 	char buffer[header_len];
@@ -77,7 +77,7 @@ vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER* shader_binar
 	return shader;
 }
 
-vulkan_shader_t* vulkan_shader_load_and_create(renderer_t* renderer, const char* file_path)
+RENDERER_API vulkan_shader_t* vulkan_shader_load_and_create(renderer_t* renderer, const char* file_path)
 {
 	BUFFER* shader_binary = load_binary_from_file(file_path);
 	vulkan_shader_t* shader = vulkan_shader_create(renderer, shader_binary);
@@ -85,7 +85,7 @@ vulkan_shader_t* vulkan_shader_load_and_create(renderer_t* renderer, const char*
 	return shader;
 }
 
-void vulkan_shader_destroy(vulkan_shader_t* shader)
+RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 {
 	for(u8 i = 0; i < shader->stage_count; i++)
 		vulkan_stage_shader_destroy(ref(vulkan_stage_shader_t*, shader->stage_shaders, i), shader->renderer);
@@ -95,7 +95,7 @@ void vulkan_shader_destroy(vulkan_shader_t* shader)
 		vulkan_descriptor_set_destroy(shader->vk_set, shader->renderer);
 }
 
-void vulkan_shader_release_resources(vulkan_shader_t* shader)
+RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 {
 	if(shader->descriptors != NULL)
 		heap_free(shader->descriptors);

@@ -32,6 +32,9 @@ typedef struct vulkan_buffer_t
 	u32 count; 							// equals to create_info->count
 } vulkan_buffer_t;
 
+
+BEGIN_CPP_COMPATIBLE
+
 /* 
 	description:
 		initializes the memory of the vulkan_buffer_t object to zero
@@ -40,7 +43,7 @@ typedef struct vulkan_buffer_t
 	returns:
 		nothing
  */
-void vulkan_buffer_init(vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_buffer_init(vulkan_buffer_t* buffer);
 
 /* 
 	description:
@@ -50,7 +53,7 @@ void vulkan_buffer_init(vulkan_buffer_t* buffer);
 	returns:
 		pointer to newly created vulkan_buffer_t object on the heap
  */
-vulkan_buffer_t* vulkan_buffer_new();
+RENDERER_API vulkan_buffer_t* vulkan_buffer_new();
 
 /* 
 	description:
@@ -62,7 +65,7 @@ vulkan_buffer_t* vulkan_buffer_new();
 	returns:
 		pointer to newly created vulkan_buffer_t object on the heap
  */
-vulkan_buffer_t* vulkan_buffer_create(renderer_t* renderer, vulkan_buffer_create_info_t* create_info);
+RENDERER_API vulkan_buffer_t* vulkan_buffer_create(renderer_t* renderer, vulkan_buffer_create_info_t* create_info);
 
 /* 
 	description:
@@ -74,7 +77,7 @@ vulkan_buffer_t* vulkan_buffer_create(renderer_t* renderer, vulkan_buffer_create
 	returns:
 		nothing
  */
-void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer);
 
 /*
 	description:
@@ -84,7 +87,7 @@ void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_in
 	returns:
 		nothing
  */
-void vulkan_buffer_destroy(vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_buffer_destroy(vulkan_buffer_t* buffer);
 
 /*
 	description:
@@ -95,7 +98,7 @@ void vulkan_buffer_destroy(vulkan_buffer_t* buffer);
 	returns:
 		nothing
  */
-void vulkan_buffer_release_resources(vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_buffer_release_resources(vulkan_buffer_t* buffer);
 
 /*
 	description:
@@ -108,7 +111,7 @@ void vulkan_buffer_release_resources(vulkan_buffer_t* buffer);
 	returns:
 		nothing
  */
-void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* data, u32 data_size);
+RENDERER_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* data, u32 data_size);
 
 /*
 	description:
@@ -118,7 +121,7 @@ void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* d
 	returns:
 		nothing
  */
-void* vulkan_buffer_map(vulkan_buffer_t* buffer);
+RENDERER_API void* vulkan_buffer_map(vulkan_buffer_t* buffer);
 
 /*
 	description:
@@ -128,4 +131,7 @@ void* vulkan_buffer_map(vulkan_buffer_t* buffer);
 	returns:
 		nothing
  */
-void vulkan_buffer_unmap(vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_buffer_unmap(vulkan_buffer_t* buffer);
+
+
+END_CPP_COMPATIBLE

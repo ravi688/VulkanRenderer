@@ -5,6 +5,7 @@
 #include <no_compile_header.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <renderer/defines.h>
 
 #define array_t(T) template(array_t, T)
 
@@ -17,9 +18,9 @@ typedef struct array_t(T)\
 	T* data;\
 } array_t(T)
 
-#define instantiate_declaration_array(T) array_t(T) array(T)(uint32_t, ...)
+#define instantiate_declaration_array(T) RENDERER_API array_t(T) array(T)(uint32_t, ...)
 #define instantiate_implementation_array(T)\
-array_t(T) array(T)(uint32_t count, ...)\
+RENDERER_API array_t(T) array(T)(uint32_t count, ...)\
 {\
 	T* buffer = heap_newv(T, count);\
 	va_list args;\

@@ -15,7 +15,7 @@ typedef enum parse_error_t
 	BMP_PARSE_ERROR_WINDOWS_HEADER_INVALID
 } parse_error_t;
 
-void bmp_parse_error(parse_error_t error)
+static void bmp_parse_error(parse_error_t error)
 {
 	switch(error)
 	{
@@ -23,7 +23,7 @@ void bmp_parse_error(parse_error_t error)
 	}
 }
 
-function_signature(bmp_t, bmp_load, const char* file_path)
+RENDERER_API function_signature(bmp_t, bmp_load, const char* file_path)
 {
 	CALLTRACE_BEGIN();
 	BUFFER* file_data = load_binary_from_file(file_path);
@@ -84,9 +84,9 @@ function_signature(bmp_t, bmp_load, const char* file_path)
 }
 
 
-function_signature(void, bmp_destroy, bmp_t bmp)
+RENDERER_API function_signature(void, bmp_destroy, bmp_t bmp)
 {
 	CALLTRACE_BEGIN();
-
+	heap_free(bmp.data);
 	CALLTRACE_END();
 }

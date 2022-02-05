@@ -19,7 +19,7 @@
 
 static void renderer_on_window_resize(render_window_t* window, void* renderer);
 
-render_window_t* renderer_get_window(renderer_t* renderer) { return renderer->window; }
+RENDERER_API render_window_t* renderer_get_window(renderer_t* renderer) { return renderer->window; }
 
 static vulkan_physical_device_t* get_lowest_score_device(vulkan_physical_device_t** devices, u32 count);
 
@@ -113,7 +113,7 @@ static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, re
 	};
 }
 
-renderer_t* renderer_init(renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen)
+RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen)
 {
 	renderer_t* renderer = heap_new(renderer_t);
 	memset(renderer, 0, sizeof(renderer_t));
@@ -260,7 +260,7 @@ DEBUG_BLOCK
 }
 
 
-void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float a)
+RENDERER_API void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float a)
 {
 	vulkan_swapchain_acquire_next_image(renderer->swapchain, renderer);
 	vkCall(vkResetCommandBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT));
@@ -289,13 +289,13 @@ void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float
 	vkCmdBeginRenderPass(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void renderer_end_frame(renderer_t* renderer)
+RENDERER_API void renderer_end_frame(renderer_t* renderer)
 {
 	vkCmdEndRenderPass(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index]);
 	vkCall(vkEndCommandBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index]));
 }
 
-void renderer_update(renderer_t* renderer)
+RENDERER_API void renderer_update(renderer_t* renderer)
 {
 	uint32_t wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	VkSubmitInfo submit_info =
@@ -328,12 +328,12 @@ void renderer_update(renderer_t* renderer)
 	render_window_poll_events(renderer->window);
 }
 
-bool renderer_is_running(renderer_t* renderer)
+RENDERER_API bool renderer_is_running(renderer_t* renderer)
 {
 	return !render_window_should_close(renderer->window);
 }
 
-void renderer_terminate(renderer_t* renderer)
+RENDERER_API void renderer_terminate(renderer_t* renderer)
 {
 	vkDestroySurfaceKHR(renderer->instance->handle, renderer->surface, NULL);
 	render_window_destroy(renderer->window);

@@ -4,7 +4,9 @@
 #include <memory_allocator/template_definitions.h>
 
 #include <defines.h>
+#include <renderer/defines.h>
 
+BEGIN_CPP_COMPATIBLE
 
 instantiate_declaration_memory_allocator_array(u8);
 instantiate_declaration_memory_allocator_array(u16);
@@ -23,7 +25,7 @@ instantiate_implementation_memory_allocator_array(double);
 instantiate_implementation_memory_allocator_array(u64);
 instantiate_implementation_memory_allocator_array(s64);
 
-float* memory_allocator_array(float)(void* buffer, u64 count, ...)
+RENDERER_API float* memory_allocator_array(float)(void* buffer, u64 count, ...)
 {
 	va_list args;
 	va_start(args, count);
@@ -39,7 +41,7 @@ float* memory_allocator_array(float)(void* buffer, u64 count, ...)
 	return buffer;
 }
 
-char* memory_allocator_array(char)(void* buffer, u64 count, ...)
+RENDERER_API char* memory_allocator_array(char)(void* buffer, u64 count, ...)
 {
 	va_list args;
 	va_start(args, count);
@@ -55,7 +57,7 @@ char* memory_allocator_array(char)(void* buffer, u64 count, ...)
 	return buffer;
 }
 
-u8* memory_allocator_array(u8)(void* buffer, u64 count, ...)
+RENDERER_API u8* memory_allocator_array(u8)(void* buffer, u64 count, ...)
 {
 	va_list args;
 	va_start(args, count);
@@ -70,7 +72,7 @@ u8* memory_allocator_array(u8)(void* buffer, u64 count, ...)
 	va_end(args);
 	return buffer;
 }
-u16* memory_allocator_array(u16)(void* buffer, u64 count, ...)
+RENDERER_API u16* memory_allocator_array(u16)(void* buffer, u64 count, ...)
 {
 	va_list args;
 	va_start(args, count);
@@ -86,7 +88,7 @@ u16* memory_allocator_array(u16)(void* buffer, u64 count, ...)
 	return buffer;
 }
 
-u32* memory_allocator_array(u32)(void* buffer, u64 count, ...)
+RENDERER_API u32* memory_allocator_array(u32)(void* buffer, u64 count, ...)
 {
 	va_list args;
 	va_start(args, count);
@@ -102,7 +104,7 @@ u32* memory_allocator_array(u32)(void* buffer, u64 count, ...)
 	return buffer;
 }
 
-s8* memory_allocator_array(s8)(void* buffer, u64 count, ...)
+RENDERER_API s8* memory_allocator_array(s8)(void* buffer, u64 count, ...)
 {
 	va_list args;
 	va_start(args, count);
@@ -118,7 +120,7 @@ s8* memory_allocator_array(s8)(void* buffer, u64 count, ...)
 	return buffer;
 }
 
-s16* memory_allocator_array(s16)(void* buffer, u64 count, ...)
+RENDERER_API s16* memory_allocator_array(s16)(void* buffer, u64 count, ...)
 {
 	va_list args;
 	va_start(args, count);
@@ -134,7 +136,7 @@ s16* memory_allocator_array(s16)(void* buffer, u64 count, ...)
 	return buffer;
 }
 
-s32* memory_allocator_array(s32)(void* buffer, u64 count, ...)
+RENDERER_API s32* memory_allocator_array(s32)(void* buffer, u64 count, ...)
 {
 	va_list args;
 	va_start(args, count);
@@ -151,4 +153,4 @@ s32* memory_allocator_array(s32)(void* buffer, u64 count, ...)
 }
 #endif
 
-
+END_CPP_COMPATIBLE

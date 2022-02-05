@@ -58,6 +58,10 @@
 #	define LOG_FETAL_ERR(...) debug_log_exit("[Fetal Error]: ", __VA_ARGS__)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cpluscplus
+
 static void debug_log(const char* description, const char* format, ...)
 {
 	va_list args;
@@ -75,3 +79,8 @@ static void debug_log_exit(const char* description, const char* format, ...)
 	va_end(args);
 	exit(0);
 }
+
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus

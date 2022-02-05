@@ -5,7 +5,7 @@
 #include <string/string.h>
 #include <memory_allocator/memory_allocator.h>
 
-const char* string(uint32_t length, const char* format, ...)
+RENDERER_API const char* string(uint32_t length, const char* format, ...)
 {
 	char* buffer = heap_alloc(length);
 	va_list args; 
@@ -15,7 +15,7 @@ const char* string(uint32_t length, const char* format, ...)
 	return buffer;
 }
 
-const char* const* string_array(uint32_t count, ...)
+RENDERER_API const char* const* string_array(uint32_t count, ...)
 {
 	const char* *buffer = heap_newv(const char*, count);
 	va_list args; 
@@ -31,4 +31,4 @@ const char* const* string_array(uint32_t count, ...)
 	return buffer;
 }
 
-const char* string_bool(bool value) { return value == true ? "true" : "false"; }
+RENDERER_API const char* string_bool(bool value) { return value == true ? "true" : "false"; }

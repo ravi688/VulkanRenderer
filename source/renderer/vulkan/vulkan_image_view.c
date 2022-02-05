@@ -15,21 +15,21 @@
 static VkImageViewType get_view_type(vulkan_image_view_type_t type);
 static u32 get_layer_count(vulkan_image_view_type_t type);
 
-vulkan_image_view_t* vulkan_image_view_new()
+RENDERER_API vulkan_image_view_t* vulkan_image_view_new()
 {
 	vulkan_image_view_t* view = heap_new(vulkan_image_view_t);
 	memset(view, 0, sizeof(vulkan_image_view_t));
 	return view;
 }
 
-vulkan_image_view_t* vulkan_image_view_create(vulkan_image_t* image, vulkan_image_view_type_t view_type)
+RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_image_t* image, vulkan_image_view_type_t view_type)
 {
 	vulkan_image_view_t* view = vulkan_image_view_new();
 	vulkan_image_view_create_no_alloc(image, view_type, view);
 	return view;
 }
 
-void vulkan_image_view_create_no_alloc(vulkan_image_t* image, vulkan_image_view_type_t view_type, vulkan_image_view_t* out_view)
+RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_image_t* image, vulkan_image_view_type_t view_type, vulkan_image_view_t* out_view)
 {
 	out_view->renderer = image->renderer;
 	VkImageViewCreateInfo view_create_info  =
@@ -61,13 +61,13 @@ void vulkan_image_view_create_no_alloc(vulkan_image_t* image, vulkan_image_view_
 	vulkan_result_assert_success(result);
 }
 
-void vulkan_image_view_destroy(vulkan_image_view_t* view)
+RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
 {
 	check_pre_condition(view);
 	vkDestroyImageView(view->renderer->logical_device->handle, view->handle, NULL);
 }
 
-void vulkan_image_view_release_resources(vulkan_image_view_t* view)
+RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)
 {
 	check_pre_condition(view);
 	heap_free(view);

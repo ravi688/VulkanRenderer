@@ -13,14 +13,14 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer
 static void destroy_swapchain(vulkan_swapchain_t* swapchain, renderer_t* renderer);
 static void destroy_semaphores(vulkan_swapchain_t* swapchain, renderer_t* renderer);
 
-vulkan_swapchain_t* vulkan_swapchain_new()
+RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new()
 {
 	vulkan_swapchain_t* swapchain = heap_new(vulkan_swapchain_t);
 	memset(swapchain, 0, sizeof(vulkan_swapchain_t));
 	return swapchain;
 }
 
-vulkan_swapchain_t* vulkan_swapchain_create(renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
+RENDERER_API vulkan_swapchain_t* vulkan_swapchain_create(renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
 {
 	assert(renderer->logical_device->handle != VK_NULL_HANDLE);
 	assert(renderer->window != NULL);
@@ -34,13 +34,13 @@ vulkan_swapchain_t* vulkan_swapchain_create(renderer_t* renderer, vulkan_swapcha
 }
 
 
-void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
+RENDERER_API void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
 {
 	destroy_swapchain(swapchain, renderer);
 	create_swapchain(swapchain, renderer, create_info);
 }
 
-void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain, renderer_t* renderer)
+RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain, renderer_t* renderer)
 {
 	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
 	destroy_semaphores(swapchain, renderer);
@@ -48,14 +48,14 @@ void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain, renderer_t* rendere
 	log_msg("Swapchain destroyed successfully\n");
 }
 
-u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, renderer_t* renderer)
+RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, renderer_t* renderer)
 {
 	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
 	vkAcquireNextImageKHR(renderer->logical_device->handle, swapchain->handle, UINT64_MAX, swapchain->image_available_semaphore, VK_NULL_HANDLE, &(swapchain->current_image_index));
 	return swapchain->current_image_index;
 }
 
-void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain)
+RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain)
 {
 	vulkan_image_view_release_resources(swapchain->depth_image_view);
 	vulkan_image_release_resources(swapchain->depth_image);

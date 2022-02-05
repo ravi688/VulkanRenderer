@@ -49,14 +49,14 @@ static sub_buffer_handle_t get_sub_buffer_handle(multi_buffer_t* multi_buffer, d
 static vulkan_instance_buffer_t* get_instance_buffer(renderer_t* renderer, dictionary_t* buffers, u16 key);
 
 // constructors and destructors
-text_mesh_t* text_mesh_new()
+RENDERER_API text_mesh_t* text_mesh_new()
 {
 	text_mesh_t* mesh = heap_new(text_mesh_t);
 	memset(mesh, 0, sizeof(text_mesh_t));
 	return mesh;
 }
 
-text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool)
+RENDERER_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool)
 {
 	assert(pool != NULL);
 	text_mesh_t* text_mesh = text_mesh_new();
@@ -69,7 +69,7 @@ text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool)
 	return text_mesh;
 }
 
-void text_mesh_destroy(text_mesh_t* text_mesh)
+RENDERER_API void text_mesh_destroy(text_mesh_t* text_mesh)
 {
 	check_pre_condition(text_mesh);
 	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
@@ -81,7 +81,7 @@ void text_mesh_destroy(text_mesh_t* text_mesh)
 	buf_clear(strings, NULL);
 }
 
-void text_mesh_release_resources(text_mesh_t* text_mesh)
+RENDERER_API void text_mesh_release_resources(text_mesh_t* text_mesh)
 {
 	check_pre_condition(text_mesh);
 	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
@@ -96,7 +96,7 @@ void text_mesh_release_resources(text_mesh_t* text_mesh)
 }
 
 // logic functions
-void text_mesh_draw(text_mesh_t* text_mesh)
+RENDERER_API void text_mesh_draw(text_mesh_t* text_mesh)
 {
 	check_pre_condition(text_mesh);
 	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
@@ -115,7 +115,7 @@ void text_mesh_draw(text_mesh_t* text_mesh)
 }
 
 // constructors and destructors
-text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh)
+RENDERER_API text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh)
 {
 	check_pre_condition(text_mesh);
 	BUFFER* strings = &text_mesh->strings;
@@ -153,7 +153,7 @@ text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh)
 	return text_mesh->inuse_list;
 }
 
-void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
 	BUFFER* strings = &text_mesh->strings;
@@ -187,7 +187,7 @@ void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t
 }
 
 // setters
-void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* str)
+RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* str)
 {
 	check_pre_condition(text_mesh);
 	// TODO: ensure handle isn't in the free-list, meaning it has been already destroyed, this check should be in debug mode only
@@ -230,57 +230,57 @@ void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t han
 	}
 }
 
-void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) scale)
+RENDERER_API void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) scale)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	string->scale = scale;
 }
 
-void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) position)
+RENDERER_API void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) position)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	string->position = position;
 }
 
-void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) rotation)
+RENDERER_API void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) rotation)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	string->rotation = rotation;
 }
 
-void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t(float) transform)
+RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t(float) transform)
 {
 	check_pre_condition(text_mesh);
 }
 
 // getters
-const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
 	return NULL;
 }
-vec3_t(float) text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API vec3_t(float) text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	return string->scale;
 }
-vec3_t(float) text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API vec3_t(float) text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	return string->position;
 }
-vec3_t(float) text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API vec3_t(float) text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	return string->rotation;
 }
-mat4_t(float) text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API mat4_t(float) text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
 	return mat4_identity(float)();

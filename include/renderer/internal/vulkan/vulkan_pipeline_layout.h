@@ -19,11 +19,14 @@ typedef struct vulkan_pipeline_layout_t
 	VkPipelineLayout handle;
 } vulkan_pipeline_layout_t;
 
+BEGIN_CPP_COMPATIBLE
 
-vulkan_pipeline_layout_t* vulkan_pipeline_layout_new();
-vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info);
-void vulkan_pipeline_layout_create_no_alloc(renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info, vulkan_pipeline_layout_t* pipeline_layout);
-void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* pipeline_layout, renderer_t* renderer);
-void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* pipeline_layout);
+RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new();
+RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info);
+RENDERER_API void vulkan_pipeline_layout_create_no_alloc(renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info, vulkan_pipeline_layout_t* pipeline_layout);
+RENDERER_API void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* pipeline_layout, renderer_t* renderer);
+RENDERER_API void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* pipeline_layout);
 
-void vulkan_pipeline_layout_push_constants(vulkan_pipeline_layout_t* pipeline_layout, renderer_t* renderer, VkShaderStageFlagBits stage_flags, u32 offset, u32 size, void* bytes);
+RENDERER_API void vulkan_pipeline_layout_push_constants(vulkan_pipeline_layout_t* pipeline_layout, renderer_t* renderer, VkShaderStageFlagBits stage_flags, u32 offset, u32 size, void* bytes);
+
+END_CPP_COMPATIBLE

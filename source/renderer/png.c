@@ -14,7 +14,7 @@ typedef enum parse_error_t
 } parse_error_t;
 
 #define png_parse_error(...) define_alias_function_macro(png_parse_error, __VA_ARGS__)
-function_signature(static void, png_parse_error, parse_error_t error)
+static function_signature(void, png_parse_error, parse_error_t error)
 {
 	CALLTRACE_BEGIN();
 	switch(error)
@@ -26,7 +26,7 @@ function_signature(static void, png_parse_error, parse_error_t error)
 }
 
 
-function_signature(png_t, png_load, const char* file_path)
+RENDERER_API function_signature(png_t, png_load, const char* file_path)
 {
 	CALLTRACE_BEGIN();
 	LOG_FETAL_ERR("This method is undefined, it is yet to be defined completely\n");
@@ -48,7 +48,7 @@ function_signature(png_t, png_load, const char* file_path)
 }
 
 
-void png_destroy(png_t png)
+RENDERER_API void png_destroy(png_t png)
 {
 
 }

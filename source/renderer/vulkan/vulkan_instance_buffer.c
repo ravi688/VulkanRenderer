@@ -10,7 +10,7 @@
 #endif /*GLOBAL_DEBUG*/
 
 // constructors and destructors
-void vulkan_instance_buffer_create(renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)
+RENDERER_API void vulkan_instance_buffer_create(renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)
 {
 	assert(out_instance_buffer != NULL);
 	multi_buffer_create(create_info->stride, create_info->capacity, &out_instance_buffer->host_buffer);
@@ -19,7 +19,7 @@ void vulkan_instance_buffer_create(renderer_t* renderer, vulkan_instance_buffer_
 	out_instance_buffer->has_device_buffer = false;
 }
 
-void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer)
+RENDERER_API void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer)
 {
 	check_pre_condition(instance_buffer);
 	if(instance_buffer->has_device_buffer)
@@ -27,7 +27,7 @@ void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer)
 	multi_buffer_clear(&instance_buffer->host_buffer);
 }
 
-void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer)
+RENDERER_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer)
 {
 	check_pre_condition(instance_buffer);
 
@@ -38,20 +38,20 @@ void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance
 }
 
 // getters
-multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer)
+RENDERER_API multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer)
 {
 	check_pre_condition(instance_buffer);
 	return &instance_buffer->host_buffer;
 }
 
-vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer)
+RENDERER_API vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer)
 {
 	check_pre_condition(instance_buffer);
 	return &instance_buffer->device_buffer;
 }
 
 // logic functions
-bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer)
+RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer)
 {
 	check_pre_condition(instance_buffer);
 	multi_buffer_t* host_buffer = &instance_buffer->host_buffer;

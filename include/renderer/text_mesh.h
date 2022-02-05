@@ -89,32 +89,40 @@
 typedef struct renderer_t renderer_t;
 typedef struct text_mesh_t text_mesh_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 // constructors and destructors
-text_mesh_t* text_mesh_new();
-text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool);
-void text_mesh_destroy(text_mesh_t* text);
-void text_mesh_release_resources(text_mesh_t* text);
+RENDERER_API text_mesh_t* text_mesh_new();
+RENDERER_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool);
+RENDERER_API void text_mesh_destroy(text_mesh_t* text);
+RENDERER_API void text_mesh_release_resources(text_mesh_t* text);
 
 // logic functions
-void text_mesh_draw(text_mesh_t* text);
+RENDERER_API void text_mesh_draw(text_mesh_t* text);
 
 
 typedef buf_ucount_t text_mesh_string_handle_t;
 
 // constructors and destructors
-text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh);
-void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh);
+RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
 
 // setters
-void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* string);
-void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) scale);
-void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) position);
-void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) rotation);
-void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t(float) transform);
+RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* string);
+RENDERER_API void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) scale);
+RENDERER_API void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) position);
+RENDERER_API void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) rotation);
+RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t(float) transform);
 
 // getters
-const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
-vec3_t(float) text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
-vec3_t(float) text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
-vec3_t(float) text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
-mat4_t(float) text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API vec3_t(float) text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API vec3_t(float) text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API vec3_t(float) text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API mat4_t(float) text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus

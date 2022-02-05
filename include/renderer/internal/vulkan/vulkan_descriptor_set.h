@@ -22,6 +22,7 @@ typedef struct vulkan_descriptor_set_t
 	VkDescriptorPool pool; //the pool from it has been allocated
 } vulkan_descriptor_set_t;
 
+BEGIN_CPP_COMPATIBLE
 
 /* 
 	description:
@@ -31,7 +32,7 @@ typedef struct vulkan_descriptor_set_t
 	returns:
 		pointer to newly created vulkan_descriptor_set_t object on the heap
  */
-vulkan_descriptor_set_t* vulkan_descriptor_set_new();
+RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new();
 
 /* 
 	description:
@@ -43,7 +44,7 @@ vulkan_descriptor_set_t* vulkan_descriptor_set_new();
 	returns:
 		pointer to newly created vulkan_descriptor_set_t object on the heap
  */
-vulkan_descriptor_set_t* vulkan_descriptor_set_create(renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info);
+RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info);
 
 
 /* 
@@ -57,7 +58,7 @@ vulkan_descriptor_set_t* vulkan_descriptor_set_create(renderer_t* renderer,  vul
 	returns:
 		nothing
  */
-void vulkan_descriptor_set_create_no_alloc(renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set);
+RENDERER_API void vulkan_descriptor_set_create_no_alloc(renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set);
 
 /*
 	description:
@@ -68,7 +69,7 @@ void vulkan_descriptor_set_create_no_alloc(renderer_t* renderer,  vulkan_descrip
 	returns:
 		nothing
  */
-void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, renderer_t* renderer);
+RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, renderer_t* renderer);
 
 /*
 	description:
@@ -79,7 +80,7 @@ void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, renderer_t* ren
 	returns:
 		nothing
  */
-void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_t* set);
+RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_t* set);
 
 /*
  	description:
@@ -91,7 +92,7 @@ void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_t* set);
  	returns:
  		nothing
  */
-void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, renderer_t* renderer, vulkan_pipeline_layout_t* pipeline_layout);
+RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, renderer_t* renderer, vulkan_pipeline_layout_t* pipeline_layout);
 
 /*
  	description:
@@ -104,7 +105,7 @@ void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, renderer_t* render
  	returns:
  		nothing
  */
-void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture);
+RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture);
 
 
 /*
@@ -118,4 +119,7 @@ void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, renderer_
  	returns:
  		nothing
  */
-void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer);
+
+
+END_CPP_COMPATIBLE

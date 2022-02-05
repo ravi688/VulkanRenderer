@@ -28,10 +28,13 @@ typedef struct vulkan_image_view_t
 	u32 layer_count;
 } vulkan_image_view_t;
 
+BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-vulkan_image_view_t* vulkan_image_view_new();
-vulkan_image_view_t* vulkan_image_view_create(vulkan_image_t* image, vulkan_image_view_type_t type);
-void vulkan_image_view_create_no_alloc(vulkan_image_t* image, vulkan_image_view_type_t type, vulkan_image_view_t* out_view);
-void vulkan_image_view_destroy(vulkan_image_view_t* view);
-void vulkan_image_view_release_resources(vulkan_image_view_t* view);
+RENDERER_API vulkan_image_view_t* vulkan_image_view_new();
+RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_image_t* image, vulkan_image_view_type_t type);
+RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_image_t* image, vulkan_image_view_type_t type, vulkan_image_view_t* out_view);
+RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view);
+RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view);
+
+END_CPP_COMPATIBLE

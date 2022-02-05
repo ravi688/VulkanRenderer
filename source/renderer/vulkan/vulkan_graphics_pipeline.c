@@ -10,7 +10,7 @@
 #include <memory_allocator/memory_allocator.h>
 #include <memory.h>
 
-vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
+RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 {
 	vulkan_graphics_pipeline_t* pipeline = heap_new(vulkan_graphics_pipeline_t);
 	memset(pipeline, 0, sizeof(vulkan_graphics_pipeline_t));
@@ -18,7 +18,7 @@ vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 	return pipeline;
 }
 
-void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline)
+RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline)
 {
 	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
 	ASSERT(renderer->vk_render_pass != VK_NULL_HANDLE, "renderer->vk_render_pass == VK_NULL_HANDLE\n");
@@ -100,7 +100,7 @@ void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graph
 	stack_free(input_rates);
 }
 
-vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
+RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
 {
 	vulkan_graphics_pipeline_t* pipeline = vulkan_graphics_pipeline_new();
 	vulkan_graphics_pipeline_create_no_alloc(renderer, create_info, pipeline);
@@ -108,7 +108,7 @@ vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer
 }
 
 
-void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer)
+RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer)
 {
 	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
 	ASSERT(renderer->swapchain != NULL, "renderer->swapchain == NULL\n");
@@ -117,14 +117,14 @@ void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, rendere
 	vkCmdBindPipeline(renderer->vk_command_buffers.value2[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
 }
 
-void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer)
+RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer)
 {
 	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
 	vulkan_pipeline_layout_destroy(pipeline->pipeline_layout, renderer);
 	vkDestroyPipeline(renderer->logical_device->handle, pipeline->pipeline, NULL);
 }
 
-void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)
+RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)
 {
 	vulkan_pipeline_layout_release_resources(pipeline->pipeline_layout);
 	heap_free(pipeline);

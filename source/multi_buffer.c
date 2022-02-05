@@ -26,14 +26,14 @@ inline static buf_ucount_t get_master_index(sub_buffer_t* sub_buffer, buf_ucount
 }
 
 // constructors and destructors
-void multi_buffer_create(u32 element_size, u32 capacity, multi_buffer_t* out_multi_buffer)
+RENDERER_API void multi_buffer_create(u32 element_size, u32 capacity, multi_buffer_t* out_multi_buffer)
 {
 	assert(out_multi_buffer != NULL);
 	out_multi_buffer->buffer = buf_create(element_size, capacity, 0);
 	out_multi_buffer->sub_buffers = buf_create(sizeof(sub_buffer_t), 1, 0);
 }
 
-void multi_buffer_free(multi_buffer_t* multi_buffer)
+RENDERER_API void multi_buffer_free(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	buf_free(&multi_buffer->buffer);
@@ -41,26 +41,26 @@ void multi_buffer_free(multi_buffer_t* multi_buffer)
 }
 
 // getters
-buf_ucount_t multi_buffer_get_count(multi_buffer_t* multi_buffer)
+RENDERER_API buf_ucount_t multi_buffer_get_count(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	return buf_get_element_count(&multi_buffer->buffer);
 }
 
-buf_ucount_t multi_buffer_get_capacity(multi_buffer_t* multi_buffer)
+RENDERER_API buf_ucount_t multi_buffer_get_capacity(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	return buf_get_capacity(&multi_buffer->buffer);
 }
 
-buf_ucount_t multi_buffer_get_sub_buffer_count(multi_buffer_t* multi_buffer)
+RENDERER_API buf_ucount_t multi_buffer_get_sub_buffer_count(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	return buf_get_element_count(&multi_buffer->sub_buffers);
 }
 
 // logic functions
-void multi_buffer_clear(multi_buffer_t* multi_buffer)
+RENDERER_API void multi_buffer_clear(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	buf_clear(&multi_buffer->buffer, NULL);
@@ -70,7 +70,7 @@ void multi_buffer_clear(multi_buffer_t* multi_buffer)
 // sub buffer
 
 // constructors and destructors
-sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* multi_buffer, buf_ucount_t capacity)
+RENDERER_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* multi_buffer, buf_ucount_t capacity)
 {
 	check_pre_condition(multi_buffer);
 	BUFFER* sub_buffers = &multi_buffer->sub_buffers;
@@ -95,10 +95,10 @@ sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* multi_buffer,
 	return buf_get_element_count(sub_buffers) - 1;
 }
 
-void multi_buffer_sub_buffer_destroy(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle); /*TODO*/
+RENDERER_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle); /*TODO*/
 
 // logic functions
-void multi_buffer_sub_buffer_push(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value)
+RENDERER_API void multi_buffer_sub_buffer_push(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value)
 {
 	check_pre_condition(multi_buffer);
 	BUFFER* sub_buffers = &multi_buffer->sub_buffers;
@@ -124,7 +124,7 @@ void multi_buffer_sub_buffer_push(multi_buffer_t* multi_buffer, sub_buffer_handl
 	sub_buffer->count++;
 }
 
-void multi_buffer_sub_buffer_clear(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
+RENDERER_API void multi_buffer_sub_buffer_clear(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
 	check_pre_condition(multi_buffer);
 	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
@@ -134,33 +134,33 @@ void multi_buffer_sub_buffer_clear(multi_buffer_t* multi_buffer, sub_buffer_hand
 }
 
 // getters
-buf_ucount_t multi_buffer_sub_buffer_get_count(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
+RENDERER_API buf_ucount_t multi_buffer_sub_buffer_get_count(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
 	check_pre_condition(multi_buffer);
 	return get_sub_buffer(multi_buffer, handle)->count;
 }
 
-buf_ucount_t multi_buffer_sub_buffer_get_capacity(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
+RENDERER_API buf_ucount_t multi_buffer_sub_buffer_get_capacity(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
 	check_pre_condition(multi_buffer);
 	return get_sub_buffer(multi_buffer, handle)->capacity;
 }
 
-void multi_buffer_sub_buffer_get_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* out_value)
+RENDERER_API void multi_buffer_sub_buffer_get_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* out_value)
 {
 	assert(out_value != NULL);
 	check_pre_condition(multi_buffer);
 	buf_get_at(&multi_buffer->buffer, get_master_index(get_sub_buffer(multi_buffer, handle), index), out_value);
 }
 
-void* multi_buffer_sub_buffer_get_ptr_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index)
+RENDERER_API void* multi_buffer_sub_buffer_get_ptr_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index)
 {
 	check_pre_condition(multi_buffer);
 	return buf_get_ptr_at(&multi_buffer->buffer, get_master_index(get_sub_buffer(multi_buffer, handle), index));
 }
 
 // setters
-void multi_buffer_sub_buffer_set_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value)
+RENDERER_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value)
 {
 	assert(in_value != NULL);
 	check_pre_condition(multi_buffer);

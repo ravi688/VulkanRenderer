@@ -36,10 +36,14 @@ typedef struct vulkan_shader_t
 	u16 descriptor_count;
 } vulkan_shader_t;
 
+BEGIN_CPP_COMPATIBLE
+
 #define vulkan_shader_load(renderer, file_path) vulkan_shader_load_and_create(renderer, file_path)
 
-vulkan_shader_t* vulkan_shader_new();
-vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER* vulkan_shader_binary);
-vulkan_shader_t* vulkan_shader_load_and_create(renderer_t* renderer, const char* file_path);
-void vulkan_shader_destroy(vulkan_shader_t* shader);
-void vulkan_shader_release_resources(vulkan_shader_t* shader);
+RENDERER_API vulkan_shader_t* vulkan_shader_new();
+RENDERER_API vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER* vulkan_shader_binary);
+RENDERER_API vulkan_shader_t* vulkan_shader_load_and_create(renderer_t* renderer, const char* file_path);
+RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader);
+RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader);
+
+END_CPP_COMPATIBLE

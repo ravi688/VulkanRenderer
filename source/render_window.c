@@ -44,7 +44,7 @@ static void glfwOnWindowResizeCallback(GLFWwindow* window, int width, int height
 		}
 }
 
-render_window_t* render_window_init(u32 width, u32 height, const char* title, bool full_screen)
+RENDERER_API render_window_t* render_window_init(u32 width, u32 height, const char* title, bool full_screen)
 {
 	render_window_t* window = heap_new(render_window_t);
 	memset(window, 0, sizeof(render_window_t));
@@ -68,7 +68,7 @@ render_window_t* render_window_init(u32 width, u32 height, const char* title, bo
 }
 static bool comparer(void* callback, event_args_t* args) { return callback == (void*)args->callback; }
 
-void render_window_subscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window, void* user_data), void* user_data)
+RENDERER_API void render_window_subscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window, void* user_data), void* user_data)
 {
 	if(window->resize_event == NULL)
 		window->resize_event = BUFcreate(NULL, sizeof(event_args_t), 0, 0);
@@ -81,24 +81,24 @@ void render_window_subscribe_on_resize(render_window_t* window, void (*callback)
 }
 
 
-void render_window_unsubscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window, void* user_data))
+RENDERER_API void render_window_unsubscribe_on_resize(render_window_t* window, void (*callback)(render_window_t* window, void* user_data))
 {
 	if(window->resize_event == NULL) return;
 	bool result = buf_remove(window->resize_event, callback, (bool (*)(void*, void*))comparer);
 	ASSERT(result == true, "Failed to unsubscribe %u from render_window_t::resize_event\n", callback);
 }
 
-bool render_window_should_close(render_window_t* window)
+RENDERER_API bool render_window_should_close(render_window_t* window)
 {
 	return glfwWindowShouldClose(window->handle);
 }
 
-void render_window_poll_events(render_window_t* window)
+RENDERER_API void render_window_poll_events(render_window_t* window)
 {
 	glfwPollEvents();
 }
 
-void render_window_destroy(render_window_t* window)
+RENDERER_API void render_window_destroy(render_window_t* window)
 {
 	glfwDestroyWindow(window->handle);
 	glfwTerminate();
@@ -108,12 +108,12 @@ void render_window_destroy(render_window_t* window)
 	log_msg("Render window destroyed successfully\n");
 }
 
-void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height)
+RENDERER_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height)
 {
 	glfwGetFramebufferSize(window->handle, out_width, out_height);
 }
 
-void render_window_get_vulkan_surface(render_window_t* window, void* vk_instance, void* out_surface)
+RENDERER_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_instance, void* out_surface)
 {
 	VkSurfaceKHR surface;
 	VkInstance instance;

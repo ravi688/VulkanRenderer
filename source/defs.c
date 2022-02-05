@@ -1,7 +1,7 @@
 #include <renderer/defs.h>
 #include <buffer.h>
 
-int __sizeof(SerializedProperty* property)
+RENDERER_API int __sizeof(SerializedProperty* property)
 {
 	if(property->is_pointer)
 		return sizeof(intptr_t);
@@ -22,7 +22,7 @@ int __sizeof(SerializedProperty* property)
 	}
 	return 0; //bytes
 }
-bool isstorage(const char* string, _storage_specifiers* storage)
+RENDERER_API bool isstorage(const char* string, _storage_specifiers* storage)
 {
 	if(strlen(string) < strlen("static"))
 	{
@@ -51,7 +51,7 @@ bool isstorage(const char* string, _storage_specifiers* storage)
 	}
 }
 
-bool istype(const char* string, _type_specifiers* type)
+RENDERER_API bool istype(const char* string, _type_specifiers* type)
 {
 	if(strlen(string) < strlen("int"))
 	{	
@@ -165,7 +165,7 @@ bool istype(const char* string, _type_specifiers* type)
 	}
 }
 
-char* defs_load_text_from_file(const char* file_name)
+RENDERER_API char* defs_load_text_from_file(const char* file_name)
 {
 	FILE* file = fopen(file_name, "r");
 	if(file == NULL) 
@@ -191,7 +191,7 @@ char* defs_load_text_from_file(const char* file_name)
 	return (char*)BUFget_ptr();  	
 }
 
-char* defs_load_text_from_file_exclude_comments(const char* file_name)
+RENDERER_API char* defs_load_text_from_file_exclude_comments(const char* file_name)
 {
 	FILE* file = fopen(file_name, "r"); 
 	if(file == NULL)

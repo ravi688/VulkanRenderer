@@ -13,14 +13,14 @@
 #endif /* GLOBAL_DEBUG */
 
 // constructors and destructors
-vulkan_physical_device_t* vulkan_physical_device_new()
+RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new()
 {
 	vulkan_physical_device_t* device = heap_new(vulkan_physical_device_t);
 	memset(device, 0, sizeof(vulkan_physical_device_t));
 	return device;
 }
 
-vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_device)
+RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_device)
 {
 	vulkan_physical_device_t* device = vulkan_physical_device_new();
 	device->handle = vk_device;
@@ -51,13 +51,13 @@ vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_devi
 	return device;
 }
 
-void vulkan_physical_device_destroy(vulkan_physical_device_t* device)
+RENDERER_API void vulkan_physical_device_destroy(vulkan_physical_device_t* device)
 {
 	// for(buf_ucount_t i = 0; i < buf_get_element_count(&device->logical_devices); i++)
 	// 	vulkan_logical_device_destroy(*buf_get_ptr_at_typeof(&device->logical_devices, vulkan_logical_device_t*, i));
 }
 
-void vulkan_physical_device_release_resources(vulkan_physical_device_t* device)
+RENDERER_API void vulkan_physical_device_release_resources(vulkan_physical_device_t* device)
 {
 	// for(buf_ucount_t i = 0; i < buf_get_element_count(&device->logical_devices); i++)
 	// 	vulkan_logical_device_release_resources(*buf_get_ptr_at_typeof(&device->logical_devices, vulkan_logical_device_t*, i));
@@ -69,7 +69,7 @@ void vulkan_physical_device_release_resources(vulkan_physical_device_t* device)
 
 
 // getters
-VkPresentModeKHR* vulkan_physical_device_get_present_modes(vulkan_physical_device_t* device, VkSurfaceKHR surface, u32* out_count)
+RENDERER_API VkPresentModeKHR* vulkan_physical_device_get_present_modes(vulkan_physical_device_t* device, VkSurfaceKHR surface, u32* out_count)
 {
 	check_pre_condition(device);
 	u32 count;
@@ -88,7 +88,7 @@ VkPresentModeKHR* vulkan_physical_device_get_present_modes(vulkan_physical_devic
 	return modes;
 }
 
-VkSurfaceFormatKHR* vulkan_physical_device_get_surface_formats(vulkan_physical_device_t* device, VkSurfaceKHR surface, u32* out_count)
+RENDERER_API VkSurfaceFormatKHR* vulkan_physical_device_get_surface_formats(vulkan_physical_device_t* device, VkSurfaceKHR surface, u32* out_count)
 {
 	check_pre_condition(device);
 	u32 count;
@@ -107,7 +107,7 @@ VkSurfaceFormatKHR* vulkan_physical_device_get_surface_formats(vulkan_physical_d
 	return formats;
 }
 
-VkSurfaceCapabilitiesKHR vulkan_physical_device_get_surface_capabilities(vulkan_physical_device_t* device, VkSurfaceKHR surface)
+RENDERER_API VkSurfaceCapabilitiesKHR vulkan_physical_device_get_surface_capabilities(vulkan_physical_device_t* device, VkSurfaceKHR surface)
 {
 	check_pre_condition(device);
 	VkSurfaceCapabilitiesKHR capabilities;
@@ -116,36 +116,36 @@ VkSurfaceCapabilitiesKHR vulkan_physical_device_get_surface_capabilities(vulkan_
 	return capabilities;
 }
 
-VkPhysicalDeviceLimits* vulkan_physical_device_get_limits(vulkan_physical_device_t* device)
+RENDERER_API VkPhysicalDeviceLimits* vulkan_physical_device_get_limits(vulkan_physical_device_t* device)
 {
 	return &(vulkan_physical_device_get_properties(device)->limits);
 }
 
-VkPhysicalDeviceProperties* vulkan_physical_device_get_properties(vulkan_physical_device_t* device)
+RENDERER_API VkPhysicalDeviceProperties* vulkan_physical_device_get_properties(vulkan_physical_device_t* device)
 {
 	check_pre_condition(device);
 	return &device->properties;
 }
 
-VkPhysicalDeviceFeatures* vulkan_physical_device_get_features(vulkan_physical_device_t* device)
+RENDERER_API VkPhysicalDeviceFeatures* vulkan_physical_device_get_features(vulkan_physical_device_t* device)
 {
 	check_pre_condition(device);
 	return &device->features;
 }
 
-VkQueueFamilyProperties* vulkan_physical_device_get_queue_family_properties(vulkan_physical_device_t* device)
+RENDERER_API VkQueueFamilyProperties* vulkan_physical_device_get_queue_family_properties(vulkan_physical_device_t* device)
 {
 	check_pre_condition(device);
 	return device->queue_family_properties;
 }
 
-u32 vulkan_physical_device_get_queue_family_count(vulkan_physical_device_t* device)
+RENDERER_API u32 vulkan_physical_device_get_queue_family_count(vulkan_physical_device_t* device)
 {
 	check_pre_condition(device);
 	return device->queue_family_count;
 }
 
-u32 vulkan_physical_device_find_queue_family_index(vulkan_physical_device_t* device, VkQueueFlags queue_flags)
+RENDERER_API u32 vulkan_physical_device_find_queue_family_index(vulkan_physical_device_t* device, VkQueueFlags queue_flags)
 {
 	check_pre_condition(device);
 	VkQueueFamilyProperties* families = vulkan_physical_device_get_queue_family_properties(device);
@@ -156,7 +156,7 @@ u32 vulkan_physical_device_find_queue_family_index(vulkan_physical_device_t* dev
 	return U32_MAX; 		// invalid
 }
 
-u32 vulkan_physical_device_find_queue_family_index_for_surface(vulkan_physical_device_t* device, VkSurfaceKHR surface)
+RENDERER_API u32 vulkan_physical_device_find_queue_family_index_for_surface(vulkan_physical_device_t* device, VkSurfaceKHR surface)
 {
 	check_pre_condition(device);
 	VkQueueFamilyProperties* families = vulkan_physical_device_get_queue_family_properties(device);
@@ -173,7 +173,7 @@ u32 vulkan_physical_device_find_queue_family_index_for_surface(vulkan_physical_d
 }
 
 // returning bools
-bool vulkan_physical_device_meets_feature_requirements(vulkan_physical_device_t* device, VkPhysicalDeviceFeatures* required_features)
+RENDERER_API bool vulkan_physical_device_meets_feature_requirements(vulkan_physical_device_t* device, VkPhysicalDeviceFeatures* required_features)
 {
 	check_pre_condition(device);
 	VkPhysicalDeviceFeatures* features = vulkan_physical_device_get_features(device);
@@ -181,13 +181,13 @@ bool vulkan_physical_device_meets_feature_requirements(vulkan_physical_device_t*
 			&& ((features->tessellationShader == VK_TRUE) == (required_features->tessellationShader == VK_FALSE));
 }
 
-bool vulkan_physical_device_meets_property_requirements(vulkan_physical_device_t* device, VkPhysicalDeviceProperties* required_properties)
+RENDERER_API bool vulkan_physical_device_meets_property_requirements(vulkan_physical_device_t* device, VkPhysicalDeviceProperties* required_properties)
 {
 	check_pre_condition(device);
 	return vulkan_physical_device_get_properties(device)->deviceType == required_properties->deviceType; // for now, just check for the device type
 }
 
-bool vulkan_physical_device_is_extension_supported(vulkan_physical_device_t* device, const char* extension)
+RENDERER_API bool vulkan_physical_device_is_extension_supported(vulkan_physical_device_t* device, const char* extension)
 {
 	check_pre_condition(device);
 	for(u32 i = 0; i < device->extension_count; i++)
@@ -198,25 +198,25 @@ bool vulkan_physical_device_is_extension_supported(vulkan_physical_device_t* dev
 
 
 // to string (s)
-void vulkan_physical_device_to_string(vulkan_physical_device_t* device, BUFFER* string_buffer)
+RENDERER_API void vulkan_physical_device_to_string(vulkan_physical_device_t* device, BUFFER* string_buffer)
 {
 	vulkan_physical_device_properties_to_string(device, string_buffer);
 	vulkan_physical_device_limits_to_string(device, string_buffer);
 	vulkan_physical_device_extensions_to_string(device, string_buffer);
 }
 
-void vulkan_physical_device_limits_to_string(vulkan_physical_device_t* device, BUFFER* string_buffer)
+RENDERER_API void vulkan_physical_device_limits_to_string(vulkan_physical_device_t* device, BUFFER* string_buffer)
 {
 	check_pre_condition(device);
 	vk_physical_device_limits_to_string("Limits:\n", vulkan_physical_device_get_limits(device), string_buffer);
 }
 
-void vulkan_physical_device_properties_to_string(vulkan_physical_device_t* device, BUFFER* string_buffer)
+RENDERER_API void vulkan_physical_device_properties_to_string(vulkan_physical_device_t* device, BUFFER* string_buffer)
 {
 	vk_physical_device_properties_to_string("Properties:\n", vulkan_physical_device_get_properties(device), string_buffer);
 }
 
-void vulkan_physical_device_extensions_to_string(vulkan_physical_device_t* device, BUFFER* string_buffer)
+RENDERER_API void vulkan_physical_device_extensions_to_string(vulkan_physical_device_t* device, BUFFER* string_buffer)
 {
 	check_pre_condition(device);
 	buf_push_string(string_buffer, "Extensions: \n");

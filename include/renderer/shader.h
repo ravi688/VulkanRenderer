@@ -23,8 +23,16 @@ typedef vulkan_shader_t shader_t;
 #include <renderer/defines.h>
 #include <buffer.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 #define shader_load(renderer, file_path) shader_load_and_create(renderer, file_path)
-shader_t* shader_create(renderer_t* renderer, BUFFER* shader_binary);
-shader_t* shader_load_and_create(renderer_t* renderer, const char* file_path);
-void shader_destroy(shader_t* shader);
-void shader_release_resources(shader_t* shader);
+RENDERER_API shader_t* shader_create(renderer_t* renderer, BUFFER* shader_binary);
+RENDERER_API shader_t* shader_load_and_create(renderer_t* renderer, const char* file_path);
+RENDERER_API void shader_destroy(shader_t* shader);
+RENDERER_API void shader_release_resources(shader_t* shader);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus

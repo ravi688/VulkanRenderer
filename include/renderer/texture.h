@@ -47,6 +47,9 @@ typedef struct texture_create_info_t
 	texture_type_t type; 						// type of the this texture
 } texture_create_info_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 /*	
 	description:
@@ -57,7 +60,7 @@ typedef struct texture_create_info_t
 	returns:
 		pointer to the newly created texture object
  */
-texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info);
+RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info);
 
 /*
 	description:
@@ -69,7 +72,7 @@ texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_in
 	returns:
 		pointer to the newly created texture object
  */
-texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...);
+RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...);
 
 /*
 	description:
@@ -79,7 +82,7 @@ texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...);
 	returns:
 		nothing
  */
-void texture_destroy(texture_t* texture);
+RENDERER_API void texture_destroy(texture_t* texture);
 
 /*
 	description:
@@ -89,4 +92,9 @@ void texture_destroy(texture_t* texture);
 	returns:
 		nothing
  */
-void texture_release_resources(texture_t* texture);
+RENDERER_API void texture_release_resources(texture_t* texture);
+
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus

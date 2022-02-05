@@ -9,7 +9,7 @@ static void __initialize_local_property_addresses(SerializedStruct* serialized_s
 static SerializedStruct __serialize_properties(const char* struct_name, char* string_buffer);
 static SerializedProperty* __serialized_struct_get_property(SerializedStruct* serialized_struct, const char* property_name); 
 
-void serialized_property_print(SerializedProperty* property)
+RENDERER_API void serialized_property_print(SerializedProperty* property)
 {
 	const char* format_string = 
 	"	Property name: %s\n"
@@ -28,7 +28,7 @@ void serialized_property_print(SerializedProperty* property)
 		property->is_const); 
 }
 
-void serialized_struct_print(const char* name)
+RENDERER_API void serialized_struct_print(const char* name)
 {
 	BUFFER* previous_buffer = BUFget_binded_buffer();
 	SerializedStruct* serialized_struct = serialized_struct_get(name); 
@@ -56,7 +56,7 @@ void serialized_struct_print(const char* name)
 	BUFbind(previous_buffer);
 }
 
-void* instantiate_object(const char* serialized_struct_name)
+RENDERER_API void* instantiate_object(const char* serialized_struct_name)
 {
 	SerializedStruct* object_definition = serialized_struct_get(serialized_struct_name); 
 	if(object_definition == NULL)
@@ -68,7 +68,7 @@ void* instantiate_object(const char* serialized_struct_name)
 	#endif
 	return allocated_memory; 
 }
-void set_serialization_source_buffer(const char* _buffer)
+RENDERER_API void set_serialization_source_buffer(const char* _buffer)
 {
 	if(freeable_source_buffer != NULL)
 	{	
@@ -77,7 +77,7 @@ void set_serialization_source_buffer(const char* _buffer)
 	}
 	source_buffer = _buffer;  
 }
-void load_serialization_source_file(const char* file_name)
+RENDERER_API void load_serialization_source_file(const char* file_name)
 {
 	if(freeable_source_buffer != NULL)
 		free(freeable_source_buffer);
@@ -91,7 +91,7 @@ void load_serialization_source_file(const char* file_name)
 	source_buffer = freeable_source_buffer;
 } 
 
-void destroy_serialization_data()
+RENDERER_API void destroy_serialization_data()
 {
 	BUFFER* previous_buffer = BUFget_binded_buffer();
 	if(serialized_structs != NULL)
@@ -115,7 +115,7 @@ void destroy_serialization_data()
 	#endif
 }
 
-void struct_serialize(const char* struct_name)
+RENDERER_API void struct_serialize(const char* struct_name)
 {
 		if(source_buffer == NULL)
 			throw_error("Please load a source file first for serializing any object", __LINE__, "");
@@ -253,7 +253,7 @@ start_search:
 	 	BUFbind(previous_buffer);
 }
 
-void* serialized_struct_get_property_value(const char* struct_name, const char* property_name, void* object_ptr)
+RENDERER_API void* serialized_struct_get_property_value(const char* struct_name, const char* property_name, void* object_ptr)
 {
 	SerializedStruct* object_definition = serialized_struct_get(struct_name); 
 	if(object_definition == NULL)
@@ -269,7 +269,7 @@ void* serialized_struct_get_property_value(const char* struct_name, const char* 
 	return shifted_pointer; 
 }
 
-void* serialized_property_get_value(SerializedProperty* property)
+RENDERER_API void* serialized_property_get_value(SerializedProperty* property)
 {
 	if(property->address == -1)
 	{
@@ -279,7 +279,7 @@ void* serialized_property_get_value(SerializedProperty* property)
 	return (void*)(property->address);
 }
 
-void serialized_struct_set_property_value(const char* struct_name, const char* property_name, void* value, void* object_ptr)
+RENDERER_API void serialized_struct_set_property_value(const char* struct_name, const char* property_name, void* value, void* object_ptr)
 {
 	SerializedStruct* object_definition = serialized_struct_get(struct_name); 
 	if(object_definition == NULL)
@@ -289,7 +289,7 @@ void serialized_struct_set_property_value(const char* struct_name, const char* p
 	memcpy((uint8_t*)(property->address + (intptr_t)object_ptr), (uint8_t*)value, _sizeof(property)); 
 }
 
-void serialized_property_set_value(SerializedProperty* property, void* value)
+RENDERER_API void serialized_property_set_value(SerializedProperty* property, void* value)
 {
 	if(property->address == -1)
 	{
@@ -299,7 +299,7 @@ void serialized_property_set_value(SerializedProperty* property, void* value)
 	memcpy((uint8_t*)(property->address), (uint8_t*)value, _sizeof(property)); 
 }
 
-SerializedProperty serialized_struct_get_property(const char* struct_name,const char* property_name, void* object_ptr)
+RENDERER_API SerializedProperty serialized_struct_get_property(const char* struct_name,const char* property_name, void* object_ptr)
 {
 	BUFFER* previous_buffer = BUFget_binded_buffer();
 	SerializedProperty serialized_property;
@@ -332,7 +332,7 @@ SerializedProperty serialized_struct_get_property(const char* struct_name,const 
 	throw_error("no propery definition found named as", __LINE__, property_name); 
 }
 
-SerializedStruct* serialized_struct_get(const char* name)
+RENDERER_API SerializedStruct* serialized_struct_get(const char* name)
 {
 	if(serialized_structs == NULL)
 		serialized_structs = BUFcreate(NULL, sizeof(SerializedStruct), 1, 0);

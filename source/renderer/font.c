@@ -7,7 +7,7 @@
 #include <renderer/assert.h>
 
 
-font_t* font_load_and_create(const char* file_name)
+RENDERER_API font_t* font_load_and_create(const char* file_name)
 {
 	assert(file_name != NULL);
 	BUFFER* file_data = load_binary_from_file(file_name);
@@ -16,7 +16,7 @@ font_t* font_load_and_create(const char* file_name)
 	return font;
 }
 
-font_t* font_create(void* bytes, u64 length)
+RENDERER_API font_t* font_create(void* bytes, u64 length)
 {
 	assert(bytes != NULL);
 	assert(length != 0);
@@ -30,19 +30,19 @@ font_t* font_create(void* bytes, u64 length)
 	return font;
 }
 
-void font_destroy(font_t* font)
+RENDERER_API void font_destroy(font_t* font)
 {
 	assert(font != NULL);
 	ttf_free(refp(font_t, font, 0)->handle);
 }
 
 
-void font_release_resources(font_t* font)
+RENDERER_API void font_release_resources(font_t* font)
 {
 	heap_free(font);
 }
 
-void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quality,  mesh3d_t* out_mesh)
+RENDERER_API void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quality,  mesh3d_t* out_mesh)
 {
 	assert(out_mesh != NULL);
 	mesh3d_positions_new(out_mesh, 0);
@@ -85,7 +85,7 @@ void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quality,  mesh3d_t
 }
 
 
-void font_get_glyph_info(font_t* font, u16 wide_char, font_glyph_info_t* out_info)
+RENDERER_API void font_get_glyph_info(font_t* font, u16 wide_char, font_glyph_info_t* out_info)
 {
 	int index = ttf_find_glyph(font->handle, wide_char);
 	if(index < 0)

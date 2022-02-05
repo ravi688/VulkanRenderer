@@ -27,10 +27,14 @@ typedef struct vulkan_graphics_pipeline_t
 	vulkan_pipeline_layout_t* pipeline_layout;
 } vulkan_graphics_pipeline_t;
 
-vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new();
-vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info);
-void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline);
-void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer);
-void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline);
-void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer);
+BEGIN_CPP_COMPATIBLE
 
+RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new();
+RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info);
+RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline);
+RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer);
+RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline);
+RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer);
+
+
+END_CPP_COMPATIBLE
