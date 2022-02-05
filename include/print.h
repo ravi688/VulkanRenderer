@@ -19,9 +19,11 @@
 #include "config.h"
 
 #include <stdint.h>
+#include <renderer/defines.h>
 
 typedef void (*printer_t)(void* value);
 
+BEGIN_CPP_COMPATIBLE
 
 #define PRIVATE static
 
@@ -40,5 +42,7 @@ PRIVATE void __print_array(void* array, uint32_t element_size, uint32_t num, pri
 
 #endif
 #endif
+
+END_CPP_COMPATIBLE
 
 #endif

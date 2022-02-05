@@ -7,7 +7,7 @@
 #include <stdio.h> 		// sprintf
 #include <string.h>		// strcmp
 
-vulkan_instance_t* vulkan_instance_new()
+RENDERER_API vulkan_instance_t* vulkan_instance_new()
 {
 	vulkan_instance_t* instance = heap_new(vulkan_instance_t);
 	memset(instance, 0, sizeof(vulkan_instance_t));
@@ -17,7 +17,7 @@ vulkan_instance_t* vulkan_instance_new()
 	return instance;
 }
 
-vulkan_instance_t* vulkan_instance_create(const char* const* extensions, u32 extension_count)
+RENDERER_API vulkan_instance_t* vulkan_instance_create(const char* const* extensions, u32 extension_count)
 {
 	vulkan_instance_t* instance = vulkan_instance_new();
 	const char* supported_extensions[extension_count];
@@ -61,7 +61,7 @@ vulkan_instance_t* vulkan_instance_create(const char* const* extensions, u32 ext
 	return instance;
 }
 
-void vulkan_instance_destroy(vulkan_instance_t* instance)
+RENDERER_API void vulkan_instance_destroy(vulkan_instance_t* instance)
 {
 	assert(instance != NULL);
 	if(instance->physical_devices != NULL)
@@ -73,7 +73,7 @@ void vulkan_instance_destroy(vulkan_instance_t* instance)
 	log_msg("Vulkan instance destroyed successfully\n");
 }
 
-void vulkan_instance_release_resources(vulkan_instance_t* instance)
+RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
 {
 	assert(instance != NULL);
 	if(instance->extension_properties != NULL)
@@ -87,7 +87,7 @@ void vulkan_instance_release_resources(vulkan_instance_t* instance)
 	heap_free(instance);
 }
 
-u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* instance)
+RENDERER_API u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* instance)
 {
 	assert(instance != NULL);
 	if(instance->physical_device_count != U32_MAX)
@@ -98,7 +98,7 @@ u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* instance)
 	return instance->physical_device_count;
 }
 
-u32 vulkan_instance_get_extension_count(vulkan_instance_t* instance, const char* layer_name)
+RENDERER_API u32 vulkan_instance_get_extension_count(vulkan_instance_t* instance, const char* layer_name)
 {
 	assert(instance != NULL);
 	assert(layer_name == NULL); 		// for now it should be null, since we are not enabling any layers
@@ -110,7 +110,7 @@ u32 vulkan_instance_get_extension_count(vulkan_instance_t* instance, const char*
 	return instance->extension_count;
 }
 
-vulkan_physical_device_t** vulkan_instance_get_physical_devices(vulkan_instance_t* instance)
+RENDERER_API vulkan_physical_device_t** vulkan_instance_get_physical_devices(vulkan_instance_t* instance)
 {
 	assert(instance != NULL);
 	if(instance->physical_devices != NULL)
@@ -128,7 +128,7 @@ vulkan_physical_device_t** vulkan_instance_get_physical_devices(vulkan_instance_
 	return instance->physical_devices;
 }
 
-VkExtensionProperties* vulkan_instance_get_extension_properties(vulkan_instance_t* instance, const char* layer_name)
+RENDERER_API VkExtensionProperties* vulkan_instance_get_extension_properties(vulkan_instance_t* instance, const char* layer_name)
 {
 	assert(instance != NULL);
 	assert(layer_name == NULL); 		// for now it should be null, since we are not enabling any layers
@@ -144,7 +144,7 @@ VkExtensionProperties* vulkan_instance_get_extension_properties(vulkan_instance_
 }
 
 // returning bools
-bool vulkan_instance_is_extension_supported(vulkan_instance_t* instance, const char* extension, const char* layer_name)
+RENDERER_API bool vulkan_instance_is_extension_supported(vulkan_instance_t* instance, const char* extension, const char* layer_name)
 {
 	assert(instance != NULL);
 	assert(layer_name == NULL);
@@ -157,7 +157,7 @@ bool vulkan_instance_is_extension_supported(vulkan_instance_t* instance, const c
 }
 
 // to string (s)
-void vulkan_instance_to_string(vulkan_instance_t* instance, BUFFER* string_buffer)
+RENDERER_API void vulkan_instance_to_string(vulkan_instance_t* instance, BUFFER* string_buffer)
 {
 	assert(instance != NULL);
 	char buffer[512];

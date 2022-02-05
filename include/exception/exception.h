@@ -12,6 +12,7 @@
 #define __EXCEPTION_H__
 
 #include <stdint.h>
+#include <renderer/defines.h>
 
 #ifdef NO_EXCEPTION
 #	define EXCEPTION_BLOCK(x)
@@ -35,22 +36,25 @@
 #ifndef NO_EXCEPTION
 typedef char* exception_t;
 #	define __exception_name(exception_name) EXCEPTION_##exception_name
-#	define define_exception(exception_name) const exception_t __exception_name(exception_name) = #exception_name
-#	define declare_exception(exception_name) extern const exception_t __exception_name(exception_name)
+#	define define_exception(exception_name) RENDERER_API const exception_t __exception_name(exception_name) = #exception_name
+#	define declare_exception(exception_name) RENDERER_API extern const exception_t __exception_name(exception_name)
 #else
 #	define __exception_name(exception_name)
 #	define define_exception(exception_name)
 #	define declare_exception(exception_name)
 #endif
 
+BEGIN_CPP_COMPATIBLE
+
 #ifndef NO_EXCEPTION
 /* Changes:
  * Version 1.0: __throw
  * Version 1.1: __throw_exception
  */
-void __throw_exception(exception_t exception, uint64_t line_no, const char* method_name, const char* file_name);
+RENDERER_API void __throw_exception(exception_t exception, uint64_t line_no, const char* method_name, const char* file_name);
 #endif
 
+END_CPP_COMPATIBLE
 
 /*Added in version 1.1*/
 #include <exception/exception_declarations.h>

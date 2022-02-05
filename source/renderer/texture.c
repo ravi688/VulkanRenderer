@@ -5,7 +5,7 @@
 #include <renderer/assert.h> 	// LOG_FETAL_ERR
 #include <stdarg.h> 		// va_start, va_end, va_list
 
-texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info)
+RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info)
 {
 	// determine the data count (texture_count) and the vulkan type
 	vulkan_texture_type_t vulkan_type;
@@ -57,7 +57,7 @@ texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_in
 	return vulkan_texture_create(renderer, &vulkan_create_info);
 }
 
-texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...)
+RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...)
 {
 	va_list file_paths;
 	va_start(file_paths, type);
@@ -117,12 +117,12 @@ texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...)
 	return texture;
 }
 
-void texture_destroy(texture_t* texture)
+RENDERER_API void texture_destroy(texture_t* texture)
 {
 	vulkan_texture_destroy(texture);
 }
 
-void texture_release_resources(texture_t* texture)
+RENDERER_API void texture_release_resources(texture_t* texture)
 {
 	vulkan_texture_release_resources(texture);
 }

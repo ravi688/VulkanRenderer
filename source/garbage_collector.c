@@ -3,4 +3,4 @@
 #include <garbage_collector/garbage_collector.h>
 
 
-tgc_t gc;
+RENDERER_API tgc_t gc;

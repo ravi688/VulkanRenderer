@@ -20,16 +20,20 @@ typedef struct vulkan_instance_buffer_t
 	bool has_device_buffer; 				// initially only host-side buffer is created and used; so it would be false if *_commit never called
 } vulkan_instance_buffer_t;
 
+BEGIN_CPP_COMPATIBLE
+
 // constructors and destructors
-void vulkan_instance_buffer_create(renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer);
-void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer);
-void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer);
+RENDERER_API void vulkan_instance_buffer_create(renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer);
+RENDERER_API void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer);
+RENDERER_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer);
 
 // getters
-multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer);
-vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer);
+RENDERER_API multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer);
+RENDERER_API vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer);
 
 // logic functions
 
 // returns true when this buffer should be binded in the pipeline, otherwise false
-bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer);
+RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer);
+
+END_CPP_COMPATIBLE

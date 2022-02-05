@@ -18,7 +18,7 @@
         		= (offset + (align - 1)) & -align
  */
 
-void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
+RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 {
 	assert(descriptor != NULL);
 	if((descriptor->fields == 0) || (descriptor->field_count == 0) || (descriptor->field_count == 0xFFFF))
@@ -35,25 +35,25 @@ void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 	descriptor->size = offset;
 }
 
-void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr)
+RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr)
 {
 	assert(descriptor != NULL);
 	descriptor->ptr = ptr;
 }
 
-void struct_descriptor_unmap(struct_descriptor_t* descriptor)
+RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor)
 {
 	assert(descriptor != NULL);
 	descriptor->ptr = NULL;
 }
 
-u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor)
+RENDERER_API u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor)
 {
 	assert(descriptor != NULL);
 	return descriptor->size;
 }
 
-struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* field_name)
+RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* field_name)
 {
 	assert(descriptor != NULL);
 	assert(descriptor->field_count < 0xFFFF);
@@ -83,193 +83,193 @@ static inline void __cpy_data_to(struct_descriptor_t* descriptor, struct_field_h
 	memcpy(data, descriptor->ptr + descriptor->fields[handle].offset, size);
 }
 
-void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in)
+RENDERER_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in)
 {
 	check_precondition(descriptor, handle);
 	cpy_data_from(descriptor, handle, in);
 }
 
-void struct_descriptor_set_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
+RENDERER_API void struct_descriptor_set_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 4);
 }
 
-void struct_descriptor_set_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
+RENDERER_API void struct_descriptor_set_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 4);
 }
 
-void struct_descriptor_set_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
+RENDERER_API void struct_descriptor_set_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 4);
 }
 
-void struct_descriptor_set_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
+RENDERER_API void struct_descriptor_set_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 16);
 }
 
-void struct_descriptor_set_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
+RENDERER_API void struct_descriptor_set_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 12);
 }
 
-void struct_descriptor_set_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
+RENDERER_API void struct_descriptor_set_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 8);
 }
 
-void struct_descriptor_set_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
+RENDERER_API void struct_descriptor_set_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 16);
 }
 
-void struct_descriptor_set_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
+RENDERER_API void struct_descriptor_set_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 12);
 }
 
-void struct_descriptor_set_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
+RENDERER_API void struct_descriptor_set_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 8);
 }
 
-void struct_descriptor_set_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
+RENDERER_API void struct_descriptor_set_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 16);
 }
 
-void struct_descriptor_set_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
+RENDERER_API void struct_descriptor_set_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 12);
 }
 
-void struct_descriptor_set_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
+RENDERER_API void struct_descriptor_set_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 8);
 }
 
-void struct_descriptor_set_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
+RENDERER_API void struct_descriptor_set_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 64);
 }
 
-void struct_descriptor_set_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
+RENDERER_API void struct_descriptor_set_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 36);
 }
 
-void struct_descriptor_set_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
+RENDERER_API void struct_descriptor_set_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in, 16);
 }
 
-void struct_descriptor_get_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const out)
+RENDERER_API void struct_descriptor_get_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const out)
 {
 	check_precondition(descriptor, handle);
 	cpy_data_to(descriptor, handle, out);
 }
 
-void struct_descriptor_get_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
+RENDERER_API void struct_descriptor_get_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 4);
 }
 
-void struct_descriptor_get_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
+RENDERER_API void struct_descriptor_get_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 4);
 }
 
-void struct_descriptor_get_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
+RENDERER_API void struct_descriptor_get_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 4);
 }
 
-void struct_descriptor_get_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
+RENDERER_API void struct_descriptor_get_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 16);
 }
 
-void struct_descriptor_get_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
+RENDERER_API void struct_descriptor_get_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 12);
 }
 
-void struct_descriptor_get_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
+RENDERER_API void struct_descriptor_get_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 8);
 }
 
-void struct_descriptor_get_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
+RENDERER_API void struct_descriptor_get_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 16);
 }
 
-void struct_descriptor_get_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
+RENDERER_API void struct_descriptor_get_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 12);
 }
 
-void struct_descriptor_get_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
+RENDERER_API void struct_descriptor_get_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 8);
 }
 
-void struct_descriptor_get_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
+RENDERER_API void struct_descriptor_get_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 16);
 }
 
-void struct_descriptor_get_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
+RENDERER_API void struct_descriptor_get_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 12);
 }
 
-void struct_descriptor_get_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
+RENDERER_API void struct_descriptor_get_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 8);
 }
 
-void struct_descriptor_get_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
+RENDERER_API void struct_descriptor_get_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 64);
 }
 
-void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
+RENDERER_API void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 36);
 }
 
-void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
+RENDERER_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out, 16);

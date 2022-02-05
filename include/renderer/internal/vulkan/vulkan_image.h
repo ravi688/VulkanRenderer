@@ -38,14 +38,17 @@ typedef struct vulkan_image_t
 	u32 layer_count;
 } vulkan_image_t;
 
+BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-vulkan_image_t* vulkan_image_new();
-vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_info_t* create_info);
-void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image);
-void vulkan_image_destroy(vulkan_image_t* image);
-void vulkan_image_release_resources(vulkan_image_t* image);
+RENDERER_API vulkan_image_t* vulkan_image_new();
+RENDERER_API vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_info_t* create_info);
+RENDERER_API void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image);
+RENDERER_API void vulkan_image_destroy(vulkan_image_t* image);
+RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image);
 
 // logic functions
-void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layout);
-void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layout);
+RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffer);
+
+END_CPP_COMPATIBLE

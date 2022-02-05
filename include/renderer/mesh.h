@@ -27,15 +27,23 @@ typedef vulkan_mesh_t mesh_t;
 
 #include <renderer/defines.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 // constructors and destructors
-mesh_t* mesh_new();
-mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data);
-void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
-void mesh_destroy(mesh_t* mesh);
-void mesh_release_resources(mesh_t* mesh);
+RENDERER_API mesh_t* mesh_new();
+RENDERER_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data);
+RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
+RENDERER_API void mesh_destroy(mesh_t* mesh);
+RENDERER_API void mesh_release_resources(mesh_t* mesh);
 
 // draw calls
-DEPRECATED void mesh_draw(mesh_t* mesh);
-void mesh_draw_indexed(mesh_t* mesh);
-void mesh_draw_instanced(mesh_t* mesh, u32 instance_count);
-void mesh_draw_indexed_instanced(mesh_t* mesh, u32 instance_count);
+RENDERER_API DEPRECATED void mesh_draw(mesh_t* mesh);
+RENDERER_API void mesh_draw_indexed(mesh_t* mesh);
+RENDERER_API void mesh_draw_instanced(mesh_t* mesh, u32 instance_count);
+RENDERER_API void mesh_draw_indexed_instanced(mesh_t* mesh, u32 instance_count);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus

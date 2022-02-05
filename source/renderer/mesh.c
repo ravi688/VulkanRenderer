@@ -8,19 +8,19 @@
 
 static u32 get_vulkan_index_from_stride(u32 stride);
 
-mesh_t* mesh_new()
+RENDERER_API mesh_t* mesh_new()
 {
 	return vulkan_mesh_new();
 }
 
-mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
+RENDERER_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 {
 	mesh_t* vulkan_mesh = vulkan_mesh_new();
 	mesh_create_no_alloc(renderer, mesh_data, vulkan_mesh);
 	return vulkan_mesh;
 }
 
-void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
+RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
 {
 	ASSERT(mesh_data != NULL, "Failed to create mesh_t, mesh3d_t* mesh_data == NULL\n");
 	vulkan_vertex_buffer_create_info_t* vertex_buffer_infos = stack_newv(vulkan_vertex_buffer_create_info_t, MESH3D_MAX_ATTRIBUTE_COUNT);
@@ -56,31 +56,31 @@ void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mes
 	stack_free(vertex_buffer_infos);
 }
 
-void mesh_destroy(mesh_t* mesh)
+RENDERER_API void mesh_destroy(mesh_t* mesh)
 {
 	vulkan_mesh_destroy(mesh);
 }
 
-void mesh_release_resources(mesh_t* mesh)
+RENDERER_API void mesh_release_resources(mesh_t* mesh)
 {
 	vulkan_mesh_release_resources(mesh);
 }
 
-void mesh_draw(mesh_t* mesh)
+RENDERER_API void mesh_draw(mesh_t* mesh)
 {
 	vulkan_mesh_draw(mesh);
 }
 
-void mesh_draw_indexed(mesh_t* mesh)
+RENDERER_API void mesh_draw_indexed(mesh_t* mesh)
 {
 	vulkan_mesh_draw_indexed(mesh);
 }
 
-void mesh_draw_instanced(mesh_t* mesh, uint32_t instance_count)
+RENDERER_API void mesh_draw_instanced(mesh_t* mesh, uint32_t instance_count)
 {
 	vulkan_mesh_draw_instanced(mesh, instance_count);
 }
-void mesh_draw_indexed_instanced(mesh_t* mesh, uint32_t instance_count)
+RENDERER_API void mesh_draw_indexed_instanced(mesh_t* mesh, uint32_t instance_count)
 {
 	vulkan_mesh_draw_indexed_instanced(mesh, instance_count);
 }

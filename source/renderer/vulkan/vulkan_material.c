@@ -14,7 +14,7 @@
 
 static void recreate_material(render_window_t* window, void* user_data);
 
-vulkan_material_t* vulkan_material_new()
+RENDERER_API vulkan_material_t* vulkan_material_new()
 {
 	vulkan_material_t* material = heap_new(vulkan_material_t);
 	memset(material, 0, sizeof(vulkan_material_t));
@@ -23,7 +23,7 @@ vulkan_material_t* vulkan_material_new()
 	return material;
 }
 
-void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_create_info_t* create_info, vulkan_material_t* material)
+RENDERER_API void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_create_info_t* create_info, vulkan_material_t* material)
 {
 	assert(renderer->window != NULL);
 	assert(create_info->vertex_info_count != 0);
@@ -43,7 +43,7 @@ void vulkan_material_create_no_alloc(renderer_t* renderer, vulkan_material_creat
 	vulkan_graphics_pipeline_create_no_alloc(renderer, &pipeline_create_info, material->graphics_pipeline);
 }
 
-vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_create_info_t* create_info)
+RENDERER_API vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_create_info_t* create_info)
 {
 	vulkan_material_t* material = vulkan_material_new();
 	vulkan_material_create_no_alloc(renderer, create_info, material);
@@ -70,14 +70,14 @@ vulkan_material_t* vulkan_material_create(renderer_t* renderer, vulkan_material_
 	return material;
 }
 
-void vulkan_material_destroy(vulkan_material_t* material)
+RENDERER_API void vulkan_material_destroy(vulkan_material_t* material)
 {
 	vulkan_graphics_pipeline_destroy(material->graphics_pipeline, material->renderer);
 	render_window_unsubscribe_on_resize(material->renderer->window, recreate_material);
 	material->shader = NULL;
 }
 
-void vulkan_material_release_resources(vulkan_material_t* material)
+RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 {
 	vulkan_graphics_pipeline_release_resources(material->graphics_pipeline);
 	u32 vertex_info_count = material->vertex_info_count;
@@ -92,7 +92,7 @@ void vulkan_material_release_resources(vulkan_material_t* material)
 	heap_free(material);
 }
 
-void vulkan_material_bind(vulkan_material_t* material)
+RENDERER_API void vulkan_material_bind(vulkan_material_t* material)
 {
 	u32 image_index = material->renderer->swapchain->current_image_index;
 	vulkan_graphics_pipeline_bind(material->graphics_pipeline, material->renderer);
@@ -100,12 +100,12 @@ void vulkan_material_bind(vulkan_material_t* material)
 		vulkan_descriptor_set_bind(material->shader->vk_set, material->renderer, material->graphics_pipeline->pipeline_layout);
 }
 
-void vulkan_material_push_constants(vulkan_material_t* material, void* bytes)
+RENDERER_API void vulkan_material_push_constants(vulkan_material_t* material, void* bytes)
 {
 	vulkan_pipeline_layout_push_constants(material->graphics_pipeline->pipeline_layout, material->renderer, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(float) * 16, bytes);
 }
 
-void vulkan_material_set_texture(vulkan_material_t* material, u32 binding_index, vulkan_texture_t* texture)
+RENDERER_API void vulkan_material_set_texture(vulkan_material_t* material, u32 binding_index, vulkan_texture_t* texture)
 {
 	if(material->shader->vk_set == NULL)
 	{
@@ -115,7 +115,7 @@ void vulkan_material_set_texture(vulkan_material_t* material, u32 binding_index,
 	vulkan_descriptor_set_write_texture(material->shader->vk_set, material->renderer, binding_index, texture);
 }
 
-void vulkan_material_set_uniform_buffer(vulkan_material_t* material, u32 binding_index, vulkan_buffer_t* buffer)
+RENDERER_API void vulkan_material_set_uniform_buffer(vulkan_material_t* material, u32 binding_index, vulkan_buffer_t* buffer)
 {
 	if(material->shader->vk_set == NULL)
 	{

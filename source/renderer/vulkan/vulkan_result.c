@@ -3,7 +3,7 @@
 #include <renderer/assert.h>
 #include <stdlib.h>
 
-void vulkan_result_assert_success(VkResult result)
+RENDERER_API void vulkan_result_assert_success(VkResult result)
 {
 	if(result == VK_SUCCESS)
 		return;
@@ -14,7 +14,7 @@ void vulkan_result_assert_success(VkResult result)
 	exit(0);
 }
 
-void vulkan_result_assert_on_time(VkResult result)
+RENDERER_API void vulkan_result_assert_on_time(VkResult result)
 {
 	if(result != VK_TIMEOUT)
 		return;
@@ -25,7 +25,7 @@ void vulkan_result_assert_on_time(VkResult result)
 	exit(0);
 }
 
-void vulkan_result_assert_complete(VkResult result)
+RENDERER_API void vulkan_result_assert_complete(VkResult result)
 {
 	if(result != VK_INCOMPLETE)
 		return;
@@ -36,7 +36,7 @@ void vulkan_result_assert_complete(VkResult result)
 	exit(0);
 }
 
-void vulkan_result_assert_no_error(VkResult result)
+RENDERER_API void vulkan_result_assert_no_error(VkResult result)
 {
 	if(result <= 5)
 		return;
@@ -47,13 +47,13 @@ void vulkan_result_assert_no_error(VkResult result)
 	exit(0);
 }
 
-void vulkan_result_to_string(VkResult result, BUFFER* string_buffer)
+RENDERER_API void vulkan_result_to_string(VkResult result, BUFFER* string_buffer)
 {
 	assert(buf_get_element_size(string_buffer) == sizeof(char));
 	buf_push_string(string_buffer, (char*)vulkan_result_to_string_literal(result));
 }
 
-const char* vulkan_result_to_string_literal(VkResult result)
+RENDERER_API const char* vulkan_result_to_string_literal(VkResult result)
 {
 	switch(result)
 	{

@@ -11,14 +11,14 @@
 #	define check_pre_condition(device)
 #endif /* GLOBAL_DEBUG */
 
-vulkan_logical_device_t* vulkan_logical_device_new()
+RENDERER_API vulkan_logical_device_t* vulkan_logical_device_new()
 {
 	vulkan_logical_device_t* device = heap_new(vulkan_logical_device_t);
 	memset(device, 0, sizeof(vulkan_logical_device_t));
 	return device;	
 }
 
-vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* physical_device, vulkan_logical_device_create_info_t* device_create_info)
+RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* physical_device, vulkan_logical_device_create_info_t* device_create_info)
 {
 	assert(device_create_info != NULL);
 	vulkan_logical_device_t* device = vulkan_logical_device_new();
@@ -91,18 +91,18 @@ vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* 
 	return device;	
 }
 
-void vulkan_logical_device_destroy(vulkan_logical_device_t* device)
+RENDERER_API void vulkan_logical_device_destroy(vulkan_logical_device_t* device)
 {
 	vkDestroyDevice(device->handle, NULL);
 	log_msg("Logical device destroyed successfully\n");
 }
 
-void vulkan_logical_device_release_resources(vulkan_logical_device_t* device)
+RENDERER_API void vulkan_logical_device_release_resources(vulkan_logical_device_t* device)
 {
 	heap_free(device);
 }
 
-VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index)
+RENDERER_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index)
 {
 	check_pre_condition(device);
 	VkQueue queue;

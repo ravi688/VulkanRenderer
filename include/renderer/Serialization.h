@@ -1,6 +1,7 @@
 #ifndef _SERIALIZATION_H_
 #define _SERIALIZATION_H_
 #include <renderer/defs.h>
+#include <renderer/defines.h>
 #include <buffer.h>
 
 #define serialized_struct_set_property_int8(struct_name, property_name, value, object_ptr)\
@@ -139,34 +140,41 @@
 #define serialized_property_get_double(property) (*(double*)serialized_property_get_vaule(property))
 #define serialized_property_get_long_double(property) (*(long double*)serialized_property_get_value(property))
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 //loads the source file from secondary storage to the main memory for further parsing and compiling
-void load_serialization_source_file(const char* name);
+RENDERER_API void load_serialization_source_file(const char* name);
 //sets the internal source buffer 
 //NOTE: if this buffer is allocated in the heap then it will not be automatically freed, you must have to free it explicitly
-void set_serialization_source_buffer(const char* buffer); 
+RENDERER_API void set_serialization_source_buffer(const char* buffer); 
 //destoyes the allocated buffers for the serialized objects and properties
-void destroy_serialization_data(); 
+RENDERER_API void destroy_serialization_data(); 
 //prints the details of a serialized property
-void serialized_property_print(SerializedProperty* property);
+RENDERER_API void serialized_property_print(SerializedProperty* property);
 //prints the details of a serialized struct along with its all property details
-void serialized_struct_print(const char* name); 
+RENDERER_API void serialized_struct_print(const char* name); 
 //serializes a struct and stores the retrieved (serialized information) information into a buffer of SerializedStructs
-void struct_serialize(const char* struct_name);
+RENDERER_API void struct_serialize(const char* struct_name);
 //instantiates a new object of type typeof('serialized_struct_name')
 //NOTE: that struct must be serialized first
-void* instantiate_object(const char* struct_name); 
+RENDERER_API void* instantiate_object(const char* struct_name); 
 //returns a pointer to the memory bock which corresponds to the property
-void* serialized_property_get_value(SerializedProperty* property);
+RENDERER_API void* serialized_property_get_value(SerializedProperty* property);
 //sets a value of a memory block which corresponds to the property
-void serialized_property_set_value(SerializedProperty* property, void* value);
+RENDERER_API void serialized_property_set_value(SerializedProperty* property, void* value);
 //sets a value to a property in the serialized struct named as 'struct_name'
-void serialized_struct_set_property_value(const char* struct_name, const char* property_name, void* value, void* object_ptr); 
+RENDERER_API void serialized_struct_set_property_value(const char* struct_name, const char* property_name, void* value, void* object_ptr); 
 //returns a pointer to the memory block of property of the struct named as 'struct_name'
-void* serialized_struct_get_property_value(const char* struct_name, const char* property_name, void* object_ptr); 
+RENDERER_API void* serialized_struct_get_property_value(const char* struct_name, const char* property_name, void* object_ptr); 
 //returns the property with name 'property_name' and you have to pass the base address of an object (struct)
-SerializedProperty serialized_struct_get_property(const char* serialized_struct_name, const char* property_name, void* object_ptr);
+RENDERER_API SerializedProperty serialized_struct_get_property(const char* serialized_struct_name, const char* property_name, void* object_ptr);
 
-SerializedStruct* serialized_struct_get(const char* name);
+RENDERER_API SerializedStruct* serialized_struct_get(const char* name);
 
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif

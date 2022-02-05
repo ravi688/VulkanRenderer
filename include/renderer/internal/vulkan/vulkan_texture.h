@@ -41,6 +41,8 @@ typedef struct vulkan_texture_t
 	VkSampler image_sampler; 						// vulkan image sampler object
 } vulkan_texture_t;
 
+BEGIN_CPP_COMPATIBLE
+
 /*	
 	description:
 		creates a vulkan texture of a type 'type'
@@ -50,7 +52,7 @@ typedef struct vulkan_texture_t
 	returns:
 		pointer to the newly created vulkan texture object
  */
-vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_create_info_t* create_info);
+RENDERER_API vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_create_info_t* create_info);
 
 /*
 	description:
@@ -60,7 +62,7 @@ vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_cre
 	returns:
 		nothing
  */
-void vulkan_texture_destroy(vulkan_texture_t* texture);
+RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture);
 
 /*
 	description:
@@ -70,4 +72,6 @@ void vulkan_texture_destroy(vulkan_texture_t* texture);
 	returns:
 		nothing
  */
-void vulkan_texture_release_resources(vulkan_texture_t* texture);
+RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture);
+
+END_CPP_COMPATIBLE

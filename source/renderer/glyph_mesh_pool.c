@@ -27,14 +27,14 @@ typedef	struct glyph_mesh_pool_t
 } glyph_mesh_pool_t;
 
 // constructors and destructors
-glyph_mesh_pool_t* glyph_mesh_pool_new()
+RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new()
 {
 	glyph_mesh_pool_t* pool = heap_new(glyph_mesh_pool_t);
 	memset(pool, 0, sizeof(glyph_mesh_pool_t));
 	return pool;
 }
 
-glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font)
+RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font)
 {
 	assert(font != NULL);
 	glyph_mesh_pool_t* pool = glyph_mesh_pool_new();
@@ -44,7 +44,7 @@ glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font)
 	return pool;
 }
 
-void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool)
+RENDERER_API void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool)
 {
 	check_pre_condition(pool);
 	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
@@ -55,7 +55,7 @@ void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool)
 	}
 }
 
-void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool)
+RENDERER_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool)
 {
 	check_pre_condition(pool);
 	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
@@ -69,13 +69,13 @@ void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool)
 
 // getters
 
-font_t* glyph_mesh_pool_get_font(glyph_mesh_pool_t* pool)
+RENDERER_API font_t* glyph_mesh_pool_get_font(glyph_mesh_pool_t* pool)
 {
 	check_pre_condition(pool);
 	return pool->font;
 }
 
-mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph)
+RENDERER_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph)
 {
 	check_pre_condition(pool);
 	if(isspace(glyph)) return NULL;

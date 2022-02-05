@@ -39,10 +39,10 @@
 #define __TRIANGLES_ARE_NOT_FOUND__ "mesh3d_t::triangles are not found, make sure to call mesh3d_triangles_new(count) first\n"
 
 #define mesh3d_foreach(...) define_alias_function_macro(mesh3d_foreach, __VA_ARGS__)
-function_signature(static void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, func_ptr_sig(void*, getter, mesh3d_t*, index_t), void (*visitor)(void*, void*), void* user_data);
+static function_signature(void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, func_ptr_sig(void*, getter, mesh3d_t*, index_t), void (*visitor)(void*, void*), void* user_data);
 
 
-function_signature_void(mesh3d_t*, mesh3d_new)
+RENDERER_API function_signature_void(mesh3d_t*, mesh3d_new)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(sizeof(buf_ucount_t) == sizeof(u64), "sizeof(buf_ucount_t) != sizeof(u64), this has to be 8 bytes because of VK_INDEX_TYPE_U64\n");
@@ -53,7 +53,7 @@ function_signature_void(mesh3d_t*, mesh3d_new)
 	CALLTRACE_RETURN(mesh);
 }
 
-function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, index_t count)
+RENDERER_API function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -67,7 +67,7 @@ function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, index_t count)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, index_t count)
+RENDERER_API function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -80,7 +80,7 @@ function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, index_t count)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_tangents_new, mesh3d_t* mesh, index_t count)
+RENDERER_API function_signature(void, mesh3d_tangents_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -93,7 +93,7 @@ function_signature(void, mesh3d_tangents_new, mesh3d_t* mesh, index_t count)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, index_t count)
+RENDERER_API function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -107,7 +107,7 @@ function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, index_t count)
 }
 
 
-function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, index_t count)
+RENDERER_API function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -120,7 +120,7 @@ function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, index_t count)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, index_t count)
+RENDERER_API function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, index_t count)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -133,7 +133,7 @@ function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, index_t count)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_positions_free, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_positions_free, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	if(mesh->positions == NULL) return;
@@ -142,7 +142,7 @@ function_signature(void, mesh3d_positions_free, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normals_free, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_normals_free, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	if(mesh->normals == NULL) return;
@@ -151,7 +151,7 @@ function_signature(void, mesh3d_normals_free, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_tangents_free, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_tangents_free, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	if(mesh->tangents == NULL) return;
@@ -160,7 +160,7 @@ function_signature(void, mesh3d_tangents_free, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_colors_free, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_colors_free, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	if(mesh->colors == NULL) return;
@@ -169,7 +169,7 @@ function_signature(void, mesh3d_colors_free, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_triangles_free, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_triangles_free, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	if(mesh->triangles == NULL) return;
@@ -178,7 +178,7 @@ function_signature(void, mesh3d_triangles_free, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_uvs_free, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_uvs_free, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	if(mesh->uvs == NULL) return;
@@ -187,7 +187,7 @@ function_signature(void, mesh3d_uvs_free, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(index_t, mesh3d_positions_count, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_positions_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -195,7 +195,7 @@ function_signature(index_t, mesh3d_positions_count, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_count(mesh->positions));
 }
 
-function_signature(index_t, mesh3d_normals_count, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_normals_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -203,7 +203,7 @@ function_signature(index_t, mesh3d_normals_count, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_count(mesh->normals));
 }
 
-function_signature(index_t, mesh3d_tangents_count, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_tangents_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -211,7 +211,7 @@ function_signature(index_t, mesh3d_tangents_count, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_count(mesh->tangents));
 }
 
-function_signature(index_t, mesh3d_uvs_count, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_uvs_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -219,14 +219,14 @@ function_signature(index_t, mesh3d_uvs_count, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_count(mesh->uvs));
 }
 
-function_signature(index_t, mesh3d_colors_count, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_colors_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	ASSERT(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_count(mesh->colors));
 }
-function_signature(index_t, mesh3d_triangles_count, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_triangles_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -234,7 +234,7 @@ function_signature(index_t, mesh3d_triangles_count, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_count(mesh->triangles));
 }
 
-function_signature(void, mesh3d_destroy, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_destroy, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -260,7 +260,7 @@ function_signature(void, mesh3d_destroy, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_optimize_buffer, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_optimize_buffer, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -280,21 +280,21 @@ function_signature(void, mesh3d_optimize_buffer, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(bool, mesh3d_has_normals, mesh3d_t* mesh)
+RENDERER_API function_signature(bool, mesh3d_has_normals, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	CALLTRACE_RETURN((mesh->normals != NULL) && (buf_get_element_count(mesh->normals) > 0));
 }
 
-function_signature(bool, mesh3d_has_tangents, mesh3d_t* mesh)
+RENDERER_API function_signature(bool, mesh3d_has_tangents, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	CALLTRACE_RETURN((mesh->tangents != NULL) && (buf_get_element_count(mesh->tangents) > 0));
 }
 
-function_signature(bool, mesh3d_has_colors, mesh3d_t* mesh)
+RENDERER_API function_signature(bool, mesh3d_has_colors, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -302,28 +302,28 @@ function_signature(bool, mesh3d_has_colors, mesh3d_t* mesh)
 }
 
 
-function_signature(bool, mesh3d_has_positions, mesh3d_t* mesh)
+RENDERER_API function_signature(bool, mesh3d_has_positions, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	CALLTRACE_RETURN((mesh->positions != NULL) && (buf_get_element_count(mesh->positions) > 0));
 }
 
-function_signature(bool, mesh3d_has_uvs, mesh3d_t* mesh)
+RENDERER_API function_signature(bool, mesh3d_has_uvs, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	CALLTRACE_RETURN((mesh->uvs != NULL) && (buf_get_element_count(mesh->uvs) > 0));
 }
 
-function_signature(bool, mesh3d_has_triangles, mesh3d_t* mesh)
+RENDERER_API function_signature(bool, mesh3d_has_triangles, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	CALLTRACE_RETURN((mesh->triangles != NULL) && (buf_get_element_count(mesh->triangles) > 0));
 }
 
-function_signature(void, mesh3d_flip_triangles, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_flip_triangles, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	assert(mesh != NULL);
@@ -338,7 +338,7 @@ function_signature(void, mesh3d_flip_triangles, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_calculate_normals, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_calculate_normals, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -384,7 +384,7 @@ static vec3_t(float) get_tangent(mesh3d_t* mesh, index_t i0, index_t i1, index_t
 	tangent = vec3_scale(float)(tangent, value);
 	return tangent;
 }
-function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	assert(mesh != NULL);
@@ -420,7 +420,7 @@ function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_position_add, mesh3d_t* mesh, float x, float y, float z)
+RENDERER_API function_signature(void, mesh3d_position_add, mesh3d_t* mesh, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -430,7 +430,7 @@ function_signature(void, mesh3d_position_add, mesh3d_t* mesh, float x, float y, 
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_position_add_vec3, mesh3d_t* mesh, vec3_t(float)  v)
+RENDERER_API function_signature(void, mesh3d_position_add_vec3, mesh3d_t* mesh, vec3_t(float)  v)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -439,7 +439,7 @@ function_signature(void, mesh3d_position_add_vec3, mesh3d_t* mesh, vec3_t(float)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_position_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
+RENDERER_API function_signature(void, mesh3d_position_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -449,7 +449,7 @@ function_signature(void, mesh3d_position_set, mesh3d_t* mesh, index_t index, flo
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_position_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  position)
+RENDERER_API function_signature(void, mesh3d_position_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  position)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -458,7 +458,7 @@ function_signature(void, mesh3d_position_set_vec3, mesh3d_t* mesh, index_t index
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_position_set_x, mesh3d_t* mesh, index_t index, float x)
+RENDERER_API function_signature(void, mesh3d_position_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -467,7 +467,7 @@ function_signature(void, mesh3d_position_set_x, mesh3d_t* mesh, index_t index, f
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_position_set_y, mesh3d_t* mesh, index_t index, float y)
+RENDERER_API function_signature(void, mesh3d_position_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -476,7 +476,7 @@ function_signature(void, mesh3d_position_set_y, mesh3d_t* mesh, index_t index, f
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_position_set_z, mesh3d_t* mesh, index_t index, float z)
+RENDERER_API function_signature(void, mesh3d_position_set_z, mesh3d_t* mesh, index_t index, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -485,7 +485,7 @@ function_signature(void, mesh3d_position_set_z, mesh3d_t* mesh, index_t index, f
 	CALLTRACE_END();
 }
 
-function_signature(vec3_t(float),  mesh3d_position_get, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(float),  mesh3d_position_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -493,7 +493,7 @@ function_signature(vec3_t(float),  mesh3d_position_get, mesh3d_t* mesh, index_t 
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->positions, vec3_t(float), index));
 }
 
-function_signature(vec3_t(float)*, mesh3d_position_get_ptr, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(float)*, mesh3d_position_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -501,7 +501,7 @@ function_signature(vec3_t(float)*, mesh3d_position_get_ptr, mesh3d_t* mesh, inde
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->positions, vec3_t(float), index));
 }
 
-function_signature(float, mesh3d_position_get_x, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_position_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -509,7 +509,7 @@ function_signature(float, mesh3d_position_get_x, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->positions, vec3_t(float), index)->x);
 }
 
-function_signature(float, mesh3d_position_get_y, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_position_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -517,7 +517,7 @@ function_signature(float, mesh3d_position_get_y, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->positions, vec3_t(float), index)->y);
 }
 
-function_signature(float, mesh3d_position_get_z, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_position_get_z, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -525,7 +525,7 @@ function_signature(float, mesh3d_position_get_z, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->positions, vec3_t(float), index)->z);
 }
 
-function_signature(void, mesh3d_normal_add, mesh3d_t* mesh, float x, float y, float z)
+RENDERER_API function_signature(void, mesh3d_normal_add, mesh3d_t* mesh, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -535,7 +535,7 @@ function_signature(void, mesh3d_normal_add, mesh3d_t* mesh, float x, float y, fl
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normal_add_vec3, mesh3d_t* mesh, vec3_t(float)  v)
+RENDERER_API function_signature(void, mesh3d_normal_add_vec3, mesh3d_t* mesh, vec3_t(float)  v)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -544,7 +544,7 @@ function_signature(void, mesh3d_normal_add_vec3, mesh3d_t* mesh, vec3_t(float)  
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normal_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
+RENDERER_API function_signature(void, mesh3d_normal_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -554,7 +554,7 @@ function_signature(void, mesh3d_normal_set, mesh3d_t* mesh, index_t index, float
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normal_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  normal)
+RENDERER_API function_signature(void, mesh3d_normal_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  normal)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -563,7 +563,7 @@ function_signature(void, mesh3d_normal_set_vec3, mesh3d_t* mesh, index_t index, 
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normal_set_x, mesh3d_t* mesh, index_t index, float x)
+RENDERER_API function_signature(void, mesh3d_normal_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -572,7 +572,7 @@ function_signature(void, mesh3d_normal_set_x, mesh3d_t* mesh, index_t index, flo
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normal_set_y, mesh3d_t* mesh, index_t index, float y)
+RENDERER_API function_signature(void, mesh3d_normal_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -581,7 +581,7 @@ function_signature(void, mesh3d_normal_set_y, mesh3d_t* mesh, index_t index, flo
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normal_set_z, mesh3d_t* mesh, index_t index, float z)
+RENDERER_API function_signature(void, mesh3d_normal_set_z, mesh3d_t* mesh, index_t index, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -590,7 +590,7 @@ function_signature(void, mesh3d_normal_set_z, mesh3d_t* mesh, index_t index, flo
 	CALLTRACE_END();
 }
 
-function_signature(vec3_t(float), mesh3d_normal_get, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(float), mesh3d_normal_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -598,7 +598,7 @@ function_signature(vec3_t(float), mesh3d_normal_get, mesh3d_t* mesh, index_t ind
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->normals, vec3_t(float), index));
 }
 
-function_signature(vec3_t(float)*, mesh3d_normal_get_ptr, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(float)*, mesh3d_normal_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -606,7 +606,7 @@ function_signature(vec3_t(float)*, mesh3d_normal_get_ptr, mesh3d_t* mesh, index_
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->normals, vec3_t(float), index));
 }
 
-function_signature(float, mesh3d_normal_get_x, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_normal_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -614,7 +614,7 @@ function_signature(float, mesh3d_normal_get_x, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->normals, vec3_t(float), index)->x);
 }
 
-function_signature(float, mesh3d_normal_get_y, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_normal_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -622,7 +622,7 @@ function_signature(float, mesh3d_normal_get_y, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->normals, vec3_t(float), index)->y);
 }
 
-function_signature(float, mesh3d_normal_get_z, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_normal_get_z, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -631,7 +631,7 @@ function_signature(float, mesh3d_normal_get_z, mesh3d_t* mesh, index_t index)
 }
 
 
-function_signature(void, mesh3d_tangents_add, mesh3d_t* mesh, float x, float y, float z)
+RENDERER_API function_signature(void, mesh3d_tangents_add, mesh3d_t* mesh, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -641,7 +641,7 @@ function_signature(void, mesh3d_tangents_add, mesh3d_t* mesh, float x, float y, 
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, vec3_t(float)  v)
+RENDERER_API function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, vec3_t(float)  v)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -650,7 +650,7 @@ function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, vec3_t(float) 
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_tangent_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
+RENDERER_API function_signature(void, mesh3d_tangent_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -660,7 +660,7 @@ function_signature(void, mesh3d_tangent_set, mesh3d_t* mesh, index_t index, floa
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  tangent)
+RENDERER_API function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  tangent)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -669,7 +669,7 @@ function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, index_t index,
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_tangent_set_x, mesh3d_t* mesh, index_t index, float x)
+RENDERER_API function_signature(void, mesh3d_tangent_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -678,7 +678,7 @@ function_signature(void, mesh3d_tangent_set_x, mesh3d_t* mesh, index_t index, fl
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_tangent_set_y, mesh3d_t* mesh, index_t index, float y)
+RENDERER_API function_signature(void, mesh3d_tangent_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -687,7 +687,7 @@ function_signature(void, mesh3d_tangent_set_y, mesh3d_t* mesh, index_t index, fl
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_tangent_set_z, mesh3d_t* mesh, index_t index, float z)
+RENDERER_API function_signature(void, mesh3d_tangent_set_z, mesh3d_t* mesh, index_t index, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -696,7 +696,7 @@ function_signature(void, mesh3d_tangent_set_z, mesh3d_t* mesh, index_t index, fl
 	CALLTRACE_END();
 }
 
-function_signature(vec3_t(float), mesh3d_tangent_get, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(float), mesh3d_tangent_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -704,7 +704,7 @@ function_signature(vec3_t(float), mesh3d_tangent_get, mesh3d_t* mesh, index_t in
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index));
 }
 
-function_signature(vec3_t(float)*, mesh3d_tangent_get_ptr, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(float)*, mesh3d_tangent_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -712,7 +712,7 @@ function_signature(vec3_t(float)*, mesh3d_tangent_get_ptr, mesh3d_t* mesh, index
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index));
 }
 
-function_signature(float, mesh3d_tangent_get_x, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_tangent_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -720,7 +720,7 @@ function_signature(float, mesh3d_tangent_get_x, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index)->x);
 }
 
-function_signature(float, mesh3d_tangent_get_y, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_tangent_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -728,7 +728,7 @@ function_signature(float, mesh3d_tangent_get_y, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index)->y);
 }
 
-function_signature(float, mesh3d_tangent_get_z, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_tangent_get_z, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -736,7 +736,7 @@ function_signature(float, mesh3d_tangent_get_z, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t(float), index)->z);
 }
 
-function_signature(void, mesh3d_color_add, mesh3d_t* mesh, float x, float y, float z)
+RENDERER_API function_signature(void, mesh3d_color_add, mesh3d_t* mesh, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -746,7 +746,7 @@ function_signature(void, mesh3d_color_add, mesh3d_t* mesh, float x, float y, flo
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_color_add_vec3, mesh3d_t* mesh, vec3_t(float)  v)
+RENDERER_API function_signature(void, mesh3d_color_add_vec3, mesh3d_t* mesh, vec3_t(float)  v)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -755,7 +755,7 @@ function_signature(void, mesh3d_color_add_vec3, mesh3d_t* mesh, vec3_t(float)  v
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_color_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
+RENDERER_API function_signature(void, mesh3d_color_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -765,7 +765,7 @@ function_signature(void, mesh3d_color_set, mesh3d_t* mesh, index_t index, float 
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_color_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  color)
+RENDERER_API function_signature(void, mesh3d_color_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  color)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -774,7 +774,7 @@ function_signature(void, mesh3d_color_set_vec3, mesh3d_t* mesh, index_t index, v
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_color_set_x, mesh3d_t* mesh, index_t index, float x)
+RENDERER_API function_signature(void, mesh3d_color_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -783,7 +783,7 @@ function_signature(void, mesh3d_color_set_x, mesh3d_t* mesh, index_t index, floa
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_color_set_y, mesh3d_t* mesh, index_t index, float y)
+RENDERER_API function_signature(void, mesh3d_color_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -792,7 +792,7 @@ function_signature(void, mesh3d_color_set_y, mesh3d_t* mesh, index_t index, floa
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_color_set_z, mesh3d_t* mesh, index_t index, float z)
+RENDERER_API function_signature(void, mesh3d_color_set_z, mesh3d_t* mesh, index_t index, float z)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -801,7 +801,7 @@ function_signature(void, mesh3d_color_set_z, mesh3d_t* mesh, index_t index, floa
 	CALLTRACE_END();
 }
 
-function_signature(vec3_t(float), mesh3d_color_get, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(float), mesh3d_color_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -809,7 +809,7 @@ function_signature(vec3_t(float), mesh3d_color_get, mesh3d_t* mesh, index_t inde
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->colors, vec3_t(float), index));
 }
 
-function_signature(vec3_t(float)*, mesh3d_color_get_ptr, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(float)*, mesh3d_color_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -817,7 +817,7 @@ function_signature(vec3_t(float)*, mesh3d_color_get_ptr, mesh3d_t* mesh, index_t
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->colors, vec3_t(float), index));
 }
 
-function_signature(float, mesh3d_color_get_x, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_color_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -825,7 +825,7 @@ function_signature(float, mesh3d_color_get_x, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->colors, vec3_t(float), index)->x);
 }
 
-function_signature(float, mesh3d_color_get_y, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_color_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -833,7 +833,7 @@ function_signature(float, mesh3d_color_get_y, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->colors, vec3_t(float), index)->y);
 }
 
-function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -842,7 +842,7 @@ function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index)
 }
 
 
-function_signature(void, mesh3d_triangle_add, mesh3d_t* mesh, index_t i0, index_t i1, index_t i2)
+RENDERER_API function_signature(void, mesh3d_triangle_add, mesh3d_t* mesh, index_t i0, index_t i1, index_t i2)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -852,7 +852,7 @@ function_signature(void, mesh3d_triangle_add, mesh3d_t* mesh, index_t i0, index_
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, vec3_t(index_t)  v)
+RENDERER_API function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, vec3_t(index_t)  v)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -861,7 +861,7 @@ function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, vec3_t(index_
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_triangle_set, mesh3d_t* mesh, index_t index, index_t i0, index_t i1, index_t i2)
+RENDERER_API function_signature(void, mesh3d_triangle_set, mesh3d_t* mesh, index_t index, index_t i0, index_t i1, index_t i2)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -871,7 +871,7 @@ function_signature(void, mesh3d_triangle_set, mesh3d_t* mesh, index_t index, ind
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_triangle_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(index_t)  v)
+RENDERER_API function_signature(void, mesh3d_triangle_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(index_t)  v)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -880,7 +880,7 @@ function_signature(void, mesh3d_triangle_set_vec3, mesh3d_t* mesh, index_t index
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_triangle_set_0, mesh3d_t* mesh, index_t index, index_t i0)
+RENDERER_API function_signature(void, mesh3d_triangle_set_0, mesh3d_t* mesh, index_t index, index_t i0)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -889,7 +889,7 @@ function_signature(void, mesh3d_triangle_set_0, mesh3d_t* mesh, index_t index, i
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_triangle_set_1, mesh3d_t* mesh, index_t index, index_t i1)
+RENDERER_API function_signature(void, mesh3d_triangle_set_1, mesh3d_t* mesh, index_t index, index_t i1)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -898,7 +898,7 @@ function_signature(void, mesh3d_triangle_set_1, mesh3d_t* mesh, index_t index, i
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_triangle_set_2, mesh3d_t* mesh, index_t index, index_t i2)
+RENDERER_API function_signature(void, mesh3d_triangle_set_2, mesh3d_t* mesh, index_t index, index_t i2)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -907,7 +907,7 @@ function_signature(void, mesh3d_triangle_set_2, mesh3d_t* mesh, index_t index, i
 	CALLTRACE_END();
 }
 
-function_signature(vec3_t(index_t),  mesh3d_triangle_get, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(index_t),  mesh3d_triangle_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -915,7 +915,7 @@ function_signature(vec3_t(index_t),  mesh3d_triangle_get, mesh3d_t* mesh, index_
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index));
 }
 
-function_signature(vec3_t(index_t)*, mesh3d_triangle_get_ptr, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec3_t(index_t)*, mesh3d_triangle_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -923,7 +923,7 @@ function_signature(vec3_t(index_t)*, mesh3d_triangle_get_ptr, mesh3d_t* mesh, in
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index));
 }
 
-function_signature(int, mesh3d_triangle_get_0, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(int, mesh3d_triangle_get_0, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -931,7 +931,7 @@ function_signature(int, mesh3d_triangle_get_0, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index)->x);
 }
 
-function_signature(int, mesh3d_triangle_get_1, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(int, mesh3d_triangle_get_1, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -939,7 +939,7 @@ function_signature(int, mesh3d_triangle_get_1, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index)->y);
 }
 
-function_signature(int, mesh3d_triangle_get_2, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(int, mesh3d_triangle_get_2, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -947,7 +947,7 @@ function_signature(int, mesh3d_triangle_get_2, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3_t(index_t), index)->z);
 }
 
-function_signature(void, mesh3d_uv_add, mesh3d_t* mesh, float x, float y)
+RENDERER_API function_signature(void, mesh3d_uv_add, mesh3d_t* mesh, float x, float y)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -957,7 +957,7 @@ function_signature(void, mesh3d_uv_add, mesh3d_t* mesh, float x, float y)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_uv_add_vec2, mesh3d_t* mesh, vec2_t(float) v)
+RENDERER_API function_signature(void, mesh3d_uv_add_vec2, mesh3d_t* mesh, vec2_t(float) v)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -966,7 +966,7 @@ function_signature(void, mesh3d_uv_add_vec2, mesh3d_t* mesh, vec2_t(float) v)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_uv_set, mesh3d_t* mesh, index_t index, float x, float y)
+RENDERER_API function_signature(void, mesh3d_uv_set, mesh3d_t* mesh, index_t index, float x, float y)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -976,7 +976,7 @@ function_signature(void, mesh3d_uv_set, mesh3d_t* mesh, index_t index, float x, 
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_uv_set_vec2, mesh3d_t* mesh, index_t index, vec2_t(float)  uv)
+RENDERER_API function_signature(void, mesh3d_uv_set_vec2, mesh3d_t* mesh, index_t index, vec2_t(float)  uv)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -985,7 +985,7 @@ function_signature(void, mesh3d_uv_set_vec2, mesh3d_t* mesh, index_t index, vec2
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_uv_set_x, mesh3d_t* mesh, index_t index, float x)
+RENDERER_API function_signature(void, mesh3d_uv_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -994,7 +994,7 @@ function_signature(void, mesh3d_uv_set_x, mesh3d_t* mesh, index_t index, float x
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_uv_set_y, mesh3d_t* mesh, index_t index, float y)
+RENDERER_API function_signature(void, mesh3d_uv_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1003,7 +1003,7 @@ function_signature(void, mesh3d_uv_set_y, mesh3d_t* mesh, index_t index, float y
 	CALLTRACE_END();
 }
 
-function_signature(vec2_t(float),  mesh3d_uv_get, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec2_t(float),  mesh3d_uv_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1011,7 +1011,7 @@ function_signature(vec2_t(float),  mesh3d_uv_get, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->uvs, vec2_t(float), index));
 }
 
-function_signature(vec2_t(float)*, mesh3d_uv_get_ptr, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(vec2_t(float)*, mesh3d_uv_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1019,7 +1019,7 @@ function_signature(vec2_t(float)*, mesh3d_uv_get_ptr, mesh3d_t* mesh, index_t in
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->uvs, vec2_t(float), index));
 }
 
-function_signature(float, mesh3d_uv_get_y, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_uv_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1027,7 +1027,7 @@ function_signature(float, mesh3d_uv_get_y, mesh3d_t* mesh, index_t index)
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->uvs, vec2_t(float), index)->y);
 }
 
-function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t index)
+RENDERER_API function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1036,44 +1036,44 @@ function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t index)
 }
 
 
-function_signature(index_t, mesh3d_sizeof_position, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_sizeof_position, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->positions != NULL, __POSITIONS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->positions));
 }
-function_signature(index_t, mesh3d_sizeof_normal, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_sizeof_normal, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->normals != NULL, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->normals));
 }
-function_signature(index_t, mesh3d_sizeof_tangent, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_sizeof_tangent, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->tangents != NULL, __TANGENTS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->tangents));
 }
-function_signature(index_t, mesh3d_sizeof_color, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_sizeof_color, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->colors));
 }
-function_signature(index_t, mesh3d_sizeof_uv, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_sizeof_uv, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->uvs != NULL, __UVS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->uvs));
 }
-function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh)
+RENDERER_API function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh->triangles != NULL, __TRIANGLES_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->triangles) / 3);
 }
 
-function_signature(mesh3d_t*, mesh3d_plane, float size)
+RENDERER_API function_signature(mesh3d_t*, mesh3d_plane, float size)
 {
 	CALLTRACE_BEGIN();
 	mesh3d_t* mesh = mesh3d_new();
@@ -1106,7 +1106,7 @@ function_signature(mesh3d_t*, mesh3d_plane, float size)
 	CALLTRACE_RETURN(mesh);
 }
 
-function_signature(mesh3d_t*, mesh3d_cube, float size)
+RENDERER_API function_signature(mesh3d_t*, mesh3d_cube, float size)
 {
 	CALLTRACE_BEGIN();
 	mesh3d_t* mesh = mesh3d_new();
@@ -1218,7 +1218,7 @@ function_signature(mesh3d_t*, mesh3d_cube, float size)
 }
 
 
-function_signature(void, mesh3d_positions_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* position, void* user_data), void* user_data)
+RENDERER_API function_signature(void, mesh3d_positions_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* position, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1227,7 +1227,7 @@ function_signature(void, mesh3d_positions_foreach, mesh3d_t* mesh, void (*visito
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data)
+RENDERER_API function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1236,7 +1236,7 @@ function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, void (*visitor)
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_tangents_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data)
+RENDERER_API function_signature(void, mesh3d_tangents_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1245,7 +1245,7 @@ function_signature(void, mesh3d_tangents_foreach, mesh3d_t* mesh, void (*visitor
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* color, void* user_data), void* user_data)
+RENDERER_API function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* color, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1254,7 +1254,7 @@ function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, void (*visitor)(
 	CALLTRACE_END();
 }
 
-function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (*visitor)(vec2_t(float)* uv, void* user_data), void* user_data)
+RENDERER_API function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (*visitor)(vec2_t(float)* uv, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1264,7 +1264,7 @@ function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (*visitor)(vec
 }
 
 
-function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(index_t)* triangle, void* user_data), void* user_data)
+RENDERER_API function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(index_t)* triangle, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1277,7 +1277,7 @@ function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, void (*visito
 static void direction_visitor(vec3_t(float)* v, mat4_t(float)* m);
 static void position_visitor(vec3_t(float)* v, mat4_t(float)* m);
 
-function_signature(void, mesh3d_transform_set, mesh3d_t* mesh, mat4_t(float) transform)
+RENDERER_API function_signature(void, mesh3d_transform_set, mesh3d_t* mesh, mat4_t(float) transform)
 {
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	mesh3d_positions_foreach(mesh, (void*)position_visitor, &transform);
@@ -1285,13 +1285,13 @@ function_signature(void, mesh3d_transform_set, mesh3d_t* mesh, mat4_t(float) tra
 	mat4_move(float)(&(mesh->transform), transform);
 }
 
-function_signature(mat4_t(float), mesh3d_transform_get, mesh3d_t* mesh)
+RENDERER_API function_signature(mat4_t(float), mesh3d_transform_get, mesh3d_t* mesh)
 {
 	ASSERT(mesh != NULL, "mesh == NULL\n");
 	return mesh->transform;
 }
 
-function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh)
+RENDERER_API function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(mesh != NULL, "mesh == NULL\n");
@@ -1312,7 +1312,7 @@ static void obj_vertex_position(float* position, void* user_data);
 static void obj_vertex_texcoord(float* texcoord, void* user_data);
 static void obj_facet(u32* facet, u32 attribute_count, u32 face_vertex_count, void* user_data);
 
-function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
+RENDERER_API function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
 {
 	CALLTRACE_BEGIN();
 	const char* extension = strrchr(file_path, '.');
@@ -1539,7 +1539,7 @@ static void obj_facet(u32* facet, u32 attribute_count, u32 face_vertex_count, vo
 }
 
 #define getter(...) define_alias_function_macro(getter, __VA_ARGS__)
-function_signature(static void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, func_ptr_sig(void*, getter, mesh3d_t*, index_t), void (*visitor)(void*, void*), void* user_data)
+static function_signature(void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, func_ptr_sig(void*, getter, mesh3d_t*, index_t), void (*visitor)(void*, void*), void* user_data)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(visitor != NULL, "visitor == NULL\n");

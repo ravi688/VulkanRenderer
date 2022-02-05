@@ -4,14 +4,14 @@
 #include <renderer/assert.h>
 #include <memory_allocator/memory_allocator.h>
 
-vulkan_image_t* vulkan_image_new()
+RENDERER_API vulkan_image_t* vulkan_image_new()
 {
 	vulkan_image_t* image = heap_new(vulkan_image_t);
 	memset(image, 0, sizeof(vulkan_image_t));
 	return image;
 }
 
-void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image)
+RENDERER_API void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image)
 {
 	assert(create_info != NULL);
 	assert(!((create_info->type == VK_IMAGE_TYPE_2D) && (create_info->depth > 1)));
@@ -47,27 +47,27 @@ void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info
 }
 
 
-vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_info_t* create_info)
+RENDERER_API vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_info_t* create_info)
 {
 	vulkan_image_t* image = vulkan_image_new();
 	vulkan_image_create_no_alloc(renderer, create_info, image);
 	return image;
 }
 
-void vulkan_image_destroy(vulkan_image_t* image)
+RENDERER_API void vulkan_image_destroy(vulkan_image_t* image)
 {
 	assert(image != NULL);
 	vkDestroyImage(image->renderer->logical_device->handle, image->handle, NULL);
 	vkFreeMemory(image->renderer->logical_device->handle, image->memory, NULL);
 }
 
-void vulkan_image_release_resources(vulkan_image_t* image)
+RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image)
 {
 	heap_free(image);
 }
 
 
-void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layout)
+RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layout)
 {
 	if(layout  == image->layout)
 	{
@@ -121,7 +121,7 @@ void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layo
 	image->layout = layout;
 }
 
-void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffer)
+RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffer)
 {
 	assert(image->layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	renderer_t* renderer = image->renderer;

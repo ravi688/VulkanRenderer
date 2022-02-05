@@ -9,6 +9,8 @@
 #include <ctype.h>
 #include <buffer.h>
 
+#include <renderer/defines.h>
+
 #define TOKEN_BUFFER_SIZE 80
 #define SINGLE_LINE_COMMENT "\\"
 #define MULTIPLE_LINE_COMMENT "/**/"
@@ -85,12 +87,19 @@ typedef struct
 	BUFFER* properties;						//list of properties
 } SerializedStruct; 
 
-char* defs_load_text_from_file(const char* file_name);
-char* defs_load_text_from_file_exclude_comments(const char* file_name);
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
-int __sizeof(SerializedProperty* property); 
-bool isstorage(const char* string, _storage_specifiers* storage);
-bool istype(const char* string, _type_specifiers* type);
+RENDERER_API char* defs_load_text_from_file(const char* file_name);
+RENDERER_API char* defs_load_text_from_file_exclude_comments(const char* file_name);
 
+RENDERER_API int __sizeof(SerializedProperty* property); 
+RENDERER_API bool isstorage(const char* string, _storage_specifiers* storage);
+RENDERER_API bool istype(const char* string, _type_specifiers* type);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif

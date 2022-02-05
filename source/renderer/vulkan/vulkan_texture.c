@@ -63,14 +63,14 @@ static void vulkan_texture_create_3d(vulkan_texture_t* texture, vulkan_texture_d
 static void vulkan_texture_create_cube(vulkan_texture_t* texture, vulkan_texture_data_t* data, u32 count);
 
 
-vulkan_texture_t* vulkan_texture_new()
+RENDERER_API vulkan_texture_t* vulkan_texture_new()
 {
 	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
 	memset(texture, 0, sizeof(vulkan_texture_t));
 	return texture;
 }
 
-vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_create_info_t* create_info)
+RENDERER_API vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_create_info_t* create_info)
 {
 	assert(create_info != NULL);
 	assert(create_info->data != NULL);
@@ -99,7 +99,7 @@ vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_cre
 	return texture;
 }
 
-void vulkan_texture_destroy(vulkan_texture_t* texture)
+RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
 {
 	assert(texture != NULL);
 	vkDestroySampler(texture->renderer->logical_device->handle, texture->image_sampler, NULL);
@@ -107,7 +107,7 @@ void vulkan_texture_destroy(vulkan_texture_t* texture)
 	vulkan_image_destroy(texture->image);
 }
 
-void vulkan_texture_release_resources(vulkan_texture_t* texture)
+RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
 {
 	assert(texture != NULL);
 	vulkan_image_view_release_resources(texture->image_view);

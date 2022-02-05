@@ -37,24 +37,24 @@ typedef u32 uint;
 #define S64_MAX INT64_MAX
 #define S64_MIN INT64_MIN
 
+// Already defined in standard library
+// #define CHAR_MAX S8_MAX
+// #define CHAR_MIN S8_MIN
+// #define SHORT_MAX S16_MAX
+// #define SHORT_MIN S16_MIN
+// #define INT_MAX S32_MAX
+// #define INT_MIN S32_MIN
+// #define LONG_MAX S64_MAX
+// #define LONG_MIN S64_MIN
 
-#define CHAR_MAX S8_MAX
-#define CHAR_MIN S8_MIN
-#define SHORT_MAX S16_MAX
-#define SHORT_MIN S16_MIN
-#define INT_MAX S32_MAX
-#define INT_MIN S32_MIN
-#define LONG_MAX S64_MAX
-#define LONG_MIN S64_MIN
-
-#define UCHAR_MAX U8_MAX
-#define UCHAR_MIN U8_MIN
-#define USHORT_MAX U16_MAX
-#define USHORT_MIN U16_MIN
-#define UINT_MAX U32_MAX
-#define UINT_MIN U32_MIN
-#define ULONG_MAX U64_MAX
-#define ULONG_MIN U64_MIN
+// #define UCHAR_MAX U8_MAX
+// #define UCHAR_MIN U8_MIN
+// #define USHORT_MAX U16_MAX
+// #define USHORT_MIN U16_MIN
+// #define UINT_MAX U32_MAX
+// #define UINT_MIN U32_MIN
+// #define ULONG_MAX U64_MAX
+// #define ULONG_MIN U64_MIN
 
 
 #ifdef GLOBAL_DEBUG
@@ -66,3 +66,22 @@ typedef u32 uint;
 
 
 #define DEPRECATED __attribute__((deprecated))
+
+#ifdef RENDERER_STATIC_LIBRARY
+#	define RENDERER_API
+#elif RENDERER_DYNAMIC_LIBRARY
+#	define RENDERER_API __declspec(dllimport)
+#elif BUILD_DYNAMIC_LIBRARY
+#	define RENDERER_API __declspec(dllexport)
+#else
+#	define RENDERER_API
+#endif
+
+
+#ifdef __cplusplus
+#	define BEGIN_CPP_COMPATIBLE extern "C" {
+#	define END_CPP_COMPATIBLE }
+#else
+#	define BEGIN_CPP_COMPATIBLE
+#	define END_CPP_COMPATIBLE
+#endif // __cplusplus
