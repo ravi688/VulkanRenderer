@@ -17,7 +17,6 @@ DYNAMIC_LIB_NAME = #testbed.dll
 EXECUTABLE_NAME = main.exe
 EXTERNAL_LIBRARIES = -L..\external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies
-#TODO: Move EntityComponentSystem from VulkanRenderer to TestBed
 DEPENDENCIES = .. ../testbed/dependencies/EntityComponentSystem MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
 DEPENDENCY_LIBS = ../lib/vulkanrenderer.a ../testbed/dependencies/EntityComponentSystem/lib/ecs.a MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a tgc/lib/tgc.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ../dependencies
