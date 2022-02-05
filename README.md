@@ -51,10 +51,9 @@
    cd VulkanRenderer
    mingw32-make -s setup
    ```
-3. Change the working directory to `VulkanRenderer/testbed` and start building by running the following command
+3. Start building by running the following command
    
    ```
-   cd testbed
    mingw32-make -s run
    ```
 
@@ -66,16 +65,16 @@
    cd shader_compiler
    mingw32-make -s debug
    ```
-2. Change the working directory to `VulkanRenderer/testbed` and build the shaders `.glsl to .sb` by running the following command
+2. Change the working directory back to `VulkanRenderer` and build the shaders `.glsl to .sb` by running the following command
    
    ```
-   cd testbed
+   cd ..\VulkanRenderer
    mingw32-make -s shader
    ```
 
 ### Building executable manually (Optional)
 
-1. Change the working directory to `VulkanRenderer/testbed` and build the `main.exe` executable by running the following command
+1. Change the working directory to `VulkanRenderer` and build the `main.exe` executable by running the following command
    
    ```
    mingw32-make -s debug
@@ -88,25 +87,23 @@
 
 ### Cleaning shaders (Optional)
 
-1. Change the working directory to `VulkanRenderer/testbed` and clean the shaders `.sb files` by running the folliwng command
+1. Change the working directory to `VulkanRenderer` and clean the shaders `.sb files` by running the folliwng command
    
    ```
-   cd testbed
    mingw32-make -i -s shader-clean
    ```
 
 ### Cleaning everything else (Optional)
 
-1. Change the working directory to `VulkanRenderer/testbed` and run the following command
+1. Change the working directory to `VulkanRenderer` and run the following command
    
    ```
-   cd testbed
    mingw32-make -i -s clean
    ```
 
 ### Where to go for examples?
 
-You can check `VulkanRenderer/testbed` directory.
+You can check `VulkanRenderer/resource/shaders` and `VulkanRenderer/source/main.c` directory for now.
 
 ## Features
 
