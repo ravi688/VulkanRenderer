@@ -1,21 +1,12 @@
 [submodule "dependencies/HPML"]
 	path = dependencies/HPML
 	url = https://github.com/ravi688/HPML.git
-# [submodule "dependencies/tgc"]
-# 	path = dependencies/tgc
-# 	url = https://github.com/orangeduck/tgc.git
-[submodule "dependencies/tgc"]
-	path = dependencies/tgc
-	url = https://github.com/ravi688/tgc.git
 [submodule "shared-dependencies/BufferLib"]
 	path = shared-dependencies/BufferLib
 	url = https://github.com/ravi688/BufferLib
 [submodule "dependencies/TemplateSystem"]
 	path = dependencies/TemplateSystem
 	url = https://github.com/ravi688/TemplateSystem.git
-[submodule "testbed/dependencies/EntityComponentSystem"]
-	path = testbed/dependencies/EntityComponentSystem
-	url = https://github.com/ravi688/EntityComponentSystem.git
 [submodule "dependencies/SafeMemory"]
 	path = dependencies/SafeMemory
 	url = https://github.com/ravi688/SafeMemory.git

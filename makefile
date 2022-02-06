@@ -34,8 +34,8 @@ DYNAMIC_LIB_NAME = vulkanrenderer.dll
 EXECUTABLE_NAME = main.exe
 EXTERNAL_LIBRARIES = -L./external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies
-DEPENDENCIES = ../shader_compiler MeshLib MeshLib/dependencies/DiskManager HPML tgc SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
-DEPENDENCY_LIBS = MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a tgc/lib/tgc.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCIES = ../shader_compiler MeshLib MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
+DEPENDENCY_LIBS = MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS =  BufferLib/lib/bufferlib.a
@@ -270,7 +270,6 @@ bin-clean:
 	@echo [Log] Binaries cleaned successfully!
 	$(MAKE) --directory=./dependencies/ttf2mesh clean
 	$(MAKE) --directory=./dependencies/HPML clean
-	$(MAKE) --directory=./dependencies/tgc clean
 	$(MAKE) --directory=./dependencies/SafeMemory clean
 	$(MAKE) --directory=./dependencies/MeshLib clean
 	$(MAKE) --directory=./shared-dependencies/BufferLib clean
