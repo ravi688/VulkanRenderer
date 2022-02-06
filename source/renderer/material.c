@@ -14,7 +14,6 @@
 
 #define VERTEX_INFO_COUNT 4
 
-instantiate_static_stack_array(VkFormat);
 static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices, u32* out_aligments);
 static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* ranges, u32* out_range_count, u32* push_constant_buffer_size);
 static material_t* __material_create(renderer_t* renderer, 

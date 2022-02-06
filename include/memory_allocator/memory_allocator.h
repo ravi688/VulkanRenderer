@@ -44,7 +44,6 @@
 #	define ref(type, validPtr, index) checked_ref(type, validPtr, index)
 #   define refp(type, validPtr, index) checked_refp(type, validPtr, index)
 #   define instantiate_stack_array(type) instantiate_declaration_safe_array(type); instantiate_implementation_safe_array(type)
-#   define instantiate_static_stack_array(type) static instantiate_declaration_safe_array(type); static instantiate_implementation_safe_array(type)
 #endif
 
 #ifdef USE_GARBAGE_COLLECTOR
@@ -67,7 +66,6 @@
 #	define ref(type, validPtr, index) validPtr[index]
 #   define refp(type, validPtr, index) (&(validPtr[index]))
 #   define instantiate_stack_array(type) instantiate_declaration_memory_allocator_array(type); instantiate_implementation_memory_allocator_array(type)
-#   define instantiate_static_stack_array(type) static instantiate_declaration_memory_allocator_array(type); static instantiate_implementation_memory_allocator_array(type)
 #endif
 
 #ifdef USE_STDLIB
@@ -84,7 +82,6 @@
 #	define ref(type, validPtr, index) validPtr[index]
 #   define refp(type, validPtr, index) (&(validPtr[index]))
 #   define instantiate_stack_array(type) instantiate_declaration_memory_allocator_array(type); instantiate_implementation_memory_allocator_array(type)
-#   define instantiate_static_stack_array(type) static instantiate_declaration_memory_allocator_array(type); static instantiate_implementation_memory_allocator_array(type)
 #endif
 
 #define stack_new(type) ((type*)stack_alloc(sizeof(type)))
