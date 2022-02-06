@@ -1,5 +1,4 @@
 #include <renderer/defs.h>
-#include <buffer.h>
 
 RENDERER_API int __sizeof(SerializedProperty* property)
 {

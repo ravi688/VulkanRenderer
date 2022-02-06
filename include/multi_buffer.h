@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 #include <renderer/defines.h>
 
 typedef struct sub_buffer_t

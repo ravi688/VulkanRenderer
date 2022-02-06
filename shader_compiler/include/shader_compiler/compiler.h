@@ -3,7 +3,7 @@
 
 #include <calltrace/calltrace.h>
 #include <stdint.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 
 enum 
 {

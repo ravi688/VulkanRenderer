@@ -21,7 +21,7 @@ typedef vulkan_shader_t shader_t;
 #endif
 
 #include <renderer/defines.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 
 #ifdef __cplusplus
 extern "C" {

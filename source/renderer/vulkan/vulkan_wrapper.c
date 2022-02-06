@@ -7,7 +7,7 @@
 #include <string.h>				//standard string library
 #include <memory_allocator/memory_allocator.h>
 #include <disk_manager/file_reader.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 
 define_exception(VULKAN_ABORTED);
 define_exception(VULKAN_LAYER_NOT_SUPPORTED);

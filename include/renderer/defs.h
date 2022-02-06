@@ -7,7 +7,7 @@
 #include <conio.h>
 #include <string.h>
 #include <ctype.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 
 #include <renderer/defines.h>
 

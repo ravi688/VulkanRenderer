@@ -4,7 +4,7 @@
 #include <vulkan/vulkan_wrapper.h>
 #include <renderer/internal/vulkan/vulkan_stage_shader.h>
 #include <renderer/struct_descriptor.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 
 typedef struct vulkan_descriptor_set_t vulkan_descriptor_set_t;
 

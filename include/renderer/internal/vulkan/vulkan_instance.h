@@ -2,7 +2,7 @@
 #pragma once
 
 #include <renderer/defines.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 #include <vulkan/vulkan.h>
 
 typedef struct vulkan_physical_device_t vulkan_physical_device_t;

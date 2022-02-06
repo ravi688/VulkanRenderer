@@ -2,7 +2,7 @@
 #pragma once
 
 #include <renderer/internal/vulkan/vulkan_buffer.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 
 typedef struct renderer_t renderer_t;
 typedef struct vulkan_mesh_t vulkan_mesh_t;

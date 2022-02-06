@@ -2,7 +2,7 @@
 #pragma once
 
 #include <defines.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 
 typedef struct render_window_t
 {

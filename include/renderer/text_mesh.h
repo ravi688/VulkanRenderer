@@ -84,7 +84,7 @@
 #include <hpml/mat4/header_config.h>
 #include <hpml/mat4/mat4.h>
 
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 
 typedef struct renderer_t renderer_t;
 typedef struct text_mesh_t text_mesh_t;

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 #include <renderer/defines.h>
 #include <calltrace/calltrace.h>
 

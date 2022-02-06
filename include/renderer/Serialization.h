@@ -2,7 +2,7 @@
 #define _SERIALIZATION_H_
 #include <renderer/defs.h>
 #include <renderer/defines.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 
 #define serialized_struct_set_property_int8(struct_name, property_name, value, object_ptr)\
 {\

@@ -3,7 +3,7 @@
 
 
 #include <vulkan/vulkan.h>
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 #include <renderer/defines.h>
 
 BEGIN_CPP_COMPATIBLE

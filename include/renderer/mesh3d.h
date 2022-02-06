@@ -30,7 +30,7 @@
 #include <hpml/mat4/header_config.h>
 #include <hpml/mat4/mat4.h>
 
-#include <buffer.h>
+#include <bufferlib/buffer.h>
 #include <renderer/defines.h>
 #include <renderer/debug.h>
 
