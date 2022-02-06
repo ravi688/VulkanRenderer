@@ -7,9 +7,9 @@
 #include <stdarg.h>
 #include <renderer/defines.h>
 
-#define array_t(T) template(array_t, T)
+#define array_t(T) c_template(array_t, T)
 
-#define array(T) template(array, T)
+#define array(T) c_template(array, T)
 
 #define instantiate_array_struct(T)\
 typedef struct array_t(T)\
