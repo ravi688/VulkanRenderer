@@ -204,11 +204,11 @@ lib-static-release: $(TARGET_STATIC_LIB)
 
 lib-dynamic: lib-dynamic-release
 lib-dynamic-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
-lib-dynamic-debug: __STATIC_LIB_COMMAND = lib-static-debug
+lib-dynamic-debug: __STATIC_LIB_COMMAND = lib-static-dynamic-debug
 lib-dynamic-debug: COMPILER_FLAGS += -g -fPIC
 lib-dynamic-debug: $(TARGET_DYNAMIC_LIB)
 lib-dynamic-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_DYNAMIC_LIBRARY
-lib-dynamic-release: __STATIC_LIB_COMMAND = lib-static-release
+lib-dynamic-release: __STATIC_LIB_COMMAND = lib-static-dynamic-release
 lib-dynamic-release: COMPILER_FLAGS += -fPIC
 lib-dynamic-release: $(TARGET_DYNAMIC_LIB)
 
