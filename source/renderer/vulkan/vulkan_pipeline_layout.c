@@ -2,7 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <memory.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>

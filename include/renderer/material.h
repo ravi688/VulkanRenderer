@@ -81,9 +81,7 @@ typedef struct material_create_info_t
 	bool is_transparent;
 } material_create_info_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
 RENDERER_API material_t* material_new();
@@ -180,7 +178,4 @@ RENDERER_API mat2_t(float) material_get_mat2(material_t* material, const char* n
 RENDERER_API mat4_t(float) material_get_mat4(material_t* material, const char* name);
 RENDERER_API texture_t* material_get_texture2d(material_t* material, const char* name);
 
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+END_CPP_COMPATIBLE

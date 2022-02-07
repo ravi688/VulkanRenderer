@@ -3,7 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 
 #ifdef GLOBAL_DEBUG
 	static void check_pre_condition(vulkan_logical_device_t* device);

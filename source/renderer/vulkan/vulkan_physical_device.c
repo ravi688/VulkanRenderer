@@ -3,7 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <string.h> 		// strcmp
 
 #ifdef GLOBAL_DEBUG

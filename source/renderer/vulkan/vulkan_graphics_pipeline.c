@@ -7,7 +7,7 @@
 #include <renderer/render_window.h>
 
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <memory.h>
 
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()

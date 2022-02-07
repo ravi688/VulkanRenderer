@@ -4,7 +4,7 @@
 #include <renderer/mesh.h>
 #include <renderer/mesh3d.h>
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 
 static u32 get_vulkan_index_from_stride(u32 stride);
 

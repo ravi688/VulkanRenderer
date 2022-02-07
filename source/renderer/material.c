@@ -7,7 +7,7 @@
 #include <renderer/material.h>
 #include <renderer/debug.h>
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <shader_compiler/compiler.h>
 
 #include <string.h>

@@ -2,7 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 
 #ifdef GLOBAL_DEBUG
 	static void check_pre_condition(vulkan_render_pass_t*);

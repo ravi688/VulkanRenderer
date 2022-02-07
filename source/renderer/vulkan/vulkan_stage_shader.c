@@ -4,7 +4,7 @@
 #include <disk_manager/file_reader.h>
 
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <memory.h>
 
 static VkShaderModule get_shader_module(VkDevice device, void* spirv, uint32_t length);

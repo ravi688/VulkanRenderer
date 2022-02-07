@@ -9,7 +9,7 @@
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/render_window.h>
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <memory.h>
 
 static void recreate_material(render_window_t* window, void* user_data);

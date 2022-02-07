@@ -3,7 +3,7 @@
 #include <renderer/assert.h>
 #include <disk_manager/file_reader.h>
 #include <meshlib/parsers/binary.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/debug.h>
 
 #define PARSE_ASSERT(boolean, ERROR) if(!(boolean)) bmp_parse_error(ERROR)

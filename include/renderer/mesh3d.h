@@ -56,9 +56,7 @@ typedef struct mesh3d_t
 	mat4_t(float) transform;
 } mesh3d_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
 RENDERER_API function_signature_void(mesh3d_t*, mesh3d_new);
@@ -331,6 +329,4 @@ RENDERER_API function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (
 RENDERER_API function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(index_t)* triangle, void* user_data), void* user_data);
 
 
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+END_CPP_COMPATIBLE

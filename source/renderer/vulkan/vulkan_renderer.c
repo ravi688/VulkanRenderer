@@ -8,7 +8,7 @@
 #include <renderer/debug.h>
 #include <renderer/assert.h>
 #include <renderer/defines.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 
 #include <stdio.h> 		// puts
 

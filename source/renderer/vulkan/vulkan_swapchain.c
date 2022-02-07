@@ -4,7 +4,7 @@
 #include <renderer/internal/vulkan/vulkan_image.h>
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/render_window.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <memory.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>

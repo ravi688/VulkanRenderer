@@ -1,7 +1,7 @@
 
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 
 RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen)
 {

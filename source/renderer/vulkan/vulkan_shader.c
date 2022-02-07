@@ -6,7 +6,7 @@
 #include <renderer/defines.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <shader_compiler/compiler.h>
 #include <disk_manager/file_reader.h>
 #include <string.h>

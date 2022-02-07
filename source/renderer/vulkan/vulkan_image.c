@@ -3,7 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 
 
 static VkCommandBuffer get_single_time_command_buffer(VkDevice device, VkCommandPool command_pool);

@@ -6,9 +6,7 @@
 
 typedef struct glyph_mesh_pool_t glyph_mesh_pool_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+BEGIN_CPP_COMPATIBLE
 
 // contructors and destructors
 RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new();
@@ -21,6 +19,4 @@ RENDERER_API font_t* glyph_mesh_pool_get_font(glyph_mesh_pool_t* pool);
 RENDERER_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph);
 
 
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+END_CPP_COMPATIBLE
