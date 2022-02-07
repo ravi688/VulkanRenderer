@@ -1,5 +1,6 @@
 //For handling rendering
 #include <renderer/renderer.h>
+#include <renderer/renderer.hpp>
 #include <renderer/material.h>
 #include <renderer/shader.h>
 #include <renderer/mesh.h>
@@ -54,9 +55,10 @@ static void u32_to_string(u32 value, char* string)
 
 int main(int argc, char** argv)
 {
-	memory_allocator_init(&argc);
+	V3D::Renderer myRenderer(V3D::RendererGPUType::INTEGRATED);
+	myRenderer.init();
 
-	renderer_t* renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 1920, 1080, "Vulkan 3D Renderer", false);
+	renderer_t* renderer = myRenderer.handle;
 	recreate_matrix(renderer_get_window(renderer), NULL);
 	render_window_subscribe_on_resize(renderer_get_window(renderer), recreate_matrix, NULL);
 	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -1.8f, 0.6f, 0 }, (vec3_t(float)) { 0, 0, -22 * DEG2RAD } );
@@ -324,7 +326,6 @@ int main(int argc, char** argv)
 		texture_release_resources(rock_textures[i]);
 	texture_release_resources(skybox_texture);
 
-	renderer_terminate(renderer);
-	memory_allocator_terminate();
+	myRenderer.terminate();
 	return 0;
 }
