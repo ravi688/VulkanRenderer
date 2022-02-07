@@ -89,9 +89,7 @@
 typedef struct renderer_t renderer_t;
 typedef struct text_mesh_t text_mesh_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
 RENDERER_API text_mesh_t* text_mesh_new();
@@ -123,6 +121,4 @@ RENDERER_API vec3_t(float) text_mesh_string_get_positionH(text_mesh_t* text_mesh
 RENDERER_API vec3_t(float) text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
 RENDERER_API mat4_t(float) text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
 
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+END_CPP_COMPATIBLE

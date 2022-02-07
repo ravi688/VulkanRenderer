@@ -1,4 +1,4 @@
-
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
@@ -7,7 +7,7 @@
 #include <renderer/render_window.h>
 
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <memory.h>
 
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
@@ -18,12 +18,13 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 	return pipeline;
 }
 
-RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline)
+RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t* pipeline)
 {
-	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
-	ASSERT(renderer->vk_render_pass != VK_NULL_HANDLE, "renderer->vk_render_pass == VK_NULL_HANDLE\n");
-	ASSERT(renderer->window != NULL, "renderer->window == NULL\n");
+	assert(renderer->logical_device->handle != VK_NULL_HANDLE);
+	assert(renderer->render_pass->handle != VK_NULL_HANDLE);
+	assert(renderer->window != NULL);
 
+	// create pipeline layout
 	vulkan_pipeline_layout_create_info_t layout_create_info = 
 	{ 
 		.vk_set_layout = create_info->shader->vk_set_layout,
@@ -32,46 +33,120 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer,
 	};
 	vulkan_pipeline_layout_create_no_alloc(renderer, &layout_create_info, pipeline->pipeline_layout);
 
-	VkPipelineShaderStageCreateInfo* shader_stages = stack_newv(VkPipelineShaderStageCreateInfo, create_info->shader->stage_count);
+	// copy the shader stage create info to a continuous array of VkPipelineShaderStageCreateInfo
+	VkPipelineShaderStageCreateInfo shader_stages[create_info->shader->stage_count];
 	for(u32 i = 0; i < create_info->shader->stage_count; i++)
-		ref(VkPipelineShaderStageCreateInfo, shader_stages, i) = (*refp(vulkan_stage_shader_t*, create_info->shader->stage_shaders, i))->stage;
+		shader_stages[i] = create_info->shader->stage_shaders[i]->stage;
 
-	vertex_attribute_binding_info_t* vertex_attribute_infos = stack_alloc(sizeof(vertex_attribute_binding_info_t) * create_info->vertex_info_count);
-	memset(vertex_attribute_infos, 0, sizeof(vertex_attribute_binding_info_t) * create_info->vertex_info_count);
-	uint32_t* strides = stack_alloc(sizeof(uint32_t) * create_info->vertex_info_count);
-	VkVertexInputRate* input_rates = stack_newv(VkVertexInputRate, create_info->vertex_info_count);
-	for(uint32_t i = 0; i < create_info->vertex_info_count; i++)
+	// setup vertex input binding and descriptions
+	VkVertexInputBindingDescription binding_descriptions[create_info->vertex_info_count];
+	BUFFER attribute_descriptions = buf_create(sizeof(VkVertexInputAttributeDescription), 0, 0);
+
+	u32 count = 0;
+	for(u32 i = 0; i < create_info->vertex_info_count; i++)
 	{
-		vertex_attribute_infos[i].attribute_count = create_info->vertex_infos[i].attribute_count;
-		vertex_attribute_infos[i].attribute_offsets = create_info->vertex_infos[i].attribute_offsets;
-		vertex_attribute_infos[i].attribute_formats = create_info->vertex_infos[i].attribute_formats;
-		strides[i] = create_info->vertex_infos[i].size;
-		input_rates[i] = create_info->vertex_infos[i].input_rate;
-	}
-	VkPipelineVertexInputStateCreateInfo vertex_info_info = vk_get_pipeline_vertex_input_state_create_info(create_info->vertex_info_count, strides, input_rates, vertex_attribute_infos);
-	VkPipelineInputAssemblyStateCreateInfo input_assembly = vk_get_pipeline_input_assembly_state_create_info();
-	VkPipelineRasterizationStateCreateInfo rasterizer = vk_get_pipeline_rasterization_state_create_info();
-	VkPipelineViewportStateCreateInfo viewport_state = vk_get_pipeline_viewport_state_create_info(renderer->window->width, renderer->window->height);
-	VkPipelineMultisampleStateCreateInfo multi_sampling = vk_get_pipeline_multisample_state_create_info();
-	VkPipelineColorBlendAttachmentState color_blend_attachmentment_state;
-	if(!create_info->blend_enabled)
-		color_blend_attachmentment_state = vk_get_pipeline_color_blend_attachment_state();
-	else 
-	{
-		VkPipelineColorBlendAttachmentState state = 
+		binding_descriptions[i].binding = i;
+		binding_descriptions[i].stride = create_info->vertex_infos[i].size;
+		binding_descriptions[i].inputRate = create_info->vertex_infos[i].input_rate;
+
+		for(u32 j = 0; j < create_info->vertex_infos[i].attribute_count; j++, count++)
 		{
-			.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-			.blendEnable = VK_TRUE,
-			.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-			.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-			.colorBlendOp = VK_BLEND_OP_ADD,
-			.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-			.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-			.alphaBlendOp = VK_BLEND_OP_ADD
-		};
-		color_blend_attachmentment_state = state;
+			VkVertexInputAttributeDescription description =
+			{
+				.binding = i,
+				.location = count,
+				.format = create_info->vertex_infos[i].attribute_formats[j],
+				.offset = create_info->vertex_infos[i].attribute_offsets[j]
+			};
+			buf_push(&attribute_descriptions, &description);
+		}
 	}
-	VkPipelineColorBlendStateCreateInfo color_blending = 
+
+	// setup vertex input state
+	VkPipelineVertexInputStateCreateInfo vertex_input_state = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, 
+		.vertexBindingDescriptionCount = create_info->vertex_info_count, 
+		.pVertexBindingDescriptions = binding_descriptions, 
+		.vertexAttributeDescriptionCount = attribute_descriptions.element_count, 
+		.pVertexAttributeDescriptions = attribute_descriptions.bytes
+	};
+
+	// setup input assembly state
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 
+		.primitiveRestartEnable = VK_FALSE
+	};
+
+	// setup rasterization state
+	VkPipelineRasterizationStateCreateInfo rasterization_state = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+		.depthClampEnable = VK_FALSE,
+		.rasterizerDiscardEnable = VK_FALSE,
+		.polygonMode = VK_POLYGON_MODE_FILL,
+		.lineWidth = 1.0f,
+		.cullMode = VK_CULL_MODE_BACK_BIT,
+		.frontFace = VK_FRONT_FACE_CLOCKWISE,
+		.depthBiasEnable = VK_FALSE,
+		.depthBiasConstantFactor = 0.0f, // Optional
+		.depthBiasClamp = 0.0f, // Optional
+		.depthBiasSlopeFactor = 0.0f // Optional
+	};
+
+	// setup viewport state
+	VkRect2D scissor = 
+	{ 
+		.offset = { 0, 0 }, 
+		.extent = renderer->swapchain->image_extent 
+	};
+	VkViewport viewport = 
+	{
+		.x = 0,
+		.y = 0, 
+		.width = renderer->swapchain->image_extent.width, 
+		.height = renderer->swapchain->image_extent.height, 
+		.minDepth = 0.0f, 
+		.maxDepth = 1.0f
+	};
+	VkPipelineViewportStateCreateInfo viewport_state =
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		.viewportCount = 1,
+		.pViewports = &viewport,
+		.scissorCount = 1, 
+		.pScissors = &scissor
+	};
+
+	// setup multiple sample state
+	VkPipelineMultisampleStateCreateInfo multi_sampling_state =
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+		.sampleShadingEnable = VK_FALSE,
+		.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+		.minSampleShading = 1.0f, // Optional
+		.pSampleMask = NULL, // Optional
+		.alphaToCoverageEnable = VK_FALSE, // Optional
+		.alphaToOneEnable = VK_FALSE // Optional
+	};
+
+	// setup color blend attachment state
+	VkPipelineColorBlendAttachmentState color_blend_attachmentment_state = 
+	{
+		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+		.blendEnable = (create_info->blend_enabled == true) ? VK_TRUE : VK_FALSE,
+		.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+		.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+		.colorBlendOp = VK_BLEND_OP_ADD,
+		.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+		.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+		.alphaBlendOp = VK_BLEND_OP_ADD
+	};
+	
+	// setup color blend state
+	VkPipelineColorBlendStateCreateInfo color_blend_state = 
 	{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
 		.logicOpEnable = VK_FALSE,
@@ -83,24 +158,49 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(renderer_t* renderer,
 		.blendConstants[2] = 0.0f, // Optional
 		.blendConstants[3] = 0.0f // Optional
 	};
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vk_get_pipeline_depth_stencil_state_create_info();
-	pipeline->pipeline = vk_get_graphics_pipeline(	renderer->logical_device->handle, pipeline->pipeline_layout->handle, renderer->vk_render_pass,
-														shader_stages,
-														&vertex_info_info,
-														&input_assembly,
-														&viewport_state,
-														&rasterizer,
-														&multi_sampling,
-														&color_blending,
-														&depth_stencil_state
-													);
-	stack_free(shader_stages);
-	stack_free(vertex_attribute_infos);
-	stack_free(strides);
-	stack_free(input_rates);
+
+	// setup depth stencil state
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+		.depthTestEnable = VK_TRUE,
+		.depthWriteEnable = VK_TRUE,
+		.depthCompareOp = VK_COMPARE_OP_LESS,
+		.depthBoundsTestEnable = VK_FALSE,
+		.minDepthBounds = 0.0f, 	// optional
+		.maxDepthBounds = 1.0f,		// optional
+		.stencilTestEnable = VK_FALSE,
+		.front = (VkStencilOpState) { }, // optional
+		.back = (VkStencilOpState) { } 	 // optional
+	};
+
+	// create graphics pipeline
+	VkGraphicsPipelineCreateInfo pipeline_create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		//TODO: Make this customizable, for more shader stages in the pipeline
+		.stageCount = 2,
+		.pStages = shader_stages,
+		.pVertexInputState = &vertex_input_state,
+		.pInputAssemblyState = &input_assembly_state,
+		.pViewportState = &viewport_state,
+		.pRasterizationState = &rasterization_state,
+		.pMultisampleState = &multi_sampling_state,
+		.pDepthStencilState = &depth_stencil_state,
+		.pColorBlendState = &color_blend_state,
+		.pDynamicState = NULL, // Optional
+		.layout = pipeline->pipeline_layout->handle,
+		.renderPass = renderer->render_pass->handle,
+		.subpass = 0,
+		.basePipelineHandle = VK_NULL_HANDLE, // Optional
+		.basePipelineIndex = -1 // Optional
+	};
+	vkCall(vkCreateGraphicsPipelines(renderer->logical_device->handle, VK_NULL_HANDLE, 1, &pipeline_create_info, NULL, &pipeline->pipeline));
+
+	buf_free(&attribute_descriptions);
 }
 
-RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
+RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
 {
 	vulkan_graphics_pipeline_t* pipeline = vulkan_graphics_pipeline_new();
 	vulkan_graphics_pipeline_create_no_alloc(renderer, create_info, pipeline);
@@ -108,18 +208,18 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(rendere
 }
 
 
-RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer)
+RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline, vulkan_renderer_t* renderer)
 {
-	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
-	ASSERT(renderer->swapchain != NULL, "renderer->swapchain == NULL\n");
+	assert(renderer->logical_device->handle != VK_NULL_HANDLE);
+	assert(renderer->swapchain != NULL);
 
 	u32 image_index = renderer->swapchain->current_image_index;
-	vkCmdBindPipeline(renderer->vk_command_buffers.value2[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
+	vkCmdBindPipeline(renderer->vk_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline, renderer_t* renderer)
+RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline, vulkan_renderer_t* renderer)
 {
-	ASSERT(renderer->logical_device->handle != VK_NULL_HANDLE, "renderer->logical_device->handle == VK_NULL_HANDLE\n");
+	assert(renderer->logical_device->handle != VK_NULL_HANDLE);
 	vulkan_pipeline_layout_destroy(pipeline->pipeline_layout, renderer);
 	vkDestroyPipeline(renderer->logical_device->handle, pipeline->pipeline, NULL);
 }

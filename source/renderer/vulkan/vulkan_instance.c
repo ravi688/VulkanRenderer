@@ -1,9 +1,9 @@
-
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_instance.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h> 	// heap_new, heap_newv, heap_free
+#include <renderer/memory_allocator.h> 	// heap_new, heap_newv, heap_free
 #include <stdio.h> 		// sprintf
 #include <string.h>		// strcmp
 

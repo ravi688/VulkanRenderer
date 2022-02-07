@@ -1,31 +1,31 @@
-
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_image.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
 /*
 	description:
 		creates a default sampler with linear filtering and repeat mode
 	params:
-		renderer: pointer to renderer_t object
+		renderer: pointer to vulkan_renderer_t object
 	returns:
 		VkSampler object
  */
-static VkSampler get_default_sampler(renderer_t* renderer);
+static VkSampler get_default_sampler(vulkan_renderer_t* renderer);
 
 /*
 	description:
 		creates a cube sampler with linear filtering and clamped mode
 	params:
-		renderer: pointer to renderer_t object
+		renderer: pointer to vulkan_renderer_t object
 	returns:
 		VkSampler object
  */
-static VkSampler get_cubmap_sampler(renderer_t* renderer);
+static VkSampler get_cubmap_sampler(vulkan_renderer_t* renderer);
 
 /*
 	description:
@@ -70,7 +70,7 @@ RENDERER_API vulkan_texture_t* vulkan_texture_new()
 	return texture;
 }
 
-RENDERER_API vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_create_info_t* create_info)
+RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info)
 {
 	assert(create_info != NULL);
 	assert(create_info->data != NULL);
@@ -257,7 +257,7 @@ static void vulkan_texture_create_cube(vulkan_texture_t* texture, vulkan_texture
 }
 
 
-static VkSampler get_default_sampler(renderer_t* renderer)
+static VkSampler get_default_sampler(vulkan_renderer_t* renderer)
 {
 	VkSamplerCreateInfo create_info =
 	{
@@ -279,12 +279,11 @@ static VkSampler get_default_sampler(renderer_t* renderer)
 		.maxLod = 0.0f
 	};
 	VkSampler sampler;
-	VkResult result = vkCreateSampler(renderer->logical_device->handle, &create_info, NULL, &sampler);
-	vulkan_result_assert_success(result);
+	vkCall(vkCreateSampler(renderer->logical_device->handle, &create_info, NULL, &sampler));
 	return sampler;
 }
 
-static VkSampler get_cubmap_sampler(renderer_t* renderer)
+static VkSampler get_cubmap_sampler(vulkan_renderer_t* renderer)
 {
 	VkSamplerCreateInfo create_info =
 	{
@@ -306,7 +305,6 @@ static VkSampler get_cubmap_sampler(renderer_t* renderer)
 		.maxLod = 0.0f
 	};
 	VkSampler sampler;
-	VkResult result = vkCreateSampler(renderer->logical_device->handle, &create_info, NULL, &sampler);
-	vulkan_result_assert_success(result);
+	vkCall(vkCreateSampler(renderer->logical_device->handle, &create_info, NULL, &sampler));
 	return sampler;
 }

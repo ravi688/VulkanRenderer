@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <defines.h>
+#include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 
 typedef struct render_window_t
@@ -13,9 +13,7 @@ typedef struct render_window_t
 	void* user_data;
 } render_window_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+BEGIN_CPP_COMPATIBLE
 
 RENDERER_API render_window_t* render_window_init(u32 width, u32 height, const char* title, bool full_screen);
 RENDERER_API bool render_window_should_close(render_window_t* window);
@@ -30,6 +28,4 @@ RENDERER_API void render_window_get_framebuffer_extent(render_window_t* window, 
 //API specific extensions
 RENDERER_API void render_window_get_vulkan_surface(render_window_t* window, void* vulkan_instance, void* out_surface);
 
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+END_CPP_COMPATIBLE

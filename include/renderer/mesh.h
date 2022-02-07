@@ -27,9 +27,7 @@ typedef vulkan_mesh_t mesh_t;
 
 #include <renderer/defines.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
 RENDERER_API mesh_t* mesh_new();
@@ -44,6 +42,4 @@ RENDERER_API void mesh_draw_indexed(mesh_t* mesh);
 RENDERER_API void mesh_draw_instanced(mesh_t* mesh, u32 instance_count);
 RENDERER_API void mesh_draw_indexed_instanced(mesh_t* mesh, u32 instance_count);
 
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+END_CPP_COMPATIBLE

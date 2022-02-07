@@ -1,9 +1,9 @@
-
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 #include <renderer/assert.h>
-#include <memory_allocator/memory_allocator.h>
+#include <renderer/memory_allocator.h>
 #include <string.h> 		// strcmp
 
 #ifdef GLOBAL_DEBUG
@@ -170,6 +170,50 @@ RENDERER_API u32 vulkan_physical_device_find_queue_family_index_for_surface(vulk
 			return i;
 	}
 	return U32_MAX; 		// invalid
+}
+
+RENDERER_API u32 vulkan_physical_device_find_memory_type(vulkan_physical_device_t* device, u32 required_memory_type_bits, VkMemoryPropertyFlags required_memory_properties)
+{
+	check_pre_condition(device);
+	
+	// get physical device memory properties
+	VkPhysicalDeviceMemoryProperties memory_properties;
+	vkGetPhysicalDeviceMemoryProperties(device->handle, &memory_properties);
+
+	for(u32 i = 0; i < memory_properties.memoryTypeCount; i++)
+		if((required_memory_type_bits & (1 << 0)) && ((memory_properties.memoryTypes[i].propertyFlags & required_memory_properties) == required_memory_properties))
+			return i;
+
+	log_wrn("Couldn't find the required memory type in the physical device, returned U32_MAX\n");
+	return U32_MAX; 		// invalid
+}
+
+RENDERER_API VkFormat vulkan_physical_device_find_supported_format(vulkan_physical_device_t* device, const VkFormat* const formats, u32 format_count, VkImageTiling tiling, VkFormatFeatureFlags format_features)
+{
+	VkFormatProperties properties;
+	for(uint32_t i = 0; i < format_count; i++)
+	{
+		VkFormat format = formats[i];
+		vkGetPhysicalDeviceFormatProperties(device->handle, format, &properties);
+		switch(tiling)
+		{
+			case VK_IMAGE_TILING_LINEAR:
+				if((properties.linearTilingFeatures & format_features) == format_features)
+					return format;
+			break;
+			
+			case VK_IMAGE_TILING_OPTIMAL:
+				if((properties.optimalTilingFeatures & format_features) == format_features)
+					return format;
+			break;
+
+			default:
+				LOG_FETAL_ERR("Unsupported image tiling\n");
+			break;
+		}
+	}
+	log_wrn("No vulkan format is found for image tiling: %u, format features: %u\n", tiling, format_features);
+	return VK_FORMAT_UNDEFINED; // invalid
 }
 
 // returning bools

@@ -36,9 +36,7 @@ typedef struct font_t
 
 } font_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+BEGIN_CPP_COMPATIBLE
 
 RENDERER_API font_t* font_create(void* bytes, u64 length);
 RENDERER_API font_t* font_load_and_create(const char* file_name);
@@ -49,6 +47,4 @@ RENDERER_API void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quali
 RENDERER_API void font_get_glyph_info(font_t* font, u16 wide_char, font_glyph_info_t* out_info);
 // void font_get_glyph_bitmap(font_t* font, void* out_bytes);
 
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+END_CPP_COMPATIBLE

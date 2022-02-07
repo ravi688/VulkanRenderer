@@ -47,10 +47,7 @@ typedef struct texture_create_info_t
 	texture_type_t type; 						// type of the this texture
 } texture_create_info_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
+BEGIN_CPP_COMPATIBLE
 /*	
 	description:
 		creates a texture of a type 'type'
@@ -94,7 +91,4 @@ RENDERER_API void texture_destroy(texture_t* texture);
  */
 RENDERER_API void texture_release_resources(texture_t* texture);
 
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+END_CPP_COMPATIBLE

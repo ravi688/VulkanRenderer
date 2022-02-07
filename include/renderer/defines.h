@@ -85,3 +85,9 @@ typedef u32 uint;
 #	define BEGIN_CPP_COMPATIBLE
 #	define END_CPP_COMPATIBLE
 #endif // __cplusplus
+
+#ifdef RENDERER_VULKAN_DRIVER
+typedef struct vulkan_renderer_t vulkan_renderer_t;
+#endif
+
+typedef struct renderer_t renderer_t;

@@ -1,5 +1,5 @@
 
-#include <dictionary.h>
+#include <renderer/dictionary.h>
 #include <memory.h>
 #include <renderer/assert.h>
 

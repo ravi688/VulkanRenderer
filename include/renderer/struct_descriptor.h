@@ -316,9 +316,7 @@ typedef struct struct_descriptor_t
 
 typedef u16 struct_field_handle_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+BEGIN_CPP_COMPATIBLE
 
 RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr);
 RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor);
@@ -360,6 +358,4 @@ RENDERER_API void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, st
 RENDERER_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
 
 
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+END_CPP_COMPATIBLE

@@ -1,29 +1,24 @@
-//TODO: Write a numeric type conversion warning systme; because of this printf("%u", <float> value) => outputs zero if <float> value < 1
-
-#include <renderer/renderer.h>
+#include <renderer/internal/vulkan/vulkan_defines.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_swapchain.h>
+#include <renderer/internal/vulkan/vulkan_instance.h>
+#include <renderer/internal/vulkan/vulkan_physical_device.h>
+#include <renderer/internal/vulkan/vulkan_to_string.h>
 #include <renderer/render_window.h>
 #include <renderer/debug.h>
 #include <renderer/assert.h>
 #include <renderer/defines.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_swapchain.h>
-#include <memory_allocator/memory_allocator.h>
-#include <string/string.h>
-
-
-#include <renderer/internal/vulkan/vulkan_instance.h>
-#include <renderer/internal/vulkan/vulkan_physical_device.h>
-#include <renderer/internal/vulkan/vulkan_to_string.h>
+#include <renderer/memory_allocator.h>
 
 #include <stdio.h> 		// puts
 
-static void renderer_on_window_resize(render_window_t* window, void* renderer);
+static void vulkan_renderer_on_window_resize(render_window_t* window, void* renderer);
 
-RENDERER_API render_window_t* renderer_get_window(renderer_t* renderer) { return renderer->window; }
+RENDERER_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer) { return renderer->window; }
 
 static vulkan_physical_device_t* get_lowest_score_device(vulkan_physical_device_t** devices, u32 count);
 
-static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t** devices, u32 count, renderer_gpu_type_t type)
+static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t** devices, u32 count, vulkan_renderer_gpu_type_t type)
 {
 	if(count == 0)
 		LOG_FETAL_ERR("No vulkan physical device found\n");
@@ -50,10 +45,10 @@ static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t**
 	void* gpu = NULL;
 	switch(type)
 	{
-		case RENDERER_GPU_TYPE_INTEGRATED:
+		case VULKAN_RENDERER_GPU_TYPE_INTEGRATED:
 			gpu = (integrated_gpu == NULL) ? discrete_gpu : integrated_gpu;
 			break;
-		case RENDERER_GPU_TYPE_DISCRETE:
+		case VULKAN_RENDERER_GPU_TYPE_DISCRETE:
 			gpu = (discrete_gpu == NULL) ? integrated_gpu : discrete_gpu;
 			break;
 		default:
@@ -113,10 +108,10 @@ static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, re
 	};
 }
 
-RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen)
+RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen)
 {
-	renderer_t* renderer = heap_new(renderer_t);
-	memset(renderer, 0, sizeof(renderer_t));
+	vulkan_renderer_t* renderer = heap_new(vulkan_renderer_t);
+	memset(renderer, 0, sizeof(vulkan_renderer_t));
 
 	//Create vulkan instance and choose a physical device
 	const char* extensions[2] = { "VK_KHR_surface", "VK_KHR_win32_surface" };
@@ -140,7 +135,7 @@ DEBUG_BLOCK
 
 	// create window
 	renderer->window = render_window_init(width, height, title, full_screen);
-	render_window_subscribe_on_resize(renderer->window, renderer_on_window_resize, renderer);
+	render_window_subscribe_on_resize(renderer->window, vulkan_renderer_on_window_resize, renderer);
 
 	// create surface
 	render_window_get_vulkan_surface(renderer->window, &(renderer->instance->handle), &(renderer->surface));
@@ -224,11 +219,16 @@ DEBUG_BLOCK
 	formats[0] = VK_FORMAT_D32_SFLOAT;
 	formats[1] = VK_FORMAT_D32_SFLOAT_S8_UINT;
 	formats[2] = VK_FORMAT_D24_UNORM_S8_UINT;
-	VkFormat depth_format = vk_find_supported_format(renderer->physical_device->handle, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	VkFormat depth_format = vulkan_physical_device_find_supported_format(renderer->physical_device, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 	stack_free(formats);
 
 	//Create Renderpass
-	renderer->vk_render_pass = vk_get_render_pass(renderer->logical_device->handle, surface_format.format, depth_format);
+	vulkan_render_pass_create_info_t render_pass_info =
+	{
+		.color_attachment_format = surface_format.format,
+		.depth_attachment_format = depth_format
+	};
+	renderer->render_pass = vulkan_render_pass_create(renderer, &render_pass_info);
 
 	//Create Swapchain
 	vulkan_swapchain_create_info_t swapchain_info =
@@ -246,63 +246,81 @@ DEBUG_BLOCK
 	memcpy(&renderer->swapchain_create_info, &swapchain_info, sizeof(vulkan_swapchain_create_info_t));
 	renderer->swapchain = vulkan_swapchain_create(renderer, &swapchain_info);
 
-	//Create command buffers
-	renderer->vk_command_pool = vk_get_command_pool(renderer->logical_device->handle, vk_get_graphics_queue_family_index(renderer->physical_device->handle));
-	renderer->vk_command_buffers = vk_get_command_buffers(renderer->logical_device->handle, renderer->vk_command_pool, renderer->swapchain->image_count);
+	// setup command pool
+	VkCommandPoolCreateInfo command_pool_create_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		.queueFamilyIndex = queue_family_indices[0],					// graphics queue family index
+		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+	};
+	vkCall(vkCreateCommandPool(renderer->logical_device->handle, &command_pool_create_info, NULL, &renderer->vk_command_pool));
+	
+	// setup command buffers
+	renderer->vk_command_buffers = heap_newv(VkCommandBuffer, renderer->swapchain->image_count);
+	VkCommandBufferAllocateInfo command_buffer_alloc_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.commandPool = renderer->vk_command_pool, 
+		.commandBufferCount = renderer->swapchain->image_count,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY
+	};
+	vkCall(vkAllocateCommandBuffers(renderer->logical_device->handle, &command_buffer_alloc_info, renderer->vk_command_buffers));
 
 	//Set up graphics queue
-	renderer->vk_graphics_queue = vk_get_device_queue(renderer->logical_device->handle, vk_get_graphics_queue_family_index(renderer->physical_device->handle), 0);
+	vkGetDeviceQueue(renderer->logical_device->handle, 0, queue_family_indices[0], &renderer->vk_graphics_queue); 
 
 	//Create descripter pool
-	renderer->vk_descriptor_pool = vk_get_descriptor_pool(renderer->logical_device->handle);
+	VkDescriptorPoolSize sizes[2] =
+	{
+		{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 8 },
+		{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 10 }
+	};
+	VkDescriptorPoolCreateInfo pool_create_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.poolSizeCount = 2,
+		.pPoolSizes = &sizes[0],
+		.maxSets = 6,
+		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
+	};
+	vkCall(vkCreateDescriptorPool(renderer->logical_device->handle, &pool_create_info, NULL, &renderer->vk_descriptor_pool));
 
 	return renderer;
 }
 
 
-RENDERER_API void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float a)
+RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer, float r, float g, float b, float a)
 {
 	vulkan_swapchain_acquire_next_image(renderer->swapchain, renderer);
-	vkCall(vkResetCommandBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT));
-	VkCommandBufferBeginInfo begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-	vkCall(vkBeginCommandBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], &begin_info));
+	vkCall(vkResetCommandBuffer(renderer->vk_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT));
+	VkCommandBufferBeginInfo cmd_begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+	vkCall(vkBeginCommandBuffer(renderer->vk_command_buffers[renderer->swapchain->current_image_index], &cmd_begin_info));
 
-	VkClearValue clear_values[2] = 
+	vulkan_render_pass_begin_info_t begin_info =
 	{
-		{ .color = { .float32 = { r, g, b, a } } },
-
-		// TODO: depth value should be 1.0,
-		// 		it is 1.1 right now because the compare operation is hard coded as less than (skybox rendering)
-		{ .depthStencil = { .depth = 1.1f, .stencil = 0 } }
-	};
-	VkRenderPassBeginInfo render_pass_begin_info =
-	{
-		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-		.renderArea.offset = (VkOffset2D) { 0, 0 },
-		.renderArea.extent = renderer->swapchain->image_extent,
 		.framebuffer = renderer->swapchain->framebuffers[renderer->swapchain->current_image_index],
-		.renderPass = renderer->vk_render_pass,
-		.clearValueCount = 2,
-		.pClearValues = &clear_values[0]
+		.depth = 1.1f,
+		.stencil = 0,
+		.color = { r, g, b, a },
+		.width = renderer->swapchain->image_extent.width,
+		.height = renderer->swapchain->image_extent.height
 	};
-
-	vkCmdBeginRenderPass(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	vulkan_render_pass_begin(renderer->render_pass, &begin_info);
 }
 
-RENDERER_API void renderer_end_frame(renderer_t* renderer)
+RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 {
-	vkCmdEndRenderPass(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index]);
-	vkCall(vkEndCommandBuffer(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index]));
+	vulkan_render_pass_end(renderer->render_pass);
 }
 
-RENDERER_API void renderer_update(renderer_t* renderer)
+RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 {
 	uint32_t wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	VkSubmitInfo submit_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 		.commandBufferCount = 1,
-		.pCommandBuffers = &(renderer->vk_command_buffers.value2[renderer->swapchain->current_image_index]),
+		.pCommandBuffers = &(renderer->vk_command_buffers[renderer->swapchain->current_image_index]),
 		.waitSemaphoreCount = 1,
 		.pWaitSemaphores = &(renderer->swapchain->image_available_semaphore),
 		.pWaitDstStageMask = &wait_destination_mask,
@@ -328,32 +346,45 @@ RENDERER_API void renderer_update(renderer_t* renderer)
 	render_window_poll_events(renderer->window);
 }
 
-RENDERER_API bool renderer_is_running(renderer_t* renderer)
+RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
 {
 	return !render_window_should_close(renderer->window);
 }
 
-RENDERER_API void renderer_terminate(renderer_t* renderer)
+RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
 	vkDestroySurfaceKHR(renderer->instance->handle, renderer->surface, NULL);
 	render_window_destroy(renderer->window);
+	
+	// destroy swapchain
 	vulkan_swapchain_destroy(renderer->swapchain, renderer);
 	vulkan_swapchain_release_resources(renderer->swapchain);
+	
 	vkDestroyDescriptorPool(renderer->logical_device->handle, renderer->vk_descriptor_pool, NULL);
-	vkDestroyRenderPass(renderer->logical_device->handle, renderer->vk_render_pass, NULL);
-	vkFreeCommandBuffers(renderer->logical_device->handle, renderer->vk_command_pool, renderer->vk_command_buffers.value1, renderer->vk_command_buffers.value2);
+	
+	// destroy render pass	
+	vulkan_render_pass_destroy(renderer->render_pass);
+	vulkan_render_pass_release_resources(renderer->render_pass);
+	
+	vkFreeCommandBuffers(renderer->logical_device->handle, renderer->vk_command_pool, renderer->swapchain->image_count, renderer->vk_command_buffers);
 	vkDestroyCommandPool(renderer->logical_device->handle, renderer->vk_command_pool, NULL);
+	
+	// destroy logical device
 	vulkan_logical_device_destroy(renderer->logical_device);
 	vulkan_logical_device_release_resources(renderer->logical_device);
+	
+	// destroy instance
 	vulkan_instance_destroy(renderer->instance);
 	vulkan_instance_release_resources(renderer->instance);
+	
+	heap_free(renderer->vk_command_buffers);
 	heap_free(renderer);
 	LOG_MSG("Renderer exited successfully\n");
 }
 
-static void renderer_on_window_resize(render_window_t* window, void* _renderer)
+static void vulkan_renderer_on_window_resize(render_window_t* window, void* _renderer)
 {
-	renderer_t* renderer = _renderer;
+	vulkan_renderer_t* renderer = _renderer;
 	log_msg("Window is resized: %u, %u\n", window->width, window->height);
 	VkSurfaceCapabilitiesKHR surface_capabilities = vulkan_physical_device_get_surface_capabilities(renderer->physical_device, renderer->surface);
 	renderer->swapchain_create_info.image_extent = find_extent(&surface_capabilities, window);

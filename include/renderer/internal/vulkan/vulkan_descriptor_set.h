@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include <vulkan/vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 #include <renderer/defines.h>
 
-typedef struct renderer_t renderer_t;
+typedef struct vulkan_renderer_t vulkan_renderer_t;
 typedef struct vulkan_texture_t vulkan_texture_t;
 typedef struct vulkan_buffer_t vulkan_buffer_t;
 typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;
@@ -39,37 +39,37 @@ RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new();
 		creates vulkan descriptor set (VkDescriptorSet) object,
 		it internally calls vulkan_descriptor_set_new()
 	params:
-		renderer: pointer to the renderer_t object
+		renderer: pointer to the vulkan_renderer_t object
 		create_info: pointer to the vulkan_descriptor_set_create_info_t object
 	returns:
 		pointer to newly created vulkan_descriptor_set_t object on the heap
  */
-RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info);
+RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info);
 
 
 /* 
 	description:
 		creates a descriptor set (VkDescriptorSet) object,
 	params:
-		renderer: pointer to the renderer_t object
+		renderer: pointer to the vulkan_renderer_t object
 		create_info: pointer to the vulkan_descriptor_set_create_info_t object
 		set: pointer to already allocated (stack or heap) vulkan_descriptor_set_t object,
 				make sure to initialize the memory to zero or using vulkan_descriptor_set_new() to allocate the object on heap
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_descriptor_set_create_no_alloc(renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set);
+RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set);
 
 /*
 	description:
 		destroys (VkFreeDescriptorSets) the vulkan objects (VkDescriptorSet)
 	params:
 		set: pointer to a valid vulkan_descriptor_set_t object (must have been created by calling vulkan_descriptor_set_create_no_alloc or vulkan_descriptor_set_create)
-		renderer: pointer to the renderer_t object
+		renderer: pointer to the vulkan_renderer_t object
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, renderer_t* renderer);
+RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer);
 
 /*
 	description:
@@ -87,25 +87,25 @@ RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_
  		binds (vkCmdBindDescriptorSets) the descriptor set to the pipline
  	params:
 		set: pointer to a valid vulkan_descriptor_set_t object (must have been created by calling vulkan_descriptor_set_create_no_alloc or vulkan_descriptor_set_create)
-		renderer: pointer to the renderer_t object
+		renderer: pointer to the vulkan_renderer_t object
  		pipeline_layout: compatible pipeline layout, which has been created with the same descriptor set layout from which this descriptor set has been created
  	returns:
  		nothing
  */
-RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, renderer_t* renderer, vulkan_pipeline_layout_t* pipeline_layout);
+RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, vulkan_pipeline_layout_t* pipeline_layout);
 
 /*
  	description:
  		updates the descriptor at binding "binding_index" with a texture resource
  	params:
 		set: pointer to a valid vulkan_descriptor_set_t object (must have been created by calling vulkan_descriptor_set_create_no_alloc or vulkan_descriptor_set_create)
-		renderer: pointer to the renderer_t object
+		renderer: pointer to the vulkan_renderer_t object
 		binding_index: binding number/index of the resource descriptor as defined in the descriptor set layout when this descriptor set has been created
 		texture: pointer to a valid vulkan_texture_t object
  	returns:
  		nothing
  */
-RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture);
+RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture);
 
 
 /*
@@ -113,13 +113,13 @@ RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* s
  		updates the descriptor at binding "binding_index" with a vulkan_buffer resource as uniform buffer
  	params:
 		set: pointer to a valid vulkan_descriptor_set_t object (must have been created by calling vulkan_descriptor_set_create_no_alloc or vulkan_descriptor_set_create)
-		renderer: pointer to the renderer_t object
+		renderer: pointer to the vulkan_renderer_t object
 		binding_index: binding number/index of the resource descriptor as defined in the descriptor set layout when this descriptor set has been created
 		texture: pointer to a valid vulkan_buffer_t object
  	returns:
  		nothing
  */
-RENDERER_API void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer);
 
 
 END_CPP_COMPATIBLE
