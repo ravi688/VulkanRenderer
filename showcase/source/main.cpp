@@ -1,6 +1,8 @@
 //For handling rendering
 #include <renderer/renderer.h>
-#include <renderer/renderer.hpp>
+#include <Renderer/Renderer.hpp>
+#include <Renderer/TextMesh.hpp>
+
 #include <renderer/material.h>
 #include <renderer/shader.h>
 #include <renderer/mesh.h>
@@ -65,6 +67,9 @@ int main(int argc, char** argv)
 	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
 	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
 
+
+	V3D::TextMesh myText = myRenderer.createTextMesh();
+	myText.drop();
 
 	/*------TEXT-----------------------------*/
 	font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");

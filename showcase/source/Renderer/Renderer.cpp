@@ -44,4 +44,9 @@ namespace V3D
 	{
 		renderer_update(handle);
 	}
+
+	SHOWCASE_API TextMesh Renderer::createTextMesh()
+	{
+		return TextMesh();
+	}
 }

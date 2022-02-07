@@ -3,6 +3,8 @@
 #include <Showcase/Interfaces/ISystem.hpp>
 #include <Showcase/Defines.hpp>			// SHOWCASE_API
 
+#include <Renderer/TextMesh.hpp>
+
 #include <renderer/defines.h>			// C header, u32
 #include <string>
 
@@ -35,5 +37,8 @@ namespace V3D
 		void beginFrame(float r, float g, float b, float a) const;
 		void endFrame() const;
 		void update() const;
+
+
+		TextMesh createTextMesh();
 	};
 }
