@@ -2,6 +2,9 @@
 #include <renderer/renderer.h>
 #include <Renderer/Renderer.hpp>
 #include <Renderer/TextMesh.hpp>
+#include <Math/Mat4.hpp>
+#include <hpml/vec2.h>
+#include <hpml/vec3.h>
 
 #include <renderer/material.h>
 #include <renderer/shader.h>
@@ -20,34 +23,20 @@
 #include <renderer/assert.h>
 
 #include <renderer/memory_allocator.h>
-#include <hpml/memory/header_config.h>
-#include <hpml/memory/memory.h>
-#include <hpml/vec2/header_config.h>
-#include <hpml/vec2/vec2.h>
-#include <hpml/vec3/header_config.h>
-#include <hpml/vec3/vec3.h>
-#include <hpml/vec4/header_config.h>
-#include <hpml/vec4/vec4.h>
-#include <hpml/mat4/header_config.h>
-#include <hpml/mat4/mat4.h>
-#include <hpml/mat2/header_config.h>
-#include <hpml/mat2/mat2.h>
-#include <hpml/affine_transformation/header_config.h>
-#include <hpml/affine_transformation/affine_transformation.h>
 
 #define DEG2RAD 0.01745f
 #define RAD2DEG 57.29577f
 
-static mat4_t(float) mat4_transform(vec3_t(float) position, vec3_t(float) eulerRotation) { return mat4_mul(float)(2, mat4_translation(float)(position.x, position.y, position.z), mat4_rotation(float)(eulerRotation.x, eulerRotation.y, eulerRotation.z)); }
+static Math::Mat4 mat4_transform(vec3_t(float) position, vec3_t(float) eulerRotation) { return Math::Mat4::translation(position.x, position.y, position.z) * Math::Mat4::rotation(eulerRotation.x, eulerRotation.y, eulerRotation.z); }
 
-static mat4_t(float) projection_matrix;
-static mat4_t(float) screen_space_matrix;
+static Math::Mat4 projection_matrix;
+static Math::Mat4 screen_space_matrix;
 
 static void recreate_matrix(render_window_t* window, void* user_data)
 {
-	mat4_move(float)(&projection_matrix,  mat4_persp_projection(float)(0.04f, 100, 60 * DEG2RAD, (float)window->width/window->height));
+	projection_matrix = Math::Mat4::perspectiveProjection(0.04f, 100, 60 * DEG2RAD, (float)window->width/window->height);
 	// mat4_move(float)(&projection_matrix,  mat4_ortho_projection(float)(0, 10, 3, (float)window->width/window->height));
-	mat4_move(float)(&screen_space_matrix, mat4_ortho_projection(float)(-0.04f, 100, window->height, (float)window->width / window->height));
+	screen_space_matrix = Math::Mat4::orthographicProjection(-0.04f, 100, window->height, (float)window->width / window->height);
 }
 
 static void u32_to_string(u32 value, char* string)
@@ -57,23 +46,21 @@ static void u32_to_string(u32 value, char* string)
 
 int main(int argc, char** argv)
 {
+
 	V3D::Renderer myRenderer(V3D::RendererGPUType::INTEGRATED);
 	myRenderer.init();
 
-	renderer_t* renderer = myRenderer.handle;
+	renderer_t* renderer = myRenderer.getHandle();
 	recreate_matrix(renderer_get_window(renderer), NULL);
 	render_window_subscribe_on_resize(renderer_get_window(renderer), recreate_matrix, NULL);
-	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -1.8f, 0.6f, 0 }, (vec3_t(float)) { 0, 0, -22 * DEG2RAD } );
-	mat4_t(float) view_matrix = mat4_inverse(float)(camera_transform);
-	mat4_t(float) clip_matrix = mat4_identity(float)(); clip_matrix.m11 = -1;
-
-
-	V3D::TextMesh myText = myRenderer.createTextMesh();
-	myText.drop();
+	Math::Mat4 camera_transform = mat4_transform((vec3_t(float)) { -1.8f, 0.6f, 0 }, (vec3_t(float)) { 0, 0, -22 * DEG2RAD } );
+	Math::Mat4 view_matrix = camera_transform.inverse();
+	Math::Mat4 clip_matrix = Math::Mat4::identity(); clip_matrix.m11 = -1;
 
 	/*------TEXT-----------------------------*/
-	font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
-	glyph_mesh_pool_t* pool = glyph_mesh_pool_create(renderer, font);
+	V3D::Font myFont("resource/fonts/Pushster-Regular.ttf");
+	font_t* font = myFont.getHandle();
+	glyph_mesh_pool_t* pool = myRenderer.createGlyphMeshPool(myFont).getHandle();
 	mesh_t* glyph_A = glyph_mesh_pool_get_mesh(pool, 'A');
 	mesh_t* glyph_B = glyph_mesh_pool_get_mesh(pool, 'B');
 	text_mesh_t* text_mesh = text_mesh_create(renderer, pool);
@@ -206,43 +193,41 @@ int main(int argc, char** argv)
 		renderer_begin_frame(renderer, 0.01f, 0.1f, 0.2f, 0.4f);
 
 		material_bind(rock_material);
-		mat4_t(float) model_matrix;
-		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_rotation(float)(0, 0 * DEG2RAD, 0), mat4_scale(float)(2.2, 2.2, 2.2)));
-		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
-		material_set_push_mat4(rock_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
-		material_set_push_mat4(rock_material, "push.model_matrix", mat4_transpose(float)(model_matrix));
+		Math::Mat4 model_matrix = Math::Mat4::rotation(0, 0 * DEG2RAD, 0) * Math::Mat4::scale(2.2, 2.2, 2.2);
+		Math::Mat4 mvp = clip_matrix * projection_matrix * view_matrix * model_matrix;
+		material_set_push_mat4(rock_material, "push.mvp_matrix", mvp.transpose());
+		material_set_push_mat4(rock_material, "push.model_matrix", model_matrix.transpose());
 		mesh_draw_indexed(rock);
 
 		material_bind(skybox_material);
 
-		mat4_t(float) skybox_matrix = view_matrix;
+		Math::Mat4 skybox_matrix = view_matrix;
 		// skybox should remain at origin, so set the last column of the view_matrix to zero
-		float** elements = (float**)mat4_data(float)(&skybox_matrix);
+		float** elements = (float**)skybox_matrix.getData();
 		elements[0][3] = 0;
 		elements[1][3] = 0;
 		elements[2][3] = 0;
 		elements[3][3] = 1;
-		mat4_move(float)(&mvp, mat4_mul(float)(3, clip_matrix, projection_matrix, skybox_matrix));
-		material_set_push_mat4(skybox_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
+		mvp = clip_matrix * projection_matrix * skybox_matrix;
+		material_set_push_mat4(skybox_material, "push.mvp_matrix", mvp.transpose());
 		mesh_draw_indexed(skybox);
 
 		material_bind(quad_material);
-		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
-		mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
-		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-		material_set_push_mat4(quad_material, "push.mvp_matrix", mvp);
+		model_matrix = Math::Mat4::translation(-0.8f, 0, 0) * Math::Mat4::rotation(0, 0, 80 * DEG2RAD);
+		mvp = clip_matrix * projection_matrix * view_matrix * model_matrix;
+		material_set_push_mat4(quad_material, "push.mvp_matrix", mvp.transpose());
 		mesh_draw_indexed(quad);
 
 		material_bind(text_material);
-		mat4_t(float) canvas_transform = mat4_mul(float)(2, clip_matrix, screen_space_matrix);
-		mat4_t(float) _model_matrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_scale(float)(0, 50, 50));
-		material_set_push_mat4(text_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
+		Math::Mat4 canvas_transform = clip_matrix * screen_space_matrix;
+		Math::Mat4 _model_matrix = Math::Mat4::translation(0, 0, 0) * Math::Mat4::scale(0, 50, 50);
+		material_set_push_mat4(text_material, "push.mvp_matrix", (canvas_transform * _model_matrix).transpose());
 		text_mesh_draw(text_mesh);
 
 
 		material_bind(game_ui_material);
-		mat4_move(float)(&_model_matrix, mat4_mul(float)(2, mat4_scale(float)(50, 50, 50), mat4_identity(float)()));
-		material_set_push_mat4(game_ui_material, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _model_matrix)));
+		_model_matrix = Math::Mat4::scale(50, 50, 50) * Math::Mat4::identity();
+		material_set_push_mat4(game_ui_material, "push.mvp_matrix", (canvas_transform * _model_matrix).transpose());
 		text_mesh_draw(game_ui);
 		// mesh_draw_indexed(glyph_A);
 		// mesh_draw_indexed(glyph_B);

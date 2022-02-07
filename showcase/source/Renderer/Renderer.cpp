@@ -45,8 +45,19 @@ namespace V3D
 		renderer_update(handle);
 	}
 
-	SHOWCASE_API TextMesh Renderer::createTextMesh()
+	SHOWCASE_API renderer_t* Renderer::getHandle() const
 	{
-		return TextMesh();
+		return handle;
 	}
+
+	SHOWCASE_API TextMesh Renderer::createTextMesh(GlyphMeshPool pool)
+	{
+		return TextMesh(this, &pool);
+	}
+
+	SHOWCASE_API GlyphMeshPool Renderer::createGlyphMeshPool(Font font)
+	{
+		return GlyphMeshPool(this, &font);
+	}
+
 }

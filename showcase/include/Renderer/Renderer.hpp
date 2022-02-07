@@ -4,6 +4,8 @@
 #include <Showcase/Defines.hpp>			// SHOWCASE_API
 
 #include <Renderer/TextMesh.hpp>
+#include <Renderer/GlyphMeshPool.hpp>
+#include <Renderer/Font.hpp>
 
 #include <renderer/defines.h>			// C header, u32
 #include <string>
@@ -19,8 +21,11 @@ namespace V3D
 
 	class SHOWCASE_API Renderer : Showcase::ISystem
 	{
-	public:
+	private:
 		renderer_t* handle;
+
+		friend class TextMesh;
+		friend class GlyphMeshPool;
 
 	public:
 		Renderer(RendererGPUType gpuType = RendererGPUType::AUTO, 
@@ -39,6 +44,9 @@ namespace V3D
 		void update() const;
 
 
-		TextMesh createTextMesh();
+		TextMesh createTextMesh(GlyphMeshPool pool);
+		GlyphMeshPool createGlyphMeshPool(Font font);
+
+		renderer_t* getHandle() const;
 	};
 }
