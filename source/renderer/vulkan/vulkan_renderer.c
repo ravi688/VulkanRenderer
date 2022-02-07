@@ -157,6 +157,8 @@ DEBUG_BLOCK
 DEBUG_BLOCK
 (
 	buf_set_element_count(&log_buffer, 0);
+	buf_push_string(&log_buffer, "Selected surface format:");
+	vk_surface_format_to_string("\t", surface_format, &log_buffer);
 	buf_push_string(&log_buffer, "Supported surface formats: \n");
 	for(u32 i = 0 ; i < surface_format_count; i++)
 		vk_surface_format_to_string("\t\t", surface_formats[i], &log_buffer);
@@ -173,6 +175,8 @@ DEBUG_BLOCK
 DEBUG_BLOCK
 (
 	buf_set_element_count(&log_buffer, 0);
+	buf_push_string(&log_buffer, "Selected present mode:");
+	vk_present_mode_to_string("\t", present_mode, &log_buffer);
 	buf_push_string(&log_buffer, "Supported present modes: \n");
 	for(u32 i = 0; i < present_mode_count; i++)
 		vk_present_mode_to_string("\t\t", present_modes[i], &log_buffer);
@@ -201,6 +205,9 @@ DEBUG_BLOCK
 	if(queue_family_indices[1] == U32_MAX)
 		LOG_FETAL_ERR("No queue found supporting presentation capabilities to the created surface\n");
 
+	log_u32(queue_family_indices[0]);
+	log_u32(queue_family_indices[1]);
+
 	extensions[0] = "VK_KHR_swapchain";
 
 	vulkan_logical_device_create_info_t logical_device_create_info =
@@ -221,6 +228,19 @@ DEBUG_BLOCK
 	formats[2] = VK_FORMAT_D24_UNORM_S8_UINT;
 	VkFormat depth_format = vulkan_physical_device_find_supported_format(renderer->physical_device, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 	stack_free(formats);
+
+DEBUG_BLOCK
+(
+	buf_set_element_count(&log_buffer, 0);
+	buf_push_string(&log_buffer, "Selected depth attachment format:");
+	vk_format_to_string("\t", depth_format, &log_buffer);
+	buf_push_newline(&log_buffer);
+	buf_push_string(&log_buffer, "Selected color attachment format: ");
+	vk_format_to_string("\t", surface_format.format, &log_buffer);
+	buf_push_newline(&log_buffer);
+	buf_push_null(&log_buffer);
+	log_msg(buf_get_ptr(&log_buffer));
+)
 
 	//Create Renderpass
 	vulkan_render_pass_create_info_t render_pass_info =
@@ -267,7 +287,7 @@ DEBUG_BLOCK
 	vkCall(vkAllocateCommandBuffers(renderer->logical_device->handle, &command_buffer_alloc_info, renderer->vk_command_buffers));
 
 	//Set up graphics queue
-	vkGetDeviceQueue(renderer->logical_device->handle, 0, queue_family_indices[0], &renderer->vk_graphics_queue); 
+	vkGetDeviceQueue(renderer->logical_device->handle, queue_family_indices[0], 0, &renderer->vk_graphics_queue); 
 
 	//Create descripter pool
 	VkDescriptorPoolSize sizes[2] =
@@ -311,11 +331,12 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer, float
 RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 {
 	vulkan_render_pass_end(renderer->render_pass);
+	vkCall(vkEndCommandBuffer(renderer->vk_command_buffers[renderer->swapchain->current_image_index]));
 }
 
 RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 {
-	uint32_t wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	u32 wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	VkSubmitInfo submit_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -328,7 +349,7 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 		.pSignalSemaphores = &(renderer->swapchain->render_finished_semaphore)
 	};
 
-	vkQueueSubmit(renderer->vk_graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+	vkCall(vkQueueSubmit(renderer->vk_graphics_queue, 1, &submit_info, VK_NULL_HANDLE));
 
 	VkPresentInfoKHR present_info =
 	{
@@ -340,9 +361,9 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 		.pImageIndices = &(renderer->swapchain->current_image_index)
 	};
 
-	vkQueuePresentKHR(renderer->vk_graphics_queue, &present_info);
-	vkQueueWaitIdle(renderer->vk_graphics_queue);
-	vkDeviceWaitIdle(renderer->logical_device->handle);
+	vkCall(vkQueuePresentKHR(renderer->vk_graphics_queue, &present_info));
+	vkCall(vkQueueWaitIdle(renderer->vk_graphics_queue));
+	vkCall(vkDeviceWaitIdle(renderer->logical_device->handle));
 	render_window_poll_events(renderer->window);
 }
 
