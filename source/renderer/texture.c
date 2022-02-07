@@ -1,4 +1,4 @@
-
+#include <renderer/renderer.h>
 #include <renderer/texture.h>
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/bmp.h>
@@ -54,7 +54,7 @@ RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info
 		.data = &data[0],
 		.type = vulkan_type
 	};
-	return vulkan_texture_create(renderer, &vulkan_create_info);
+	return vulkan_texture_create(renderer->handle, &vulkan_create_info);
 }
 
 RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...)
@@ -108,7 +108,7 @@ RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, 
 		.data = &data[0],
 		.type = vulkan_type
 	};
-	vulkan_texture_t* texture = vulkan_texture_create(renderer, &create_info);
+	vulkan_texture_t* texture = vulkan_texture_create(renderer->handle, &create_info);
 	
 	// unload the loaded texture data from host memory
 	for(u32 i = 0; i < file_path_count; i++)

@@ -1,4 +1,4 @@
-
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_image.h>

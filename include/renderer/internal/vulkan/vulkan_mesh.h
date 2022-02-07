@@ -4,35 +4,35 @@
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <bufferlib/buffer.h>
 
-typedef struct renderer_t renderer_t;
+typedef struct vulkan_renderer_t vulkan_renderer_t;
 typedef struct vulkan_mesh_t vulkan_mesh_t;
 
 typedef struct vulkan_vertex_buffer_create_info_t
 {
 	void* data;
-	uint32_t stride;
-	uint32_t count;
+	u32 stride;
+	u32 count;
 } vulkan_vertex_buffer_create_info_t;
 
 typedef struct vulkan_index_buffer_create_info_t
 {
 	void* data;
 	VkIndexType index_type;
-	uint32_t count;
+	u32 count;
 } vulkan_index_buffer_create_info_t;
 
 typedef struct vulkan_mesh_create_info_t
 {
 	vulkan_vertex_buffer_create_info_t* vertex_buffer_infos;
 	vulkan_vertex_buffer_create_info_t* instance_buffer_infos;
-	uint32_t vertex_buffer_info_count;
-	uint32_t instance_buffer_info_count;
+	u32 vertex_buffer_info_count;
+	u32 instance_buffer_info_count;
 	vulkan_index_buffer_create_info_t index_buffer_info;
 } vulkan_mesh_create_info_t;
 
 typedef struct vulkan_mesh_t
 {
-	renderer_t* renderer;
+	vulkan_renderer_t* renderer;
 	BUFFER /*typeof(vulkan_buffer_t*)*/ vertex_buffers;
 	vulkan_buffer_t* index_buffer;
 	VkIndexType index_type;
@@ -44,8 +44,8 @@ BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
 vulkan_mesh_t* vulkan_mesh_new();
-vulkan_mesh_t* vulkan_mesh_create(renderer_t* renderer, vulkan_mesh_create_info_t* create_info);
-void vulkan_mesh_create_no_alloc(renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh);
+vulkan_mesh_t* vulkan_mesh_create(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info);
+void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh);
 void vulkan_mesh_destroy(vulkan_mesh_t* mesh);
 void vulkan_mesh_release_resources(vulkan_mesh_t* mesh);
 

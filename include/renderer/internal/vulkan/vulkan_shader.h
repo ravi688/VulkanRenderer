@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <vulkan/vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 #include <renderer/internal/vulkan/vulkan_stage_shader.h>
 #include <renderer/struct_descriptor.h>
 #include <bufferlib/buffer.h>
@@ -26,7 +26,7 @@ typedef struct vulkan_shader_resource_descriptor_t
 
 typedef struct vulkan_shader_t
 {
-	renderer_t* renderer;
+	vulkan_renderer_t* renderer;
 	vulkan_stage_shader_t** stage_shaders;
 	u8 stage_count;
 	//For now we will be using only one descriptor set and descriptor layout
@@ -41,8 +41,8 @@ BEGIN_CPP_COMPATIBLE
 #define vulkan_shader_load(renderer, file_path) vulkan_shader_load_and_create(renderer, file_path)
 
 RENDERER_API vulkan_shader_t* vulkan_shader_new();
-RENDERER_API vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER* vulkan_shader_binary);
-RENDERER_API vulkan_shader_t* vulkan_shader_load_and_create(renderer_t* renderer, const char* file_path);
+RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, BUFFER* vulkan_shader_binary);
+RENDERER_API vulkan_shader_t* vulkan_shader_load_and_create(vulkan_renderer_t* renderer, const char* file_path);
 RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader);
 RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader);
 

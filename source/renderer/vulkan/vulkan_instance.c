@@ -1,4 +1,4 @@
-
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_instance.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_physical_device.h>

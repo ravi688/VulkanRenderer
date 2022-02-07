@@ -1,4 +1,4 @@
-
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
@@ -17,13 +17,13 @@ RENDERER_API vulkan_shader_t* vulkan_shader_new()
 	memset(shader, 0, sizeof(vulkan_shader_t));
 	return shader;
 }
-static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(renderer_t* renderer, vulkan_shader_resource_descriptor_t* descriptors, u32 binding_count);
-static vulkan_stage_shader_t** create_stage_shaders(renderer_t* renderer, BUFFER* shader_binary, u32 cursor, u8* out_stage_count);
+static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(vulkan_renderer_t* renderer, vulkan_shader_resource_descriptor_t* descriptors, u32 binding_count);
+static vulkan_stage_shader_t** create_stage_shaders(vulkan_renderer_t* renderer, BUFFER* shader_binary, u32 cursor, u8* out_stage_count);
 static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_binary, u32 cursor, u16* out_descriptor_count);
 static u16 sizeof_glsl_type(u8 type);
 static u16 alignof_glsl_type(u8 type);
 
-RENDERER_API vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER* shader_binary)
+RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, BUFFER* shader_binary)
 {
 	const char* header = "SHADER BINARY"; u8 header_len = strlen(header);
 	char buffer[header_len];
@@ -77,7 +77,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(renderer_t* renderer, BUFFER*
 	return shader;
 }
 
-RENDERER_API vulkan_shader_t* vulkan_shader_load_and_create(renderer_t* renderer, const char* file_path)
+RENDERER_API vulkan_shader_t* vulkan_shader_load_and_create(vulkan_renderer_t* renderer, const char* file_path)
 {
 	BUFFER* shader_binary = load_binary_from_file(file_path);
 	vulkan_shader_t* shader = vulkan_shader_create(renderer, shader_binary);
@@ -105,7 +105,7 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 	heap_free(shader);
 }
 
-static vulkan_stage_shader_t** create_stage_shaders(renderer_t* renderer, BUFFER* shader_binary, u32 cursor, u8* stage_count)
+static vulkan_stage_shader_t** create_stage_shaders(vulkan_renderer_t* renderer, BUFFER* shader_binary, u32 cursor, u8* stage_count)
 {
 	assert(cursor != 0xFFFFFFFF);
 	u8 shader_mask = *(u8*)buf_get_ptr_at(shader_binary, cursor); cursor++;
@@ -249,7 +249,7 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 }
 
 
-static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(renderer_t* renderer, vulkan_shader_resource_descriptor_t* descriptors, u32 descriptor_count)
+static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(vulkan_renderer_t* renderer, vulkan_shader_resource_descriptor_t* descriptors, u32 descriptor_count)
 {
 	if(descriptor_count == 0)
 	{
@@ -294,7 +294,14 @@ static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(renderer_t* render
 		}
 		binding_count++;
 	}
-	VkDescriptorSetLayout vk_set_layout = vk_get_descriptor_set_layout(renderer->logical_device->handle, bindings, binding_count);
+	VkDescriptorSetLayoutCreateInfo layout_create_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.bindingCount = binding_count,
+		.pBindings = bindings
+	};
+	VkDescriptorSetLayout vk_set_layout;
+	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->handle, &layout_create_info, NULL, &vk_set_layout));
 	stack_free(bindings);
 	return vk_set_layout;
 }

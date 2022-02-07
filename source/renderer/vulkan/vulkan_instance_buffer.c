@@ -1,4 +1,4 @@
-
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h>
 #include <renderer/assert.h>
 #include <memory.h> 			// memcpy
@@ -10,7 +10,7 @@
 #endif /*GLOBAL_DEBUG*/
 
 // constructors and destructors
-RENDERER_API void vulkan_instance_buffer_create(renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)
+RENDERER_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)
 {
 	assert(out_instance_buffer != NULL);
 	multi_buffer_create(create_info->stride, create_info->capacity, &out_instance_buffer->host_buffer);

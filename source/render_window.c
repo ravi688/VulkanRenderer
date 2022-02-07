@@ -2,16 +2,14 @@
 #include <renderer/render_window.h>
 #include <renderer/debug.h>
 #include <renderer/assert.h>
+#include <renderer/internal/vulkan/vulkan_defines.h>
 
 #include <exception/exception.h>
 #include <memory_allocator/memory_allocator.h>
-#include <tuple/header_config.h>
-#include <tuple/tuple.h>
 #include <stdio.h>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan_wrapper.h>
 #include <memory.h>
 
 typedef struct event_args_t
@@ -20,8 +18,6 @@ typedef struct event_args_t
 	void (*callback)(render_window_t* window, void* user_data);
 } event_args_t;
 
-static void glfw_dump_required_extensions();
-static tuple_t(uint32_t, ppVkChar_t) glfw_get_required_instance_extensions();
 static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, VkInstance vk_instance);
 
 #if GLOBAL_DEBUG
@@ -51,7 +47,6 @@ RENDERER_API render_window_t* render_window_init(u32 width, u32 height, const ch
 	glfwInit();
 #if GLOBAL_DEBUG
 	glfwSetErrorCallback(glfwErrorCallback);
-	glfw_dump_required_extensions();
 #endif
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -120,27 +115,6 @@ RENDERER_API void render_window_get_vulkan_surface(render_window_t* window, void
 	memcpy(&instance, vk_instance, sizeof(VkInstance));
 	surface = glfw_get_vulkan_surface(window->handle, instance);
 	memcpy(out_surface, &surface, sizeof(VkSurfaceKHR));
-}
-
-static void glfw_dump_required_extensions()
-{
-	tuple_t(uint32_t, ppVkChar_t) required_extensions = glfw_get_required_instance_extensions(); 
-	log_msg("GLFW required_extensions ----------------\n");
-	for(uint32_t i = 0; i < required_extensions.value1; i++)
-		log_msg("%s\n", required_extensions.value2[i]);
-EXCEPTION_BLOCK
-(
-	if(!vk_check_instance_extension_support(required_extensions))
-		throw_exception(VULKAN_EXTENSION_NOT_SUPPORTED);
-)
-}
-
-static tuple_t(uint32_t, ppVkChar_t) glfw_get_required_instance_extensions()
-{
-	tuple_t(uint32_t, ppVkChar_t) pair;
-	//TODO: SafeMemory improvement: there should be remove_alloc also to unregister the pointer
-	pair.value2 = (ppVkChar_t)glfwGetRequiredInstanceExtensions(&(pair.value1));
-	return pair;
 }
 
 static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, VkInstance vk_instance)

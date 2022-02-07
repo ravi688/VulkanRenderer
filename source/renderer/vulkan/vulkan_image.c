@@ -1,8 +1,13 @@
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_image.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/assert.h>
 #include <memory_allocator/memory_allocator.h>
+
+
+static VkCommandBuffer get_single_time_command_buffer(VkDevice device, VkCommandPool command_pool);
+static void end_single_time_command_buffer(VkDevice device, VkCommandPool command_pool, VkCommandBuffer command_buffer, VkQueue queue);
 
 RENDERER_API vulkan_image_t* vulkan_image_new()
 {
@@ -11,7 +16,7 @@ RENDERER_API vulkan_image_t* vulkan_image_new()
 	return image;
 }
 
-RENDERER_API void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image)
+RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image)
 {
 	assert(create_info != NULL);
 	assert(!((create_info->type == VK_IMAGE_TYPE_2D) && (create_info->depth > 1)));
@@ -35,7 +40,21 @@ RENDERER_API void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_imag
 		.flags = 0 //optional
 	};
 	vkCall(vkCreateImage(renderer->logical_device->handle, &image_info, NULL, &out_image->handle));
-	out_image->memory = vk_get_device_memory_for_image(renderer->logical_device->handle, renderer->physical_device->handle, out_image->handle, create_info->memory_properties_mask);
+	
+	// get memory requirements
+	VkMemoryRequirements memory_requirements;
+	vkGetImageMemoryRequirements(renderer->logical_device->handle, out_image->handle, &memory_requirements);
+
+	// allocate device memory
+	VkMemoryAllocateInfo alloc_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.allocationSize = memory_requirements.size,
+		.memoryTypeIndex = vulkan_physical_device_find_memory_type(renderer->physical_device, memory_requirements.memoryTypeBits, create_info->memory_properties_mask)
+	};
+	vkCall(vkAllocateMemory(renderer->logical_device->handle, &alloc_info, NULL, &out_image->memory));
+	vkCall(vkBindImageMemory(renderer->logical_device->handle, out_image->handle, out_image->memory, 0));
+	
 	out_image->type = create_info->type;
 	out_image->format = create_info->format;
 	out_image->aspect_mask = create_info->aspect_mask;
@@ -47,7 +66,7 @@ RENDERER_API void vulkan_image_create_no_alloc(renderer_t* renderer, vulkan_imag
 }
 
 
-RENDERER_API vulkan_image_t* vulkan_image_create(renderer_t* renderer, vulkan_image_create_info_t* create_info)
+RENDERER_API vulkan_image_t* vulkan_image_create(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info)
 {
 	vulkan_image_t* image = vulkan_image_new();
 	vulkan_image_create_no_alloc(renderer, create_info, image);
@@ -74,8 +93,8 @@ RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkIma
 		log_wrn("Image transtion layout warning | new layout is same as the previous one\n");
 		return;
 	}
-	renderer_t* renderer = image->renderer;
-	VkCommandBuffer command_buffer = vk_get_begin_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool);
+	vulkan_renderer_t* renderer = image->renderer;
+	VkCommandBuffer command_buffer = get_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool);
 	VkImageMemoryBarrier barrier =
 	{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -117,15 +136,15 @@ RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkIma
 		LOG_FETAL_ERR("Image layout transition error | transition from %u to %u isn't defined\n", image->layout, layout);
 	
 	vkCmdPipelineBarrier(command_buffer, src_pipeline_stage, dst_pipeline_stage, 0, 0, NULL, 0, NULL, 1, &barrier);
-	vk_end_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
+	end_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
 	image->layout = layout;
 }
 
 RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffer)
 {
 	assert(image->layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	renderer_t* renderer = image->renderer;
-	VkCommandBuffer command_buffer = vk_get_begin_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool);
+	vulkan_renderer_t* renderer = image->renderer;
+	VkCommandBuffer command_buffer = get_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool);
 	VkBufferImageCopy region =
 	{
 		.bufferOffset = 0,
@@ -140,5 +159,44 @@ RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_bu
 		.imageExtent = (VkExtent3D){ image->width, image->height, image->depth }
 	};
 	vkCmdCopyBufferToImage(command_buffer, buffer->handle, image->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-	vk_end_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
+	end_single_time_command_buffer(renderer->logical_device->handle, renderer->vk_command_pool, command_buffer, renderer->vk_graphics_queue);
+}
+
+
+static VkCommandBuffer get_single_time_command_buffer(VkDevice device, VkCommandPool command_pool)
+{
+	VkCommandBufferAllocateInfo alloc_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		.commandPool = command_pool,
+		.commandBufferCount = 1
+	};
+
+	VkCommandBuffer command_buffer;
+	vkCall(vkAllocateCommandBuffers(device, &alloc_info, &command_buffer));
+
+	VkCommandBufferBeginInfo begin_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+	};
+	vkCall(vkBeginCommandBuffer(command_buffer, &begin_info));
+	return command_buffer;
+}
+
+static void end_single_time_command_buffer(VkDevice device, VkCommandPool command_pool, VkCommandBuffer command_buffer, VkQueue queue)
+{
+	vkEndCommandBuffer(command_buffer);
+
+	VkSubmitInfo submit_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &command_buffer
+	};
+
+	vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
+	vkQueueWaitIdle(queue);
+	vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
 }

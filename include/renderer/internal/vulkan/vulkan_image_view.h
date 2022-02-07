@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
 
-typedef struct renderer_t renderer_t;
+typedef struct vulkan_renderer_t vulkan_renderer_t;
 typedef struct vulkan_image_t vulkan_image_t;
 
 typedef enum vulkan_image_view_type_t
@@ -23,7 +23,7 @@ typedef enum vulkan_image_view_type_t
 typedef struct vulkan_image_view_t
 {
 	VkImageView handle;
-	renderer_t* renderer;
+	vulkan_renderer_t* renderer;
 	vulkan_image_view_type_t type;
 	u32 layer_count;
 } vulkan_image_view_t;

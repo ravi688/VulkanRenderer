@@ -1,4 +1,4 @@
-
+#include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_material.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
@@ -132,7 +132,7 @@ static material_t* __material_create(renderer_t* renderer,
 		.push_constant_ranges = push_constant_ranges,
 		.push_constant_range_count = push_constant_range_count
 	};
-	material->handle = vulkan_material_create(renderer, &material_info);
+	material->handle = vulkan_material_create(renderer->handle, &material_info);
 	return material;
 }
 
@@ -158,7 +158,7 @@ static void __material_create_no_alloc(renderer_t* renderer,
 		.push_constant_ranges = push_constant_ranges,
 		.push_constant_range_count = push_constant_range_count
 	};
-	vulkan_material_create_no_alloc(renderer, &material_info, material->handle);
+	vulkan_material_create_no_alloc(renderer->handle, &material_info, material->handle);
 }
 
 static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* ranges, u32* out_range_count, u32* push_constant_buffer_size)
@@ -245,7 +245,7 @@ static void material_set_up_shader_resources(material_t* material)
 				.usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 			};
-			vulkan_buffer_create_no_alloc(material->renderer, &create_info, &resource->buffer);
+			vulkan_buffer_create_no_alloc(material->renderer->handle, &create_info, &resource->buffer);
 			vulkan_material_set_uniform_buffer(material->handle, descriptor->binding_number, &resource->buffer);
 		}
 		else
@@ -337,7 +337,7 @@ static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags)
 static void set_push_constants(material_t* material, vulkan_shader_resource_descriptor_t* descriptor)
 {
 	vulkan_pipeline_layout_push_constants(material->handle->graphics_pipeline->pipeline_layout, 
-											material->renderer, 
+											material->renderer->handle, 
 											get_vulkan_shader_flags(descriptor->stage_flags), 
 											descriptor->push_constant_range_offset, 
 											struct_descriptor_sizeof(&descriptor->handle), 

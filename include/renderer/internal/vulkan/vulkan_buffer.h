@@ -1,10 +1,10 @@
 
 #pragma once
 
-#include <vulkan/vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 #include <renderer/defines.h>		// u32
 
-typedef struct renderer_t renderer_t;
+typedef struct vulkan_renderer_t vulkan_renderer_t;
 
 typedef struct vulkan_buffer_create_info_t
 {
@@ -24,7 +24,7 @@ typedef struct vulkan_buffer_create_info_t
 
 typedef struct vulkan_buffer_t
 {
-	renderer_t* renderer;				// pointer to the renderer_t object
+	vulkan_renderer_t* renderer;				// pointer to the vulkan_renderer_t object
 	VkBuffer handle;
 	VkDeviceMemory memory;
 	u32 size; 							// if create_info->size is zero then its value would be "count * stride" in bytes
@@ -60,24 +60,24 @@ RENDERER_API vulkan_buffer_t* vulkan_buffer_new();
 		creates vulkan buffer (VkBuffer and VkDeviceMemory) object,
 		it internally calls vulkan_buffer_new()
 	params:
-		renderer: pointer to the renderer_t object
+		renderer: pointer to the vulkan_renderer_t object
 		create_info: pointer to the vulkan_buffer_create_info_t object
 	returns:
 		pointer to newly created vulkan_buffer_t object on the heap
  */
-RENDERER_API vulkan_buffer_t* vulkan_buffer_create(renderer_t* renderer, vulkan_buffer_create_info_t* create_info);
+RENDERER_API vulkan_buffer_t* vulkan_buffer_create(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info);
 
 /* 
 	description:
 		creates vulkan buffer (VkBuffer and VkDeviceMemory) object,
 	params:
-		renderer: pointer to the renderer_t object
+		renderer: pointer to the vulkan_renderer_t object
 		create_info: pointer to the vulkan_buffer_create_info_t object
 		buffer: pointer to already allocated (stack or heap) and initialized (by calling vulkan_buffer_init) vulkan_buffer_t object
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer);
 
 /*
 	description:

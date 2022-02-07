@@ -7,7 +7,7 @@
 #include <renderer/internal/vulkan/vulkan_image.h>			 // vulkan_image_t
 #include <renderer/internal/vulkan/vulkan_image_view.h> 	 // vulkan_image_view_t
 
-typedef struct renderer_t renderer_t;
+typedef struct vulkan_renderer_t vulkan_renderer_t;
 
 typedef enum vulkan_texture_type_t
 {
@@ -35,7 +35,7 @@ typedef struct vulkan_texture_create_info_t
 
 typedef struct vulkan_texture_t
 {
-	renderer_t* renderer; 							// pointer to the renderer_t object
+	vulkan_renderer_t* renderer; 							// pointer to the vulkan_renderer_t object
 	vulkan_image_t* image;							// pointer to the vulkan image object
 	vulkan_image_view_t* image_view; 				// pointer to the vulkan image view object
 	VkSampler image_sampler; 						// vulkan image sampler object
@@ -52,7 +52,7 @@ BEGIN_CPP_COMPATIBLE
 	returns:
 		pointer to the newly created vulkan texture object
  */
-RENDERER_API vulkan_texture_t* vulkan_texture_create(renderer_t* renderer, vulkan_texture_create_info_t* create_info);
+RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info);
 
 /*
 	description:

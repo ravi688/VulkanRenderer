@@ -1,3 +1,4 @@
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
@@ -14,7 +15,7 @@ RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new()
 	return set;
 }
 
-RENDERER_API void vulkan_descriptor_set_create_no_alloc(renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
+RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
 {
 	VkDescriptorSetAllocateInfo alloc_info =
 	{
@@ -27,14 +28,14 @@ RENDERER_API void vulkan_descriptor_set_create_no_alloc(renderer_t* renderer,  v
 	set->pool = create_info->pool;
 }
 
-RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(renderer_t* renderer, vulkan_descriptor_set_create_info_t* create_info)
+RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(vulkan_renderer_t* renderer, vulkan_descriptor_set_create_info_t* create_info)
 {
 	vulkan_descriptor_set_t* set = vulkan_descriptor_set_new();
 	vulkan_descriptor_set_create_no_alloc(renderer, create_info, set);
 	return set;
 }
 
-RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, renderer_t* renderer)
+RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer)
 {
 	vkCall(vkFreeDescriptorSets(renderer->logical_device->handle, set->pool, 1, &set->handle));
 }
@@ -44,13 +45,13 @@ RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_
 	heap_free(set);
 }
 
-RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, renderer_t* renderer, vulkan_pipeline_layout_t* pipeline_layout)
+RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, vulkan_pipeline_layout_t* pipeline_layout)
 {
 	u32 image_index = renderer->swapchain->current_image_index;
-	vkCmdBindDescriptorSets(renderer->vk_command_buffers.value2[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->handle, 0, 1, &set->handle, 0, NULL);
+	vkCmdBindDescriptorSets(renderer->vk_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->handle, 0, 1, &set->handle, 0, NULL);
 }
 
-RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture)
+RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture)
 {
 	VkDescriptorImageInfo image_info =
 	{
@@ -71,7 +72,7 @@ RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* s
 	vkUpdateDescriptorSets(renderer->logical_device->handle, 1, &descriptor_write, 0, NULL);
 }
 
-RENDERER_API void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer)
+RENDERER_API void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer)
 {
 	VkDescriptorBufferInfo buffer_info =
 	{

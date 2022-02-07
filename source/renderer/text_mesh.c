@@ -1,4 +1,4 @@
-
+#include <renderer/renderer.h>
 #include <renderer/text_mesh.h>									// text_mesh_t
 #include <renderer/glyph_mesh_pool.h> 							// glyph_mesh_pool_t
 #include <renderer/mesh3d.h>									// mesh3d_t
@@ -321,7 +321,7 @@ static vulkan_instance_buffer_t* get_instance_buffer(renderer_t* renderer, dicti
 			.stride = 36,		// vec3 offset, vec3 scale, vec3 rotation
 			.capacity = 10,
 		};
-		vulkan_instance_buffer_create(renderer, &create_info, &buffer);
+		vulkan_instance_buffer_create(renderer->handle, &create_info, &buffer);
 		dictionary_add(buffers, &key, &buffer);
 		index = dictionary_get_count(buffers) - 1;
 	}

@@ -1,4 +1,4 @@
-
+#include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <memory_allocator/memory_allocator.h>
@@ -24,14 +24,14 @@ RENDERER_API vulkan_buffer_t* vulkan_buffer_new()
 }
 
 
-RENDERER_API vulkan_buffer_t* vulkan_buffer_create(renderer_t* renderer, vulkan_buffer_create_info_t* create_info)
+RENDERER_API vulkan_buffer_t* vulkan_buffer_create(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info)
 {
 	vulkan_buffer_t* buffer = vulkan_buffer_new();
 	vulkan_buffer_create_no_alloc(renderer, create_info, buffer);
 	return buffer;
 }
 
-RENDERER_API void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer)
+RENDERER_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer)
 {
 	assert(renderer != NULL);
 	assert(buffer != NULL);
@@ -39,8 +39,31 @@ RENDERER_API void vulkan_buffer_create_no_alloc(renderer_t* renderer, vulkan_buf
 
 	buffer->renderer = renderer;
 	u32 buffer_size = (create_info->size == 0) ? (create_info->stride * create_info->count) : create_info->size;
-	buffer->handle = vk_get_buffer(renderer->logical_device->handle, buffer_size, create_info->usage_flags, create_info->sharing_mode);
-	buffer->memory = vk_get_device_memory_for_buffer(renderer->logical_device->handle, renderer->physical_device->handle, buffer->handle, create_info->memory_property_flags);
+	
+	// create vulkan buffer object
+	VkBufferCreateInfo buffer_create_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.size = buffer_size,
+		.usage = create_info->usage_flags,
+		.sharingMode = create_info->sharing_mode
+	};
+	vkCall(vkCreateBuffer(renderer->logical_device->handle, &buffer_create_info, NULL, &buffer->handle));
+
+	// get memory requirements
+    VkMemoryRequirements memory_requirements;
+	vkGetBufferMemoryRequirements(renderer->logical_device->handle, buffer->handle, &memory_requirements);
+
+	// allocate device memory
+	VkMemoryAllocateInfo alloc_info =
+	{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.allocationSize = memory_requirements.size,
+		.memoryTypeIndex = vulkan_physical_device_find_memory_type(renderer->physical_device, memory_requirements.memoryTypeBits, create_info->memory_property_flags)
+	};
+	vkCall(vkAllocateMemory(renderer->logical_device->handle, &alloc_info, NULL, &buffer->memory));
+	vkCall(vkBindBufferMemory(renderer->logical_device->handle, buffer->handle, buffer->memory, 0));
+
 	buffer->stride = create_info->stride;
 	buffer->count = create_info->count;
 	buffer->size = buffer_size;

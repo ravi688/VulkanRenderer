@@ -1,4 +1,4 @@
-
+#include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
 
 #include <renderer/mesh.h>
@@ -52,7 +52,7 @@ RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data
 			.count = index_buffer->element_count * 3 //element_size = sizeof(vec3_t(index_t)), and element_count = count of vec3_t(index_t)
 		};
 	}
-	vulkan_mesh_create_no_alloc(renderer, &create_info, mesh);
+	vulkan_mesh_create_no_alloc(renderer->handle, &create_info, mesh);
 	stack_free(vertex_buffer_infos);
 }
 
