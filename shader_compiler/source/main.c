@@ -41,5 +41,5 @@ int main(int arg_count, const char* const* argv)
 	BUFFER* binary = shader_compiler_load_and_compile(input_file_name);
 	write_binary_to_file(output_file_name, binary->bytes, binary->element_count);
 	buf_free(binary);;
-	puts("Exited Successfully");
+	// puts("Exited Successfully");
 }

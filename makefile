@@ -317,15 +317,25 @@ SHADER_COMPILER = ./shader_compiler/shader_compiler.exe
 SHADER_SOURCES = $(wildcard ./resource/shaders/*.glsl)
 SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
 
+SHADER_COMPILER_COMPILATION_MODE =
+
 $(SHADER_COMPILER):
-	$(MAKE) --directory=./shader_compiler debug
+	$(MAKE) --directory=$(dir $@) $(SHADER_COMPILER_COMPILATION_MODE)
 
 %.sb: %.glsl $(SHADER_COMPILER)
+	@echo [Log]: Compiling shader $< to $@
 	$(SHADER_COMPILER) $< $@
 
+.PHONY: shader-debug
+.PHONY: shader-release
 .PHONY: shader
 .PHONY: shader-clean
-shader: $(SHADER_BINARIES) 
+
+shader-debug: SHADER_COMPILER_COMPILATION_MODE += debug
+shader-debug: shader
+shader-release: SHADER_COMPILER_COMPILATION_MODE += release
+shader-release: shader
+shader: $(SHADER_BINARIES)
 
 shader-clean:
 	del $(subst /,\, $(SHADER_BINARIES))
@@ -342,11 +352,19 @@ clean: bin-clean
 
 .PHONY: build
 .PHONY: build-run
+.PHONY: build-release
+.PHONY: build-debug
 .PHONY: run
 
-build: shader
+build-release: shader-release
+	$(MAKE) lib-static-release
+	$(MAKE) release
+
+build-debug: shader-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
+
+build: build
 
 build-run: build
 	$(__EXECUTABLE_NAME)

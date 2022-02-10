@@ -206,7 +206,7 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 
 		if(strncmp(source, SECTION_SETTINGS, count) == 0)
 		{
-			LOG_MSG("SETTINGS section found, parsing ...\n");
+			LOG_MSG("SETTINGS section found, parsing & compiling ...\n");
 			if(settings_section_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_SETTINGS_SECTION_FOUND);
 			source += count;
 			source = strchr(source, '\n');
@@ -227,7 +227,7 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 		}
 		else if(strncmp(source, SECTION_LAYOUT, count) == 0)
 		{
-			LOG_MSG("LAYOUT section found, parsing ...\n");
+			LOG_MSG("LAYOUT section found, parsing & compiling ...\n");
 			if(layout_section_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_LAYOUT_SECTION_FOUND);
 			source += count;
 			source = strchr(source, '\n');
@@ -248,7 +248,7 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 		}
 		else if(strncmp(source, SECTION_SHADER, count) == 0)
 		{
-			LOG_MSG("SHADER section found, parsing ...\n");
+			LOG_MSG("SHADER section found, parsing & compiling ...\n");
 			if(shader_section_count > 0) shader_parse_error(SHADER_PARSE_ERROR_MORE_THAN_ONE_SHADER_SECTION_FOUND);
 			source += count;
 			source = strchr(source, '\n');
@@ -292,6 +292,7 @@ function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_uc
 	}
 
 	buf_fit(buffer);
+	LOG_MSG("Compiled shader binary info: { size = %llu bytes }\n", buf_get_element_count(buffer));
 	buf_free(offsets_buffer);
 	CALLTRACE_RETURN(buffer);
 }
@@ -429,7 +430,7 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 
 		//Write offset (byte count), 4 BYTES
 		buffer_insert_offset(buffer, offsets_buffer, descriptor_offsets_index);
-		log_u32(buf_get_element_count(buffer));
+		// log_u32(buf_get_element_count(buffer));
 
 		//Write descriptor set number/index, 1 BYTE
 		buffer_write_u8(buffer, (u8)values[0]);
@@ -443,7 +444,7 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 
 	//Write number of descriptor count, 2 BYTES
 	*(u16*)buf_get_ptr_at(buffer, descriptor_count_index) = descriptor_count;
-	log_u32(descriptor_count);
+	// log_u32(descriptor_count);
 
 	//Reverse the descriptor_offsets (array of u32)
 	u32* descriptor_offsets = buf_get_ptr_at(buffer, descriptor_offsets_index);
@@ -511,7 +512,7 @@ static const char* parse_type(const char* string, u32 mask, BUFFER* buffer, BUFF
 
 		//Write type info to the buffer, 4 BYTES
 		buffer_write_u32(buffer, type | mask);
-		log_u32(type | mask);
+		// log_u32(type | mask);
 
 		//Write block name to the buffer, count + 1 BYTES
 		buffer_write_string(buffer, block_name, count, true);
@@ -553,7 +554,7 @@ static const char* parse_type(const char* string, u32 mask, BUFFER* buffer, BUFF
 	//Write identifier name to the buffer, count + 1 BYTES
 	char identifier_name[count + 1]; memcpy(identifier_name, string, count); identifier_name[count] = 0;
 	buffer_insert_bytes(buffer, offsets_buffer, identifier_name_index, identifier_name, count + 1);
-	LOG_MSG("Identifier: %s\n", identifier_name);
+	// LOG_MSG("Identifier: %s\n", identifier_name);
 
 	string += count;
 	while(*string != ';')
@@ -665,7 +666,7 @@ PARSE_NUMBER:
 		memcpy(sub_str, string - len, len); sub_str[len] = 0;
 		arr_len = strtoul(sub_str, NULL, 0);
 		out_data[count] = arr_len;
-		log_u32(arr_len);
+		// log_u32(arr_len);
 		count++;
 		if(count > required)
 			LOG_FETAL_ERR("shader layout parse error: More than required elements found in the array index operator, \"%u\"\n", arr_len);
@@ -935,7 +936,7 @@ function_signature(static void, serialize_shader, const char* const* stage_strin
 	//Write the shader mask 0 0 0 0  1 0 0 1 -> fragment & vertex shaders
 	buf_push(buffer, &shader_mask);
 
-	log_u32(shader_mask);
+	// log_u32(shader_mask);
 
 	//Allocate space for offsets and lengths for each shader SPIRV binary
 	buf_ucount_t indices[shader_count];
@@ -972,8 +973,8 @@ function_signature(static void, serialize_shader, const char* const* stage_strin
 		uint64_t length = shaderc_result_get_length(result);
 		assert(length > 0);
 		uint32_t offset = buf_get_element_count(buffer);
-		log_u32(offset);
-		log_u32(length);
+		// log_u32(offset);
+		// log_u32(length);
 
 		//Write offset
 		memcpy(buf_get_ptr_at(buffer, indices[j]), &offset, 4);
