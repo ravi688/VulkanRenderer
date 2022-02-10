@@ -220,7 +220,7 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
 		multi_buffer_t* buffer = &instance_buffer->host_buffer;
 		sub_buffer_handle_t handle = get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch);
 		vec3_t(float) offset = { 0, 0, horizontal_pen};
-		offset = vec3_add(float)(offset, string->position);
+		offset = vec3_add(float)(2, offset, string->position);
 		char bytes[36];
 		memcpy(bytes, &offset, 12);
 		memcpy(bytes + 12, &string->scale, 12);

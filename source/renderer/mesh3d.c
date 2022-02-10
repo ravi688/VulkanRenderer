@@ -377,9 +377,9 @@ static vec3_t(float) get_tangent(mesh3d_t* mesh, index_t i0, index_t i1, index_t
 {
 	vec2_t(float) duv1 = vec2_sub(float)(mesh3d_uv_get(mesh, i1), mesh3d_uv_get(mesh, i0));
 	vec2_t(float) duv2 = vec2_sub(float)(mesh3d_uv_get(mesh, i2), mesh3d_uv_get(mesh, i0));
-	vec3_t(float) e1 = vec3_sub(float)(mesh3d_position_get(mesh, i1), mesh3d_position_get(mesh, i0));
-	vec3_t(float) e2 = vec3_sub(float)(mesh3d_position_get(mesh, i2), mesh3d_position_get(mesh, i0));
-	vec3_t(float) tangent = vec3_sub(float)(vec3_scale(float)(e1, duv2.y), vec3_scale(float)(e2, duv1.y));
+	vec3_t(float) e1 = vec3_sub(float)(2, mesh3d_position_get(mesh, i1), mesh3d_position_get(mesh, i0));
+	vec3_t(float) e2 = vec3_sub(float)(2, mesh3d_position_get(mesh, i2), mesh3d_position_get(mesh, i0));
+	vec3_t(float) tangent = vec3_sub(float)(2, vec3_scale(float)(e1, duv2.y), vec3_scale(float)(e2, duv1.y));
 	float value = 1 / (duv1.x * duv2.y - duv1.y * duv2.x);
 	tangent = vec3_scale(float)(tangent, value);
 	return tangent;
@@ -403,9 +403,9 @@ RENDERER_API function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh)
 		// calculate the tangent for this triangle
 		vec3_t(float) tangent = get_tangent(mesh, triangle.x, triangle.y, triangle.z);
 		// add this tangent to each corner/vertex of this triangle
-		mesh3d_tangent_set_vec3(mesh, triangle.x, vec3_add(float)(mesh3d_tangent_get(mesh, triangle.x), tangent));
-		mesh3d_tangent_set_vec3(mesh, triangle.y, vec3_add(float)(mesh3d_tangent_get(mesh, triangle.y), tangent));
-		mesh3d_tangent_set_vec3(mesh, triangle.z, vec3_add(float)(mesh3d_tangent_get(mesh, triangle.z), tangent));
+		mesh3d_tangent_set_vec3(mesh, triangle.x, vec3_add(float)(2, mesh3d_tangent_get(mesh, triangle.x), tangent));
+		mesh3d_tangent_set_vec3(mesh, triangle.y, vec3_add(float)(2, mesh3d_tangent_get(mesh, triangle.y), tangent));
+		mesh3d_tangent_set_vec3(mesh, triangle.z, vec3_add(float)(2, mesh3d_tangent_get(mesh, triangle.z), tangent));
 	}
 
 	// normalize all the tangents and Gram-Schimdt orthogonalize
@@ -413,7 +413,7 @@ RENDERER_API function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh)
 	{
 		vec3_t(float) tangent = mesh3d_tangent_get(mesh, i);
 		vec3_t(float) normal = mesh3d_normal_get(mesh, i);
-		tangent = vec3_sub(float)(tangent, vec3_scale(float)(normal, vec3_dot(float)(tangent, normal)));
+		tangent = vec3_sub(float)(2, tangent, vec3_scale(float)(normal, vec3_dot(float)(tangent, normal)));
 		mesh3d_tangent_set_vec3(mesh, i, vec3_normalize(float)(tangent));
 	}
 	
@@ -1298,10 +1298,10 @@ RENDERER_API function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mes
 	ASSERT(mesh3d_has_positions(mesh), "!mesh3d_has_positions(mesh)\n");
 	vec3_t(float) centroid = vec3_zero(float)();
 	for(buf_ucount_t i = 0; i < mesh3d_positions_count(mesh); i++)
-		centroid = vec3_add(float)(centroid, mesh3d_position_get(mesh, i));
+		centroid = vec3_add(float)(2, centroid, mesh3d_position_get(mesh, i));
 	centroid = vec3_scale(float)(centroid, (float)1 / mesh3d_positions_count(mesh));
 	for(buf_ucount_t i = 0; i < mesh3d_positions_count(mesh); i++)
-		mesh3d_position_set_vec3(mesh, i, vec3_sub(float)(mesh3d_position_get(mesh, i), centroid));
+		mesh3d_position_set_vec3(mesh, i, vec3_sub(float)(2, mesh3d_position_get(mesh, i), centroid));
 	CALLTRACE_END();
 }
 

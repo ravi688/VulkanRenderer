@@ -1,13 +1,13 @@
 //For handling rendering
 #include <renderer/renderer.h>
 
+#include <Math/Vec3.hpp>
 #include <Math/Vec4.hpp>
 #include <Math/Mat4.hpp>
 #include <Renderer/Renderer.hpp>
 #include <Renderer/TextMesh.hpp>
 
 #include <hpml/vec2.h>
-#include <hpml/vec3.h>
 
 #include <renderer/material.h>
 #include <renderer/shader.h>
@@ -49,7 +49,7 @@ static void u32_to_string(u32 value, char* string)
 
 int main(int argc, char** argv)
 {
-
+	Math::Vec3 anotherPosition;
 	V3D::Renderer myRenderer(V3D::RendererGPUType::INTEGRATED);
 	myRenderer.init();
 

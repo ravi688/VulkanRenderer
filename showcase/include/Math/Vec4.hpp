@@ -19,7 +19,7 @@ namespace Math
 			};
 		};
 
-		inline Vec4(float x, float y, float z, float w) { v = { x, y, w, z }; };
+		inline Vec4(float x, float y, float z, float w) { v = { x, y, z, w }; };
 		inline Vec4(float x) { v = { x, x, x, x }; }
 		inline Vec4() { v = { 0, 0, 0, 0 }; }
 		inline Vec4(const vec4_t(float)& v) { this->v = v; }

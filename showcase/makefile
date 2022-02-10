@@ -309,7 +309,7 @@ build-debug: shader-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
 
-build: build
+build: build-debug
 
 build-run: build
 	$(__EXECUTABLE_NAME)
