@@ -1,7 +1,9 @@
 #pragma once
 
-#include <hpml/mat4.h>
-#include <hpml/affine_transformation.h>
+#include <Math/Vec4.hpp>
+
+#include <hpml/mat4.h>						// C header
+#include <hpml/affine_transformation.h>		// C header
 
 
 namespace Math
@@ -54,6 +56,7 @@ namespace Math
 		inline Mat4 operator- (const Mat4& other)  { return mat4_sub(float)(m, other.m); }
 		inline Mat4 operator* (const Mat4& other) { return mat4_mul(float)(2, m, other.m); }
 		inline Mat4 operator* (float scalar) { return mat4_mul_scalar(float)(m, scalar); }
+		inline Vec4 operator* (const Vec4& other) { return mat4_mul_vec4(float)(m, other.x, other.y, other.z, other.w); }
 		inline Mat4 operator/ (const Mat4 other) { return mat4_div(float)(m, other.m); }
 		inline bool operator== (const Mat4& other) { return mat4_is_equal(float)(m, other.m); }
 		inline bool operator!= (const Mat4& other) { return !operator==(other); }

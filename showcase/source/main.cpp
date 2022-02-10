@@ -1,8 +1,11 @@
 //For handling rendering
 #include <renderer/renderer.h>
+
+#include <Math/Vec4.hpp>
+#include <Math/Mat4.hpp>
 #include <Renderer/Renderer.hpp>
 #include <Renderer/TextMesh.hpp>
-#include <Math/Mat4.hpp>
+
 #include <hpml/vec2.h>
 #include <hpml/vec3.h>
 
@@ -180,8 +183,11 @@ int main(int argc, char** argv)
 		material_set_float(text_material, "ubo.time", game_time);
 		material_set_float(game_ui_material, "ubo.time", game_time);
 
+		auto rotation_matrix = Math::Mat4::rotation(0, angle * DEG2RAD, 0);
+		auto light_dir = rotation_matrix * Math::Vec4::forward();
+
 		material_set_vec3(rock_material, "light.color", vec3(float)(1, 1, 1));
-		material_set_vec3(rock_material, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 3)));
+		material_set_vec3(rock_material, "light.dir", vec3_normalize(float)(vec3(float)(light_dir.x, light_dir.y, light_dir.z)));
 		material_set_float(rock_material, "light.intensity", 4.0f);
 
 		// vec4_t(float) eye_dir = mat4_mul_vec4(float)(camera_transform, 1, 0, 0, 0);
