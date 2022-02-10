@@ -298,15 +298,18 @@ clean: bin-clean shader-clean
 .PHONY: build
 .PHONY: build-run
 .PHONY: build-release
+.PHONY: build-debug
 .PHONY: run
 
 build-release: shader-release
 	$(MAKE) lib-static-release
 	$(MAKE) release
 
-build: shader-debug
+build-debug: shader-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
+
+build: build
 
 build-run: build
 	$(__EXECUTABLE_NAME)
