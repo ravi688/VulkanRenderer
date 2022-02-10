@@ -40,6 +40,7 @@ DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS =  BufferLib/lib/bufferlib.a
 SHARED_DEPENDENCIES_DIR = ./shared-dependencies
+UNPACKED_OBJECTS_DIR = ./unpacked
 #-------------------------------------------
 
 #-------------------------------------------
@@ -50,6 +51,7 @@ __DEPENDENCY_LIBS = $(addprefix $(DEPENDENCIES_DIR)/, $(DEPENDENCY_LIBS))
 __SHARED_DEPENDENCIES = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPENDENCIES))
 __SHARED_DEPENDENCY_LIBS = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPENDENCY_LIBS))
 __EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
+__UNPACKED_DIRS = $(notdir $(basename $(DEPENDENCY_LIBS) $(SHARED_DEPENDENCY_LIBS)))
 .PHONY: all
 .PHONY: init
 .PHONY: setup
@@ -63,7 +65,11 @@ all: dgraph release
 $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR): 
 	mkdir $(subst /,\,$@)
 	@echo [Log] $@ created successfully!
-
+$(UNPACKED_OBJECTS_DIR):
+	mkdir $(subst /, \,$@)
+	cd $@ & mkdir .temp
+	cd $@ & $(foreach var, $(__UNPACKED_DIRS) , mkdir $(var) & )
+	@echo [Log] $@ created successfully!
 
 init: $(PROJECT_NAME).gv $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR)
 	@echo [Log] $(PROJECT_NAME) init successfully!
@@ -155,6 +161,7 @@ dgraph-clean:
 TARGET_LIB_DIR = ./lib
 TARGET_STATIC_LIB = $(join $(TARGET_LIB_DIR)/, $(STATIC_LIB_NAME))
 TARGET_DYNAMIC_LIB = $(join $(TARGET_LIB_DIR)/, $(DYNAMIC_LIB_NAME))
+TARGET_DYNAMIC_PACKED_LIB = $(join $(TARGET_LIB_DIR)/, $(addprefix packed, $(DYNAMIC_LIB_NAME)))
 TARGET = $(__EXECUTABLE_NAME)
 
 #Dependencies
@@ -176,6 +183,7 @@ DYNAMIC_LIBRARY_COMPILATION_FLAG = -shared
 DYNAMIC_IMPORT_LIBRARY_FLAG = -Wl,--out-implib,
 COMPILER = gcc
 ARCHIVER_FLAGS = -rc
+ARCHIVER_UNPACK_FLAGS = -x
 ARCHIVER = ar
 
 TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefix lib, $(notdir $(TARGET_DYNAMIC_LIB).a)))
@@ -211,6 +219,12 @@ lib-dynamic-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_DYNAMIC_LIBRARY
 lib-dynamic-release: __STATIC_LIB_COMMAND = lib-static-dynamic-release
 lib-dynamic-release: COMPILER_FLAGS += -fPIC
 lib-dynamic-release: $(TARGET_DYNAMIC_LIB)
+
+.PHONY: lib-dynamic-packed-debug
+lib-dynamic-packed-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
+lib-dynamic-packed-debug: __STATIC_LIB_COMMAND = lib-static-dynamic-debug
+lib-dynamic-packed-debug: COMPILER_FLAGS += -g -fPIC
+lib-dynamic-packed-debug: $(TARGET_DYNAMIC_PACKED_LIB)
 
 release: DEFINES += $(RELEASE_DEFINES) -DBUILD_EXECUTABLE
 release: __STATIC_LIB_COMMAND = lib-static-release
@@ -251,6 +265,24 @@ $(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPEN
 	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
 	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
 
+.PHONY: UNPACK_LIBS
+.PHONY: $(TARGET_DYNAMIC_PACKED_LIB)
+.PHONY: DELETE_UPACKED_OBJECTS
+
+UNPACK_LIBS: $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) | $(UNPACKED_OBJECTS_DIR)
+	cd $(UNPACKED_OBJECTS_DIR)/.temp & $(foreach var, $^, cd ../$(notdir $(basename $(var))) & $(ARCHIVER) $(ARCHIVER_UNPACK_FLAGS) ../../$(var) &)
+
+DELETE_UPACKED_OBJECTS:
+	del $(subst /,\ $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
+	rmdir $(UNPACKED_OBJECTS_DIR)
+
+$(TARGET_DYNAMIC_PACKED_LIB) : PRINT_DYNAMIC_INFO  $(filter-out source/main.o, $(OBJECTS)) UNPACK_LIBS | $(TARGET_LIB_DIR)
+	@echo [Log] Linking $@ ...
+	$(COMPILER) $(COMPILER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG)  $(wildcard $(UNPACKED_OBJECTS_DIR)/*/*.o) $(filter-out source/main.o, $(OBJECTS)) \
+	$(LIBS) \
+	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
+	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
+
 $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) source/main.o
 	@echo [Log] Linking $@ ...
 	$(COMPILER) $(COMPILER_FLAGS) source/main.o \
@@ -267,6 +299,8 @@ bin-clean:
 	del $(subst /,\, $(TARGET_DYNAMIC_LIB))
 	del $(subst /,\, $(TARGET_DYNAMIC_IMPORT_LIB))
 	rmdir $(subst /,\, $(TARGET_LIB_DIR))
+	del $(subst /,\, $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
+	rmdir $(subst /,\, $(UNPACKED_OBJECTS_DIR))
 	@echo [Log] Binaries cleaned successfully!
 	$(MAKE) --directory=./dependencies/ttf2mesh clean
 	$(MAKE) --directory=./dependencies/HPML clean

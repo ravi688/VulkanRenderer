@@ -13,10 +13,10 @@
 #-------------------------------------------
 PROJECT_NAME = ShaderCompiler
 STATIC_LIB_NAME = shader_compiler.a
-DYNAMIC_LIB_NAME = #shader_compiler.dll
+DYNAMIC_LIB_NAME = shader_compiler.dll
 EXECUTABLE_NAME = shader_compiler.exe
 EXTERNAL_LIBRARIES = -L.\external-dependency-libs -lshaderc_shared
-EXTERNAL_INCLUDES = 
+EXTERNAL_INCLUDES = -I./include/shader_compiler
 DEPENDENCIES = ../../dependencies/MeshLib/dependencies/DiskManager ../../shared-dependencies/BufferLib ../../dependencies/SafeMemory/shared-dependencies/CallTrace
 DEPENDENCY_LIBS = ../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../shared-dependencies/BufferLib/lib/bufferlib.a ../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
@@ -34,7 +34,6 @@ __DEPENDENCY_LIBS = $(addprefix $(DEPENDENCIES_DIR)/, $(DEPENDENCY_LIBS))
 __SHARED_DEPENDENCIES = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPENDENCIES))
 __SHARED_DEPENDENCY_LIBS = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPENDENCY_LIBS))
 __EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
-
 .PHONY: all
 .PHONY: init
 all: dgraph release
@@ -96,15 +95,16 @@ dgraph-clean:
 #-------------------------------------------
 #		Binary Generation
 #-------------------------------------------
-TARGET_STATIC_LIB = $(join ./lib/, $(STATIC_LIB_NAME))
-TARGET_STATIC_LIB_DIR = ./lib
+TARGET_LIB_DIR = ./lib
+TARGET_STATIC_LIB = $(join $(TARGET_LIB_DIR)/, $(STATIC_LIB_NAME))
+TARGET_DYNAMIC_LIB = $(join $(TARGET_LIB_DIR)/, $(DYNAMIC_LIB_NAME))
 TARGET = $(__EXECUTABLE_NAME)
 
 #Dependencies
 DEPENDENCY_INCLUDES = $(addsuffix /include, $(__DEPENDENCIES))
 SHARED_DEPENDENCY_INCLUDES = $(addsuffix /include, $(__SHARED_DEPENDENCIES))
 
-INCLUDES= -I.\include -I./include/shader_compiler $(addprefix -I, $(DEPENDENCY_INCLUDES) $(SHARED_DEPENDENCY_INCLUDES))
+INCLUDES= -I.\include $(EXTERNAL_INCLUDES) $(addprefix -I, $(DEPENDENCY_INCLUDES) $(SHARED_DEPENDENCY_INCLUDES))
 SOURCES= $(wildcard source/*.c)
 OBJECTS= $(addsuffix .o, $(basename $(SOURCES)))
 LIBS = $(EXTERNAL_LIBRARIES)
@@ -115,14 +115,23 @@ RELEASE_DEFINES =  -DGLOBAL_RELEASE -DRELEASE -DLOG_RELEASE
 DEFINES = 
 
 COMPILER_FLAGS= -m64
+DYNAMIC_LIBRARY_COMPILATION_FLAG = -shared
+DYNAMIC_IMPORT_LIBRARY_FLAG = -Wl,--out-implib,
 COMPILER = gcc
 ARCHIVER_FLAGS = -rc
 ARCHIVER = ar
 
+TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefix lib, $(notdir $(TARGET_DYNAMIC_LIB).a)))
 
 .PHONY: lib-static
 .PHONY: lib-static-debug
 .PHONY: lib-static-release
+.PHONY: lib-dynamic
+.PHONY: lib-dynamic-debug
+.PHONY: lib-dynamic-release
+.PHONY: lib-static-dynamic
+.PHONY: lib-static-dynamic-debug
+.PHONY: lib-static-dynamic-release
 .PHONY: release
 .PHONY: debug
 .PHONY: $(TARGET)	
@@ -131,59 +140,111 @@ ARCHIVER = ar
 
 all: release
 lib-static: lib-static-release
-lib-static-debug: DEFINES += $(DEBUG_DEFINES)
+lib-static-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_STATIC_LIBRARY
 lib-static-debug: __STATIC_LIB_COMMAND = lib-static-debug
 lib-static-debug: COMPILER_FLAGS += -g
 lib-static-debug: $(TARGET_STATIC_LIB)
-lib-static-release: DEFINES += $(RELEASE_DEFINES)
+lib-static-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_STATIC_LIBRARY
 lib-static-release: __STATIC_LIB_COMMAND = lib-static-release
 lib-static-release: $(TARGET_STATIC_LIB)
-release: DEFINES += $(RELEASE_DEFINES)
+
+lib-dynamic: lib-dynamic-release
+lib-dynamic-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
+lib-dynamic-debug: __STATIC_LIB_COMMAND = lib-static-debug
+lib-dynamic-debug: COMPILER_FLAGS += -g -fPIC
+lib-dynamic-debug: $(TARGET_DYNAMIC_LIB)
+lib-dynamic-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_DYNAMIC_LIBRARY
+lib-dynamic-release: __STATIC_LIB_COMMAND = lib-static-release
+lib-dynamic-release: COMPILER_FLAGS += -fPIC
+lib-dynamic-release: $(TARGET_DYNAMIC_LIB)
+
+lib-static-dynamic: lib-static-dynamic-release
+lib-static-dynamic-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
+lib-static-dynamic-debug: __STATIC_LIB_COMMAND = lib-static-dynamic-debug
+lib-static-dynamic-debug: COMPILER_FLAGS += -g -fPIC
+lib-static-dynamic-debug: $(TARGET_STATIC_LIB)
+lib-static-dynamic-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_DYNAMIC_LIBRARY
+lib-static-dynamic-release: __STATIC_LIB_COMMAND = lib-static-dynamic-release
+lib-static-dynamic-release: COMPILER_FLAGS += -fPIC
+lib-static-dynamic-release: $(TARGET_STATIC_LIB)
+
+release: DEFINES += $(RELEASE_DEFINES) -DBUILD_EXECUTABLE
 release: __STATIC_LIB_COMMAND = lib-static-release
 release: $(TARGET)
-debug: DEFINES += $(DEBUG_DEFINES)
+debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_EXECUTABLE
 debug: __STATIC_LIB_COMMAND = lib-static-debug
 debug: COMPILER_FLAGS += -g
 debug: $(TARGET)
 
+.PHONY: dynamic-release
+.PHONY: dynamic-release
+.PHONY: dynamic-release
+.PHONY: dynamic-debug
+.PHONY: dynamic-debug
+.PHONY: dynamic-debug
+.PHONY: dynamic-debug
+
+dynamic-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_DYNAMIC_LIBRARY
+dynamic-release: __STATIC_LIB_COMMAND = lib-static-dynamic-release
+dynamic-release: COMPILER_FLAGS += -fPIC
+dynamic-release: $(TARGET)
+dynamic-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
+dynamic-debug: __STATIC_LIB_COMMAND = lib-static-dynamic-debug
+dynamic-debug: COMPILER_FLAGS += -g -fPIC
+dynamic-debug: $(TARGET)
+
 
 %.o : %.c
 	$(COMPILER) $(COMPILER_FLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
 
 %.a:
 	@echo [Log] Building $@ ...
 	$(MAKE) --directory=$(subst lib/, ,$(dir $@)) $(__STATIC_LIB_COMMAND)
 	@echo [Log] $@ built successfully!
 
-$(TARGET_STATIC_LIB_DIR): 
+$(TARGET_LIB_DIR): 
 	mkdir $@
 
-PRINT_MESSAGE1: 
+PRINT_STATIC_INFO: 
 	@echo [Log] Building $(TARGET_STATIC_LIB) ...
 
-$(TARGET_STATIC_LIB) : PRINT_MESSAGE1 $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_STATIC_LIB_DIR) 
+PRINT_DYNAMIC_INFO: 
+	@echo [Log] Building $(TARGET_DYNAMIC_LIB) ...
+
+$(TARGET_STATIC_LIB) : PRINT_STATIC_INFO $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_LIB_DIR) 
 	$(ARCHIVER) $(ARCHIVER_FLAGS) $@ $(filter-out $<, $^)
 	@echo [Log] $@ built successfully!
+
+$(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_LIB_DIR)
+	@echo [Log] Linking $@ ...
+	$(COMPILER) $(COMPILER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(filter-out source/main.o, $(OBJECTS))  $(LIBS)\
+	$(addprefix -L, $(dir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
+	$(addprefix -l:, $(notdir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
+	$(LIBS) \
+	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
+	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
 
 $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) source/main.o
 	@echo [Log] Linking $@ ...
 	$(COMPILER) $(COMPILER_FLAGS) source/main.o \
 	$(addprefix -L, $(dir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
-	$(LIBS) -o $@
+	$(LIBS) \
+	-o $@
 	@echo [Log] $(PROJECT_NAME) built successfully!
 
-bin-clean: 
-	del $(addprefix source\, $(notdir $(OBJECTS)))
+bin-clean:
+	del $(subst /,\, $(OBJECTS))
 	del $(__EXECUTABLE_NAME)
 	del $(subst /,\, $(TARGET_STATIC_LIB))
-	rmdir $(subst /,\, $(TARGET_STATIC_LIB_DIR))
+	del $(subst /,\, $(TARGET_DYNAMIC_LIB))
+	del $(subst /,\, $(TARGET_DYNAMIC_IMPORT_LIB))
+	rmdir $(subst /,\, $(TARGET_LIB_DIR))
 	@echo [Log] Binaries cleaned successfully!
-	$(MAKE) --directory=./dependencies/../../dependencies/MeshLib/dependencies/DiskManager clean
-	$(MAKE) --directory=./dependencies/../../shared-dependencies/BufferLib clean
-	$(MAKE) --directory=./dependencies/../../dependencies/SafeMemory/shared-dependencies/CallTrace clean
-# 	$(MAKE) --directory=./dependencies/BufferLib clean
-# 	$(MAKE) --directory=./dependencies/BufferLib/dependencies/CallTrace clean
+	$(MAKE) --directory=../dependencies/MeshLib/dependencies/DiskManager clean
+	$(MAKE) --directory=../shared-dependencies/BufferLib clean
+	$(MAKE) --directory=../dependencies/SafeMemory/shared-dependencies/CallTrace clean
 # 	$(MAKE) --directory=./dependencies/HPML clean
 # 	$(MAKE) --directory=../../shared-dependencies/BufferLib clean
 #  	$(MAKE) --directory=./dependencies/tgc clean
@@ -194,6 +255,6 @@ bin-clean:
 #		Cleaning
 #-------------------------------------------
 .PHONY: clean
-clean: bin-clean
+clean: bin-clean 
 	@echo [Log] All cleaned successfully!
 #-------------------------------------------

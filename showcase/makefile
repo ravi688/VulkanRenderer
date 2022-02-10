@@ -35,10 +35,10 @@ PROJECT_NAME = Showcase
 STATIC_LIB_NAME = showcase.a
 DYNAMIC_LIB_NAME = showcase.dll
 EXECUTABLE_NAME = main.exe
-EXTERNAL_LIBRARIES = #-L./external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
+EXTERNAL_LIBRARIES = -L../external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
 EXTERNAL_INCLUDES = #-I./dependencies/ -I./shared-dependencies
-DEPENDENCIES = . dependencies/HPML shared-dependencies/BufferLib dependencies/ttf2mesh dependencies/SafeMemory dependencies/TemplateSystem dependencies/SafeMemory/shared-dependencies/CallTrace
-DEPENDENCY_LIBS = lib/libvulkanrenderer.dll.a
+DEPENDENCIES = . dependencies/HPML shared-dependencies/BufferLib dependencies/ttf2mesh dependencies/MeshLib dependencies/MeshLib/dependencies/DiskManager dependencies/SafeMemory dependencies/TemplateSystem dependencies/SafeMemory/shared-dependencies/CallTrace
+DEPENDENCY_LIBS = lib/vulkanrenderer.a dependencies/HPML/lib/hpml.a dependencies/MeshLib/lib/meshlib.a dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a  shared-dependencies/BufferLib/lib/bufferlib.a dependencies/ttf2mesh/lib/ttf2mesh.a dependencies/SafeMemory/lib/safemem.a dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a 
 DEPENDENCIES_DIR = ..
 SHARED_DEPENDENCIES = #BufferLib
 SHARED_DEPENDENCY_LIBS =  #BufferLib/lib/bufferlib.a
@@ -187,14 +187,14 @@ relocate-dll: ../lib/libvulkanrenderer.dll.a
 	copy ..\lib\vulkanrenderer.dll .\
 
 release: DEFINES += $(RELEASE_DEFINES) -DBUILD_EXECUTABLE
-release: __STATIC_LIB_COMMAND = lib-dynamic-release
+release: __STATIC_LIB_COMMAND = lib-static-release
 release: $(TARGET)
-release: relocate-dll
+# release: relocate-dll
 debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_EXECUTABLE
-debug: __STATIC_LIB_COMMAND = lib-dynamic-debug
+debug: __STATIC_LIB_COMMAND = lib-static-debug
 debug: COMPILER_FLAGS += -g
 debug: $(TARGET)
-debug: relocate-dll
+# debug: relocate-dll
 
 
 %.cpp.o : %.cpp
