@@ -21,6 +21,7 @@ typedef vulkan_texture_t texture_t;
 #endif
 
 #include <renderer/defines.h>
+#include <stdarg.h>
 
 typedef enum texture_type_t
 {
@@ -70,6 +71,18 @@ RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info
 		pointer to the newly created texture object
  */
 RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...);
+
+/*
+	description:
+		creates a texture of a type 'type'
+	params:
+		renderer: pointer to the renderer object
+		type: type of the texture, must be a valid texture_type_t
+		file_paths: file path strings i.e. "path/textures/front.bmp", "path/textures/back.bmp", ...
+	returns:
+		pointer to the newly created texture object
+ */
+RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths);
 
 /*
 	description:

@@ -61,7 +61,13 @@ RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, 
 {
 	va_list file_paths;
 	va_start(file_paths, type);
+	texture_t* texture = texture_loadv(renderer, type, file_paths);
+	va_end(file_paths);
+	return texture;
+}
 
+RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths)
+{
 	// determine vulkan texture type and number of textures to load
 	vulkan_texture_type_t vulkan_type;
 	u32 file_path_count;
@@ -99,7 +105,6 @@ RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, 
 		data[i].depth = 1;
 		data[i].channel_count = bmp_data[i].channel_count;
 	}
-	va_end(file_paths);
 
 	// create vulkan texture
 	vulkan_texture_create_info_t create_info =
