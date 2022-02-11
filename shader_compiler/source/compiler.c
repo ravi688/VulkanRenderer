@@ -354,6 +354,13 @@ function_signature(static const char*, parse_settings, const char* _source, buf_
 /*
   		*---------------------------INPUT STRING FORMAT---------------------------*
 
+per-vertex [0, 0] vec3 position;
+per-vertex [0, 1] vec3 normal;
+per-vertex [0, 2] vec2 texcoord;
+per-vertex [0, 3] vec3 tangent;
+
+per-instance [0, 0] vec3 offset;
+
 vertex [push_constant] uniform Push
 {
 	mat4 mvp_matrix; 		// 64 bytes
@@ -378,12 +385,14 @@ fragment vertex [0, 1] uniform SceneData
 	*------------------------------OUTPUT BINARY FORMAT----------------------------*
  Byte Index 	| Interpretation			| Description
  _______________|___________________________|___________________________________________
- 0 				| u16 						| descriptor count
+ 0 				| u16 						| descriptor count + attribute count
  ...			| array of u32 				| offsets for each serialized descriptor
- 0 				| u8 						| descriptor set number/index, if the type is push_constant then it would be the offset
- 1 				| u8 						| descriptor binding number/index, if the type is push_constant then it would be 0xFF
- 2 				| u32 						| BIT(16) set if the type is a push_constant
-  				| u32						| BIT(15) set if the type is an opaque type
+ 0 				| u8 						| descriptor set number/index or vertex attribute binding number, if the type is push_constant then it would be the offset
+ 1 				| u8 						| descriptor binding number/index or vertex attribute layout number, if the type is push_constant then it would be 0xFF
+ 2 				| u32 						| BIT(18) set if the type is a per-vertex attribute
+ 				|							| BIT(17) set if the type is a per-instance attribute
+  				| 							| BIT(16) set if the type is a push_constant
+  				| 							| BIT(15) set if the type is an opaque type
  				| 							| BIT(14) set if the type is an uniform
   				| 							| BIT(13) = vertex shader, BIT(12) = tessellation shader, BIT(11) = geometry shader, BIT(10) = fragment shader
   				| 							| Lower 8 Bits contains the type information
@@ -423,22 +432,27 @@ function_signature(static const char*, parse_layout, const char* _source, buf_uc
 		u32 values[2] = { 0xFF, 0xFF };
 
 		string = parse_shader_stage(string, &shader_mask);
-		bool is_found = false;
+		bool is_attribute = (shader_mask & (1UL << 18)) || (shader_mask & (1UL << 17));
+		bool is_found = false;			// true if [push_constant] is found
 		string = parse_square_brackets(string, &is_found, &layout_info_mask);
+		//  if push_constant found then look for offset (a number) in another square brackets
 		string = parse_array_operator(string, &values[0], is_found ? 1 : 2);
-		string = parse_storage_qualifiers(string, &storage_mask);
+		// look for storage qualifiers only if there is a shader stage (meaning a descriptor)
+		if(!is_attribute)
+			string = parse_storage_qualifiers(string, &storage_mask);
 
 		//Write offset (byte count), 4 BYTES
 		buffer_insert_offset(buffer, offsets_buffer, descriptor_offsets_index);
 		// log_u32(buf_get_element_count(buffer));
 
-		//Write descriptor set number/index, 1 BYTE
+		//Write descriptor set number/index or binding number in case of vertex attribute, 1 BYTE
 		buffer_write_u8(buffer, (u8)values[0]);
 
-		//Write descriptor binding number/index, 1 BYTE
+		//Write descriptor binding number/index or layout number in case of vertex attribute, 1 BYTE
 		buffer_write_u8(buffer, (u8)values[1]);
 
 		string = parse_type(string, layout_info_mask | storage_mask | shader_mask, buffer, offsets_buffer);
+		
 		descriptor_count++;
 	}
 
@@ -583,18 +597,33 @@ static const char* parse_storage_qualifiers(const char* string, u32* out_info)
 	return string + count;
 }
 
+static inline u32 min(u32 v1, u32 v2) { return (v1 > v2) ? v2 : v1; }
+
 static const char* parse_shader_stage(const char* string, u32* out_mask)
 {
 	const char* stage_strings[SHADER_COMPILER_SHADER_STAGE_MAX] = { "vertex", "tessellation", "geometry", "fragment" };
 	u32 count = 0;
 	u8 stage_count = 0;
 	u32 mask = 0;
+	bool found_attribute = false;
 	while(true)
 	{
 		while(isspace(*string)) string++;
 		count = get_word_length(string, '[');
 		if(count == 0) break;
-		if(strncmp(string, SHADER_STAGE_VERTEX_STR, count) == 0)
+		if(strncmp(string, "per", min(3, count)) == 0)
+		{
+			if(strncmp(string + 3, "-vertex", min(7, count - 3)) == 0)
+				mask |= 1UL << 18;
+			else if(strncmp(string + 3, "-instance", min(9, count - 3)) == 0)
+				mask |= 1UL << 17;
+			else
+				LOG_FETAL_ERR("shader data layout parse error: Unrecognized vertex attribute qualifer \"%.*s\"\n", count, string);
+			string += count;
+			found_attribute = true;
+			break;
+		}
+		else if(strncmp(string, SHADER_STAGE_VERTEX_STR, count) == 0)
 			mask |= 1UL << (13 - SHADER_COMPILER_SHADER_STAGE_VERTEX);
 		else if(strncmp(string, SHADER_STAGE_TESSELLATION_STR, count) == 0)
 			mask |= 1UL << (13 - SHADER_COMPILER_SHADER_STAGE_TESSELLATION);
@@ -606,8 +635,8 @@ static const char* parse_shader_stage(const char* string, u32* out_mask)
 		string += count;
 		stage_count++;
 	}
-	if(stage_count == 0)
-		LOG_FETAL_ERR("shader layout parse error: Unrecognized symbol \"%.*s\", expected shader stage!\n", count, string);
+	if((stage_count == 0) && !found_attribute)
+		LOG_FETAL_ERR("shader layout parse error: Unrecognized symbol \"%.*s\", expected shader stage or vertex attribute qualifer!\n", count, string);
 	*out_mask = mask;
 	return string;
 }

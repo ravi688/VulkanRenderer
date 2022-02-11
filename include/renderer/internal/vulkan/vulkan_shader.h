@@ -12,6 +12,7 @@ typedef struct vulkan_shader_resource_descriptor_t
 {
 	struct_descriptor_t handle;
 	bool is_push_constant;
+	bool is_attribute;
 	bool is_opaque;
 	bool is_uniform;
 	u8 binding_number;

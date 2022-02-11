@@ -94,6 +94,7 @@ RENDERER_API void material_bind(material_t* material);
 
 typedef struct material_field_handle_t
 {
+	u16 resource_index;
 	u16 descriptor_index;
 	struct_field_handle_t field_handle;
 } material_field_handle_t;

@@ -1,5 +1,23 @@
 
+#section SETTINGS
+
+wireframe true
+winding clockwise
+line_thickness 5
+//TODO: make color blending configurable here
+blend true
+//TODO: make depth buffer configurable here
+depth true
+
+
 #section LAYOUT
+
+per-vertex [0, 0] vec3 position;
+per-vertex [0, 1] vec3 normal;
+per-vertex [0, 2] vec2 texcoord;
+per-vertex [0, 3] vec3 tangent;
+
+per-instance [0, 0] vec3 offset;
 
 vertex [push_constant] [0] uniform Push
 {

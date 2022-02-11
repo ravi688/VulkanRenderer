@@ -217,23 +217,38 @@ static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* 
 	return push_constant_buffer;
 }
 
+static u32 calculate_uniform_resource_count(material_t* material)
+{
+	assert(material->handle->shader != NULL);
+	if(material->handle->shader->descriptors == NULL)
+		return 0;
+	u16 count = material->handle->shader->descriptor_count;
+	u16 uniform_count = 0;
+	for(u16 i = 0; i < count; i++)
+	{
+		if(material->handle->shader->descriptors[i].is_attribute)
+			continue;
+		++uniform_count;
+	}
+	return uniform_count;
+}
+
 static void material_set_up_shader_resources(material_t* material)
 {
 	assert(material->handle->shader != NULL);
-	if((material->handle->shader->descriptors == NULL) || (material->handle->shader->descriptor_count == 0))
-	{
-		material->uniform_resources = NULL;
-		material->uniform_resource_count = 0;
-		return;
-	}
-	u16 count = material->handle->shader->descriptor_count;
+	u16 count = calculate_uniform_resource_count(material);
+	if(count == 0) return;
+
 	vulkan_shader_resource_descriptor_t* descriptors = material->handle->shader->descriptors;
 	uniform_resource_t* uniform_resources = heap_newv(uniform_resource_t, count);
 	memset(uniform_resources, 0, sizeof(uniform_resource_t) * count);
-	for(u16 i = 0; i < count; i++)
+	for(u16 i = 0, j = 0; i < material->handle->shader->descriptor_count; i++)
 	{
 		vulkan_shader_resource_descriptor_t* descriptor = refp(vulkan_shader_resource_descriptor_t, descriptors, i);
-		uniform_resource_t* resource = &uniform_resources[i];
+		if(descriptor->is_attribute)
+			continue;
+		uniform_resource_t* resource = &uniform_resources[j];
+		j++;
 		if((descriptor->handle.type == SHADER_COMPILER_BLOCK) && (!descriptor->is_push_constant))
 		{
 			u32 size = struct_descriptor_sizeof(&descriptor->handle);
@@ -252,7 +267,7 @@ static void material_set_up_shader_resources(material_t* material)
 			resource->descriptor_index = 0xFFFF;
 	}
 	material->uniform_resources = uniform_resources;
-	material->uniform_resource_count = material->handle->shader->descriptor_count;
+	material->uniform_resource_count = count;
 }
 
 RENDERER_API void material_destroy(material_t* material)
@@ -296,23 +311,28 @@ RENDERER_API material_field_handle_t material_get_field_handle(material_t* mater
 	u16 descriptor_count = material->handle->shader->descriptor_count;
 	vulkan_shader_resource_descriptor_t* descriptors = material->handle->shader->descriptors;
 	u16 descriptor_index = 0xFFFF;
+	u16 resource_index = 0xFFFF;
 	u16 field_handle = STRUCT_FIELD_INVALID_HANDLE;
-	for(u16 i = 0; i < descriptor_count; i++)
+	for(u16 i = 0, j = 0; i < descriptor_count; i++)
 	{
 		vulkan_shader_resource_descriptor_t descriptor = ref(vulkan_shader_resource_descriptor_t, descriptors, i);
+		if(descriptor.is_attribute)
+			continue;
 		if(strcmp(descriptor.handle.name, struct_name) == 0)
 		{
 			field_handle = struct_descriptor_get_field_handle(&descriptor.handle, field_name);
 			descriptor_index = i;
+			resource_index = j;
 			if(field_handle == STRUCT_FIELD_INVALID_HANDLE)
 				continue;
 			break;
 		}
+		j++;
 	}
-	if(descriptor_index != 0xFFFF)
-		return (material_field_handle_t) { .descriptor_index = descriptor_index, .field_handle = field_handle };
+	if((descriptor_index != 0xFFFF) && (resource_index != 0xFFFF))
+		return (material_field_handle_t) { .descriptor_index = descriptor_index, .resource_index = resource_index, .field_handle = field_handle };
 	LOG_FETAL_ERR("symbol \"%s\" isn't found in the shader resource descriptors\n", name);
-	return (material_field_handle_t) { .descriptor_index = 0xFFFF, .field_handle = STRUCT_FIELD_INVALID_HANDLE };
+	return (material_field_handle_t) { .descriptor_index = 0xFFFF, .resource_index = 0xFFFF, .field_handle = STRUCT_FIELD_INVALID_HANDLE };
 }
 
 
@@ -789,15 +809,15 @@ static void check_precondition(material_t* material)
 	assert(material != NULL);
 	assert(material->renderer != NULL);
 	assert(material->handle->shader != NULL);
-	assert(material->handle->shader->descriptors != NULL);
-	assert_wrn(material->handle->shader->descriptor_count != 0);
+	// assert(material->handle->shader->descriptors != NULL);
+	// assert_wrn(material->handle->shader->descriptor_count != 0);
 }
 #endif
 
 
 static void unmap_descriptor(material_t* material, material_field_handle_t handle)
 {
-	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.descriptor_index].buffer);
+	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.resource_index].buffer);
 	struct_descriptor_t* descriptor = &(material->handle->shader->descriptors[handle.descriptor_index].handle);
 	struct_descriptor_unmap(descriptor);
 	vulkan_buffer_unmap(buffer);
@@ -805,7 +825,7 @@ static void unmap_descriptor(material_t* material, material_field_handle_t handl
 
 static struct_descriptor_t* map_descriptor(material_t* material, material_field_handle_t handle)
 {
-	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.descriptor_index].buffer);
+	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.resource_index].buffer);
 	struct_descriptor_t* descriptor = &(material->handle->shader->descriptors[handle.descriptor_index].handle);
 	struct_descriptor_map(descriptor, vulkan_buffer_map(buffer));
 	return descriptor;
