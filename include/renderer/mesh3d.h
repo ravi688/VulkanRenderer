@@ -84,6 +84,7 @@ RENDERER_API function_signature(bool, mesh3d_has_triangles, mesh3d_t* mesh);
 RENDERER_API function_signature(bool, mesh3d_has_colors, mesh3d_t* mesh);
 RENDERER_API function_signature(index_t, mesh3d_positions_count, mesh3d_t* mesh);
 RENDERER_API function_signature(index_t, mesh3d_normals_count, mesh3d_t* mesh);
+RENDERER_API function_signature(index_t, mesh3d_tangents_count, mesh3d_t* mesh);
 RENDERER_API function_signature(index_t, mesh3d_uvs_count, mesh3d_t* mesh);
 RENDERER_API function_signature(index_t, mesh3d_colors_count, mesh3d_t* mesh);
 RENDERER_API function_signature(index_t, mesh3d_triangles_count, mesh3d_t* mesh);
