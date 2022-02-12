@@ -9,6 +9,8 @@ typedef struct vulkan_vertex_info_t
 	u32 input_rate;
 	u32 size;
 	u32 attribute_count;
+	u16 binding;
+	u16* attribute_locations;
 	VkFormat* attribute_formats;
 	u32* attribute_offsets;
 } vulkan_vertex_info_t;

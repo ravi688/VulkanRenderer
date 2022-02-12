@@ -182,7 +182,8 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 		descriptor->is_push_constant = (descriptor_info & (1U << 16)) ? true : false;
 		descriptor->is_opaque = (descriptor_info & (1U << 15)) ? true : false;
 		descriptor->is_uniform = (descriptor_info & (1U << 14)) ? true : false;
-		descriptor->is_attribute = (descriptor_info & (1UL << 18)) || (descriptor_info & (1UL << 17));
+		descriptor->is_per_vertex_attribute = (descriptor_info & (1UL << 18));
+		descriptor->is_per_instance_attribute = (descriptor_info & (1UL << 17));
 		descriptor->handle.type = descriptor_info & 0xFFU;
 		descriptor->stage_flags = 0;
 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_VERTEX)))

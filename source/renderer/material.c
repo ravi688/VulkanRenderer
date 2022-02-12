@@ -8,6 +8,7 @@
 #include <renderer/debug.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/dictionary.h>
 #include <shader_compiler/compiler.h>
 
 #include <string.h>
@@ -15,7 +16,7 @@
 #define VERTEX_INFO_COUNT 4
 
 static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices, u32* out_aligments);
-static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* ranges, u32* out_range_count, u32* push_constant_buffer_size);
+static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* ranges, u32* push_constant_buffer_size);
 static material_t* __material_create(renderer_t* renderer, 
 										VkDescriptorSetLayout vk_set_layout, 
 										u32 vertex_info_count, 
@@ -34,7 +35,7 @@ static void __material_create_no_alloc(renderer_t* renderer,
 										bool is_transparent, 
 										material_t* material);
 static u32 decode_attribute_count(u64 packed_attributes);
-static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, VkVertexInputRate input_rate);
+static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16 location_offset, VkVertexInputRate input_rate);
 
 static void get_record_and_field_name(const char* const full_name, char out_struct_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE], char out_field_name[STRUCT_FIELD_MAX_NAME_SIZE]);
 static VkDescriptorSetLayoutBinding* get_set_layout_bindings(shader_t* shader, u32* out_binding_count);
@@ -42,6 +43,11 @@ static void material_set_up_shader_resources(material_t* material);
 
 static void unmap_descriptor(material_t* material, material_field_handle_t handle);
 static struct_descriptor_t* map_descriptor(material_t* material, material_field_handle_t handle);
+
+static u16 calculate_push_constant_range_count(shader_t* shader);
+static u16 calculate_uniform_resource_count(shader_t* shader);
+static vulkan_vertex_info_t* create_vertex_infos(shader_t* shader, u32* out_count);
+static u64 get_material_glsl_type(u8 shader_compiler_glsl_type);
 
 #ifndef GLOBAL_DEBUG
 #	define check_precondition(material)
@@ -75,28 +81,39 @@ RENDERER_API material_t* material_new()
 
 RENDERER_API material_t* material_create(renderer_t* renderer, material_create_info_t* create_info)
 {
-	u32 total_attribute_count = create_info->per_vertex_attribute_binding_count + create_info->per_instance_attribute_binding_count;
-	if(total_attribute_count == 0)
-		LOG_FETAL_ERR("Material create error: total_attribute_count is equals to 0\n");
-	vulkan_vertex_info_t* vertex_infos = stack_newv(vulkan_vertex_info_t, total_attribute_count);
-	for(u32 i = 0; i < create_info->per_vertex_attribute_binding_count; i++)
+	u32 attribute_count = 0;
+	vulkan_vertex_info_t* vertex_infos = NULL;
+	if(!create_info->is_vertex_attrib_from_file)
 	{
-		u32 attribute_count = decode_attribute_count(create_info->per_vertex_attribute_bindings[i]);
-		vertex_infos[i] = decode_vulkan_vertex_info(create_info->per_vertex_attribute_bindings[i], VK_VERTEX_INPUT_RATE_VERTEX);
+		attribute_count = create_info->per_vertex_attribute_binding_count + create_info->per_instance_attribute_binding_count;
+		if(attribute_count == 0)
+			LOG_FETAL_ERR("Material create error: attribute_count is equals to 0\n");
+		vertex_infos = heap_newv(vulkan_vertex_info_t, attribute_count);
+		u16 location_offset = 0;
+		u16 binding = 0;
+		for(u32 i = 0; i < create_info->per_vertex_attribute_binding_count; i++, binding++)
+		{
+			vertex_infos[i] = decode_vulkan_vertex_info(create_info->per_vertex_attribute_bindings[i], location_offset, VK_VERTEX_INPUT_RATE_VERTEX);
+			vertex_infos[i].binding = binding;
+			location_offset += vertex_infos[i].attribute_count;
+		}
+		for(u32 i = 0; i < create_info->per_instance_attribute_binding_count; i++, binding++)
+		{
+			vertex_infos[i + create_info->per_vertex_attribute_binding_count] = decode_vulkan_vertex_info(create_info->per_instance_attribute_bindings[i], location_offset, VK_VERTEX_INPUT_RATE_INSTANCE);
+			vertex_infos[i + create_info->per_vertex_attribute_binding_count].binding = binding;
+			location_offset += vertex_infos[i].attribute_count;
+		}
 	}
-	for(u32 i = 0; i < create_info->per_instance_attribute_binding_count; i++)
-	{
-		u32 attribute_count = decode_attribute_count(create_info->per_instance_attribute_bindings[i]);
-		vertex_infos[i + create_info->per_vertex_attribute_binding_count] = decode_vulkan_vertex_info(create_info->per_instance_attribute_bindings[i], VK_VERTEX_INPUT_RATE_INSTANCE);
-	}
+	else
+		vertex_infos = create_vertex_infos(create_info->shader, &attribute_count);
 
-	VkPushConstantRange* push_constant_ranges = stack_newv(VkPushConstantRange, create_info->shader->descriptor_count);
-	u32 push_constant_range_count;
+	u32 push_constant_range_count = calculate_push_constant_range_count(create_info->shader);
+	VkPushConstantRange* push_constant_ranges = stack_newv(VkPushConstantRange, push_constant_range_count);
 	u32 push_constant_buffer_size;
-	void* push_constant_buffer = shader_setup_push_constants(create_info->shader, push_constant_ranges, &push_constant_range_count, &push_constant_buffer_size);
+	void* push_constant_buffer = shader_setup_push_constants(create_info->shader, push_constant_ranges, &push_constant_buffer_size);
 	material_t* material =  __material_create(renderer, 
 												create_info->shader->vk_set_layout, 
-												total_attribute_count, 
+												attribute_count, 
 												vertex_infos, 
 												push_constant_range_count,
 												push_constant_ranges,
@@ -106,7 +123,28 @@ RENDERER_API material_t* material_create(renderer_t* renderer, material_create_i
 	material->push_constant_buffer_size = push_constant_buffer_size;
 	material_set_up_shader_resources(material);
 	stack_free(push_constant_ranges);
-	stack_free(vertex_infos);
+
+	if(!create_info->is_vertex_attrib_from_file)
+	{
+		for(u32 i = 0; i < attribute_count; i++)
+		{
+			heap_free(vertex_infos[i].attribute_formats);
+			heap_free(vertex_infos[i].attribute_offsets);
+			heap_free(vertex_infos[i].attribute_locations);
+		}
+		heap_free(vertex_infos);
+	}
+	else
+	{
+		for(u32 i = 0; i < attribute_count; i++)
+		{
+			free(vertex_infos[i].attribute_formats);
+			free(vertex_infos[i].attribute_offsets);
+			free(vertex_infos[i].attribute_locations);
+		}
+		free(vertex_infos);
+	}
+
 	return material;
 }
 
@@ -161,7 +199,7 @@ static void __material_create_no_alloc(renderer_t* renderer,
 	vulkan_material_create_no_alloc(renderer->handle, &material_info, material->handle);
 }
 
-static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* ranges, u32* out_range_count, u32* push_constant_buffer_size)
+static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* ranges, u32* push_constant_buffer_size)
 {
 	u16 count = shader->descriptor_count;
 	vulkan_shader_resource_descriptor_t* descriptors = shader->descriptors;
@@ -193,7 +231,6 @@ static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* 
 		log_u32(ranges[range_count].offset);
 		++range_count;
 	}
-	*out_range_count = range_count;
 
 	if(range_count == 0)
 	{
@@ -217,16 +254,171 @@ static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* 
 	return push_constant_buffer;
 }
 
-static u32 calculate_uniform_resource_count(material_t* material)
+static u16 calculate_push_constant_range_count(shader_t* shader)
 {
-	assert(material->handle->shader != NULL);
-	if(material->handle->shader->descriptors == NULL)
-		return 0;
-	u16 count = material->handle->shader->descriptor_count;
+	assert(shader != NULL);
+	if(shader->descriptors == NULL) return 0;
+	u16 count = shader->descriptor_count;
+
+	u16 range_count = 0;
+	for(u16 i = 0; i < count; i++)
+	{
+		if(!shader->descriptors[i].is_push_constant)
+			continue;
+		++range_count;
+	}
+	return range_count;	
+}
+
+static u64 get_material_glsl_type(u8 shader_compiler_glsl_type)
+{
+	switch(shader_compiler_glsl_type)
+	{
+		case SHADER_COMPILER_FLOAT: return MATERIAL_FLOAT;
+		case SHADER_COMPILER_INT: return MATERIAL_INT;
+		case SHADER_COMPILER_UINT: return MATERIAL_UINT;
+		case SHADER_COMPILER_DOUBLE: return MATERIAL_DOUBLE;
+		case SHADER_COMPILER_VEC4: return MATERIAL_VEC4;
+		case SHADER_COMPILER_VEC3: return MATERIAL_VEC3;
+		case SHADER_COMPILER_VEC2: return MATERIAL_VEC2;
+		case SHADER_COMPILER_IVEC4: return MATERIAL_IVEC4;
+		case SHADER_COMPILER_IVEC3: return MATERIAL_IVEC3;
+		case SHADER_COMPILER_IVEC2: return MATERIAL_IVEC2;
+		case SHADER_COMPILER_UVEC4: return MATERIAL_UVEC4;
+		case SHADER_COMPILER_UVEC3: return MATERIAL_UVEC3;
+		case SHADER_COMPILER_UVEC2: return MATERIAL_UVEC2;
+		case SHADER_COMPILER_MAT4: return MATERIAL_MAT4;
+		case SHADER_COMPILER_MAT3: return MATERIAL_MAT3;
+		case SHADER_COMPILER_MAT2: return MATERIAL_MAT2;
+		default:
+			LOG_FETAL_ERR("Cannot convert shader compiler type \"%lu\" to equivalent material glsl type\n", shader_compiler_glsl_type);
+		// in case of vertex attribute these types are invalid
+		// case SHADER_COMPILER_SAMPLER_2D: return MATERIAL_SAMPLER_2D
+		// case SHADER_COMPILER_SAMPLER_3D: return MATERIAL_SAMPLER_3D
+		// case SHADER_COMPILER_SAMPLER_CUBE: return MATERIAL_SAMPLER_CUBE
+	}
+}
+
+static vulkan_vertex_info_t* create_vertex_infos(shader_t* shader, u32* out_count)
+{
+	assert(shader != NULL);
+
+	VkFormat vulkan_formats[27];
+	u32 sizes[23];
+	u32 indices[23];
+	u32 alignments[23];
+	get_vulkan_constants(vulkan_formats, sizes, indices, alignments);
+
+	BUFFER vinfos = buf_create(sizeof(vulkan_vertex_info_t), 1, 0);
+
+	typedef struct attribute_info_t { BUFFER locations, formats, offsets; } attribute_info_t;
+	dictionary_t bindings = dictionary_create(u16, attribute_info_t, 1, dictionary_key_comparer_u16);
+
+	u16 count = shader->descriptor_count;
+	for(u16 i = 0; i < count; i++)
+	{
+		if(shader->descriptors[i].is_attribute)
+		{
+			u16 key = shader->descriptors[i].vertex_attrib_binding_number;
+			u16 location = shader->descriptors[i].vertex_attrib_location_number;
+			u64 material_glsl_type = get_material_glsl_type(shader->descriptors[i].handle.type);
+			VkFormat format = vulkan_formats[indices[material_glsl_type]];
+			u32 alignment = alignments[material_glsl_type];
+			u32 size = sizes[material_glsl_type];
+
+			// if the binding 'key' is not present then create new attribute_info_t object
+			if(!dictionary_contains(&bindings, &key))
+			{
+				attribute_info_t info = 
+				{ 
+					.locations = buf_create(sizeof(u16), 1, 0), 
+					.formats = buf_create(sizeof(VkFormat), 1, 0), 
+					.offsets = buf_create(sizeof(u32), 1, 0) 
+				};
+				dictionary_push(&bindings, &key, &info);
+
+				// add zero offset to be popped later
+				u32 offset = 0;
+				attribute_info_t* attribute_info = dictionary_get_value_ptr_at(&bindings, dictionary_get_count(&bindings) - 1);
+				buf_push(&attribute_info->offsets, &offset);
+
+				// create vertex info object for the binding 'key'
+				vulkan_vertex_info_t vinfo =
+				{
+					.binding = key,
+					.input_rate = shader->descriptors[i].is_per_vertex_attribute ? VK_VERTEX_INPUT_RATE_VERTEX : VK_VERTEX_INPUT_RATE_INSTANCE
+				};
+				buf_push(&vinfos, &vinfo);
+			}
+
+			// get pointer to the attribute info object for binding 'key'
+			attribute_info_t* attribute_info = dictionary_get_value_ptr(&bindings, &key);
+
+			// TODO: These checks should be done at the compilation time, not at the runtime
+			// if(buf_find_index_of(locations, &location, buf_u16_comparer) != BUF_INVALID_INDEX)
+			// 	LOG_FETAL_ERR("Multiple vertex attributes have the same layout location \"%u\", which is not allowed!\n", location);
+			
+			// add the location
+			buf_push(&attribute_info->locations, &location);
+			// add the format
+			buf_push(&attribute_info->formats, &format);
+
+			u32 offset;
+			// pop the previous offset
+			buf_pop(&attribute_info->offsets, &offset);
+			// snap the offset to the correct alignment for this field/attribute
+			offset += (alignment - (offset % alignment)) % alignment;
+			// add the offset
+			buf_push(&attribute_info->offsets, &offset);
+			// increment the offset by the size of this field/attribute
+			offset += size;
+			// save the offset for next iteration
+			buf_push(&attribute_info->offsets, &offset);
+		}
+	}
+
+	buf_ucount_t vinfo_count = buf_get_element_count(&vinfos);
+	for(buf_ucount_t i = 0; i < vinfo_count; i++)
+	{
+		vulkan_vertex_info_t* vinfo = buf_get_ptr_at(&vinfos, i);
+		attribute_info_t* ainfo = dictionary_get_value_ptr_at(&bindings, i);
+
+		// the final stride would be the last saved offset
+		vinfo->size = *(u32*)buf_peek_ptr(&ainfo->offsets);
+		// assign the number of attribute count
+		vinfo->attribute_count = buf_get_element_count(&ainfo->locations);
+		// assign the internal pointers to their corresponding destinations
+		vinfo->attribute_locations = buf_get_ptr(&ainfo->locations);
+		vinfo->attribute_formats = buf_get_ptr(&ainfo->formats);
+		vinfo->attribute_offsets = buf_get_ptr(&ainfo->offsets);
+	}
+
+	// free the temporary dictionary buffer
+	dictionary_free(&bindings);
+
+	// set the number of vulkan vertex info objects
+	*out_count = buf_get_element_count(&vinfos);
+
+	// if no vertex attribute is found then return NULL
+	if((*out_count) == 0)
+	{
+		buf_free(&vinfos);
+		return NULL;
+	}
+
+	// return pointer to the final vulkan vertex info objects
+	return buf_get_ptr(&vinfos);
+}
+
+static u16 calculate_uniform_resource_count(shader_t* shader)
+{
+	assert(shader != NULL);
+	if(shader->descriptors == NULL) return 0;
+	u16 count = shader->descriptor_count;
 	u16 uniform_count = 0;
 	for(u16 i = 0; i < count; i++)
 	{
-		if(material->handle->shader->descriptors[i].is_attribute)
+		if(shader->descriptors[i].is_attribute)
 			continue;
 		++uniform_count;
 	}
@@ -236,7 +428,7 @@ static u32 calculate_uniform_resource_count(material_t* material)
 static void material_set_up_shader_resources(material_t* material)
 {
 	assert(material->handle->shader != NULL);
-	u16 count = calculate_uniform_resource_count(material);
+	u16 count = calculate_uniform_resource_count(material->handle->shader);
 	if(count == 0) return;
 
 	vulkan_shader_resource_descriptor_t* descriptors = material->handle->shader->descriptors;
@@ -854,33 +1046,33 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices, u32* out_aligments)
 {
 	{
-		u32 indices[21 + 1] =
+		u32 indices[22 + 1] =
 		{	0,
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-			13, 16, 20, 21, 22, 23, 24, 26
+			13, 14, 17, 21, 22, 23, 24, 25, 26
 		};
-		memcpy(&out_indices[0], indices, sizeof(u32) * 22);
+		memcpy(&out_indices[0], indices, sizeof(u32) * 23);
 	};
 	{
-		u32 sizes[21 + 1] =
+		u32 sizes[22 + 1] =
 		{
 			0,
-			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 12, 16, 16,
+			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 8, 12, 16, 8,
 			36, 64, 8, 12, 16, 8, 12, 16
 		};
-		memcpy(&out_sizes[0], sizes, sizeof(u32) * 22);
+		memcpy(&out_sizes[0], sizes, sizeof(u32) * 23);
 	};
 
 	{
-		u32 aligments[21 + 1] = 
+		u32 aligments[22 + 1] = 
 		{
 			0,
-			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 12, 16, 16,
-			64, 64, 8, 12, 16, 8, 12, 16
+			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 8, 12, 16, 8,
+			16, 16, 8, 16, 16, 8, 16, 16
 		};
-		memcpy(&out_aligments[0], aligments, sizeof(u32) * 22);
+		memcpy(&out_aligments[0], aligments, sizeof(u32) * 23);
 	};
-	VkFormat vulkan_formats[26] =
+	VkFormat vulkan_formats[27] =
 	{
 		//U8
 		VK_FORMAT_R8_UINT,
@@ -900,6 +1092,8 @@ static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out
 		VK_FORMAT_R64_SINT,
 		//F32
 		VK_FORMAT_R32_SFLOAT,
+		//F64
+		VK_FORMAT_R64_SFLOAT,
 		//VEC2
 		VK_FORMAT_R32G32_SFLOAT,
 		//VEC3
@@ -933,7 +1127,7 @@ static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out
 		//UVEC4
 		VK_FORMAT_R32G32B32A32_UINT,
 	};
-	memcpy(&out_formats[0], vulkan_formats, sizeof(VkFormat) * 26);
+	memcpy(&out_formats[0], vulkan_formats, sizeof(VkFormat) * 27);
 }
 
 static u32 decode_attribute_count(u64 packed_attributes)
@@ -951,16 +1145,17 @@ static u32 decode_attribute_count(u64 packed_attributes)
 	return count;
 }
 
-static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, VkVertexInputRate input_rate)
+static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16 location_offset, VkVertexInputRate input_rate)
 {
-	VkFormat vulkan_formats[26];
-	u32 sizes[22];
-	u32 indices[22];
-	u32 alignments[22];
+	VkFormat vulkan_formats[27];
+	u32 sizes[23];
+	u32 indices[23];
+	u32 alignments[23];
 	get_vulkan_constants(vulkan_formats, sizes, indices, alignments);
 
 	VkFormat formats[12];
 	u32 offsets[12];
+	u16 locations[12];
 
 	u8 bits_per_type = 5;
 	u64 bits_mask = ~(0xFFFFFFFFFFFFFFFFULL << bits_per_type);
@@ -995,6 +1190,7 @@ static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, VkV
 		}
 		packed_attributes >>= bits_per_type;
 		offset = field_offset + sizes[attribute_type];
+		locations[i] = i + location_offset;
 		i++;
 	}
 	vulkan_vertex_info_t info;
@@ -1003,7 +1199,9 @@ static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, VkV
 	info.size = offset;
 	info.attribute_formats = heap_newv(VkFormat, info.attribute_count);
 	info.attribute_offsets = heap_newv(u32, info.attribute_count);
+	info.attribute_locations = heap_newv(u16, info.attribute_count);
 	memcpy(info.attribute_offsets, offsets, sizeof(u32) * info.attribute_count);
 	memcpy(info.attribute_formats, formats, sizeof(VkFormat) * info.attribute_count);
+	memcpy(info.attribute_locations, locations, sizeof(u16) * info.attribute_count);
 	return info;
 }

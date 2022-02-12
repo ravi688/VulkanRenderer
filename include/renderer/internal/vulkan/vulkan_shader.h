@@ -12,13 +12,26 @@ typedef struct vulkan_shader_resource_descriptor_t
 {
 	struct_descriptor_t handle;
 	bool is_push_constant;
-	bool is_attribute;
+	union
+	{
+		struct
+		{
+			bool is_per_vertex_attribute;
+			bool is_per_instance_attribute;
+		};
+		u16 is_attribute;
+	};
 	bool is_opaque;
 	bool is_uniform;
-	u8 binding_number;
+	union
+	{
+		u8 binding_number;
+		u8 vertex_attrib_location_number;
+	};
 	union 
 	{
 		u8 set_number;
+		u8 vertex_attrib_binding_number;
 		u8 push_constant_range_offset;
 	};
 	//NOTE: These bit descriptions are based on the vulkan_vulkan_shader_stage_t and vulkan_shader_stage_t enums
