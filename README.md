@@ -54,7 +54,11 @@
 3. Start building by running the following command
    
    ```
-   mingw32-make -s run
+   mingw32-make -s build
+   ```
+   For release mode
+   ```
+   mingw32-make -s build-release
    ```
 
 ### Building shaders manually (Optional)
@@ -136,7 +140,7 @@ Currently `tessellation` and `geometry` are not supported.
 
 #section LAYOUT         // optional
 
-// all the push constants and descriptor sets definition should go inside this section
+// all the vertex attributre, push constants and descriptor sets definition should go inside this section
 
 #section SHADER         // mandatory
 
@@ -172,6 +176,32 @@ fragment [push_constant] [64] uniform Push
 {
     mat4 model_matrix;
 } push;
+```
+
+#### Vertex Attributes
+   There are two types of vertex attributes: `per-vertex` and `per-instance`. <br>
+   So, if you want the attributes to be supplied to the shader per vertex then use `per-vertex` otherwise for per instance use `per-instance`. <br>
+   First value in the square brackets represents the binding number and the second value represents the layout location number.
+```GLSL
+// for interleaved vertex buffer you can do like this, and bind the vertex buffer at binding location 0
+per-vertex [0, 0] vec3 position;
+per-vertex [0, 1] vec3 normal;
+per-vertex [0, 2] vec3 tangent;
+per-vertex [0, 3] vec2 texcoord;
+
+// for separated vertex buffers you can do like this, and bind the vertex buffers at their corresponding binding locations (i.e. 0, 1, 2, 3)
+per-vertex [0, 0] vec3 position;
+per-vertex [1, 1] vec3 normal;
+per-vertex [2, 2] vec3 tangent;
+per-vertex [3, 3] vec2 texcoord;
+
+// for instanced rendering (interleaved buffer), and bind the instance data buffer at binding location 0
+per-instance [0, 0] vec3 eulerRotation;
+per-instance [0, 1] vec4 color;
+
+// for instanced rendering (separated buffers), and bind the instance data buffers at binding locations 0 and 1
+per-instance [0, 0] vec3 eulerRotation;
+per-instance [1, 1] vec4 color;
 ```
 
 #### Descriptor Sets
@@ -288,6 +318,8 @@ texture_release_resources(skybox_texture);
 
 All the descriptors defined in the shader definition file could be set by material_set_* functions.
 All the push constants defined in the shader definition file could be set by material_set_push_* functions.
+If you are defining the vertex attributes in the shader definition (source) file then make sure to set <br>
+`is_vertex_attrib_from_file` to `true` in the material_create_info_t struct, in that case the hard coded vertex attributes would be ignored.
 
 ```C
 // prepare the mesh data structure
@@ -312,6 +344,7 @@ material_create_info_t box_material_info =
 {
     .per_vertex_attribute_binding_count = 4,     // we want four separate vertex buffers, not interleaved
     .per_vertex_attribute_bindings = &per_vertex_attributes[0],
+    .is_vertex_attrib_from_file = true; // if you are defining the vertex attributes in the shader defintion file (source) itself
     .shader = box_shader, 
    .is_transparent = false    // optional
 };
