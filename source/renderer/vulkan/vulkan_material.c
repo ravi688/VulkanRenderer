@@ -74,9 +74,11 @@ RENDERER_API vulkan_material_t* vulkan_material_create(vulkan_renderer_t* render
 
 		dst_info->attribute_formats = heap_newv(VkFormat, src_info->attribute_count);
 		dst_info->attribute_offsets = heap_newv(u32, src_info->attribute_count);
+		dst_info->attribute_locations = heap_newv(u16, src_info->attribute_count);
 		
 		memcpy(dst_info->attribute_formats, src_info->attribute_formats, sizeof(VkFormat) * src_info->attribute_count);
 		memcpy(dst_info->attribute_offsets, src_info->attribute_offsets, sizeof(u32) * src_info->attribute_count);
+		memcpy(dst_info->attribute_locations, src_info->attribute_locations, sizeof(u16) * src_info->attribute_count);
 	}
 
 
@@ -105,6 +107,7 @@ RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 		vulkan_vertex_info_t* info = &material->vertex_infos[i];
 		heap_free(info->attribute_formats);
 		heap_free(info->attribute_offsets);
+		heap_free(info->attribute_locations);
 	}
 
 	heap_free(material->vertex_infos);

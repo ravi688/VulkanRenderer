@@ -35,7 +35,8 @@ enum
 	SHADER_COMPILER_MAT2,
 	SHADER_COMPILER_SAMPLER_2D,
 	SHADER_COMPILER_SAMPLER_3D,
-	SHADER_COMPILER_SAMPLER_CUBE
+	SHADER_COMPILER_SAMPLER_CUBE,
+	SHADER_COMPILER_MAX
 };
 
 #define shader_compiler_compile(...) define_alias_function_macro(shader_compiler_compile, __VA_ARGS__)

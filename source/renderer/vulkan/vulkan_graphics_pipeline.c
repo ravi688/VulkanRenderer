@@ -42,19 +42,18 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 	VkVertexInputBindingDescription binding_descriptions[create_info->vertex_info_count];
 	BUFFER attribute_descriptions = buf_create(sizeof(VkVertexInputAttributeDescription), 0, 0);
 
-	u32 count = 0;
 	for(u32 i = 0; i < create_info->vertex_info_count; i++)
 	{
 		binding_descriptions[i].binding = i;
 		binding_descriptions[i].stride = create_info->vertex_infos[i].size;
 		binding_descriptions[i].inputRate = create_info->vertex_infos[i].input_rate;
 
-		for(u32 j = 0; j < create_info->vertex_infos[i].attribute_count; j++, count++)
+		for(u32 j = 0; j < create_info->vertex_infos[i].attribute_count; j++)
 		{
 			VkVertexInputAttributeDescription description =
 			{
-				.binding = i,
-				.location = count,
+				.binding = create_info->vertex_infos[i].binding,
+				.location = create_info->vertex_infos[i].attribute_locations[j],
 				.format = create_info->vertex_infos[i].attribute_formats[j],
 				.offset = create_info->vertex_infos[i].attribute_offsets[j]
 			};
