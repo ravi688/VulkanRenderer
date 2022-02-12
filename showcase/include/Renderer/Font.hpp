@@ -12,17 +12,16 @@ namespace V3D
 	private:
 		font_t* handle;
 
-		friend class Renderer;
 		friend class GlyphMeshPool;
 
 
 	public:
 
 		Font(const std::string& filePath);
+		inline Font(font_t* font) : handle(font) { }
 
-		void unload() override;
-		void drop() override;
-
-		font_t* getHandle() const;
+		// Implementation of IResourceObject interface
+		void unload() const override;
+		void drop() const override { unload(); }
 	};
 }

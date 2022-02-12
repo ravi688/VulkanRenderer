@@ -85,9 +85,16 @@ namespace Math
 		static inline Mat4 lerp(const Mat4& from, const Mat4& to, float t ) { return mat4_lerp(float)(from.m, to.m, t); }
 		static inline Mat4 diagonal(float x, float y, float z, float w) { return mat4_diagonal(float)(x, y, z, w); }
 	
+		static inline Mat4 translation(const Vec3& position) { return mat4_translation(float)(position.x, position.y, position.z); }
 		static inline Mat4 translation(float x, float y, float z) { return mat4_translation(float)(x, y, z); }
+		static inline Mat4 rotation(const Vec3& euler) { return mat4_rotation(float)(euler.x, euler.y, euler.z); }
 		static inline Mat4 rotation(float x, float y, float z) { return mat4_rotation(float)(x, y, z); }
 		static inline Mat4 scale(float x, float y, float z) { return mat4_scale(float)(x, y, z); }
+		static inline Mat4 scale(const Vec3& scaleVector) { return mat4_scale(float)(scaleVector.x, scaleVector.y, scaleVector.z); }
+		static inline Mat4 transform(const Vec3& position, const Vec3& euler = Vec3::zero(), const Vec3& scaleVector = Vec3::one())
+		{
+			return translation(position) * rotation(euler) * scale(scaleVector);
+		}
 		static inline Mat4 perspectiveProjection(float nearClipPlane, float farClipPlane, float fov, float aspectRatio)
 		{
 			return mat4_persp_projection(float)(nearClipPlane, farClipPlane, fov, aspectRatio);

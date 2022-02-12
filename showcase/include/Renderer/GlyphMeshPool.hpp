@@ -2,6 +2,7 @@
 
 #include <Showcase/Defines.hpp>
 #include <Renderer/IRenderObject.hpp>
+#include <Renderer/Mesh.hpp> 				// Mesh
 #include <renderer/glyph_mesh_pool.h> 		// C header, glyph_mesh_pool_t
 
 
@@ -15,17 +16,21 @@ namespace V3D
 	private:
 		glyph_mesh_pool_t* handle;
 
-		friend class Renderer;
+		friend Renderer;
 		friend class TextMesh;
 
-		GlyphMeshPool(Renderer* renderer, Font* font);
+		GlyphMeshPool(Renderer& renderer, Font& font);
 	
 	public:
 
-		void destroy() override;
-		void releaseResources() override;
-		void drop() override;
+		inline GlyphMeshPool(glyph_mesh_pool_t* pool) : handle(pool) { }
 
-		glyph_mesh_pool_t* getHandle() const;
+		// Implementation of IRenderObject interface
+		void destroy() const override;
+		void releaseResources() const override;
+		void drop() const override;
+
+
+		Mesh getMesh(u16 glyph) const;
 	};
 }

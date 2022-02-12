@@ -6,29 +6,29 @@
 
 namespace V3D
 {
-	SHOWCASE_API GlyphMeshPool::GlyphMeshPool(Renderer* renderer, Font* font)
+	SHOWCASE_API GlyphMeshPool::GlyphMeshPool(Renderer& renderer, Font& font)
 	{
-		handle = glyph_mesh_pool_create(renderer->handle, font->handle);
+		handle = glyph_mesh_pool_create(renderer.handle, font.handle);
 	}
 
-	SHOWCASE_API void GlyphMeshPool::destroy()
+	SHOWCASE_API void GlyphMeshPool::destroy() const
 	{
 		glyph_mesh_pool_destroy(handle);
 	}
 
-	SHOWCASE_API void GlyphMeshPool::releaseResources()
+	SHOWCASE_API void GlyphMeshPool::releaseResources() const
 	{
 		glyph_mesh_pool_release_resources(handle);
 	}
 
-	SHOWCASE_API void GlyphMeshPool::drop()
+	SHOWCASE_API void GlyphMeshPool::drop() const
 	{
 		glyph_mesh_pool_destroy(handle);
 		glyph_mesh_pool_release_resources(handle);
 	}
 
-	SHOWCASE_API glyph_mesh_pool_t* GlyphMeshPool::getHandle() const
+	SHOWCASE_API Mesh GlyphMeshPool::getMesh(u16 glyph) const
 	{
-		return handle;
+		return glyph_mesh_pool_get_mesh(handle, glyph);
 	}
 }

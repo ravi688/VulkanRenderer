@@ -5,6 +5,11 @@
 
 #section LAYOUT
 
+per-vertex 		[0, 0] vec3 position;
+per-instance 	[1, 1] vec3 offset;
+per-instance 	[1, 2] vec3 scale;
+per-instance 	[1, 3] vec3 rotation;
+
 vertex [push_constant] [0] uniform Push
 {
 	mat4 mvp_matrix;

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <Math/Vec3.hpp>
 #include <hpml/vec4.h>			// C header
+#include <hpml/vec3.h>			// C header
 
 namespace Math
 {
@@ -19,13 +21,15 @@ namespace Math
 			};
 		};
 
-		inline Vec4(float x, float y, float z, float w) { v = { x, y, z, w }; };
+		inline Vec4(const Vec3& v) { this->v = { v.x, v.y, v.z, 0 }; }
+		inline Vec4(float x, float y, float z, float w = 0) { v = { x, y, z, w }; };
 		inline Vec4(float x) { v = { x, x, x, x }; }
 		inline Vec4() { v = { 0, 0, 0, 0 }; }
 		inline Vec4(const vec4_t(float)& v) { this->v = v; }
 
 
 		inline operator vec4_t(float)() { return v; }
+		inline operator vec3_t(float)() { return { v.x, v.y, v.z }; }
 		inline Vec4 operator+ (const Vec4& other) { return vec4_add(float)(2, v, other.v); }
 		inline Vec4 operator* (const Vec4& other) { return vec4_mul(float)(2, v, other.v); }
 		inline Vec4 operator* (float scalar) { return vec4_scale(float)(v, scalar); }
@@ -54,6 +58,7 @@ namespace Math
 		static inline float unit_angle(const Vec4& from, const Vec4& to) { return vec4_unit_angle(float)(from.v, to.v); }
 		static inline float box(const Vec4& from, const Vec4& to, const Vec4& height) { return vec4_box(float)(from.v, to.v, height.v); }
 		static inline float dot(const Vec4& v1, const Vec4& v2) { return vec4_dot(float)(v1.v, v2.v); }
+		static inline Vec4 cross(const Vec4& from, const Vec4& to) { return vec4_cross(float)(from.v, to.v); }
 
 		static inline Vec4 one() { return vec4_one(float)(); }
 		static inline Vec4 zero() { return vec4_zero(float)(); }

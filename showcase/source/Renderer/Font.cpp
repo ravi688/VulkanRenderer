@@ -9,18 +9,9 @@ namespace V3D
 		handle = font_load_and_create(filePath.c_str());
 	}
 
-	SHOWCASE_API void Font::unload()
+	SHOWCASE_API void Font::unload() const
 	{
 		font_destroy(handle);
-	}
-
-	SHOWCASE_API void Font::drop()
-	{
 		font_release_resources(handle);
-	}
-
-	SHOWCASE_API font_t* Font::getHandle() const
-	{
-		return handle;
 	}
 }

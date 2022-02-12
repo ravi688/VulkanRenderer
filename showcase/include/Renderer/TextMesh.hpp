@@ -3,6 +3,7 @@
 
 #include <Showcase/Defines.hpp>
 #include <Renderer/IRenderObject.hpp>
+#include <Math/Vec3.hpp>
 
 #include <renderer/text_mesh.h> 			// C header, text_mesh_t
 
@@ -16,23 +17,26 @@ namespace V3D
 	private:
 		text_mesh_t* handle;
 
-		friend class Renderer;
+		friend Renderer;
 
-		TextMesh(Renderer* renderer, GlyphMeshPool* pool);
+		TextMesh(Renderer& renderer, GlyphMeshPool& pool);
 
 	public:
+		typedef text_mesh_string_handle_t StringHandle;
 
-		void destroy() override;
-		void releaseResources() override;
-		void drop() override;
+		inline TextMesh(text_mesh_t* textMesh) : handle(textMesh) { }
 
-		text_mesh_t* getHandle() const;
+		void destroy() const override;
+		void releaseResources() const override;
+		void drop() const override;
+		void draw() const;
 
-		void draw();
+		StringHandle createString() const;
+		void destroyString(StringHandle handle) const;
 
-		using string_handle_t = text_mesh_string_handle_t;
-
-		string_handle_t createString();
-		// void setStringPosition(string_handle_t handle, )
+		void setString(StringHandle handle, const char* ptr) const;
+		void setStringPosition(StringHandle handle, const Math::Vec3& position) const;
+		void setStringRotation(StringHandle handle, const Math::Vec3& euler) const;
+		void setStringScale(StringHandle handle, const Math::Vec3& scaleVector) const;
 	};
 }

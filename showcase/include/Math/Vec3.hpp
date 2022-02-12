@@ -54,6 +54,7 @@ namespace Math
 		static inline float unit_angle(const Vec3& from, const Vec3& to) { return vec3_unit_angle(float)(from.v, to.v); }
 		static inline float box(const Vec3& from, const Vec3& to, const Vec3& height) { return vec3_box(float)(from.v, to.v, height.v); }
 		static inline float dot(const Vec3& v1, const Vec3& v2) { return vec3_dot(float)(v1.v, v2.v); }
+		static inline Vec3 cross(const Vec3& from, const Vec3& to) { return vec3_cross(float)(from.v, to.v); }
 
 		static inline Vec3 one() { return vec3_one(float)(); }
 		static inline Vec3 zero() { return vec3_zero(float)(); }
