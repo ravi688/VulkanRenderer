@@ -172,7 +172,7 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 	{
 		u32 offset = *(u32*)buf_get_ptr_at(shader_binary, cursor);
 		u32 temp_cursor = offset;
-		vulkan_shader_resource_descriptor_t* descriptor = refp(vulkan_shader_resource_descriptor_t, descriptors, i);
+		vulkan_shader_resource_descriptor_t* descriptor = &descriptors[i];
 		memset(&descriptor->handle, 0, sizeof(struct_descriptor_t));
 		descriptor->set_number = *(u8*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 1;
 		descriptor->binding_number = *(u8*)buf_get_ptr_at(shader_binary, temp_cursor); temp_cursor += 1;
@@ -182,6 +182,8 @@ static vulkan_shader_resource_descriptor_t* create_descriptors(BUFFER* shader_bi
 		descriptor->is_push_constant = (descriptor_info & (1U << 16)) ? true : false;
 		descriptor->is_opaque = (descriptor_info & (1U << 15)) ? true : false;
 		descriptor->is_uniform = (descriptor_info & (1U << 14)) ? true : false;
+		descriptor->is_per_vertex_attribute = (descriptor_info & (1UL << 18));
+		descriptor->is_per_instance_attribute = (descriptor_info & (1UL << 17));
 		descriptor->handle.type = descriptor_info & 0xFFU;
 		descriptor->stage_flags = 0;
 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_VERTEX)))
@@ -262,7 +264,7 @@ static VkDescriptorSetLayout get_vulkan_descriptor_set_layout(vulkan_renderer_t*
 	for(u32 i = 0; i < descriptor_count; i++)
 	{
 		vulkan_shader_resource_descriptor_t* descriptor = refp(vulkan_shader_resource_descriptor_t, descriptors, i);
-		if(descriptor->is_push_constant)
+		if(descriptor->is_push_constant || descriptor->is_attribute)
 			continue;
 		VkDescriptorSetLayoutBinding* binding = refp(VkDescriptorSetLayoutBinding, bindings, binding_count);
 		binding->binding = descriptor->binding_number;

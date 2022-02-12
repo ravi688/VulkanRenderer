@@ -124,6 +124,7 @@ int main(int argc, char** argv)
 	{
 		.per_vertex_attribute_binding_count = 4,
 		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
+		.is_vertex_attrib_from_file = true,
 		.shader = rock_shader
 	};
 	material_t* rock_material = material_create(renderer, &rock_material_info);
