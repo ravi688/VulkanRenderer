@@ -17,30 +17,32 @@
 #	4. 	lib-dynamic-release				For building dynamic library (vulkanrenderer.dll) in release mode
 #	5. 	debug 							For building executable (main.exe) in debug mode
 #	6. 	release 						For building executable (main.exe) in release mode
-#	7. 	clean 							For cleaning the object files (.obj)
-#	8. 	shader-clean 					For cleaning the shader binaries (.sb)
-#	9. 	shader 							For building shader binaries (.sb)
-#	10. setup 							For fetching (downloading) the submodules
-#	11. run 							For building executable in debug mode and launching it
+#	7. 	clean 							For cleaning the object files and shader binaries
+#	8. 	clean-dependencies 				For cleaning the dependencies
+#	9. 	shader-clean 					For cleaning the shader binaries (.sb)
+#	10.	shader-debug 					For building shaders in debug mode
+#	11. shader-release 					For building shaders in release mode
+#	12. shader 							For building shader binaries (.sb)
+#	13. setup 							For fetching (downloading) the submodules
+#	14. run 							For building executable in debug mode and launching it
 #-------------------------------------------
 
 
 #-------------------------------------------
 #		Project Configuration
 #-------------------------------------------
-PROJECT_NAME = VulkanRenderer
-STATIC_LIB_NAME = vulkanrenderer.a
-DYNAMIC_LIB_NAME = vulkanrenderer.dll
+PROJECT_NAME = Skybox
+STATIC_LIB_NAME = skybox.a
+DYNAMIC_LIB_NAME = skybox.dll
 EXECUTABLE_NAME = main.exe
-EXTERNAL_LIBRARIES = -L./external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
-EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies
-DEPENDENCIES = ../shader_compiler ECS MeshLib MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
-DEPENDENCY_LIBS = ECS/lib/ecs.a MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
-DEPENDENCIES_DIR = ./dependencies
-SHARED_DEPENDENCIES = BufferLib
-SHARED_DEPENDENCY_LIBS =  BufferLib/lib/bufferlib.a
+EXTERNAL_LIBRARIES = -L../../external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
+EXTERNAL_INCLUDES = #-I./dependencies/ -I./shared-dependencies
+DEPENDENCIES = . dependencies/HPML dependencies/ECS shared-dependencies/BufferLib dependencies/ttf2mesh dependencies/MeshLib dependencies/MeshLib/dependencies/DiskManager dependencies/SafeMemory dependencies/TemplateSystem dependencies/SafeMemory/shared-dependencies/CallTrace
+DEPENDENCY_LIBS = lib/vulkanrenderer.a dependencies/ECS/lib/ecs.a dependencies/HPML/lib/hpml.a dependencies/MeshLib/lib/meshlib.a dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a  shared-dependencies/BufferLib/lib/bufferlib.a dependencies/ttf2mesh/lib/ttf2mesh.a dependencies/SafeMemory/lib/safemem.a dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a 
+DEPENDENCIES_DIR = ../..
+SHARED_DEPENDENCIES = #BufferLib
+SHARED_DEPENDENCY_LIBS =  #BufferLib/lib/bufferlib.a
 SHARED_DEPENDENCIES_DIR = ./shared-dependencies
-UNPACKED_OBJECTS_DIR = ./unpacked
 #-------------------------------------------
 
 #-------------------------------------------
@@ -51,11 +53,9 @@ __DEPENDENCY_LIBS = $(addprefix $(DEPENDENCIES_DIR)/, $(DEPENDENCY_LIBS))
 __SHARED_DEPENDENCIES = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPENDENCIES))
 __SHARED_DEPENDENCY_LIBS = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPENDENCY_LIBS))
 __EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
-__UNPACKED_DIRS = $(notdir $(basename $(DEPENDENCY_LIBS) $(SHARED_DEPENDENCY_LIBS)))
 .PHONY: all
 .PHONY: init
 .PHONY: setup
-.PHONY: update
 all: dgraph release
 
 %.gv:
@@ -65,56 +65,15 @@ all: dgraph release
 $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR): 
 	mkdir $(subst /,\,$@)
 	@echo [Log] $@ created successfully!
-$(UNPACKED_OBJECTS_DIR):
-	mkdir $(subst /, \,$@)
-	cd $@ & mkdir .temp
-	cd $@ & $(foreach var, $(__UNPACKED_DIRS) , mkdir $(var) & )
-	@echo [Log] $@ created successfully!
+
 
 init: $(PROJECT_NAME).gv $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR)
 	@echo [Log] $(PROJECT_NAME) init successfully!
 
 setup:
-	git submodule update --init
-	git -C ./dependencies/ECS checkout VulkanRenderer/testbed/main
-	git -C ./dependencies/HPML checkout main
-	git -C ./dependencies/MeshLib checkout VulkanRenderer/main
-	git	-C ./dependencies/SafeMemory checkout VulkanRenderer/main
-	git -C ./dependencies/TemplateSystem checkout main
-	git -C ./dependencies/tgc checkout master
-	git -C ./dependencies/ttf2mesh checkout master
-	git -C ./shared-dependencies/BufferLib checkout VulkanRenderer/main
-	git -C ./dependencies/SafeMemory submodule update --init shared-dependencies/CallTrace
-	git -C ./dependencies/MeshLib submodule update --init dependencies/DiskManager
-	git -C ./dependencies/SafeMemory submodule update --init dependencies/TemplateSystem
-	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace checkout main
-	git -C ./dependencies/MeshLib/dependencies/DiskManager checkout VulkanRenderer/Meshlib/main
-	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem checkout main
+	git submodule update --init dependencies/VulkanRenderer
+	$(MAKE) --directory=../../ -s setup
 	@echo [Log] Setup successfully!
-
-update:
-	git -C ./dependencies/ECS pull origin main
-	git -C ./dependencies/HPML pull origin main
-	git -C ./dependencies/MeshLib pull origin main
-	git	-C ./dependencies/SafeMemory pull origin main
-	git -C ./dependencies/TemplateSystem pull origin main
-	git -C ./dependencies/tgc pull origin master
-	git -C ./dependencies/ttf2mesh pull origin master
-	git -C ./shared-dependencies/BufferLib pull origin main
-	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace pull origin main
-	git -C ./dependencies/MeshLib/dependencies/DiskManager pull origin main
-	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem pull origin main
-	git -C ./dependencies/ECS push
-	git -C ./dependencies/HPML push
-	git -C ./dependencies/MeshLib push
-	git	-C ./dependencies/SafeMemory push
-	git -C ./dependencies/TemplateSystem push
-	git -C ./dependencies/tgc push
-	git -C ./dependencies/ttf2mesh push
-	git -C ./shared-dependencies/BufferLib push
-	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace push
-	git -C ./dependencies/MeshLib/dependencies/DiskManager push
-	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem push
 #-------------------------------------------
 
 
@@ -164,7 +123,6 @@ dgraph-clean:
 TARGET_LIB_DIR = ./lib
 TARGET_STATIC_LIB = $(join $(TARGET_LIB_DIR)/, $(STATIC_LIB_NAME))
 TARGET_DYNAMIC_LIB = $(join $(TARGET_LIB_DIR)/, $(DYNAMIC_LIB_NAME))
-TARGET_DYNAMIC_PACKED_LIB = $(join $(TARGET_LIB_DIR)/, $(addprefix packed, $(DYNAMIC_LIB_NAME)))
 TARGET = $(__EXECUTABLE_NAME)
 
 #Dependencies
@@ -172,8 +130,8 @@ DEPENDENCY_INCLUDES = $(addsuffix /include, $(__DEPENDENCIES))
 SHARED_DEPENDENCY_INCLUDES = $(addsuffix /include, $(__SHARED_DEPENDENCIES))
 
 INCLUDES= -I./include $(EXTERNAL_INCLUDES) $(addprefix -I, $(DEPENDENCY_INCLUDES) $(SHARED_DEPENDENCY_INCLUDES))
-SOURCES= $(wildcard source/*.c source/*/*.c source/*/*/*.c)
-OBJECTS= $(addsuffix .o, $(basename $(SOURCES)))
+SOURCES= $(wildcard source/*.c source/*/*.c source/*.cpp source/*/*.cpp)
+OBJECTS= $(subst .c,.o, $(SOURCES))
 LIBS = $(EXTERNAL_LIBRARIES)
 
 #Flags and Defines
@@ -186,7 +144,6 @@ DYNAMIC_LIBRARY_COMPILATION_FLAG = -shared
 DYNAMIC_IMPORT_LIBRARY_FLAG = -Wl,--out-implib,
 COMPILER = gcc
 ARCHIVER_FLAGS = -rc
-ARCHIVER_UNPACK_FLAGS = -x
 ARCHIVER = ar
 
 TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefix lib, $(notdir $(TARGET_DYNAMIC_LIB).a)))
@@ -201,6 +158,7 @@ TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefi
 .PHONY: debug
 .PHONY: $(TARGET)	
 .PHONY: bin-clean
+.PHONY: clean-dependencies
 .PHONY: PRINT_MESSAGE1
 
 all: release
@@ -215,44 +173,29 @@ lib-static-release: $(TARGET_STATIC_LIB)
 
 lib-dynamic: lib-dynamic-release
 lib-dynamic-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
-lib-dynamic-debug: __STATIC_LIB_COMMAND = lib-static-dynamic-debug
+lib-dynamic-debug: __STATIC_LIB_COMMAND = lib-static-debug
 lib-dynamic-debug: COMPILER_FLAGS += -g -fPIC
 lib-dynamic-debug: $(TARGET_DYNAMIC_LIB)
 lib-dynamic-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_DYNAMIC_LIBRARY
-lib-dynamic-release: __STATIC_LIB_COMMAND = lib-static-dynamic-release
+lib-dynamic-release: __STATIC_LIB_COMMAND = lib-static-release
 lib-dynamic-release: COMPILER_FLAGS += -fPIC
 lib-dynamic-release: $(TARGET_DYNAMIC_LIB)
 
-.PHONY: lib-dynamic-packed-debug
-lib-dynamic-packed-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
-lib-dynamic-packed-debug: __STATIC_LIB_COMMAND = lib-static-dynamic-debug
-lib-dynamic-packed-debug: COMPILER_FLAGS += -g -fPIC
-lib-dynamic-packed-debug: $(TARGET_DYNAMIC_PACKED_LIB)
+.PHONY: relocate-dll
+
+relocate-dll: ../../lib/libvulkanrenderer.dll.a
+	copy ..\lib\vulkanrenderer.dll .\
 
 release: DEFINES += $(RELEASE_DEFINES) -DBUILD_EXECUTABLE
 release: __STATIC_LIB_COMMAND = lib-static-release
 release: $(TARGET)
+# release: relocate-dll
 debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_EXECUTABLE
 debug: __STATIC_LIB_COMMAND = lib-static-debug
 debug: COMPILER_FLAGS += -g
 debug: $(TARGET)
+# debug: relocate-dll
 
-# Building examples
-EXAMPLES = ./examples/Skybox/main.exe
-
-.PHONY: build-examples build-examples-debug build-examples-release examples-clean
-
-BUILD_MODE = build
-%.exe:
-	$(MAKE) --directory=$(dir $@) $(BUILD_MODE)
-
-build-examples: build-examples-debug
-build-examples-debug: BUILD_MODE = build-debug
-build-examples-debug: $(EXAMPLES)
-build-examples-release: BUILD_MODE = build-release
-build-examples-release: $(EXAMPLES)
-examples-clean:
-	$(foreach var, $(dir $(EXAMPLES)) ,$(MAKE) --directory=$(var) clean & )
 
 %.o : %.c
 	$(COMPILER) $(COMPILER_FLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
@@ -284,24 +227,6 @@ $(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPEN
 	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
 	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
 
-.PHONY: UNPACK_LIBS
-.PHONY: $(TARGET_DYNAMIC_PACKED_LIB)
-.PHONY: DELETE_UPACKED_OBJECTS
-
-UNPACK_LIBS: $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) | $(UNPACKED_OBJECTS_DIR)
-	cd $(UNPACKED_OBJECTS_DIR)/.temp & $(foreach var, $^, cd ../$(notdir $(basename $(var))) & $(ARCHIVER) $(ARCHIVER_UNPACK_FLAGS) ../../$(var) &)
-
-DELETE_UPACKED_OBJECTS:
-	del $(subst /,\ $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
-	rmdir $(UNPACKED_OBJECTS_DIR)
-
-$(TARGET_DYNAMIC_PACKED_LIB) : PRINT_DYNAMIC_INFO  $(filter-out source/main.o, $(OBJECTS)) UNPACK_LIBS | $(TARGET_LIB_DIR)
-	@echo [Log] Linking $@ ...
-	$(COMPILER) $(COMPILER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG)  $(wildcard $(UNPACKED_OBJECTS_DIR)/*/*.o) $(filter-out source/main.o, $(OBJECTS)) \
-	$(LIBS) \
-	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
-	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
-
 $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) source/main.o
 	@echo [Log] Linking $@ ...
 	$(COMPILER) $(COMPILER_FLAGS) source/main.o \
@@ -318,22 +243,23 @@ bin-clean:
 	del $(subst /,\, $(TARGET_DYNAMIC_LIB))
 	del $(subst /,\, $(TARGET_DYNAMIC_IMPORT_LIB))
 	rmdir $(subst /,\, $(TARGET_LIB_DIR))
-	del $(subst /,\, $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
-	rmdir $(subst /,\, $(UNPACKED_OBJECTS_DIR))
+	del vulkanrenderer.dll
 	@echo [Log] Binaries cleaned successfully!
-	$(MAKE) --directory=./dependencies/ttf2mesh clean
-	$(MAKE) --directory=./dependencies/HPML clean
-	$(MAKE) --directory=./dependencies/ECS clean
-	$(MAKE) --directory=./dependencies/SafeMemory clean
-	$(MAKE) --directory=./dependencies/MeshLib clean
-	$(MAKE) --directory=./shared-dependencies/BufferLib clean
-	$(MAKE) --directory=./shader_compiler clean
+
+clean-dependencies:
+	$(MAKE) --directory=../../ -i -s clean
+# 	$(MAKE) --directory=./dependencies/HPML clean
+# 	$(MAKE) --directory=./dependencies/tgc clean
+# 	$(MAKE) --directory=./dependencies/SafeMemory clean
+# 	$(MAKE) --directory=./dependencies/MeshLib clean
+# 	$(MAKE) --directory=./shared-dependencies/BufferLib clean
+# 	$(MAKE) --directory=./shader_compiler clean
 #-------------------------------------------
 
 #-------------------------------------------
 #		Shader Compilation
 #-------------------------------------------
-SHADER_COMPILER = ./shader_compiler/shader_compiler.exe
+SHADER_COMPILER = ../../shader_compiler/shader_compiler.exe
 SHADER_SOURCES = $(wildcard ./resource/shaders/*.glsl)
 SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
 
@@ -343,7 +269,6 @@ $(SHADER_COMPILER):
 	$(MAKE) --directory=$(dir $@) $(SHADER_COMPILER_COMPILATION_MODE)
 
 %.sb: %.glsl $(SHADER_COMPILER)
-	@echo [Log]: Compiling shader $< to $@
 	$(SHADER_COMPILER) $< $@
 
 .PHONY: shader-debug
@@ -365,7 +290,7 @@ shader-clean:
 #		Cleaning
 #-------------------------------------------
 .PHONY: clean
-clean: bin-clean 
+clean: bin-clean shader-clean
 	@echo [Log] All cleaned successfully!
 #-------------------------------------------
 
