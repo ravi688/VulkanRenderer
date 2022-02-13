@@ -34,8 +34,8 @@ DYNAMIC_LIB_NAME = vulkanrenderer.dll
 EXECUTABLE_NAME = main.exe
 EXTERNAL_LIBRARIES = -L./external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies
-DEPENDENCIES = ../shader_compiler MeshLib MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
-DEPENDENCY_LIBS = MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCIES = ../shader_compiler ECS MeshLib MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
+DEPENDENCY_LIBS = ECS/lib/ecs.a MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS =  BufferLib/lib/bufferlib.a
@@ -76,6 +76,7 @@ init: $(PROJECT_NAME).gv $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR)
 
 setup:
 	git submodule update --init
+	git -C ./dependencies/ECS checkout VulkanRenderer/testbed/main
 	git -C ./dependencies/HPML checkout main
 	git -C ./dependencies/MeshLib checkout VulkanRenderer/main
 	git	-C ./dependencies/SafeMemory checkout VulkanRenderer/main
@@ -92,6 +93,7 @@ setup:
 	@echo [Log] Setup successfully!
 
 update:
+	git -C ./dependencies/ECS pull origin main
 	git -C ./dependencies/HPML pull origin main
 	git -C ./dependencies/MeshLib pull origin main
 	git	-C ./dependencies/SafeMemory pull origin main
@@ -102,6 +104,7 @@ update:
 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace pull origin main
 	git -C ./dependencies/MeshLib/dependencies/DiskManager pull origin main
 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem pull origin main
+	git -C ./dependencies/ECS push
 	git -C ./dependencies/HPML push
 	git -C ./dependencies/MeshLib push
 	git	-C ./dependencies/SafeMemory push
@@ -304,6 +307,7 @@ bin-clean:
 	@echo [Log] Binaries cleaned successfully!
 	$(MAKE) --directory=./dependencies/ttf2mesh clean
 	$(MAKE) --directory=./dependencies/HPML clean
+	$(MAKE) --directory=./dependencies/ECS clean
 	$(MAKE) --directory=./dependencies/SafeMemory clean
 	$(MAKE) --directory=./dependencies/MeshLib clean
 	$(MAKE) --directory=./shared-dependencies/BufferLib clean

@@ -16,3 +16,6 @@
 [submodule "dependencies/MeshLib"]
 	path = dependencies/MeshLib
 	url = https://github.com/ravi688/MeshLib
+[submodule "dependencies/ECS"]
+	path = dependencies/ECS
+	url = https://github.com/ravi688/EntityComponentSystem.git
