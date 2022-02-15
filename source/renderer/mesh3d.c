@@ -1195,23 +1195,30 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_cube, float size)
 	mesh3d_triangle_add(mesh, 20, 21, 22);
 	mesh3d_triangle_add(mesh, 20, 22, 23);
 
+	// normals pointing down
 	for(int i = 0; i < 4; i++)
 		mesh3d_normal_add(mesh, 0, -1.0f, 0);
 
+	// normals pointing up
 	for(int i = 0; i < 4; i++)
 		mesh3d_normal_add(mesh, 0, 1.0f, 0);
 
+	// normals pointing back
+	for(int i = 0; i < 4; i++)
+		mesh3d_normal_add(mesh, -1.0f, 0, 0);
+	
+	// normals pointing left
+	for(int i = 0; i < 4; i++)
+		mesh3d_normal_add(mesh, 0, 0, -1.0f);
+
+	// normals pointing right
 	for(int i = 0; i < 4; i++)
 		mesh3d_normal_add(mesh, 0, 0, 1.0f);
 
-	for(int i = 0; i < 4; i++)
-		mesh3d_normal_add(mesh, -1.0f, 0, 0);
-
+	// normals pointing forward
 	for(int i = 0; i < 4; i++)
 		mesh3d_normal_add(mesh, 1.0f, 0, 0);
 
-	for(int i = 0; i < 4; i++)
-		mesh3d_normal_add(mesh, 0, 0, -1.0f);
 
 	mesh3d_optimize_buffer(mesh);
 	CALLTRACE_RETURN(mesh);
