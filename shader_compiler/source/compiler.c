@@ -1,5 +1,6 @@
 
 #include <shader_compiler/compiler.h>
+#include <shader_compiler/settings_parser.h> 		// settings_parse
 #include <shader_compiler/shaderc/shaderc.h>
 #include <shader_compiler/assert.h> 	//assert
 #include <disk_manager/file_reader.h> 	//load_text_from_file
@@ -80,7 +81,7 @@ static void buffer_insert_bytes(BUFFER* buffer, BUFFER* offsets_buffer, buf_ucou
 static bool is_empty(const char* start, const char* const end);
 static void remove_comments(char* start, buf_ucount_t length);
 
-function_signature(BUFFER*, shader_compiler_load_and_compile, const char* file_path)
+SC_API function_signature(BUFFER*, shader_compiler_load_and_compile, const char* file_path)
 {
 	CALLTRACE_BEGIN();
 	BUFFER* buffer = load_text_from_file(file_path);
@@ -162,7 +163,7 @@ fragment[0, 1] uniform Light
  40			| u32, contains a number 	| fragment shader offset if BIT(3) is set
  44			| u32, contains a number 	| fragment shader length if BIT(3) is set
  */
-function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_ucount_t length)
+SC_API function_signature(BUFFER*, shader_compiler_compile, const char* _source, buf_ucount_t length)
 {
 	CALLTRACE_BEGIN();
 
@@ -338,6 +339,20 @@ static void buffer_insert_offset(BUFFER* buffer, BUFFER* offsets_buffer, buf_uco
 	*(u32*)buf_get_ptr_at(buffer, index) = buf_get_element_count(buffer);
 }
 
+
+static void print_category(const char* name, u32 length, void* user_data)
+{
+	printf("Category: %.*s\n", length, name);
+}
+
+static void print_field(const char* name, u32 length, const char* value, u32 value_length, void* user_data)
+{
+	if(value_length != 0)
+		printf("Field: %.*s = %.*s\n", length, name, value_length, value);
+	else
+		printf("Field: %.*s\n", length, name);
+}
+
 function_signature(static const char*, parse_settings, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
 {
 	CALLTRACE_BEGIN();
@@ -348,6 +363,13 @@ function_signature(static const char*, parse_settings, const char* _source, buf_
 		LOG_MSG("SETTINGS section is empty, skipping\n");
 		CALLTRACE_RETURN(_source + length);
 	}
+	settings_parser_callbacks_t callbacks =
+	{
+		.category = print_category,
+		.field = print_field,
+		.user_data = NULL
+	};
+	settings_parse(string, length, &callbacks);
 	CALLTRACE_RETURN(_source + length);
 }
 

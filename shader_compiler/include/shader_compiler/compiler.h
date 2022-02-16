@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <shader_compiler/defines.h>
 #include <calltrace/calltrace.h>
 #include <stdint.h>
 #include <bufferlib/buffer.h>
@@ -40,7 +41,7 @@ enum
 };
 
 #define shader_compiler_compile(...) define_alias_function_macro(shader_compiler_compile, __VA_ARGS__)
-function_signature(BUFFER*, shader_compiler_compile, const char* source, buf_ucount_t length);
+SC_API function_signature(BUFFER*, shader_compiler_compile, const char* source, buf_ucount_t length);
 
 #define shader_compiler_load_and_compile(...) define_alias_function_macro(shader_compiler_load_and_compile, __VA_ARGS__)
-function_signature(BUFFER*, shader_compiler_load_and_compile, const char* file_path);
+SC_API function_signature(BUFFER*, shader_compiler_load_and_compile, const char* file_path);

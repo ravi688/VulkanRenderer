@@ -1,10 +1,114 @@
-#section SETTINGS DEFAULT
-wireframe true
-line_thickness 5
-blend true
-winding clockwise
+#section SETTINGS
+
+input-assembly
+{
+    topology = triangle,
+    primitive-restart-enable = true
+}
+
+rasterization
+{
+    depth-clamp-enable = false,
+    rasterizer-discard-enable = true,
+    polygon-mode = fill,
+    line-width = 1.0f,
+    cull-mode = back,
+    front-face = clockwise,
+    depth-bias-enable = true,
+    depth-bias-constant-factor = 0.0f,
+    depth-bias-clamp = 0.0f,
+    depth-bias-slope-factor = 0.0f
+}
+
+viewport
+{
+    scissor
+    {
+        offset
+        {
+            x = 0,
+            y = 0
+        }
+        extent = full_screen // or { 800, 800 }
+    }
+    viewport
+    {
+        x = 0,
+        y = 0,
+        width = screen_width,
+        height = screen_width,
+        min-depth = 0.0f,
+        max-depth = 1.0f
+    }
+}
+
+multisample
+{
+    sample-shading-enable = false,
+    rasterization-samples = 1,
+    min-sample-shading = 1.0f,
+    alpha-to-converage-enable = false,
+    alpha-to-one-enable = false
+}
+
+color-blend
+{
+    logic-op-enable = false,
+    logic-op = copy,
+
+    color-attachment
+    {
+        color-write-mask = r|g|b|a, // or rgba in case of color
+        blend-enable = false,
+        src-color-blend-factor = src-alpha,
+        dst-color-blend-factor = one-minus-src-alpha,
+        color-blend-op = add,
+        src-alpha-blend-factor = one,
+        dst-alpha-blend-factor = zero,
+        alpha-blend-op = add
+    }
+
+    blend-constants
+    {}
+}
+
+stencil
+{
+    front
+    {
+        fail-op = keep // or zero, replace etc.
+        pass-op = keep
+        depth-fail-op = keep
+        compare-op = less
+        compare-mask = 0xFF00FF00
+        write-mask = 0x000F0FFF
+        reference = 14
+    }
+
+    back
+    {
+        // same as above
+    }
+}
+
+depth
+{
+    test-enable = true,
+    write-enable = true,
+    compare-op = less,
+    bounds-test-enable = false,
+    min-bounds = 0.0f,
+    max-bounds = 1.0f,
+}
+
 
 #section LAYOUT
+
+per-vertex [0, 0] vec3 position;
+per-vertex [1, 1] vec3 normal;
+per-vertex [2, 2] vec2 texcoord;
+
+
 vertex fragment [1, 4] uniform Matrices
 {
     mat4 projection_matrix;
