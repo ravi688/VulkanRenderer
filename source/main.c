@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 
 
 	/*------TEXT-----------------------------*/
-	font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
+	font_t* font = font_load_and_create("showcase/resource/fonts/Pushster-Regular.ttf");
 	glyph_mesh_pool_t* pool = glyph_mesh_pool_create(renderer, font);
 	mesh_t* glyph_A = glyph_mesh_pool_get_mesh(pool, 'A');
 	mesh_t* glyph_B = glyph_mesh_pool_get_mesh(pool, 'B');
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
 	text_mesh_string_set_scaleH(text_mesh, cpu_usage, vec3(float)(0.7f, 0.7f, 0.7f));
 	text_mesh_string_setH(text_mesh, cpu_usage, "10.99999%");
 
-	shader_t* text_shader = shader_load(renderer, "resource/shaders/text_shader.sb");
+	shader_t* text_shader = shader_load(renderer, "showcase/resource/shaders/text_shader.sb");
 	u64 per_vertex_attributes[5] = { MATERIAL_ALIGN(MATERIAL_VEC3, 0) };
 	u64 per_instance_attributes[1] = { MATERIAL_ALIGN(MATERIAL_VEC3, 0) | MATERIAL_ALIGN(MATERIAL_VEC3, 1) | MATERIAL_ALIGN(MATERIAL_VEC3, 2) };
 	material_create_info_t text_material_info =
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 	/*---------------------------------------*/
 
 	/*-----------GAME UI----------------------*/
-	shader_t* game_ui_shader = shader_load(renderer, "resource/shaders/game_ui_shader.sb");
+	shader_t* game_ui_shader = shader_load(renderer, "showcase/resource/shaders/game_ui_shader.sb");
 	text_material_info.shader = game_ui_shader;
 	material_t* game_ui_material = material_create(renderer, &text_material_info);
 
@@ -110,12 +110,12 @@ int main(int argc, char** argv)
 	text_mesh_string_set_scaleH(game_ui, score_text, vec3(float)(0.8f, 0.8f, 0.8f));
 
 	/*--------PLAYGROUND----------------------*/
-	mesh3d_t* rock_mesh3d = mesh3d_load("resource/Rock/Rock.obj");
+	mesh3d_t* rock_mesh3d = mesh3d_load("showcase/resource/Rock/Rock.obj");
 	mesh3d_make_centroid_origin(rock_mesh3d);
 	mesh3d_calculate_tangents(rock_mesh3d);
 	mesh_t* rock = mesh_create(renderer, rock_mesh3d);
 	mesh3d_destroy(rock_mesh3d);
-	shader_t* rock_shader = shader_load(renderer, "resource/shaders/bump_shader.sb");
+	shader_t* rock_shader = shader_load(renderer, "showcase/resource/shaders/bump_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); // position
 	per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); // normal
 	per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC2, 2); // texture coordinates
@@ -130,8 +130,8 @@ int main(int argc, char** argv)
 	material_t* rock_material = material_create(renderer, &rock_material_info);
 	texture_t* rock_textures[] = 
 	{ 
-		texture_load(renderer, TEXTURE_TYPE_ALBEDO, "resource/Rock/albedo.bmp"),
-		texture_load(renderer, TEXTURE_TYPE_NORMAL, "resource/Rock/normal.bmp")
+		texture_load(renderer, TEXTURE_TYPE_ALBEDO, "showcase/resource/Rock/albedo.bmp"),
+		texture_load(renderer, TEXTURE_TYPE_NORMAL, "showcase/resource/Rock/normal.bmp")
 	};
 	material_set_texture(rock_material, "albedo", rock_textures[0]);
 	material_set_texture(rock_material, "normal_map", rock_textures[1]);
@@ -139,18 +139,18 @@ int main(int argc, char** argv)
 
 	/*----------- CUBEMAP - SKYBOX ----------------------*/
 	texture_t* skybox_texture = texture_load(renderer, TEXTURE_TYPE_CUBE,
-											"resource/skybox_textures/skybox/right.bmp",
-											"resource/skybox_textures/skybox/left.bmp",
-											"resource/skybox_textures/skybox/bottom.bmp",
-											"resource/skybox_textures/skybox/top.bmp",
-											"resource/skybox_textures/skybox/front.bmp", 
-											"resource/skybox_textures/skybox/back.bmp");
+											"showcase/resource/skybox_textures/skybox/right.bmp",
+											"showcase/resource/skybox_textures/skybox/left.bmp",
+											"showcase/resource/skybox_textures/skybox/bottom.bmp",
+											"showcase/resource/skybox_textures/skybox/top.bmp",
+											"showcase/resource/skybox_textures/skybox/front.bmp", 
+											"showcase/resource/skybox_textures/skybox/back.bmp");
 	mesh3d_t* skybox_mesh3d = mesh3d_cube(5);
 	mesh3d_flip_triangles(skybox_mesh3d);
 	mesh_t* skybox = mesh_create(renderer, skybox_mesh3d);
 	mesh3d_destroy(skybox_mesh3d);
 
-	shader_t* skybox_shader = shader_load(renderer, "resource/shaders/skybox_shader.sb");
+	shader_t* skybox_shader = shader_load(renderer, "showcase/resource/shaders/skybox_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); 	// position
 	material_create_info_t skybox_material_info = 
 	{
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 	mesh3d_t* quad_mesh3d = mesh3d_plane(0.6f);
 	mesh_t* quad = mesh_create(renderer, quad_mesh3d);
 	mesh3d_destroy(quad_mesh3d);
-	shader_t* quad_shader = shader_load(renderer, "resource/shaders/transparent_shader.sb");
+	shader_t* quad_shader = shader_load(renderer, "showcase/resource/shaders/transparent_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); //position
 	material_create_info_t quad_material_info =
 	{

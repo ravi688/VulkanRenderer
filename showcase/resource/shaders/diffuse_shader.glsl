@@ -1,6 +1,10 @@
 
 #section LAYOUT
 
+per-vertex [0, 0] vec3 position;
+per-vertex [1, 1] vec3 normal;
+per-vertex [2, 2] vec2 texcoord;
+
 vertex fragment [push_constant] [0] uniform Push
 {
 	mat4 mvp_matrix;
