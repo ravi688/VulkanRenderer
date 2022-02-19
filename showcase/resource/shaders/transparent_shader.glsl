@@ -1,6 +1,8 @@
 
 #section LAYOUT
 
+per-vertex [0, 0] vec3 position;
+
 vertex [push_constant] [0] uniform Push
 {
 	mat4 mvp_matrix;

@@ -1,14 +1,21 @@
+// Game UI shader
+
 #section SETTINGS
 
 
 #section LAYOUT
+
+per-vertex 		[0, 0] vec3 position;
+per-instance 	[1, 1] vec3 offset;
+per-instance 	[1, 2] vec3 scale;
+per-instance 	[1, 3] vec3 rotation;
 
 vertex [push_constant] [0] uniform Push
 {
 	mat4 mvp_matrix;
 } push;
 
-vertex [0, 0] uniform UBO
+fragment [0, 0] uniform UBO
 {
 	float time;
 } ubo;
@@ -19,11 +26,6 @@ vertex [0, 0] uniform UBO
 #stage vertex
 
 #version 450
-
-layout(binding = 0) uniform UBO
-{
-	float time;
-} ubo;
 
 layout(push_constant) uniform Push
 {
@@ -45,7 +47,7 @@ void main()
 	vec3 pos = offset;
 	pos += norm_position;
 	pos = pos * scale;
-	gl_Position = push.mvp * vec4(pos + vec3(0, cos(ubo.time), sin(ubo.time)), 1);
+	gl_Position = push.mvp * vec4(pos, 1);
 }
 
 
@@ -53,11 +55,18 @@ void main()
 
 #version 450
 
+layout(set = 0, binding = 0) uniform UBO
+{
+	float time;
+};
+
 layout(location = 0) out vec3 color;
+
+vec3 lerp(vec3 v1, vec3 v2, float t) { return v1 * (1 - t) + v2 * t; }
 
 void main()
 {
-	color = vec3(1, 1, 1);
+	color = lerp(vec3(0.2f, 0.9f, 1.0f), vec3(0.5f, 0.1f, 1.0f), (1 - sin(time * 5)) * 0.5f);
 }
 
 
