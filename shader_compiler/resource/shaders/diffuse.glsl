@@ -1,106 +1,158 @@
 #section SETTINGS
 
-input-assembly
+GraphicsPipeline
 {
-    topology = triangle,
-    primitive-restart-enable = true
-}
-
-rasterization
-{
-    depth-clamp-enable = false,
-    rasterizer-discard-enable = true,
-    polygon-mode = fill,
-    line-width = 1.0f,
-    cull-mode = back,
-    front-face = clockwise,
-    depth-bias-enable = true,
-    depth-bias-constant-factor = 0.0f,
-    depth-bias-clamp = 0.0f,
-    depth-bias-slope-factor = 0.0f
-}
-
-viewport
-{
-    scissor
+    InputAssembly
     {
-        offset
+        topology = trianglelist,
+        primitive-restart-enable = true
+    }
+    
+    Rasterization
+    {
+        depth-clamp-enable = false,
+        rasterizer-discard-enable = true,
+        polygon-mode = fill,
+        line-width = 1.0f,
+        cull-mode = back,
+        front-face = clockwise,
+        depth-bias-enable = true,
+        depth-bias-constant-factor = 0.0f,
+        depth-bias-clamp = 0.0f,
+        depth-bias-slope-factor = 0.0f
+    }
+    
+    Viewport
+    {
+        scissor
+        {
+            offset
+            {
+                x = 0,
+                y = 0
+            }
+    
+            extent 
+            { 
+                width = 800, 
+                height = 800
+            }
+
+        }
+
+        scissor
+        {
+            offset
+            {
+                x = 0,
+                y = 0
+            }
+
+            extent
+            {
+                width = 800,
+                height = 800
+            }
+        }
+        
+        scissor
+        {
+            offset
+            {
+                x = 0,
+                y = 0
+            }
+
+            extent
+            {
+                width = 800,
+                height = 800
+            }
+        }
+
+        viewport
         {
             x = 0,
-            y = 0
+            y = 0,
+            width = 800,
+            height = 800,
+            minDepth = 0.0f,
+            maxDepth = 1.0f
         }
-        extent = full_screen // or { 800, 800 }
     }
-    viewport
+    
+    Multisample
     {
-        x = 0,
-        y = 0,
-        width = screen_width,
-        height = screen_width,
-        min-depth = 0.0f,
-        max-depth = 1.0f
+        sample-shading-enable = false,
+        rasterization-samples = 1,
+        min-sample-shading = 1.0f,
+        alpha-to-coverage-enable = false,
+        alpha-to-one-enable = false
     }
-}
-
-multisample
-{
-    sample-shading-enable = false,
-    rasterization-samples = 1,
-    min-sample-shading = 1.0f,
-    alpha-to-converage-enable = false,
-    alpha-to-one-enable = false
-}
-
-color-blend
-{
-    logic-op-enable = false,
-    logic-op = copy,
-
-    color-attachment
+    
+    ColorBlend
     {
-        color-write-mask = r|g|b|a, // or rgba in case of color
-        blend-enable = false,
-        src-color-blend-factor = src-alpha,
-        dst-color-blend-factor = one-minus-src-alpha,
-        color-blend-op = add,
-        src-alpha-blend-factor = one,
-        dst-alpha-blend-factor = zero,
-        alpha-blend-op = add
+        logic-op-enable = false,
+        logic-op = copy,
+    
+        attachment
+        {
+            color-write-mask = r|g|b|a, // or rgba in case of color
+            blend-enable = false,
+            src-color-blend-factor = srcalpha,
+            dst-color-blend-factor = oneminussrcalpha,
+            color-blend-op = add,
+            src-alpha-blend-factor = one,
+            dst-alpha-blend-factor = zero,
+            alpha-blend-op = add
+        }
+
+        Attachment
+        {
+            colorWriteMask = R|G|B|A,
+            blendEnable = true,
+            srcColorBlendFactor = srcalpha,
+            dstColorBlendFactor = oneminussrcalpha,
+            colorBlendOp = add,
+            srcAlphaBlendFactor = one,
+            dstAlphaBlendFactor = zero,
+            alphaBlendOp = add
+        }
+
+        Attachment
+        {
+            colorWriteMask = R|G|B|A,
+            blendEnable = true,
+            srcColorBlendFactor = srcalpha,
+            dstColorBlendFactor = oneminussrcalpha,
+            colorBlendOp = add,
+            srcAlphaBlendFactor = one,
+            dstAlphaBlendFactor = zero,
+            alphaBlendOp = add
+        }
+
+        BlendConstants
+        {
+
+        }
     }
-
-    blend-constants
-    {}
-}
-
-stencil
-{
-    front
+    
+    DepthStencil
     {
-        fail-op = keep // or zero, replace etc.
-        pass-op = keep
-        depth-fail-op = keep
-        compare-op = less
-        compare-mask = 0xFF00FF00
-        write-mask = 0x000F0FFF
-        reference = 14
-    }
+        depthTestEnable = true,
+        depthWriteEnable = true,
 
-    back
-    {
-        // same as above
+        front
+        {
+
+        }
+
+        back
+        {
+
+        }
     }
 }
-
-depth
-{
-    test-enable = true,
-    write-enable = true,
-    compare-op = less,
-    bounds-test-enable = false,
-    min-bounds = 0.0f,
-    max-bounds = 1.0f,
-}
-
 
 #section LAYOUT
 
