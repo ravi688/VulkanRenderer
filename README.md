@@ -241,6 +241,7 @@ Supported file formats are `ASCII STL` `Binary STL` `ASCII OBJ` <br>
 STL files could be ASCII or Binary, it is automatically detected when we load the file.
 As of now only polygonal 3d models are supported, no curves and surfaces as it could be in the OBJ files.
 
+**For C**
 ```C
 // load stl file, it automatically detects ASCII and Binary stl files.
 mesh3d_t* sphere = mesh3d_load("resources/Sphere.stl"); 
@@ -265,6 +266,20 @@ mesh_release_resources(sphere_mesh); // release heap memory
 mesh_destroy(monkey_mesh); // destroy vulkan objects
 mesh_release_resources(moneky_mesh); // release heap memory
 ```
+**For C++**
+```C++
+V3D::Renderer myRenderer(V3D::RendererGPUType::DISCRETE);
+myRenderer.init();
+V3D::Mesh3D monkey = V3D::Mesh3D::load("resources/Monkey.obj");
+
+V3D::Mesh monkeyMesh = myRenderer.createMesh(monkey);
+
+// in render loop
+// monkeyMesh.draw();
+
+monkeyMesh.drop();
+monkey.drop();
+```
 
 ### Textures
 
@@ -272,6 +287,7 @@ mesh_release_resources(moneky_mesh); // release heap memory
 
 Supported file formats are: `Windows BMP`
 
+**For C**
 ```C
 // load the texture data and create required vulkan objects
 texture_t* texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "resource/textures/linuxlogo.bmp");
@@ -289,10 +305,24 @@ texture_release_resources(texture);
 texture_release_resources(normal_map);
 ```
 
+**For C++**
+```C++
+V3D::Texture texture = myRenderer.loadTexture(V3D::TextureType::ALBEDO, "resource/textures/linuxlogo.bmp");
+V3D::Texture normalMap = myRenderer.loadTexture(V3D::TextureType::NORMAL, "resource/textures/normal_map.bmp");
+
+// use the texture somewhere,
+// i.e. myMaterial.set("albedo",  texture);
+// or myMaterial.set("normalMap", normalMap);
+
+texture.drop();
+normalMap.drop();
+```
+
 #### Cube map Textures
 
 Supported file formats are: `Windows BMP`
 
+**For C**
 ```C
 // load the 6 textures for each face and create required vulkan objects
 texture_t* skybox_texture = texture_load(renderer, TEXTURE_TYPE_CUBE,
@@ -313,6 +343,19 @@ texture_destroy(skybox_texture);
 // release heap allocated memory
 texture_release_resources(skybox_texture);
 ```
+**For C++**
+```C++
+V3D::Texture skyboxTexture = myRenderer.loadTexture(V3D::TextureType::CUBE,
+                                 "resource/skybox_textures/skybox/right.bmp",
+                                 "resource/skybox_textures/skybox/left.bmp",
+                                 "resource/skybox_textures/skybox/bottom.bmp",
+                                 "resource/skybox_textures/skybox/top.bmp",
+                                 "resource/skybox_textures/skybox/front.bmp", 
+                                 "resource/skybox_textures/skybox/back.bmp");
+// use this cube map texture somehere
+ 
+skyboxTexture.drop();
+```
 
 ### Materials
 
@@ -321,6 +364,7 @@ All the push constants defined in the shader definition file could be set by mat
 If you are defining the vertex attributes in the shader definition (source) file then make sure to set <br>
 `is_vertex_attrib_from_file` to `true` in the material_create_info_t struct, in that case the hard coded vertex attributes would be ignored.
 
+**For C**
 ```C
 // prepare the mesh data structure
 mesh3d_t* box_mesh3d = mesh3d_load("resource/Box.obj");
@@ -381,6 +425,47 @@ material_destroy(box_material);
 material_release_resources(box_material);
 ```
 
+**For C++**
+```C++
+// prepare the mesh data structure
+V3D::Mesh3D box_mesh3d = V3D::Mesh3D::load("resource/Box.obj");
+box_mesh3d.makeCentroidOrigin(); // set the model's origin equal to its centroid, optional
+box_mesh3d.calculateTangents();   // calculate tangents for normal mapping
+
+// create renderable mesh object
+V3D::Mesh box = myRenderer.createMesh(box_mesh3d);
+
+// load the shader binary file
+V3D::Shader boxShader = myRenderer.loadShader("resource/shaders/bump_shader.sb");
+
+// create the material
+V3D::Material boxMaterial = myRenderer.createMaterial(boxShader);        //uses everything from file
+
+// load the required textures
+V3D::Texture boxTextures[] = 
+{ 
+    myRenderer.loadTexture("resource/textures/white.bmp"),
+    myRenderer.loadTexture("resource/textures/normal_map.bmp")
+};
+
+// set the albedo texture to its corresponding slot in the shader
+boxMaterial.set("albedo", boxTextures[0]);
+
+// set the normal map texture to its corresponding slot in the shader
+boxMaterial.set("normal_map", boxTextures[1]);
+
+// set the transformation matrices, note: uniform buffers could also be used instead of push constants
+boxMaterial.setPush("push.mvp_matrix", mvp.transpose());
+boxMaterial.setPush("push.model_matrix", modelMatrix.transpose());
+
+// bind the material by calling box_material.bind()
+// render the mesh by calling mesh.draw()
+
+// destroy and release V3D::Mesh, V3D::Mesh3D, V3D::Shader, and V3D::Texture
+
+boxMaterial.drop();
+```
+
 ### Text Rendering
 
 Currently on text meshes are support, meaning all the glyphs are being tessellated and rendered as complex polygons.
@@ -389,6 +474,7 @@ Texts are being accomplished by `font_t` `text_mesh_t` `glyph_mesh_pool_t` and `
 
 #### Font
 
+**For C**
 ```C
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
@@ -401,8 +487,19 @@ font_destroy(font);
 font_release_resources(font);
 ```
 
+**For C++**
+```C++
+// load the font data and allocate the required memory
+V3D::Font font("resource/fonts/Pushter-Regular.ttf");
+
+// use the font somewhere
+
+font.drop();
+```
+
 #### Glyph Mesh Pool
 
+**For C**
 ```C
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
@@ -430,8 +527,30 @@ glyph_mesh_pool_destroy(pool);
 glyph_mesh_pool_release_resources(pool); 
 ```
 
+**For C++**
+```C++
+// load the font data and allocate the required memory
+V3D::Font font("resource/fonts/Pushster-Regular.ttf");
+
+// create glyph mesh pool to create renderable meshes (`mesh_t`)
+V3D::GlyphMeshPool pool = myRenderer.createGlyphMeshPool(font);
+
+// creates a new `V3D::Mesh` because it is the first query for the glyph 'A'
+V3D::Mesh glyph_A = pool.getMesh('A'); 
+// creates a new `V3D::Mesh` because it is the first query for the glyph 'A'
+V3D::Mesh glyph_B = pool.getMesh('B');
+// returns the already created `V3D::Mesh` object for the glyph 'A', so value of glyph_A2 must be equals to glph_A
+V3D::Mesh glph_A2 = pool.getMesh('A');
+
+// render the meshes by calling Mesh::draw() kind of functions
+
+font.drop();
+pool.drop();
+```
+
 #### Text Mesh and String Handles
 
+**For C**
 ```C
 // load the font data and allocate the required memory
 font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
@@ -469,6 +588,34 @@ glyph_mesh_pool_release_resources(pool);
 text_mesh_destroy(game_ui);
 // release heap allocated memory
 text_mesh_release_resources(game_ui);
+```
+
+**For C++**
+```C++
+// load the font data and allocate the required memory
+V3D::Font font("resource/fonts/Pushster-Regular.ttf");
+
+// create glyph mesh pool to create renderable meshes (`V3D::Mesh`)
+V3D::GlyphMeshPool pool = myRenderer.createGlyphMeshPool(font);
+
+// create text mesh object
+V3D::TextMesh gameUI = myRenderer.createTextMesh(pool);
+
+// create a string, note: these string instances would be pooled automatically
+V3D::TextMesh::StringHandle scoreText = gameUI.createString();
+// set the position
+gameUI.setStringPosition(scoreText, { 0, 7, 5 });
+// set the scale
+gameUI.setStringScale(scoreText, { 0.8f, 0.8f, 0.8f });
+// set the string value, note: it allocates heap memory internally if the current size of the internal buffer is less than the required.
+gameUI.setString(scoreText, "Score: 456");
+
+// render the texts by calling gameUI.draw() function
+
+font.drop();
+pool.drop();
+// no need to destroy string handles because they are pooled inside the V3D::TextMesh object.
+gameUI.drop();
 ```
 
 ## More?
