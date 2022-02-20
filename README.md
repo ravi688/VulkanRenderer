@@ -19,6 +19,10 @@
    ```
    gcc --version
    ```
+   and
+   ```
+   g++ --version
+   ```
 2. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
    
    ```
@@ -107,7 +111,11 @@
 
 ### Where to go for examples?
 
+#### For C language
 You can check `VulkanRenderer/resource/shaders` and `VulkanRenderer/source/main.c` directory for now.
+
+#### For C++ language
+You can check `VulkanRenderer/showcase/resource/shaders` and `VulkanRenderer/showcase/main.cpp` directory for now.
 
 ## Features
 
@@ -116,6 +124,7 @@ You can check `VulkanRenderer/resource/shaders` and `VulkanRenderer/source/main.
 `Shader defintion` (`example_shader.glsl`) source files are first compiled into a `Shader Binary` files (`example_shader.sb`) by `shader_compiler.exe` executable.
 After the compilation, the shader binary files consumed as follows:
 
+**For C**
 ```C
 shader_t* example_shader = shader_load(renderer, "resource/shaders/example_shader.sb");
 
@@ -123,6 +132,14 @@ shader_t* example_shader = shader_load(renderer, "resource/shaders/example_shade
 
 shader_destroy(example_shader); // destroys the vulkan objects
 shader_release_resources(example_shader); // releases some extra heap allocated memory
+```
+**For C++**
+```C++
+V3D::Shader exampleShader = myRenderer.loadShader("resource/shaders/example_shader.sb");
+
+// use the shader
+
+exampleShader.drop();
 ```
 
 ### Shader defintiion
