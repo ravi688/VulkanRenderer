@@ -618,6 +618,25 @@ pool.drop();
 gameUI.drop();
 ```
 
+## Screenshots and video clips
+#### Skybox Rendering
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/f3wqkk3p7MA/0.jpg)](https://www.youtube.com/watch?v=f3wqkk3p7MA)
+
+#### Mesh Rendering
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/Jh2ViGbWrrE/0.jpg)](https://www.youtube.com/watch?v=Jh2ViGbWrrE)
+
+#### Specular Shading
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/nqGjmHLH4jk/0.jpg)](https://www.youtube.com/watch?v=nqGjmHLH4jk)
+
+#### Diffuse Shading
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/NQ_kysdMxHg/0.jpg)](https://www.youtube.com/watch?v=NQ_kysdMxHg)
+
+#### Color Blending and Text Rendering
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/2jXi0bTWkC4/0.jpg)](https://www.youtube.com/watch?v=2jXi0bTWkC4)
+
+#### Flat Shading
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/6K_JPCuZfFM/0.jpg)](https://www.youtube.com/watch?v=6K_JPCuZfFM)
+
 ## More?
 
 #### [Youtube](https://www.youtube.com/channel/UCWe_os3p4z3DBnQ4B5DUTfw/videos)
