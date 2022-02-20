@@ -95,29 +95,29 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.depthBiasSlopeFactor = 0.0f // Optional
 	};
 
-	// setup viewport state
-	VkRect2D scissor = 
-	{ 
-		.offset = { 0, 0 }, 
-		.extent = renderer->swapchain->image_extent 
-	};
-	VkViewport viewport = 
+	VkPipelineViewportStateCreateInfo* viewport_state = &create_info->shader->pipelineSettings.viewport;
+	if(viewport_state->viewportCount > 0)
 	{
-		.x = 0,
-		.y = 0, 
-		.width = renderer->swapchain->image_extent.width, 
-		.height = renderer->swapchain->image_extent.height, 
-		.minDepth = 0.0f, 
-		.maxDepth = 1.0f
-	};
-	VkPipelineViewportStateCreateInfo viewport_state =
+		VkViewport* viewports = (void*)viewport_state->pViewports;
+		for(int i = 0; i < viewport_state->viewportCount; i++)
+		{
+			if(viewports[i].width == 0)
+				viewports[i].width = renderer->swapchain->image_extent.width;
+			if(viewports[i].height == 0)
+				viewports[i].height = renderer->swapchain->image_extent.height;
+		}
+	}
+	if(viewport_state->scissorCount > 0)
 	{
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-		.viewportCount = 1,
-		.pViewports = &viewport,
-		.scissorCount = 1, 
-		.pScissors = &scissor
-	};
+		VkRect2D* scissors = (void*)viewport_state->pScissors;
+		for(int i = 0; i < viewport_state->scissorCount; i++)
+		{
+			if(scissors[i].extent.width == 0)
+				scissors[i].extent.width = renderer->swapchain->image_extent.width;
+			if(scissors[i].extent.height == 0)
+				scissors[i].extent.height = renderer->swapchain->image_extent.height;
+		}
+	}
 
 	// setup multiple sample state
 	VkPipelineMultisampleStateCreateInfo multi_sampling_state =
@@ -174,7 +174,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.pStages = shader_stages,
 		.pVertexInputState = &vertex_input_state,
 		.pInputAssemblyState = &create_info->shader->pipelineSettings.inputassembly,
-		.pViewportState = &create_info->shader->pipelineSettings.viewport,
+		.pViewportState = viewport_state,
 		.pRasterizationState = &create_info->shader->pipelineSettings.rasterization,
 		.pMultisampleState = &create_info->shader->pipelineSettings.multisample,
 		.pDepthStencilState = &create_info->shader->pipelineSettings.depthstencil,

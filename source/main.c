@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 {
 	memory_allocator_init(&argc);
 
-	renderer_t* renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 1920, 1080, "Vulkan 3D Renderer", false);
+	renderer_t* renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Vulkan 3D Renderer", false);
 	recreate_matrix(renderer_get_window(renderer), NULL);
 	render_window_subscribe_on_resize(renderer_get_window(renderer), recreate_matrix, NULL);
 	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -1.8f, 0.6f, 0 }, (vec3_t(float)) { 0, 0, -22 * DEG2RAD } );

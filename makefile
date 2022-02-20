@@ -235,7 +235,7 @@ debug: COMPILER_FLAGS += -g
 debug: $(TARGET)
 
 # Building examples
-EXAMPLES = ./examples/Skybox/main.exe
+EXAMPLES = ./examples/ShadowMap/main.exe
 
 .PHONY: build-examples build-examples-debug build-examples-release examples-clean
 
@@ -331,7 +331,7 @@ bin-clean:
 #		Shader Compilation
 #-------------------------------------------
 SHADER_COMPILER = ./shader_compiler/shader_compiler.exe
-SHADER_SOURCES = $(wildcard ./resource/shaders/*.glsl)
+SHADER_SOURCES = $(wildcard ./showcase/resource/shaders/*.glsl)
 SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
 
 SHADER_COMPILER_COMPILATION_MODE =
@@ -349,10 +349,10 @@ $(SHADER_COMPILER):
 .PHONY: shader-clean
 
 shader-debug: SHADER_COMPILER_COMPILATION_MODE += debug
-shader-debug: shader
+shader-debug: $(SHADER_BINARIES)
 shader-release: SHADER_COMPILER_COMPILATION_MODE += release
-shader-release: shader
-shader: $(SHADER_BINARIES)
+shader-release: $(SHADER_BINARIES)
+shader: shader-debug
 
 shader-clean:
 	del $(subst /,\, $(SHADER_BINARIES))
