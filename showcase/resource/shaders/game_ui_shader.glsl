@@ -1,6 +1,86 @@
-// Game UI shader
-
 #section SETTINGS
+
+
+GraphicsPipeline
+{
+    InputAssembly
+    {
+        topology = trianglelist,
+        primitiveRestartEnable = false
+    }
+
+    Rasterization
+    {
+        depthClampEnable = false,
+        rasterizerDiscardEnable = false,
+        polygonMode = fill,
+        lineWidth = 1,
+        cullMode = back,
+        frontFace = clockwise,
+        depthBiasEnable = false,
+    }
+
+    Viewport
+    {
+        viewport
+        {
+            x = 0,
+            y = 0,
+            width = 800,
+            height = 800,
+            minDepth = 0,
+            maxDepth = 1
+        }
+
+        scissor
+        {
+            offset
+            {
+                x = 0,
+                y = 0
+            }
+
+            extent
+            {
+                width = 800,
+                height = 800
+            }
+        }
+    }
+
+    Multisample
+    {
+        sampleShadingEnable = false,
+        rasterizationSamples = 1
+    }
+
+    ColorBlend
+    {
+        logicOpEnable = false,
+        logicOp = copy,
+
+        attachment
+        {
+            colorWriteMask = RGBA,
+            blendEnable = false,
+            srcColorBlendFactor = srcalpha,
+            dstColorBlendFactor = oneminussrcalpha,
+            colorBlendOp = add,
+            srcAlphaBlendFactor = one,
+            dstAlphaBlendFactor = zero,
+            alphaBlendOp = add
+        }
+    }
+
+    DepthStencil
+    {
+        depthTestEnable = true,
+        depthWriteEnable = true,
+        depthCompareOp = less,
+        depthBoundsTestEnable = false,
+        stencilTestEnable = false
+    }
+}
 
 
 #section LAYOUT
