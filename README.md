@@ -3,6 +3,7 @@
 ## Summary
 
 **Vulkan 3D renderer** is built on Vulkan API <br>
+Supported languages are C and C++ only for now.
 
 ### Tested on
 
