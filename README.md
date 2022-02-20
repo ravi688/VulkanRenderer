@@ -65,6 +65,14 @@
    mingw32-make -s build-release
    ```
 
+### Building Showcase (C++)
+1. Change the working directory to `VulkanRenderer/showcase` and build it by running the following commands
+
+   ```
+   cd showcase
+   mingw32-make -s build-debug
+   ```
+
 ### Building shaders manually (Optional)
 
 1. Change the working directory to `VulkanRenderer/shader_compiler` and build the `shader_compiler.exe` executable by running the following command
