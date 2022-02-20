@@ -5,6 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_stage_shader.h>
 #include <renderer/struct_descriptor.h>
 #include <bufferlib/buffer.h>
+#include <shader_compiler/settings_parser.h>
 
 typedef struct vulkan_descriptor_set_t vulkan_descriptor_set_t;
 
@@ -48,6 +49,7 @@ typedef struct vulkan_shader_t
 	VkDescriptorSetLayout vk_set_layout;
 	vulkan_shader_resource_descriptor_t* descriptors;
 	u16 descriptor_count;
+	GraphicsPipeline pipelineSettings;
 } vulkan_shader_t;
 
 BEGIN_CPP_COMPATIBLE

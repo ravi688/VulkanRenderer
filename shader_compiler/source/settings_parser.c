@@ -3,9 +3,8 @@
 #include <shader_compiler/settings_parser.h>
 #include <shader_compiler/assert.h> 		// assert()
 #include <shader_compiler/string_utilities.h>
-
-#include <vulkan/vulkan_core.h>
 #include <shader_compiler/dictionary.h>
+
 
 #include <stddef.h> 			// offsetof
 
@@ -91,7 +90,7 @@ static void field(const char* name, u32 length, const char* value, u32 value_len
 static dictionary_t* create_tree(UserData* data);
 static void destroy_tree(dictionary_t* tree);
 static dictionary_t setup_category_templates();
-static void link(UserData* data);
+static void link(UserData* data, BUFFER* offsetsBuffer);
 
 function_signature(const char*, parse_settings, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
 {
@@ -134,7 +133,7 @@ function_signature(const char*, parse_settings, const char* _source, buf_ucount_
 	parse(string, length, &callbacks, 0);
 
 	// merge and link the outputs
-	link(&data);
+	link(&data, offsets_buffer);
 
 	// release heap allocated resources
 	destroy_tree(data.tree);
@@ -390,19 +389,6 @@ static const char* parse(const char* str, u32 length, settings_parser_callbacks_
 	return parse(str, length - (str - origin), callbacks, categoryRank);
 }
 
-
-typedef struct GraphicsPipeline
-{
-	VkPipelineInputAssemblyStateCreateInfo	inputassembly;
-	VkPipelineTessellationStateCreateInfo	tessellation;
-	VkPipelineViewportStateCreateInfo		viewport;
-	VkPipelineRasterizationStateCreateInfo	rasterization;
-	VkPipelineMultisampleStateCreateInfo	multisample;
-	VkPipelineDepthStencilStateCreateInfo	depthstencil;
-	VkPipelineColorBlendStateCreateInfo		colorblend;
-	VkPipelineDynamicStateCreateInfo		dynamic;
-} GraphicsPipeline;
-
 static Category create_graphicspipeline_category(UserData* data);
 
 #define createStringLiteral(literal) __createStringLiteral(data->literalBuffer, literal)
@@ -419,8 +405,17 @@ static dictionary_t* create_tree(UserData* data)
 	dictionary_t* categories = create_category_dictionary();
 	Category category = create_graphicspipeline_category(data);
 	dictionary_push(categories, createStringLiteral("graphicspipeline"), &category);
+	buf_ucount_t offset = buf_get_element_count(data->mainOutput);
 	buf_push_pseudo(data->mainOutput, sizeof(GraphicsPipeline));
-	printf("Size of GraphicsPipeline: %u\n", sizeof(GraphicsPipeline));
+	GraphicsPipeline* pipeline = buf_get_ptr_at(data->mainOutput, offset);
+	pipeline->inputassembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	pipeline->tessellation.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+	pipeline->viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	pipeline->rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	pipeline->multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	pipeline->depthstencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	pipeline->colorblend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	pipeline->dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	return categories;
 }
 
@@ -430,13 +425,59 @@ static void destroy_tree(dictionary_t* tree)
 }
 
 
-static void link(UserData* data)
+static void link(UserData* data, BUFFER* offsetsBuffer)
 {
 	dictionary_t* templates = &data->categoryTemplates;
-	u32 count = dictionary_get_count(templates);
-	for(u32 i = 0; i < count; i++)
-	{
+	
+	// at the category templates
+	const char* attachmentStr = "attachment";
+	const char* scissorStr = "scissor";
+	const char* viewportStr = "viewport";
+	CategoryTemplate* attachmentTemplate = dictionary_get_value_ptr(templates, &attachmentStr);
+	CategoryTemplate* scissorTemplate = dictionary_get_value_ptr(templates, &scissorStr);
+	CategoryTemplate* viewportTemplate = dictionary_get_value_ptr(templates, &viewportStr);
+	GraphicsPipeline* pipeline = buf_get_ptr_at(data->mainOutput, data->mainBaseOffset);
 
+	// set the counts
+	pipeline->colorblend.attachmentCount = buf_get_element_count(&attachmentTemplate->instances) / sizeof(VkPipelineColorBlendAttachmentState);
+	pipeline->viewport.scissorCount = buf_get_element_count(&scissorTemplate->instances) / sizeof(VkRect2D);
+	pipeline->viewport.viewportCount = buf_get_element_count(&viewportTemplate->instances) / sizeof(VkViewport);
+
+	if(pipeline->colorblend.attachmentCount != 0)
+	{
+		// pAttachments would hold the offset of attachments
+		pipeline->colorblend.pAttachments = (void*)(buf_get_element_count(data->mainOutput));
+
+		// register the offset for update whenever the buffer resizes
+		buf_ucount_t index = data->mainBaseOffset + offsetof(GraphicsPipeline, colorblend.pAttachments);
+		buf_push(offsetsBuffer, &index);
+
+		// copy (push) to main output buffer
+		buf_pushv(data->mainOutput, buf_get_ptr(&attachmentTemplate->instances), buf_get_element_count(&attachmentTemplate->instances));
+	}
+	if(pipeline->viewport.scissorCount != 0)
+	{
+		// pScissors would hold the offset of scissors
+		pipeline->viewport.pScissors = (void*)(buf_get_element_count(data->mainOutput));
+	
+		// register the offset for update whenever the buffer resizes		
+		buf_ucount_t index = data->mainBaseOffset + offsetof(GraphicsPipeline, viewport.pScissors);
+		buf_push(offsetsBuffer, &index);
+		
+		// copy (push) to main output buffer
+		buf_pushv(data->mainOutput, buf_get_ptr(&scissorTemplate->instances), buf_get_element_count(&scissorTemplate->instances));
+	}
+	if(pipeline->viewport.viewportCount != 0)
+	{
+		// pViewports would hold the offset of viewports
+		pipeline->viewport.pViewports = (void*)(buf_get_element_count(data->mainOutput));
+		
+		// register the offset for update whenever the buffer resizes
+		buf_ucount_t index = data->mainBaseOffset + offsetof(GraphicsPipeline, viewport.pViewports);
+		buf_push(offsetsBuffer, &index);
+		
+		// copy (push) to main output buffer
+		buf_pushv(data->mainOutput, buf_get_ptr(&viewportTemplate->instances), buf_get_element_count(&viewportTemplate->instances));
 	}
 }
 
@@ -541,7 +582,7 @@ static Category create_scissor_category(UserData* data)
 /* template */
 static Category create_viewport_category(UserData* data)
 {
-	buf_ucount_t offset = buf_get_element_count(data->output);
+	buf_ucount_t offset = 0;
 	buf_push_pseudo(data->output, sizeof(VkViewport));
 	dictionary_t* fields = create_field_dictionary();
     Field field = { offset + offsetof(VkViewport, x), write_float };

@@ -125,17 +125,13 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 		.sampleShadingEnable = VK_FALSE,
 		.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-		.minSampleShading = 1.0f, // Optional
-		.pSampleMask = NULL, // Optional
-		.alphaToCoverageEnable = VK_FALSE, // Optional
-		.alphaToOneEnable = VK_FALSE // Optional
 	};
 
 	// setup color blend attachment state
 	VkPipelineColorBlendAttachmentState color_blend_attachmentment_state = 
 	{
 		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-		.blendEnable = (create_info->blend_enabled == true) ? VK_TRUE : VK_FALSE,
+		.blendEnable = VK_FALSE,
 		.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
 		.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
 		.colorBlendOp = VK_BLEND_OP_ADD,
@@ -143,7 +139,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
 		.alphaBlendOp = VK_BLEND_OP_ADD
 	};
-	
+
 	// setup color blend state
 	VkPipelineColorBlendStateCreateInfo color_blend_state = 
 	{
@@ -166,11 +162,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.depthWriteEnable = VK_TRUE,
 		.depthCompareOp = VK_COMPARE_OP_LESS,
 		.depthBoundsTestEnable = VK_FALSE,
-		.minDepthBounds = 0.0f, 	// optional
-		.maxDepthBounds = 1.0f,		// optional
-		.stencilTestEnable = VK_FALSE,
-		.front = (VkStencilOpState) { }, // optional
-		.back = (VkStencilOpState) { } 	 // optional
+		.stencilTestEnable = VK_FALSE
 	};
 
 	// create graphics pipeline
@@ -181,12 +173,12 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.stageCount = 2,
 		.pStages = shader_stages,
 		.pVertexInputState = &vertex_input_state,
-		.pInputAssemblyState = &input_assembly_state,
-		.pViewportState = &viewport_state,
-		.pRasterizationState = &rasterization_state,
-		.pMultisampleState = &multi_sampling_state,
-		.pDepthStencilState = &depth_stencil_state,
-		.pColorBlendState = &color_blend_state,
+		.pInputAssemblyState = &create_info->shader->pipelineSettings.inputassembly,
+		.pViewportState = &create_info->shader->pipelineSettings.viewport,
+		.pRasterizationState = &create_info->shader->pipelineSettings.rasterization,
+		.pMultisampleState = &create_info->shader->pipelineSettings.multisample,
+		.pDepthStencilState = &create_info->shader->pipelineSettings.depthstencil,
+		.pColorBlendState = &create_info->shader->pipelineSettings.colorblend,
 		.pDynamicState = NULL, // Optional
 		.layout = pipeline->pipeline_layout->handle,
 		.renderPass = renderer->render_pass->handle,
