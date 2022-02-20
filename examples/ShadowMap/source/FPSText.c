@@ -20,7 +20,7 @@ static void onWindowResize(render_window_t* _, void* user_data)
 {
 	vec3f position = { };
 	position.y = WINDOW_HEIGHT * 0.5f - 250.0f;
-	position.z = -10.0f;
+	position.z = -WINDOW_WIDTH * 0.5f + 250.0f;
 	FPSText_setPosition(user_data, position);
 }
 
