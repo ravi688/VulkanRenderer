@@ -81,7 +81,6 @@ setup:
 	git -C ./dependencies/MeshLib checkout VulkanRenderer/main
 	git	-C ./dependencies/SafeMemory checkout VulkanRenderer/main
 	git -C ./dependencies/TemplateSystem checkout main
-	git -C ./dependencies/tgc checkout master
 	git -C ./dependencies/ttf2mesh checkout master
 	git -C ./shared-dependencies/BufferLib checkout VulkanRenderer/main
 	git -C ./dependencies/SafeMemory submodule update --init shared-dependencies/CallTrace
@@ -98,7 +97,6 @@ update:
 	git -C ./dependencies/MeshLib pull origin main
 	git	-C ./dependencies/SafeMemory pull origin main
 	git -C ./dependencies/TemplateSystem pull origin main
-	git -C ./dependencies/tgc pull origin master
 	git -C ./dependencies/ttf2mesh pull origin master
 	git -C ./shared-dependencies/BufferLib pull origin main
 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace pull origin main
@@ -109,7 +107,6 @@ update:
 	git -C ./dependencies/MeshLib push
 	git	-C ./dependencies/SafeMemory push
 	git -C ./dependencies/TemplateSystem push
-	git -C ./dependencies/tgc push
 	git -C ./dependencies/ttf2mesh push
 	git -C ./shared-dependencies/BufferLib push
 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace push
