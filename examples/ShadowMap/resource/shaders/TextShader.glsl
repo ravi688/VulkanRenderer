@@ -84,11 +84,15 @@ GraphicsPipeline
 
 #section LAYOUT
 
+// buffer for just position attribute at binding = 0
 per-vertex [0, 0] vec3 position;
+
+// interleaved buffer at binding = 1
 per-instance [1, 1] vec3 offset;
 per-instance [1, 2] vec3 scale;
 per-instance [1, 3] vec3 rotation;
 
+// offset = 0
 vertex [push_constant] [0] uniform Push
 {
 	mat4 mvpMatrix;

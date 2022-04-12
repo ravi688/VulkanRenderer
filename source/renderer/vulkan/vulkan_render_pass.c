@@ -17,6 +17,119 @@ RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new()
 	return render_pass;
 }
 
+static vulkan_render_pass_t* create_color_render_pass(vulkan_renderer_t* renderer, VkFormat color_format, VkFormat depth_format)
+{
+	// setup color attachment description
+	VkAttachmentDescription color_attachment = 
+	{
+		.format = color_format,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+	};
+
+	// setup depth attachment description
+	VkAttachmentDescription depth_attachment = 
+	{
+		.format = depth_format,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
+
+	// setup subpass description
+
+	VkAttachmentReference color_attachment_reference =
+	{
+		.attachment = 0,
+		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	};
+	VkAttachmentReference depth_attachment_reference = 
+	{
+		.attachment = 1,
+		.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
+	VkSubpassDescription subpass =
+	{
+		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		.colorAttachmentCount = 1,
+		.pColorAttachments = &color_attachment_reference,
+		.pDepthStencilAttachment = &depth_attachment_reference
+	};
+
+	// create vulkan render pass
+	VkAttachmentDescription attachments[2] = { color_attachment, depth_attachment };
+	VkRenderPass renderPass;
+ 	VkRenderPassCreateInfo render_pass_create_info =
+ 	{
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		.attachmentCount = 2,
+		.pAttachments = &attachments[0],
+		.subpassCount = 1,
+		.pSubpasses = &subpass
+		// .dependencyCount = 1,
+		// .pDependencies = &dependency
+	};
+
+	vulkan_render_pass_t* render_pass = vulkan_render_pass_new();
+	render_pass->renderer = renderer;
+	VkResult result = vkCreateRenderPass(renderer->logical_device->handle, &render_pass_create_info, NULL, &render_pass->handle);
+	vulkan_result_assert_success(result);
+	return render_pass;
+}
+
+static vulkan_render_pass_t* create_shadow_map_render_pass(vulkan_renderer_t* renderer, VkFormat depth_format)
+{
+	VkAttachmentDescription depth_attachment_description =
+	{
+		.format = depth_format,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+	};
+
+	VkAttachmentReference depth_attachment_reference = 
+	{
+		.attachment = 0,
+		.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
+
+	VkSubpassDescription subpass = 
+	{
+		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		.colorAttachmentCount = 0,		// optional
+		.pDepthStencilAttachment = &depth_attachment_reference
+	};
+
+	VkRenderPassCreateInfo create_info = 
+	{
+		.attachmentCount = 1,
+		.pAttachments = &depth_attachment_description,
+		.subpassCount = 1,
+		.pSubpasses = &subpass,
+		.dependencyCount = 0,
+		.pDependencies = NULL
+	};
+
+	vulkan_render_pass_t* render_pass = vulkan_render_pass_new();
+	render_pass->renderer = renderer;
+	VkResult result = vkCreateRenderPass(renderer->logical_device->handle, &create_info, NULL, &render_pass->handle);
+	vulkan_result_assert_success(result);
+	return render_pass;
+}
+
 RENDERER_API vulkan_render_pass_t* vulkan_render_pass_create(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
 {
 	vulkan_render_pass_t* render_pass = vulkan_render_pass_new();

@@ -1,5 +1,11 @@
 #section SETTINGS
 
+Properties
+{
+    castShadow = true
+    receiveShadow = false
+}
+
 GraphicsPipeline
 {
     InputAssembly

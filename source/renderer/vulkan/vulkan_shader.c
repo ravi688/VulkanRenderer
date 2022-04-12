@@ -71,21 +71,12 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	vulkan_shader_t* shader = vulkan_shader_new();
 	shader->renderer = renderer;
 	shader->stage_shaders = create_stage_shaders(renderer, shader_binary, shader_offset, &shader->stage_count);
-	if(layout_found)
-	{
-		shader->descriptors = create_descriptors(shader_binary, layout_offset, &shader->descriptor_count);
-		shader->vk_set_layout = get_vulkan_descriptor_set_layout(renderer, shader->descriptors, shader->descriptor_count);
-		vulkan_descriptor_set_create_info_t set_create_info =
-		{
-			.pool = renderer->vk_descriptor_pool,
-			.layout = shader->vk_set_layout
-		};
-		if(shader->vk_set_layout != VK_NULL_HANDLE)
-			shader->vk_set = vulkan_descriptor_set_create(renderer, &set_create_info);
-	}
+	
 	if(settings_found)
 	{
 		memcpy(&shader->pipelineSettings, buf_get_ptr_at(shader_binary, settings_offset), sizeof(GraphicsPipeline));
+		memcpy(&shader->properties, buf_get_ptr_at(shader_binary, settings_offset + sizeof(GraphicsPipeline)), sizeof(Properties));
+
 		u32 viewportCount = shader->pipelineSettings.viewport.viewportCount;
 		u32 scissorCount = shader->pipelineSettings.viewport.scissorCount;
 		u32 attachmentCount = shader->pipelineSettings.colorblend.attachmentCount;
@@ -108,6 +99,20 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 			memcpy((void*)shader->pipelineSettings.colorblend.pAttachments, buf_get_ptr_at(shader_binary, offset), sizeof(VkPipelineColorBlendAttachmentState) * attachmentCount);
 		}
 	}
+
+	if(layout_found)
+	{
+		shader->descriptors = create_descriptors(shader_binary, layout_offset, &shader->descriptor_count);
+		shader->vk_set_layout = get_vulkan_descriptor_set_layout(renderer, shader->descriptors, shader->descriptor_count);
+		vulkan_descriptor_set_create_info_t set_create_info =
+		{
+			.pool = renderer->vk_descriptor_pool,
+			.layout = shader->vk_set_layout
+		};
+		if(shader->vk_set_layout != VK_NULL_HANDLE)
+			shader->vk_set = vulkan_descriptor_set_create(renderer, &set_create_info);
+	}
+	
 	return shader;
 }
 

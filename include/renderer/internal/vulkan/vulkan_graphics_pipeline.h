@@ -18,7 +18,6 @@ typedef struct vulkan_graphics_pipeline_create_info_t
 	uint32_t push_constant_range_count;
 	VkPushConstantRange* push_constant_ranges;
 	VkDescriptorSetLayout vk_set_layout;
-	bool blend_enabled;
 } vulkan_graphics_pipeline_create_info_t;
 
 typedef struct vulkan_graphics_pipeline_t

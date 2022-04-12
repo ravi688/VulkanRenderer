@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 		.per_vertex_attribute_binding_count = 1,
 		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
 		.shader = quad_shader,
-		.is_transparent = true
+		// .is_transparent = true
 	};
 	material_t* quad_material = material_create(renderer, &quad_material_info);
 

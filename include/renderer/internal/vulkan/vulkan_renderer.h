@@ -24,7 +24,8 @@ typedef struct vulkan_renderer_t
 	vulkan_instance_t* instance;
 	vulkan_logical_device_t* logical_device;
 	vulkan_physical_device_t* physical_device;
-	vulkan_render_pass_t* render_pass;
+	vulkan_render_pass_t* render_pass; 							// render pass for rendering the final image
+	vulkan_render_pass_t* shadow_map_render_pass; 				// render pass for rendering the shadow map
 	VkSurfaceKHR surface;
 	VkQueue vk_graphics_queue;
 	VkCommandPool vk_command_pool;

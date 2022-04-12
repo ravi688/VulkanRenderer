@@ -20,7 +20,6 @@ typedef struct vulkan_material_create_info_t
 	u32 push_constant_range_count;
 	VkPushConstantRange* push_constant_ranges;
 	VkDescriptorSetLayout vk_set_layout;
-	bool is_transparent;
 } vulkan_material_create_info_t;
 
 typedef struct vulkan_material_t

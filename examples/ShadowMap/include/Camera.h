@@ -15,8 +15,8 @@ typedef struct Camera
 	vec4f clearColor;
 	union
 	{
-		float fov;
-		float height;
+		float fov;				// if the camera is in perspective projection mode
+		float height; 			// if the camera is in orthographic projection mode
 	};
 	float aspectRatio;
 	float farClipPlane;

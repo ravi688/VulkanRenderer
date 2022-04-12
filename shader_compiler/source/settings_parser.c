@@ -390,6 +390,7 @@ static const char* parse(const char* str, u32 length, settings_parser_callbacks_
 }
 
 static Category create_graphicspipeline_category(UserData* data);
+static Category create_properties_category(UserData* data);
 
 #define createStringLiteral(literal) __createStringLiteral(data->literalBuffer, literal)
 static char** __createStringLiteral(BUFFER* literalBuffer, const char* literal)
@@ -405,8 +406,11 @@ static dictionary_t* create_tree(UserData* data)
 	dictionary_t* categories = create_category_dictionary();
 	Category category = create_graphicspipeline_category(data);
 	dictionary_push(categories, createStringLiteral("graphicspipeline"), &category);
+	category = create_properties_category(data);
+	dictionary_push(categories, createStringLiteral("properties"), &category);
 	buf_ucount_t offset = buf_get_element_count(data->mainOutput);
-	buf_push_pseudo(data->mainOutput, sizeof(GraphicsPipeline));
+	buf_push_pseudo(data->mainOutput, sizeof(GraphicsPipeline) + sizeof(Properties));
+	
 	GraphicsPipeline* pipeline = buf_get_ptr_at(data->mainOutput, offset);
 	pipeline->inputassembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	pipeline->tessellation.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
@@ -416,6 +420,11 @@ static dictionary_t* create_tree(UserData* data)
 	pipeline->depthstencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	pipeline->colorblend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	pipeline->dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+
+	Properties* properties = buf_get_ptr_at(data->mainOutput, offset + sizeof(GraphicsPipeline));
+	properties->castShadow = true;		// default value
+	properties->receiveShadow = true; 	// default value
+
 	return categories;
 }
 
@@ -479,6 +488,19 @@ static void link(UserData* data, BUFFER* offsetsBuffer)
 		// copy (push) to main output buffer
 		buf_pushv(data->mainOutput, buf_get_ptr(&viewportTemplate->instances), buf_get_element_count(&viewportTemplate->instances));
 	}
+}
+
+static void write_bool(const char* str, void* output);
+
+static Category create_properties_category(UserData* data)
+{
+	dictionary_t* fields = create_field_dictionary();
+	u32 offset = sizeof(GraphicsPipeline);
+	Field field = { offset + offsetof(Properties, castShadow), write_bool };
+	dictionary_push(fields, createStringLiteral("castshadow"), &field);
+	field = (Field) { offset + offsetof(Properties, receiveShadow), write_bool };
+	dictionary_push(fields, createStringLiteral("receiveshadow"), &field);
+	return (Category) { .fields = fields, .categories = NULL };
 }
 
 static Category create_inputassembly_category(UserData* data);
@@ -1146,4 +1168,16 @@ static void write_VkColorComponentFlags(const char* str, void* output)
 
 	// else LOG_FETAL_ERR("Invalid value \"%s\" has been assigned to a variable of type VkColorComponentFlags\n", str);
 	memcpy(output, &value, sizeof(value));	
+}
+
+static void write_bool(const char* str, void* output)
+{
+	assert(sizeof(bool) == 1);
+	bool value;
+	if(strcmp(str, "true") == 0)
+		value = true;
+	else if(strcmp(str, "false") == 0)
+		value = false;
+	else LOG_FETAL_ERR("Invalid value \"%s\" has been assigned to a variable of type bool\n", str);
+	memcpy(output, &value, 1);
 }

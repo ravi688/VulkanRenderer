@@ -306,6 +306,7 @@ build-release: shader-release
 	$(MAKE) release
 
 build-debug: shader-debug
+	$(MAKE) --directory=..\..\ lib-static-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
 
