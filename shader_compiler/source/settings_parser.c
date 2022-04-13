@@ -421,6 +421,57 @@ static dictionary_t* create_tree(UserData* data)
 	pipeline->colorblend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	pipeline->dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 
+	pipeline->inputassembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	pipeline->inputassembly.primitiveRestartEnable = VK_FALSE;
+
+	pipeline->rasterization.depthClampEnable = VK_FALSE;
+	pipeline->rasterization.rasterizerDiscardEnable = VK_FALSE;
+	pipeline->rasterization.polygonMode = VK_POLYGON_MODE_FILL;
+	pipeline->rasterization.lineWidth = 1.0f;
+	pipeline->rasterization.cullMode = VK_CULL_MODE_BACK_BIT;
+	pipeline->rasterization.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	pipeline->rasterization.depthBiasEnable = VK_FALSE;
+
+	VkViewport* viewport = malloc(sizeof(VkViewport));
+	*viewport = (VkViewport)
+	{
+		.x = 0, .y = 0,
+		.width = 800, .height = 800,
+		.minDepth = 0, .maxDepth = 1
+	};
+
+	VkRect2D* scissor = malloc(sizeof(VkRect2D));
+	*scissor = (VkRect2D)
+	{
+		.offset = { .x = 0, .y = 0 },
+		.extent = { .width = 800, .height = 800 }
+	};
+
+	pipeline->viewport.pViewports = viewport;
+	pipeline->viewport.pScissors = scissor;
+	pipeline->viewport.viewportCount = 1;
+	pipeline->viewport.scissorCount = 1;
+
+	pipeline->multisample.sampleShadingEnable = VK_FALSE;
+	pipeline->multisample.rasterizationSamples = 1;
+
+	VkPipelineColorBlendAttachmentState* colorAttachment = malloc(sizeof(VkPipelineColorBlendAttachmentState));
+
+	*colorAttachment = (VkPipelineColorBlendAttachmentState)
+	{
+		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+		.blendEnable = VK_FALSE
+	};
+
+	pipeline->colorblend.pAttachments = colorAttachment;
+	pipeline->colorblend.attachmentCount = 1;
+
+	pipeline->depthstencil.depthTestEnable = VK_TRUE;
+	pipeline->depthstencil.depthWriteEnable = VK_TRUE;
+	pipeline->depthstencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	pipeline->depthstencil.depthBoundsTestEnable = VK_FALSE;
+	pipeline->depthstencil.stencilTestEnable = VK_FALSE;
+
 	Properties* properties = buf_get_ptr_at(data->mainOutput, offset + sizeof(GraphicsPipeline));
 	properties->castShadow = true;		// default value
 	properties->receiveShadow = true; 	// default value
@@ -447,47 +498,83 @@ static void link(UserData* data, BUFFER* offsetsBuffer)
 	CategoryTemplate* viewportTemplate = dictionary_get_value_ptr(templates, &viewportStr);
 	GraphicsPipeline* pipeline = buf_get_ptr_at(data->mainOutput, data->mainBaseOffset);
 
-	// set the counts
-	pipeline->colorblend.attachmentCount = buf_get_element_count(&attachmentTemplate->instances) / sizeof(VkPipelineColorBlendAttachmentState);
-	pipeline->viewport.scissorCount = buf_get_element_count(&scissorTemplate->instances) / sizeof(VkRect2D);
-	pipeline->viewport.viewportCount = buf_get_element_count(&viewportTemplate->instances) / sizeof(VkViewport);
+	// get the instance counts as defined (explicitly) in the shader
+	u32 colorAttachmentCount = buf_get_element_count(&attachmentTemplate->instances) / sizeof(VkPipelineColorBlendAttachmentState);
+	u32 scissorCount = buf_get_element_count(&scissorTemplate->instances) / sizeof(VkRect2D);
+	u32 viewportCount = buf_get_element_count(&viewportTemplate->instances) / sizeof(VkViewport);
 
-	if(pipeline->colorblend.attachmentCount != 0)
+	// set the default values
+	void* defaultValue = (void*)pipeline->colorblend.pAttachments;
+	u32 size = sizeof(VkPipelineColorBlendAttachmentState) * pipeline->colorblend.attachmentCount;
+	if(colorAttachmentCount != 0)
 	{
-		// pAttachments would hold the offset of attachments
-		pipeline->colorblend.pAttachments = (void*)(buf_get_element_count(data->mainOutput));
+		// release the default values
+		if(pipeline->colorblend.attachmentCount != 0)
+			free((void*)pipeline->colorblend.pAttachments);
 
-		// register the offset for update whenever the buffer resizes
-		buf_ucount_t index = data->mainBaseOffset + offsetof(GraphicsPipeline, colorblend.pAttachments);
-		buf_push(offsetsBuffer, &index);
 
-		// copy (push) to main output buffer
-		buf_pushv(data->mainOutput, buf_get_ptr(&attachmentTemplate->instances), buf_get_element_count(&attachmentTemplate->instances));
+		// overwrite with explicit values
+		defaultValue = buf_get_ptr(&attachmentTemplate->instances);
+		size = buf_get_element_count(&attachmentTemplate->instances);
+
+		// set the attachment count
+		pipeline->colorblend.attachmentCount = size / sizeof(VkPipelineColorBlendAttachmentState);
 	}
-	if(pipeline->viewport.scissorCount != 0)
+	// pAttachments would hold the offset of attachments
+	pipeline->colorblend.pAttachments = (void*)(buf_get_element_count(data->mainOutput));
+	// register the offset for update whenever the buffer resizes
+	buf_ucount_t index = data->mainBaseOffset + offsetof(GraphicsPipeline, colorblend.pAttachments);
+	buf_push(offsetsBuffer, &index);
+	// copy (push) to main output buffer
+	buf_pushv(data->mainOutput, defaultValue, size);
+
+	// set the default values
+	defaultValue = (void*)pipeline->viewport.pScissors;
+	size = sizeof(VkRect2D) * pipeline->viewport.scissorCount;
+	if(scissorCount != 0)
 	{
-		// pScissors would hold the offset of scissors
-		pipeline->viewport.pScissors = (void*)(buf_get_element_count(data->mainOutput));
-	
-		// register the offset for update whenever the buffer resizes		
-		buf_ucount_t index = data->mainBaseOffset + offsetof(GraphicsPipeline, viewport.pScissors);
-		buf_push(offsetsBuffer, &index);
-		
-		// copy (push) to main output buffer
-		buf_pushv(data->mainOutput, buf_get_ptr(&scissorTemplate->instances), buf_get_element_count(&scissorTemplate->instances));
+		// release the default values
+		if(pipeline->viewport.scissorCount != 0)
+			free((void*)pipeline->viewport.pScissors);
+
+		// overwrite with explicit values
+		defaultValue = buf_get_ptr(&scissorTemplate->instances);
+		size = buf_get_element_count(&scissorTemplate->instances);
+
+		// set the scissor count
+		pipeline->viewport.scissorCount = size / sizeof(VkRect2D);
 	}
-	if(pipeline->viewport.viewportCount != 0)
+	// pScissors would hold the offset of scissors
+	pipeline->viewport.pScissors = (void*)(buf_get_element_count(data->mainOutput));
+	// register the offset for update whenever the buffer resizes		
+	index = data->mainBaseOffset + offsetof(GraphicsPipeline, viewport.pScissors);
+	buf_push(offsetsBuffer, &index);
+	// copy (push) to main output buffer
+	buf_pushv(data->mainOutput, defaultValue, size);
+
+	// set the default values
+	defaultValue = (void*)pipeline->viewport.pViewports;
+	size = sizeof(VkViewport) * pipeline->viewport.viewportCount;
+	if(viewportCount != 0)
 	{
-		// pViewports would hold the offset of viewports
-		pipeline->viewport.pViewports = (void*)(buf_get_element_count(data->mainOutput));
+		// release the default values
+		if(pipeline->viewport.viewportCount != 0)
+			free((void*)pipeline->viewport.pViewports);
 		
-		// register the offset for update whenever the buffer resizes
-		buf_ucount_t index = data->mainBaseOffset + offsetof(GraphicsPipeline, viewport.pViewports);
-		buf_push(offsetsBuffer, &index);
-		
-		// copy (push) to main output buffer
-		buf_pushv(data->mainOutput, buf_get_ptr(&viewportTemplate->instances), buf_get_element_count(&viewportTemplate->instances));
+		// overwrite with explicit values
+		defaultValue = buf_get_ptr(&viewportTemplate->instances);
+		size = buf_get_element_count(&viewportTemplate->instances);
+
+		// set the viewport count
+		pipeline->viewport.viewportCount = size / sizeof(VkViewport);
 	}
+	// pViewports would hold the offset of viewports
+	pipeline->viewport.pViewports = (void*)(buf_get_element_count(data->mainOutput));	
+	// register the offset for update whenever the buffer resizes
+	index = data->mainBaseOffset + offsetof(GraphicsPipeline, viewport.pViewports);
+	buf_push(offsetsBuffer, &index);
+	// copy (push) to main output buffer
+	buf_pushv(data->mainOutput, defaultValue, size);
 }
 
 static void write_bool(const char* str, void* output);
