@@ -35,18 +35,34 @@ int main()
 	VkSemaphore imageAvailableSemaphore = pvkCreateSemaphore(logicalGPU);
 	VkSemaphore renderFinishSemaphore = pvkCreateSemaphore(logicalGPU);
 
+	VkRenderPass renderPass = pvkCreateRenderPass(logicalGPU);
+	PvkFramebuffer* framebuffers = pvkCreateFramebuffers(logicalGPU, swapchain, renderPass, VK_FORMAT_B8G8R8A8_SRGB, 800, 800);
+
 	while(!pvkWindowShouldClose(window))
 	{
-		uint32_t index;
+		uint32_t index = 0;
 		PVK_CHECK(vkAcquireNextImageKHR(logicalGPU, swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &index));
 
-		pvkSubmit(commandBuffers[index], graphicsQueue, imageAvailableSemaphore, renderFinishSemaphore);
+		pvkBeginCommandBuffer(commandBuffers[index]);
 		
+		pvkBeginRenderPass(commandBuffers[index], renderPass, framebuffers[index].handle, 800, 800);
+
+
+
+		pvkEndRenderPass(commandBuffers[index]);
+
+		pvkEndCommandBuffer(commandBuffers[index]);
+
+		pvkSubmit(commandBuffers[index], graphicsQueue, imageAvailableSemaphore, renderFinishSemaphore);
 		pvkPresent(index, swapchain, presentQueue, renderFinishSemaphore);
 
 		pvkWindowPollEvents(window);
 	}
 
+	pvkDestroyFramebuffers(logicalGPU, framebuffers);
+	vkDestroyRenderPass(logicalGPU, renderPass, NULL);
+	vkDestroySemaphore(logicalGPU, imageAvailableSemaphore, NULL);
+	vkDestroySemaphore(logicalGPU, renderFinishSemaphore, NULL);
 	delete(commandBuffers);
 	vkDestroyCommandPool(logicalGPU, commandPool, NULL);
 	vkDestroySwapchainKHR(logicalGPU, swapchain, NULL);

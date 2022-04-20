@@ -4,37 +4,14 @@
 #include <vulkan/vulkan.h> 	// for vulkan
 
 #include <stdint.h> 		// standard int types
-#include <stdio.h> 			// printf and puts
+#include <stdio.h> 			// printf, puts, fopen, fclose
 #include <stdbool.h>	 	// bool
 #include <stdlib.h> 		// malloc
 #include <string.h> 		// memset
 #include <stdarg.h> 		// va_list, va_start, va_end, va_arg
 #include <assert.h> 		// assert()
 
-/* Memory functions */
-#define new(type) (type*)__new(sizeof(type))
-#define newv(type, count) (type*)__new(sizeof(type) * count)
-static void* __new(size_t size) { void* block = malloc(size); memset(block, 0, size); return block; }
-#define delete(ptr) __delete((char**)&(ptr))
-static void __delete(char** ptr) 
-{ 
-	if(*ptr == NULL) {  puts("[Warning] You are trying to free an invalid memory block, ptr = NULL"); return;  }
-	free((void*)(*ptr)); 
-	*ptr = NULL; 
-}
-
-/* Resulting checking */
-#define PVK_CHECK(result) pvkCheckResult(result, __LINE__, __FUNCTION__, __FILE__)
-
-static void pvkCheckResult(VkResult result, uint32_t line_no, const char* function_name, const char* source_name)
-{
-	if(result != VK_SUCCESS)
-	{
-		printf("Result != VK_SUCCESS, Result = %lld , at %lu, %s, %s\n", result, line_no, function_name, source_name);
-		exit(0);
-	}
-}
-
+/* Logging functions */
 #define PVK_FETAL_ERROR(...) pvkFetalError(__VA_ARGS__)
 #define PVK_WARNING(...) pvkLog("[Warning] ", __VA_ARGS__)
 #define PVK_ERROR(...) pvkLog("[Error] ", __VA_ARGS__)
@@ -60,6 +37,26 @@ static void pvkFetalError(const char* format, ...)
 	exit(0);
 }
 
+/* Memory functions */
+#define new(type) (type*)__new(sizeof(type))
+#define newv(type, count) (type*)__new(sizeof(type) * count)
+static void* __new(size_t size) { void* block = malloc(size); memset(block, 0, size); return block; }
+#define delete(ptr) __delete((char**)&(ptr))
+static void __delete(char** ptr) 
+{ 
+	if(*ptr == NULL) {  PVK_WARNING("You are trying to free an invalid memory block, ptr = NULL"); return;  }
+	free((void*)(*ptr)); 
+	*ptr = NULL; 
+}
+
+/* Resulting checking */
+#define PVK_CHECK(result) pvkCheckResult(result, __LINE__, __FUNCTION__, __FILE__)
+
+static void pvkCheckResult(VkResult result, uint32_t line_no, const char* function_name, const char* source_name)
+{
+	if(result != VK_SUCCESS)
+		PVK_FETAL_ERROR("Result != VK_SUCCESS, Result = %lld , at %lu, %s, %s\n", result, line_no, function_name, source_name);
+}
 
 /* Windowing system */
 #define GLFW_INCLUDE_VULKAN
@@ -89,10 +86,7 @@ static PvkWindow* pvkWindowCreate(uint32_t width, uint32_t height, const char* t
 #endif
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	if(full_screen)
-		window->handle = glfwCreateWindow(width, height, title, glfwGetPrimaryMonitor(), NULL);
-	else
-		window->handle = glfwCreateWindow(width, height, title, NULL, NULL);
+	window->handle = glfwCreateWindow(width, height, title, full_screen ? glfwGetPrimaryMonitor() : NULL, NULL);
 	// glfwSetFramebufferSizeCallback(window->handle, glfwOnWindowResizeCallback);
 	glfwSetWindowUserPointer(window->handle, window);
 	window->width = width;
@@ -281,7 +275,7 @@ static bool __pvkIsDeviceTypeSupported(VkPhysicalDevice device, VkPhysicalDevice
 {
 	VkPhysicalDeviceProperties properties;
 	vkGetPhysicalDeviceProperties(device, &properties);
-	printf("Found Device: %s\n", properties.deviceName);
+	PVK_INFO("Found Device: %s\n", properties.deviceName);
 	return properties.deviceType == type;
 }
 
@@ -422,17 +416,19 @@ static void __pvkUnionUInt32(uint32_t count, const uint32_t* values, uint32_t* o
 	// calculate the max value
 	uint32_t maxValue = values[0];
 	for(int i = 1; i < count; i++)
-		if(values[i] < maxValue)
+		if(values[i] > maxValue)
 			maxValue = values[i];
 
 	// look up table
+	assert(sizeof(bool) == 1);
 	bool exists[maxValue + 1]; memset(exists, false, maxValue + 1);
 
 	for(int i = 0; i < count; i++)
 	{
 		if(!exists[values[i]])
 		{
-			out_values[uniqueCount++] = values[i];
+			out_values[uniqueCount] = values[i];
+			uniqueCount++;
 			exists[values[i]] = true;
 		}
 	}
@@ -502,7 +498,7 @@ static VkDevice pvkCreateLogicalDeviceWithExtensions(VkInstance instance, VkPhys
 		.pQueueCreateInfos = queueCreateInfos,
 		.enabledExtensionCount = extensionCount,
 		.ppEnabledExtensionNames = extensions,
-		.pEnabledFeatures = &features,
+		.pEnabledFeatures = &features
 	};
 	VkDevice device;
 	PVK_CHECK(vkCreateDevice(physicalDevice, &dcInfo, NULL, &device));
@@ -589,11 +585,13 @@ static VkSemaphore pvkCreateSemaphore(VkDevice device)
 
 static void pvkSubmit(VkCommandBuffer commandBuffer, VkQueue queue, VkSemaphore wait, VkSemaphore signal)
 {
+	VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	VkSubmitInfo info =
 	{
 		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 		.waitSemaphoreCount = 1,
 		.pWaitSemaphores = &wait,
+		.pWaitDstStageMask = &waitStage,
 		.signalSemaphoreCount = 1,
 		.pSignalSemaphores = &signal,
 		.commandBufferCount = 1,
@@ -607,6 +605,7 @@ static void pvkPresent(uint32_t index, VkSwapchainKHR  swapchain, VkQueue queue,
 	VkResult result;
 	VkPresentInfoKHR info = 
 	{
+		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 		.waitSemaphoreCount = 1,
 		.pWaitSemaphores = &wait,
 		.swapchainCount = 1,
@@ -614,6 +613,419 @@ static void pvkPresent(uint32_t index, VkSwapchainKHR  swapchain, VkQueue queue,
 		.pImageIndices = &index,
 		.pResults = &result
 	};
-	assert(result == VK_SUCCESS);
+	// assert(result == VK_SUCCESS);
 	PVK_CHECK(vkQueuePresentKHR(queue, &info));
 }
+
+static void pvkBeginCommandBuffer(VkCommandBuffer commandBuffer)
+{
+	VkCommandBufferBeginInfo beginInfo = { .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+	PVK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+}
+
+static inline void pvkEndCommandBuffer(VkCommandBuffer commandBuffer)
+{
+	PVK_CHECK(vkEndCommandBuffer(commandBuffer));
+}
+
+static void pvkBeginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height)
+{
+	VkClearValue clearValue = { .color = { .float32 = { 0.01f, 0.02f, 0.3f, 1.0f } }  };
+	VkRenderPassBeginInfo beginInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+		.renderPass = renderPass,
+		.framebuffer = framebuffer,
+		.renderArea = { .offset = { 0, 0 }, .extent = { width, height } },
+		.clearValueCount = 1,
+		.pClearValues = &clearValue
+	};
+	vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+static inline void pvkEndRenderPass(VkCommandBuffer commandBuffer)
+{
+	vkCmdEndRenderPass(commandBuffer);
+}
+
+static VkRenderPass pvkCreateRenderPass(VkDevice device)
+{
+	VkAttachmentDescription colorAttachmentDescription = 
+	{
+		.format = VK_FORMAT_B8G8R8A8_SRGB,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+	 	.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+	 	.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+	 	.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+	 	.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+	 	.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+	 	.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+	};
+
+	VkAttachmentReference colorAttachmentReference = 
+	{
+		.attachment = 0,
+		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	};
+
+	VkSubpassDescription subpass = 
+	{
+		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		.colorAttachmentCount = 1,
+		.pColorAttachments = &colorAttachmentReference,
+	};
+
+	VkRenderPassCreateInfo rInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		.attachmentCount = 1, 
+		.pAttachments = &colorAttachmentDescription,
+		.subpassCount = 1,
+		.pSubpasses = &subpass
+	};
+	VkRenderPass renderPass;
+	PVK_CHECK(vkCreateRenderPass(device, &rInfo, NULL, &renderPass));
+	return renderPass;
+}
+
+typedef struct PvkFramebuffer
+{
+	VkFramebuffer handle;				// handle to vulkan framebuffer object
+	VkImageView* attachments;			// attachments (attached with this framebuffer)
+	uint32_t attachmentCount;			// number of attachment (attached with this framebuffer)
+} PvkFramebuffer;
+
+static PvkFramebuffer* pvkCreateFramebuffers(VkDevice device, VkSwapchainKHR swapchain, VkRenderPass renderPass, VkFormat format, uint32_t width, uint32_t height)
+{
+	// get the swapchain images
+	uint32_t imageCount;
+	PVK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, NULL));
+	assert(imageCount == 3);
+	VkImage* images = newv(VkImage, imageCount);
+	PVK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, images));
+
+	PvkFramebuffer* framebuffers = newv(PvkFramebuffer, 3);
+	for(int i = 0; i < 3; i++)
+	{
+		// create an image view for the corresponding image in the swapchain
+		framebuffers[i].attachments = new(VkImageView);
+		framebuffers[i].attachmentCount = 1;
+		VkImageViewCreateInfo vinfo = 
+		{
+			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+			.image = images[i],
+			.viewType = VK_IMAGE_VIEW_TYPE_2D,
+			.format = format,
+			.components = { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY },
+			.subresourceRange = 
+			{
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.levelCount = 1,
+				.layerCount = 1
+			}
+		};
+		PVK_CHECK(vkCreateImageView(device, &vinfo, NULL, framebuffers[i].attachments));
+
+		// create a framebuffer with the image view
+		VkFramebufferCreateInfo fInfo = 
+		{
+			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+			.renderPass = renderPass,
+			.attachmentCount = framebuffers[i].attachmentCount,
+			.pAttachments = framebuffers[i].attachments,
+			.width = width,
+			.height = height,
+			.layers = 1
+		};
+		PVK_CHECK(vkCreateFramebuffer(device, &fInfo, NULL, &framebuffers[i].handle));
+	}
+	return framebuffers;
+}
+
+static void pvkDestroyFramebuffers(VkDevice device, PvkFramebuffer* framebuffers)
+{
+	for(int i = 0; i < 3; i++)
+	{
+		vkDestroyImageView(device, *(framebuffers[i].attachments), NULL);
+		vkDestroyFramebuffer(device, framebuffers[i].handle, NULL);
+		delete(framebuffers[i].attachments);
+		framebuffers[i].attachmentCount = 0;
+	}
+}
+
+
+static const char* __pvkLoadBinaryFile(const char* filePath, size_t* out_length)
+{
+	FILE* file = fopen(filePath, "rb");
+	if(file == NULL)
+		PVK_FETAL_ERROR("Unable to open the file at path \"%s\"\n", filePath);
+	int result = fseek(file, 0, SEEK_END);
+	assert(result == 0);
+	size_t length = ftell(file);
+	if(length == 0)
+		PVK_WARNING("File at path \"%s\" is empty\n", filePath);
+	rewind(file);
+	char* data = newv(char, length);
+	size_t readLength = fread(data, 1, length, file);
+	assert(readLength == length);
+	fclose(file);
+	if(out_length != NULL)
+		*out_length = length;
+	return data;
+}
+
+static VkShaderModule pvkCreateShaderModule(VkDevice device, const char* filePath)
+{
+	size_t length;
+	const char* bytes = __pvkLoadBinaryFile(filePath, &length);
+	assert((length % 4) == 0);
+	VkShaderModuleCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		.codeSize = (uint32_t)length,
+		.pCode = (uint32_t*)bytes,
+	};
+	delete(bytes);
+	VkShaderModule shaderModule;
+	PVK_CHECK(vkCreateShaderModule(device, &cInfo, NULL, &shaderModule));
+	return shaderModule;
+}
+
+typedef struct PvkShader
+{
+	VkShaderModule handle;
+	PvkShaderType type;
+} PvkShader;
+
+static VkShaderStageFlagBits __pkvShaderTypeToVulkanShaderStage(PvkShaderType type)
+{
+	VkShaderStageFlagBits flags = 0;
+	if(type & PVK_SHADER_TYPE_VERTEX)
+		flags |= VK_SHADER_STAGE_VERTEX_BIT;
+	if(type & PVK_SHADER_TYPE_TESSELLATION)
+		flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+	if(type & PVK_SHADER_TYPE_GEOMETRY)
+		flags |= VK_SHADER_STAGE_GEOMETRY_BIT;
+	if(type & PVK_SHADER_TYPE_FRAGMENT)
+		flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+	return flags;
+}
+
+static VkPipelineShaderStageCreateInfo* __pvkCreatePipelineShaderStageCreateInfos(uint32_t count, const PvkShader* const shaders)
+{
+	VkPipelineShaderStageCreateInfo* infos = newv(VkPipelineShaderStageCreateInfo, count);
+	for(int i = 0; i < count; i++)
+	{
+		infos[i] = (VkPipelineShaderStageCreateInfo)
+		{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			.module = shaders[i].handle,
+			.pName = "main",
+			.stage = __pkvShaderTypeToVulkanShaderStage(shaders[i].type)	
+		};
+	}
+	return infos;
+}
+
+
+typedef struct PvkVertex
+{
+	// attribute at location = 0 : position of the vertex
+	struct 
+	{
+		float x, y, z;
+	} position;
+
+	// attribute at location = 1 : normal of the vertex
+	struct
+	{
+		float x, y, z;
+	} normal;
+
+	// attribute at location = 2 : texture coordinates of the vertex
+	union 
+	{
+		struct 
+		{
+			float x, y;
+		};
+		struct 
+		{
+			float s, t;
+		};
+	} texcoord;
+
+	// attribute at location = 3 : color of the vertex
+	struct
+	{
+		float r, g, b, a;
+	} color;
+
+} PvkVertex;
+
+#define PVK_VERTEX_SIZE sizeof(PvkVertex)
+#define PVK_VERTEX_ATTRIBUTE_COUNT 4
+#define PVK_VERTEX_POSITION_OFFSET offsetof(PvkVertex, position)
+#define PVK_VERTEX_NORMAL_OFFSET offsetof(PvkVertex, normal)
+#define PVK_VERTEX_TEXCOORD_OFFSET offsetof(PvkVertex, texcoord)
+#define PVK_VERTEX_COLOR_OFFSET offsetof(PvkVertex, color)
+
+static VkVertexInputAttributeDescription __pvkGetVertexInputAttributeDescription(uint32_t binding, uint32_t location, VkFormat format, uint32_t offset)
+{
+	return (VkVertexInputAttributeDescription)
+	{
+		.location = location,
+		.binding = binding,
+		.format = format,
+		.offset = offset
+	};
+}
+
+static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass,  uint32_t width, uint32_t height, uint32_t count, ...)
+{
+	PVK_INFO("Creating graphics pipeline\n");
+	/* Shader modules */
+	PvkShader shaderModules[count];
+	va_list args;
+	va_start(args, count);
+	for(int i = 0; i < count; i++)
+		shaderModules[i] = va_arg(args, PvkShader);
+	va_end(args);
+	VkPipelineShaderStageCreateInfo* stageCInfos = __pvkCreatePipelineShaderStageCreateInfos(count, shaderModules);
+
+	/* Vertex buffer layouts and their description */
+	VkVertexInputBindingDescription vertexBindingDescription = 
+	{
+		.binding = 0,
+		.stride = PVK_VERTEX_SIZE,
+		.inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+	};
+	VkVertexInputAttributeDescription* vertexAttributeDescriptions = newv(VkVertexInputAttributeDescription, PVK_VERTEX_ATTRIBUTE_COUNT);
+	vertexAttributeDescriptions[0] = __pvkGetVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, PVK_VERTEX_POSITION_OFFSET);
+	vertexAttributeDescriptions[1] = __pvkGetVertexInputAttributeDescription(0, 1, VK_FORMAT_R32G32B32A32_SFLOAT, PVK_VERTEX_NORMAL_OFFSET);
+	vertexAttributeDescriptions[2] = __pvkGetVertexInputAttributeDescription(0, 2, VK_FORMAT_R32G32_SFLOAT, PVK_VERTEX_TEXCOORD_OFFSET);
+	vertexAttributeDescriptions[3] = __pvkGetVertexInputAttributeDescription(0, 3, VK_FORMAT_R32G32B32A32_SFLOAT, PVK_VERTEX_COLOR_OFFSET);
+
+	VkPipelineVertexInputStateCreateInfo vertexInputStateCInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		.vertexBindingDescriptionCount = 1,
+		.pVertexBindingDescriptions = &vertexBindingDescription,
+		.vertexAttributeDescriptionCount = PVK_VERTEX_ATTRIBUTE_COUNT,
+		.pVertexAttributeDescriptions = vertexAttributeDescriptions
+	};
+
+	/* Primitive assembly */
+	VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		.primitiveRestartEnable = VK_FALSE
+	};
+
+	/* Viewport configuration */
+	VkViewport viewport = 
+	{
+		.x = 0,
+		.y = 0,
+		.width = width,
+		.height = height,
+		.minDepth = 0,
+		.maxDepth = 1.0f
+	};
+	VkRect2D scissor = 
+	{
+		.offset = { 0, 0 },
+		.extent = { width, height }
+	};
+
+	VkPipelineViewportStateCreateInfo viewportStateCInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		.viewportCount = 1,
+		.pViewports = &viewport,
+		.scissorCount = 1,
+		.pScissors = &scissor
+	};
+
+	/* Rasterization configuration */
+	VkPipelineRasterizationStateCreateInfo rasterizationStateCInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+		.depthClampEnable = VK_FALSE,
+		.rasterizerDiscardEnable = VK_FALSE,
+		.polygonMode = VK_POLYGON_MODE_FILL,
+		.cullMode = VK_CULL_MODE_BACK_BIT,
+		.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+		.depthBiasEnable = VK_FALSE
+	};
+
+	/* Multisampling */
+	VkPipelineMultisampleStateCreateInfo multisamplingStateCInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+		.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+		.sampleShadingEnable = VK_FALSE
+	};
+
+	/* Depth stencil configuration */
+	VkPipelineDepthStencilStateCreateInfo dephtStencilStateCInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+		.depthTestEnable = VK_FALSE,
+		.depthWriteEnable = VK_FALSE,
+		.stencilTestEnable = VK_FALSE
+	};
+
+	/* Color attachment configuration */
+	VkPipelineColorBlendAttachmentState colorAttachment = 
+	{
+		.blendEnable = VK_FALSE,
+		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT	
+	};
+
+	VkPipelineColorBlendStateCreateInfo colorBlendStateCInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+		.logicOpEnable = VK_FALSE,
+		.attachmentCount = 1,
+		.pAttachments = &colorAttachment
+	};
+
+	VkGraphicsPipelineCreateInfo pipelineCInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.stageCount = count,
+		.pStages = stageCInfos,
+		.pVertexInputState = &vertexInputStateCInfo,
+		.pInputAssemblyState = &inputAssemblyStateCInfo,
+		.pViewportState = &viewportStateCInfo,
+		.pRasterizationState = &rasterizationStateCInfo,
+		.pDepthStencilState = &dephtStencilStateCInfo,
+		.pColorBlendState = &colorBlendStateCInfo,
+		.layout = layout,
+		.renderPass = renderPass,
+		.subpass = 0
+	};
+
+	VkPipeline pipeline;
+	PVK_CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCInfo, NULL, &pipeline));
+	PVK_INFO("Succeed\n");
+
+	delete(stageCInfos);
+	delete(vertexAttributeDescriptions);
+	return pipeline;
+}
+
+
+static VkPipelineLayout pvkCreatePipelineLayout(VkDevice device)
+{
+	VkPipelineLayoutCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
+	};
+	VkPipelineLayout layout;
+	PVK_CHECK(vkCreatePipelineLayout(device, &cInfo, NULL, &layout));
+	return layout;
+}
+
