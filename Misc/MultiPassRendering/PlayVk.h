@@ -785,9 +785,9 @@ static VkShaderModule pvkCreateShaderModule(VkDevice device, const char* filePat
 		.codeSize = (uint32_t)length,
 		.pCode = (uint32_t*)bytes,
 	};
-	delete(bytes);
 	VkShaderModule shaderModule;
 	PVK_CHECK(vkCreateShaderModule(device, &cInfo, NULL, &shaderModule));
+	delete(bytes);
 	return shaderModule;
 }
 
@@ -883,7 +883,6 @@ static VkVertexInputAttributeDescription __pvkGetVertexInputAttributeDescription
 
 static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass,  uint32_t width, uint32_t height, uint32_t count, ...)
 {
-	PVK_INFO("Creating graphics pipeline\n");
 	/* Shader modules */
 	PvkShader shaderModules[count];
 	va_list args;
@@ -1010,7 +1009,6 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 
 	VkPipeline pipeline;
 	PVK_CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCInfo, NULL, &pipeline));
-	PVK_INFO("Succeed\n");
 
 	delete(stageCInfos);
 	delete(vertexAttributeDescriptions);

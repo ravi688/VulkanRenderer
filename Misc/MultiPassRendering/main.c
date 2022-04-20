@@ -38,6 +38,14 @@ int main()
 	VkRenderPass renderPass = pvkCreateRenderPass(logicalGPU);
 	PvkFramebuffer* framebuffers = pvkCreateFramebuffers(logicalGPU, swapchain, renderPass, VK_FORMAT_B8G8R8A8_SRGB, 800, 800);
 
+	VkShaderModule fragmentShader = pvkCreateShaderModule(logicalGPU, "shaders/shader.frag.spv");
+	VkShaderModule vertexShader = pvkCreateShaderModule(logicalGPU, "shaders/shader.vert.spv");
+
+	VkPipelineLayout pipelineLayout = pvkCreatePipelineLayout(logicalGPU);
+	VkPipeline pipeline = pvkCreateGraphicsPipeline(logicalGPU, pipelineLayout, renderPass, 800, 800, 2,
+													(PvkShader) { fragmentShader, PVK_SHADER_TYPE_FRAGMENT },
+													(PvkShader) { vertexShader, PVK_SHADER_TYPE_VERTEX });
+
 	while(!pvkWindowShouldClose(window))
 	{
 		uint32_t index = 0;
@@ -59,6 +67,10 @@ int main()
 		pvkWindowPollEvents(window);
 	}
 
+	vkDestroyPipeline(logicalGPU, pipeline, NULL);
+	vkDestroyPipelineLayout(logicalGPU, pipelineLayout, NULL);
+	vkDestroyShaderModule(logicalGPU, fragmentShader, NULL);
+	vkDestroyShaderModule(logicalGPU, vertexShader, NULL);
 	pvkDestroyFramebuffers(logicalGPU, framebuffers);
 	vkDestroyRenderPass(logicalGPU, renderPass, NULL);
 	vkDestroySemaphore(logicalGPU, imageAvailableSemaphore, NULL);
