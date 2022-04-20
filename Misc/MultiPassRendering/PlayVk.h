@@ -1106,3 +1106,12 @@ static void pvkDestroyBuffer(VkDevice device, PvkBuffer buffer)
 	vkDestroyBuffer(device, buffer.handle, NULL);
 	vkFreeMemory(device, buffer.memory, NULL);
 }
+
+static void pvkUploadToBuffer(VkDevice device, PvkBuffer buffer, void* data, size_t size)
+{
+	void* dst;
+	PVK_CHECK(vkMapMemory(device, buffer.memory, 0, size, 0, &dst));
+	memcpy(dst, data, size);
+	vkUnmapMemory(device, buffer.memory);
+}
+
