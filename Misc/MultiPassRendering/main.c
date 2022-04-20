@@ -7,16 +7,16 @@ int main()
 	PvkWindow* window = pvkWindowCreate(800, 800, "Vulkan Multipass Rendering", false);
 	VkSurfaceKHR surface = pvkWindowCreateVulkanSurface(window, instance);
 	VkPhysicalDevice physicalGPU = pvkGetPhysicalDevice(instance, surface, 
-														VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, 
+														VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, 
 														VK_FORMAT_B8G8R8A8_SRGB, 
 														VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, 
 														VK_PRESENT_MODE_FIFO_KHR);
 	uint32_t graphicsQueueFamilyIndex = pvkFindQueueFamilyIndex(physicalGPU, VK_QUEUE_GRAPHICS_BIT);
 	uint32_t presentQueueFamilyIndex = pvkFindQueueFamilyIndexWithPresentSupport(physicalGPU, surface);
-	uint32_t queueFamilyIndicies[2] = { graphicsQueueFamilyIndex, presentQueueFamilyIndex };
+	uint32_t queueFamilyIndices[2] = { graphicsQueueFamilyIndex, presentQueueFamilyIndex };
 	VkDevice logicalGPU = pvkCreateLogicalDeviceWithExtensions(instance, 
 																physicalGPU,
-																2, queueFamilyIndicies,
+																2, queueFamilyIndices,
 																1, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	VkQueue graphicsQueue, presentQueue;
 	vkGetDeviceQueue(logicalGPU, graphicsQueueFamilyIndex, 0, &graphicsQueue);
@@ -27,7 +27,7 @@ int main()
 													VK_FORMAT_B8G8R8A8_SRGB, 
 													VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, 
 													VK_PRESENT_MODE_FIFO_KHR,
-													2, queueFamilyIndicies);
+													2, queueFamilyIndices);
 
 	VkCommandPool commandPool = pvkCreateCommandPool(logicalGPU, 0, graphicsQueueFamilyIndex);
 	VkCommandBuffer* commandBuffers = pvkAllocateCommandBuffers(logicalGPU, commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -45,29 +45,7 @@ int main()
 	VkPipeline pipeline = pvkCreateGraphicsPipeline(logicalGPU, pipelineLayout, renderPass, 800, 800, 2,
 													(PvkShader) { fragmentShader, PVK_SHADER_TYPE_FRAGMENT },
 													(PvkShader) { vertexShader, PVK_SHADER_TYPE_VERTEX });
-
-	PvkVertex vertices[4] = 
-	{
-		{ { -0.5f, -0.5f },  { }, { }, { 0, 1, 1, 1 } },
-		{ { 0.5f, -0.5f },   { }, { }, { 1, 1, 1, 1 } },
-		{ { 0.5f, 0.5f },  { }, { }, { 1, 0, 1, 1 } },
-		{ { -0.5f, 0.5f }, { }, { }, { 1, 1, 0, 1 } }
-	};
-
-	uint16_t indices[6] = 
-	{
-		2, 1, 0,
-		0, 3, 2
-	};
-
-	PvkBuffer vertexBuffer = pvkCreateBuffer(physicalGPU, logicalGPU, 
-												VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-												VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, sizeof(vertices), 2, queueFamilyIndicies);
-	PvkBuffer indexBuffer = pvkCreateBuffer(physicalGPU, logicalGPU, 
-												VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-												VK_BUFFER_USAGE_INDEX_BUFFER_BIT, sizeof(indices), 2, queueFamilyIndicies);
-	pvkUploadToBuffer(logicalGPU, vertexBuffer, vertices, sizeof(vertices));
-	pvkUploadToBuffer(logicalGPU, indexBuffer, indices, sizeof(indices));
+	PvkGeometry* boxGeometry = pvkCreateBoxGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 1);
 
 	while(!pvkWindowShouldClose(window))
 	{
@@ -79,10 +57,8 @@ int main()
 		pvkBeginRenderPass(commandBuffers[index], renderPass, framebuffers[index].handle, 800, 800);
 
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-		VkDeviceSize offset = 0;
-		vkCmdBindVertexBuffers(commandBuffers[index], 0, 1, &vertexBuffer.handle, &offset);
-		vkCmdBindIndexBuffer(commandBuffers[index], indexBuffer.handle, 0, VK_INDEX_TYPE_UINT16);
-		vkCmdDrawIndexed(commandBuffers[index], sizeof(indices) / sizeof(uint16_t), 1, 0, 0, 0);
+		
+		pvkDrawGeometry(commandBuffers[index], boxGeometry);
 
 		pvkEndRenderPass(commandBuffers[index]);
 
@@ -94,8 +70,7 @@ int main()
 		pvkWindowPollEvents(window);
 	}
 
-	pvkDestroyBuffer(logicalGPU, vertexBuffer);
-	pvkDestroyBuffer(logicalGPU, indexBuffer);
+	pvkDestroyGeometry(logicalGPU, boxGeometry);
 	vkDestroyPipeline(logicalGPU, pipeline, NULL);
 	vkDestroyPipelineLayout(logicalGPU, pipelineLayout, NULL);
 	vkDestroyShaderModule(logicalGPU, fragmentShader, NULL);

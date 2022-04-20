@@ -1115,3 +1115,74 @@ static void pvkUploadToBuffer(VkDevice device, PvkBuffer buffer, void* data, siz
 	vkUnmapMemory(device, buffer.memory);
 }
 
+
+/* Geometry */
+typedef uint16_t PvkIndex;
+
+typedef struct PvkGeometryData
+{
+	PvkVertex* vertices;
+	PvkIndex* indices;
+	uint32_t vertexCount;
+	uint32_t indexCount;
+} PvkGeometryData;
+
+typedef struct PvkGeometry
+{
+	PvkBuffer vertexBuffer;
+	PvkBuffer indexBuffer;
+	uint16_t indexCount;
+} PvkGeometry;
+
+PvkGeometry* __pvkCreateGeometry(VkPhysicalDevice physicalDevice, VkDevice device, uint16_t queueFamilyIndexCount, uint32_t* queueFamilyIndices, PvkGeometryData* data)
+{
+	uint64_t vertexBufferSize = sizeof(PvkVertex) * data->vertexCount;
+	uint64_t indexBufferSize = sizeof(PvkIndex) * data->indexCount;
+	PvkBuffer vertexBuffer = pvkCreateBuffer(physicalDevice, device, 
+												VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+												VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexBufferSize, queueFamilyIndexCount, queueFamilyIndices);
+	PvkBuffer indexBuffer = pvkCreateBuffer(physicalDevice, device, 
+												VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+												VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexBufferSize, queueFamilyIndexCount, queueFamilyIndices);
+	pvkUploadToBuffer(device, vertexBuffer, data->vertices, vertexBufferSize);
+	pvkUploadToBuffer(device, indexBuffer, data->indices, indexBufferSize);
+	PvkGeometry* geometry = new(PvkGeometry);
+	geometry->vertexBuffer = vertexBuffer;
+	geometry->indexBuffer = indexBuffer;
+	geometry->indexCount = 36;
+	return geometry;
+}
+
+PvkGeometry* pvkCreateBoxGeometry(VkPhysicalDevice physicalDevice, VkDevice device, uint32_t queueFamilyIndexCount, uint32_t* queueFamilyIndices, float size)
+{
+	PvkVertex vertices[4] = 
+	{
+		{ { -0.5f, -0.5f },  { }, { }, { 0, 1, 1, 1 } },
+		{ { 0.5f, -0.5f },   { }, { }, { 1, 1, 1, 1 } },
+		{ { 0.5f, 0.5f },  { }, { }, { 1, 0, 1, 1 } },
+		{ { -0.5f, 0.5f }, { }, { }, { 1, 1, 0, 1 } }
+	};
+
+	PvkIndex indices[6] = 
+	{
+		2, 1, 0,
+		0, 3, 2
+	};
+	PvkGeometryData geometryData = { .vertices = vertices, .vertexCount = 4, .indices = indices, .indexCount = 6 };
+	return __pvkCreateGeometry(physicalDevice, device, queueFamilyIndexCount, queueFamilyIndices, &geometryData);
+}
+
+void pvkDrawGeometry(VkCommandBuffer cb, PvkGeometry* geometry)
+{
+	VkDeviceSize offset = 0;
+	vkCmdBindVertexBuffers(cb, 0, 1, &geometry->vertexBuffer.handle, &offset);
+	vkCmdBindIndexBuffer(cb, geometry->indexBuffer.handle, 0, VK_INDEX_TYPE_UINT16);
+	vkCmdDrawIndexed(cb, geometry->indexCount, 1, 0, 0, 0);
+}
+
+void pvkDestroyGeometry(VkDevice device, PvkGeometry* geometry)
+{
+	pvkDestroyBuffer(device, geometry->vertexBuffer);
+	pvkDestroyBuffer(device, geometry->indexBuffer);
+	delete(geometry);
+}
