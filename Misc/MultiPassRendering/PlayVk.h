@@ -1027,3 +1027,82 @@ static VkPipelineLayout pvkCreatePipelineLayout(VkDevice device)
 	return layout;
 }
 
+static VkBuffer __pvkCreateBuffer(VkDevice device, VkBufferUsageFlags usageFlags, VkDeviceSize size, uint32_t queueFamilyCount, uint32_t* queueFamilyIndices)
+{
+	// union operation
+	uint32_t uniqueQueueFamilyCount;
+	uint32_t uniqueQueueFamilyIndices[queueFamilyCount];
+	__pvkUnionUInt32(queueFamilyCount, queueFamilyIndices, &uniqueQueueFamilyCount, uniqueQueueFamilyIndices);
+
+	VkBufferCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.usage = usageFlags,
+		.size = size,
+		.queueFamilyIndexCount = uniqueQueueFamilyCount,
+		.pQueueFamilyIndices = uniqueQueueFamilyIndices,
+		.sharingMode = (uniqueQueueFamilyCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE
+	};
+
+	VkBuffer buffer;
+	PVK_CHECK(vkCreateBuffer(device, &cInfo, NULL, &buffer));
+	return buffer;
+}
+
+static VkDeviceMemory pvkAllocateMemory(VkDevice device, VkDeviceSize size, uint32_t memoryTypeIndex)
+{
+	VkMemoryAllocateInfo aInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.allocationSize = size,
+		.memoryTypeIndex = memoryTypeIndex
+	};
+
+	VkDeviceMemory memory;
+	PVK_CHECK(vkAllocateMemory(device, &aInfo, NULL, &memory));
+	return memory;
+}
+
+typedef struct PvkBuffer
+{
+	VkBuffer handle;
+	VkDeviceMemory memory;
+} PvkBuffer;
+
+static uint32_t __pvkGetMemoryTypeIndexFromMemoryProperty(VkPhysicalDevice device, VkMemoryPropertyFlags propertyFlags)
+{
+	VkPhysicalDeviceMemoryProperties properties;
+	vkGetPhysicalDeviceMemoryProperties(device, &properties);
+	uint32_t index = UINT32_MAX;
+	for(int i = 0; i < properties.memoryTypeCount; i++)
+	{
+		VkMemoryPropertyFlags supportedFlags = properties.memoryTypes[i].propertyFlags;
+		if((supportedFlags & propertyFlags) == propertyFlags)
+			return i;
+	}
+	PVK_WARNING("Unable to find memory type with requested memory property flags\n");
+	return index;
+}
+
+static void __pvkCheckForMemoryTypesSupport(VkPhysicalDevice device, uint32_t bits)
+{
+	/* TODO */
+}
+
+static PvkBuffer pvkCreateBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkMemoryPropertyFlags mflags, VkBufferUsageFlags flags, VkDeviceSize size, uint32_t queueFamilyCount, uint32_t* queueFamilyIndices)
+{
+	VkBuffer buffer = __pvkCreateBuffer(device, flags, size, queueFamilyCount, queueFamilyIndices);
+	VkMemoryRequirements bufferMemoryRequirements;
+	vkGetBufferMemoryRequirements(device, buffer, &bufferMemoryRequirements);
+	__pvkCheckForMemoryTypesSupport(physicalDevice, bufferMemoryRequirements.memoryTypeBits);
+	VkDeviceMemory memory = pvkAllocateMemory(device, bufferMemoryRequirements.size, 
+												__pvkGetMemoryTypeIndexFromMemoryProperty(physicalDevice, mflags));	
+	PVK_CHECK(vkBindBufferMemory(device, buffer, memory, 0));
+	return (PvkBuffer) { buffer, memory };
+}
+
+static void pvkDestroyBuffer(VkDevice device, PvkBuffer buffer)
+{
+	vkDestroyBuffer(device, buffer.handle, NULL);
+	vkFreeMemory(device, buffer.memory, NULL);
+}

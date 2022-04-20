@@ -46,6 +46,27 @@ int main()
 													(PvkShader) { fragmentShader, PVK_SHADER_TYPE_FRAGMENT },
 													(PvkShader) { vertexShader, PVK_SHADER_TYPE_VERTEX });
 
+	PvkVertex vertices[4] = 
+	{
+		{ { -0.5f, 0.5f },  { }, { }, { 1, 1, 1, 1 } },
+		{ { 0.5f, 0.5f },   { }, { }, { 1, 1, 1, 1 } },
+		{ { 0.5f, -0.5f },  { }, { }, { 1, 1, 1, 1 } },
+		{ { -0.5f, -0.5f }, { }, { }, { 1, 1, 1, 1 } }
+	};
+
+	uint16_t indices[6] = 
+	{
+		2, 1, 0,
+		0, 3, 2
+	};
+
+	PvkBuffer vertexBuffer = pvkCreateBuffer(physicalGPU, logicalGPU, 
+												VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+												VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, sizeof(vertices), 2, queueFamilyIndicies);
+	PvkBuffer indexBuffer = pvkCreateBuffer(physicalGPU, logicalGPU, 
+												VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+												VK_BUFFER_USAGE_INDEX_BUFFER_BIT, sizeof(indices), 2, queueFamilyIndicies);
+
 	while(!pvkWindowShouldClose(window))
 	{
 		uint32_t index = 0;
@@ -55,7 +76,7 @@ int main()
 		
 		pvkBeginRenderPass(commandBuffers[index], renderPass, framebuffers[index].handle, 800, 800);
 
-
+		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		pvkEndRenderPass(commandBuffers[index]);
 
@@ -67,6 +88,8 @@ int main()
 		pvkWindowPollEvents(window);
 	}
 
+	pvkDestroyBuffer(logicalGPU, vertexBuffer);
+	pvkDestroyBuffer(logicalGPU, indexBuffer);
 	vkDestroyPipeline(logicalGPU, pipeline, NULL);
 	vkDestroyPipelineLayout(logicalGPU, pipelineLayout, NULL);
 	vkDestroyShaderModule(logicalGPU, fragmentShader, NULL);
