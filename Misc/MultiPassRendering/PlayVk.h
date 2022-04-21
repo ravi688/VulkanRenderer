@@ -10,6 +10,7 @@
 #include <string.h> 		// memset
 #include <stdarg.h> 		// va_list, va_start, va_end, va_arg
 #include <assert.h> 		// assert()
+#include <math.h> 			// sin, cos
 
 /* Logging functions */
 #define PVK_FETAL_ERROR(...) pvkFetalError(__VA_ARGS__)
@@ -35,6 +36,234 @@ static void pvkFetalError(const char* format, ...)
 	vprintf(format, args);
 	va_end(args);
 	exit(0);
+}
+
+/* Mathematics */
+
+static const double PVK_PI = 3.1415926;
+static const double PVK_INVERSE_PI = 0.3183098;
+static const double PVK_INVERSE_180 = 0.0055555;
+static const double PVK_RAD2DEG = PVK_INVERSE_PI * 180.0;
+static const double PVK_DEG2RAD = PVK_INVERSE_180 * PVK_PI;
+
+static void __pvkScaleFloats(uint32_t count, float* const values, const float scalar)
+{
+	for(int i = 0; i < count; i++)
+		values[i] *= scalar;
+}
+
+static float __pvkMat3Det(float m[3][3])
+{
+	return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) 
+			- m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) 
+			+ m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+}
+
+typedef union PvkVec2
+{
+	struct 
+	{
+		float x, y;
+	};
+	struct 
+	{
+		float s, t;
+	};
+	float v[2];
+} PvkVec2;
+
+typedef union PvkVec3
+{
+	struct
+	{
+		float x, y, z;
+	};
+	struct
+	{
+		float r, g, b;
+	};
+	float v[3];
+	PvkVec2 xy;
+} PvkVec3;
+
+typedef union PvkVec4
+{
+	struct
+	{
+		float x, y, z, w;
+	};
+	struct
+	{
+		float r, g, b, a;
+	};
+	float v[4];
+	struct
+	{
+		PvkVec2 xy;
+		PvkVec2 zw;
+	};
+	PvkVec3 xyz;
+} PvkVec4;
+
+static inline PvkVec4 pvkVec4Zero() { return (PvkVec4) { 0, 0, 0, 0 }; }
+
+typedef union PvkMat4
+{
+	struct 
+	{
+		float v[4][4];
+	};
+	struct
+	{
+		PvkVec4 r0;
+		PvkVec4 r1;
+		PvkVec4 r2;
+		PvkVec4 r3;
+	};
+} PvkMat4;
+
+static PvkMat4 pvkMat4Identity()
+{
+	return (PvkMat4)
+	{
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
+}
+
+static inline PvkMat4 pvkMat4Zero() { return (PvkMat4) { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; }
+
+static PvkMat4 pvkMat4Mul(PvkMat4 m1, PvkMat4 m2)
+{
+	PvkMat4 m = pvkMat4Zero();
+	for(int i = 0; i < 4; i++)
+		for(int j = 0; j < 4; j++)
+			for(int k = 0; k < 4; k++)
+				m.v[i][j] += m1.v[i][k] * m2.v[k][j];
+	return m;
+}
+
+static PvkMat4 pvkMat4Transpose(PvkMat4 m)
+{
+	for(int i = 0; i < 4; i++)
+		for(int j = i + 1; j < 4; j++)
+		{
+			float t = m.v[i][j];
+			m.v[i][j] = m.v[j][i];
+			m.v[j][i] = t;
+		}
+	return m;
+}
+
+static PvkMat4 pvkCofactorMatrix(PvkMat4 m)
+{
+	PvkMat4 result;
+	float minor[3][3];
+	for(int i = 0; i < 4; i++)
+		for(int j = 0; j < 4; j++)
+		{
+			for(int p = 0, h = 0; p < 4; p++)
+				for(int q = 0, k = 0; q < 4; q++)
+					if((p == i) || (q == j))
+						continue;
+					else
+						minor[h++][k++] = m.v[p][q];
+			result.v[i][j] = (((i + j) & 1) ? -1 : 1) * m.v[i][j] * __pvkMat3Det(minor);
+		}
+	return result;
+}
+
+static inline PvkMat4 pvkMat4Adjoint(PvkMat4 m)
+{
+	return pvkMat4Transpose(pvkCofactorMatrix(m));
+}
+
+static float pvkMat4Determinant(PvkMat4 m)
+{
+	float minor[3][3];
+	float det = 0;
+	float sign = 1;
+	for(int i = 0; i < 4; i++)
+	{
+		for(int p = 0, h = 0; p < 4; p++)
+			for(int q = 0, k = 0; q < 4; q++)
+				if(q == i)
+					continue;
+				else
+					minor[h++][k++] = m.v[p][q];
+		det += sign * __pvkMat3Det(minor);
+		sign *= -1;
+	}
+	return det;
+}
+
+static PvkMat4 pvkMat4Inverse(PvkMat4 m)
+{
+	PvkMat4 result = pvkMat4Adjoint(m);
+	float det = pvkMat4Determinant(m);
+	__pvkScaleFloats(16, (float*)&result, det);
+	return result;
+}
+
+/* Affine transformation */
+
+static PvkVec4 pvkMat4MulVec4(PvkMat4 m, PvkVec4 v)
+{
+	PvkVec4 fv = pvkVec4Zero();
+	for(int i = 0; i < 4; i++)
+		for(int j = 0; j < 4; j++)
+			fv.v[i] += m.v[i][j] * v.v[j];
+	return fv;
+}
+
+static PvkMat4 pvkMat4Translate(PvkVec3 displacement)
+{
+	return (PvkMat4)
+	{
+		1, 0, 0, displacement.x,
+		0, 1, 0, displacement.y,
+		0, 0, 1, displacement.z,
+		0, 0, 0, 			  1,
+	};
+}
+
+static PvkMat4 pvkMat4Rotate(PvkVec3 v)
+{
+	float xc0 = cos(v.x), xs0 = sin(v.x);
+	float yc0 = cos(v.y), ys0 = sin(v.y);
+	float zc0 = cos(v.z), zs0 = sin(v.z);
+	return pvkMat4Mul((PvkMat4) 
+	{
+		zc0, -zs0, 0, 0, 			// rotation around z axis
+		zs0,  zc0, 0, 0,
+		0,      0, 1, 0,
+		0,      0, 0, 1
+	}, pvkMat4Mul((PvkMat4) 
+	{
+		yc0,  0, ys0, 0, 			// rotation around y axis
+		0,    1,   0, 0,
+		-ys0, 0, yc0, 0,
+		0,    0,   0, 1
+	}, (PvkMat4)
+	{
+		1,   0,    0, 0,			// rotation around x axis
+		0, xc0, -xs0, 0,
+		0, xs0,  xc0, 0,
+		0,   0,    0, 1
+	}));
+}
+
+static PvkMat4 pvkMat4Scale(PvkVec3 v)
+{
+	return (PvkMat4)
+	{
+		v.x, 0, 0, 0,
+		0, v.y, 0, 0,
+		0, 0, v.z, 0,
+		0, 0,   0, 1
+	};
 }
 
 /* Memory functions */
@@ -926,35 +1155,16 @@ static VkPipelineShaderStageCreateInfo* __pvkCreatePipelineShaderStageCreateInfo
 typedef struct PvkVertex
 {
 	// attribute at location = 0 : position of the vertex
-	struct 
-	{
-		float x, y, z;
-	} position;
+	PvkVec3 position;
 
 	// attribute at location = 1 : normal of the vertex
-	struct
-	{
-		float x, y, z;
-	} normal;
+	PvkVec3 normal;
 
 	// attribute at location = 2 : texture coordinates of the vertex
-	union 
-	{
-		struct 
-		{
-			float x, y;
-		};
-		struct 
-		{
-			float s, t;
-		};
-	} texcoord;
+	PvkVec2 texcoord;
 
 	// attribute at location = 3 : color of the vertex
-	struct
-	{
-		float r, g, b, a;
-	} color;
+	PvkVec4 color;
 
 } PvkVertex;
 
