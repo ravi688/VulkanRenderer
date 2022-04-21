@@ -688,14 +688,114 @@ static VkRenderPass pvkCreateRenderPass(VkDevice device)
 	return renderPass;
 }
 
-typedef struct PvkFramebuffer
+/* Vulkan Device Memory Allocation */
+static VkDeviceMemory pvkAllocateMemory(VkDevice device, VkDeviceSize size, uint32_t memoryTypeIndex)
 {
-	VkFramebuffer handle;				// handle to vulkan framebuffer object
-	VkImageView* attachments;			// attachments (attached with this framebuffer)
-	uint32_t attachmentCount;			// number of attachment (attached with this framebuffer)
-} PvkFramebuffer;
+	VkMemoryAllocateInfo aInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.allocationSize = size,
+		.memoryTypeIndex = memoryTypeIndex
+	};
 
-static PvkFramebuffer* pvkCreateFramebuffers(VkDevice device, VkSwapchainKHR swapchain, VkRenderPass renderPass, VkFormat format, uint32_t width, uint32_t height)
+	VkDeviceMemory memory;
+	PVK_CHECK(vkAllocateMemory(device, &aInfo, NULL, &memory));
+	return memory;
+}
+
+static uint32_t __pvkGetMemoryTypeIndexFromMemoryProperty(VkPhysicalDevice device, VkMemoryPropertyFlags propertyFlags)
+{
+	VkPhysicalDeviceMemoryProperties properties;
+	vkGetPhysicalDeviceMemoryProperties(device, &properties);
+	uint32_t index = UINT32_MAX;
+	for(int i = 0; i < properties.memoryTypeCount; i++)
+	{
+		VkMemoryPropertyFlags supportedFlags = properties.memoryTypes[i].propertyFlags;
+		if((supportedFlags & propertyFlags) == propertyFlags)
+			return i;
+	}
+	PVK_WARNING("Unable to find memory type with requested memory property flags\n");
+	return index;
+}
+
+static void __pvkCheckForMemoryTypesSupport(VkPhysicalDevice device, uint32_t bits)
+{
+	/* TODO */
+}
+
+/* Vulkan Image & ImageView */
+static VkImage __pvkCreateImage(VkDevice device, VkFormat format, uint32_t width, uint32_t height, VkImageUsageFlags usageFlags, uint32_t queueFamilyIndexCount, uint32_t* queueFamilyIndices)
+{
+	// union operation
+	uint32_t uniqueQueueFamilyCount;
+	uint32_t uniqueQueueFamilyIndices[queueFamilyIndexCount];
+	__pvkUnionUInt32(queueFamilyIndexCount, queueFamilyIndices, &uniqueQueueFamilyCount, uniqueQueueFamilyIndices);
+	
+	VkImageCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+		.imageType = VK_IMAGE_TYPE_2D,
+		.format = format,
+		.extent = { .width = width, .height = height, .depth = 1 },
+		.mipLevels = 1,
+		.arrayLayers = 1,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.tiling = VK_IMAGE_TILING_OPTIMAL,
+		.usage = usageFlags,
+		.sharingMode = (uniqueQueueFamilyCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = uniqueQueueFamilyCount,
+		.pQueueFamilyIndices = uniqueQueueFamilyIndices
+	};
+	VkImage image;
+	PVK_CHECK(vkCreateImage(device, &cInfo, NULL, &image));
+	return image;
+}
+
+typedef struct PvkImage
+{
+	VkImage handle;
+	VkDeviceMemory memory;
+} PvkImage;
+
+static PvkImage pvkCreateImage(VkPhysicalDevice physicalDevice, VkDevice device, VkMemoryPropertyFlags mflags, VkFormat format, uint32_t width, uint32_t height, VkImageUsageFlags usageFlags, uint32_t queueFamilyIndexCount, uint32_t* queueFamilyIndices)
+{
+	VkImage image = __pvkCreateImage(device, format, width, height, usageFlags, queueFamilyIndexCount, queueFamilyIndices);
+	VkMemoryRequirements imageMemoryRequirements;
+	vkGetImageMemoryRequirements(device, image, &imageMemoryRequirements);
+	__pvkCheckForMemoryTypesSupport(physicalDevice, imageMemoryRequirements.memoryTypeBits);
+	VkDeviceMemory memory = pvkAllocateMemory(device, imageMemoryRequirements.size, __pvkGetMemoryTypeIndexFromMemoryProperty(physicalDevice, mflags));
+	PVK_CHECK(vkBindImageMemory(device, image, memory, 0));
+	return (PvkImage) { image, memory };
+}
+
+static void pvkDestroyImage(VkDevice device, PvkImage image)
+{
+	vkDestroyImage(device, image.handle, NULL);
+	vkFreeMemory(device, image.memory, NULL);
+}
+
+static VkImageView pvkCreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlagBits aspectMask)
+{
+	VkImageViewCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+		.image = image,
+		.viewType = VK_IMAGE_VIEW_TYPE_2D,
+		.format = format,
+		.components = { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY },
+		.subresourceRange = 
+		{
+			.aspectMask = aspectMask,
+			.levelCount = 1,
+			.layerCount = 1
+		}
+	};
+	VkImageView imageView;
+	PVK_CHECK(vkCreateImageView(device, &cInfo, NULL, &imageView));
+	return imageView;
+}
+
+static VkImageView* pvkCreateSwapchainImageViews(VkDevice device, VkSwapchainKHR swapchain, VkFormat format)
 {
 	// get the swapchain images
 	uint32_t imageCount;
@@ -704,56 +804,51 @@ static PvkFramebuffer* pvkCreateFramebuffers(VkDevice device, VkSwapchainKHR swa
 	VkImage* images = newv(VkImage, imageCount);
 	PVK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, images));
 
-	PvkFramebuffer* framebuffers = newv(PvkFramebuffer, 3);
+	VkImageView* imageViews = newv(VkImageView, imageCount);
+	for(int i = 0; i < imageCount; i++)
+		imageViews[i] = pvkCreateImageView(device, images[i], format, VK_IMAGE_ASPECT_COLOR_BIT);
+
+	delete(images);
+	return imageViews;
+}
+
+static void pvkDestroySwapchainImageViews(VkDevice device, VkSwapchainKHR swapchain, VkImageView* imageViews)
+{
+	uint32_t imageCount;
+	PVK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, NULL));
+	for(int i = 0; i < imageCount; i++)
+		vkDestroyImageView(device, imageViews[i], NULL);
+	delete(imageViews);
+}
+
+/* Vulkan Frambuffer */
+static VkFramebuffer* pvkCreateFramebuffers(VkDevice device, VkRenderPass renderPass, uint32_t width, uint32_t height, uint32_t imageViewCount, VkImageView* imageViews)
+{
+	VkFramebuffer* framebuffers = newv(VkFramebuffer, 3);
 	for(int i = 0; i < 3; i++)
 	{
-		// create an image view for the corresponding image in the swapchain
-		framebuffers[i].attachments = new(VkImageView);
-		framebuffers[i].attachmentCount = 1;
-		VkImageViewCreateInfo vinfo = 
-		{
-			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-			.image = images[i],
-			.viewType = VK_IMAGE_VIEW_TYPE_2D,
-			.format = format,
-			.components = { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY },
-			.subresourceRange = 
-			{
-				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-				.levelCount = 1,
-				.layerCount = 1
-			}
-		};
-		PVK_CHECK(vkCreateImageView(device, &vinfo, NULL, framebuffers[i].attachments));
-
-		// create a framebuffer with the image view
 		VkFramebufferCreateInfo fInfo = 
 		{
 			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 			.renderPass = renderPass,
-			.attachmentCount = framebuffers[i].attachmentCount,
-			.pAttachments = framebuffers[i].attachments,
+			.attachmentCount = imageViewCount,
+			.pAttachments = &imageViews[imageViewCount * i],
 			.width = width,
 			.height = height,
 			.layers = 1
 		};
-		PVK_CHECK(vkCreateFramebuffer(device, &fInfo, NULL, &framebuffers[i].handle));
+		PVK_CHECK(vkCreateFramebuffer(device, &fInfo, NULL, &framebuffers[i]));
 	}
 	return framebuffers;
 }
 
-static void pvkDestroyFramebuffers(VkDevice device, PvkFramebuffer* framebuffers)
+static void pvkDestroyFramebuffers(VkDevice device, VkFramebuffer* framebuffers)
 {
 	for(int i = 0; i < 3; i++)
-	{
-		vkDestroyImageView(device, *(framebuffers[i].attachments), NULL);
-		vkDestroyFramebuffer(device, framebuffers[i].handle, NULL);
-		delete(framebuffers[i].attachments);
-		framebuffers[i].attachmentCount = 0;
-	}
+		vkDestroyFramebuffer(device, framebuffers[i], NULL);
 }
 
-
+/* Shaders & Graphics Pipeline */
 static const char* __pvkLoadBinaryFile(const char* filePath, size_t* out_length)
 {
 	FILE* file = fopen(filePath, "rb");
@@ -881,7 +976,7 @@ static VkVertexInputAttributeDescription __pvkGetVertexInputAttributeDescription
 	};
 }
 
-static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass,  uint32_t width, uint32_t height, uint32_t count, ...)
+static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass, uint32_t subpassIndex, uint32_t width, uint32_t height, uint32_t count, ...)
 {
 	/* Shader modules */
 	PvkShader shaderModules[count];
@@ -1004,7 +1099,7 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 		.pColorBlendState = &colorBlendStateCInfo,
 		.layout = layout,
 		.renderPass = renderPass,
-		.subpass = 0
+		.subpass = subpassIndex
 	};
 
 	VkPipeline pipeline;
@@ -1016,17 +1111,20 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 }
 
 
-static VkPipelineLayout pvkCreatePipelineLayout(VkDevice device)
+static VkPipelineLayout pvkCreatePipelineLayout(VkDevice device, uint32_t setLayoutCount, VkDescriptorSetLayout* setLayouts)
 {
 	VkPipelineLayoutCreateInfo cInfo = 
 	{
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+		.setLayoutCount = setLayoutCount,
+		.pSetLayouts = setLayouts
 	};
 	VkPipelineLayout layout;
 	PVK_CHECK(vkCreatePipelineLayout(device, &cInfo, NULL, &layout));
 	return layout;
 }
 
+/* Vulkan Buffer */
 static VkBuffer __pvkCreateBuffer(VkDevice device, VkBufferUsageFlags usageFlags, VkDeviceSize size, uint32_t queueFamilyCount, uint32_t* queueFamilyIndices)
 {
 	// union operation
@@ -1049,45 +1147,12 @@ static VkBuffer __pvkCreateBuffer(VkDevice device, VkBufferUsageFlags usageFlags
 	return buffer;
 }
 
-static VkDeviceMemory pvkAllocateMemory(VkDevice device, VkDeviceSize size, uint32_t memoryTypeIndex)
-{
-	VkMemoryAllocateInfo aInfo = 
-	{
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = size,
-		.memoryTypeIndex = memoryTypeIndex
-	};
-
-	VkDeviceMemory memory;
-	PVK_CHECK(vkAllocateMemory(device, &aInfo, NULL, &memory));
-	return memory;
-}
-
 typedef struct PvkBuffer
 {
 	VkBuffer handle;
 	VkDeviceMemory memory;
 } PvkBuffer;
 
-static uint32_t __pvkGetMemoryTypeIndexFromMemoryProperty(VkPhysicalDevice device, VkMemoryPropertyFlags propertyFlags)
-{
-	VkPhysicalDeviceMemoryProperties properties;
-	vkGetPhysicalDeviceMemoryProperties(device, &properties);
-	uint32_t index = UINT32_MAX;
-	for(int i = 0; i < properties.memoryTypeCount; i++)
-	{
-		VkMemoryPropertyFlags supportedFlags = properties.memoryTypes[i].propertyFlags;
-		if((supportedFlags & propertyFlags) == propertyFlags)
-			return i;
-	}
-	PVK_WARNING("Unable to find memory type with requested memory property flags\n");
-	return index;
-}
-
-static void __pvkCheckForMemoryTypesSupport(VkPhysicalDevice device, uint32_t bits)
-{
-	/* TODO */
-}
 
 static PvkBuffer pvkCreateBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkMemoryPropertyFlags mflags, VkBufferUsageFlags flags, VkDeviceSize size, uint32_t queueFamilyCount, uint32_t* queueFamilyIndices)
 {
@@ -1113,6 +1178,46 @@ static void pvkUploadToBuffer(VkDevice device, PvkBuffer buffer, void* data, siz
 	PVK_CHECK(vkMapMemory(device, buffer.memory, 0, size, 0, &dst));
 	memcpy(dst, data, size);
 	vkUnmapMemory(device, buffer.memory);
+}
+
+/* Vulkan Descriptor sets */
+
+static VkDescriptorSet* pvkAllocateDescriptorSets(VkDevice device, VkDescriptorPool pool, uint32_t setCount, VkDescriptorSetLayout* setLayouts)
+{
+	VkDescriptorSetAllocateInfo allocInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+		.descriptorPool = pool,
+		.descriptorSetCount = setCount,
+		.pSetLayouts = setLayouts
+	};
+
+	VkDescriptorSet* sets = newv(VkDescriptorSet, setCount);
+	PVK_CHECK(vkAllocateDescriptorSets(device, &allocInfo, sets));
+	return sets;
+}
+
+static void pvkWriteInputAttachmentToDescriptor(VkDevice device, VkDescriptorSet set, uint32_t binding, VkImageView imageView)
+{
+	VkDescriptorImageInfo imageInfo = 
+	{
+		.imageView = imageView,
+		.sampler = VK_NULL_HANDLE,
+		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+	};
+
+	VkWriteDescriptorSet writeInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+		.dstSet = set,
+		.dstBinding = binding,
+		.dstArrayElement = 0,
+		.descriptorCount = 1,
+		.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+		.pImageInfo = &imageInfo
+	};
+
+	vkUpdateDescriptorSets(device, 1, &writeInfo, 0, NULL);
 }
 
 
@@ -1157,10 +1262,10 @@ PvkGeometry* pvkCreateBoxGeometry(VkPhysicalDevice physicalDevice, VkDevice devi
 {
 	PvkVertex vertices[4] = 
 	{
-		{ { -0.5f, -0.5f },  { }, { }, { 0, 1, 1, 1 } },
-		{ { 0.5f, -0.5f },   { }, { }, { 1, 1, 1, 1 } },
-		{ { 0.5f, 0.5f },  { }, { }, { 1, 0, 1, 1 } },
-		{ { -0.5f, 0.5f }, { }, { }, { 1, 1, 0, 1 } }
+		{ { -0.5f * size, -0.5f * size },  { }, { }, { 0, 1, 1, 1 } },
+		{ { 0.5f * size, -0.5f * size },   { }, { }, { 1, 1, 1, 1 } },
+		{ { 0.5f * size, 0.5f * size },  { }, { }, { 1, 0, 1, 1 } },
+		{ { -0.5f * size, 0.5f * size }, { }, { }, { 1, 1, 0, 1 } }
 	};
 
 	PvkIndex indices[6] = 
