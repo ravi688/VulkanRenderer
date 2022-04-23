@@ -97,13 +97,17 @@ static VkRenderPass pvkCreateRenderPass2(VkDevice device)
 
 static VkDescriptorPool pvkCreateDescriptorPool(VkDevice device)
 {
-	VkDescriptorPoolSize poolSize = { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1 };
+	VkDescriptorPoolSize poolSizes[2] =
+	{ 
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 }
+	};
 	VkDescriptorPoolCreateInfo cInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-		.maxSets = 1,
-		.poolSizeCount = 1,
-		.pPoolSizes = &poolSize
+		.maxSets = 3,
+		.poolSizeCount = 2,
+		.pPoolSizes = poolSizes
 	};
 
 	VkDescriptorPool pool;
@@ -119,6 +123,50 @@ static VkDescriptorSetLayout pvkCreateDescriptorSetLayout(VkDevice device)
 		.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
 		.descriptorCount = 1,
 		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+	};
+
+	VkDescriptorSetLayoutCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.bindingCount = 1,
+		.pBindings = &binding
+	};
+
+	VkDescriptorSetLayout setLayout;
+	PVK_CHECK(vkCreateDescriptorSetLayout(device, &cInfo, NULL, &setLayout));
+	return setLayout;
+}
+
+static VkDescriptorSetLayout pvkCreateGlobalDescriptorSetLayout(VkDevice device)
+{
+	VkDescriptorSetLayoutBinding binding = 
+	{
+		.binding = 1,
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+	};
+
+	VkDescriptorSetLayoutCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.bindingCount = 1,
+		.pBindings = &binding
+	};
+
+	VkDescriptorSetLayout setLayout;
+	PVK_CHECK(vkCreateDescriptorSetLayout(device, &cInfo, NULL, &setLayout));
+	return setLayout;
+}
+
+static VkDescriptorSetLayout pvkCreateObjectSetLayout(VkDevice device)
+{
+	VkDescriptorSetLayoutBinding binding = 
+	{
+		.binding = 2,
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
 	};
 
 	VkDescriptorSetLayoutCreateInfo cInfo = 
@@ -184,11 +232,47 @@ int main()
 	};
 	VkFramebuffer* framebuffers = pvkCreateFramebuffers(logicalGPU, renderPass, 800, 800, 2, attachments);
 
+	/* Uniform Buffers */
+	PvkBuffer globalUniformBuffer = pvkCreateBuffer(physicalGPU, logicalGPU, 
+													VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+													VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+													sizeof(PvkGlobalData),
+													2, queueFamilyIndices);
+	PvkBuffer objectUniformBuffer = pvkCreateBuffer(physicalGPU, logicalGPU,
+													VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+													VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+													sizeof(PvkObjectData),
+													2, queueFamilyIndices);
+
 	/* Resource Descriptors */
 	VkDescriptorPool descriptorPool = pvkCreateDescriptorPool(logicalGPU);
-	VkDescriptorSetLayout setLayout = pvkCreateDescriptorSetLayout(logicalGPU);
-	VkDescriptorSet* set = pvkAllocateDescriptorSets(logicalGPU, descriptorPool, 1, &setLayout);
+	VkDescriptorSetLayout setLayouts[3] = 
+	{ 
+		pvkCreateDescriptorSetLayout(logicalGPU),				// input attachment set layout
+		pvkCreateGlobalDescriptorSetLayout(logicalGPU),			// global set layout
+		pvkCreateObjectSetLayout(logicalGPU)					// object/local set layout
+	};
+	VkDescriptorSet* set = pvkAllocateDescriptorSets(logicalGPU, descriptorPool, 3, setLayouts);
 	pvkWriteInputAttachmentToDescriptor(logicalGPU, set[0], 0, auxAttachment);
+	pvkWriteBufferToDescriptor(logicalGPU, set[1], 1, globalUniformBuffer.handle);
+	pvkWriteBufferToDescriptor(logicalGPU, set[2], 1, objectUniformBuffer.handle);
+
+	PvkCamera* camera = pvkCreateCamera((float)window->width / window->height, PVK_PROJECTION_TYPE_PERSPECTIVE, 65 DEG);	
+	PvkGlobalData* globalData = new(PvkGlobalData);
+	PvkObjectData* objectData = new(PvkObjectData);
+	globalData->projectionMatrix = pvkMat4Transpose(camera->projection);
+	globalData->viewMatrix = pvkMat4Transpose(camera->view);
+	globalData->dirLight.color = (PvkVec3) { 1, 1, 1 };
+	globalData->dirLight.intensity = 1.0f;
+	globalData->dirLight.dir = (PvkVec3) { 0, -1, -1 };
+	globalData->ambLight.color = (PvkVec3) { 0.5f, 0.5f, 0.5f };
+	globalData->ambLight.intensity = 1.0f;
+	objectData->modelMatrix = pvkMat4Identity();
+	objectData->normalMatrix = pvkMat4Inverse(objectData->modelMatrix);
+	pvkUploadToMemory(logicalGPU, globalUniformBuffer.memory, globalData, sizeof(PvkGlobalData));
+	pvkUploadToMemory(logicalGPU, objectUniformBuffer.memory, objectData, sizeof(PvkObjectData));
+	delete(globalData);
+	delete(objectData);
 
 	/* Graphics Pipeline & Shaders */
 	VkShaderModule fragmentShader = pvkCreateShaderModule(logicalGPU, "shaders/shader.frag.spv");
@@ -197,15 +281,16 @@ int main()
 	VkShaderModule fragmentShaderPass2 = pvkCreateShaderModule(logicalGPU, "shaders/shader.pass2.frag.spv");
 	VkShaderModule vertexShaderPass2 = pvkCreateShaderModule(logicalGPU, "shaders/shader.pass2.vert.spv");
 
-	VkPipelineLayout pipelineLayout = pvkCreatePipelineLayout(logicalGPU, 0, NULL);
-	VkPipelineLayout pipelineLayout2 = pvkCreatePipelineLayout(logicalGPU, 1, &setLayout);
+	VkPipelineLayout pipelineLayout = pvkCreatePipelineLayout(logicalGPU, 2, &setLayouts[1]);
+	VkPipelineLayout pipelineLayout2 = pvkCreatePipelineLayout(logicalGPU, 3, &setLayouts[0]);
 	VkPipeline pipeline = pvkCreateGraphicsPipeline(logicalGPU, pipelineLayout, renderPass, 0, 800, 800, 2,
 													(PvkShader) { fragmentShader, PVK_SHADER_TYPE_FRAGMENT },
 													(PvkShader) { vertexShader, PVK_SHADER_TYPE_VERTEX });
 	VkPipeline pipeline2 = pvkCreateGraphicsPipeline(logicalGPU, pipelineLayout2, renderPass, 1, 800, 800, 2,
 													(PvkShader) { fragmentShaderPass2, PVK_SHADER_TYPE_FRAGMENT },
 													(PvkShader) { vertexShaderPass2, PVK_SHADER_TYPE_VERTEX });
-	PvkGeometry* boxGeometry = pvkCreateBoxGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 0.5f);
+	PvkGeometry* planeGeometry = pvkCreateBoxGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 3);
+
 
 	/* Command buffer recording */
 	for(int index = 0; index < 3; index++)
@@ -214,16 +299,19 @@ int main()
 		
 		pvkBeginRenderPass(commandBuffers[index], renderPass, framebuffers[index], 800, 800);
 
+		PvkMat4 mvp = pvkMat4Mul(camera->projection, pvkMat4Mul(camera->view, planeGeometry->transform));
+
 		/* first pass */
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-		pvkDrawGeometry(commandBuffers[index], boxGeometry);
+		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 2, &set[1], 0, NULL);
+		pvkDrawGeometry(commandBuffers[index], planeGeometry);
 
 		vkCmdNextSubpass(commandBuffers[index], VK_SUBPASS_CONTENTS_INLINE);
 
 		/* second pass */
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline2);
-		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout2, 0, 1, set, 0, NULL);
-		pvkDrawGeometry(commandBuffers[index], boxGeometry);
+		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout2, 0, 3, &set[0], 0, NULL);
+		pvkDrawGeometry(commandBuffers[index], planeGeometry);
 
 		pvkEndRenderPass(commandBuffers[index]);
 
@@ -242,7 +330,8 @@ int main()
 		pvkWindowPollEvents(window);
 	}
 
-	pvkDestroyGeometry(logicalGPU, boxGeometry);
+	delete(camera);
+	pvkDestroyGeometry(logicalGPU, planeGeometry);
 	vkDestroyShaderModule(logicalGPU, fragmentShaderPass2, NULL);
 	vkDestroyShaderModule(logicalGPU, vertexShaderPass2, NULL);
 	vkDestroyPipeline(logicalGPU, pipeline2, NULL);
@@ -252,7 +341,10 @@ int main()
 	vkDestroyShaderModule(logicalGPU, fragmentShader, NULL);
 	vkDestroyShaderModule(logicalGPU, vertexShader, NULL);
 	delete(set);
-	vkDestroyDescriptorSetLayout(logicalGPU, setLayout, NULL);
+	for(int i = 0; i < 3; i++)
+		vkDestroyDescriptorSetLayout(logicalGPU, setLayouts[i], NULL);
+	pvkDestroyBuffer(logicalGPU, objectUniformBuffer);
+	pvkDestroyBuffer(logicalGPU, globalUniformBuffer);
 	vkDestroyDescriptorPool(logicalGPU, descriptorPool, NULL);
 	pvkDestroyFramebuffers(logicalGPU, framebuffers);
 	delete(framebuffers);

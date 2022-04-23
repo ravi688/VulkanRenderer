@@ -45,6 +45,8 @@ static const double PVK_INVERSE_PI = 0.3183098;
 static const double PVK_INVERSE_180 = 0.0055555;
 static const double PVK_RAD2DEG = PVK_INVERSE_PI * 180.0;
 static const double PVK_DEG2RAD = PVK_INVERSE_180 * PVK_PI;
+#define DEG * PVK_DEG2RAD
+#define RAD
 
 static void __pvkScaleFloats(uint32_t count, float* const values, const float scalar)
 {
@@ -161,20 +163,28 @@ static PvkMat4 pvkCofactorMatrix(PvkMat4 m)
 {
 	PvkMat4 result;
 	float minor[3][3];
+	float sign = 1;
 	for(int i = 0; i < 4; i++)
 		for(int j = 0; j < 4; j++)
 		{
 			for(int p = 0, h = 0; p < 4; p++)
+			{
+				if(p == i) 
+					continue;
 				for(int q = 0, k = 0; q < 4; q++)
-					if((p == i) || (q == j))
+					if(q == j)
 						continue;
 					else
-						minor[h++][k++] = m.v[p][q];
-			result.v[i][j] = (((i + j) & 1) ? -1 : 1) * m.v[i][j] * __pvkMat3Det(minor);
+						minor[h][k++] = m.v[p][q];
+				h++;
+			}
+			result.v[i][j] = sign * m.v[i][j] * __pvkMat3Det(minor);
+			sign *= -1.0f;
 		}
 	return result;
 }
 
+/* NOTE: This is not working as expected */
 static inline PvkMat4 pvkMat4Adjoint(PvkMat4 m)
 {
 	return pvkMat4Transpose(pvkCofactorMatrix(m));
@@ -187,24 +197,65 @@ static float pvkMat4Determinant(PvkMat4 m)
 	float sign = 1;
 	for(int i = 0; i < 4; i++)
 	{
-		for(int p = 0, h = 0; p < 4; p++)
+		for(int p = 1, h = 0; p < 4; p++, h++)
+		{
 			for(int q = 0, k = 0; q < 4; q++)
 				if(q == i)
 					continue;
 				else
-					minor[h++][k++] = m.v[p][q];
-		det += sign * __pvkMat3Det(minor);
+					minor[h][k++] = m.v[p][q];
+		}
+		det += sign * m.v[0][i] * __pvkMat3Det(minor);
 		sign *= -1;
 	}
 	return det;
 }
 
+// static PvkMat4 pvkMat4Inverse(PvkMat4 m)
+// {
+// 	PvkMat4 result = pvkMat4Adjoint(m);
+// 	float det = pvkMat4Determinant(m);
+// 	__pvkScaleFloats(16, (float*)&result, det);
+// 	return result;
+// }
+
 static PvkMat4 pvkMat4Inverse(PvkMat4 m)
 {
-	PvkMat4 result = pvkMat4Adjoint(m);
-	float det = pvkMat4Determinant(m);
-	__pvkScaleFloats(16, (float*)&result, det);
-	return result;
+	float inverse_det = 1 / pvkMat4Determinant(m);
+	PvkMat4 _m;
+	_m.v[0][0] = m.v[1][1] * (m.v[2][2] * m.v[3][3] - m.v[2][3] * m.v[3][2]) - m.v[1][2] * (m.v[2][1] * m.v[3][3] - m.v[2][3] * m.v[3][1]) + m.v[1][3] * (m.v[2][1] * m.v[3][2] - m.v[2][2] * m.v[3][1]);
+	_m.v[1][0] = m.v[1][0] * (m.v[2][2] * m.v[3][3] - m.v[2][3] * m.v[3][2]) - m.v[1][2] * (m.v[2][0] * m.v[3][3] - m.v[2][3] * m.v[3][0]) + m.v[1][3] * (m.v[2][0] * m.v[3][2] - m.v[2][2] * m.v[3][0]);
+	_m.v[2][0] = m.v[1][0] * (m.v[2][1] * m.v[3][3] - m.v[2][3] * m.v[3][1]) - m.v[1][1] * (m.v[2][0] * m.v[3][3] - m.v[2][3] * m.v[3][0]) + m.v[1][3] * (m.v[2][0] * m.v[3][1] - m.v[2][1] * m.v[3][0]);
+	_m.v[3][0] = m.v[1][0] * (m.v[2][1] * m.v[3][2] - m.v[2][2] * m.v[3][1]) - m.v[1][1] * (m.v[2][0] * m.v[3][2] - m.v[2][2] * m.v[3][0]) + m.v[1][2] * (m.v[2][0] * m.v[3][1] - m.v[2][1] * m.v[3][0]);
+ 	_m.v[0][1] = m.v[0][1] * (m.v[2][2] * m.v[3][3] - m.v[2][3] * m.v[3][2]) - m.v[0][2] * (m.v[2][1] * m.v[3][3] - m.v[2][3] * m.v[3][1]) + m.v[0][3] * (m.v[2][1] * m.v[3][2] - m.v[2][2] * m.v[3][1]);
+ 	_m.v[1][1] = m.v[0][0] * (m.v[2][2] * m.v[3][3] - m.v[2][3] * m.v[3][2]) - m.v[0][2] * (m.v[2][0] * m.v[3][3] - m.v[2][3] * m.v[3][0]) + m.v[0][3] * (m.v[2][0] * m.v[3][2] - m.v[2][2] * m.v[3][0]);
+ 	_m.v[2][1] = m.v[0][0] * (m.v[2][1] * m.v[3][3] - m.v[2][3] * m.v[3][1]) - m.v[0][1] * (m.v[2][0] * m.v[3][3] - m.v[2][3] * m.v[3][0]) + m.v[0][3] * (m.v[2][0] * m.v[3][1] - m.v[2][1] * m.v[3][0]);
+ 	_m.v[3][1] = m.v[0][0] * (m.v[2][1] * m.v[3][2] - m.v[2][2] * m.v[3][1]) - m.v[0][1] * (m.v[2][0] * m.v[3][2] - m.v[2][2] * m.v[3][0]) + m.v[0][2] * (m.v[2][0] * m.v[3][1] - m.v[2][1] * m.v[3][0]);
+	_m.v[0][2] = m.v[0][1] * (m.v[1][2] * m.v[3][3] - m.v[1][3] * m.v[3][2]) - m.v[0][2] * (m.v[1][1] * m.v[3][3] - m.v[1][3] * m.v[3][1]) + m.v[0][3] * (m.v[1][1] * m.v[3][2] - m.v[1][2] * m.v[3][1]);
+	_m.v[1][2] = m.v[0][0] * (m.v[1][2] * m.v[3][3] - m.v[1][3] * m.v[3][2]) - m.v[0][2] * (m.v[1][0] * m.v[3][3] - m.v[1][3] * m.v[3][0]) + m.v[0][3] * (m.v[1][0] * m.v[3][2] - m.v[1][2] * m.v[3][0]);
+	_m.v[2][2] = m.v[0][0] * (m.v[1][1] * m.v[3][3] - m.v[1][3] * m.v[3][1]) - m.v[0][1] * (m.v[1][0] * m.v[3][3] - m.v[1][3] * m.v[3][0]) + m.v[0][3] * (m.v[1][0] * m.v[3][1] - m.v[1][1] * m.v[3][0]);
+	_m.v[3][2] = m.v[0][0] * (m.v[1][1] * m.v[3][2] - m.v[1][2] * m.v[3][1]) - m.v[0][1] * (m.v[1][0] * m.v[3][2] - m.v[1][2] * m.v[3][0]) + m.v[0][2] * (m.v[1][0] * m.v[3][1] - m.v[1][1] * m.v[3][0]);
+	_m.v[0][3] = m.v[0][1] * (m.v[1][2] * m.v[2][3] - m.v[1][3] * m.v[2][2]) - m.v[0][2] * (m.v[1][1] * m.v[2][3] - m.v[1][3] * m.v[2][1]) + m.v[0][3] * (m.v[1][1] * m.v[2][2] - m.v[1][2] * m.v[2][1]);
+	_m.v[1][3] = m.v[0][0] * (m.v[1][2] * m.v[2][3] - m.v[1][3] * m.v[2][2]) - m.v[0][2] * (m.v[1][0] * m.v[2][3] - m.v[1][3] * m.v[2][0]) + m.v[0][3] * (m.v[1][0] * m.v[2][2] - m.v[1][2] * m.v[2][0]);
+	_m.v[2][3] = m.v[0][0] * (m.v[1][1] * m.v[2][3] - m.v[1][3] * m.v[2][1]) - m.v[0][1] * (m.v[1][0] * m.v[2][3] - m.v[1][3] * m.v[2][0]) + m.v[0][3] * (m.v[1][0] * m.v[2][1] - m.v[1][1] * m.v[2][0]);
+	_m.v[3][3] = m.v[0][0] * (m.v[1][1] * m.v[2][2] - m.v[1][2] * m.v[2][1]) - m.v[0][1] * (m.v[1][0] * m.v[2][2] - m.v[1][2] * m.v[2][0]) + m.v[0][2] * (m.v[1][0] * m.v[2][1] - m.v[1][1] * m.v[2][0]);
+	_m.v[0][0] *= inverse_det;
+	_m.v[0][1] *= -inverse_det;
+	_m.v[0][2] *= inverse_det;
+	_m.v[0][3] *= -inverse_det;
+	_m.v[1][0] *= -inverse_det;
+	_m.v[1][1] *= inverse_det;
+	_m.v[1][2] *= -inverse_det;
+	_m.v[1][3] *= inverse_det;
+	_m.v[2][0] *= inverse_det;
+	_m.v[2][1] *= -inverse_det;
+	_m.v[2][2] *= inverse_det;
+	_m.v[2][3] *= -inverse_det;
+	_m.v[3][0] *= -inverse_det;
+	_m.v[3][1] *= inverse_det;
+	_m.v[3][2] *= -inverse_det;
+	_m.v[3][3] *= inverse_det;
+	return _m;
 }
 
 /* Affine transformation */
@@ -531,8 +582,8 @@ static bool __pvkIsPhysicalDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR 
 
 	bool isImageSupported = true;
 	isImageSupported &= (requirements->imageCount >= capabilities.minImageCount) && (requirements->imageCount <= capabilities.maxImageCount);
-	isImageSupported &= (requirements->imageWidth >= capabilities.minImageExtent.width) && (requirements->imageWidth <= capabilities.maxImageExtent.width);
-	isImageSupported &= (requirements->imageHeight >= capabilities.minImageExtent.height) && (requirements->imageHeight <= capabilities.maxImageExtent.height);
+	// isImageSupported &= (requirements->imageWidth >= capabilities.minImageExtent.width) && (requirements->imageWidth <= capabilities.maxImageExtent.width);
+	// isImageSupported &= (requirements->imageHeight >= capabilities.minImageExtent.height) && (requirements->imageHeight <= capabilities.maxImageExtent.height);
 
 	VkPhysicalDeviceFeatures requiredFeatures = 
 	{
@@ -571,8 +622,8 @@ static VkPhysicalDevice pvkGetPhysicalDevice(VkInstance instance, VkSurfaceKHR s
 			.presentMode = presentMode,
 			.shaders = PVK_SHADER_TYPE_GEOMETRY | PVK_SHADER_TYPE_TESSELLATION,
 			.imageCount = 3,
-			.imageWidth = 800,
-			.imageHeight = 800
+			// .imageWidth = 800,
+			// .imageHeight = 800
 		};
 		if(__pvkIsPhysicalDeviceSuitable(devices[i], surface, &requirements))
 		{
@@ -1382,12 +1433,12 @@ static void pvkDestroyBuffer(VkDevice device, PvkBuffer buffer)
 	vkFreeMemory(device, buffer.memory, NULL);
 }
 
-static void pvkUploadToBuffer(VkDevice device, PvkBuffer buffer, void* data, size_t size)
+static void pvkUploadToMemory(VkDevice device, VkDeviceMemory memory, void* data, size_t size)
 {
 	void* dst;
-	PVK_CHECK(vkMapMemory(device, buffer.memory, 0, size, 0, &dst));
+	PVK_CHECK(vkMapMemory(device, memory, 0, size, 0, &dst));
 	memcpy(dst, data, size);
-	vkUnmapMemory(device, buffer.memory);
+	vkUnmapMemory(device, memory);
 }
 
 /* Vulkan Descriptor sets */
@@ -1430,6 +1481,28 @@ static void pvkWriteInputAttachmentToDescriptor(VkDevice device, VkDescriptorSet
 	vkUpdateDescriptorSets(device, 1, &writeInfo, 0, NULL);
 }
 
+static void pvkWriteBufferToDescriptor(VkDevice device, VkDescriptorSet set, uint32_t binding, VkBuffer buffer)
+{
+	VkDescriptorBufferInfo bufferInfo = 
+	{
+		.buffer = buffer,
+		.offset = 0,
+		.range = VK_WHOLE_SIZE
+	};
+
+	VkWriteDescriptorSet writeInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+		.dstSet = set,
+		.dstBinding = binding,
+		.dstArrayElement = 0,
+		.descriptorCount = 1,
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.pBufferInfo = &bufferInfo
+	};
+
+	vkUpdateDescriptorSets(device, 1, &writeInfo, 0, NULL);
+}
 
 /* Geometry */
 typedef uint16_t PvkIndex;
@@ -1447,9 +1520,10 @@ typedef struct PvkGeometry
 	PvkBuffer vertexBuffer;
 	PvkBuffer indexBuffer;
 	uint16_t indexCount;
+	PvkMat4 transform;
 } PvkGeometry;
 
-PvkGeometry* __pvkCreateGeometry(VkPhysicalDevice physicalDevice, VkDevice device, uint16_t queueFamilyIndexCount, uint32_t* queueFamilyIndices, PvkGeometryData* data)
+static PvkGeometry* __pvkCreateGeometry(VkPhysicalDevice physicalDevice, VkDevice device, uint16_t queueFamilyIndexCount, uint32_t* queueFamilyIndices, PvkGeometryData* data)
 {
 	uint64_t vertexBufferSize = sizeof(PvkVertex) * data->vertexCount;
 	uint64_t indexBufferSize = sizeof(PvkIndex) * data->indexCount;
@@ -1459,23 +1533,24 @@ PvkGeometry* __pvkCreateGeometry(VkPhysicalDevice physicalDevice, VkDevice devic
 	PvkBuffer indexBuffer = pvkCreateBuffer(physicalDevice, device, 
 												VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
 												VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexBufferSize, queueFamilyIndexCount, queueFamilyIndices);
-	pvkUploadToBuffer(device, vertexBuffer, data->vertices, vertexBufferSize);
-	pvkUploadToBuffer(device, indexBuffer, data->indices, indexBufferSize);
+	pvkUploadToMemory(device, vertexBuffer.memory, data->vertices, vertexBufferSize);
+	pvkUploadToMemory(device, indexBuffer.memory, data->indices, indexBufferSize);
 	PvkGeometry* geometry = new(PvkGeometry);
 	geometry->vertexBuffer = vertexBuffer;
 	geometry->indexBuffer = indexBuffer;
 	geometry->indexCount = 36;
+	geometry->transform = pvkMat4Identity();
 	return geometry;
 }
 
-PvkGeometry* pvkCreateBoxGeometry(VkPhysicalDevice physicalDevice, VkDevice device, uint32_t queueFamilyIndexCount, uint32_t* queueFamilyIndices, float size)
+static PvkGeometry* pvkCreatePlaneGeometry(VkPhysicalDevice physicalDevice, VkDevice device, uint32_t queueFamilyIndexCount, uint32_t* queueFamilyIndices, float size)
 {
 	PvkVertex vertices[4] = 
 	{
-		{ { -0.5f * size, -0.5f * size },  { }, { }, { 0, 1, 1, 1 } },
-		{ { 0.5f * size, -0.5f * size },   { }, { }, { 1, 1, 1, 1 } },
-		{ { 0.5f * size, 0.5f * size },  { }, { }, { 1, 0, 1, 1 } },
-		{ { -0.5f * size, 0.5f * size }, { }, { }, { 1, 1, 0, 1 } }
+		{ { -0.5f * size, 0, -0.5f * size }, { 0, 1.0f, 0 }, { 0, 1 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, 0, -0.5f * size }, { 0, 1.0f, 0 }, { 1, 1 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, 0,  0.5f * size }, { 0, 1.0f, 0 }, { 1, 0 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size, 0,  0.5f * size }, { 0, 1.0f, 0 }, { 0, 0 }, { 1, 1, 1, 1 } }
 	};
 
 	PvkIndex indices[6] = 
@@ -1483,11 +1558,94 @@ PvkGeometry* pvkCreateBoxGeometry(VkPhysicalDevice physicalDevice, VkDevice devi
 		2, 1, 0,
 		0, 3, 2
 	};
+
 	PvkGeometryData geometryData = { .vertices = vertices, .vertexCount = 4, .indices = indices, .indexCount = 6 };
 	return __pvkCreateGeometry(physicalDevice, device, queueFamilyIndexCount, queueFamilyIndices, &geometryData);
 }
 
-void pvkDrawGeometry(VkCommandBuffer cb, PvkGeometry* geometry)
+static void __pvkTransformVertices(PvkVertex* dest, uint32_t count, PvkVertex* vertices, PvkMat4 transform)
+{
+	for(uint32_t i = 0; i < count; i++)
+	{
+		dest[i].position = pvkMat4MulVec4(transform, (PvkVec4) { vertices[i].position.x, vertices[i].position.y, vertices[i].position.z, 1 }).xyz;
+		dest[i].normal = pvkMat4MulVec4(pvkMat4Transpose(pvkMat4Inverse(transform)), (PvkVec4) { vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z, 0 }).xyz;
+	}
+}
+
+static PvkMat4 pvkMat4Transform(PvkVec3 position, PvkVec3 rotation)
+{
+	return pvkMat4Mul(pvkMat4Translate(position), pvkMat4Rotate(rotation));
+}
+
+static PvkGeometry* pvkCreateBoxGeometry(VkPhysicalDevice physicalDevice, VkDevice device, uint32_t queueFamilyIndexCount, uint32_t* queueFamilyIndices, float size)
+{
+	PvkVertex faceVertices[8] = 
+	{
+		// bottom
+		{ { -0.5f * size, 0 , -0.5f * size }, { 0, -1.0f, 0 }, { 0, 1 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, 0 , -0.5f * size }, { 0, -1.0f, 0 }, { 1, 1 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, 0 ,  0.5f * size }, { 0, -1.0f, 0 }, { 1, 0 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size, 0 ,  0.5f * size }, { 0, -1.0f, 0 }, { 0, 0 }, { 1, 1, 1, 1 } }
+	};
+
+	PvkVertex vertices[24];
+	for(int i = 0; i < 24; i++)
+	{
+		vertices[i].color = (PvkVec4) { 1, 1, 1, 1 };
+		vertices[i].texcoord = (PvkVec2) { 0, 0 };
+	}
+
+	// bottom
+	__pvkTransformVertices(&vertices[0], 4, faceVertices, pvkMat4Transform((PvkVec3) { 0, -size * 0.5f, 0 }, (PvkVec3) { 0, 0, 0 }));
+	
+	// top
+	__pvkTransformVertices(&vertices[4], 4, faceVertices, pvkMat4Transform((PvkVec3) { 0, size * 0.5f, 0 }, (PvkVec3) { 180 DEG, 0, 0 }));
+	
+	// rear
+	__pvkTransformVertices(&vertices[8], 4, faceVertices, pvkMat4Transform((PvkVec3) { 0, 0, -size * 0.5f }, (PvkVec3) { 90 DEG, 0, 0 }));
+	
+	// front
+	__pvkTransformVertices(&vertices[12], 4, faceVertices, pvkMat4Transform((PvkVec3) { 0, 0, size * 0.5f }, (PvkVec3) { -90 DEG, 0, 0 }));
+	
+	// right
+	__pvkTransformVertices(&vertices[16], 4, faceVertices, pvkMat4Transform((PvkVec3) { size * 0.5f, 0, 0 }, (PvkVec3) { 0, 0, 90 DEG }));
+	
+	// left
+	__pvkTransformVertices(&vertices[20], 4, faceVertices, pvkMat4Transform((PvkVec3) { -size * 0.5f, 0, 0 }, (PvkVec3) { 0, 0, -90 DEG }));
+
+
+	PvkIndex indices[36] = 
+	{
+		// bottom
+		2, 1, 0,
+		0, 3, 2,
+
+		// rear
+		10, 9, 8,
+		8, 11, 10,
+		
+		// right
+		18, 17, 16,
+		16, 19, 18,
+		
+		// left
+		20, 21, 22,
+		22, 23, 20,
+
+		// top
+		4, 5, 6,
+		6, 7, 4,
+		
+		// front
+		12, 13, 14,
+		14, 15, 12
+	};
+
+	PvkGeometryData geometryData = { .vertices = vertices, .vertexCount = 24, .indices = indices, .indexCount = 36 };
+	return __pvkCreateGeometry(physicalDevice, device, queueFamilyIndexCount, queueFamilyIndices, &geometryData);
+}
+
+static void pvkDrawGeometry(VkCommandBuffer cb, PvkGeometry* geometry)
 {
 	VkDeviceSize offset = 0;
 	vkCmdBindVertexBuffers(cb, 0, 1, &geometry->vertexBuffer.handle, &offset);
@@ -1495,9 +1653,97 @@ void pvkDrawGeometry(VkCommandBuffer cb, PvkGeometry* geometry)
 	vkCmdDrawIndexed(cb, geometry->indexCount, 1, 0, 0, 0);
 }
 
-void pvkDestroyGeometry(VkDevice device, PvkGeometry* geometry)
+static void pvkDestroyGeometry(VkDevice device, PvkGeometry* geometry)
 {
 	pvkDestroyBuffer(device, geometry->vertexBuffer);
 	pvkDestroyBuffer(device, geometry->indexBuffer);
 	delete(geometry);
 }
+
+
+/* Camera */
+
+static PvkMat4 pvkMat4OrthoProj(float height, float aspectRatio, float n, float f)
+{
+	return (PvkMat4)
+	{
+		2 / (height * aspectRatio), 0, 0, 0,
+		0, -2 / height, 0, 0,								// negative sign due to vulkan clip space nature
+		0, 0, -1 / (f - n), 0,								// negative sign due to the reversed direction of z-axis in our application
+		0, 0, 0, 1
+	};
+}
+
+static PvkMat4 pvkMat4PerspProj(float vAngle, float aspectRatio, float n, float f)
+{
+	float height = tan(vAngle * 0.5f);
+	return (PvkMat4)
+	{
+		1 / (height * aspectRatio), 0, 0, 0,
+		0, -1 / height, 0, 0,								// negative sign due to vulkan clip space nature
+		0, 0, -f / (f - n), -n * f / (f - n),				// negative sign due to the reversed direction of z-axis in our application
+		0, 0, -1, 0
+	};
+}
+
+typedef struct PvkCamera
+{
+	PvkMat4 transform;			// model matrix of the camera
+	PvkMat4 projection;			// projection matrix of the camera
+	PvkMat4 view; 				// view matrix of the camera
+} PvkCamera;
+
+typedef enum PvkProjectionType
+{
+	PVK_PROJECTION_TYPE_ORTHOGRAPHIC,
+	PVK_PROJECTION_TYPE_PERSPECTIVE
+} PvkProjectionType;
+
+static PvkCamera* pvkCreateCamera(float aspectRatio, PvkProjectionType projectionType, float heightOrAngle)
+{
+	PvkCamera* cam = new(PvkCamera);
+	cam->transform = pvkMat4Mul(pvkMat4Translate((PvkVec3) { 0, 2.0f, 6.0f }), pvkMat4Rotate((PvkVec3) { -20 DEG, 0, 0 }));
+	cam->view = pvkMat4Inverse(cam->transform);
+	switch(projectionType)
+	{
+		case PVK_PROJECTION_TYPE_PERSPECTIVE:
+			cam->projection = pvkMat4PerspProj(heightOrAngle, aspectRatio, 0, 20);
+			break;
+		case PVK_PROJECTION_TYPE_ORTHOGRAPHIC:
+			cam->projection = pvkMat4OrthoProj(heightOrAngle, aspectRatio, 0, 20);
+			break;
+		default:
+			PVK_FETAL_ERROR("Unrecognized PvkProjectionType \"%d\"\n", projectionType);
+	}
+	return cam;
+}
+
+
+/* Lights */
+typedef struct PvkAmbientLight
+{
+	PvkVec3 color;
+	float intensity;
+} PvkAmbientLight;
+
+typedef struct PvkDirectionalLight
+{
+	PvkVec3 color;
+	PvkVec3 dir;
+	float intensity;
+} PvkDirectionalLight;
+
+/* Global & Object Uniform Data */
+typedef struct PvkGlobalData
+{
+	PvkMat4 projectionMatrix;
+	PvkMat4 viewMatrix;
+	PvkDirectionalLight dirLight;
+	PvkAmbientLight ambLight;
+} PvkGlobalData;
+
+typedef struct PvkObjectData
+{
+	PvkMat4 modelMatrix;
+	PvkMat4 normalMatrix;
+} PvkObjectData;

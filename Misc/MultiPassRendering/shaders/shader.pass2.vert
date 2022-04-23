@@ -2,6 +2,17 @@
 
 #version 450
 
+layout(set = 1, binding = 1) uniform PvkGlobalData
+{
+	mat4 projectionMatrix;
+	mat4 viewMatrix;
+} pvkGlobalData;
+
+layout(set = 2, binding = 2) uniform PvkObjectData
+{
+	mat4 modelMatrix;
+	mat4 normalMatrix;
+} pvkObjectData;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -14,8 +25,8 @@ layout(location = 2) out vec4 _color;
 
 void main()
 {
-	gl_Position = vec4(position, 1.0);
-	_normal = normal;
+	gl_Position = pvkGlobalData.projectionMatrix * pvkGlobalData.viewMatrix * pvkObjectData.modelMatrix * vec4(position, 1);
+	_normal = (pvkObjectData.normalMatrix * vec4(normal, 0)).xyz;
 	_texcoord = texcoord;
 	_color = color;
 }
