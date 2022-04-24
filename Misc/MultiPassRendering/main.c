@@ -262,17 +262,16 @@ int main()
 	PvkObjectData* objectData = new(PvkObjectData);
 	globalData->projectionMatrix = pvkMat4Transpose(camera->projection);
 	globalData->viewMatrix = pvkMat4Transpose(camera->view);
-	globalData->dirLight.color = (PvkVec3) { 1, 1, 1 };
+	globalData->dirLight.dir = pvkVec3Normalize((PvkVec3) { 1, -1, 0 });
 	globalData->dirLight.intensity = 1.0f;
-	globalData->dirLight.dir = (PvkVec3) { 0, -1, -1 };
-	globalData->ambLight.color = (PvkVec3) { 0.5f, 0.5f, 0.5f };
+	globalData->dirLight.color = (PvkVec3) { 1, 1, 1 };
+	globalData->ambLight.color = (PvkVec3) { 0.3f, 0.3f, 0.3f };
 	globalData->ambLight.intensity = 1.0f;
-	objectData->modelMatrix = pvkMat4Identity();
+	objectData->modelMatrix = pvkMat4Transpose(pvkMat4Rotate((PvkVec3) { 20 DEG, 0, 0 }));
 	objectData->normalMatrix = pvkMat4Inverse(objectData->modelMatrix);
 	pvkUploadToMemory(logicalGPU, globalUniformBuffer.memory, globalData, sizeof(PvkGlobalData));
 	pvkUploadToMemory(logicalGPU, objectUniformBuffer.memory, objectData, sizeof(PvkObjectData));
 	delete(globalData);
-	delete(objectData);
 
 	/* Graphics Pipeline & Shaders */
 	VkShaderModule fragmentShader = pvkCreateShaderModule(logicalGPU, "shaders/shader.frag.spv");
@@ -289,8 +288,8 @@ int main()
 	VkPipeline pipeline2 = pvkCreateGraphicsPipeline(logicalGPU, pipelineLayout2, renderPass, 1, 800, 800, 2,
 													(PvkShader) { fragmentShaderPass2, PVK_SHADER_TYPE_FRAGMENT },
 													(PvkShader) { vertexShaderPass2, PVK_SHADER_TYPE_VERTEX });
-	PvkGeometry* planeGeometry = pvkCreateBoxGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 3);
-
+	PvkGeometry* planeGeometry = pvkCreatePlaneGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 6);
+	PvkGeometry* boxGeometry = pvkCreateBoxGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 3);
 
 	/* Command buffer recording */
 	for(int index = 0; index < 3; index++)
@@ -305,6 +304,7 @@ int main()
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 2, &set[1], 0, NULL);
 		pvkDrawGeometry(commandBuffers[index], planeGeometry);
+		pvkDrawGeometry(commandBuffers[index], boxGeometry);
 
 		vkCmdNextSubpass(commandBuffers[index], VK_SUBPASS_CONTENTS_INLINE);
 
@@ -312,24 +312,32 @@ int main()
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline2);
 		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout2, 0, 3, &set[0], 0, NULL);
 		pvkDrawGeometry(commandBuffers[index], planeGeometry);
+		pvkDrawGeometry(commandBuffers[index], boxGeometry);
 
 		pvkEndRenderPass(commandBuffers[index]);
 
 		pvkEndCommandBuffer(commandBuffers[index]);
 	}
 
+	float angle = 0;
 	/* Rendering & Presentation */
 	while(!pvkWindowShouldClose(window))
 	{
 		uint32_t index = 0;
 		PVK_CHECK(vkAcquireNextImageKHR(logicalGPU, swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &index));
 
+		angle += 0.1f DEG;
+		objectData->modelMatrix = pvkMat4Transpose(pvkMat4Rotate((PvkVec3) { 0, angle, 0 }));
+		objectData->normalMatrix = pvkMat4Inverse(objectData->modelMatrix);
+		pvkUploadToMemory(logicalGPU, objectUniformBuffer.memory, objectData, sizeof(PvkObjectData));
+		
 		pvkSubmit(commandBuffers[index], graphicsQueue, imageAvailableSemaphore, renderFinishSemaphore);
 		pvkPresent(index, swapchain, presentQueue, renderFinishSemaphore);
 
 		pvkWindowPollEvents(window);
 	}
 
+	delete(objectData);
 	delete(camera);
 	pvkDestroyGeometry(logicalGPU, planeGeometry);
 	vkDestroyShaderModule(logicalGPU, fragmentShaderPass2, NULL);

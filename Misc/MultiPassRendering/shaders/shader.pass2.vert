@@ -1,5 +1,4 @@
 
-
 #version 450
 
 layout(set = 1, binding = 1) uniform PvkGlobalData

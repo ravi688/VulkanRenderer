@@ -88,6 +88,9 @@ typedef union PvkVec3
 	PvkVec2 xy;
 } PvkVec3;
 
+static float pvkVec3Magnitude(PvkVec3 v) { return sqrt(v.x*v.x + v.y*v.y + v.z*v.z); }
+static PvkVec3 pvkVec3Normalize(PvkVec3 v) { float m = 1 / pvkVec3Magnitude(v); return (PvkVec3){ v.x*m, v.y*m, v.z*m }; }
+
 typedef union PvkVec4
 {
 	struct
@@ -315,6 +318,11 @@ static PvkMat4 pvkMat4Scale(PvkVec3 v)
 		0, 0, v.z, 0,
 		0, 0,   0, 1
 	};
+}
+
+static PvkMat4 pvkMat4Transform(PvkVec3 position, PvkVec3 rotation)
+{
+	return pvkMat4Mul(pvkMat4Translate(position), pvkMat4Rotate(rotation));
 }
 
 /* Memory functions */
@@ -1257,7 +1265,7 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 	};
 	VkVertexInputAttributeDescription* vertexAttributeDescriptions = newv(VkVertexInputAttributeDescription, PVK_VERTEX_ATTRIBUTE_COUNT);
 	vertexAttributeDescriptions[0] = __pvkGetVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, PVK_VERTEX_POSITION_OFFSET);
-	vertexAttributeDescriptions[1] = __pvkGetVertexInputAttributeDescription(0, 1, VK_FORMAT_R32G32B32A32_SFLOAT, PVK_VERTEX_NORMAL_OFFSET);
+	vertexAttributeDescriptions[1] = __pvkGetVertexInputAttributeDescription(0, 1, VK_FORMAT_R32G32B32_SFLOAT, PVK_VERTEX_NORMAL_OFFSET);
 	vertexAttributeDescriptions[2] = __pvkGetVertexInputAttributeDescription(0, 2, VK_FORMAT_R32G32_SFLOAT, PVK_VERTEX_TEXCOORD_OFFSET);
 	vertexAttributeDescriptions[3] = __pvkGetVertexInputAttributeDescription(0, 3, VK_FORMAT_R32G32B32A32_SFLOAT, PVK_VERTEX_COLOR_OFFSET);
 
@@ -1563,84 +1571,62 @@ static PvkGeometry* pvkCreatePlaneGeometry(VkPhysicalDevice physicalDevice, VkDe
 	return __pvkCreateGeometry(physicalDevice, device, queueFamilyIndexCount, queueFamilyIndices, &geometryData);
 }
 
-static void __pvkTransformVertices(PvkVertex* dest, uint32_t count, PvkVertex* vertices, PvkMat4 transform)
-{
-	for(uint32_t i = 0; i < count; i++)
-	{
-		dest[i].position = pvkMat4MulVec4(transform, (PvkVec4) { vertices[i].position.x, vertices[i].position.y, vertices[i].position.z, 1 }).xyz;
-		dest[i].normal = pvkMat4MulVec4(pvkMat4Transpose(pvkMat4Inverse(transform)), (PvkVec4) { vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z, 0 }).xyz;
-	}
-}
-
-static PvkMat4 pvkMat4Transform(PvkVec3 position, PvkVec3 rotation)
-{
-	return pvkMat4Mul(pvkMat4Translate(position), pvkMat4Rotate(rotation));
-}
-
 static PvkGeometry* pvkCreateBoxGeometry(VkPhysicalDevice physicalDevice, VkDevice device, uint32_t queueFamilyIndexCount, uint32_t* queueFamilyIndices, float size)
 {
-	PvkVertex faceVertices[8] = 
+	PvkVertex vertices[24] = 
 	{
 		// bottom
-		{ { -0.5f * size, 0 , -0.5f * size }, { 0, -1.0f, 0 }, { 0, 1 }, { 1, 1, 1, 1 } },
-		{ {  0.5f * size, 0 , -0.5f * size }, { 0, -1.0f, 0 }, { 1, 1 }, { 1, 1, 1, 1 } },
-		{ {  0.5f * size, 0 ,  0.5f * size }, { 0, -1.0f, 0 }, { 1, 0 }, { 1, 1, 1, 1 } },
-		{ { -0.5f * size, 0 ,  0.5f * size }, { 0, -1.0f, 0 }, { 0, 0 }, { 1, 1, 1, 1 } }
+		{ { -0.5f * size, -0.5f * size, -0.5f * size }, { 0, -1.0f, 0 }, { 0, 1 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, -0.5f * size, -0.5f * size }, { 0, -1.0f, 0 }, { 1, 1 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, -0.5f * size,  0.5f * size }, { 0, -1.0f, 0 }, { 1, 0 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size, -0.5f * size,  0.5f * size }, { 0, -1.0f, 0 }, { 0, 0 }, { 1, 1, 1, 1 } },
+
+		// top
+		{ { -0.5f * size, 0.5f * size, -0.5f * size }, { 0, 1.0f, 0 }, { 0, 1 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, 0.5f * size, -0.5f * size }, { 0, 1.0f, 0 }, { 1, 1 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, 0.5f * size,  0.5f * size }, { 0, 1.0f, 0 }, { 1, 0 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size, 0.5f * size,  0.5f * size }, { 0, 1.0f, 0 }, { 0, 0 }, { 1, 1, 1, 1 } },
+
+		// left
+		{ { -0.5f * size,  0.5f * size, -0.5f * size }, { -1.0f, 0, 0 }, { 0, 1 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size,  0.5f * size,  0.5f * size }, { -1.0f, 0, 0 }, { 1, 1 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size, -0.5f * size,  0.5f * size }, { -1.0f, 0, 0 }, { 1, 0 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size, -0.5f * size, -0.5f * size }, { -1.0f, 0, 0 }, { 0, 0 }, { 1, 1, 1, 1 } },
+
+		// right
+		{ { 0.5f * size,  0.5f * size, -0.5f * size }, { 1.0f, 0, 0 }, { 0, 1 }, { 1, 1, 1, 1 } },
+		{ { 0.5f * size,  0.5f * size,  0.5f * size }, { 1.0f, 0, 0 }, { 1, 1 }, { 1, 1, 1, 1 } },
+		{ { 0.5f * size, -0.5f * size,  0.5f * size }, { 1.0f, 0, 0 }, { 1, 0 }, { 1, 1, 1, 1 } },
+		{ { 0.5f * size, -0.5f * size, -0.5f * size }, { 1.0f, 0, 0 }, { 0, 0 }, { 1, 1, 1, 1 } },
+
+		// rear
+		{ {  0.5f * size,  0.5f * size, -0.5f * size }, { 0, 0, 1.0f }, { 0, 1 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size,  0.5f * size, -0.5f * size }, { 0, 0, 1.0f }, { 1, 1 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size, -0.5f * size, -0.5f * size }, { 0, 0, 1.0f }, { 1, 0 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, -0.5f * size, -0.5f * size }, { 0, 0, 1.0f }, { 0, 0 }, { 1, 1, 1, 1 } },
+
+		// fear
+		{ {  0.5f * size,  0.5f * size, 0.5f * size }, { 0, 0, -1.0f }, { 0, 1 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size,  0.5f * size, 0.5f * size }, { 0, 0, -1.0f }, { 1, 1 }, { 1, 1, 1, 1 } },
+		{ { -0.5f * size, -0.5f * size, 0.5f * size }, { 0, 0, -1.0f }, { 1, 0 }, { 1, 1, 1, 1 } },
+		{ {  0.5f * size, -0.5f * size, 0.5f * size }, { 0, 0, -1.0f }, { 0, 0 }, { 1, 1, 1, 1 } }
 	};
-
-	PvkVertex vertices[24];
-	for(int i = 0; i < 24; i++)
-	{
-		vertices[i].color = (PvkVec4) { 1, 1, 1, 1 };
-		vertices[i].texcoord = (PvkVec2) { 0, 0 };
-	}
-
-	// bottom
-	__pvkTransformVertices(&vertices[0], 4, faceVertices, pvkMat4Transform((PvkVec3) { 0, -size * 0.5f, 0 }, (PvkVec3) { 0, 0, 0 }));
-	
-	// top
-	__pvkTransformVertices(&vertices[4], 4, faceVertices, pvkMat4Transform((PvkVec3) { 0, size * 0.5f, 0 }, (PvkVec3) { 180 DEG, 0, 0 }));
-	
-	// rear
-	__pvkTransformVertices(&vertices[8], 4, faceVertices, pvkMat4Transform((PvkVec3) { 0, 0, -size * 0.5f }, (PvkVec3) { 90 DEG, 0, 0 }));
-	
-	// front
-	__pvkTransformVertices(&vertices[12], 4, faceVertices, pvkMat4Transform((PvkVec3) { 0, 0, size * 0.5f }, (PvkVec3) { -90 DEG, 0, 0 }));
-	
-	// right
-	__pvkTransformVertices(&vertices[16], 4, faceVertices, pvkMat4Transform((PvkVec3) { size * 0.5f, 0, 0 }, (PvkVec3) { 0, 0, 90 DEG }));
-	
-	// left
-	__pvkTransformVertices(&vertices[20], 4, faceVertices, pvkMat4Transform((PvkVec3) { -size * 0.5f, 0, 0 }, (PvkVec3) { 0, 0, -90 DEG }));
-
 
 	PvkIndex indices[36] = 
 	{
-		// bottom
-		2, 1, 0,
-		0, 3, 2,
-
-		// rear
+		0, 1, 2,
+		2, 3, 0,
+		6, 5, 4,
+		4, 7, 6,
 		10, 9, 8,
 		8, 11, 10,
-		
-		// right
+		12, 13, 14,
+		14, 15, 12,
 		18, 17, 16,
 		16, 19, 18,
-		
-		// left
 		20, 21, 22,
-		22, 23, 20,
-
-		// top
-		4, 5, 6,
-		6, 7, 4,
-		
-		// front
-		12, 13, 14,
-		14, 15, 12
+		22, 23, 20
 	};
-
 	PvkGeometryData geometryData = { .vertices = vertices, .vertexCount = 24, .indices = indices, .indexCount = 36 };
 	return __pvkCreateGeometry(physicalDevice, device, queueFamilyIndexCount, queueFamilyIndices, &geometryData);
 }
@@ -1722,25 +1708,26 @@ static PvkCamera* pvkCreateCamera(float aspectRatio, PvkProjectionType projectio
 /* Lights */
 typedef struct PvkAmbientLight
 {
-	PvkVec3 color;
-	float intensity;
+	PvkVec3 color;		// 12 bytes
+	float intensity;	// 4 bytes
 } PvkAmbientLight;
 
 typedef struct PvkDirectionalLight
 {
-	PvkVec3 color;
-	PvkVec3 dir;
-	float intensity;
+	PvkVec3 color;		// 12 bytes
+	float intensity;	// 4 bytes
+	PvkVec3 dir;		// 12 bytes
+	float _;			// 4 bytes
 } PvkDirectionalLight;
 
 /* Global & Object Uniform Data */
 typedef struct PvkGlobalData
 {
-	PvkMat4 projectionMatrix;
-	PvkMat4 viewMatrix;
-	PvkDirectionalLight dirLight;
-	PvkAmbientLight ambLight;
-} PvkGlobalData;
+	PvkMat4 projectionMatrix;		// 64 bytes
+	PvkMat4 viewMatrix;				// 64 bytes
+	PvkDirectionalLight dirLight;	// 32 bytes
+	PvkAmbientLight ambLight;		// 16 bytes
+} PvkGlobalData;					// total = 128 + 48 = 176 bytes
 
 typedef struct PvkObjectData
 {

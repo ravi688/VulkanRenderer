@@ -5,8 +5,8 @@
 struct PvkDirectionalLight
 {
 	vec3 color;
-	vec3 dir;
 	float intensity;
+	vec3 dir;
 };
 
 struct PvkAmbientLight
