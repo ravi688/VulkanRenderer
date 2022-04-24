@@ -267,7 +267,7 @@ int main()
 	globalData->dirLight.color = (PvkVec3) { 1, 1, 1 };
 	globalData->ambLight.color = (PvkVec3) { 0.3f, 0.3f, 0.3f };
 	globalData->ambLight.intensity = 1.0f;
-	objectData->modelMatrix = pvkMat4Transpose(pvkMat4Rotate((PvkVec3) { 20 DEG, 0, 0 }));
+	objectData->modelMatrix = pvkMat4Transpose(pvkMat4Rotate((PvkVec3) { 0 DEG, 0, 0 }));
 	objectData->normalMatrix = pvkMat4Inverse(objectData->modelMatrix);
 	pvkUploadToMemory(logicalGPU, globalUniformBuffer.memory, globalData, sizeof(PvkGlobalData));
 	pvkUploadToMemory(logicalGPU, objectUniformBuffer.memory, objectData, sizeof(PvkObjectData));
@@ -327,7 +327,7 @@ int main()
 		PVK_CHECK(vkAcquireNextImageKHR(logicalGPU, swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &index));
 
 		angle += 0.1f DEG;
-		objectData->modelMatrix = pvkMat4Transpose(pvkMat4Rotate((PvkVec3) { 0, angle, 0 }));
+		objectData->modelMatrix = pvkMat4Transpose(pvkMat4Transform((PvkVec3) { 0, 0, 0 }, (PvkVec3) { 0, angle, 0 }));
 		objectData->normalMatrix = pvkMat4Inverse(objectData->modelMatrix);
 		pvkUploadToMemory(logicalGPU, objectUniformBuffer.memory, objectData, sizeof(PvkObjectData));
 		

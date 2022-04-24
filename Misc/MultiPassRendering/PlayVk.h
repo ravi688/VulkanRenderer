@@ -918,15 +918,19 @@ static inline void pvkEndCommandBuffer(VkCommandBuffer commandBuffer)
 
 static void pvkBeginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height)
 {
-	VkClearValue clearValue = { .color = { .float32 = { 0.01f, 0.02f, 0.3f, 1.0f } }  };
+	VkClearValue clearValue[2] =
+	{
+		{ .color = { .float32 = { 0.01f, 0.02f, 0.3f, 1.0f } }  },
+		{ .color = { .float32 = { 0.01f, 0.02f, 0.3f, 1.0f } }  }
+	};
 	VkRenderPassBeginInfo beginInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 		.renderPass = renderPass,
 		.framebuffer = framebuffer,
 		.renderArea = { .offset = { 0, 0 }, .extent = { width, height } },
-		.clearValueCount = 1,
-		.pClearValues = &clearValue
+		.clearValueCount = 2,
+		.pClearValues = clearValue
 	};
 	vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
@@ -1320,7 +1324,6 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 		.polygonMode = VK_POLYGON_MODE_FILL,
 		.cullMode = VK_CULL_MODE_BACK_BIT,
 		.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-		.depthBiasEnable = VK_FALSE
 	};
 
 	/* Multisampling */
@@ -1337,7 +1340,8 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
 		.depthTestEnable = VK_FALSE,
 		.depthWriteEnable = VK_FALSE,
-		.stencilTestEnable = VK_FALSE
+		.stencilTestEnable = VK_FALSE,
+		.depthBoundsTestEnable = VK_FALSE
 	};
 
 	/* Color attachment configuration */
@@ -1681,6 +1685,13 @@ static PvkMat4 pvkMat4PerspProj(float vAngle, float aspectRatio, float n, float 
 		0, 0, -f / (f - n), -n * f / (f - n),				// negative sign due to the reversed direction of z-axis in our application
 		0, 0, -1, 0
 	};
+	/*
+	  f 		  n * f
+	------  +    -------- = 
+	(f - n) 	 (f - n)z
+
+	 */
+
 }
 
 typedef struct PvkCamera
@@ -1704,10 +1715,10 @@ static PvkCamera* pvkCreateCamera(float aspectRatio, PvkProjectionType projectio
 	switch(projectionType)
 	{
 		case PVK_PROJECTION_TYPE_PERSPECTIVE:
-			cam->projection = pvkMat4PerspProj(heightOrAngle, aspectRatio, 0, 20);
+			cam->projection = pvkMat4PerspProj(heightOrAngle, aspectRatio, 1, 20);
 			break;
 		case PVK_PROJECTION_TYPE_ORTHOGRAPHIC:
-			cam->projection = pvkMat4OrthoProj(heightOrAngle, aspectRatio, 0, 20);
+			cam->projection = pvkMat4OrthoProj(heightOrAngle, aspectRatio, 1, 20);
 			break;
 		default:
 			PVK_FETAL_ERROR("Unrecognized PvkProjectionType \"%d\"\n", projectionType);

@@ -27,6 +27,7 @@ layout(set = 0, binding = 1) uniform PvkGlobalData
 layout(location = 0) in vec2 _texcoord;
 layout(location = 1) in vec3 _normal;
 layout(location = 2) in vec4 _color;
+layout(location = 3) in vec4 _position;
 
 layout(location = 0) out vec4 color;
 
@@ -36,6 +37,8 @@ void main()
 	vec3 light1 = t  * pvkGlobalData.dirLight.color * pvkGlobalData.dirLight.intensity;
 	vec3 light2 = pvkGlobalData.ambLight.color * pvkGlobalData.ambLight.intensity;
 	vec4 lighting = vec4(light1 + light2, 1);
-	color = _color * lighting;	
+	color = _color * lighting;
+	float depth = _position.z / _position.w;
+	color = vec4(depth, depth, depth, 1);
 }
 

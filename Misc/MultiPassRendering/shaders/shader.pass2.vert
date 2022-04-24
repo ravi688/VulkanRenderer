@@ -24,7 +24,8 @@ layout(location = 2) out vec4 _color;
 
 void main()
 {
-	gl_Position = pvkGlobalData.projectionMatrix * pvkGlobalData.viewMatrix * pvkObjectData.modelMatrix * vec4(position, 1);
+	vec4 _position = pvkGlobalData.projectionMatrix * pvkGlobalData.viewMatrix * pvkObjectData.modelMatrix * vec4(position, 1.0);
+	gl_Position = _position;
 	_normal = (pvkObjectData.normalMatrix * vec4(normal, 0)).xyz;
 	_texcoord = texcoord;
 	_color = color;

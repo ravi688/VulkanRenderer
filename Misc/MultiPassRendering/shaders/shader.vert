@@ -21,10 +21,12 @@ layout(location = 3) in vec4 color;
 layout(location = 0) out vec2 _texcoord;
 layout(location = 1) out vec3 _normal;
 layout(location = 2) out vec4 _color;
+layout(location = 3) out vec4 _position;
 
 void main()
 {
-	gl_Position = pvkGlobalData.projectionMatrix * pvkGlobalData.viewMatrix * pvkObjectData.modelMatrix * vec4(position, 1.0);
+	_position = pvkGlobalData.projectionMatrix * pvkGlobalData.viewMatrix * pvkObjectData.modelMatrix * vec4(position, 1.0);
+	gl_Position = _position;
 	_normal = (pvkObjectData.normalMatrix * vec4(normal, 0)).xyz;
 	_texcoord = texcoord;
 	_color = color;
