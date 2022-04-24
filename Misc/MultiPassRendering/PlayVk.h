@@ -1347,12 +1347,22 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT	
 	};
 
+	VkPipelineColorBlendAttachmentState colorAttachment2 = 
+	{
+		.blendEnable = VK_FALSE,
+		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+	};
+
+	VkPipelineColorBlendAttachmentState* colorAttachments = newv(VkPipelineColorBlendAttachmentState, 2);
+	colorAttachments[0] = colorAttachment;
+	colorAttachments[1] = colorAttachment2;
+
 	VkPipelineColorBlendStateCreateInfo colorBlendStateCInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
 		.logicOpEnable = VK_FALSE,
-		.attachmentCount = 1,
-		.pAttachments = &colorAttachment
+		.attachmentCount = 2,
+		.pAttachments = colorAttachments
 	};
 
 	VkGraphicsPipelineCreateInfo pipelineCInfo = 
@@ -1374,6 +1384,7 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 	VkPipeline pipeline;
 	PVK_CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCInfo, NULL, &pipeline));
 
+	delete(colorAttachments);
 	delete(stageCInfos);
 	delete(vertexAttributeDescriptions);
 	return pipeline;
