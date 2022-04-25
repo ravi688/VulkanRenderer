@@ -3,6 +3,24 @@
 
 static VkRenderPass pvkCreateRenderPass2(VkDevice device)
 {
+	VkAttachmentDescription depthAttachment = 
+	{
+		.format = VK_FORMAT_D32_SFLOAT,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
+
+	VkAttachmentReference depthAttachmentReference = 
+	{
+		.attachment = 2,
+		.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
+
 	/* Attachment for the sub pass 1 */
 	VkAttachmentDescription colorAttachment1 = 
 	{
@@ -51,7 +69,8 @@ static VkRenderPass pvkCreateRenderPass2(VkDevice device)
 	{
 		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
 		.colorAttachmentCount = 1,
-		.pColorAttachments = &attachmentReference1
+		.pColorAttachments = &attachmentReference1,
+		.pDepthStencilAttachment = &depthAttachmentReference
 	};
 
 	VkSubpassDescription subpass2 = 
@@ -60,13 +79,14 @@ static VkRenderPass pvkCreateRenderPass2(VkDevice device)
 		.colorAttachmentCount = 1,
 		.pColorAttachments = &attachmentReference2,
 		.inputAttachmentCount = 1,
-		.pInputAttachments = &inputAttachmentReference2
-	};
+		.pInputAttachments = &inputAttachmentReference2,
+		.pDepthStencilAttachment = &depthAttachmentReference
+	};		
 	VkSubpassDescription* subpasses = newv(VkSubpassDescription, 2);
 	subpasses[0] = subpass1;
 	subpasses[1] = subpass2;
 
-	VkAttachmentDescription attachments[2] = { colorAttachment2, colorAttachment1 };
+	VkAttachmentDescription attachments[3] = { colorAttachment2, colorAttachment1, depthAttachment };
 
 	VkSubpassDependency* dependencies = newv(VkSubpassDependency, 3);
 
@@ -81,7 +101,7 @@ static VkRenderPass pvkCreateRenderPass2(VkDevice device)
 	VkRenderPassCreateInfo cInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-		.attachmentCount = 2, 
+		.attachmentCount = 3, 
 		.pAttachments = &attachments[0],
 		.subpassCount = 2,
 		.pSubpasses = subpasses,
@@ -224,13 +244,19 @@ int main()
 										VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, 
 										2, queueFamilyIndices);
 	VkImageView auxAttachment = pvkCreateImageView(logicalGPU, auxImage.handle, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
-	VkImageView attachments[6] = 
+	PvkImage depthImage = pvkCreateImage(physicalGPU, logicalGPU, 
+										VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+										VK_FORMAT_D32_SFLOAT, 800, 800,
+										VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+										2, queueFamilyIndices);
+	VkImageView depthAttachment = pvkCreateImageView(logicalGPU, depthImage.handle, VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT);
+	VkImageView attachments[9] = 
 	{
-		swapchainImageViews[0], auxAttachment,				// framebuffer for swapchain image 0
-		swapchainImageViews[1], auxAttachment,				// framebuffer for swapchain image 1
-		swapchainImageViews[2], auxAttachment				// framebuffer for swapchain image 2
+		swapchainImageViews[0], auxAttachment, depthAttachment,				// framebuffer for swapchain image 0
+		swapchainImageViews[1], auxAttachment, depthAttachment,				// framebuffer for swapchain image 1
+		swapchainImageViews[2], auxAttachment, depthAttachment				// framebuffer for swapchain image 2
 	};
-	VkFramebuffer* framebuffers = pvkCreateFramebuffers(logicalGPU, renderPass, 800, 800, 2, attachments);
+	VkFramebuffer* framebuffers = pvkCreateFramebuffers(logicalGPU, renderPass, 800, 800, 3, attachments);
 
 	/* Uniform Buffers */
 	PvkBuffer globalUniformBuffer = pvkCreateBuffer(physicalGPU, logicalGPU, 
@@ -291,12 +317,22 @@ int main()
 	PvkGeometry* planeGeometry = pvkCreatePlaneGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 6);
 	PvkGeometry* boxGeometry = pvkCreateBoxGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 3);
 
+	VkClearValue* clearValues = newv(VkClearValue, 3);
+	for(int i = 0; i < 2; i++)
+	{
+		clearValues[i].color.float32[0] = 0;
+		clearValues[i].color.float32[1] = 0;
+		clearValues[i].color.float32[2] = 0;
+		clearValues[i].color.float32[3] = 1;
+	}
+	clearValues[2].depthStencil.depth = 1;
+
 	/* Command buffer recording */
 	for(int index = 0; index < 3; index++)
 	{
 		pvkBeginCommandBuffer(commandBuffers[index]);
 		
-		pvkBeginRenderPass(commandBuffers[index], renderPass, framebuffers[index], 800, 800);
+		pvkBeginRenderPass(commandBuffers[index], renderPass, framebuffers[index], 800, 800, 3, clearValues);
 
 		PvkMat4 mvp = pvkMat4Mul(camera->projection, pvkMat4Mul(camera->view, planeGeometry->transform));
 
@@ -337,6 +373,7 @@ int main()
 		pvkWindowPollEvents(window);
 	}
 
+	delete(clearValues);
 	delete(objectData);
 	delete(camera);
 	pvkDestroyGeometry(logicalGPU, planeGeometry);
@@ -356,6 +393,8 @@ int main()
 	vkDestroyDescriptorPool(logicalGPU, descriptorPool, NULL);
 	pvkDestroyFramebuffers(logicalGPU, framebuffers);
 	delete(framebuffers);
+	vkDestroyImageView(logicalGPU, depthAttachment, NULL);
+	pvkDestroyImage(logicalGPU, depthImage);
 	vkDestroyImageView(logicalGPU, auxAttachment, NULL);
 	pvkDestroyImage(logicalGPU, auxImage);
 	pvkDestroySwapchainImageViews(logicalGPU, swapchain, swapchainImageViews);

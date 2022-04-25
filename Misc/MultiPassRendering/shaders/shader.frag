@@ -38,7 +38,5 @@ void main()
 	vec3 light2 = pvkGlobalData.ambLight.color * pvkGlobalData.ambLight.intensity;
 	vec4 lighting = vec4(light1 + light2, 1);
 	color = _color * lighting;
-	float depth = _position.z / _position.w;
-	color = vec4(depth, depth, depth, 1);
 }
 

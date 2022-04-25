@@ -916,21 +916,16 @@ static inline void pvkEndCommandBuffer(VkCommandBuffer commandBuffer)
 	PVK_CHECK(vkEndCommandBuffer(commandBuffer));
 }
 
-static void pvkBeginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height)
+static void pvkBeginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height, uint32_t clearValueCount, VkClearValue* clearValues)
 {
-	VkClearValue clearValue[2] =
-	{
-		{ .color = { .float32 = { 0.01f, 0.02f, 0.3f, 1.0f } }  },
-		{ .color = { .float32 = { 0.01f, 0.02f, 0.3f, 1.0f } }  }
-	};
 	VkRenderPassBeginInfo beginInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 		.renderPass = renderPass,
 		.framebuffer = framebuffer,
 		.renderArea = { .offset = { 0, 0 }, .extent = { width, height } },
-		.clearValueCount = 2,
-		.pClearValues = clearValue
+		.clearValueCount = clearValueCount,
+		.pClearValues = clearValues
 	};
 	vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
@@ -1338,8 +1333,9 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 	VkPipelineDepthStencilStateCreateInfo dephtStencilStateCInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-		.depthTestEnable = VK_FALSE,
-		.depthWriteEnable = VK_FALSE,
+		.depthTestEnable = VK_TRUE,
+		.depthWriteEnable = VK_TRUE,
+		.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
 		.stencilTestEnable = VK_FALSE,
 		.depthBoundsTestEnable = VK_FALSE
 	};
