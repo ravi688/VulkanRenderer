@@ -1109,17 +1109,17 @@ static void pvkDestroySwapchainImageViews(VkDevice device, VkSwapchainKHR swapch
 }
 
 /* Vulkan Frambuffer */
-static VkFramebuffer* pvkCreateFramebuffers(VkDevice device, VkRenderPass renderPass, uint32_t width, uint32_t height, uint32_t imageViewCount, VkImageView* imageViews)
+static VkFramebuffer* pvkCreateFramebuffers(VkDevice device, VkRenderPass renderPass, uint32_t width, uint32_t height, uint32_t fbCount, uint32_t attachmentCount, VkImageView* imageViews)
 {
-	VkFramebuffer* framebuffers = newv(VkFramebuffer, 3);
-	for(int i = 0; i < 3; i++)
+	VkFramebuffer* framebuffers = newv(VkFramebuffer, fbCount);
+	for(int i = 0; i < fbCount; i++)
 	{
 		VkFramebufferCreateInfo fInfo = 
 		{
 			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 			.renderPass = renderPass,
-			.attachmentCount = imageViewCount,
-			.pAttachments = &imageViews[imageViewCount * i],
+			.attachmentCount = attachmentCount,
+			.pAttachments = &imageViews[attachmentCount * i],
 			.width = width,
 			.height = height,
 			.layers = 1
@@ -1129,9 +1129,9 @@ static VkFramebuffer* pvkCreateFramebuffers(VkDevice device, VkRenderPass render
 	return framebuffers;
 }
 
-static void pvkDestroyFramebuffers(VkDevice device, VkFramebuffer* framebuffers)
+static void pvkDestroyFramebuffers(VkDevice device, uint32_t fbCount, VkFramebuffer* framebuffers)
 {
-	for(int i = 0; i < 3; i++)
+	for(int i = 0; i < fbCount; i++)
 		vkDestroyFramebuffer(device, framebuffers[i], NULL);
 }
 
@@ -1244,15 +1244,12 @@ static VkVertexInputAttributeDescription __pvkGetVertexInputAttributeDescription
 	};
 }
 
-static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass, uint32_t subpassIndex, uint32_t width, uint32_t height, uint32_t count, ...)
+static VkPipeline __pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass, uint32_t subpassIndex, uint32_t width, uint32_t height, VkPipelineColorBlendStateCreateInfo* colorBlend, uint32_t count, va_list args)
 {
 	/* Shader modules */
 	PvkShader shaderModules[count];
-	va_list args;
-	va_start(args, count);
 	for(int i = 0; i < count; i++)
 		shaderModules[i] = va_arg(args, PvkShader);
-	va_end(args);
 	VkPipelineShaderStageCreateInfo* stageCInfos = __pvkCreatePipelineShaderStageCreateInfos(count, shaderModules);
 
 	/* Vertex buffer layouts and their description */
@@ -1340,6 +1337,52 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 		.depthBoundsTestEnable = VK_FALSE
 	};
 
+	VkGraphicsPipelineCreateInfo pipelineCInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.stageCount = count,
+		.pStages = stageCInfos,
+		.pVertexInputState = &vertexInputStateCInfo,
+		.pInputAssemblyState = &inputAssemblyStateCInfo,
+		.pViewportState = &viewportStateCInfo,
+		.pRasterizationState = &rasterizationStateCInfo,
+		.pDepthStencilState = &dephtStencilStateCInfo,
+		.pColorBlendState = colorBlend,
+		.layout = layout,
+		.renderPass = renderPass,
+		.subpass = subpassIndex
+	};
+
+	VkPipeline pipeline;
+	PVK_CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCInfo, NULL, &pipeline));
+
+	delete(stageCInfos);
+	delete(vertexAttributeDescriptions);
+	return pipeline;
+}
+
+
+static VkPipeline pvkCreateShadowMapGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass, uint32_t subpassIndex, uint32_t width, uint32_t height, uint32_t count, ...)
+{
+	va_list shaderModuleList;
+	va_start(shaderModuleList, count);
+
+	VkPipelineColorBlendStateCreateInfo colorBlend = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+		.logicOpEnable = VK_FALSE
+	};
+
+	VkPipeline pipeline =  __pvkCreateGraphicsPipeline(device, layout, renderPass, subpassIndex, width, height, &colorBlend, count, shaderModuleList);
+	va_end(shaderModuleList);
+	return pipeline;
+}
+
+static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass, uint32_t subpassIndex, uint32_t width, uint32_t height, uint32_t count, ...)
+{
+	va_list shaderModuleList;
+	va_start(shaderModuleList, count);
+
 	/* Color attachment configuration */
 	VkPipelineColorBlendAttachmentState colorAttachment = 
 	{
@@ -1357,7 +1400,7 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 	colorAttachments[0] = colorAttachment;
 	colorAttachments[1] = colorAttachment2;
 
-	VkPipelineColorBlendStateCreateInfo colorBlendStateCInfo = 
+	VkPipelineColorBlendStateCreateInfo colorBlend = 
 	{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
 		.logicOpEnable = VK_FALSE,
@@ -1365,31 +1408,11 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 		.pAttachments = colorAttachments
 	};
 
-	VkGraphicsPipelineCreateInfo pipelineCInfo = 
-	{
-		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-		.stageCount = count,
-		.pStages = stageCInfos,
-		.pVertexInputState = &vertexInputStateCInfo,
-		.pInputAssemblyState = &inputAssemblyStateCInfo,
-		.pViewportState = &viewportStateCInfo,
-		.pRasterizationState = &rasterizationStateCInfo,
-		.pDepthStencilState = &dephtStencilStateCInfo,
-		.pColorBlendState = &colorBlendStateCInfo,
-		.layout = layout,
-		.renderPass = renderPass,
-		.subpass = subpassIndex
-	};
-
-	VkPipeline pipeline;
-	PVK_CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCInfo, NULL, &pipeline));
-
+	VkPipeline pipeline =  __pvkCreateGraphicsPipeline(device, layout, renderPass, subpassIndex, width, height, &colorBlend, count, shaderModuleList);
+	va_end(shaderModuleList);
 	delete(colorAttachments);
-	delete(stageCInfos);
-	delete(vertexAttributeDescriptions);
 	return pipeline;
 }
-
 
 static VkPipelineLayout pvkCreatePipelineLayout(VkDevice device, uint32_t setLayoutCount, VkDescriptorSetLayout* setLayouts)
 {
@@ -1477,13 +1500,13 @@ static VkDescriptorSet* pvkAllocateDescriptorSets(VkDevice device, VkDescriptorP
 	return sets;
 }
 
-static void pvkWriteInputAttachmentToDescriptor(VkDevice device, VkDescriptorSet set, uint32_t binding, VkImageView imageView)
+static void pvkWriteImageViewToDescriptor(VkDevice device, VkDescriptorSet set, uint32_t binding, VkImageView imageView, VkSampler sampler, VkImageLayout layout, VkDescriptorType descriptorType)
 {
 	VkDescriptorImageInfo imageInfo = 
 	{
 		.imageView = imageView,
-		.sampler = VK_NULL_HANDLE,
-		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		.sampler = sampler,
+		.imageLayout = layout
 	};
 
 	VkWriteDescriptorSet writeInfo = 
@@ -1493,14 +1516,14 @@ static void pvkWriteInputAttachmentToDescriptor(VkDevice device, VkDescriptorSet
 		.dstBinding = binding,
 		.dstArrayElement = 0,
 		.descriptorCount = 1,
-		.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+		.descriptorType = descriptorType,
 		.pImageInfo = &imageInfo
 	};
 
 	vkUpdateDescriptorSets(device, 1, &writeInfo, 0, NULL);
 }
 
-static void pvkWriteBufferToDescriptor(VkDevice device, VkDescriptorSet set, uint32_t binding, VkBuffer buffer)
+static void pvkWriteBufferToDescriptor(VkDevice device, VkDescriptorSet set, uint32_t binding, VkBuffer buffer, VkDescriptorType descriptorType)
 {
 	VkDescriptorBufferInfo bufferInfo = 
 	{
@@ -1516,7 +1539,7 @@ static void pvkWriteBufferToDescriptor(VkDevice device, VkDescriptorSet set, uin
 		.dstBinding = binding,
 		.dstArrayElement = 0,
 		.descriptorCount = 1,
-		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.descriptorType = descriptorType,
 		.pBufferInfo = &bufferInfo
 	};
 

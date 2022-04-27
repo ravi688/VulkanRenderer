@@ -23,6 +23,7 @@ layout(set = 0, binding = 1) uniform PvkGlobalData
 	PvkAmbientLight ambLight;
 } pvkGlobalData;
 
+layout(set = 0, binding = 3) uniform sampler2D shadowMap;			// shadow map depth buffer sampler
 
 layout(location = 0) in vec2 _texcoord;
 layout(location = 1) in vec3 _normal;

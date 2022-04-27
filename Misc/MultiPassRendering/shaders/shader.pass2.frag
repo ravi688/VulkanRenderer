@@ -13,6 +13,6 @@ layout(location = 0) out vec4 color;
 void main()
 {
 	vec4 previousColor = subpassLoad(previousResult);
-	color = previousColor * previousColor * previousColor;
+	color = previousColor;
 }
 

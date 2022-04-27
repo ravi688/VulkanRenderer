@@ -3,14 +3,14 @@
 
 layout(set = 1, binding = 1) uniform PvkGlobalData
 {
-	mat4 projectionMatrix;
-	mat4 viewMatrix;
+	mat4 projectionMatrix;			// projection matrix of the camera
+	mat4 viewMatrix;				// view matrix of the camera
 } pvkGlobalData;
 
 layout(set = 2, binding = 2) uniform PvkObjectData
 {
-	mat4 modelMatrix;
-	mat4 normalMatrix;
+	mat4 modelMatrix;				// model matrix of the object being rendered
+	mat4 normalMatrix;				// normal matrix of the object being rendered
 } pvkObjectData;
 
 layout(location = 0) in vec3 position;

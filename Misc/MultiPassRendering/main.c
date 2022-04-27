@@ -1,6 +1,96 @@
 
 #include <PlayVk.h>
 
+static VkRenderPass pvkCreateShadowMapRenderPass(VkDevice device)
+{
+	// depth attachment only
+	VkAttachmentDescription depthAttachment = 
+	{
+		.format = VK_FORMAT_D32_SFLOAT,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,			// we need to access it after rendering
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
+
+	VkAttachmentReference depthAttachmentReference = 
+	{
+		.attachment = 0,
+		.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
+
+	VkSubpassDescription subpass = 
+	{
+		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		.pDepthStencilAttachment = &depthAttachmentReference
+	};
+
+	VkSubpassDependency* dependencies = newv(VkSubpassDependency, 2);
+
+	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	dependencies[1].srcSubpass = 0;
+	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	VkRenderPassCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		.attachmentCount = 1,
+		.pAttachments = &depthAttachment,
+		.subpassCount = 1,
+		.pSubpasses = &subpass,
+		.dependencyCount = 2,
+		.pDependencies = dependencies
+	};
+
+	VkRenderPass renderPass;
+	PVK_CHECK(vkCreateRenderPass(device, &cInfo, NULL, &renderPass));
+	delete(dependencies);	
+	return renderPass;
+}
+
+static VkSampler pvkCreateShadowMapSampler(VkDevice device)
+{
+	VkSamplerCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+		.magFilter = VK_FILTER_LINEAR,
+		.minFilter = VK_FILTER_LINEAR,
+		.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+		.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+		.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+		.mipLodBias = 0,
+		.anisotropyEnable = VK_FALSE,
+		.maxAnisotropy = 1.0f, // Optional
+		.compareEnable = VK_FALSE,
+		.compareOp = VK_COMPARE_OP_ALWAYS,	// Optional
+		.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+		.unnormalizedCoordinates = VK_FALSE,
+		.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+		.mipLodBias = 0.0f,
+		.minLod = 0.0f,
+		.maxLod = 1.0f
+	};
+
+	VkSampler sampler;
+	PVK_CHECK(vkCreateSampler(device, &cInfo, NULL, &sampler));
+	return sampler;
+}
+
 static VkRenderPass pvkCreateRenderPass2(VkDevice device)
 {
 	VkAttachmentDescription depthAttachment = 
@@ -117,16 +207,17 @@ static VkRenderPass pvkCreateRenderPass2(VkDevice device)
 
 static VkDescriptorPool pvkCreateDescriptorPool(VkDevice device)
 {
-	VkDescriptorPoolSize poolSizes[2] =
+	VkDescriptorPoolSize poolSizes[3] =
 	{ 
 		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 }
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }
 	};
 	VkDescriptorPoolCreateInfo cInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-		.maxSets = 3,
-		.poolSizeCount = 2,
+		.maxSets = 4,
+		.poolSizeCount = 3,
 		.pPoolSizes = poolSizes
 	};
 
@@ -145,11 +236,25 @@ static VkDescriptorSetLayout pvkCreateDescriptorSetLayout(VkDevice device)
 		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
 	};
 
+	VkDescriptorSetLayoutBinding binding2 = 
+	{
+		.binding = 3,
+		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+	};
+
+	VkDescriptorSetLayoutBinding bindings[2] = 
+	{
+		binding,
+		binding2
+	};
+
 	VkDescriptorSetLayoutCreateInfo cInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-		.bindingCount = 1,
-		.pBindings = &binding
+		.bindingCount = 2,
+		.pBindings = bindings
 	};
 
 	VkDescriptorSetLayout setLayout;
@@ -159,23 +264,25 @@ static VkDescriptorSetLayout pvkCreateDescriptorSetLayout(VkDevice device)
 
 static VkDescriptorSetLayout pvkCreateGlobalDescriptorSetLayout(VkDevice device)
 {
-	VkDescriptorSetLayoutBinding binding = 
+	VkDescriptorSetLayoutBinding* bindings = newv(VkDescriptorSetLayoutBinding, 2);
+	bindings[0] = (VkDescriptorSetLayoutBinding)
 	{
 		.binding = 1,
 		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		.descriptorCount = 1,
-		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT		
 	};
 
 	VkDescriptorSetLayoutCreateInfo cInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 		.bindingCount = 1,
-		.pBindings = &binding
+		.pBindings = bindings
 	};
 
 	VkDescriptorSetLayout setLayout;
 	PVK_CHECK(vkCreateDescriptorSetLayout(device, &cInfo, NULL, &setLayout));
+	delete(bindings);
 	return setLayout;
 }
 
@@ -236,6 +343,7 @@ int main()
 	VkSemaphore renderFinishSemaphore = pvkCreateSemaphore(logicalGPU);
 
 	/* Render Pass & Framebuffer attachments */
+	VkRenderPass shadowMapRenderPass = pvkCreateShadowMapRenderPass(logicalGPU);
 	VkRenderPass renderPass = pvkCreateRenderPass2(logicalGPU);
 	VkImageView* swapchainImageViews = pvkCreateSwapchainImageViews(logicalGPU, swapchain, VK_FORMAT_B8G8R8A8_SRGB);
 	PvkImage auxImage = pvkCreateImage(physicalGPU, logicalGPU, 
@@ -247,7 +355,7 @@ int main()
 	PvkImage depthImage = pvkCreateImage(physicalGPU, logicalGPU, 
 										VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 										VK_FORMAT_D32_SFLOAT, 800, 800,
-										VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+										VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 										2, queueFamilyIndices);
 	VkImageView depthAttachment = pvkCreateImageView(logicalGPU, depthImage.handle, VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT);
 	VkImageView attachments[9] = 
@@ -256,7 +364,15 @@ int main()
 		swapchainImageViews[1], auxAttachment, depthAttachment,				// framebuffer for swapchain image 1
 		swapchainImageViews[2], auxAttachment, depthAttachment				// framebuffer for swapchain image 2
 	};
-	VkFramebuffer* framebuffers = pvkCreateFramebuffers(logicalGPU, renderPass, 800, 800, 3, attachments);
+	VkFramebuffer* framebuffers = pvkCreateFramebuffers(logicalGPU, renderPass, 800, 800, 3, 3, attachments);
+	PvkImage shadowMapImage = pvkCreateImage(physicalGPU, logicalGPU,
+												VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+												VK_FORMAT_D32_SFLOAT, 800, 800,
+												VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+												2, queueFamilyIndices);
+	VkSampler shadowMapSampler = pvkCreateShadowMapSampler(logicalGPU);
+	VkImageView shadowMapAttachment = pvkCreateImageView(logicalGPU, shadowMapImage.handle, VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT);
+	VkFramebuffer* shadowMapFramebuffer = pvkCreateFramebuffers(logicalGPU, shadowMapRenderPass, 800, 800, 1, 1, &shadowMapAttachment);
 
 	/* Uniform Buffers */
 	PvkBuffer globalUniformBuffer = pvkCreateBuffer(physicalGPU, logicalGPU, 
@@ -279,9 +395,10 @@ int main()
 		pvkCreateObjectSetLayout(logicalGPU)					// object/local set layout
 	};
 	VkDescriptorSet* set = pvkAllocateDescriptorSets(logicalGPU, descriptorPool, 3, setLayouts);
-	pvkWriteInputAttachmentToDescriptor(logicalGPU, set[0], 0, auxAttachment);
-	pvkWriteBufferToDescriptor(logicalGPU, set[1], 1, globalUniformBuffer.handle);
-	pvkWriteBufferToDescriptor(logicalGPU, set[2], 1, objectUniformBuffer.handle);
+	pvkWriteImageViewToDescriptor(logicalGPU, set[0], 0, auxAttachment, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
+	pvkWriteImageViewToDescriptor(logicalGPU, set[0], 3, shadowMapAttachment, shadowMapSampler, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	pvkWriteBufferToDescriptor(logicalGPU, set[1], 1, globalUniformBuffer.handle, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+	pvkWriteBufferToDescriptor(logicalGPU, set[2], 2, objectUniformBuffer.handle, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
 	PvkCamera* camera = pvkCreateCamera((float)window->width / window->height, PVK_PROJECTION_TYPE_PERSPECTIVE, 65 DEG);	
 	PvkGlobalData* globalData = new(PvkGlobalData);
@@ -306,14 +423,20 @@ int main()
 	VkShaderModule fragmentShaderPass2 = pvkCreateShaderModule(logicalGPU, "shaders/shader.pass2.frag.spv");
 	VkShaderModule vertexShaderPass2 = pvkCreateShaderModule(logicalGPU, "shaders/shader.pass2.vert.spv");
 
+	VkShaderModule shadowMapFragmentShader = pvkCreateShaderModule(logicalGPU, "shaders/shadowMapShader.frag.spv");
+	VkShaderModule shadowMapVertexShader = pvkCreateShaderModule(logicalGPU, "shaders/shadowMapShader.vert.spv");
+
 	VkPipelineLayout pipelineLayout = pvkCreatePipelineLayout(logicalGPU, 2, &setLayouts[1]);
 	VkPipelineLayout pipelineLayout2 = pvkCreatePipelineLayout(logicalGPU, 3, &setLayouts[0]);
+	VkPipelineLayout shadowMapPipelineLayout = pvkCreatePipelineLayout(logicalGPU, 2, &setLayouts[1]);
 	VkPipeline pipeline = pvkCreateGraphicsPipeline(logicalGPU, pipelineLayout, renderPass, 0, 800, 800, 2,
 													(PvkShader) { fragmentShader, PVK_SHADER_TYPE_FRAGMENT },
 													(PvkShader) { vertexShader, PVK_SHADER_TYPE_VERTEX });
 	VkPipeline pipeline2 = pvkCreateGraphicsPipeline(logicalGPU, pipelineLayout2, renderPass, 1, 800, 800, 2,
 													(PvkShader) { fragmentShaderPass2, PVK_SHADER_TYPE_FRAGMENT },
 													(PvkShader) { vertexShaderPass2, PVK_SHADER_TYPE_VERTEX });
+	VkPipeline shadowMapPipeline = pvkCreateShadowMapGraphicsPipeline(logicalGPU, pipelineLayout, shadowMapRenderPass, 0, 800, 800, 1,
+													(PvkShader) { shadowMapVertexShader, PVK_SHADER_TYPE_VERTEX });
 	PvkGeometry* planeGeometry = pvkCreatePlaneGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 6);
 	PvkGeometry* boxGeometry = pvkCreateBoxGeometry(physicalGPU, logicalGPU, 2, queueFamilyIndices, 3);
 
@@ -331,12 +454,22 @@ int main()
 	for(int index = 0; index < 3; index++)
 	{
 		pvkBeginCommandBuffer(commandBuffers[index]);
-		
+
+		/* shadow map renderpass */
+		VkClearValue shadowMapClearValue = { .depthStencil = { .depth = 1.0f, .stencil = 0.0f } };
+		pvkBeginRenderPass(commandBuffers[index], shadowMapRenderPass, *shadowMapFramebuffer, 800, 800, 1, &shadowMapClearValue);
+		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, shadowMapPipeline);
+		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, shadowMapPipelineLayout, 0, 2, &set[1], 0, NULL);
+		pvkDrawGeometry(commandBuffers[index], planeGeometry);
+		pvkDrawGeometry(commandBuffers[index], boxGeometry);
+		pvkEndRenderPass(commandBuffers[index]);
+
+		/* color renderpass */
 		pvkBeginRenderPass(commandBuffers[index], renderPass, framebuffers[index], 800, 800, 3, clearValues);
 
 		PvkMat4 mvp = pvkMat4Mul(camera->projection, pvkMat4Mul(camera->view, planeGeometry->transform));
 
-		/* first pass */
+		/* first subpass */
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 2, &set[1], 0, NULL);
 		pvkDrawGeometry(commandBuffers[index], planeGeometry);
@@ -344,7 +477,7 @@ int main()
 
 		vkCmdNextSubpass(commandBuffers[index], VK_SUBPASS_CONTENTS_INLINE);
 
-		/* second pass */
+		/* second subpass */
 		vkCmdBindPipeline(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline2);
 		vkCmdBindDescriptorSets(commandBuffers[index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout2, 0, 3, &set[0], 0, NULL);
 		pvkDrawGeometry(commandBuffers[index], planeGeometry);
@@ -377,10 +510,14 @@ int main()
 	delete(objectData);
 	delete(camera);
 	pvkDestroyGeometry(logicalGPU, planeGeometry);
+	vkDestroyShaderModule(logicalGPU, shadowMapFragmentShader, NULL);
+	vkDestroyShaderModule(logicalGPU, shadowMapVertexShader, NULL);
 	vkDestroyShaderModule(logicalGPU, fragmentShaderPass2, NULL);
 	vkDestroyShaderModule(logicalGPU, vertexShaderPass2, NULL);
+	vkDestroyPipeline(logicalGPU, shadowMapPipeline, NULL);
 	vkDestroyPipeline(logicalGPU, pipeline2, NULL);
 	vkDestroyPipeline(logicalGPU, pipeline, NULL);
+	vkDestroyPipelineLayout(logicalGPU, shadowMapPipelineLayout, NULL);
 	vkDestroyPipelineLayout(logicalGPU, pipelineLayout2, NULL);
 	vkDestroyPipelineLayout(logicalGPU, pipelineLayout, NULL);
 	vkDestroyShaderModule(logicalGPU, fragmentShader, NULL);
@@ -391,7 +528,12 @@ int main()
 	pvkDestroyBuffer(logicalGPU, objectUniformBuffer);
 	pvkDestroyBuffer(logicalGPU, globalUniformBuffer);
 	vkDestroyDescriptorPool(logicalGPU, descriptorPool, NULL);
-	pvkDestroyFramebuffers(logicalGPU, framebuffers);
+	pvkDestroyFramebuffers(logicalGPU, 1, shadowMapFramebuffer);
+	delete(shadowMapFramebuffer);
+	vkDestroyImageView(logicalGPU, shadowMapAttachment, NULL);
+	pvkDestroyImage(logicalGPU, shadowMapImage);
+	vkDestroySampler(logicalGPU, shadowMapSampler, NULL);
+	pvkDestroyFramebuffers(logicalGPU, 3, framebuffers);
 	delete(framebuffers);
 	vkDestroyImageView(logicalGPU, depthAttachment, NULL);
 	pvkDestroyImage(logicalGPU, depthImage);
@@ -399,6 +541,7 @@ int main()
 	pvkDestroyImage(logicalGPU, auxImage);
 	pvkDestroySwapchainImageViews(logicalGPU, swapchain, swapchainImageViews);
 	vkDestroyRenderPass(logicalGPU, renderPass, NULL);
+	vkDestroyRenderPass(logicalGPU, shadowMapRenderPass, NULL);
 	vkDestroySemaphore(logicalGPU, imageAvailableSemaphore, NULL);
 	vkDestroySemaphore(logicalGPU, renderFinishSemaphore, NULL);
 	delete(commandBuffers);
