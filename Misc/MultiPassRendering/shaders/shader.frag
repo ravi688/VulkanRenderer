@@ -43,11 +43,11 @@ layout(location = 0) out vec4 color;
 void main()
 {
 	float lightSpaceDepth = _shadowPos.z / _shadowPos.w;
-	vec2 shadowCoord = vec2(_shadowPos.x / _shadowPos.w, -_shadowPos.y / _shadowPos.w);
+	vec2 shadowCoord = vec2(_shadowPos.x / _shadowPos.w, _shadowPos.y / _shadowPos.w);
 	shadowCoord.x = (shadowCoord.x + 1.0) / 2.0;			// map 0 -> 1
 	shadowCoord.y = (shadowCoord.y + 1.0) / 2.0;			// map 0 -> 1
 	float dist = texture(shadowMap, shadowCoord).r;
-	if(lightSpaceDepth > dist)
+	if((lightSpaceDepth - dist) > 0.001)
 		color = vec4(0.1, 0.1, 0.1, 1.0);
 	else
 	{
