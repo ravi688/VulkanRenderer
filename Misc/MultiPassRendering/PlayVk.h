@@ -1368,7 +1368,7 @@ static VkPipeline pvkCreateShadowMapGraphicsPipeline(VkDevice device, VkPipeline
 {
 	va_list shaderModuleList;
 	va_start(shaderModuleList, count);
-	VkPipeline pipeline =  __pvkCreateGraphicsPipeline(device, layout, renderPass, subpassIndex, width, height, NULL, false, count, shaderModuleList);
+	VkPipeline pipeline =  __pvkCreateGraphicsPipeline(device, layout, renderPass, subpassIndex, width, height, NULL, true, count, shaderModuleList);
 	va_end(shaderModuleList);
 	return pipeline;
 }
