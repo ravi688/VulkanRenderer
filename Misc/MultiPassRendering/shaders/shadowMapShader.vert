@@ -5,6 +5,8 @@ layout(set = 0, binding = 1) uniform PvkGlobalData
 {
 	mat4 projectionMatrix;			// projection matrix of the light
 	mat4 viewMatrix;				// view matrix of the light
+	mat4 lightProjectionMatrix;		// projection matrix of the light
+	mat4 lightViewMatrix;			// view matrix of the light
 } pvkGlobalData;
 
 layout(set = 1, binding = 2) uniform PvkObjectData
@@ -17,7 +19,7 @@ layout(location = 0) in vec3 position;
 
 void main()
 {
-	vec4 _position = pvkGlobalData.projectionMatrix * pvkGlobalData.viewMatrix * pvkObjectData.modelMatrix * vec4(position, 1.0);
+	vec4 _position = pvkGlobalData.lightProjectionMatrix * pvkGlobalData.lightViewMatrix * pvkObjectData.modelMatrix * vec4(position, 1.0);
 	gl_Position = _position;
 }
 

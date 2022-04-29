@@ -1057,8 +1057,8 @@ static PvkImage pvkCreateImage(VkPhysicalDevice physicalDevice, VkDevice device,
 
 static void pvkDestroyImage(VkDevice device, PvkImage image)
 {
-	vkDestroyImage(device, image.handle, NULL);
 	vkFreeMemory(device, image.memory, NULL);
+	vkDestroyImage(device, image.handle, NULL);
 }
 
 static VkImageView pvkCreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlagBits aspectMask)
@@ -1244,7 +1244,7 @@ static VkVertexInputAttributeDescription __pvkGetVertexInputAttributeDescription
 	};
 }
 
-static VkPipeline __pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass, uint32_t subpassIndex, uint32_t width, uint32_t height, VkPipelineColorBlendStateCreateInfo* colorBlend, uint32_t count, va_list args)
+static VkPipeline __pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout layout, VkRenderPass renderPass, uint32_t subpassIndex, uint32_t width, uint32_t height, VkPipelineColorBlendStateCreateInfo* colorBlend, bool enableDepth, uint32_t count, va_list args)
 {
 	/* Shader modules */
 	PvkShader shaderModules[count];
@@ -1316,6 +1316,7 @@ static VkPipeline __pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout 
 		.polygonMode = VK_POLYGON_MODE_FILL,
 		.cullMode = VK_CULL_MODE_BACK_BIT,
 		.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+		.lineWidth = 1.0f
 	};
 
 	/* Multisampling */
@@ -1330,8 +1331,8 @@ static VkPipeline __pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout 
 	VkPipelineDepthStencilStateCreateInfo dephtStencilStateCInfo = 
 	{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-		.depthTestEnable = VK_TRUE,
-		.depthWriteEnable = VK_TRUE,
+		.depthTestEnable = enableDepth ? VK_TRUE : VK_FALSE,
+		.depthWriteEnable = enableDepth ? VK_TRUE : VK_FALSE,
 		.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
 		.stencilTestEnable = VK_FALSE,
 		.depthBoundsTestEnable = VK_FALSE
@@ -1345,6 +1346,7 @@ static VkPipeline __pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout 
 		.pVertexInputState = &vertexInputStateCInfo,
 		.pInputAssemblyState = &inputAssemblyStateCInfo,
 		.pViewportState = &viewportStateCInfo,
+		.pMultisampleState = &multisamplingStateCInfo,
 		.pRasterizationState = &rasterizationStateCInfo,
 		.pDepthStencilState = &dephtStencilStateCInfo,
 		.pColorBlendState = colorBlend,
@@ -1366,14 +1368,7 @@ static VkPipeline pvkCreateShadowMapGraphicsPipeline(VkDevice device, VkPipeline
 {
 	va_list shaderModuleList;
 	va_start(shaderModuleList, count);
-
-	VkPipelineColorBlendStateCreateInfo colorBlend = 
-	{
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-		.logicOpEnable = VK_FALSE
-	};
-
-	VkPipeline pipeline =  __pvkCreateGraphicsPipeline(device, layout, renderPass, subpassIndex, width, height, &colorBlend, count, shaderModuleList);
+	VkPipeline pipeline =  __pvkCreateGraphicsPipeline(device, layout, renderPass, subpassIndex, width, height, NULL, false, count, shaderModuleList);
 	va_end(shaderModuleList);
 	return pipeline;
 }
@@ -1408,7 +1403,7 @@ static VkPipeline pvkCreateGraphicsPipeline(VkDevice device, VkPipelineLayout la
 		.pAttachments = colorAttachments
 	};
 
-	VkPipeline pipeline =  __pvkCreateGraphicsPipeline(device, layout, renderPass, subpassIndex, width, height, &colorBlend, count, shaderModuleList);
+	VkPipeline pipeline =  __pvkCreateGraphicsPipeline(device, layout, renderPass, subpassIndex, width, height, &colorBlend, true, count, shaderModuleList);
 	va_end(shaderModuleList);
 	delete(colorAttachments);
 	return pipeline;
@@ -1766,9 +1761,11 @@ typedef struct PvkGlobalData
 {
 	PvkMat4 projectionMatrix;		// 64 bytes
 	PvkMat4 viewMatrix;				// 64 bytes
+	PvkMat4 lightProjectionMatrix; 	// 64 bytes
+	PvkMat4 lightViewMatrix; 		// 64 bytes
 	PvkDirectionalLight dirLight;	// 32 bytes
 	PvkAmbientLight ambLight;		// 16 bytes
-} PvkGlobalData;					// total = 128 + 48 = 176 bytes
+} PvkGlobalData;					// total = 256 + 48 = 304 bytes
 
 typedef struct PvkObjectData
 {
