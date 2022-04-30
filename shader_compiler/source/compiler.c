@@ -817,7 +817,7 @@ static void buffer_write_u32(BUFFER* buffer, u32 value)
 
 static const char* parse_glsl_code(const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer);
 
-static const char* parse_render_pass(const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
+static const char* parse_pass(const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer, const char* pass_name)
 {
 	const char* c = _source;
 	const char* end = _source + length;
@@ -829,12 +829,12 @@ static const char* parse_render_pass(const char* _source, buf_ucount_t length, B
 		c = skip_whitespaces(c, end);
 	}
 
-	if((tolower(*c) == 'p') && (strncmp(c + 1, "ass", 3) == 0))
+	if(strncmp(c, pass_name, strlen(pass_name)) == 0)
 	{
-		c += 4; 	// strlen("Pass")
+		c += strlen(pass_name);
 		c = skip_whitespaces(c, end);
 		if(*c != '{')
-			LOG_FETAL_ERR("Render pass parse error: Unrecognized symbol \"%c\", expected a closed brace \"{\"\n", *c);
+			LOG_FETAL_ERR("Pass parse error: Unrecognized symbol \"%c\", expected a closed brace \"{\"\n", *c);
 		c++;
 		const char* glsl_str = c;
 		
@@ -851,19 +851,19 @@ static const char* parse_render_pass(const char* _source, buf_ucount_t length, B
 			if((open_brace_count < 0) || (c >= end)) break;
 		}
 		if(open_brace_count >= 0)
-			LOG_FETAL_ERR("Render pass parse error: Render pass is not closed, expected \"}\"\n");
+			LOG_FETAL_ERR("Pass parse error: %s is not closed, expected \"}\"\n", pass_name);
 
 		u32 glsl_len = c - glsl_str - 1;
 
-		parse_glsl_code(glsl_str, glsl_len, buffer, offsets_buffer);
-		// puts("-------- GLSL Shader --------------");
-		// printf("%.*s\n", glsl_len, glsl_str);
-		//exit(0);
+		if(strcmp(pass_name, "SubPass") != 0)
+			parse_pass(glsl_str, glsl_len, buffer, offsets_buffer, "SubPass");
+		else
+			parse_glsl_code(glsl_str, glsl_len, buffer, offsets_buffer);
 	}
 	else
 	{
 		u32 len = __get_word_length(c, end, "\0{");
-		LOG_FETAL_ERR("Render pass parse error: Unrecognized symbol \"%.*s\", expected \"Pass\"\n", len, c);
+		LOG_FETAL_ERR("Pass parse error: Unrecognized symbol \"%.*s\", expected \"%s\"\n", len, c, pass_name);
 	}
 
 	return skip_whitespaces(c, end);
@@ -997,7 +997,7 @@ static function_signature(const char*, parse_shader, const char* _source, buf_uc
 	// parse each render pass
 	while(string < (_source + length))
 	{
-		string = parse_render_pass(string, length - (string - _source), buffer, offsets_buffer);
+		string = parse_pass(string, length - (string - _source), buffer, offsets_buffer, "RenderPass");
 		++render_pass_count;
 	}
 
