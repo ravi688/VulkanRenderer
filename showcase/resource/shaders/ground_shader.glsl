@@ -85,21 +85,23 @@ GraphicsPipeline
 
 #section LAYOUT
 
-per-vertex 		[0, 0] vec3 position;
-per-instance 	[1, 1] vec3 offset;
-per-instance 	[1, 2] vec3 scale;
-per-instance 	[1, 3] vec3 rotation;
+per-vertex [0, 0] vec3 position;
+per-vertex [1, 1] vec3 normal;
+per-vertex [2, 2] vec2 texcoord;
 
-vertex [push_constant] [0] uniform Push
+vertex fragment [push_constant] [0] uniform Push
 {
-	mat4 mvp_matrix;
+    mat4 mvp_matrix;
+    mat4 model_matrix;
 } push;
 
-vertex [0, 0] uniform UBO
+fragment [0, 0] uniform sampler2D albedo;
+fragment [0, 1] uniform Light
 {
-	float time;
-} ubo;
-
+    vec3 dir;
+    float intensity;
+    vec3 color;
+} light;
 
 #section SHADER
 
@@ -111,32 +113,24 @@ RenderPass
         
         #version 450
         
-        layout(binding = 0) uniform UBO
-        {
-        	float time;
-        } ubo;
-        
         layout(push_constant) uniform Push
         {
-        	mat4 mvp;
-        } push;
+            mat4 mvp_matrix;
+            mat4 model_matrix;
+        };
         
+        layout(location = 0) in vec3 position;
+        layout(location = 1) in vec3 normal;
+        layout(location = 2) in vec2 texcoord;
         
-        //Inputs
-        //per vertex
-        layout(location = 0) in vec3 norm_position;
-        
-        //per instance
-        layout(location = 1) in vec3 offset;
-        layout(location = 2) in vec3 scale;
-        layout(location = 3) in vec3 rotation;
+        layout(location = 0) out vec3 _normal;
+        layout(location = 1) out vec2 _texcoord;
         
         void main()
         {
-        	vec3 pos = offset;
-        	pos += norm_position;
-        	pos = pos * scale;
-        	gl_Position = push.mvp * vec4(pos + vec3(0, cos(ubo.time), sin(ubo.time)), 1);
+            _normal = normalize((transpose(inverse(model_matrix)) * vec4(normal, 0)).xyz);
+            _texcoord = texcoord;
+            gl_Position = mvp_matrix * vec4(position, 1);
         }
         
         
@@ -144,11 +138,22 @@ RenderPass
         
         #version 450
         
+        layout(set = 0, binding = 0) uniform sampler2D albedo;
+        layout(set = 0, binding = 1) uniform Light
+        {
+            vec3 dir;
+            float intensity;
+            vec3 color;
+        } light;
+        
+        layout(location = 0) in vec3 _normal;
+        layout(location = 1) in vec2 _texcoord;
+        
         layout(location = 0) out vec3 color;
         
         void main()
         {
-        	color = vec3(1, 1, 1);
+            color = vec3(1, 1, 1) * light.color * light.intensity * max(0, dot(-_normal, light.dir));
         }
     }
 }

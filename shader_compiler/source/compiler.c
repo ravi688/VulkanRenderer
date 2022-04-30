@@ -211,6 +211,8 @@ ________________________________LAYOUT__________________________________________
  			| u32 						| contains length of the array if the type is an array
 ____________|___________________________|_________________________________________
 ________________________________SHADER____________________________________________
+ 			| u8 						| Render pass count
+ 			| RenderPassInfo object 	| 
  13 		| shader mask byte 			| BIT(0) = vertex shader, BIT(1) = tessellation shader, BIT(2) = geometry shader, BIT(3) = fragment shader
  14			| u32, contains a number 	| vertex shader offset if BIT(0) is set
  18			| u32, contains a number 	| vertex shader length if BIT(0) is set
@@ -812,16 +814,65 @@ static void buffer_write_u32(BUFFER* buffer, u32 value)
 	*(u32*)buf_get_ptr_at(buffer, index) = value;
 }
 
-static function_signature(const char*, parse_shader, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
+
+static const char* parse_glsl_code(const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer);
+
+static const char* parse_pass(const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer, const char* pass_name)
 {
-	CALLTRACE_BEGIN();
-	const char* string = _source;
-	if(is_empty(string, string + length))
+	const char* c = _source;
+	const char* end = _source + length;
+	c = skip_whitespaces(c, end);
+
+	while(*c == '[')
 	{
-		LOG_MSG("SHADER section is empty, skipping\n");
-		CALLTRACE_RETURN(_source + length);
+		// ...
+		c = skip_whitespaces(c, end);
 	}
 
+	if(strncmp(c, pass_name, strlen(pass_name)) == 0)
+	{
+		c += strlen(pass_name);
+		c = skip_whitespaces(c, end);
+		if(*c != '{')
+			LOG_FETAL_ERR("Pass parse error: Unrecognized symbol \"%c\", expected a closed brace \"{\"\n", *c);
+		c++;
+		const char* glsl_str = c;
+		
+		// calculate the length of the glsl_str
+		int open_brace_count = 0;
+		while(true)
+		{
+			switch(*c)
+			{
+				case '{' : open_brace_count++; break;
+				case '}' : open_brace_count--; break;
+			}
+			++c;
+			if((open_brace_count < 0) || (c >= end)) break;
+		}
+		if(open_brace_count >= 0)
+			LOG_FETAL_ERR("Pass parse error: %s is not closed, expected \"}\"\n", pass_name);
+
+		u32 glsl_len = c - glsl_str - 1;
+
+		if(strcmp(pass_name, "SubPass") != 0)
+			parse_pass(glsl_str, glsl_len, buffer, offsets_buffer, "SubPass");
+		else
+			parse_glsl_code(glsl_str, glsl_len, buffer, offsets_buffer);
+	}
+	else
+	{
+		u32 len = __get_word_length(c, end, "\0{");
+		LOG_FETAL_ERR("Pass parse error: Unrecognized symbol \"%.*s\", expected \"%s\"\n", len, c, pass_name);
+	}
+
+	return skip_whitespaces(c, end);
+}
+
+static const char* parse_glsl_code(const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
+{
+	const char* string = _source;
+	const char* end = _source + length;
 	//Parse the _source string to separate vertex, tessellation, geometry, and fragment shaders
 	const char* stage_strings[SHADER_COMPILER_SHADER_STAGE_MAX] = { "vertex", "tessellation", "geometry", "fragment" };
 	shader_source_t sources[SHADER_COMPILER_SHADER_STAGE_MAX]; memset(sources, 0, sizeof(shader_source_t) * SHADER_COMPILER_SHADER_STAGE_MAX);
@@ -832,7 +883,7 @@ static function_signature(const char*, parse_shader, const char* _source, buf_uc
 	u8 tessellation_shader_count = 0;
 	u8 geometry_shader_count = 0;
 	u8 fragment_shader_count = 0;
-	while((string = strchr(string, PREPROCESSOR)) != NULL)
+	while(((string = strchr(string, PREPROCESSOR)) != NULL) && (string < end))
 	{
 		temp = string - 1;
 		string += 1;
@@ -923,7 +974,37 @@ static function_signature(const char*, parse_shader, const char* _source, buf_uc
 	if(previous_source != NULL)
 		previous_source->length = _source + length - previous_source->source;
 	serialize_shader(stage_strings, sources, shader_count, buffer, offsets_buffer);
-	CALLTRACE_RETURN(_source + length);
+	return _source + length;
+}
+
+static function_signature(const char*, parse_shader, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
+{
+	CALLTRACE_BEGIN();
+	const char* string = _source;
+
+	// check for the empty section
+	if(is_empty(string, string + length))
+	{
+		LOG_MSG("SHADER section is empty, skipping\n");
+		CALLTRACE_RETURN(_source + length);
+	}
+
+	// allocate 1 byte space for the render pass count
+	buf_ucount_t index = buf_get_element_count(buffer);
+	buf_push_pseudo(buffer, 1);
+	
+	u32 render_pass_count = 0;
+	// parse each render pass
+	while(string < (_source + length))
+	{
+		string = parse_pass(string, length - (string - _source), buffer, offsets_buffer, "RenderPass");
+		++render_pass_count;
+	}
+
+	// set the render pass count
+	buf_set_at(buffer, index, &render_pass_count);
+
+	CALLTRACE_RETURN(string);
 }
 
 static function_signature(void, serialize_shader, const char* const* stage_strings, shader_source_t* sources, uint8_t shader_count, BUFFER* buffer, BUFFER* offsets_buffer)

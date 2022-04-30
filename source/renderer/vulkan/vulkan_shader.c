@@ -61,10 +61,12 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 		if(section_mask & (MASK << (i * 3)))
 			cursor += 4;
 	}
+	// TODO: Make settings section optional
 	if(!settings_found)
 		LOG_FETAL_ERR("Shader binary loading error: SETTINGS section not found! it is compulsory for now\n");
 	if(!shader_found)
 		LOG_FETAL_ERR("Shader binary loading error: SHADER section not found!\n");
+	// TODO: Make layout section optional
 	if(!layout_found)
 		LOG_WRN("Shader binary loading warning: LAYOUT section not found!\n");
 
@@ -155,6 +157,11 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 static vulkan_stage_shader_t** create_stage_shaders(vulkan_renderer_t* renderer, BUFFER* shader_binary, u32 cursor, u8* stage_count)
 {
 	assert(cursor != 0xFFFFFFFF);
+	
+	// for now render pass count must be 1
+	u8 render_pass_count = *(u8*)buf_get_ptr_at(shader_binary, cursor); cursor++;
+	assert(render_pass_count == 1);
+
 	u8 shader_mask = *(u8*)buf_get_ptr_at(shader_binary, cursor); cursor++;
 	u8 shader_count = 0; for(u8 i = 0; i < 4; i++) { if(shader_mask & (1 << i)) shader_count++; }
 	*stage_count = shader_count;
