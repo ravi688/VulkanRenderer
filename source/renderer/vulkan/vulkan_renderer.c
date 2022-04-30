@@ -3,6 +3,8 @@
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <renderer/internal/vulkan/vulkan_instance.h>
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
+#include <renderer/internal/vulkan/vulkan_command_buffer.h>
+#include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 #include <renderer/render_window.h>
 #include <renderer/debug.h>
@@ -275,24 +277,11 @@ DEBUG_BLOCK
 	renderer->swapchain = vulkan_swapchain_create(renderer, &swapchain_info);
 
 	// setup command pool
-	VkCommandPoolCreateInfo command_pool_create_info =
-	{
-		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-		.queueFamilyIndex = queue_family_indices[0],					// graphics queue family index
-		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
-	};
-	vkCall(vkCreateCommandPool(renderer->logical_device->handle, &command_pool_create_info, NULL, &renderer->vk_command_pool));
+	renderer->vk_command_pool = vulkan_command_pool_create(renderer, queue_family_indices[0], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 	
 	// setup command buffers
 	renderer->vk_command_buffers = heap_newv(VkCommandBuffer, renderer->swapchain->image_count);
-	VkCommandBufferAllocateInfo command_buffer_alloc_info =
-	{
-		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-		.commandPool = renderer->vk_command_pool, 
-		.commandBufferCount = renderer->swapchain->image_count,
-		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY
-	};
-	vkCall(vkAllocateCommandBuffers(renderer->logical_device->handle, &command_buffer_alloc_info, renderer->vk_command_buffers));
+	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vk_command_pool, renderer->swapchain->image_count, renderer->vk_command_buffers);
 
 	//Set up graphics queue
 	vkGetDeviceQueue(renderer->logical_device->handle, queue_family_indices[0], 0, &renderer->vk_graphics_queue); 
@@ -320,9 +309,8 @@ DEBUG_BLOCK
 RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer, float r, float g, float b, float a)
 {
 	vulkan_swapchain_acquire_next_image(renderer->swapchain, renderer);
-	vkCall(vkResetCommandBuffer(renderer->vk_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT));
-	VkCommandBufferBeginInfo cmd_begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-	vkCall(vkBeginCommandBuffer(renderer->vk_command_buffers[renderer->swapchain->current_image_index], &cmd_begin_info));
+	vulkan_command_buffer_reset(renderer->vk_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+	vulkan_command_buffer_begin(renderer->vk_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	vulkan_render_pass_begin_info_t begin_info =
 	{
@@ -339,38 +327,22 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer, float
 RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 {
 	vulkan_render_pass_end(renderer->render_pass);
-	vkCall(vkEndCommandBuffer(renderer->vk_command_buffers[renderer->swapchain->current_image_index]));
+	vulkan_command_buffer_end(renderer->vk_command_buffers[renderer->swapchain->current_image_index]);
 }
 
 RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 {
 	u32 wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	VkSubmitInfo submit_info =
-	{
-		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-		.commandBufferCount = 1,
-		.pCommandBuffers = &(renderer->vk_command_buffers[renderer->swapchain->current_image_index]),
-		.waitSemaphoreCount = 1,
-		.pWaitSemaphores = &(renderer->swapchain->image_available_semaphore),
-		.pWaitDstStageMask = &wait_destination_mask,
-		.signalSemaphoreCount = 1,
-		.pSignalSemaphores = &(renderer->swapchain->render_finished_semaphore)
-	};
-
-	vkCall(vkQueueSubmit(renderer->vk_graphics_queue, 1, &submit_info, VK_NULL_HANDLE));
-
-	VkPresentInfoKHR present_info =
-	{
-		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-		.swapchainCount = 1,
-		.pSwapchains = &(renderer->swapchain->handle),
-		.waitSemaphoreCount = 1,
-		.pWaitSemaphores = &(renderer->swapchain->render_finished_semaphore),
-		.pImageIndices = &(renderer->swapchain->current_image_index)
-	};
-
-	vkCall(vkQueuePresentKHR(renderer->vk_graphics_queue, &present_info));
-	vkCall(vkQueueWaitIdle(renderer->vk_graphics_queue));
+	vulkan_queue_submit(renderer->vk_graphics_queue,
+								renderer->vk_command_buffers[renderer->swapchain->current_image_index],
+								renderer->swapchain->image_available_semaphore,
+								VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+								renderer->swapchain->render_finished_semaphore);
+	vulkan_queue_present(renderer->vk_graphics_queue, 
+						renderer->swapchain->handle, 
+						renderer->swapchain->current_image_index,
+						renderer->swapchain->render_finished_semaphore);
+	vulkan_queue_wait_idle(renderer->vk_graphics_queue);
 	vkCall(vkDeviceWaitIdle(renderer->logical_device->handle));
 	render_window_poll_events(renderer->window);
 }
