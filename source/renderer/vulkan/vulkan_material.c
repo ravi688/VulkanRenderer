@@ -32,7 +32,6 @@ RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, v
 	// cache some required data to use them when recreating this material when window resizes
 	material->renderer = renderer;
 	material->shader = create_info->shader;
-	material->is_transparent = create_info->is_transparent;
 	
 	vulkan_graphics_pipeline_create_info_t pipeline_create_info =
 	{
@@ -41,7 +40,6 @@ RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, v
 		.vertex_infos = create_info->vertex_infos,
 		.push_constant_ranges = create_info->push_constant_ranges,
 		.push_constant_range_count = create_info->push_constant_range_count,
-		.blend_enabled = create_info->is_transparent
 	};
 	vulkan_graphics_pipeline_create_no_alloc(renderer, &pipeline_create_info, material->graphics_pipeline);
 }
@@ -165,7 +163,6 @@ static void recreate_material(render_window_t* window, void* user_data)
 		.shader = material->shader,
 		.vertex_info_count = material->vertex_info_count,
 		.vertex_infos = material->vertex_infos,
-		.blend_enabled = material->is_transparent,
 		.push_constant_ranges = material->push_constant_ranges,
 		.push_constant_range_count = material->push_constant_range_count
 	};

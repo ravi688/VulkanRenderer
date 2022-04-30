@@ -250,6 +250,14 @@ DEBUG_BLOCK
 	};
 	renderer->render_pass = vulkan_render_pass_create(renderer, &render_pass_info);
 
+	// create a shadow render pass for rendering the shadow map
+	vulkan_render_pass_create_info_t shadow_render_pass_info =
+	{
+		// color attachment format is not needed
+		.depth_attachment_format = depth_format
+	};
+	renderer->shadow_map_render_pass = vulkan_render_pass_create(renderer, &shadow_render_pass_info);
+
 	//Create Swapchain
 	vulkan_swapchain_create_info_t swapchain_info =
 	{
@@ -386,6 +394,10 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	// destroy render pass	
 	vulkan_render_pass_destroy(renderer->render_pass);
 	vulkan_render_pass_release_resources(renderer->render_pass);
+
+	// destroy the shadow render pass
+	vulkan_render_pass_destroy(renderer->shadow_map_render_pass);
+	vulkan_render_pass_release_resources(renderer->shadow_map_render_pass);
 	
 	vkFreeCommandBuffers(renderer->logical_device->handle, renderer->vk_command_pool, renderer->swapchain->image_count, renderer->vk_command_buffers);
 	vkDestroyCommandPool(renderer->logical_device->handle, renderer->vk_command_pool, NULL);

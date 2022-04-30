@@ -31,9 +31,9 @@
 #-------------------------------------------
 #		Project Configuration
 #-------------------------------------------
-PROJECT_NAME = Skybox
-STATIC_LIB_NAME = skybox.a
-DYNAMIC_LIB_NAME = skybox.dll
+PROJECT_NAME = ShadowMap
+STATIC_LIB_NAME = shadowmap.a
+DYNAMIC_LIB_NAME = shadowmap.dll
 EXECUTABLE_NAME = main.exe
 EXTERNAL_LIBRARIES = -L../../external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
 EXTERNAL_INCLUDES = #-I./dependencies/ -I./shared-dependencies
@@ -306,6 +306,7 @@ build-release: shader-release
 	$(MAKE) release
 
 build-debug: shader-debug
+	$(MAKE) --directory=..\..\ lib-static-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
 

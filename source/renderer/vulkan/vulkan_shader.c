@@ -32,10 +32,12 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	if(strncmp(buffer, header, header_len) != 0)
 		LOG_FETAL_ERR("Shader binary loading error: invalid header \"%.*s\"\n", header_len, buffer);
 
-	u32 shader_offset = 0xFFFFFFFF; //invalid
-	u32 layout_offset = 0xFFFFFFFF; //invalid
+	u32 shader_offset = 	0xFFFFFFFF; //invalid
+	u32 layout_offset = 	0xFFFFFFFF; //invalid
+	u32 settings_offset = 	0xFFFFFFFF; // invalid
 	bool shader_found = false;
 	bool layout_found = false;
+	bool settings_found = false;
 
 	const u32 section_mask = *(u32*)buf_get_ptr_at(shader_binary, cursor); cursor += 4;
 	const u32 MASK = 0x00000007UL;
@@ -51,17 +53,55 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 			layout_offset = *(u32*)buf_get_ptr_at(shader_binary, cursor);
 			layout_found = true;
 		}
+		else if((!settings_found) && (section_mask & ((1UL << 0) << (i * 3))))
+		{
+			settings_offset = *(u32*)buf_get_ptr_at(shader_binary, cursor);
+			settings_found = true;
+		}
 		if(section_mask & (MASK << (i * 3)))
 			cursor += 4;
 	}
+	// TODO: Make settings section optional
+	if(!settings_found)
+		LOG_FETAL_ERR("Shader binary loading error: SETTINGS section not found! it is compulsory for now\n");
 	if(!shader_found)
 		LOG_FETAL_ERR("Shader binary loading error: SHADER section not found!\n");
+	// TODO: Make layout section optional
 	if(!layout_found)
 		LOG_WRN("Shader binary loading warning: LAYOUT section not found!\n");
 
 	vulkan_shader_t* shader = vulkan_shader_new();
 	shader->renderer = renderer;
 	shader->stage_shaders = create_stage_shaders(renderer, shader_binary, shader_offset, &shader->stage_count);
+	
+	if(settings_found)
+	{
+		memcpy(&shader->pipelineSettings, buf_get_ptr_at(shader_binary, settings_offset), sizeof(GraphicsPipeline));
+		memcpy(&shader->properties, buf_get_ptr_at(shader_binary, settings_offset + sizeof(GraphicsPipeline)), sizeof(Properties));
+
+		u32 viewportCount = shader->pipelineSettings.viewport.viewportCount;
+		u32 scissorCount = shader->pipelineSettings.viewport.scissorCount;
+		u32 attachmentCount = shader->pipelineSettings.colorblend.attachmentCount;
+		if(viewportCount != 0)
+		{
+			buf_ucount_t offset = (buf_ucount_t)shader->pipelineSettings.viewport.pViewports;
+			shader->pipelineSettings.viewport.pViewports = malloc(sizeof(VkViewport) * viewportCount);
+			memcpy((void*)shader->pipelineSettings.viewport.pViewports, buf_get_ptr_at(shader_binary, offset), sizeof(VkViewport) * viewportCount);
+		}
+		if(scissorCount != 0)
+		{
+			buf_ucount_t offset = (buf_ucount_t)shader->pipelineSettings.viewport.pScissors;
+			shader->pipelineSettings.viewport.pScissors = malloc(sizeof(VkRect2D) * scissorCount);
+			memcpy((void*)shader->pipelineSettings.viewport.pScissors, buf_get_ptr_at(shader_binary, offset), sizeof(VkRect2D) * scissorCount);
+		}
+		if(attachmentCount != 0)
+		{
+			buf_ucount_t offset = (buf_ucount_t)shader->pipelineSettings.colorblend.pAttachments;
+			shader->pipelineSettings.colorblend.pAttachments = malloc(sizeof(VkPipelineColorBlendAttachmentState) * attachmentCount);
+			memcpy((void*)shader->pipelineSettings.colorblend.pAttachments, buf_get_ptr_at(shader_binary, offset), sizeof(VkPipelineColorBlendAttachmentState) * attachmentCount);
+		}
+	}
+
 	if(layout_found)
 	{
 		shader->descriptors = create_descriptors(shader_binary, layout_offset, &shader->descriptor_count);
@@ -74,6 +114,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 		if(shader->vk_set_layout != VK_NULL_HANDLE)
 			shader->vk_set = vulkan_descriptor_set_create(renderer, &set_create_info);
 	}
+	
 	return shader;
 }
 
@@ -100,6 +141,14 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 	if(shader->descriptors != NULL)
 		heap_free(shader->descriptors);
 	heap_free(shader->stage_shaders);
+	
+	if(shader->pipelineSettings.colorblend.pAttachments != NULL)
+		free((void*)shader->pipelineSettings.colorblend.pAttachments);
+	if(shader->pipelineSettings.viewport.pScissors != NULL)
+		free((void*)shader->pipelineSettings.viewport.pScissors);
+	if(shader->pipelineSettings.viewport.pViewports != NULL)
+		free((void*)shader->pipelineSettings.viewport.pViewports);
+
 	if(shader->vk_set != NULL)
 		vulkan_descriptor_set_release_resources(shader->vk_set);
 	heap_free(shader);
@@ -108,6 +157,11 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 static vulkan_stage_shader_t** create_stage_shaders(vulkan_renderer_t* renderer, BUFFER* shader_binary, u32 cursor, u8* stage_count)
 {
 	assert(cursor != 0xFFFFFFFF);
+	
+	// for now render pass count must be 1
+	u8 render_pass_count = *(u8*)buf_get_ptr_at(shader_binary, cursor); cursor++;
+	assert(render_pass_count == 1);
+
 	u8 shader_mask = *(u8*)buf_get_ptr_at(shader_binary, cursor); cursor++;
 	u8 shader_count = 0; for(u8 i = 0; i < 4; i++) { if(shader_mask & (1 << i)) shader_count++; }
 	*stage_count = shader_count;

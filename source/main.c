@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 {
 	memory_allocator_init(&argc);
 
-	renderer_t* renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 1920, 1080, "Vulkan 3D Renderer", false);
+	renderer_t* renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Vulkan 3D Renderer", false);
 	recreate_matrix(renderer_get_window(renderer), NULL);
 	render_window_subscribe_on_resize(renderer_get_window(renderer), recreate_matrix, NULL);
 	mat4_t(float) camera_transform = mat4_transform((vec3_t(float)) { -1.8f, 0.6f, 0 }, (vec3_t(float)) { 0, 0, -22 * DEG2RAD } );
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 	text_mesh_string_set_scaleH(game_ui, score_text, vec3(float)(0.8f, 0.8f, 0.8f));
 
 	/*--------PLAYGROUND----------------------*/
-	mesh3d_t* rock_mesh3d = mesh3d_load("showcase/resource/Rock/Rock.obj");
+	mesh3d_t* rock_mesh3d = mesh3d_cube(0.4f);//mesh3d_load("showcase/resource/Rock/Rock.obj");
 	mesh3d_make_centroid_origin(rock_mesh3d);
 	mesh3d_calculate_tangents(rock_mesh3d);
 	mesh_t* rock = mesh_create(renderer, rock_mesh3d);
@@ -165,7 +165,6 @@ int main(int argc, char** argv)
 	/*----------- QUAD ----------------------*/
 	mesh3d_t* quad_mesh3d = mesh3d_plane(0.6f);
 	mesh_t* quad = mesh_create(renderer, quad_mesh3d);
-	mesh3d_destroy(quad_mesh3d);
 	shader_t* quad_shader = shader_load(renderer, "showcase/resource/shaders/transparent_shader.sb");
 	per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); //position
 	material_create_info_t quad_material_info =
@@ -173,9 +172,23 @@ int main(int argc, char** argv)
 		.per_vertex_attribute_binding_count = 1,
 		.per_vertex_attribute_bindings = &per_vertex_attributes[0],
 		.shader = quad_shader,
-		.is_transparent = true
+		// .is_transparent = true
 	};
 	material_t* quad_material = material_create(renderer, &quad_material_info);
+
+
+	/*-------------Ground Plane---------------*/
+	mesh3d_transform_set(quad_mesh3d, mat4_mul(float)(2, mat4_scale(float)(4.1f, 4.1f, 4.1f), mat4_identity(float)()));
+	mesh_t* ground_plane = mesh_create(renderer, quad_mesh3d);
+	shader_t* ground_shader = shader_load(renderer, "showcase/resource/shaders/ground_shader.sb");
+	material_create_info_t ground_material_info = 
+	{
+		.is_vertex_attrib_from_file = true,
+		.shader = ground_shader
+	};
+	material_t* ground_material = material_create(renderer, &ground_material_info);
+	mesh3d_destroy(quad_mesh3d);
+
 
 	time_handle_t frame_time_handle = time_get_handle();
 	time_handle_t second_time_handle = time_get_handle();
@@ -195,6 +208,10 @@ int main(int argc, char** argv)
 		material_set_vec3(rock_material, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 3)));
 		material_set_float(rock_material, "light.intensity", 4.0f);
 
+		material_set_vec3(ground_material, "light.color", vec3(float)(1, 1, 1));
+		material_set_vec3(ground_material, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 3)));
+		material_set_float(ground_material, "light.intensity", 4.0f);
+
 		// vec4_t(float) eye_dir = mat4_mul_vec4(float)(camera_transform, 1, 0, 0, 0);
 		// material_set_vec3(rock_material, "misc.eye_dir", vec3_normalize(float)(vec3(float)(eye_dir.x, eye_dir.y, eye_dir.z)));
 
@@ -205,7 +222,7 @@ int main(int argc, char** argv)
 
 		material_bind(rock_material);
 		mat4_t(float) model_matrix;
-		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_rotation(float)(0, 0 * DEG2RAD, 0), mat4_scale(float)(2.2, 2.2, 2.2)));
+		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_rotation(float)(angle * DEG2RAD, 45 * DEG2RAD, 0), mat4_scale(float)(2.2, 2.2, 2.2)));
 		mat4_t(float) mvp = mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix);
 		material_set_push_mat4(rock_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
 		material_set_push_mat4(rock_material, "push.model_matrix", mat4_transpose(float)(model_matrix));
@@ -223,6 +240,14 @@ int main(int argc, char** argv)
 		mat4_move(float)(&mvp, mat4_mul(float)(3, clip_matrix, projection_matrix, skybox_matrix));
 		material_set_push_mat4(skybox_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
 		mesh_draw_indexed(skybox);
+
+		material_bind(ground_material);
+		mat4_move(float)(&model_matrix, mat4_translation(float)(1, -1.0f, 0));
+		mat4_move(float)(&mvp, mat4_mul(float)(4, clip_matrix, projection_matrix, view_matrix, model_matrix));
+		mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
+		material_set_push_mat4(ground_material, "push.mvp_matrix", mvp);
+		material_set_push_mat4(ground_material, "push.model_matrix", model_matrix);
+		mesh_draw_indexed(ground_plane);
 
 		material_bind(quad_material);
 		mat4_move(float)(&model_matrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
@@ -280,6 +305,7 @@ int main(int argc, char** argv)
 	text_mesh_destroy(text_mesh);
 	mesh_destroy(rock);
 	mesh_destroy(quad);
+	mesh_destroy(ground_plane);
 	mesh_destroy(skybox);
 
 	// destroy shaders
@@ -287,6 +313,7 @@ int main(int argc, char** argv)
 	shader_destroy(game_ui_shader);
 	shader_destroy(rock_shader);
 	shader_destroy(quad_shader);
+	shader_destroy(ground_shader);
 	shader_destroy(skybox_shader);
 
 	// destroy materials
@@ -294,6 +321,7 @@ int main(int argc, char** argv)
 	material_destroy(text_material);
 	material_destroy(rock_material);
 	material_destroy(quad_material);
+	material_destroy(ground_material);
 	material_destroy(skybox_material);
 
 	// destroy textures
@@ -317,12 +345,14 @@ int main(int argc, char** argv)
 	shader_release_resources(game_ui_shader);
 	shader_release_resources(rock_shader);
 	shader_release_resources(quad_shader);
+	shader_release_resources(ground_shader);
 	shader_release_resources(skybox_shader);
 	
 	material_release_resources(text_material);
 	material_release_resources(game_ui_material);
 	material_release_resources(rock_material);
 	material_release_resources(quad_material);
+	material_release_resources(ground_material);
 	material_release_resources(skybox_material);
 
 	for(int i = 0; i < 2; i++)

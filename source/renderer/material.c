@@ -23,8 +23,7 @@ static material_t* __material_create(renderer_t* renderer,
 										vulkan_vertex_info_t* vertex_infos,
 										u32 push_constant_range_count,
 										VkPushConstantRange* push_constant_ranges, 
-										shader_t* shader, 
-										bool is_transparent);
+										shader_t* shader);
 static void __material_create_no_alloc(renderer_t* renderer, 
 										VkDescriptorSetLayout vk_set_layout, 
 										u32 vertex_info_count, 
@@ -32,7 +31,6 @@ static void __material_create_no_alloc(renderer_t* renderer,
 										u32 push_constant_range_count,
 										VkPushConstantRange* push_constant_ranges, 
 										shader_t* shader, 
-										bool is_transparent, 
 										material_t* material);
 static u32 decode_attribute_count(u64 packed_attributes);
 static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16 location_offset, VkVertexInputRate input_rate);
@@ -117,8 +115,7 @@ RENDERER_API material_t* material_create(renderer_t* renderer, material_create_i
 												vertex_infos, 
 												push_constant_range_count,
 												push_constant_ranges,
-												create_info->shader,
-												create_info->is_transparent);
+												create_info->shader);
 	material->push_constant_buffer = push_constant_buffer;
 	material->push_constant_buffer_size = push_constant_buffer_size;
 	material_set_up_shader_resources(material);
@@ -154,8 +151,7 @@ static material_t* __material_create(renderer_t* renderer,
 										vulkan_vertex_info_t* vertex_infos,
 										u32 push_constant_range_count,
 										VkPushConstantRange* push_constant_ranges, 
-										shader_t* shader, 
-										bool is_transparent)
+										shader_t* shader)
 {
 	material_t* material = material_new();
 	material->renderer = renderer;
@@ -166,7 +162,6 @@ static material_t* __material_create(renderer_t* renderer,
 		//NOTE: calling vulkan_material_create() creates a deep copy of vertex_infos
 		.vertex_infos = vertex_infos,
 		.vk_set_layout = vk_set_layout,
-		.is_transparent = is_transparent,
 		.push_constant_ranges = push_constant_ranges,
 		.push_constant_range_count = push_constant_range_count
 	};
@@ -180,8 +175,7 @@ static void __material_create_no_alloc(renderer_t* renderer,
 										vulkan_vertex_info_t* vertex_infos,
 										u32 push_constant_range_count,
 										VkPushConstantRange* push_constant_ranges, 
-										shader_t* shader, 
-										bool is_transparent, 
+										shader_t* shader,  
 										material_t* material)
 {
 	material->renderer = renderer;
@@ -192,7 +186,6 @@ static void __material_create_no_alloc(renderer_t* renderer,
 		//NOTE: calling vulkan_material_create_no_alloc() doesn't creates a deep copy of vertex_infos
 		.vertex_infos = vertex_infos,
 		.vk_set_layout = vk_set_layout,
-		.is_transparent = is_transparent,
 		.push_constant_ranges = push_constant_ranges,
 		.push_constant_range_count = push_constant_range_count
 	};

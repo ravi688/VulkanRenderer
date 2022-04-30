@@ -84,7 +84,6 @@ typedef struct material_create_info_t
 	shader_t* shader;
 	u32 per_vertex_attribute_binding_count;
 	u32 per_instance_attribute_binding_count;
-	bool is_transparent;
 	bool is_vertex_attrib_from_file;
 } material_create_info_t;
 
