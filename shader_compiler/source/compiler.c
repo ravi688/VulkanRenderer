@@ -834,31 +834,40 @@ static const char* parse_pass(const char* _source, buf_ucount_t length, BUFFER* 
 		c += strlen(pass_name);
 		c = skip_whitespaces(c, end);
 		if(*c != '{')
-			LOG_FETAL_ERR("Pass parse error: Unrecognized symbol \"%c\", expected a closed brace \"{\"\n", *c);
-		c++;
-		const char* glsl_str = c;
-		
-		// calculate the length of the glsl_str
-		int open_brace_count = 0;
-		while(true)
+			LOG_FETAL_ERR("Pass parse error: Unrecognized symbol \"%c\", expected a open brace \"{\"\n", *c);
+		c++;		// skip the '{' character
+		const char* str = c;
+
+		// if this is RenderPass then parse the SubPasses inside it
+		if(strcmp(pass_name, "RenderPass") == 0)
 		{
-			switch(*c)
-			{
-				case '{' : open_brace_count++; break;
-				case '}' : open_brace_count--; break;
-			}
-			++c;
-			if((open_brace_count < 0) || (c >= end)) break;
+			str = skip_whitespaces(str, end);
+			while(strncmp(str, "SubPass", strlen("SubPass")) == 0)
+				str = parse_pass(str, end - str, buffer, offsets_buffer, "SubPass");
+			c = skip_whitespaces(str, end);
+			if(*c != '}')
+				LOG_FETAL_ERR("Pass parse error: %s is not closed, expected \"}\"\n", pass_name);
+			c++;	 // skip '}' character
 		}
-		if(open_brace_count >= 0)
-			LOG_FETAL_ERR("Pass parse error: %s is not closed, expected \"}\"\n", pass_name);
+		else // if this is SubPass
+		{
+			// calculate the length of the str
+			int open_brace_count = 0;
+			while(true)
+			{
+				switch(*c)
+				{
+					case '{' : open_brace_count++; break;
+					case '}' : open_brace_count--; break;
+				}
+				++c;
+				if((open_brace_count < 0) || (c >= end)) break;
+			}
+			if(open_brace_count >= 0)
+				LOG_FETAL_ERR("Pass parse error: %s is not closed, expected \"}\"\n", pass_name);
 
-		u32 glsl_len = c - glsl_str - 1;
-
-		if(strcmp(pass_name, "SubPass") != 0)
-			parse_pass(glsl_str, glsl_len, buffer, offsets_buffer, "SubPass");
-		else
-			parse_glsl_code(glsl_str, glsl_len, buffer, offsets_buffer);
+			parse_glsl_code(str, c - str - 1, buffer, offsets_buffer);
+		}
 	}
 	else
 	{
