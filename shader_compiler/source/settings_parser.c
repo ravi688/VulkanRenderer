@@ -97,11 +97,11 @@ function_signature(const char*, parse_settings, const char* _source, buf_ucount_
 	CALLTRACE_BEGIN();
 	const char* string = _source;
 	const char* const end = string + length;
-	if(is_empty(string, end))
-	{
-		LOG_MSG("SETTINGS section is empty, skipping\n");
-		CALLTRACE_RETURN(_source + length);
-	}
+	// if(is_empty(string, end))
+	// {
+	// 	LOG_MSG("SETTINGS section is empty, skipping\n");
+	// 	CALLTRACE_RETURN(_source + length);
+	// }
 
 	BUFFER stringLiteralBuffer = buf_create(sizeof(char*), 1024, 0);	 // 8 KB
 	UserData data = {};
