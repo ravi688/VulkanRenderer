@@ -170,13 +170,20 @@ Currently `tessellation` and `geometry` are not supported.
 
 #section SHADER         // mandatory
 
-#stage vertex             // mendatory for now
+RenderPass
+{
+   SubPass
+   {
 
-// GLSL vertex shader
+      #stage vertex             // mendatory for now
 
-#stage fragment         // mendatory for now
+      // GLSL vertex shader
 
-// GLSL fragment shader
+      #stage fragment         // mendatory for now
+
+      // GLSL fragment shader
+   }
+}
 ```
 
 #### Push Constants
