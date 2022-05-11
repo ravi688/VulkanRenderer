@@ -55,7 +55,7 @@ PipelineLayout
         mat4 viewMatrix;
     } cameraInfo;
 
-    fragment [RENDER_SET, RENDER_INPUT_BINDING0] uniform sampler2D depthMap;
+    fragment [RENDER_SET, RENDER_BINDING0] uniform sampler2D depthMap;
 
     fragment [GLOBAL_SET, LIGHT_BINDING] uniform LightInfo
     {
@@ -122,7 +122,7 @@ RenderPass
 RenderPass
 {
     [GraphicsPipeline("Color")]
-    [Input(depth, set = RENDER_SET, binding = RENDER_INPUT_BINDING0)]
+    [Input(depth, set = RENDER_SET, binding = RENDER_BINDING0)]
     SubPass
     {
         #stage vertex
@@ -174,8 +174,13 @@ RenderPass
             float intensity;
         } lightInfo;
 
+        // material descriptor set (bound for each material)
+        layout(set = MATERIAL_SET, binding = TEXTURE_BINDING0) uniform sampler2D albedoTexture;
+        layout(set = MATERIAL_SET, binding = TEXTURE_BINDING1) uniform sampler2D specularTexture;
+        layout(set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform sampler2D roughnessTexture;
+
         // render descriptor set (bound for each render pass)
-        layout(set = RENDER_SET, binding = RENDER_INPUT_BINDING0) uniform sampler2D depthMap;
+        layout(set = RENDER_SET, binding = RENDER_BINDING0) uniform sampler2D depthMap;
         
         layout(location = 0) in vec3 _normal;
         layout(location = 1) in vec2 _texcoord;
