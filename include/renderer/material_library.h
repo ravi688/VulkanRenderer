@@ -5,14 +5,23 @@
 #include <renderer/shader_library.h>
 #include <renderer/material.h>
 #include <renderer/shader.h>
+#include <renderer/string.h>
 
 typedef buf_ucount_t material_handle_t;
 #define MATERIAL_HANDLE_INVALID (~0ULL)
 
+typedef struct material_library_slot_t
+{
+	string_t name;
+	material_t* material;
+	material_handle_t handle;
+} material_library_slot_t;
+
 typedef struct material_library_t
 {
 	shader_library_t* shader_library;
-	dictionary_t materials;
+	BUFFER relocation_table;
+	BUFFER materials;
 } material_library_t;
 
 

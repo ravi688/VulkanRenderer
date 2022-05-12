@@ -2,7 +2,6 @@
 #include <renderer/defines.h>
 #include <renderer/shader.h>
 #include <renderer/string.h>
-#include <renderer/dictionary.h>
 #include <bufferlib/buffer.h>
 
 typedef struct renderer_t renderer_t;
@@ -13,13 +12,15 @@ typedef buf_ucount_t shader_handle_t;
 typedef struct shader_library_slot_t
 {
 	string_t name;
-	void* data;
+	shader_t* shader;
+	shader_handle_t handle;
 } shader_library_slot_t;
 
 typedef struct shader_library_t
 {
 	renderer_t* context;
-	dictionary_t shaders; 	// dictionary of <shader_handle_t, shader_library_slot_t>
+	BUFFER relocation_table; 	// list of buf_ucount_t
+	BUFFER shaders; 			// list of shader_library_slot_t
 } shader_library_t;
 
 
