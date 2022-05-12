@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 

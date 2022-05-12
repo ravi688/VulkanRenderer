@@ -66,6 +66,7 @@ typedef u32 uint;
 
 
 #define DEPRECATED __attribute__((deprecated))
+#define FORCE_INLINE inline __attribute__((always_inline))
 
 #ifdef RENDERER_STATIC_LIBRARY
 #	define RENDERER_API
@@ -91,3 +92,6 @@ typedef struct vulkan_renderer_t vulkan_renderer_t;
 #endif
 
 typedef struct renderer_t renderer_t;
+
+
+#define NOT_IMPLEMETNED_FUNCTION() LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__);
