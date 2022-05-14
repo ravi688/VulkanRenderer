@@ -20,7 +20,6 @@ typedef double f64;
 typedef u32 uint;
 
 
-
 #define INTERNAL
 
 #define U8_MAX UINT8_MAX
@@ -95,3 +94,8 @@ typedef struct renderer_t renderer_t;
 
 
 #define NOT_IMPLEMETNED_FUNCTION() LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__);
+
+
+#define DEREF_TO(ptr, type) (*(type*)(ptr))
+#define CAST_TO(s, to) ((to)(s))
+#define REINTERPRET_TO(s, to) (*(to*)(&s))

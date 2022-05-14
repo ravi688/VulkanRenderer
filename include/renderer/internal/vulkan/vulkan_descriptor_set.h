@@ -5,6 +5,14 @@
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
 
+enum
+{
+	VULKAN_DESCRIPTOR_SET_GLOBAL 	= 	0,
+	VULKAN_DESCRIPTOR_SET_RENDER 	= 	1
+	VULKAN_DESCRIPTOR_SET_MATERIAL 	= 	2,
+	VULKAN_DESCRIPTOR_SET_OBJECT 	=	0
+};
+
 typedef struct vulkan_renderer_t vulkan_renderer_t;
 typedef struct vulkan_texture_t vulkan_texture_t;
 typedef struct vulkan_buffer_t vulkan_buffer_t;
@@ -88,11 +96,12 @@ RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_
  	params:
 		set: pointer to a valid vulkan_descriptor_set_t object (must have been created by calling vulkan_descriptor_set_create_no_alloc or vulkan_descriptor_set_create)
 		renderer: pointer to the vulkan_renderer_t object
+		set_number: set number
  		pipeline_layout: compatible pipeline layout, which has been created with the same descriptor set layout from which this descriptor set has been created
  	returns:
  		nothing
  */
-RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, vulkan_pipeline_layout_t* pipeline_layout);
+RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, u32 set_number, vulkan_pipeline_layout_t* pipeline_layout);
 
 /*
  	description:
