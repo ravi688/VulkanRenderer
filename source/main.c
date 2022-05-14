@@ -8,8 +8,6 @@
 #include <renderer/time.h>
 #include <renderer/render_queue.h>
 #include <renderer/render_object.h>
-#include <renderer/material_library.h>
-#include <renderer/shader_library.h>
 
 //For handling text/font rendering
 #include <renderer/font.h>
@@ -57,14 +55,9 @@ static void u32_to_string(u32 value, char* string)
 	sprintf(string, "%u", value);
 }
 
-static void setup_shader_library(shader_library_t* library);
-static void setup_material_library(material_library_t* library);
-
 typedef struct Game
 {
 	renderer_t* renderer;
-	shader_library_t* shaderLibrary;
-	material_library_t* materialLibrary;
 	render_queue_t* geometryQueue;
 	render_queue_t* uiQueue;
 
@@ -94,6 +87,8 @@ typedef struct Game
 } Game;
 
 
+static void setup_shaders(Game* library);
+static void setup_materials(Game* library);
 static void setup_render_queues(Game* game);
 static void update(Game* game);
 static void game_release_resources(Game* game);
@@ -114,10 +109,8 @@ int main(int argc, char** argv)
 	setup_camera(&game);
 
 	// setup the shader & material libraries
-	game.shader_library = shader_library_create(game.renderer);
-	game.material_library = material_library_create(game.shader_library);
-	setup_shader_library(game.shader_library);
-	setup_material_library(game.material_library);
+	setup_shaders(game);
+	setup_materials(game);
 
 	// setup the render queues
 	game.geometryQueue = render_queue_create(game.renderer, "Geometry");
@@ -159,11 +152,6 @@ int main(int argc, char** argv)
 	render_queue_release_resources(game.geometryQueue);
 	render_queue_release_resources(game.uiQueue);
 
-	shader_library_destroy(game.shaderLibrary);
-	material_library_destroy(game.materialLibrary);
-	shader_library_release_resources(game.shaderLibrary);
-	material_library_release_resources(game.materialLibrary);
-
 	game_release_resources(&game);
 
 	renderer_terminate(game.renderer);
@@ -171,7 +159,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-static void setu_camera(Game* game)
+static void setup_camera(Game* game)
 {
 	game->cameraTransform = mat4_transform((vec3_t(float)) { -1.8f, 0.6f, 0 }, (vec3_t(float)) { 0, 0, -22 * DEG2RAD } );
 	game->viewMatrix = mat4_inverse(float)(game->cameraTransform);
@@ -381,8 +369,9 @@ static void game_release_resources(Game* game)
 }
 
 
-static void setup_shader_library(shader_library_t* library)
+static void setup_shaders(Game* game)
 {
+	shader_library_t* library = renderer_get_shader_library(game->renderer);
 	shader_library_load_shader(library, "showcase/resource/shaders/text_shader.sb", "TextShader");
 	shader_library_load_shader(library, "showcase/resource/shaders/game_ui_shader.sb", "GameUIShader");
 	shader_library_load_shader(library, "showcase/resource/shaders/bump_shader.sb", "BumpShader");
@@ -391,8 +380,9 @@ static void setup_shader_library(shader_library_t* library)
 	shader_library_load_shader(library, "showcase/resource/shaders/ground_shader.sb", "GroundShader");
 }
 
-static void setup_material_library(material_library_t* library)
+static void setup_materials(Game* game)
 {
+	material_library_t* library = renderer_get_material_library(game->renderer);
 	material_library_create_material(library, "TextShader", "TextMaterial");
 	material_library_create_material(library, "GameUIShader", "GameUIMaterial");
 	material_library_create_material(library, "BumpShader", "BumpMaterial");

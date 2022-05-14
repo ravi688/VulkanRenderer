@@ -3,16 +3,18 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
+#include <renderer/string.h>
 #include <bufferlib/buffer.h>
 #include <renderer/dictionary.h>
 
 #include <renderer/internal/vulkan/vulkan_material.h> // for vulkan_material_bind_info_t
+#include <renderer/internal/vulkan/vulkan_render_pass.h> 	// for vulkan specific functions
 
 typedef struct render_queue_t
 {
 	renderer_t* renderer;					// reference to the context
-	char name[RENDER_QUEUE_NAME_MAX_SIZE]; 	// identification name of this render queue
-	dictionary_t render_pass_handles; 			// list of render_pass_handle_t
+	string_t name; 							// identification name of this render queue
+	dictionary_t render_pass_handles; 		// list of render_pass_handle_t
 	bool is_ready; 							// true if this render queue is ready to dispatch
 } render_queue_t;
 
@@ -28,10 +30,7 @@ RENDERER_API render_queue_t* render_queue_create(renderer_t* renderer, const cha
 	render_queue_t* queue = render_queue_new();
 	queue->renderer = renderer;
 
-	// copy the name
-	assert(strlen(name) < RENDER_QUEUE_NAME_MAX_SIZE);
-	strcpy(queue->name, name);
-
+	queue->name = string_create(name);
 	queue->render_pass_handles = dictionary_create(render_pass_handle_t, dictionary_t*, 1, dictionary_key_comparer_buf_ucount_t);
 
 	// initial the render queue won't be ready to be dispatched
@@ -41,13 +40,13 @@ RENDERER_API render_queue_t* render_queue_create(renderer_t* renderer, const cha
 
 RENDERER_API void render_queue_destroy(render_queue_t* queue)
 {
-	queue->name[0] = 0;
 	// TODO
 	queue->is_ready = false;
 }
 
 RENDERER_API void render_queue_release_resources(render_queue_t* queue)
 {
+	string_destroy(queue->name);
 	// TODO
 	heap_free(queue);
 }
@@ -154,9 +153,9 @@ RENDERER_API void render_queue_dispatch(render_queue_t* queue)
 {
 	assert_wrn(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it\n");
 	// get the pointers to render pass pool, shader library and material library
-	render_pass_pool_t* pass_pool = queue->renderer->render_pass_pool;
-	shader_library_t* shader_library = queue->renderer->shader_library;
-	material_library_t* material_library = queue->renderer->material_library;
+	render_pass_pool_t* pass_pool = renderer_get_render_pass_pool(queue->renderer);
+	shader_library_t* shader_library = renderer_get_shader_library(queue->renderer);
+	material_library_t* material_library = renderer_get_material_library(queue->renderer);
 
 	// get the number of unique render passes in this render queue
 	buf_ucount_t pass_count = dictionary_get_count(&queue->render_pass_handles);
@@ -168,7 +167,7 @@ RENDERER_API void render_queue_dispatch(render_queue_t* queue)
 		render_pass_handle_t handle;
 		dictionary_get_key_at(&queue->render_pass_handles, i, &handle);
 
-		render_pass_t* pass = render_pass_pool_get(pass_pool, handle);
+		render_pass_t* pass = render_pass_pool_getH(pass_pool, handle);
 
 		// begin the render pass
 		render_pass_begin(pass);
@@ -185,16 +184,20 @@ RENDERER_API void render_queue_dispatch(render_queue_t* queue)
 		for(int j = 0; j < sub_pass_count; )
 		{
 			// bind the render descriptor set for this sub pass at index 'j' [at RENDER_SET]
-			render_pass_bind_resource(pass, j);
+			shader_handle_t shader_handle;
+			dictionary_get_key_at(shaders, 0, &shader_handle);
+			vulkan_render_pass_bind_set(pass, j, shader_get_pipeline(shader_library_getH(shader_library, shader_handle), j)->pipeline_layout);
 
-			// iterate through each shader in this render pass
+			// iterate through each shader in this render pass for this sub pass at index 'j'
+			// NOTE: each shader has multiple pipelines, i.e. for each sub pass, 
+			// 		 so every pipeline at index 'k' has identical pipeline layout in each shader
 			for(int k = 0; k < shader_count; k++)
 			{
 				shader_handle_t shader_handle;
 				dictionary_get_key_at(shaders, k, &shader_handle);
 
 				// get the pointer to the shader object
-				shader_t* shader = shader_library_get_shader(shader_library, shader_handle);
+				shader_t* shader = shader_library_getH(shader_library, shader_handle);
 				
 				// bind pipeline for this subpass
 				shader_bind_pipeline(shader, j); 		// sub pass index
@@ -213,7 +216,7 @@ RENDERER_API void render_queue_dispatch(render_queue_t* queue)
 					dictionary_get_key_at(materials, l, &material_handle);
 
 					// get the pointer to the material object
-					material_t* material = material_library(material_library, material_handle);
+					material_t* material = material_library_getH(material_library, material_handle);
 					
 					// bind the material descriptor set for this sub pass [at MATERIAL_SET]
 					vulkan_material_bind_info_t bind_info = { j, pipeline_layout };
