@@ -45,6 +45,7 @@
 #define LightInfo \
 LightInfo\
 {\
+	mat4 transform;\
 	mat4 projectionMatrix;\
 	mat4 viewMatrix;\
 	vec3 dir;\
@@ -62,6 +63,7 @@ ObjectInfo\
 #define CameraInfo \
 CameraInfo\
 {\
+	mat4 transform;\
 	mat4 projectionMatrix;\
 	mat4 viewMatrix;\
 }

@@ -8,6 +8,7 @@
 #include <renderer/time.h>
 #include <renderer/render_queue.h>
 #include <renderer/render_object.h>
+#include <renderer/camera.h>
 
 //For handling text/font rendering
 #include <renderer/font.h>
@@ -38,9 +39,6 @@
 #define RAD2DEG 57.29577f
 
 static mat4_t(float) mat4_transform(vec3_t(float) position, vec3_t(float) eulerRotation) { return mat4_mul(float)(2, mat4_translation(float)(position.x, position.y, position.z), mat4_rotation(float)(eulerRotation.x, eulerRotation.y, eulerRotation.z)); }
-
-static mat4_t(float) projectionMatrix;
-static mat4_t(float) screenSpaceMatrix;
 
 static void recreate_matrix(render_window_t* window, void* user_data)
 {
@@ -92,7 +90,7 @@ static void setup_materials(Game* library);
 static void setup_render_queues(Game* game);
 static void update(Game* game);
 static void game_release_resources(Game* game);
-static void setup_camera(Game* game);
+static void setup_camera_and_light(Game* game);
 
 int main(int argc, char** argv)
 {
@@ -106,7 +104,7 @@ int main(int argc, char** argv)
 	render_window_subscribe_on_resize(renderer_get_window(game.renderer), recreate_matrix, &game);
 
 	// setup the camera
-	setup_camera(&game);
+	setup_camera_and_light(&game);
 
 	// setup the shader & material libraries
 	setup_shaders(game);
@@ -159,11 +157,10 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-static void setup_camera(Game* game)
+static void setup_camera_and_light(Game* game)
 {
-	game->cameraTransform = mat4_transform((vec3_t(float)) { -1.8f, 0.6f, 0 }, (vec3_t(float)) { 0, 0, -22 * DEG2RAD } );
-	game->viewMatrix = mat4_inverse(float)(game->cameraTransform);
-	game->clipMatrix = mat4_identity(float)(); clipMatrix.m11 = -1;
+	game->camera = camera_create(game->renderer, PROJECTION_TYPE_PERSPECTIVE, 65 DEG);
+	game->light = light_create(game->renderer);
 }
 
 static void setup_render_queues(Game* game)
@@ -263,12 +260,6 @@ static void update(Game* game)
 {
 	material_set_float(game->textMaterial, "ubo.time", game->gameTime);
 	material_set_float(game->gameUIMaterial, "ubo.time", game->gameTime);
-	material_set_vec3(game->rockMaterial, "light.color", vec3(float)(1, 1, 1));
-	material_set_vec3(game->rockMaterial, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 3)));
-	material_set_float(game->rockMaterial, "light.intensity", 4.0f);
-	material_set_vec3(game->groundMaterial, "light.color", vec3(float)(1, 1, 1));
-	material_set_vec3(game->groundMaterial, "light.dir", vec3_normalize(float)(vec3(float)(1, -1, 3)));
-	material_set_float(game->groundMaterial, "light.intensity", 4.0f);
 
 	mat4_t(float) modelMatrix;
 	mat4_move(float)(&modelMatrix, mat4_mul(float)(2, mat4_rotation(float)(game->angle * DEG2RAD, 45 * DEG2RAD, 0), mat4_scale(float)(2.2, 2.2, 2.2)));
@@ -366,27 +357,32 @@ static void game_release_resources(Game* game)
 	for(int i = 0; i < 2; i++)
 		texture_release_resources(game->rockTextures[i]);
 	texture_release_resources(game->skyboxTexture);
+
+	camera_destroy(game->camera);
+	camera_release_resources(game->camera);
+	light_destroy(game->light);
+	light_release_resources(game->light);
 }
 
 
 static void setup_shaders(Game* game)
 {
 	shader_library_t* library = renderer_get_shader_library(game->renderer);
-	shader_library_load_shader(library, "showcase/resource/shaders/text_shader.sb", "TextShader");
-	shader_library_load_shader(library, "showcase/resource/shaders/game_ui_shader.sb", "GameUIShader");
-	shader_library_load_shader(library, "showcase/resource/shaders/bump_shader.sb", "BumpShader");
-	shader_library_load_shader(library, "showcase/resource/shaders/skybox_shader.sb", "SkyboxShader");
-	shader_library_load_shader(library, "showcase/resource/shaders/transparent_shader.sb", "TransparentShader");
-	shader_library_load_shader(library, "showcase/resource/shaders/ground_shader.sb", "GroundShader");
+	shader_library_load_shader(library, "showcase/resource/shaders/text_shader.sb");
+	shader_library_load_shader(library, "showcase/resource/shaders/game_ui_shader.sb");
+	shader_library_load_shader(library, "showcase/resource/shaders/bump_shader.sb");
+	shader_library_load_shader(library, "showcase/resource/shaders/skybox_shader.sb");
+	shader_library_load_shader(library, "showcase/resource/shaders/transparent_shader.sb");
+	shader_library_load_shader(library, "showcase/resource/shaders/ground_shader.sb");
 }
 
 static void setup_materials(Game* game)
 {
 	material_library_t* library = renderer_get_material_library(game->renderer);
-	material_library_create_material(library, "TextShader", "TextMaterial");
-	material_library_create_material(library, "GameUIShader", "GameUIMaterial");
-	material_library_create_material(library, "BumpShader", "BumpMaterial");
-	material_library_create_material(library, "SkyboxShader", "SkyboxMaterial");
-	material_library_create_material(library, "TransparentShader", "TransparentMaterial");
-	material_library_create_material(library, "GroundShader", "GroundMaterial");
+	material_library_load_material(library, "showcase/resource/materials/text_material.mat");
+	material_library_load_material(library, "showcase/resource/materials/game_ui_material.mat");
+	material_library_load_material(library, "showcase/resource/materials/bump_material.mat");
+	material_library_load_material(library, "showcase/resource/materials/skybox_material.mat");
+	material_library_load_material(library, "showcase/resource/materials/transparent_material.mat");
+	material_library_load_material(library, "showcase/resource/materials/ground_material.mat");
 }
