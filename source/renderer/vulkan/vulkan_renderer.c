@@ -110,6 +110,10 @@ static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, re
 	};
 }
 
+static VkDescriptorSetLayout create_global_set_layout(vulkan_renderer_t* renderer);
+static VkDescriptorSetLayout create_object_set_layout(vulkan_renderer_t* renderer);
+static void setup_global_set(vulkan_renderer_t* renderer);
+
 RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen)
 {
 	vulkan_renderer_t* renderer = heap_new(vulkan_renderer_t);
@@ -207,6 +211,8 @@ DEBUG_BLOCK
 	if(queue_family_indices[1] == U32_MAX)
 		LOG_FETAL_ERR("No queue found supporting presentation capabilities to the created surface\n");
 
+	renderer->sharing_mode = (queue_family_indices[0] == queue_family_indices[1]) ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
+
 	log_u32(queue_family_indices[0]);
 	log_u32(queue_family_indices[1]);
 
@@ -215,7 +221,7 @@ DEBUG_BLOCK
 	vulkan_logical_device_create_info_t logical_device_create_info =
 	{
 		.queue_family_indices = queue_family_indices,
-		.queue_family_index_count = 2,
+		.queue_family_index_count = (queue_family_indices[0] == queue_family_indices[1]) ? 1 : 2,
 		.extensions = extensions,
 		.extension_count = 1,
 		.features = minimum_required_features
@@ -269,8 +275,8 @@ DEBUG_BLOCK
 		.image_color_space = surface_format.colorSpace,
 		.image_extent = image_extent,
 		.image_sharing_mode = (queue_family_indices[0] == queue_family_indices[1]) ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT,
-		.queue_family_indices = (queue_family_indices[0] == queue_family_indices[1]) ? NULL : queue_family_indices,
-		.queue_family_index_count = (queue_family_indices[0] == queue_family_indices[1]) ? 0 : 2,
+		.queue_family_indices = queue_family_indices,
+		.queue_family_index_count = (queue_family_indices[0] == queue_family_indices[1]) ? 1 : 2,
 		.present_mode = present_mode
 	};
 	memcpy(&renderer->swapchain_create_info, &swapchain_info, sizeof(vulkan_swapchain_create_info_t));
@@ -302,7 +308,72 @@ DEBUG_BLOCK
 	};
 	vkCall(vkCreateDescriptorPool(renderer->logical_device->handle, &pool_create_info, NULL, &renderer->vk_descriptor_pool));
 
+	renderer->global_set_layout = create_global_set_layout(renderer);
+	renderer->object_set_layout = create_object_set_layout(renderer);
+	setup_global_set(renderer);
 	return renderer;
+}
+
+static void setup_global_set(vulkan_renderer_t* renderer)
+{
+	vulkan_descriptor_set_create_info_t set_create_info = 
+	{
+		.pool = renderer->descriptor_pool,
+		.layout = renderer->global_set_layout
+	};
+	vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &renderer->global_set);
+}
+
+static VkDescriptorSetLayout create_object_set_layout(vulkan_renderer_t* renderer)
+{
+	VkDescriptorSetLayoutBinding binding = 
+	{
+		.binding = VULKAN_DESCRIPTOR_BINDING_TRANSFORM,
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+	};
+
+	VkDescriptorSetLayoutCreateInfo create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.bindingCount = 1,
+		.pBinding = &binding
+	};
+
+	VkDescriptorSetLayout set_layout;
+	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->handle, &create_info, NULL, &set_layout));
+	return set_layout;
+}
+
+static VkDescriptorSetLayout create_global_set_layout(vulkan_renderer_t* renderer)
+{
+	VkDescriptorSetLayoutBinding bindings[2] = 
+	{
+		{
+			.binding = VULKAN_DESCRIPTOR_SET_GLOBAL_BINDING_CAMERA,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+		},
+		{
+			.binding = VULKAN_DESCRIPTOR_SET_GLOBAL_BINDING_LIGHT,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+		}
+	};
+	
+	VkDescriptorSetLayoutCreateInfo create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.bindingCount = 2,
+		.pBindings = bindings
+	};
+
+	VkDescriptorSetLayout set_layout;
+	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->handle, &create_info, NULL, &set_layout));
+	return set_layout;
 }
 
 
@@ -354,6 +425,11 @@ RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
 
 RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
+	vulkan_descriptor_set_destroy(&renderer->global_set, renderer);
+	vulkan_descriptor_set_release_resources(&renderer->global_set);
+	vkDestroyDescriptorSetLayout(renderer->logical_device->handle, renderer->object_set_layout, NULL);
+	vkDestroyDescriptorSetLayout(renderer->logical_device->handle, renderer->global_set_layout, NULL);
+
 	vkDestroySurfaceKHR(renderer->instance->handle, renderer->surface, NULL);
 	render_window_destroy(renderer->window);
 	
