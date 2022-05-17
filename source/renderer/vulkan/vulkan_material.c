@@ -22,7 +22,7 @@ static u16 calculate_uniform_resource_count(vulkan_shader_t* shader)
 	u16 count = shader->material_set_binding_count;
 	u16 uniform_count = 0;
 	for(u16 i = 0; i < count; i++)
-		if(shader->material_set_bindings[i].is_uniform)
+		if(!shader->material_set_bindings[i].is_attribute)
 			++uniform_count;
 	return uniform_count;
 }
@@ -39,7 +39,7 @@ static void setup_material_resources(vulkan_material_t* material)
 	for(u16 i = 0, j = 0; i < material->shader->material_set_binding_count; i++)
 	{
 		vulkan_shader_resource_descriptor_t* binding = &bindings[i];
-		if(!binding->is_uniform)
+		if(binding->is_attribute)
 			continue;
 		uniform_resource_t* resource = &uniform_resources[j];
 		j++;
@@ -91,13 +91,15 @@ RENDERER_API void vulkan_material_destroy(vulkan_material_t* material)
 {
 	vulkan_descriptor_set_destroy(&material->material_set, material->renderer);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
-		vulkan_descriptor_set_destroy(&material->uniform_resources[i].buffer, material->renderer);
+		if(material->uniform_resources[i].index != 0xFFFF)
+			vulkan_descriptor_set_destroy(&material->uniform_resources[i].buffer, material->renderer);
 }
 
 RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 {
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
-		vulkan_descriptor_set_release_resources(&material->uniform_resources[i].buffer);
+		if(material->uniform_resources[i].index != 0xFFFF)
+			vulkan_descriptor_set_release_resources(&material->uniform_resources[i].buffer);
 	heap_free(material->uniform_resources);
 	heap_free(material);
 }
