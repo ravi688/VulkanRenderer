@@ -1,1200 +1,381 @@
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_material.h>
-#include <renderer/internal/vulkan/vulkan_shader.h>
-#include <renderer/internal/vulkan/vulkan_buffer.h>
-#include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
-#include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
 #include <renderer/material.h>
-#include <renderer/debug.h>
-#include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/dictionary.h>
-#include <shader_compiler/compiler.h>
-
-#include <string.h>
-
-#define VERTEX_INFO_COUNT 4
-
-static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices, u32* out_aligments);
-static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* ranges, u32* push_constant_buffer_size);
-static material_t* __material_create(renderer_t* renderer, 
-										VkDescriptorSetLayout vk_set_layout, 
-										u32 vertex_info_count, 
-										vulkan_vertex_info_t* vertex_infos,
-										u32 push_constant_range_count,
-										VkPushConstantRange* push_constant_ranges, 
-										shader_t* shader);
-static void __material_create_no_alloc(renderer_t* renderer, 
-										VkDescriptorSetLayout vk_set_layout, 
-										u32 vertex_info_count, 
-										vulkan_vertex_info_t* vertex_infos,
-										u32 push_constant_range_count,
-										VkPushConstantRange* push_constant_ranges, 
-										shader_t* shader, 
-										material_t* material);
-static u32 decode_attribute_count(u64 packed_attributes);
-static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16 location_offset, VkVertexInputRate input_rate);
-
-static void get_record_and_field_name(const char* const full_name, char out_struct_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE], char out_field_name[STRUCT_FIELD_MAX_NAME_SIZE]);
-static VkDescriptorSetLayoutBinding* get_set_layout_bindings(shader_t* shader, u32* out_binding_count);
-static void material_set_up_shader_resources(material_t* material);
-
-static void unmap_descriptor(material_t* material, material_field_handle_t handle);
-static struct_descriptor_t* map_descriptor(material_t* material, material_field_handle_t handle);
-
-static u16 calculate_push_constant_range_count(shader_t* shader);
-static u16 calculate_uniform_resource_count(shader_t* shader);
-static vulkan_vertex_info_t* create_vertex_infos(shader_t* shader, u32* out_count);
-static u64 get_material_glsl_type(u8 shader_compiler_glsl_type);
-
-#ifndef GLOBAL_DEBUG
-#	define check_precondition(material)
-#else
-	static void check_precondition(material_t* material);
-#endif
-
-typedef struct uniform_resource_t
-{
-	vulkan_buffer_t buffer;
-	u16 descriptor_index;
-} uniform_resource_t;
-
-typedef struct material_t
-{
-	renderer_t* renderer;
-	vulkan_material_t* handle;
-	uniform_resource_t* uniform_resources;
-	u16 uniform_resource_count;
-	void* push_constant_buffer;
-	u32 push_constant_buffer_size;
-} material_t;
+#include <renderer/vulkan_material.h>
+#include <renderer/renderer.h>
 
 RENDERER_API material_t* material_new()
 {
-	material_t* material = heap_new(material_t);
-	memset(material, 0, sizeof(material_t));
-	material->handle = vulkan_material_new();
-	return material;
+	return vulkan_material_new();
 }
 
-RENDERER_API material_t* material_create(renderer_t* renderer, material_create_info_t* create_info)
+RENDERER_API material_t* material_create(renderer_t* renderer, shader_t* shader)
 {
-	u32 attribute_count = 0;
-	vulkan_vertex_info_t* vertex_infos = NULL;
-	if(!create_info->is_vertex_attrib_from_file)
-	{
-		attribute_count = create_info->per_vertex_attribute_binding_count + create_info->per_instance_attribute_binding_count;
-		if(attribute_count == 0)
-			LOG_FETAL_ERR("Material create error: attribute_count is equals to 0\n");
-		vertex_infos = heap_newv(vulkan_vertex_info_t, attribute_count);
-		u16 location_offset = 0;
-		u16 binding = 0;
-		for(u32 i = 0; i < create_info->per_vertex_attribute_binding_count; i++, binding++)
-		{
-			vertex_infos[i] = decode_vulkan_vertex_info(create_info->per_vertex_attribute_bindings[i], location_offset, VK_VERTEX_INPUT_RATE_VERTEX);
-			vertex_infos[i].binding = binding;
-			location_offset += vertex_infos[i].attribute_count;
-		}
-		for(u32 i = 0; i < create_info->per_instance_attribute_binding_count; i++, binding++)
-		{
-			vertex_infos[i + create_info->per_vertex_attribute_binding_count] = decode_vulkan_vertex_info(create_info->per_instance_attribute_bindings[i], location_offset, VK_VERTEX_INPUT_RATE_INSTANCE);
-			vertex_infos[i + create_info->per_vertex_attribute_binding_count].binding = binding;
-			location_offset += vertex_infos[i].attribute_count;
-		}
-	}
-	else
-		vertex_infos = create_vertex_infos(create_info->shader, &attribute_count);
-
-	u32 push_constant_range_count = calculate_push_constant_range_count(create_info->shader);
-	VkPushConstantRange* push_constant_ranges = stack_newv(VkPushConstantRange, push_constant_range_count);
-	u32 push_constant_buffer_size;
-	void* push_constant_buffer = shader_setup_push_constants(create_info->shader, push_constant_ranges, &push_constant_buffer_size);
-	material_t* material =  __material_create(renderer, 
-												create_info->shader->vk_set_layout, 
-												attribute_count, 
-												vertex_infos, 
-												push_constant_range_count,
-												push_constant_ranges,
-												create_info->shader);
-	material->push_constant_buffer = push_constant_buffer;
-	material->push_constant_buffer_size = push_constant_buffer_size;
-	material_set_up_shader_resources(material);
-	stack_free(push_constant_ranges);
-
-	if(!create_info->is_vertex_attrib_from_file)
-	{
-		for(u32 i = 0; i < attribute_count; i++)
-		{
-			heap_free(vertex_infos[i].attribute_formats);
-			heap_free(vertex_infos[i].attribute_offsets);
-			heap_free(vertex_infos[i].attribute_locations);
-		}
-		heap_free(vertex_infos);
-	}
-	else
-	{
-		for(u32 i = 0; i < attribute_count; i++)
-		{
-			free(vertex_infos[i].attribute_formats);
-			free(vertex_infos[i].attribute_offsets);
-			free(vertex_infos[i].attribute_locations);
-		}
-		free(vertex_infos);
-	}
-
-	return material;
+	return vulkan_material_create(renderer->handle, shader);
 }
 
-static material_t* __material_create(renderer_t* renderer, 
-										VkDescriptorSetLayout vk_set_layout, 
-										u32 vertex_info_count, 
-										vulkan_vertex_info_t* vertex_infos,
-										u32 push_constant_range_count,
-										VkPushConstantRange* push_constant_ranges, 
-										shader_t* shader)
+RENDERER_API void material_create_no_alloc(renderer_t* renderer, shader_t* shader, material_t* material)
 {
-	material_t* material = material_new();
-	material->renderer = renderer;
-	vulkan_material_create_info_t material_info =
-	{
-		.shader = shader,
-		.vertex_info_count = vertex_info_count,
-		//NOTE: calling vulkan_material_create() creates a deep copy of vertex_infos
-		.vertex_infos = vertex_infos,
-		.vk_set_layout = vk_set_layout,
-		.push_constant_ranges = push_constant_ranges,
-		.push_constant_range_count = push_constant_range_count
-	};
-	material->handle = vulkan_material_create(renderer->handle, &material_info);
-	return material;
-}
-
-static void __material_create_no_alloc(renderer_t* renderer, 
-										VkDescriptorSetLayout vk_set_layout, 
-										u32 vertex_info_count, 
-										vulkan_vertex_info_t* vertex_infos,
-										u32 push_constant_range_count,
-										VkPushConstantRange* push_constant_ranges, 
-										shader_t* shader,  
-										material_t* material)
-{
-	material->renderer = renderer;
-	vulkan_material_create_info_t material_info =
-	{
-		.shader = shader,
-		.vertex_info_count = vertex_info_count,
-		//NOTE: calling vulkan_material_create_no_alloc() doesn't creates a deep copy of vertex_infos
-		.vertex_infos = vertex_infos,
-		.vk_set_layout = vk_set_layout,
-		.push_constant_ranges = push_constant_ranges,
-		.push_constant_range_count = push_constant_range_count
-	};
-	vulkan_material_create_no_alloc(renderer->handle, &material_info, material->handle);
-}
-
-static void* shader_setup_push_constants(shader_t* shader, VkPushConstantRange* ranges, u32* push_constant_buffer_size)
-{
-	u16 count = shader->descriptor_count;
-	vulkan_shader_resource_descriptor_t* descriptors = shader->descriptors;
-	u16 descriptor_indices[count];
-	u16 range_count = 0;
-	for(u16 i = 0; i < count; i++)
-	{
-		vulkan_shader_resource_descriptor_t* descriptor = refp(vulkan_shader_resource_descriptor_t, descriptors, i);
-
-		if(!descriptor->is_push_constant) continue;
-		assert_wrn(descriptor->handle.type == SHADER_COMPILER_BLOCK);
-		
-		VkShaderStageFlagBits stage_flags = 0;
-		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_VERTEX))
-			stage_flags |= VK_SHADER_STAGE_VERTEX_BIT;
-		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_FRAGMENT))
-			stage_flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_GEOMETRY))
-			stage_flags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_TESSELLATION))
-			stage_flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-		ref(VkPushConstantRange, ranges, range_count) = (VkPushConstantRange)
-		{
-			.stageFlags = stage_flags,
-			.offset = descriptor->push_constant_range_offset,
-			.size = struct_descriptor_sizeof(&descriptor->handle)
-		};
-		descriptor_indices[range_count] = i;
-		log_u32(ranges[range_count].offset);
-		++range_count;
-	}
-
-	if(range_count == 0)
-	{
-		*push_constant_buffer_size = 0;
-		return NULL;
-	}
-
-	VkPushConstantRange max = ranges[0];
-	// find the max (offset + size)
-	for(u16 i = 1; i < range_count; i++)
-		if((max.offset + max.size) < (ranges[i].offset + ranges[i].size))
-			max = ranges[i];
-	// set the size of the push_constant_buffer to (max.offset + max.size)
-	void* push_constant_buffer = heap_alloc(max.offset + max.size);
-	for(u16 i = 0; i < range_count; i++)
-	{
-		assert(ranges[i].offset < (max.offset + max.size));
-		struct_descriptor_map(&descriptors[descriptor_indices[i]].handle, push_constant_buffer + ranges[i].offset);
-	}
-	*push_constant_buffer_size = max.offset + max.size;
-	return push_constant_buffer;
-}
-
-static u16 calculate_push_constant_range_count(shader_t* shader)
-{
-	assert(shader != NULL);
-	if(shader->descriptors == NULL) return 0;
-	u16 count = shader->descriptor_count;
-
-	u16 range_count = 0;
-	for(u16 i = 0; i < count; i++)
-	{
-		if(!shader->descriptors[i].is_push_constant)
-			continue;
-		++range_count;
-	}
-	return range_count;	
-}
-
-static u64 get_material_glsl_type(u8 shader_compiler_glsl_type)
-{
-	switch(shader_compiler_glsl_type)
-	{
-		case SHADER_COMPILER_FLOAT: return MATERIAL_FLOAT;
-		case SHADER_COMPILER_INT: return MATERIAL_INT;
-		case SHADER_COMPILER_UINT: return MATERIAL_UINT;
-		case SHADER_COMPILER_DOUBLE: return MATERIAL_DOUBLE;
-		case SHADER_COMPILER_VEC4: return MATERIAL_VEC4;
-		case SHADER_COMPILER_VEC3: return MATERIAL_VEC3;
-		case SHADER_COMPILER_VEC2: return MATERIAL_VEC2;
-		case SHADER_COMPILER_IVEC4: return MATERIAL_IVEC4;
-		case SHADER_COMPILER_IVEC3: return MATERIAL_IVEC3;
-		case SHADER_COMPILER_IVEC2: return MATERIAL_IVEC2;
-		case SHADER_COMPILER_UVEC4: return MATERIAL_UVEC4;
-		case SHADER_COMPILER_UVEC3: return MATERIAL_UVEC3;
-		case SHADER_COMPILER_UVEC2: return MATERIAL_UVEC2;
-		case SHADER_COMPILER_MAT4: return MATERIAL_MAT4;
-		case SHADER_COMPILER_MAT3: return MATERIAL_MAT3;
-		case SHADER_COMPILER_MAT2: return MATERIAL_MAT2;
-		default:
-			LOG_FETAL_ERR("Cannot convert shader compiler type \"%lu\" to equivalent material glsl type\n", shader_compiler_glsl_type);
-		// in case of vertex attribute these types are invalid
-		// case SHADER_COMPILER_SAMPLER_2D: return MATERIAL_SAMPLER_2D
-		// case SHADER_COMPILER_SAMPLER_3D: return MATERIAL_SAMPLER_3D
-		// case SHADER_COMPILER_SAMPLER_CUBE: return MATERIAL_SAMPLER_CUBE
-	}
-}
-
-static vulkan_vertex_info_t* create_vertex_infos(shader_t* shader, u32* out_count)
-{
-	assert(shader != NULL);
-
-	VkFormat vulkan_formats[27];
-	u32 sizes[23];
-	u32 indices[23];
-	u32 alignments[23];
-	get_vulkan_constants(vulkan_formats, sizes, indices, alignments);
-
-	BUFFER vinfos = buf_create(sizeof(vulkan_vertex_info_t), 1, 0);
-
-	typedef struct attribute_info_t { BUFFER locations, formats, offsets; } attribute_info_t;
-	dictionary_t bindings = dictionary_create(u16, attribute_info_t, 1, dictionary_key_comparer_u16);
-
-	u16 count = shader->descriptor_count;
-	for(u16 i = 0; i < count; i++)
-	{
-		if(shader->descriptors[i].is_attribute)
-		{
-			u16 key = shader->descriptors[i].vertex_attrib_binding_number;
-			u16 location = shader->descriptors[i].vertex_attrib_location_number;
-			u64 material_glsl_type = get_material_glsl_type(shader->descriptors[i].handle.type);
-			VkFormat format = vulkan_formats[indices[material_glsl_type]];
-			u32 alignment = alignments[material_glsl_type];
-			u32 size = sizes[material_glsl_type];
-
-			// if the binding 'key' is not present then create new attribute_info_t object
-			if(!dictionary_contains(&bindings, &key))
-			{
-				attribute_info_t info = 
-				{ 
-					.locations = buf_create(sizeof(u16), 1, 0), 
-					.formats = buf_create(sizeof(VkFormat), 1, 0), 
-					.offsets = buf_create(sizeof(u32), 1, 0) 
-				};
-				dictionary_push(&bindings, &key, &info);
-
-				// add zero offset to be popped later
-				u32 offset = 0;
-				attribute_info_t* attribute_info = dictionary_get_value_ptr_at(&bindings, dictionary_get_count(&bindings) - 1);
-				buf_push(&attribute_info->offsets, &offset);
-
-				// create vertex info object for the binding 'key'
-				vulkan_vertex_info_t vinfo =
-				{
-					.binding = key,
-					.input_rate = shader->descriptors[i].is_per_vertex_attribute ? VK_VERTEX_INPUT_RATE_VERTEX : VK_VERTEX_INPUT_RATE_INSTANCE
-				};
-				buf_push(&vinfos, &vinfo);
-			}
-
-			// get pointer to the attribute info object for binding 'key'
-			attribute_info_t* attribute_info = dictionary_get_value_ptr(&bindings, &key);
-
-			// TODO: These checks should be done at the compilation time, not at the runtime
-			// if(buf_find_index_of(locations, &location, buf_u16_comparer) != BUF_INVALID_INDEX)
-			// 	LOG_FETAL_ERR("Multiple vertex attributes have the same layout location \"%u\", which is not allowed!\n", location);
-			
-			// add the location
-			buf_push(&attribute_info->locations, &location);
-			// add the format
-			buf_push(&attribute_info->formats, &format);
-
-			u32 offset;
-			// pop the previous offset
-			buf_pop(&attribute_info->offsets, &offset);
-			// snap the offset to the correct alignment for this field/attribute
-			offset += (alignment - (offset % alignment)) % alignment;
-			// add the offset
-			buf_push(&attribute_info->offsets, &offset);
-			// increment the offset by the size of this field/attribute
-			offset += size;
-			// save the offset for next iteration
-			buf_push(&attribute_info->offsets, &offset);
-		}
-	}
-
-	buf_ucount_t vinfo_count = buf_get_element_count(&vinfos);
-	for(buf_ucount_t i = 0; i < vinfo_count; i++)
-	{
-		vulkan_vertex_info_t* vinfo = buf_get_ptr_at(&vinfos, i);
-		attribute_info_t* ainfo = dictionary_get_value_ptr_at(&bindings, i);
-
-		// the final stride would be the last saved offset
-		vinfo->size = *(u32*)buf_peek_ptr(&ainfo->offsets);
-		// assign the number of attribute count
-		vinfo->attribute_count = buf_get_element_count(&ainfo->locations);
-		// assign the internal pointers to their corresponding destinations
-		vinfo->attribute_locations = buf_get_ptr(&ainfo->locations);
-		vinfo->attribute_formats = buf_get_ptr(&ainfo->formats);
-		vinfo->attribute_offsets = buf_get_ptr(&ainfo->offsets);
-	}
-
-	// free the temporary dictionary buffer
-	dictionary_free(&bindings);
-
-	// set the number of vulkan vertex info objects
-	*out_count = buf_get_element_count(&vinfos);
-
-	// if no vertex attribute is found then return NULL
-	if((*out_count) == 0)
-	{
-		buf_free(&vinfos);
-		return NULL;
-	}
-
-	// return pointer to the final vulkan vertex info objects
-	return buf_get_ptr(&vinfos);
-}
-
-static u16 calculate_uniform_resource_count(shader_t* shader)
-{
-	assert(shader != NULL);
-	if(shader->descriptors == NULL) return 0;
-	u16 count = shader->descriptor_count;
-	u16 uniform_count = 0;
-	for(u16 i = 0; i < count; i++)
-	{
-		if(shader->descriptors[i].is_attribute)
-			continue;
-		++uniform_count;
-	}
-	return uniform_count;
-}
-
-static void material_set_up_shader_resources(material_t* material)
-{
-	assert(material->handle->shader != NULL);
-	u16 count = calculate_uniform_resource_count(material->handle->shader);
-	if(count == 0) return;
-
-	vulkan_shader_resource_descriptor_t* descriptors = material->handle->shader->descriptors;
-	uniform_resource_t* uniform_resources = heap_newv(uniform_resource_t, count);
-	memset(uniform_resources, 0, sizeof(uniform_resource_t) * count);
-	for(u16 i = 0, j = 0; i < material->handle->shader->descriptor_count; i++)
-	{
-		vulkan_shader_resource_descriptor_t* descriptor = refp(vulkan_shader_resource_descriptor_t, descriptors, i);
-		if(descriptor->is_attribute)
-			continue;
-		uniform_resource_t* resource = &uniform_resources[j];
-		j++;
-		if((descriptor->handle.type == SHADER_COMPILER_BLOCK) && (!descriptor->is_push_constant))
-		{
-			u32 size = struct_descriptor_sizeof(&descriptor->handle);
-			vulkan_buffer_init(&resource->buffer);
-			resource->descriptor_index = i;
-			vulkan_buffer_create_info_t create_info =
-			{
-				.size = size,
-				.usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-			};
-			vulkan_buffer_create_no_alloc(material->renderer->handle, &create_info, &resource->buffer);
-			vulkan_material_set_uniform_buffer(material->handle, descriptor->binding_number, &resource->buffer);
-		}
-		else
-			resource->descriptor_index = 0xFFFF;
-	}
-	material->uniform_resources = uniform_resources;
-	material->uniform_resource_count = count;
+	vulkan_material_create_no_alloc(renderer->handle, shader, material);
 }
 
 RENDERER_API void material_destroy(material_t* material)
 {
-	vulkan_material_destroy(material->handle);
-	for(u16 i = 0; i < material->uniform_resource_count; i++)
-	{
-		if(material->uniform_resources[i].descriptor_index == 0xFFFF)
-			continue;
-		vulkan_buffer_destroy(&material->uniform_resources[i].buffer);
-	}
+	vulkan_material_destroy(material);
 }
 
 RENDERER_API void material_release_resources(material_t* material)
 {
-	vulkan_material_release_resources(material->handle);
-	if(material->uniform_resources != NULL)
-		heap_free(material->uniform_resources);
-	if(material->push_constant_buffer != NULL)
-		heap_free(material->push_constant_buffer);
-	heap_free(material);
-}
-
-RENDERER_API void material_bind(material_t* material)
-{
-	vulkan_material_bind(material->handle);
+	vulkan_material_release_resources(material);
 }
 
 RENDERER_API material_field_handle_t material_get_field_handle(material_t* material, const char* name)
 {
-	assert(material != NULL);
-	assert(material->handle->shader != NULL);
-
-	if(material->handle->shader->descriptor_count == 0)
-		LOG_WRN("Couldn't get field handle to \"%s\", reason: material->handle->shader->descriptor_count == 0\n", name);
-
-	char struct_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE];
-	char field_name[STRUCT_FIELD_MAX_NAME_SIZE];
-	get_record_and_field_name(name, struct_name, field_name);
-
-	u16 descriptor_count = material->handle->shader->descriptor_count;
-	vulkan_shader_resource_descriptor_t* descriptors = material->handle->shader->descriptors;
-	u16 descriptor_index = 0xFFFF;
-	u16 resource_index = 0xFFFF;
-	u16 field_handle = STRUCT_FIELD_INVALID_HANDLE;
-	for(u16 i = 0, j = 0; i < descriptor_count; i++)
-	{
-		vulkan_shader_resource_descriptor_t descriptor = ref(vulkan_shader_resource_descriptor_t, descriptors, i);
-		if(descriptor.is_attribute)
-			continue;
-		if(strcmp(descriptor.handle.name, struct_name) == 0)
-		{
-			field_handle = struct_descriptor_get_field_handle(&descriptor.handle, field_name);
-			descriptor_index = i;
-			resource_index = j;
-			if(field_handle == STRUCT_FIELD_INVALID_HANDLE)
-				continue;
-			break;
-		}
-		j++;
-	}
-	if((descriptor_index != 0xFFFF) && (resource_index != 0xFFFF))
-		return (material_field_handle_t) { .descriptor_index = descriptor_index, .resource_index = resource_index, .field_handle = field_handle };
-	LOG_FETAL_ERR("symbol \"%s\" isn't found in the shader resource descriptors\n", name);
-	return (material_field_handle_t) { .descriptor_index = 0xFFFF, .resource_index = 0xFFFF, .field_handle = STRUCT_FIELD_INVALID_HANDLE };
+	return vulkan_material_get_field_handle(material, name);	
 }
 
 
 /* ------------------------------------------ BEGIN: PUSH CONSTANTS -------------------------------------------*/
 
-// TODO: fix this branching
-static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags)
-{
-	VkShaderStageFlagBits flags = 0;
-	if(_flags & (1 << VULKAN_SHADER_TYPE_VERTEX))
-		flags |= VK_SHADER_STAGE_VERTEX_BIT;
-	if(_flags & (1 << VULKAN_SHADER_TYPE_FRAGMENT))
-		flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-	if(_flags & (1 << VULKAN_SHADER_TYPE_GEOMETRY))
-		flags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-	if(_flags & (1 << VULKAN_SHADER_TYPE_TESSELLATION))
-		flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-	return flags;
-}
-
-// setters
-static void set_push_constants(material_t* material, vulkan_shader_resource_descriptor_t* descriptor)
-{
-	vulkan_pipeline_layout_push_constants(material->handle->graphics_pipeline->pipeline_layout, 
-											material->renderer->handle, 
-											get_vulkan_shader_flags(descriptor->stage_flags), 
-											descriptor->push_constant_range_offset, 
-											struct_descriptor_sizeof(&descriptor->handle), 
-											descriptor->handle.ptr);
-}
-/* functions accepting handles */
-#define set_push_value(material, handle, setter, in_value) __set_push_value(material, handle, (void (*)(struct_descriptor_t*, struct_field_handle_t, const void* const))(setter), in_value);
-static void __set_push_value(material_t* material, material_field_handle_t handle, void (*setter)(struct_descriptor_t*, struct_field_handle_t, const void* const), const void* const in)
-{
-	vulkan_shader_resource_descriptor_t* descriptor = &(material->handle->shader->descriptors[handle.descriptor_index]);
-	setter(&descriptor->handle, handle.field_handle, in);
-	set_push_constants(material, descriptor);
-}
-
 RENDERER_API void material_set_push_floatH(material_t* material, material_field_handle_t handle, float value)
 {
-	check_precondition(material);
-	set_push_value(material, handle, struct_descriptor_set_float, &value);
+	vulkan_material_set_push_floatH(material, handle, value);
 }
 
 RENDERER_API void material_set_push_intH(material_t* material, material_field_handle_t handle, int value)
 {
-	check_precondition(material);
-	set_push_value(material, handle, struct_descriptor_set_int, &value);
+	vulkan_material_set_push_intH(material, handle, value);
 }
 
 RENDERER_API void material_set_push_uintH(material_t* material, material_field_handle_t handle, uint value)
 {
-	check_precondition(material);
-	set_push_value(material, handle, struct_descriptor_set_uint, &value);
+	vulkan_material_set_push_uintH(material, handle, value);
 }
 
 RENDERER_API void material_set_push_vec2H(material_t* material, material_field_handle_t handle, vec2_t(float) value)
 {
-	check_precondition(material);
-	set_push_value(material, handle, struct_descriptor_set_vec2, &value);
+	vulkan_material_set_push_vec2H(material, handle, value);
 }
 
 RENDERER_API void material_set_push_vec3H(material_t* material, material_field_handle_t handle, vec3_t(float) value)
 {
-	check_precondition(material);
-	set_push_value(material, handle, struct_descriptor_set_vec3, &value);
+	vulkan_material_set_push_vec3H(material, handle, value);
 }
 
 RENDERER_API void material_set_push_vec4H(material_t* material, material_field_handle_t handle, vec4_t(float) value)
 {
-	check_precondition(material);
-	set_push_value(material, handle, struct_descriptor_set_vec4, &value);
+	vulkan_material_set_push_vec4H(material, handle, value);
 }
 
 RENDERER_API void material_set_push_mat2H(material_t* material, material_field_handle_t handle, mat2_t(float) value)
 {
-	check_precondition(material);
-	set_push_value(material, handle, struct_descriptor_set_mat2, &value);
+	vulkan_material_set_push_mat2H(material, handle, value);
 }
 
 RENDERER_API void material_set_push_mat4H(material_t* material, material_field_handle_t handle, mat4_t(float) value)
 {
-	check_precondition(material);
-	set_push_value(material, handle, struct_descriptor_set_mat4, &value);
+	vulkan_material_set_push_mat4H(material, handle, value);
 }
 
 // getters
-#define get_push_value(material, handle, getter, out_value) __get_push_value(material, handle, (void (*)(struct_descriptor_t*, struct_field_handle_t, void* const))(getter), out_value);
-static void __get_push_value(material_t* material, material_field_handle_t handle, void (*getter)(struct_descriptor_t*, struct_field_handle_t, void* const), void* const out)
-{
-	vulkan_shader_resource_descriptor_t* descriptor = &(material->handle->shader->descriptors[handle.descriptor_index]);
-	getter(&descriptor->handle, handle.field_handle, out);
-}
-
 RENDERER_API float material_get_push_floatH(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	float value;
-	get_push_value(material, handle, struct_descriptor_get_float, &value);
-	return value;
+	return vulkan_material_get_push_floatH(material, handle);
 }
 
 RENDERER_API int material_get_push_intH(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	int value;
-	get_push_value(material, handle, struct_descriptor_get_int, &value);
-	return value;
+	return vulkan_material_get_push_intH(material, handle);
 }
 
 RENDERER_API uint material_get_push_uintH(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	uint value;
-	get_push_value(material, handle, struct_descriptor_get_uint, &value);
-	return value;
+	return vulkan_material_get_push_uintH(material, handle);
 }
 
-RENDERER_API vec2_t(float) material_get_push_vec2H(material_t* material, material_field_handle_t handle)
+RENDERER_API vec2_t(float) vulkan_material_get_push_vec2H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	vec2_t(float) value;
-	get_push_value(material, handle, struct_descriptor_get_vec2, &value);
-	return value;
+	return vulkan_material_get_push_vec2H(material, handle);
 }
 
 RENDERER_API vec3_t(float) material_get_push_vec3H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	vec3_t(float) value;
-	get_push_value(material, handle, struct_descriptor_get_vec3, &value);
-	return value;
+	return vulkan_material_get_push_vec3H(material, handle);
 }
 
 RENDERER_API vec4_t(float) material_get_push_vec4H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	vec4_t(float) value;
-	get_push_value(material, handle, struct_descriptor_get_vec4, &value);
-	return value;
+	return vulkan_material_get_push_vec4H(material, handle);
 }
 
 RENDERER_API mat2_t(float) material_get_push_mat2H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	mat2_t(float) value;
-	get_push_value(material, handle, struct_descriptor_get_mat2, &value);
-	return value;
+	return vulkan_material_get_push_mat2H(material, handle);
 }
 
 RENDERER_API mat4_t(float) material_get_push_mat4H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	mat4_t(float) value;
-	get_push_value(material, handle, struct_descriptor_get_mat4, &value);
-	return value;
+	return vulkan_material_get_push_mat4H(material, handle);
 }
 
 /* functions accepting strings */
 RENDERER_API void material_set_push_float(material_t* material, const char* name, float value)
 {
-	material_set_push_floatH(material, material_get_field_handle(material, name), value);
+	vulkan_material_set_push_float(material, name, value);
 }
 
 RENDERER_API void material_set_push_int(material_t* material, const char* name, int value)
 {
-	material_set_push_intH(material, material_get_field_handle(material, name), value);
+	vulkan_material_set_push_int(material, name, value);
 }
 
 RENDERER_API void material_set_push_uint(material_t* material, const char* name, uint value)
 {
-	material_set_push_uintH(material, material_get_field_handle(material, name), value);
+	vulkan_material_set_push_uint(material, name, value);
 }
 
-RENDERER_API void material_set_push_vec2(material_t* material, const char* name, vec2_t(float) v)
+RENDERER_API void material_set_push_vec2(material_t* material, const char* name, vec2_t(float) value)
 {
-	material_set_push_vec2H(material, material_get_field_handle(material, name), v);
+	vulkan_material_set_push_vec2(material, name, value);
 }
 
-RENDERER_API void material_set_push_vec3(material_t* material, const char* name, vec3_t(float) v)
+RENDERER_API void material_set_push_vec3(material_t* material, const char* name, vec3_t(float) value)
 {
-	material_set_push_vec3H(material, material_get_field_handle(material, name), v);
+	vulkan_material_set_push_vec3(material, name, value);
 }
 
-RENDERER_API void material_set_push_vec4(material_t* material, const char* name, vec4_t(float) v)
+RENDERER_API void material_set_push_vec4(material_t* material, const char* name, vec4_t(float) value)
 {
-	material_set_push_vec4H(material, material_get_field_handle(material, name), v);
+	vulkan_material_set_push_vec4(material, name, value);
 }
 
-RENDERER_API void material_set_push_mat2(material_t* material, const char* name, mat2_t(float) m)
+RENDERER_API void material_set_push_mat2(material_t* material, const char* name, mat2_t(float) value)
 {
-	material_set_push_mat2H(material, material_get_field_handle(material, name), m);
+	vulkan_material_set_push_mat2(material, name, value);
 }
 
-RENDERER_API void material_set_push_mat4(material_t* material, const char* name, mat4_t(float) m)
+RENDERER_API void material_set_push_mat4(material_t* material, const char* name, mat4_t(float) value)
 {
-	material_set_push_mat4H(material, material_get_field_handle(material, name), m);
+	vulkan_material_set_push_mat4(material, name, value);
 }
 
 RENDERER_API float material_get_push_float(material_t* material, const char* name)
 {
-	return material_get_push_floatH(material, material_get_field_handle(material, name));
+	return vulkan_material_get_push_float(material, name);
 }
 
 RENDERER_API int material_get_push_int(material_t* material, const char* name)
 {
-	return material_get_push_intH(material, material_get_field_handle(material, name));
+	return vulkan_material_get_push_int(material, name);
 }
 
 RENDERER_API uint material_get_push_uint(material_t* material, const char* name)
 {
-	return material_get_push_uintH(material, material_get_field_handle(material, name));
+	return vulkan_material_get_push_uint(material, name);
 }
 
 RENDERER_API vec2_t(float) material_get_push_vec2(material_t* material, const char* name)
 {
-	return material_get_push_vec2H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_push_vec2(material, name);
 }
 
 RENDERER_API vec3_t(float) material_get_push_vec3(material_t* material, const char* name)
 {
-	return material_get_push_vec3H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_push_vec3(material, name);
 }
 
 RENDERER_API vec4_t(float) material_get_push_vec4(material_t* material, const char* name)
 {
-	return material_get_push_vec4H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_push_vec4(material, name);
 }
 
 RENDERER_API mat2_t(float) material_get_push_mat2(material_t* material, const char* name)
 {
-	return material_get_push_mat2H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_push_mat2(material, name);
 }
 
 RENDERER_API mat4_t(float) material_get_push_mat4(material_t* material, const char* name)
 {
-	return material_get_push_mat4H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_push_mat4(material, name);
 }
 
 /* ------------------------------------------ END: PUSH CONSTANTS -------------------------------------------*/
 
 RENDERER_API void material_set_floatH(material_t* material, material_field_handle_t handle, float value)
 {
-	check_precondition(material);
-	struct_descriptor_set_float(map_descriptor(material, handle), handle.field_handle, &value);
-	unmap_descriptor(material, handle);
+	vulkan_material_set_floatH(material, handle, value);
 }
 
 RENDERER_API void material_set_intH(material_t* material, material_field_handle_t handle, int value)
 {
-	check_precondition(material);
-	struct_descriptor_set_int(map_descriptor(material, handle), handle.field_handle, &value);
-	unmap_descriptor(material, handle);
+	vulkan_material_set_intH(material, handle, value);
 }
 
 RENDERER_API void material_set_uintH(material_t* material, material_field_handle_t handle, uint value)
 {
-	check_precondition(material);
-	struct_descriptor_set_uint(map_descriptor(material, handle), handle.field_handle, &value);
-	unmap_descriptor(material, handle);
+	vulkan_material_set_uintH(material, handle, value);
 }
 
 RENDERER_API void material_set_vec2H(material_t* material, material_field_handle_t handle, vec2_t(float) value)
 {
-	check_precondition(material);
-	struct_descriptor_set_vec2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	unmap_descriptor(material, handle);
+	vulkan_material_set_vec2H(material, handle, value);
 }
 
 RENDERER_API void material_set_vec3H(material_t* material, material_field_handle_t handle, vec3_t(float) value)
 {
-	check_precondition(material);
-	struct_descriptor_set_vec3(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	unmap_descriptor(material, handle);
+	vulkan_material_set_vec3H(material, handle, value);
 }
 
 RENDERER_API void material_set_vec4H(material_t* material, material_field_handle_t handle, vec4_t(float) value)
 {
-	check_precondition(material);
-	struct_descriptor_set_vec4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	unmap_descriptor(material, handle);
+	vulkan_material_set_vec4H(material, handle, value);
 }
 
 RENDERER_API void material_set_mat2H(material_t* material, material_field_handle_t handle, mat2_t(float) value)
 {
-	check_precondition(material);
-	struct_descriptor_set_mat2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	unmap_descriptor(material, handle);
+	vulkan_material_set_mat2H(material, handle, value);
 }
 
 RENDERER_API void material_set_mat4H(material_t* material, material_field_handle_t handle, mat4_t(float) value)
 {
-	check_precondition(material);
-	struct_descriptor_set_mat4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	unmap_descriptor(material, handle);
+	vulkan_material_set_mat4H(material, handle, value);
 }
 
 RENDERER_API void material_set_textureH(material_t* material, material_field_handle_t handle, texture_t* texture)
 {
-	check_precondition(material);
-	assert(handle.descriptor_index < material->handle->shader->descriptor_count);
-	vulkan_shader_resource_descriptor_t descriptor = material->handle->shader->descriptors[handle.descriptor_index];
-	assert(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
-	vulkan_material_set_texture(material->handle, descriptor.binding_number, texture);
+	vulkan_material_set_textureH(material, handle, texture);
 }
 
 RENDERER_API float material_get_floatH(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	float value;
-	struct_descriptor_get_float(map_descriptor(material, handle), handle.field_handle, &value);
-	return value;
+	return vulkan_material_get_floatH(material, handle);
 }
 
 RENDERER_API int material_get_intH(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	int value;
-	struct_descriptor_get_int(map_descriptor(material, handle), handle.field_handle, &value);
-	return value;
+	return vulkan_material_get_intH(material, handle);
 }
 
 RENDERER_API uint material_get_uintH(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	uint value;
-	struct_descriptor_get_uint(map_descriptor(material, handle), handle.field_handle, &value);
-	return value;
+	return vulkan_material_get_intH(material, handle);
 }
 
 RENDERER_API vec2_t(float) material_get_vec2H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	vec2_t(float) value;
-	struct_descriptor_get_vec2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	return value;
+	return vulkan_material_get_vec2H(material, handle);
 }
 
 RENDERER_API vec3_t(float) material_get_vec3H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	vec3_t(float) value;
-	struct_descriptor_get_vec3(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	return value;
+	return vulkan_material_get_vec3H(material, handle);
 }
 
 RENDERER_API vec4_t(float) material_get_vec4H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	vec4_t(float) value;
-	struct_descriptor_get_vec4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	return value;
+	return vulkan_material_get_vec4H(material, handle);
 }
 
 RENDERER_API mat2_t(float) material_get_mat2H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	mat2_t(float) value;
-	struct_descriptor_get_mat2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	return value;
+	return vulkan_material_get_mat2H(material, handle);
 }
 
 RENDERER_API mat4_t(float) material_get_mat4H(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	mat4_t(float) value;
-	struct_descriptor_get_mat4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
-	return value;
+	return vulkan_material_get_mat4H(material, handle);
 }
 
 RENDERER_API texture_t* material_get_texture2dH(material_t* material, material_field_handle_t handle)
 {
-	check_precondition(material);
-	LOG_WRN("material_get_texture2dH isn't defined, for now it will return NULL\n");
-	return NULL;
+	return vulkan_material_get_texture2dH(material, handle);
 }
 
 /* functions accepting strings */
 RENDERER_API void material_set_float(material_t* material, const char* name, float value)
 {
-	material_set_floatH(material, material_get_field_handle(material, name), value);
+	vulkan_material_set_float(material, name, value);
 }
 
 RENDERER_API void material_set_int(material_t* material, const char* name, int value)
 {
-	material_set_intH(material, material_get_field_handle(material, name), value);
+	vulkan_material_set_int(material, name, value);
 }
 
 RENDERER_API void material_set_uint(material_t* material, const char* name, uint value)
 {
-	material_set_uintH(material, material_get_field_handle(material, name), value);
+	vulkan_material_set_uint(material, name, value);
 }
 
 RENDERER_API void material_set_vec2(material_t* material, const char* name, vec2_t(float) v)
 {
-	material_set_vec2H(material, material_get_field_handle(material, name), v);
+	vulkan_material_set_vec2(material, name, v);
 }
 
 RENDERER_API void material_set_vec3(material_t* material, const char* name, vec3_t(float) v)
 {
-	material_set_vec3H(material, material_get_field_handle(material, name), v);
+	vulkan_material_set_vec3(material, name, v);
 }
 
 RENDERER_API void material_set_vec4(material_t* material, const char* name, vec4_t(float) v)
 {
-	material_set_vec4H(material, material_get_field_handle(material, name), v);
+	vulkan_material_set_vec4(material, name, v);
 }
 
 RENDERER_API void material_set_mat2(material_t* material, const char* name, mat2_t(float) m)
 {
-	material_set_mat2H(material, material_get_field_handle(material, name), m);
+	vulkan_material_set_mat2(material, name, m);
 }
 
 RENDERER_API void material_set_mat4(material_t* material, const char* name, mat4_t(float) m)
 {
-	material_set_mat4H(material, material_get_field_handle(material, name), m);
+	vulkan_material_set_mat4(material, name, m);
 }
 
 RENDERER_API void material_set_texture(material_t* material, const char* name, texture_t* texture)
 {
-	material_set_textureH(material, material_get_field_handle(material, name), texture);
+	vulkan_material_set_texture(material, name, texture);
 }
 
 RENDERER_API float material_get_float(material_t* material, const char* name)
 {
-	return material_get_floatH(material, material_get_field_handle(material, name));
+	return vulkan_material_get_float(material, name);
 }
 
 RENDERER_API int material_get_int(material_t* material, const char* name)
 {
-	return material_get_intH(material, material_get_field_handle(material, name));
+	return vulkan_material_get_int(material, name);
 }
 
 RENDERER_API uint material_get_uint(material_t* material, const char* name)
 {
-	return material_get_uintH(material, material_get_field_handle(material, name));
+	return vulkan_material_get_uint(material, name);
 }
 
 RENDERER_API vec2_t(float) material_get_vec2(material_t* material, const char* name)
 {
-	return material_get_vec2H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_vec2(material, name);
 }
 
 RENDERER_API vec3_t(float) material_get_vec3(material_t* material, const char* name)
 {
-	return material_get_vec3H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_vec3(material, name);
 }
 
 RENDERER_API vec4_t(float) material_get_vec4(material_t* material, const char* name)
 {
-	return material_get_vec4H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_vec4(material, name);
 }
 
 RENDERER_API mat2_t(float) material_get_mat2(material_t* material, const char* name)
 {
-	return material_get_mat2H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_mat2(material, name);
 }
 
 RENDERER_API mat4_t(float) material_get_mat4(material_t* material, const char* name)
 {
-	return material_get_mat4H(material, material_get_field_handle(material, name));
+	return vulkan_material_get_mat4(material, name);
 }
 
 RENDERER_API texture_t* material_get_texture2d(material_t* material, const char* name)
 {
-	return material_get_texture2dH(material, material_get_field_handle(material, name));
-}
-
-
-#if GLOBAL_DEBUG
-static void check_precondition(material_t* material)
-{
-	assert(material != NULL);
-	assert(material->renderer != NULL);
-	assert(material->handle->shader != NULL);
-	// assert(material->handle->shader->descriptors != NULL);
-	// assert_wrn(material->handle->shader->descriptor_count != 0);
-}
-#endif
-
-
-static void unmap_descriptor(material_t* material, material_field_handle_t handle)
-{
-	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.resource_index].buffer);
-	struct_descriptor_t* descriptor = &(material->handle->shader->descriptors[handle.descriptor_index].handle);
-	struct_descriptor_unmap(descriptor);
-	vulkan_buffer_unmap(buffer);
-}
-
-static struct_descriptor_t* map_descriptor(material_t* material, material_field_handle_t handle)
-{
-	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.resource_index].buffer);
-	struct_descriptor_t* descriptor = &(material->handle->shader->descriptors[handle.descriptor_index].handle);
-	struct_descriptor_map(descriptor, vulkan_buffer_map(buffer));
-	return descriptor;
-}
-
-static void get_record_and_field_name(const char* const full_name, char out_struct_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE], char out_field_name[STRUCT_FIELD_MAX_NAME_SIZE])
-{
-	u32 len = strlen(full_name);
-	assert(len != 0);
-	const char* ptr = strchr(full_name, '.');
-	memset(out_field_name, 0, STRUCT_FIELD_MAX_NAME_SIZE);
-	memset(out_struct_name, 0, STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
-	if(ptr == NULL)
-	{
-		memcpy(out_struct_name, full_name, len);
-		return;
-	}
-	u16 struct_name_len = (u16)(ptr - full_name);
-	u16 field_name_len = (u16)(len - struct_name_len - 1);
-	assert(struct_name_len < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
-	assert(field_name_len < STRUCT_FIELD_MAX_NAME_SIZE);
-	memcpy(out_struct_name, full_name, struct_name_len);
-	memcpy(out_field_name, ptr + 1, field_name_len);
-}
-
-static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices, u32* out_aligments)
-{
-	{
-		u32 indices[22 + 1] =
-		{	0,
-			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-			13, 14, 17, 21, 22, 23, 24, 25, 26
-		};
-		memcpy(&out_indices[0], indices, sizeof(u32) * 23);
-	};
-	{
-		u32 sizes[22 + 1] =
-		{
-			0,
-			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 8, 12, 16, 8,
-			36, 64, 8, 12, 16, 8, 12, 16
-		};
-		memcpy(&out_sizes[0], sizes, sizeof(u32) * 23);
-	};
-
-	{
-		u32 aligments[22 + 1] = 
-		{
-			0,
-			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 8, 12, 16, 8,
-			16, 16, 8, 16, 16, 8, 16, 16
-		};
-		memcpy(&out_aligments[0], aligments, sizeof(u32) * 23);
-	};
-	VkFormat vulkan_formats[27] =
-	{
-		//U8
-		VK_FORMAT_R8_UINT,
-		//U16
-		VK_FORMAT_R16_UINT,
-		//U32
-		VK_FORMAT_R32_UINT,
-		//U64
-		VK_FORMAT_R64_UINT,
-		//S8
-		VK_FORMAT_R8_SINT,
-		//S16
-		VK_FORMAT_R16_SINT,
-		//S32
-		VK_FORMAT_R32_SINT,
-		//S64
-		VK_FORMAT_R64_SINT,
-		//F32
-		VK_FORMAT_R32_SFLOAT,
-		//F64
-		VK_FORMAT_R64_SFLOAT,
-		//VEC2
-		VK_FORMAT_R32G32_SFLOAT,
-		//VEC3
-		VK_FORMAT_R32G32B32_SFLOAT,
-		//VEC4
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		//MAT2
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-
-		//MAT3
-		VK_FORMAT_R32G32B32_SFLOAT,
-		VK_FORMAT_R32G32B32_SFLOAT,
-		VK_FORMAT_R32G32B32_SFLOAT,
-
-		//MAT4
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-
-		//IVEC2
-		VK_FORMAT_R32G32_SINT,
-		//IVEC3
-		VK_FORMAT_R32G32B32_SINT,
-		//IVEC4
-		VK_FORMAT_R32G32B32A32_SINT,
-		//UVEC2
-		VK_FORMAT_R32G32_UINT,
-		//UVEC3
-		VK_FORMAT_R32G32B32_UINT,
-		//UVEC4
-		VK_FORMAT_R32G32B32A32_UINT,
-	};
-	memcpy(&out_formats[0], vulkan_formats, sizeof(VkFormat) * 27);
-}
-
-static u32 decode_attribute_count(u64 packed_attributes)
-{
-	u8 bits_per_type = 5;
-	log_u64(packed_attributes);
-	u64 bits_mask = ~(0xFFFFFFFFFFFFFFFFULL << bits_per_type);
-	u32 count = 0;
-	while(packed_attributes != 0)
-	{
-		if((packed_attributes & bits_mask) != 0)
-			++count;
-		packed_attributes >>= bits_per_type;
-	}
-	return count;
-}
-
-static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16 location_offset, VkVertexInputRate input_rate)
-{
-	VkFormat vulkan_formats[27];
-	u32 sizes[23];
-	u32 indices[23];
-	u32 alignments[23];
-	get_vulkan_constants(vulkan_formats, sizes, indices, alignments);
-
-	VkFormat formats[12];
-	u32 offsets[12];
-	u16 locations[12];
-
-	u8 bits_per_type = 5;
-	u64 bits_mask = ~(0xFFFFFFFFFFFFFFFFULL << bits_per_type);
-
-	u32 i = 0;
-	u32 offset = 0;
-	while(packed_attributes != 0)
-	{
-		u64 attribute_type = (packed_attributes & bits_mask);
-		if(attribute_type == 0)
-		{
-			packed_attributes >>= bits_per_type;
-			continue;
-		}
-		VkFormat vulkan_format = vulkan_formats[indices[attribute_type]];
-		u32 align = alignments[attribute_type];
-		u32 field_offset = ((align - (offset % align)) % align) + offset;
-		switch(attribute_type)
-		{
-			case MATERIAL_MAT3:
-				LOG_FETAL_ERR("Vertex attribute decode error: MATERIAL_MAT3 isn't supported yet!\n");
-			break;
-
-			case MATERIAL_MAT4:
-				LOG_FETAL_ERR("Vertex attribute decode error: MATERIAL_MAT4 isn't supported yet!\n");
-			break;
-
-			default:/*or MATERIAL_MAT2*/
-				formats[i] = vulkan_format;
-				offsets[i] = field_offset;
-			break;
-		}
-		packed_attributes >>= bits_per_type;
-		offset = field_offset + sizes[attribute_type];
-		locations[i] = i + location_offset;
-		i++;
-	}
-	vulkan_vertex_info_t info;
-	info.input_rate = input_rate;
-	info.attribute_count = i;
-	info.size = offset;
-	info.attribute_formats = heap_newv(VkFormat, info.attribute_count);
-	info.attribute_offsets = heap_newv(u32, info.attribute_count);
-	info.attribute_locations = heap_newv(u16, info.attribute_count);
-	memcpy(info.attribute_offsets, offsets, sizeof(u32) * info.attribute_count);
-	memcpy(info.attribute_formats, formats, sizeof(VkFormat) * info.attribute_count);
-	memcpy(info.attribute_locations, locations, sizeof(u16) * info.attribute_count);
-	return info;
+	return vulkan_material_get_texture2d(material, name);
 }
