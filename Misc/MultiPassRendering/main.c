@@ -363,7 +363,7 @@ int main()
 	PvkImage depthImage = pvkCreateImage(physicalGPU, logicalGPU, 
 										VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 										VK_FORMAT_D32_SFLOAT, 800, 800,
-										VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+										VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 										2, queueFamilyIndices);
 	VkImageView depthAttachment = pvkCreateImageView(logicalGPU, depthImage.handle, VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT);
 	VkImageView attachments[9] = 
