@@ -1,0 +1,59 @@
+
+#pragma
+
+#include <renderer/defines.h>
+#include <renderer/struct_descriptor.h>
+#include <renderer/internal/vulkan/vulkan_buffer.h>
+
+#include <hpml/vec3/header_config.h>
+#include <hpml/vec3/vec3.h>
+#include <hpml/vec2/header_config.h>
+#include <hpml/vec2/vec2.h>
+#include <hpml/mat4/header_config.h>
+#include <hpml/mat4/mat4.h>
+
+typedef enum vulkan_camera_projection_type_t
+{
+	VULKAN_CAMERA_PROJECTION_TYPE_ORTHOGRAPHIC,
+	VULKAN_CAMERA_PROJECTION_TYPE_PERSPECTIVE,
+	VULKAN_CAMERA_PROJECTION_TYPE_STEROGRAPHIC
+} vulkan_camera_projection_type_t;
+
+typedef struct vulkan_camera_t
+{
+	vulkan_renderer_t* renderer;
+	vulkan_buffer_t buffer;
+	struct_descriptor_t struct_definition;
+	struct_field_handle_t transform_handle;
+	struct_field_handle_t projection_handle;
+	struct_field_handle_t view_handle;
+} vulkan_camera_t;
+
+BEGIN_CPP_COMPATIBLE
+
+/* constructors & destructors */
+RENDERER_API vulkan_camera_t* vulkan_camera_new();
+RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_projection_type_t projection_type, float height_or_angle);
+RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_projection_type_t projection_type, float height_or_angle, vulkan_camera_t OUT camera);
+RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera);
+RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera);
+
+/* getters */
+RENDERER_API vec3_t(float) vulkan_camera_get_position(vulkan_camera_t* camera);
+RENDERER_API vec3_t(float) vulkan_camera_get_rotation(vulkan_camera_t* camera);
+RENDERER_API float vulkan_camera_get_aspect_ratio(vulkan_camera_t* camera);
+RENDERER_API vec2_t(float) vulkan_camera_get_clip_planes(vulkan_camera_t* camera);
+static RENDERER_API FORCE_INLINE float vulkan_camera_get_near_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_clip_planes(camera).x; }
+static RENDERER_API FORCE_INLINE float vulkan_camera_get_far_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_clip_planes(camera).y; }
+RENDERER_API float vulkan_camera_get_field_of_view(vulkan_camera_t* camera);
+static RENDERER_API FORCE_INLINE float vulkan_camera_get_height(vulkan_camera_t* camera) { return vulkan_camera_get_field_of_view(camera); }
+
+/* setters */
+RENDERER_API void vulkan_camera_set_position(vulkan_camera_t* camera, vec3_t(float) position);
+RENDERER_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t(float) rotation);
+RENDERER_API void vulkan_camera_set_aspect_ratio(vulkan_camera_t* camera, float aspect_ratio);
+RENDERER_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane);
+RENDERER_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float fov);
+static RENDERER_API FORCE_INLINE void vulkan_camera_set_height(vulkan_camera_t* camera) { vulkan_camera_set_field_of_view(camera); }
+
+END_CPP_COMPATIBLE

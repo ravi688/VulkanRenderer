@@ -8,6 +8,7 @@
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
+#include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 
 typedef struct render_window_t render_window_t;
 
@@ -37,6 +38,18 @@ typedef struct vulkan_renderer_t
 
 	u32 vk_graphics_queue_index;
 	VkCommandBuffer* vk_command_buffers;
+
+	VkSharingMode sharing_mode;
+
+	VkDescriptorSetLayout global_set_layout;
+	VkDescriptorSetLayout object_set_layout;
+	
+	vulkan_descriptor_set_t global_set;
+
+/*
+	TODO:
+	vulkan_pipeline_layout_pool_t* pipeline_layout_pool;
+ */
 } vulkan_renderer_t;
 
 BEGIN_CPP_COMPATIBLE

@@ -57,14 +57,14 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_image_t* image, vulka
     		view_create_info.components = (VkComponentMapping) { VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_R };
     	break;
 	}
-	VkResult result = vkCreateImageView(image->renderer->logical_device->handle, &view_create_info, NULL, &out_view->handle);
+	VkResult result = vkCreateImageView(image->renderer->logical_device->vo_handle, &view_create_info, NULL, &out_view->vo_handle);
 	vulkan_result_assert_success(result);
 }
 
 RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
 {
 	check_pre_condition(view);
-	vkDestroyImageView(view->renderer->logical_device->handle, view->handle, NULL);
+	vkDestroyImageView(view->renderer->logical_device->vo_handle, view->vo_handle, NULL);
 }
 
 RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)

@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
-
+#include <bufferlib/buffer.h>
 #include <renderer/internal/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan_buffer.h>
 #include <renderer/struct_descriptor.h>
@@ -22,6 +22,7 @@
 
 typedef struct vulkan_shader_t vulkan_shader_t;
 typedef struct vulkan_texture_t vulkan_texture_t;
+typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;
 
 typedef struct vulkan_material_field_handle_t
 {
@@ -36,9 +37,14 @@ typedef struct vulkan_uniform_resource_t
 	u16 index;					// index of this resource in the list of resouce descriptors of this material
 } vulkan_uniform_resource_t;
 
+typedef buf_ucount_t vulkan_material_handle_t;
+
 typedef struct vulkan_material_t
 { 
 	vulkan_renderer_t* renderer;
+
+	/* handle to this material in the vulkan material library */
+	vulkan_material_handle_t handle;
 
 	// ptr to the shader object from which this material has been derived	
 	vulkan_shader_t* shader;
@@ -62,7 +68,7 @@ RENDERER_API void vulkan_material_destroy(vulkan_material_t* material);
 RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material);
 
 /* logic functions */
-RENDERER_API void vulkan_material_push_constants(vulkan_material_t* material, void* bytes);
+RENDERER_API void vulkan_material_push_constants(vulkan_material_t* material, vulkan_pipeline_layout_t* pipeline_layout);
 RENDERER_API void vulkan_material_set_texture(vulkan_material_t* material, u32 binding_index, vulkan_texture_t* texture);
 RENDERER_API void vulkan_material_set_uniform_buffer(vulkan_material_t* material, u32 binding_index, vulkan_buffer_t* buffer);
 

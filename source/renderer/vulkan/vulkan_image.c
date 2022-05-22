@@ -37,15 +37,15 @@ RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulk
 		.tiling = create_info->tiling,
 		.initialLayout = create_info->layout,
 		.usage = create_info->usage_mask,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.sharingMode = renderer->sharing_mode,
 		.samples = VK_SAMPLE_COUNT_1_BIT,
 		.flags = 0 //optional
 	};
-	vkCall(vkCreateImage(renderer->logical_device->handle, &image_info, NULL, &out_image->handle));
+	vkCall(vkCreateImage(renderer->logical_device->vo_handle, &image_info, NULL, &out_image->vo_handle));
 	
 	// get memory requirements
 	VkMemoryRequirements memory_requirements;
-	vkGetImageMemoryRequirements(renderer->logical_device->handle, out_image->handle, &memory_requirements);
+	vkGetImageMemoryRequirements(renderer->logical_device->vo_handle, out_image->vo_handle, &memory_requirements);
 
 	// allocate device memory
 	VkMemoryAllocateInfo alloc_info =
@@ -54,8 +54,8 @@ RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulk
 		.allocationSize = memory_requirements.size,
 		.memoryTypeIndex = vulkan_physical_device_find_memory_type(renderer->physical_device, memory_requirements.memoryTypeBits, create_info->memory_properties_mask)
 	};
-	vkCall(vkAllocateMemory(renderer->logical_device->handle, &alloc_info, NULL, &out_image->memory));
-	vkCall(vkBindImageMemory(renderer->logical_device->handle, out_image->handle, out_image->memory, 0));
+	vkCall(vkAllocateMemory(renderer->logical_device->vo_handle, &alloc_info, NULL, &out_image->memory));
+	vkCall(vkBindImageMemory(renderer->logical_device->vo_handle, out_image->vo_handle, out_image->memory, 0));
 	
 	out_image->type = create_info->type;
 	out_image->format = create_info->format;
@@ -78,8 +78,8 @@ RENDERER_API vulkan_image_t* vulkan_image_create(vulkan_renderer_t* renderer, vu
 RENDERER_API void vulkan_image_destroy(vulkan_image_t* image)
 {
 	assert(image != NULL);
-	vkDestroyImage(image->renderer->logical_device->handle, image->handle, NULL);
-	vkFreeMemory(image->renderer->logical_device->handle, image->memory, NULL);
+	vkDestroyImage(image->renderer->logical_device->vo_handle, image->vo_handle, NULL);
+	vkFreeMemory(image->renderer->logical_device->vo_handle, image->memory, NULL);
 }
 
 RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image)
@@ -104,7 +104,7 @@ RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkIma
 		.newLayout = layout,
 		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
 		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		.image = image->handle,
+		.image = image->vo_handle,
 		.subresourceRange.aspectMask = image->aspect_mask,
 		.subresourceRange.baseMipLevel = 0,
 		.subresourceRange.levelCount = 1,
@@ -160,7 +160,7 @@ RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_bu
 		.imageOffset = (VkOffset3D){ 0, 0, 0 },
 		.imageExtent = (VkExtent3D){ image->width, image->height, image->depth }
 	};
-	vkCmdCopyBufferToImage(command_buffer, buffer->handle, image->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+	vkCmdCopyBufferToImage(command_buffer, buffer->handle, image->vo_handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 	end_single_time_command_buffer(renderer, command_buffer);
 }
 
@@ -177,5 +177,5 @@ static void end_single_time_command_buffer(vulkan_renderer_t* renderer, VkComman
 	vkEndCommandBuffer(command_buffer);
 	vulkan_queue_submit(renderer->vk_graphics_queue, command_buffer, VK_NULL_HANDLE, 0, VK_NULL_HANDLE);
 	vulkan_queue_wait_idle(renderer->vk_graphics_queue);
-	vkFreeCommandBuffers(renderer->logical_device->handle, renderer->vk_command_pool, 1, &command_buffer);
+	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vk_command_pool, 1, &command_buffer);
 }

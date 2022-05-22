@@ -1,12 +1,8 @@
 #include <renderer/internal/vulkan/vulkan_material.h>
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
-#include <memory.h>
 
 RENDERER_API vulkan_material_t* vulkan_material_new()
 {
@@ -34,14 +30,14 @@ static void setup_material_resources(vulkan_material_t* material)
 	if(count == 0) return;
 
 	vulkan_shader_resource_descriptor_t* bindings = material->shader->material_set_bindings;
-	uniform_resource_t* uniform_resources = heap_newv(uniform_resource_t, count);
-	memset(uniform_resources, 0, sizeof(uniform_resource_t) * count);
+	vulkan_uniform_resource_t* uniform_resources = heap_newv(vulkan_uniform_resource_t, count);
+	memset(uniform_resources, 0, sizeof(vulkan_uniform_resource_t) * count);
 	for(u16 i = 0, j = 0; i < material->shader->material_set_binding_count; i++)
 	{
 		vulkan_shader_resource_descriptor_t* binding = &bindings[i];
 		if(binding->is_attribute)
 			continue;
-		uniform_resource_t* resource = &uniform_resources[j];
+		vulkan_uniform_resource_t* resource = &uniform_resources[j];
 		j++;
 		if((binding->handle.type == SHADER_COMPILER_BLOCK) && (!binding->is_push_constant))
 		{
@@ -104,9 +100,22 @@ RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 	heap_free(material);
 }
 
-RENDERER_API void vulkan_material_push_constants(vulkan_material_t* material, void* bytes)
+static void set_push_constants(vulkan_material_t* material, vulkan_shader_resource_descriptor_t* descriptor, vulkan_pipeline_layout_t* pipeline_layout)
 {
-	vulkan_pipeline_layout_push_constants(material->graphics_pipeline->pipeline_layout, material->renderer, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(float) * 16, bytes);
+	vulkan_pipeline_layout_push_constants(material->shader->current_bound_pipeline->pipeline_layout, 
+											material->renderer->handle, 
+											get_vulkan_shader_flags(descriptor->stage_flags), 
+											descriptor->push_constant_range_offset, 
+											struct_descriptor_sizeof(&descriptor->handle), 
+											descriptor->handle.ptr);
+}
+
+RENDERER_API void vulkan_material_push_constants(vulkan_material_t* material, vulkan_pipeline_layout_t* pipeline_layout)
+{
+	u32 binding_count = material->material_set_binding_count;
+	for(u32 i = 0; i < binding_count; i++)
+		if(material->material_set_bindings[i].is_push_constant)
+			set_push_constants(material, &material->material_set_bindings[i], pipeline_layout);
 }
 
 RENDERER_API void vulkan_material_set_texture(vulkan_material_t* material, u32 binding_index, vulkan_texture_t* texture)
@@ -137,15 +146,6 @@ static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags)
 }
 
 // setters
-static void set_push_constants(vulkan_material_t* material, vulkan_shader_resource_descriptor_t* descriptor)
-{
-	vulkan_pipeline_layout_push_constants(material->shader->current_bound_pipeline->pipeline_layout, 
-											material->renderer->handle, 
-											get_vulkan_shader_flags(descriptor->stage_flags), 
-											descriptor->push_constant_range_offset, 
-											struct_descriptor_sizeof(&descriptor->handle), 
-											descriptor->handle.ptr);
-}
 /* functions accepting handles */
 #define set_push_value(material, handle, setter, in_value) __set_push_value(material, handle, (void (*)(struct_descriptor_t*, struct_field_handle_t, const void* const))(setter), in_value);
 static void __set_push_value(vulkan_material_t* material, vulkan_material_field_handle_t handle, void (*setter)(struct_descriptor_t*, struct_field_handle_t, const void* const), const void* const in)

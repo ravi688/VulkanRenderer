@@ -78,10 +78,6 @@ typedef struct Game
 	time_handle_t secondTimeHandle;
 	float deltaTime;
 	float gameTime;
-
-	mat4_t(float) cameraTransform;
-	mat4_t(float) viewMatrix;
-	mat4_t(float) clipMatrix;
 } Game;
 
 
@@ -203,27 +199,27 @@ static void setup_render_queues(Game* game)
 	mesh3d_make_centroid_origin(rock_mesh3d);
 	mesh3d_calculate_tangents(rock_mesh3d);
 	game->rockMaterial = material_library_get(game->materialLibrary, "BumpMaterial");
-	game->rockTextures[0] = texture_load(game->renderer, TEXTURE_TYPE_ALBEDO, "showcase/resource/Rock/albedo.bmp"),
-	game->rockTextures[1] = texture_load(game->renderer, TEXTURE_TYPE_NORMAL, "showcase/resource/Rock/normal.bmp")
-	material_set_texture(game->rockMaterial, "albedo", rockTextures[0]);
-	material_set_texture(game->rockMaterial, "normal_map", rockTextures[1]);
+	// game->rockTextures[0] = texture_load(game->renderer, TEXTURE_TYPE_ALBEDO, "showcase/resource/Rock/albedo.bmp"),
+	// game->rockTextures[1] = texture_load(game->renderer, TEXTURE_TYPE_NORMAL, "showcase/resource/Rock/normal.bmp")
+	// material_set_texture(game->rockMaterial, "albedo", rockTextures[0]);
+	// material_set_texture(game->rockMaterial, "normal_map", rockTextures[1]);
 	game->rock = mesh_create(game->renderer, rock_mesh3d);
 	mesh3d_destroy(rock_mesh3d);
 	/*---------------------------------------*/
 
 	/*----------- CUBEMAP - SKYBOX ----------------------*/
-	game->skyboxTexture = texture_load(game->renderer, TEXTURE_TYPE_CUBE,
-											"showcase/resource/skybox_textures/skybox/right.bmp",
-											"showcase/resource/skybox_textures/skybox/left.bmp",
-											"showcase/resource/skybox_textures/skybox/bottom.bmp",
-											"showcase/resource/skybox_textures/skybox/top.bmp",
-											"showcase/resource/skybox_textures/skybox/front.bmp", 
-											"showcase/resource/skybox_textures/skybox/back.bmp");
+	// game->skyboxTexture = texture_load(game->renderer, TEXTURE_TYPE_CUBE,
+	// 										"showcase/resource/skybox_textures/skybox/right.bmp",
+	// 										"showcase/resource/skybox_textures/skybox/left.bmp",
+	// 										"showcase/resource/skybox_textures/skybox/bottom.bmp",
+	// 										"showcase/resource/skybox_textures/skybox/top.bmp",
+	// 										"showcase/resource/skybox_textures/skybox/front.bmp", 
+	// 										"showcase/resource/skybox_textures/skybox/back.bmp");
 	mesh3d_t* skybox_mesh3d = mesh3d_cube(5);
 	mesh3d_flip_triangles(skybox_mesh3d);
 
 	game->skyboxMaterial = material_library_get(game->materialLibrary, "SkyboxMaterial");
-	material_set_texture(skyboxMaterial, "skybox", game->skyboxTexture);
+	// material_set_texture(skyboxMaterial, "skybox", game->skyboxTexture);
 	game->skybox = mesh_create(game->renderer, skybox_mesh3d);
 	mesh3d_destroy(skybox_mesh3d);
 
@@ -379,10 +375,10 @@ static void setup_shaders(Game* game)
 static void setup_materials(Game* game)
 {
 	material_library_t* library = renderer_get_material_library(game->renderer);
-	material_library_load_material(library, "showcase/resource/materials/text_material.mat");
-	material_library_load_material(library, "showcase/resource/materials/game_ui_material.mat");
-	material_library_load_material(library, "showcase/resource/materials/bump_material.mat");
-	material_library_load_material(library, "showcase/resource/materials/skybox_material.mat");
-	material_library_load_material(library, "showcase/resource/materials/transparent_material.mat");
-	material_library_load_material(library, "showcase/resource/materials/ground_material.mat");
+	material_library_load_material(library, "showcase/resource/materials/text_material.mb");
+	material_library_load_material(library, "showcase/resource/materials/game_ui_material.mb");
+	material_library_load_material(library, "showcase/resource/materials/bump_material.mb");
+	material_library_load_material(library, "showcase/resource/materials/skybox_material.mb");
+	material_library_load_material(library, "showcase/resource/materials/transparent_material.mb");
+	material_library_load_material(library, "showcase/resource/materials/ground_material.mb");
 }

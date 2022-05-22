@@ -3,70 +3,124 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
-
-typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;
-typedef struct vulkan_descriptor_set_t vulkan_descriptor_set_t;
-typedef struct vulkan_descriptor_set_create_info_t vulkan_descriptor_set_create_info_t;
+#include <bufferlib/buffer.h>
+#include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
+#include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 
 typedef struct vulkan_subpass_create_info_t
 {
-	// bind point of this subpass in the pipeline
+	/* bind point of this subpass in the pipeline */
 	VkPipelineBindPoint pipeline_bind_point;
 
-
-	// list of color attachments
+	/* list of color attachments */
 	VkAttachmentReference* color_attachments;
 	u32 color_attachment_count;
 
-	// list of input attachments
+	/* list of input attachments */
 	VkAttachmentReference* input_attachments;
 	u32 input_attachment_count;
 
-	// depth stencil attachment
+	/* depth stencil attachment */
 	VkAttachmentReference* depth_stencil_attachment;
 
-	// list of attachments to be preserved
+	/* list of attachments to be preserved */
 	VkAttachmentReference* preserve_attachments;
 	u32 preserve_attachment_count;
 
-	// render set create info
-	vulkan_descriptor_set_create_info_t* set_info;
+	/* used for creating descriptor set layout for the sub render set */
+	vulkan_shader_resource_descriptor_t* sub_render_set_bindings;
+	u32 sub_render_set_binding_count;
+
 } vulkan_subpass_create_info_t;
+
+typedef struct vulkan_attachment_usage_t vulkan_attachment_usage_t;
 
 typedef struct vulkan_render_pass_create_info_t
 {
-	// list of attachment descriptions
+	/* 	number of framebuffers
+		usually this should be 1
+		But if this render pass is writing to the image views which has to be presented later on
+		then this has to be equal to the number of swap chain images because of asynchronous presentation engine.
+	 */
+	u32 framebuffer_count;
+
+	/* list of attachment descriptions */
 	VkAttachmentDescription* attachment_descriptions;
+	/* list of attachment usages */
+	vulkan_attachment_usage_t* attachment_usages;
 	u32 attachment_description_count;
 
-	// list of subpass create infos
+	/* list of extra attachments in the framebuffer such as swapchain image view */
+	VkImageView* supplementary_attachments;
+	VkAttachmentDescription* supplementary_attachment_descriptions;
+	/* this could be left NULL */
+	vulkan_attachment_usage_t* supplementary_attachment_usages;
+	u32 supplementary_attachment_count;
+
+	/* list of subpass create infos */
 	vulkan_subpass_create_info_t* subpasses;
 	u32 subpass_count;
+
+	/* used for creating descriptor set layout for the render set */
+	vulkan_shader_resource_descriptor_t* render_set_bindings;
+	u32 render_set_binding_count;
+
 } vulkan_render_pass_create_info_t;
 
-typedef struct vulkan_render_pass_begin_info_t
-{
-	VkFramebuffer framebuffer;	// framebuffer to render onto
-	u32 width;					// width of the framebuffer in pixels
-	u32 height;					// height of the framebuffer in pixels
-
-	// clear values
-	u32 clear_stencil;			// stencil buffer clear value
-	float clear_depth;			// depth buffer clear value
-	bool is_depth; 				// is depth attachment is attached
-	color_t* clear_colors;		// clear colors for the color attachments
-	u32 clear_color_count; 		// number of clear colors, it must be equal to the attachment_description_count
-} vulkan_render_pass_begin_info_t;
+typedef buf_ucount_t vulkan_render_pass_handle_t;
+#define VULKAN_RENDER_PASS_HANDLE_INVALID (~0ULL)
+typedef struct vulkan_attachment_t vulkan_attachment_t;
 
 typedef struct vulkan_render_pass_t
 {
-	vulkan_renderer_t* context;
-	VkRenderPass handle;
+	vulkan_renderer_t* renderer;
+
+	/* handle to this render pass in the render pass pool */
+	vulkan_render_pass_handle_t handle;	
+
+	/* vulkan object handle */
+	VkRenderPass vo_handle;
+
+	/* attachments for one frame buffer */
+	vulkan_attachment_t* attachments;
+	u32 attachment_count;
+
+	/* supplementary attachments for a frame buffer 
+		NOTE: this is not a deep copy or internal allocation, 
+		instead it points to the create info's supplementary attachments.
+		This way updating the supplementary attachments results in updates to internal framebuffers for this render pass
+		which is useful when the render window resizes.
+	 */
+	VkImageView* supplementary_attachments;
+	u32 supplementary_attachment_count;
+
+	/* clear value for each attachment in the frame buffer */
+	VkClearValue* vo_clear_values;
+	/* this is equal to attachment_count + supplementary_attachment_count */
+	u32 clear_value_count;
+
+	/* framebuffers for this render pass */
+	VkFramebuffer* vo_framebuffers;
+	u32 framebuffer_count;
+
+	/* sub render set layouts for this render pass */
+	vulkan_descriptor_set_layout_t* sub_render_set_layouts;
+
+	/* list of sub render sets, i.e. for each sub pass */
+	vulkan_descriptor_set_t* sub_render_sets;
+
+	/* number of subpasses in this render pass */	
 	u32 subpass_count;
+
+	/* index of the current subpass */
 	u32 current_subpass_index;
 
-	// list of render set, i.e set for each sub pass
-	vulkan_descriptor_set_t* sets;
+	/* render set layout for this render pass */
+	vulkan_descriptor_set_layout_t render_set_layout;
+
+	/* render set for this render pass */
+	vulkan_descriptor_set_t render_set;
+
 } vulkan_render_pass_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -90,7 +144,19 @@ RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new();
 	returns:
 		pointer to newly created vulkan_render_pass_t object on heap
  */
-RENDERER_API vulkan_render_pass_t* vulkan_render_pass_create(vulkan_renderer_t* context, vulkan_render_pass_create_info_t* create_info);
+RENDERER_API vulkan_render_pass_t* vulkan_render_pass_create(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info);
+
+/*
+	description:
+		creates a vulkan render pass, it calls vulkan_render_pass_new() internally to allocate memory
+	params:
+		renderer: pointer to a valid vulkan_renderer_t object
+		create_info: pointer to vulkan_render_pass_create_info_t object
+		OUT render_pass: pointer to the pre allocated vulkan_render_pass_t object (by vulkan_render_pass_new())
+	returns:
+		nothing
+ */
+RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_t OUT render_pass);
 
 /*
 	description:
@@ -121,7 +187,7 @@ RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* ren
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, vulkan_render_pass_begin_info_t* begin_info);
+RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index);
 
 /*
 	description:
@@ -142,48 +208,5 @@ RENDERER_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass);
 		nothing
  */
 RENDERER_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass);
-
-/*
-	description:
-		returns the sub pass count
-	params:
-		render_pass: ptr to a valid vulkan_render_pass_t object
-	returns:
-		u32, sub pass count
- */
-RENDERER_API u32 vulkan_render_pass_get_subpass_count(vulkan_render_pass_t* render_pass);
-
-/*
-	description:
-		binds the descriptor set (render set) for the sub pass at 'subpass_index' or current subpass
-	params:
-		render_pass: ptr to a valid vulkan_render_pass_t object
-		subpass_index: sub pass index or VULKAN_SUBPASS_INDEX_CURRENT
-	returns:
-		nothing
- */
-#define VULKAN_SUBPASS_INDEX_CURRENT (~0UL)
-RENDERER_API void vulkan_render_pass_bind_set(vulkan_render_pass_t* render_pass, u32 subpass_index, vulkan_pipeline_layout_t* pipeline_layout);
-
-/*
-	description:
-		returns ptr to the vulkan_descriptor_set_t object corresponding the 'subpass_index'
-	params:
-		render_pass: ptr to a valid vulkan_render_pass_t object
-		subpass_index: sub pass index or VULKAN_SUBPASS_INDEX_CURRENT
-	returns:
-		nothing
- */
-RENDERER_API vulkan_descriptor_set_t* vulkan_render_pass_get_set(vulkan_render_pass_t* render_pass, u32 subpass_index);
-
-/*
-	description:
-		generates a unique hash value for vulkan_render_pass_create_info_t
-	params:
-		create_info: ptr to the vulkan_render_pass_create_info_t object
-	returns:
-		64 bit hash value
- */
-RENDERER_API u64 vulkan_render_pass_create_info_get_hash(vulkan_render_pass_create_info_t* create_info);
 
 END_CPP_COMPATIBLE

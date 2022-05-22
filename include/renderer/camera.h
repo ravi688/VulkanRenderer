@@ -1,25 +1,37 @@
 
-#pragma
+#pragma once
+
+/* API level object selection */
+#ifdef RENDERER_VULKAN_DRIVER
+	typedef struct vulkan_camera_t vulkan_camera_t;
+	typedef vulkan_camera_t camera_t;
+#elif RENDERER_OPENGL_DRIVER
+	typedef struct opengl_camera_t opengl_camera_t;
+	typedef opengl_camera_t camera_t;
+#elif RENDERER_DIRECTX_DRIVER
+	typedef struct directx_camera_t directx_camera_t;
+	typedef directx_camera_t camera_t;
+#elif RENDERER_METAL_DRIVER
+	typedef struct metal_camera_t metal_camera_t;
+	typedef metal_camera_t camera_t;
+#endif
 
 #include <renderer/defines.h>
 
-#include <hpml/mat4/header_config.h>
-#include <hpml/mat4/mat4.h>
-
-typedef enum projection_type_t
+/* NOTE: should be in sync with vulkan_camera_projection_type_t */
+typedef enum camera_projection_type_t
 {
-	PROJECTION_TYPE_ORTHOGRAPHIC,
-	PROJECTION_TYPE_PERSPECTIVE,
-	PROJECTION_TYPE_STEROGRAPHIC
-} projection_type_t;
-
-typedef struct camera_t camera_t;
+	CAMERA_PROJECTION_TYPE_ORTHOGRAPHIC,
+	CAMERA_PROJECTION_TYPE_PERSPECTIVE,
+	CAMERA_PROJECTION_TYPE_STEROGRAPHIC
+} camera_projection_type_t;
 
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
 RENDERER_API camera_t* camera_new();
-RENDERER_API camera_t* camera_create(renderer_t* renderer, projection_type_t projection_type, float height_or_angle);
+RENDERER_API camera_t* camera_create(renderer_t* renderer, camera_projection_type_t projection_type, float height_or_angle);
+RENDERER_API void camera_create_no_alloc(renderer_t* renderer, camera_projection_type_t projection_type, float height_or_angle, camera_t OUT camera);
 RENDERER_API void camera_destroy(camera_t* camera);
 RENDERER_API void camera_release_resources(camera_t* camera);
 
@@ -27,14 +39,19 @@ RENDERER_API void camera_release_resources(camera_t* camera);
 RENDERER_API vec3_t(float) camera_get_position(camera_t* camera);
 RENDERER_API vec3_t(float) camera_get_rotation(camera_t* camera);
 RENDERER_API float camera_get_aspect_ratio(camera_t* camera);
+RENDERER_API vec2_t(float) camera_get_clip_planes(camera_t* camera);
+RENDERER_API float camera_get_near_clip_plane(camera_t* camera);
+RENDERER_API float camera_get_far_clip_plane(camera_t* camera);
 RENDERER_API float camera_get_field_of_view(camera_t* camera);
-static RENDERER_API FORCE_INLINE float camera_get_height(camera_t* camera) { return camera_get_field_of_view(camera); }
+RENDERER_API float camera_get_height(camera_t* camera);
 
 /* setters */
 RENDERER_API void camera_set_position(camera_t* camera, vec3_t(float) position);
 RENDERER_API void camera_set_rotation(camera_t* camera, vec3_t(float) rotation);
 RENDERER_API void camera_set_aspect_ratio(camera_t* camera, float aspect_ratio);
+RENDERER_API void camera_set_clip_planes(camera_t* camera, float near_clip_plane, float far_clip_plane);
 RENDERER_API void camera_set_field_of_view(camera_t* camera, float fov);
-static RENDERER_API FORCE_INLINE void camera_set_height(camera_t* camera) { camera_set_field_of_view(camera); }
+RENDERER_API void camera_set_height(camera_t* camera);
+
 
 END_CPP_COMPATIBLE

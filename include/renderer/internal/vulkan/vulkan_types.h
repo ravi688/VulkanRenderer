@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
 
+/* TODO: rename it to vulkan_attribute_binding_info_t*/
 typedef struct vulkan_vertex_info_t
 {
 	u32 input_rate;
@@ -23,7 +24,7 @@ typedef enum vulkan_shader_type_t
 	VULKAN_SHADER_TYPE_TESSELLATION
 } vulkan_shader_type_t;
 
-
+/* TODO: remove it from here because there are not references */
 typedef struct vertex_attribute_binding_info_t
 {
 	u32 input_rate;

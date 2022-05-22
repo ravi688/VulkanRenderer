@@ -22,8 +22,8 @@ typedef enum vulkan_image_view_type_t
 
 typedef struct vulkan_image_view_t
 {
-	VkImageView handle;
 	vulkan_renderer_t* renderer;
+	VkImageView vo_handle;
 	vulkan_image_view_type_t type;
 	u32 layer_count;
 } vulkan_image_view_t;

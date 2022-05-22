@@ -97,5 +97,8 @@ typedef struct renderer_t renderer_t;
 
 
 #define DEREF_TO(ptr, type) (*(type*)(ptr))
+#define DEREF(ptr) (*(ptr))
 #define CAST_TO(s, to) ((to)(s))
 #define REINTERPRET_TO(s, to) (*(to*)(&s))
+
+#define OUT *

@@ -3,22 +3,49 @@
 
 #include <renderer/defines.h>
 
+/* API level object selection */
+#ifdef RENDERER_VULKAN_DRIVER
+	typedef struct vulkan_renderer_t vulkan_renderer_t;
+	typedef vulkan_renderer_t driver_t;
+	typedef struct vulkan_render_pass_pool_t vulkan_render_pass_pool_t;
+	typedef vulkan_render_pass_pool_t render_pass_pool_t;
+#elif RENDERER_OPENGL_DRIVER
+	typedef struct opengl_renderer_t opengl_renderer_t;
+	typedef opengl_renderer_t driver_t;
+	typedef struct opengl_render_pass_pool_t opengl_render_pass_pool_t;
+	typedef opengl_render_pass_pool_t render_pass_pool_t;
+#elif RENDERER_DIRECTX_DRIVER
+	typedef struct directx_renderer_t directx_renderer_t;
+	typedef directx_renderer_t driver_t;
+	typedef struct directx_render_pass_pool_t directx_render_pass_pool_t;
+	typedef directx_render_pass_pool_t render_pass_pool_t;
+#elif RENDERER_METAL_DRIVER
+	typedef struct metal_renderer_t metal_renderer_t;
+	typedef metal_renderer_t driver_t;
+	typedef struct metal_render_pass_pool_t metal_render_pass_pool_t;
+	typedef metal_render_pass_pool_t render_pass_pool_t;
+#endif
+
 typedef struct material_library_t material_library_t;
 typedef struct shader_library_t shader_library_t;
-typedef struct render_pass_pool_t render_pass_pool_t;
-
-typedef struct render_window_t render_window_t;
-#ifdef RENDERER_VULKAN_DRIVER
-typedef struct vulkan_renderer_t vulkan_renderer_t;
-#endif
 
 typedef struct renderer_t
 {
+	union
+	{
+		driver_t*
 #ifdef RENDERER_VULKAN_DRIVER
-	vulkan_renderer_t* handle;
-#else
-	void* handle;
+		vulkan_driver, vulkan_handle;
+#elif RENDERER_OPENGL_DRIVER
+		opengl_driver, opengl_handle;
+#elif RENDERER_DIRECTX_DRIVER
+		directx_driver, directx_handle;
+#elif RENDERER_METAL_DRIVER
+		metal_driver, metal_handle;
 #endif
+		driver_t* handle;
+		driver_t* driver;
+	};
 	shader_library_t* shader_library;
 	material_library_t* material_library;
 	render_pass_pool_t* render_pass_pool;
