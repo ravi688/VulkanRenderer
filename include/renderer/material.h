@@ -4,24 +4,32 @@
 #include <renderer/defines.h>
 
 #ifdef RENDERER_VULKAN_DRIVER
-#include <renderer/internal/vulkan/vulkan_material.h>
-typedef struct vulkan_texture_t vulkan_texture_t;
-typedef vulkan_texture_t texture_t;
-typedef vulkan_shader_t shader_t;
-typedef vukan_material_t material_t;
-typedef vulkan_material_field_handle_t material_field_handle_t;
-#endif
-
-#ifdef RENDERER_OPENGL_DRIVER
-#error "OpenGL is not supported yet!"
-#endif
-
-#ifdef RENDERER_DIRECTX_DRIVER
-#error "DirectX is not supported yet!"
-#endif
-
-#ifdef RENDERER_METAL_DRIVER
-#error "Metal is not supported yet!"
+	#include <renderer/internal/vulkan/vulkan_material.h>
+	typedef struct vulkan_texture_t vulkan_texture_t;
+	typedef vulkan_texture_t texture_t;
+	typedef vulkan_shader_t shader_t;
+	typedef vukan_material_t material_t;
+	typedef vulkan_material_field_handle_t material_field_handle_t;
+#elif RENDERER_OPENGL_DRIVER
+	#include <renderer/internal/opengl/opengl_material.h>
+	typedef struct opengl_texture_t opengl_texture_t;
+	typedef opengl_shader_t shader_t;
+	typedef opengl_material_t material_t;
+	typedef opengl_material_field_handle_t material_field_handle_t;
+#elif RENDERER_DIRECTX_DRIVER
+	#include <renderer/internal/directx/directx_material.h>
+	typedef struct directx_texture_t directx_texture_t;
+	typedef directx_texture_t directx_texture_t;
+	typedef directx_shader_t shader_t;
+	typedef directx_material_t material_t;
+	typedef directx_material_field_handle_t material_field_handle_t;
+#elif RENDERER_METAL_DRIVER
+	#include <renderer/internal/metal/metal_material.h>
+	typedef struct metal_texture_t metal_texture_t;
+	typedef metal_texture_t metal_texture_t;
+	typedef metal_shader_t shader_t;
+	typedef metal_material_t material_t;
+	typedef metal_material_field_handle_t material_field_handle_t;
 #endif
 
 #include <hpml/vec2/header_config.h>

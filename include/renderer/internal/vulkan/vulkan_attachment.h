@@ -7,13 +7,15 @@
 #include <renderer/internal/vulkan/vulkan_image.h>
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 
-typedef enum vulkan_attachment_usage_t
+typedef enum vulkan_attachment_next_pass_usage_t
 {
+	/* this attachment is of no use after completing this render pass and intermediate subpasses */
+	VULKAN_ATTACHMENT_NEXT_PASS_USAGE_NONE = 0,
 	/* if this attachment would be used as a Input attachment for the next subpasses */
-	VULKAN_ATTACHMENT_USAGE_INPUT = 1,
+	VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT = 1,
 	/* if this attachment would be used as a Sampled Image for the next renderpass */
-	VULKAN_ATTACHMENT_USAGE_SAMPLED = 1 << 1
-} vulkan_attachment_usage_t;
+	VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED = 1 << 1
+} vulkan_attachment_next_pass_usage_t;
 
 typedef enum vulkan_attachment_type_t
 {
@@ -34,7 +36,7 @@ typedef struct vulkan_attachment_create_info_t
 	/* type of the attachment to be created */
 	vulkan_attachment_type_t type;
 	/* usage of this attachment to be created */
-	vulkan_attachment_usage_t usage;
+	vulkan_attachment_next_pass_usage_t next_pass_usage;
 	/* format of the attachment to be created */
 	VkFormat format;
 } vulkan_attachment_create_info_t;

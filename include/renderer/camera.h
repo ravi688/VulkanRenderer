@@ -18,6 +18,12 @@
 
 #include <renderer/defines.h>
 
+#include <hpml/vec3/header_config.h>
+#include <hpml/vec3/vec3.h>
+
+#include <hpml/vec2/header_config.h>
+#include <hpml/vec2/vec2.h>
+
 /* NOTE: should be in sync with vulkan_camera_projection_type_t */
 typedef enum camera_projection_type_t
 {

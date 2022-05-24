@@ -23,22 +23,23 @@ RENDERER_API shader_library_t* shader_library_create(renderer_t* context)
 
 RENDERER_API shader_library_t* shader_library_load_folder(renderer_t* context, const char* folder_path)
 {
-	// create a shader library
-	shader_library_t* library = shader_library_craete(context);
+	NOT_IMPLEMENTED_FUNCTION();
+	// // create a shader library
+	// shader_library_t* library = shader_library_craete(context);
 
-	// get all the files of type .sb recursively
-	BUFFER files = directory_get_files(folder_path, "*.sb", DIRECTORY_SEARCH_TYPE_RECURSIVE);
+	// // get all the files of type .sb recursively
+	// BUFFER files = directory_get_files(folder_path, "*.sb", DIRECTORY_SEARCH_TYPE_RECURSIVE);
 	
-	// load each .sb file
-	int file_count = buf_get_element_count(&files);
-	for(int i = 0; i < file_count; i++)
-	{
-		file_info_t* info = buf_get_ptr_at(&files, i);
-		shader_handle_t handle = shader_library_load_shader(library, info->path);
-		ASSERT(handle != SHADER_HANDLE_INVALID, "Loading shader \"%s\" failed\n", info->path);
-	}
-	buf_free(&files);
-	return library;
+	// // load each .sb file
+	// int file_count = buf_get_element_count(&files);
+	// for(int i = 0; i < file_count; i++)
+	// {
+	// 	file_info_t* info = buf_get_ptr_at(&files, i);
+	// 	shader_handle_t handle = shader_library_load_shader(library, info->path);
+	// 	ASSERT(handle != SHADER_HANDLE_INVALID, "Loading shader \"%s\" failed\n", info->path);
+	// }
+	// buf_free(&files);
+	// return library;
 }
 
 RENDERER_API void shader_library_destroy(shader_library_t* library)
@@ -121,16 +122,12 @@ RENDERER_API bool shader_library_destroy_shaderH(shader_library_t* library, shad
 
 RENDERER_API bool shader_library_remove(shader_library_t* library, const char* shader_name)
 {
-	// TODO
-	LOG_WRN("shader_library_remove isn't implemented yet!\n");
-	return false;
+	NOT_IMPLEMENTED_FUNCTION();
 }
 
 RENDERER_API bool shader_library_removeH(shader_library_t* library, shader_handle_t handle)
 {
-	// TODO
-	LOG_WRN("shader_library_removeH isn't implemented yet!\n");
-	return false;
+	NOT_IMPLEMENTED_FUNCTION();
 }
 
 
@@ -190,18 +187,15 @@ RENDERER_API shader_t* shader_library_get(shader_library_t* library, const char*
 /* setters */
 RENDERER_API shader_handle_t shader_library_setH(shader_library_t* library, shader_handle_t handle, shader_t* shader)
 {
-	LOG_WRN("shader_library_setH isn't implemented yet!\n");
-	return SHADER_HANDLE_INVALID;
+	NOT_IMPLEMENTED_FUNCTION();
 }
 
 RENDERER_API shader_handle_t shader_library_set(shader_library_t* library, const char* shader_name, shader_t* shader)
 {
-	LOG_WRN("shader_library_set isn't implemented yet!\n");
-	return SHADER_HANDLE_INVALID;
+	NOT_IMPLEMENTED_FUNCTION();
 }
 
 RENDERER_API shader_handle_t shader_library_set_nameH(shader_library_t* library, shader_handle_t handle, const char* shader_name)
 {
-	LOG_WRN("shader_library_set_nameH isn't implemented yet!\n");
-	return SHADER_HANDLE_INVALID;
+	NOT_IMPLEMENTED_FUNCTION();
 }

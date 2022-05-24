@@ -37,11 +37,10 @@ typedef struct vulkan_attachment_usage_t vulkan_attachment_usage_t;
 
 typedef struct vulkan_render_pass_create_info_t
 {
-	/* 	number of framebuffers
-		usually this should be 1
-		But if this render pass is writing to the image views which has to be presented later on
-		then this has to be equal to the number of swap chain images because of asynchronous presentation engine.
-	 */
+	/*
+		usually it would be equal to the number of swapchain images if there is only one RenderPass
+		but if there are multiple passes and successive passes consumes previous results then it woulbe equal to one
+	*/
 	u32 framebuffer_count;
 
 	/* list of attachment descriptions */
@@ -50,11 +49,8 @@ typedef struct vulkan_render_pass_create_info_t
 	vulkan_attachment_usage_t* attachment_usages;
 	u32 attachment_description_count;
 
-	/* list of extra attachments in the framebuffer such as swapchain image view */
+	/* list of extra attachments in the foreach framebuffer such as swapchain image view */
 	VkImageView* supplementary_attachments;
-	VkAttachmentDescription* supplementary_attachment_descriptions;
-	/* this could be left NULL */
-	vulkan_attachment_usage_t* supplementary_attachment_usages;
 	u32 supplementary_attachment_count;
 
 	/* list of subpass create infos */
@@ -83,7 +79,11 @@ typedef struct vulkan_render_pass_t
 
 	/* attachments for one frame buffer */
 	vulkan_attachment_t* attachments;
-	u32 attachment_count;
+	union
+	{
+		u32 attachment_count;
+		u32 clear_value_count;
+	};
 
 	/* supplementary attachments for a frame buffer 
 		NOTE: this is not a deep copy or internal allocation, 
@@ -96,8 +96,6 @@ typedef struct vulkan_render_pass_t
 
 	/* clear value for each attachment in the frame buffer */
 	VkClearValue* vo_clear_values;
-	/* this is equal to attachment_count + supplementary_attachment_count */
-	u32 clear_value_count;
 
 	/* framebuffers for this render pass */
 	VkFramebuffer* vo_framebuffers;

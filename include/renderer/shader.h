@@ -1,33 +1,31 @@
 
 #pragma once
 
-typedef struct renderer_t renderer_t;
-
-#ifdef RENDERER_VULKAN_DRIVER
-typedef struct vulkan_shader_t vulkan_shader_t;
-typedef vulkan_shader_t shader_t;
-#endif
-
-#ifdef RENDERER_OPENGL_DRIVER
-#error "OpenGL is not supported yet!"
-#endif
-
-#ifdef RENDERER_DIRECTX_DRIVER
-#error "DirectX is not supported yet!"
-#endif
-
-#ifdef RENDERER_METAL_DRIVER
-#error "Metal is not supported yet!"
-#endif
-
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 
+#ifdef RENDERER_VULKAN_DRIVER
+	typedef struct vulkan_shader_t vulkan_shader_t;
+	typedef vulkan_shader_t shader_t;
+	typedef vulkan_shader_handle_t shader_handle_t;
+#elif RENDERER_OPENGL_DRIVER
+	typedef struct opengl_shader_t opengl_shader_t;
+	typedef opengl_shader_t shader_t;
+	typedef opengl_shader_handle_t shader_handle_t;
+#elif RENDERER_DIRECTX_DRIVER
+	typedef struct directx_shader_t directx_shader_t;
+	typedef directx_shader_t shader_t;
+	typedef directx_shader_handle_t shader_handle_t;
+#elif RENDERER_METAL_DRIVER
+	typedef struct metal_shader_t metal_shader_t;
+	typedef metal_shader_t shader_t;
+	typedef metal_shader_handle_t shader_handle_t;
+#endif
+
 BEGIN_CPP_COMPATIBLE
 
-#define shader_load(renderer, file_path) shader_load_and_create(renderer, file_path)
 RENDERER_API shader_t* shader_create(renderer_t* renderer, BUFFER* shader_binary);
-RENDERER_API shader_t* shader_load_and_create(renderer_t* renderer, const char* file_path);
+RENDERER_API shader_t* shader_load(renderer_t* renderer, const char* file_path);
 RENDERER_API void shader_destroy(shader_t* shader);
 RENDERER_API void shader_release_resources(shader_t* shader);
 

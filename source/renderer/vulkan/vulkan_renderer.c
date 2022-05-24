@@ -144,9 +144,9 @@ DEBUG_BLOCK
 	render_window_subscribe_on_resize(renderer->window, vulkan_renderer_on_window_resize, renderer);
 
 	// create surface
-	render_window_get_vulkan_surface(renderer->window, &(renderer->instance->handle), &(renderer->surface));
+	render_window_get_vulkan_surface(renderer->window, &(renderer->instance->handle), &(renderer->vo_surface));
 
-	VkSurfaceCapabilitiesKHR surface_capabilities = vulkan_physical_device_get_surface_capabilities(physical_device, renderer->surface);
+	VkSurfaceCapabilitiesKHR surface_capabilities = vulkan_physical_device_get_surface_capabilities(physical_device, renderer->vo_surface);
 DEBUG_BLOCK
 (
 	buf_set_element_count(&log_buffer, 0);
@@ -157,7 +157,7 @@ DEBUG_BLOCK
 
 	// setup the surface format
 	u32 surface_format_count;
-	VkSurfaceFormatKHR* surface_formats = vulkan_physical_device_get_surface_formats(physical_device, renderer->surface, &surface_format_count);
+	VkSurfaceFormatKHR* surface_formats = vulkan_physical_device_get_surface_formats(physical_device, renderer->vo_surface, &surface_format_count);
 	VkSurfaceFormatKHR surface_format = find_surface_format(surface_formats, surface_format_count, VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
 
 DEBUG_BLOCK
@@ -175,7 +175,7 @@ DEBUG_BLOCK
 	
 	// setup the present mode
 	u32 present_mode_count;
-	VkPresentModeKHR* present_modes = vulkan_physical_device_get_present_modes(physical_device, renderer->surface, &present_mode_count);
+	VkPresentModeKHR* present_modes = vulkan_physical_device_get_present_modes(physical_device, renderer->vo_surface, &present_mode_count);
 	VkPresentModeKHR present_mode = find_present_mode(present_modes, present_mode_count, VK_PRESENT_MODE_MAILBOX_KHR);
 
 DEBUG_BLOCK
@@ -204,7 +204,7 @@ DEBUG_BLOCK
 	u32 queue_family_indices[2] =
 	{
 		vulkan_physical_device_find_queue_family_index(physical_device, VK_QUEUE_GRAPHICS_BIT),			// graphics queue family index
-		vulkan_physical_device_find_queue_family_index_for_surface(physical_device, renderer->surface)	// presentation queue family index
+		vulkan_physical_device_find_queue_family_index_for_surface(physical_device, renderer->vo_surface)	// presentation queue family index
 	};
 	if(queue_family_indices[0] == U32_MAX)
 		LOG_FETAL_ERR("No queue found supporting graphics capabilities\n");
@@ -250,21 +250,21 @@ DEBUG_BLOCK
 	log_msg(buf_get_ptr(&log_buffer));
 )
 
-	//Create Renderpass
-	vulkan_render_pass_create_info_t render_pass_info =
-	{
-		.color_attachment_format = surface_format.format,
-		.depth_attachment_format = depth_format
-	};
-	renderer->render_pass = vulkan_render_pass_create(renderer, &render_pass_info);
+	// //Create Renderpass
+	// vulkan_render_pass_create_info_t render_pass_info =
+	// {
+	// 	.color_attachment_format = surface_format.format,
+	// 	.depth_attachment_format = depth_format
+	// };
+	// renderer->render_pass = vulkan_render_pass_create(renderer, &render_pass_info);
 
 	// create a shadow render pass for rendering the shadow map
-	vulkan_render_pass_create_info_t shadow_render_pass_info =
-	{
-		// color attachment format is not needed
-		.depth_attachment_format = depth_format
-	};
-	renderer->shadow_map_render_pass = vulkan_render_pass_create(renderer, &shadow_render_pass_info);
+	// vulkan_render_pass_create_info_t shadow_render_pass_info =
+	// {
+	// 	// color attachment format is not needed
+	// 	.depth_attachment_format = depth_format
+	// };
+	// renderer->shadow_map_render_pass = vulkan_render_pass_create(renderer, &shadow_render_pass_info);
 
 	//Create Swapchain
 	vulkan_swapchain_create_info_t swapchain_info =
@@ -283,14 +283,14 @@ DEBUG_BLOCK
 	renderer->swapchain = vulkan_swapchain_create(renderer, &swapchain_info);
 
 	// setup command pool
-	renderer->vk_command_pool = vulkan_command_pool_create(renderer, queue_family_indices[0], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+	renderer->vo_command_pool = vulkan_command_pool_create(renderer, queue_family_indices[0], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 	
 	// setup command buffers
-	renderer->vk_command_buffers = heap_newv(VkCommandBuffer, renderer->swapchain->image_count);
-	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vk_command_pool, renderer->swapchain->image_count, renderer->vk_command_buffers);
+	renderer->vo_command_buffers = heap_newv(VkCommandBuffer, renderer->swapchain->image_count);
+	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, renderer->swapchain->image_count, renderer->vo_command_buffers);
 
 	//Set up graphics queue
-	vkGetDeviceQueue(renderer->logical_device->handle, queue_family_indices[0], 0, &renderer->vk_graphics_queue); 
+	vkGetDeviceQueue(renderer->logical_device->vo_handle, queue_family_indices[0], 0, &renderer->vo_graphics_queue); 
 
 	//Create descripter pool
 	VkDescriptorPoolSize sizes[2] =
@@ -306,7 +306,7 @@ DEBUG_BLOCK
 		.maxSets = 6,
 		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 	};
-	vkCall(vkCreateDescriptorPool(renderer->logical_device->handle, &pool_create_info, NULL, &renderer->vk_descriptor_pool));
+	vkCall(vkCreateDescriptorPool(renderer->logical_device->vo_handle, &pool_create_info, NULL, &renderer->vk_descriptor_pool));
 
 	renderer->global_set_layout = create_global_set_layout(renderer);
 	renderer->object_set_layout = create_object_set_layout(renderer);
@@ -324,7 +324,7 @@ static void setup_global_set(vulkan_renderer_t* renderer)
 	vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &renderer->global_set);
 }
 
-static VkDescriptorSetLayout create_object_set_layout(vulkan_renderer_t* renderer)
+static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t* renderer)
 {
 	VkDescriptorSetLayoutBinding binding = 
 	{
@@ -334,19 +334,12 @@ static VkDescriptorSetLayout create_object_set_layout(vulkan_renderer_t* rendere
 		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 	};
 
-	VkDescriptorSetLayoutCreateInfo create_info = 
-	{
-		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-		.bindingCount = 1,
-		.pBinding = &binding
-	};
-
-	VkDescriptorSetLayout set_layout;
-	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->handle, &create_info, NULL, &set_layout));
-	return set_layout;
+	vulkan_descriptor_set_layout_t layout;
+	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, &layout);
+	return layout;
 }
 
-static VkDescriptorSetLayout create_global_set_layout(vulkan_renderer_t* renderer)
+static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer)
 {
 	VkDescriptorSetLayoutBinding bindings[2] = 
 	{
@@ -363,58 +356,50 @@ static VkDescriptorSetLayout create_global_set_layout(vulkan_renderer_t* rendere
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		}
 	};
-	
-	VkDescriptorSetLayoutCreateInfo create_info = 
-	{
-		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-		.bindingCount = 2,
-		.pBindings = bindings
-	};
-
-	VkDescriptorSetLayout set_layout;
-	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->handle, &create_info, NULL, &set_layout));
-	return set_layout;
+	vulkan_descriptor_set_layout_t layout;
+	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, 2, &layout);
+	return layout;	
 }
 
 
-RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer, float r, float g, float b, float a)
+RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 {
 	vulkan_swapchain_acquire_next_image(renderer->swapchain, renderer);
-	vulkan_command_buffer_reset(renderer->vk_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-	vulkan_command_buffer_begin(renderer->vk_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+	vulkan_command_buffer_begin(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	vulkan_render_pass_begin_info_t begin_info =
-	{
-		.framebuffer = renderer->swapchain->framebuffers[renderer->swapchain->current_image_index],
-		.depth = 1.1f,
-		.stencil = 0,
-		.color = { r, g, b, a },
-		.width = renderer->swapchain->image_extent.width,
-		.height = renderer->swapchain->image_extent.height
-	};
-	vulkan_render_pass_begin(renderer->render_pass, &begin_info);
+	// vulkan_render_pass_begin_info_t begin_info =
+	// {
+	// 	.framebuffer = renderer->swapchain->framebuffers[renderer->swapchain->current_image_index],
+	// 	.depth = 1.1f,
+	// 	.stencil = 0,
+	// 	.color = { r, g, b, a },
+	// 	.width = renderer->swapchain->image_extent.width,
+	// 	.height = renderer->swapchain->image_extent.height
+	// };
+	// vulkan_render_pass_begin(renderer->render_pass, &begin_info);
 }
 
 RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 {
-	vulkan_render_pass_end(renderer->render_pass);
-	vulkan_command_buffer_end(renderer->vk_command_buffers[renderer->swapchain->current_image_index]);
+	// vulkan_render_pass_end(renderer->render_pass);
+	vulkan_command_buffer_end(renderer->vo_command_buffers[renderer->swapchain->current_image_index]);
 }
 
 RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 {
 	u32 wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	vulkan_queue_submit(renderer->vk_graphics_queue,
-								renderer->vk_command_buffers[renderer->swapchain->current_image_index],
+	vulkan_queue_submit(renderer->vo_graphics_queue,
+								renderer->vo_command_buffers[renderer->swapchain->current_image_index],
 								renderer->swapchain->image_available_semaphore,
 								VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 								renderer->swapchain->render_finished_semaphore);
-	vulkan_queue_present(renderer->vk_graphics_queue, 
+	vulkan_queue_present(renderer->vo_graphics_queue, 
 						renderer->swapchain->handle, 
 						renderer->swapchain->current_image_index,
 						renderer->swapchain->render_finished_semaphore);
-	vulkan_queue_wait_idle(renderer->vk_graphics_queue);
-	vkCall(vkDeviceWaitIdle(renderer->logical_device->handle));
+	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
+	vkCall(vkDeviceWaitIdle(renderer->logical_device->vo_handle));
 	render_window_poll_events(renderer->window);
 }
 
@@ -427,28 +412,28 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
 	vulkan_descriptor_set_destroy(&renderer->global_set, renderer);
 	vulkan_descriptor_set_release_resources(&renderer->global_set);
-	vkDestroyDescriptorSetLayout(renderer->logical_device->handle, renderer->object_set_layout, NULL);
-	vkDestroyDescriptorSetLayout(renderer->logical_device->handle, renderer->global_set_layout, NULL);
+	vulkan_descriptor_set_layout_destroy(&renderer->object_set_layout);
+	vulkan_descriptor_set_layout_destroy(&renderer->global_set_layout);
 
-	vkDestroySurfaceKHR(renderer->instance->handle, renderer->surface, NULL);
+	vkDestroySurfaceKHR(renderer->instance->handle, renderer->vo_surface, NULL);
 	render_window_destroy(renderer->window);
 	
 	// destroy swapchain
 	vulkan_swapchain_destroy(renderer->swapchain, renderer);
 	vulkan_swapchain_release_resources(renderer->swapchain);
 	
-	vkDestroyDescriptorPool(renderer->logical_device->handle, renderer->vk_descriptor_pool, NULL);
+	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vk_descriptor_pool, NULL);
 	
-	// destroy render pass	
-	vulkan_render_pass_destroy(renderer->render_pass);
-	vulkan_render_pass_release_resources(renderer->render_pass);
+	// // destroy render pass	
+	// vulkan_render_pass_destroy(renderer->render_pass);
+	// vulkan_render_pass_release_resources(renderer->render_pass);
 
-	// destroy the shadow render pass
-	vulkan_render_pass_destroy(renderer->shadow_map_render_pass);
-	vulkan_render_pass_release_resources(renderer->shadow_map_render_pass);
+	// // destroy the shadow render pass
+	// vulkan_render_pass_destroy(renderer->shadow_map_render_pass);
+	// vulkan_render_pass_release_resources(renderer->shadow_map_render_pass);
 	
-	vkFreeCommandBuffers(renderer->logical_device->handle, renderer->vk_command_pool, renderer->swapchain->image_count, renderer->vk_command_buffers);
-	vkDestroyCommandPool(renderer->logical_device->handle, renderer->vk_command_pool, NULL);
+	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, renderer->swapchain->image_count, renderer->vo_command_buffers);
+	vkDestroyCommandPool(renderer->logical_device->vo_handle, renderer->vo_command_pool, NULL);
 	
 	// destroy logical device
 	vulkan_logical_device_destroy(renderer->logical_device);
@@ -458,7 +443,7 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_instance_destroy(renderer->instance);
 	vulkan_instance_release_resources(renderer->instance);
 	
-	heap_free(renderer->vk_command_buffers);
+	heap_free(renderer->vo_command_buffers);
 	heap_free(renderer);
 	LOG_MSG("Renderer exited successfully\n");
 }
@@ -467,7 +452,7 @@ static void vulkan_renderer_on_window_resize(render_window_t* window, void* _ren
 {
 	vulkan_renderer_t* renderer = _renderer;
 	log_msg("Window is resized: %u, %u\n", window->width, window->height);
-	VkSurfaceCapabilitiesKHR surface_capabilities = vulkan_physical_device_get_surface_capabilities(renderer->physical_device, renderer->surface);
+	VkSurfaceCapabilitiesKHR surface_capabilities = vulkan_physical_device_get_surface_capabilities(renderer->physical_device, renderer->vo_surface);
 	renderer->swapchain_create_info.image_extent = find_extent(&surface_capabilities, window);
 	vulkan_swapchain_refresh(renderer->swapchain, renderer, &renderer->swapchain_create_info);
 }

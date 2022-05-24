@@ -35,7 +35,7 @@ static VkFormat get_image_format_from_attachment_type(vulkan_attachment_type_t t
 	return VK_FORMAT_UNDEFINED;
 }
 
-static VkImageUsageFlags get_image_usage_from_format(VkFormat format, vulkan_attachment_usage_t usage)
+static VkImageUsageFlags get_image_usage_from_format(VkFormat format, vulkan_attachment_next_pass_usage_t usage)
 {
 	VkImageUsageFlags flags = 0;
 	switch(format)
@@ -49,12 +49,12 @@ static VkImageUsageFlags get_image_usage_from_format(VkFormat format, vulkan_att
 		default:
 			LOG_FETAL_ERROR("Unsupported format %u for any of the image usages\n", format);
 	}
-	flags |= (usage & VULKAN_ATTACHMENT_USAGE_INPUT) ? VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT : 0;
-	flags |= (usage & VULKAN_ATTACHMENT_USAGE_SAMPLED) ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
+	flags |= (usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT) ? VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT : 0;
+	flags |= (usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
 	return flags;
 }
 
-static VkImageUsageFlags get_image_usage_from_attachment_type(vulkan_attachment_type_t type, vulkan_attachment_usage_t usage)
+static VkImageUsageFlags get_image_usage_from_attachment_type(vulkan_attachment_type_t type, vulkan_attachment_next_pass_usage_t usage)
 {
 	VkImageUsageFlags flags = 0;
 	switch(type)
@@ -70,8 +70,8 @@ static VkImageUsageFlags get_image_usage_from_attachment_type(vulkan_attachment_
 		default:
 			LOG_FETAL_ERROR("Unsupported attachment type %u for any of the image usages\n", type);
 	}
-	flags |= (usage & VULKAN_ATTACHMENT_USAGE_INPUT) ? VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT : 0;
-	flags |= (usage & VULKAN_ATTACHMENT_USAGE_SAMPLED) ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
+	flags |= (usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT) ? VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT : 0;
+	flags |= (usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
 	return flags;
 }
 

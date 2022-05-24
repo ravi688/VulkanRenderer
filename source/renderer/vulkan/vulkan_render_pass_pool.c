@@ -51,8 +51,15 @@ static bool create_info_compare(void* create_info, void* ref)
 {
 	vulkan_render_pass_create_info_t* create_info1 = CAST_TO(vulkan_render_pass_create_info_t, create_info);
 	vulkan_render_pass_create_info_t* create_info2 = CAST_TO(vulkan_render_pass_create_info_t, ref);
+
 	// TODO:
-	return false;
+
+	static u32 counter = 0;
+	++counter;
+	if(counter == 1)
+		return false;
+	else
+		return true;
 }
 
 static void vulkan_resource_descriptor_deep_copy(vulkan_resource_descriptor_t* dst, vulkan_resource_descriptor_t* src)

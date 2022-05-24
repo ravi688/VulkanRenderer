@@ -6,11 +6,6 @@
 #include <renderer/string.h>
 #include <bufferlib/buffer.h>
 
-typedef struct renderer_t renderer_t;
-
-typedef buf_ucount_t shader_handle_t;
-#define SHADER_HANDLE_INVALID (~0ULL)
-
 typedef struct shader_library_slot_t
 {
 	string_t name;

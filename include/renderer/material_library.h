@@ -9,9 +9,6 @@
 #include <renderer/shader.h>
 #include <renderer/string.h>
 
-typedef buf_ucount_t material_handle_t;
-#define MATERIAL_HANDLE_INVALID (~0ULL)
-
 typedef struct material_library_slot_t
 {
 	string_t name;
@@ -73,6 +70,18 @@ RENDERER_API material_handle_t material_library_create_material(material_library
 		MATERIAL_HANDLE_INVALID, if the creation failed
  */
 RENDERER_API material_handle_t material_library_create_materialH(material_library_t* library, shader_handle_t handle, const char* material_name);
+
+/*
+	description: loads and creates a material into the library with the identification name as 'material_name'
+	params:
+		library: ptr to the material_library_t
+		file_path: path of the material file (.mat)
+		material_name: identification name of this material_t object created
+	returns:
+		material_handle_t, handle to the material_t object just loaded & created
+		MATERAIL_HANDLE_INVALID, if the creation or load failed
+ */
+RENDERER_API material_handle_t material_library_load_material(material_library_t* library, const char* file_path, const char* material_name);
 
 /*
 	description: destroys & removes a material in the library with the material named as 'material_name'
@@ -205,7 +214,7 @@ RENDERER_API const char* material_library_get_nameH(material_library_t* library,
 		const char*, name of the material object
 		NULL, if the material object isn't found
  */
-RENDERER_API const char* material_librayr_get_name(material_library_t* library, material_t* material);
+RENDERER_API const char* material_library_get_name(material_library_t* library, material_t* material);
 
 /* setters */
 

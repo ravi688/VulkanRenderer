@@ -54,15 +54,14 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		};
 	}
 
-	VkAttachmentDescription* attachment_descriptions = heap_newv(VkAttachmentDescription, create_info->attachment_description_count + create_info->supplementary_attachment_count);
+	VkAttachmentDescription* attachment_descriptions = heap_newv(VkAttachmentDescription, create_info->attachment_description_count);
 	memcpy(attachment_descriptions, create_info->attachment_descriptions, sizeof(VkAttachmentDescription) * create_info->attachment_description_count);
-	memcpy(attachment_descriptions + create_info->supplementary_attachment_count, create_info->supplementary_attachments, sizeof(VkAttachmentDescription) * create_info->supplementary_attachment_count);
 	
 	VkRenderPassCreateInfo render_pass_create_info = 
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
 		.pAttachments = attachment_descriptions,
-		.attachmentCount = create_info->attachment_description_count + create_info->supplementary_attachment_count,
+		.attachmentCount = create_info->attachment_description_count,
 		.subpassCount = create_info->subpass_count
 		.pSubpasses = subpasses
 	}
@@ -73,34 +72,39 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	// create attachments
 	render_pass->attachments = heap_newv(vulkan_attachment_t, create_info->attachment_description_count);
 	render_pass->attachment_count = create_info->attachment_description_count;
-	for(u32 i = 0; i < create_info->attachment_description_count; i++)
+	render_pass->supplementary_attachments = create_info->supplementary_attachments;
+	render_pass->supplementary_attachment_count = create_info->supplementary_attachment_count;
+	s32 num_attachment_to_be_created = CAST_TO(s32, render_pass->attachment_count) - CAST_TO(s32, render_pass->supplementary_attachment_count;
+	for(u32 i = 0; i < num_attachment_to_be_created; i++)
 	{
 		vulkan_attachment_create_info_t attachment_create_info = 
 		{
-			.format = create_info->attachment_descriptions[i].format,
+			.format = create_info->attachment_descriptions[i + render_pass->supplementary_attachment_count].format,
 			.width = renderer->window->width,
 			.height = renderer->window->height,
-			.usage = create_info->attachment_usages[i]
+			.usage = create_info->attachment_usages[i + render_pass->supplementary_attachment_count]
 		};
 		vulkan_attachment_create_no_alloc(renderer, &attachment_create_info, &render_pass->attachments[i]);
 	}
- 
+
 	// create framebuffers
 	render_pass->vo_framebuffers = heap_newv(VkFramebuffer, create_info->framebuffer_count);
 	render_pass->framebuffer_count = create_info->framebuffer_count;
-	u32 image_view_count = render_pass->attachment_count + render_pass->supplementary_attachment_count;
-	VkImageView* image_views = heap_newv(VkImageView, image_view_count);
-	for(u32 i = 0; i < render_pass->attachment_count; i++)
-		image_views[i] = render_pass->attachments[i].image_view;
-	for(u32 i = 0; i < render_pass->supplementary_attachment_count; i++)
-		image_views[i + render_pass->attachment_count] = render_pass->supplementary_attachments[i];
-	for(u32 i = 0; i < create_info->framebuffer_count; i++)
+	VkImageView* image_views = heap_newv(VkImageView, render_pass->attachment_count);
+	s32 num_created_image_views = num_attachment_to_be_created;
+	for(u32 i = 0; i < num_created_image_views; i++)
+		image_views[i + render_pass->supplementary_attachment_count] = render_pass->attachments[i].image_view;
+
+	for(u32 i = 0; i < render_pass->framebuffer_count; i++)
 	{
+		for(u32 j = 0; j < render_pass->supplementary_attachment_count; j++)
+			image_views[j] = render_pass->supplementary_attachments[j + i * render_pass->supplementary_attachment_count];
+
 		VkFramebufferCreateInfo framebuffer_create_info = 
 		{
 			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 			.renderPass = render_pass->vo_handle,
-			.attachmentCount = image_view_count,
+			.attachmentCount = render_pass->attachment_count,
 			.pAttachments = image_views;
 			.width = renderer->window->width,
 			.height = renderer->window->height,
@@ -111,12 +115,9 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	heap_free(image_views);
 
 	// create clear values for each attachment in this render pass
-	render_pass->vo_clear_values = heap_newv(VkClearValue, image_view_count);
-	render_pass->clear_value_count = image_view_count;
-	for(u32 i = 0; i < create_info->attachment_description_count; i++)
+	render_pass->vo_clear_values = heap_newv(VkClearValue, render_pass->attachment_count);
+	for(u32 i = 0; i < render_pass->attachment_count; i++)
 		render_pass->vo_clear_values[i] = get_clear_value_from_format(create_info->attachment_descriptions[i].format);
-	for(u32 i = 0; i < create_info->supplementary_attachment_description_count; i++)
-		render_pass->vo_clear_values[i + create_info->attachment_description_count] = get_clear_value_from_format(create_info->supplementary_attachment_descriptions[i].format);	
 
 	// create render set layout & render set
 	vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, create_info->render_set_bindings, create_info->render_set_binding_count, &render_pass->render_set_layout);
@@ -189,12 +190,12 @@ RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u3
 		.clearValueCount = render_pass->clear_value_count,
 		.pClearValues = render_pass->vo_clear_values
 	};
-	vkCmdBeginRenderPass(render_pass->renderer->vk_command_buffers[render_pass->renderer->swapchain->current_image_index], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(render_pass->renderer->vo_command_buffers[render_pass->renderer->swapchain->current_image_index], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 RENDERER_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass)
 {
-	vkCmdEndRenderPass(render_pass->renderer->vk_command_buffers[render_pass->renderer->swapchain->current_image_index]);
+	vkCmdEndRenderPass(render_pass->renderer->vo_command_buffers[render_pass->renderer->swapchain->current_image_index]);
 }
 
 RENDERER_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass)
@@ -204,6 +205,6 @@ RENDERER_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass)
 		log_wrn("There are only %u subpasses but you're trying to exceed it\n", render_pass->subpass_count);
 		return;
 	}
-	vkCmdNextSubpass(render_pass->renderer->vk_command_buffers[render_pass->renderer->swapchain->current_image_index], VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdNextSubpass(render_pass->renderer->vo_command_buffers[render_pass->renderer->swapchain->current_image_index], VK_SUBPASS_CONTENTS_INLINE);
 	++(render_pass->current_subpass_index);
 }

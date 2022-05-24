@@ -3,12 +3,8 @@
 
 #include <vulkan/vulkan.h>
 
-#include <renderer/dictionary.h>
-#include <renderer/internal/vulkan/vulkan_descriptor_set.h>
-#include <renderer/internal/vulkan/vulkan_types.h>
-#include <renderer/render_pass_pool.h>
-#include <bufferlib/buffer.h>
-
+#include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h> // vulkan_descriptor_set_layout_t
+#include <renderer/internal/vulkan/vulkan_attachment.h> 		// vulkan_attachment_type_t
 
 #define GLSL_ALIGN(value, index) ((value) << ((index) * 5))
 
@@ -60,8 +56,6 @@ typedef struct vulkan_spirv_code_t
 
 } vulkan_spirv_code_t;
 
-typedef GraphicsPipeline GraphicsPipelineSettings;
-
 typedef struct vulkan_graphics_pipeline_description_t
 {
 	/* fixed function settings for this graphics pipeline */
@@ -73,17 +67,48 @@ typedef struct vulkan_graphics_pipeline_description_t
 
 } vulkan_graphics_pipeline_description_t;
 
+typedef struct vulkan_shader_resource_descriptor_t vulkan_shader_resource_descriptor_t;
+
+/* NOTE: sub_render_set_binding_count is always equal to input_attachment_count */
 typedef struct vulkan_subpass_description_t
 {
 	/* SUB RENDER SET BINDING DESCRIPTIONS */
 	vulkan_shader_resource_descriptor_t* sub_render_set_bindings;
-	u32 sub_render_set_binding_count;
 
 	/* graphics pipeline description */
 	vulkan_graphics_pipeline_description_t pipeline_description;
 
+	/* ATTACHMENT POINTERS */
+	
+	/* list of color attachments */
+	u32* color_attachments;
+	u32 color_attachment_count;
+
+	/* list of input attachments */
+	u32* input_attachments;
+	union
+	{
+		u32 input_attachment_count;
+		u32 sub_render_set_binding_count;
+	};
+
+	/* index of the depth stencil attachment */
+	u32 depth_stencil_attachment;
+
+	/* list of preserve attachments */
+	u32* preserve_attachments;
+	u32 preserve_attachment_count;
+
 } vulkan_subpass_description_t;
 
+typedef enum vulkan_render_pass_type_t
+{
+	VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER,
+	VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET
+	
+} vulkan_render_pass_type_t;
+
+/* NOTE: render_set_binding_count is always equal to input_attachment_count */
 typedef struct vulkan_render_pass_description_t
 {
 	/* RENDER SET BINDING DESCRIPTIONS */
@@ -96,9 +121,26 @@ typedef struct vulkan_render_pass_description_t
 	/* number of subpasses in this render pass */
 	u32 subpass_description_count;
 
+	/* ATTACHMENTS */
+	vulkan_attachment_type_t* attachments;
+	u32 attachment_count;
+
+	/* INPUTS */
+
+	/* list of input attachments from the previous render pass */
+	u32* input_attachments;
+	union
+	{
+		u32 input_attachment_count;
+		u32 render_set_binding_count;
+	};
+
+	/* type of this render pass */
+	vulkan_render_pass_type_t type;
+
 } vulkan_render_pass_description_t;
 
-typedef struct vulkan_shader_file_info_t
+typedef struct vulkan_shader_load_info_t
 {
 	/* file path of the file to be loaded */
 	const char* path;
@@ -118,7 +160,7 @@ typedef struct vulkan_shader_file_info_t
 	/* number of vertex bindings for per instance input rate */
 	u32 per_instance_attribute_binding_count;
 
-} vulkan_shader_file_info_t;
+} vulkan_shader_load_info_t;
 
 typedef struct vulkan_shader_create_info_t
 {
@@ -188,7 +230,7 @@ typedef struct vulkan_shader_t
 	u32 material_set_binding_count;
 
 	/* for creating MATERIAL_SET for each of the materials deriving from this shader */
-	VkDescriptorSetLayout material_set_layout;
+	vulkan_descriptor_set_layout_t material_set_layout;
 
 
 	/* VERTEX ATTRIBUTE DESCRIPTIONS */
@@ -216,7 +258,7 @@ BEGIN_CPP_COMPATIBLE
 /* constructors & destructors */
 RENDERER_API vulkan_shader_t* vulkan_shader_new();
 RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, BUFFER* vulkan_shader_binary);
-RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_file_info_t* file_info);
+RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* file_info);
 RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader);
 RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader);
 

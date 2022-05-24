@@ -42,7 +42,6 @@ enum
 	VULKAN_DESCRIPTOR_BINDING_TEXTURE8 = 9
 };
 
-typedef struct vulkan_renderer_t vulkan_renderer_t;
 typedef struct vulkan_texture_t vulkan_texture_t;
 typedef struct vulkan_buffer_t vulkan_buffer_t;
 typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;

@@ -13,7 +13,7 @@ RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t gpu_type, u32 width, 
 	memset(renderer, 0, sizeof(renderer_t));
 	
 	// create the renderer
-	renderer->handle = vulkan_renderer_init((vulkan_renderer_gpu_type_t)gpu_type, width, height, title, full_screen);
+	renderer->vulkan_handle = vulkan_renderer_init(CAST_TO(vulkan_renderer_gpu_type_t, gpu_type), width, height, title, full_screen);
 	
 	// create the shader and material library
 	renderer->shader_library = shader_library_create(renderer);
@@ -21,7 +21,7 @@ RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t gpu_type, u32 width, 
 	
 	// NOTE: for now let's focus on vulkan
 	// create render pass pool
-	renderer->render_pass_pool = render_pass_pool_create(vulkan_render_pass_create_info_get_hash);	
+	renderer->render_pass_pool = render_pass_pool_create(renderer);	
 
 	return renderer;
 }
@@ -29,7 +29,7 @@ RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t gpu_type, u32 width, 
 RENDERER_API void renderer_terminate(renderer_t* renderer)
 {
 	// terminate the renderer
-	vulkan_renderer_terminate(renderer->handle);
+	vulkan_renderer_terminate(renderer->vulkan_handle);
 	
 	// destroy the shader library
 	shader_library_destroy(renderer->shader_library);
@@ -48,29 +48,29 @@ RENDERER_API void renderer_terminate(renderer_t* renderer)
 
 RENDERER_API void renderer_update(renderer_t* renderer)
 {
-	vulkan_renderer_update(renderer->handle);
+	vulkan_renderer_update(renderer->vulkan_handle);
 }
 
 RENDERER_API bool renderer_is_running(renderer_t* renderer)
 {
-	vulkan_renderer_is_running(renderer->handle);
+	vulkan_renderer_is_running(renderer->vulkan_handle);
 }
 
 
-RENDERER_API void renderer_begin_frame(renderer_t* renderer, float r, float g, float b, float a)
+RENDERER_API void renderer_begin_frame(renderer_t* renderer)
 {
-	vulkan_renderer_begin_frame(renderer->handle, r, g, b, a);
+	vulkan_renderer_begin_frame(renderer->vulkan_handle);
 }
 
 RENDERER_API void renderer_end_frame(renderer_t* renderer)
 {
-	vulkan_renderer_end_frame(renderer->handle);
+	vulkan_renderer_end_frame(renderer->vulkan_handle);
 }
 
 /* getters */
 RENDERER_API render_window_t* renderer_get_window(renderer_t* renderer)
 {
-	return vulkan_renderer_get_window(renderer->handle);
+	return vulkan_renderer_get_window(renderer->vulkan_handle);
 }
 
 RENDERER_API shader_library_t* renderer_get_shader_library(renderer_t* renderer)

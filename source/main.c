@@ -59,8 +59,6 @@ typedef struct Game
 	render_queue_t* geometryQueue;
 	render_queue_t* uiQueue;
 
-	render_objects_t** renderObjects;
-
 	material_t* textMaterial;
 	material_t* gameUIMaterial;
 	material_t* rockMaterial;
@@ -68,11 +66,19 @@ typedef struct Game
 	material_t* groundMaterial;
 	font_t* font;
 	glyph_mesh_pool_t* pool;
+
 	text_mesh_t* textMesh;
+	text_mesh_t* gameUI;
 	mesh_t* rockMesh;
 	mesh_t* skyboxMesh;
 	mesh_t* quadMesh;
 	mesh_t* groundPlaneMesh;
+
+	text_mesh_t* textRenderObject;
+	mesh_t* rockRenderObject;
+	mesh_t* skyboxRenderObject;
+	mesh_t* quadRenderObject;
+	mesh_t* groundPlaneRenderObject;
 
 	text_mesh_string_handle_t scoreTextHandle;
 	time_handle_t secondTimeHandle;
@@ -129,10 +135,10 @@ int main(int argc, char** argv)
 		/* Rendering */
 
 		// begin the command buffer recording
-		renderer_begin_frame(game.renderer, 0.01f, 0.1f, 0.2f, 0.4f);
+		renderer_begin_frame(game.renderer);
 
 		render_queue_dispatch(game.geometryQueue);
-		render_queue_dispatch(game.uiQueue);
+		// render_queue_dispatch(game.uiQueue);
 
 		// end command buffer recording
 		renderer_end_frame(game.renderer);
@@ -236,60 +242,74 @@ static void setup_render_queues(Game* game)
 	game->groundPlane = mesh_create(game->renderer, quad_mesh3d);
 	mesh3d_destroy(quad_mesh3d);
 
-	game->renderObjects = heap_newv(render_object_t*, 6);
-	game->renderObjects[0] = render_object_create(game->rock, mesh_draw_indexed, game->rockMaterial);
-	game->renderObjects[1] = render_object_create(game->skybox, mesh_draw_indexed, game->skyboxMaterial);
-	game->renderObjects[2] = render_object_create(game->groundPlane, mesh_draw_indexed, game->groundMaterial);
-	game->renderObjects[3] = render_object_create(game->quad, mesh_draw_indexed, game->quadMaterial);
-	game->renderObjects[4] = render_object_create(game->textMesh, text_mesh_draw, game->textMaterial);
-	game->renderObjects[5] = render_object_create(game->gameUI, text_mesh_draw, game->gameUIMaterial);
+	render_object_create_info_t object_create_info;
+	object_create_info.material = game->rockMaterial;
+	object_create_info.draw = mesh_draw_indexed;
+	object_create_info.user_data = game->rock;
+	game->rockRenderObject = render_object_create(game->renderer, &object_create_info);
+	object_create_info.material = game->skyboxMaterial;
+	object_create_info.draw = mesh_draw_indexed;
+	object_create_info.user_data = game->skybox;
+	game->skyboxRenderObject = render_object_create(game->renderer, &object_create_info);
+	object_create_info.material = game->groundMaterial;
+	object_create_info.draw = mesh_draw_indexed;
+	object_create_info.user_data = game->groundPlane;
+	game->groundPlaneRenderObject = render_object_create(game->renderer, &object_create_info);
+	object_create_info.material = game->quadMaterial;
+	object_create_info.draw = mesh_draw_indexed;
+	object_create_info.user_data = game->quad;
+	game->quadRenderObject = render_object_create(game->renderer, &object_create_info);
+	object_create_info.material = game->textMaterial;
+	object_create_info.draw = text_mesh_draw;
+	object_create_info.user_data = game->textMesh;
+	game->textRenderObject = render_object_create(game->renderer, &object_create_info);
+	object_create_info.material = game->gameUIMaterial;
+	object_create_info.draw = text_mesh_draw;
+	object_create_info.user_data = game->gameUI;
+	game->gameUIRenderObject = render_object_create(game->renderer, &object_create_info);
 
-	for(int i = 0; i < 4; i++)
-		render_queue_add(game->geometryQueue, game->renderObjects[i]);
-	for(int i = 4; i < 6; i++)
-		render_queue_add(game->uiQueue, game->renderObjects[i]);
+	render_queue_add(game->geometryQueue, game->rockRenderObject);
+	// render_queue_add(game->geometryQueue, game->skyboxRenderObject);
+	render_queue_add(game->geometryQueue, game->groundPlaneRenderObject);
+	render_queue_add(game->geometryQueue, game->quadRenderObject);
+
+	// render_queue_add(game->uiQueue, game->textRenderObject);
+	// render_queue_add(game->uiQueue, game->gameUIRenderObject);
 	render_queue_build(game->geometryQueue);
 	render_queue_build(game->uiQueue);
 }
 
 static void update(Game* game)
 {
-	material_set_float(game->textMaterial, "ubo.time", game->gameTime);
-	material_set_float(game->gameUIMaterial, "ubo.time", game->gameTime);
+	// material_set_float(game->textMaterial, "parameters.time", game->gameTime);
+	// material_set_float(game->gameUIMaterial, "parameters.time", game->gameTime);
 
 	mat4_t(float) modelMatrix;
 	mat4_move(float)(&modelMatrix, mat4_mul(float)(2, mat4_rotation(float)(game->angle * DEG2RAD, 45 * DEG2RAD, 0), mat4_scale(float)(2.2, 2.2, 2.2)));
-	mat4_t(float) mvp = mat4_mul(float)(4, game->clipMatrix, game->projectionMatrix, game->viewMatrix, game->modelMatrix);
-	material_set_push_mat4(game->rockMaterial, "push.mvp_matrix", mat4_transpose(float)(mvp));
-	material_set_push_mat4(game->rockMaterial, "push.modelMatrix", mat4_transpose(float)(modelMatrix));
+	render_object_set_transform(game->rockRenderObject, mat4_transpose(float)(modelMatrix));
 
-	mat4_t(float) skyboxMatrix = game->viewMatrix;
-	// skybox should remain at origin, so set the last column of the viewMatrix to zero
-	float** elements = (float**)mat4_data(float)(&skyboxMatrix);
-	elements[0][3] = 0;
-	elements[1][3] = 0;
-	elements[2][3] = 0;
-	elements[3][3] = 1;
-	mat4_move(float)(&mvp, mat4_mul(float)(3, game->clipMatrix, game->projectionMatrix, game->skyboxMatrix));
-	material_set_push_mat4(game->skyboxMaterial, "push.mvp_matrix", mat4_transpose(float)(mvp));
+	// mat4_t(float) skyboxMatrix = game->viewMatrix;
+	// // skybox should remain at origin, so set the last column of the viewMatrix to zero
+	// float** elements = (float**)mat4_data(float)(&skyboxMatrix);
+	// elements[0][3] = 0;
+	// elements[1][3] = 0;
+	// elements[2][3] = 0;
+	// elements[3][3] = 1;
+	// mat4_move(float)(&mvp, mat4_mul(float)(3, game->clipMatrix, game->projectionMatrix, game->skyboxMatrix));
+	// material_set_push_mat4(game->skyboxMaterial, "push.mvp_matrix", mat4_transpose(float)(mvp));
 
 	mat4_move(float)(&modelMatrix, mat4_translation(float)(1, -1.0f, 0));
-	mat4_move(float)(&mvp, mat4_mul(float)(4, game->clipMatrix, game->projectionMatrix, game->viewMatrix, modelMatrix));
-	mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-	material_set_push_mat4(game->groundMaterial, "push.mvp_matrix", mvp);
-	material_set_push_mat4(game->groundMaterial, "push.modelMatrix", modelMatrix);
+	render_object_set_transform(game->groundPlaneRenderObject, modelMatrix);
 
 	mat4_move(float)(&modelMatrix, mat4_mul(float)(2, mat4_translation(float)(-0.8f, 0, 0), mat4_rotation(float)(0, 0, 80 * DEG2RAD)));
-	mat4_move(float)(&mvp, mat4_mul(float)(4, game->clipMatrix, game->projectionMatrix, game->viewMatrix, modelMatrix));
-	mat4_move(float)(&mvp, mat4_transpose(float)(mvp));
-	material_set_push_mat4(game->quadMaterial, "push.mvp_matrix", mvp);
+	render_object_set_transform(game->quadRenderObject, modelMatrix);
 
-	mat4_t(float) canvas_transform = mat4_mul(float)(2, game->clipMatrix, game->screenSpaceMatrix);
-	mat4_t(float) _modelMatrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_scale(float)(0, 50, 50));
-	material_set_push_mat4(game->textMaterial, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _modelMatrix)));
+	// mat4_t(float) canvas_transform = mat4_mul(float)(2, game->clipMatrix, game->screenSpaceMatrix);
+	// mat4_t(float) _modelMatrix = mat4_mul(float)(2, mat4_translation(float)(0, 0, 0), mat4_scale(float)(0, 50, 50));
+	// material_set_push_mat4(game->textMaterial, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _modelMatrix)));
 
-	mat4_move(float)(&_modelMatrix, mat4_mul(float)(2, mat4_scale(float)(50, 50, 50), mat4_identity(float)()));
-	material_set_push_mat4(game->gameUIMaterial, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _modelMatrix)));
+	// mat4_move(float)(&_modelMatrix, mat4_mul(float)(2, mat4_scale(float)(50, 50, 50), mat4_identity(float)()));
+	// material_set_push_mat4(game->gameUIMaterial, "push.mvp_matrix", mat4_transpose(float)(mat4_mul(float)(2, canvas_transform, _modelMatrix)));
 
 	game->angle += 180 * game->delta_time * 0.1f;
 	if(game->angle >= 360.0f)
@@ -315,13 +335,20 @@ static void update(Game* game)
 static void game_release_resources(Game* game)
 {
 	// destroy render objects and release resources
-	for(int i = 0; i < 6; i++)
-	{
-		render_object_destroy(game->renderObjects[i]);
-		render_object_release_resources(game->renderObjects[i]);
-	}
-	heap_free(game->renderObjects);
 
+	render_object_destroy(game->rockRenderObject);
+	render_object_release_resources(game->rockRenderObject);
+	render_object_destroy(game->skyboxRenderObject);
+	render_object_release_resources(game->skyboxRenderObject);
+	render_object_destroy(game->groundPlaneRenderObject);
+	render_object_release_resources(game->groundPlaneRenderObject);
+	render_object_destroy(game->quadRenderObject);
+	render_object_release_resources(game->quadRenderObject);
+	render_object_destroy(game->textRenderObject);
+	render_object_release_resources(game->textRenderObject);
+	render_object_destroy(game->gameUIRenderObject);
+	render_object_release_resources(game->gameUIRenderObject);
+	
 	// destroy fonts
 	font_destroy(game->font);
 
@@ -364,21 +391,21 @@ static void game_release_resources(Game* game)
 static void setup_shaders(Game* game)
 {
 	shader_library_t* library = renderer_get_shader_library(game->renderer);
-	shader_library_load_shader(library, "showcase/resource/shaders/text_shader.sb");
-	shader_library_load_shader(library, "showcase/resource/shaders/game_ui_shader.sb");
-	shader_library_load_shader(library, "showcase/resource/shaders/bump_shader.sb");
-	shader_library_load_shader(library, "showcase/resource/shaders/skybox_shader.sb");
-	shader_library_load_shader(library, "showcase/resource/shaders/transparent_shader.sb");
-	shader_library_load_shader(library, "showcase/resource/shaders/ground_shader.sb");
+	shader_library_load_shader(library, "showcase/resource/shaders/text_shader.sb", NULL);
+	shader_library_load_shader(library, "showcase/resource/shaders/game_ui_shader.sb", NULL);
+	shader_library_load_shader(library, "showcase/resource/shaders/bump_shader.sb", NULL);
+	shader_library_load_shader(library, "showcase/resource/shaders/skybox_shader.sb", NULL);
+	shader_library_load_shader(library, "showcase/resource/shaders/transparent_shader.sb", NULL);
+	shader_library_load_shader(library, "showcase/resource/shaders/ground_shader.sb", NULL);
 }
 
 static void setup_materials(Game* game)
 {
 	material_library_t* library = renderer_get_material_library(game->renderer);
-	material_library_load_material(library, "showcase/resource/materials/text_material.mb");
-	material_library_load_material(library, "showcase/resource/materials/game_ui_material.mb");
-	material_library_load_material(library, "showcase/resource/materials/bump_material.mb");
-	material_library_load_material(library, "showcase/resource/materials/skybox_material.mb");
-	material_library_load_material(library, "showcase/resource/materials/transparent_material.mb");
-	material_library_load_material(library, "showcase/resource/materials/ground_material.mb");
+	material_library_load_material(library, "showcase/resource/materials/text_material.mb", NULL);
+	material_library_load_material(library, "showcase/resource/materials/game_ui_material.mb", NULL);
+	material_library_load_material(library, "showcase/resource/materials/bump_material.mb", NULL);
+	material_library_load_material(library, "showcase/resource/materials/skybox_material.mb", NULL);
+	material_library_load_material(library, "showcase/resource/materials/transparent_material.mb", NULL);
+	material_library_load_material(library, "showcase/resource/materials/ground_material.mb", NULL);
 }

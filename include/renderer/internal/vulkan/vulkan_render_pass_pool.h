@@ -33,8 +33,8 @@ RENDERER_API void vulkan_render_pass_pool_destroy(vulkan_render_pass_pool_t* poo
 RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_pool_t* pool);
 
 /* logic functions */
-RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_create_pass(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info);
-RENDERER_API vulkan_render_pass_t* vulkan_render_pass_getH(vulkan_render_pass_pool_t* pool, vulkan_render_pass_handle_t handle);
+RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info);
+RENDERER_API vulkan_render_pass_t* vulkan_render_pass_pool_getH(vulkan_render_pass_pool_t* pool, vulkan_render_pass_handle_t handle);
 
 
 END_CPP_COMPATIBLE

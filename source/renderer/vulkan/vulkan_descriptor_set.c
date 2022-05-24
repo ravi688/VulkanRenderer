@@ -48,7 +48,7 @@ RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_
 RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, u32 set_number, vulkan_pipeline_layout_t* pipeline_layout)
 {
 	u32 image_index = renderer->swapchain->current_image_index;
-	vkCmdBindDescriptorSets(renderer->vk_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->handle, set_number, 1, &set->handle, 0, NULL);
+	vkCmdBindDescriptorSets(renderer->vo_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->handle, set_number, 1, &set->handle, 0, NULL);
 }
 
 RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture)

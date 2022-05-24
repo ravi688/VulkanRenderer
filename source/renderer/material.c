@@ -9,12 +9,12 @@ RENDERER_API material_t* material_new()
 
 RENDERER_API material_t* material_create(renderer_t* renderer, shader_t* shader)
 {
-	return vulkan_material_create(renderer->handle, shader);
+	return vulkan_material_create(renderer->vulkan_handle, shader);
 }
 
 RENDERER_API void material_create_no_alloc(renderer_t* renderer, shader_t* shader, material_t* material)
 {
-	vulkan_material_create_no_alloc(renderer->handle, shader, material);
+	vulkan_material_create_no_alloc(renderer->vulkan_handle, shader, material);
 }
 
 RENDERER_API void material_destroy(material_t* material)

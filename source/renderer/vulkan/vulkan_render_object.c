@@ -56,7 +56,12 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 
 RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info)
 {
-	vulkan_render_object_t* obj = vulkan_render_object_new();
+	vulkan_render_object_t* object = vulkan_render_object_new();
+	vulkan_render_object_create_no_alloc(renderer, create_info, object);
+	return object;
+}
+RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object)
+{
 	obj->renderer = renderer;
 	obj->material = create_info->material;
 	obj->user_data = create_info->user_data;
@@ -65,7 +70,6 @@ RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer
 	setup_gpu_resources(obj);
 	
 	vulkan_render_object_set_transform(obj, mat4_identity(float)());
-	return obj;
 }
 
 RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* obj)
@@ -85,8 +89,17 @@ RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t*
 
 RENDERER_API void vulkan_render_object_draw(vulkan_render_object_t* obj)
 {
-	assert(obj != NULL);
 	obj->draw(obj->user_data);
+}
+
+RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* obj, vulkan_material_t* material)
+{
+	obj->material;
+}
+
+RENDERER_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* obj)
+{
+	return obj->material;
 }
 
 RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* obj, mat4_t(float) transform)

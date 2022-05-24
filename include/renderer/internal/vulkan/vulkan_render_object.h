@@ -45,13 +45,16 @@ BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructurs */
 RENDERER_API vulkan_render_object_t* vulkan_render_object_new();
-RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_render_object_create_info_t* create_info);
-RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* obj);
-RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t* obj);
+RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info);
+RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object);
+RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* object);
+RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t* object);
 
-RENDERER_API void vulkan_render_object_draw(vulkan_render_object_t* obj);
-RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* obj, mat4_t(float) transform);
-RENDERER_API mat4_t(float) vulkan_render_object_get_transform(vulkan_render_object_t* obj);
-RENDERER_API mat4_t(float) vulkan_render_object_get_normal(vulkan_render_object_t* obj);
+RENDERER_API void vulkan_render_object_draw(vulkan_render_object_t* object);
+RENDERER_API void vulkan_render_object_set_material(vulkan_renderer_object_t* object, vulkan_material_t* material);
+RENDERER_API void vulkan_render_object_get_material(vulkan_renderer_object_t* object);
+RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* object, mat4_t(float) transform);
+RENDERER_API mat4_t(float) vulkan_render_object_get_transform(vulkan_render_object_t* object);
+RENDERER_API mat4_t(float) vulkan_render_object_get_normal(vulkan_render_object_t* object);
 
 END_CPP_COMPATIBLE
