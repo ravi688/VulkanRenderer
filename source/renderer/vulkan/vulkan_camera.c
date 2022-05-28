@@ -4,6 +4,7 @@
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
+#include <renderer/debug.h>
 
 #include <hpml/vec4/header_config.h>
 #include <hpml/vec4/vec4.h>
@@ -24,8 +25,8 @@ static void setup_gpu_resources(vulkan_camera_t* camera)
 	struct_field_t* fields = heap_newv(struct_field_t, 3);
 	memset(fields, 0, sizeof(struct_field_t) * 3);
 	strcpy(fields[0].name, "transform");
-	strcpy(fields[0].name, "projection");
-	strcpy(fields[1].name, "view");
+	strcpy(fields[1].name, "projection");
+	strcpy(fields[2].name, "view");
 	for(int i = 0; i < 3; i++)
 	{
 		fields[i].type = STRUCT_FIELD_MAT4;
@@ -89,6 +90,8 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	struct_descriptor_set_mat4(&camera->struct_definition, camera->view_handle, CAST_TO(float*, &view));
 
 	render_window_subscribe_on_resize(vulkan_renderer_get_window(renderer), recreate_projection, camera);
+
+	log_msg("Vulkan Camera has been created successfully\n");
 }
 
 RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
@@ -96,13 +99,15 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 	struct_descriptor_unmap(&camera->struct_definition);
 	vulkan_buffer_unmap(&camera->buffer);
 	vulkan_buffer_destroy(&camera->buffer);
+	log_msg("Vulkan Camera has been destroyed successfully\n");
 }
 
 RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 {
 	vulkan_buffer_release_resources(&camera->buffer);
 	heap_free(camera->struct_definition.fields);
-	heap_free(camera);
+	// TODO
+	// heap_free(camera);
 }
 
 /* getters */
