@@ -20,9 +20,8 @@ RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new()
 	return device;
 }
 
-RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_device)
+RENDERER_API void vulkan_physical_device_create_no_alloc(VkPhysicalDevice vk_device, vulkan_physical_device_t OUT device)
 {
-	vulkan_physical_device_t* device = vulkan_physical_device_new();
 	device->vo_handle = vk_device;
 
 	// create list of logical devices to store all the logical devices created with this physical device
@@ -47,7 +46,12 @@ RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalD
 	vo_result = vkEnumerateDeviceExtensionProperties(device->vo_handle, NULL, &device->extension_count, device->vo_extension_properties);
 	vulkan_result_assert_success(vo_result);
 	vulkan_result_assert_complete(vo_result);
+}
 
+RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_device)
+{
+	vulkan_physical_device_t* device = vulkan_physical_device_new();
+	vulkan_physical_device_create_no_alloc(vk_device, device);
 	return device;
 }
 
@@ -64,7 +68,9 @@ RENDERER_API void vulkan_physical_device_release_resources(vulkan_physical_devic
 	// buf_free(&device->logical_devices);
 	heap_free(device->vo_queue_family_properties);
 	heap_free(device->vo_extension_properties);
-	heap_free(device);
+
+	// TODO:
+	// heap_free(device);
 }
 
 

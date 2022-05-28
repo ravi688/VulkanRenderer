@@ -41,6 +41,7 @@ RENDERER_API void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, vulkan
 {
 	destroy_swapchain(swapchain);
 	create_swapchain(swapchain, create_info);
+	log_msg("Swapchain refreshed successfully\n");
 }
 
 RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain)
@@ -55,7 +56,8 @@ RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapcha
 {
 	heap_free(swapchain->vo_image_views);
 	heap_free(swapchain->vo_images);
-	heap_free(swapchain);
+	// TODO
+	// heap_free(swapchain);
 }
 
 RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain)
@@ -86,25 +88,30 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_cre
 	};
 	vkCall(vkCreateSwapchainKHR(swapchain->renderer->logical_device->vo_handle, &swapchain_create_info, NULL, &swapchain->vo_handle));
 
-	// cache the variables because it is needed everywhere
+	// cache the variables because it is needed everyowhere
+	bool image_count_changed = swapchain->image_count != create_info->image_count;
 	swapchain->image_count = create_info->image_count;
 	swapchain->vo_image_extent = create_info->vo_image_extent;
 
 	log_msg("Swapchain image count: %u\n", swapchain->image_count);
 	log_msg("Swapchain image size: (%u, %u)\n", swapchain->vo_image_extent.width, swapchain->vo_image_extent.height);
 
-	// if the swapchain has to be recreated then no allocation should happen
-	if(swapchain->vo_images == NULL)
+	// if the swapchain has to be recreated then no allcation should happen
+	if(swapchain->vo_images == NULL || image_count_changed)
 	{
+		// deallocate the previous image buffer
+		if(swapchain->vo_images != NULL)
+		{
+			heap_free(swapchain->vo_images);
+			heap_free(swapchain->vo_image_views);
+		}
+
 		vkCall(vkGetSwapchainImagesKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, &swapchain->image_count, NULL));
 		assert(swapchain->image_count != 0);
 		swapchain->vo_images = heap_newv(VkImage, swapchain->image_count);
+		swapchain->vo_image_views = heap_newv(VkImageView, swapchain->image_count);
 	}
 	vkCall(vkGetSwapchainImagesKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, &swapchain->image_count, swapchain->vo_images));
-
-	// if the swapchain has to be recreated then no allocation should happen
-	if(swapchain->vo_image_views == NULL)
-		swapchain->vo_image_views = heap_newv(VkImageView, swapchain->image_count);
 
 	for(u32 i = 0; i < swapchain->image_count; i++)
 	{

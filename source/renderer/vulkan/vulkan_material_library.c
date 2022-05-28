@@ -2,7 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_shader_library.h>
 #include <renderer/internal/vulkan/vulkan_material.h>
 #include <renderer/memory_allocator.h>
-
+#include <renderer/debug.h>
 
 /* constructors & destructors */
 RENDERER_API vulkan_material_library_t* vulkan_material_library_new()
@@ -18,6 +18,7 @@ RENDERER_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* ren
 	library->shader_library = shader_library;
 	library->relocation_table = buf_create(sizeof(vulkan_material_handle_t), 1, 0);
 	library->materials = buf_create(sizeof(vulkan_material_library_slot_t), 1, 0);
+	log_msg("Vulkan material library has been created successfully\n");
 }
 
 RENDERER_API vulkan_material_library_t* vulkan_material_library_create(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library)
@@ -36,6 +37,7 @@ RENDERER_API void vulkan_material_library_destroy(vulkan_material_library_t* lib
 		string_destroy(&slot->name);
 		vulkan_material_destroy(slot->material);
 	}
+	log_msg("Vulkan material library has been destroyed successfully\n");
 }
 
 RENDERER_API void vulkan_material_library_release_resources(vulkan_material_library_t* library)
@@ -45,7 +47,9 @@ RENDERER_API void vulkan_material_library_release_resources(vulkan_material_libr
 	{
 		vulkan_material_library_slot_t* slot = buf_get_ptr_at(&library->materials, i);
 		vulkan_material_release_resources(slot->material);
-	}	
+	}
+	// TODO
+	// heap_free(library);
 }
 
 

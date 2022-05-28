@@ -2,7 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/io.h>
 #include <renderer/memory_allocator.h>
-
+#include <renderer/debug.h>
 #include <string.h>
 
 /* constructors & destructors */
@@ -13,11 +13,18 @@ RENDERER_API vulkan_shader_library_t* vulkan_shader_library_new()
 	return library;
 }
 
+RENDERER_API void vulkan_shader_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t OUT library)
+{
+	library->renderer = renderer;
+	library->relocation_table = buf_create(sizeof(buf_ucount_t), 1, 0);
+	library->shaders = buf_create(sizeof(vulkan_shader_library_slot_t), 1, 0);
+	log_msg("Vulkan shader library has been created successfully\n");
+}
+
 RENDERER_API vulkan_shader_library_t* vulkan_shader_library_create(vulkan_renderer_t* renderer)
 {
 	vulkan_shader_library_t* library = vulkan_shader_library_new();
-	library->relocation_table = buf_create(sizeof(buf_ucount_t), 1, 0);
-	library->shaders = buf_create(sizeof(vulkan_shader_library_slot_t), 1, 0);
+	vulkan_shader_library_create_no_alloc(renderer, library);
 	return library;
 }
 
@@ -51,6 +58,7 @@ RENDERER_API void vulkan_shader_library_destroy(vulkan_shader_library_t* library
 		string_destroy(&slot->name);
 		vulkan_shader_destroy(slot->shader);
 	}
+	log_msg("Vulkan shader library has been destroyed successfully\n");
 }
 
 RENDERER_API void vulkan_shader_library_release_resources(vulkan_shader_library_t* library)
@@ -63,7 +71,8 @@ RENDERER_API void vulkan_shader_library_release_resources(vulkan_shader_library_
 		vulkan_shader_release_resources(slot->shader);
 	}
 	buf_free(&library->shaders);
-	heap_free(library);
+	// TODO
+	// heap_free(library);
 }
 
 

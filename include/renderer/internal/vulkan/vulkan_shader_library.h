@@ -28,6 +28,7 @@ typedef struct vulkan_shader_library_t
 /* constructors & destructors */
 RENDERER_API vulkan_shader_library_t* vulkan_shader_library_new();
 RENDERER_API vulkan_shader_library_t* vulkan_shader_library_create(vulkan_renderer_t* renderer);
+RENDERER_API void vulkan_shader_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t OUT library);
 RENDERER_API vulkan_shader_library_t* vulkan_shader_library_load_folder(vulkan_renderer_t* renderer, const char* folder_path);
 RENDERER_API void vulkan_shader_library_destroy(vulkan_shader_library_t* library);
 RENDERER_API void vulkan_shader_library_release_resources(vulkan_shader_library_t* library);

@@ -3,6 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/debug.h>
 
 /* constructors & destructors */
 RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new()
@@ -11,13 +12,18 @@ RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new()
 	memset(pool, 0, sizeof(vulkan_render_pass_pool_t));
 	return pool;
 }
+RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_pool_t OUT pool)
+{
+	pool->renderer = renderer;
+	pool->relocation_table = buf_create(sizeof(vulkan_render_pass_handle_t), 1, 0);
+	pool->slots = buf_create(sizeof(vulkan_render_pass_pool_slot_t), 1, 0);
+log_msg("Vulkan render pass pool has been created successfully\n");
+}
 
 RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_create(vulkan_renderer_t* renderer)
 {
 	vulkan_render_pass_pool_t* pool = vulkan_render_pass_pool_new();
-	pool->renderer = renderer;
-	pool->relocation_table = buf_create(sizeof(vulkan_render_pass_handle_t), 1, 0);
-	pool->slots = buf_create(sizeof(vulkan_render_pass_pool_slot_t), 1, 0);
+	vulkan_render_pass_pool_create_no_alloc(renderer, pool);
 	return pool;
 }
 
@@ -26,6 +32,7 @@ RENDERER_API void vulkan_render_pass_pool_destroy(vulkan_render_pass_pool_t* poo
 	buf_ucount_t count = buf_get_element_count(&pool->slots);
 	for(buf_ucount_t i = 0; i < count; i++)
 		vulkan_render_pass_destroy(CAST_TO(vulkan_render_pass_pool_slot_t*, buf_get_ptr_at(&pool->slots, i))->render_pass);
+	log_msg("Vulkan render pass pool has been destroyed successfully\n");
 }
 
 static void vulkan_render_pass_create_info_deep_free(vulkan_render_pass_create_info_t* create_info)
@@ -44,7 +51,8 @@ RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_p
 	}
 	buf_free(&pool->relocation_table);
 	buf_free(&pool->slots);
-	heap_free(pool);
+	// TODO
+	// heap_free(pool);
 }
 
 /* logic functions */

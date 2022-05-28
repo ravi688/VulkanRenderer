@@ -23,7 +23,7 @@ RENDERER_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* rend
 
 static vulkan_physical_device_t* get_lowest_score_device(vulkan_physical_device_t** devices, u32 count);
 
-static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t** devices, u32 count, vulkan_renderer_gpu_type_t type)
+static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t* devices, u32 count, vulkan_renderer_gpu_type_t type)
 {
 	if(count == 0)
 		LOG_FETAL_ERR("No vulkan physical device found\n");
@@ -32,15 +32,15 @@ static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t**
 	vulkan_physical_device_t* discrete_gpu = NULL;
 	for(int i = 0; i < count; i++)
 	{
-		VkPhysicalDeviceFeatures* features = vulkan_physical_device_get_features(devices[i]);
-		VkPhysicalDeviceProperties* properties = vulkan_physical_device_get_properties(devices[i]);
+		VkPhysicalDeviceFeatures* features = vulkan_physical_device_get_features(&devices[i]);
+		VkPhysicalDeviceProperties* properties = vulkan_physical_device_get_properties(&devices[i]);
 		switch(properties->deviceType)
 		{
 			case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-				integrated_gpu = devices[i];
+				integrated_gpu = &devices[i];
 				break;
 			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-				discrete_gpu = devices[i];
+				discrete_gpu = &devices[i];
 				break;
 		}
 	}
@@ -122,10 +122,10 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t 
 	vulkan_renderer_t* renderer = heap_new(vulkan_renderer_t);
 	memset(renderer, 0, sizeof(vulkan_renderer_t));
 
-	//Create vulkan instance and choose a physical device
+	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[2] = { "VK_KHR_surface", "VK_KHR_win32_surface" };
 	renderer->instance = vulkan_instance_create(extensions, 2);
-	vulkan_physical_device_t** physical_devices = vulkan_instance_get_physical_devices(renderer->instance);
+	vulkan_physical_device_t* physical_devices = vulkan_instance_get_physical_devices(renderer->instance);
 	u32 physical_device_count = vulkan_instance_get_physical_device_count(renderer->instance);
 
 DEBUG_BLOCK
@@ -133,7 +133,7 @@ DEBUG_BLOCK
 	BUFFER log_buffer = buf_create(sizeof(char), 0, 0);
 	vulkan_instance_to_string(renderer->instance, &log_buffer);
 	for(u32 i = 0; i < physical_device_count; i++)
-		vulkan_physical_device_to_string(physical_devices[i], &log_buffer);
+		vulkan_physical_device_to_string(&physical_devices[i], &log_buffer);
 	buf_push_char(&log_buffer, 0);
 	log_msg(buf_get_ptr(&log_buffer));
 )
@@ -290,25 +290,28 @@ DEBUG_BLOCK
 	// setup command buffers
 	renderer->vo_command_buffers = heap_newv(VkCommandBuffer, renderer->swapchain->image_count);
 	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, renderer->swapchain->image_count, renderer->vo_command_buffers);
+	log_msg("Command Buffers has been allocated successfully\n");
 
 	//Set up graphics queue
 	vkGetDeviceQueue(renderer->logical_device->vo_handle, queue_family_indices[0], 0, &renderer->vo_graphics_queue); 
 
 	//Create descripter pool
-	VkDescriptorPoolSize sizes[2] =
+	VkDescriptorPoolSize sizes[3] =
 	{
 		{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 8 },
-		{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 10 }
+		{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 20 },
+		{ .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = 3 }
 	};
 	VkDescriptorPoolCreateInfo pool_create_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-		.poolSizeCount = 2,
+		.poolSizeCount = 3,
 		.pPoolSizes = &sizes[0],
-		.maxSets = 6,
+		.maxSets = 20,
 		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 	};
 	vkCall(vkCreateDescriptorPool(renderer->logical_device->vo_handle, &pool_create_info, NULL, &renderer->vo_descriptor_pool));
+	log_msg("Descriptor pool has been allocated successfully\n");
 
 	renderer->global_set_layout = create_global_set_layout(renderer);
 	renderer->object_set_layout = create_object_set_layout(renderer);
@@ -318,7 +321,6 @@ DEBUG_BLOCK
 	renderer->shader_library = vulkan_shader_library_create(renderer);
 	renderer->material_library = vulkan_material_library_create(renderer, renderer->shader_library);
 	
-	// NOTE: for now let's focus on vulkan
 	// create render pass pool
 	renderer->render_pass_pool = vulkan_render_pass_pool_create(renderer);	
 
@@ -333,6 +335,7 @@ static void setup_global_set(vulkan_renderer_t* renderer)
 		.layout = &renderer->global_set_layout
 	};
 	vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &renderer->global_set);
+	log_msg("Global descriptor set has been created successfully\n");
 }
 
 static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t* renderer)
@@ -347,6 +350,7 @@ static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t
 
 	vulkan_descriptor_set_layout_t layout;
 	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, &layout);
+	log_msg("Object descriptor set layout has been created successfully\n");
 	return layout;
 }
 
@@ -369,6 +373,7 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 	};
 	vulkan_descriptor_set_layout_t layout;
 	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, 2, &layout);
+	log_msg("Global descriptor set layout has been created successfully\n");
 	return layout;	
 }
 

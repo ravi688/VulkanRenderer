@@ -16,6 +16,8 @@ RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new()
 
 RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
 {
+	set->renderer = renderer;
+	set->vo_pool = create_info->vo_pool;
 	VkDescriptorSetAllocateInfo alloc_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -24,7 +26,6 @@ RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* rende
 		.pSetLayouts = &create_info->layout->vo_handle
 	};
 	vkCall(vkAllocateDescriptorSets(set->renderer->logical_device->vo_handle, &alloc_info, &set->vo_handle));
-	set->vo_pool = create_info->vo_pool;
 }
 
 RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(vulkan_renderer_t* renderer, vulkan_descriptor_set_create_info_t* create_info)
@@ -41,7 +42,8 @@ RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set)
 
 RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_t* set)
 {
-	heap_free(set);
+	// TODO:
+	// heap_free(set);
 }
 
 RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, u32 set_number, vulkan_pipeline_layout_t* pipeline_layout)

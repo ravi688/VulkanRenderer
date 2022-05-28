@@ -7,6 +7,7 @@
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
 #include <renderer/internal/vulkan/vulkan_shader_module.h>
+#include <disk_manager/file_reader.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
 #include <shader_compiler/compiler.h>
@@ -1065,6 +1066,21 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	shader->render_pass_count = create_info->render_pass_description_count;
 
 	return shader;
+}
+
+static vulkan_shader_create_info_t* deserialize_shader_create_info(void* bytes, u32 length)
+{
+	vulkan_shader_create_info_t* create_info = heap_new(vulkan_shader_create_info_t);
+	// TODO:
+	return create_info;
+}
+
+RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* load_info)
+{
+	BUFFER* buffer = load_binary_from_file(load_info->path);
+	vulkan_shader_create_info_t* create_info = deserialize_shader_create_info(buffer->bytes, buffer->element_count);
+	buf_free(buffer);
+	return vulkan_shader_create(renderer, create_info);
 }
 
 RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)

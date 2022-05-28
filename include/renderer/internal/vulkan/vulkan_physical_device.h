@@ -24,6 +24,7 @@ BEGIN_CPP_COMPATIBLE
 // constructors and destructors
 RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new();
 RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_device);
+RENDERER_API void vulkan_physical_device_create_no_alloc(VkPhysicalDevice vk_device, vulkan_physical_device_t OUT device);
 RENDERER_API void vulkan_physical_device_destroy(vulkan_physical_device_t* device);
 RENDERER_API void vulkan_physical_device_release_resources(vulkan_physical_device_t* device);
 

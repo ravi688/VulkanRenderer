@@ -66,7 +66,7 @@ RENDERER_API void vulkan_instance_destroy(vulkan_instance_t* instance)
 	assert(instance != NULL);
 	if(instance->physical_devices != NULL)
 		for(u32 i = 0; i < instance->physical_device_count; i++)
-			vulkan_physical_device_destroy(instance->physical_devices[i]);
+			vulkan_physical_device_destroy(&instance->physical_devices[i]);
 	if(instance->handle != VK_NULL_HANDLE)
 		vkDestroyInstance(instance->handle, NULL);
 	instance->handle = VK_NULL_HANDLE;
@@ -81,7 +81,7 @@ RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
 	if(instance->physical_devices != NULL)
 	{
 		for(u32 i = 0; i < instance->physical_device_count; i++)
-			vulkan_physical_device_release_resources(instance->physical_devices[i]);
+			vulkan_physical_device_release_resources(&instance->physical_devices[i]);
 		heap_free(instance->physical_devices);
 	}
 	heap_free(instance);
@@ -110,20 +110,20 @@ RENDERER_API u32 vulkan_instance_get_extension_count(vulkan_instance_t* instance
 	return instance->extension_count;
 }
 
-RENDERER_API vulkan_physical_device_t** vulkan_instance_get_physical_devices(vulkan_instance_t* instance)
+RENDERER_API vulkan_physical_device_t* vulkan_instance_get_physical_devices(vulkan_instance_t* instance)
 {
 	assert(instance != NULL);
 	if(instance->physical_devices != NULL)
 		return instance->physical_devices;
 	u32 physical_device_count = vulkan_instance_get_physical_device_count(instance);
 	if(physical_device_count == 0) return NULL;
-	instance->physical_devices = heap_newv(vulkan_physical_device_t*, physical_device_count);
+	instance->physical_devices = heap_newv(vulkan_physical_device_t, physical_device_count);
 	VkPhysicalDevice* vk_devices = heap_newv(VkPhysicalDevice, physical_device_count);
 	VkResult result = vkEnumeratePhysicalDevices(instance->handle, &physical_device_count, vk_devices);
 	vulkan_result_assert_complete(result);
 	vulkan_result_assert_success(result);
 	for(u32 i = 0; i < physical_device_count; i++)
-		instance->physical_devices[i] = vulkan_physical_device_create(vk_devices[i]);
+		vulkan_physical_device_create_no_alloc(vk_devices[i], &instance->physical_devices[i]);
 	heap_free(vk_devices);
 	return instance->physical_devices;
 }
