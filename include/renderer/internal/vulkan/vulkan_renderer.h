@@ -12,6 +12,9 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 
 typedef struct render_window_t render_window_t;
+typedef struct vulkan_shader_library_t vulkan_shader_library_t;
+typedef struct vulkan_material_library_t vulkan_material_library_t;
+typedef struct vulkan_render_pass_pool_t vulkan_render_pass_pool_t;
 
 typedef enum vulkan_renderer_gpu_type_t
 {
@@ -38,9 +41,9 @@ typedef struct vulkan_renderer_t
 	vulkan_swapchain_t* swapchain;
 
 	u32 graphics_queue_index;
-	VkCommandBuffer* command_buffers;
+	VkCommandBuffer* vo_command_buffers;
 
-	VkSharingMode sharing_mode;
+	VkSharingMode vo_sharing_mode;
 
 	vulkan_descriptor_set_layout_t global_set_layout;
 	vulkan_descriptor_set_layout_t object_set_layout;
@@ -51,6 +54,10 @@ typedef struct vulkan_renderer_t
 	TODO:
 	vulkan_pipeline_layout_pool_t* pipeline_layout_pool;
  */
+
+	vulkan_shader_library_t* shader_library;
+	vulkan_material_library_t* material_library;
+	vulkan_render_pass_pool_t* render_pass_pool;
 } vulkan_renderer_t;
 
 BEGIN_CPP_COMPATIBLE

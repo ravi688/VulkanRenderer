@@ -26,8 +26,9 @@ RENDERER_API vulkan_shader_module_t* vulkan_shader_module_create(vulkan_renderer
 
 RENDERER_API void vulkan_shader_module_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info, vulkan_shader_module_t* shader)
 {
-	shader->vo_module = get_shader_module(renderer->logical_device->vo_handle, spirv, length);
-	shader->vo_stage = get_pipeline_shader_stage_create_info(shader->vo_module, shader_type, "main");
+	shader->renderer = renderer;
+	shader->vo_module = get_shader_module(renderer->logical_device->vo_handle, create_info->spirv, create_info->length);
+	shader->vo_stage = get_pipeline_shader_stage_create_info(shader->vo_module, create_info->type, "main");
 }
 
 RENDERER_API void vulkan_shader_module_load_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_load_info_t* load_info, vulkan_shader_module_t OUT shader)
@@ -45,9 +46,9 @@ RENDERER_API vulkan_shader_module_t* vulkan_shader_module_load(vulkan_renderer_t
 	return shader;
 }
 
-RENDERER_API void vulkan_shader_module_destroy(vulkan_shader_module_t* shader, vulkan_renderer_t* renderer)
+RENDERER_API void vulkan_shader_module_destroy(vulkan_shader_module_t* shader)
 {
-	vkDestroyShaderModule(renderer->logical_device->vo_handle, shader->vo_module, NULL);
+	vkDestroyShaderModule(shader->renderer->logical_device->vo_handle, shader->vo_module, NULL);
 }
 
 RENDERER_API void vulkan_shader_module_release_resources(vulkan_shader_module_t* shader)

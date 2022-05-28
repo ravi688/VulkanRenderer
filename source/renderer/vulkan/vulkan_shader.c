@@ -3,6 +3,10 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
+#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
+#include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
+#include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
+#include <renderer/internal/vulkan/vulkan_shader_module.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
 #include <shader_compiler/compiler.h>
@@ -161,12 +165,12 @@ static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16
 		u32 field_offset = ((align - (offset % align)) % align) + offset;
 		switch(attribute_type)
 		{
-			case MATERIAL_MAT3:
-				LOG_FETAL_ERR("Vertex attribute decode error: MATERIAL_MAT3 isn't supported yet!\n");
+			case GLSL_MAT3:
+				LOG_FETAL_ERR("Vertex attribute decode error: GLSL_MAT3 isn't supported yet!\n");
 			break;
 
-			case MATERIAL_MAT4:
-				LOG_FETAL_ERR("Vertex attribute decode error: MATERIAL_MAT4 isn't supported yet!\n");
+			case GLSL_MAT4:
+				LOG_FETAL_ERR("Vertex attribute decode error: GLSL_MAT4 isn't supported yet!\n");
 			break;
 
 			default:/*or MATERIAL_MAT2*/
@@ -618,12 +622,13 @@ static u16 alignof_glsl_type(u8 type)
 static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource_descriptor_t* material_set_bindings, u32 material_set_binding_count)
 {
 	// holds the indices of the material set binding descriptors which are push constants
-	u32 descriptor_indices[count];
+	u32* descriptor_indices = heap_newv(u32, material_set_binding_count);
 
 	// TODO: add an extra parameter is_zero, if true then each block allocated in the buffer would be first zeroed-out otherwise uninitialized
 	BUFFER ranges = buf_create(sizeof(VkPushConstantRange), 0, 0);
 
-	for(u32 i = 0, range_count = 0; i < material_set_binding_count; i++)
+	u32 range_count = 0;
+	for(u32 i = 0; i < material_set_binding_count; i++)
 	{
 		vulkan_shader_resource_descriptor_t* descriptor = &material_set_bindings[i];
 
@@ -650,7 +655,7 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 			.offset = descriptor->push_constant_range_offset,
 			.size = struct_descriptor_sizeof(&descriptor->handle)
 		};
-		buf_push(ranges, &range);
+		buf_push(&ranges, &range);
 
 		descriptor_indices[range_count] = i;
 		++range_count;
@@ -668,12 +673,12 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 		};
 	}
 
-	VkPushConstantRange max = DEREF_TO(buf_get_ptr_at(ranges, 0), VkPushConstantRange);
+	VkPushConstantRange max = DEREF_TO(VkPushConstantRange, buf_get_ptr_at(&ranges, 0));
 	
 	// find the max (offset + size)
 	for(u16 i = 1; i < range_count; i++)
 	{
-		VkPushConstantRange range = DEREF_TO(buf_get_ptr_at(ranges, i), VkPushConstantRange);
+		VkPushConstantRange range = DEREF_TO(VkPushConstantRange, buf_get_ptr_at(&ranges, i));
 		if((max.offset + max.size) < (range.offset + range.size))
 			max = range;
 	}
@@ -684,18 +689,20 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 	// map each range
 	for(u16 i = 0; i < range_count; i++)
 	{
-		VkPushConstantRange range = DEREF_TO(buf_get_ptr_at(ranges, i), VkPushConstantRange);
+		VkPushConstantRange range = DEREF_TO(VkPushConstantRange, buf_get_ptr_at(&ranges, i));
 		// offsets must be in inceasing order and should be in the bounds of the buffer size which is (max.offset + max.size)
 		assert(range.offset < (max.offset + max.size));
 
 		// map
-		struct_descriptor_map(&descriptors[descriptor_indices[i]].handle, push_constant_buffer + range.offset);
+		struct_descriptor_map(&material_set_bindings[descriptor_indices[i]].handle, push_constant_buffer + range.offset);
 	}
+
+	heap_free(descriptor_indices);
 
 	// return the vulkan_push_constant_t object
 	return (vulkan_push_constant_t)
 	{
-		.ranges = buf_get_ptr(ranges),
+		.ranges = buf_get_ptr(&ranges),
 		.range_count = range_count,
 		.buffer = push_constant_buffer,
 		.buffer_size = max.offset + max.size
@@ -728,7 +735,7 @@ static vulkan_vertex_info_t* create_deep_copy_of_vulkan_vertex_infos(vulkan_vert
 		memcpy(copy_infos[i].attribute_offsets, vertex_infos[i].attribute_offsets, sizeof(VkFormat) * attribute_count);
 		memcpy(copy_infos[i].attribute_locations, vertex_infos[i].attribute_locations, sizeof(VkFormat) * attribute_count);
 	}
-	return copy_Infos;
+	return copy_infos;
 }
 
 static void destroy_vulkan_vertex_infos(vulkan_vertex_info_t* vertex_infos, u32 vertex_info_count)
@@ -764,7 +771,7 @@ static void destroy_set_binding_descriptors(vulkan_shader_resource_descriptor_t*
 {
 	for(u32 i = 0; i < descriptor_count; i++)
 	{
-		if(descriptor[i].handle.fields != NULL)
+		if(descriptors[i].handle.fields != NULL)
 			heap_free(descriptors[i].handle.fields);
 	}
 	heap_free(descriptors);
@@ -800,11 +807,11 @@ static VkFormat get_image_format_from_attachment_type(vulkan_attachment_type_t t
 		case VULKAN_ATTACHMENT_TYPE_DEPTH:
 			return VK_FORMAT_D32_SFLOAT;
 		case VULKAN_ATTACHMENT_TYPE_STENCIL:
-			LOG_FETAL_ERROR("VULKAN_ATTACHMENT_TYPE_STENCIL isn't supported yet!\n");
+			LOG_FETAL_ERR("VULKAN_ATTACHMENT_TYPE_STENCIL isn't supported yet!\n");
 		case VULKAN_ATTACHMENT_TYPE_DEPTH_STENCIL:
-			LOG_FETAL_ERROR("VULKAN_ATTACHMENT_TYPE_DEPTH_STENCIL isn't supported yet!\n");
+			LOG_FETAL_ERR("VULKAN_ATTACHMENT_TYPE_DEPTH_STENCIL isn't supported yet!\n");
 		default:
-			LOG_FETAL_ERROR("Unsupported attachment type %u for any of the image format\n", type);
+			LOG_FETAL_ERR("Unsupported attachment type %u for any of the image format\n", type);
 	}
 	return VK_FORMAT_UNDEFINED;
 }
@@ -830,13 +837,13 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 	}
 	create_info->attachment_description_count = pass->attachment_count;
 
-	if(pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHIAN_TARGET)
+	if(pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET)
 	{
 		assert(create_info->framebuffer_count == renderer->swapchain->image_count);
 		create_info->supplementary_attachments = heap_newv(VkImageView, renderer->swapchain->image_count);
 		create_info->supplementary_attachment_count = 1;
 		for(u32 i = 0; i < renderer->swapchain->image_count; i++)
-			create_info->supplementary_attachments[i] = renderer->swapchain->image_views[i];
+			create_info->supplementary_attachments[i] = renderer->swapchain->vo_image_views[i];
 	}
 
 	for(u32 i = 0; i < pass->attachment_count; i++)
@@ -844,7 +851,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		
 		VkImageLayout final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
-									 ((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHIAN_TARGET) ?
+									 ((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) ?
 									  VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		
 		vulkan_attachment_next_pass_usage_t usage = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_NONE;
@@ -867,7 +874,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 				final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ?
 								VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL :
 								VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-				usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLER;
+				usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED;
 			}
 		}
 
@@ -919,7 +926,14 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 																	VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 		}
 
-		create_info->subpasses[i].depth_stencil_attachment = &pass->subpass_descriptions[i].depth_stencil_attachment;
+		if(pass->subpass_descriptions[i].depth_stencil_attachment != U32_MAX)
+		{
+			VkAttachmentReference* depth_stencil_attachment = heap_new(VkAttachmentReference);
+			assert(pass->attachments[pass->subpass_descriptions[i].depth_stencil_attachment] == VULKAN_ATTACHMENT_TYPE_DEPTH);
+			depth_stencil_attachment->attachment = pass->subpass_descriptions[i].depth_stencil_attachment;
+			depth_stencil_attachment->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			create_info->subpasses[i].depth_stencil_attachment = depth_stencil_attachment;
+		}
 
 		// for now we won't be using preserve attachments
 		create_info->subpasses[i].preserve_attachments = NULL;
@@ -935,6 +949,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	vulkan_shader_render_pass_t* passes = heap_newv(vulkan_shader_render_pass_t, description_count);
 
 	BUFFER set_layouts = buf_create(sizeof(VkDescriptorSetLayout), 1, 0);
+	BUFFER shader_modules = buf_create(sizeof(vulkan_shader_module_t), 1, 0);
 
 	// push global set layout, at GLOBAL_SET = 0
 	buf_push(&set_layouts, &renderer->global_set_layout);
@@ -953,11 +968,11 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 
 		// allocate memory for pipeline layouts & graphics pipelines
 		vulkan_pipeline_layout_t* pipeline_layouts = heap_newv(vulkan_pipeline_layout_t, subpass_count);
-		vulkank_graphics_pipeline_t* pipelines = heap_newv(vulkan_graphics_pipeline_layout_t, subpass_count);
+		vulkan_graphics_pipeline_t* pipelines = heap_newv(vulkan_graphics_pipeline_t, subpass_count);
 
-		vulkan_render_pass_t* render_pass = vulkan_render_pass_pool_get(renderer->render_pass_pool, handle);
-		write_render_pass_descriptors(previous_pass, (i > 0) ? descriptions[i - 1] : 0,
-									  render_pass, descriptions[i]);
+		vulkan_render_pass_t* render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, handle);
+		write_render_pass_descriptors(previous_pass, (i > 0) ? &descriptions[i - 1] : NULL,
+									  render_pass, &descriptions[i]);
 		previous_pass = render_pass;
 
 		// push render set layout, at RENDER_SET = 1
@@ -975,10 +990,10 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 			// create pipeline layout for this subpass
 			vulkan_pipeline_layout_create_info_t layout_create_info =
 			{
-				.push_constant_ranges = common_data->push_constant_ranges,
+				.vo_push_constant_ranges = common_data->push_constant_ranges,
 				.push_constant_range_count = common_data->push_constant_range_count,
-				.descriptor_set_layouts = buf_get_ptr(&set_layouts),
-				.descriptor_set_layout_count = buf_get_element_count(&set_layouts)
+				.vo_set_layouts = buf_get_ptr(&set_layouts),
+				.set_layout_count = buf_get_element_count(&set_layouts)
 			};
 			vulkan_pipeline_layout_create_no_alloc(renderer, &layout_create_info, &pipeline_layouts[j]);
 
@@ -987,13 +1002,22 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 			buf_pop(&set_layouts, NULL);
 			buf_pop(&set_layouts, NULL);
 
+			buf_clear(&shader_modules, NULL);
+			u32 module_count = descriptions[i].subpass_descriptions[j].pipeline_description.spirv_code_count;
+			for(u32 k = 0; k < module_count; k++)
+			{
+				vulkan_shader_module_create_info_t module_create_info = REINTERPRET_TO(vulkan_shader_module_create_info_t, descriptions[i].subpass_descriptions[j].pipeline_description.spirv_codes[k]);
+				buf_push_pseudo(&shader_modules, 1);
+				vulkan_shader_module_create_no_alloc(renderer, &module_create_info, CAST_TO(vulkan_shader_module_t*, buf_peek_ptr(&shader_modules)));
+			}
+
 			// create graphics pipeline for this subpass
 			vulkan_graphics_pipeline_create_info_t pipeline_create_info = 
 			{
-				.pipeline_layout = &pipeline_layouts[j],
-				.pipeline_settings = descriptions[i].subpass_descriptions[j].pipeline_description.settings,
-				.spirv_codes = descriptions[i].subpass_descriptions[j].pipeline_description.spirv_codes,
-				.spirv_code_count = descriptions[i].subpass_descriptions[j].pipeline_description.spirv_code_count,
+				.layout = &pipeline_layouts[j],
+				.settings = descriptions[i].subpass_descriptions[j].pipeline_description.settings,
+				.shader_modules = CAST_TO(vulkan_shader_module_t*, buf_get_ptr(&shader_modules)),
+				.shader_module_count = module_count,
 				.vertex_attribute_bindings = common_data->vertex_attribute_bindings,
 				.vertex_attribute_binding_count = common_data->vertex_attribute_binding_count,
 				.render_pass = render_pass,
@@ -1013,6 +1037,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	buf_pop(&set_layouts, NULL);
 
 	buf_free(&set_layouts);
+	buf_free(&shader_modules);
 	
 	return passes;
 }
@@ -1025,16 +1050,16 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	shader->push_constant = create_vulkan_push_constant(create_info->material_set_bindings, create_info->material_set_binding_count);
 	shader->vertex_infos = create_deep_copy_of_vulkan_vertex_infos(create_info->vertex_infos, create_info->vertex_info_count);
 	shader->vertex_info_count = create_info->vertex_info_count;
-	vulakn_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, create_info->material_set_bindings, create_info->material_set_binding_count, &shader->material_set_layout);
+	vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, create_info->material_set_bindings, create_info->material_set_binding_count, &shader->material_set_layout);
 	shader->material_set_bindings = create_deep_copy_of_set_binding_descriptors(create_info->material_set_bindings, create_info->material_set_binding_count);
 	shader->material_set_binding_count = create_info->material_set_binding_count;
 	vulkan_pipeline_common_data_t common_data = 
 	{
-		.vertex_attribute_bindings = shader->vertex_infos;
-		.vertex_attribute_binding_count = shader->vertex_info_count;
-		.push_constant_ranges = shader->push_constant.ranges;
-		.push_constant_range_count = shader->push_constant.range_count;
-		.material_set_layout = shader->material_set_layout;
+		.vertex_attribute_bindings = shader->vertex_infos,
+		.vertex_attribute_binding_count = shader->vertex_info_count,
+		.push_constant_ranges = shader->push_constant.ranges,
+		.push_constant_range_count = shader->push_constant.range_count,
+		.material_set_layout = shader->material_set_layout
 	};
 	shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, create_info->render_pass_description_count, &common_data);
 	shader->render_pass_count = create_info->render_pass_description_count;
@@ -1045,7 +1070,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 {
 	shader->handle = VULKAN_SHADER_HANDLE_INVALID;
-	VkDescriptorSetLayout(shader->renderer->logical_device->handle, shader->material_set_layout, NULL);
+	vulkan_descriptor_set_layout_destroy(&shader->material_set_layout);
 	// shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, create_info->render_pass_description_count);
 	// shader->render_pass_count = create_info->render_pass_description_count;
 }
@@ -1066,7 +1091,7 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shade
 		if(shader->render_passes[i].handle == handle)
 		{
 			assert(subpass_index < shader->render_passes[i].subpass_count);
-			return shader->render_passes[i].pipelines[subpass_index];
+			return &shader->render_passes[i].pipelines[subpass_index];
 		}
 	}
 	return NULL;
@@ -1080,7 +1105,7 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_
 		if(shader->render_passes[i].handle == handle)
 		{
 			assert(subpass_index < shader->render_passes[i].subpass_count);
-			return shader->render_passes[i].pipeline_layouts[subpass_index];
+			return &shader->render_passes[i].pipeline_layouts[subpass_index];
 		}
 	}
 	return NULL;
@@ -1143,7 +1168,7 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_
 static u32 decode_attribute_count(u64 packed_attributes)
 {
 	u8 bits_per_type = 5;
-	log_u64(packed_attributes);
+	// log_u64(packed_attributes);
 	u64 bits_mask = ~(0xFFFFFFFFFFFFFFFFULL << bits_per_type);
 	u32 count = 0;
 	while(packed_attributes != 0)

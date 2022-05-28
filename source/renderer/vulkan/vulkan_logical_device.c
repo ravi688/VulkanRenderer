@@ -82,7 +82,7 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physic
 		.pEnabledFeatures = device_create_info->features
 	};
 
-	VkResult result = vkCreateDevice(physical_device->handle, &create_info, NULL, &device->handle);
+	VkResult result = vkCreateDevice(physical_device->vo_handle, &create_info, NULL, &device->vo_handle);
 	vulkan_result_assert_success(result);
 
 	heap_free(queue_create_infos);
@@ -93,7 +93,7 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physic
 
 RENDERER_API void vulkan_logical_device_destroy(vulkan_logical_device_t* device)
 {
-	vkDestroyDevice(device->handle, NULL);
+	vkDestroyDevice(device->vo_handle, NULL);
 	log_msg("Logical device destroyed successfully\n");
 }
 
@@ -105,8 +105,9 @@ RENDERER_API void vulkan_logical_device_release_resources(vulkan_logical_device_
 RENDERER_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index)
 {
 	check_pre_condition(device);
-	VkQueue queue;
-	vkGetDeviceQueue(device->handle, family_index, queue_index, &queue);
+	VkQueue vo_queue;
+	vkGetDeviceQueue(device->vo_handle, family_index, queue_index, &vo_queue);
+	return vo_queue;
 }
 
 
@@ -114,7 +115,7 @@ RENDERER_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* de
 static void check_pre_condition(vulkan_logical_device_t* device)
 {
 	assert(device != NULL);
-	assert(device->handle != VK_NULL_HANDLE);
+	assert(device->vo_handle != VK_NULL_HANDLE);
 }
 #endif /* GLOBAL_DEBUG */
 

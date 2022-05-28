@@ -8,7 +8,7 @@
 	typedef struct vulkan_texture_t vulkan_texture_t;
 	typedef vulkan_texture_t texture_t;
 	typedef vulkan_shader_t shader_t;
-	typedef vukan_material_t material_t;
+	typedef vulkan_material_t material_t;
 	typedef vulkan_material_field_handle_t material_field_handle_t;
 #elif RENDERER_OPENGL_DRIVER
 	#include <renderer/internal/opengl/opengl_material.h>

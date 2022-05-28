@@ -26,7 +26,7 @@ typedef struct render_object_create_info_t
 {
 	material_t* material; 					// material that this object uses
 	void* user_data;						// user data such as ptr to mesh_t or text_mesh_t
-	void (*draw)(void* user_data);			// ptr to the draw function, depends on the render object implementation
+	void (*draw_handler)(void* user_data);			// ptr to the draw function, depends on the render object implementation
 } render_object_create_info_t;
 
 

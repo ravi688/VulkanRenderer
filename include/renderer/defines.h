@@ -87,18 +87,30 @@ typedef u32 uint;
 #endif // __cplusplus
 
 #ifdef RENDERER_VULKAN_DRIVER
-typedef struct vulkan_renderer_t vulkan_renderer_t;
+	typedef struct vulkan_renderer_t vulkan_renderer_t;
+#elif defined(RENDERER_OPENGL_DRIVER)
+	typedef struct opengl_renderer_t opengl_renderer_t;
+#elif defined(RENDERER_DIRECTX_DRIVER)
+	typedef struct directx_renderer_t directx_renderer_t;
+#elif defined(RENDERER_METAL_DRIVER)
+	typedef struct metal_renderer_t metal_renderer_t;
 #endif
 
 typedef struct renderer_t renderer_t;
 
+#include <renderer/assert.h>
+#define NOT_IMPLEMENTED_FUNCTION() LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__);
 
-#define NOT_IMPLEMETNED_FUNCTION() LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__);
 
-
-#define DEREF_TO(ptr, type) (*(type*)(ptr))
+#define DEREF_TO(type, ptr) (*(type*)(ptr))
 #define DEREF(ptr) (*(ptr))
-#define CAST_TO(s, to) ((to)(s))
-#define REINTERPRET_TO(s, to) (*(to*)(&s))
+#define CAST_TO(to, s) ((to)(s))
+#define REINTERPRET_TO(to, s) (*(to*)(&s))
 
 #define OUT *
+#define IN const*
+
+#define DEG2RAD 0.01745f
+#define RAD2DEG 57.29577f
+
+#define DEG * DEG2RAD

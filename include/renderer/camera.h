@@ -57,7 +57,7 @@ RENDERER_API void camera_set_rotation(camera_t* camera, vec3_t(float) rotation);
 RENDERER_API void camera_set_aspect_ratio(camera_t* camera, float aspect_ratio);
 RENDERER_API void camera_set_clip_planes(camera_t* camera, float near_clip_plane, float far_clip_plane);
 RENDERER_API void camera_set_field_of_view(camera_t* camera, float fov);
-RENDERER_API void camera_set_height(camera_t* camera);
+RENDERER_API void camera_set_height(camera_t* camera, float height);
 
 
 END_CPP_COMPATIBLE

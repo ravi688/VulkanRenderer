@@ -19,6 +19,8 @@ typedef struct string_t
  */
 RENDERER_API string_t string_create(const char* str);
 
+static RENDERER_API FORCE_INLINE string_t string_null() { return (string_t) { NULL, 0 }; }
+
 /*
 	description: destroys a string (deallocation)
 	params:

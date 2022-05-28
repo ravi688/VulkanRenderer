@@ -1,6 +1,10 @@
 
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
-#include <rendere/memory_allocator.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_defines.h>  					// vkCall
+#include <renderer/internal/vulkan/vulkan_types.h>	 					// vulkan_shader_type_t
+#include <shader_compiler/compiler.h>	 								// shader compiler types
+#include <renderer/memory_allocator.h>
 
 
 RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_new()
@@ -68,11 +72,11 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 		}
 		binding_count++;
 	}
-	vulkan_descriptoR_set_layout_create_no_alloc(renderer, bindings, binding_count, layout);
+	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, binding_count, layout);
 	heap_free(bindings);	
 }
 
-RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors(vulkan_renderer_t* renderer, vulkan_shader_resource_descriptor_t* bindings, u32 binding_count)
+RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_create_from_resource_descriptors(vulkan_renderer_t* renderer, vulkan_shader_resource_descriptor_t* bindings, u32 binding_count)
 {
 	vulkan_descriptor_set_layout_t* layout = vulkan_descriptor_set_layout_new();
 	vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, bindings, binding_count, layout);
@@ -84,7 +88,7 @@ RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc(vulkan_renderer_t
 	if(binding_count == 0)
 	{
 		layout->vo_handle = VK_NULL_HANDLE;
-		layout->rendere = renderer;
+		layout->renderer = renderer;
 		return;
 	}
 
@@ -95,7 +99,7 @@ RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc(vulkan_renderer_t
 		.pBindings = bindings
 	};
 	VkDescriptorSetLayout set_layout;
-	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->handle, &layout_create_info, NULL, &set_layout));
+	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->vo_handle, &layout_create_info, NULL, &set_layout));
 
 	layout->renderer = renderer;
 	layout->vo_handle = set_layout;

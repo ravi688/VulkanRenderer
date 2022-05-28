@@ -4,7 +4,11 @@
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
+typedef buf_ucount_t vulkan_render_pass_handle_t;
+#define VULKAN_RENDER_PASS_HANDLE_INVALID (~0ULL)
+
+typedef struct vulkan_render_pass_t vulkan_render_pass_t;
+typedef struct vulkan_render_pass_create_info_t vulkan_render_pass_create_info_t;
 
 typedef struct vulkan_render_pass_pool_slot_t
 {

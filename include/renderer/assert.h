@@ -80,7 +80,7 @@ static void debug_log_exit(const char* description, const char* format, ...)
 	exit(0);
 }
 
-#define ASSERT_CALLED_ONCE() static int __FUNCTION__##call_counter = 0; ++__FUNCTION__##call_counter; ASSERT(call_counter == 1, "%s has been called more than once\n", __FUNCTION__)
+#define ASSERT_CALLED_ONCE() static int __FUNCTION__##call_counter = 0; ++__FUNCTION__##call_counter; ASSERT(__FUNCTION__##call_counter == 1, "%s has been called more than once\n", __FUNCTION__)
 
 #ifdef __cplusplus
 }

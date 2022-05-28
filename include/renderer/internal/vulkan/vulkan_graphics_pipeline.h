@@ -37,7 +37,7 @@ typedef struct vulkan_graphics_pipeline_create_info_t
 typedef struct vulkan_graphics_pipeline_t
 {
 	vulkan_renderer_t* renderer;
-	VkPipeline vo_pipeline;
+	VkPipeline vo_handle;
 } vulkan_graphics_pipeline_t;
 
 BEGIN_CPP_COMPATIBLE

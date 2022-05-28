@@ -14,14 +14,6 @@ RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t gpu_type, u32 width, 
 	
 	// create the renderer
 	renderer->vulkan_handle = vulkan_renderer_init(CAST_TO(vulkan_renderer_gpu_type_t, gpu_type), width, height, title, full_screen);
-	
-	// create the shader and material library
-	renderer->shader_library = shader_library_create(renderer);
-	renderer->material_library = material_library_create(renderer->shader_library);
-	
-	// NOTE: for now let's focus on vulkan
-	// create render pass pool
-	renderer->render_pass_pool = render_pass_pool_create(renderer);	
 
 	return renderer;
 }
@@ -31,18 +23,6 @@ RENDERER_API void renderer_terminate(renderer_t* renderer)
 	// terminate the renderer
 	vulkan_renderer_terminate(renderer->vulkan_handle);
 	
-	// destroy the shader library
-	shader_library_destroy(renderer->shader_library);
-	material_library_release_resources(renderer->material_library);
-
-	// destroy the material library
-	material_library_destory(renderer->material_library);
-	shader_library_release_resources(renderer->shader_library);
-
-	// destroy the render pass pool
-	render_pass_pool_destroy(renderer->render_pass_pool);
-	render_pass_pool_release_resources(renderer->render_pass_pool);
-
 	heap_free(renderer);
 }
 
@@ -75,16 +55,16 @@ RENDERER_API render_window_t* renderer_get_window(renderer_t* renderer)
 
 RENDERER_API shader_library_t* renderer_get_shader_library(renderer_t* renderer)
 {
-	return renderer->shader_library;
+	return renderer->vulkan_handle->shader_library;
 }
 
 RENDERER_API material_library_t* renderer_get_material_library(renderer_t* renderer)
 {
-	return renderer->material_library;
+	return renderer->vulkan_handle->material_library;
 }
 
 RENDERER_API render_pass_pool_t* renderer_get_render_pass_pool(renderer_t* renderer)
 {
-	return renderer->render_pass_pool;
+	return renderer->vulkan_handle->render_pass_pool;
 }
 

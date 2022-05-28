@@ -12,7 +12,7 @@ RENDERER_API VkCommandPool vulkan_command_pool_create(vulkan_renderer_t* rendere
 		.flags = flags
 	};
 	VkCommandPool pool;
-	vkCall(vkCreateCommandPool(renderer->logical_device->handle, &command_pool_create_info, NULL, &pool));
+	vkCall(vkCreateCommandPool(renderer->logical_device->vo_handle, &command_pool_create_info, NULL, &pool));
 	return pool;
 }
 
@@ -34,7 +34,7 @@ RENDERER_API void vulkan_command_buffer_allocatev(vulkan_renderer_t* renderer, V
 	};
 
 	VkCommandBuffer buffer;
-	vkCall(vkAllocateCommandBuffers(renderer->logical_device->handle, &alloc_info, out_buffers));
+	vkCall(vkAllocateCommandBuffers(renderer->logical_device->vo_handle, &alloc_info, out_buffers));
 }
 
 RENDERER_API void vulkan_command_buffer_begin(VkCommandBuffer buffer, VkCommandBufferUsageFlags flags)

@@ -1,5 +1,6 @@
 
 #include <renderer/render_pass.h>
+#include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
 
 /* constructors and destructors */
@@ -15,7 +16,7 @@ RENDERER_API render_pass_t* render_pass_create(renderer_t* renderer, render_pass
 
 RENDERER_API void render_pass_create_no_alloc(renderer_t* renderer, render_pass_create_info_t* create_info, render_pass_t OUT pass)
 {
-	vulkan_render_pass_create_no_alloc(renderer->vulkan_handle, create_info, object);
+	vulkan_render_pass_create_no_alloc(renderer->vulkan_handle, create_info, pass);
 }
 
 RENDERER_API void render_pass_destroy(render_pass_t* pass)
@@ -30,7 +31,7 @@ RENDERER_API void render_pass_release_resources(render_pass_t* pass)
 
 RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific)
 {
-	vulkan_render_pass_begin(pass, /* framebuffer index */ DEREF_TO(api_specific, u32));
+	vulkan_render_pass_begin(pass, /* framebuffer index */ DEREF_TO(u32, api_specific));
 }
 
 RENDERER_API void render_pass_end(render_pass_t* pass)

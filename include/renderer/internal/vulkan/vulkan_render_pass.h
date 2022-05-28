@@ -6,6 +6,7 @@
 #include <bufferlib/buffer.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
+#include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t
 
 typedef struct vulkan_subpass_create_info_t
 {
@@ -24,7 +25,7 @@ typedef struct vulkan_subpass_create_info_t
 	VkAttachmentReference* depth_stencil_attachment;
 
 	/* list of attachments to be preserved */
-	VkAttachmentReference* preserve_attachments;
+	u32* preserve_attachments;
 	u32 preserve_attachment_count;
 
 	/* used for creating descriptor set layout for the sub render set */
@@ -33,7 +34,7 @@ typedef struct vulkan_subpass_create_info_t
 
 } vulkan_subpass_create_info_t;
 
-typedef struct vulkan_attachment_usage_t vulkan_attachment_usage_t;
+typedef enum vulkan_attachment_next_pass_usage_t vulkan_attachment_next_pass_usage_t;
 
 typedef struct vulkan_render_pass_create_info_t
 {
@@ -46,7 +47,7 @@ typedef struct vulkan_render_pass_create_info_t
 	/* list of attachment descriptions */
 	VkAttachmentDescription* attachment_descriptions;
 	/* list of attachment usages */
-	vulkan_attachment_usage_t* attachment_usages;
+	vulkan_attachment_next_pass_usage_t* attachment_usages;
 	u32 attachment_description_count;
 
 	/* list of extra attachments in the foreach framebuffer such as swapchain image view */
@@ -63,16 +64,13 @@ typedef struct vulkan_render_pass_create_info_t
 
 } vulkan_render_pass_create_info_t;
 
-typedef buf_ucount_t vulkan_render_pass_handle_t;
-#define VULKAN_RENDER_PASS_HANDLE_INVALID (~0ULL)
 typedef struct vulkan_attachment_t vulkan_attachment_t;
 
 typedef struct vulkan_render_pass_t
 {
 	vulkan_renderer_t* renderer;
 
-	/* handle to this render pass in the render pass pool */
-	vulkan_render_pass_handle_t handle;	
+	vulkan_render_pass_handle_t handle;
 
 	/* vulkan object handle */
 	VkRenderPass vo_handle;

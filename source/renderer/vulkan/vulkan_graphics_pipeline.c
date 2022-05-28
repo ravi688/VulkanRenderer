@@ -3,6 +3,8 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
+#include <renderer/internal/vulkan/vulkan_shader_module.h>
+#include <shader_compiler/settings_parser.h>
 #include <renderer/render_window.h>
 
 #include <renderer/memory_allocator.h>
@@ -16,10 +18,11 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 
 RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline)
 {
+	pipeline->renderer;
 	// copy the shader stage create info to a continuous array of VkPipelineShaderStageCreateInfo
-	VkPipelineShaderStageCreateInfo* shader_stages = heap_newv(VkPipelineViewportStateCreateInfo, create_info->shader_module_count);
+	VkPipelineShaderStageCreateInfo* shader_stages = heap_newv(VkPipelineShaderStageCreateInfo, create_info->shader_module_count);
 	for(u32 i = 0; i < create_info->shader_module_count; i++)
-		shader_stages[i] = create_info->shade_modules[i].vo_stage;
+		shader_stages[i] = create_info->shader_modules[i].vo_stage;
 
 	// setup vertex input binding and descriptions
 	VkVertexInputBindingDescription* binding_descriptions = heap_newv(VkVertexInputBindingDescription, create_info->vertex_attribute_binding_count);
@@ -62,9 +65,9 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		for(int i = 0; i < viewport_state->viewportCount; i++)
 		{
 			if(viewports[i].width == 0)
-				viewports[i].width = renderer->swapchain->image_extent.width;
+				viewports[i].width = renderer->swapchain->vo_image_extent.width;
 			if(viewports[i].height == 0)
-				viewports[i].height = renderer->swapchain->image_extent.height;
+				viewports[i].height = renderer->swapchain->vo_image_extent.height;
 		}
 	}
 	if(viewport_state->scissorCount > 0)
@@ -73,9 +76,9 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		for(int i = 0; i < viewport_state->scissorCount; i++)
 		{
 			if(scissors[i].extent.width == 0)
-				scissors[i].extent.width = renderer->swapchain->image_extent.width;
+				scissors[i].extent.width = renderer->swapchain->vo_image_extent.width;
 			if(scissors[i].extent.height == 0)
-				scissors[i].extent.height = renderer->swapchain->image_extent.height;
+				scissors[i].extent.height = renderer->swapchain->vo_image_extent.height;
 		}
 	}
 
@@ -94,11 +97,11 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.pColorBlendState = &create_info->settings->colorblend,
 		.layout = create_info->layout->vo_handle,
 		.renderPass = create_info->render_pass->vo_handle,
-		.subpass = create_info->supass_index,
+		.subpass = create_info->subpass_index,
 		.basePipelineHandle = VK_NULL_HANDLE, // Optional
 		.basePipelineIndex = -1 // Optional
 	};
-	vkCall(vkCreateGraphicsPipelines(renderer->logical_device->vo_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, NULL, &pipeline->pipeline));
+	vkCall(vkCreateGraphicsPipelines(renderer->logical_device->vo_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, NULL, &pipeline->vo_handle));
 
 	buf_free(&attribute_descriptions);
 	heap_free(binding_descriptions);
@@ -120,7 +123,7 @@ RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipe
 
 RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline)
 {
-	vkDestroyPipeline(renderer->logical_device->vo_handle, pipeline->vo_handle, NULL);
+	vkDestroyPipeline(pipeline->renderer->logical_device->vo_handle, pipeline->vo_handle, NULL);
 }
 
 RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)

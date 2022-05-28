@@ -9,12 +9,12 @@
 
 typedef struct vulkan_physical_device_t
 {
-	VkPhysicalDevice handle;
-	VkPhysicalDeviceProperties properties;			// cached properties
-	VkPhysicalDeviceFeatures features;				// cached features
-	VkQueueFamilyProperties* queue_family_properties;
+	VkPhysicalDevice vo_handle;
+	VkPhysicalDeviceProperties vo_properties;			// cached properties
+	VkPhysicalDeviceFeatures vo_features;				// cached features
+	VkQueueFamilyProperties* vo_queue_family_properties;
 	u32 queue_family_count;
-	VkExtensionProperties* extension_properties;
+	VkExtensionProperties* vo_extension_properties;
 	u32 extension_count;
 	//BUFFER /* vulkan_logical_device_t* */ logical_devices; 			// all the logical devices created with this physical device
 } vulkan_physical_device_t;

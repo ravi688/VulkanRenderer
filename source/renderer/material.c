@@ -1,5 +1,4 @@
 #include <renderer/material.h>
-#include <renderer/vulkan_material.h>
 #include <renderer/renderer.h>
 
 RENDERER_API material_t* material_new()

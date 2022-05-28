@@ -22,30 +22,30 @@ RENDERER_API vulkan_image_view_t* vulkan_image_view_new()
 	return view;
 }
 
-RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_image_t* image, vulkan_image_view_type_t view_type)
+RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info)
 {
 	vulkan_image_view_t* view = vulkan_image_view_new();
-	vulkan_image_view_create_no_alloc(image, view_type, view);
+	vulkan_image_view_create_no_alloc(renderer, create_info, view);
 	return view;
 }
 
-RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_image_t* image, vulkan_image_view_type_t view_type, vulkan_image_view_t* out_view)
+RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info, vulkan_image_view_t OUT view)
 {
-	out_view->renderer = image->renderer;
+	view->renderer = renderer;
 	VkImageViewCreateInfo view_create_info  =
 	{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-		.image = image->handle,
-		.viewType = get_view_type(view_type),
-		.format = image->format,
-		.subresourceRange.aspectMask = image->aspect_mask,
+		.image = create_info->image->vo_handle,
+		.viewType = get_view_type(create_info->view_type),
+		.format = create_info->image->vo_format,
+		.subresourceRange.aspectMask = create_info->image->vo_aspect_mask,
 		.subresourceRange.baseMipLevel = 0,
 		.subresourceRange.levelCount = 1,
 		.subresourceRange.baseArrayLayer = 0,
-		.subresourceRange.layerCount = get_layer_count(view_type)
+		.subresourceRange.layerCount = get_layer_count(create_info->view_type)
 	};
-	out_view->layer_count = view_create_info.subresourceRange.layerCount;
-	switch(image->format)
+	view->layer_count = view_create_info.subresourceRange.layerCount;
+	switch(create_info->image->vo_format)
 	{
 		case VK_FORMAT_R8G8B8A8_UNORM:
     	case VK_FORMAT_R8G8B8A8_SNORM:
@@ -57,7 +57,7 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_image_t* image, vulka
     		view_create_info.components = (VkComponentMapping) { VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_R };
     	break;
 	}
-	VkResult result = vkCreateImageView(image->renderer->logical_device->vo_handle, &view_create_info, NULL, &out_view->vo_handle);
+	VkResult result = vkCreateImageView(view->renderer->logical_device->vo_handle, &view_create_info, NULL, &view->vo_handle);
 	vulkan_result_assert_success(result);
 }
 

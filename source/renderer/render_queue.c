@@ -42,11 +42,11 @@ RENDERER_API void render_queue_remove(render_queue_t* queue, render_object_t* ob
 
 RENDERER_API void render_queue_build(render_queue_t* queue)
 {
-	vulkan_queue_build(queue);
+	vulkan_render_queue_build(queue);
 }
 
 RENDERER_API void render_queue_dispatch(render_queue_t* queue)
 {
-	vulkan_queue_dispatch(queue);
+	vulkan_render_queue_dispatch(queue);
 }
 

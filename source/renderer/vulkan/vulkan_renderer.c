@@ -4,6 +4,9 @@
 #include <renderer/internal/vulkan/vulkan_instance.h>
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/internal/vulkan/vulkan_command_buffer.h>
+#include <renderer/internal/vulkan/vulkan_shader_library.h>
+#include <renderer/internal/vulkan/vulkan_material_library.h>
+#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
 #include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 #include <renderer/render_window.h>
@@ -110,8 +113,8 @@ static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, re
 	};
 }
 
-static VkDescriptorSetLayout create_global_set_layout(vulkan_renderer_t* renderer);
-static VkDescriptorSetLayout create_object_set_layout(vulkan_renderer_t* renderer);
+static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer);
+static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t* renderer);
 static void setup_global_set(vulkan_renderer_t* renderer);
 
 RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen)
@@ -211,7 +214,7 @@ DEBUG_BLOCK
 	if(queue_family_indices[1] == U32_MAX)
 		LOG_FETAL_ERR("No queue found supporting presentation capabilities to the created surface\n");
 
-	renderer->sharing_mode = (queue_family_indices[0] == queue_family_indices[1]) ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
+	renderer->vo_sharing_mode = (queue_family_indices[0] == queue_family_indices[1]) ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
 
 	log_u32(queue_family_indices[0]);
 	log_u32(queue_family_indices[1]);
@@ -230,19 +233,19 @@ DEBUG_BLOCK
 	heap_free(minimum_required_features);
 
 	// setup depth buffer format
-	VkFormat* formats = stack_newv(VkFormat, 3);
-	formats[0] = VK_FORMAT_D32_SFLOAT;
-	formats[1] = VK_FORMAT_D32_SFLOAT_S8_UINT;
-	formats[2] = VK_FORMAT_D24_UNORM_S8_UINT;
-	VkFormat depth_format = vulkan_physical_device_find_supported_format(renderer->physical_device, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-	stack_free(formats);
+	// VkFormat* formats = stack_newv(VkFormat, 3);
+	// formats[0] = VK_FORMAT_D32_SFLOAT;
+	// formats[1] = VK_FORMAT_D32_SFLOAT_S8_UINT;
+	// formats[2] = VK_FORMAT_D24_UNORM_S8_UINT;
+	// VkFormat depth_format = vulkan_physical_device_find_supported_format(renderer->physical_device, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	// stack_free(formats);
 
 DEBUG_BLOCK
 (
 	buf_set_element_count(&log_buffer, 0);
-	buf_push_string(&log_buffer, "Selected depth attachment format:");
-	vk_format_to_string("\t", depth_format, &log_buffer);
-	buf_push_newline(&log_buffer);
+	// buf_push_string(&log_buffer, "Selected depth attachment format:");
+	// vk_format_to_string("\t", depth_format, &log_buffer);
+	// buf_push_newline(&log_buffer);
 	buf_push_string(&log_buffer, "Selected color attachment format: ");
 	vk_format_to_string("\t", surface_format.format, &log_buffer);
 	buf_push_newline(&log_buffer);
@@ -270,14 +273,13 @@ DEBUG_BLOCK
 	vulkan_swapchain_create_info_t swapchain_info =
 	{
 		.image_count = image_count,
-		.image_format = surface_format.format,
-		.depth_format = depth_format,
-		.image_color_space = surface_format.colorSpace,
-		.image_extent = image_extent,
-		.image_sharing_mode = (queue_family_indices[0] == queue_family_indices[1]) ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT,
+		.vo_image_format = surface_format.format,
+		// .depth_format = depth_format,
+		.vo_image_color_space = surface_format.colorSpace,
+		.vo_image_extent = image_extent,
 		.queue_family_indices = queue_family_indices,
 		.queue_family_index_count = (queue_family_indices[0] == queue_family_indices[1]) ? 1 : 2,
-		.present_mode = present_mode
+		.vo_present_mode = present_mode
 	};
 	memcpy(&renderer->swapchain_create_info, &swapchain_info, sizeof(vulkan_swapchain_create_info_t));
 	renderer->swapchain = vulkan_swapchain_create(renderer, &swapchain_info);
@@ -306,11 +308,20 @@ DEBUG_BLOCK
 		.maxSets = 6,
 		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 	};
-	vkCall(vkCreateDescriptorPool(renderer->logical_device->vo_handle, &pool_create_info, NULL, &renderer->vk_descriptor_pool));
+	vkCall(vkCreateDescriptorPool(renderer->logical_device->vo_handle, &pool_create_info, NULL, &renderer->vo_descriptor_pool));
 
 	renderer->global_set_layout = create_global_set_layout(renderer);
 	renderer->object_set_layout = create_object_set_layout(renderer);
 	setup_global_set(renderer);
+
+	// create the shader and material library
+	renderer->shader_library = vulkan_shader_library_create(renderer);
+	renderer->material_library = vulkan_material_library_create(renderer, renderer->shader_library);
+	
+	// NOTE: for now let's focus on vulkan
+	// create render pass pool
+	renderer->render_pass_pool = vulkan_render_pass_pool_create(renderer);	
+
 	return renderer;
 }
 
@@ -318,8 +329,8 @@ static void setup_global_set(vulkan_renderer_t* renderer)
 {
 	vulkan_descriptor_set_create_info_t set_create_info = 
 	{
-		.pool = renderer->descriptor_pool,
-		.layout = renderer->global_set_layout
+		.vo_pool = renderer->vo_descriptor_pool,
+		.layout = &renderer->global_set_layout
 	};
 	vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &renderer->global_set);
 }
@@ -344,13 +355,13 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 	VkDescriptorSetLayoutBinding bindings[2] = 
 	{
 		{
-			.binding = VULKAN_DESCRIPTOR_SET_GLOBAL_BINDING_CAMERA,
+			.binding = VULKAN_DESCRIPTOR_BINDING_CAMERA,
 			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = 1,
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		},
 		{
-			.binding = VULKAN_DESCRIPTOR_SET_GLOBAL_BINDING_LIGHT,
+			.binding = VULKAN_DESCRIPTOR_BINDING_LIGHT,
 			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = 1,
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
@@ -364,7 +375,7 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 
 RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 {
-	vulkan_swapchain_acquire_next_image(renderer->swapchain, renderer);
+	vulkan_swapchain_acquire_next_image(renderer->swapchain);
 	vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 	vulkan_command_buffer_begin(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -391,13 +402,13 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 	u32 wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	vulkan_queue_submit(renderer->vo_graphics_queue,
 								renderer->vo_command_buffers[renderer->swapchain->current_image_index],
-								renderer->swapchain->image_available_semaphore,
+								renderer->swapchain->vo_image_available_semaphore,
 								VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-								renderer->swapchain->render_finished_semaphore);
+								renderer->swapchain->vo_render_finished_semaphore);
 	vulkan_queue_present(renderer->vo_graphics_queue, 
-						renderer->swapchain->handle, 
+						renderer->swapchain->vo_handle, 
 						renderer->swapchain->current_image_index,
-						renderer->swapchain->render_finished_semaphore);
+						renderer->swapchain->vo_render_finished_semaphore);
 	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 	vkCall(vkDeviceWaitIdle(renderer->logical_device->vo_handle));
 	render_window_poll_events(renderer->window);
@@ -410,7 +421,19 @@ RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
 
 RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
-	vulkan_descriptor_set_destroy(&renderer->global_set, renderer);
+	// destroy the shader library
+	vulkan_shader_library_destroy(renderer->shader_library);
+	vulkan_shader_library_release_resources(renderer->shader_library);
+
+	// destroy the material library
+	vulkan_material_library_destroy(renderer->material_library);
+	vulkan_material_library_release_resources(renderer->material_library);
+
+	// destroy the render pass pool
+	vulkan_render_pass_pool_destroy(renderer->render_pass_pool);
+	vulkan_render_pass_pool_release_resources(renderer->render_pass_pool);
+
+	vulkan_descriptor_set_destroy(&renderer->global_set);
 	vulkan_descriptor_set_release_resources(&renderer->global_set);
 	vulkan_descriptor_set_layout_destroy(&renderer->object_set_layout);
 	vulkan_descriptor_set_layout_destroy(&renderer->global_set_layout);
@@ -419,10 +442,10 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	render_window_destroy(renderer->window);
 	
 	// destroy swapchain
-	vulkan_swapchain_destroy(renderer->swapchain, renderer);
+	vulkan_swapchain_destroy(renderer->swapchain);
 	vulkan_swapchain_release_resources(renderer->swapchain);
 	
-	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vk_descriptor_pool, NULL);
+	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vo_descriptor_pool, NULL);
 	
 	// // destroy render pass	
 	// vulkan_render_pass_destroy(renderer->render_pass);
@@ -453,6 +476,6 @@ static void vulkan_renderer_on_window_resize(render_window_t* window, void* _ren
 	vulkan_renderer_t* renderer = _renderer;
 	log_msg("Window is resized: %u, %u\n", window->width, window->height);
 	VkSurfaceCapabilitiesKHR surface_capabilities = vulkan_physical_device_get_surface_capabilities(renderer->physical_device, renderer->vo_surface);
-	renderer->swapchain_create_info.image_extent = find_extent(&surface_capabilities, window);
-	vulkan_swapchain_refresh(renderer->swapchain, renderer, &renderer->swapchain_create_info);
+	renderer->swapchain_create_info.vo_image_extent = find_extent(&surface_capabilities, window);
+	vulkan_swapchain_refresh(renderer->swapchain, &renderer->swapchain_create_info);
 }

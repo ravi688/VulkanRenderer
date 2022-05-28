@@ -75,14 +75,19 @@ RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer
 	assert(create_info != NULL);
 	assert(create_info->data != NULL);
 	assert(create_info->data_count != 0);
+	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
+	vulkan_texture_create_no_alloc(renderer, create_info, texture);
+	return texture;
+}
 
+RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info, vulkan_texture_t OUT texture)
+{
 	// for now every texture must have channel count equals to 4
 #ifdef GLOBAL_DEBUG
 	for(u32 i = 0; i < create_info->data_count; i++)
 		assert(create_info->data[i].channel_count == 4);
 #endif // GLOBAL_DEBUG
 
-	vulkan_texture_t* texture = vulkan_texture_new();
 	texture->renderer = renderer;
 	switch(create_info->type)
 	{
@@ -96,22 +101,21 @@ RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer
 		default:
 			LOG_FETAL_ERR("Invalid vulkan texture type\n");
 	}
-	return texture;
 }
 
 RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
 {
 	assert(texture != NULL);
-	vkDestroySampler(texture->renderer->logical_device->handle, texture->image_sampler, NULL);
-	vulkan_image_view_destroy(texture->image_view);
-	vulkan_image_destroy(texture->image);
+	vkDestroySampler(texture->renderer->logical_device->vo_handle, texture->vo_image_sampler, NULL);
+	vulkan_image_view_destroy(&texture->image_view);
+	vulkan_image_destroy(&texture->image);
 }
 
 RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
 {
 	assert(texture != NULL);
-	vulkan_image_view_release_resources(texture->image_view);
-	vulkan_image_release_resources(texture->image);
+	// vulkan_image_view_release_resources(texture->image_view);
+	// vulkan_image_release_resources(texture->image);
 	heap_free(texture);
 }
 
@@ -128,9 +132,9 @@ static void vulkan_texture_create_2d(vulkan_texture_t* texture, vulkan_texture_d
 	{
 		.data = texture_data,
 		.size = texture_size,
-		.usage_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		.sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
-		.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		.vo_usage_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
 	vulkan_buffer_t* staging_buffer = vulkan_buffer_create(texture->renderer, &staging_buffer_info);
 
@@ -150,39 +154,40 @@ static void vulkan_texture_create_2d(vulkan_texture_t* texture, vulkan_texture_d
 
 	vulkan_image_create_info_t image_info =
 	{
-		.flags = 0,		// optional
-		.type = VK_IMAGE_TYPE_2D,
+		.vo_flags = 0,		// optional
+		.vo_type = VK_IMAGE_TYPE_2D,
 		.width = texture_width,
 		.height = texture_height,
 		.depth = 1,
 		.layer_count = 1,
-		.format = format,
-		.tiling = VK_IMAGE_TILING_OPTIMAL,
-		.layout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.usage_mask = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		.memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		.aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT
+		.vo_format = format,
+		.vo_tiling = VK_IMAGE_TILING_OPTIMAL,
+		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.vo_usage_mask = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		.vo_memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		.vo_aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT
 	};
-	texture->image = vulkan_image_create(texture->renderer, &image_info);
+	vulkan_image_create_no_alloc(texture->renderer, &image_info, &texture->image);
 
 	// transition image layout from undefined to transfer destination optimal
-	vulkan_image_transition_layout_to(texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	// copy device memory of staging buffer to the device memory of the image
-	vulkan_image_copy_from_buffer(texture->image, staging_buffer);
+	vulkan_image_copy_from_buffer(&texture->image, staging_buffer);
 
 	// transition image layout from transfer destination optimal to shader read only optimal
-	vulkan_image_transition_layout_to(texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	// destroy staging buffer and it's device memory
 	vulkan_buffer_destroy(staging_buffer);
 	vulkan_buffer_release_resources(staging_buffer);
 
 	// create 2d image view
-	texture->image_view = vulkan_image_view_create(texture->image, VULKAN_IMAGE_VIEW_TYPE_2D);
+	vulkan_image_view_create_info_t view_create_info = { .image = &texture->image, .view_type = VULKAN_IMAGE_VIEW_TYPE_2D };
+ 	vulkan_image_view_create_no_alloc(texture->renderer, &view_create_info, &texture->image_view);
 	
 	// create default sampler
-	texture->image_sampler = get_default_sampler(texture->renderer);
+	texture->vo_image_sampler = get_default_sampler(texture->renderer);
 }
 
 static void vulkan_texture_create_3d(vulkan_texture_t* texture, vulkan_texture_data_t* data);
@@ -207,9 +212,9 @@ static void vulkan_texture_create_cube(vulkan_texture_t* texture, vulkan_texture
 		.data = NULL,		// optional
 		.stride = texture_size,
 		.count = 6,
-		.usage_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		.sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
-		.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		.vo_usage_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
 	vulkan_buffer_t* staging_buffer = vulkan_buffer_create(texture->renderer, &staging_buffer_info);
 
@@ -220,40 +225,41 @@ static void vulkan_texture_create_cube(vulkan_texture_t* texture, vulkan_texture
 	// create image
 	vulkan_image_create_info_t image_info =
 	{
-		.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,		// required for cube map images
-		.type = VK_IMAGE_TYPE_2D,
+		.vo_flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,		// required for cube map images
+		.vo_type = VK_IMAGE_TYPE_2D,
 		.width = texture_width,
 		.height = texture_height,
 		.depth = 1,
 		.layer_count = 6,
 		// for VULKAN_TEXTURE_TYPE_CUBE, format should be VK_FORMAT_R8G8B8A8_SRGB for best color
-		.format = VK_FORMAT_R8G8B8A8_SRGB,
-		.tiling = VK_IMAGE_TILING_OPTIMAL,
-		.layout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.usage_mask = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		.memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		.aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT
+		.vo_format = VK_FORMAT_R8G8B8A8_SRGB,
+		.vo_tiling = VK_IMAGE_TILING_OPTIMAL,
+		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.vo_usage_mask = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		.vo_memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		.vo_aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT
 	};
-	texture->image = vulkan_image_create(texture->renderer, &image_info);
+	vulkan_image_create_no_alloc(texture->renderer, &image_info, &texture->image);
 
 	// transition image layout from undefined to transfer destination optimal
-	vulkan_image_transition_layout_to(texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	// copy device memory of staging buffer to the device memory of the image
-	vulkan_image_copy_from_buffer(texture->image, staging_buffer);
+	vulkan_image_copy_from_buffer(&texture->image, staging_buffer);
 
 	// transition image layout from transfer destination optimal to shader read only optimal
-	vulkan_image_transition_layout_to(texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	// destroy staging buffer and it's device memory
 	vulkan_buffer_destroy(staging_buffer);
 	vulkan_buffer_release_resources(staging_buffer);
 
 	// create 2d image view
-	texture->image_view = vulkan_image_view_create(texture->image, VULKAN_IMAGE_VIEW_TYPE_CUBE);
+	vulkan_image_view_create_info_t view_create_info = { .image = &texture->image, .view_type = VULKAN_TEXTURE_TYPE_CUBE };
+	vulkan_image_view_create_no_alloc(texture->renderer, &view_create_info, &texture->image_view);
 
 	// create default sampler
-	texture->image_sampler = get_cubmap_sampler(texture->renderer);
+	texture->vo_image_sampler = get_cubmap_sampler(texture->renderer);
 }
 
 
@@ -279,7 +285,7 @@ static VkSampler get_default_sampler(vulkan_renderer_t* renderer)
 		.maxLod = 0.0f
 	};
 	VkSampler sampler;
-	vkCall(vkCreateSampler(renderer->logical_device->handle, &create_info, NULL, &sampler));
+	vkCall(vkCreateSampler(renderer->logical_device->vo_handle, &create_info, NULL, &sampler));
 	return sampler;
 }
 
@@ -305,6 +311,6 @@ static VkSampler get_cubmap_sampler(vulkan_renderer_t* renderer)
 		.maxLod = 0.0f
 	};
 	VkSampler sampler;
-	vkCall(vkCreateSampler(renderer->logical_device->handle, &create_info, NULL, &sampler));
+	vkCall(vkCreateSampler(renderer->logical_device->vo_handle, &create_info, NULL, &sampler));
 	return sampler;
 }

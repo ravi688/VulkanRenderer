@@ -1,6 +1,7 @@
 
 #include <renderer/render_pass_pool.h>
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
+#include <renderer/renderer.h>
+#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
 
 /* constructors & destructors */
 RENDERER_API render_pass_pool_t* render_pass_pool_new()

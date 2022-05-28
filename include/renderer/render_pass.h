@@ -8,21 +8,25 @@
 	typedef vulkan_render_pass_t render_pass_t;
 	typedef vulkan_render_pass_create_info_t render_pass_create_info_t;
 	typedef vulkan_render_pass_handle_t render_pass_handle_t;
-#elif RENDERER_OPENGL_DRIVER
+	#define RENDER_PASS_HANDLE_INVALID VULKAN_RENDER_PASS_HANDLE_INVALID
+#elif defined(RENDERER_OPENGL_DRIVER)
 	#include <renderer/internal/opengl/opengl_render_pass.h>
 	typedef opengl_render_pass_t render_pass_t;
 	typedef opengl_render_pass_create_info_t render_pass_create_info_t;
 	typedef opengl_render_pass_handle_t render_pass_handle_t;
-#ifdef RENDERER_DIRECTX_DRIVER
+	#define RENDER_PASS_HANDLE_INVALID OPENGL_RENDER_PASS_HANDLE_INVALID
+#elif defined(RENDERER_DIRECTX_DRIVER)
 	#include <renderer/internal/directx/directx_render_pass.h>
 	typedef directx_render_pass_t render_pass_t;
 	typedef directx_render_pass_create_info_t render_pass_create_info_t;
 	typedef directx_render_pass_handle_t render_pass_handle_t;
-#ifdef RENDERER_METAL_DRIVER
+	#define RENDER_PASS_HANDLE_INVALID DIRECTX_RENDER_PASS_HANDLE_INVALID
+#elif defined(RENDERER_METAL_DRIVER)
 	#include <renderer/internal/metal/metal_render_pass.h>
 	typedef metal_render_pass_t render_pass_t;
 	typedef metal_render_pass_create_info_t render_pass_create_info_t;
 	typedef metal_render_pass_handle_t render_pass_handle_t;
+	#define RENDER_PASS_HANDLE_INVALID METAL_RENDER_PASS_HANDLE_INVALID
 #endif
 
 

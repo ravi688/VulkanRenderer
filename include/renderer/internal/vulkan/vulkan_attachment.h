@@ -24,7 +24,7 @@ typedef enum vulkan_attachment_type_t
 	/* for depth only attachment, format would be automatically deduced */
 	VULKAN_ATTACHMENT_TYPE_DEPTH = 1 << 1,
 	/* for stencil only attachment, format would be automatically deduced */
-	VUKLAN_ATTACHMENT_TYPE_STENCIL = 1 << 2,
+	VULKAN_ATTACHMENT_TYPE_STENCIL = 1 << 2,
 	/* for depth & stencil attachment, format would be automatically decuded */
 	VULKAN_ATTACHMENT_TYPE_DEPTH_STENCIL = VULKAN_ATTACHMENT_TYPE_DEPTH | VULKAN_ATTACHMENT_TYPE_STENCIL
 } vulkan_attachment_type_t;
@@ -47,7 +47,7 @@ typedef struct vulkan_attachment_t
 	/* image for this attachment */
 	vulkan_image_t image;
 	/* image view for this attachment */
-	vuklan_image_view_t image_view;
+	vulkan_image_view_t image_view;
 } vulkan_attachment_t;
 
 
@@ -62,6 +62,6 @@ RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attac
 
 /* getters */
 RENDERER_API vulkan_image_t* vulkan_attachment_get_image(vulkan_attachment_t* attachment);
-RENDERER_API vuklan_image_view_t* vulkan_attachment_get_image_view(vulkan_attachment_t* attachment);
+RENDERER_API vulkan_image_view_t* vulkan_attachment_get_image_view(vulkan_attachment_t* attachment);
 
 END_CPP_COMPATIBLE

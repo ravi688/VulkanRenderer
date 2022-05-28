@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <vulkan/vulkan.h>
 #include <renderer/defines.h>
 #include <renderer/struct_descriptor.h>
 

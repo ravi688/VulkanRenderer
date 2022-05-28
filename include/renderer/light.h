@@ -19,6 +19,8 @@
 #include <renderer/defines.h>
 #include <hpml/vec3/header_config.h>
 #include <hpml/vec3/vec3.h>
+#include <hpml/memory/header_config.h>
+#include <hpml/memory/memory.h>
 #include <hpml/mat4/header_config.h>
 #include <hpml/mat4/mat4.h>
 
@@ -34,7 +36,7 @@ typedef enum light_type_t
 	LIGHT_TYPE_AMBIENT = 6
 } light_type_t;
 
-BEGIN_CPP_COMPTABILE
+BEGIN_CPP_COMPATIBLE
 
 RENDERER_API light_t* light_new();
 RENDERER_API light_t* light_create(renderer_t* renderer, light_type_t type);
@@ -49,4 +51,4 @@ RENDERER_API void light_set_color(light_t* light, vec3_t(float) color);
 RENDERER_API void light_set_projection(light_t* light, mat4_t(float) projection);
 RENDERER_API void light_set_direction(light_t* light, vec3_t(float) dir);
 
-END_CPP_COMPTABILE
+END_CPP_COMPATIBLE

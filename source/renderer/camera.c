@@ -1,6 +1,6 @@
 
 #include <renderer/camera.h>
-
+#include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
@@ -13,12 +13,12 @@ RENDERER_API camera_t* camera_new()
 
 RENDERER_API camera_t* camera_create(renderer_t* renderer, camera_projection_type_t projection_type, float height_or_angle)
 {
-	return vulkan_camera_create(renderer->vulkan_handle, REINTERPRET_TO(projection_type, vulkan_camera_projection_type_t), height_or_angle);
+	return vulkan_camera_create(renderer->vulkan_handle, REINTERPRET_TO(vulkan_camera_projection_type_t, projection_type), height_or_angle);
 }
 
 RENDERER_API void camera_create_no_alloc(renderer_t* renderer, camera_projection_type_t projection_type, float height_or_angle, camera_t OUT camera)
 {
-	vulkan_camera_create_no_alloc(renderer->vulkan_handle REINTERPRET_TO(projection_type, vulkan_camera_projection_type_t), height_or_angle, camera);
+	vulkan_camera_create_no_alloc(renderer->vulkan_handle, REINTERPRET_TO(vulkan_camera_projection_type_t, projection_type), height_or_angle, camera);
 }
 
 RENDERER_API void camera_destroy(camera_t* camera)
@@ -45,7 +45,7 @@ RENDERER_API vec3_t(float) camera_get_rotation(camera_t* camera)
 
 RENDERER_API float camera_get_aspect_ratio(camera_t* camera)
 {
-	return vulkan_camera_get_aspect_ration(camera);
+	return vulkan_camera_get_aspect_ratio(camera);
 }
 
 RENDERER_API vec2_t(float) camera_get_clip_planes(camera_t* camera)
@@ -82,7 +82,7 @@ RENDERER_API void camera_set_position(camera_t* camera, vec3_t(float) position)
 
 RENDERER_API void camera_set_rotation(camera_t* camera, vec3_t(float) rotation)
 {
-	vulkan_camera_set_rotation(camera, position);
+	vulkan_camera_set_rotation(camera, rotation);
 }
 
 RENDERER_API void camera_set_aspect_ratio(camera_t* camera, float aspect_ratio)
@@ -100,7 +100,7 @@ RENDERER_API void camera_set_field_of_view(camera_t* camera, float fov)
 	vulkan_camera_set_field_of_view(camera, fov);
 }
 
-RENDERER_API void camera_set_height(camera_t* camera)
+RENDERER_API void camera_set_height(camera_t* camera, float height)
 {
-	vulkan_camera_set_height(camera);
+	vulkan_camera_set_height(camera, height);
 }

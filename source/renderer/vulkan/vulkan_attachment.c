@@ -26,11 +26,11 @@ static VkFormat get_image_format_from_attachment_type(vulkan_attachment_type_t t
 		case VULKAN_ATTACHMENT_TYPE_DEPTH:
 			return VK_FORMAT_D32_SFLOAT;
 		case VULKAN_ATTACHMENT_TYPE_STENCIL:
-			LOG_FETAL_ERROR("VULKAN_ATTACHMENT_TYPE_STENCIL isn't supported yet!\n");
+			LOG_FETAL_ERR("VULKAN_ATTACHMENT_TYPE_STENCIL isn't supported yet!\n");
 		case VULKAN_ATTACHMENT_TYPE_DEPTH_STENCIL:
-			LOG_FETAL_ERROR("VULKAN_ATTACHMENT_TYPE_DEPTH_STENCIL isn't supported yet!\n");
+			LOG_FETAL_ERR("VULKAN_ATTACHMENT_TYPE_DEPTH_STENCIL isn't supported yet!\n");
 		default:
-			LOG_FETAL_ERROR("Unsupported attachment type %u for any of the image format\n", type);
+			LOG_FETAL_ERR("Unsupported attachment type %u for any of the image format\n", type);
 	}
 	return VK_FORMAT_UNDEFINED;
 }
@@ -47,7 +47,7 @@ static VkImageUsageFlags get_image_usage_from_format(VkFormat format, vulkan_att
 			flags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 			break;
 		default:
-			LOG_FETAL_ERROR("Unsupported format %u for any of the image usages\n", format);
+			LOG_FETAL_ERR("Unsupported format %u for any of the image usages\n", format);
 	}
 	flags |= (usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT) ? VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT : 0;
 	flags |= (usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
@@ -68,7 +68,7 @@ static VkImageUsageFlags get_image_usage_from_attachment_type(vulkan_attachment_
 			flags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 			break;
 		default:
-			LOG_FETAL_ERROR("Unsupported attachment type %u for any of the image usages\n", type);
+			LOG_FETAL_ERR("Unsupported attachment type %u for any of the image usages\n", type);
 	}
 	flags |= (usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT) ? VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT : 0;
 	flags |= (usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
@@ -86,23 +86,23 @@ static VkImageAspectFlags get_image_aspect_from_attachment_type(vulkan_attachmen
 		case VULKAN_ATTACHMENT_TYPE_STENCIL:
 			return VK_IMAGE_ASPECT_STENCIL_BIT;
 		case VULKAN_ATTACHMENT_TYPE_DEPTH_STENCIL:
-			return VK_IMAGE_ASPECT_STENCIL_BIT | VK_IMAGE_ASPECT_DEPTH_BIT
+			return VK_IMAGE_ASPECT_STENCIL_BIT | VK_IMAGE_ASPECT_DEPTH_BIT;
 		default:
-			LOG_FETAL_ERROR("Unsupported attachment type : %u\n", type);
+			LOG_FETAL_ERR("Unsupported attachment type : %u\n", type);
 	}
 	return 0;
 }
 
 static VkImageAspectFlags get_image_aspect_from_format(VkFormat format)
 {
-	switch(type)
+	switch(format)
 	{
 		case VK_FORMAT_B8G8R8A8_SRGB:
 			return VK_IMAGE_ASPECT_COLOR_BIT;
 		case VK_FORMAT_D32_SFLOAT:
 			return VK_IMAGE_ASPECT_DEPTH_BIT;
 		default:
-			LOG_FETAL_ERROR("Unsupported format %u for any of the image aspect flags\n", format);
+			LOG_FETAL_ERR("Unsupported format %u for any of the image aspect flags\n", format);
 	}
 	return 0;
 }
@@ -114,22 +114,27 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 	// create image for this attachment
 	vulkan_image_create_info_t image_create_info = 
 	{
-		.type = VK_IMAGE_TYPE_2D,
-		.format = create_info->format ? create_info->format : get_image_format_from_attachment_type(create_info->attachment_type),
+		.vo_type = VK_IMAGE_TYPE_2D,
+		.vo_format = create_info->format ? create_info->format : get_image_format_from_attachment_type(create_info->type),
 		.width = create_info->width,
 		.height = create_info->height,
 		.depth = 1,
 		.layer_count = 1,
-		.tiling = VK_IMAGE_TILING_OPTIMAL,
-		.layout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.usage_mask = create_info->format ? get_image_usage_from_format(create_info->format, create_info->usage) : get_image_usage_from_attachment_type(create_info->attachment_type, create_info->usage),
-		.memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		.aspect_mask = create_info->format ? get_image_aspect_from_format(create_info->format) : get_image_aspect_from_attachment_type(create_info->attachment_type)
+		.vo_tiling = VK_IMAGE_TILING_OPTIMAL,
+		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.vo_usage_mask = create_info->format ? get_image_usage_from_format(create_info->format, create_info->next_pass_usage) : get_image_usage_from_attachment_type(create_info->type, create_info->next_pass_usage),
+		.vo_memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		.vo_aspect_mask = create_info->format ? get_image_aspect_from_format(create_info->format) : get_image_aspect_from_attachment_type(create_info->type)
 	};
 	vulkan_image_create_no_alloc(renderer, &image_create_info, &attachment->image);
 
 	// create image view for this attachment
-	vulkan_image_view_create_no_alloc(renderer, &attachment->image, VULKAN_IMAGE_VIEW_TYPE_2D, &attachment->image_view);
+	vulkan_image_view_create_info_t view_create_info =
+	{
+		.image = &attachment->image,
+		.view_type = VULKAN_IMAGE_VIEW_TYPE_2D
+	};
+	vulkan_image_view_create_no_alloc(renderer, &view_create_info, &attachment->image_view);
 }
 
 RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)

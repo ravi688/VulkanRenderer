@@ -9,6 +9,8 @@
 #include <hpml/vec3/vec3.h>
 #include <hpml/vec2/header_config.h>
 #include <hpml/vec2/vec2.h>
+#include <hpml/memory/header_config.h>
+#include <hpml/memory/memory.h>
 #include <hpml/mat4/header_config.h>
 #include <hpml/mat4/mat4.h>
 
@@ -43,8 +45,8 @@ RENDERER_API vec3_t(float) vulkan_camera_get_position(vulkan_camera_t* camera);
 RENDERER_API vec3_t(float) vulkan_camera_get_rotation(vulkan_camera_t* camera);
 RENDERER_API float vulkan_camera_get_aspect_ratio(vulkan_camera_t* camera);
 RENDERER_API vec2_t(float) vulkan_camera_get_clip_planes(vulkan_camera_t* camera);
-static RENDERER_API FORCE_INLINE float vulkan_camera_get_near_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_clip_planes(camera).x; }
-static RENDERER_API FORCE_INLINE float vulkan_camera_get_far_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_clip_planes(camera).y; }
+static RENDERER_API FORCE_INLINE float vulkan_camera_get_near_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_get_clip_planes(camera).x; }
+static RENDERER_API FORCE_INLINE float vulkan_camera_get_far_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_get_clip_planes(camera).y; }
 RENDERER_API float vulkan_camera_get_field_of_view(vulkan_camera_t* camera);
 static RENDERER_API FORCE_INLINE float vulkan_camera_get_height(vulkan_camera_t* camera) { return vulkan_camera_get_field_of_view(camera); }
 
@@ -54,6 +56,6 @@ RENDERER_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t(flo
 RENDERER_API void vulkan_camera_set_aspect_ratio(vulkan_camera_t* camera, float aspect_ratio);
 RENDERER_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane);
 RENDERER_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float fov);
-static RENDERER_API FORCE_INLINE void vulkan_camera_set_height(vulkan_camera_t* camera) { vulkan_camera_set_field_of_view(camera); }
+static RENDERER_API FORCE_INLINE void vulkan_camera_set_height(vulkan_camera_t* camera, float height) { vulkan_camera_set_field_of_view(camera, height); }
 
 END_CPP_COMPATIBLE

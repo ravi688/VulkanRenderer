@@ -1,8 +1,11 @@
 #include <renderer/internal/vulkan/vulkan_material.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
+#include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
+#include <shader_compiler/compiler.h>
 
 RENDERER_API vulkan_material_t* vulkan_material_new()
 {
@@ -46,11 +49,11 @@ static void setup_material_resources(vulkan_material_t* material)
 			vulkan_buffer_create_info_t create_info =
 			{
 				.size = size,
-				.usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+				.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 			};
 			vulkan_buffer_create_no_alloc(material->renderer, &create_info, &resource->buffer);
-			vulkan_material_set_uniform_buffer(material, descriptor->binding_number, &resource->buffer);
+			vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, &resource->buffer);
 		}
 		else
 			resource->index = 0xFFFF;
@@ -66,9 +69,9 @@ RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, v
 	// create MATERIAL_SET
 	vulkan_descriptor_set_create_info_t create_info = 
 	{
-		.pool = renderer->descriptor_pool,
-		.layout = shader->material_set_layout
-	}
+		.vo_pool = renderer->vo_descriptor_pool,
+		.layout = &shader->material_set_layout
+	};
 	vulkan_descriptor_set_create_no_alloc(renderer, &create_info, &material->material_set);
 	setup_material_resources(material);
 }
@@ -85,25 +88,26 @@ RENDERER_API vulkan_material_t* vulkan_material_create(vulkan_renderer_t* render
 
 RENDERER_API void vulkan_material_destroy(vulkan_material_t* material)
 {
-	vulkan_descriptor_set_destroy(&material->material_set, material->renderer);
+	vulkan_descriptor_set_destroy(&material->material_set);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
 		if(material->uniform_resources[i].index != 0xFFFF)
-			vulkan_descriptor_set_destroy(&material->uniform_resources[i].buffer, material->renderer);
+			vulkan_buffer_destroy(&material->uniform_resources[i].buffer);
 }
 
 RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 {
-	for(u16 i = 0; i < material->uniform_resource_count; i++)
-		if(material->uniform_resources[i].index != 0xFFFF)
-			vulkan_descriptor_set_release_resources(&material->uniform_resources[i].buffer);
+	// for(u16 i = 0; i < material->uniform_resource_count; i++)
+	// 	if(material->uniform_resources[i].index != 0xFFFF)
+	// 		vulkan_buffer_release_resources(&material->uniform_resources[i].buffer);
 	heap_free(material->uniform_resources);
 	heap_free(material);
 }
 
+static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags);
+
 static void set_push_constants(vulkan_material_t* material, vulkan_shader_resource_descriptor_t* descriptor, vulkan_pipeline_layout_t* pipeline_layout)
 {
-	vulkan_pipeline_layout_push_constants(material->shader->current_bound_pipeline->pipeline_layout, 
-											material->renderer->handle, 
+	vulkan_pipeline_layout_push_constants(pipeline_layout, 
 											get_vulkan_shader_flags(descriptor->stage_flags), 
 											descriptor->push_constant_range_offset, 
 											struct_descriptor_sizeof(&descriptor->handle), 
@@ -112,20 +116,10 @@ static void set_push_constants(vulkan_material_t* material, vulkan_shader_resour
 
 RENDERER_API void vulkan_material_push_constants(vulkan_material_t* material, vulkan_pipeline_layout_t* pipeline_layout)
 {
-	u32 binding_count = material->material_set_binding_count;
+	u32 binding_count = material->shader->material_set_binding_count;
 	for(u32 i = 0; i < binding_count; i++)
-		if(material->material_set_bindings[i].is_push_constant)
-			set_push_constants(material, &material->material_set_bindings[i], pipeline_layout);
-}
-
-RENDERER_API void vulkan_material_set_texture(vulkan_material_t* material, u32 binding_index, vulkan_texture_t* texture)
-{
-	vulkan_descriptor_set_write_texture(&material->material_set, material->renderer, binding_index, texture);
-}
-
-RENDERER_API void vulkan_material_set_uniform_buffer(vulkan_material_t* material, u32 binding_index, vulkan_buffer_t* buffer)
-{
-	vulkan_descriptor_set_write_uniform_buffer(&material->material_set, material->renderer, binding_index, buffer);
+		if(material->shader->material_set_bindings[i].is_push_constant)
+			set_push_constants(material, &material->shader->material_set_bindings[i], pipeline_layout);
 }
 
 /* ------------------------------------------ BEGIN: PUSH CONSTANTS -------------------------------------------*/
@@ -411,7 +405,7 @@ RENDERER_API void vulkan_material_set_textureH(vulkan_material_t* material, vulk
 	assert(handle.index < material->shader->material_set_binding_count);
 	vulkan_shader_resource_descriptor_t descriptor = material->shader->material_set_bindings[handle.index];
 	assert(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
-	vulkan_material_set_texture(material, descriptor.binding_number, texture);
+	vulkan_descriptor_set_write_texture(&material->material_set, descriptor.binding_number, texture);
 }
 
 RENDERER_API float vulkan_material_get_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
@@ -606,12 +600,12 @@ RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vul
 	u16 field_handle = STRUCT_FIELD_INVALID_HANDLE;
 	for(u16 i = 0, j = 0; i < binding_count; i++)
 	{
-		vulkan_shader_resource_descriptor_t binding = &bindings[i];
-		if(!binding.is_uniform)
+		vulkan_shader_resource_descriptor_t* binding = &bindings[i];
+		if(!binding->is_uniform)
 			continue;
-		if(strcmp(binding.handle.name, struct_name) == 0)
+		if(strcmp(binding->handle.name, struct_name) == 0)
 		{
-			field_handle = struct_descriptor_get_field_handle(&binding.handle, field_name);
+			field_handle = struct_descriptor_get_field_handle(&binding->handle, field_name);
 			index = i;
 			uniform_index = j;
 			if(field_handle == STRUCT_FIELD_INVALID_HANDLE)

@@ -2,7 +2,7 @@
 #pragma once
 
 #include <renderer/defines.h>
-#include <renderer/buffer.h>
+#include <bufferlib/buffer.h>
 
 typedef struct file_info_t
 {

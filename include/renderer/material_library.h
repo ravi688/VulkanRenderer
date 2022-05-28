@@ -2,31 +2,52 @@
 #pragma once
 
 #include <renderer/defines.h>
-#include <bufferlib/buffer.h>
 
-#include <renderer/shader_library.h>
-#include <renderer/material.h>
-#include <renderer/shader.h>
-#include <renderer/string.h>
-
-typedef struct material_library_slot_t
-{
-	string_t name;
-	material_t* material;
-	material_handle_t handle;
-} material_library_slot_t;
-
-typedef struct material_library_t
-{
-	shader_library_t* shader_library;
-	BUFFER relocation_table;
-	BUFFER materials;
-} material_library_t;
-
+#ifdef RENDERER_VULKAN_DRIVER
+	#include <renderer/internal/vulkan/vulkan_material_library.h>
+	typedef vulkan_material_library_t material_library_t;
+	typedef vulkan_material_t material_t;
+	typedef vulkan_material_handle_t material_handle_t;
+	#define MATERIAL_HANDLE_INVALID VULKAN_MATERIAL_HANDLE_INVALID
+	typedef struct vulkan_shader_t vulkan_shader_t;
+	typedef vulkan_shader_t shader_t;
+	typedef vulkan_shader_library_t shader_library_t;
+	typedef vulkan_shader_handle_t shader_handle_t;
+#elif defined(RENDERER_OPENGL_DRIVER)
+	#include <renderer/internal/opengl/opengl_material_library.h>
+	typedef opengl_material_library_t material_library_t;
+	typedef opengl_material_t material_t;
+	typedef opengl_material_handle_t material_handle_t;
+	#define MATERIAL_HANDLE_INVALID OPENGL_MATERIAL_HANDLE_INVALID
+	typedef struct opengl_shader_t opengl_shader_t;
+	typedef opengl_shader_t shader_t;
+	typedef opengl_shader_library_t shader_library_t;
+	typedef opengl_shader_handle_t shader_handle_t;
+#elif defined(RENDERER_DIRECTX_DRIVER)
+	#include <renderer/internal/directx/directx_material_library.h>
+	typedef directx_material_library_t material_library_t;
+	typedef directx_material_t material_t;
+	typedef directx_material_handle_t material_handle_t;
+	#define MATERIAL_HANDLE_INVALID DIRECTX_MATERIAL_HANDLE_INVALID
+	typedef struct directx_shader_t directx_shader_t;
+	typedef directx_shader_t shader_t;
+	typedef directx_shader_library_t shader_library_t;
+	typedef directx_shader_handle_t shader_handle_t;
+#elif defined(RENDERER_METAL_DRIVER)
+	#include <renderer/internal/metal/metal_material_library.h>
+	typedef metal_material_library_t material_library_t;
+	typedef metal_material_t material_t;
+	typedef metal_material_handle_t material_handle_t;
+	#define MATERIAL_HANDLE_INVALID METAL_MATERIAL_HANDLE_INVALID
+	typedef struct metal_shader_t metal_shader_t;
+	typedef metal_shader_t shader_t;
+	typedef metal_shader_library_t shader_library_t;
+	typedef metal_shader_handle_t shader_handle_t;
+#endif
 
 /* constructors & destructors */
 RENDERER_API material_library_t* material_library_new();
-RENDERER_API material_library_t* material_library_create(shader_library_t* shader_library);
+RENDERER_API material_library_t* material_library_create(renderer_t* renderer, shader_library_t* shader_library);
 RENDERER_API void material_library_destroy(material_library_t* library);
 RENDERER_API void material_library_release_resources(material_library_t* library);
 

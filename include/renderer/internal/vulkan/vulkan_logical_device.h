@@ -24,7 +24,7 @@ typedef struct vulkan_logical_device_create_info_t
  
 typedef struct vulkan_logical_device_t
 {
-	VkDevice handle;
+	VkDevice vo_handle;
 } vulkan_logical_device_t;
 
 BEGIN_CPP_COMPATIBLE

@@ -20,6 +20,13 @@ typedef enum vulkan_image_view_type_t
 	VULKAN_IMAGE_VIEW_TYPE_CUBE_ARRAY
 } vulkan_image_view_type_t;
 
+typedef struct vulkan_image_view_create_info_t
+{
+	vulkan_image_t* image;
+	vulkan_image_view_type_t view_type;
+} vulkan_image_view_create_info_t;
+
+
 typedef struct vulkan_image_view_t
 {
 	vulkan_renderer_t* renderer;
@@ -32,8 +39,8 @@ BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
 RENDERER_API vulkan_image_view_t* vulkan_image_view_new();
-RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_image_t* image, vulkan_image_view_type_t type);
-RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_image_t* image, vulkan_image_view_type_t type, vulkan_image_view_t* out_view);
+RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info);
+RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info, vulkan_image_view_t OUT view);
 RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view);
 RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view);
 

@@ -2,29 +2,41 @@
 #pragma once
 
 #include <renderer/defines.h>
-#include <renderer/shader.h>
-#include <renderer/string.h>
-#include <bufferlib/buffer.h>
 
-typedef struct shader_library_slot_t
-{
-	string_t name;
-	shader_t* shader;
-	shader_handle_t handle;
-} shader_library_slot_t;
-
-typedef struct shader_library_t
-{
-	renderer_t* context;
-	BUFFER relocation_table; 	// list of buf_ucount_t
-	BUFFER shaders; 			// list of shader_library_slot_t
-} shader_library_t;
-
+#ifdef RENDERER_VULKAN_DRIVER
+	#include <renderer/internal/vulkan/vulkan_shader_library.h>
+	typedef vulkan_shader_library_t shader_library_t;
+	typedef vulkan_shader_t shader_t;
+	typedef vulkan_shader_create_info_t shader_create_info_t;
+	typedef vulkan_shader_handle_t shader_handle_t;
+	#define SHADER_HANDLE_INVALID VULKAN_SHADER_HANDLE_INVALID
+#elif defined(RENDERER_OPENGL_DRIVER)
+	#include <renderer/internal/opengl/opengl_shader_library.h>
+	typedef opengl_shader_library_t shader_library_t;
+	typedef opengl_shader_t shader_t;
+	typedef opengl_shader_create_info_t shader_create_info_t;
+	typedef opengl_shader_handle_t shader_handle_t;
+	#define SHADER_HANDLE_INVALID OPENGL_SHADER_HANDLE_INVALID
+#elif defined(RENDERER_DIRECTX_DRIVER)
+	#include <renderer/internal/directx/directx_shader_library.h>
+	typedef directx_shader_library_t shader_library_t;
+	typedef directx_shader_t shader_t;
+	typedef directx_shader_create_info_t shader_create_info_t;
+	typedef directx_shader_handle_t shader_handle_t;
+	#define SHADER_HANDLE_INVALID DIRECTX_SHADER_HANDLE_INVALID
+#elif defined(RENDERER_METAL_DRIVER)
+	#include <renderer/internal/metal/metal_shader_library.h>
+	typedef metal_shader_library_t shader_library_t;
+	typedef metal_shader_t shader_t;
+	typedef metal_shader_create_info_t shader_create_info_t;
+	typedef metal_shader_handle_t shader_handle_t;
+	#define SHADER_HANDLE_INVALID METAL_SHADER_HANDLE_INVALID
+#endif
 
 /* constructors & destructors */
 RENDERER_API shader_library_t* shader_library_new();
-RENDERER_API shader_library_t* shader_library_create(renderer_t* context);
-RENDERER_API shader_library_t* shader_library_load_folder(renderer_t* context, const char* folder_path);
+RENDERER_API shader_library_t* shader_library_create(renderer_t* renderer);
+RENDERER_API shader_library_t* shader_library_load_folder(renderer_t* renderer, const char* folder_path);
 RENDERER_API void shader_library_destroy(shader_library_t* library);
 RENDERER_API void shader_library_release_resources(shader_library_t* library);
 
@@ -41,7 +53,7 @@ RENDERER_API void shader_library_release_resources(shader_library_t* library);
 		shader_handle_t, handle to the newly created shader
 		SHADER_HANDLE_INVALID, if the shader creation failed
  */
-RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* library, void* sb, u32 length, const char* shader_name);
+RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* library, shader_create_info_t* create_info, const char* shader_name);
 
 /*
 	description: loads a file and creates a shader from that with identification name 'shader_name'

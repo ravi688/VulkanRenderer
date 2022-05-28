@@ -7,8 +7,6 @@
 #include <renderer/internal/vulkan/vulkan_image.h>			 // vulkan_image_t
 #include <renderer/internal/vulkan/vulkan_image_view.h> 	 // vulkan_image_view_t
 
-typedef struct vulkan_renderer_t vulkan_renderer_t;
-
 typedef enum vulkan_texture_type_t
 {
 	VULKAN_TEXTURE_TYPE_ALBEDO = 0, // to be used when the texture is meant to represent color
@@ -36,9 +34,9 @@ typedef struct vulkan_texture_create_info_t
 typedef struct vulkan_texture_t
 {
 	vulkan_renderer_t* renderer; 							// pointer to the vulkan_renderer_t object
-	vulkan_image_t* image;							// pointer to the vulkan image object
-	vulkan_image_view_t* image_view; 				// pointer to the vulkan image view object
-	VkSampler image_sampler; 						// vulkan image sampler object
+	vulkan_image_t image;									// vulkan image object
+	vulkan_image_view_t image_view; 						// vulkan image view object
+	VkSampler vo_image_sampler; 							// vulkan image sampler object
 } vulkan_texture_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -53,6 +51,7 @@ BEGIN_CPP_COMPATIBLE
 		pointer to the newly created vulkan texture object
  */
 RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info);
+RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info, vulkan_texture_t OUT texture);
 
 /*
 	description:

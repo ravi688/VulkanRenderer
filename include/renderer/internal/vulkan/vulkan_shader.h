@@ -2,9 +2,12 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-
+#include <renderer/internal/vulkan/vulkan_types.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h> // vulkan_descriptor_set_layout_t
 #include <renderer/internal/vulkan/vulkan_attachment.h> 		// vulkan_attachment_type_t
+#include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t, vulkan_shader_handle_t
+
+#include <shader_compiler/settings_parser.h> 		// GraphicsPipeline
 
 #define GLSL_ALIGN(value, index) ((value) << ((index) * 5))
 
@@ -45,6 +48,7 @@ enum
 	GLSL_TEXCOORD = GLSL_ALIGN(GLSL_VEC2, 3)
 };
 
+/* NOTE: this must be in sync with vulkan_shader_module_create_info_t */
 typedef struct vulkan_spirv_code_t
 {
 	/* ptr to the SPIRV binary */
@@ -55,6 +59,8 @@ typedef struct vulkan_spirv_code_t
 	vulkan_shader_type_t type;
 
 } vulkan_spirv_code_t;
+
+typedef GraphicsPipeline GraphicsPipelineSettings;
 
 typedef struct vulkan_graphics_pipeline_description_t
 {
@@ -113,13 +119,16 @@ typedef struct vulkan_render_pass_description_t
 {
 	/* RENDER SET BINDING DESCRIPTIONS */
 	vulkan_shader_resource_descriptor_t* render_set_bindings;
-	u32 render_set_binding_count;
 
 	/* SUBPASS DESCRIPTIONS */
 	/* ptr to the list of subpass descriptions */
 	vulkan_subpass_description_t* subpass_descriptions;
 	/* number of subpasses in this render pass */
-	u32 subpass_description_count;
+	union
+	{	
+		u32 subpass_description_count;
+		u32 subpass_count;
+	};
 
 	/* ATTACHMENTS */
 	vulkan_attachment_type_t* attachments;
@@ -180,10 +189,13 @@ typedef struct vulkan_shader_create_info_t
 
 } vulkan_shader_create_info_t;
 
+typedef struct vulkan_graphics_pipeline_t vulkan_graphics_pipeline_t;
+typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;
+
 typedef struct vulkan_shader_render_pass_t
 {
 	/* handle to the render pass instance into the render pass pool */
-	vulkan_render_pass_handle_t handle
+	vulkan_render_pass_handle_t handle;
 	/* ptr to the list of vulkan_pipeline_layout_t objects for each sub pass */
 	vulkan_pipeline_layout_t* pipeline_layouts;
 	/* ptr to the list of vulkan_graphics_pipeline_layout_t objects for each sub pass */
@@ -206,14 +218,10 @@ typedef struct vulkan_push_constant_t
 
 } vulkan_push_constant_t;
 
-typedef buf_ucount_t vulkan_shader_handle_t;
-#define VULKAN_SHADER_HANDLE_INVALID (~0ULL)
-
 typedef struct vulkan_shader_t
 {
 	vulkan_renderer_t* renderer;
 
-	/* handle to this shader in the vulkan shader library */
 	vulkan_shader_handle_t handle;
 
 	/* RENDER PASS HANDLES, PIPELINE LAYOUTS & GRAPHICS PIPELINES */
@@ -257,7 +265,7 @@ BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
 RENDERER_API vulkan_shader_t* vulkan_shader_new();
-RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, BUFFER* vulkan_shader_binary);
+RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, vulkan_shader_create_info_t* create_info);
 RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* file_info);
 RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader);
 RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader);

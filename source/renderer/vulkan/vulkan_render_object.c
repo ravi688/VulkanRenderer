@@ -1,6 +1,6 @@
 
 #include <renderer/internal/vulkan/vulkan_render_object.h>
-
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
@@ -16,9 +16,9 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 	// create descriptor set
 	vulkan_descriptor_set_create_info_t set_create_info =
 	{
-		.pool = object->renderer->descriptor_pool,
-		.layout = object->renderer->object_set_layout
-	}
+		.vo_pool = object->renderer->vo_descriptor_pool,
+		.layout = &object->renderer->object_set_layout
+	};
 	vulkan_descriptor_set_create_no_alloc(object->renderer, &set_create_info, &object->object_set);
 
 	// setup object struct definiton
@@ -41,14 +41,14 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 	vulkan_buffer_create_info_t create_info = 
 	{
 		.size = struct_descriptor_sizeof(&object->struct_definition),
-		.usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		.sharing_mode = object->renderer->sharing_mode,
-		.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-	}
+		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		.vo_sharing_mode = object->renderer->vo_sharing_mode,
+		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+	};
 	assert(create_info.size == (64 * 2));
-	vulkan_buffer_create_no_alloc(object->renderer, &object->buffer);
-	struct_descriptor_map(&object->buffer, vulkan_buffer_map(&object->buffer));
-	vulkan_descriptor_set_write_uniform_buffer(&object->object_set, object->renderer, VULKAN_DESCRIPTOR_SET_OBJECT_TRANSFORM, &object->buffer);
+	vulkan_buffer_create_no_alloc(object->renderer, &create_info, &object->buffer);
+	struct_descriptor_map(&object->struct_definition, vulkan_buffer_map(&object->buffer));
+	vulkan_descriptor_set_write_uniform_buffer(&object->object_set, VULKAN_DESCRIPTOR_BINDING_TRANSFORM, &object->buffer);
 
 	object->transform_handle = struct_descriptor_get_field_handle(&object->struct_definition, "transform");
 	object->normal_handle = struct_descriptor_get_field_handle(&object->struct_definition, "normal");
@@ -62,19 +62,19 @@ RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer
 }
 RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object)
 {
-	obj->renderer = renderer;
-	obj->material = create_info->material;
-	obj->user_data = create_info->user_data;
-	obj->draw = create_info->draw_handler;
+	object->renderer = renderer;
+	object->material = create_info->material;
+	object->user_data = create_info->user_data;
+	object->draw = create_info->draw_handler;
 
-	setup_gpu_resources(obj);
+	setup_gpu_resources(object);
 	
-	vulkan_render_object_set_transform(obj, mat4_identity(float)());
+	vulkan_render_object_set_transform(object, mat4_identity(float)());
 }
 
 RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* obj)
 {
-	vulkan_descriptor_set_destroy(&obj->object_set, obj->renderer);
+	vulkan_descriptor_set_destroy(&obj->object_set);
 	struct_descriptor_unmap(&obj->struct_definition);
 	vulkan_buffer_unmap(&obj->buffer);
 	vulkan_buffer_destroy(&obj->buffer);
@@ -105,20 +105,20 @@ RENDERER_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_
 RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* obj, mat4_t(float) transform)
 {
 	mat4_t(float) normal = mat4_transpose(float)(mat4_inverse(float)(transform));
-	struct_descriptor_set_mat4(&obj->struct_definition, obj->transform_handle, &transform);
-	struct_descriptor_set_mat4(&obj->struct_definition, obj->normal_handle, &normal);
+	struct_descriptor_set_mat4(&obj->struct_definition, obj->transform_handle, CAST_TO(float*, &transform));
+	struct_descriptor_set_mat4(&obj->struct_definition, obj->normal_handle, CAST_TO(float*, &normal));
 }
 
 RENDERER_API mat4_t(float) vulkan_render_object_get_transform(vulkan_render_object_t* obj)
 {
 	mat4_t(float) transform;
-	struct_descriptor_get_mat4(&obj->struct_definition, obj->transform_handle, &transform);
+	struct_descriptor_get_mat4(&obj->struct_definition, obj->transform_handle, CAST_TO(float*, &transform));
 	return transform;
 }
 
 RENDERER_API mat4_t(float) vulkan_render_object_get_normal(vulkan_render_object_t* obj)
 {
 	mat4_t(float) normal;
-	struct_descriptor_get_mat4(&obj->struct_definition, obj->normal_handle, &normal);
+	struct_descriptor_get_mat4(&obj->struct_definition, obj->normal_handle, CAST_TO(float*, &normal));
 	return normal;
 }

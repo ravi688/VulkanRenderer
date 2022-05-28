@@ -9,25 +9,40 @@
 	typedef vulkan_renderer_t driver_t;
 	typedef struct vulkan_render_pass_pool_t vulkan_render_pass_pool_t;
 	typedef vulkan_render_pass_pool_t render_pass_pool_t;
+	typedef struct vulkan_shader_library_t vulkan_shader_library_t;
+	typedef vulkan_shader_library_t shader_library_t;
+	typedef struct vulkan_material_library_t vulkan_material_library_t;
+	typedef vulkan_material_library_t material_library_t;
 #elif RENDERER_OPENGL_DRIVER
 	typedef struct opengl_renderer_t opengl_renderer_t;
 	typedef opengl_renderer_t driver_t;
 	typedef struct opengl_render_pass_pool_t opengl_render_pass_pool_t;
 	typedef opengl_render_pass_pool_t render_pass_pool_t;
+	typedef struct opengl_shader_library_t opengl_shader_library_t;
+	typedef opengl_shader_library_t shader_library_t;
+	typedef struct opengl_material_library_t opengl_material_library_t;
+	typedef opengl_material_library_t material_library_t;
 #elif RENDERER_DIRECTX_DRIVER
 	typedef struct directx_renderer_t directx_renderer_t;
 	typedef directx_renderer_t driver_t;
 	typedef struct directx_render_pass_pool_t directx_render_pass_pool_t;
 	typedef directx_render_pass_pool_t render_pass_pool_t;
+	typedef struct directx_shader_library_t directx_shader_library_t;
+	typedef directx_shader_library_t shader_library_t;
+	typedef struct directx_material_library_t directx_material_library_t;
+	typedef directx_material_library_t material_library_t;
 #elif RENDERER_METAL_DRIVER
 	typedef struct metal_renderer_t metal_renderer_t;
 	typedef metal_renderer_t driver_t;
 	typedef struct metal_render_pass_pool_t metal_render_pass_pool_t;
 	typedef metal_render_pass_pool_t render_pass_pool_t;
+	typedef struct metal_shader_library_t metal_shader_library_t;
+	typedef metal_shader_library_t shader_library_t;
+	typedef struct material_shader_library_t material_shader_library_t;
+	typedef metal_material_library_t material_library_t;
 #endif
 
-typedef struct material_library_t material_library_t;
-typedef struct shader_library_t shader_library_t;
+typedef struct render_window_t render_window_t;
 
 typedef struct renderer_t
 {
@@ -35,20 +50,20 @@ typedef struct renderer_t
 	{
 		driver_t*
 #ifdef RENDERER_VULKAN_DRIVER
-		vulkan_driver, vulkan_handle;
+		vulkan_driver, *vulkan_handle;
 #elif RENDERER_OPENGL_DRIVER
-		opengl_driver, opengl_handle;
+		opengl_driver, *opengl_handle;
 #elif RENDERER_DIRECTX_DRIVER
 		directx_driver, directx_handle;
 #elif RENDERER_METAL_DRIVER
-		metal_driver, metal_handle;
+		metal_driver, *metal_handle;
 #endif
 		driver_t* handle;
 		driver_t* driver;
 	};
-	shader_library_t* shader_library;
-	material_library_t* material_library;
-	render_pass_pool_t* render_pass_pool;
+	// shader_library_t* shader_library;
+	// material_library_t* material_library;
+	// render_pass_pool_t* render_pass_pool;
 } renderer_t;
 
 typedef enum renderer_gpu_type_t
