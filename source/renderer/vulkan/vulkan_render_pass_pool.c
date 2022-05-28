@@ -3,6 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/assert.h>
 #include <renderer/debug.h>
 
 /* constructors & destructors */
@@ -17,7 +18,7 @@ RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* ren
 	pool->renderer = renderer;
 	pool->relocation_table = buf_create(sizeof(vulkan_render_pass_handle_t), 1, 0);
 	pool->slots = buf_create(sizeof(vulkan_render_pass_pool_slot_t), 1, 0);
-log_msg("Vulkan render pass pool has been created successfully\n");
+	log_msg("Vulkan render pass pool has been created successfully\n");
 }
 
 RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_create(vulkan_renderer_t* renderer)
@@ -102,6 +103,7 @@ static void vulkan_render_pass_create_info_deep_copy(vulkan_render_pass_create_i
 	dst->attachment_descriptions = src->attachment_description_count ? heap_newv(VkAttachmentDescription, src->attachment_description_count) : NULL;
 	memcpy(dst->attachment_descriptions, src->attachment_descriptions, sizeof(VkAttachmentDescription) * src->attachment_description_count);
 
+	assert(src->subpass_count > 0);
 	dst->subpasses = heap_newv(vulkan_subpass_create_info_t, src->subpass_count);
 	memcpy(dst->subpasses, src->subpasses, sizeof(vulkan_subpass_create_info_t) * src->subpass_count);
 	for(u32 i = 0; i < src->subpass_count; i++)

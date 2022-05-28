@@ -11,6 +11,7 @@ RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_new()
 {
 	vulkan_descriptor_set_layout_t* layout = heap_new(vulkan_descriptor_set_layout_t);
 	memset(layout, 0, sizeof(vulkan_descriptor_set_layout_t));
+	layout->vo_handle = VK_NULL_HANDLE;
 	return layout;
 }
 
@@ -116,6 +117,7 @@ RENDERER_API void vulkan_descriptor_set_layout_destroy(vulkan_descriptor_set_lay
 
 RENDERER_API void vulkan_descriptor_set_layout_release_resources(vulkan_descriptor_set_layout_t* layout)
 {
-	heap_free(layout);
+	// TODO
+	// heap_free(layout);
 }
 

@@ -33,6 +33,7 @@
 		}\
 	} while(0)
 #else
+#	define ASSERT_WRN(boolean, ...)
 #	define ASSERT(boolean, ...)
 #endif
 

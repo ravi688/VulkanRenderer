@@ -22,10 +22,9 @@ typedef struct vulkan_swapchain_t
 	VkImage* vo_images;
 	VkImageView* vo_image_views;
 	VkExtent2D vo_image_extent;
+	VkFormat vo_image_format;
 	u32 image_count;
 	u32 current_image_index;
-	VkSemaphore vo_image_available_semaphore;
-	VkSemaphore vo_render_finished_semaphore;
 } vulkan_swapchain_t;
 
 BEGIN_CPP_COMPATIBLE

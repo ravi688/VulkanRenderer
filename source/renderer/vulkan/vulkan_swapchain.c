@@ -5,8 +5,6 @@
 
 static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info);
 static void destroy_swapchain(vulkan_swapchain_t* swapchain);
-static void destroy_semaphores(vulkan_swapchain_t* swapchain);
-static VkSemaphore get_semaphore(VkDevice device);
 
 RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new()
 {
@@ -28,11 +26,6 @@ RENDERER_API void vulkan_swapchain_create_no_alloc(vulkan_renderer_t* renderer, 
 	swapchain->renderer = renderer;
 	// create swapchain, it allocates some memory for the first time
 	create_swapchain(swapchain, create_info);
-	
-	// create synchronization semaphores
-	swapchain->vo_image_available_semaphore = get_semaphore(renderer->logical_device->vo_handle);
-	swapchain->vo_render_finished_semaphore = get_semaphore(renderer->logical_device->vo_handle);
-	
 	log_msg("Swapchain created successfully\n");
 }
 
@@ -46,7 +39,6 @@ RENDERER_API void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, vulkan
 
 RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain)
 {
-	destroy_semaphores(swapchain);
 	destroy_swapchain(swapchain);
 	
 	log_msg("Swapchain destroyed successfully\n");
@@ -62,7 +54,7 @@ RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapcha
 
 RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain)
 {
-	vkAcquireNextImageKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, UINT64_MAX, swapchain->vo_image_available_semaphore, VK_NULL_HANDLE, &(swapchain->current_image_index));
+	vkAcquireNextImageKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, UINT64_MAX, swapchain->renderer->vo_image_available_semaphore, VK_NULL_HANDLE, &(swapchain->current_image_index));
 	return swapchain->current_image_index;
 }
 
@@ -92,6 +84,7 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_cre
 	bool image_count_changed = swapchain->image_count != create_info->image_count;
 	swapchain->image_count = create_info->image_count;
 	swapchain->vo_image_extent = create_info->vo_image_extent;
+	swapchain->vo_image_format = create_info->vo_image_format;
 
 	log_msg("Swapchain image count: %u\n", swapchain->image_count);
 	log_msg("Swapchain image size: (%u, %u)\n", swapchain->vo_image_extent.width, swapchain->vo_image_extent.height);
@@ -136,25 +129,9 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_cre
 	swapchain->current_image_index = 0;
 }
 
-
-static void destroy_semaphores(vulkan_swapchain_t* swapchain)
-{
-	vkDestroySemaphore(swapchain->renderer->logical_device->vo_handle, swapchain->vo_image_available_semaphore, NULL);
-	vkDestroySemaphore(swapchain->renderer->logical_device->vo_handle, swapchain->vo_render_finished_semaphore, NULL);
-}
-
 static void destroy_swapchain(vulkan_swapchain_t* swapchain)
 {
 	vkDestroySwapchainKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, NULL);
 	for(u32 i = 0; i < swapchain->image_count; i++)
 		vkDestroyImageView(swapchain->renderer->logical_device->vo_handle, swapchain->vo_image_views[i], NULL);
-}
-
-static VkSemaphore get_semaphore(VkDevice device)
-{
-	VkSemaphore semaphore;
-	VkSemaphoreCreateInfo createInfo = { }; 
-	createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-	vkCall(vkCreateSemaphore(device, &createInfo, NULL, &semaphore)); 
-	return semaphore;
 }

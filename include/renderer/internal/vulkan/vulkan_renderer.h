@@ -36,6 +36,9 @@ typedef struct vulkan_renderer_t
 	VkCommandPool vo_command_pool;
 	VkDescriptorPool vo_descriptor_pool;
 
+	VkSemaphore vo_image_available_semaphore;
+	VkSemaphore vo_render_finished_semaphore;
+
 	render_window_t* window;
 	vulkan_swapchain_create_info_t swapchain_create_info;		// for recreating the swapchain
 	vulkan_swapchain_t* swapchain;

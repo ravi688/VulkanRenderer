@@ -7,6 +7,7 @@
 #include <renderer/render_window.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/debug.h>
 
 RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new()
 {
@@ -27,7 +28,7 @@ static VkClearValue get_clear_value_from_format(VkFormat format)
 	switch(format)
 	{
 		case VK_FORMAT_B8G8R8A8_SRGB:
-			return (VkClearValue) { .color = { 0.1f, 0.1f, 0.1f, 0.1f } };
+			return (VkClearValue) { .color = { .float32 = { 0.1f, 0.1f, 0.1f, 0.1f } } };
 		case VK_FORMAT_D32_SFLOAT:
 			return (VkClearValue) { .depthStencil = { 1.0f, 0UL } };
 		default:
@@ -43,13 +44,15 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	render_pass->current_subpass_index = 0;
 	render_pass->handle = VULKAN_RENDER_PASS_HANDLE_INVALID;
 
-	// create render pass vulkan object
+	assert(create_info->subpass_count > 0);
 	VkSubpassDescription* subpasses = heap_newv(VkSubpassDescription, create_info->subpass_count);
 	for(u32 i = 0; i < create_info->subpass_count; i++)
 	{
 		subpasses[i] = (VkSubpassDescription)
 		{
 			.pipelineBindPoint = create_info->subpasses[i].pipeline_bind_point,
+			.pColorAttachments = create_info->subpasses[i].color_attachments,
+			.colorAttachmentCount = create_info->subpasses[i].color_attachment_count,
 			.inputAttachmentCount = create_info->subpasses[i].input_attachment_count,
 			.pInputAttachments = create_info->subpasses[i].input_attachments,
 			.pDepthStencilAttachment = create_info->subpasses[i].depth_stencil_attachment,
@@ -58,27 +61,30 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		};
 	}
 
-	VkAttachmentDescription* attachment_descriptions = heap_newv(VkAttachmentDescription, create_info->attachment_description_count);
-	memcpy(attachment_descriptions, create_info->attachment_descriptions, sizeof(VkAttachmentDescription) * create_info->attachment_description_count);
+	assert(create_info->attachment_description_count > 0);
+	// VkAttachmentDescription* attachment_descriptions = heap_newv(VkAttachmentDescription, create_info->attachment_description_count);
+	// memcpy(attachment_descriptions, create_info->attachment_descriptions, sizeof(VkAttachmentDescription) * create_info->attachment_description_count);
 	
 	VkRenderPassCreateInfo render_pass_create_info = 
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-		.pAttachments = attachment_descriptions,
+		.pAttachments = create_info->attachment_descriptions,
 		.attachmentCount = create_info->attachment_description_count,
 		.subpassCount = create_info->subpass_count,
 		.pSubpasses = subpasses
 	};
 	vkCall(vkCreateRenderPass(renderer->logical_device->vo_handle, &render_pass_create_info, NULL, &render_pass->vo_handle));
-	heap_free(attachment_descriptions);
+	// heap_free(attachment_descriptions);
 	heap_free(subpasses);
 
 	// create attachments
-	render_pass->attachments = heap_newv(vulkan_attachment_t, create_info->attachment_description_count);
 	render_pass->attachment_count = create_info->attachment_description_count;
-	render_pass->supplementary_attachments = create_info->supplementary_attachments;
 	render_pass->supplementary_attachment_count = create_info->supplementary_attachment_count;
+	render_pass->supplementary_attachments = create_info->supplementary_attachments;
 	s32 num_attachment_to_be_created = CAST_TO(s32, render_pass->attachment_count) - CAST_TO(s32, render_pass->supplementary_attachment_count);
+	assert(num_attachment_to_be_created >= 0);
+	render_pass->attachments = heap_newv(vulkan_attachment_t, num_attachment_to_be_created);
+	memzerov(render_pass->attachments, vulkan_attachment_t, num_attachment_to_be_created);
 	for(u32 i = 0; i < num_attachment_to_be_created; i++)
 	{
 		vulkan_attachment_create_info_t attachment_create_info = 
@@ -92,8 +98,8 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	}
 
 	// create framebuffers
-	render_pass->vo_framebuffers = heap_newv(VkFramebuffer, create_info->framebuffer_count);
 	render_pass->framebuffer_count = create_info->framebuffer_count;
+	render_pass->vo_framebuffers = heap_newv(VkFramebuffer, render_pass->framebuffer_count);
 	VkImageView* image_views = heap_newv(VkImageView, render_pass->attachment_count);
 	s32 num_created_image_views = num_attachment_to_be_created;
 	for(u32 i = 0; i < num_created_image_views; i++)
@@ -120,6 +126,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 
 	// create clear values for each attachment in this render pass
 	render_pass->vo_clear_values = heap_newv(VkClearValue, render_pass->attachment_count);
+	memzerov(render_pass->vo_clear_values, VkClearValue, render_pass->attachment_count);
 	for(u32 i = 0; i < render_pass->attachment_count; i++)
 		render_pass->vo_clear_values[i] = get_clear_value_from_format(create_info->attachment_descriptions[i].format);
 
@@ -176,7 +183,8 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass)
 {
 	heap_free(render_pass->vo_clear_values);
-	heap_free(render_pass);
+	// TODO
+	// heap_free(render_pass);
 }
 
 RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index)

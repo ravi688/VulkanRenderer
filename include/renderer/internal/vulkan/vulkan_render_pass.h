@@ -45,10 +45,18 @@ typedef struct vulkan_render_pass_create_info_t
 	u32 framebuffer_count;
 
 	/* list of attachment descriptions */
-	VkAttachmentDescription* attachment_descriptions;
+	union
+	{
+		VkAttachmentDescription* attachment_descriptions;
+		VkAttachmentDescription* attachments;
+	};
 	/* list of attachment usages */
 	vulkan_attachment_next_pass_usage_t* attachment_usages;
-	u32 attachment_description_count;
+	union
+	{
+		u32 attachment_description_count;
+		u32 attachment_count;
+	};
 
 	/* list of extra attachments in the foreach framebuffer such as swapchain image view */
 	VkImageView* supplementary_attachments;

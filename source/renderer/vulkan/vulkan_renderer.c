@@ -116,6 +116,14 @@ static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, re
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer);
 static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t* renderer);
 static void setup_global_set(vulkan_renderer_t* renderer);
+static VkSemaphore get_semaphore(VkDevice device)
+{
+	VkSemaphore semaphore;
+	VkSemaphoreCreateInfo createInfo = { }; 
+	createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	vkCall(vkCreateSemaphore(device, &createInfo, NULL, &semaphore)); 
+	return semaphore;
+}
 
 RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen)
 {
@@ -269,6 +277,10 @@ DEBUG_BLOCK
 	// };
 	// renderer->shadow_map_render_pass = vulkan_render_pass_create(renderer, &shadow_render_pass_info);
 
+	// create semaphores
+	renderer->vo_image_available_semaphore = get_semaphore(renderer->logical_device->vo_handle);
+	renderer->vo_render_finished_semaphore = get_semaphore(renderer->logical_device->vo_handle);
+
 	//Create Swapchain
 	vulkan_swapchain_create_info_t swapchain_info =
 	{
@@ -407,15 +419,15 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 	u32 wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	vulkan_queue_submit(renderer->vo_graphics_queue,
 								renderer->vo_command_buffers[renderer->swapchain->current_image_index],
-								renderer->swapchain->vo_image_available_semaphore,
+								renderer->vo_image_available_semaphore,
 								VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-								renderer->swapchain->vo_render_finished_semaphore);
+								renderer->vo_render_finished_semaphore);
 	vulkan_queue_present(renderer->vo_graphics_queue, 
 						renderer->swapchain->vo_handle, 
 						renderer->swapchain->current_image_index,
-						renderer->swapchain->vo_render_finished_semaphore);
-	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
-	vkCall(vkDeviceWaitIdle(renderer->logical_device->vo_handle));
+						renderer->vo_render_finished_semaphore);
+	// vulkan_queue_wait_idle(renderer->vo_graphics_queue);
+	// vkCall(vkDeviceWaitIdle(renderer->logical_device->vo_handle));
 	render_window_poll_events(renderer->window);
 }
 
@@ -450,6 +462,10 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_swapchain_destroy(renderer->swapchain);
 	vulkan_swapchain_release_resources(renderer->swapchain);
 	
+	// destroy semaphores
+	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_image_available_semaphore, NULL);
+	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_render_finished_semaphore, NULL);
+
 	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vo_descriptor_pool, NULL);
 	
 	// // destroy render pass	

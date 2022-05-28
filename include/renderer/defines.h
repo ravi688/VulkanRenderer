@@ -63,9 +63,10 @@ typedef u32 uint;
 #endif /*GLOBAL_DEBUG*/
 
 
-
+/* GCC Extensions */
 #define DEPRECATED __attribute__((deprecated))
 #define FORCE_INLINE inline __attribute__((always_inline))
+#define AUTO __auto_type
 
 #ifdef RENDERER_STATIC_LIBRARY
 #	define RENDERER_API

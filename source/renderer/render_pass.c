@@ -2,6 +2,7 @@
 #include <renderer/render_pass.h>
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 
 /* constructors and destructors */
 RENDERER_API render_pass_t* render_pass_new()
@@ -31,7 +32,12 @@ RENDERER_API void render_pass_release_resources(render_pass_t* pass)
 
 RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific)
 {
-	vulkan_render_pass_begin(pass, /* framebuffer index */ DEREF_TO(u32, api_specific));
+	u32 framebuffer_index;
+	if(api_specific == NULL)
+		framebuffer_index = CAST_TO(vulkan_render_pass_t*, pass)->renderer->swapchain->current_image_index;
+	else
+		framebuffer_index = DEREF_TO(u32, api_specific);
+	vulkan_render_pass_begin(pass, framebuffer_index);
 }
 
 RENDERER_API void render_pass_end(render_pass_t* pass)

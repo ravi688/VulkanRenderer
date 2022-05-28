@@ -3,6 +3,19 @@
 
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
+#include <renderer/type_system.h>
+
+static const type_t TYPE_ID(render_window_t) = TYPE_ID_CREATE(1);
+
+
+
+/* events */ 	// TODO
+typedef enum render_window_event_type_t
+{
+	 RENDER_WINDOW_EVENT_RESIZE,
+	 RENDER_WINDOW_EVENT_REPOSITION
+} render_window_event_type_t;
+
 
 typedef struct render_window_t
 {
