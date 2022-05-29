@@ -34,7 +34,7 @@ RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific)
 {
 	u32 framebuffer_index;
 	if(api_specific == NULL)
-		framebuffer_index = CAST_TO(vulkan_render_pass_t*, pass)->renderer->swapchain->current_image_index;
+		framebuffer_index = VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN;
 	else
 		framebuffer_index = DEREF_TO(u32, api_specific);
 	vulkan_render_pass_begin(pass, framebuffer_index);

@@ -189,6 +189,7 @@ RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* ren
 
 RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index)
 {
+	framebuffer_index = (framebuffer_index == VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN) ? render_pass->renderer->swapchain->current_image_index : framebuffer_index;
 	// begin the render pass
 	VkRenderPassBeginInfo render_pass_begin_info =
 	{

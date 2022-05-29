@@ -76,9 +76,10 @@ RENDERER_API function_signature(buf_ucount_t, dictionary_find_index_of, dictiona
 #define dictionary_key_comparer_char dictionary_key_comparer_s8
 #define dictionary_key_comparer_int dictionary_key_comparer_s32
 #define dictionary_key_comparer_uint dictionary_key_comparer_u32
+#define dictionary_key_comparer_buf_ucount_t dictionary_key_comparer_u64
 RENDERER_API bool dictionary_key_comparer_u16(void* v1, void* v2);
 RENDERER_API bool dictionary_key_comparer_u32(void* v1, void* v2);
-RENDERER_API bool dictionary_key_comparer_buf_ucount_t(void* v1, void* v2);
+RENDERER_API bool dictionary_key_comparer_u64(void* v1, void* v2);
 RENDERER_API bool dictionary_key_comparer_u8(void* v1, void* v2);
 RENDERER_API bool dictionary_key_comparer_s16(void* v1, void* v2);
 RENDERER_API bool dictionary_key_comparer_s32(void* v1, void* v2);

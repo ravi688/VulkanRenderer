@@ -103,3 +103,96 @@ RENDERER_API material_library_t* renderer_get_material_library(renderer_t* rende
 RENDERER_API render_pass_pool_t* renderer_get_render_pass_pool(renderer_t* renderer);
 
 END_CPP_COMPATIBLE
+
+#ifdef RENDERER_INCLUDE_EVERYTHING
+#	define RENDERER_INCLUDE_DEBUG
+#	define RENDERER_INCLUDE_LOW_LEVEL
+#	define RENDERER_INCLUDE_DATA_STRUCTURES
+#	define RENDERER_INCLUDE_CORE
+#	define RENDERER_INCLUDE_CORE_MESH_RENDER_SYSTEM
+#	define RENDERER_INCLUDE_CORE_TEXT_RENDER_SYSTEM
+#	define RENDERER_INCLUDE_3D_LIGHT_SYSTEM
+#	define RENDERER_INCLUDE_3D_MESH_RENDER_SYSTEM
+#	define RENDERER_INCLUDE_3D_TEXT_RENDER_SYSTEM
+// #	define RENDERER_INCLUDE_2D_LIGHT_SYSTEM
+// #	define RENDERER_INCLUDE_2D_MESH_RENDER_SYSTEM
+// #	define RENDERER_INCLUDE_2D_TEXT_RENDER_SYSTEM
+#endif
+
+#ifdef RENDERER_INCLUDE_DEBUG
+#	include <renderer/assert.h>
+#	include <renderer/debug.h>
+#endif
+
+#ifdef RENDERER_INCLUDE_LOW_LEVEL
+#	include <renderer/io.h>
+#	include <renderer/multi_buffer.h>
+#	include <renderer/type_system.h>
+#	include <renderer/garbage_collector.h>
+#	include <renderer/event_system.h>
+# 	include <renderer/struct_descriptor.h>
+#endif
+
+#ifdef RENDERER_INCLUDE_DATA_STRUCTURES
+#	include <renderer/dictionary.h>
+#	include <renderer/string.h>
+#  	include <bufferlib/buffer.h>
+#endif
+
+#ifdef RENDERER_INCLUDE_CORE
+// TODO: abstract memory allocator into the renderer object itself
+#	include <renderer/memory_allocator.h>
+#	include <renderer/render_window.h>
+#	include <renderer/render_queue.h>
+#	include <renderer/render_pass.h>
+# 	include <renderer/render_pass_pool.h>
+#	include <renderer/shader_library.h>
+#	include <renderer/material_library.h>
+#	include <renderer/shader.h>
+#	include <renderer/material.h>
+#	include <renderer/camera.h>
+#	include <renderer/color.h>
+#endif
+
+
+#ifdef RENDERER_INCLUDE_3D_TEXT_RENDER_SYSTEM
+//TODO: <renderer/text_mesh3d.h>
+#	include <renderer/text_mesh.h>
+#	ifndef RENDERER_INCLUDE_CORE_TEXT_RENDER_SYSTEM
+#		define RENDERER_INCLUDE_CORE_TEXT_RENDER_SYSTEM
+#	endif
+#endif
+
+#ifdef RENDERER_INCLUDE_2D_TEXT_RENDER_SYSTEM
+#	include <renderer/text_mesh2d.h>
+#	ifndef RENDERER_INCLUDE_CORE_TEXT_RENDER_SYSTEM
+#		define RENDERER_INCLUDE_CORE_TEXT_RENDER_SYSTEM
+#	endif
+#endif
+
+#ifdef RENDERER_INCLUDE_CORE_TEXT_RENDER_SYSTEM
+#	include <renderer/glyph_mesh_pool.h>
+#	include <renderer/font.h>
+#endif
+
+#ifdef RENDERER_INCLUDE_3D_MESH_RENDER_SYSTEM
+#	include <renderer/mesh3d.h>
+#	ifndef RENDERER_INCLUDE_CORE_MESH_RENDER_SYSTEM
+#		define RENDERER_INCLUDE_CORE_MESH_RENDER_SYSTEM
+#	endif
+#endif
+
+#ifdef RENDERER_INCLUDE_2D_MESH_RENDER_SYSTEM
+#	include <renderer/mesh2d.h>
+#	ifndef RENDERER_INCLUDE_CORE_MESH_RENDER_SYSTEM
+#		define RENDERER_INCLUDE_CORE_MESH_RENDER_SYSTEM	
+#	endif
+#endif
+
+#ifdef RENDERER_INCLUDE_CORE_MESH_RENDER_SYSTEM
+#	include <renderer/mesh.h>
+#endif
+
+#ifdef RENDERER_INCLUDE_3D_LIGHT_SYSTEM
+#	include <renderer/light.h>
+#endif

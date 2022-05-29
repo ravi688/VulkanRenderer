@@ -29,7 +29,7 @@ typedef BUFFER subpass_shader_list_t;
 typedef BUFFER render_object_list_t;
 typedef dictionary_t material_and_render_object_list_map_t;
 
-RENDERER_API void vulkan_render_queue_no_alloc(vulkan_renderer_t* renderer, const char* name, vulkan_render_queue_t OUT queue)
+RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, const char* name, vulkan_render_queue_t OUT queue)
 {
 	queue->renderer = renderer;
 	queue->name = string_create(name);

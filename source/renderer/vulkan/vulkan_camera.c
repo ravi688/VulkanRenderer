@@ -1,6 +1,7 @@
 
 #include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
@@ -58,32 +59,36 @@ static void setup_gpu_resources(vulkan_camera_t* camera)
 static void recreate_projection(render_window_t* window, void* user_data)
 {
 	vulkan_camera_t* camera = user_data;
-	mat4_t(float) projection = mat4_persp_projection(float)(0.04f, 100, 60 * DEG2RAD, (float)window->width/window->height);
+	mat4_t(float) projection = mat4_persp_projection(float)(camera->near_clip_plane, camera->far_clip_plane, camera->field_of_view, (float)window->width/window->height);
 	struct_descriptor_set_mat4(&camera->struct_definition, camera->projection_handle, CAST_TO(float*, &projection));
 	// mat4_move(float)(&projectionMatrix,  mat4_ortho_projection(float)(0, 10, 3, (float)window->width/window->height));
 	// mat4_move(float)(&game->screenSpaceMatrix, mat4_ortho_projection(float)(-0.04f, 100, window->height, (float)window->width / window->height));
 }
 
-RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_projection_type_t projection_type, float height_or_angle)
+RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info)
 {
 	vulkan_camera_t* camera = vulkan_camera_new();
-	vulkan_camera_create_no_alloc(renderer, projection_type, height_or_angle, camera);
+	vulkan_camera_create_no_alloc(renderer, create_info, camera);
 	return camera;
 }
 
-RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_projection_type_t projection_type, float height_or_angle, vulkan_camera_t OUT camera)
+RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info, vulkan_camera_t OUT camera)
 {
 	// for now only one camera could be in the entire application
 	ASSERT_CALLED_ONCE();
 
 	camera->renderer = renderer;
+	camera->far_clip_plane = create_info->far_clip_plane;
+	camera->near_clip_plane = create_info->near_clip_plane;
+	camera->field_of_view = create_info->field_of_view;
+	camera->default_render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, create_info->default_render_pass);
 
 	render_window_t* window = vulkan_renderer_get_window(renderer);
 
 	setup_gpu_resources(camera);
 
 	mat4_t(float) transform = mat4_mul(float)(2, mat4_translation(float)(-1.8f, 0.6f, 0), mat4_rotation(float)(0, 0, -22 * DEG2RAD));
-	mat4_t(float) projection = mat4_persp_projection(float)(0.04f, 100, 60 * DEG2RAD, (float)window->width / (float)window->height);
+	mat4_t(float) projection = mat4_persp_projection(float)(create_info->near_clip_plane, create_info->far_clip_plane, create_info->field_of_view, (float)window->width / (float)window->height);
 	mat4_t(float) view = mat4_inverse(float)(transform);
 	struct_descriptor_set_mat4(&camera->struct_definition, camera->transform_handle, CAST_TO(float*, &transform));
 	struct_descriptor_set_mat4(&camera->struct_definition, camera->projection_handle, CAST_TO(float*, &projection));
@@ -110,6 +115,16 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 	// heap_free(camera);
 }
 
+/* logic functions */
+RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_queue_t* queue)
+{
+	if(queue == NULL)
+	{
+		vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN);
+		vulkan_render_pass_end(camera->default_render_pass);
+	}
+}
+
 /* getters */
 RENDERER_API vec3_t(float) vulkan_camera_get_position(vulkan_camera_t* camera)
 {
@@ -123,19 +138,14 @@ RENDERER_API vec3_t(float) vulkan_camera_get_rotation(vulkan_camera_t* camera)
 	NOT_IMPLEMENTED_FUNCTION();
 }
 
-RENDERER_API float vulkan_camera_get_aspect_ratio(vulkan_camera_t* camera)
-{
-	NOT_IMPLEMENTED_FUNCTION();
-}
-
 RENDERER_API vec2_t(float) vulkan_camera_get_clip_planes(vulkan_camera_t* camera)
 {
-	NOT_IMPLEMENTED_FUNCTION();
+	return vec2(float)(camera->near_clip_plane, camera->far_clip_plane);
 }
 
 RENDERER_API float vulkan_camera_get_field_of_view(vulkan_camera_t* camera)
 {
-	NOT_IMPLEMENTED_FUNCTION();
+	return camera->field_of_view;
 }
 
 /* setters */
@@ -156,18 +166,16 @@ RENDERER_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t(flo
 	NOT_IMPLEMENTED_FUNCTION();
 }
 
-RENDERER_API void vulkan_camera_set_aspect_ratio(vulkan_camera_t* camera, float aspect_ratio)
-{
-	NOT_IMPLEMENTED_FUNCTION();
-}
-
 RENDERER_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane)
 {
-	NOT_IMPLEMENTED_FUNCTION();
+	camera->near_clip_plane = near_clip_plane;
+	camera->far_clip_plane = far_clip_plane;
+	recreate_projection(vulkan_renderer_get_window(camera->renderer), camera);
 }
 
 RENDERER_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float fov)
 {
-	NOT_IMPLEMENTED_FUNCTION();
+	camera->field_of_view = fov;
+	recreate_projection(vulkan_renderer_get_window(camera->renderer), camera);
 }
 

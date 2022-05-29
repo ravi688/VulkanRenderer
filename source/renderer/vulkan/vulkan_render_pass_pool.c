@@ -57,19 +57,29 @@ RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_p
 }
 
 /* logic functions */
-static bool create_info_compare(void* create_info, void* ref)
+
+static bool shader_resource_descriptor_compare(void* create_info, void* ref)
+{
+	vulkan_shader_resource_descriptor_t* descriptor1 = CAST_TO(vulkan_shader_resource_descriptor_t*, create_info);
+	vulkan_shader_resource_descriptor_t* descriptor2 = CAST_TO(vulkan_shader_resource_descriptor_t*, ref);
+	
+	return true;
+}
+
+static bool subpass_create_info_compare(void* create_info, void* ref)
+{
+	vulkan_subpass_create_info_t* create_info1 = CAST_TO(vulkan_subpass_create_info_t*, create_info);
+	vulkan_subpass_create_info_t* create_info2 = CAST_TO(vulkan_subpass_create_info_t*, create_info);
+
+	return true;
+}
+
+static bool render_pass_create_info_compare(void* create_info, void* ref)
 {
 	vulkan_render_pass_create_info_t* create_info1 = CAST_TO(vulkan_render_pass_create_info_t*, create_info);
 	vulkan_render_pass_create_info_t* create_info2 = CAST_TO(vulkan_render_pass_create_info_t*, ref);
 
-	// TODO:
-
-	static u32 counter = 0;
-	++counter;
-	if(counter == 1)
-		return false;
-	else
-		return true;
+	return true;
 }
 
 static void vulkan_resource_descriptor_deep_copy(vulkan_shader_resource_descriptor_t* dst, vulkan_shader_resource_descriptor_t* src)
@@ -116,9 +126,10 @@ static void vulkan_render_pass_create_info_deep_copy(vulkan_render_pass_create_i
 
 static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info)
 {	
-	buf_ucount_t handle = buf_find_index_of(&pool->slots, create_info, create_info_compare);
+	buf_ucount_t handle = buf_find_index_of(&pool->slots, create_info, render_pass_create_info_compare);
 	if(handle == BUF_INVALID_INDEX)
 	{
+		log_msg("Creating new vulkan render pass because no render pass exists in the pool with the same create info\n");
 		// generate a new handle
 		handle = buf_get_element_count(&pool->relocation_table);
 		buf_ucount_t index = buf_get_element_count(&pool->slots);
@@ -136,6 +147,10 @@ static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_re
 		buf_push(&pool->slots, &slot);
 		return handle;
 	}
+	else
+	{
+		log_wrn("Vulkan render pass is already exist in the pool with the same create info\n");
+	}
 	// if the slot already exists then return the slot's handle
 	return CAST_TO(vulkan_render_pass_pool_slot_t*, buf_get_ptr_at(&pool->slots, handle))->handle;
 }
@@ -150,7 +165,7 @@ static vulkan_render_pass_pool_slot_t* vulkan_render_pass_pool_get_slotH(vulkan_
 RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info)
 {
 	// for now this must be called once
-	ASSERT_CALLED_ONCE();
+	// ASSERT_CALLED_ONCE();
 
 	vulkan_render_pass_pool_slot_t* slot = vulkan_render_pass_pool_get_slotH(pool, vulkan_render_pass_pool_create_slot(pool, create_info));
 	if(slot->render_pass == NULL)

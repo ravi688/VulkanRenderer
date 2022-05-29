@@ -1,62 +1,64 @@
 
+#define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
 
-#include <renderer/defines.h>
-#include <renderer/debug.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/render_pass_pool.h>
-#include <renderer/render_pass.h>
-
-
-#include <renderer/camera.h>
-
 /*
- Initializing Renderer:
-	1. Render Window [done]
-	2. Vulkan Instance [done]
-	3. Vulkan Surface [done]
-	4. Vulkan Device [done]
-	5. Vulkan Queue [done]
-	6. Vulkan Swapchain [done]
-	7. Vulkan Command Buffers [done]
-
-	8. Global and Object set layouts [done]
-
-	9. Vulkan Shader Library
-	10. Vulkan Material Library
-	11. Vulkan Render Pass Pool
-
- Default Renderpass [ color attachment + depth attachment ] [ done ]
-
-On window resize:
-	1. recreate swapchain [done]
-	2. update swapchain images [done]
-	2. recreate swapchain image views [done]
+	1. Default clear screen render pass after creating a camera [done]
+	2. 
  */
 
 int main(const char** argc, int argv)
 {
 	memory_allocator_init(&argv);
+	
+	// initialize renderer
 	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_AUTO, 800, 800, "Vulkan Renderer", false);
+	// create a render queue and add it to the camera
+	AUTO queue = render_queue_create(renderer, "GeometryQueue");
 
-	AUTO camera = camera_create(renderer, CAMERA_PROJECTION_TYPE_PERSPECTIVE, 65);
+	// create a camera
+	AUTO camera = camera_create(renderer, CAMERA_PROJECTION_TYPE_PERSPECTIVE, 0.04f, 100, 65);
+	// camera_add_render_queue(camera, queue);
+	
+	// // for shadow rendering there should be a light
+	// AUTO light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
+	// light_set_shadow(light, true);
+	// light_add_render_queue(light, queue);
 
-	AUTO pool = renderer_get_render_pass_pool(renderer);
-	AUTO pass = render_pass_pool_getH(pool, render_pass_pool_create_pass_from_preset(pool, RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN));
+	// // load a shader & create a material
+	// AUTO shaderH = shader_library_create_shader_from_preset(renderer_get_shader_library(renderer), SHADER_LIBRARY_SHADER_PRESET_UNLIT);
+	// AUTO mlib = renderer_get_material_library(renderer);
+	// AUTO material = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH));
+	// material_set_vec4(material, "color", vec4(float)(1, 0, 1, 1));
+
+	// // load a mesh and create a render object/node and add it to the GeometryQueue
+	// AUTO mesh = mesh_load(renderer, "Monkey.obj")
+	// AUTO object = mesh_get_render_object(mesh);
+	// render_object_set_material(object, material);
+	// render_object_set_position(object, vec3(float)(0, 0, 0));
+	// render_queue_add(queue, object);
 
 
 	while(renderer_is_running(renderer))
 	{
+		// begin command buffer recording
 		renderer_begin_frame(renderer);
 
-		render_pass_begin(pass, NULL);
-		
-		render_pass_end(pass);
-		
+		// shadow render pass
+		// light_render(light);
+
+		// color render pass
+		camera_render(camera, NULL);
+
+		// end command buffer recording
 		renderer_end_frame(renderer);
 
+		// submit the work to the GPU and present the rendered image to the window
 		renderer_update(renderer);
 	}
+
+	// light_destroy(light);
+	// light_release_resources(light);
 
 	camera_destroy(camera);
 	camera_release_resources(camera);

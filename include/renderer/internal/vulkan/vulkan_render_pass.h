@@ -8,6 +8,8 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t
 
+#define VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN (~0UL)
+
 typedef struct vulkan_subpass_create_info_t
 {
 	/* bind point of this subpass in the pipeline */
@@ -187,7 +189,7 @@ RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* ren
 		begins the render pass
 	params:
 		render_pass: ptr to a valid vulkan_render_pass_t object
-		begin_info: ptr to the vulkan_render_pass_begin_info_t object which contains the clear values and reference to the framebuffer
+		framebuffer_index: index of the framebuffer to be used as a render target, it could be VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN for swapchain images
 	returns:
 		nothing
  */
