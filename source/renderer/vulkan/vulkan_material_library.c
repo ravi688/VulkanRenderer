@@ -56,7 +56,7 @@ RENDERER_API void vulkan_material_library_release_resources(vulkan_material_libr
 
 
 /* logic functions */
-static vulkan_material_handle_t vulkan_material_library_add(vulkan_material_library_t* library, vulkan_material_t* material, const char* vulkan_material_name)
+static vulkan_material_handle_t vulkan_material_library_add(vulkan_material_library_t* library, vulkan_material_t* material, const char* material_name)
 {
 	buf_ucount_t index = buf_get_element_count(&library->materials);
 
@@ -67,7 +67,7 @@ static vulkan_material_handle_t vulkan_material_library_add(vulkan_material_libr
 	// create a new slot
 	vulkan_material_library_slot_t slot = 
 	{
-		.name = (vulkan_material_name != NULL) ? string_create(vulkan_material_name) : string_null(),
+		.name = (material_name != NULL) ? string_create(material_name) : string_null(),
 		.material = material,
 		.handle = handle
 	};
@@ -76,7 +76,7 @@ static vulkan_material_handle_t vulkan_material_library_add(vulkan_material_libr
 	return handle;
 }
 
-RENDERER_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, const char* shader_name, const char* vulkan_material_name)
+RENDERER_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, const char* shader_name, const char* material_name)
 {
 	vulkan_shader_t* shader = vulkan_shader_library_get(library->shader_library, shader_name);
 	if(shader == NULL)
@@ -84,10 +84,10 @@ RENDERER_API vulkan_material_handle_t vulkan_material_library_create_material(vu
 		log_wrn("Material creation failed as shader with name \"%s\" isn't found in the shader library\n", shader_name);
 		return VULKAN_MATERIAL_HANDLE_INVALID;
 	}
-	return vulkan_material_library_add(library, vulkan_material_create(library->shader_library->renderer, shader), vulkan_material_name);
+	return vulkan_material_library_add(library, vulkan_material_create(library->shader_library->renderer, shader), material_name);
 }
 
-RENDERER_API vulkan_material_handle_t vulkan_material_library_create_materialH(vulkan_material_library_t* library, vulkan_shader_handle_t handle, const char* vulkan_material_name)
+RENDERER_API vulkan_material_handle_t vulkan_material_library_create_materialH(vulkan_material_library_t* library, vulkan_shader_handle_t handle, const char* material_name)
 {
 	vulkan_shader_t* shader = vulkan_shader_library_getH(library->shader_library, handle);
 	if(shader == NULL)
@@ -95,10 +95,10 @@ RENDERER_API vulkan_material_handle_t vulkan_material_library_create_materialH(v
 		log_wrn("Material creation failed as shader with the specified handle isn't found in the shader library\n");
 		return VULKAN_MATERIAL_HANDLE_INVALID;
 	}
-	return vulkan_material_library_add(library, vulkan_material_create(library->shader_library->renderer, shader), vulkan_material_name);
+	return vulkan_material_library_add(library, vulkan_material_create(library->shader_library->renderer, shader), material_name);
 }
 
-RENDERER_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path, const char* vulkan_material_name)
+RENDERER_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path, const char* material_name)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 }
@@ -115,13 +115,13 @@ static bool vulkan_material_library_removeH(vulkan_material_library_t* library, 
 }
 
 
-RENDERER_API bool vulkan_material_library_destroy_material(vulkan_material_library_t* library, const char* vulkan_material_name)
+RENDERER_API bool vulkan_material_library_destroy_material(vulkan_material_library_t* library, const char* material_name)
 {
-	vulkan_material_t* material = vulkan_material_library_get(library, vulkan_material_name);
+	vulkan_material_t* material = vulkan_material_library_get(library, material_name);
 	if(material == NULL)
 		return false;
 	vulkan_material_destroy(material);
-	return vulkan_material_library_remove(library, vulkan_material_name);
+	return vulkan_material_library_remove(library, material_name);
 }
 
 RENDERER_API bool vulkan_material_library_destroy_materialH(vulkan_material_library_t* library, vulkan_material_handle_t handle)
@@ -151,13 +151,13 @@ RENDERER_API bool vulkan_material_library_deserialize_no_alloc(void* bytes, u64 
 
 /* getters */
 
-static vulkan_material_library_slot_t* vulkan_material_library_get_slot(vulkan_material_library_t* library, const char* vulkan_material_name)
+static vulkan_material_library_slot_t* vulkan_material_library_get_slot(vulkan_material_library_t* library, const char* material_name)
 {
 	buf_ucount_t count = buf_get_element_count(&library->materials);
 	for(buf_ucount_t i = 0; i < count; i++)
 	{
 		vulkan_material_library_slot_t* slot = buf_get_ptr_at(&library->materials, i);
-		if(strcmp(slot->name.data, vulkan_material_name) == 0)
+		if(strcmp(slot->name.data, material_name) == 0)
 			return slot;
 	}
 	return NULL;
@@ -175,15 +175,15 @@ static vulkan_material_library_slot_t* vulkan_material_library_get_slotH(vulkan_
 	return NULL;
 }
 
-RENDERER_API vulkan_material_handle_t vulkan_material_library_get_handle(vulkan_material_library_t* library, const char* vulkan_material_name)
+RENDERER_API vulkan_material_handle_t vulkan_material_library_get_handle(vulkan_material_library_t* library, const char* material_name)
 {
-	vulkan_material_library_slot_t* slot = vulkan_material_library_get_slot(library, vulkan_material_name);
+	vulkan_material_library_slot_t* slot = vulkan_material_library_get_slot(library, material_name);
 	return (slot == NULL) ? VULKAN_MATERIAL_HANDLE_INVALID : slot->handle;
 }
 
-RENDERER_API vulkan_material_t* vulkan_material_library_get(vulkan_material_library_t* library, const char* vulkan_material_name)
+RENDERER_API vulkan_material_t* vulkan_material_library_get(vulkan_material_library_t* library, const char* material_name)
 {
-	vulkan_material_library_slot_t* slot = vulkan_material_library_get_slot(library, vulkan_material_name);
+	vulkan_material_library_slot_t* slot = vulkan_material_library_get_slot(library, material_name);
 	return (slot == NULL) ? NULL : slot->material;
 }
 

@@ -68,6 +68,7 @@ RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, v
 
 	material->renderer = renderer;
 	material->handle = VULKAN_MATERIAL_HANDLE_INVALID;
+	material->shader = shader;
 
 	// create MATERIAL_SET
 	vulkan_descriptor_set_create_info_t create_info = 
@@ -99,11 +100,13 @@ RENDERER_API void vulkan_material_destroy(vulkan_material_t* material)
 
 RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 {
+	// TODO
 	// for(u16 i = 0; i < material->uniform_resource_count; i++)
 	// 	if(material->uniform_resources[i].index != 0xFFFF)
 	// 		vulkan_buffer_release_resources(&material->uniform_resources[i].buffer);
 	heap_free(material->uniform_resources);
-	heap_free(material);
+	// TODO
+	// heap_free(material);
 }
 
 static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags);

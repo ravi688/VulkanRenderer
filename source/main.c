@@ -5,7 +5,8 @@
 
 /*
 	1. Default clear screen render pass after creating a camera [done]
-	2. Test Shader & Material, Default Shaders [in-progress]
+	2. Test Shader & Material, Default Shaders [done]
+	3. Rendering [in-progress]
  */
 
 int main(const char** argc, int argv)
@@ -27,7 +28,12 @@ int main(const char** argc, int argv)
 	AUTO shadowPass2 = render_pass_pool_getH(pool, render_pass_pool_create_pass_from_preset(pool, RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP));
 	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR);
 	AUTO shader = shader_library_getH(slib, shaderH);
-	// AUTO material = material_library_getH(mlib, material_library_create_material(mlib, shaderH));
+	AUTO blueMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "BlueColorMaterial"));
+	AUTO greenMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "GreenColorMaterial"));
+
+	material_set_vec4(blueMaterial, "parameters.color", vec4(float)(0, 0, 1, 1));
+	material_set_vec4(greenMaterial, "parameters.color", vec4(float)(0, 1, 0, 1));
+
 
 	while(renderer_is_running(renderer))
 	{
