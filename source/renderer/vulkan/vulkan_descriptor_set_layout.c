@@ -6,6 +6,18 @@
 #include <shader_compiler/compiler.h>	 								// shader compiler types
 #include <renderer/memory_allocator.h>
 
+static VkDescriptorSetLayout get_null_set_layout(vulkan_renderer_t* renderer)
+{
+	VkDescriptorSetLayoutCreateInfo layout_create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.bindingCount = 0
+	};
+
+	VkDescriptorSetLayout layout;
+	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->vo_handle, &layout_create_info, NULL, &layout));
+	return layout;
+}
 
 RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_new()
 {
@@ -26,8 +38,8 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 {
 	if(descriptor_count == 0)
 	{
-		layout->vo_handle = VK_NULL_HANDLE;
 		layout->renderer = renderer;
+		layout->vo_handle = get_null_set_layout(renderer);
 		return;
 	}
 	// allocate memory
@@ -86,13 +98,6 @@ RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_create
 
 RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc(vulkan_renderer_t* renderer, VkDescriptorSetLayoutBinding* bindings, u32 binding_count, vulkan_descriptor_set_layout_t OUT layout)
 {
-	if(binding_count == 0)
-	{
-		layout->vo_handle = VK_NULL_HANDLE;
-		layout->renderer = renderer;
-		return;
-	}
-
 	VkDescriptorSetLayoutCreateInfo layout_create_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,

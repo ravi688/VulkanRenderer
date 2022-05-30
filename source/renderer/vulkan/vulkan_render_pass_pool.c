@@ -169,7 +169,10 @@ RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vul
 
 	vulkan_render_pass_pool_slot_t* slot = vulkan_render_pass_pool_get_slotH(pool, vulkan_render_pass_pool_create_slot(pool, create_info));
 	if(slot->render_pass == NULL)
+	{
 		slot->render_pass = vulkan_render_pass_create(pool->renderer, create_info);
+		slot->render_pass->handle = slot->handle;
+	}
 	return slot->handle;
 }
 

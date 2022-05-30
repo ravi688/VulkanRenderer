@@ -185,7 +185,11 @@ typedef struct vulkan_shader_create_info_t
 	/* ptr to the list of render pass descriptions */
 	vulkan_render_pass_description_t* render_pass_descriptions;
 	/* number of render passes in this shader */
-	u32 render_pass_description_count;
+	union
+	{
+		u32 render_pass_description_count;
+		u32 render_pass_count;
+	};
 
 } vulkan_shader_create_info_t;
 

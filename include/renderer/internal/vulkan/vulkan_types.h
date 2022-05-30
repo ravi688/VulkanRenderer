@@ -18,10 +18,10 @@ typedef struct vulkan_vertex_info_t
 
 typedef enum vulkan_shader_type_t
 {
-	VULKAN_SHADER_TYPE_VERTEX,
-	VULKAN_SHADER_TYPE_FRAGMENT,
-	VULKAN_SHADER_TYPE_GEOMETRY,
-	VULKAN_SHADER_TYPE_TESSELLATION
+	VULKAN_SHADER_TYPE_VERTEX = 0,
+	VULKAN_SHADER_TYPE_FRAGMENT = 1,
+	VULKAN_SHADER_TYPE_GEOMETRY = 2,
+	VULKAN_SHADER_TYPE_TESSELLATION = 3
 } vulkan_shader_type_t;
 
 /* TODO: remove it from here because there are not references */

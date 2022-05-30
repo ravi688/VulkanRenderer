@@ -93,6 +93,7 @@ static vulkan_shader_handle_t vulkan_shader_library_add(vulkan_shader_library_t*
 		.shader = shader,
 		.handle = handle
 	};
+	shader->handle = handle;
 	buf_push(&library->shaders, &slot);
 	return handle;
 }
@@ -102,21 +103,21 @@ RENDERER_API vulkan_shader_handle_t vulkan_shader_library_create_shader(vulkan_s
 	return vulkan_shader_library_add(library, vulkan_shader_create(library->renderer, create_info), vulkan_shader_name);
 }
 
-RENDERER_API vulkan_shader_handle_t vulkan_shader_library_load_shader(vulkan_shader_library_t* library, const char* file_path, const char* vulkan_shader_name)
+RENDERER_API vulkan_shader_handle_t vulkan_shader_library_load_shader(vulkan_shader_library_t* library, const char* file_path)
 {
 	vulkan_shader_load_info_t load_info = 
 	{
 		.path = file_path,
 	};
-	return vulkan_shader_library_add(library, vulkan_shader_load(library->renderer, &load_info), vulkan_shader_name);
+	return vulkan_shader_library_add(library, vulkan_shader_load(library->renderer, &load_info), "TODO:");
 }
 
-RENDERER_API bool vulkan_shader_library_remove(vulkan_shader_library_t* library, const char* vulkan_shader_name)
+static bool vulkan_shader_library_remove(vulkan_shader_library_t* library, const char* vulkan_shader_name)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 }
 
-RENDERER_API bool vulkan_shader_library_removeH(vulkan_shader_library_t* library, vulkan_shader_handle_t handle)
+static bool vulkan_shader_library_removeH(vulkan_shader_library_t* library, vulkan_shader_handle_t handle)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 }
@@ -140,6 +141,16 @@ RENDERER_API bool vulkan_shader_library_destroy_shaderH(vulkan_shader_library_t*
 }
 
 /* getters */
+
+RENDERER_API const char* vulkan_shader_library_get_nameH(vulkan_shader_library_t* library, vulkan_shader_handle_t handle)
+{
+	buf_ucount_t index;
+	buf_get_at(&library->relocation_table, handle, &index);
+
+	vulkan_shader_library_slot_t slot;
+	buf_get_at(&library->shaders, index, &slot);
+	return slot.name.data;
+}
 
 RENDERER_API vulkan_shader_handle_t vulkan_shader_library_get_handle(vulkan_shader_library_t* library, const char* vulkan_shader_name)
 {

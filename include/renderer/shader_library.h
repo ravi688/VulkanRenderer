@@ -33,6 +33,24 @@
 	#define SHADER_HANDLE_INVALID METAL_SHADER_HANDLE_INVALID
 #endif
 
+typedef enum shader_library_shader_preset_t
+{
+	SHADER_LIBRARY_SHADER_PRESET_UNLIT_VERTEX,
+	SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR,
+	SHADER_LIBRARY_SHADER_PRESET_UNLIT_TEXTURE,
+	SHADER_LIBRARY_SHADER_PRESET_UNLIT_TRANSPARENT,
+	SHADER_LIBRARY_SHADER_PRESET_UNLIT_TRANSPARENT_CUTOUT,
+	SHADER_LIBRARY_SHADER_PRESET_LIT_VERTEX,
+	SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR,
+	SHADER_LIBRARY_SHADER_PRESET_LIT_TEXTURE,
+	SHADER_LIBRARY_SHADER_PRESET_LIT_TRANSPARENT,
+	SHADER_LIBRARY_SHADER_PRESET_LIT_TRANSPARENT_CUTOUT,
+	SHADER_LIBRARY_SHADER_PRESET_DIFFUSE,
+	SHADER_LIBRARY_SHADER_PRESET_SPECULAR,
+	SHADER_LIBRARY_SHADER_PRESET_BUMPED_DIFFUSE,
+	SHADER_LIBRARY_SHADER_PRESET_BUMPED_SPECULAR
+} shader_library_shader_preset_t;
+
 /* constructors & destructors */
 RENDERER_API shader_library_t* shader_library_new();
 RENDERER_API shader_library_t* shader_library_create(renderer_t* renderer);
@@ -41,6 +59,8 @@ RENDERER_API void shader_library_destroy(shader_library_t* library);
 RENDERER_API void shader_library_release_resources(shader_library_t* library);
 
 /* logic functions */
+
+RENDERER_API shader_handle_t shader_library_create_shader_from_preset(shader_library_t* library, shader_library_shader_preset_t preset);
 
 /*
 	description: creates a shader from bytes with identification name 'shader_name'
@@ -65,19 +85,7 @@ RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* libr
 		shader_handle_t, handle to the newly created shader
 		SHADER_HANDLE_INVALID, if the shader creation failed
  */
-RENDERER_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path, const char* shader_name);
-
-/*
-	description: adds a shader into the library with identification name 'shader_name'
-	params:
-		library: ptr to the shader_library_t object
-		shader: ptr to the shader_t object to be added
-		shader_name: identification name of the added shader
-	returns:
-		shader_handle_t, handle to the added shader
-		SHADER_HANDLE_INVALID, if the shader addition failed
- */
-RENDERER_API shader_handle_t shader_library_add(shader_library_t* library, shader_t* shader, const char* shader_name);
+RENDERER_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path);
 
 /*
 	description: destroys a shader with identification name as 'shader_name'
@@ -100,28 +108,6 @@ RENDERER_API bool shader_library_destroy_shader(shader_library_t* library, const
 		false, otherwise
  */
 RENDERER_API bool shader_library_destroy_shaderH(shader_library_t* library, shader_handle_t handle);
-
-/*
-	description: removes a shader from the library but doesn't destroys it
-	params:
-		library: ptr to the shader_library_t object
-		shader_name: name of the shader in the library
-	returns:
-		true, if the shader removal succeed
-		false, otherwise
- */
-RENDERER_API bool shader_library_remove(shader_library_t* library, const char* shader_name);
-
-/*
-	description: removes a shader from the library but doesn't destroys it
-	params:
-		library: ptr to the shader_library_t object
-		handle: handle to the shader in the library
-	returns:
-		true, if the shader removal succeed
-		false, otherwise
- */
-RENDERER_API bool shader_library_removeH(shader_library_t* library, shader_handle_t handle);
 
 /* getters */
 
@@ -156,17 +142,7 @@ RENDERER_API const char* shader_library_get_nameH(shader_library_t* library, sha
 		const char*, name of the shader slot in the library
 		NULL, if the shader slot isn't found with ptr as 'shader'
  */
-RENDERER_API const char* shader_library_get_name(shader_library_t* library, shader_t* shader);
 
-/*
-	description: returns ptr to the shader_t object in the library with handle as 'handle'
-	params:
-		library: ptr to the shader_library_t object
-		handle: handle to the shader in the library
-	returns:
-		shader_t*, ptr to the shader_t object
-		NULL, if the shader isn't found
- */
 RENDERER_API shader_t* shader_library_getH(shader_library_t* library, shader_handle_t handle);
 
 /*
@@ -179,41 +155,3 @@ RENDERER_API shader_t* shader_library_getH(shader_library_t* library, shader_han
 		NULL, if the shader isn't found
  */
 RENDERER_API shader_t* shader_library_get(shader_library_t* library, const char* shader_name);
-
-/* setters */
-
-/*
-	description: sets the shader at the slot with handle 'handle' in the library
-	params:
-		library: ptr to the shader_library_t object
-		handle: handle to the shader slot in the library
-		shader: ptr to the shader object
-	returns:
-		shader_handle_t, handle to the shader slot
-		SHADER_HANDLE_INVALID, if the slot creation failed in case it doesn't already exist
- */
-RENDERER_API shader_handle_t shader_library_setH(shader_library_t* library, shader_handle_t handle, shader_t* shader);
-
-/*
-	description: sets the shader at the slot with name 'shader_name' in the library
-	params:
-		library: ptr to the shader_library_t object
-		shader_name: name of the shader slot in the library
-		shader: ptr to the shader object
-	returns:
-		shader_handle_t, handle to the shader slot
-		SHADER_HANDLE_INVALID, if the slot creation failed in case it doesn't already exist
- */
-RENDERER_API shader_handle_t shader_library_set(shader_library_t* library, const char* shader_name, shader_t* shader);
-
-/*
-	description: sets the name of the shader slot with handle as 'handle' in the library
-	params:
-		library: ptr to the shader_library_t object
-		handle: handle to the shader slot in the library
-		shader_name: name of the shader slot
-	returns:
-		shader_handle_t, handle to the shader slot
-		SHADER_HANDLE_INVALID, if the slot creation failed in case it doesn't already exist
- */
-RENDERER_API shader_handle_t shader_library_set_nameH(shader_library_t* library, shader_handle_t handle, const char* shader_name);

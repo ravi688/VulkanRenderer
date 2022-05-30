@@ -119,6 +119,9 @@ END_CPP_COMPATIBLE
 // #	define RENDERER_INCLUDE_2D_TEXT_RENDER_SYSTEM
 #endif
 
+// TODO: abstract memory allocator into the renderer object itself
+#	include <renderer/memory_allocator.h>
+
 #ifdef RENDERER_INCLUDE_DEBUG
 #	include <renderer/assert.h>
 #	include <renderer/debug.h>
@@ -140,8 +143,6 @@ END_CPP_COMPATIBLE
 #endif
 
 #ifdef RENDERER_INCLUDE_CORE
-// TODO: abstract memory allocator into the renderer object itself
-#	include <renderer/memory_allocator.h>
 #	include <renderer/render_window.h>
 #	include <renderer/render_queue.h>
 #	include <renderer/render_pass.h>

@@ -3,16 +3,29 @@
 #include <renderer/assert.h>
 #include <stdlib.h>
 
-RENDERER_API void vulkan_result_assert_success(VkResult result)
+
+RENDERER_API void __vulkan_result_assert_success(VkResult result, u32 line, const char* fnname, const char* flname)
 {
 	if(result == VK_SUCCESS)
 		return;
 	BUFFER buffer = buf_create(sizeof(char), 0, 0);
 	vulkan_result_to_string(result, &buffer);
-	LOG_ERR("[Assertion Failed]: assertion was result != VK_SUCCESS, but result equals to \"%s\"\n", vulkan_result_to_string_literal(result));
+	printf("[Assertion Failed]: assertion was result != VK_SUCCESS, but result equals to \"%s\", at %u, %s, %s\n", vulkan_result_to_string_literal(result),
+		line, fnname, flname);
 	buf_free(&buffer);
 	exit(0);
 }
+
+// RENDERER_API void vulkan_result_assert_success(VkResult result)
+// {
+// 	if(result == VK_SUCCESS)
+// 		return;
+// 	BUFFER buffer = buf_create(sizeof(char), 0, 0);
+// 	vulkan_result_to_string(result, &buffer);
+// 	LOG_ERR("[Assertion Failed]: assertion was result != VK_SUCCESS, but result equals to \"%s\"\n", vulkan_result_to_string_literal(result));
+// 	buf_free(&buffer);
+// 	exit(0);
+// }
 
 RENDERER_API void vulkan_result_assert_on_time(VkResult result)
 {

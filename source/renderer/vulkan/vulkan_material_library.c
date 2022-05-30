@@ -69,6 +69,7 @@ static vulkan_material_handle_t vulkan_material_library_add(vulkan_material_libr
 		.material = material,
 		.handle = handle
 	};
+	material->handle = handle;
 	buf_push(&library->materials, &slot);
 	return handle;
 }

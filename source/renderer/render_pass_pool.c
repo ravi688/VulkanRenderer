@@ -52,7 +52,7 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 	};
 	create_info->attachment_usages = heap_new(vulkan_attachment_next_pass_usage_t);
-	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_NONE;
+	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
 
 	create_info->supplementary_attachment_count = 1;
 	create_info->supplementary_attachments = renderer->swapchain->vo_image_views;

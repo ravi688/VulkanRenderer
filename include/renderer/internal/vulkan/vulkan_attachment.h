@@ -14,7 +14,9 @@ typedef enum vulkan_attachment_next_pass_usage_t
 	/* if this attachment would be used as a Input attachment for the next subpasses */
 	VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT = 1,
 	/* if this attachment would be used as a Sampled Image for the next renderpass */
-	VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED = 1 << 1
+	VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED = 1 << 1,
+	/* if this attachment would be used as a Present Image for the presentation engine */
+	VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT = 1 << 2
 } vulkan_attachment_next_pass_usage_t;
 
 typedef enum vulkan_attachment_type_t

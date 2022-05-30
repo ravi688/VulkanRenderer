@@ -8,7 +8,9 @@
 BEGIN_CPP_COMPATIBLE
 
 // doesn't do anything if result == VK_SUCCESS
-RENDERER_API void vulkan_result_assert_success(VkResult result);
+// RENDERER_API void vulkan_result_assert_success(VkResult result);
+#define vulkan_result_assert_success(result) __vulkan_result_assert_success(result, __LINE__, __FUNCTION__, __FILE__)
+RENDERER_API void __vulkan_result_assert_success(VkResult result, u32 line, const char* fnname, const char* flname);
 
 // doesn't do anything if result != VK_TIMEOUT
 RENDERER_API void vulkan_result_assert_on_time(VkResult result);

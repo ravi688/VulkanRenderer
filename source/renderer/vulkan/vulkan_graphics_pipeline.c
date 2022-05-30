@@ -8,6 +8,7 @@
 #include <renderer/render_window.h>
 
 #include <renderer/memory_allocator.h>
+#include <disk_manager/file_reader.h>
 
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 {
@@ -16,13 +17,53 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 	return pipeline;
 }
 
+static BUFFER* __pvkLoadBinaryFile(const char* filePath)
+{
+	FILE* file = fopen(filePath, "rb");
+	if(file == NULL)
+		LOG_FETAL_ERR("Unable to open the file at path \"%s\"\n", filePath);
+	int result = fseek(file, 0, SEEK_END);
+	assert(result == 0);
+	size_t length = ftell(file);
+	if(length == 0)
+		LOG_WRN("File at path \"%s\" is empty\n", filePath);
+	rewind(file);
+	BUFFER* buffer = BUFcreate(NULL, sizeof(char), 0, 0);
+	buf_resize(buffer, length);
+	size_t readLength = fread(buffer->bytes, sizeof(char), length, file);
+	assert(readLength == length);
+	buf_set_element_count(buffer, readLength);
+	buf_fit(buffer);
+	fclose(file);
+	// if(out_length != NULL)
+		// *out_length = length;
+	return buffer;
+}
+
+static VkShaderModule pvkCreateShaderModule(VkDevice device, const char* filePath)
+{
+	BUFFER* spirv  = load_binary_from_file(filePath);
+	VkShaderModuleCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		.codeSize = spirv->element_count,
+		.pCode = spirv->bytes,
+	};
+	VkShaderModule shaderModule;
+	vkCall(vkCreateShaderModule(device, &cInfo, NULL, &shaderModule));
+	buf_free(spirv);
+	return shaderModule;
+}
+
 RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline)
 {
 	pipeline->renderer;
+	assert(create_info->shader_module_count > 0);
 	// copy the shader stage create info to a continuous array of VkPipelineShaderStageCreateInfo
 	VkPipelineShaderStageCreateInfo* shader_stages = heap_newv(VkPipelineShaderStageCreateInfo, create_info->shader_module_count);
 	for(u32 i = 0; i < create_info->shader_module_count; i++)
 		shader_stages[i] = create_info->shader_modules[i].vo_stage;
+
 
 	// setup vertex input binding and descriptions
 	VkVertexInputBindingDescription* binding_descriptions = heap_newv(VkVertexInputBindingDescription, create_info->vertex_attribute_binding_count);
@@ -95,6 +136,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.pMultisampleState = &create_info->settings->multisample,
 		.pDepthStencilState = &create_info->settings->depthstencil,
 		.pColorBlendState = &create_info->settings->colorblend,
+		.pDynamicState = &create_info->settings->dynamic,
 		.layout = create_info->layout->vo_handle,
 		.renderPass = create_info->render_pass->vo_handle,
 		.subpass = create_info->subpass_index,
