@@ -98,7 +98,7 @@ RENDERER_API vulkan_material_handle_t vulkan_material_library_create_materialH(v
 	return vulkan_material_library_add(library, vulkan_material_create(library->shader_library->renderer, shader), material_name);
 }
 
-RENDERER_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path, const char* material_name)
+RENDERER_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 }

@@ -38,9 +38,9 @@ RENDERER_API material_handle_t material_library_create_materialH(material_librar
 	return vulkan_material_library_create_materialH(library, handle, material_name);
 }
 
-RENDERER_API material_handle_t material_library_load_material(material_library_t* library, const char* file_path, const char* material_name)
+RENDERER_API material_handle_t material_library_load_material(material_library_t* library, const char* file_path)
 {
-	return vulkan_material_library_load_material(library, file_path, material_name);
+	return vulkan_material_library_load_material(library, file_path);
 }
 
 RENDERER_API bool material_library_destroy_material(material_library_t* library, const char* material_name)

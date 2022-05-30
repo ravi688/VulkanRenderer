@@ -35,7 +35,7 @@ RENDERER_API void vulkan_material_library_release_resources(vulkan_material_libr
 /* logic functions */
 RENDERER_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, const char* shader_name, const char* material_name);
 RENDERER_API vulkan_material_handle_t vulkan_material_library_create_materialH(vulkan_material_library_t* library, vulkan_shader_handle_t handle, const char* material_name);
-RENDERER_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path, const char* material_name);
+RENDERER_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path);
 RENDERER_API bool vulkan_material_library_destroy_material(vulkan_material_library_t* library, const char* material_name);
 RENDERER_API bool vulkan_material_library_destroy_materialH(vulkan_material_library_t* library, vulkan_material_handle_t handle);
 RENDERER_API BUFFER* vulkan_material_library_serialize(vulkan_material_library_t* library);
