@@ -15,6 +15,9 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new()
 RENDERER_API void vulkan_pipeline_layout_create_no_alloc(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info, vulkan_pipeline_layout_t* layout)
 {
 	assert(create_info != NULL);
+
+	memzero(layout, vulkan_pipeline_layout_t);
+
 	layout->renderer = renderer;
 	VkPipelineLayoutCreateInfo pipeline_layout_info =
 	{

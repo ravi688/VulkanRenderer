@@ -64,6 +64,8 @@ static void setup_material_resources(vulkan_material_t* material)
 
 RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_t* shader, vulkan_material_t* material)
 {
+	memzero(material, vulkan_material_t);
+
 	material->renderer = renderer;
 	material->handle = VULKAN_MATERIAL_HANDLE_INVALID;
 

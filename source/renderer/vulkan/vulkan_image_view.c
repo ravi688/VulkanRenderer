@@ -31,6 +31,8 @@ RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* re
 
 RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info, vulkan_image_view_t OUT view)
 {
+	memzero(view, vulkan_image_view_t);
+
 	view->renderer = renderer;
 	VkImageViewCreateInfo view_create_info  =
 	{

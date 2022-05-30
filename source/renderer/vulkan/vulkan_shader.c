@@ -858,7 +858,10 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		vulkan_attachment_next_pass_usage_t usage = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_NONE;
 
 		if(i < create_info->supplementary_attachment_count)
+		{
+			store_op = VK_ATTACHMENT_STORE_OP_STORE;
 			usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
+		}
 
 		for(u32 j = 0; j < pass->subpass_description_count; j++)
 		{
@@ -904,6 +907,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 	assert(pass->subpass_description_count > 0);
 	create_info->subpass_count = pass->subpass_description_count;
 	create_info->subpasses = heap_newv(vulkan_subpass_create_info_t, pass->subpass_count);
+	memzerov(create_info->subpasses, vulkan_subpass_create_info_t, pass->subpass_count);
 	for(u32 i = 0; i < pass->subpass_count; i++)
 	{
 		create_info->subpasses[i].sub_render_set_bindings = pass->subpass_descriptions[i].sub_render_set_bindings;

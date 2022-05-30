@@ -15,6 +15,8 @@ RENDERER_API vulkan_shader_library_t* vulkan_shader_library_new()
 
 RENDERER_API void vulkan_shader_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t OUT library)
 {
+	memzero(library, vulkan_shader_library_t);
+
 	library->renderer = renderer;
 	library->relocation_table = buf_create(sizeof(buf_ucount_t), 1, 0);
 	library->shaders = buf_create(sizeof(vulkan_shader_library_slot_t), 1, 0);

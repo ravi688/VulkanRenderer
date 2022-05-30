@@ -32,6 +32,48 @@ RENDERER_API void render_pass_pool_release_resources(render_pass_pool_t* pool)
 
 /* logic functions */
 
+static vulkan_render_pass_create_info_t* build_shadow_map_render_pass_create_info(vulkan_renderer_t* renderer)
+{
+	vulkan_render_pass_create_info_t* create_info = heap_new(vulkan_render_pass_create_info_t);
+	memzero(create_info, vulkan_render_pass_create_info_t);
+	
+	create_info->framebuffer_count = 1;
+	create_info->attachment_count = 1;
+	create_info->attachments = heap_new(VkAttachmentDescription);
+	create_info->attachments[0] = (VkAttachmentDescription)
+	{
+		.format = VK_FORMAT_D32_SFLOAT,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
+	};
+	create_info->attachment_usages = heap_new(vulkan_attachment_next_pass_usage_t);
+	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED;
+
+	// create_info->supplementary_attachment_count = 1;
+	// create_info->supplementary_attachments = renderer->swapchain->vo_image_views;
+
+	VkAttachmentReference* depth_stencil_attachment = heap_new(VkAttachmentReference);
+	depth_stencil_attachment[0] = (VkAttachmentReference)
+	{
+		.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		.attachment = 0
+	};
+	create_info->subpass_count = 1;
+	create_info->subpasses = heap_new(vulkan_subpass_create_info_t);
+	create_info->subpasses[0] = (vulkan_subpass_create_info_t)
+	{
+		.pipeline_bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		.depth_stencil_attachment = depth_stencil_attachment
+	};
+
+	return create_info;
+}
+
 static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_create_info(vulkan_renderer_t* renderer)
 {
 	vulkan_render_pass_create_info_t* create_info = heap_new(vulkan_render_pass_create_info_t);
@@ -75,6 +117,17 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 	return create_info;
 }
 
+static const char* preset_to_string(render_pass_pool_pass_preset_t preset)
+{
+	switch(preset)
+	{
+		case RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN: return "RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN";
+		case RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP: return "RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP";
+		default: "UNKOWN PRESET";
+	}
+	return "UNKOWN PRESET";
+}
+
 RENDERER_API render_pass_handle_t render_pass_pool_create_pass_from_preset(render_pass_pool_t* pool, render_pass_pool_pass_preset_t preset)
 {
 	vulkan_render_pass_create_info_t* create_info;
@@ -83,12 +136,15 @@ RENDERER_API render_pass_handle_t render_pass_pool_create_pass_from_preset(rende
 		case RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN:
 			create_info = build_swapchain_color_render_pass_create_info(CAST_TO(vulkan_render_pass_t*, pool)->renderer);
 			break;
+		case RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP:
+			create_info = build_shadow_map_render_pass_create_info(CAST_TO(vulkan_render_pass_t*, pool)->renderer);
+			break;
 		default:
 			return RENDER_PASS_HANDLE_INVALID;
 	}
 	AUTO handle = vulkan_render_pass_pool_create_pass(pool, create_info);
 	heap_free(create_info);
-	log_msg("Vulkan render pass has been created from a preset successfully\n");
+	log_msg("Render pass has been created or fetched from pool with preset: %s\n", preset_to_string(preset));
 	return handle;
 }
 

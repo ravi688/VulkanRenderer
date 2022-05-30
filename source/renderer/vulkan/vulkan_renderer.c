@@ -125,7 +125,7 @@ static VkSemaphore get_semaphore(VkDevice device)
 	return semaphore;
 }
 
-RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen)
+RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
 	vulkan_renderer_t* renderer = heap_new(vulkan_renderer_t);
 	memset(renderer, 0, sizeof(vulkan_renderer_t));
@@ -151,7 +151,7 @@ DEBUG_BLOCK
 
 
 	// create window
-	renderer->window = render_window_init(width, height, title, full_screen);
+	renderer->window = render_window_init(width, height, title, full_screen, resizable);
 	render_window_subscribe_on_resize(renderer->window, vulkan_renderer_on_window_resize, renderer);
 
 	// create surface
@@ -297,7 +297,7 @@ DEBUG_BLOCK
 	renderer->swapchain = vulkan_swapchain_create(renderer, &swapchain_info);
 
 	// setup command pool
-	renderer->vo_command_pool = vulkan_command_pool_create(renderer, queue_family_indices[0], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+	renderer->vo_command_pool = vulkan_command_pool_create(renderer, queue_family_indices[0], 0);
 	
 	// setup command buffers
 	renderer->vo_command_buffers = heap_newv(VkCommandBuffer, renderer->swapchain->image_count);
@@ -393,7 +393,10 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 {
 	vulkan_swapchain_acquire_next_image(renderer->swapchain);
-	vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+	
+	// WARNING: enabling command buffer reset and dragging the window results in a crash, not sure why?
+	// vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+	
 	vulkan_command_buffer_begin(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	// vulkan_render_pass_begin_info_t begin_info =
@@ -416,7 +419,6 @@ RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 
 RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 {
-	u32 wait_destination_mask = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	vulkan_queue_submit(renderer->vo_graphics_queue,
 								renderer->vo_command_buffers[renderer->swapchain->current_image_index],
 								renderer->vo_image_available_semaphore,

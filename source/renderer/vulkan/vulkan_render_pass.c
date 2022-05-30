@@ -39,6 +39,8 @@ static VkClearValue get_clear_value_from_format(VkFormat format)
 
 RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_t OUT render_pass)
 {
+	memzero(render_pass, vulkan_render_pass_t);
+
 	render_pass->renderer = renderer;
 	render_pass->subpass_count = create_info->subpass_count;
 	render_pass->current_subpass_index = 0;
@@ -161,7 +163,8 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 	vkDestroyRenderPass(render_pass->renderer->logical_device->vo_handle, render_pass->vo_handle, NULL);
 	
 	// destroy the vulkan attachments
-	for(u32 i = 0; i < render_pass->attachment_count; i++)
+	s32 num_attachment_to_be_destroyed = CAST_TO(s32, render_pass->attachment_count) - CAST_TO(s32, render_pass->supplementary_attachment_count);
+	for(u32 i = 0; i < num_attachment_to_be_destroyed; i++)
 		vulkan_attachment_destroy(&render_pass->attachments[i]);
 
 	// destroy the vulkan framebuffers
@@ -187,9 +190,12 @@ RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* ren
 	// heap_free(render_pass);
 }
 
+static INLINE u32 min(u32 v1, u32 v2) { return (v1 > v2) ? v2 : v1; }
+
 RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index)
 {
 	framebuffer_index = (framebuffer_index == VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN) ? render_pass->renderer->swapchain->current_image_index : framebuffer_index;
+	framebuffer_index = min(render_pass->framebuffer_count - 1, framebuffer_index);
 	// begin the render pass
 	VkRenderPassBeginInfo render_pass_begin_info =
 	{

@@ -62,6 +62,8 @@ RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer
 }
 RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object)
 {
+	memzero(object, vulkan_render_object_t);
+
 	object->renderer = renderer;
 	object->material = create_info->material;
 	object->user_data = create_info->user_data;

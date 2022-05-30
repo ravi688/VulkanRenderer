@@ -22,6 +22,9 @@ RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new()
 
 RENDERER_API void vulkan_physical_device_create_no_alloc(VkPhysicalDevice vk_device, vulkan_physical_device_t OUT device)
 {
+
+	memzero(device, vulkan_physical_device_t);
+
 	device->vo_handle = vk_device;
 
 	// create list of logical devices to store all the logical devices created with this physical device

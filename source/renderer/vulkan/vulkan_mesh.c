@@ -28,6 +28,8 @@ RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulka
 	assert(create_info != 0);
 	assert(mesh != NULL);
 
+	memzero(mesh, vulkan_mesh_t);
+
 	mesh->renderer = renderer;
 	
 	// clear the list of vertex buffers if the same mesh object has been recreated

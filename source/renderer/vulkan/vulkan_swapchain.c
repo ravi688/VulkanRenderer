@@ -23,6 +23,8 @@ RENDERER_API vulkan_swapchain_t* vulkan_swapchain_create(vulkan_renderer_t* rend
 
 RENDERER_API void vulkan_swapchain_create_no_alloc(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info, vulkan_swapchain_t OUT swapchain)
 {
+	memzero(swapchain, vulkan_swapchain_t);
+
 	swapchain->renderer = renderer;
 	// create swapchain, it allocates some memory for the first time
 	create_swapchain(swapchain, create_info);

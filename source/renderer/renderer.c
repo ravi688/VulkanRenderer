@@ -7,13 +7,13 @@
 #include <renderer/material_library.h>
 #include <renderer/render_pass_pool.h>
 
-RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen)
+RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
 	renderer_t* renderer = heap_new(renderer_t);
 	memset(renderer, 0, sizeof(renderer_t));
 	
 	// create the renderer
-	renderer->vulkan_handle = vulkan_renderer_init(CAST_TO(vulkan_renderer_gpu_type_t, gpu_type), width, height, title, full_screen);
+	renderer->vulkan_handle = vulkan_renderer_init(CAST_TO(vulkan_renderer_gpu_type_t, gpu_type), width, height, title, full_screen, resizable);
 
 	return renderer;
 }

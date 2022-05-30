@@ -26,6 +26,8 @@ RENDERER_API vulkan_shader_module_t* vulkan_shader_module_create(vulkan_renderer
 
 RENDERER_API void vulkan_shader_module_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info, vulkan_shader_module_t* shader)
 {
+	memzero(shader, vulkan_shader_module_t);
+
 	shader->renderer = renderer;
 	shader->vo_module = get_shader_module(renderer->logical_device->vo_handle, create_info->spirv, create_info->length);
 	shader->vo_stage = get_pipeline_shader_stage_create_info(shader->vo_module, create_info->type, "main");
