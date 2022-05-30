@@ -54,21 +54,6 @@ RENDERER_API void material_library_release_resources(material_library_t* library
 /* logic functions */
 
 /*
-	description: adds a material into the libray with identification name as 'material_name'
-	params:
-		library: ptr to the material_library_t
-		material: ptr to the material_t object ( to be added into library )
-		material_name: identification name of this material_t object
-	returns:
-		material_handle_t, handle to the material_t object just added
-		MATERIAL_HANDLE_INVLIAD, if the addition failed
-	NOTE:
-		multiple material_t objects could be added with the same identification name,
-		in that case the first one will always be considered first in every operation.
- */
-RENDERER_API material_handle_t material_library_add(material_library_t* library, material_t* material, const char* material_name);
-
-/*
 	description: creates a material into the library with a shader named as 'shader_name' with the identification name as 'material_name'
 	params:
 		library: ptr to the material_library_t
@@ -102,7 +87,7 @@ RENDERER_API material_handle_t material_library_create_materialH(material_librar
 		material_handle_t, handle to the material_t object just loaded & created
 		MATERAIL_HANDLE_INVALID, if the creation or load failed
  */
-RENDERER_API material_handle_t material_library_load_material(material_library_t* library, const char* file_path, const char* material_name);
+RENDERER_API material_handle_t material_library_load_material(material_library_t* library, const char* file_path);
 
 /*
 	description: destroys & removes a material in the library with the material named as 'material_name'
@@ -125,28 +110,6 @@ RENDERER_API bool material_library_destroy_material(material_library_t* library,
 		false, if the destruction failed
  */
 RENDERER_API bool material_library_destroy_materialH(material_library_t* library, material_handle_t handle);
-
-/*
-	description: removes a material from the library with the material named as 'material_name', but doesn't destroys it
-	params:
-		library: ptr to the material_library_t
-		material_name: identification name of the material to be removed
-	returns:
-		true, if the removal succeed
-		false, if the removal failed
- */
-RENDERER_API bool material_library_remove(material_library_t* library, const char* material_name);
-
-/*
-	description: removes a material from the library with the material having handle as 'handle'
-	params:
-		library: ptr to the material_library_t
-		material_name: handle to the material to be removed
-	returns:
-		true, if the removal succeed
-		false, if the removal failed
- */
-RENDERER_API bool material_library_removeH(material_library_t* library, material_handle_t handle);
 
 /*
 	description: serializes the material_library_t object into stream of bytes (BUFFER* object)
@@ -226,57 +189,3 @@ RENDERER_API material_t* material_library_getH(material_library_t* library, mate
  */
 RENDERER_API const char* material_library_get_nameH(material_library_t* library, material_handle_t handle);
 
-/*
-	description: returns the name of the material with the ptr to the material_t object
-	params:
-		library: ptr to the material_library_t
-		material: ptr to the material_t object
-	returns:
-		const char*, name of the material object
-		NULL, if the material object isn't found
- */
-RENDERER_API const char* material_library_get_name(material_library_t* library, material_t* material);
-
-/* setters */
-
-/*
-	description: sets the material_t object to the slot with identification name as 'name'
-	params:
-		library: ptr to the material_libray_t
-		name: identification name of the material slot
-		material: ptr to the material_t object
-	returns:
-		material_handle_t, handle to the material_t object with name 'name'
-		MATERIAL_HANDLE_INVALID, if setting or adding failed
-	NOTE:
-		if the slot with material name 'name' isn't found then it will call material_library_add
- */
-RENDERER_API material_handle_t material_library_set(material_library_t* library, const char* name, material_t* material);
-
-/*
-	description: sets the material_t object to the slot with material handle as 'handle'
-	params:
-		library: ptr to the material_library_t object
-		handle: handle to the material slot
-		material: ptr to the material_t object
-	returns:
-		material_handle_t, handle to the material_t object with name 'name'
-		MATERIAL_HANDLE_INVALID, if setting or adding failed
-	NOTE:
-		if the slot with material handle 'handle' isn't found then it will call material_library_add
- */
-RENDERER_API material_handle_t material_library_setH(material_library_t* library, material_handle_t handle, material_t* material);
-
-/*
-	description: sets the name of the material slot with handle 'handle'
-	params:
-		library: ptr to the material_library_t object
-		handle: handle to the material slot
-		material_name: identification name of the material slot to be set
-	returns:
-		material_handle_t, handle (same that is passed)
-		or a valid material_handle_t with a new slot in case the passed handle isn't valid
-	NOTE:
-		if the slot with material handle 'handle' isn't found then it will call material_library_add
- */
-RENDERER_API material_handle_t material_library_set_nameH(material_library_t* library, material_handle_t handle, const char* material_name);
