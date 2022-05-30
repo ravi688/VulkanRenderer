@@ -90,7 +90,7 @@ RENDERER_API uint material_get_push_uintH(material_t* material, material_field_h
 	return vulkan_material_get_push_uintH(material, handle);
 }
 
-RENDERER_API vec2_t(float) vulkan_material_get_push_vec2H(material_t* material, material_field_handle_t handle)
+RENDERER_API vec2_t(float) material_get_push_vec2H(material_t* material, material_field_handle_t handle)
 {
 	return vulkan_material_get_push_vec2H(material, handle);
 }
