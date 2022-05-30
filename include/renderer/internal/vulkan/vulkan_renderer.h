@@ -65,7 +65,7 @@ typedef struct vulkan_renderer_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen);
+RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable);
 RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer);
 
 /* submits the recorded command buffer to the graphics queue and performs presentation */

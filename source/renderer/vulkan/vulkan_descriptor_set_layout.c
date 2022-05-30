@@ -98,6 +98,8 @@ RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_create
 
 RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc(vulkan_renderer_t* renderer, VkDescriptorSetLayoutBinding* bindings, u32 binding_count, vulkan_descriptor_set_layout_t OUT layout)
 {
+	memzero(layout, vulkan_descriptor_set_layout_t);
+	
 	VkDescriptorSetLayoutCreateInfo layout_create_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,

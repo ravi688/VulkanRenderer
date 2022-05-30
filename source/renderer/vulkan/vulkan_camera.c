@@ -77,6 +77,8 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	// for now only one camera could be in the entire application
 	ASSERT_CALLED_ONCE();
 
+	memzero(camera, vulkan_camera_t);
+
 	camera->renderer = renderer;
 	camera->far_clip_plane = create_info->far_clip_plane;
 	camera->near_clip_plane = create_info->near_clip_plane;

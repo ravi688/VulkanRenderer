@@ -88,6 +88,8 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 		assert(create_info->data[i].channel_count == 4);
 #endif // GLOBAL_DEBUG
 
+	memzero(texture, vulkan_texture_t);
+
 	texture->renderer = renderer;
 	switch(create_info->type)
 	{

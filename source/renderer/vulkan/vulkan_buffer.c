@@ -37,6 +37,7 @@ RENDERER_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vul
 	assert(buffer != NULL);
 	assert(((create_info->stride != 0) && (create_info->count != 0)) || (create_info->size != 0));
 
+	memzero(buffer, vulkan_buffer_t);
 	buffer->renderer = renderer;
 	u32 buffer_size = (create_info->size == 0) ? (create_info->stride * create_info->count) : create_info->size;
 	

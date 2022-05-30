@@ -87,6 +87,8 @@ RENDERER_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vu
 
 RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_light_type_t type, vulkan_light_t OUT light)
 {
+	memzero(light, vulkan_light_t);
+
 	light->renderer = renderer;
 
 	setup_gpu_resources(light);

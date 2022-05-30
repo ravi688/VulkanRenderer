@@ -109,6 +109,7 @@ static VkImageAspectFlags get_image_aspect_from_format(VkFormat format)
 
 RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment)
 {
+	memzero(attachment, vulkan_attachment_t);
 	attachment->renderer = renderer;
 
 	// create image for this attachment
@@ -145,7 +146,8 @@ RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)
 
 RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment)
 {
-	heap_free(attachment);
+	// TODO
+	// heap_free(attachment);
 }
 
 RENDERER_API vulkan_image_t* vulkan_attachment_get_image(vulkan_attachment_t* attachment)

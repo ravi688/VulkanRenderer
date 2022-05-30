@@ -24,6 +24,9 @@ RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulk
 	assert(!((create_info->vo_type == VK_IMAGE_TYPE_2D) && (create_info->depth > 1)));
 	assert(create_info->depth != 0);
 	assert(image != NULL);
+
+	memzero(image, vulkan_image_t);
+
 	image->renderer = renderer;
 	VkImageCreateInfo image_info =
 	{
@@ -84,7 +87,8 @@ RENDERER_API void vulkan_image_destroy(vulkan_image_t* image)
 
 RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image)
 {
-	heap_free(image);
+	// TODO
+	// heap_free(image);
 }
 
 

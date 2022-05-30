@@ -17,6 +17,7 @@ RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new()
 
 RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
 {
+	memzero(set, vulkan_descriptor_set_t);
 	set->renderer = renderer;
 	set->vo_pool = create_info->vo_pool;
 	if(create_info->layout->vo_handle == VK_NULL_HANDLE)
