@@ -22,11 +22,13 @@
 #include <hpml/mat4/header_config.h>
 #include <hpml/mat4/mat4.h>
 
+typedef void (*render_object_draw_handler_t)(void* user_data);
+
 typedef struct render_object_create_info_t
 {
-	material_t* material; 					// material that this object uses
-	void* user_data;						// user data such as ptr to mesh_t or text_mesh_t
-	void (*draw_handler)(void* user_data);			// ptr to the draw function, depends on the render object implementation
+	material_t* material; 						// material that this object uses
+	void* user_data;							// user data such as ptr to mesh_t or text_mesh_t
+	render_object_draw_handler_t draw_handler;;	// ptr to the draw function, depends on the render object implementation
 } render_object_create_info_t;
 
 

@@ -107,6 +107,7 @@ RENDERER_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_
 RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* obj, mat4_t(float) transform)
 {
 	mat4_t(float) normal = mat4_transpose(float)(mat4_inverse(float)(transform));
+	mat4_move(float)(&transform, mat4_transpose(float)(transform));
 	struct_descriptor_set_mat4(&obj->struct_definition, obj->transform_handle, CAST_TO(float*, &transform));
 	struct_descriptor_set_mat4(&obj->struct_definition, obj->normal_handle, CAST_TO(float*, &normal));
 }

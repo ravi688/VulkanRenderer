@@ -92,6 +92,10 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	mat4_t(float) transform = mat4_mul(float)(2, mat4_translation(float)(-1.8f, 0.6f, 0), mat4_rotation(float)(0, 0, -22 * DEG2RAD));
 	mat4_t(float) projection = mat4_persp_projection(float)(create_info->near_clip_plane, create_info->far_clip_plane, create_info->field_of_view, (float)window->width / (float)window->height);
 	mat4_t(float) view = mat4_inverse(float)(transform);
+
+	mat4_move(float)(&transform, mat4_transpose(float)(transform));
+	mat4_move(float)(&projection, mat4_transpose(float)(projection));
+	mat4_move(float)(&view, mat4_transpose(float)(view));
 	struct_descriptor_set_mat4(&camera->struct_definition, camera->transform_handle, CAST_TO(float*, &transform));
 	struct_descriptor_set_mat4(&camera->struct_definition, camera->projection_handle, CAST_TO(float*, &projection));
 	struct_descriptor_set_mat4(&camera->struct_definition, camera->view_handle, CAST_TO(float*, &view));
