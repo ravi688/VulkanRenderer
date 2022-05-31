@@ -1,23 +1,16 @@
 
 #version 450
 
-layout(set = 0, binding = 0) uniform CameraInfo
-{
-	mat4 transform;
-	mat4 projection;
-	mat4 view;
-} cameraInfo;
+#include <v3d.h>
 
+layout(set = GLOBAL_SET, binding = CAMERA_BINDING) uniform CameraInfo cameraInfo;
+layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
-layout(set = 4, binding = 0) uniform ObjectInfo
-{
-	mat4 transform;
-	mat4 normal;
-} objectInfo;
-
-layout(location = 0) in vec3 position;
+layout(location = POSITION_LOCATION) in vec3 position;
 
 void main()
 {
-	gl_Position = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+	vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+	clipPos.y = -clipPos.y;
+	gl_Position = clipPos;
 }

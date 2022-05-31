@@ -1,7 +1,9 @@
 
 #version 450
 
-layout(set = 3, binding = 0) uniform Parameters
+#include <v3d.h>
+
+layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
 	vec4 color;
 } parameters;
