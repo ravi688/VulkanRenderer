@@ -23,7 +23,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 
 	memzero(pipeline, vulkan_graphics_pipeline_t);
 
-	pipeline->renderer;
+	pipeline->renderer = renderer;
 	// copy the shader stage create info to a continuous array of VkPipelineShaderStageCreateInfo
 	VkPipelineShaderStageCreateInfo* shader_stages = heap_newv(VkPipelineShaderStageCreateInfo, create_info->shader_module_count);
 	for(u32 i = 0; i < create_info->shader_module_count; i++)

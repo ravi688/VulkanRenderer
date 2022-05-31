@@ -18,7 +18,6 @@ RENDERER_API vulkan_mesh_t* vulkan_mesh_new()
 {
 	vulkan_mesh_t* mesh = heap_new(vulkan_mesh_t);
 	memset(mesh, 0, sizeof(vulkan_mesh_t));
-	mesh->vertex_buffers = buf_create(sizeof(vulkan_buffer_t), 0, 0);
 	return mesh;
 }
 
@@ -30,10 +29,12 @@ RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulka
 
 	memzero(mesh, vulkan_mesh_t);
 
+	mesh->vertex_buffers = buf_create(sizeof(vulkan_buffer_t), 0, 0);
 	mesh->renderer = renderer;
 	
+	// TODO
 	// clear the list of vertex buffers if the same mesh object has been recreated
-	buf_clear(&mesh->vertex_buffers, NULL);
+	//buf_clear(&mesh->vertex_buffers, NULL);
 	
 	//create vertex buffers
 	if((create_info->vertex_buffer_info_count != 0) && (create_info->vertex_buffer_infos != NULL))
@@ -103,9 +104,11 @@ RENDERER_API void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 	// for(u32 i = 0; i < mesh->vertex_buffers.element_count; i++)
 		// vulkan_buffer_release_resources((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i));
 	buf_free(&mesh->vertex_buffers);
-	if(mesh->index_buffer != NULL)
-		vulkan_buffer_release_resources(mesh->index_buffer);
-	heap_free(mesh);
+	// TODO
+	// if(mesh->index_buffer != NULL)
+	// 	vulkan_buffer_release_resources(mesh->index_buffer);
+	// TODO
+	// heap_free(mesh);
 }
 
 RENDERER_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh)
