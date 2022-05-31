@@ -1094,8 +1094,8 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_plane, float size)
 	mesh3d_uv_add(mesh, 0, 0);
 	mesh3d_uv_add(mesh, 1, 0);
 
-	mesh3d_triangle_add(mesh, 3, 1, 0);
-	mesh3d_triangle_add(mesh, 3, 2, 1);
+	mesh3d_triangle_add(mesh, 0, 1, 3);
+	mesh3d_triangle_add(mesh, 1, 2, 3);
 
 	mesh3d_normal_add(mesh, 0, 1, 0);
 	mesh3d_normal_add(mesh, 0, 1, 0);

@@ -82,18 +82,17 @@ RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_r
 		material_and_render_object_list_map_t map = dictionary_create(vulkan_material_handle_t, render_object_list_t, 1, dictionary_key_comparer_buf_ucount_t);
 		dictionary_add(&queue->shader_handles, &obj->material->shader->handle, &map);
 	}
-	else
+
+	material_and_render_object_list_map_t* map = dictionary_get_value_ptr_at(&queue->shader_handles, obj->material->shader->handle);
+	if(!dictionary_contains(map, &obj->material->handle))
 	{
-		material_and_render_object_list_map_t* map = dictionary_get_value_ptr_at(&queue->shader_handles, obj->material->shader->handle);
-		if(!dictionary_contains(map, &obj->material->handle))
-		{
-			render_object_list_t list = buf_create(sizeof(vulkan_render_object_t*), 1, 0);
-			dictionary_add(map, &obj->material->handle, &list);
-		}
-		render_object_list_t* list = dictionary_get_value_ptr(map, &obj->material->handle);
-		if(buf_find_index_of(list, &obj, buf_ptr_comparer) == BUF_INVALID_INDEX)
-			buf_push(list, &obj);
+		render_object_list_t list = buf_create(sizeof(vulkan_render_object_t*), 1, 0);
+		dictionary_add(map, &obj->material->handle, &list);
 	}
+	
+	render_object_list_t* list = dictionary_get_value_ptr(map, &obj->material->handle);
+	if(buf_find_index_of(list, &obj, buf_ptr_comparer) == BUF_INVALID_INDEX)
+		buf_push(list, &obj);
 
 	u32 pass_count = obj->material->shader->render_pass_count;
 	vulkan_shader_render_pass_t* passes = obj->material->shader->render_passes;
@@ -125,12 +124,13 @@ RENDERER_API void vulkan_render_queue_remove(vulkan_render_queue_t* queue, vulka
 
 RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
 {
-	queue->is_ready = true;
+	// TODO
+	// queue->is_ready = true;
 }
 
 RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue)
 {
-	ASSERT_WRN(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it\n");
+	// ASSERT_WRN(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it\n");
 	// get the pointers to render pass pool, shader library and material library
 	vulkan_render_pass_pool_t* pass_pool = queue->renderer->render_pass_pool;
 	vulkan_shader_library_t* shader_library = queue->renderer->shader_library;
