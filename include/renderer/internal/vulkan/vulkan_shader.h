@@ -82,7 +82,7 @@ typedef struct vulkan_subpass_description_t
 	vulkan_shader_resource_descriptor_t* sub_render_set_bindings;
 
 	/* graphics pipeline description */
-	vulkan_graphics_pipeline_description_t pipeline_description;
+	u32 pipeline_description_index;
 
 	/* ATTACHMENT POINTERS */
 	
@@ -190,6 +190,9 @@ typedef struct vulkan_shader_create_info_t
 		u32 render_pass_description_count;
 		u32 render_pass_count;
 	};
+
+	/* PIPELINES */
+	vulkan_graphics_pipeline_description_t* pipeline_descriptions;
 
 } vulkan_shader_create_info_t;
 

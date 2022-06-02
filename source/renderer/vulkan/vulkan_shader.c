@@ -786,6 +786,7 @@ typedef struct vulkan_pipeline_common_data_t
 	VkPushConstantRange* push_constant_ranges;
 	u32 push_constant_range_count;
 	vulkan_descriptor_set_layout_t material_set_layout;
+	vulkan_graphics_pipeline_description_t* pipeline_descriptions;
 } vulkan_pipeline_common_data_t;
 
 static u32 get_framebuffer_count_from_render_pass_type(vulkan_render_pass_type_t type, u32 swapchain_image_count)
@@ -1018,11 +1019,12 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 			buf_pop(&set_layouts, NULL);
 
 			buf_clear(&shader_modules, NULL);
-			u32 module_count = descriptions[i].subpass_descriptions[j].pipeline_description.spirv_code_count;
+			vulkan_graphics_pipeline_description_t* pipeline_description = &common_data->pipeline_descriptions[descriptions[i].subpass_descriptions[j].pipeline_description_index];
+			u32 module_count = pipeline_description->spirv_code_count;
 			
 			for(u32 k = 0; k < module_count; k++)
 			{
-				vulkan_shader_module_create_info_t module_create_info = REINTERPRET_TO(vulkan_shader_module_create_info_t, descriptions[i].subpass_descriptions[j].pipeline_description.spirv_codes[k]);
+				vulkan_shader_module_create_info_t module_create_info = REINTERPRET_TO(vulkan_shader_module_create_info_t, pipeline_description->spirv_codes[k]);
 				buf_push_pseudo(&shader_modules, 1);
 				vulkan_shader_module_create_no_alloc(renderer, &module_create_info, CAST_TO(vulkan_shader_module_t*, buf_peek_ptr(&shader_modules)));
 			}
@@ -1031,7 +1033,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 			vulkan_graphics_pipeline_create_info_t pipeline_create_info = 
 			{
 				.layout = &pipeline_layouts[j],
-				.settings = descriptions[i].subpass_descriptions[j].pipeline_description.settings,
+				.settings = pipeline_description->settings,
 				.shader_modules = CAST_TO(vulkan_shader_module_t*, buf_get_ptr(&shader_modules)),
 				.shader_module_count = module_count,
 				.vertex_attribute_bindings = common_data->vertex_attribute_bindings,
@@ -1082,7 +1084,8 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 		.vertex_attribute_binding_count = shader->vertex_info_count,
 		.push_constant_ranges = shader->push_constant.ranges,
 		.push_constant_range_count = shader->push_constant.range_count,
-		.material_set_layout = shader->material_set_layout
+		.material_set_layout = shader->material_set_layout,
+		.pipeline_descriptions = create_info->pipeline_descriptions
 	};
 	shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, create_info->render_pass_description_count, &common_data);
 	shader->render_pass_count = create_info->render_pass_description_count;

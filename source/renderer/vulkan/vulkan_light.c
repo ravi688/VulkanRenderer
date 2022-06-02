@@ -96,7 +96,7 @@ RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulk
 	mat4_t(float) transform = mat4_mul(float)(2, mat4_translation(float)(-4.0f, 4.0f, 0 ), mat4_rotation(float)(-20 DEG, -90 DEG, 0));
 	mat4_t(float) projection = mat4_ortho_projection(float)(5, 20, 10, 1);
 	mat4_t(float) view = mat4_inverse(float)(transform);
-	vec3_t(float) dir = vec3_normalize(float)(vec3(float)(1, -1, 3));
+	vec3_t(float) dir = vec3_normalize(float)(vec3(float)(0, -1, 1));
 	vec3_t(float) color = vec3_one(float)();
 	float intensity = 1.0f;
 	struct_descriptor_set_mat4(&light->struct_definition, light->transform_handle, CAST_TO(float*, &transform));
