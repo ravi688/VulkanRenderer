@@ -5,6 +5,10 @@
 #define RENDERER_INCLUDE_DEBUG
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
+#include <renderer/render_scene.h>
+
+#include <conio.h>
+
 /*
 	1. Default clear screen render pass after creating a camera [done]
 	2. Test Shader & Material, Default Shaders [done]
@@ -24,7 +28,9 @@ int main(const char** argc, int argv)
 	// create a camera
 	AUTO camera = camera_create(renderer, CAMERA_PROJECTION_TYPE_PERSPECTIVE, 0.04f, 100, 65 DEG);
 
-	AUTO pool = renderer_get_render_pass_pool(renderer);
+	// create a render scene
+	AUTO scene = render_scene_create_from_preset(renderer, RENDER_SCENE_PRESET_TYPE_DEFAULT);
+
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
 
@@ -36,31 +42,35 @@ int main(const char** argc, int argv)
 	AUTO planeMesh = mesh_create(renderer, mesh3d_plane(1.0f));
 
 	material_set_vec4(blueMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
-	material_set_vec4(greenMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
+	material_set_vec4(greenMaterial, "parameters.color", vec4(float)(0, 1, 0, 1));
 
-	render_object_create_info_t create_info = 
-	{
-		.material = blueMaterial,
-		.user_data = mesh,
-		.draw_handler = CAST_TO(render_object_draw_handler_t, mesh_draw_indexed)
-	};
-	AUTO renderObject = render_object_create(renderer, &create_info);
+	render_object_t* obj2 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(obj2, greenMaterial);
+	render_object_attach(obj2, planeMesh);
+	render_object_set_transform(obj2, mat4_translation(float)(0, 0, 0.5f));
 
-	create_info.user_data = planeMesh;
-	create_info.material = greenMaterial;
-	AUTO renderObject2 = render_object_create(renderer, &create_info);
-	render_object_set_transform(renderObject2, mat4_translation(float)(0, -1.0f, 0));
+	render_object_t* obj1 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	// render_object_set_material(obj1, blueMaterial);
+	render_object_attach(obj1, mesh);
+	render_object_set_transform(obj1, mat4_translation(float)(0, 0, -0.5f));
 
-	AUTO queue = render_queue_create(renderer, "GeometryQueue");
-	render_queue_add(queue, renderObject);
-	render_queue_add(queue, renderObject2);
 
+	bool swap = true;
 	while(renderer_is_running(renderer))
 	{
+		if(kbhit())
+		{
+			getch();
+			render_object_set_material(obj1, swap ? greenMaterial: blueMaterial);
+			render_object_set_material(obj2, swap ? blueMaterial : greenMaterial);
+			swap = !swap;
+		}
+
 		// begin command buffer recording
 		renderer_begin_frame(renderer);
 
-		render_queue_dispatch(queue);
+		render_scene_render(scene);
+		// camera_render(scene);
 
 		// end command buffer recording
 		renderer_end_frame(renderer);
@@ -69,16 +79,14 @@ int main(const char** argc, int argv)
 		renderer_update(renderer);
 	}
 
-	render_object_destroy(renderObject);
-	render_object_release_resources(renderObject);
-
-	render_queue_destroy(queue);
-	render_queue_release_resources(queue);
-
 	mesh_destroy(planeMesh);
 	mesh_release_resources(planeMesh);
 	mesh_destroy(mesh);
 	mesh_release_resources(mesh);
+
+	render_scene_destroy(scene);
+	render_scene_release_resources(scene);
+
 	camera_destroy(camera);
 	camera_release_resources(camera);
 

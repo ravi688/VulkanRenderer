@@ -10,22 +10,55 @@
 	typedef vulkan_render_queue_t render_queue_t;
 	typedef struct vulkan_render_object_t vulkan_render_object_t;
 	typedef vulkan_render_object_t render_object_t;
+	#include <renderer/internal/vulkan/vulkan_handles.h>
+	typedef vulkan_render_object_handle_t render_object_handle_t;
+	#define RENDER_OBJECT_HANDLE_INVALID VULKAN_RENDER_OBJECT_HANDLE_INVALID
+	typedef vulkan_render_queue_handle_t render_queue_handle_t;
+	#define RENDER_QUEUE_HANDLE_INVALID VULKAN_RENDER_QUEUE_HANDLE_INVALID
 #elif RENDERER_OPENGL_DRIVER
 	typedef struct opengl_render_queue_t opengl_render_queue_t;
 	typedef opengl_render_queue_t render_queue_t;
 	typedef struct opengl_render_object_t opengl_render_object_t;
 	typedef opengl_render_object_t render_object_t;
+	#include <renderer/internal/opengl/opengl_handles.h>
+	typedef opengl_render_object_handle_t render_object_handle_t;
+	#define RENDER_OBJECT_HANDLE_INVALID OPENGL_RENDER_OBJECT_HANDLE_INVALID
+	typedef opengl_render_queue_handle_t render_queue_handle_t;
+	#define RENDER_QUEUE_HANDLE_INVALID OPENGL_RENDER_QUEUE_HANDLE_INVALID
 #elif RENDERER_DIRECTX_DRIVER
 	typedef struct directx_render_queue_t directx_render_queue_t;
 	typedef directx_render_queue_t render_queue_t;
 	typedef struct directx_render_object_t directx_render_object_t;
 	typedef directx_render_object_t render_object_t;
+	#include <renderer/internal/directx/directx_handles.h>
+	typedef directx_render_object_handle_t render_object_handle_t;
+	#define RENDER_OBJECT_HANDLE_INVALID DIRECTX_RENDER_OBJECT_HANDLE_INVALID
+	typedef directx_render_queue_handle_t render_queue_handle_t;
+	#define RENDER_QUEUE_HANDLE_INVALID DIRECTX_RENDER_QUEUE_HANDLE_INVALID
 #elif RENDERER_METAL_DRIVER
 	typedef struct metal_render_queue_t metal_render_queue_t;
 	typedef metal_render_queue_t render_queue_t;
 	typedef struct metal_render_object_t metal_render_object_t;
 	typedef metal_render_object_t render_object_t;
+	#include <renderer/internal/metal/metal_handles.h>
+	typedef metal_render_object_handle_t render_object_handle_t;
+	#define RENDER_OBJECT_HANDLE_INVALID METAL_RENDER_OBJECT_HANDLE_INVALID
+	typedef metal_render_queue_handle_t render_queue_handle_t;
+	#define RENDER_QUEUE_HANDLE_INVALID METAL_RENDER_QUEUE_HANDLE_INVALID
 #endif
+
+// NOTE: this should be in sync with vulkan_render_queue_type_t
+typedef enum render_queue_type_t
+{
+	RENDER_QUEUE_TYPE_BACKGROUND,	// this render queue is rendered before any others
+	RENDER_QUEUE_TYPE_GEOMETRY, 		// opaque geometry uses this queue
+	RENDER_QUEUE_TYPE_ALPH_TESTED, 	// alpha tested geometry uses this queue
+	RENDER_QUEUE_TYPE_GEOMETRY_LAST, // last render queue that is considered "opaque"
+	RENDER_QUEUE_TYPE_TRANSPARENT, 	// this render queue is rendered after Geometry and AlphaTest, in back-to-front order
+	RENDER_QUEUE_TYPE_OVERLAY, 		// this render queue is meant for overlay effects
+	RENDER_QUEUE_TYPE_UNDEFINED 	// for specific purpose such as implementing render scene and adding a camera to it
+} render_queue_type_t;
+
 
 
 /*
@@ -35,23 +68,21 @@
 RENDERER_API render_queue_t* render_queue_new();
 
 /*
-	description: Creates a render queue object with identification name "name"
+	description: Creates a render queue object
 	params:
 		renderer: ptr to the context
-		name: identification name of this queue
 	returns: ptr to the newly created render_queue_t object
  */
-RENDERER_API render_queue_t* render_queue_create(renderer_t* renderer, const char* name);
+RENDERER_API render_queue_t* render_queue_create(renderer_t* renderer, render_queue_type_t type);
 
 /*
-	description: Creates a render queue object with identification name "name"
+	description: Creates a render queue object
 	params:
 		renderer: ptr to the context
-		name: identification name of this queue
 		OUT queue: pre allocated render_queue_t object (using render_queue_new())
 	returns: nothing
  */
-RENDERER_API void render_queue_create_no_alloc(renderer_t* renderer, const char* name, render_queue_t OUT queue);
+RENDERER_API void render_queue_create_no_alloc(renderer_t* renderer, render_queue_type_t type, render_queue_t OUT queue);
 
 /*
 	description: Destroys the API specific resources
@@ -81,7 +112,7 @@ RENDERER_API void render_queue_release_resources(render_queue_t* queue);
 		you would still need to call render_queue_build()
 		Adding render object into the queue sets is_ready to false
  */
-RENDERER_API void render_queue_add(render_queue_t* queue, render_object_t* obj);
+RENDERER_API render_object_handle_t render_queue_add(render_queue_t* queue, render_object_t* obj);
 
 /*
 	description: Removes a render object from the render queue
@@ -94,7 +125,7 @@ RENDERER_API void render_queue_add(render_queue_t* queue, render_object_t* obj);
 		you would still need to call render_queue_build()
 		Removing render object from the queue sets is_ready to false
  */
-RENDERER_API void render_queue_remove(render_queue_t* queue, render_object_t* obj);
+RENDERER_API void render_queue_removeH(render_queue_t* queue, render_object_handle_t handle);
 
 /*
 	description: Builds and Orders the render objects according to the render pass handles
