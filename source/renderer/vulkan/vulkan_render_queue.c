@@ -18,10 +18,10 @@ RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new()
 	return queue;
 }
 
-RENDERER_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, const char* name)
+RENDERER_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type)
 {
 	vulkan_render_queue_t* queue = vulkan_render_queue_new();
-	vulkan_render_queue_create_no_alloc(renderer, name, queue);
+	vulkan_render_queue_create_no_alloc(renderer, type, queue);
 	return queue;
 }
 
@@ -29,12 +29,12 @@ typedef BUFFER subpass_shader_list_t;
 typedef BUFFER render_object_list_t;
 typedef dictionary_t material_and_render_object_list_map_t;
 
-RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, const char* name, vulkan_render_queue_t OUT queue)
+RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type, vulkan_render_queue_t OUT queue)
 {
 	memzero(queue, vulkan_render_queue_t);
 
+	queue->handle = VULKAN_RENDER_QUEUE_HANDLE_INVALID;
 	queue->renderer = renderer;
-	queue->name = string_create(name);
 	assert(sizeof(vulkan_render_pass_handle_t) == sizeof(buf_ucount_t));
 	queue->render_pass_handles = dictionary_create(vulkan_render_pass_handle_t, subpass_shader_list_t*, 1, dictionary_key_comparer_buf_ucount_t);
 	assert(sizeof(vulkan_shader_handle_t) == sizeof(buf_ucount_t));
@@ -44,13 +44,45 @@ RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* rendere
 
 RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 {
+	buf_ucount_t count = dictionary_get_count(&queue->render_pass_handles);
+	for(buf_ucount_t i = 0; i < count; i++)
+	{
+		subpass_shader_list_t* list = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr_at(&queue->render_pass_handles, i));
+		u32 subpass_count = vulkan_render_pass_pool_getH(queue->renderer->render_pass_pool, DEREF_TO(vulkan_render_pass_handle_t, dictionary_get_key_ptr_at(&queue->render_pass_handles, i)))->subpass_count;
+		for(u32 j = 0; j < subpass_count; j++)
+			buf_clear(&list[i], NULL);
+		// heap_free(list);
+	}
+	dictionary_clear(&queue->render_pass_handles);
+
+	count = dictionary_get_count(&queue->shader_handles);
+	for(buf_ucount_t i = 0; i < count; i++)
+	{
+		material_and_render_object_list_map_t* map = dictionary_get_value_ptr_at(&queue->shader_handles, i);
+		buf_ucount_t count1 = dictionary_get_count(map);
+		for(buf_ucount_t j = 0; j < count1; j++)
+		{
+			render_object_list_t* list = dictionary_get_value_ptr_at(map, i);
+			buf_ucount_t count2 = buf_get_count(list);
+			for(buf_ucount_t k = 0; k < count2; k++)
+			{
+				vulkan_render_object_t* obj;
+				buf_get_at(list, k, &obj);
+				obj->queue = NULL;
+				obj->handle = VULKAN_RENDER_OBJECT_HANDLE_INVALID;
+			}
+			buf_clear(list, NULL);
+		}
+		dictionary_clear(map);
+	}
+	dictionary_clear(&queue->shader_handles);
+
 	// TODO
 	queue->is_ready = false;
 }
 
 RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue)
 {
-	string_destroy(&queue->name);
 	buf_ucount_t count = dictionary_get_count(&queue->render_pass_handles);
 	for(buf_ucount_t i = 0; i < count; i++)
 	{
@@ -75,8 +107,13 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 	heap_free(queue);
 }
 
-RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj)
+RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj)
 {
+	obj->queue = queue;
+	obj->handle = VULKAN_RENDER_OBJECT_HANDLE_INVALID;
+	if(obj->material == NULL)
+		return VULKAN_RENDER_OBJECT_HANDLE_INVALID;
+
 	if(!dictionary_contains(&queue->shader_handles, &obj->material->shader->handle))
 	{
 		material_and_render_object_list_map_t map = dictionary_create(vulkan_material_handle_t, render_object_list_t, 1, dictionary_key_comparer_buf_ucount_t);
@@ -115,11 +152,27 @@ RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_r
 				buf_push(&lists[j], &obj->material->shader->handle);
 		}
 	}
+	obj->handle = obj;
+	return obj;
 }
 
-RENDERER_API void vulkan_render_queue_remove(vulkan_render_queue_t* queue, vulkan_render_object_t* obj)
+// TODO
+RENDERER_API void vulkan_render_queue_remove_materialH();
+RENDERER_API void vulkan_render_queue_remove_render_passH();
+RENDERER_API void vulkan_render_queue_remove_shaderH();
+
+RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_handle_t handle)
 {
-	LOG_FETAL_ERR("For now removing an object from the render queue is not allowed\n");
+	assert(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
+	vulkan_render_object_t* object = handle;
+	material_and_render_object_list_map_t* map = dictionary_get_value_ptr(&queue->shader_handles, &object->material->shader->handle);
+	render_object_list_t* list = dictionary_get_value_ptr(map, &object->material->handle);
+	buf_ucount_t index = buf_find_index_of(list, &object, buf_ptr_comparer);
+	if(index == BUF_INVALID_INDEX)
+		LOG_WRN("remove failed, render object isn't found in the queue\n");
+	buf_remove_at(list, index, NULL);
+	// object->queue = NULL;
+	object->handle = VULKAN_RENDER_OBJECT_HANDLE_INVALID;
 }
 
 RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
