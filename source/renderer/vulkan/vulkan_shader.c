@@ -13,6 +13,10 @@
 #include <renderer/memory_allocator.h>
 #include <shader_compiler/compiler.h>
 
+
+// TODO: remove it from here after debugging
+#include <renderer/internal/vulkan/vulkan_texture.h>
+
 RENDERER_API vulkan_shader_t* vulkan_shader_new()
 {
 	vulkan_shader_t* shader = heap_new(vulkan_shader_t);
@@ -830,7 +834,18 @@ static void write_render_pass_descriptors(vulkan_render_pass_t* previous_pass, v
 		for(u32 i = 0; i < count; i++)
 			vulkan_descriptor_set_write_texture(&pass->render_set, pass_description->render_set_bindings[i].binding_number,
 				CAST_TO(vulkan_texture_t*, &previous_pass->attachments[pass_description->input_attachments[i]]));
-	}	
+	}
+
+	// write subpass descriptions
+	u32 subpass_count = pass->subpass_count;
+	for(u32 i = 0; i < subpass_count; i++)
+	{
+		vulkan_subpass_description_t* subpass = &pass_description->subpass_descriptions[i];
+		u32 count = subpass->sub_render_set_binding_count;
+		for(u32 j = 0; j < count; j++)
+			vulkan_descriptor_set_write_texture(&pass->sub_render_sets[i], subpass->sub_render_set_bindings[j].binding_number,
+				CAST_TO(vulkan_texture_t*, &pass->attachments[subpass->input_attachments[j] - pass->supplementary_attachment_count]));
+	}
 }
 
 static vulkan_render_pass_create_info_t* convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_t* next_pass)
@@ -858,19 +873,22 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 
 	for(u32 i = 0; i < pass->attachment_count; i++)
 	{
+		bool is_supplementary = i < create_info->supplementary_attachment_count;
 		VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		VkAttachmentLoadOp load_op = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
-									 ((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) ?
+									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
 									  VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR) : VK_ATTACHMENT_LOAD_OP_CLEAR;
 
 		VkImageLayout final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
-									 ((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) ?
+									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
 									  VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		
 		vulkan_attachment_next_pass_usage_t usage = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_NONE;
 
-		if(i < create_info->supplementary_attachment_count)
+		// supplementary attachments would always be swapchain image
+		if(is_supplementary)
 		{
+			assert(pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR);
 			store_op = VK_ATTACHMENT_STORE_OP_STORE;
 			usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
 		}

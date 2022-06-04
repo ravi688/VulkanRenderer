@@ -5,6 +5,9 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
+// TODO: remove it after debugging
+#include <renderer/debug.h>
+
 RENDERER_API vulkan_attachment_t* vulkan_attachment_new()
 {
 	vulkan_attachment_t* attachment = heap_new(vulkan_attachment_t);
@@ -167,10 +170,18 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 	};
 	vulkan_image_view_create_no_alloc(renderer, &view_create_info, &attachment->image_view);
 
+	// NOTE: in case of VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT we don't need any sampler
 	if((create_info->next_pass_usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) != 0)
+	{
+		attachment->vo_descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		attachment->sampler = create_sampler(renderer->logical_device->vo_handle);
+	}
 	else
+	{
+		if((create_info->next_pass_usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT) != 0)
+			attachment->vo_descriptor_type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
 		attachment->sampler = VK_NULL_HANDLE;
+	}
 }
 
 RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)

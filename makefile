@@ -359,7 +359,7 @@ shader-clean:
 
 
 SHADER_INCLUDES = -I $(wildcard shaders/include/)
-GLSL_SHADERS = $(wildcard shaders/*.frag shaders/*.vert shaders/*/*.frag shaders/*/*.vert shaders/*/*/*/.frag shaders/*/*/*.vert shaders/*/*/*/*.frag shaders/*/*/*/*.vert)
+GLSL_SHADERS = $(wildcard shaders/*.frag shaders/*.vert shaders/*/*.frag shaders/*/*.vert shaders/*/*/*.frag shaders/*/*/*.vert shaders/*/*/*/*.frag shaders/*/*/*/*.vert)
 SPIRV_SHADERS = $(addsuffix .spv, $(GLSL_SHADERS))
 SPIRV_COMPILER = glslc
 

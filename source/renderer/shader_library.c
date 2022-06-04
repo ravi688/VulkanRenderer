@@ -51,17 +51,18 @@ static void* create_element(BUFFER* list)
 	return buf_peek_ptr(list);	
 }
 
-static void add_sampler2D(BUFFER* list, const char* name, u32 set_number, u32 binding_number)
+static void add_opaque(BUFFER* list, const char* name, u32 type, u32 set_number, u32 binding_number)
 {
 	vulkan_shader_resource_descriptor_t* binding = create_element(list);
 	binding->is_opaque = true;
 	binding->set_number = set_number;
 	binding->binding_number = binding_number;
-	binding->stage_flags = (1 << VULKAN_SHADER_TYPE_VERTEX) | (1 << VULKAN_SHADER_TYPE_FRAGMENT);
+	// NOTE: shader stage must be FRAGMENT for subpassInput
+	binding->stage_flags = (1 << VULKAN_SHADER_TYPE_FRAGMENT); //| (1 << VULKAN_SHADER_TYPE_VERTEX);
 
 	struct_descriptor_t* descriptor = &binding->handle;
 	strcpy(descriptor->name, name);
-	descriptor->type = SHADER_COMPILER_SAMPLER_2D;	
+	descriptor->type = type;	
 }
 
 static void begin_uniform(BUFFER* list, const char* name, u32 set_number, u32 binding_number)
@@ -128,6 +129,12 @@ static vulkan_shader_resource_descriptor_t* create_material_set_binding(shader_l
 			begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				add_color_field(&bindings, "color");
 			end_uniform(&bindings);
+			break;
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
+			begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
+				add_color_field(&bindings, "color");
+			end_uniform(&bindings);
+			add_opaque(&bindings, "albedo", SHADER_COMPILER_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
 		default:
 			UNSUPPORTED_PRESET(preset);
@@ -207,6 +214,17 @@ static vulkan_vertex_info_t* create_vertex_info(shader_library_shader_preset_t p
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(&attributes);
 			break;
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
+			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			end_vertex_binding(&attributes);
+			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
+				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			end_vertex_binding(&attributes);
+			begin_vertex_binding(&attributes, 8, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_BINDING);
+				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_LOCATION, VK_FORMAT_R32G32_SFLOAT, 0);
+			end_vertex_binding(&attributes);
+			break;
 		default:
 			UNSUPPORTED_PRESET(preset);
 	}
@@ -229,7 +247,7 @@ static void add_input_from_previous(BUFFER* list, u32 index, u32 binding)
 {
 	vulkan_render_pass_description_t* pass = buf_peek_ptr(list);
 	buf_push_auto(CAST_TO(BUFFER*, pass->input_attachments), index);
-	add_sampler2D(CAST_TO(BUFFER*, pass->render_set_bindings), "internal", VULKAN_DESCRIPTOR_SET_RENDER, binding);
+	add_opaque(CAST_TO(BUFFER*, pass->render_set_bindings), "internal", SHADER_COMPILER_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_RENDER, binding);
 }
 
 static void add_attachment(BUFFER* list, vulkan_attachment_type_t type)
@@ -247,6 +265,8 @@ static void begin_subpass(BUFFER* list, u32 pipeline_index)
 	subpass->color_attachments = CAST_TO(u32*, create_buffer(u32));
 	subpass->input_attachments = CAST_TO(u32*, create_buffer(u32));
 	subpass->preserve_attachments = CAST_TO(u32*, create_buffer(u32));
+
+	subpass->sub_render_set_bindings = CAST_TO(vulkan_shader_resource_descriptor_t*, create_buffer(vulkan_shader_resource_descriptor_t));
 }
 
 typedef enum vulkan_attachment_reference_type_t
@@ -257,7 +277,7 @@ typedef enum vulkan_attachment_reference_type_t
 	VUKLAN_ATTACHMENT_REFERENCE_TYPE_PRESERVE
 } vulkan_attachment_reference_type_t;
 
-static void add_attachment_reference(BUFFER* list, vulkan_attachment_reference_type_t type, u32 reference)
+static void add_attachment_reference(BUFFER* list, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
 {
 	vulkan_render_pass_description_t* pass = buf_peek_ptr(list);
 	vulkan_subpass_description_t* subpass = buf_peek_ptr(CAST_TO(BUFFER*, pass->subpass_descriptions));
@@ -268,6 +288,7 @@ static void add_attachment_reference(BUFFER* list, vulkan_attachment_reference_t
 			break;
 		case VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT:
 			buf_push_auto(CAST_TO(BUFFER*, subpass->input_attachments), reference);
+			add_opaque(CAST_TO(BUFFER*, subpass->sub_render_set_bindings), "internal", SHADER_COMPILER_SUBPASS_INPUT, VULKAN_DESCRIPTOR_SET_SUB_RENDER, binding);
 			break;
 		case VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL:
 			subpass->depth_stencil_attachment = reference;
@@ -285,27 +306,26 @@ static void end_subpass(BUFFER* list)
 	vulkan_render_pass_description_t* pass = buf_peek_ptr(list);
 	vulkan_subpass_description_t* subpass = buf_peek_ptr(CAST_TO(BUFFER*, pass->subpass_descriptions));
 	BUFFER* buffer;
-	if(subpass->color_attachments != NULL)
-	{
-		buffer = CAST_TO(BUFFER*, subpass->color_attachments);
-		subpass->color_attachment_count = buf_get_element_count(buffer);
-		subpass->color_attachments = buf_get_ptr(buffer);
-		heap_free(buffer);
-	}
-	if(subpass->input_attachments != NULL)
-	{
-		buffer = CAST_TO(BUFFER*, subpass->input_attachments);
-		subpass->input_attachment_count = buf_get_element_count(buffer);
-		subpass->input_attachments = buf_get_ptr(buffer);
-		heap_free(buffer);
-	}
-	if(subpass->preserve_attachments != NULL)
-	{
-		buffer = CAST_TO(BUFFER*, subpass->preserve_attachments);
-		subpass->preserve_attachment_count = buf_get_element_count(buffer);
-		subpass->preserve_attachments = buf_get_ptr(buffer);
-		heap_free(buffer);
-	}
+	
+	buffer = CAST_TO(BUFFER*, subpass->color_attachments);
+	subpass->color_attachment_count = buf_get_element_count(buffer);
+	subpass->color_attachments = buf_get_ptr(buffer);
+	heap_free(buffer);
+	
+	buffer = CAST_TO(BUFFER*, subpass->input_attachments);
+	subpass->input_attachment_count = buf_get_element_count(buffer);
+	subpass->input_attachments = buf_get_ptr(buffer);
+	heap_free(buffer);
+
+	buffer = CAST_TO(BUFFER*, subpass->preserve_attachments);
+	subpass->preserve_attachment_count = buf_get_element_count(buffer);
+	subpass->preserve_attachments = buf_get_ptr(buffer);
+	heap_free(buffer);
+
+	buffer = CAST_TO(BUFFER*, subpass->sub_render_set_bindings);
+	subpass->sub_render_set_bindings = buf_get_ptr(buffer);
+	subpass->sub_render_set_binding_count = buf_get_element_count(buffer);
+	heap_free(buffer);
 }
 
 static void end_pass(BUFFER* list)
@@ -340,8 +360,8 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
 				begin_subpass(&passes, 0);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
 				end_subpass(&passes);
 			end_pass(&passes);
 			break;
@@ -350,8 +370,8 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
 				begin_subpass(&passes, 0);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
 				end_subpass(&passes);
 			end_pass(&passes);
 			break;
@@ -359,7 +379,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
 				begin_subpass(&passes, 0);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
 				end_subpass(&passes);
 			end_pass(&passes);
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
@@ -367,8 +387,31 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
 				begin_subpass(&passes, 1);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
+				end_subpass(&passes);
+			end_pass(&passes);
+			break;
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
+			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
+				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
+				begin_subpass(&passes, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
+				end_subpass(&passes);
+			end_pass(&passes);
+			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
+				add_input_from_previous(&passes, 0, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 1 target [swapchain image]
+				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 0 target
+				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
+				begin_subpass(&passes, 1);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 1, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
+				end_subpass(&passes);
+				begin_subpass(&passes, 2);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT, 1, VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
 				end_subpass(&passes);
 			end_pass(&passes);
 			break;
@@ -536,6 +579,25 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
 				add_shader(&pipelines, "shaders/presets/lit/color/color.pass.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
 				add_shader(&pipelines, "shaders/presets/lit/color/color.pass.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			break;
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
+			begin_pipeline(renderer, &pipelines);
+				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
+				add_shader(&pipelines, "shaders/presets/lit/color/shadow.pass.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/lit/color/shadow.pass.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			begin_pipeline(renderer, &pipelines);
+				add_color_blend_state(&pipelines, VK_FALSE);
+				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
+				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			begin_pipeline(renderer, &pipelines);
+				add_color_blend_state(&pipelines, VK_FALSE);
+				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
+				add_shader(&pipelines, "shaders/presets/diffuse/overlay.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/diffuse/overlay.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
 			end_pipeline(&pipelines);
 			break;
 		default:

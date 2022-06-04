@@ -91,6 +91,7 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 	memzero(texture, vulkan_texture_t);
 
 	texture->renderer = renderer;
+	texture->vo_descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	switch(create_info->type)
 	{
 		case VULKAN_TEXTURE_TYPE_ALBEDO:

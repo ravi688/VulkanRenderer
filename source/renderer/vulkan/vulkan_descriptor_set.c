@@ -61,29 +61,12 @@ RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, u32 s
 	vkCmdBindDescriptorSets(set->renderer->vo_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->vo_handle, set_number, 1, &set->vo_handle, 0, NULL);
 }
 
-RENDERER_API void vulkan_descriptor_set_write_image_sampler(vulkan_descriptor_set_t* set, u32 binding_index, VkImageView view, VkSampler sampler)
-{
-	VkDescriptorImageInfo image_info =
-	{
-		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		.imageView = view,
-		.sampler = sampler
-	};
-	VkWriteDescriptorSet descriptor_write =
-	{
-		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-		.dstSet = set->vo_handle,
-		.dstBinding = binding_index,
-		.dstArrayElement = 0,
-		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		.descriptorCount = 1,
-		.pImageInfo = &image_info,
-	};
-	vkUpdateDescriptorSets(set->renderer->logical_device->vo_handle, 1, &descriptor_write, 0, NULL);	
-}
-
 RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_texture_t* texture)
 {
+	assert(texture->image_view.vo_handle != VK_NULL_HANDLE);
+	
+	// NOTE: texture->vo_image_sampler might be VK_NULL_HANDLE in case of subpassInput
+	// assert(texture->vo_image_sampler != VK_NULL_HANDLE);
 	VkDescriptorImageInfo image_info =
 	{
 		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -96,7 +79,7 @@ RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* s
 		.dstSet = set->vo_handle,
 		.dstBinding = binding_index,
 		.dstArrayElement = 0,
-		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.descriptorType = texture->vo_descriptor_type,
 		.descriptorCount = 1,
 		.pImageInfo = &image_info,
 	};

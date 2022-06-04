@@ -78,6 +78,9 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 			case SHADER_COMPILER_SAMPLER_CUBE:
 				binding->descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			break;
+			case SHADER_COMPILER_SUBPASS_INPUT:
+				binding->descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+			break;
 			
 			default:
 				LOG_FETAL_ERR("Cannot create set layout binding for the type \"%u\", because it is not recognized\n", descriptor->handle.type);

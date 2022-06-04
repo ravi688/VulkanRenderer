@@ -34,6 +34,7 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
 	memzero(view, vulkan_image_view_t);
 
 	view->renderer = renderer;
+	view->type = create_info->view_type;
 	VkImageViewCreateInfo view_create_info  =
 	{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,

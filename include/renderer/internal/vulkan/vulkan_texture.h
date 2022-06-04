@@ -37,6 +37,9 @@ typedef struct vulkan_texture_t
 	vulkan_image_t image;									// vulkan image object
 	vulkan_image_view_t image_view; 						// vulkan image view object
 	VkSampler vo_image_sampler; 							// vulkan image sampler object
+
+	// internal use only
+	VkDescriptorType vo_descriptor_type;	 				// type of descriptor to which this texture would be bound
 } vulkan_texture_t;
 
 BEGIN_CPP_COMPATIBLE

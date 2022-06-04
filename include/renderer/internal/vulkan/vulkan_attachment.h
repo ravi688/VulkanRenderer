@@ -54,6 +54,9 @@ typedef struct vulkan_attachment_t
 
 	/* sampler for this attachment if it has to be used in the next render pass, otherwise VK_NULL_HANDLE */
 	VkSampler sampler;
+
+	/* type of the descriptor to which this attachment to be bound as vulkan_texture_t */
+	VkDescriptorType vo_descriptor_type;
 } vulkan_attachment_t;
 
 
