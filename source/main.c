@@ -16,8 +16,12 @@
 	2. Test Shader & Material, Default Shaders [done]
 	3. Rendering [done]
 	4. Render Queue [done]
-	5. Muliple render passes (shadow mapping) [ in - progress ]
-	6. Multiple sub passes (color override)
+	5. Muliple render passes (shadow mapping) [ done ]
+	6. Multiple sub passes (color override) [ in - progress ]
+	7. Depth texture sharing across multiple render passes
+	8. Each shader will have prefered render pass description, if a render pass in the render pass pool
+		suffice to meet the requirements of the shader then that pass should be used instead of creating
+		another one.
  */
 
 int main(const char** argc, int argv)
@@ -37,7 +41,10 @@ int main(const char** argc, int argv)
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
 
-	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR);
+	AUTO shadowShaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR);
+	AUTO mat2 = material_library_getH(mlib, material_library_create_materialH(mlib, shadowShaderH, "Material2"));
+
+	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR);
 	AUTO shader = shader_library_getH(slib, shaderH);
 	AUTO blueMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "BlueColorMaterial"));
 	AUTO greenMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "GreenColorMaterial"));
@@ -46,6 +53,8 @@ int main(const char** argc, int argv)
 
 	material_set_vec4(blueMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
 	material_set_vec4(greenMaterial, "parameters.color", vec4(float)(0, 1, 0, 1));
+	material_set_vec4(mat2, "parameters.color", vec4(float)(1, 1, 1, 1));
+
 
 	render_object_t* obj2 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(obj2, greenMaterial);
@@ -55,7 +64,12 @@ int main(const char** argc, int argv)
 	render_object_t* obj1 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(obj1, blueMaterial);
 	render_object_attach(obj1, mesh);
-	render_object_set_transform(obj1, mat4_translation(float)(0, 0, 0));
+	render_object_set_transform(obj1, mat4_translation(float)(0.5f, 0, 0));
+
+	render_object_t* obj3 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(obj3, mat2);
+	render_object_attach(obj3, mesh);
+	render_object_set_transform(obj3, mat4_mul(float)(2, mat4_scale(float)(0.5f, 0.5f, 0.5f), mat4_translation(float)(-2, 0, 0)));
 
 	bool swap = true;
 	float angle = 0;
@@ -71,13 +85,17 @@ int main(const char** argc, int argv)
 		}
 		float deltaTime = time_get_delta_time(&tHandle);
 		angle += deltaTime * 90;
-		render_object_set_transform(obj1, mat4_rotation(float)(0, angle DEG, 0));
+		render_object_set_transform(obj1, mat4_mul(float)(2, mat4_translation(float)(0.5f, 0, 0), mat4_rotation(float)(0, angle DEG, 0)));
 
 		// begin command buffer recording
 		renderer_begin_frame(renderer);
 
+		// clear the screen
+		camera_set_clear(camera, COLOR_BLACK, 1.0f);
+		camera_render(camera, NULL);
+
+		// render the scene
 		render_scene_render(scene);
-		// camera_render(scene);
 
 		// end command buffer recording
 		renderer_end_frame(renderer);

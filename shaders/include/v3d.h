@@ -22,15 +22,15 @@
 #define MATERIAL_PROPERTIES_BINDING 0 	// binding for material properties
 
 // should be used with MATERIAL_SET & RENDER_SET
-#define TEXTURE_BINDING0 2 		// binding for texture unit 0
-#define TEXTURE_BINDING1 3 		// binding for texture unit 1
-#define TEXTURE_BINDING2 4 		// binding for texture unit 2
-#define TEXTURE_BINDING3 5 		// binding for texture unit 3
-#define TEXTURE_BINDING4 6 		// binding for texture unit 4
-#define TEXTURE_BINDING5 7	 	// binding for texture unit 5
-#define TEXTURE_BINDING6 8 		// binding for texture unit 6
-#define TEXTURE_BINDING7 9		// binding for texture unit 7
-#define TEXTURE_BINDING8 10 	// binding for texture unit 8
+#define TEXTURE_BINDING0 1 		// binding for texture unit 0
+#define TEXTURE_BINDING1 2 		// binding for texture unit 1
+#define TEXTURE_BINDING2 3 		// binding for texture unit 2
+#define TEXTURE_BINDING3 4 		// binding for texture unit 3
+#define TEXTURE_BINDING4 5 		// binding for texture unit 4
+#define TEXTURE_BINDING5 6	 	// binding for texture unit 5
+#define TEXTURE_BINDING6 7 		// binding for texture unit 6
+#define TEXTURE_BINDING7 8		// binding for texture unit 7
+#define TEXTURE_BINDING8 9 		// binding for texture unit 8
 
 // should be used with OBJECT_SET
 #define TRANSFORM_BINDING 0 	// binding for object transform matrices

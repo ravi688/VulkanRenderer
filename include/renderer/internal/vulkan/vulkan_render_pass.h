@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
+#include <renderer/color.h>
 #include <bufferlib/buffer.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
@@ -127,6 +128,9 @@ typedef struct vulkan_render_pass_t
 	/* render set for this render pass */
 	vulkan_descriptor_set_t render_set;
 
+
+	/* formats of each attachment [only for internal use] */
+	VkFormat* vo_formats;
 } vulkan_render_pass_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -183,6 +187,8 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass);
 		nothing
  */
 RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass);
+
+RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth);
 
 /*
 	description:

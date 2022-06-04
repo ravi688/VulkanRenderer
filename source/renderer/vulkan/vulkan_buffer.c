@@ -82,7 +82,8 @@ RENDERER_API void vulkan_buffer_destroy(vulkan_buffer_t* buffer)
 RENDERER_API void vulkan_buffer_release_resources(vulkan_buffer_t* buffer)
 {
 	check_pre_condition(buffer);
-	heap_free(buffer);
+	// TODO:
+	// heap_free(buffer);
 }
 
 RENDERER_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* data, u32 data_size)

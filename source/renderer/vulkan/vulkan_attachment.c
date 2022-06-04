@@ -1,5 +1,7 @@
 
 #include <renderer/internal/vulkan/vulkan_attachment.h>
+#include <renderer/internal/vulkan/vulkan_defines.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
@@ -107,6 +109,34 @@ static VkImageAspectFlags get_image_aspect_from_format(VkFormat format)
 	return 0;
 }
 
+
+static VkSampler create_sampler(VkDevice device)
+{
+	VkSamplerCreateInfo cInfo = 
+	{
+		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+		.magFilter = VK_FILTER_LINEAR,
+		.minFilter = VK_FILTER_LINEAR,
+		.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+		.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+		.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+		.mipLodBias = 0,
+		.anisotropyEnable = VK_FALSE,
+		.maxAnisotropy = 1.0f, // Optional
+		.compareEnable = VK_FALSE,
+		.compareOp = VK_COMPARE_OP_ALWAYS,	// Optional
+		.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+		.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+		.mipLodBias = 0.0f,
+		.minLod = 0.0f,
+		.maxLod = 1.0f
+	};
+
+	VkSampler sampler;
+	vkCall(vkCreateSampler(device, &cInfo, NULL, &sampler));
+	return sampler;
+}
+
 RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment)
 {
 	memzero(attachment, vulkan_attachment_t);
@@ -136,12 +166,19 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 		.view_type = VULKAN_IMAGE_VIEW_TYPE_2D
 	};
 	vulkan_image_view_create_no_alloc(renderer, &view_create_info, &attachment->image_view);
+
+	if((create_info->next_pass_usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) != 0)
+		attachment->sampler = create_sampler(renderer->logical_device->vo_handle);
+	else
+		attachment->sampler = VK_NULL_HANDLE;
 }
 
 RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)
 {
 	vulkan_image_destroy(&attachment->image);
 	vulkan_image_view_destroy(&attachment->image_view);
+	if(attachment->sampler != VK_NULL_HANDLE)
+		vkDestroySampler(attachment->renderer->logical_device->vo_handle, attachment->sampler, NULL);
 }
 
 RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment)

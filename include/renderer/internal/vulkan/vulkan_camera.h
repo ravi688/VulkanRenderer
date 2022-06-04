@@ -2,6 +2,7 @@
 #pragma
 
 #include <renderer/defines.h>
+#include <renderer/color.h>
 #include <renderer/struct_descriptor.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_handles.h> 	// vulkan_render_pass_handle_t
@@ -67,6 +68,7 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera);
 RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera);
 
 /* logic functions */
+RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth);
 RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_queue_t* queue);
 
 /* getters */

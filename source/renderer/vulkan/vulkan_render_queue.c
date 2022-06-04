@@ -9,6 +9,7 @@
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
 #include <renderer/assert.h>
+#include <renderer/debug.h>
 #include <renderer/memory_allocator.h>
 
 RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new()
@@ -47,10 +48,10 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 	buf_ucount_t count = dictionary_get_count(&queue->render_pass_handles);
 	for(buf_ucount_t i = 0; i < count; i++)
 	{
-		subpass_shader_list_t* list = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr_at(&queue->render_pass_handles, i));
+		subpass_shader_list_t* lists = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr_at(&queue->render_pass_handles, i));
 		u32 subpass_count = vulkan_render_pass_pool_getH(queue->renderer->render_pass_pool, DEREF_TO(vulkan_render_pass_handle_t, dictionary_get_key_ptr_at(&queue->render_pass_handles, i)))->subpass_count;
 		for(u32 j = 0; j < subpass_count; j++)
-			buf_clear(&list[i], NULL);
+			buf_clear(&lists[j], NULL);
 		// heap_free(list);
 	}
 	dictionary_clear(&queue->render_pass_handles);
@@ -62,7 +63,7 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 		buf_ucount_t count1 = dictionary_get_count(map);
 		for(buf_ucount_t j = 0; j < count1; j++)
 		{
-			render_object_list_t* list = dictionary_get_value_ptr_at(map, i);
+			render_object_list_t* list = dictionary_get_value_ptr_at(map, j);
 			buf_ucount_t count2 = buf_get_count(list);
 			for(buf_ucount_t k = 0; k < count2; k++)
 			{
@@ -107,6 +108,24 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 	heap_free(queue);
 }
 
+RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue)
+{
+	buf_ucount_t count = dictionary_get_count(&queue->shader_handles);
+	for(buf_ucount_t i = 0; i < count; i++)
+	{
+		material_and_render_object_list_map_t* map = dictionary_get_value_ptr_at(&queue->shader_handles, i);
+		buf_ucount_t count1 = dictionary_get_count(map);
+		for(buf_ucount_t j = 0; j < count1; j++)
+		{
+			render_object_list_t* list = dictionary_get_value_ptr_at(map, j);
+			buf_ucount_t count2 = buf_get_element_count(list);
+			for(u32 k = 0; k < count2; k++)
+				vulkan_render_object_destroy(DEREF_TO(vulkan_render_object_t*, buf_get_ptr_at(list, k)));
+			buf_clear(list, NULL);
+		}
+	}
+}
+
 RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj)
 {
 	obj->queue = queue;
@@ -120,7 +139,7 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 		dictionary_add(&queue->shader_handles, &obj->material->shader->handle, &map);
 	}
 
-	material_and_render_object_list_map_t* map = dictionary_get_value_ptr_at(&queue->shader_handles, obj->material->shader->handle);
+	material_and_render_object_list_map_t* map = dictionary_get_value_ptr(&queue->shader_handles, &obj->material->shader->handle);
 	if(!dictionary_contains(map, &obj->material->handle))
 	{
 		render_object_list_t list = buf_create(sizeof(vulkan_render_object_t*), 1, 0);

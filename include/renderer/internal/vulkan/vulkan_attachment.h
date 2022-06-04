@@ -43,6 +43,7 @@ typedef struct vulkan_attachment_create_info_t
 	VkFormat format;
 } vulkan_attachment_create_info_t;
 
+/* NOTE: this should be in sync with vulkan_texture_t */
 typedef struct vulkan_attachment_t
 {
 	vulkan_renderer_t* renderer;
@@ -50,6 +51,9 @@ typedef struct vulkan_attachment_t
 	vulkan_image_t image;
 	/* image view for this attachment */
 	vulkan_image_view_t image_view;
+
+	/* sampler for this attachment if it has to be used in the next render pass, otherwise VK_NULL_HANDLE */
+	VkSampler sampler;
 } vulkan_attachment_t;
 
 

@@ -79,7 +79,11 @@ RENDERER_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene)
 {
 	u32 count = dictionary_get_count(&scene->queues);
 	for(u32 i = 0; i < count; i++)
-		vulkan_render_queue_destroy(dictionary_get_value_ptr_at(&scene->queues, i));
+	{
+		vulkan_render_queue_t* queue = dictionary_get_value_ptr_at(&scene->queues, i);
+		vulkan_render_queue_destroy_all_objects(queue);
+		vulkan_render_queue_destroy(queue);
+	}
 }
 
 RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* scene)

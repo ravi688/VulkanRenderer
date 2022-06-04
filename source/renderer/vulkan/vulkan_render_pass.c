@@ -129,8 +129,12 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	// create clear values for each attachment in this render pass
 	render_pass->vo_clear_values = heap_newv(VkClearValue, render_pass->attachment_count);
 	memzerov(render_pass->vo_clear_values, VkClearValue, render_pass->attachment_count);
+	render_pass->vo_formats = heap_newv(VkFormat, render_pass->attachment_count);
 	for(u32 i = 0; i < render_pass->attachment_count; i++)
+	{
+		render_pass->vo_formats[i] = create_info->attachment_descriptions[i].format;
 		render_pass->vo_clear_values[i] = get_clear_value_from_format(create_info->attachment_descriptions[i].format);
+	}
 
 	// create render set layout & render set
 	vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, create_info->render_set_bindings, create_info->render_set_binding_count, &render_pass->render_set_layout);
@@ -186,11 +190,36 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass)
 {
 	heap_free(render_pass->vo_clear_values);
+	heap_free(render_pass->vo_formats);
 	// TODO
 	// heap_free(render_pass);
 }
 
 static INLINE u32 min(u32 v1, u32 v2) { return (v1 > v2) ? v2 : v1; }
+
+RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth)
+{
+	for(u32 i = 0; i < render_pass->attachment_count; i++)
+	{
+		switch(render_pass->vo_formats[i])
+		{
+			case VK_FORMAT_D32_SFLOAT:
+				render_pass->vo_clear_values[i] = (VkClearValue) { .depthStencil = { depth, 0UL } };
+				break;
+			case VK_FORMAT_B8G8R8A8_SRGB:
+				render_pass->vo_clear_values[i] = (VkClearValue) { .color = { .float32 = 
+					{ 
+						color.r,
+						color.g,
+						color.b,
+						color.a
+					} } };
+			break;
+			default:
+				LOG_FETAL_ERR("Unsupported VkFormat %u for clear value\n", render_pass->vo_formats[i]);
+		}
+	}
+}
 
 RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index)
 {

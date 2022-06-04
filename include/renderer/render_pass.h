@@ -40,6 +40,7 @@ RENDERER_API void render_pass_destroy(render_pass_t* pass);
 RENDERER_API void render_pass_release_resources(render_pass_t* pass);
 
 /* logic functions */
+RENDERER_API void render_pass_set_clear(render_pass_t* pass, color_t color, float depth);
 RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific);
 RENDERER_API void render_pass_end(render_pass_t* pass);
 

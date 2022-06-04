@@ -137,6 +137,9 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue);
 RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue);
 
 /* logic functions */
+
+RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue);
+
 /*
 	description: Adds a render object into the render queue
 	params:

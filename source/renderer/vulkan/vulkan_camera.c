@@ -89,6 +89,8 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 
 	setup_gpu_resources(camera);
 
+	// mat4_t(float) transform = mat4_mul(float)(2, mat4_translation(float)(0, 0.6f, -1.8f), mat4_rotation(float)(0, -90 * DEG2RAD, -22 * DEG2RAD));
+	// mat4_t(float) projection = mat4_ortho_projection(float)(0.04f, 20, 5, 1);
 	mat4_t(float) transform = mat4_mul(float)(2, mat4_translation(float)(-1.8f, 0.6f, 0), mat4_rotation(float)(0, 0, -22 * DEG2RAD));
 	mat4_t(float) projection = mat4_persp_projection(float)(create_info->near_clip_plane, create_info->far_clip_plane, create_info->field_of_view, (float)window->width / (float)window->height);
 	mat4_t(float) view = mat4_inverse(float)(transform);
@@ -122,13 +124,16 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 }
 
 /* logic functions */
+
+RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth)
+{
+	vulkan_render_pass_set_clear(camera->default_render_pass, color, depth);
+}
+
 RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_queue_t* queue)
 {
-	if(queue == NULL)
-	{
-		vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN);
-		vulkan_render_pass_end(camera->default_render_pass);
-	}
+	vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN);
+	vulkan_render_pass_end(camera->default_render_pass);
 }
 
 /* getters */

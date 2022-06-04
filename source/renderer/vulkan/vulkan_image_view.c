@@ -72,7 +72,8 @@ RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
 RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)
 {
 	check_pre_condition(view);
-	heap_free(view);
+	// TODO
+	// heap_free(view);
 }
 
 static VkImageViewType get_view_type(vulkan_image_view_type_t type)
