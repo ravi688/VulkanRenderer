@@ -410,7 +410,7 @@ RENDERER_API void vulkan_material_set_textureH(vulkan_material_t* material, vulk
 {
 	assert(handle.index < material->shader->material_set_binding_count);
 	vulkan_shader_resource_descriptor_t descriptor = material->shader->material_set_bindings[handle.index];
-	assert(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
+	// assert(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
 	vulkan_descriptor_set_write_texture(&material->material_set, descriptor.binding_number, texture);
 }
 
@@ -577,6 +577,7 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 	if(ptr == NULL)
 	{
 		memcpy(out_struct_name, full_name, len);
+		strcpy(out_field_name, "<UndefinedField>");
 		return;
 	}
 	u16 struct_name_len = (u16)(ptr - full_name);

@@ -7,7 +7,6 @@
 #define RENDERER_INCLUDE_DEBUG
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
-#include <renderer/render_scene.h>
 
 #include <conio.h>
 
@@ -17,7 +16,7 @@
 	3. Rendering [done]
 	4. Render Queue [done]
 	5. Muliple render passes (shadow mapping) [ done ]
-	6. Multiple sub passes (color override) [ in - progress ]
+	6. Multiple sub passes (greyscale) [ done ]
 	7. Depth texture sharing across multiple render passes
 	8. Each shader will have prefered render pass description, if a render pass in the render pass pool
 		suffice to meet the requirements of the shader then that pass should be used instead of creating
@@ -29,10 +28,12 @@ int main(const char** argc, int argv)
 	memory_allocator_init(&argv);
 	
 	// initialize renderer
-	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_AUTO, 800, 800, "Renderer", false, true);
+	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Renderer", false, true);
 
 	// create a camera
 	AUTO camera = camera_create(renderer, CAMERA_PROJECTION_TYPE_PERSPECTIVE, 0.04f, 100, 65 DEG);
+	camera_set_clear(camera, COLOR_BLACK, 1.0f);
+	
 	AUTO light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
 
 	// create a render scene
@@ -41,25 +42,28 @@ int main(const char** argc, int argv)
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
 
-	AUTO shadowShaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR);
-	AUTO mat2 = material_library_getH(mlib, material_library_create_materialH(mlib, shadowShaderH, "Material2"));
+	AUTO shaderH2 = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR);
+	AUTO mat2 = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH2, "Material2"));
 
-	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR);
+	AUTO texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Smile.bmp");
+	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST);
 	AUTO shader = shader_library_getH(slib, shaderH);
 	AUTO blueMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "BlueColorMaterial"));
 	AUTO greenMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "GreenColorMaterial"));
 	AUTO mesh = mesh_create(renderer, mesh3d_cube(1.0f));
 	AUTO planeMesh = mesh_create(renderer, mesh3d_plane(2.0f));
 
+	material_set_texture(blueMaterial, "albedo", texture);
+	material_set_texture(greenMaterial, "albedo", texture);
 	material_set_vec4(blueMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
-	material_set_vec4(greenMaterial, "parameters.color", vec4(float)(0, 1, 0, 1));
+	material_set_vec4(greenMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
 	material_set_vec4(mat2, "parameters.color", vec4(float)(1, 1, 1, 1));
 
 
 	render_object_t* obj2 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(obj2, greenMaterial);
 	render_object_attach(obj2, planeMesh);
-	render_object_set_transform(obj2, mat4_translation(float)(0, 0, 0));
+	render_object_set_transform(obj2, mat4_translation(float)(0, -0.5f, 0));
 
 	render_object_t* obj1 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(obj1, blueMaterial);
@@ -91,7 +95,6 @@ int main(const char** argc, int argv)
 		renderer_begin_frame(renderer);
 
 		// clear the screen
-		camera_set_clear(camera, COLOR_BLACK, 1.0f);
 		camera_render(camera, NULL);
 
 		// render the scene
@@ -103,6 +106,9 @@ int main(const char** argc, int argv)
 		// submit the work to the GPU and present the rendered image to the window
 		renderer_update(renderer);
 	}
+
+	texture_destroy(texture);
+	texture_release_resources(texture);
 
 	mesh_destroy(planeMesh);
 	mesh_release_resources(planeMesh);

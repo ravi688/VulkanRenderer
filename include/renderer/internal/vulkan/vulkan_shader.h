@@ -80,6 +80,7 @@ typedef struct vulkan_subpass_description_t
 {
 	/* SUB RENDER SET BINDING DESCRIPTIONS */
 	vulkan_shader_resource_descriptor_t* sub_render_set_bindings;
+	u32 sub_render_set_binding_count; 	// must be equal to input_attachment_count
 
 	/* graphics pipeline description */
 	u32 pipeline_description_index;
@@ -92,11 +93,7 @@ typedef struct vulkan_subpass_description_t
 
 	/* list of input attachments */
 	u32* input_attachments;
-	union
-	{
-		u32 input_attachment_count;
-		u32 sub_render_set_binding_count;
-	};
+	u32 input_attachment_count; 	// must be equal to sub_render_set_binding_count
 
 	/* index of the depth stencil attachment */
 	u32 depth_stencil_attachment;
@@ -119,6 +116,7 @@ typedef struct vulkan_render_pass_description_t
 {
 	/* RENDER SET BINDING DESCRIPTIONS */
 	vulkan_shader_resource_descriptor_t* render_set_bindings;
+	u32 render_set_binding_count; 	// must be equal to input_attachment_count
 
 	/* SUBPASS DESCRIPTIONS */
 	/* ptr to the list of subpass descriptions */
@@ -138,11 +136,7 @@ typedef struct vulkan_render_pass_description_t
 
 	/* list of input attachments from the previous render pass */
 	u32* input_attachments;
-	union
-	{
-		u32 input_attachment_count;
-		u32 render_set_binding_count;
-	};
+	u32 input_attachment_count; 	// must be equal to render_set_binding_count
 
 	/* type of this render pass */
 	vulkan_render_pass_type_t type;

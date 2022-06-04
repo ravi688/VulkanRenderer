@@ -264,6 +264,7 @@ END_CPP_COMPATIBLE
 #	include <renderer/render_window.h>
 #	include <renderer/render_object.h>
 #	include <renderer/render_queue.h>
+# 	include <renderer/render_scene.h>
 #	include <renderer/render_pass.h>
 # 	include <renderer/render_pass_pool.h>
 #	include <renderer/shader_library.h>
@@ -272,6 +273,7 @@ END_CPP_COMPATIBLE
 #	include <renderer/material.h>
 #	include <renderer/camera.h>
 #	include <renderer/color.h>
+#	include <renderer/texture.h>
 #endif
 
 #ifdef RENDERER_INCLUDE_CORE_INTERNAL
@@ -285,6 +287,7 @@ END_CPP_COMPATIBLE
 #		include <renderer/internal/vulkan/vulkan_shader.h>
 #		include <renderer/internal/vulkan/vulkan_material.h>
 #		include <renderer/internal/vulkan/vulkan_camera.h>
+#		include <renderer/internal/vulkan/vulkan_texture.h>
 #	endif
 #endif
 

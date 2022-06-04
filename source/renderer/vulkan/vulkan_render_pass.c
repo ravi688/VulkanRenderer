@@ -237,6 +237,8 @@ RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u3
 		.pClearValues = render_pass->vo_clear_values
 	};
 	vkCmdBeginRenderPass(render_pass->renderer->vo_command_buffers[render_pass->renderer->swapchain->current_image_index], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+	render_pass->current_subpass_index = 0;
 }
 
 RENDERER_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass)
