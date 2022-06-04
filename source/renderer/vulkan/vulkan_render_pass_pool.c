@@ -78,7 +78,7 @@ static bool compare_struct_fields(u32 count, struct_field_t* f1, struct_field_t*
 
 static bool struct_descriptor_compare(struct_descriptor_t* d1, struct_descriptor_t* d2)
 {
-	bool b1 = strcmp(d1->name, d2->name);
+	bool b1 = strcmp(d1->name, d2->name) == 0;
 	bool b2 = b1 && (d1->type == d2->type);
 	bool b3 = b2 && (d1->field_count == d2->field_count) && compare_struct_fields(d1->field_count, d1->fields, d2->fields);
 	return b3;

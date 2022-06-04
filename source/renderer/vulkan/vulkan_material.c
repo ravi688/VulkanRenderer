@@ -607,7 +607,7 @@ RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vul
 	for(u16 i = 0, j = 0; i < binding_count; i++)
 	{
 		vulkan_shader_resource_descriptor_t* binding = &bindings[i];
-		if(!binding->is_uniform)
+		if(binding->is_attribute)
 			continue;
 		if(strcmp(binding->handle.name, struct_name) == 0)
 		{

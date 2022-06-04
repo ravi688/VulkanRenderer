@@ -51,10 +51,10 @@ typedef u32 color_hex_t;
 static FORCE_INLINE color_t color(float r, float g, float b, float a) { return (color_t) { r, g, b, a }; }
 
 static FORCE_INLINE u8 color_hex_get(color_hex_t hex, u8 index) { return (hex & (0xFF << index)) >> index; }
-static FORCE_INLINE u8 color_hex_r(color_hex_t hex) { return color_hex_get(hex, 0); }
-static FORCE_INLINE u8 color_hex_g(color_hex_t hex) { return color_hex_get(hex, 1); }
-static FORCE_INLINE u8 color_hex_b(color_hex_t hex) { return color_hex_get(hex, 2); }
-static FORCE_INLINE u8 color_hex_a(color_hex_t hex) { return color_hex_get(hex, 3); }
+static FORCE_INLINE u8 color_hex_r(color_hex_t hex) { return color_hex_get(hex, 24); }
+static FORCE_INLINE u8 color_hex_g(color_hex_t hex) { return color_hex_get(hex, 16); }
+static FORCE_INLINE u8 color_hex_b(color_hex_t hex) { return color_hex_get(hex, 8); }
+static FORCE_INLINE u8 color_hex_a(color_hex_t hex) { return color_hex_get(hex, 0); }
 static FORCE_INLINE color_t color_hex(color_hex_t hex)
 {
 	float t = 1 / (float)0xFF;

@@ -20,7 +20,7 @@ RENDERER_API camera_t* camera_create(renderer_t* renderer, camera_projection_typ
 	{
 		.projection_type = REINTERPRET_TO(vulkan_camera_projection_type_t, projection_type),
 		.field_of_view = height_or_angle,
-		.default_render_pass = render_pass_pool_create_pass_from_preset(pool, RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN),
+		.default_render_pass = render_pass_pool_create_pass_from_preset(pool, RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN_CLEAR),
 		.near_clip_plane = n_plane,
 		.far_clip_plane = f_plane
 	};
@@ -52,6 +52,11 @@ RENDERER_API void camera_release_resources(camera_t* camera)
 }
 
 /* logic functions */
+RENDERER_API void camera_set_clear(camera_t* camera, color_t color, float depth)
+{
+	vulkan_camera_set_clear(camera, color, depth);
+}
+
 RENDERER_API void camera_render(camera_t* camera, render_queue_t* queue)
 {
 	vulkan_camera_render(camera, queue);

@@ -56,6 +56,7 @@ RENDERER_API void render_pass_pool_release_resources(render_pass_pool_t* pool);
 typedef enum render_pass_pool_pass_preset_t
 {
 	RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN,
+	RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN_CLEAR,
 	RENDER_PASS_POOL_PASS_PRESET_COLOR_DEPTH_SWAPCHAIN,
 	RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP
 } render_pass_pool_pass_preset_t;

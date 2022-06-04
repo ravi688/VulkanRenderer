@@ -25,6 +25,7 @@
 #endif
 
 #include <renderer/defines.h>
+#include <renderer/color.h>
 
 #include <hpml/vec3/header_config.h>
 #include <hpml/vec3/vec3.h>
@@ -50,6 +51,7 @@ RENDERER_API void camera_destroy(camera_t* camera);
 RENDERER_API void camera_release_resources(camera_t* camera);
 
 /* logic functions */
+RENDERER_API void camera_set_clear(camera_t* camera, color_t color, float depth);
 RENDERER_API void camera_render(camera_t* camera, render_queue_t* queue);
 
 /* getters */

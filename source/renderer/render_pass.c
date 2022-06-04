@@ -30,6 +30,11 @@ RENDERER_API void render_pass_release_resources(render_pass_t* pass)
 	vulkan_render_pass_release_resources(pass);
 }
 
+RENDERER_API void render_pass_set_clear(render_pass_t* pass, color_t color, float depth)
+{
+	vulkan_render_pass_set_clear(pass, color, depth);
+}
+
 RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific)
 {
 	u32 framebuffer_index;

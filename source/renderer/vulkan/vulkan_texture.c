@@ -116,9 +116,10 @@ RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
 RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
 {
 	assert(texture != NULL);
-	// vulkan_image_view_release_resources(texture->image_view);
-	// vulkan_image_release_resources(texture->image);
-	heap_free(texture);
+	vulkan_image_view_release_resources(&texture->image_view);
+	vulkan_image_release_resources(&texture->image);
+	// TODO
+	// heap_free(texture);
 }
 
 

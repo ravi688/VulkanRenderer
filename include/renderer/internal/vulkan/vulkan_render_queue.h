@@ -63,13 +63,27 @@
 #include <renderer/string.h> 		// for string_t
 #include <renderer/dictionary.h> 	// for dictionary_t
 
+#include <renderer/internal/vulkan/vulkan_handles.h>
+
 typedef struct vulkan_render_object_t vulkan_render_object_t;
+
+typedef enum vulkan_render_queue_type_t
+{
+	VULKAN_RENDER_QUEUE_TYPE_BACKGROUND,	// this render queue is rendered before any others
+	VULKAN_RENDER_QUEUE_TYPE_GEOMETRY, 		// opaque geometry uses this queue
+	VULKAN_RENDER_QUEUE_TYPE_ALPHA_TESTED, 	// alpha tested geometry uses this queue
+	VULKAN_RENDER_QUEUE_TYPE_GEOMETRY_LAST, // last render queue that is considered "opaque"
+	VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT, 	// this render queue is rendered after Geometry and AlphaTest, in back-to-front order
+	VULKAN_RENDER_QUEUE_TYPE_OVERLAY, 		// this render queue is meant for overlay effects
+	VULKAN_RENDER_QUEUE_TYPE_UNDEFINED 		// for specific purpose such as implementing render scene and adding a camera to it
+} vulkan_render_queue_type_t;
 
 typedef struct vulkan_render_queue_t
 {
 	vulkan_renderer_t* renderer;
-	/* identification name of this render queue */
-	string_t name;
+
+	vulkan_render_queue_handle_t handle;  // handle to this queue in the vulkan render scene
+
 	/* < vulkan_render_pass_handle_t, list of <list of shader handles > >*/
 	dictionary_t render_pass_handles;
 	/* < vulkan_shader_handle_t , list of dictionary<vulkan_material_handle_t, list of render objects > > */
@@ -90,23 +104,21 @@ BEGIN_CPP_COMPATIBLE
 RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new();
 
 /*
-	description: Creates a render queue object with identification name "name"
+	description: Creates a render queue object
 	params:
 		renderer: ptr to the context
-		name: identification name of this queue
 	returns: ptr to the newly created vulkan_render_queue_t object
  */
-RENDERER_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, const char* name);
+RENDERER_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type);
 
 /*
-	description: Creates a render queue object with identification name "name"
+	description: Creates a render queue object
 	params:
 		renderer: ptr to the context
-		name: identification name of this queue
 		OUT queue: pre allocated vulkan_render_queue_t object (using vulkan_render_queue_new())
 	returns: nothing
  */
-RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, const char* name, vulkan_render_queue_t OUT queue);
+RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type, vulkan_render_queue_t OUT queue);
 
 /*
 	description: Destroys the API specific resources
@@ -125,6 +137,9 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue);
 RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue);
 
 /* logic functions */
+
+RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue);
+
 /*
 	description: Adds a render object into the render queue
 	params:
@@ -136,7 +151,7 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 		you would still need to call render_queue_build()
 		Adding render object into the queue sets is_ready to false
  */
-RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
+RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
 
 /*
 	description: Removes a render object from the render queue
@@ -149,7 +164,7 @@ RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_r
 		you would still need to call render_queue_build()
 		Removing render object from the queue sets is_ready to false
  */
-RENDERER_API void vulkan_render_queue_remove(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
+RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_handle_t handle);
 
 /*
 	description: Builds and Orders the render objects according to the render pass handles

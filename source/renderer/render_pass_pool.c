@@ -74,7 +74,7 @@ static vulkan_render_pass_create_info_t* build_shadow_map_render_pass_create_inf
 	return create_info;
 }
 
-static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_create_info(vulkan_renderer_t* renderer)
+static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_create_info(vulkan_renderer_t* renderer, VkAttachmentLoadOp loadOp)
 {
 	vulkan_render_pass_create_info_t* create_info = heap_new(vulkan_render_pass_create_info_t);
 	memzero(create_info, vulkan_render_pass_create_info_t);
@@ -86,7 +86,7 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 	{
 		.format = renderer->swapchain->vo_image_format,
 		.samples = VK_SAMPLE_COUNT_1_BIT,
-		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.loadOp = loadOp,
 		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
 		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -122,6 +122,7 @@ static const char* preset_to_string(render_pass_pool_pass_preset_t preset)
 	switch(preset)
 	{
 		case RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN: return "RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN";
+		case RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN_CLEAR: return "RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN_CLEAR";
 		case RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP: return "RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP";
 		default: "UNKOWN PRESET";
 	}
@@ -134,8 +135,11 @@ RENDERER_API render_pass_handle_t render_pass_pool_create_pass_from_preset(rende
 	switch(preset)
 	{
 		case RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN:
-			create_info = build_swapchain_color_render_pass_create_info(CAST_TO(vulkan_render_pass_t*, pool)->renderer);
+			create_info = build_swapchain_color_render_pass_create_info(CAST_TO(vulkan_render_pass_t*, pool)->renderer, VK_ATTACHMENT_LOAD_OP_LOAD);
 			break;
+		case RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN_CLEAR:
+			create_info = build_swapchain_color_render_pass_create_info(CAST_TO(vulkan_render_pass_t*, pool)->renderer, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			break;	
 		case RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP:
 			create_info = build_shadow_map_render_pass_create_info(CAST_TO(vulkan_render_pass_t*, pool)->renderer);
 			break;

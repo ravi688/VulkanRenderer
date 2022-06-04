@@ -713,6 +713,8 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 
 static void destroy_vulkan_push_constant(vulkan_push_constant_t* push_constant)
 {
+	if((push_constant->ranges == NULL) || (push_constant->buffer == NULL))
+		return;
 	/* NOTE: this hasn't been allocated with heap_*, instead malloc internally by BUFFER */
 	free(push_constant->ranges);
 	heap_free(push_constant->buffer);
@@ -786,6 +788,7 @@ typedef struct vulkan_pipeline_common_data_t
 	VkPushConstantRange* push_constant_ranges;
 	u32 push_constant_range_count;
 	vulkan_descriptor_set_layout_t material_set_layout;
+	vulkan_graphics_pipeline_description_t* pipeline_descriptions;
 } vulkan_pipeline_common_data_t;
 
 static u32 get_framebuffer_count_from_render_pass_type(vulkan_render_pass_type_t type, u32 swapchain_image_count)
@@ -818,10 +821,16 @@ static VkFormat get_image_format_from_attachment_type(vulkan_attachment_type_t t
 	return VK_FORMAT_UNDEFINED;
 }
 
-static void write_render_pass_descriptors(vulkan_render_pass_t* pass, vulkan_render_pass_description_t* pass_description,
-										  vulkan_render_pass_t* next_pass, vulkan_render_pass_description_t* next_pass_description)\
+static void write_render_pass_descriptors(vulkan_render_pass_t* previous_pass, vulkan_render_pass_description_t* previous_pass_description,
+										  vulkan_render_pass_t* pass, vulkan_render_pass_description_t* pass_description)
 {
-	// TODO: not necessary for single for render pass and just one sub pass 
+	if(previous_pass != NULL)
+	{
+		u32 count = pass_description->render_set_binding_count;
+		for(u32 i = 0; i < count; i++)
+			vulkan_descriptor_set_write_texture(&pass->render_set, pass_description->render_set_bindings[i].binding_number,
+				CAST_TO(vulkan_texture_t*, &previous_pass->attachments[pass_description->input_attachments[i]]));
+	}	
 }
 
 static vulkan_render_pass_create_info_t* convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_t* next_pass)
@@ -850,7 +859,10 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 	for(u32 i = 0; i < pass->attachment_count; i++)
 	{
 		VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		
+		VkAttachmentLoadOp load_op = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
+									 ((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) ?
+									  VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR) : VK_ATTACHMENT_LOAD_OP_CLEAR;
+
 		VkImageLayout final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
 									 ((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) ?
 									  VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -890,7 +902,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		{
 			.format = get_image_format_from_attachment_type(pass->attachments[i]),
 			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			.loadOp = load_op,
 			.storeOp = store_op,
 			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -1018,11 +1030,12 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 			buf_pop(&set_layouts, NULL);
 
 			buf_clear(&shader_modules, NULL);
-			u32 module_count = descriptions[i].subpass_descriptions[j].pipeline_description.spirv_code_count;
+			vulkan_graphics_pipeline_description_t* pipeline_description = &common_data->pipeline_descriptions[descriptions[i].subpass_descriptions[j].pipeline_description_index];
+			u32 module_count = pipeline_description->spirv_code_count;
 			
 			for(u32 k = 0; k < module_count; k++)
 			{
-				vulkan_shader_module_create_info_t module_create_info = REINTERPRET_TO(vulkan_shader_module_create_info_t, descriptions[i].subpass_descriptions[j].pipeline_description.spirv_codes[k]);
+				vulkan_shader_module_create_info_t module_create_info = REINTERPRET_TO(vulkan_shader_module_create_info_t, pipeline_description->spirv_codes[k]);
 				buf_push_pseudo(&shader_modules, 1);
 				vulkan_shader_module_create_no_alloc(renderer, &module_create_info, CAST_TO(vulkan_shader_module_t*, buf_peek_ptr(&shader_modules)));
 			}
@@ -1031,7 +1044,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 			vulkan_graphics_pipeline_create_info_t pipeline_create_info = 
 			{
 				.layout = &pipeline_layouts[j],
-				.settings = descriptions[i].subpass_descriptions[j].pipeline_description.settings,
+				.settings = pipeline_description->settings,
 				.shader_modules = CAST_TO(vulkan_shader_module_t*, buf_get_ptr(&shader_modules)),
 				.shader_module_count = module_count,
 				.vertex_attribute_bindings = common_data->vertex_attribute_bindings,
@@ -1082,7 +1095,8 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 		.vertex_attribute_binding_count = shader->vertex_info_count,
 		.push_constant_ranges = shader->push_constant.ranges,
 		.push_constant_range_count = shader->push_constant.range_count,
-		.material_set_layout = shader->material_set_layout
+		.material_set_layout = shader->material_set_layout,
+		.pipeline_descriptions = create_info->pipeline_descriptions
 	};
 	shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, create_info->render_pass_description_count, &common_data);
 	shader->render_pass_count = create_info->render_pass_description_count;
@@ -1109,8 +1123,15 @@ RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 {
 	shader->handle = VULKAN_SHADER_HANDLE_INVALID;
 	vulkan_descriptor_set_layout_destroy(&shader->material_set_layout);
-	// shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, create_info->render_pass_description_count);
-	// shader->render_pass_count = create_info->render_pass_description_count;
+	u32 count = shader->render_pass_count;
+	for(u32 i = 0; i < count; i++)
+	{
+		for(u32 j = 0; j < shader->render_passes[i].subpass_count; j++)
+		{
+			vulkan_pipeline_layout_destroy(&shader->render_passes[i].pipeline_layouts[j]);
+			vulkan_graphics_pipeline_destroy(&shader->render_passes[i].pipelines[j]);
+		}
+	}
 }
 
 RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
@@ -1118,7 +1139,8 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 	destroy_vulkan_push_constant(&shader->push_constant);
 	destroy_vulkan_vertex_infos(shader->vertex_infos, shader->vertex_info_count);
 	destroy_set_binding_descriptors(shader->material_set_bindings, shader->material_set_binding_count);
-	heap_free(shader);
+	// TODO
+	// heap_free(shader);
 }
 
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index)
