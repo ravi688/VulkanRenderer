@@ -86,9 +86,7 @@ RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* render
 			object->draw = CAST_TO(draw_call_handler_t, text_mesh_draw);
 			break;
 		case VULKAN_RENDER_OBJECT_TYPE_TEXT: 	// TODO
-		case VULKAN_RENDER_OBJECT_TYPE_CAMERA:	// TODO
-		case VULKAN_RENDER_OBJECT_TYPE_LIGHT: 	// TODO
-			LOG_FETAL_ERR("TEXT, CAMERA, AND LIGHT render objects are yet to be defined\n");
+			LOG_FETAL_ERR("TEXT render object are yet to be defined\n");
 			break;
 		default:
 			if(create_info->draw_handler == NULL)

@@ -27,9 +27,7 @@ typedef enum vulkan_render_object_type_t
 {
 	VULKAN_RENDER_OBJECT_TYPE_MESH = 1,
 	VULKAN_RENDER_OBJECT_TYPE_TEXT_MESH = 2,
-	VULKAN_RENDER_OBJECT_TYPE_TEXT = 3,
-	VULKAN_RENDER_OBJECT_TYPE_CAMERA = 4,
-	VULKAN_RENDER_OBJECT_TYPE_LIGHT = 5
+	VULKAN_RENDER_OBJECT_TYPE_TEXT = 3
 } vulkan_render_object_type_t;
 
 typedef void (*draw_call_handler_t)(void* object);

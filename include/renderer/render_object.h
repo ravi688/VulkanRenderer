@@ -48,9 +48,7 @@ typedef enum render_object_type_t
 {
 	RENDER_OBJECT_TYPE_MESH = 1,
 	RENDER_OBJECT_TYPE_TEXT_MESH = 2,
-	RENDER_OBJECT_TYPE_TEXT = 3,
-	RENDER_OBJECT_TYPE_CAMERA = 4,
-	RENDER_OBJECT_TYPE_LIGHT = 5
+	RENDER_OBJECT_TYPE_TEXT = 3
 } render_object_type_t;
 
 typedef void (*render_object_draw_handler_t)(void* user_data);
@@ -60,7 +58,7 @@ typedef struct render_object_create_info_t
 	material_t* material; 						// material that this object uses
 	void* user_data;							// user data such as ptr to mesh_t or text_mesh_t
 	render_object_type_t type; 					// type of the render object
-	render_object_draw_handler_t draw_handler;;	// optional if type is defined, ptr to the draw function, depends on the render object implementation
+	render_object_draw_handler_t draw_handler;	// optional if type is defined, ptr to the draw function, depends on the render object implementation
 } render_object_create_info_t;
 
 

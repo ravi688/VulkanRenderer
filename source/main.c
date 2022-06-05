@@ -1,7 +1,6 @@
 
 #define RENDERER_INCLUDE_TIMING
 #define RENDERER_INCLUDE_MATH
-#define RENDERER_INCLUDE_EVERYTHING_INTERNAL
 #define RENDERER_INCLUDE_3D_MESH_RENDER_SYSTEM
 #define RENDERER_INCLUDE_3D_LIGHT_SYSTEM
 #define RENDERER_INCLUDE_DEBUG
@@ -17,8 +16,9 @@
 	4. Render Queue [done]
 	5. Muliple render passes (shadow mapping) [ done ]
 	6. Multiple sub passes (greyscale) [ done ]
-	7. Depth texture sharing across multiple render passes
-	8. Each shader will have prefered render pass description, if a render pass in the render pass pool
+	7. Camera and Light as a Render Object in the scene
+	8. Depth texture sharing across multiple render passes
+	9. Each shader will have prefered render pass description, if a render pass in the render pass pool
 		suffice to meet the requirements of the shader then that pass should be used instead of creating
 		another one.
  */
