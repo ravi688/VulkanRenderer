@@ -520,6 +520,16 @@ static void set_depth_stencil(BUFFER* list, VkBool32 depthWrite, VkBool32 depthT
 	info->depthTestEnable = depthTest;
 }
 
+static void set_depth_bias(BUFFER* list, float factor, float clamp, float slope_factor)
+{
+	VkPipelineRasterizationStateCreateInfo* info = &CAST_TO(vulkan_graphics_pipeline_description_t*, buf_peek_ptr(list))->settings->rasterization;
+	if(info->depthBiasEnable == VK_FALSE)
+		info->depthBiasEnable = VK_TRUE;
+	info->depthBiasConstantFactor = factor;
+	info->depthBiasClamp = clamp;
+	info->depthBiasSlopeFactor = slope_factor;
+}
+
 static void add_shader(BUFFER* list, const char* file_path, vulkan_shader_type_t type)
 {
 	vulkan_graphics_pipeline_description_t* pipeline = CAST_TO(vulkan_graphics_pipeline_description_t*, buf_peek_ptr(list));

@@ -16,9 +16,13 @@
 	4. Render Queue [done]
 	5. Muliple render passes (shadow mapping) [ done ]
 	6. Multiple sub passes (greyscale) [ done ]
-	7. Camera and Light as a Render Object in the scene
-	8. Depth texture sharing across multiple render passes
-	9. Each shader will have prefered render pass description, if a render pass in the render pass pool
+	7. Shadow mapping improvement [ done ]
+	8. Lights [ in - progress ]
+	9. Multiple light system
+	10. Deferred rendering & forward rendering
+	11. Camera and Light as a Render Object in the scene
+	12. Depth texture sharing across multiple render passes
+	13. Each shader will have prefered render pass description, if a render pass in the render pass pool
 		suffice to meet the requirements of the shader then that pass should be used instead of creating
 		another one.
  */
@@ -65,31 +69,40 @@ int main(const char** argc, int argv)
 	render_object_attach(obj2, planeMesh);
 	render_object_set_transform(obj2, mat4_translation(float)(0, -0.5f, 0));
 
+	render_object_t* obj4 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(obj4, blueMaterial);
+	render_object_attach(obj4, mesh);
+	render_object_set_transform(obj4, mat4_mul(float)(2, mat4_scale(float)(0.5f, 0.5f, 0.5f), mat4_translation(float)(-0.8f, 0.1f, 1)));
+
 	render_object_t* obj1 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(obj1, blueMaterial);
 	render_object_attach(obj1, mesh);
-	render_object_set_transform(obj1, mat4_translation(float)(0.5f, 0, 0));
+	render_object_set_transform(obj1, mat4_translation(float)(0, 0, 0));
 
-	render_object_t* obj3 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(obj3, mat2);
-	render_object_attach(obj3, mesh);
-	render_object_set_transform(obj3, mat4_mul(float)(2, mat4_scale(float)(0.5f, 0.5f, 0.5f), mat4_translation(float)(-2, 0, 0)));
+	// render_object_t* obj3 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	// render_object_set_material(obj3, mat2);
+	// render_object_attach(obj3, mesh);
+	// render_object_set_transform(obj3, mat4_mul(float)(2, mat4_scale(float)(0.5f, 0.5f, 0.5f), mat4_translation(float)(-2, 0, 0)));
 
 	bool swap = true;
 	float angle = 0;
+	float speed = 0;
 	time_handle_t tHandle = time_get_handle();
 	while(renderer_is_running(renderer))
 	{
+		speed = 45;
 		if(kbhit())
 		{
 			getch();
-			render_object_set_material(obj1, swap ? greenMaterial: blueMaterial);
-			render_object_set_material(obj2, swap ? blueMaterial : greenMaterial);
+			// speed = 90;
+			// render_object_set_material(obj1, swap ? greenMaterial: blueMaterial);
+			// render_object_set_material(obj2, swap ? blueMaterial : greenMaterial);
 			swap = !swap;
 		}
+		// else speed = 50.0f;
 		float deltaTime = time_get_delta_time(&tHandle);
-		angle += deltaTime * 90;
-		render_object_set_transform(obj1, mat4_mul(float)(2, mat4_translation(float)(0.5f, 0, 0), mat4_rotation(float)(0, angle DEG, 0)));
+		angle += deltaTime * speed;
+		render_object_set_transform(obj1, mat4_rotation(float)(0 DEG, angle DEG, 0 DEG));
 
 		// begin command buffer recording
 		renderer_begin_frame(renderer);
