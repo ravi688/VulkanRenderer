@@ -93,10 +93,10 @@ RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulk
 
 	setup_gpu_resources(light);
 
-	mat4_t(float) transform = mat4_mul(float)(2, mat4_translation(float)(0, 0.6f, -1.8f), mat4_rotation(float)(0, -90 * DEG2RAD, -22 * DEG2RAD));
+	mat4_t(float) transform = mat4_mul(float)(2, mat4_translation(float)(0, 0.6f, -1.8f), mat4_rotation(float)(0, -100 * DEG2RAD, -10 * DEG2RAD));
 	mat4_t(float) projection = mat4_ortho_projection(float)(0.04f, 10, 3, 1);
 	mat4_t(float) view = mat4_inverse(float)(transform);
-	vec3_t(float) dir = vec3_normalize(float)(vec3(float)(0, -1, 1));
+	vec4_t(float) dir = mat4_mul_vec4(float)(mat4_transpose(float)(view), 1, 0, 0, 0);
 	vec3_t(float) color = vec3_one(float)();
 	float intensity = 1.0f;
 

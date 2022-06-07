@@ -363,16 +363,17 @@ GLSL_SHADERS = $(wildcard shaders/*.frag shaders/*.vert shaders/*/*.frag shaders
 SPIRV_SHADERS = $(addsuffix .spv, $(GLSL_SHADERS))
 SPIRV_COMPILER = glslc
 
-%.vert.spv: $(basename $@)
-	@echo [Log] Compiling shader $(basename $@) to $@
-	$(SPIRV_COMPILER) $(SHADER_INCLUDES) $(basename $@) -o $@
-%.frag.spv: $(basename $@)
-	@echo [Log] Compiling shader $(basename $@) to $@
-	$(SPIRV_COMPILER) $(SHADER_INCLUDES) $(basename $@) -o $@
+%.vert.spv: %.vert
+	@echo [Log] Compiling shader $< to $@
+	$(SPIRV_COMPILER) $(SHADER_INCLUDES) $< -o $@
+%.frag.spv: %.frag
+	@echo [Log] Compiling shader $< to $@
+	$(SPIRV_COMPILER) $(SHADER_INCLUDES) $< -o $@
 
 .PHONY: glsl-shader
+.PHONY: glsl-shader-clean
 
-glsl-shader: $(GLSL_SHADERS) $(SPIRV_SHADERS)
+glsl-shader: $(SPIRV_SHADERS)
 
 glsl-shader-clean:
 	del $(subst /,\, $(SPIRV_SHADERS))

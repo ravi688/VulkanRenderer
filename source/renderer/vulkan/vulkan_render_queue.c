@@ -119,8 +119,12 @@ RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t*
 		{
 			render_object_list_t* list = dictionary_get_value_ptr_at(map, j);
 			buf_ucount_t count2 = buf_get_element_count(list);
+			// WARNING: This won't work because destroying a render object automatically removes it from the queue resulting in the element count decrease
+			// for(u32 k = 0; k < count2; k++)
+			// 	vulkan_render_object_destroy(DEREF_TO(vulkan_render_object_t*, buf_get_ptr_at(list, k)));
+
 			for(u32 k = 0; k < count2; k++)
-				vulkan_render_object_destroy(DEREF_TO(vulkan_render_object_t*, buf_get_ptr_at(list, k)));
+				vulkan_render_object_destroy(DEREF_TO(vulkan_render_object_t*, buf_peek_ptr(list)));
 			buf_clear(list, NULL);
 		}
 	}

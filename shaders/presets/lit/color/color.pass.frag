@@ -18,11 +18,11 @@ layout(location = 0) out vec4 color;
 
 void main()
 {
-	float depth = _lightClipPos.z / _lightClipPos.w;
+	float shadowedDepth = _lightClipPos.z / _lightClipPos.w;
 	vec2 shadowMapCoord = vec2(_lightClipPos.x / _lightClipPos.w, -_lightClipPos.y / _lightClipPos.w);
 	shadowMapCoord = shadowMapCoord * 0.5 + 0.5;
-	float shadowedDepth = texture(shadowMap, shadowMapCoord).r;
-	if((depth - shadowedDepth) > 0.001)
+	float depth = texture(shadowMap, shadowMapCoord).r;
+	if((shadowedDepth - depth) > 0.001)
 		color = parameters.color * 0.01;
 	else
 	{
