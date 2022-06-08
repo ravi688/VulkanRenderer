@@ -3,7 +3,6 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>  					// vkCall
 #include <renderer/internal/vulkan/vulkan_types.h>	 					// vulkan_shader_type_t
-#include <shader_compiler/compiler.h>	 								// shader compiler types
 #include <renderer/memory_allocator.h>
 
 static VkDescriptorSetLayout get_null_set_layout(vulkan_renderer_t* renderer)
@@ -69,16 +68,16 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 			binding->stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
 		switch(descriptor->handle.type)
 		{
-			case SHADER_COMPILER_BLOCK:
+			case GLSL_TYPE_BLOCK:
 				binding->descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			break;
 			
-			case SHADER_COMPILER_SAMPLER_2D:
-			case SHADER_COMPILER_SAMPLER_3D:
-			case SHADER_COMPILER_SAMPLER_CUBE:
+			case GLSL_TYPE_SAMPLER_2D:
+			case GLSL_TYPE_SAMPLER_3D:
+			case GLSL_TYPE_SAMPLER_CUBE:
 				binding->descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			break;
-			case SHADER_COMPILER_SUBPASS_INPUT:
+			case GLSL_TYPE_SUBPASS_INPUT:
 				binding->descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
 			break;
 			

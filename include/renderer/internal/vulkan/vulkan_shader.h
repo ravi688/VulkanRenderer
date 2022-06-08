@@ -9,43 +9,14 @@
 
 #include <shader_compiler/settings_parser.h> 		// GraphicsPipeline
 
-#define GLSL_ALIGN(value, index) ((value) << ((index) * 5))
-
-enum 
+#include <renderer/glsl_types.h>
+#define VERTEX_ATTRIB(value, index) ((value) << ((index) * 5))
+enum
 {
-	GLSL_U8 	= 1ULL,
-	GLSL_U16 	= 2ULL,
-	GLSL_U32	= 3ULL,
-	GLSL_U64 	= 4ULL,
-	GLSL_S8 	= 5ULL,
-	GLSL_S16 	= 6ULL,
-	GLSL_S32 	= 7ULL,
-	GLSL_S64 	= 8ULL,
-	GLSL_F32 	= 9ULL,
-	GLSL_F64 	= 10ULL,
-	GLSL_VEC2 	= 11ULL,
-	GLSL_VEC3 	= 12ULL,
-	GLSL_VEC4 	= 13ULL,
-	GLSL_MAT2 	= 14ULL,
-	GLSL_MAT3 	= 15ULL,
-	GLSL_MAT4	= 16ULL,
-
-	GLSL_IVEC2 	= 17ULL,
-	GLSL_IVEC3 	= 18ULL,
-	GLSL_IVEC4 	= 19ULL,
-	GLSL_UVEC2 	= 20ULL,
-	GLSL_UVEC3 	= 21ULL,
-	GLSL_UVEC4 	= 22ULL,
-
-	GLSL_FLOAT = GLSL_F32,
-	GLSL_INT = GLSL_S32,
-	GLSL_UINT = GLSL_U32,
-	GLSL_DOUBLE = GLSL_F64,
-
-	GLSL_POSITION = GLSL_ALIGN(GLSL_VEC3, 0),
-	GLSL_NORMAL = GLSL_ALIGN(GLSL_VEC3, 1),
-	GLSL_COLOR = GLSL_ALIGN(GLSL_VEC3, 2),
-	GLSL_TEXCOORD = GLSL_ALIGN(GLSL_VEC2, 3)
+	VERTEX_ATTRIB_POSITION = VERTEX_ATTRIB(GLSL_TYPE_VEC3, 0),
+	VERTEX_ATTRIB_NORMAL = VERTEX_ATTRIB(GLSL_TYPE_VEC3, 1),
+	VERTEX_ATTRIB_COLOR = VERTEX_ATTRIB(GLSL_TYPE_VEC3, 2),
+	VERTEX_ATTRIB_TEXCOORD = VERTEX_ATTRIB(GLSL_TYPE_VEC2, 3)
 };
 
 /* NOTE: this must be in sync with vulkan_shader_module_create_info_t */

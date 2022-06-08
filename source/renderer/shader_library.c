@@ -10,8 +10,6 @@
 #include <renderer/memory_allocator.h>
 
 #include <disk_manager/file_reader.h>
-#include <shader_compiler/compiler.h>
-
 #include <string.h> 		// strcpy
 
 /* constructors & destructors */
@@ -60,9 +58,8 @@ static void add_opaque(BUFFER* list, const char* name, u32 type, u32 set_number,
 	// NOTE: shader stage must be FRAGMENT for subpassInput
 	binding->stage_flags = (1 << VULKAN_SHADER_TYPE_FRAGMENT); //| (1 << VULKAN_SHADER_TYPE_VERTEX);
 
-	struct_descriptor_t* descriptor = &binding->handle;
-	strcpy(descriptor->name, name);
-	descriptor->type = type;	
+	struct_descriptor_begin(&binding->handle, name, type);
+	struct_descriptor_end(&binding->handle);
 }
 
 static void begin_uniform(BUFFER* list, const char* name, u32 set_number, u32 binding_number)
@@ -73,41 +70,19 @@ static void begin_uniform(BUFFER* list, const char* name, u32 set_number, u32 bi
 	binding->binding_number = binding_number;
 	binding->stage_flags = (1 << VULKAN_SHADER_TYPE_VERTEX) | (1 << VULKAN_SHADER_TYPE_FRAGMENT);
 
-	struct_descriptor_t* descriptor = &binding->handle;
-	strcpy(descriptor->name, name);
-	descriptor->type = SHADER_COMPILER_BLOCK;
-	BUFFER* fields = heap_new(BUFFER);
-	*fields = buf_create(sizeof(struct_field_t), 0, 0);
-	descriptor->fields = CAST_TO(struct_field_t*, fields);
+	struct_descriptor_begin(&binding->handle, name, GLSL_TYPE_BLOCK);
 }
 
 static void end_uniform(BUFFER* list)
 {
 	vulkan_shader_resource_descriptor_t* binding = buf_peek_ptr(list);
-	struct_descriptor_t* descriptor = &binding->handle;
-	BUFFER* fields = CAST_TO(BUFFER*, descriptor->fields);
-	descriptor->fields = buf_get_ptr(fields);
-	descriptor->field_count = buf_get_element_count(fields);
-	heap_free(fields);
-	struct_descriptor_recalculate(descriptor);
-}
-
-static struct_field_t* create_field(BUFFER* list)
-{
-	vulkan_shader_resource_descriptor_t* binding = buf_peek_ptr(list);
-	struct_descriptor_t* descriptor = &binding->handle;
-	BUFFER* fields = CAST_TO(BUFFER*, descriptor->fields);
-	buf_push_pseudo(fields, 1);
-	return buf_peek_ptr(fields);
+	struct_descriptor_end(&binding->handle);
 }
 
 static void add_color_field(BUFFER* list, const char* name)
 {
-	struct_field_t* field = create_field(list);
-	strcpy(field->name, name);
-	field->type = SHADER_COMPILER_VEC4;
-	field->size = sizeof(float) * 4;
-	field->alignment = 16;
+	vulkan_shader_resource_descriptor_t* binding = buf_peek_ptr(list);
+	struct_descriptor_add_field_vec4(&binding->handle, name);
 }
 
 static vulkan_shader_resource_descriptor_t* create_material_set_binding(shader_library_shader_preset_t preset, u32 OUT binding_count)
@@ -131,10 +106,11 @@ static vulkan_shader_resource_descriptor_t* create_material_set_binding(shader_l
 			end_uniform(&bindings);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
 			begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				add_color_field(&bindings, "color");
 			end_uniform(&bindings);
-			add_opaque(&bindings, "albedo", SHADER_COMPILER_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+			add_opaque(&bindings, "albedo", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
 		default:
 			UNSUPPORTED_PRESET(preset);
@@ -215,6 +191,7 @@ static vulkan_vertex_info_t* create_vertex_info(shader_library_shader_preset_t p
 			end_vertex_binding(&attributes);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
 			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(&attributes);
@@ -247,7 +224,7 @@ static void add_input_from_previous(BUFFER* list, u32 index, u32 binding)
 {
 	vulkan_render_pass_description_t* pass = buf_peek_ptr(list);
 	buf_push_auto(CAST_TO(BUFFER*, pass->input_attachments), index);
-	add_opaque(CAST_TO(BUFFER*, pass->render_set_bindings), "internal", SHADER_COMPILER_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_RENDER, binding);
+	add_opaque(CAST_TO(BUFFER*, pass->render_set_bindings), "internal", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_RENDER, binding);
 }
 
 static void add_attachment(BUFFER* list, vulkan_attachment_type_t type)
@@ -288,7 +265,7 @@ static void add_attachment_reference(BUFFER* list, vulkan_attachment_reference_t
 			break;
 		case VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT:
 			buf_push_auto(CAST_TO(BUFFER*, subpass->input_attachments), reference);
-			add_opaque(CAST_TO(BUFFER*, subpass->sub_render_set_bindings), "internal", SHADER_COMPILER_SUBPASS_INPUT, VULKAN_DESCRIPTOR_SET_SUB_RENDER, binding);
+			add_opaque(CAST_TO(BUFFER*, subpass->sub_render_set_bindings), "internal", GLSL_TYPE_SUBPASS_INPUT, VULKAN_DESCRIPTOR_SET_SUB_RENDER, binding);
 			break;
 		case VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL:
 			subpass->depth_stencil_attachment = reference;
@@ -393,6 +370,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 			end_pass(&passes);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
 				begin_subpass(&passes, 0);
@@ -602,6 +580,25 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
 				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
 				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			begin_pipeline(renderer, &pipelines);
+				add_color_blend_state(&pipelines, VK_FALSE);
+				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
+				add_shader(&pipelines, "shaders/presets/diffuse/overlay.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/diffuse/overlay.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			break;
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
+			begin_pipeline(renderer, &pipelines);
+				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
+				add_shader(&pipelines, "shaders/presets/diffuse/shadow.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/diffuse/shadow.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			begin_pipeline(renderer, &pipelines);
+				add_color_blend_state(&pipelines, VK_FALSE);
+				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
+				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
 			end_pipeline(&pipelines);
 			begin_pipeline(renderer, &pipelines);
 				add_color_blend_state(&pipelines, VK_FALSE);

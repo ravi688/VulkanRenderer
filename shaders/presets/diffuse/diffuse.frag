@@ -3,7 +3,7 @@
 
 #include <v3d.h>
 
-layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform LightInfo lightInfo;
+layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
 layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
 	vec4 color;
@@ -27,10 +27,10 @@ float lerp(float min, float max, float t)
 
 void main()
 {
-	float dp = dot(normal, -lightInfo.dir);
+	float dp = dot(normal, -light.direction);
 
 	float litAmount = dp * 0.5 + 0.5;
-	vec4 diffuse = litAmount * vec4(lightInfo.color, 1) * parameters.color * texture(albedo, texcoord);
+	vec4 diffuse = litAmount * vec4(light.color, 1) * parameters.color * texture(albedo, texcoord);
 
 
 	vec2 shadowMapCoord = vec2(lightClipPos.x / lightClipPos.w, -lightClipPos.y / lightClipPos.w);

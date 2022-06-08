@@ -32,13 +32,15 @@ int main(const char** argc, int argv)
 	memory_allocator_init(&argv);
 	
 	// initialize renderer
-	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Renderer", false, true);
+	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_INTEGRATED, 800, 800, "Renderer", false, true);
 
 	// create a camera
 	AUTO camera = camera_create(renderer, CAMERA_PROJECTION_TYPE_PERSPECTIVE, 0.04f, 100, 65 DEG);
 	camera_set_clear(camera, COLOR_BLACK, 1.0f);
 	
-	AUTO light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
+	AUTO light = light_create(renderer, LIGHT_TYPE_POINT);
+	light_set_color(light, vec3(float)(0, 1, 0));
+	light_set_intensity(light, 0.3f);
 
 	// create a render scene
 	AUTO scene = render_scene_create_from_preset(renderer, RENDER_SCENE_PRESET_TYPE_DEFAULT);
@@ -50,7 +52,7 @@ int main(const char** argc, int argv)
 	AUTO mat2 = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH2, "Material2"));
 
 	AUTO texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Smile.bmp");
-	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST);
+	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT);
 	AUTO shader = shader_library_getH(slib, shaderH);
 	AUTO blueMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "BlueColorMaterial"));
 	AUTO greenMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "GreenColorMaterial"));
@@ -90,7 +92,7 @@ int main(const char** argc, int argv)
 	time_handle_t tHandle = time_get_handle();
 	while(renderer_is_running(renderer))
 	{
-		speed = 45;
+		speed = 20;
 		if(kbhit())
 		{
 			getch();
@@ -103,6 +105,8 @@ int main(const char** argc, int argv)
 		float deltaTime = time_get_delta_time(&tHandle);
 		angle += deltaTime * speed;
 		render_object_set_transform(obj1, mat4_rotation(float)(0 DEG, angle DEG, 0 DEG));
+		light_set_position(light, vec3(float)(0, 0.5f, sin(angle * 2 DEG)));
+
 
 		// begin command buffer recording
 		renderer_begin_frame(renderer);

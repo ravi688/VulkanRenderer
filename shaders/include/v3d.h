@@ -53,6 +53,26 @@ LightInfo\
 	float intensity;\
 }
 
+#define DirectionalLight \
+DirectionalLight\
+{\
+	mat4 projection;\
+	mat4 view;\
+	vec3 color;\
+	float intensity;\
+	vec3 direction;\
+}
+
+#define PointLight \
+PointLight\
+{\
+	mat4 projection;\
+	mat4 view;\
+	vec3 color;\
+	float intensity;\
+	vec3 position;\
+}
+
 #define ObjectInfo \
 ObjectInfo\
 {\
