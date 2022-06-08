@@ -11,11 +11,6 @@
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 #include <renderer/memory_allocator.h>
-#include <shader_compiler/compiler.h>
-
-
-// TODO: remove it from here after debugging
-#include <renderer/internal/vulkan/vulkan_texture.h>
 
 RENDERER_API vulkan_shader_t* vulkan_shader_new()
 {
@@ -24,36 +19,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_new()
 	return shader;
 }
 
-static u64 convert_to_glsl_type(u8 shader_compiler_glsl_type)
-{
-	switch(shader_compiler_glsl_type)
-	{
-		case SHADER_COMPILER_FLOAT: return GLSL_FLOAT;
-		case SHADER_COMPILER_INT: return GLSL_INT;
-		case SHADER_COMPILER_UINT: return GLSL_UINT;
-		case SHADER_COMPILER_DOUBLE: return GLSL_DOUBLE;
-		case SHADER_COMPILER_VEC4: return GLSL_VEC4;
-		case SHADER_COMPILER_VEC3: return GLSL_VEC3;
-		case SHADER_COMPILER_VEC2: return GLSL_VEC2;
-		case SHADER_COMPILER_IVEC4: return GLSL_IVEC4;
-		case SHADER_COMPILER_IVEC3: return GLSL_IVEC3;
-		case SHADER_COMPILER_IVEC2: return GLSL_IVEC2;
-		case SHADER_COMPILER_UVEC4: return GLSL_UVEC4;
-		case SHADER_COMPILER_UVEC3: return GLSL_UVEC3;
-		case SHADER_COMPILER_UVEC2: return GLSL_UVEC2;
-		case SHADER_COMPILER_MAT4: return GLSL_MAT4;
-		case SHADER_COMPILER_MAT3: return GLSL_MAT3;
-		case SHADER_COMPILER_MAT2: return GLSL_MAT2;
-		default:
-			LOG_FETAL_ERR("Cannot convert shader compiler type \"%lu\" to equivalent material glsl type\n", shader_compiler_glsl_type);
-		// in case of vertex attribute these types are invalid
-		// case SHADER_COMPILER_SAMPLER_2D: return GLSL_SAMPLER_2D
-		// case SHADER_COMPILER_SAMPLER_3D: return GLSL_SAMPLER_3D
-		// case SHADER_COMPILER_SAMPLER_CUBE: return GLSL_SAMPLER_CUBE
-	}
-}
-
-static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out_indices, u32* out_aligments)
+static void get_vulkan_constants(VkFormat* out_formats, u32* out_indices)
 {
 	{
 		u32 indices[22 + 1] =
@@ -62,25 +28,6 @@ static void get_vulkan_constants(VkFormat* out_formats, u32* out_sizes, u32* out
 			13, 14, 17, 21, 22, 23, 24, 25, 26
 		};
 		memcpy(&out_indices[0], indices, sizeof(u32) * 23);
-	};
-	{
-		u32 sizes[22 + 1] =
-		{
-			0,
-			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 8, 12, 16, 8,
-			36, 64, 8, 12, 16, 8, 12, 16
-		};
-		memcpy(&out_sizes[0], sizes, sizeof(u32) * 23);
-	};
-
-	{
-		u32 aligments[22 + 1] = 
-		{
-			0,
-			1, 2, 4, 8, 1, 2, 4, 8, 4, 8, 8, 12, 16, 8,
-			16, 16, 8, 16, 16, 8, 16, 16
-		};
-		memcpy(&out_aligments[0], aligments, sizeof(u32) * 23);
 	};
 	VkFormat vulkan_formats[27] =
 	{
@@ -144,10 +91,8 @@ static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16
 {
 	// get the vulkan constants
 	VkFormat vulkan_formats[27];
-	u32 sizes[23];
 	u32 indices[23];
-	u32 alignments[23];
-	get_vulkan_constants(vulkan_formats, sizes, indices, alignments);
+	get_vulkan_constants(vulkan_formats, indices);
 
 	VkFormat formats[12];
 	u32 offsets[12];
@@ -167,15 +112,15 @@ static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16
 			continue;
 		}
 		VkFormat vulkan_format = vulkan_formats[indices[attribute_type]];
-		u32 align = alignments[attribute_type];
+		u32 align = alignof_glsl_type(attribute_type);
 		u32 field_offset = ((align - (offset % align)) % align) + offset;
 		switch(attribute_type)
 		{
-			case GLSL_MAT3:
+			case GLSL_TYPE_MAT3:
 				LOG_FETAL_ERR("Vertex attribute decode error: GLSL_MAT3 isn't supported yet!\n");
 			break;
 
-			case GLSL_MAT4:
+			case GLSL_TYPE_MAT4:
 				LOG_FETAL_ERR("Vertex attribute decode error: GLSL_MAT4 isn't supported yet!\n");
 			break;
 
@@ -185,7 +130,7 @@ static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16
 			break;
 		}
 		packed_attributes >>= bits_per_type;
-		offset = field_offset + sizes[attribute_type];
+		offset = field_offset + sizeof_glsl_type(attribute_type);
 		locations[i] = i + location_offset;
 		i++;
 	}
@@ -232,100 +177,6 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 		location_number_offset += vertex_infos[binding_number].attribute_count;
 	}
 	return vertex_infos;
-}
-
-/*
-	Scalars
-	The basic non-vector types are:
-
-	bool: conditional type, values may be either true or false
-	int: a signed, two's complement, 32-bit integer
-	uint: an unsigned 32-bit integer
-	float: an IEEE-754 single-precision floating point number
-	double: an IEEE-754 double-precision floating-point number
- 
- 	Vectors
-	Each of the scalar types, including booleans, have 2, 3, and 4-component vector equivalents. The n digit below can be 2, 3, or 4:
-
-	bvecn: a vector of booleans
-	ivecn: a vector of signed integers
-	uvecn: a vector of unsigned integers
-	vecn: a vector of single-precision floating-point numbers
-	dvecn: a vector of double-precision floating-point numbers
-
-	NOTE: uniform int count: 'non-opaque uniforms outside a block' : not allowed when using GLSL for Vulkan
- */
-static u16 sizeof_glsl_type(u8 type)
-{
-	switch(type)
-	{
-		case SHADER_COMPILER_BLOCK 			: LOG_FETAL_ERR("getting size of non glsl type \"SHADER_COMPILER_BLOCK\" is a invalid operation\n");
-		case SHADER_COMPILER_FLOAT 			:
-		case SHADER_COMPILER_INT 			:
-		case SHADER_COMPILER_UINT 			: return 4;
-		case SHADER_COMPILER_DOUBLE 		: LOG_FETAL_ERR("\"double\" isn't supported yet\n");
-		case SHADER_COMPILER_VEC4 			:
-		case SHADER_COMPILER_IVEC4 			:
-		case SHADER_COMPILER_UVEC4 			:
-		case SHADER_COMPILER_MAT2 			: return 16;
-		case SHADER_COMPILER_IVEC3 			:
-		case SHADER_COMPILER_UVEC3 			:
-		case SHADER_COMPILER_VEC3 			: return 12;
-		case SHADER_COMPILER_IVEC2 			:
-		case SHADER_COMPILER_UVEC2 			:
-		case SHADER_COMPILER_VEC2 			: return 8;
-		case SHADER_COMPILER_MAT4 			: return 64;
-		case SHADER_COMPILER_MAT3 			: return 36;
-		case SHADER_COMPILER_SAMPLER_2D 	:
-		case SHADER_COMPILER_SAMPLER_3D		: 
-		case SHADER_COMPILER_SAMPLER_CUBE	: LOG_FETAL_ERR("getting size of opaque types are invalid operation\n");
-		default								: LOG_FETAL_ERR("Unrecognized glsl type \"%u\"\n", type);
-	};
-}
-
-/*
-	From the spec:
-
-	Standard Uniform Buffer Layout
-
-	The 'base alignment' of the type of an OpTypeStruct member of is defined recursively as follows:
-
-	A scalar of size N has a base alignment of N.
-	A two-component vector, with components of size N, has a base alignment of 2 N.
-	A three- or four-component vector, with components of size N, has a base alignment of 4 N.
-	An array has a base alignment equal to the base alignment of its element type, rounded up to a multiple of 16.
-	A structure has a base alignment equal to the largest base alignment of any of its members, rounded up to a multiple of 16.
-	A row-major matrix of C columns has a base alignment equal to the base alignment of a vector of C matrix components.
-	A column-major matrix has a base alignment equal to the base alignment of the matrix column type.
-	The std140 layout in GLSL satisfies these rules.
-
- */
-static u16 alignof_glsl_type(u8 type)
-{
-	switch(type)
-	{
-		case SHADER_COMPILER_BLOCK 			: LOG_FETAL_ERR("getting alignment of non glsl type \"SHADER_COMPILER_BLOCK\" is a invalid operation\n");
-		case SHADER_COMPILER_FLOAT 			:
-		case SHADER_COMPILER_INT 			:
-		case SHADER_COMPILER_UINT 			: return 4;
-		case SHADER_COMPILER_DOUBLE 		: LOG_FETAL_ERR("\"double\" isn't supported yet\n");
-		case SHADER_COMPILER_VEC4 			:
-		case SHADER_COMPILER_IVEC4 			:
-		case SHADER_COMPILER_UVEC4 			:
-		case SHADER_COMPILER_IVEC3 			:
-		case SHADER_COMPILER_UVEC3 			:
-		case SHADER_COMPILER_VEC3 			:
-		case SHADER_COMPILER_MAT4 			:
-		case SHADER_COMPILER_MAT3 			: return 16;
-		case SHADER_COMPILER_IVEC2 			:
-		case SHADER_COMPILER_UVEC2 			:
-		case SHADER_COMPILER_VEC2 			:
-		case SHADER_COMPILER_MAT2 			: return 8;
-		case SHADER_COMPILER_SAMPLER_2D 	:
-		case SHADER_COMPILER_SAMPLER_3D		: 
-		case SHADER_COMPILER_SAMPLER_CUBE	: LOG_FETAL_ERR("getting alignment of opaque types are invalid operation\n");
-		default								: LOG_FETAL_ERR("Unrecognized glsl type \"%u\"\n", type);
-	};
 }
 
 // static vulkan_shader_resource_descriptor_t* create_descriptors(u32 OUT descriptor_count, BUFFER* bytes, buf_ucount_t OUT cursor)
@@ -381,7 +232,7 @@ static u16 alignof_glsl_type(u8 type)
 // 		temp_cursor += len + 1;
 // 		strcpy(descriptor->handle.name, name);
 
-// 		if(descriptor->handle.type == SHADER_COMPILER_BLOCK)
+// 		if(descriptor->handle.type == GLSL_TYPE_BLOCK)
 // 		{
 // 			// ignore the block name
 // 			name = buf_get_ptr_at(bytes, temp_cursor);
@@ -392,10 +243,10 @@ static u16 alignof_glsl_type(u8 type)
 
 // 		log_msg("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
 // 			i, descriptor->set_number, descriptor->binding_number, descriptor->stage_flags,
-// 			descriptor->is_push_constant ? "true" : "false", descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", (descriptor->handle.type == SHADER_COMPILER_BLOCK) ? "true" : "false",
+// 			descriptor->is_push_constant ? "true" : "false", descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", (descriptor->handle.type == GLSL_TYPE_BLOCK) ? "true" : "false",
 // 			descriptor->handle.name);
 
-// 		if(descriptor->handle.type == SHADER_COMPILER_BLOCK)
+// 		if(descriptor->handle.type == GLSL_TYPE_BLOCK)
 // 		{
 // 			// get the number of fields in this uniform block
 // 			descriptor->handle.field_count = *(u16*)buf_get_ptr_at(bytes, temp_cursor); temp_cursor += 2;
@@ -642,7 +493,7 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 		if(!descriptor->is_push_constant) continue;
 
 		// sanity check
-		assert(descriptor->handle.type == SHADER_COMPILER_BLOCK);
+		assert(descriptor->handle.type == GLSL_TYPE_BLOCK);
 		
 		VkShaderStageFlagBits stage_flags = 0;
 		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_VERTEX))

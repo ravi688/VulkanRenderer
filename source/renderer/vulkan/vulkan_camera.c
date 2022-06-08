@@ -22,21 +22,11 @@ RENDERER_API vulkan_camera_t* vulkan_camera_new()
 static void setup_gpu_resources(vulkan_camera_t* camera)
 {
 	// setup camera struct definiton
-	strcpy(camera->struct_definition.name, "cameraInfo");
-	struct_field_t* fields = heap_newv(struct_field_t, 3);
-	memset(fields, 0, sizeof(struct_field_t) * 3);
-	strcpy(fields[0].name, "transform");
-	strcpy(fields[1].name, "projection");
-	strcpy(fields[2].name, "view");
-	for(int i = 0; i < 3; i++)
-	{
-		fields[i].type = STRUCT_FIELD_MAT4;
-		fields[i].alignment = 16;
-		fields[i].size = sizeof(float) * 16;
-	}
-	camera->struct_definition.fields = fields;
-	camera->struct_definition.field_count = 3;
-	struct_descriptor_recalculate(&camera->struct_definition);
+	struct_descriptor_begin(&camera->struct_definition, "cameraInfo", GLSL_TYPE_BLOCK);
+		struct_descriptor_add_field_mat4(&camera->struct_definition, "transform");
+		struct_descriptor_add_field_mat4(&camera->struct_definition, "projection");
+		struct_descriptor_add_field_mat4(&camera->struct_definition, "view");
+	struct_descriptor_end(&camera->struct_definition);
 
 	// create uniform buffers and write to the descriptor set GLOBAL_SET at bindings GLOBAL_CAMERA and GLOBAL_LIGHT
 	vulkan_buffer_create_info_t create_info = 
@@ -118,7 +108,6 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 {
 	vulkan_buffer_release_resources(&camera->buffer);
-	heap_free(camera->struct_definition.fields);
 	// TODO
 	// heap_free(camera);
 }

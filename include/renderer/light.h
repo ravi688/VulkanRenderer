@@ -26,14 +26,15 @@
 
 typedef enum light_type_t
 {
-	LIGHT_TYPE_DIRECTIONAL = 0,
-	LIGHT_TYPE_POINT = 1,
+	LIGHT_TYPE_UNDEFINED = 0,
+	LIGHT_TYPE_DIRECTIONAL = 1,
+	LIGHT_TYPE_POINT = 2,
 	LIGHT_TYPE_OMIN = LIGHT_TYPE_POINT,
-	LIGHT_TYPE_SPOT = 2,
-	LIGHT_TYPE_AREA = 3,
-	LIGHT_TYPE_CURVE = 4,
-	LIGHT_TYPE_VOLUME = 5,
-	LIGHT_TYPE_AMBIENT = 6
+	LIGHT_TYPE_SPOT = 3,
+	LIGHT_TYPE_AREA = 4,
+	LIGHT_TYPE_CURVE = 5,
+	LIGHT_TYPE_VOLUME = 6,
+	LIGHT_TYPE_AMBIENT = 7
 } light_type_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -44,11 +45,10 @@ RENDERER_API void light_create_no_alloc(renderer_t* renderer, light_type_t type,
 RENDERER_API void light_destroy(light_t* light);
 RENDERER_API void light_release_resources(light_t* light);
 
+RENDERER_API void light_set_spot_angle(light_t* light, float angle);
 RENDERER_API void light_set_position(light_t* light, vec3_t(float) position);
 RENDERER_API void light_set_rotation(light_t* light, vec3_t(float) rotation);
 RENDERER_API void light_set_intensity(light_t* light, float intensity);
 RENDERER_API void light_set_color(light_t* light, vec3_t(float) color);
-RENDERER_API void light_set_projection(light_t* light, mat4_t(float) projection);
-RENDERER_API void light_set_direction(light_t* light, vec3_t(float) dir);
 
 END_CPP_COMPATIBLE

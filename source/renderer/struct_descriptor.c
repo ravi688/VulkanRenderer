@@ -2,7 +2,9 @@
 #include <renderer/struct_descriptor.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
+#include <renderer/memory_allocator.h>
 #include <string.h>
+#include <bufferlib/buffer.h>
 
 /*
  		COMPUTING PADDING
@@ -92,91 +94,91 @@ RENDERER_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, s
 RENDERER_API void struct_descriptor_set_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 4);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_FLOAT_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 4);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_INT_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 4);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_UINT_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 16);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_VEC4_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 12);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_VEC3_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 8);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_VEC2_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 16);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_IVEC4_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 12);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_IVEC3_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 8);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_IVEC2_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 16);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_UVEC4_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 12);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_UVEC3_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 8);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_UVEC2_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 64);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_MAT4_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 36);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_MAT3_SIZE);
 }
 
 RENDERER_API void struct_descriptor_set_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_from(descriptor, handle, in, 16);
+	__cpy_data_from(descriptor, handle, in, GLSL_TYPE_MAT2_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const out)
@@ -188,91 +190,129 @@ RENDERER_API void struct_descriptor_get_value(struct_descriptor_t* descriptor, s
 RENDERER_API void struct_descriptor_get_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 4);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_FLOAT_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 4);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_INT_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 4);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_UINT_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 16);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_VEC4_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 12);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_VEC3_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 8);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_VEC2_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 16);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_IVEC4_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 12);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_IVEC3_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 8);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_IVEC2_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 16);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_UVEC4_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 12);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_UVEC3_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 8);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_UVEC2_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 64);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_MAT4_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 36);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_MAT3_SIZE);
 }
 
 RENDERER_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
 	check_precondition(descriptor, handle);
-	__cpy_data_to(descriptor, handle, out, 16);
+	__cpy_data_to(descriptor, handle, out, GLSL_TYPE_MAT2_SIZE);
+}
+
+static struct_field_t* create_field(struct_descriptor_t* descriptor)
+{
+	BUFFER* fields = CAST_TO(BUFFER*, descriptor->fields);
+	buf_push_pseudo(fields, 1);
+	return buf_peek_ptr(fields);
+}
+
+RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type)
+{
+	struct_field_t* field = create_field(descriptor);
+	strcpy(field->name, name);
+	field->type = type;
+	field->size = sizeof_glsl_type(type);
+	field->alignment = alignof_glsl_type(type);
+}
+
+RENDERER_API void struct_descriptor_begin(struct_descriptor_t* descriptor, const char* name, u8 type)
+{
+	memzero(descriptor, struct_descriptor_t);
+	
+	strcpy(descriptor->name, name);
+	descriptor->type = type;
+
+	BUFFER* buffer = heap_new(BUFFER);
+	BUFFER _buffer = buf_create(sizeof(struct_field_t), 1, 0);
+	memcpy(buffer, &_buffer, sizeof(BUFFER));
+	descriptor->fields = CAST_TO(struct_field_t*, buffer);
+}
+
+RENDERER_API void struct_descriptor_end(struct_descriptor_t* descriptor)
+{
+	BUFFER* buffer = CAST_TO(BUFFER*, descriptor->fields);
+	descriptor->fields = buf_get_ptr(buffer);
+	descriptor->field_count = buf_get_element_count(buffer);
+	heap_free(buffer);
+	struct_descriptor_recalculate(descriptor);
 }
 
 

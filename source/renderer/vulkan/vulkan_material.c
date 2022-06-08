@@ -42,7 +42,7 @@ static void setup_material_resources(vulkan_material_t* material)
 			continue;
 		vulkan_uniform_resource_t* resource = &uniform_resources[j];
 		j++;
-		if((binding->handle.type == SHADER_COMPILER_BLOCK) && (!binding->is_push_constant))
+		if((binding->handle.type == GLSL_TYPE_BLOCK) && (!binding->is_push_constant))
 		{
 			u32 size = struct_descriptor_sizeof(&binding->handle);
 			resource->index = i;

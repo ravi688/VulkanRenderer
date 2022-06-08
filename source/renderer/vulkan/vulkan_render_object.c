@@ -30,20 +30,10 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 	vulkan_descriptor_set_create_no_alloc(object->renderer, &set_create_info, &object->object_set);
 
 	// setup object struct definiton
-	strcpy(object->struct_definition.name, "objectInfo");
-	struct_field_t* fields = heap_newv(struct_field_t, 2);
-	memset(fields, 0, sizeof(struct_field_t) * 2);
-	strcpy(fields[0].name, "transform"); 		// transform matrix
-	strcpy(fields[1].name, "normal");			// normal matrix
-	for(int i = 0; i < 2; i++)
-	{
-		fields[i].type = STRUCT_FIELD_MAT4;
-		fields[i].alignment = 16;
-		fields[i].size = sizeof(float) * 16;
-	}
-	object->struct_definition.fields = fields;
-	object->struct_definition.field_count = 2;
-	struct_descriptor_recalculate(&object->struct_definition);
+	struct_descriptor_begin(&object->struct_definition, "objectInfo", GLSL_TYPE_BLOCK);
+		struct_descriptor_add_field(&object->struct_definition, "transform", GLSL_TYPE_MAT4);
+		struct_descriptor_add_field(&object->struct_definition, "normal", GLSL_TYPE_MAT4);
+	struct_descriptor_end(&object->struct_definition);
 
 	// create uniform buffers and write to the descriptor set OBJECT_SET at binding TRANSFORM_BINDING
 	vulkan_buffer_create_info_t create_info = 
@@ -113,7 +103,8 @@ RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t*
 {
 	vulkan_descriptor_set_release_resources(&obj->object_set);
 	vulkan_buffer_release_resources(&obj->buffer);
-	heap_free(obj);
+	// TODO
+	// heap_free(obj);
 }
 
 RENDERER_API void vulkan_render_object_attach(vulkan_render_object_t* obj, void* user_data)
