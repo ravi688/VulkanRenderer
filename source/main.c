@@ -32,14 +32,14 @@ int main(const char** argc, int argv)
 	memory_allocator_init(&argv);
 	
 	// initialize renderer
-	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_INTEGRATED, 800, 800, "Renderer", false, true);
+	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Renderer", false, true);
 
 	// create a camera
-	AUTO camera = camera_create(renderer, CAMERA_PROJECTION_TYPE_PERSPECTIVE, 0.04f, 100, 65 DEG);
-	camera_set_clear(camera, COLOR_BLACK, 1.0f);
-	
+	AUTO camera = camera_create(renderer, CAMERA_PROJECTION_TYPE_PERSPECTIVE);
+	camera_set_clear(camera, COLOR_ORANGE, 1.0f);
+
 	AUTO light = light_create(renderer, LIGHT_TYPE_POINT);
-	light_set_color(light, vec3(float)(0, 1, 0));
+	light_set_color(light, vec3(float)(1, 1, 1));
 	light_set_intensity(light, 0.3f);
 
 	// create a render scene
@@ -50,6 +50,20 @@ int main(const char** argc, int argv)
 
 	AUTO shaderH2 = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR);
 	AUTO mat2 = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH2, "Material2"));
+
+	AUTO skyboxTexture = texture_load(renderer, TEXTURE_TYPE_CUBE, 
+											"showcase/resource/skybox_textures/skybox/right.bmp",
+											"showcase/resource/skybox_textures/skybox/left.bmp",
+											"showcase/resource/skybox_textures/skybox/bottom.bmp",
+											"showcase/resource/skybox_textures/skybox/top.bmp",
+											"showcase/resource/skybox_textures/skybox/front.bmp", 
+											"showcase/resource/skybox_textures/skybox/back.bmp");
+	AUTO skyboxGeometry = mesh3d_cube(5.0f);
+	mesh3d_flip_triangles(skyboxGeometry);
+	AUTO skyboxMesh = mesh_create(renderer, skyboxGeometry);
+	AUTO skyboxShaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_SKYBOX);
+	AUTO skyboxMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, skyboxShaderH, "SkyboxMaterial"));
+	material_set_texture(skyboxMaterial, "albedo", skyboxTexture);
 
 	AUTO texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Smile.bmp");
 	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT);
@@ -65,6 +79,9 @@ int main(const char** argc, int argv)
 	material_set_vec4(greenMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
 	material_set_vec4(mat2, "parameters.color", vec4(float)(1, 1, 1, 1));
 
+	render_object_t* skyboxObj = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_BACKGROUND));
+	render_object_set_material(skyboxObj, skyboxMaterial);
+	render_object_attach(skyboxObj, skyboxMesh);
 
 	render_object_t* obj2 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(obj2, greenMaterial);
@@ -127,10 +144,16 @@ int main(const char** argc, int argv)
 	texture_destroy(texture);
 	texture_release_resources(texture);
 
+	texture_destroy(skyboxTexture);
+	texture_release_resources(skyboxTexture);
+
 	mesh_destroy(planeMesh);
 	mesh_release_resources(planeMesh);
 	mesh_destroy(mesh);
 	mesh_release_resources(mesh);
+
+	mesh_destroy(skyboxMesh);
+	mesh_release_resources(skyboxMesh);
 
 	render_scene_destroy(scene);
 	render_scene_release_resources(scene);

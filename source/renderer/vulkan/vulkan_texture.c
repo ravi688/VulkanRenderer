@@ -259,7 +259,7 @@ static void vulkan_texture_create_cube(vulkan_texture_t* texture, vulkan_texture
 	vulkan_buffer_release_resources(staging_buffer);
 
 	// create 2d image view
-	vulkan_image_view_create_info_t view_create_info = { .image = &texture->image, .view_type = VULKAN_TEXTURE_TYPE_CUBE };
+	vulkan_image_view_create_info_t view_create_info = { .image = &texture->image, .view_type = VULKAN_IMAGE_VIEW_TYPE_CUBE };
 	vulkan_image_view_create_no_alloc(texture->renderer, &view_create_info, &texture->image_view);
 
 	// create default sampler
