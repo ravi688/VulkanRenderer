@@ -7,6 +7,9 @@
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
 #include <renderer/internal/vulkan/vulkan_shader_module.h>
+#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
+#include <renderer/internal/vulkan/vulkan_render_pass_description.h>
+#include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <disk_manager/file_reader.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
@@ -87,7 +90,7 @@ static void get_vulkan_constants(VkFormat* out_formats, u32* out_indices)
 	memcpy(&out_formats[0], vulkan_formats, sizeof(VkFormat) * 27);
 }
 
-static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16 location_offset, VkVertexInputRate input_rate)
+static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(u64 packed_attributes, u16 location_offset, VkVertexInputRate input_rate)
 {
 	// get the vulkan constants
 	VkFormat vulkan_formats[27];
@@ -134,7 +137,7 @@ static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16
 		locations[i] = i + location_offset;
 		i++;
 	}
-	vulkan_vertex_info_t info;
+	vulkan_vertex_buffer_layout_description_t info;
 	info.input_rate = input_rate;
 	info.attribute_count = i;
 	info.size = offset;
@@ -147,7 +150,7 @@ static vulkan_vertex_info_t decode_vulkan_vertex_info(u64 packed_attributes, u16
 	return info;
 }
 
-static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribute_bindings,
+static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(u64* per_vertex_attribute_bindings,
 												 		u32 per_vertex_attribute_binding_count,
 												 		u64* per_instance_attribute_bindings,
 												 		u32 per_instance_attribute_binding_count)
@@ -156,8 +159,8 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 	u32 binding_count = per_vertex_attribute_binding_count + per_instance_attribute_binding_count;
 
 	// allocate memory
-	vulkan_vertex_info_t* vertex_infos = heap_newv(vulkan_vertex_info_t, binding_count);
-	memset(vertex_infos, 0, sizeof(vulkan_vertex_info_t) * binding_count);
+	vulkan_vertex_buffer_layout_description_t* vertex_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, binding_count);
+	memset(vertex_infos, 0, sizeof(vulkan_vertex_buffer_layout_description_t) * binding_count);
 	
 	u32 binding_number = 0;
 	u16 location_number_offset = 0;
@@ -179,7 +182,7 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 	return vertex_infos;
 }
 
-// static vulkan_shader_resource_descriptor_t* create_descriptors(u32 OUT descriptor_count, BUFFER* bytes, buf_ucount_t OUT cursor)
+// static vulkan_shader_resource_description_t* create_descriptors(u32 OUT descriptor_count, BUFFER* bytes, buf_ucount_t OUT cursor)
 // {
 // 	// get the number of descriptors
 // 	u16 count = *(u16*)buf_get_ptr_at(bytes, OUT cursor); OUT cursor += 2;
@@ -191,8 +194,8 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 // 		return NULL;
 
 // 	// allocate memory
-// 	vulkan_shader_resource_descriptor_t* descriptors = heap_newv(vulkan_shader_resource_descriptor_t, count);
-// 	memset(descriptors, 0, sizeof(vulkan_shader_resource_descriptor_t) * count);
+// 	vulkan_shader_resource_description_t* descriptors = heap_newv(vulkan_shader_resource_description_t, count);
+// 	memset(descriptors, 0, sizeof(vulkan_shader_resource_description_t) * count);
 
 // 	u32 temp_cursor = 0;
 // 	for(u16 i = 0; i < count; i++, OUT cursor += 4)
@@ -202,7 +205,7 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 
 // 		temp_cursor = offset;
 
-// 		vulkan_shader_resource_descriptor_t* descriptor = &descriptors[i];
+// 		vulkan_shader_resource_description_t* descriptor = &descriptors[i];
 
 // 		descriptor->set_number = *(u8*)buf_get_ptr_at(bytes, temp_cursor); temp_cursor += 1;
 // 		descriptor->binding_number = *(u8*)buf_get_ptr_at(bytes, temp_cursor); temp_cursor += 1;
@@ -290,7 +293,7 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 // 	return descriptors;
 // }
 
-// static vulkan_vertex_info_t* create_vertex_infos(u32 OUT vertex_info_count, BUFFER* bytes, buf_ucount_t OUT cursor)
+// static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(u32 OUT vertex_info_count, BUFFER* bytes, buf_ucount_t OUT cursor)
 // {
 // 	// get the vulkan constants
 // 	VkFormat vulkan_formats[27];
@@ -301,11 +304,11 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 
 // 	// get the vertex attribute count across all the vertex bindings
 // 	u32 binding_count;
-// 	vulkan_shader_resource_descriptor_t* binding_descriptions = create_descriptors(&binding_count, bytes, cursor);
+// 	vulkan_shader_resource_description_t* binding_descriptions = create_descriptors(&binding_count, bytes, cursor);
 
 // 	// allocate memory
-// 	vulkan_vertex_info_t* vertex_infos = heap_newv(vulkan_vertex_info_t, binding_count);
-// 	memset(vertex_infos, 0, sizeof(vulkan_vertex_info_t) * binding_count);
+// 	vulkan_vertex_buffer_layout_description_t* vertex_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, binding_count);
+// 	memset(vertex_infos, 0, sizeof(vulkan_vertex_buffer_layout_description_t) * binding_count);
 
 // 	typedef struct attribute_info_t { BUFFER locations, formats, offsets; } attribute_info_t;
 // 	dictionary_t bindings = dictionary_create(u32, attribute_info_t, 1, dictionary_key_comparer_u32);
@@ -341,7 +344,7 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 // 			buf_push(&attribute_info->offsets, &offset);
 
 // 			// create vertex info object for the binding 'key'
-// 			vertex_infos[index] = (vulkan_vertex_info_t)
+// 			vertex_infos[index] = (vulkan_vertex_buffer_layout_description_t)
 // 			{
 // 				.binding = key,
 // 				.input_rate = binding_descriptions[i].is_per_vertex_attribute ? VK_VERTEX_INPUT_RATE_VERTEX : VK_VERTEX_INPUT_RATE_INSTANCE
@@ -375,7 +378,7 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 
 // 	for(u32 i = 0; i < binding_count; i++)
 // 	{
-// 		vulkan_vertex_info_t* vinfo = &vertex_infos[i];
+// 		vulkan_vertex_buffer_layout_description_t* vinfo = &vertex_infos[i];
 // 		attribute_info_t* ainfo = dictionary_get_value_ptr_at(&bindings, i);
 
 // 		// the final stride would be the last saved offset
@@ -436,11 +439,11 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 
 // 	// create material set bindings
 // 	u32 material_set_binding_count;
-// 	vulkan_shader_resource_descriptor_t* material_set_bindings = create_descriptors(&material_set_binding_count, bytes, &cursor);
+// 	vulkan_shader_resource_description_t* material_set_bindings = create_descriptors(&material_set_binding_count, bytes, &cursor);
 
 // 	// create vertex attribute infos
 // 	u32 vertex_info_count;
-// 	vulkan_vertex_info_t* vertex_infos = file_info->is_vertex_attrib_from_file ? create_vertex_infos(&vertex_info_count, bytes, &cursor) : 
+// 	vulkan_vertex_buffer_layout_description_t* vertex_infos = file_info->is_vertex_attrib_from_file ? create_vertex_infos(&vertex_info_count, bytes, &cursor) : 
 // 										decode_vulkan_vertex_infos(file_info->per_vertex_attribute_bindings,
 // 																   file_info->per_vertex_attribute_binding_count,
 // 																   file_info->per_instance_attribute_bindings,
@@ -476,7 +479,7 @@ static vulkan_vertex_info_t* decode_vulkan_vertex_infos(u64* per_vertex_attribut
 // 	return vulkan_shader_create(renderer, &create_info);
 // }
 
-static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource_descriptor_t* material_set_bindings, u32 material_set_binding_count)
+static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource_description_t* material_set_bindings, u32 material_set_binding_count)
 {
 	// holds the indices of the material set binding descriptors which are push constants
 	u32* descriptor_indices = heap_newv(u32, material_set_binding_count);
@@ -487,7 +490,7 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 	u32 range_count = 0;
 	for(u32 i = 0; i < material_set_binding_count; i++)
 	{
-		vulkan_shader_resource_descriptor_t* descriptor = &material_set_bindings[i];
+		vulkan_shader_resource_description_t* descriptor = &material_set_bindings[i];
 
 		// if this is not a push constant then skip it
 		if(!descriptor->is_push_constant) continue;
@@ -575,11 +578,11 @@ static void destroy_vulkan_push_constant(vulkan_push_constant_t* push_constant)
 	heap_free(push_constant->buffer);
 }
 
-static vulkan_vertex_info_t* create_deep_copy_of_vulkan_vertex_infos(vulkan_vertex_info_t* vertex_infos, u32 vertex_info_count)
+static vulkan_vertex_buffer_layout_description_t* create_deep_copy_of_vulkan_vertex_infos(vulkan_vertex_buffer_layout_description_t* vertex_infos, u32 vertex_info_count)
 {
 	if((vertex_infos == NULL) || (vertex_info_count == 0))
 		return NULL;
-	vulkan_vertex_info_t* copy_infos = heap_newv(vulkan_vertex_info_t, vertex_info_count);
+	vulkan_vertex_buffer_layout_description_t* copy_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, vertex_info_count);
 	for(u32 i = 0; i < vertex_info_count; i++)
 	{
 		copy_infos[i] = vertex_infos[i];
@@ -597,7 +600,7 @@ static vulkan_vertex_info_t* create_deep_copy_of_vulkan_vertex_infos(vulkan_vert
 	return copy_infos;
 }
 
-static void destroy_vulkan_vertex_infos(vulkan_vertex_info_t* vertex_infos, u32 vertex_info_count)
+static void destroy_vulkan_vertex_infos(vulkan_vertex_buffer_layout_description_t* vertex_infos, u32 vertex_info_count)
 {
 	for(u32 i = 0; i < vertex_info_count; i++)
 	{
@@ -608,9 +611,9 @@ static void destroy_vulkan_vertex_infos(vulkan_vertex_info_t* vertex_infos, u32 
 	heap_free(vertex_infos);
 }
 
-static vulkan_shader_resource_descriptor_t* create_deep_copy_of_set_binding_descriptors(vulkan_shader_resource_descriptor_t* descriptors, u32 descriptor_count)
+static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_descriptors(vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
 {
-	vulkan_shader_resource_descriptor_t* copy_descriptors = heap_newv(vulkan_shader_resource_descriptor_t, descriptor_count);
+	vulkan_shader_resource_description_t* copy_descriptors = heap_newv(vulkan_shader_resource_description_t, descriptor_count);
 	for(u32 i = 0; i < descriptor_count; i++)
 	{
 		copy_descriptors[i] = descriptors[i];
@@ -626,7 +629,7 @@ static vulkan_shader_resource_descriptor_t* create_deep_copy_of_set_binding_desc
 	return copy_descriptors;
 }
 
-static void destroy_set_binding_descriptors(vulkan_shader_resource_descriptor_t* descriptors, u32 descriptor_count)
+static void destroy_set_binding_descriptors(vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
 {
 	for(u32 i = 0; i < descriptor_count; i++)
 	{
@@ -638,7 +641,7 @@ static void destroy_set_binding_descriptors(vulkan_shader_resource_descriptor_t*
 
 typedef struct vulkan_pipeline_common_data_t
 {
-	vulkan_vertex_info_t* vertex_attribute_bindings;
+	vulkan_vertex_buffer_layout_description_t* vertex_attribute_bindings;
 	u32 vertex_attribute_binding_count;
 	VkPushConstantRange* push_constant_ranges;
 	u32 push_constant_range_count;
