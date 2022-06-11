@@ -32,7 +32,7 @@ typedef struct vulkan_subpass_create_info_t
 	u32 preserve_attachment_count;
 
 	/* used for creating descriptor set layout for the sub render set */
-	vulkan_shader_resource_descriptor_t* sub_render_set_bindings;
+	vulkan_shader_resource_description_t* sub_render_set_bindings;
 	u32 sub_render_set_binding_count;
 
 } vulkan_subpass_create_info_t;
@@ -70,7 +70,7 @@ typedef struct vulkan_render_pass_create_info_t
 	u32 subpass_count;
 
 	/* used for creating descriptor set layout for the render set */
-	vulkan_shader_resource_descriptor_t* render_set_bindings;
+	vulkan_shader_resource_description_t* render_set_bindings;
 	u32 render_set_binding_count;
 
 } vulkan_render_pass_create_info_t;

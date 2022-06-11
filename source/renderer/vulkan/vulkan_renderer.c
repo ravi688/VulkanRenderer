@@ -240,42 +240,15 @@ DEBUG_BLOCK
 	renderer->logical_device = vulkan_logical_device_create(physical_device, &logical_device_create_info);
 	heap_free(minimum_required_features);
 
-	// setup depth buffer format
-	// VkFormat* formats = stack_newv(VkFormat, 3);
-	// formats[0] = VK_FORMAT_D32_SFLOAT;
-	// formats[1] = VK_FORMAT_D32_SFLOAT_S8_UINT;
-	// formats[2] = VK_FORMAT_D24_UNORM_S8_UINT;
-	// VkFormat depth_format = vulkan_physical_device_find_supported_format(renderer->physical_device, &formats[0], 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-	// stack_free(formats);
-
 DEBUG_BLOCK
 (
 	buf_set_element_count(&log_buffer, 0);
-	// buf_push_string(&log_buffer, "Selected depth attachment format:");
-	// vk_format_to_string("\t", depth_format, &log_buffer);
-	// buf_push_newline(&log_buffer);
 	buf_push_string(&log_buffer, "Selected color attachment format: ");
 	vk_format_to_string("\t", surface_format.format, &log_buffer);
 	buf_push_newline(&log_buffer);
 	buf_push_null(&log_buffer);
 	log_msg(buf_get_ptr(&log_buffer));
 )
-
-	// //Create Renderpass
-	// vulkan_render_pass_create_info_t render_pass_info =
-	// {
-	// 	.color_attachment_format = surface_format.format,
-	// 	.depth_attachment_format = depth_format
-	// };
-	// renderer->render_pass = vulkan_render_pass_create(renderer, &render_pass_info);
-
-	// create a shadow render pass for rendering the shadow map
-	// vulkan_render_pass_create_info_t shadow_render_pass_info =
-	// {
-	// 	// color attachment format is not needed
-	// 	.depth_attachment_format = depth_format
-	// };
-	// renderer->shadow_map_render_pass = vulkan_render_pass_create(renderer, &shadow_render_pass_info);
 
 	// create semaphores
 	renderer->vo_image_available_semaphore = get_semaphore(renderer->logical_device->vo_handle);
@@ -286,7 +259,6 @@ DEBUG_BLOCK
 	{
 		.image_count = image_count,
 		.vo_image_format = surface_format.format,
-		// .depth_format = depth_format,
 		.vo_image_color_space = surface_format.colorSpace,
 		.vo_image_extent = image_extent,
 		.queue_family_indices = queue_family_indices,
@@ -398,17 +370,6 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 	// vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 	
 	vulkan_command_buffer_begin(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-	// vulkan_render_pass_begin_info_t begin_info =
-	// {
-	// 	.framebuffer = renderer->swapchain->framebuffers[renderer->swapchain->current_image_index],
-	// 	.depth = 1.1f,
-	// 	.stencil = 0,
-	// 	.color = { r, g, b, a },
-	// 	.width = renderer->swapchain->image_extent.width,
-	// 	.height = renderer->swapchain->image_extent.height
-	// };
-	// vulkan_render_pass_begin(renderer->render_pass, &begin_info);
 }
 
 RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
@@ -428,8 +389,6 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 						renderer->swapchain->vo_handle, 
 						renderer->swapchain->current_image_index,
 						renderer->vo_render_finished_semaphore);
-	// vulkan_queue_wait_idle(renderer->vo_graphics_queue);
-	// vkCall(vkDeviceWaitIdle(renderer->logical_device->vo_handle));
 	render_window_poll_events(renderer->window);
 }
 
@@ -469,14 +428,6 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_render_finished_semaphore, NULL);
 
 	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vo_descriptor_pool, NULL);
-	
-	// // destroy render pass	
-	// vulkan_render_pass_destroy(renderer->render_pass);
-	// vulkan_render_pass_release_resources(renderer->render_pass);
-
-	// // destroy the shadow render pass
-	// vulkan_render_pass_destroy(renderer->shadow_map_render_pass);
-	// vulkan_render_pass_release_resources(renderer->shadow_map_render_pass);
 	
 	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, renderer->swapchain->image_count, renderer->vo_command_buffers);
 	vkDestroyCommandPool(renderer->logical_device->vo_handle, renderer->vo_command_pool, NULL);

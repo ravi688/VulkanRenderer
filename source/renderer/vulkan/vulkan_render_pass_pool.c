@@ -3,6 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_attachment.h>
+#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
@@ -86,9 +87,9 @@ static bool struct_descriptor_compare(struct_descriptor_t* d1, struct_descriptor
 
 static bool shader_resource_descriptor_compare(void* create_info, void* ref)
 {
-	vulkan_shader_resource_descriptor_t* descriptor1 = CAST_TO(vulkan_shader_resource_descriptor_t*, create_info);
-	vulkan_shader_resource_descriptor_t* descriptor2 = CAST_TO(vulkan_shader_resource_descriptor_t*, ref);
-	return (memcmp(descriptor1, descriptor1, sizeof(vulkan_shader_resource_descriptor_t)) == 0)
+	vulkan_shader_resource_description_t* descriptor1 = CAST_TO(vulkan_shader_resource_description_t*, create_info);
+	vulkan_shader_resource_description_t* descriptor2 = CAST_TO(vulkan_shader_resource_description_t*, ref);
+	return (memcmp(descriptor1, descriptor1, sizeof(vulkan_shader_resource_description_t)) == 0)
 			&& struct_descriptor_compare(&descriptor1->handle, &descriptor2->handle);
 }
 
@@ -132,7 +133,7 @@ static bool compare_attachment_reference(u32 count, VkAttachmentReference* r1, V
 	return true;
 }
 
-static bool compare_resource_descriptors(u32 count, vulkan_shader_resource_descriptor_t* d1, vulkan_shader_resource_descriptor_t* d2)
+static bool compare_resource_descriptors(u32 count, vulkan_shader_resource_description_t* d1, vulkan_shader_resource_description_t* d2)
 {
 	for(u32 i = 0; i < count; i++)
 	{
@@ -185,9 +186,9 @@ static bool render_pass_create_info_compare(void* create_info, void* ref)
 	return b6;
 }
 
-static void vulkan_resource_descriptor_deep_copy(vulkan_shader_resource_descriptor_t* dst, vulkan_shader_resource_descriptor_t* src)
+static void vulkan_resource_descriptor_deep_copy(vulkan_shader_resource_description_t* dst, vulkan_shader_resource_description_t* src)
 {
-	memcpy(dst, src, sizeof(vulkan_shader_resource_descriptor_t));
+	memcpy(dst, src, sizeof(vulkan_shader_resource_description_t));
 	if(src->handle.field_count > 0)
 	{
 		dst->handle.fields = heap_newv(struct_field_t, src->handle.field_count);
@@ -205,7 +206,7 @@ static void vulkan_subpass_create_info_deep_copy(vulkan_subpass_create_info_t* d
 	dst->preserve_attachments = src->preserve_attachment_count ? heap_newv(u32, src->preserve_attachment_count) : NULL;
 	memcpy(dst->preserve_attachments, src->preserve_attachments, sizeof(u32) * src->preserve_attachment_count);
 			
-	dst->sub_render_set_bindings = src->sub_render_set_binding_count ? heap_newv(vulkan_shader_resource_descriptor_t, src->sub_render_set_binding_count) : NULL;
+	dst->sub_render_set_bindings = src->sub_render_set_binding_count ? heap_newv(vulkan_shader_resource_description_t, src->sub_render_set_binding_count) : NULL;
 	for(u32 j = 0; j < src->sub_render_set_binding_count; j++)
 		vulkan_resource_descriptor_deep_copy(&dst->sub_render_set_bindings[j], &src->sub_render_set_bindings[j]);	
 }
@@ -222,7 +223,7 @@ static void vulkan_render_pass_create_info_deep_copy(vulkan_render_pass_create_i
 	for(u32 i = 0; i < src->subpass_count; i++)
 		vulkan_subpass_create_info_deep_copy(&dst->subpasses[i], &src->subpasses[i]);
 
-	dst->render_set_bindings = src->render_set_binding_count ? heap_newv(vulkan_shader_resource_descriptor_t, src->render_set_binding_count) : NULL;
+	dst->render_set_bindings = src->render_set_binding_count ? heap_newv(vulkan_shader_resource_description_t, src->render_set_binding_count) : NULL;
 	for(u32 i = 0; i < src->render_set_binding_count; i++)
 		vulkan_resource_descriptor_deep_copy(&dst->render_set_bindings[i], &src->render_set_bindings[i]);
 }
