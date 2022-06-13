@@ -1,5 +1,7 @@
 ![](VulkanRendererLogo.png)
 
+[![Windows Build](https://github.com/ravi688/VulkanRenderer/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/ravi688/VulkanRenderer/actions/workflows/c-cpp.yml)
+
 ## Summary
 
 **Vulkan 3D renderer** is built on Vulkan API <br>
