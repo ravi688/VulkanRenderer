@@ -13,9 +13,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: submodule init
-      run: git submodule init
-    - name: submodule update
-      run: git submodule update
-    - name: debug
-      run: make debug
+    - name: Compiler Test
+      run: gcc --version
+    - name: Build System Test
+      run: mingw32-make --version
+    - name: Setup & Updating Git submodules
+      run: mingw32-make -s setup
+    - name: build-debug
+      run: mingw32-make -s build
+    - name: cleaning
+      run: mingw32-make -i -s clean
