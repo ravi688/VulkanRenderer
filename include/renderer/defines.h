@@ -112,6 +112,9 @@ typedef struct renderer_t renderer_t;
 #define OUT *
 #define IN const*
 
+#define BIT64(index) (CAST_TO(u64, 1) << index)
+#define BIT32(index) (CAST_TO(u32, 1) << index)
+
 #define DEG2RAD 0.01745f
 #define RAD2DEG 57.29577f
 

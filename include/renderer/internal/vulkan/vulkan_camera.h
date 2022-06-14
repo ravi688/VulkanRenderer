@@ -41,6 +41,7 @@ typedef struct vulkan_camera_t
 	struct_field_handle_t transform_handle;
 	struct_field_handle_t projection_handle;
 	struct_field_handle_t view_handle;
+	struct_field_handle_t screen_handle;
 	vulkan_render_pass_t* default_render_pass;
 
 	vulkan_camera_projection_type_t projection_type;
@@ -56,6 +57,7 @@ typedef struct vulkan_camera_t
 	mat4_t(float) transform;
 	mat4_t(float) view;
 	mat4_t(float) projection;
+	mat4_t(float) screen;
 } vulkan_camera_t;
 
 BEGIN_CPP_COMPATIBLE

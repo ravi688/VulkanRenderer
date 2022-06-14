@@ -73,8 +73,6 @@ RENDERER_API vulkan_texture_t* vulkan_texture_new()
 RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info)
 {
 	assert(create_info != NULL);
-	assert(create_info->data != NULL);
-	assert(create_info->data_count != 0);
 	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
 	vulkan_texture_create_no_alloc(renderer, create_info, texture);
 	return texture;
@@ -126,22 +124,6 @@ RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
 
 static void vulkan_texture_create_2d(vulkan_texture_t* texture, vulkan_texture_data_t* data, vulkan_texture_type_t type)
 {
-	void* texture_data = data->data;
-	u32 texture_width = data->width;
-	u32 texture_height = data->height;
-	u32 texture_size = texture_width * texture_height * 4;
-
-	// prepare staging buffer
-	vulkan_buffer_create_info_t staging_buffer_info = 
-	{
-		.data = texture_data,
-		.size = texture_size,
-		.vo_usage_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
-		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-	};
-	vulkan_buffer_t* staging_buffer = vulkan_buffer_create(texture->renderer, &staging_buffer_info);
-
 	// create image
 	
 	VkFormat format;
@@ -156,35 +138,32 @@ static void vulkan_texture_create_2d(vulkan_texture_t* texture, vulkan_texture_d
 		break;
 	}
 
+	bool has_data = (data->data != NULL) && (data->width != 0) && (data->height != 0);
+
+	assert_wrn((data->width > 0) && (data->height > 0));
+	
 	vulkan_image_create_info_t image_info =
 	{
 		.vo_flags = 0,		// optional
 		.vo_type = VK_IMAGE_TYPE_2D,
-		.width = texture_width,
-		.height = texture_height,
+		.width = data->width,
+		.height = data->height,
 		.depth = 1,
 		.layer_count = 1,
 		.vo_format = format,
 		.vo_tiling = VK_IMAGE_TILING_OPTIMAL,
 		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.vo_usage_mask = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		.vo_usage_mask = (has_data ? VK_IMAGE_USAGE_TRANSFER_DST_BIT : 0) | VK_IMAGE_USAGE_SAMPLED_BIT,
 		.vo_memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		.vo_aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT
 	};
 	vulkan_image_create_no_alloc(texture->renderer, &image_info, &texture->image);
 
-	// transition image layout from undefined to transfer destination optimal
-	vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	if(data->data != NULL)
+		vulkan_image_upload_data(&texture->image, data->data, data->width * data->height * 4);
 
-	// copy device memory of staging buffer to the device memory of the image
-	vulkan_image_copy_from_buffer(&texture->image, staging_buffer);
-
-	// transition image layout from transfer destination optimal to shader read only optimal
+	// transition image layout from transfer destination optimal or undefined to shader read only optimal
 	vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	// destroy staging buffer and it's device memory
-	vulkan_buffer_destroy(staging_buffer);
-	vulkan_buffer_release_resources(staging_buffer);
 
 	// create 2d image view
 	vulkan_image_view_create_info_t view_create_info = { .image = &texture->image, .view_type = VULKAN_IMAGE_VIEW_TYPE_2D };

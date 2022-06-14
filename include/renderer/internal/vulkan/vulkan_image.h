@@ -50,5 +50,6 @@ RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image);
 // logic functions
 RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layout);
 RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_image_upload_data(vulkan_image_t* image, void* data, u32 size);
 
 END_CPP_COMPATIBLE

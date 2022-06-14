@@ -42,6 +42,11 @@
 #define TANGENT_LOCATION 3
 
 
+#define POSITION layout(location = POSITION_LOCATION) in vec3
+#define NORMAL layout(location = NORMAL_LOCATION) in vec3
+#define TEXCOORD layout(location = TEXCOORD_LOCATION) in vec2
+#define TANGENT layout(location = TANGENT_LOCATION) in vec3
+
 #define LightInfo \
 LightInfo\
 {\
@@ -86,4 +91,13 @@ CameraInfo\
 	mat4 transform;\
 	mat4 projection;\
 	mat4 view;\
+	mat4 screen;\
 }
+
+
+
+#define CAMERA layout(set = GLOBAL_SET, binding = CAMERA_BINDING) uniform CameraInfo
+#define LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform LightInfo
+#define POINT_LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight
+#define MATERIAL_PROPERTIES layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Properties
+#define OBJECT layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo

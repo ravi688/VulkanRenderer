@@ -26,6 +26,7 @@ static void setup_gpu_resources(vulkan_camera_t* camera)
 		struct_descriptor_add_field(&camera->struct_definition, "transform", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "projection", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "view", GLSL_TYPE_MAT4);
+		struct_descriptor_add_field(&camera->struct_definition, "screen", GLSL_TYPE_MAT4);
 	struct_descriptor_end(&camera->struct_definition);
 
 	// create uniform buffers and write to the descriptor set GLOBAL_SET at bindings GLOBAL_CAMERA and GLOBAL_LIGHT
@@ -36,7 +37,7 @@ static void setup_gpu_resources(vulkan_camera_t* camera)
 		.vo_sharing_mode = camera->renderer->vo_sharing_mode,
 		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
-	assert(create_info.size == (64 * 3));
+	assert(create_info.size == (64 * 4));
 	vulkan_buffer_create_no_alloc(camera->renderer, &create_info, &camera->buffer);
 	struct_descriptor_map(&camera->struct_definition, vulkan_buffer_map(&camera->buffer));
 	vulkan_descriptor_set_write_uniform_buffer(&camera->renderer->global_set, VULKAN_DESCRIPTOR_BINDING_CAMERA, &camera->buffer);
@@ -44,6 +45,14 @@ static void setup_gpu_resources(vulkan_camera_t* camera)
 	camera->transform_handle = struct_descriptor_get_field_handle(&camera->struct_definition, "transform");
 	camera->projection_handle = struct_descriptor_get_field_handle(&camera->struct_definition, "projection");
 	camera->view_handle = struct_descriptor_get_field_handle(&camera->struct_definition, "view");
+	camera->screen_handle = struct_descriptor_get_field_handle(&camera->struct_definition, "screen");
+}
+
+static void vulkan_camera_set_screen_projection(vulkan_camera_t* camera, mat4_t(float) screen)
+{
+	camera->screen = screen;
+	mat4_move(float)(&screen, mat4_transpose(float)(screen));
+	struct_descriptor_set_mat4(&camera->struct_definition, camera->screen_handle, CAST_TO(float*, &screen));
 }
 
 static void vulkan_camera_set_projection(vulkan_camera_t* camera, mat4_t(float) projection)
@@ -87,10 +96,21 @@ static void vulkan_camera_recalculate_transform(vulkan_camera_t* camera)
 		mat4_rotation(float)(camera->rotation.x, camera->rotation.y, camera->rotation.z)));
 }
 
+static void vulkan_camera_recalculate_screen_projection(vulkan_camera_t* camera)
+{
+	render_window_t* window = vulkan_renderer_get_window(camera->renderer);
+	vulkan_camera_set_screen_projection(camera, 
+		mat4_ortho_projection(float)(-0.04f, 100, window->height, (float)window->width / window->height));
+}
+
+static void recreate_screen_projection(render_window_t* window, void* user_data)
+{
+	vulkan_camera_recalculate_screen_projection(CAST_TO(vulkan_camera_t*, user_data));
+}
+
 static void recreate_projection(render_window_t* window, void* user_data)
 {
 	vulkan_camera_recalculate_projection(CAST_TO(vulkan_camera_t*, user_data));
-	// mat4_move(float)(&game->screenSpaceMatrix, mat4_ortho_projection(float)(-0.04f, 100, window->height, (float)window->width / window->height));
 }
 
 RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info)
@@ -132,12 +152,14 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 			LOG_FETAL_ERR("Unsupported camera projection type: %u\n", create_info->projection_type);
 	}
 	vulkan_camera_recalculate_projection(camera);
+	vulkan_camera_recalculate_screen_projection(camera);
 
 	camera->position = vec3(float)(-1.8f, 0.6f, 0);
 	camera->rotation = vec3(float)(0, 0, -22 DEG);
 	vulkan_camera_recalculate_transform(camera);
 
 	render_window_subscribe_on_resize(vulkan_renderer_get_window(renderer), recreate_projection, camera);
+	render_window_subscribe_on_resize(vulkan_renderer_get_window(renderer), recreate_screen_projection, camera);
 
 	log_msg("Vulkan Camera has been created successfully\n");
 }
