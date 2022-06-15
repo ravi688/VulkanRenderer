@@ -6,6 +6,7 @@
 #include <renderer/struct_descriptor.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_handles.h> 	// vulkan_render_pass_handle_t
+#include <renderer/internal/vulkan/vulkan_types.h> 		// vulkan_render_target_render_technique_t
 
 #include <hpml/vec3/header_config.h>
 #include <hpml/vec3/vec3.h>
@@ -31,7 +32,8 @@ typedef struct vulkan_camera_create_info_t
 } vulkan_camera_create_info_t;
 
 typedef struct vulkan_render_pass_t vulkan_render_pass_t;
-typedef struct vulkan_render_queue_t vulkan_render_queue_t;
+typedef struct vulkan_render_scene_t vulkan_render_scene_t;
+typedef struct vulkan_texture_t vulkan_texture_t;
 
 typedef struct vulkan_camera_t
 {
@@ -71,7 +73,8 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera);
 
 /* logic functions */
 RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth);
-RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_queue_t* queue);
+RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene);
+RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_render_target_technique_t technique, vulkan_texture_t* texture);
 
 /* getters */
 RENDERER_API mat4_t(float) vulkan_camera_get_view(vulkan_camera_t* camera);

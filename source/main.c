@@ -109,12 +109,17 @@ int main(const char** argc, int argv)
 	render_object_set_transform(obj5, mat4_rotation(float)(0, 0, 90 DEG));
 	material_set_vec4(uiMaterial, "parameters.color", vec4(float)(1, 1, 1, 0.4f));
 
-	vulkan_texture_data_t data = { .width = 800, .height = 800, .depth = 1, .channel_count = 4 };
 	vulkan_texture_create_info_t create_info = 
 	{
-		.data_count = 1,
-		.data = &data,
-		.type = VULKAN_TEXTURE_TYPE_ALBEDO // SRGB
+		.width = renderer_get_window(renderer)->width,
+		.height = renderer_get_window(renderer)->height,
+		.depth = 1,
+		.channel_count = 4,
+		.type = VULKAN_TEXTURE_TYPE_ALBEDO | VULKAN_TEXTURE_TYPE_RENDER_TARGET,
+		.initial_usage = VULKAN_TEXTURE_USAGE_NONE,
+		.usage = VULKAN_TEXTURE_USAGE_RENDER_TARGET,
+		.final_usage = VULKAN_TEXTURE_USAGE_PRESENT,
+		.technique = VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH
 	};
 	vulkan_texture_t* renderTexture = vulkan_texture_create(renderer->vulkan_handle, &create_info);
 	// render_object_t* obj3 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
@@ -147,18 +152,9 @@ int main(const char** argc, int argv)
 		// begin command buffer recording
 		renderer_begin_frame(renderer);
 
-		// vulkan_camera_render_to_target(camera, 
-		// 								VULKAN_RENDER_TARGET_TYPE_TEXTURE_2D,
-		// 								VULKAN_RENDER_TARGET_RENDER_TECHNIQUE_ATTACH,
-		// 								renderTexture);
+		// vulkan_camera_render_to_texture(camera, scene, VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH, renderTexture);
 
-		// vulkan_render_scene_render_to_target(scene, 
-		// 										VULKAN_RENDER_TARGET_TYPE_TEXTURE_2D, 
-		// 										VULKAN_RENDER_TARGET_RENDER_TECHNIQUE_ATTACH,
-		// 										renderTexture);
-
-		camera_render(camera, NULL);
-		render_scene_render(scene);
+		vulkan_camera_render(camera, scene);
 
 		// end command buffer recording
 		renderer_end_frame(renderer);

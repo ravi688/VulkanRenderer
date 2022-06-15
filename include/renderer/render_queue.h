@@ -50,13 +50,13 @@
 // NOTE: this should be in sync with vulkan_render_queue_type_t
 typedef enum render_queue_type_t
 {
+	RENDER_QUEUE_TYPE_UNDEFINED = 0,
 	RENDER_QUEUE_TYPE_BACKGROUND,	// this render queue is rendered before any others
 	RENDER_QUEUE_TYPE_GEOMETRY, 		// opaque geometry uses this queue
 	RENDER_QUEUE_TYPE_ALPH_TESTED, 	// alpha tested geometry uses this queue
 	RENDER_QUEUE_TYPE_GEOMETRY_LAST, // last render queue that is considered "opaque"
 	RENDER_QUEUE_TYPE_TRANSPARENT, 	// this render queue is rendered after Geometry and AlphaTest, in back-to-front order
-	RENDER_QUEUE_TYPE_OVERLAY, 		// this render queue is meant for overlay effects
-	RENDER_QUEUE_TYPE_UNDEFINED 	// for specific purpose such as implementing render scene and adding a camera to it
+	RENDER_QUEUE_TYPE_OVERLAY 		// this render queue is meant for overlay effects
 } render_queue_type_t;
 
 

@@ -51,9 +51,14 @@ RENDERER_API void camera_set_clear(camera_t* camera, color_t color, float depth)
 	vulkan_camera_set_clear(camera, color, depth);
 }
 
-RENDERER_API void camera_render(camera_t* camera, render_queue_t* queue)
+RENDERER_API void camera_render(camera_t* camera, render_scene_t* scene)
 {
-	vulkan_camera_render(camera, queue);
+	vulkan_camera_render(camera, scene);
+}
+
+RENDERER_API void camera_render_to_texture(camera_t* camera, render_scene_t* scene, texture_t* texture)
+{
+	vulkan_camera_render_to_texture(camera, scene, VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH, texture);
 }
 
 /* getters */

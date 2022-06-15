@@ -114,6 +114,7 @@ typedef struct renderer_t renderer_t;
 
 #define BIT64(index) (CAST_TO(u64, 1) << index)
 #define BIT32(index) (CAST_TO(u32, 1) << index)
+#define BIT_MASK32(count) CAST_TO(u32, ~(CAST_TO(u32, ~0) << count))
 
 #define DEG2RAD 0.01745f
 #define RAD2DEG 57.29577f

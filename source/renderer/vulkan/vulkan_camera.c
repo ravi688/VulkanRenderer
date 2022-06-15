@@ -2,6 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
+#include <renderer/internal/vulkan/vulkan_render_scene.h>
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
@@ -186,10 +187,17 @@ RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color
 	vulkan_render_pass_set_clear(camera->default_render_pass, color, depth);
 }
 
-RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_queue_t* queue)
+RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
 	vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN);
 	vulkan_render_pass_end(camera->default_render_pass);
+	if(scene != NULL)
+		vulkan_render_scene_render(scene);
+}
+
+RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_render_target_technique_t technique, vulkan_texture_t* target)
+{
+
 }
 
 /* getters */
