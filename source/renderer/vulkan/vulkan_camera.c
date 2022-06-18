@@ -41,7 +41,15 @@ static void setup_gpu_resources(vulkan_camera_t* camera)
 	assert(create_info.size == (64 * 4));
 	vulkan_buffer_create_no_alloc(camera->renderer, &create_info, &camera->buffer);
 	struct_descriptor_map(&camera->struct_definition, vulkan_buffer_map(&camera->buffer));
-	vulkan_descriptor_set_write_uniform_buffer(&camera->renderer->global_set, VULKAN_DESCRIPTOR_BINDING_CAMERA, &camera->buffer);
+	
+	vulkan_descriptor_set_create_info_t set_create_info = 
+	{
+		.vo_pool = camera->renderer->vo_descriptor_pool,
+		.layout = &camera->renderer->camera_set_layout
+	};
+	vulkan_descriptor_set_create_no_alloc(camera->renderer, &set_create_info, &camera->set);
+
+	vulkan_descriptor_set_write_uniform_buffer(&camera->set, VULKAN_DESCRIPTOR_BINDING_CAMERA_PROPERTIES, &camera->buffer);
 
 	camera->transform_handle = struct_descriptor_get_field_handle(&camera->struct_definition, "transform");
 	camera->projection_handle = struct_descriptor_get_field_handle(&camera->struct_definition, "projection");
@@ -123,14 +131,12 @@ RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, 
 
 RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info, vulkan_camera_t OUT camera)
 {
-	// for now only one camera could be in the entire application
-	ASSERT_CALLED_ONCE();
-
 	memzero(camera, vulkan_camera_t);
 
 	camera->renderer = renderer;
 	camera->default_render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, create_info->default_render_pass);
 	camera->projection_type = create_info->projection_type;
+	camera->is_active = true;
 
 	render_window_t* window = vulkan_renderer_get_window(renderer);
 
@@ -167,6 +173,7 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 
 RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 {
+	vulkan_descriptor_set_destroy(&camera->set);
 	struct_descriptor_unmap(&camera->struct_definition);
 	vulkan_buffer_unmap(&camera->buffer);
 	vulkan_buffer_destroy(&camera->buffer);
@@ -175,6 +182,7 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 
 RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 {
+	vulkan_descriptor_set_release_resources(&camera->set);
 	vulkan_buffer_release_resources(&camera->buffer);
 	// TODO
 	// heap_free(camera);

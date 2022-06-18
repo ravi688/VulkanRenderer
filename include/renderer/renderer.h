@@ -13,6 +13,8 @@
 	typedef vulkan_shader_library_t shader_library_t;
 	typedef struct vulkan_material_library_t vulkan_material_library_t;
 	typedef vulkan_material_library_t material_library_t;
+	typedef struct vulkan_camera_system_t vulkan_camera_system_t;
+	typedef vulkan_camera_system_t camera_system_t;
 #elif RENDERER_OPENGL_DRIVER
 	typedef struct opengl_renderer_t opengl_renderer_t;
 	typedef opengl_renderer_t driver_t;
@@ -22,6 +24,8 @@
 	typedef opengl_shader_library_t shader_library_t;
 	typedef struct opengl_material_library_t opengl_material_library_t;
 	typedef opengl_material_library_t material_library_t;
+	typedef struct opengl_camera_system_t opengl_camera_system_t;
+	typedef opengl_camera_system_t camera_system_t;
 #elif RENDERER_DIRECTX_DRIVER
 	typedef struct directx_renderer_t directx_renderer_t;
 	typedef directx_renderer_t driver_t;
@@ -31,6 +35,8 @@
 	typedef directx_shader_library_t shader_library_t;
 	typedef struct directx_material_library_t directx_material_library_t;
 	typedef directx_material_library_t material_library_t;
+	typedef struct directx_camera_system_t directx_camera_system_t;
+	typedef directx_camera_system_t camera_system_t;
 #elif RENDERER_METAL_DRIVER
 	typedef struct metal_renderer_t metal_renderer_t;
 	typedef metal_renderer_t driver_t;
@@ -40,6 +46,8 @@
 	typedef metal_shader_library_t shader_library_t;
 	typedef struct material_shader_library_t material_shader_library_t;
 	typedef metal_material_library_t material_library_t;
+	typedef struct metal_camera_system_t metal_camera_system_t;
+	typedef metal_camera_system_t camera_system_t;
 #endif
 
 typedef struct render_window_t render_window_t;
@@ -101,6 +109,7 @@ RENDERER_API render_window_t* renderer_get_window(renderer_t* renderer);
 RENDERER_API shader_library_t* renderer_get_shader_library(renderer_t* renderer);
 RENDERER_API material_library_t* renderer_get_material_library(renderer_t* renderer);
 RENDERER_API render_pass_pool_t* renderer_get_render_pass_pool(renderer_t* renderer);
+RENDERER_API camera_system_t* renderer_get_camera_system(renderer_t* renderer);
 
 END_CPP_COMPATIBLE
 

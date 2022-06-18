@@ -204,7 +204,7 @@ RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
 	// queue->is_ready = true;
 }
 
-RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue)
+RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_descriptor_set_t* camera_set)
 {
 	// ASSERT_WRN(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it\n");
 	// get the pointers to render pass pool, shader library and material library
@@ -252,6 +252,8 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue)
 				// get the pipeline layout for this render pass and sub pass 'j'
 				vulkan_pipeline_layout_t* pipeline_layout = vulkan_shader_get_pipeline_layout(shader, pass->handle, j);
 
+				// bind CAMERA_SET
+				vulkan_descriptor_set_bind(camera_set, VULKAN_DESCRIPTOR_SET_CAMERA, pipeline_layout);
 				// bind GLOBAL_SET
 				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, pipeline_layout); 
 				// bind RENDER_SET

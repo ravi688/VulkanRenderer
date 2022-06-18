@@ -7,6 +7,7 @@
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_handles.h> 	// vulkan_render_pass_handle_t
 #include <renderer/internal/vulkan/vulkan_types.h> 		// vulkan_render_target_render_technique_t
+#include <renderer/internal/vulkan/vulkan_descriptor_set.h> 	// vulkan_descriptor_set_t
 
 #include <hpml/vec3/header_config.h>
 #include <hpml/vec3/vec3.h>
@@ -39,6 +40,8 @@ typedef struct vulkan_camera_t
 {
 	vulkan_renderer_t* renderer;
 	vulkan_buffer_t buffer;
+	vulkan_descriptor_set_t set;
+
 	struct_descriptor_t struct_definition;
 	struct_field_handle_t transform_handle;
 	struct_field_handle_t projection_handle;
@@ -46,6 +49,7 @@ typedef struct vulkan_camera_t
 	struct_field_handle_t screen_handle;
 	vulkan_render_pass_t* default_render_pass;
 
+	bool is_active;
 	vulkan_camera_projection_type_t projection_type;
 	float far_clip_plane;
 	float near_clip_plane;
@@ -77,6 +81,10 @@ RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_sc
 RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_render_target_technique_t technique, vulkan_texture_t* texture);
 
 /* getters */
+static RENDERER_API FORCE_INLINE bool vulkan_camera_is_active(vulkan_camera_t* camera)
+{
+	return camera->is_active;
+}
 RENDERER_API mat4_t(float) vulkan_camera_get_view(vulkan_camera_t* camera);
 RENDERER_API mat4_t(float) vulkan_camera_get_transform(vulkan_camera_t* camera);
 RENDERER_API mat4_t(float) vulkan_camera_get_projection(vulkan_camera_t* camera);
@@ -89,6 +97,10 @@ RENDERER_API float vulkan_camera_get_field_of_view(vulkan_camera_t* camera);
 static RENDERER_API FORCE_INLINE float vulkan_camera_get_height(vulkan_camera_t* camera) { return vulkan_camera_get_field_of_view(camera); }
 
 /* setters */
+static RENDERER_API FORCE_INLINE void vulkan_camera_set_active(vulkan_camera_t* camera, bool is_active)
+{
+	camera->is_active = is_active;
+}
 RENDERER_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t(float) transform);
 RENDERER_API void vulkan_camera_set_position(vulkan_camera_t* camera, vec3_t(float) position);
 RENDERER_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t(float) rotation);
