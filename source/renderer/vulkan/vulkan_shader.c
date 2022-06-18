@@ -848,7 +848,10 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	BUFFER set_layouts = buf_create(sizeof(VkDescriptorSetLayout), 1, 0);
 	BUFFER shader_modules = buf_create(sizeof(vulkan_shader_module_t), 1, 0);
 
-	// push global set layout, at GLOBAL_SET = 0
+	// push camera set layout, at CAMERA_SET = 0
+	buf_push(&set_layouts, &renderer->camera_set_layout.vo_handle);
+
+	// push global set layout, at GLOBAL_SET = 1
 	buf_push(&set_layouts, &renderer->global_set_layout.vo_handle);
 
 	vulkan_render_pass_t* previous_pass = NULL;
@@ -874,16 +877,16 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 									  render_pass, &descriptions[i]);
 		previous_pass = render_pass;
 
-		// push render set layout, at RENDER_SET = 1
+		// push render set layout, at RENDER_SET = 2
 		buf_push(&set_layouts, &render_pass->render_set_layout.vo_handle);
 
 		for(u32 j = 0; j < subpass_count; j++)
 		{
-			// push sub render set layout, at SUB_RENDER_SET = 2
+			// push sub render set layout, at SUB_RENDER_SET = 3
 			buf_push(&set_layouts, &render_pass->sub_render_set_layouts[j].vo_handle);
-			// push material set layout, at MATERIAL_SET = 3
+			// push material set layout, at MATERIAL_SET = 4
 			buf_push(&set_layouts, &common_data->material_set_layout.vo_handle);
-			// push object set layout, at OBJECT_SET = 4
+			// push object set layout, at OBJECT_SET = 5
 			buf_push(&set_layouts, &renderer->object_set_layout.vo_handle);
 
 			// create pipeline layout for this subpass
@@ -941,6 +944,9 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	}
 
 	// pop out the GLOBAL_SET layout
+	buf_pop(&set_layouts, NULL);
+
+	// pop out the CAMERA_SET layout
 	buf_pop(&set_layouts, NULL);
 
 	buf_free(&set_layouts);

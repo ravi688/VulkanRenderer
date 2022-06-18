@@ -35,9 +35,25 @@ int main(const char** argc, int argv)
 	// initialize renderer
 	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Renderer", false, true);
 
+	AUTO camera_system = renderer_get_camera_system(renderer);
+
+	// TODO: every scene will have their own camera system ( Camera sets )
 	// create a camera
-	AUTO camera = camera_create(renderer, CAMERA_PROJECTION_TYPE_PERSPECTIVE);
+	AUTO camera = camera_system_getH(camera_system,
+							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_clear(camera, COLOR_ORANGE, 1.0f);
+	camera_set_active(camera, true);
+
+	AUTO camera3 = camera_system_getH(camera_system,
+							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
+	camera_set_active(camera3, false);
+	camera_set_position(camera3, vec3(float)(0, 0.6, -3.0f));
+	camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG, 0));
+
+	AUTO camera2 = camera_system_getH(camera_system,
+							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_ORTHOGRAPHIC));
+	camera_set_clear(camera2, COLOR_BLACK, 1.0f);
+	camera_set_active(camera2, false);
 
 	AUTO light = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_color(light, vec3(float)(1, 1, 1));
@@ -130,16 +146,32 @@ int main(const char** argc, int argv)
 	bool swap = true;
 	float angle = 0;
 	float speed = 0;
+	int camera_index = 0;
 	time_handle_t tHandle = time_get_handle();
+	camera_t* previous_camera = camera;
 	while(renderer_is_running(renderer))
 	{
 		speed = 20;
 		if(kbhit())
 		{
 			getch();
-			// speed = 90;
-			// render_object_set_material(obj1, swap ? greenMaterial: blueMaterial);
-			// render_object_set_material(obj2, swap ? blueMaterial : greenMaterial);
+			camera_set_active(previous_camera, false);
+			switch(camera_index % 3)
+			{
+				case 0:
+					camera_set_active(camera2, true);
+					previous_camera = camera2;
+					break;
+				case 1:
+					camera_set_active(camera3, true);
+					previous_camera = camera3;
+					break;
+				case 2:
+					camera_set_active(camera, true);
+					previous_camera = camera;
+					break;
+			}
+			camera_index++;
 			swap = !swap;
 		}
 		// else speed = 50.0f;
@@ -154,7 +186,7 @@ int main(const char** argc, int argv)
 
 		// vulkan_camera_render_to_texture(camera, scene, VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH, renderTexture);
 
-		vulkan_camera_render(camera, scene);
+		render_scene_render(scene);
 
 		// end command buffer recording
 		renderer_end_frame(renderer);
@@ -187,8 +219,6 @@ int main(const char** argc, int argv)
 
 	light_destroy(light);
 	light_release_resources(light);
-	camera_destroy(camera);
-	camera_release_resources(camera);
 
 	renderer_terminate(renderer);
 	memory_allocator_terminate();

@@ -51,6 +51,16 @@ RENDERER_API void camera_set_clear(camera_t* camera, color_t color, float depth)
 	vulkan_camera_set_clear(camera, color, depth);
 }
 
+RENDERER_API void camera_set_active(camera_t* camera, bool is_active)
+{
+	vulkan_camera_set_active(camera, is_active);
+}
+
+RENDERER_API bool camera_is_active(camera_t* camera)
+{
+	return vulkan_camera_is_active(camera);
+}
+
 RENDERER_API void camera_render(camera_t* camera, render_scene_t* scene)
 {
 	vulkan_camera_render(camera, scene);

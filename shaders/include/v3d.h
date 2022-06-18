@@ -1,12 +1,16 @@
 
 /* set constants */
-#define GLOBAL_SET 0 			// bound once [ Camera and Lights ]
-#define RENDER_SET 1 			// bound for each render pass
-#define SUB_RENDER_SET 2 		// bound for each sub pass
-#define MATERIAL_SET 3 			// bound for each material [ textures, material properties ]
-#define OBJECT_SET 4 			// bound for each object [ model and normal matrices ]
+#define CAMERA_SET 0 			// bound for each Camera
+#define GLOBAL_SET 1 			// bound once [ Camera and Lights ]
+#define RENDER_SET 2 			// bound for each render pass
+#define SUB_RENDER_SET 3 		// bound for each sub pass
+#define MATERIAL_SET 4 			// bound for each material [ textures, material properties ]
+#define OBJECT_SET 5 			// bound for each object [ model and normal matrices ]
 
 /* binding constants  */
+
+// should be used with CAMERA_SET
+#define CAMERA_PROPERTIES_BINDING 0 // binding for current camera properties
 
 // should be used with GLOBAL_SET
 #define CAMERA_BINDING 0 		// binding for camera properties
@@ -96,7 +100,7 @@ CameraInfo\
 
 
 
-#define CAMERA layout(set = GLOBAL_SET, binding = CAMERA_BINDING) uniform CameraInfo
+#define CAMERA layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo
 #define LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform LightInfo
 #define POINT_LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight
 #define MATERIAL_PROPERTIES layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Properties

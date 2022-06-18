@@ -2,6 +2,9 @@
 #include <renderer/internal/vulkan/vulkan_render_scene.h>
 #include <renderer/internal/vulkan/vulkan_render_object.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
+#include <renderer/internal/vulkan/vulkan_render_pass.h>
+#include <renderer/internal/vulkan/vulkan_camera_system.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 
 #include <renderer/renderer.h>
 #include <renderer/memory_allocator.h>
@@ -102,9 +105,23 @@ RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* s
 
 RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene)
 {
-	buf_ucount_t count = dictionary_get_count(&scene->queues);
-	for(buf_ucount_t i = 0; i < count; i++)
-		vulkan_render_queue_dispatch(dictionary_get_value_ptr_at(&scene->queues, i));
+	vulkan_camera_system_t* camera_system = scene->renderer->camera_system;
+
+	buf_ucount_t camera_count = vulkan_camera_system_get_count(camera_system);
+
+	for(buf_ucount_t h = 0; h < camera_count; h++)
+	{
+		vulkan_camera_t* camera = vulkan_camera_system_get_at(camera_system, h);
+		if(!camera->is_active)
+			continue;
+
+		vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN);
+		vulkan_render_pass_end(camera->default_render_pass);
+
+		buf_ucount_t count = dictionary_get_count(&scene->queues);
+		for(buf_ucount_t i = 0; i < count; i++)
+			vulkan_render_queue_dispatch(dictionary_get_value_ptr_at(&scene->queues, i), &camera->set);
+	}
 }
 
 RENDERER_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle)

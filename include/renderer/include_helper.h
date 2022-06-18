@@ -166,9 +166,9 @@
 # 	include <renderer/render_pass_pool.h>
 #	include <renderer/shader_library.h>
 #	include <renderer/material_library.h>
+#	include <renderer/camera_system.h>
 #	include <renderer/shader.h>
 #	include <renderer/material.h>
-#	include <renderer/camera.h>
 #	include <renderer/color.h>
 #	include <renderer/texture.h>
 #endif
