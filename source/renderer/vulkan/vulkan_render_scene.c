@@ -115,12 +115,12 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene)
 		if(!camera->is_active)
 			continue;
 
-		vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN);
+		vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN, camera);
 		vulkan_render_pass_end(camera->default_render_pass);
 
 		buf_ucount_t count = dictionary_get_count(&scene->queues);
 		for(buf_ucount_t i = 0; i < count; i++)
-			vulkan_render_queue_dispatch(dictionary_get_value_ptr_at(&scene->queues, i), &camera->set);
+			vulkan_render_queue_dispatch(dictionary_get_value_ptr_at(&scene->queues, i), camera);
 	}
 }
 

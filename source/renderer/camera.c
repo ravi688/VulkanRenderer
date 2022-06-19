@@ -56,6 +56,11 @@ RENDERER_API void camera_set_active(camera_t* camera, bool is_active)
 	vulkan_camera_set_active(camera, is_active);
 }
 
+RENDERER_API void camera_set_render_target(camera_t* camera, camera_render_target_type_t target_type, texture_t* texture)
+{
+	vulkan_camera_set_render_target(camera, REINTERPRET_TO(vulkan_camera_render_target_type_t, target_type), texture);
+}
+
 RENDERER_API bool camera_is_active(camera_t* camera)
 {
 	return vulkan_camera_is_active(camera);
@@ -68,7 +73,7 @@ RENDERER_API void camera_render(camera_t* camera, render_scene_t* scene)
 
 RENDERER_API void camera_render_to_texture(camera_t* camera, render_scene_t* scene, texture_t* texture)
 {
-	vulkan_camera_render_to_texture(camera, scene, VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH, texture);
+	vulkan_camera_render_to_texture(camera, scene, texture);
 }
 
 /* getters */

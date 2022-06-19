@@ -74,10 +74,15 @@ static vulkan_shader_resource_description_t* create_material_set_binding(shader_
 	switch(preset)
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
+			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
+				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
+			end_uniform(&bindings);	
+			break;
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
 			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
 			end_uniform(&bindings);	
+			add_opaque(&bindings, "albedo", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
 			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);

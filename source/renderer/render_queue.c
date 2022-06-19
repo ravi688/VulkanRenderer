@@ -45,8 +45,8 @@ RENDERER_API void render_queue_build(render_queue_t* queue)
 	vulkan_render_queue_build(queue);
 }
 
-RENDERER_API void render_queue_dispatch(render_queue_t* queue)
+RENDERER_API void render_queue_dispatch(render_queue_t* queue, camera_t* camera)
 {
-	vulkan_render_queue_dispatch(queue);
+	vulkan_render_queue_dispatch(queue, CAST_TO(vulkan_camera_t*, camera));
 }
 

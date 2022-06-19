@@ -46,7 +46,7 @@ int main(const char** argc, int argv)
 
 	AUTO camera3 = camera_system_getH(camera_system,
 							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_active(camera3, false);
+	camera_set_active(camera3, true);
 	camera_set_position(camera3, vec3(float)(0, 0.6, -3.0f));
 	camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG, 0));
 
@@ -123,7 +123,7 @@ int main(const char** argc, int argv)
 	render_object_set_material(obj5, uiMaterial);
 	render_object_attach(obj5, quadMesh);
 	render_object_set_transform(obj5, mat4_rotation(float)(0, 0, 90 DEG));
-	material_set_vec4(uiMaterial, "parameters.color", vec4(float)(1, 1, 1, 0.4f));
+	material_set_vec4(uiMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
 
 	vulkan_texture_create_info_t create_info = 
 	{
@@ -134,14 +134,14 @@ int main(const char** argc, int argv)
 		.type = VULKAN_TEXTURE_TYPE_ALBEDO | VULKAN_TEXTURE_TYPE_RENDER_TARGET,
 		.initial_usage = VULKAN_TEXTURE_USAGE_NONE,
 		.usage = VULKAN_TEXTURE_USAGE_RENDER_TARGET,
-		.final_usage = VULKAN_TEXTURE_USAGE_PRESENT,
+		.final_usage = VULKAN_TEXTURE_USAGE_SAMPLED,
 		.technique = VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH
 	};
 	vulkan_texture_t* renderTexture = vulkan_texture_create(renderer->vulkan_handle, &create_info);
-	// render_object_t* obj3 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	// render_object_set_material(obj3, mat2);
-	// render_object_attach(obj3, mesh);
-	// render_object_set_transform(obj3, mat4_mul(float)(2, mat4_scale(float)(0.5f, 0.5f, 0.5f), mat4_translation(float)(-2, 0, 0)));
+
+	material_set_texture(uiMaterial, "albedo", renderTexture);
+
+	camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_TEXTURE, renderTexture);
 
 	bool swap = true;
 	float angle = 0;
@@ -156,17 +156,17 @@ int main(const char** argc, int argv)
 		{
 			getch();
 			camera_set_active(previous_camera, false);
-			switch(camera_index % 3)
+			switch(camera_index % 2)
 			{
 				case 0:
 					camera_set_active(camera2, true);
 					previous_camera = camera2;
 					break;
+				// case 1:
+				// 	camera_set_active(camera3, true);
+				// 	previous_camera = camera3;
+				// 	break;
 				case 1:
-					camera_set_active(camera3, true);
-					previous_camera = camera3;
-					break;
-				case 2:
 					camera_set_active(camera, true);
 					previous_camera = camera;
 					break;
@@ -180,18 +180,12 @@ int main(const char** argc, int argv)
 		render_object_set_transform(obj1, mat4_rotation(float)(0 DEG, angle DEG, 0 DEG));
 		light_set_position(light, vec3(float)(0, 0.5f, sin(angle * 2 DEG)));
 
-
-		// begin command buffer recording
 		renderer_begin_frame(renderer);
-
-		// vulkan_camera_render_to_texture(camera, scene, VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH, renderTexture);
 
 		render_scene_render(scene);
 
-		// end command buffer recording
 		renderer_end_frame(renderer);
 
-		// submit the work to the GPU and present the rendered image to the window
 		renderer_update(renderer);
 	}
 

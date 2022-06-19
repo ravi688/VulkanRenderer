@@ -66,7 +66,7 @@
 #include <renderer/internal/vulkan/vulkan_handles.h>
 
 typedef struct vulkan_render_object_t vulkan_render_object_t;
-typedef struct vulkan_descriptor_set_t vulkan_descriptor_set_t;
+typedef struct vulkan_camera_t vulkan_camera_t;
 
 typedef enum vulkan_render_queue_type_t
 {
@@ -185,6 +185,6 @@ RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue);
 		nothing
 	NOTE: if this render queue isn't ready (is_ready = false), then it first calls render_queue_build()
  */
-RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_descriptor_set_t* camera_set);
+RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera);
 
 END_CPP_COMPATIBLE

@@ -268,9 +268,6 @@ static vulkan_render_pass_pool_slot_t* vulkan_render_pass_pool_get_slotH(vulkan_
 
 RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info)
 {
-	// for now this must be called once
-	// ASSERT_CALLED_ONCE();
-
 	vulkan_render_pass_pool_slot_t* slot = vulkan_render_pass_pool_get_slotH(pool, vulkan_render_pass_pool_create_slot(pool, create_info));
 	if(slot->render_pass == NULL)
 	{

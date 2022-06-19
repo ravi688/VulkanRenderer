@@ -15,6 +15,10 @@
 	#define RENDER_OBJECT_HANDLE_INVALID VULKAN_RENDER_OBJECT_HANDLE_INVALID
 	typedef vulkan_render_queue_handle_t render_queue_handle_t;
 	#define RENDER_QUEUE_HANDLE_INVALID VULKAN_RENDER_QUEUE_HANDLE_INVALID
+
+	typedef struct vulkan_camera_t vulkan_camera_t;
+	typedef vulkan_camera_t camera_t;
+
 #elif RENDERER_OPENGL_DRIVER
 	typedef struct opengl_render_queue_t opengl_render_queue_t;
 	typedef opengl_render_queue_t render_queue_t;
@@ -25,6 +29,10 @@
 	#define RENDER_OBJECT_HANDLE_INVALID OPENGL_RENDER_OBJECT_HANDLE_INVALID
 	typedef opengl_render_queue_handle_t render_queue_handle_t;
 	#define RENDER_QUEUE_HANDLE_INVALID OPENGL_RENDER_QUEUE_HANDLE_INVALID
+
+	typedef struct opengl_camera_t opengl_camera_t;
+	typedef opengl_camera_t camera_t;
+	
 #elif RENDERER_DIRECTX_DRIVER
 	typedef struct directx_render_queue_t directx_render_queue_t;
 	typedef directx_render_queue_t render_queue_t;
@@ -35,6 +43,10 @@
 	#define RENDER_OBJECT_HANDLE_INVALID DIRECTX_RENDER_OBJECT_HANDLE_INVALID
 	typedef directx_render_queue_handle_t render_queue_handle_t;
 	#define RENDER_QUEUE_HANDLE_INVALID DIRECTX_RENDER_QUEUE_HANDLE_INVALID
+
+	typedef struct directx_camera_t directx_camera_t;
+	typedef directx_camera_t camera_t;
+	
 #elif RENDERER_METAL_DRIVER
 	typedef struct metal_render_queue_t metal_render_queue_t;
 	typedef metal_render_queue_t render_queue_t;
@@ -45,6 +57,10 @@
 	#define RENDER_OBJECT_HANDLE_INVALID METAL_RENDER_OBJECT_HANDLE_INVALID
 	typedef metal_render_queue_handle_t render_queue_handle_t;
 	#define RENDER_QUEUE_HANDLE_INVALID METAL_RENDER_QUEUE_HANDLE_INVALID
+
+	typedef struct metal_camera_t metal_camera_t;
+	typedef metal_camera_t camera_t;
+	
 #endif
 
 // NOTE: this should be in sync with vulkan_render_queue_type_t
@@ -141,8 +157,9 @@ RENDERER_API void render_queue_build(render_queue_t* queue);
 	description: Builds the actual API specific command buffers
 	params:
 		queue: this render queue
+		camera: the camera to which output have to be written
 	returns:
 		nothing
 	NOTE: if this render queue isn't ready (is_ready = false), then it first calls render_queue_build()
  */
-RENDERER_API void render_queue_dispatch(render_queue_t* queue);
+RENDERER_API void render_queue_dispatch(render_queue_t* queue, camera_t* camera);

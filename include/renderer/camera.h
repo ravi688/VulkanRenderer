@@ -55,6 +55,13 @@ typedef enum camera_projection_type_t
 	CAMERA_PROJECTION_TYPE_STEROGRAPHIC
 } camera_projection_type_t;
 
+typedef enum camera_render_target_type_t
+{
+	CAMERA_RENDER_TARGET_TYPE_UNDEFINED = 0,
+	CAMERA_RENDER_TARGET_TYPE_SCREEN,
+	CAMERA_RENDER_TARGET_TYPE_TEXTURE
+} camera_render_target_type_t;
+
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
@@ -67,6 +74,7 @@ RENDERER_API void camera_release_resources(camera_t* camera);
 /* logic functions */
 RENDERER_API void camera_set_clear(camera_t* camera, color_t color, float depth);
 RENDERER_API void camera_set_active(camera_t* camera, bool is_active);
+RENDERER_API void camera_set_render_target(camera_t* camera, camera_render_target_type_t target_type, texture_t* texture);
 RENDERER_API bool camera_is_active(camera_t* camera);
 RENDERER_API void camera_render(camera_t* camera, render_scene_t* scene);
 RENDERER_API void camera_render_to_texture(camera_t* camera, render_scene_t* scene, texture_t* texture);

@@ -26,6 +26,13 @@ typedef enum vulkan_camera_projection_type_t
 	VULKAN_CAMERA_PROJECTION_TYPE_STEROGRAPHIC
 } vulkan_camera_projection_type_t;
 
+typedef enum vulkan_camera_render_target_type_t
+{
+	VULKAN_CAMERA_RENDER_TARGET_TYPE_UNDEFINED = 0,
+	VULKAN_CAMERA_RENDER_TARGET_TYPE_SWAPCHAIN,
+	VULKAN_CAMERA_RENDER_TARGET_TYPE_TEXTURE
+} vulkan_camera_render_target_type_t;
+
 typedef struct vulkan_camera_create_info_t
 {
 	vulkan_camera_projection_type_t projection_type;
@@ -35,19 +42,22 @@ typedef struct vulkan_camera_create_info_t
 typedef struct vulkan_render_pass_t vulkan_render_pass_t;
 typedef struct vulkan_render_scene_t vulkan_render_scene_t;
 typedef struct vulkan_texture_t vulkan_texture_t;
+typedef struct vulkan_framebuffer_t vulkan_framebuffer_t;
 
 typedef struct vulkan_camera_t
 {
 	vulkan_renderer_t* renderer;
 	vulkan_buffer_t buffer;
 	vulkan_descriptor_set_t set;
+	vulkan_render_pass_t* default_render_pass;
+
+	BUFFER framebuffers;
 
 	struct_descriptor_t struct_definition;
 	struct_field_handle_t transform_handle;
 	struct_field_handle_t projection_handle;
 	struct_field_handle_t view_handle;
 	struct_field_handle_t screen_handle;
-	vulkan_render_pass_t* default_render_pass;
 
 	bool is_active;
 	vulkan_camera_projection_type_t projection_type;
@@ -77,8 +87,13 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera);
 
 /* logic functions */
 RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth);
+RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_texture_t* texture);
 RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene);
-RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_render_target_technique_t technique, vulkan_texture_t* texture);
+RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_texture_t* texture);
+
+RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_framebuffer_list_handle_t handle);
+RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* pass);
+
 
 /* getters */
 static RENDERER_API FORCE_INLINE bool vulkan_camera_is_active(vulkan_camera_t* camera)
