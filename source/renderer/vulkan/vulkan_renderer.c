@@ -7,6 +7,7 @@
 #include <renderer/internal/vulkan/vulkan_shader_library.h>
 #include <renderer/internal/vulkan/vulkan_material_library.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
+#include <renderer/internal/vulkan/vulkan_camera_system.h>
 #include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 #include <renderer/render_window.h>
@@ -115,6 +116,7 @@ static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, re
 
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer);
 static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t* renderer);
+static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t* renderer);
 static void setup_global_set(vulkan_renderer_t* renderer);
 static VkSemaphore get_semaphore(VkDevice device)
 {
@@ -282,16 +284,16 @@ DEBUG_BLOCK
 	//Create descripter pool
 	VkDescriptorPoolSize sizes[3] =
 	{
-		{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 8 },
-		{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 20 },
-		{ .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = 3 }
+		{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 10 },
+		{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 40 },
+		{ .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = 10 }
 	};
 	VkDescriptorPoolCreateInfo pool_create_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		.poolSizeCount = 3,
 		.pPoolSizes = &sizes[0],
-		.maxSets = 20,
+		.maxSets = 60,
 		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 	};
 	vkCall(vkCreateDescriptorPool(renderer->logical_device->vo_handle, &pool_create_info, NULL, &renderer->vo_descriptor_pool));
@@ -299,6 +301,7 @@ DEBUG_BLOCK
 
 	renderer->global_set_layout = create_global_set_layout(renderer);
 	renderer->object_set_layout = create_object_set_layout(renderer);
+	renderer->camera_set_layout = create_camera_set_layout(renderer);
 	setup_global_set(renderer);
 
 	// create the shader and material library
@@ -308,6 +311,8 @@ DEBUG_BLOCK
 	// create render pass pool
 	renderer->render_pass_pool = vulkan_render_pass_pool_create(renderer);	
 
+	// create camera system
+	renderer->camera_system = vulkan_camera_system_create(renderer);
 	return renderer;
 }
 
@@ -335,6 +340,22 @@ static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t
 	vulkan_descriptor_set_layout_t layout;
 	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, &layout);
 	log_msg("Object descriptor set layout has been created successfully\n");
+	return layout;
+}
+
+static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t* renderer)
+{
+	VkDescriptorSetLayoutBinding binding = 
+	{
+		.binding = VULKAN_DESCRIPTOR_BINDING_CAMERA_PROPERTIES,
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+	};
+
+	vulkan_descriptor_set_layout_t layout;
+	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, &layout);
+	log_msg("Camera descriptor set layout has been created successfully\n");
 	return layout;
 }
 
@@ -399,6 +420,10 @@ RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
 
 RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
+	// destroy camera system
+	vulkan_camera_system_destroy(renderer->camera_system);
+	vulkan_camera_system_release_resources(renderer->camera_system);
+
 	// destroy the shader library
 	vulkan_shader_library_destroy(renderer->shader_library);
 	vulkan_shader_library_release_resources(renderer->shader_library);
@@ -411,10 +436,17 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_render_pass_pool_destroy(renderer->render_pass_pool);
 	vulkan_render_pass_pool_release_resources(renderer->render_pass_pool);
 
+	// destroy global set
 	vulkan_descriptor_set_destroy(&renderer->global_set);
 	vulkan_descriptor_set_release_resources(&renderer->global_set);
+
+	// destroy set layouts
+	vulkan_descriptor_set_layout_destroy(&renderer->camera_set_layout);
+	vulkan_descriptor_set_layout_release_resources(&renderer->camera_set_layout);
 	vulkan_descriptor_set_layout_destroy(&renderer->object_set_layout);
+	vulkan_descriptor_set_layout_release_resources(&renderer->object_set_layout);
 	vulkan_descriptor_set_layout_destroy(&renderer->global_set_layout);
+	vulkan_descriptor_set_layout_release_resources(&renderer->global_set_layout);
 
 	vkDestroySurfaceKHR(renderer->instance->handle, renderer->vo_surface, NULL);
 	render_window_destroy(renderer->window);

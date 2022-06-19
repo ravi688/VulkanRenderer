@@ -66,16 +66,17 @@
 #include <renderer/internal/vulkan/vulkan_handles.h>
 
 typedef struct vulkan_render_object_t vulkan_render_object_t;
+typedef struct vulkan_camera_t vulkan_camera_t;
 
 typedef enum vulkan_render_queue_type_t
 {
+	VULKAN_RENDER_QUEUE_TYPE_UNDEFINED = 0,
 	VULKAN_RENDER_QUEUE_TYPE_BACKGROUND,	// this render queue is rendered before any others
 	VULKAN_RENDER_QUEUE_TYPE_GEOMETRY, 		// opaque geometry uses this queue
 	VULKAN_RENDER_QUEUE_TYPE_ALPHA_TESTED, 	// alpha tested geometry uses this queue
 	VULKAN_RENDER_QUEUE_TYPE_GEOMETRY_LAST, // last render queue that is considered "opaque"
 	VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT, 	// this render queue is rendered after Geometry and AlphaTest, in back-to-front order
 	VULKAN_RENDER_QUEUE_TYPE_OVERLAY, 		// this render queue is meant for overlay effects
-	VULKAN_RENDER_QUEUE_TYPE_UNDEFINED 		// for specific purpose such as implementing render scene and adding a camera to it
 } vulkan_render_queue_type_t;
 
 typedef struct vulkan_render_queue_t
@@ -184,6 +185,6 @@ RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue);
 		nothing
 	NOTE: if this render queue isn't ready (is_ready = false), then it first calls render_queue_build()
  */
-RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue);
+RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera);
 
 END_CPP_COMPATIBLE

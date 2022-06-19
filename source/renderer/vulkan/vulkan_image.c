@@ -91,6 +91,53 @@ RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image)
 	// heap_free(image);
 }
 
+#define UNDEFINED_LAYOUT_TRANSITION(old, final) LOG_FETAL_ERR("Undefined layout transition, %u --> %u\n", old, final)
+
+static void get_access_and_stage_flags(VkAccessFlags OUT src_access, VkAccessFlags OUT dst_access, VkPipelineStageFlags OUT src_stage, VkPipelineStageFlags OUT dst_stage, VkImageLayout oldLayout, VkImageLayout finalLayout)
+{
+	switch(oldLayout)
+	{
+		case VK_IMAGE_LAYOUT_UNDEFINED:
+		{
+			OUT src_access = 0;
+			OUT src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			switch(finalLayout)
+			{
+				case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+					OUT dst_access = VK_ACCESS_TRANSFER_WRITE_BIT;
+					OUT dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+				break;
+				case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+					OUT dst_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+					OUT dst_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+				break;
+				case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+					OUT dst_access = VK_ACCESS_SHADER_READ_BIT;
+					OUT dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+				break;
+				default:
+					UNDEFINED_LAYOUT_TRANSITION(oldLayout, finalLayout);
+			}
+		}
+		break;
+
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+		{
+			OUT src_access = VK_ACCESS_TRANSFER_WRITE_BIT;
+			OUT src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			switch(finalLayout)
+			{
+				case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+					OUT dst_access = VK_ACCESS_SHADER_READ_BIT;
+					OUT dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+				break;
+				default:
+					UNDEFINED_LAYOUT_TRANSITION(oldLayout, finalLayout);
+			}
+		}
+		break;
+	}
+}
 
 RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout vo_layout)
 {
@@ -117,30 +164,7 @@ RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkIma
 	};
 	VkPipelineStageFlags src_pipeline_stage;
 	VkPipelineStageFlags dst_pipeline_stage;
-	if((image->vo_layout == VK_IMAGE_LAYOUT_UNDEFINED) && (vo_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL))
-	{
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		src_pipeline_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		dst_pipeline_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	}
-	else if((image->vo_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) && (vo_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL))
-	{
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		src_pipeline_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		dst_pipeline_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-	else if((image->vo_layout == VK_IMAGE_LAYOUT_UNDEFINED) && (vo_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL))
-	{
-		barrier.srcAccessMask = 0;
-    	barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		src_pipeline_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		dst_pipeline_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	}
-	else
-		LOG_FETAL_ERR("Image layout transition error | transition from %u to %u isn't defined\n", image->vo_layout, vo_layout);
-	
+	get_access_and_stage_flags(&barrier.srcAccessMask, &barrier.dstAccessMask, &src_pipeline_stage, &dst_pipeline_stage, image->vo_layout, vo_layout);
 	vkCmdPipelineBarrier(vo_command_buffer, src_pipeline_stage, dst_pipeline_stage, 0, 0, NULL, 0, NULL, 1, &barrier);
 	end_single_time_command_buffer(renderer, vo_command_buffer);
 	image->vo_layout = vo_layout;
@@ -168,6 +192,31 @@ RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_bu
 	end_single_time_command_buffer(renderer, vo_command_buffer);
 }
 
+RENDERER_API void vulkan_image_upload_data(vulkan_image_t* image, void* data, u32 size)
+{
+	assert(size > 0);
+	assert(data != NULL);
+	// prepare staging buffer
+	vulkan_buffer_create_info_t staging_buffer_info = 
+	{
+		.data = data,
+		.size = size,
+		.vo_usage_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+	};
+	vulkan_buffer_t* staging_buffer = vulkan_buffer_create(image->renderer, &staging_buffer_info);
+
+	// transition image layout from undefined to transfer destination optimal
+	vulkan_image_transition_layout_to(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+	// copy device memory of staging buffer to the device memory of the image
+	vulkan_image_copy_from_buffer(image, staging_buffer);
+
+	// destroy staging buffer and it's device memory
+	vulkan_buffer_destroy(staging_buffer);
+	vulkan_buffer_release_resources(staging_buffer);
+}
 
 static VkCommandBuffer get_single_time_command_buffer(vulkan_renderer_t* renderer)
 {

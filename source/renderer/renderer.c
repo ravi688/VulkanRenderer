@@ -68,3 +68,7 @@ RENDERER_API render_pass_pool_t* renderer_get_render_pass_pool(renderer_t* rende
 	return renderer->vulkan_handle->render_pass_pool;
 }
 
+RENDERER_API camera_system_t* renderer_get_camera_system(renderer_t* renderer)
+{
+	return renderer->vulkan_handle->camera_system;
+}

@@ -8,6 +8,7 @@
 #include <renderer/internal/vulkan/vulkan_material.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
+#include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 #include <renderer/memory_allocator.h>
@@ -204,7 +205,7 @@ RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
 	// queue->is_ready = true;
 }
 
-RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue)
+RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera)
 {
 	// ASSERT_WRN(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it\n");
 	// get the pointers to render pass pool, shader library and material library
@@ -225,7 +226,7 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue)
 		vulkan_render_pass_t* pass = vulkan_render_pass_pool_getH(pass_pool, pass_handle);
 
 		// begin the render pass
-		vulkan_render_pass_begin(pass, queue->renderer->swapchain->current_image_index);
+		vulkan_render_pass_begin(pass, queue->renderer->swapchain->current_image_index, camera);
 		
 		// get the number of sub passes that this render pass has
 		u32 sub_pass_count = pass->subpass_count;
@@ -252,6 +253,8 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue)
 				// get the pipeline layout for this render pass and sub pass 'j'
 				vulkan_pipeline_layout_t* pipeline_layout = vulkan_shader_get_pipeline_layout(shader, pass->handle, j);
 
+				// bind CAMERA_SET
+				vulkan_descriptor_set_bind(&camera->set, VULKAN_DESCRIPTOR_SET_CAMERA, pipeline_layout);
 				// bind GLOBAL_SET
 				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, pipeline_layout); 
 				// bind RENDER_SET

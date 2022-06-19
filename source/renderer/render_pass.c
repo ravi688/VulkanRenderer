@@ -2,6 +2,7 @@
 #include <renderer/render_pass.h>
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
+#include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 
 /* constructors and destructors */
@@ -35,14 +36,14 @@ RENDERER_API void render_pass_set_clear(render_pass_t* pass, color_t color, floa
 	vulkan_render_pass_set_clear(pass, color, depth);
 }
 
-RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific)
+RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific, camera_t* camera)
 {
 	u32 framebuffer_index;
 	if(api_specific == NULL)
 		framebuffer_index = VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN;
 	else
 		framebuffer_index = DEREF_TO(u32, api_specific);
-	vulkan_render_pass_begin(pass, framebuffer_index);
+	vulkan_render_pass_begin(pass, framebuffer_index, camera);
 }
 
 RENDERER_API void render_pass_end(render_pass_t* pass)

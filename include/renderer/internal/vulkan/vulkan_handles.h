@@ -26,3 +26,11 @@ typedef struct vulkan_render_scene_object_handle_t
 } vulkan_render_scene_object_handle_t;
 
 #define VULKAN_RENDER_SCENE_OBJECT_HANDLE_INVALID (vulkan_render_scene_object_handle_t) { VULKAN_RENDER_OBJECT_HANDLE_INVALID, VULKAN_RENDER_QUEUE_HANDLE_INVALID }
+
+#include <renderer/library.h>
+typedef library_slot_handle_t vulkan_camera_handle_t;
+#define VULKAN_CAMERA_HANDLE_INVALID LIBRARY_SLOT_HANDLE_INVALID
+
+typedef buf_ucount_t vulkan_framebuffer_list_handle_t;
+#define VULKAN_FRAMEBUFFER_LIST_HANDLE_INVALID (~0ULL)
+

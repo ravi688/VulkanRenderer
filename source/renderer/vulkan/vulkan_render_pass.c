@@ -4,6 +4,8 @@
 #include <renderer/internal/vulkan/vulkan_attachment.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_image_view.h>
+#include <renderer/internal/vulkan/vulkan_framebuffer.h>
+#include <renderer/internal/vulkan/vulkan_camera_system.h>
 #include <renderer/render_window.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
@@ -45,6 +47,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	render_pass->subpass_count = create_info->subpass_count;
 	render_pass->current_subpass_index = 0;
 	render_pass->handle = VULKAN_RENDER_PASS_HANDLE_INVALID;
+	render_pass->required_framebuffer_count = create_info->framebuffer_count;
 
 	assert(create_info->subpass_count > 0);
 	VkSubpassDescription* subpasses = heap_newv(VkSubpassDescription, create_info->subpass_count);
@@ -99,33 +102,6 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		vulkan_attachment_create_no_alloc(renderer, &attachment_create_info, &render_pass->attachments[i]);
 	}
 
-	// create framebuffers
-	render_pass->framebuffer_count = create_info->framebuffer_count;
-	render_pass->vo_framebuffers = heap_newv(VkFramebuffer, render_pass->framebuffer_count);
-	VkImageView* image_views = heap_newv(VkImageView, render_pass->attachment_count);
-	s32 num_created_image_views = num_attachment_to_be_created;
-	for(u32 i = 0; i < num_created_image_views; i++)
-		image_views[i + render_pass->supplementary_attachment_count] = render_pass->attachments[i].image_view.vo_handle;
-
-	for(u32 i = 0; i < render_pass->framebuffer_count; i++)
-	{
-		for(u32 j = 0; j < render_pass->supplementary_attachment_count; j++)
-			image_views[j] = render_pass->supplementary_attachments[j + i * render_pass->supplementary_attachment_count];
-
-		VkFramebufferCreateInfo framebuffer_create_info = 
-		{
-			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-			.renderPass = render_pass->vo_handle,
-			.attachmentCount = render_pass->attachment_count,
-			.pAttachments = image_views,
-			.width = renderer->window->width,
-			.height = renderer->window->height,
-			.layers = 1
-		};
-		vkCall(vkCreateFramebuffer(renderer->logical_device->vo_handle, &framebuffer_create_info, NULL, &render_pass->vo_framebuffers[i]));
-	}
-	heap_free(image_views);
-
 	// create clear values for each attachment in this render pass
 	render_pass->vo_clear_values = heap_newv(VkClearValue, render_pass->attachment_count);
 	memzerov(render_pass->vo_clear_values, VkClearValue, render_pass->attachment_count);
@@ -158,10 +134,18 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		};
 		vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &render_pass->sub_render_sets[i]);
 	}
+
+	// register this render pass to all the cameras
+	vulkan_camera_system_t* camera_system = renderer->camera_system;
+	u32 camera_count = vulkan_camera_system_get_count(camera_system);
+	for(u32 i = 0; i < camera_count; i++)
+		render_pass->framebuffer_list_handle = vulkan_camera_register_render_pass(vulkan_camera_system_get_at(camera_system, i), render_pass);
 }
 
 RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 {
+	// unregister this render pass from the all the cameras
+	// TODO
 
 	// destory the vulkan render pass object
 	vkDestroyRenderPass(render_pass->renderer->logical_device->vo_handle, render_pass->vo_handle, NULL);
@@ -170,10 +154,6 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 	s32 num_attachment_to_be_destroyed = CAST_TO(s32, render_pass->attachment_count) - CAST_TO(s32, render_pass->supplementary_attachment_count);
 	for(u32 i = 0; i < num_attachment_to_be_destroyed; i++)
 		vulkan_attachment_destroy(&render_pass->attachments[i]);
-
-	// destroy the vulkan framebuffers
-	for(u32 i = 0; i < render_pass->framebuffer_count; i++)
-		vkDestroyFramebuffer(render_pass->renderer->logical_device->vo_handle, render_pass->vo_framebuffers[i], NULL);
 
 	// destroy the vulkan descriptor sets and layouts (sub render sets and layouts)
 	for(u32 i = 0; i < render_pass->subpass_count; i++)
@@ -221,17 +201,19 @@ RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass
 	}
 }
 
-RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index)
+RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index, vulkan_camera_t* camera)
 {
 	framebuffer_index = (framebuffer_index == VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN) ? render_pass->renderer->swapchain->current_image_index : framebuffer_index;
-	framebuffer_index = min(render_pass->framebuffer_count - 1, framebuffer_index);
+	framebuffer_index = min(render_pass->required_framebuffer_count - 1, framebuffer_index);
+
+	vulkan_framebuffer_t* framebuffers = vulkan_camera_get_framebuffer_list(camera, render_pass->framebuffer_list_handle);
 	// begin the render pass
 	VkRenderPassBeginInfo render_pass_begin_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 		.renderArea.offset = (VkOffset2D) { 0, 0 },
 		.renderArea.extent = (VkExtent2D) { render_pass->renderer->window->width, render_pass->renderer->window->height },
-		.framebuffer = render_pass->vo_framebuffers[framebuffer_index],
+		.framebuffer = framebuffers[framebuffer_index].vo_handle,
 		.renderPass = render_pass->vo_handle,
 		.clearValueCount = render_pass->clear_value_count,
 		.pClearValues = render_pass->vo_clear_values
