@@ -41,8 +41,7 @@ RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulk
 		.initialLayout = create_info->vo_layout,
 		.usage = create_info->vo_usage_mask,
 		.sharingMode = renderer->vo_sharing_mode,
-		.samples = VK_SAMPLE_COUNT_1_BIT,
-		.flags = 0 //optional
+		.samples = VK_SAMPLE_COUNT_1_BIT
 	};
 	vkCall(vkCreateImage(renderer->logical_device->vo_handle, &image_info, NULL, &image->vo_handle));
 	
@@ -115,6 +114,10 @@ static void get_access_and_stage_flags(VkAccessFlags OUT src_access, VkAccessFla
 					OUT dst_access = VK_ACCESS_SHADER_READ_BIT;
 					OUT dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 				break;
+				case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+					OUT dst_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+					OUT dst_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+				break;
 				default:
 					UNDEFINED_LAYOUT_TRANSITION(oldLayout, finalLayout);
 			}
@@ -136,6 +139,39 @@ static void get_access_and_stage_flags(VkAccessFlags OUT src_access, VkAccessFla
 			}
 		}
 		break;
+
+		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+		{
+			OUT src_access = VK_ACCESS_SHADER_READ_BIT;
+			OUT src_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			switch(finalLayout)
+			{
+				case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+					OUT dst_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+					OUT dst_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+				break;
+				default:
+					UNDEFINED_LAYOUT_TRANSITION(oldLayout, finalLayout);
+			}
+		}
+		break;
+		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+		{
+			OUT src_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			OUT src_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			switch(finalLayout)
+			{
+				case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+					OUT dst_access = VK_ACCESS_SHADER_READ_BIT;
+					OUT dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+				break;
+				default:
+					UNDEFINED_LAYOUT_TRANSITION(oldLayout, finalLayout);
+			}
+		}
+		break;
+		default:
+			UNDEFINED_LAYOUT_TRANSITION(oldLayout, finalLayout);
 	}
 }
 
@@ -147,7 +183,6 @@ RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkIma
 		return;
 	}
 	vulkan_renderer_t* renderer = image->renderer;
-	VkCommandBuffer vo_command_buffer = get_single_time_command_buffer(renderer);
 	VkImageMemoryBarrier barrier =
 	{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -165,8 +200,12 @@ RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkIma
 	VkPipelineStageFlags src_pipeline_stage;
 	VkPipelineStageFlags dst_pipeline_stage;
 	get_access_and_stage_flags(&barrier.srcAccessMask, &barrier.dstAccessMask, &src_pipeline_stage, &dst_pipeline_stage, image->vo_layout, vo_layout);
-	vkCmdPipelineBarrier(vo_command_buffer, src_pipeline_stage, dst_pipeline_stage, 0, 0, NULL, 0, NULL, 1, &barrier);
-	end_single_time_command_buffer(renderer, vo_command_buffer);
+	
+	vulkan_command_buffer_begin(renderer->vo_aux_command_buffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		vkCmdPipelineBarrier(renderer->vo_aux_command_buffer, src_pipeline_stage, dst_pipeline_stage, 0, 0, NULL, 0, NULL, 1, &barrier);
+	vulkan_command_buffer_end(renderer->vo_aux_command_buffer);
+	vulkan_queue_submit(renderer->vo_graphics_queue, renderer->vo_aux_command_buffer, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, VK_NULL_HANDLE);
+	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 	image->vo_layout = vo_layout;
 }
 
@@ -174,7 +213,6 @@ RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_bu
 {
 	assert(image->vo_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	vulkan_renderer_t* renderer = image->renderer;
-	VkCommandBuffer vo_command_buffer = get_single_time_command_buffer(renderer);
 	VkBufferImageCopy region =
 	{
 		.bufferOffset = 0,
@@ -188,8 +226,11 @@ RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_bu
 		.imageOffset = (VkOffset3D){ 0, 0, 0 },
 		.imageExtent = (VkExtent3D){ image->width, image->height, image->depth }
 	};
-	vkCmdCopyBufferToImage(vo_command_buffer, buffer->vo_handle, image->vo_handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-	end_single_time_command_buffer(renderer, vo_command_buffer);
+	vulkan_command_buffer_begin(renderer->vo_aux_command_buffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		vkCmdCopyBufferToImage(renderer->vo_aux_command_buffer, buffer->vo_handle, image->vo_handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+	vulkan_command_buffer_end(renderer->vo_aux_command_buffer);
+	vulkan_queue_submit(renderer->vo_graphics_queue, renderer->vo_aux_command_buffer, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, VK_NULL_HANDLE);
+	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 }
 
 RENDERER_API void vulkan_image_upload_data(vulkan_image_t* image, void* data, u32 size)
@@ -216,19 +257,4 @@ RENDERER_API void vulkan_image_upload_data(vulkan_image_t* image, void* data, u3
 	// destroy staging buffer and it's device memory
 	vulkan_buffer_destroy(staging_buffer);
 	vulkan_buffer_release_resources(staging_buffer);
-}
-
-static VkCommandBuffer get_single_time_command_buffer(vulkan_renderer_t* renderer)
-{
-	VkCommandBuffer vo_buffer = vulkan_command_buffer_allocate(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool);
-	vulkan_command_buffer_begin(vo_buffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	return vo_buffer;
-}
-
-static void end_single_time_command_buffer(vulkan_renderer_t* renderer, VkCommandBuffer vo_command_buffer)
-{
-	vkEndCommandBuffer(vo_command_buffer);
-	vulkan_queue_submit(renderer->vo_graphics_queue, vo_command_buffer, VK_NULL_HANDLE, 0, VK_NULL_HANDLE);
-	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
-	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, 1, &vo_command_buffer);
 }

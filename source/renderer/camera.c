@@ -66,9 +66,9 @@ RENDERER_API bool camera_is_active(camera_t* camera)
 	return vulkan_camera_is_active(camera);
 }
 
-RENDERER_API void camera_render(camera_t* camera, render_scene_t* scene)
+RENDERER_API void camera_render(camera_t* camera, render_scene_t* scene, u64 queue_mask)
 {
-	vulkan_camera_render(camera, scene);
+	vulkan_camera_render(camera, scene, queue_mask);
 }
 
 RENDERER_API void camera_render_to_texture(camera_t* camera, render_scene_t* scene, texture_t* texture)

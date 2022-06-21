@@ -72,7 +72,15 @@ typedef enum render_queue_type_t
 	RENDER_QUEUE_TYPE_ALPH_TESTED, 	// alpha tested geometry uses this queue
 	RENDER_QUEUE_TYPE_GEOMETRY_LAST, // last render queue that is considered "opaque"
 	RENDER_QUEUE_TYPE_TRANSPARENT, 	// this render queue is rendered after Geometry and AlphaTest, in back-to-front order
-	RENDER_QUEUE_TYPE_OVERLAY 		// this render queue is meant for overlay effects
+	RENDER_QUEUE_TYPE_OVERLAY, 		// this render queue is meant for overlay effects
+	RENDER_QUEUE_TYPE_QUEUE0, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE1, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE2, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE3, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE4, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE5, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE6, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE7 		// general purpose queue
 } render_queue_type_t;
 
 

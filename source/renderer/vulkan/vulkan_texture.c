@@ -58,6 +58,23 @@ static VkImageType get_image_type_from_texture_type(vulkan_texture_type_t type)
 
 static VkFormat get_format_from_texture_type(vulkan_texture_type_t type)
 {
+	if(type & VULKAN_TEXTURE_TYPE_RENDER_TARGET)
+	{
+		switch(type & BIT_MASK32(4))
+		{
+			case VULKAN_TEXTURE_TYPE_ALBEDO:
+				return VK_FORMAT_B8G8R8A8_SRGB; 	// swapchain format
+			case VULKAN_TEXTURE_TYPE_COLOR:
+			case VULKAN_TEXTURE_TYPE_NORMAL:
+				LOG_FETAL_ERR("VULKAN_TEXTURE_TYPE_COLOR or VULKAN_TEXTURE_TYPE_NORMAL can't be used as a render target\n");
+			break;
+			case VULKAN_TEXTURE_TYPE_DEPTH:
+				return VK_FORMAT_D32_SFLOAT;
+			default:
+				UNSUPPORTED_TEXTURE_TYPE(type & BIT_MASK32(3));
+		}
+	}
+
 	switch(type & BIT_MASK32(3))
 	{
 		case VULKAN_TEXTURE_TYPE_ALBEDO:

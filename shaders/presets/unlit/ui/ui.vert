@@ -7,9 +7,7 @@ CAMERA cameraInfo;
 OBJECT objectInfo;
 
 POSITION position;
-NORMAL normal;
 TEXCOORD texcoord;
-TANGENT tangent;
 
 layout(location = 0) out vec2 _texcoord;
 
