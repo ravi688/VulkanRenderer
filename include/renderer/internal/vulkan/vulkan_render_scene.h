@@ -38,7 +38,12 @@ RENDERER_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene);
 RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* scene);
 
 /* logic functions */
-RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene);
+
+RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type);
+#define VULKAN_RENDER_SCENE_RENDER_ALL_QUEUES (~0ULL)
+#define VULKAN_RENDER_SCENE_DONT_CARE 1UL
+#define VULKAN_RENDER_SCENE_CLEAR 0UL
+RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 render_flags);
 RENDERER_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle);
 RENDERER_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_object(vulkan_render_scene_t* scene, vulkan_render_object_type_t object_type, vulkan_render_queue_type_t queue_type);
 RENDERER_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle);

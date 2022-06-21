@@ -51,6 +51,8 @@ typedef struct vulkan_camera_t
 	vulkan_descriptor_set_t set;
 	vulkan_render_pass_t* default_render_pass;
 
+	vulkan_texture_t* render_target; 	// NULL, if the target is the screen
+
 	BUFFER framebuffers;
 
 	struct_descriptor_t struct_definition;
@@ -86,9 +88,13 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera);
 RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera);
 
 /* logic functions */
+#define VULKAN_CAMERA_CLEAR_FLAG_DONT_CARE 1
+#define VULKAN_CAMERA_CLEAR_FLAG_CLEAR 0
+RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera, u32 clear_flags);
+RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera);
 RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth);
 RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_texture_t* texture);
-RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene);
+RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask);
 RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_texture_t* texture);
 
 RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_framebuffer_list_handle_t handle);
@@ -96,6 +102,10 @@ RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass
 
 
 /* getters */
+static RENDERER_API FORCE_INLINE bool vulkan_camera_is_offscreen(vulkan_camera_t* camera)
+{
+	return camera->render_target != NULL;
+}
 static RENDERER_API FORCE_INLINE bool vulkan_camera_is_active(vulkan_camera_t* camera)
 {
 	return camera->is_active;

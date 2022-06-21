@@ -39,6 +39,7 @@ typedef struct vulkan_renderer_t
 
 	VkSemaphore vo_image_available_semaphore;
 	VkSemaphore vo_render_finished_semaphore;
+	VkFence vo_fence;
 
 	render_window_t* window;
 	vulkan_swapchain_create_info_t swapchain_create_info;		// for recreating the swapchain
@@ -46,6 +47,7 @@ typedef struct vulkan_renderer_t
 
 	u32 graphics_queue_index;
 	VkCommandBuffer* vo_command_buffers;
+	VkCommandBuffer vo_aux_command_buffer;
 
 	VkSharingMode vo_sharing_mode;
 
