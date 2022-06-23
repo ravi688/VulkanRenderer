@@ -400,31 +400,39 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 {
 	vulkan_swapchain_acquire_next_image(renderer->swapchain);
 
-	VkCommandBuffer cb = renderer->vo_aux_command_buffer;
-	
+	u32 current_index = renderer->swapchain->current_image_index;
+	VkCommandBuffer cb = renderer->vo_command_buffers[current_index];
+
 	// WARNING: enabling command buffer reset and dragging the window results in a crash, not sure why?
 	// vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 	
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[renderer->swapchain->current_image_index],
-		VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_SWAPCHAIN_READY_FOR_RENDER);
-	vulkan_command_buffer_end(cb);
-	vulkan_queue_submit(renderer->vo_graphics_queue, 
-						cb, 
-						VK_NULL_HANDLE, 
-						VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-						VK_NULL_HANDLE,
-						VK_NULL_HANDLE);
-	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
-
-	cb = renderer->vo_command_buffers[renderer->swapchain->current_image_index];
-	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	
+	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[current_index], VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+		/* oldLayout: */ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		/* newLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
+		/* srcAccess: */ VK_ACCESS_MEMORY_READ_BIT,
+		/* dstAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		/* srcStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		/* dstStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 }
 
 RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 {
-	VkCommandBuffer cb = renderer->vo_command_buffers[renderer->swapchain->current_image_index];
-	vulkan_command_buffer_end(renderer->vo_command_buffers[renderer->swapchain->current_image_index]);
+	u32 current_index = renderer->swapchain->current_image_index;
+	VkCommandBuffer cb = renderer->vo_command_buffers[current_index];
+
+	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[current_index], VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+		/* oldLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		/* newLayout: */ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
+		/* srcAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		/* dstAccess: */ VK_ACCESS_MEMORY_READ_BIT,
+		/* srcStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		/* dstStage: */ VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+
+	vulkan_command_buffer_end(renderer->vo_command_buffers[current_index]);
 }
 
 RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
@@ -438,19 +446,6 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 								renderer->vo_fence);
 	vkCall(vkWaitForFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence, VK_TRUE, U64_MAX));
 	vkCall(vkResetFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence));
-
-	cb = renderer->vo_aux_command_buffer;
-	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[renderer->swapchain->current_image_index],
-		VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_SWAPCHAIN_READY_FOR_PRESENT);
-	vulkan_command_buffer_end(cb);
-	vulkan_queue_submit(renderer->vo_graphics_queue, 
-						cb, 
-						VK_NULL_HANDLE, 
-						VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-						VK_NULL_HANDLE,
-						VK_NULL_HANDLE);
-	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 
 	vulkan_queue_present(renderer->vo_graphics_queue, 
 						renderer->swapchain->vo_handle, 

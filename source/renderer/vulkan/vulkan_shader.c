@@ -794,16 +794,20 @@ VkAccessFlags get_access_mask(vulkan_subpass_create_info_t* subpass)
 	return flags;
 }
 
+#define STAGE_COLOR_WRITE_DEPTH_READ_WRITE (VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT)
+#define ACCESS_COLOR_WRITE_DEPTH_READ_WRITE (VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
+
 static VkSubpassDependency get_dependency(s32 index, vulkan_subpass_create_info_t* src, vulkan_subpass_create_info_t* dst)
 {
 	VkSubpassDependency dependency = 
 	{
 		.srcSubpass = (src == NULL) ? VK_SUBPASS_EXTERNAL : index,
 		.dstSubpass = (dst == NULL) ? VK_SUBPASS_EXTERNAL : index + 1,
-		.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-		.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-		.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
+		.srcStageMask = (src == NULL) ? STAGE_COLOR_WRITE_DEPTH_READ_WRITE : get_stage_mask(src),
+		.dstStageMask = (dst == NULL) ? STAGE_COLOR_WRITE_DEPTH_READ_WRITE : get_stage_mask(dst),
+		.srcAccessMask = (src == NULL) ? ACCESS_COLOR_WRITE_DEPTH_READ_WRITE : get_access_mask(src),
+		.dstAccessMask = (dst == NULL) ? ACCESS_COLOR_WRITE_DEPTH_READ_WRITE : get_access_mask(dst),
+		.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 	};
 	return dependency;
 }
@@ -952,7 +956,6 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		dependencies[i + 1] = get_dependency(i, 
 									(i >= 0) ? &create_info->subpasses[i] : NULL, 
 									((i + 1) < create_info->subpass_count) ? &create_info->subpasses[i + 1] : NULL);
-
 	return create_info;
 }
 

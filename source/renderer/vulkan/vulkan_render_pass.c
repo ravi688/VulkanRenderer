@@ -39,6 +39,20 @@ static VkClearValue get_clear_value_from_format(VkFormat format)
 	return (VkClearValue) { };
 }
 
+static VkImageLayout get_attachment_layout(VkFormat format)
+{
+	switch(format)
+	{
+		case VK_FORMAT_B8G8R8A8_SRGB:
+			return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		case VK_FORMAT_D32_SFLOAT:
+			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		default:
+			LOG_FETAL_ERR("Unsupported format %u for attachment layout\n", format);
+	}
+	return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
 RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_t OUT render_pass)
 {
 	memzero(render_pass, vulkan_render_pass_t);
@@ -102,6 +116,9 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 			.next_pass_usage = create_info->attachment_usages[i + render_pass->supplementary_attachment_count]
 		};
 		vulkan_attachment_create_no_alloc(renderer, &attachment_create_info, &render_pass->attachments[i]);
+
+		// TODO: Fix image layout transition issues in multiple render passes
+		// vulkan_image_transition_layout_to(&render_pass->attachments[i].image, get_attachment_layout(attachment_create_info.format));
 	}
 
 	// create clear values for each attachment in this render pass
