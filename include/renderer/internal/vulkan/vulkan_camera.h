@@ -47,6 +47,9 @@ typedef struct vulkan_framebuffer_t vulkan_framebuffer_t;
 typedef struct vulkan_camera_t
 {
 	vulkan_renderer_t* renderer;
+
+	VkClearValue* clear_buffer;
+
 	vulkan_buffer_t buffer;
 	vulkan_descriptor_set_t set;
 	vulkan_render_pass_t* default_render_pass;

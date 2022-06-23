@@ -400,7 +400,7 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 {
 	vulkan_swapchain_acquire_next_image(renderer->swapchain);
 
-	VkCommandBuffer cb = renderer->vo_command_buffers[renderer->swapchain->current_image_index];
+	VkCommandBuffer cb = renderer->vo_aux_command_buffer;
 	
 	// WARNING: enabling command buffer reset and dragging the window results in a crash, not sure why?
 	// vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
@@ -417,6 +417,7 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 						VK_NULL_HANDLE);
 	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 
+	cb = renderer->vo_command_buffers[renderer->swapchain->current_image_index];
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 }
 
@@ -438,6 +439,7 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 	vkCall(vkWaitForFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence, VK_TRUE, U64_MAX));
 	vkCall(vkResetFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence));
 
+	cb = renderer->vo_aux_command_buffer;
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[renderer->swapchain->current_image_index],
 		VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_SWAPCHAIN_READY_FOR_PRESENT);

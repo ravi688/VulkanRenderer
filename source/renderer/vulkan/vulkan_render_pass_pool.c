@@ -223,6 +223,12 @@ static void vulkan_render_pass_create_info_deep_copy(vulkan_render_pass_create_i
 	for(u32 i = 0; i < src->subpass_count; i++)
 		vulkan_subpass_create_info_deep_copy(&dst->subpasses[i], &src->subpasses[i]);
 
+	if(src->subpass_dependency_count > 0)
+	{
+		dst->subpass_dependencies = heap_newv(VkSubpassDependency, src->subpass_dependency_count);
+		memcpy(dst->subpass_dependencies, src->subpass_dependencies, sizeof(VkSubpassDependency) * src->subpass_dependency_count);
+	}
+
 	dst->render_set_bindings = src->render_set_binding_count ? heap_newv(vulkan_shader_resource_description_t, src->render_set_binding_count) : NULL;
 	for(u32 i = 0; i < src->render_set_binding_count; i++)
 		vulkan_resource_descriptor_deep_copy(&dst->render_set_bindings[i], &src->render_set_bindings[i]);

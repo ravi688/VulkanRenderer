@@ -33,22 +33,23 @@ int main(const char** argc, int argv)
 	memory_allocator_init(&argv);
 	
 	// initialize renderer
-	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_INTEGRATED, 800, 800, "Renderer", false, true);
+	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Renderer", false, true);
 
 	AUTO camera_system = renderer_get_camera_system(renderer);
 
 	// TODO: every scene will have their own camera system ( Camera sets )
-	// create a camera
-	AUTO camera = camera_system_getH(camera_system,
-							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(camera, COLOR_ORANGE, 1.0f);
-	camera_set_active(camera, true);
 
 	AUTO camera3 = camera_system_getH(camera_system,
 							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_active(camera3, false);
+	camera_set_clear(camera3, COLOR_GREEN, 1.0f);
 	camera_set_position(camera3, vec3(float)(0, 0.6, -3.0f));
 	camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG, 0));
+	// create a camera
+	AUTO camera = camera_system_getH(camera_system,
+							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
+	camera_set_clear(camera, COLOR_WHITE, 1.0f);
+	camera_set_active(camera, true);
 
 	AUTO light = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_color(light, vec3(float)(1, 1, 1));
@@ -77,38 +78,38 @@ int main(const char** argc, int argv)
 	AUTO skyboxMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, skyboxShaderH, "SkyboxMaterial"));
 	material_set_texture(skyboxMaterial, "albedo", skyboxTexture);
 
-	AUTO texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Smile.bmp");
-	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT);
-	AUTO shader = shader_library_getH(slib, shaderH);
-	AUTO blueMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "BlueColorMaterial"));
-	AUTO greenMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "GreenColorMaterial"));
-	AUTO mesh = mesh_create(renderer, mesh3d_cube(1.0f));
-	AUTO planeMesh = mesh_create(renderer, mesh3d_plane(2.0f));
+	// AUTO texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Smile.bmp");
+	// AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT);
+	// AUTO shader = shader_library_getH(slib, shaderH);
+	// AUTO blueMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "BlueColorMaterial"));
+	// AUTO greenMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "GreenColorMaterial"));
+	// AUTO mesh = mesh_create(renderer, mesh3d_cube(1.0f));
+	// AUTO planeMesh = mesh_create(renderer, mesh3d_plane(2.0f));
 
-	material_set_texture(blueMaterial, "albedo", texture);
-	material_set_texture(greenMaterial, "albedo", texture);
-	material_set_vec4(blueMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
-	material_set_vec4(greenMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
-	material_set_vec4(mat2, "parameters.color", vec4(float)(1, 1, 1, 1));
+	// material_set_texture(blueMaterial, "albedo", texture);
+	// material_set_texture(greenMaterial, "albedo", texture);
+	// material_set_vec4(blueMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
+	// material_set_vec4(greenMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
+	// material_set_vec4(mat2, "parameters.color", vec4(float)(1, 1, 1, 1));
 
 	render_object_t* skyboxObj = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_BACKGROUND));
 	render_object_set_material(skyboxObj, skyboxMaterial);
 	render_object_attach(skyboxObj, skyboxMesh);
 
-	render_object_t* obj2 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(obj2, greenMaterial);
-	render_object_attach(obj2, planeMesh);
-	render_object_set_transform(obj2, mat4_translation(float)(0, -0.5f, 0));
+	// render_object_t* obj2 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	// render_object_set_material(obj2, greenMaterial);
+	// render_object_attach(obj2, planeMesh);
+	// render_object_set_transform(obj2, mat4_translation(float)(0, -0.5f, 0));
 
-	render_object_t* obj4 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(obj4, blueMaterial);
-	render_object_attach(obj4, mesh);
-	render_object_set_transform(obj4, mat4_mul(float)(2, mat4_scale(float)(0.5f, 0.5f, 0.5f), mat4_translation(float)(-0.8f, 0.1f, 1)));
+	// render_object_t* obj4 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	// render_object_set_material(obj4, blueMaterial);
+	// render_object_attach(obj4, mesh);
+	// render_object_set_transform(obj4, mat4_mul(float)(2, mat4_scale(float)(0.5f, 0.5f, 0.5f), mat4_translation(float)(-0.8f, 0.1f, 1)));
 
-	render_object_t* obj1 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(obj1, blueMaterial);
-	render_object_attach(obj1, mesh);
-	render_object_set_transform(obj1, mat4_translation(float)(0, 0, 0));
+	// render_object_t* obj1 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	// render_object_set_material(obj1, blueMaterial);
+	// render_object_attach(obj1, mesh);
+	// render_object_set_transform(obj1, mat4_translation(float)(0, 0, 0));
 
 	AUTO uiShaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI);
 	AUTO uiMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, uiShaderH, "UIMaterial"));
@@ -173,7 +174,7 @@ int main(const char** argc, int argv)
 		// else speed = 50.0f;
 		float deltaTime = time_get_delta_time(&tHandle);
 		angle += deltaTime * speed;
-		render_object_set_transform(obj1, mat4_rotation(float)(0 DEG, angle DEG, 0 DEG));
+		// render_object_set_transform(obj1, mat4_rotation(float)(0 DEG, angle DEG, 0 DEG));
 		light_set_position(light, vec3(float)(0, 0.5f, sin(angle * 2 DEG)));
 		camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG * sin(angle DEG), 0));
 
@@ -196,18 +197,18 @@ int main(const char** argc, int argv)
 	texture_destroy(renderTexture);
 	texture_release_resources(renderTexture);
 
-	texture_destroy(texture);
-	texture_release_resources(texture);
+	// texture_destroy(texture);
+	// texture_release_resources(texture);
 
 	texture_destroy(skyboxTexture);
 	texture_release_resources(skyboxTexture);
 
 	mesh_destroy(quadMesh);
 	mesh_release_resources(quadMesh);
-	mesh_destroy(planeMesh);
-	mesh_release_resources(planeMesh);
-	mesh_destroy(mesh);
-	mesh_release_resources(mesh);
+	// mesh_destroy(planeMesh);
+	// mesh_release_resources(planeMesh);
+	// mesh_destroy(mesh);
+	// mesh_release_resources(mesh);
 
 	mesh_destroy(skyboxMesh);
 	mesh_release_resources(skyboxMesh);

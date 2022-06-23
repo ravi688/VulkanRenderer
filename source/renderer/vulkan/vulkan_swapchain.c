@@ -65,7 +65,7 @@ RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapcha
 
 static void transition_image_to_layout_present_KHR(vulkan_swapchain_t* swapchain)
 {
-	VkCommandBuffer cb = swapchain->renderer->vo_command_buffers[0];
+	VkCommandBuffer cb = swapchain->renderer->vo_aux_command_buffer;
 
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	u32 count = swapchain->image_count;
