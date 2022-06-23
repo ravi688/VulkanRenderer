@@ -38,22 +38,18 @@ int main(const char** argc, int argv)
 	AUTO camera_system = renderer_get_camera_system(renderer);
 
 	// TODO: every scene will have their own camera system ( Camera sets )
-	// create a camera
-	AUTO camera = camera_system_getH(camera_system,
-							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(camera, COLOR_ORANGE, 1.0f);
-	camera_set_active(camera, true);
 
 	AUTO camera3 = camera_system_getH(camera_system,
 							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_active(camera3, true);
+	camera_set_active(camera3, false);
+	camera_set_clear(camera3, COLOR_GREEN, 1.0f);
 	camera_set_position(camera3, vec3(float)(0, 0.6, -3.0f));
 	camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG, 0));
-
-	AUTO camera2 = camera_system_getH(camera_system,
-							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_ORTHOGRAPHIC));
-	camera_set_clear(camera2, COLOR_BLACK, 1.0f);
-	camera_set_active(camera2, false);
+	// create a camera
+	AUTO camera = camera_system_getH(camera_system,
+							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
+	camera_set_clear(camera, COLOR_WHITE, 1.0f);
+	camera_set_active(camera, true);
 
 	AUTO light = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_color(light, vec3(float)(1, 1, 1));
@@ -118,8 +114,9 @@ int main(const char** argc, int argv)
 	AUTO uiShaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI);
 	AUTO uiMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, uiShaderH, "UIMaterial"));
 
+	render_scene_add_queue(scene, RENDER_QUEUE_TYPE_QUEUE0);
 	AUTO quadMesh = mesh_create(renderer, mesh3d_plane(200));
-	render_object_t* obj5 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_OVERLAY));
+	render_object_t* obj5 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
 	render_object_set_material(obj5, uiMaterial);
 	render_object_attach(obj5, quadMesh);
 	render_object_set_transform(obj5, mat4_rotation(float)(0, 0, 90 DEG));
@@ -132,7 +129,7 @@ int main(const char** argc, int argv)
 		.depth = 1,
 		.channel_count = 4,
 		.type = VULKAN_TEXTURE_TYPE_ALBEDO | VULKAN_TEXTURE_TYPE_RENDER_TARGET,
-		.initial_usage = VULKAN_TEXTURE_USAGE_NONE,
+		.initial_usage = VULKAN_TEXTURE_USAGE_SAMPLED,
 		.usage = VULKAN_TEXTURE_USAGE_RENDER_TARGET,
 		.final_usage = VULKAN_TEXTURE_USAGE_SAMPLED,
 		.technique = VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH
@@ -155,20 +152,20 @@ int main(const char** argc, int argv)
 		if(kbhit())
 		{
 			getch();
-			camera_set_active(previous_camera, false);
+			// camera_set_active(previous_camera, false);
 			switch(camera_index % 2)
 			{
 				case 0:
-					camera_set_active(camera2, true);
-					previous_camera = camera2;
+					// camera_set_active(camera2, true);
+					// previous_camera = camera2;
 					break;
 				// case 1:
 				// 	camera_set_active(camera3, true);
 				// 	previous_camera = camera3;
 				// 	break;
 				case 1:
-					camera_set_active(camera, true);
-					previous_camera = camera;
+					// camera_set_active(camera, true);
+					// previous_camera = camera;
 					break;
 			}
 			camera_index++;
@@ -179,10 +176,18 @@ int main(const char** argc, int argv)
 		angle += deltaTime * speed;
 		render_object_set_transform(obj1, mat4_rotation(float)(0 DEG, angle DEG, 0 DEG));
 		light_set_position(light, vec3(float)(0, 0.5f, sin(angle * 2 DEG)));
+		camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG * sin(angle DEG), 0));
 
 		renderer_begin_frame(renderer);
 
-		render_scene_render(scene);
+		// activate the offscreen camera and exclude the queue QUEUE0
+		camera_set_active(camera3, true);
+		render_scene_render(scene, BIT64(RENDER_QUEUE_TYPE_GEOMETRY)
+								 | BIT64(RENDER_QUEUE_TYPE_BACKGROUND), RENDER_SCENE_CLEAR);
+		
+		// deactivate the offscreen camera and render only for QUEUE0
+		camera_set_active(camera3, false);
+		render_scene_render(scene, BIT64(RENDER_QUEUE_TYPE_QUEUE0), RENDER_SCENE_DONT_CARE);
 
 		renderer_end_frame(renderer);
 

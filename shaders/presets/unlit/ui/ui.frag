@@ -16,6 +16,7 @@ layout(location = 0) out vec4 color;
 
 void main()
 {
-	color = parameters.color * texture(albedo, texcoord).rgba;
+	vec2 uv = vec2(texcoord.x, 1 - texcoord.y);
+	color = parameters.color * texture(albedo, uv).rgba;
 }
 

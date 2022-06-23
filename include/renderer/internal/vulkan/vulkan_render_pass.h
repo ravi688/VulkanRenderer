@@ -69,6 +69,11 @@ typedef struct vulkan_render_pass_create_info_t
 	vulkan_subpass_create_info_t* subpasses;
 	u32 subpass_count;
 
+	/* list of subpass dependencies
+	 */
+	VkSubpassDependency* subpass_dependencies;
+	u32 subpass_dependency_count;
+
 	/* used for creating descriptor set layout for the render set */
 	vulkan_shader_resource_description_t* render_set_bindings;
 	u32 render_set_binding_count;
@@ -188,6 +193,7 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass);
  */
 RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass);
 
+RENDERER_API void vulkan_render_pass_set_clear_indirect(vulkan_render_pass_t* render_pass, color_t color, float depth, VkClearValue* indirect_buffer);
 RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth);
 
 /*

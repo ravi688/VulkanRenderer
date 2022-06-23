@@ -140,6 +140,36 @@ static VkSampler create_sampler(VkDevice device)
 	return sampler;
 }
 
+static VkImageLayout get_layout_from_format(VkFormat format)
+{
+	switch(format)
+	{
+		case VK_FORMAT_B8G8R8A8_SRGB:
+			return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		case VK_FORMAT_D32_SFLOAT:
+			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		default:
+			LOG_FETAL_ERR("Unsupported attachment format %u\n", format);
+	}
+	return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
+static VkImageLayout get_layout_from_attachment_type(vulkan_attachment_type_t type)
+{
+	switch(type)
+	{
+		case VULKAN_ATTACHMENT_TYPE_COLOR:
+			return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		case VULKAN_ATTACHMENT_TYPE_STENCIL:
+		case VULKAN_ATTACHMENT_TYPE_DEPTH:
+		case VULKAN_ATTACHMENT_TYPE_DEPTH_STENCIL:
+			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		default: 
+			LOG_FETAL_ERR("Unsupported attachment type : %u\n", type);
+	}
+	return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
 RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment)
 {
 	memzero(attachment, vulkan_attachment_t);

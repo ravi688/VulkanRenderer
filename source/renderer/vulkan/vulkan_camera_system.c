@@ -58,8 +58,8 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
 		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+		.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 	};
 	create_info->attachment_usages = heap_new(vulkan_attachment_next_pass_usage_t);
 	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
@@ -80,6 +80,30 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 		.pipeline_bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
 		.color_attachments = color_attachments,
 		.color_attachment_count = 1
+	};
+
+	create_info->subpass_dependency_count = 2;
+	VkSubpassDependency* dependencies = create_info->subpass_dependencies = heap_newv(VkSubpassDependency, create_info->subpass_dependency_count);
+	dependencies[0] = (VkSubpassDependency)
+	{
+		.srcSubpass = VK_SUBPASS_EXTERNAL,
+		.dstSubpass = 0,
+		.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.srcAccessMask = 0,
+		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+	};
+
+	dependencies[1] = (VkSubpassDependency)
+	{
+		.srcSubpass = 0,
+		.dstSubpass = VK_SUBPASS_EXTERNAL,
+		.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT,
+		.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 	};
 
 	return create_info;

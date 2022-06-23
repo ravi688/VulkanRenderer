@@ -4,6 +4,8 @@
 #include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
 #include <renderer/internal/vulkan/vulkan_render_scene.h>
 #include <renderer/internal/vulkan/vulkan_framebuffer.h>
+#include <renderer/internal/vulkan/vulkan_texture.h>
+#include <renderer/internal/vulkan/vulkan_command.h>
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
@@ -140,6 +142,9 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	camera->is_active = true;
 	camera->framebuffers = buf_create(sizeof(vulkan_framebuffer_t), 1, 0);
 
+	camera->clear_buffer = heap_newv(VkClearValue, camera->default_render_pass->attachment_count);
+	memcpy(camera->clear_buffer, camera->default_render_pass->vo_clear_values, sizeof(VkClearValue) * camera->default_render_pass->attachment_count);
+
 	render_window_t* window = vulkan_renderer_get_window(renderer);
 
 	setup_gpu_resources(camera);
@@ -170,6 +175,16 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	render_window_subscribe_on_resize(vulkan_renderer_get_window(renderer), recreate_projection, camera);
 	render_window_subscribe_on_resize(vulkan_renderer_get_window(renderer), recreate_screen_projection, camera);
 
+
+	// register all the render passes with this camera
+	vulkan_render_pass_pool_t* pass_pool = renderer->render_pass_pool;
+	buf_ucount_t pass_count = vulkan_render_pass_pool_get_count(pass_pool);
+	for(buf_ucount_t i = 0; i < pass_count; i++)
+	{
+		vulkan_render_pass_t* pass = vulkan_render_pass_pool_get_at(pass_pool, i);
+		pass->framebuffer_list_handle = vulkan_camera_register_render_pass(camera, pass);
+	}
+
 	log_msg("Vulkan Camera has been created successfully\n");
 }
 
@@ -198,10 +213,49 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 }
 
 /* logic functions */
+RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera, u32 clear_flags)
+{
+	if(vulkan_camera_is_offscreen(camera))
+	{
+		VkCommandBuffer cb = camera->renderer->vo_command_buffers[camera->renderer->swapchain->current_image_index];
+		vulkan_command_image_layout_transition(cb, camera->render_target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+				/* oldLayout: */ VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				/* newLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
+				/* srcAccess: */ VK_ACCESS_SHADER_READ_BIT,
+				/* dstAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				/* srcStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				/* dstStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	}
+	switch(clear_flags)
+	{
+		case VULKAN_CAMERA_CLEAR_FLAG_CLEAR:
+			AUTO clear_buffer = camera->default_render_pass->vo_clear_values;
+			camera->default_render_pass->vo_clear_values = camera->clear_buffer;
+			vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN, camera);
+			vulkan_render_pass_end(camera->default_render_pass);
+			camera->default_render_pass->vo_clear_values = clear_buffer;
+		break;
+	}
+}
+
+RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera)
+{
+	if(!vulkan_camera_is_offscreen(camera)) return;
+	VkCommandBuffer cb = camera->renderer->vo_command_buffers[camera->renderer->swapchain->current_image_index];
+	vulkan_command_image_layout_transition(cb, camera->render_target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+			/* oldLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			/* newLayout: */ VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
+			/* srcAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			/* dstAccess: */ VK_ACCESS_SHADER_READ_BIT,
+			/* srcStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			/* dstStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+}
 
 RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth)
 {
-	vulkan_render_pass_set_clear(camera->default_render_pass, color, depth);
+	vulkan_render_pass_set_clear_indirect(camera->default_render_pass, color, depth, camera->clear_buffer);
 }
 
 RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_texture_t* texture)
@@ -212,21 +266,25 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 		case VULKAN_CAMERA_RENDER_TARGET_TYPE_SWAPCHAIN:
 			for(buf_ucount_t i = 0; i < count; i++)
 				vulkan_framebuffer_restore_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)));
+			camera->render_target = NULL;
 		break;
 		case VULKAN_CAMERA_RENDER_TARGET_TYPE_TEXTURE:
 			for(buf_ucount_t i = 0; i < count; i++)
 				vulkan_framebuffer_set_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)), 
 					CAST_TO(vulkan_attachment_t*, texture));
+			camera->render_target = texture;
 		break;
+		default:
+			LOG_FETAL_ERR("Invalid vulkan camera render target type: %u\n", target_type);
 	}
 }
 
-RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene)
+RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask)
 {
-	vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN, camera);
-	vulkan_render_pass_end(camera->default_render_pass);
-	if(scene != NULL)
-		vulkan_render_scene_render(scene);
+	// vulkan_render_pass_begin(camera->default_render_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN, camera);
+	// vulkan_render_pass_end(camera->default_render_pass);
+	// if(scene != NULL)
+	// 	vulkan_render_scene_render(scene, queue_mask);
 }
 
 RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_texture_t* target)

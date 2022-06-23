@@ -48,3 +48,13 @@ RENDERER_API void vulkan_command_buffer_begin(VkCommandBuffer buffer, VkCommandB
 	vkCall(vkBeginCommandBuffer(buffer, &begin_info));
 }
 
+RENDERER_API void vulkan_command_buffer_reset(VkCommandBuffer buffer, VkCommandBufferResetFlags flags) 
+{ 
+	vkCall(vkResetCommandBuffer(buffer, flags)); 
+}
+
+RENDERER_API void vulkan_command_buffer_end(VkCommandBuffer buffer) 
+{ 
+	vkCall(vkEndCommandBuffer(buffer)); 
+}
+

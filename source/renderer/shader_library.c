@@ -142,12 +142,19 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(shader_libr
 	switch(preset)
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
-		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
 			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(&attributes);
 			break;
+		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
+			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			end_vertex_binding(&attributes);
+			begin_vertex_binding(&attributes, 8, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_BINDING);
+				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_LOCATION, VK_FORMAT_R32G32_SFLOAT, 0);
+			end_vertex_binding(&attributes);
+		break;
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
 			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
@@ -281,11 +288,11 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
 				add_input(&passes, 0, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 1 target [swapchain image]
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 0 target
+				// add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 0 target
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
 				begin_subpass(&passes, 1);
 					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
 				end_subpass(&passes);
 				// begin_subpass(&passes, 2);
 				// 	add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT, 1, VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0);
@@ -340,7 +347,7 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
 			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_TRUE);
+				add_color_blend_state(&pipelines, VK_FALSE);
 				add_shader(&pipelines, "shaders/presets/unlit/ui/ui.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
 				add_shader(&pipelines, "shaders/presets/unlit/ui/ui.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
 			end_pipeline(&pipelines);
