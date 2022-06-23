@@ -33,22 +33,23 @@ int main(const char** argc, int argv)
 	memory_allocator_init(&argv);
 	
 	// initialize renderer
-	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_INTEGRATED, 800, 800, "Renderer", false, true);
+	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Renderer", false, true);
 
 	AUTO camera_system = renderer_get_camera_system(renderer);
 
 	// TODO: every scene will have their own camera system ( Camera sets )
-	// create a camera
-	AUTO camera = camera_system_getH(camera_system,
-							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(camera, COLOR_ORANGE, 1.0f);
-	camera_set_active(camera, true);
 
 	AUTO camera3 = camera_system_getH(camera_system,
 							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_active(camera3, false);
+	camera_set_clear(camera3, COLOR_GREEN, 1.0f);
 	camera_set_position(camera3, vec3(float)(0, 0.6, -3.0f));
 	camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG, 0));
+	// create a camera
+	AUTO camera = camera_system_getH(camera_system,
+							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
+	camera_set_clear(camera, COLOR_WHITE, 1.0f);
+	camera_set_active(camera, true);
 
 	AUTO light = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_color(light, vec3(float)(1, 1, 1));

@@ -288,11 +288,11 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
 				add_input(&passes, 0, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 1 target [swapchain image]
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 0 target
+				// add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 0 target
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
 				begin_subpass(&passes, 1);
 					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
 				end_subpass(&passes);
 				// begin_subpass(&passes, 2);
 				// 	add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT, 1, VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0);

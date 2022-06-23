@@ -39,6 +39,20 @@ static VkClearValue get_clear_value_from_format(VkFormat format)
 	return (VkClearValue) { };
 }
 
+static VkImageLayout get_attachment_layout(VkFormat format)
+{
+	switch(format)
+	{
+		case VK_FORMAT_B8G8R8A8_SRGB:
+			return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		case VK_FORMAT_D32_SFLOAT:
+			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		default:
+			LOG_FETAL_ERR("Unsupported format %u for attachment layout\n", format);
+	}
+	return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
 RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_t OUT render_pass)
 {
 	memzero(render_pass, vulkan_render_pass_t);
@@ -76,7 +90,9 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		.pAttachments = create_info->attachment_descriptions,
 		.attachmentCount = create_info->attachment_description_count,
 		.subpassCount = create_info->subpass_count,
-		.pSubpasses = subpasses
+		.pSubpasses = subpasses,
+		.dependencyCount = create_info->subpass_dependency_count,
+		.pDependencies = create_info->subpass_dependencies
 	};
 	vkCall(vkCreateRenderPass(renderer->logical_device->vo_handle, &render_pass_create_info, NULL, &render_pass->vo_handle));
 	// heap_free(attachment_descriptions);
@@ -100,6 +116,9 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 			.next_pass_usage = create_info->attachment_usages[i + render_pass->supplementary_attachment_count]
 		};
 		vulkan_attachment_create_no_alloc(renderer, &attachment_create_info, &render_pass->attachments[i]);
+
+		// TODO: Fix image layout transition issues in multiple render passes
+		// vulkan_image_transition_layout_to(&render_pass->attachments[i].image, get_attachment_layout(attachment_create_info.format));
 	}
 
 	// create clear values for each attachment in this render pass
@@ -177,17 +196,17 @@ RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* ren
 
 static INLINE u32 min(u32 v1, u32 v2) { return (v1 > v2) ? v2 : v1; }
 
-RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth)
+RENDERER_API void vulkan_render_pass_set_clear_indirect(vulkan_render_pass_t* render_pass, color_t color, float depth, VkClearValue* indirect_buffer)
 {
 	for(u32 i = 0; i < render_pass->attachment_count; i++)
 	{
 		switch(render_pass->vo_formats[i])
 		{
 			case VK_FORMAT_D32_SFLOAT:
-				render_pass->vo_clear_values[i] = (VkClearValue) { .depthStencil = { depth, 0UL } };
+				indirect_buffer[i] = (VkClearValue) { .depthStencil = { depth, 0UL } };
 				break;
 			case VK_FORMAT_B8G8R8A8_SRGB:
-				render_pass->vo_clear_values[i] = (VkClearValue) { .color = { .float32 = 
+				indirect_buffer[i] = (VkClearValue) { .color = { .float32 = 
 					{ 
 						color.r,
 						color.g,
@@ -198,7 +217,12 @@ RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass
 			default:
 				LOG_FETAL_ERR("Unsupported VkFormat %u for clear value\n", render_pass->vo_formats[i]);
 		}
-	}
+	}	
+}
+
+RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth)
+{
+	vulkan_render_pass_set_clear_indirect(render_pass, color, depth, render_pass->vo_clear_values);
 }
 
 RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index, vulkan_camera_t* camera)

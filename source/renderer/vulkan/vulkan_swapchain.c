@@ -65,7 +65,7 @@ RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapcha
 
 static void transition_image_to_layout_present_KHR(vulkan_swapchain_t* swapchain)
 {
-	VkCommandBuffer cb = swapchain->renderer->vo_command_buffers[0];
+	VkCommandBuffer cb = swapchain->renderer->vo_aux_command_buffer;
 
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	u32 count = swapchain->image_count;
@@ -78,7 +78,7 @@ static void transition_image_to_layout_present_KHR(vulkan_swapchain_t* swapchain
 			/* srcAccess: */ VK_ACCESS_NONE_KHR,
 			/* dstAccess: */ VK_ACCESS_MEMORY_READ_BIT,
 			/* srcStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-			/* dstStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+			/* dstStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
 	}
 	vulkan_command_buffer_end(cb);
 	vulkan_queue_submit(swapchain->renderer->vo_graphics_queue, cb, 
