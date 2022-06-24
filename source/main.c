@@ -33,11 +33,16 @@ int main(const char** argc, int argv)
 	memory_allocator_init(&argv);
 	
 	// initialize renderer
-	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Renderer", false, true);
+	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 1000, 900, "Renderer", false, true);
 
 	AUTO camera_system = renderer_get_camera_system(renderer);
 
 	// TODO: every scene will have their own camera system ( Camera sets )
+	// create a camera
+	AUTO camera = camera_system_getH(camera_system,
+							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
+	camera_set_clear(camera, COLOR_WHITE, 1.0f);
+	camera_set_active(camera, true);
 
 	AUTO camera3 = camera_system_getH(camera_system,
 							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
@@ -45,24 +50,16 @@ int main(const char** argc, int argv)
 	camera_set_clear(camera3, COLOR_GREEN, 1.0f);
 	camera_set_position(camera3, vec3(float)(0, 0.6, -3.0f));
 	camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG, 0));
-	// create a camera
-	AUTO camera = camera_system_getH(camera_system,
-							camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(camera, COLOR_WHITE, 1.0f);
-	camera_set_active(camera, true);
 
-	AUTO light = light_create(renderer, LIGHT_TYPE_POINT);
-	light_set_color(light, vec3(float)(1, 1, 1));
-	light_set_intensity(light, 0.3f);
+	AUTO light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
+	light_set_rotation(light, vec3(float)(10 DEG, -120 DEG, 0));
+	light_set_position(light, vec3(float)(1, 0.6f, -3.0f));
 
 	// create a render scene
 	AUTO scene = render_scene_create_from_preset(renderer, RENDER_SCENE_PRESET_TYPE_DEFAULT);
 
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
-
-	AUTO shaderH2 = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR);
-	AUTO mat2 = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH2, "Material2"));
 
 	AUTO skyboxTexture = texture_load(renderer, TEXTURE_TYPE_CUBE, 
 											"showcase/resource/skybox_textures/skybox/right.bmp",
@@ -79,7 +76,7 @@ int main(const char** argc, int argv)
 	material_set_texture(skyboxMaterial, "albedo", skyboxTexture);
 
 	AUTO texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Smile.bmp");
-	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT);
+	AUTO shaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST);
 	AUTO shader = shader_library_getH(slib, shaderH);
 	AUTO blueMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "BlueColorMaterial"));
 	AUTO greenMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, shaderH, "GreenColorMaterial"));
@@ -90,7 +87,6 @@ int main(const char** argc, int argv)
 	material_set_texture(greenMaterial, "albedo", texture);
 	material_set_vec4(blueMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
 	material_set_vec4(greenMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
-	material_set_vec4(mat2, "parameters.color", vec4(float)(1, 1, 1, 1));
 
 	render_object_t* skyboxObj = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_BACKGROUND));
 	render_object_set_material(skyboxObj, skyboxMaterial);
@@ -115,7 +111,7 @@ int main(const char** argc, int argv)
 	AUTO uiMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, uiShaderH, "UIMaterial"));
 
 	render_scene_add_queue(scene, RENDER_QUEUE_TYPE_QUEUE0);
-	AUTO quadMesh = mesh_create(renderer, mesh3d_plane(200));
+	AUTO quadMesh = mesh_create(renderer, mesh3d_plane(400));
 	render_object_t* obj5 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
 	render_object_set_material(obj5, uiMaterial);
 	render_object_attach(obj5, quadMesh);
@@ -137,7 +133,7 @@ int main(const char** argc, int argv)
 	vulkan_texture_t* renderTexture = vulkan_texture_create(renderer->vulkan_handle, &create_info);
 
 	material_set_texture(uiMaterial, "albedo", renderTexture);
-
+	
 	camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_TEXTURE, renderTexture);
 
 	bool swap = true;
@@ -155,17 +151,21 @@ int main(const char** argc, int argv)
 			// camera_set_active(previous_camera, false);
 			switch(camera_index % 2)
 			{
-				case 0:
+				case 1:
 					// camera_set_active(camera2, true);
 					// previous_camera = camera2;
+					camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_TEXTURE, renderTexture);
+					camera_set_active(camera, true);
 					break;
 				// case 1:
 				// 	camera_set_active(camera3, true);
 				// 	previous_camera = camera3;
 				// 	break;
-				case 1:
+				case 0:
 					// camera_set_active(camera, true);
 					// previous_camera = camera;
+					camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_SCREEN, NULL);
+					camera_set_active(camera, false);
 					break;
 			}
 			camera_index++;
@@ -175,8 +175,8 @@ int main(const char** argc, int argv)
 		float deltaTime = time_get_delta_time(&tHandle);
 		angle += deltaTime * speed;
 		render_object_set_transform(obj1, mat4_rotation(float)(0 DEG, angle DEG, 0 DEG));
-		light_set_position(light, vec3(float)(0, 0.5f, sin(angle * 2 DEG)));
-		camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG * sin(angle DEG), 0));
+		// light_set_position(light, vec3(float)(0, 0.5f, sin(angle * 2 DEG)));
+		// camera_set_rotation(camera3, vec3(float)(10 DEG, -90 DEG * sin(angle DEG), 0));
 
 		renderer_begin_frame(renderer);
 
