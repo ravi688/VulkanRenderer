@@ -54,6 +54,7 @@ int main(const char** argc, int argv)
 	AUTO light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
 	light_set_rotation(light, vec3(float)(10 DEG, -120 DEG, 0));
 	light_set_position(light, vec3(float)(1, 0.6f, -3.0f));
+	// light_set_position(light, vec3(float)(0, 1, -1));
 
 	// create a render scene
 	AUTO scene = render_scene_create_from_preset(renderer, RENDER_SCENE_PRESET_TYPE_DEFAULT);

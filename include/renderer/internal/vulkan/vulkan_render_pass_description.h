@@ -4,6 +4,7 @@
 #include <renderer/defines.h>
 #include <renderer/glsl_types.h>
 #include <renderer/internal/vulkan/vulkan_types.h> 	// vulkan_render_pass_type_t
+#include <vulkan/vulkan.h>
 
 typedef struct vulkan_shader_resource_description_t vulkan_shader_resource_description_t;
 typedef enum vulkan_attachment_type_t vulkan_attachment_type_t;
@@ -54,6 +55,10 @@ typedef struct vulkan_render_pass_description_t
 		u32 subpass_count;
 	};
 
+	/* SUBPASS DEPENDENCIES */
+	VkSubpassDependency* subpass_dependencies;
+	u32 subpass_dependency_count;
+
 	/* ATTACHMENTS */
 	vulkan_attachment_type_t* attachments;
 	u32 attachment_count;
@@ -86,4 +91,5 @@ typedef enum vulkan_attachment_reference_type_t
 
 RENDERER_API void vulkan_render_pass_description_add_attachment_reference(vulkan_render_pass_description_t* description, vulkan_attachment_reference_type_t type, u32 reference, u32 binding);
 RENDERER_API void vulkan_render_pass_description_end_subpass(vulkan_render_pass_description_t* description);
+RENDERER_API void vulkan_render_pass_description_add_subpass_dependency(vulkan_render_pass_description_t* description, VkSubpassDependency* dependency);
 RENDERER_API void vulkan_render_pass_description_end(vulkan_render_pass_description_t* description);
