@@ -733,8 +733,9 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
 									  VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR) : VK_ATTACHMENT_LOAD_OP_CLEAR;
 
-		VkImageLayout initial_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ?
-										VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
+		VkImageLayout initial_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
+									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
+									  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED) : VK_IMAGE_LAYOUT_UNDEFINED;
 									
 		VkImageLayout final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
 									VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : 

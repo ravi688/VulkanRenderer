@@ -309,7 +309,26 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				begin_subpass(&passes, 0);
 					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
 				end_subpass(&passes);
+				
+				// let the clear happen first
+				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstSubpass = 0;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				add_dependency(&passes, &dependency);
 
+				// let the layout transition happen
+				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstSubpass = 0;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				dependency.dstAccessMask = 0;
+				add_dependency(&passes, &dependency);
+
+				// let the write happen first and then allow read
 				dependency.srcSubpass = 0;
 				dependency.dstSubpass = VK_SUBPASS_EXTERNAL;
 				dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
@@ -317,21 +336,60 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 				add_dependency(&passes, &dependency);
+
 			end_pass(&passes);
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
 				add_input(&passes, 0, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 1 target [swapchain image]
-				// add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 0 target
+				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 0 target
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
 				begin_subpass(&passes, 1);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
-					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 1, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
 				end_subpass(&passes);
-				// begin_subpass(&passes, 2);
-					// add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT, 1, VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0);
-					// add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
-					// add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
-				// end_subpass(&passes);
+
+				// let the clear happen first for the depth stencil attachment
+				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstSubpass = 0;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				add_dependency(&passes, &dependency);
+
+				// let the clear happen first for the color attachment
+				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstSubpass = 0;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				add_dependency(&passes, &dependency);
+
+
+				// let the layout transition happen
+				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstSubpass = 0;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				dependency.dstAccessMask = 0;
+				add_dependency(&passes, &dependency);
+
+				begin_subpass(&passes, 2);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT, 1, VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
+				end_subpass(&passes);
+
+				dependency.srcSubpass = 0;
+				dependency.dstSubpass = 1;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+				dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				dependency.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+				add_dependency(&passes, &dependency);
+
 			end_pass(&passes);
 			break;
 		default:
