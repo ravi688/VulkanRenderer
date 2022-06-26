@@ -154,7 +154,7 @@ RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulk
 		case VULKAN_LIGHT_TYPE_AMBIENT:
 		break;
 		case VULKAN_LIGHT_TYPE_DIRECTIONAL:
-			vulkan_light_set_projection(light, mat4_ortho_projection(float)(0.04f, 10, 3, 1));
+			vulkan_light_set_projection(light, mat4_ortho_projection(float)(0.04f, 20.0f, 3, 1));
 		break;
 		case VULKAN_LIGHT_TYPE_SPOT:
 			vulkan_light_set_spot_angle(light, 30 DEG);

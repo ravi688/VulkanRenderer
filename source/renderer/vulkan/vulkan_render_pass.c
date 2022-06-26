@@ -95,6 +95,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		.pDependencies = create_info->subpass_dependencies
 	};
 	vkCall(vkCreateRenderPass(renderer->logical_device->vo_handle, &render_pass_create_info, NULL, &render_pass->vo_handle));
+	log_ptr(render_pass->vo_handle);
 	// heap_free(attachment_descriptions);
 	heap_free(subpasses);
 
@@ -116,9 +117,6 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 			.next_pass_usage = create_info->attachment_usages[i + render_pass->supplementary_attachment_count]
 		};
 		vulkan_attachment_create_no_alloc(renderer, &attachment_create_info, &render_pass->attachments[i]);
-
-		// TODO: Fix image layout transition issues in multiple render passes
-		// vulkan_image_transition_layout_to(&render_pass->attachments[i].image, get_attachment_layout(attachment_create_info.format));
 	}
 
 	// create clear values for each attachment in this render pass

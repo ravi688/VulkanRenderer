@@ -30,7 +30,7 @@ static void vulkan_framebuffer_recreate(vulkan_framebuffer_t* framebuffer, VkIma
 	assert(render_pass->supplementary_attachment_count <= 1);
 	for(u32 j = 0; j < render_pass->supplementary_attachment_count; j++)
 	{
-		if(override_view != NULL)
+		if(override_view != VK_NULL_HANDLE)
 			image_views[0] = override_view;
 		else
 			image_views[j] = render_pass->supplementary_attachments[j + framebuffer->id * render_pass->supplementary_attachment_count];
@@ -66,7 +66,7 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 											&& (render_pass->supplementary_attachment_count != 0);
 	framebuffer->id = id;
 	framebuffer->image_views = heap_newv(VkImageView, render_pass->attachment_count);
-	vulkan_framebuffer_recreate(framebuffer, NULL);
+	vulkan_framebuffer_recreate(framebuffer, VK_NULL_HANDLE);
 }
 
 RENDERER_API void vulkan_framebuffer_destroy(vulkan_framebuffer_t* framebuffer)
@@ -89,6 +89,6 @@ RENDERER_API void vulkan_framebuffer_set_supplementary(vulkan_framebuffer_t* fra
 RENDERER_API void vulkan_framebuffer_restore_supplementary(vulkan_framebuffer_t* framebuffer)
 {
 	if(!framebuffer->is_supplementary_supported) return;
-	vulkan_framebuffer_recreate(framebuffer, framebuffer->pass->supplementary_attachments[0]);
+	vulkan_framebuffer_recreate(framebuffer, VK_NULL_HANDLE);
 }
 

@@ -702,116 +702,6 @@ static void write_render_pass_descriptors(vulkan_render_pass_t* previous_pass, v
 	}
 }
 
-VkPipelineStageFlags get_stage_mask(vulkan_subpass_create_info_t* subpass)
-{
-	VkPipelineStageFlags flags = 0;
-	for(u32 i = 0; i < subpass->color_attachment_count; i++)
-	{
-		VkAttachmentReference ref = subpass->color_attachments[i];
-		switch(ref.layout)
-		{
-			case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-				flags |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			break;
-			default:
-				LOG_FETAL_ERR("Undefined VkPipelineStageFlags for the color image layout %u\n", ref.layout);
-		}
-	}
-
-	for(u32 i = 0; i < subpass->input_attachment_count; i++)
-	{
-		VkAttachmentReference ref = subpass->input_attachments[i];
-		switch(ref.layout)
-		{
-			case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
-				flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-			break;
-			default:
-				LOG_FETAL_ERR("Undefined VkPipelineStageFlags for the input image layout %u\n", ref.layout);
-		}
-	}
-
-	if(subpass->depth_stencil_attachment == NULL)
-		return flags;
-
-	switch(subpass->depth_stencil_attachment->layout)
-	{
-		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-			flags |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-			flags |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		break;
-		default:
-			LOG_FETAL_ERR("Undefined VkPipelineStageFlags for the depth stencil image layout: %u\n", subpass->depth_stencil_attachment->layout);
-	}
-
-	return flags;
-}
-
-VkAccessFlags get_access_mask(vulkan_subpass_create_info_t* subpass)
-{
-	VkAccessFlags flags = 0;
-	for(u32 i = 0; i < subpass->color_attachment_count; i++)
-	{
-		VkAttachmentReference ref = subpass->color_attachments[i];
-		switch(ref.layout)
-		{
-			case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-				flags |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			break;
-			default:
-				LOG_FETAL_ERR("Undefined VkAccessFlags for the color image layout %u\n", ref.layout);
-		}
-	}
-
-	for(u32 i = 0; i < subpass->input_attachment_count; i++)
-	{
-		VkAttachmentReference ref = subpass->input_attachments[i];
-		switch(ref.layout)
-		{
-			case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
-				flags |= VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-			break;
-			default:
-				LOG_FETAL_ERR("Undefined VkAccessFlags for the input image layout %u\n", ref.layout);
-		}
-	}
-
-	if(subpass->depth_stencil_attachment == NULL)
-		return flags;
-
-	switch(subpass->depth_stencil_attachment->layout)
-	{
-		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-			flags |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-			flags |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-		break;
-		default:
-			LOG_FETAL_ERR("Undefined VkAccessFlags for the depth stencil image layout: %u\n", subpass->depth_stencil_attachment->layout);
-	}
-
-	return flags;
-}
-
-#define STAGE_COLOR_WRITE_DEPTH_READ_WRITE (VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT)
-#define ACCESS_COLOR_WRITE_DEPTH_READ_WRITE (VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
-
-static VkSubpassDependency get_dependency(s32 index, vulkan_subpass_create_info_t* src, vulkan_subpass_create_info_t* dst)
-{
-	VkSubpassDependency dependency = 
-	{
-		.srcSubpass = (src == NULL) ? VK_SUBPASS_EXTERNAL : index,
-		.dstSubpass = (dst == NULL) ? VK_SUBPASS_EXTERNAL : index + 1,
-		.srcStageMask = (src == NULL) ? STAGE_COLOR_WRITE_DEPTH_READ_WRITE : get_stage_mask(src),
-		.dstStageMask = (dst == NULL) ? STAGE_COLOR_WRITE_DEPTH_READ_WRITE : get_stage_mask(dst),
-		.srcAccessMask = (src == NULL) ? ACCESS_COLOR_WRITE_DEPTH_READ_WRITE : get_access_mask(src),
-		.dstAccessMask = (dst == NULL) ? ACCESS_COLOR_WRITE_DEPTH_READ_WRITE : get_access_mask(dst),
-		.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
-	};
-	return dependency;
-}
-
 static vulkan_render_pass_create_info_t* convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_t* next_pass)
 {
 	vulkan_render_pass_create_info_t* create_info = heap_new(vulkan_render_pass_create_info_t);
@@ -843,8 +733,9 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
 									  VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR) : VK_ATTACHMENT_LOAD_OP_CLEAR;
 
-		VkImageLayout initial_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ?
-										VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
+		VkImageLayout initial_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
+									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
+									  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED) : VK_IMAGE_LAYOUT_UNDEFINED;
 									
 		VkImageLayout final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
 									VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : 
@@ -949,13 +840,8 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		create_info->subpasses[i].preserve_attachments = NULL;
 		create_info->subpasses[i].preserve_attachment_count = 0;
 	}
-
-	create_info->subpass_dependency_count = create_info->subpass_count + 1;
-	VkSubpassDependency* dependencies = create_info->subpass_dependencies = heap_newv(VkSubpassDependency, create_info->subpass_dependency_count);
-	for(s32 i = -1; i < CAST_TO(s32, create_info->subpass_count); i++)
-		dependencies[i + 1] = get_dependency(i, 
-									(i >= 0) ? &create_info->subpasses[i] : NULL, 
-									((i + 1) < create_info->subpass_count) ? &create_info->subpasses[i + 1] : NULL);
+	create_info->subpass_dependencies = pass->subpass_dependencies;
+	create_info->subpass_dependency_count = pass->subpass_dependency_count;
 	return create_info;
 }
 

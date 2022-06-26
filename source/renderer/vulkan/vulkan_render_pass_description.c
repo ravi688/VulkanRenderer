@@ -27,6 +27,7 @@ RENDERER_API void vulkan_render_pass_description_begin(vulkan_render_pass_descri
 	description->attachments = CAST_TO(vulkan_attachment_type_t*, create_buffer(vulkan_attachment_type_t));
 	description->input_attachments = CAST_TO(u32*, create_buffer(u32));
 	description->subpass_descriptions = CAST_TO(vulkan_subpass_description_t*, create_buffer(vulkan_subpass_description_t));
+	description->subpass_dependencies = CAST_TO(VkSubpassDependency*, create_buffer(VkSubpassDependency));
 	description->render_set_bindings = CAST_TO(vulkan_shader_resource_description_t*, create_buffer(vulkan_shader_resource_description_t));
 }
 
@@ -102,6 +103,12 @@ RENDERER_API void vulkan_render_pass_description_end_subpass(vulkan_render_pass_
 	heap_free(buffer);
 }
 
+RENDERER_API void vulkan_render_pass_description_add_subpass_dependency(vulkan_render_pass_description_t* description, VkSubpassDependency* dependency)
+{
+	VkSubpassDependency* dst_dependency = create_element(CAST_TO(BUFFER*, description->subpass_dependencies));
+	memcpy(dst_dependency, dependency, sizeof(VkSubpassDependency));
+}
+
 RENDERER_API void vulkan_render_pass_description_end(vulkan_render_pass_description_t* description)
 {
 	BUFFER* buffer = CAST_TO(BUFFER*, description->attachments);
@@ -115,6 +122,10 @@ RENDERER_API void vulkan_render_pass_description_end(vulkan_render_pass_descript
 	buffer = CAST_TO(BUFFER*, description->subpass_descriptions);
 	description->subpass_count = buf_get_element_count(buffer);
 	description->subpass_descriptions = buf_get_ptr(buffer);
+	heap_free(buffer);
+	buffer = CAST_TO(BUFFER*, description->subpass_dependencies);
+	description->subpass_dependency_count = buf_get_element_count(buffer);
+	description->subpass_dependencies = buf_get_ptr(buffer);
 	heap_free(buffer);
 	buffer = CAST_TO(BUFFER*, description->render_set_bindings);
 	description->render_set_bindings = buf_get_ptr(buffer);
