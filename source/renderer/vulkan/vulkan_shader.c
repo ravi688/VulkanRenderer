@@ -728,7 +728,21 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 	for(u32 i = 0; i < pass->attachment_count; i++)
 	{
 		bool is_supplementary = i < create_info->supplementary_attachment_count;
-		VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+
+		/*
+			TODO: STORE operation is expensive, this should be VK_ATTACHMENT_STORE_OP_DONT_CARE by default
+			We can define the usage of an attachment upfront while defining the render pass description
+			for the attachments that are supposed to be sampled by another shader.
+			However the following algorithm creates a usage mask based on if they are being accessed in the
+			next pass; but it doesn't know that if the attachment might be sampled in another pass or descriptor binding,
+			for that reason we need to define the usage of such attachments upfront.
+
+			However, swapchain color attachment is always stored so we only need to care about the depth attachment
+			and that depth attachment must be global to all the render passes.
+		 */
+		VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_STORE;
+		
 		VkAttachmentLoadOp load_op = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
 									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
 									  VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR) : VK_ATTACHMENT_LOAD_OP_CLEAR;

@@ -17,8 +17,11 @@ typedef struct vulkan_framebuffer_t
 
 	/* INTERNAL use only */
 	bool is_supplementary_supported;
-	VkImageView* image_views;
-	u32 id;
+	bool is_depth_supported;
+	u32 depth_index; 	// index of the depth attachment in this framebuffer, otherwise U32_MAX
+	// TODO: this should be shared among all the identical framebuffers (typically for a render pass)
+	VkImageView* image_views;	// temporary buffer to be used when recreating this framebuffer
+	u32 id; 		// index of this frambuffer in the list of the framebuffers (in case of double or tripple buffering)
 } vulkan_framebuffer_t;
 
 
@@ -32,6 +35,8 @@ RENDERER_API void vulkan_framebuffer_release_resources(vulkan_framebuffer_t* fra
 
 RENDERER_API void vulkan_framebuffer_set_supplementary(vulkan_framebuffer_t* framebuffer, vulkan_attachment_t* attachment);
 RENDERER_API void vulkan_framebuffer_restore_supplementary(vulkan_framebuffer_t* framebuffer);
+RENDERER_API void vulkan_framebuffer_set_depth(vulkan_framebuffer_t* framebuffer, vulkan_attachment_t* attachment);
+RENDERER_API void vulkan_framebuffer_restore_depth(vulkan_framebuffer_t* framebuffer);
 
 END_CPP_COMPATIBLE
 

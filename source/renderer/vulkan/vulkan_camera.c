@@ -212,13 +212,13 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 	// heap_free(camera);
 }
 
-/* logic functions */
-RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera, u32 clear_flags)
+static void transition_target_layout_for_write(vulkan_texture_t* target)
 {
-	if(vulkan_camera_is_offscreen(camera))
+	VkCommandBuffer cb = target->renderer->vo_command_buffers[target->renderer->swapchain->current_image_index];
+	switch(target->image.vo_format)
 	{
-		VkCommandBuffer cb = camera->renderer->vo_command_buffers[camera->renderer->swapchain->current_image_index];
-		vulkan_command_image_layout_transition(cb, camera->render_target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+		case VK_FORMAT_B8G8R8A8_SRGB:
+			vulkan_command_image_layout_transition(cb, target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
 				/* oldLayout: */ VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 				/* newLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 				/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
@@ -226,7 +226,63 @@ RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera, u32 clear_flags)
 				/* dstAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 				/* srcStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 				/* dstStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+			break;
+		case VK_FORMAT_D32_SFLOAT:
+			vulkan_command_image_layout_transition(cb, target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+				/* oldLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+				/* newLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+				/* aspectMask: */ VK_IMAGE_ASPECT_DEPTH_BIT,
+				/* srcAccess: */ VK_ACCESS_SHADER_READ_BIT,
+				/* dstAccess: */ VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				/* srcStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				/* dstStage: */ VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+			break;
+		default:
+			LOG_FETAL_ERR("Unsupported format %u for any possible render target layout\n", target->image.vo_format);
 	}
+}
+
+static void transition_target_layout_for_sample(vulkan_texture_t* target)
+{
+	VkCommandBuffer cb = target->renderer->vo_command_buffers[target->renderer->swapchain->current_image_index];
+	switch(target->image.vo_format)
+	{
+		case VK_FORMAT_B8G8R8A8_SRGB:
+			vulkan_command_image_layout_transition(cb, target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+				/* oldLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				/* newLayout: */ VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
+				/* srcAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				/* dstAccess: */ VK_ACCESS_SHADER_READ_BIT,
+				/* srcStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				/* dstStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+			break;
+		case VK_FORMAT_D32_SFLOAT:
+			vulkan_command_image_layout_transition(cb, target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+				/* oldLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+				/* newLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+				/* aspectMask: */ VK_IMAGE_ASPECT_DEPTH_BIT,
+				/* srcAccess: */ VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				/* dstAccess: */ VK_ACCESS_SHADER_READ_BIT,
+				/* srcStage: */ VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+				/* dstStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+			break;
+		default:
+			LOG_FETAL_ERR("Unsupported format %u for any possible render target layout\n", target->image.vo_format);
+	}
+}
+
+/* logic functions */
+RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera, u32 clear_flags)
+{
+	if(vulkan_camera_is_offscreen(camera))
+	{
+		if(camera->color_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+			transition_target_layout_for_write(camera->color_render_target);
+		if(camera->depth_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+			transition_target_layout_for_write(camera->depth_render_target);
+	}
+
 	switch(clear_flags)
 	{
 		case VULKAN_CAMERA_CLEAR_FLAG_CLEAR:
@@ -241,16 +297,13 @@ RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera, u32 clear_flags)
 
 RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera)
 {
-	if(!vulkan_camera_is_offscreen(camera)) return;
-	VkCommandBuffer cb = camera->renderer->vo_command_buffers[camera->renderer->swapchain->current_image_index];
-	vulkan_command_image_layout_transition(cb, camera->render_target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
-			/* oldLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			/* newLayout: */ VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
-			/* srcAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			/* dstAccess: */ VK_ACCESS_SHADER_READ_BIT,
-			/* srcStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			/* dstStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	if(vulkan_camera_is_offscreen(camera))
+	{
+		if(camera->color_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+			transition_target_layout_for_sample(camera->color_render_target);
+		if(camera->depth_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+			transition_target_layout_for_sample(camera->depth_render_target);
+	}
 }
 
 RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth)
@@ -263,16 +316,35 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
 	switch(target_type)
 	{
-		case VULKAN_CAMERA_RENDER_TARGET_TYPE_SWAPCHAIN:
-			for(buf_ucount_t i = 0; i < count; i++)
-				vulkan_framebuffer_restore_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)));
-			camera->render_target = NULL;
+		case VULKAN_CAMERA_RENDER_TARGET_TYPE_COLOR:
+			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+			{
+				for(buf_ucount_t i = 0; i < count; i++)
+					vulkan_framebuffer_restore_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)));
+				camera->color_render_target = NULL;
+			}
+			else
+			{
+				for(buf_ucount_t i = 0; i < count; i++)
+					vulkan_framebuffer_set_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)), CAST_TO(vulkan_attachment_t*, texture));
+				camera->color_render_target = texture;
+			}
+
 		break;
-		case VULKAN_CAMERA_RENDER_TARGET_TYPE_TEXTURE:
-			for(buf_ucount_t i = 0; i < count; i++)
-				vulkan_framebuffer_set_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)), 
-					CAST_TO(vulkan_attachment_t*, texture));
-			camera->render_target = texture;
+		case VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH:
+			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+			{
+				for(buf_ucount_t i = 0; i < count; i++)
+					vulkan_framebuffer_restore_depth(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)));
+				camera->depth_render_target = NULL;
+			}
+			else
+			{
+				for(buf_ucount_t i = 0; i < count; i++)
+					vulkan_framebuffer_set_depth(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)), CAST_TO(vulkan_attachment_t*, texture));
+				camera->depth_render_target = texture;
+			}
+
 		break;
 		default:
 			LOG_FETAL_ERR("Invalid vulkan camera render target type: %u\n", target_type);

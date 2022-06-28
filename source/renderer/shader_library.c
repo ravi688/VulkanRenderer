@@ -79,6 +79,7 @@ static vulkan_shader_resource_description_t* create_material_set_binding(shader_
 			end_uniform(&bindings);	
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
+		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
 			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
 			end_uniform(&bindings);	
@@ -148,6 +149,7 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(shader_libr
 			end_vertex_binding(&attributes);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
+		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
 			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(&attributes);
@@ -238,6 +240,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 	switch(preset)
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
+		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR);
 				begin_subpass(&passes, 0);
@@ -442,7 +445,14 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 				add_shader(&pipelines, "shaders/presets/unlit/ui/ui.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
 				add_shader(&pipelines, "shaders/presets/unlit/ui/ui.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
 			end_pipeline(&pipelines);
-			break;		
+			break;
+		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
+			begin_pipeline(renderer, &pipelines);
+				add_color_blend_state(&pipelines, VK_FALSE);
+				add_shader(&pipelines, "shaders/presets/unlit/ui/ui2.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/unlit/ui/ui2.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			break;
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
 			begin_pipeline(renderer, &pipelines);
 				add_color_blend_state(&pipelines, VK_FALSE);

@@ -1,5 +1,5 @@
 
-#pragma
+#pragma once
 
 #include <renderer/defines.h>
 #include <renderer/color.h>
@@ -26,11 +26,13 @@ typedef enum vulkan_camera_projection_type_t
 	VULKAN_CAMERA_PROJECTION_TYPE_STEROGRAPHIC
 } vulkan_camera_projection_type_t;
 
+#define VULKAN_CAMERA_RENDER_TARGET_SCREEN CAST_TO(vulkan_texture_t*, NULL)
+
 typedef enum vulkan_camera_render_target_type_t
 {
 	VULKAN_CAMERA_RENDER_TARGET_TYPE_UNDEFINED = 0,
-	VULKAN_CAMERA_RENDER_TARGET_TYPE_SWAPCHAIN,
-	VULKAN_CAMERA_RENDER_TARGET_TYPE_TEXTURE
+	VULKAN_CAMERA_RENDER_TARGET_TYPE_COLOR,
+	VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH
 } vulkan_camera_render_target_type_t;
 
 typedef struct vulkan_camera_create_info_t
@@ -54,7 +56,8 @@ typedef struct vulkan_camera_t
 	vulkan_descriptor_set_t set;
 	vulkan_render_pass_t* default_render_pass;
 
-	vulkan_texture_t* render_target; 	// NULL, if the target is the screen
+	vulkan_texture_t* color_render_target; 	// NULL, if the target is the swapchain color attachment
+	vulkan_texture_t* depth_render_target; 	// NULL, if the target is the backed depth attachment
 
 	BUFFER framebuffers;
 
@@ -107,7 +110,7 @@ RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass
 /* getters */
 static RENDERER_API FORCE_INLINE bool vulkan_camera_is_offscreen(vulkan_camera_t* camera)
 {
-	return camera->render_target != NULL;
+	return (camera->color_render_target != NULL) || (camera->depth_render_target != NULL);
 }
 static RENDERER_API FORCE_INLINE bool vulkan_camera_is_active(vulkan_camera_t* camera)
 {
