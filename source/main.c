@@ -33,7 +33,7 @@ int main(const char** argc, int argv)
 	memory_allocator_init(&argv);
 	
 	// initialize renderer
-	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 1000, 900, "Renderer", false, true);
+	AUTO renderer = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 900, 900, "Renderer", false, true);
 
 	AUTO camera_system = renderer_get_camera_system(renderer);
 
@@ -109,15 +109,24 @@ int main(const char** argc, int argv)
 	render_object_set_transform(obj1, mat4_translation(float)(0, 0, 0));
 
 	AUTO uiShaderH = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI);
+	AUTO uiShaderH2 = shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2);
 	AUTO uiMaterial = material_library_getH(mlib, material_library_create_materialH(mlib, uiShaderH, "UIMaterial"));
+	AUTO uiMaterial2 = material_library_getH(mlib, material_library_create_materialH(mlib, uiShaderH2, "UIMaterial2"));
 
 	render_scene_add_queue(scene, RENDER_QUEUE_TYPE_QUEUE0);
 	AUTO quadMesh = mesh_create(renderer, mesh3d_plane(400));
 	render_object_t* obj5 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
 	render_object_set_material(obj5, uiMaterial);
 	render_object_attach(obj5, quadMesh);
-	render_object_set_transform(obj5, mat4_rotation(float)(0, 0, 90 DEG));
+	render_object_set_transform(obj5, mat4_mul(float)(2, mat4_translation(float)(0, 0, -200), mat4_rotation(float)(0, 0, 90 DEG)));
 	material_set_vec4(uiMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
+
+	render_object_t* obj6 = render_scene_getH(scene, render_scene_create_object(scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
+	render_object_set_material(obj6, uiMaterial2);
+	render_object_attach(obj6, quadMesh);
+	render_object_set_transform(obj6, mat4_mul(float)(2, mat4_translation(float)(0, 0, 200), mat4_rotation(float)(0, 0, 90 DEG)));
+	material_set_vec4(uiMaterial2, "parameters.color", vec4(float)(1, 1, 1, 1));
+
 
 	vulkan_texture_create_info_t create_info = 
 	{
@@ -131,11 +140,16 @@ int main(const char** argc, int argv)
 		.final_usage = VULKAN_TEXTURE_USAGE_SAMPLED,
 		.technique = VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH
 	};
-	vulkan_texture_t* renderTexture = vulkan_texture_create(renderer->vulkan_handle, &create_info);
+	vulkan_texture_t* colorRenderTexture = vulkan_texture_create(renderer->vulkan_handle, &create_info);
 
-	material_set_texture(uiMaterial, "albedo", renderTexture);
+	create_info.type = VULKAN_TEXTURE_TYPE_DEPTH | VULKAN_TEXTURE_TYPE_RENDER_TARGET;
+	vulkan_texture_t* depthRenderTexture = vulkan_texture_create(renderer->vulkan_handle, &create_info);
+
+	material_set_texture(uiMaterial, "albedo", depthRenderTexture);
+	material_set_texture(uiMaterial2, "albedo", colorRenderTexture);
 	
-	camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_TEXTURE, renderTexture);
+	camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, colorRenderTexture);
+	camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, depthRenderTexture);
 
 	bool swap = true;
 	float angle = 0;
@@ -155,7 +169,8 @@ int main(const char** argc, int argv)
 				case 1:
 					// camera_set_active(camera2, true);
 					// previous_camera = camera2;
-					camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_TEXTURE, renderTexture);
+					camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, colorRenderTexture);
+					camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, depthRenderTexture);
 					camera_set_active(camera, true);
 					break;
 				// case 1:
@@ -165,7 +180,8 @@ int main(const char** argc, int argv)
 				case 0:
 					// camera_set_active(camera, true);
 					// previous_camera = camera;
-					camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_SCREEN, NULL);
+					camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_SCREEN);
+					camera_set_render_target(camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_SCREEN);
 					camera_set_active(camera, false);
 					break;
 			}
@@ -195,8 +211,11 @@ int main(const char** argc, int argv)
 		renderer_update(renderer);
 	}
 
-	texture_destroy(renderTexture);
-	texture_release_resources(renderTexture);
+	texture_destroy(colorRenderTexture);
+	texture_release_resources(colorRenderTexture);
+
+	texture_destroy(depthRenderTexture);
+	texture_release_resources(depthRenderTexture);
 
 	texture_destroy(texture);
 	texture_release_resources(texture);

@@ -135,6 +135,7 @@ static VkImageUsageFlags get_usage(vulkan_texture_type_t type, vulkan_texture_us
 					break;
 					case VULKAN_TEXTURE_TYPE_DEPTH:
 						flags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+					break;
 					default:
 						UNSUPPORTED_TEXTURE_TYPE(type & BIT_MASK32(3));
 				}
@@ -385,7 +386,19 @@ RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulk
 		case VULKAN_TEXTURE_USAGE_NONE:
 		break;
 		case VULKAN_TEXTURE_USAGE_SAMPLED:
-			vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			switch(type & BIT_MASK32(3))
+			{
+				case VULKAN_TEXTURE_TYPE_ALBEDO:
+				case VULKAN_TEXTURE_TYPE_NORMAL:
+				case VULKAN_TEXTURE_TYPE_COLOR:
+					vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+					break;
+				case VULKAN_TEXTURE_TYPE_DEPTH:
+					vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+					break;
+				default:
+					UNSUPPORTED_TEXTURE_TYPE(type & BIT_MASK32(3));
+			}
 		break;
 		case VULKAN_TEXTURE_USAGE_TRANSFER_DST:
 			vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
