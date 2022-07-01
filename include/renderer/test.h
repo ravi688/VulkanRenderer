@@ -21,13 +21,21 @@
 
 #include <renderer/defines.h>
 
+#define DEFAULT_TEST_NAME "ENVIRONMENT_REFLECTIONS"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 800
 #define GPU_TYPE RENDERER_GPU_TYPE_DISCRETE
-#define FULL_SCREEN false
-#define RESIZABLE true
+#define FULL_SCREEN 0
+#define RESIZABLE 1
 #define WINDOW_NAME "3D Renderer"
+
+#if (FULL_SCREEN == 1)
+#	undef WINDOW_WIDTH
+#	define WINDOW_WIDTH 1920
+#	undef WINDOW_HEIGHT
+#	define WINDOW_HEIGHT 1080
+#endif
 
 typedef struct renderer_t renderer_t;
 

@@ -105,6 +105,13 @@ static vulkan_shader_resource_description_t* create_material_set_binding(shader_
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
 			add_opaque(&bindings, "albedo", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
+		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION:
+			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
+				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
+				struct_descriptor_add_field(parameters, "reflectance", GLSL_TYPE_FLOAT);
+			end_uniform(&bindings);	
+			add_opaque(&bindings, "reflectionMap", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+			break;
 		default:
 			UNSUPPORTED_PRESET(preset);
 	};
@@ -158,6 +165,7 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(shader_libr
 			end_vertex_binding(&attributes);
 		break;
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
+		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION:
 			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(&attributes);
@@ -279,6 +287,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 			end_pass(&passes);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
+		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION:
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
@@ -475,6 +484,14 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
 				add_shader(&pipelines, "shaders/presets/lit/color/color.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
 				add_shader(&pipelines, "shaders/presets/lit/color/color.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			break;
+		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION:
+			begin_pipeline(renderer, &pipelines);
+				add_color_blend_state(&pipelines, VK_FALSE);
+				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
+				add_shader(&pipelines, "shaders/presets/lit/color/reflection.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/lit/color/reflection.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
 			end_pipeline(&pipelines);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR:

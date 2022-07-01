@@ -46,6 +46,11 @@ RENDERER_API render_scene_t* render_scene_create_from_preset(renderer_t* rendere
 	return vulkan_render_scene_create_from_preset(renderer->vulkan_handle, CAST_TO(vulkan_render_scene_preset_type_t, type));
 }
 
+RENDERER_API render_scene_t* render_scene_create_from_mask(renderer_t* renderer, u64 mask)
+{
+	return vulkan_render_scene_create_from_mask(renderer->vulkan_handle, mask);
+}
+
 RENDERER_API void render_scene_destroy(render_scene_t* scene)
 {
 	vulkan_render_scene_destroy(scene);

@@ -84,7 +84,10 @@ typedef enum vulkan_render_queue_type_t
 	VULKAN_RENDER_QUEUE_TYPE_QUEUE4, 		// general purpose queue
 	VULKAN_RENDER_QUEUE_TYPE_QUEUE5, 		// general purpose queue
 	VULKAN_RENDER_QUEUE_TYPE_QUEUE6, 		// general purpose queue
-	VULKAN_RENDER_QUEUE_TYPE_QUEUE7 		// general purpose queue
+	VULKAN_RENDER_QUEUE_TYPE_QUEUE7, 		// general purpose queue
+
+	VULKAN_RENDER_QUEUE_TYPE_MAX, 			// maximum invalid value
+	VULKAN_RENDER_QUEUE_TYPE_MIN = VULKAN_RENDER_QUEUE_TYPE_UNDEFINED, 	// minimum invalid value
 } vulkan_render_queue_type_t;
 
 typedef struct vulkan_render_queue_t

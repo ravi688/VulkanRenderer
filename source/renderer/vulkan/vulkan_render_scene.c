@@ -80,6 +80,22 @@ RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_preset(vulka
 	return scene;
 }
 
+RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_mask(vulkan_renderer_t* renderer, u64 mask)
+{
+	BUFFER queue_types = buf_new(vulkan_render_queue_type_t);
+	for(int i = VULKAN_RENDER_QUEUE_TYPE_MIN + 1; i < VULKAN_RENDER_QUEUE_TYPE_MAX; i++)
+		if(mask & BIT64(i))
+			buf_push_auto(&queue_types, i);
+	vulkan_render_scene_create_info_t create_info = 
+	{
+		.required_queues = queue_types.bytes,
+		.required_queue_count = queue_types.element_count
+	};
+	vulkan_render_scene_t* scene = vulkan_render_scene_create(renderer, &create_info);
+	buf_free(&queue_types);
+	return scene;
+}
+
 RENDERER_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene)
 {
 	u32 count = dictionary_get_count(&scene->queues);

@@ -11,11 +11,10 @@ int main(int argc, const char** argv)
 
 	test_t* test;
 	if(argc < 2)
-		test = test_create("DEPTH_RENDER_TEXTURE");
+		test = test_create(DEFAULT_TEST_NAME);
 	else 
 		test = test_create(argv[1]);
-
-	AUTO driver = renderer_init(GPU_TYPE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, FULL_SCREEN, RESIZABLE);
+	AUTO driver = renderer_init(GPU_TYPE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, FULL_SCREEN ? true : false, RESIZABLE ? true : false);
 
 	test->initialize(driver, test->user_data);
 
