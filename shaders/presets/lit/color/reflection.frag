@@ -29,7 +29,7 @@ void main()
 
 	vec3 reflection_vector = 2 * dot(eye_vector, normal) * normal - eye_vector;
 
-	vec4 reflection_color = mix(texture(reflectionMap, vec3(position.z, -position.y, position.x)), vec4(1, 1, 1, 1), 1 - parameters.reflectance);
+	vec4 reflection_color = mix(texture(reflectionMap, vec3(position.z, position.y, position.x)), vec4(1, 1, 1, 1), 1 - parameters.reflectance);
 
 	vec4 specular_color = mix(parameters.color, vec4(1, 1, 1, 1), 0.5 * dot(normalize(reflection_vector), normal) + 0.5);
 

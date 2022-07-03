@@ -254,7 +254,7 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 				vulkan_pipeline_layout_t* pipeline_layout = vulkan_shader_get_pipeline_layout(shader, pass->handle, j);
 
 				// bind CAMERA_SET
-				vulkan_descriptor_set_bind(&camera->set, VULKAN_DESCRIPTOR_SET_CAMERA, pipeline_layout);
+				vulkan_descriptor_set_bind(&camera->sets[camera->current_shot_index], VULKAN_DESCRIPTOR_SET_CAMERA, pipeline_layout);
 				// bind GLOBAL_SET
 				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, pipeline_layout); 
 				// bind RENDER_SET

@@ -52,8 +52,15 @@ typedef struct vulkan_camera_t
 
 	VkClearValue* clear_buffer;
 
-	vulkan_buffer_t buffer;
-	vulkan_descriptor_set_t set;
+	vulkan_buffer_t buffers[6];
+	vulkan_descriptor_set_t sets[6];
+	void* buffer_mappings[6];
+	union
+	{
+		u32 buffer_count;
+		u32 set_count;
+	};
+
 	vulkan_render_pass_t* default_render_pass;
 
 	vulkan_texture_t* color_render_target; 	// NULL, if the target is the swapchain color attachment
@@ -87,7 +94,6 @@ typedef struct vulkan_camera_t
 	mat4_t(float) projection;
 	mat4_t(float) screen;
 
-	vec3_t(float) saved_rotation;
 	vec3_t(float)* shot_rotations;
 } vulkan_camera_t;
 
