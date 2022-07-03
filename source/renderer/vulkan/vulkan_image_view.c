@@ -69,6 +69,8 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
     	case VK_FORMAT_R8G8B8A8_SRGB:
     		view_create_info.components = (VkComponentMapping) { VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_R };
     	break;
+    	default:
+    		view_create_info.components = (VkComponentMapping) { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY };
 	}
 	VkResult result = vkCreateImageView(view->renderer->logical_device->vo_handle, &view_create_info, NULL, &view->vo_handle);
 	vulkan_result_assert_success(result);
