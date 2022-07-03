@@ -61,6 +61,22 @@ RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, u32 s
 	vkCmdBindDescriptorSets(set->renderer->vo_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->vo_handle, set_number, 1, &set->vo_handle, 0, NULL);
 }
 
+static VkImageLayout get_layout(VkFormat format)
+{
+	switch(format)
+	{
+		case VK_FORMAT_B8G8R8A8_SRGB:
+		case VK_FORMAT_R8G8B8A8_SRGB:
+		case VK_FORMAT_R8G8B8A8_UNORM:
+			return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		case VK_FORMAT_D32_SFLOAT:
+			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+		default:
+			LOG_FETAL_ERR("Unsupport format for image layout during descriptor write: %u\n", format);
+	}
+	return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
 RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_texture_t* texture)
 {
 	assert(texture->image_view.vo_handle != VK_NULL_HANDLE);
@@ -69,7 +85,7 @@ RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* s
 	// assert(texture->vo_image_sampler != VK_NULL_HANDLE);
 	VkDescriptorImageInfo image_info =
 	{
-		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		.imageLayout = get_layout(texture->image.vo_format),
 		.imageView = texture->image_view.vo_handle,
 		.sampler = texture->vo_image_sampler
 	};

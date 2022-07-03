@@ -3,25 +3,29 @@
 
 /* API level object selection */
 #ifdef RENDERER_VULKAN_DRIVER
-	typedef struct vulkan_camera_t vulkan_camera_t;
+	#include <renderer/internal/vulkan/vulkan_camera.h>
 	typedef vulkan_camera_t camera_t;
-	typedef struct vulkan_render_queue_t vulkan_render_queue_t;
-	typedef vulkan_render_queue_t render_queue_t;
+	typedef vulkan_render_scene_t render_scene_t;
+	typedef vulkan_texture_t texture_t;
+	#define CAMERA_RENDER_TARGET_SCREEN VULKAN_CAMERA_RENDER_TARGET_SCREEN
 #elif RENDERER_OPENGL_DRIVER
-	typedef struct opengl_camera_t opengl_camera_t;
+	#include <renderer/internal/opengl/opengl_camera.h>
 	typedef opengl_camera_t camera_t;
-	typedef struct opengl_render_queue_t opengl_render_queue_t;
-	typedef opengl_render_queue_t render_queue_t;
+	typedef opengl_render_scene_t render_scene_t;
+	typedef opengl_texture_t texture_t;
+	#define CAMERA_RENDER_TARGET_SCREEN OPENGL_CAMERA_RENDER_TARGET_SCREEN
 #elif RENDERER_DIRECTX_DRIVER
-	typedef struct directx_camera_t directx_camera_t;
+	#include <renderer/internal/directx/directx_camera.h>
 	typedef directx_camera_t camera_t;
-	typedef struct directx_render_queue_t directx_render_queue_t;
-	typedef directx_render_queue_t render_queue_t;
+	typedef directx_render_scene_t render_scene_t;
+	typedef directx_texture_t texture_t;
+	#define CAMERA_RENDER_TARGET_SCREEN DIRECTX_CAMERA_RENDER_TARGET_SCREEN
 #elif RENDERER_METAL_DRIVER
-	typedef struct metal_camera_t metal_camera_t;
+	#include <renderer/internal/metal/metal_camera.h>
 	typedef metal_camera_t camera_t;
-	typedef struct metal_render_queue_t metal_render_queue_t;
-	typedef metal_render_queue_t render_queue_t;
+	typedef metal_render_scene_t render_scene_t;
+	typedef metal_texture_t texture_t;
+	#define CAMERA_RENDER_TARGET_SCREEN METAL_CAMERA_RENDER_TARGET_SCREEN
 #endif
 
 #include <renderer/defines.h>
@@ -47,6 +51,13 @@ typedef enum camera_projection_type_t
 	CAMERA_PROJECTION_TYPE_STEROGRAPHIC
 } camera_projection_type_t;
 
+typedef enum camera_render_target_type_t
+{
+	CAMERA_RENDER_TARGET_TYPE_UNDEFINED = 0,
+	CAMERA_RENDER_TARGET_TYPE_COLOR,
+	CAMERA_RENDER_TARGET_TYPE_DEPTH
+} camera_render_target_type_t;
+
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
@@ -58,7 +69,11 @@ RENDERER_API void camera_release_resources(camera_t* camera);
 
 /* logic functions */
 RENDERER_API void camera_set_clear(camera_t* camera, color_t color, float depth);
-RENDERER_API void camera_render(camera_t* camera, render_queue_t* queue);
+RENDERER_API void camera_set_active(camera_t* camera, bool is_active);
+RENDERER_API void camera_set_render_target(camera_t* camera, camera_render_target_type_t target_type, texture_t* texture);
+RENDERER_API bool camera_is_active(camera_t* camera);
+RENDERER_API void camera_render(camera_t* camera, render_scene_t* scene, u64 queue_mask);
+RENDERER_API void camera_render_to_texture(camera_t* camera, render_scene_t* scene, texture_t* texture);
 
 /* getters */
 RENDERER_API mat4_t(float) camera_get_view(camera_t* camera);

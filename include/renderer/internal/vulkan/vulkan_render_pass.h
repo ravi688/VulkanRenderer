@@ -32,7 +32,7 @@ typedef struct vulkan_subpass_create_info_t
 	u32 preserve_attachment_count;
 
 	/* used for creating descriptor set layout for the sub render set */
-	vulkan_shader_resource_descriptor_t* sub_render_set_bindings;
+	vulkan_shader_resource_description_t* sub_render_set_bindings;
 	u32 sub_render_set_binding_count;
 
 } vulkan_subpass_create_info_t;
@@ -69,13 +69,19 @@ typedef struct vulkan_render_pass_create_info_t
 	vulkan_subpass_create_info_t* subpasses;
 	u32 subpass_count;
 
+	/* list of subpass dependencies
+	 */
+	VkSubpassDependency* subpass_dependencies;
+	u32 subpass_dependency_count;
+
 	/* used for creating descriptor set layout for the render set */
-	vulkan_shader_resource_descriptor_t* render_set_bindings;
+	vulkan_shader_resource_description_t* render_set_bindings;
 	u32 render_set_binding_count;
 
 } vulkan_render_pass_create_info_t;
 
 typedef struct vulkan_attachment_t vulkan_attachment_t;
+typedef struct vulkan_camera_t vulkan_camera_t;
 
 typedef struct vulkan_render_pass_t
 {
@@ -106,9 +112,8 @@ typedef struct vulkan_render_pass_t
 	/* clear value for each attachment in the frame buffer */
 	VkClearValue* vo_clear_values;
 
-	/* framebuffers for this render pass */
-	VkFramebuffer* vo_framebuffers;
-	u32 framebuffer_count;
+	u32 required_framebuffer_count;
+	vulkan_framebuffer_list_handle_t framebuffer_list_handle;
 
 	/* sub render set layouts for this render pass */
 	vulkan_descriptor_set_layout_t* sub_render_set_layouts;
@@ -188,6 +193,7 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass);
  */
 RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass);
 
+RENDERER_API void vulkan_render_pass_set_clear_indirect(vulkan_render_pass_t* render_pass, color_t color, float depth, VkClearValue* indirect_buffer);
 RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth);
 
 /*
@@ -196,10 +202,11 @@ RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass
 	params:
 		render_pass: ptr to a valid vulkan_render_pass_t object
 		framebuffer_index: index of the framebuffer to be used as a render target, it could be VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN for swapchain images
+		camera: output camera
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index);
+RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index, vulkan_camera_t* camera);
 
 /*
 	description:

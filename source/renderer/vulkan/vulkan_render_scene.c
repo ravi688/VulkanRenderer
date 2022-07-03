@@ -2,6 +2,9 @@
 #include <renderer/internal/vulkan/vulkan_render_scene.h>
 #include <renderer/internal/vulkan/vulkan_render_object.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
+#include <renderer/internal/vulkan/vulkan_render_pass.h>
+#include <renderer/internal/vulkan/vulkan_camera_system.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 
 #include <renderer/renderer.h>
 #include <renderer/memory_allocator.h>
@@ -28,6 +31,8 @@ RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* rendere
 	assert(sizeof(vulkan_render_queue_type_t) == sizeof(s32));
 	scene->renderer = renderer;
 	scene->queues = dictionary_create(vulkan_render_queue_type_t, vulkan_render_queue_t, 1, dictionary_key_comparer_s32);
+	if((create_info == NULL) || (create_info->required_queue_count == 0))
+		return;
 	for(u32 i = 0; i < create_info->required_queue_count; i++)
 	{
 		vulkan_render_queue_t queue;
@@ -75,6 +80,22 @@ RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_preset(vulka
 	return scene;
 }
 
+RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_mask(vulkan_renderer_t* renderer, u64 mask)
+{
+	BUFFER queue_types = buf_new(vulkan_render_queue_type_t);
+	for(int i = VULKAN_RENDER_QUEUE_TYPE_MIN + 1; i < VULKAN_RENDER_QUEUE_TYPE_MAX; i++)
+		if(mask & BIT64(i))
+			buf_push_auto(&queue_types, i);
+	vulkan_render_scene_create_info_t create_info = 
+	{
+		.required_queues = queue_types.bytes,
+		.required_queue_count = queue_types.element_count
+	};
+	vulkan_render_scene_t* scene = vulkan_render_scene_create(renderer, &create_info);
+	buf_free(&queue_types);
+	return scene;
+}
+
 RENDERER_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene)
 {
 	u32 count = dictionary_get_count(&scene->queues);
@@ -100,11 +121,56 @@ RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* s
 
 /* logic functions */
 
-RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene)
+RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type)
 {
-	buf_ucount_t count = dictionary_get_count(&scene->queues);
-	for(buf_ucount_t i = 0; i < count; i++)
-		vulkan_render_queue_dispatch(dictionary_get_value_ptr_at(&scene->queues, i));
+	if(dictionary_contains(&scene->queues, &queue_type))
+	{
+		log_wrn("vulkan render scene already has render queue of type %u, but you are still trying to add it\n", queue_type);
+		return;
+	}
+	vulkan_render_queue_t queue;
+	vulkan_render_queue_create_no_alloc(scene->renderer, queue_type, &queue);
+	dictionary_add(&scene->queues, &queue_type, &queue);
+}
+
+RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 flags)
+{
+	vulkan_camera_system_t* camera_system = scene->renderer->camera_system;
+
+	buf_ucount_t camera_count = vulkan_camera_system_get_count(camera_system);
+
+	for(buf_ucount_t h = 0; h < camera_count; h++)
+	{
+		vulkan_camera_t* camera = vulkan_camera_system_get_at(camera_system, h);
+		if(!vulkan_camera_is_active(camera))
+			continue;
+
+		u32 clear_flags = 0;
+		switch(flags)
+		{
+			case VULKAN_RENDER_SCENE_DONT_CARE:
+				clear_flags = VULKAN_CAMERA_CLEAR_FLAG_DONT_CARE;
+			break;
+			case VULKAN_RENDER_SCENE_CLEAR:
+				clear_flags = VULKAN_CAMERA_CLEAR_FLAG_CLEAR;
+			break;
+		}
+		
+		vulkan_camera_begin(camera);
+		
+		while(vulkan_camera_capture(camera, clear_flags))
+		{
+			buf_ucount_t count = dictionary_get_count(&scene->queues);
+			for(buf_ucount_t i = 0; i < count; i++)
+			{
+				AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, i));
+				if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
+					vulkan_render_queue_dispatch(dictionary_get_value_ptr_at(&scene->queues, i), camera);
+			}
+		}
+		
+		vulkan_camera_end(camera);
+	}
 }
 
 RENDERER_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle)

@@ -1,6 +1,9 @@
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_command_buffer.h>
+#include <renderer/internal/vulkan/vulkan_command.h>
+#include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/memory_allocator.h>
 
 static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info);
@@ -58,6 +61,41 @@ RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapcha
 {
 	vkAcquireNextImageKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, UINT64_MAX, swapchain->renderer->vo_image_available_semaphore, VK_NULL_HANDLE, &(swapchain->current_image_index));
 	return swapchain->current_image_index;
+}
+
+static void transition_image_to_layout_present_KHR(vulkan_swapchain_t* swapchain)
+{
+	VkCommandBuffer cb = swapchain->renderer->vo_aux_command_buffer;
+
+	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	VkImageSubresourceRange subresource = 
+	{
+		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+	u32 count = swapchain->image_count;
+	for(u32 i = 0; i < count; i++)
+	{
+		vulkan_command_image_layout_transition(cb, swapchain->vo_images[i],
+			&subresource,
+			/* oldLayout: */ VK_IMAGE_LAYOUT_UNDEFINED,
+			/* newLayout: */ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+			/* srcAccess: */ VK_ACCESS_NONE_KHR,
+			/* dstAccess: */ VK_ACCESS_MEMORY_READ_BIT,
+			/* srcStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			/* dstStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+	}
+	vulkan_command_buffer_end(cb);
+	vulkan_queue_submit(swapchain->renderer->vo_graphics_queue, cb, 
+			/* waitSemaphore: */ VK_NULL_HANDLE, 
+			/* waitDstStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 
+			/* signalSemaphore: */ VK_NULL_HANDLE,
+		 	/* signalFence: */ VK_NULL_HANDLE);
+	vulkan_queue_wait_idle(swapchain->renderer->vo_graphics_queue);
 }
 
 static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info)
@@ -129,6 +167,8 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_cre
 		vkCall(vkCreateImageView(swapchain->renderer->logical_device->vo_handle, &createInfo, NULL, &swapchain->vo_image_views[i]));
 	}
 	swapchain->current_image_index = 0;
+
+	transition_image_to_layout_present_KHR(swapchain);
 }
 
 static void destroy_swapchain(vulkan_swapchain_t* swapchain)

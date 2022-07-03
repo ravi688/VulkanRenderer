@@ -40,6 +40,14 @@ RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_p
 /* logic functions */
 RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info);
 RENDERER_API vulkan_render_pass_t* vulkan_render_pass_pool_getH(vulkan_render_pass_pool_t* pool, vulkan_render_pass_handle_t handle);
+static RENDERER_API FORCE_INLINE buf_ucount_t vulkan_render_pass_pool_get_count(vulkan_render_pass_pool_t* pool)
+{
+	return buf_get_element_count(&pool->slots);
+}
 
+static RENDERER_API FORCE_INLINE vulkan_render_pass_t* vulkan_render_pass_pool_get_at(vulkan_render_pass_pool_t* pool, buf_ucount_t index)
+{
+	return CAST_TO(vulkan_render_pass_pool_slot_t*, buf_get_ptr_at(&pool->slots, index))->render_pass;
+}
 
 END_CPP_COMPATIBLE

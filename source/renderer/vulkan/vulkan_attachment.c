@@ -140,6 +140,20 @@ static VkSampler create_sampler(VkDevice device)
 	return sampler;
 }
 
+static VkImageLayout get_layout_from_format(VkFormat format)
+{
+	switch(format)
+	{
+		case VK_FORMAT_B8G8R8A8_SRGB:
+			return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		case VK_FORMAT_D32_SFLOAT:
+			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		default:
+			LOG_FETAL_ERR("Unsupported attachment format %u\n", format);
+	}
+	return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
 RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment)
 {
 	memzero(attachment, vulkan_attachment_t);
@@ -166,7 +180,12 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 	vulkan_image_view_create_info_t view_create_info =
 	{
 		.image = &attachment->image,
-		.view_type = VULKAN_IMAGE_VIEW_TYPE_2D
+		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.view_type = VULKAN_IMAGE_VIEW_TYPE_2D,
+		.base_mip_level = 0,
+		.level_count = 1,
+		.base_array_layer = 0,
+		.layer_count = 1
 	};
 	vulkan_image_view_create_no_alloc(renderer, &view_create_info, &attachment->image_view);
 

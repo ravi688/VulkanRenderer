@@ -3,6 +3,8 @@
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
+#include <renderer/internal/vulkan/vulkan_types.h>
+#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
 #include <shader_compiler/compiler.h>
@@ -32,12 +34,12 @@ static void setup_material_resources(vulkan_material_t* material)
 	u16 count = calculate_uniform_resource_count(material->shader);
 	if(count == 0) return;
 
-	vulkan_shader_resource_descriptor_t* bindings = material->shader->material_set_bindings;
+	vulkan_shader_resource_description_t* bindings = material->shader->material_set_bindings;
 	vulkan_uniform_resource_t* uniform_resources = heap_newv(vulkan_uniform_resource_t, count);
 	memset(uniform_resources, 0, sizeof(vulkan_uniform_resource_t) * count);
 	for(u16 i = 0, j = 0; i < material->shader->material_set_binding_count; i++)
 	{
-		vulkan_shader_resource_descriptor_t* binding = &bindings[i];
+		vulkan_shader_resource_description_t* binding = &bindings[i];
 		if(binding->is_attribute)
 			continue;
 		vulkan_uniform_resource_t* resource = &uniform_resources[j];
@@ -111,7 +113,7 @@ RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 
 static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags);
 
-static void set_push_constants(vulkan_material_t* material, vulkan_shader_resource_descriptor_t* descriptor, vulkan_pipeline_layout_t* pipeline_layout)
+static void set_push_constants(vulkan_material_t* material, vulkan_shader_resource_description_t* descriptor, vulkan_pipeline_layout_t* pipeline_layout)
 {
 	vulkan_pipeline_layout_push_constants(pipeline_layout, 
 											get_vulkan_shader_flags(descriptor->stage_flags), 
@@ -150,7 +152,7 @@ static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags)
 #define set_push_value(material, handle, setter, in_value) __set_push_value(material, handle, (void (*)(struct_descriptor_t*, struct_field_handle_t, const void* const))(setter), in_value);
 static void __set_push_value(vulkan_material_t* material, vulkan_material_field_handle_t handle, void (*setter)(struct_descriptor_t*, struct_field_handle_t, const void* const), const void* const in)
 {
-	vulkan_shader_resource_descriptor_t* descriptor = &(material->shader->material_set_bindings[handle.index]);
+	vulkan_shader_resource_description_t* descriptor = &(material->shader->material_set_bindings[handle.index]);
 	setter(&descriptor->handle, handle.field_handle, in);
 	// set_push_constants(material, descriptor);
 }
@@ -199,7 +201,7 @@ RENDERER_API void vulkan_material_set_push_mat4H(vulkan_material_t* material, vu
 #define get_push_value(material, handle, getter, out_value) __get_push_value(material, handle, (void (*)(struct_descriptor_t*, struct_field_handle_t, void* const))(getter), out_value);
 static void __get_push_value(vulkan_material_t* material, vulkan_material_field_handle_t handle, void (*getter)(struct_descriptor_t*, struct_field_handle_t, void* const), void* const out)
 {
-	vulkan_shader_resource_descriptor_t* descriptor = &(material->shader->material_set_bindings[handle.index]);
+	vulkan_shader_resource_description_t* descriptor = &(material->shader->material_set_bindings[handle.index]);
 	getter(&descriptor->handle, handle.field_handle, out);
 }
 
@@ -409,7 +411,7 @@ RENDERER_API void vulkan_material_set_mat4H(vulkan_material_t* material, vulkan_
 RENDERER_API void vulkan_material_set_textureH(vulkan_material_t* material, vulkan_material_field_handle_t handle, vulkan_texture_t* texture)
 {
 	assert(handle.index < material->shader->material_set_binding_count);
-	vulkan_shader_resource_descriptor_t descriptor = material->shader->material_set_bindings[handle.index];
+	vulkan_shader_resource_description_t descriptor = material->shader->material_set_bindings[handle.index];
 	// assert(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
 	vulkan_descriptor_set_write_texture(&material->material_set, descriptor.binding_number, texture);
 }
@@ -601,13 +603,13 @@ RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vul
 	get_record_and_field_name(name, struct_name, field_name);
 
 	u16 binding_count = material->shader->material_set_binding_count;
-	vulkan_shader_resource_descriptor_t* bindings = material->shader->material_set_bindings;
+	vulkan_shader_resource_description_t* bindings = material->shader->material_set_bindings;
 	u16 index = 0xFFFF;
 	u16 uniform_index = 0xFFFF;
 	u16 field_handle = STRUCT_FIELD_INVALID_HANDLE;
 	for(u16 i = 0, j = 0; i < binding_count; i++)
 	{
-		vulkan_shader_resource_descriptor_t* binding = &bindings[i];
+		vulkan_shader_resource_description_t* binding = &bindings[i];
 		if(binding->is_attribute)
 			continue;
 		if(strcmp(binding->handle.name, struct_name) == 0)
