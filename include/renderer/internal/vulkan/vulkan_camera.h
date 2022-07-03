@@ -61,6 +61,10 @@ typedef struct vulkan_camera_t
 
 	BUFFER framebuffers;
 
+	u32 max_shot_count;
+	u32 current_shot_index; 	// will always be shot_taken - 1
+	u32 shot_taken;
+
 	struct_descriptor_t struct_definition;
 	struct_field_handle_t transform_handle;
 	struct_field_handle_t projection_handle;
@@ -82,6 +86,9 @@ typedef struct vulkan_camera_t
 	mat4_t(float) view;
 	mat4_t(float) projection;
 	mat4_t(float) screen;
+
+	vec3_t(float) saved_rotation;
+	vec3_t(float)* shot_rotations;
 } vulkan_camera_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -96,8 +103,9 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera);
 /* logic functions */
 #define VULKAN_CAMERA_CLEAR_FLAG_DONT_CARE 1
 #define VULKAN_CAMERA_CLEAR_FLAG_CLEAR 0
-RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera, u32 clear_flags);
+RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera);
 RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera);
+RENDERER_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags);
 RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth);
 RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_texture_t* texture);
 RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask);

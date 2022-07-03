@@ -74,12 +74,18 @@ typedef struct vulkan_texture_t
 {
 	vulkan_renderer_t* renderer; 							// pointer to the vulkan_renderer_t object
 	vulkan_image_t image;									// vulkan image object
+
+	/* image view: for sampling the texture or writing to the 2D render texture */
 	vulkan_image_view_t image_view; 						// vulkan image view object
+	
 	VkSampler vo_image_sampler; 							// vulkan image sampler object
 
 	// internal use only
 	VkDescriptorType vo_descriptor_type;	 				// type of descriptor to which this texture would be bound
 
+	/* image views: for writing/renderingg to the texture, typically Cube render texture */
+	vulkan_image_view_t* image_views;
+	u32 image_view_count;
 
 	u32 width;
 	u32 height;

@@ -408,10 +408,18 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 	
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	
-	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[current_index], VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+	VkImageSubresourceRange subresource = 
+	{
+		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[current_index],
+		&subresource,
 		/* oldLayout: */ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		/* newLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
 		/* srcAccess: */ VK_ACCESS_MEMORY_READ_BIT,
 		/* dstAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		/* srcStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -423,10 +431,18 @@ RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 	u32 current_index = renderer->swapchain->current_image_index;
 	VkCommandBuffer cb = renderer->vo_command_buffers[current_index];
 
-	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[current_index], VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+	VkImageSubresourceRange subresource = 
+	{
+		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[current_index],
+		&subresource,
 		/* oldLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		/* newLayout: */ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
 		/* srcAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		/* dstAccess: */ VK_ACCESS_MEMORY_READ_BIT,
 		/* srcStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,

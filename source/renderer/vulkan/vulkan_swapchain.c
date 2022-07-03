@@ -68,13 +68,22 @@ static void transition_image_to_layout_present_KHR(vulkan_swapchain_t* swapchain
 	VkCommandBuffer cb = swapchain->renderer->vo_aux_command_buffer;
 
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	VkImageSubresourceRange subresource = 
+	{
+		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
 	u32 count = swapchain->image_count;
 	for(u32 i = 0; i < count; i++)
 	{
-		vulkan_command_image_layout_transition(cb, swapchain->vo_images[i], VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+		vulkan_command_image_layout_transition(cb, swapchain->vo_images[i],
+			&subresource,
 			/* oldLayout: */ VK_IMAGE_LAYOUT_UNDEFINED,
 			/* newLayout: */ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
 			/* srcAccess: */ VK_ACCESS_NONE_KHR,
 			/* dstAccess: */ VK_ACCESS_MEMORY_READ_BIT,
 			/* srcStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,

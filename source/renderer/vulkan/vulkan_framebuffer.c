@@ -2,6 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_framebuffer.h>
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
 #include <renderer/internal/vulkan/vulkan_attachment.h>
+#include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/render_window.h>
@@ -104,14 +105,14 @@ RENDERER_API void vulkan_framebuffer_release_resources(vulkan_framebuffer_t* fra
 	// heap_free(framebuffer);
 }
 
-RENDERER_API void vulkan_framebuffer_set_supplementary(vulkan_framebuffer_t* framebuffer, vulkan_attachment_t* attachment)
+RENDERER_API void vulkan_framebuffer_set_supplementary(vulkan_framebuffer_t* framebuffer, vulkan_image_view_t* view)
 {
 	if(!framebuffer->is_supplementary_supported) return;
 
 	// for now supplementary attachment count must be one; just for swapchain color attachment
 	assert(framebuffer->pass->supplementary_attachment_count == 1);
 	
-	framebuffer->image_views[0] = attachment->image_view.vo_handle;
+	framebuffer->image_views[0] = view->vo_handle;
 	vulkan_framebuffer_recreate(framebuffer);
 }
 
@@ -127,12 +128,12 @@ RENDERER_API void vulkan_framebuffer_restore_supplementary(vulkan_framebuffer_t*
 	vulkan_framebuffer_recreate(framebuffer);
 }
 
-RENDERER_API void vulkan_framebuffer_set_depth(vulkan_framebuffer_t* framebuffer, vulkan_attachment_t* attachment)
+RENDERER_API void vulkan_framebuffer_set_depth(vulkan_framebuffer_t* framebuffer, vulkan_image_view_t* view)
 {
 	if(!framebuffer->is_depth_supported) return;
 
 	assert(framebuffer->depth_index != U32_MAX);
-	framebuffer->image_views[framebuffer->depth_index] = attachment->image_view.vo_handle;
+	framebuffer->image_views[framebuffer->depth_index] = view->vo_handle;
 	vulkan_framebuffer_recreate(framebuffer);
 }
 

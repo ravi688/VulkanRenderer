@@ -4,7 +4,7 @@
 #include <renderer/defines.h>
 #include <vulkan/vulkan.h>
 
-typedef struct vulkan_attachment_t vulkan_attachment_t;
+typedef struct vulkan_image_view_t vulkan_image_view_t;
 typedef struct vulkan_render_pass_t vulkan_render_pass_t;
 
 typedef struct vulkan_framebuffer_t
@@ -33,9 +33,9 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 RENDERER_API void vulkan_framebuffer_destroy(vulkan_framebuffer_t* framebuffer);
 RENDERER_API void vulkan_framebuffer_release_resources(vulkan_framebuffer_t* framebuffer);
 
-RENDERER_API void vulkan_framebuffer_set_supplementary(vulkan_framebuffer_t* framebuffer, vulkan_attachment_t* attachment);
+RENDERER_API void vulkan_framebuffer_set_supplementary(vulkan_framebuffer_t* framebuffer, vulkan_image_view_t* view);
 RENDERER_API void vulkan_framebuffer_restore_supplementary(vulkan_framebuffer_t* framebuffer);
-RENDERER_API void vulkan_framebuffer_set_depth(vulkan_framebuffer_t* framebuffer, vulkan_attachment_t* attachment);
+RENDERER_API void vulkan_framebuffer_set_depth(vulkan_framebuffer_t* framebuffer, vulkan_image_view_t* view);
 RENDERER_API void vulkan_framebuffer_restore_depth(vulkan_framebuffer_t* framebuffer);
 
 END_CPP_COMPATIBLE

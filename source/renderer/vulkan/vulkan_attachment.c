@@ -180,7 +180,12 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 	vulkan_image_view_create_info_t view_create_info =
 	{
 		.image = &attachment->image,
-		.view_type = VULKAN_IMAGE_VIEW_TYPE_2D
+		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.view_type = VULKAN_IMAGE_VIEW_TYPE_2D,
+		.base_mip_level = 0,
+		.level_count = 1,
+		.base_array_layer = 0,
+		.layer_count = 1
 	};
 	vulkan_image_view_create_no_alloc(renderer, &view_create_info, &attachment->image_view);
 

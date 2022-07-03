@@ -140,7 +140,14 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	camera->default_render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, create_info->default_render_pass);
 	camera->projection_type = create_info->projection_type;
 	camera->is_active = true;
-	camera->framebuffers = buf_create(sizeof(vulkan_framebuffer_t), 1, 0);
+	camera->framebuffers = buf_create(sizeof(BUFFER), 1, 0);
+	camera->shot_taken = 0;
+	camera->current_shot_index = 0;
+
+	// create framebuffer list for the shot 1 initially
+	camera->max_shot_count = 1;
+	BUFFER buffer = buf_new(vulkan_framebuffer_t);
+	buf_push(&camera->framebuffers, &buffer);
 
 	camera->clear_buffer = heap_newv(VkClearValue, camera->default_render_pass->attachment_count);
 	memcpy(camera->clear_buffer, camera->default_render_pass->vo_clear_values, sizeof(VkClearValue) * camera->default_render_pass->attachment_count);
@@ -196,7 +203,12 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 	vulkan_buffer_destroy(&camera->buffer);
 	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
 	for(buf_ucount_t i = 0; i < count; i++)
-		vulkan_framebuffer_destroy(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)));
+	{
+		BUFFER* buffer = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, i));
+		buf_ucount_t count1 = buf_get_element_count(buffer);
+		for(buf_ucount_t j = 0; j < count1; j++)
+			vulkan_framebuffer_destroy(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(buffer, j)));
+	}
 	log_msg("Vulkan Camera has been destroyed successfully\n");
 }
 
@@ -206,82 +218,120 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 	vulkan_buffer_release_resources(&camera->buffer);
 	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
 	for(buf_ucount_t i = 0; i < count; i++)
-		vulkan_framebuffer_release_resources(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)));
+	{
+		BUFFER* buffer = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, i));
+		buf_ucount_t count1 = buf_get_element_count(buffer);
+		for(buf_ucount_t j = 0; j < count1; j++)
+			vulkan_framebuffer_release_resources(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(buffer, j)));
+		buf_free(buffer);
+	}
 	buf_free(&camera->framebuffers);
 	// TODO
 	// heap_free(camera);
 }
 
-static void transition_target_layout_for_write(vulkan_texture_t* target)
+static void transition_target_layout_for_write(VkFormat format, vulkan_image_view_t* view)
 {
-	VkCommandBuffer cb = target->renderer->vo_command_buffers[target->renderer->swapchain->current_image_index];
-	switch(target->image.vo_format)
+	VkCommandBuffer cb = view->renderer->vo_command_buffers[view->renderer->swapchain->current_image_index];
+	switch(format)
 	{
 		case VK_FORMAT_B8G8R8A8_SRGB:
-			vulkan_command_image_layout_transition(cb, target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+			vulkan_command_image_layout_transition(cb, view->image->vo_handle,
+				&view->vo_subresource_range,
 				/* oldLayout: */ VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 				/* newLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-				/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
 				/* srcAccess: */ VK_ACCESS_SHADER_READ_BIT,
 				/* dstAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 				/* srcStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 				/* dstStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 			break;
 		case VK_FORMAT_D32_SFLOAT:
-			vulkan_command_image_layout_transition(cb, target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+			vulkan_command_image_layout_transition(cb, view->image->vo_handle,
+				&view->vo_subresource_range,
 				/* oldLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
 				/* newLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-				/* aspectMask: */ VK_IMAGE_ASPECT_DEPTH_BIT,
 				/* srcAccess: */ VK_ACCESS_SHADER_READ_BIT,
 				/* dstAccess: */ VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 				/* srcStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 				/* dstStage: */ VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
 			break;
 		default:
-			LOG_FETAL_ERR("Unsupported format %u for any possible render target layout\n", target->image.vo_format);
+			LOG_FETAL_ERR("Unsupported format %u for any possible render target layout\n", format);
 	}
 }
 
-static void transition_target_layout_for_sample(vulkan_texture_t* target)
+static void transition_target_layout_for_sample(VkFormat format, vulkan_image_view_t* view)
 {
-	VkCommandBuffer cb = target->renderer->vo_command_buffers[target->renderer->swapchain->current_image_index];
-	switch(target->image.vo_format)
+	VkCommandBuffer cb = view->renderer->vo_command_buffers[view->renderer->swapchain->current_image_index];
+	switch(format)
 	{
 		case VK_FORMAT_B8G8R8A8_SRGB:
-			vulkan_command_image_layout_transition(cb, target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+			vulkan_command_image_layout_transition(cb, view->image->vo_handle,
+				&view->vo_subresource_range,
 				/* oldLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 				/* newLayout: */ VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				/* aspectMask: */ VK_IMAGE_ASPECT_COLOR_BIT,
 				/* srcAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 				/* dstAccess: */ VK_ACCESS_SHADER_READ_BIT,
 				/* srcStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 				/* dstStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 			break;
 		case VK_FORMAT_D32_SFLOAT:
-			vulkan_command_image_layout_transition(cb, target->image.vo_handle, VULKAN_IMAGE_LAYOUT_TRANSITION_TYPE_CUSTOM,
+			vulkan_command_image_layout_transition(cb, view->image->vo_handle,
+				&view->vo_subresource_range,
 				/* oldLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 				/* newLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-				/* aspectMask: */ VK_IMAGE_ASPECT_DEPTH_BIT,
 				/* srcAccess: */ VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 				/* dstAccess: */ VK_ACCESS_SHADER_READ_BIT,
 				/* srcStage: */ VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
 				/* dstStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 			break;
 		default:
-			LOG_FETAL_ERR("Unsupported format %u for any possible render target layout\n", target->image.vo_format);
+			LOG_FETAL_ERR("Unsupported format %u for any possible render target layout\n", format);
 	}
 }
 
 /* logic functions */
-RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera, u32 clear_flags)
+RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera)
 {
 	if(vulkan_camera_is_offscreen(camera))
 	{
 		if(camera->color_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-			transition_target_layout_for_write(camera->color_render_target);
+		{
+			if((camera->color_render_target->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE)
+			{
+				for(u32 i = 0; i < 6; i++)
+					transition_target_layout_for_write(camera->color_render_target->image.vo_format, &camera->color_render_target->image_views[i]);
+			}
+			else transition_target_layout_for_write(camera->color_render_target->image.vo_format, &camera->color_render_target->image_view);
+		}
+
 		if(camera->depth_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-			transition_target_layout_for_write(camera->depth_render_target);
+		{
+			if((camera->depth_render_target->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE)
+			{
+				for(u32 i = 0; i < 6; i++)
+					transition_target_layout_for_write(camera->depth_render_target->image.vo_format, &camera->depth_render_target->image_views[i]);
+			}
+			else transition_target_layout_for_write(camera->depth_render_target->image.vo_format, &camera->depth_render_target->image_view);
+		}
 	}
+	camera->current_shot_index = 0;
+	camera->shot_taken = 0;
+	camera->saved_rotation = camera->rotation;
+}
+
+RENDERER_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags)
+{
+	bool is_capture = camera->shot_taken < camera->max_shot_count;
+
+	if(!is_capture)
+		return false;
+
+	if(camera->max_shot_count > 1)
+		vulkan_camera_set_rotation(camera, camera->shot_rotations[camera->shot_taken]);
+
+	camera->current_shot_index = camera->shot_taken;
+	camera->shot_taken++;
 
 	switch(clear_flags)
 	{
@@ -293,6 +343,8 @@ RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera, u32 clear_flags)
 			camera->default_render_pass->vo_clear_values = clear_buffer;
 		break;
 	}
+
+	return true;
 }
 
 RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera)
@@ -300,10 +352,28 @@ RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera)
 	if(vulkan_camera_is_offscreen(camera))
 	{
 		if(camera->color_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-			transition_target_layout_for_sample(camera->color_render_target);
+		{
+			if((camera->color_render_target->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE)
+			{
+				for(u32 i = 0; i < 6; i++)
+					transition_target_layout_for_sample(camera->color_render_target->image.vo_format, &camera->color_render_target->image_views[i]);
+			}
+			else transition_target_layout_for_sample(camera->color_render_target->image.vo_format, &camera->color_render_target->image_view);
+		}
+
 		if(camera->depth_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-			transition_target_layout_for_sample(camera->depth_render_target);
+		{
+			if((camera->depth_render_target->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE)
+			{
+				for(u32 i = 0; i < 6; i++)
+					transition_target_layout_for_sample(camera->depth_render_target->image.vo_format, &camera->depth_render_target->image_views[i]);
+			}
+			else transition_target_layout_for_sample(camera->depth_render_target->image.vo_format, &camera->depth_render_target->image_view);
+		}
 	}
+
+	if(camera->max_shot_count > 1)
+		vulkan_camera_set_rotation(camera, camera->saved_rotation);
 }
 
 RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth)
@@ -313,41 +383,95 @@ RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color
 
 RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_texture_t* texture)
 {
+	if((texture != VULKAN_CAMERA_RENDER_TARGET_SCREEN) && ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE))
+	{
+		camera->max_shot_count = 6;
+		if(camera->shot_rotations == NULL)
+		{
+			camera->shot_rotations = heap_newv(vec3_t(float), camera->max_shot_count);
+			camera->shot_rotations[0] = vec3(float)(0, -90 DEG, 0); // right
+			camera->shot_rotations[1] = vec3(float)(0, 90 DEG, 0); 	// left
+			camera->shot_rotations[2] = vec3(float)(0, 0, -90 DEG); // bottom
+			camera->shot_rotations[3] = vec3(float)(0, 0, 90 DEG); 	// top
+			camera->shot_rotations[4] = vec3(float)(0, 0, 0); 		// front
+			camera->shot_rotations[5] = vec3(float)(0, 180 DEG, 0); // back
+
+			/* NOTE: we can't get the pointer to the peek element because the buffer will resize itself
+				upon the push so the ptr will become invalid to access */
+			buf_ucount_t peek_handle = buf_get_element_count(&camera->framebuffers) - 1;
+			buf_ucount_t count = buf_get_element_count(buf_peek_ptr(&camera->framebuffers));
+			for(u32 i = 0; i < 5; i++)
+			{
+				BUFFER buffer = buf_new(vulkan_framebuffer_t);
+				for(u32 j = 0; j < count; j++)
+				{
+					buf_push_pseudo(&buffer, 1);
+					vulkan_framebuffer_t* framebuffer = CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, peek_handle)), j));
+					vulkan_framebuffer_create_no_alloc(camera->renderer, framebuffer->pass, framebuffer->id, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(&buffer)));
+				}
+				buf_push(&camera->framebuffers, &buffer);
+			}
+		}
+	}
+	else
+		camera->max_shot_count = 1;
+
+
 	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
+	for(buf_ucount_t i = 0; i < count; i++)
+	{
+		BUFFER* framebuffers = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, i));
+		buf_ucount_t framebuffer_count = buf_get_element_count(framebuffers);
+		switch(target_type)
+		{
+			case VULKAN_CAMERA_RENDER_TARGET_TYPE_COLOR:
+				if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+					for(buf_ucount_t j = 0; j < framebuffer_count; j++)
+						vulkan_framebuffer_restore_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(framebuffers, j)));
+				else
+				{
+					vulkan_image_view_t* view;
+					if((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE)
+						view = &texture->image_views[i];
+					else
+						view = &texture->image_view;
+					for(buf_ucount_t j = 0; j < framebuffer_count; j++)
+						vulkan_framebuffer_set_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(framebuffers, j)), view);
+				}
+
+			break;
+			case VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH:
+				if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+					for(buf_ucount_t j = 0; j < framebuffer_count; j++)
+						vulkan_framebuffer_restore_depth(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(framebuffers, j)));
+				else
+				{
+					vulkan_image_view_t* view;
+					if((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE)
+						view = &texture->image_views[i];
+					else
+						view = &texture->image_view;
+					for(buf_ucount_t j = 0; j < framebuffer_count; j++)
+						vulkan_framebuffer_set_depth(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(framebuffers, j)), view);
+				}
+			break;
+			default:
+				LOG_FETAL_ERR("Invalid vulkan camera render target type: %u\n", target_type);
+		}
+	}
+
 	switch(target_type)
 	{
 		case VULKAN_CAMERA_RENDER_TARGET_TYPE_COLOR:
 			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-			{
-				for(buf_ucount_t i = 0; i < count; i++)
-					vulkan_framebuffer_restore_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)));
 				camera->color_render_target = NULL;
-			}
-			else
-			{
-				for(buf_ucount_t i = 0; i < count; i++)
-					vulkan_framebuffer_set_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)), CAST_TO(vulkan_attachment_t*, texture));
-				camera->color_render_target = texture;
-			}
-
+			else camera->color_render_target = texture;
 		break;
 		case VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH:
 			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-			{
-				for(buf_ucount_t i = 0; i < count; i++)
-					vulkan_framebuffer_restore_depth(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)));
 				camera->depth_render_target = NULL;
-			}
-			else
-			{
-				for(buf_ucount_t i = 0; i < count; i++)
-					vulkan_framebuffer_set_depth(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, i)), CAST_TO(vulkan_attachment_t*, texture));
-				camera->depth_render_target = texture;
-			}
-
+			else camera->depth_render_target = texture;
 		break;
-		default:
-			LOG_FETAL_ERR("Invalid vulkan camera render target type: %u\n", target_type);
 	}
 }
 
@@ -367,18 +491,22 @@ RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulka
 RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_framebuffer_list_handle_t handle)
 {
 	assert(handle != VULKAN_FRAMEBUFFER_LIST_HANDLE_INVALID);
-	return CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&camera->framebuffers, handle));
+	return CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, camera->current_shot_index)), handle));
 }
 
 RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* pass)
 {
 	if(pass->required_framebuffer_count <= 0)
 		return VULKAN_FRAMEBUFFER_LIST_HANDLE_INVALID;
-	buf_ucount_t handle = buf_get_element_count(&camera->framebuffers);
-	for(u32 i = 0; i < pass->required_framebuffer_count; i++)
+	buf_ucount_t handle = buf_get_element_count(CAST_TO(BUFFER*, buf_peek_ptr(&camera->framebuffers)));
+	for(u32 j = 0; j < camera->max_shot_count; j++)
 	{
-		buf_push_pseudo(&camera->framebuffers, 1);
-		vulkan_framebuffer_create_no_alloc(camera->renderer, pass, i, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(&camera->framebuffers)));
+		for(u32 i = 0; i < pass->required_framebuffer_count; i++)
+		{
+			BUFFER* buffer = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, j));
+			buf_push_pseudo(buffer, 1);
+			vulkan_framebuffer_create_no_alloc(camera->renderer, pass, i, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(buffer)));
+		}
 	}
 	return handle;
 }

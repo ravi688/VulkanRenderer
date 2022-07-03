@@ -155,16 +155,20 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 				clear_flags = VULKAN_CAMERA_CLEAR_FLAG_CLEAR;
 			break;
 		}
-		vulkan_camera_begin(camera, clear_flags);
 		
-		buf_ucount_t count = dictionary_get_count(&scene->queues);
-		for(buf_ucount_t i = 0; i < count; i++)
+		vulkan_camera_begin(camera);
+		
+		while(vulkan_camera_capture(camera, clear_flags))
 		{
-			AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, i));
-			if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
-				vulkan_render_queue_dispatch(dictionary_get_value_ptr_at(&scene->queues, i), camera);
+			buf_ucount_t count = dictionary_get_count(&scene->queues);
+			for(buf_ucount_t i = 0; i < count; i++)
+			{
+				AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, i));
+				if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
+					vulkan_render_queue_dispatch(dictionary_get_value_ptr_at(&scene->queues, i), camera);
+			}
 		}
-
+		
 		vulkan_camera_end(camera);
 	}
 }

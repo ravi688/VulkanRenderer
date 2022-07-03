@@ -2,6 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_image.h>
+#include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/memory_allocator.h>
@@ -277,6 +278,33 @@ static VkSampler get_sampler_from_texture_type(vulkan_renderer_t* renderer, vulk
 	}
 }
 
+static vulkan_image_view_t* create_write_image_views(vulkan_texture_t* texture, u32 OUT view_count)
+{
+	if((texture->type & VULKAN_TEXTURE_TYPE_CUBE) != VULKAN_TEXTURE_TYPE_CUBE)
+	{
+		OUT view_count = 0;
+		return NULL;
+	}
+	assert(texture->image.layer_count >= 6);
+	OUT view_count = 6;
+	vulkan_image_view_t* views = heap_newv(vulkan_image_view_t, 6);
+	for(u32 i = 0; i < 6; i++)
+	{
+		vulkan_image_view_create_info_t create_info = 
+		{
+			.image = &texture->image,
+			.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+			.view_type = VULKAN_IMAGE_VIEW_TYPE_2D,
+			.base_mip_level = 0,
+			.level_count = 1,
+			.base_array_layer = i,
+			.layer_count = 1
+		};
+		vulkan_image_view_create_no_alloc(texture->renderer, &create_info, &views[i]);
+	}
+	return views;
+}
+
 RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info, vulkan_texture_t OUT texture)
 {
 	memzero(texture, vulkan_texture_t);
@@ -314,19 +342,26 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 	};
 	vulkan_image_create_no_alloc(texture->renderer, &image_info, &texture->image);
 
-	vulkan_texture_set_usage_stage(texture, VULKAN_TEXTURE_USAGE_STAGE_INITIAL);
-
 	vulkan_image_view_create_info_t view_create_info = 
 	{ 
 		.image = &texture->image, 
-		.view_type = get_view_type_from_texture_type(texture->type)
+		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.view_type = get_view_type_from_texture_type(texture->type),
+		.base_mip_level = 0,
+		.level_count = 1,
+		.base_array_layer = 0,
+		.layer_count = image_info.layer_count
 	};
  	vulkan_image_view_create_no_alloc(texture->renderer, &view_create_info, &texture->image_view);
+
+ 	texture->image_views = create_write_image_views(texture, &texture->image_view_count);
 
  	if((create_info->usage | create_info->initial_usage | create_info->final_usage) & VULKAN_TEXTURE_USAGE_SAMPLED)
  		texture->vo_image_sampler = get_sampler_from_texture_type(texture->renderer, texture->type);
  	else
  		texture->vo_image_sampler = VK_NULL_HANDLE;
+
+	vulkan_texture_set_usage_stage(texture, VULKAN_TEXTURE_USAGE_STAGE_INITIAL);
 }
 
 RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
@@ -338,6 +373,8 @@ RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
 		texture->vo_image_sampler = VK_NULL_HANDLE;
 	}
 	vulkan_image_view_destroy(&texture->image_view);
+	for(u32 i = 0; i < texture->image_view_count; i++)
+		vulkan_image_view_destroy(&texture->image_views[i]);
 	vulkan_image_destroy(&texture->image);
 }
 
@@ -345,6 +382,8 @@ RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
 {
 	assert(texture != NULL);
 	vulkan_image_view_release_resources(&texture->image_view);
+	for(u32 i = 0; i < texture->image_view_count; i++)
+		vulkan_image_view_release_resources(&texture->image_views[i]);
 	vulkan_image_release_resources(&texture->image);
 	// TODO
 	// heap_free(texture);
@@ -391,23 +430,23 @@ RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulk
 				case VULKAN_TEXTURE_TYPE_ALBEDO:
 				case VULKAN_TEXTURE_TYPE_NORMAL:
 				case VULKAN_TEXTURE_TYPE_COLOR:
-					vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+					vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 					break;
 				case VULKAN_TEXTURE_TYPE_DEPTH:
-					vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+					vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 					break;
 				default:
 					UNSUPPORTED_TEXTURE_TYPE(type & BIT_MASK32(3));
 			}
 		break;
 		case VULKAN_TEXTURE_USAGE_TRANSFER_DST:
-			vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		break;
 		case VULKAN_TEXTURE_USAGE_TRANSFER_SRC:
-			vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+			vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		break;
 		case VULKAN_TEXTURE_USAGE_PRESENT:
-			vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+			vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 		break;
 		case VULKAN_TEXTURE_USAGE_RENDER_TARGET:
 		{
@@ -422,10 +461,10 @@ RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulk
 						case VULKAN_TEXTURE_TYPE_ALBEDO:
 						case VULKAN_TEXTURE_TYPE_NORMAL:
 						case VULKAN_TEXTURE_TYPE_COLOR:
-							vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+							vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 						break;
 						case VULKAN_TEXTURE_TYPE_DEPTH:
-							vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+							vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 						break;
 						default:
 							UNSUPPORTED_TEXTURE_TYPE(type & BIT_MASK32(3));
@@ -433,7 +472,7 @@ RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulk
 				}
 				break;
 				case VULKAN_RENDER_TARGET_TECHNIQUE_COPY:
-					vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+					vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 				break;
 			}
 		}
@@ -445,10 +484,10 @@ RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulk
 				case VULKAN_TEXTURE_TYPE_ALBEDO:
 				case VULKAN_TEXTURE_TYPE_NORMAL:
 				case VULKAN_TEXTURE_TYPE_COLOR:
-					vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+					vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 				break;
 				case VULKAN_TEXTURE_TYPE_DEPTH:
-					vulkan_image_transition_layout_to(&texture->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+					vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 				break;
 				default:
 					UNSUPPORTED_TEXTURE_TYPE(type & BIT_MASK32(3));
@@ -494,7 +533,7 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 		for(u32 i = 0; i < data_count; i++)
 			vulkan_buffer_copy_data(&staging_buffer, texture_size * i, data[i].data, texture_size);
 
-		vulkan_image_copy_from_buffer(&texture->image, &staging_buffer);
+		vulkan_image_view_copy_from_buffer(&texture->image_view, &staging_buffer);
 
 		vulkan_buffer_destroy(&staging_buffer);
 	}
@@ -519,7 +558,7 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 				};
 				vulkan_buffer_create_no_alloc(texture->renderer, &create_info, &staging_buffer);
 
-				vulkan_image_copy_from_buffer(&texture->image, &staging_buffer);
+				vulkan_image_view_copy_from_buffer(&texture->image_view, &staging_buffer);
 
 				vulkan_buffer_destroy(&staging_buffer);
 			}
