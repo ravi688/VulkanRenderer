@@ -21,7 +21,7 @@
 
 #include <renderer/defines.h>
 
-#define DEFAULT_TEST_NAME "DEPTH_CUBE_RENDER_TEXTURE"
+#define DEFAULT_TEST_NAME "POINT_LIGHT_SHADOWS"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 800
