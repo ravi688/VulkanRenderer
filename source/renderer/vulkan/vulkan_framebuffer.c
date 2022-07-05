@@ -60,8 +60,11 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 
     // for now we must not touch the depth only passes because they are being sampled in other passes
     // or if(render_pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET)
-   	if(render_pass->required_framebuffer_count == renderer->swapchain->image_count)
-   	{
+   	
+
+    // TODO: Revert this change after implementing and testing the point light shadows
+   	// if(render_pass->required_framebuffer_count == renderer->swapchain->image_count)
+   	// {
 		u32 attachment_count = render_pass->attachment_count;
 #ifdef GLOBAL_DEBUG
 		u32 depth_count = 0;
@@ -81,7 +84,7 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 #ifdef GLOBAL_DEBUG
 		assert_wrn(depth_count <= 1);
 #endif
-	}
+	// }
 
 	assert(render_pass->supplementary_attachment_count <= 1);
 	for(u32 j = 0; j < render_pass->supplementary_attachment_count; j++)

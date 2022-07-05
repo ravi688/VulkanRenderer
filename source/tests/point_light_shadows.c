@@ -23,14 +23,18 @@ TEST_DATA(POINT_LIGHT_SHADOWS)
 
 	/* materials */
 	material_t* material;
+	material_t* shadowMapMaterial;
+	material_t* depthReflectionMaterial;
 
 	/* meshes */
 	mesh_t* mesh;
 	mesh_t* wallMesh;
+	mesh_t* cubeMesh;
 
 	/* render objects*/
 	render_object_t* renderObject;
 	render_object_t* wallObject;
+	render_object_t* cubeObject;
 
 	/* textures */
 	vulkan_texture_t* shadowMap;
@@ -62,16 +66,22 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	light_set_position(this->pointLight, vec3_zero(float)());
 	light_set_intensity(this->pointLight, 0.5f);
 
-	// this->shadowMapMaterial = material_library_getH(mlib, 
-	// 						material_library_create_materialH(mlib, 
-	// 						shader_library_create_shader_from_preset(slib, 
-	// 							SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP), "ShadowMapMaterial"));
+	this->shadowMapMaterial = material_library_getH(mlib, 
+							material_library_create_materialH(mlib, 
+							shader_library_create_shader_from_preset(slib, 
+								SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP), "ShadowMapMaterial"));
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
 							shader_library_create_shader_from_preset(slib, 
 								SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT), "PointLightMaterial"));
+	this->depthReflectionMaterial = material_library_getH(mlib, 
+							material_library_create_materialH(mlib, 
+							shader_library_create_shader_from_preset(slib, 
+								SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH_POINT), "DepthRefectionMaterial"));
 
 	material_set_vec4(this->material, "parameters.color", vec4(float)(1, 1, 1, 1));
+	material_set_vec4(this->depthReflectionMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
+	material_set_float(this->depthReflectionMaterial, "parameters.reflectance", 1.0f);
 
 	vulkan_texture_create_info_t create_info = 
 	{
@@ -87,6 +97,7 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	};	
 	this->shadowMap = vulkan_texture_create(renderer->vulkan_handle, &create_info);
 	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->shadowMap);
+	material_set_texture(this->depthReflectionMaterial, "reflectionMap", this->shadowMap);
 
 	AUTO sphereMeshData = mesh3d_load("models/Sphere.obj");
 	mesh3d_make_centroid_origin(sphereMeshData);
@@ -98,12 +109,19 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	render_object_set_transform(this->renderObject, mat4_scale(float)(0.5f, 0.5f, 0.5f));
 
 	AUTO cubeMeshData = mesh3d_cube(1);
+	this->cubeMesh = mesh_create(renderer, cubeMeshData);
+	this->cubeObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->cubeObject, this->material);
+	render_object_attach(this->cubeObject, this->cubeMesh);
+	render_object_set_transform(this->cubeObject, mat4_mul(float)(2, mat4_translation(float)(-0.5f, 0, 0.5f), mat4_scale(float)(0.1f, 0.1f, 0.1f)));
+
 	mesh3d_transform_set(cubeMeshData, mat4_scale(float)(-1, -1, -1));
 	this->wallMesh = mesh_create(renderer, cubeMeshData);
 	this->wallObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->wallObject, this->material);
 	render_object_attach(this->wallObject, this->wallMesh);
 	render_object_set_transform(this->wallObject, mat4_scale(float)(3, 3, 3));
+
 }
 
 TEST_ON_TERMINATE(POINT_LIGHT_SHADOWS)
@@ -112,6 +130,8 @@ TEST_ON_TERMINATE(POINT_LIGHT_SHADOWS)
 	mesh_release_resources(this->mesh);
 	mesh_destroy(this->wallMesh);
 	mesh_release_resources(this->wallMesh);
+	mesh_destroy(this->cubeMesh);
+	mesh_release_resources(this->cubeMesh);
 	light_destroy(this->pointLight);
 	light_release_resources(this->pointLight);
 
@@ -140,10 +160,24 @@ TEST_ON_UPDATE(POINT_LIGHT_SHADOWS)
 
 	angle += deltaTime * 30;
 	light_set_position(this->pointLight, vec3(float)(0.7f * sin(angle DEG), 0, 0.7f * cos(angle DEG)));
+	render_object_set_transform(this->cubeObject, mat4_mul(float)(2, mat4_translation(float)(0.7f * sin(angle DEG), 0, 0.7f * cos(angle DEG)),
+		mat4_scale(float)(0.1f, 0.1f, 0.1f)));
 }
 
 TEST_ON_RENDER(POINT_LIGHT_SHADOWS)
 {
+	render_object_set_material(this->renderObject, this->shadowMapMaterial);
+	render_object_set_material(this->wallObject, this->shadowMapMaterial);
+	render_object_set_material(this->cubeObject, this->shadowMapMaterial);
+	camera_set_active(this->offscreenCamera, true);
+	camera_set_active(this->camera, false);
+	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
+
+	render_object_set_material(this->renderObject, this->depthReflectionMaterial);
+	render_object_set_material(this->wallObject, this->material);
+	render_object_set_material(this->cubeObject, this->material);
+	camera_set_active(this->offscreenCamera, false);
+	camera_set_active(this->camera, true);
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 }
 

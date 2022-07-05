@@ -102,11 +102,11 @@ RENDERER_API void vulkan_material_destroy(vulkan_material_t* material)
 
 RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 {
-	// TODO
-	// for(u16 i = 0; i < material->uniform_resource_count; i++)
-	// 	if(material->uniform_resources[i].index != 0xFFFF)
-	// 		vulkan_buffer_release_resources(&material->uniform_resources[i].buffer);
-	heap_free(material->uniform_resources);
+	for(u16 i = 0; i < material->uniform_resource_count; i++)
+		if(material->uniform_resources[i].index != 0xFFFF)
+			vulkan_buffer_release_resources(&material->uniform_resources[i].buffer);
+	if(material->uniform_resource_count != 0)
+		heap_free(material->uniform_resources);
 	// TODO
 	// heap_free(material);
 }
