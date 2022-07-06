@@ -98,6 +98,7 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	this->shadowMap = vulkan_texture_create(renderer->vulkan_handle, &create_info);
 	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->shadowMap);
 	material_set_texture(this->depthReflectionMaterial, "reflectionMap", this->shadowMap);
+	material_set_texture(this->material, "shadowMap", this->shadowMap);
 
 	AUTO sphereMeshData = mesh3d_load("models/Sphere.obj");
 	mesh3d_make_centroid_origin(sphereMeshData);
@@ -109,7 +110,7 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	render_object_set_transform(this->renderObject, mat4_scale(float)(0.5f, 0.5f, 0.5f));
 
 	AUTO cubeMeshData = mesh3d_cube(1);
-	this->cubeMesh = mesh_create(renderer, cubeMeshData);
+	this->cubeMesh = mesh_create(renderer, sphereMeshData);
 	this->cubeObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->cubeObject, this->material);
 	render_object_attach(this->cubeObject, this->cubeMesh);
@@ -159,8 +160,11 @@ TEST_ON_UPDATE(POINT_LIGHT_SHADOWS)
 	}
 
 	angle += deltaTime * 30;
-	light_set_position(this->pointLight, vec3(float)(0.7f * sin(angle DEG), 0, 0.7f * cos(angle DEG)));
-	render_object_set_transform(this->cubeObject, mat4_mul(float)(2, mat4_translation(float)(0.7f * sin(angle DEG), 0, 0.7f * cos(angle DEG)),
+	vec3_t(float) pos = vec3(float)(0.7f * sin(angle DEG), 0, 0.7f * cos(angle DEG));
+	vulkan_camera_set_position_cube(this->offscreenCamera, pos);
+	light_set_position(this->pointLight, pos);
+	light_set_color(this->pointLight, vec3(float)(pos.x * 0.5f + 0.5f, pos.y * 0.5f + 0.5f, pos.z * 0.5f + 0.5f));
+	render_object_set_transform(this->cubeObject, mat4_mul(float)(2, mat4_translation(float)(pos.x, pos.y, pos.z),
 		mat4_scale(float)(0.1f, 0.1f, 0.1f)));
 }
 
@@ -173,7 +177,7 @@ TEST_ON_RENDER(POINT_LIGHT_SHADOWS)
 	camera_set_active(this->camera, false);
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 
-	render_object_set_material(this->renderObject, this->depthReflectionMaterial);
+	render_object_set_material(this->renderObject, this->material);
 	render_object_set_material(this->wallObject, this->material);
 	render_object_set_material(this->cubeObject, this->material);
 	camera_set_active(this->offscreenCamera, false);

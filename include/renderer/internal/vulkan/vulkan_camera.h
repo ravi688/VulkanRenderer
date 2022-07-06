@@ -147,6 +147,7 @@ static RENDERER_API FORCE_INLINE void vulkan_camera_set_active(vulkan_camera_t* 
 	camera->is_active = is_active;
 }
 RENDERER_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t(float) transform);
+RENDERER_API void vulkan_camera_set_position_cube(vulkan_camera_t* camera, vec3_t(float) position);
 RENDERER_API void vulkan_camera_set_position(vulkan_camera_t* camera, vec3_t(float) position);
 RENDERER_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t(float) rotation);
 RENDERER_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane);

@@ -9,10 +9,8 @@ layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectI
 
 layout(location = POSITION_LOCATION) in vec3 position;
 layout(location = NORMAL_LOCATION) in vec3 normal;
-// layout(location = TEXCOORD_LOCATION) in vec2 texcoord;
 
 layout(location = 0) out vec3 _normal;
-// layout(location = 1) out vec2 _texcoord;
 layout(location = 1) out vec3 _position;
 
 void main()
@@ -23,5 +21,4 @@ void main()
 	clipPos.y = -clipPos.y;
 	gl_Position = clipPos;
 	_normal = normalize((objectInfo.normal * vec4(normal, 1)).xyz);
-	// _texcoord = texcoord;
 }

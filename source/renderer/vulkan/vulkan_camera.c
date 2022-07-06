@@ -429,18 +429,7 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 				memcpy(camera->buffer_mappings[i + 1], camera->buffer_mappings[0], struct_descriptor_sizeof(&camera->struct_definition));
 			}
 			camera->buffer_count = 6;
-
-			for(u32 i = 0; i < 6; i++)
-			{
-				struct_descriptor_map(&camera->struct_definition, camera->buffer_mappings[i]);
-				mat4_t(float) transform = mat4_mul(float)(2, mat4_translation(float)(camera->position.x, camera->position.y, camera->position.z),
-					mat4_rotation(float)(camera->shot_rotations[i].x, camera->shot_rotations[i].y , camera->shot_rotations[i].z));
-				mat4_t(float) view = mat4_inverse(float)(transform);
-				mat4_move(float)(&transform, mat4_transpose(float)(transform));
-				struct_descriptor_set_mat4(&camera->struct_definition, camera->transform_handle, CAST_TO(float*, &transform));
-				mat4_move(float)(&view, mat4_transpose(float)(view));
-				struct_descriptor_set_mat4(&camera->struct_definition, camera->view_handle, CAST_TO(float*, &view));
-			}
+			vulkan_camera_set_position_cube(camera, camera->position);
 		}
 	}
 	else
@@ -588,6 +577,23 @@ RENDERER_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t(fl
 	camera->view = mat4_inverse(float)(transform);
 	mat4_move(float)(&m, mat4_transpose(float)(camera->view));
 	update_mat4(camera, camera->view_handle, CAST_TO(float*, &m));
+}
+
+RENDERER_API void vulkan_camera_set_position_cube(vulkan_camera_t* camera, vec3_t(float) position)
+{
+	camera->position = position;
+	assert(camera->max_shot_count == 6);
+	for(u32 i = 0; i < 6; i++)
+	{
+		struct_descriptor_map(&camera->struct_definition, camera->buffer_mappings[i]);
+		mat4_t(float) transform = mat4_mul(float)(2, mat4_translation(float)(camera->position.x, camera->position.y, camera->position.z),
+			mat4_rotation(float)(camera->shot_rotations[i].x, camera->shot_rotations[i].y , camera->shot_rotations[i].z));
+		mat4_t(float) view = mat4_inverse(float)(transform);
+		mat4_move(float)(&transform, mat4_transpose(float)(transform));
+		struct_descriptor_set_mat4(&camera->struct_definition, camera->transform_handle, CAST_TO(float*, &transform));
+		mat4_move(float)(&view, mat4_transpose(float)(view));
+		struct_descriptor_set_mat4(&camera->struct_definition, camera->view_handle, CAST_TO(float*, &view));
+	}
 }
 
 RENDERER_API void vulkan_camera_set_position(vulkan_camera_t* camera, vec3_t(float) position)
