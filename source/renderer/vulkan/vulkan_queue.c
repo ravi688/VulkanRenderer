@@ -20,9 +20,9 @@ RENDERER_API void vulkan_queue_presentv(VkQueue queue, u32 swapchain_count, VkSw
 	vkCall(vkQueuePresentKHR(queue, &present_info));
 }
 
-RENDERER_API void vulkan_queue_submit(VkQueue queue, VkCommandBuffer buffer, VkSemaphore wait, VkPipelineStageFlags wait_dst_stage, VkSemaphore signal)
+RENDERER_API void vulkan_queue_submit(VkQueue queue, VkCommandBuffer buffer, VkSemaphore wait, VkPipelineStageFlags wait_dst_stage, VkSemaphore signal, VkFence fence)
 {
-	vulkan_queue_submitv(queue, 1, &buffer, wait, wait_dst_stage, signal, VK_NULL_HANDLE);
+	vulkan_queue_submitv(queue, 1, &buffer, wait, wait_dst_stage, signal, fence);
 }
 
 RENDERER_API void vulkan_queue_submitv(VkQueue queue, u32 count, VkCommandBuffer* buffers, VkSemaphore wait, VkPipelineStageFlags wait_dst, VkSemaphore signal, VkFence fence)

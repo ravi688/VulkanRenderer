@@ -31,7 +31,6 @@ typedef struct vulkan_image_t
 	VkImageType vo_type;
 	VkFormat vo_format;
 	VkImageAspectFlags vo_aspect_mask;
-	VkImageLayout vo_layout;
 	u32 width;
 	u32 height;
 	u32 depth;
@@ -46,9 +45,5 @@ RENDERER_API vulkan_image_t* vulkan_image_create(vulkan_renderer_t* renderer, vu
 RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* out_image);
 RENDERER_API void vulkan_image_destroy(vulkan_image_t* image);
 RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image);
-
-// logic functions
-RENDERER_API void vulkan_image_transition_layout_to(vulkan_image_t* image, VkImageLayout layout);
-RENDERER_API void vulkan_image_copy_from_buffer(vulkan_image_t* image, vulkan_buffer_t* buffer);
 
 END_CPP_COMPATIBLE

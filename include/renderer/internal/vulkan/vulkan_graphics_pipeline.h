@@ -4,12 +4,12 @@
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
 #include <renderer/internal/vulkan/vulkan_types.h>
+#include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
 
 typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;
-typedef struct GraphicsPipeline GraphicsPipeline;
-typedef GraphicsPipeline GraphicsPipelineSettings;
 typedef struct vulkan_shader_module_t vulkan_shader_module_t;
 typedef struct vulkan_render_pass_t vulkan_render_pass_t;
+typedef struct vulkan_graphics_pipeline_settings_t vulkan_graphics_pipeline_settings_t;
 
 typedef struct vulkan_graphics_pipeline_create_info_t
 {
@@ -17,14 +17,14 @@ typedef struct vulkan_graphics_pipeline_create_info_t
 	vulkan_pipeline_layout_t* layout;
 	
 	/* fixed function settings for this pipeline */
-	GraphicsPipelineSettings* settings;
+	vulkan_graphics_pipeline_settings_t* settings;
 	
 	/* list of shader modues for this pipeline */
 	vulkan_shader_module_t* shader_modules;
 	u32 shader_module_count;
 
 	/* list of vertex binding descriptions supported by this pipeline  */
-	vulkan_vertex_info_t* vertex_attribute_bindings;
+	vulkan_vertex_buffer_layout_description_t* vertex_attribute_bindings;
 	u32 vertex_attribute_binding_count;
 
 	/* render pass for this pipeline */

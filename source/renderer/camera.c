@@ -13,30 +13,24 @@ RENDERER_API camera_t* camera_new()
 	return vulkan_camera_new();
 }
 
-RENDERER_API camera_t* camera_create(renderer_t* renderer, camera_projection_type_t projection_type, float n_plane, float f_plane, float height_or_angle)
+RENDERER_API camera_t* camera_create(renderer_t* renderer, camera_projection_type_t projection_type)
 {
 	render_pass_pool_t* pool = renderer_get_render_pass_pool(renderer);
 	vulkan_camera_create_info_t create_info = 
 	{
 		.projection_type = REINTERPRET_TO(vulkan_camera_projection_type_t, projection_type),
-		.field_of_view = height_or_angle,
 		.default_render_pass = render_pass_pool_create_pass_from_preset(pool, RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN_CLEAR),
-		.near_clip_plane = n_plane,
-		.far_clip_plane = f_plane
 	};
 	return vulkan_camera_create(renderer->vulkan_handle, &create_info);
 }
 
-RENDERER_API void camera_create_no_alloc(renderer_t* renderer, camera_projection_type_t projection_type, float n_plane, float f_plane, float height_or_angle, camera_t OUT camera)
+RENDERER_API void camera_create_no_alloc(renderer_t* renderer, camera_projection_type_t projection_type, camera_t OUT camera)
 {
 	render_pass_pool_t* pool = renderer_get_render_pass_pool(renderer);
 	vulkan_camera_create_info_t create_info = 
 	{
 		.projection_type = REINTERPRET_TO(vulkan_camera_projection_type_t, projection_type),
-		.field_of_view = height_or_angle,
 		.default_render_pass = render_pass_pool_create_pass_from_preset(pool, RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN),
-		.near_clip_plane = n_plane,
-		.far_clip_plane = f_plane
 	};
 	vulkan_camera_create_no_alloc(renderer->vulkan_handle, &create_info, camera);
 }
@@ -57,12 +51,48 @@ RENDERER_API void camera_set_clear(camera_t* camera, color_t color, float depth)
 	vulkan_camera_set_clear(camera, color, depth);
 }
 
-RENDERER_API void camera_render(camera_t* camera, render_queue_t* queue)
+RENDERER_API void camera_set_active(camera_t* camera, bool is_active)
 {
-	vulkan_camera_render(camera, queue);
+	vulkan_camera_set_active(camera, is_active);
+}
+
+RENDERER_API void camera_set_render_target(camera_t* camera, camera_render_target_type_t target_type, texture_t* texture)
+{
+	vulkan_camera_set_render_target(camera, REINTERPRET_TO(vulkan_camera_render_target_type_t, target_type), texture);
+}
+
+RENDERER_API bool camera_is_active(camera_t* camera)
+{
+	return vulkan_camera_is_active(camera);
+}
+
+RENDERER_API void camera_render(camera_t* camera, render_scene_t* scene, u64 queue_mask)
+{
+	vulkan_camera_render(camera, scene, queue_mask);
+}
+
+RENDERER_API void camera_render_to_texture(camera_t* camera, render_scene_t* scene, texture_t* texture)
+{
+	vulkan_camera_render_to_texture(camera, scene, texture);
 }
 
 /* getters */
+
+RENDERER_API mat4_t(float) camera_get_view(camera_t* camera)
+{
+	return vulkan_camera_get_view(camera);
+}
+
+RENDERER_API mat4_t(float) camera_get_transform(camera_t* camera)
+{
+	return vulkan_camera_get_transform(camera);
+}
+
+RENDERER_API mat4_t(float) camera_get_projection(camera_t* camera)
+{
+	return vulkan_camera_get_projection(camera);
+}
+
 RENDERER_API vec3_t(float) camera_get_position(camera_t* camera)
 {
 	return vulkan_camera_get_position(camera);
@@ -100,6 +130,12 @@ RENDERER_API float camera_get_height(camera_t* camera)
 
 
 /* setters */
+
+RENDERER_API void camera_set_transform(camera_t* camera, mat4_t(float) transform)
+{
+	vulkan_camera_set_transform(camera, transform);
+}
+
 RENDERER_API void camera_set_position(camera_t* camera, vec3_t(float) position)
 {
 	vulkan_camera_set_position(camera, position);

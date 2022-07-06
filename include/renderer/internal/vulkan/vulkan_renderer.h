@@ -15,6 +15,7 @@ typedef struct render_window_t render_window_t;
 typedef struct vulkan_shader_library_t vulkan_shader_library_t;
 typedef struct vulkan_material_library_t vulkan_material_library_t;
 typedef struct vulkan_render_pass_pool_t vulkan_render_pass_pool_t;
+typedef struct vulkan_camera_system_t vulkan_camera_system_t;
 
 typedef enum vulkan_renderer_gpu_type_t
 {
@@ -38,6 +39,7 @@ typedef struct vulkan_renderer_t
 
 	VkSemaphore vo_image_available_semaphore;
 	VkSemaphore vo_render_finished_semaphore;
+	VkFence vo_fence;
 
 	render_window_t* window;
 	vulkan_swapchain_create_info_t swapchain_create_info;		// for recreating the swapchain
@@ -45,11 +47,13 @@ typedef struct vulkan_renderer_t
 
 	u32 graphics_queue_index;
 	VkCommandBuffer* vo_command_buffers;
+	VkCommandBuffer vo_aux_command_buffer;
 
 	VkSharingMode vo_sharing_mode;
 
 	vulkan_descriptor_set_layout_t global_set_layout;
 	vulkan_descriptor_set_layout_t object_set_layout;
+	vulkan_descriptor_set_layout_t camera_set_layout;
 	
 	vulkan_descriptor_set_t global_set;
 
@@ -61,6 +65,7 @@ typedef struct vulkan_renderer_t
 	vulkan_shader_library_t* shader_library;
 	vulkan_material_library_t* material_library;
 	vulkan_render_pass_pool_t* render_pass_pool;
+	vulkan_camera_system_t* camera_system;
 } vulkan_renderer_t;
 
 BEGIN_CPP_COMPATIBLE

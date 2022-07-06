@@ -15,6 +15,10 @@
 	#define RENDER_OBJECT_HANDLE_INVALID VULKAN_RENDER_OBJECT_HANDLE_INVALID
 	typedef vulkan_render_queue_handle_t render_queue_handle_t;
 	#define RENDER_QUEUE_HANDLE_INVALID VULKAN_RENDER_QUEUE_HANDLE_INVALID
+
+	typedef struct vulkan_camera_t vulkan_camera_t;
+	typedef vulkan_camera_t camera_t;
+
 #elif RENDERER_OPENGL_DRIVER
 	typedef struct opengl_render_queue_t opengl_render_queue_t;
 	typedef opengl_render_queue_t render_queue_t;
@@ -25,6 +29,10 @@
 	#define RENDER_OBJECT_HANDLE_INVALID OPENGL_RENDER_OBJECT_HANDLE_INVALID
 	typedef opengl_render_queue_handle_t render_queue_handle_t;
 	#define RENDER_QUEUE_HANDLE_INVALID OPENGL_RENDER_QUEUE_HANDLE_INVALID
+
+	typedef struct opengl_camera_t opengl_camera_t;
+	typedef opengl_camera_t camera_t;
+	
 #elif RENDERER_DIRECTX_DRIVER
 	typedef struct directx_render_queue_t directx_render_queue_t;
 	typedef directx_render_queue_t render_queue_t;
@@ -35,6 +43,10 @@
 	#define RENDER_OBJECT_HANDLE_INVALID DIRECTX_RENDER_OBJECT_HANDLE_INVALID
 	typedef directx_render_queue_handle_t render_queue_handle_t;
 	#define RENDER_QUEUE_HANDLE_INVALID DIRECTX_RENDER_QUEUE_HANDLE_INVALID
+
+	typedef struct directx_camera_t directx_camera_t;
+	typedef directx_camera_t camera_t;
+	
 #elif RENDERER_METAL_DRIVER
 	typedef struct metal_render_queue_t metal_render_queue_t;
 	typedef metal_render_queue_t render_queue_t;
@@ -45,18 +57,30 @@
 	#define RENDER_OBJECT_HANDLE_INVALID METAL_RENDER_OBJECT_HANDLE_INVALID
 	typedef metal_render_queue_handle_t render_queue_handle_t;
 	#define RENDER_QUEUE_HANDLE_INVALID METAL_RENDER_QUEUE_HANDLE_INVALID
+
+	typedef struct metal_camera_t metal_camera_t;
+	typedef metal_camera_t camera_t;
+	
 #endif
 
 // NOTE: this should be in sync with vulkan_render_queue_type_t
 typedef enum render_queue_type_t
 {
+	RENDER_QUEUE_TYPE_UNDEFINED = 0,
 	RENDER_QUEUE_TYPE_BACKGROUND,	// this render queue is rendered before any others
 	RENDER_QUEUE_TYPE_GEOMETRY, 		// opaque geometry uses this queue
 	RENDER_QUEUE_TYPE_ALPH_TESTED, 	// alpha tested geometry uses this queue
 	RENDER_QUEUE_TYPE_GEOMETRY_LAST, // last render queue that is considered "opaque"
 	RENDER_QUEUE_TYPE_TRANSPARENT, 	// this render queue is rendered after Geometry and AlphaTest, in back-to-front order
 	RENDER_QUEUE_TYPE_OVERLAY, 		// this render queue is meant for overlay effects
-	RENDER_QUEUE_TYPE_UNDEFINED 	// for specific purpose such as implementing render scene and adding a camera to it
+	RENDER_QUEUE_TYPE_QUEUE0, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE1, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE2, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE3, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE4, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE5, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE6, 		// general purpose queue
+	RENDER_QUEUE_TYPE_QUEUE7 		// general purpose queue
 } render_queue_type_t;
 
 
@@ -141,8 +165,9 @@ RENDERER_API void render_queue_build(render_queue_t* queue);
 	description: Builds the actual API specific command buffers
 	params:
 		queue: this render queue
+		camera: the camera to which output have to be written
 	returns:
 		nothing
 	NOTE: if this render queue isn't ready (is_ready = false), then it first calls render_queue_build()
  */
-RENDERER_API void render_queue_dispatch(render_queue_t* queue);
+RENDERER_API void render_queue_dispatch(render_queue_t* queue, camera_t* camera);

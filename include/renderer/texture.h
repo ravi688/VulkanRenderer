@@ -3,21 +3,18 @@
 
 typedef struct renderer_t renderer_t;
 
-#ifdef RENDERER_VULKAN_DRIVER
-typedef struct vulkan_texture_t vulkan_texture_t;
-typedef vulkan_texture_t texture_t;
-#endif
-
-#ifdef RENDERER_OPENGL_DRIVER
-#error "OpenGL is not supported yet!"
-#endif
-
-#ifdef RENDERER_DIRECTX_DRIVER
-#error "DirectX is not supported yet!"
-#endif
-
-#ifdef RENDERER_METAL_DRIVER
-#error "Metal is not supported yet!"
+#if   defined(RENDERER_VULKAN_DRIVER)
+	typedef struct vulkan_texture_t vulkan_texture_t;
+	typedef vulkan_texture_t texture_t;
+#elif defined(RENDERER_OPENGL_DRIVER)
+	typedef struct opengl_texture_t opengl_texture_t;
+	typedef opengl_texture_t texture_t;
+#elif defined(RENDERER_DIRECTX_DRIVER)
+	typedef struct directx_texture_t directx_texture_t;
+	typedef directx_texture_t texture_t;
+#elif defined(RENDERER_METAL_DRIVER)
+	typedef struct metal_texture_t metal_texture_t;
+	typedef metal_texture_t texture_t;
 #endif
 
 #include <renderer/defines.h>
@@ -38,13 +35,16 @@ typedef struct texture_data_t
 	void* data;				// pointer to the bytes (texel values)
 	u32 width;				// width of the texture in texels
 	u32 height;				// height of the texture in texels
+	u32 depth;
 	u8 channel_count;		// number of channels present in the texture, for now it must be 4 (RGBA)
 } texture_data_t;
 
 typedef struct texture_create_info_t
 {
-	u32 data_count;	 							// number of individual textures loaded into the memory
-	texture_data_t* data;						// pointer to the texture data(s) loaded into the memory
+	u32 width;
+	u32 height;
+	u32 depth;
+	u8 channel_count;
 	texture_type_t type; 						// type of the this texture
 } texture_create_info_t;
 

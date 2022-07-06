@@ -4,7 +4,7 @@
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <renderer/internal/vulkan/vulkan_shader_module.h>
-#include <shader_compiler/settings_parser.h>
+#include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <renderer/render_window.h>
 
 #include <renderer/memory_allocator.h>
