@@ -37,7 +37,7 @@ float max(float x1, float x2, float x3, float x4, float x5, float x6)
 	return max(max(max(max(max(x1, x2), x3), x4), x5), x6);
 }
 
-const float bias = 0.01;
+const float castedBias = 0.01f;
 
 void main()
 {
@@ -55,7 +55,7 @@ void main()
 
 	float sqrDistance = dot(dir, dir);
 	float litAmount = light.intensity / sqrDistance;
-	float castedShadow = dp * 0.5 + 0.5 + bias;
+	float castedShadow = max(0.0, dp) + castedBias;
 	vec4 _color = receivedShadow * litAmount * castedShadow * vec4(light.color, 1) * parameters.color;
 	color = vec4(_color.r, _color.g, _color.b, 1);
 }

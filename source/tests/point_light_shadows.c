@@ -100,17 +100,17 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	material_set_texture(this->depthReflectionMaterial, "reflectionMap", this->shadowMap);
 	material_set_texture(this->material, "shadowMap", this->shadowMap);
 
-	AUTO sphereMeshData = mesh3d_load("models/Sphere.obj");
+	AUTO sphereMeshData = mesh3d_load("models/Monkey.obj");
 	mesh3d_make_centroid_origin(sphereMeshData);
 
 	this->mesh = mesh_create(renderer, sphereMeshData);
 	this->renderObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->renderObject, this->material);
 	render_object_attach(this->renderObject, this->mesh);
-	render_object_set_transform(this->renderObject, mat4_scale(float)(0.5f, 0.5f, 0.5f));
+	render_object_set_transform(this->renderObject, mat4_mul(float)(2, mat4_rotation(float)(0, -90 DEG, 0), mat4_scale(float)(0.5f, 0.5f, 0.5f)));
 
 	AUTO cubeMeshData = mesh3d_cube(1);
-	this->cubeMesh = mesh_create(renderer, sphereMeshData);
+	this->cubeMesh = mesh_create(renderer, cubeMeshData);
 	this->cubeObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->cubeObject, this->material);
 	render_object_attach(this->cubeObject, this->cubeMesh);
@@ -145,7 +145,7 @@ TEST_ON_TERMINATE(POINT_LIGHT_SHADOWS)
 
 
 static bool swap = false;
-static float angle = 0.0f;
+static float angle = 0;
 
 TEST_ON_UPDATE(POINT_LIGHT_SHADOWS)
 {
@@ -159,8 +159,9 @@ TEST_ON_UPDATE(POINT_LIGHT_SHADOWS)
 			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->shadowMap);
 	}
 
-	angle += deltaTime * 30;
-	vec3_t(float) pos = vec3(float)(0.7f * sin(angle DEG), 0, 0.7f * cos(angle DEG));
+	angle += deltaTime;
+	float _angle = (0.5f * sin(angle) + 0.5f) * 180.0f - 180.0f;
+	vec3_t(float) pos = vec3(float)(0.8f * sin(_angle DEG), 0, 0.8f * cos(_angle DEG));
 	vulkan_camera_set_position_cube(this->offscreenCamera, pos);
 	light_set_position(this->pointLight, pos);
 	light_set_color(this->pointLight, vec3(float)(pos.x * 0.5f + 0.5f, pos.y * 0.5f + 0.5f, pos.z * 0.5f + 0.5f));
