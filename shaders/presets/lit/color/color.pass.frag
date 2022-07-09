@@ -3,7 +3,7 @@
 
 #include <v3d.h>
 
-layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform LightInfo lightInfo;
+layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight lightInfo;
 layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
 	vec4 color;
@@ -26,7 +26,7 @@ void main()
 		color = parameters.color * 0.01;
 	else
 	{
-		float dp = dot(-_normal, lightInfo.dir) * 0.5 + 0.5;
+		float dp = dot(-_normal, lightInfo.direction) * 0.5 + 0.5;
 		color = parameters.color * dp * vec4(lightInfo.color, 1);
 	}
 }

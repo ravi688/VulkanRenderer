@@ -21,7 +21,7 @@
 
 #include <renderer/defines.h>
 
-#define DEFAULT_TEST_NAME "POINT_LIGHT_SHADOWS"
+#define DEFAULT_TEST_NAME "SPOT_LIGHT"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 800

@@ -58,9 +58,9 @@ static void setup_gpu_resources(vulkan_light_t* light)
 				struct_descriptor_add_field(&light->struct_definition, "position", GLSL_TYPE_VEC3);
 			break;
 			case VULKAN_LIGHT_TYPE_SPOT:
-				struct_descriptor_add_field(&light->struct_definition, "angle", GLSL_TYPE_FLOAT);
 				struct_descriptor_add_field(&light->struct_definition, "direction", GLSL_TYPE_VEC3);
 				struct_descriptor_add_field(&light->struct_definition, "position", GLSL_TYPE_VEC3);
+				struct_descriptor_add_field(&light->struct_definition, "angle", GLSL_TYPE_FLOAT);
 			break;
 			case VULKAN_LIGHT_TYPE_AMBIENT:
 			break;
@@ -206,9 +206,10 @@ RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle
 			AUTO _light = CAST_TO(vulkan_spot_light_t*, light);
 			_light->angle = angle;
 			struct_descriptor_set_float(&light->struct_definition, _light->angle_handle, &angle);
+			vulkan_light_set_projection(light, mat4_persp_projection(float)(0.04f, 20.0f, _light->angle, 1));
 		break;
 		default:
-			log_wrn("You are trying to set spot angle for the light which isn't a spot light\n");
+			log_wrn("You are trying to set spot angle for the light which isn't a spot light, light type: %u\n", light->type);
 		break;
 	}
 }

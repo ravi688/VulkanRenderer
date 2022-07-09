@@ -27,11 +27,6 @@ float linearize(float depth, float n, float f)
 	return n * f * 1 / t;
 }
 
-float lerp(float min, float max, float t)
-{
-	return min * (1 - t) + max * t;
-}
-
 float max(float x1, float x2, float x3, float x4, float x5, float x6)
 {
 	return max(max(max(max(max(x1, x2), x3), x4), x5), x6);
@@ -42,19 +37,17 @@ const float castedBias = 0.01f;
 void main()
 {
 	vec3 dir = light.position - position;
-	float dp = dot(normal, normalize(dir));
 
 	float closestDepth = texture(shadowMap, -vec3(dir.z, dir.y, dir.x)).r;
 	closestDepth = linearize(closestDepth, 0.04, 20.0) * (20.0 - 0.04) + 0.04;
 	float depth = max(dir.x, dir.y, dir.z, -dir.x, -dir.y, -dir.z);
 	float receivedShadow = 1.0f;
-	if(dp <= 0.05f)
-		receivedShadow = lerp(minShadow, 1.0, max(1.0, 1.0 + dp));	
-	else if(closestDepth < (depth + shadowBias))
+	if(closestDepth < (depth + shadowBias))
 		receivedShadow = minShadow;
 
 	float sqrDistance = dot(dir, dir);
 	float litAmount = light.intensity / sqrDistance;
+	float dp = dot(normal, normalize(dir));
 	float castedShadow = max(0.0, dp) + castedBias;
 	vec4 _color = receivedShadow * litAmount * castedShadow * vec4(light.color, 1) * parameters.color;
 	color = vec4(_color.r, _color.g, _color.b, 1);
