@@ -74,18 +74,21 @@ static vulkan_shader_resource_description_t* create_material_set_binding(shader_
 	switch(preset)
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
+		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
+		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
 			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
 			end_uniform(&bindings);	
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
+		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
 			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
 			end_uniform(&bindings);	
 			add_opaque(&bindings, "albedo", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
-		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT:
 			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
@@ -96,13 +99,6 @@ static vulkan_shader_resource_description_t* create_material_set_binding(shader_
 			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
 			end_uniform(&bindings);
-			break;
-		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
-		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
-			parameters = begin_uniform(&bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
-				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
-			end_uniform(&bindings);
-			add_opaque(&bindings, "albedo", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
 			add_opaque(&bindings, "albedo", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
@@ -177,13 +173,7 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(shader_libr
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH:
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH_POINT:
 		case SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT:
-			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
-			end_vertex_binding(&attributes);
-			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
-			end_vertex_binding(&attributes);
-			break;
+		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR:
 			begin_vertex_binding(&attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
@@ -311,12 +301,39 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				end_subpass(&passes);
 			end_pass(&passes);
 			break;
+		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR:
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
 				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
 				begin_subpass(&passes, 0);
 					add_attachment_reference(&passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
 				end_subpass(&passes);
+				// let the clear happen first
+				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstSubpass = 0;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				add_dependency(&passes, &dependency);
+
+				// let the layout transition happen
+				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstSubpass = 0;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				dependency.dstAccessMask = 0;
+				add_dependency(&passes, &dependency);
+
+				// let the write happen first and then allow read
+				dependency.srcSubpass = 0;
+				dependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				add_dependency(&passes, &dependency);
 			end_pass(&passes);
 			begin_pass(&passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
 				add_input(&passes, 0, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
@@ -618,6 +635,20 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 				add_shader(&pipelines, "shaders/presets/lit/color/point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
 				add_shader(&pipelines, "shaders/presets/lit/color/point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
 			end_pipeline(&pipelines);
+			break;
+		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
+			begin_pipeline(renderer, &pipelines);
+				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
+				add_shader(&pipelines, "shaders/presets/lit/color/shadow.spot.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/lit/color/shadow.spot.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			begin_pipeline(renderer, &pipelines);
+				add_color_blend_state(&pipelines, VK_FALSE);
+				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
+				add_shader(&pipelines, "shaders/presets/lit/color/spot.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				add_shader(&pipelines, "shaders/presets/lit/color/spot.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			end_pipeline(&pipelines);
+			break;
 		case SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP:
 			begin_pipeline(renderer, &pipelines);
 				add_color_blend_state(&pipelines, VK_FALSE);
