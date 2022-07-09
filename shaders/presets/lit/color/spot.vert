@@ -11,8 +11,7 @@ layout(location = POSITION_LOCATION) in vec3 position;
 layout(location = NORMAL_LOCATION) in vec3 normal;
 
 layout(location = 0) out vec3 _normal;
-layout(location = 1) out vec4 _lightClipPos;
-layout(location = 2) out vec3 _position;
+layout(location = 1) out vec3 _position;
 
 void main()
 {
@@ -20,6 +19,5 @@ void main()
 	clipPos.y = -clipPos.y;
 	gl_Position = clipPos;
 	_normal = normalize((objectInfo.normal * vec4(normal, 1)).xyz);
-	_lightClipPos = light.projection * light.view * objectInfo.transform * vec4(position, 1);
 	_position = (objectInfo.transform * vec4(position, 1)).xyz;
 }

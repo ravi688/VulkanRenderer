@@ -206,6 +206,7 @@ RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle
 			AUTO _light = CAST_TO(vulkan_spot_light_t*, light);
 			_light->angle = angle;
 			struct_descriptor_set_float(&light->struct_definition, _light->angle_handle, &angle);
+			vulkan_light_set_projection(light, mat4_persp_projection(float)(0.04f, 20.0f, _light->angle, 1));
 		break;
 		default:
 			log_wrn("You are trying to set spot angle for the light which isn't a spot light, light type: %u\n", light->type);
