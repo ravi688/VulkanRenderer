@@ -18,20 +18,11 @@ layout(location = 2) in vec4 lightClipPos;
 layout(location = 0) out vec4 color;
 
 const float shadowBias = 0.0006f;
-const float minShadow = 0.1f;
-
-float lerp(float min, float max, float t)
-{
-	return min * (1 - t) + max * t;
-}
+const float minShadow = 0.001f;
+const float ambient = 0.02f;
 
 void main()
 {
-	float dp = dot(normal, -light.direction);
-
-	float litAmount = dp * 0.5 + 0.5;
-	vec4 diffuse = litAmount * vec4(light.color, 1) * parameters.color * texture(albedo, texcoord);
-
 
 	vec2 shadowMapCoord = vec2(lightClipPos.x / lightClipPos.w, -lightClipPos.y / lightClipPos.w);
 	shadowMapCoord = shadowMapCoord * 0.5 + 0.5;
@@ -39,11 +30,10 @@ void main()
 	float shadowedDepth = lightClipPos.z / lightClipPos.w;
 
 	float shadow = 1.0f;
-	if(dp <= 0.1f)
-		shadow = lerp(minShadow, 1.0, max(1, (1.0 + dp)));
-	else if(shadowedDepth > (depth + shadowBias))
- 		shadow = 0.1f;
+	if(shadowedDepth > (depth + shadowBias))
+ 		shadow = minShadow;
 
-	color = diffuse * shadow;
-
+	float dp = dot(normal, -light.direction);
+	float litAmount = max(0, dp);
+	color = max(shadow * litAmount, ambient) * vec4(light.color, 1) * parameters.color * texture(albedo, texcoord);
 }

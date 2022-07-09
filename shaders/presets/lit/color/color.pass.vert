@@ -4,7 +4,7 @@
 #include <v3d.h>
 
 layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
-layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform LightInfo lightInfo;
+layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight lightInfo;
 layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
 layout(location = POSITION_LOCATION) in vec3 position;

@@ -51,13 +51,11 @@
 #define TEXCOORD layout(location = TEXCOORD_LOCATION) in vec2
 #define TANGENT layout(location = TANGENT_LOCATION) in vec3
 
-#define LightInfo \
-LightInfo\
+#define Light \
+Light\
 {\
-	mat4 transform;\
 	mat4 projection;\
 	mat4 view;\
-	vec3 dir;\
 	vec3 color;\
 	float intensity;\
 }
@@ -82,6 +80,18 @@ PointLight\
 	vec3 position;\
 }
 
+#define SpotLight \
+SpotLight\
+{\
+	mat4 projection;\
+	mat4 view;\
+	vec3 color;\
+	float intensity;\
+	vec3 direction;\
+	vec3 position;\
+	float angle;\
+}
+
 #define ObjectInfo \
 ObjectInfo\
 {\
@@ -101,7 +111,9 @@ CameraInfo\
 
 
 #define CAMERA layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo
-#define LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform LightInfo
+#define LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform Light
+#define DIRECTIONAL_LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight
 #define POINT_LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight
+#define SPOT_LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight
 #define MATERIAL_PROPERTIES layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Properties
 #define OBJECT layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo
