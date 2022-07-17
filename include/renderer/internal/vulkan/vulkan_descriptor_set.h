@@ -5,21 +5,66 @@
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
 
-typedef struct vulkan_renderer_t vulkan_renderer_t;
+// NOTE: This must be in sync with v3d.h
+enum
+{
+	VULKAN_DESCRIPTOR_SET_CAMERA 	 =  0,
+	VULKAN_DESCRIPTOR_SET_GLOBAL 	 = 	1,
+	VULKAN_DESCRIPTOR_SET_RENDER 	 = 	2,
+	VULKAN_DESCRIPTOR_SET_SUB_RENDER =  3,
+	VULKAN_DESCRIPTOR_SET_MATERIAL 	 = 	4,
+	VULKAN_DESCRIPTOR_SET_OBJECT 	 =	5
+};
+
+// NOTE: This must be in sync with v3d.h
+enum
+{
+	// bindings for CAMERA_SET
+	VULKAN_DESCRIPTOR_BINDING_CAMERA_PROPERTIES = 0,
+	
+	// bindings for GLOBAL_SET
+	VULKAN_DESCRIPTOR_BINDING_CAMERA = 0,
+	VULKAN_DESCRIPTOR_BINDING_LIGHT = 1,
+
+	// bindings for SUB_RENDER_SET
+	VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0 = 0,
+	VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT1 = 1,
+	VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT2 = 2,
+
+	// bindigs for MATERIAL_SET
+	VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES = 0,
+
+	// bindings for MATERIAL_SET & RENDER_SET
+	VULKAN_DESCRIPTOR_BINDING_TEXTURE0 = 1,
+	VULKAN_DESCRIPTOR_BINDING_TEXTURE1 = 2,
+	VULKAN_DESCRIPTOR_BINDING_TEXTURE2 = 3,
+	VULKAN_DESCRIPTOR_BINDING_TEXTURE3 = 4,
+	VULKAN_DESCRIPTOR_BINDING_TEXTURE4 = 5,
+	VULKAN_DESCRIPTOR_BINDING_TEXTURE5 = 6,
+	VULKAN_DESCRIPTOR_BINDING_TEXTURE6 = 7,
+	VULKAN_DESCRIPTOR_BINDING_TEXTURE7 = 8,
+	VULKAN_DESCRIPTOR_BINDING_TEXTURE8 = 9,
+
+	// bindings for OBJECT_SET
+	VULKAN_DESCRIPTOR_BINDING_TRANSFORM = 0
+};
+
 typedef struct vulkan_texture_t vulkan_texture_t;
 typedef struct vulkan_buffer_t vulkan_buffer_t;
 typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;
+typedef struct vulkan_descriptor_set_layout_t vulkan_descriptor_set_layout_t;
 
 typedef struct vulkan_descriptor_set_create_info_t
 {
-	VkDescriptorPool pool;				// the pool from the set must be allocated
-	VkDescriptorSetLayout layout;		// the layout of the set (contains a set of different types of resource descriptors)
+	VkDescriptorPool vo_pool;				// the pool from the set must be allocated
+	vulkan_descriptor_set_layout_t* layout;		// the layout of the set (contains a set of different types of resource descriptors)
 } vulkan_descriptor_set_create_info_t;
 
 typedef struct vulkan_descriptor_set_t
 {
-	VkDescriptorSet handle;
-	VkDescriptorPool pool; //the pool from it has been allocated
+	vulkan_renderer_t* renderer;
+	VkDescriptorSet vo_handle;
+	VkDescriptorPool vo_pool; //the pool from it has been allocated
 } vulkan_descriptor_set_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -69,7 +114,7 @@ RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* rende
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer);
+RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set);
 
 /*
 	description:
@@ -88,11 +133,12 @@ RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_
  	params:
 		set: pointer to a valid vulkan_descriptor_set_t object (must have been created by calling vulkan_descriptor_set_create_no_alloc or vulkan_descriptor_set_create)
 		renderer: pointer to the vulkan_renderer_t object
+		set_number: set number
  		pipeline_layout: compatible pipeline layout, which has been created with the same descriptor set layout from which this descriptor set has been created
  	returns:
  		nothing
  */
-RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, vulkan_pipeline_layout_t* pipeline_layout);
+RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, u32 set_number, vulkan_pipeline_layout_t* pipeline_layout);
 
 /*
  	description:
@@ -105,7 +151,7 @@ RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, vulka
  	returns:
  		nothing
  */
-RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, u32 binding_index, vulkan_texture_t* texture);
+RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_texture_t* texture);
 
 
 /*
@@ -119,7 +165,7 @@ RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* s
  	returns:
  		nothing
  */
-RENDERER_API void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, vulkan_renderer_t* renderer, u32 binding_index, vulkan_buffer_t* buffer);
+RENDERER_API void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_buffer_t* buffer);
 
 
 END_CPP_COMPATIBLE

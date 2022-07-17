@@ -18,20 +18,23 @@ RENDERER_API vulkan_mesh_t* vulkan_mesh_new()
 {
 	vulkan_mesh_t* mesh = heap_new(vulkan_mesh_t);
 	memset(mesh, 0, sizeof(vulkan_mesh_t));
-	mesh->vertex_buffers = buf_create(sizeof(vulkan_buffer_t), 0, 0);
 	return mesh;
 }
 
 RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
 {
-	assert(renderer->logical_device->handle != VK_NULL_HANDLE);
+	assert(renderer->logical_device->vo_handle != VK_NULL_HANDLE);
 	assert(create_info != 0);
 	assert(mesh != NULL);
 
+	memzero(mesh, vulkan_mesh_t);
+
+	mesh->vertex_buffers = buf_create(sizeof(vulkan_buffer_t), 0, 0);
 	mesh->renderer = renderer;
 	
+	// TODO
 	// clear the list of vertex buffers if the same mesh object has been recreated
-	buf_clear(&mesh->vertex_buffers, NULL);
+	//buf_clear(&mesh->vertex_buffers, NULL);
 	
 	//create vertex buffers
 	if((create_info->vertex_buffer_info_count != 0) && (create_info->vertex_buffer_infos != NULL))
@@ -56,9 +59,9 @@ RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulka
 			.data = create_info->index_buffer_info.data,
 			.stride = get_index_stride(create_info->index_buffer_info.index_type),
 			.count = create_info->index_buffer_info.count,
-			.usage_flags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-			.sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
-			.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			.vo_usage_flags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		};
 		if(mesh->index_buffer != NULL)
 			vulkan_buffer_create_no_alloc(renderer, &buffer_create_info, mesh->index_buffer);
@@ -101,9 +104,11 @@ RENDERER_API void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 	// for(u32 i = 0; i < mesh->vertex_buffers.element_count; i++)
 		// vulkan_buffer_release_resources((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i));
 	buf_free(&mesh->vertex_buffers);
-	if(mesh->index_buffer != NULL)
-		vulkan_buffer_release_resources(mesh->index_buffer);
-	heap_free(mesh);
+	// TODO
+	// if(mesh->index_buffer != NULL)
+	// 	vulkan_buffer_release_resources(mesh->index_buffer);
+	// TODO
+	// heap_free(mesh);
 }
 
 RENDERER_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh)
@@ -122,8 +127,8 @@ RENDERER_API void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buf
 	assert(buffer != NULL);
 
 	VkDeviceSize offsets[1] = { 0 };
-	VkCommandBuffer command_buffer = mesh->renderer->vk_command_buffers[mesh->renderer->swapchain->current_image_index];
-	vkCmdBindVertexBuffers(command_buffer, mesh->binding_index, 1, &buffer->handle, offsets);
+	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
+	vkCmdBindVertexBuffers(vo_command_buffer, mesh->binding_index, 1, &buffer->vo_handle, offsets);
 	
 	// increment the binding index for the next vertex buffer
 	mesh->binding_index++;
@@ -135,9 +140,9 @@ RENDERER_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u
 	assert(mesh->index_buffer != NULL);
 	assert(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
 	
-	VkCommandBuffer command_buffer = mesh->renderer->vk_command_buffers[mesh->renderer->swapchain->current_image_index];
-	vkCmdBindIndexBuffer(command_buffer, mesh->index_buffer->handle, 0, mesh->index_type);
-	vkCmdDrawIndexed(command_buffer, mesh->index_buffer->count, instance_count, 0, 0, 0);
+	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
+	vkCmdBindIndexBuffer(vo_command_buffer, mesh->index_buffer->vo_handle, 0, mesh->index_type);
+	vkCmdDrawIndexed(vo_command_buffer, mesh->index_buffer->count, instance_count, 0, 0, 0);
 	
 	// set the binding index to zero, for the next frame
 	mesh->binding_index = 0;
@@ -148,9 +153,9 @@ RENDERER_API void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh)
 	check_pre_condition(mesh);
 	
 	VkDeviceSize offsets[1] = { 0 };
-	VkCommandBuffer command_buffer = mesh->renderer->vk_command_buffers[mesh->renderer->swapchain->current_image_index];
+	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
 	for(u32 i = 0; i < mesh->vertex_buffers.element_count; i++, mesh->binding_index++)
-		vkCmdBindVertexBuffers(command_buffer, mesh->binding_index, 1, &(((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i))->handle), offsets);	
+		vkCmdBindVertexBuffers(vo_command_buffer, mesh->binding_index, 1, &(((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i))->vo_handle), offsets);	
 }
 
 RENDERER_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 instance_count)
@@ -160,11 +165,11 @@ RENDERER_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 in
 	assert(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
 	
 	VkDeviceSize offsets[1] = { 0 };
-	VkCommandBuffer command_buffer = mesh->renderer->vk_command_buffers[mesh->renderer->swapchain->current_image_index];
+	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
 	for(u32 i = 0; i < mesh->vertex_buffers.element_count; i++, mesh->binding_index++)
-		vkCmdBindVertexBuffers(command_buffer, mesh->binding_index, 1, &(((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i))->handle), offsets);
-	vkCmdBindIndexBuffer(command_buffer, mesh->index_buffer->handle, 0, mesh->index_type);
-	vkCmdDrawIndexed(command_buffer, mesh->index_buffer->count, instance_count, 0, 0, 0);
+		vkCmdBindVertexBuffers(vo_command_buffer, mesh->binding_index, 1, &(((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i))->vo_handle), offsets);
+	vkCmdBindIndexBuffer(vo_command_buffer, mesh->index_buffer->vo_handle, 0, mesh->index_type);
+	vkCmdDrawIndexed(vo_command_buffer, mesh->index_buffer->count, instance_count, 0, 0, 0);
 	
 	// set the binding index to zero, for the next frame
 	mesh->binding_index = 0;
@@ -175,10 +180,10 @@ RENDERER_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_c
 	check_pre_condition(mesh);
 	
 	VkDeviceSize offsets[1] = { 0 };
-	VkCommandBuffer command_buffer = mesh->renderer->vk_command_buffers[mesh->renderer->swapchain->current_image_index];
+	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
 	for(u32 i = 0; i < mesh->vertex_buffers.element_count; i++, mesh->binding_index++)
-		vkCmdBindVertexBuffers(command_buffer, mesh->binding_index, 1, &(((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i))->handle), offsets);
-	vkCmdDraw(command_buffer, ((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, 0))->count, instance_count, 0, 0);
+		vkCmdBindVertexBuffers(vo_command_buffer, mesh->binding_index, 1, &(((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i))->vo_handle), offsets);
+	vkCmdDraw(vo_command_buffer, ((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, 0))->count, instance_count, 0, 0);
 	
 	// set the binding index to zero, for the next frame
 	mesh->binding_index = 0;
@@ -196,9 +201,9 @@ RENDERER_API void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, 
 		.data = create_info->data,
 		.stride = create_info->stride,
 		.count = create_info->count,
-		.usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		.sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
-		.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		.vo_usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
 
 	// allocates memory if current size doesn't fits

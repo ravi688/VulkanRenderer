@@ -3,6 +3,19 @@
 
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
+#include <renderer/type_system.h>
+
+static const type_t TYPE_ID(render_window_t) = TYPE_ID_CREATE(1);
+
+
+
+/* events */ 	// TODO
+typedef enum render_window_event_type_t
+{
+	 RENDER_WINDOW_EVENT_RESIZE,
+	 RENDER_WINDOW_EVENT_REPOSITION
+} render_window_event_type_t;
+
 
 typedef struct render_window_t
 {
@@ -15,7 +28,7 @@ typedef struct render_window_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API render_window_t* render_window_init(u32 width, u32 height, const char* title, bool full_screen);
+RENDERER_API render_window_t* render_window_init(u32 width, u32 height, const char* title, bool full_screen, bool resizable);
 RENDERER_API bool render_window_should_close(render_window_t* window);
 RENDERER_API void render_window_poll_events(render_window_t* window);
 RENDERER_API void render_window_destroy(render_window_t* window);

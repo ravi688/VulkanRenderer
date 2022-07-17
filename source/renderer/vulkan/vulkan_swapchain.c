@@ -1,18 +1,13 @@
+#include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_swapchain.h>
-#include <renderer/internal/vulkan/vulkan_image.h>
-#include <renderer/internal/vulkan/vulkan_image_view.h>
-#include <renderer/render_window.h>
+#include <renderer/internal/vulkan/vulkan_command_buffer.h>
+#include <renderer/internal/vulkan/vulkan_command.h>
+#include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/memory_allocator.h>
-#include <memory.h>
-#include <renderer/assert.h>
-#include <renderer/debug.h>
 
-static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info);
-static void destroy_swapchain(vulkan_swapchain_t* swapchain, vulkan_renderer_t* renderer);
-static void destroy_semaphores(vulkan_swapchain_t* swapchain, vulkan_renderer_t* renderer);
-static VkSemaphore get_semaphore(VkDevice device);
+static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info);
+static void destroy_swapchain(vulkan_swapchain_t* swapchain);
 
 RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new()
 {
@@ -23,110 +18,142 @@ RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new()
 
 RENDERER_API vulkan_swapchain_t* vulkan_swapchain_create(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
 {
-	assert(renderer->logical_device->handle != VK_NULL_HANDLE);
-	assert(renderer->window != NULL);
-	assert(renderer->surface != VK_NULL_HANDLE);
-
 	// allocate memory and initialize it
 	vulkan_swapchain_t* swapchain = vulkan_swapchain_new();
-	
-	// create swapchain, it allocates some memory for the first time
-	create_swapchain(swapchain, renderer, create_info);
-	
-	// create synchronization semaphores
-	swapchain->image_available_semaphore = get_semaphore(renderer->logical_device->handle);
-	swapchain->render_finished_semaphore = get_semaphore(renderer->logical_device->handle);
-	
-	log_msg("Swapchain created successfully\n");
+	vulkan_swapchain_create_no_alloc(renderer, create_info, swapchain);
 	return swapchain;
 }
 
-
-RENDERER_API void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
+RENDERER_API void vulkan_swapchain_create_no_alloc(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info, vulkan_swapchain_t OUT swapchain)
 {
-	destroy_swapchain(swapchain, renderer);
-	create_swapchain(swapchain, renderer, create_info);
+	memzero(swapchain, vulkan_swapchain_t);
+
+	swapchain->renderer = renderer;
+	// create swapchain, it allocates some memory for the first time
+	create_swapchain(swapchain, create_info);
+	log_msg("Swapchain created successfully\n");
 }
 
-RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain, vulkan_renderer_t* renderer)
+
+RENDERER_API void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info)
 {
-	assert(renderer->logical_device->handle != VK_NULL_HANDLE);
-	
-	destroy_semaphores(swapchain, renderer);
-	destroy_swapchain(swapchain, renderer);
+	destroy_swapchain(swapchain);
+	create_swapchain(swapchain, create_info);
+	log_msg("Swapchain refreshed successfully\n");
+}
+
+RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain)
+{
+	destroy_swapchain(swapchain);
 	
 	log_msg("Swapchain destroyed successfully\n");
 }
 
-RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, vulkan_renderer_t* renderer)
+RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain)
 {
-	assert(renderer->logical_device->handle != VK_NULL_HANDLE);
-	vkAcquireNextImageKHR(renderer->logical_device->handle, swapchain->handle, UINT64_MAX, swapchain->image_available_semaphore, VK_NULL_HANDLE, &(swapchain->current_image_index));
+	heap_free(swapchain->vo_image_views);
+	heap_free(swapchain->vo_images);
+	// TODO
+	// heap_free(swapchain);
+}
+
+RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain)
+{
+	vkAcquireNextImageKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, UINT64_MAX, swapchain->renderer->vo_image_available_semaphore, VK_NULL_HANDLE, &(swapchain->current_image_index));
 	return swapchain->current_image_index;
 }
 
-RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain)
+static void transition_image_to_layout_present_KHR(vulkan_swapchain_t* swapchain)
 {
-	vulkan_image_view_release_resources(swapchain->depth_image_view);
-	vulkan_image_release_resources(swapchain->depth_image);
-	heap_free(swapchain->framebuffer_image_views);
-	heap_free(swapchain->image_views);
-	heap_free(swapchain->images);
-	heap_free(swapchain->framebuffers);
-	heap_free(swapchain);
+	VkCommandBuffer cb = swapchain->renderer->vo_aux_command_buffer;
+
+	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	VkImageSubresourceRange subresource = 
+	{
+		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+	u32 count = swapchain->image_count;
+	for(u32 i = 0; i < count; i++)
+	{
+		vulkan_command_image_layout_transition(cb, swapchain->vo_images[i],
+			&subresource,
+			/* oldLayout: */ VK_IMAGE_LAYOUT_UNDEFINED,
+			/* newLayout: */ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+			/* srcAccess: */ VK_ACCESS_NONE_KHR,
+			/* dstAccess: */ VK_ACCESS_MEMORY_READ_BIT,
+			/* srcStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			/* dstStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+	}
+	vulkan_command_buffer_end(cb);
+	vulkan_queue_submit(swapchain->renderer->vo_graphics_queue, cb, 
+			/* waitSemaphore: */ VK_NULL_HANDLE, 
+			/* waitDstStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 
+			/* signalSemaphore: */ VK_NULL_HANDLE,
+		 	/* signalFence: */ VK_NULL_HANDLE);
+	vulkan_queue_wait_idle(swapchain->renderer->vo_graphics_queue);
 }
 
-static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
+static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info)
 {
-	assert(renderer->render_pass != VK_NULL_HANDLE);
-
 	// create vulkan swapchain object
 	VkSwapchainCreateInfoKHR swapchain_create_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-		.surface = renderer->surface,
+		.surface = swapchain->renderer->vo_surface,
 		.minImageCount = create_info->image_count,
-		.imageFormat = create_info->image_format,
-		.imageExtent = create_info->image_extent,
-		.imageColorSpace = create_info->image_color_space,
+		.imageFormat = create_info->vo_image_format,
+		.imageExtent = create_info->vo_image_extent,
+		.imageColorSpace = create_info->vo_image_color_space,
 		.imageArrayLayers = 1,
 		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		.imageSharingMode = swapchain->renderer->vo_sharing_mode,
 		.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-		.presentMode = create_info->present_mode,
+		.presentMode = create_info->vo_present_mode,
 		.clipped = VK_TRUE,
 		.oldSwapchain = VK_NULL_HANDLE,
 		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
 	};
-	vkCall(vkCreateSwapchainKHR(renderer->logical_device->handle, &swapchain_create_info, NULL, &swapchain->handle));
+	vkCall(vkCreateSwapchainKHR(swapchain->renderer->logical_device->vo_handle, &swapchain_create_info, NULL, &swapchain->vo_handle));
 
-	// cache the variables because it is needed everywhere
+	// cache the variables because it is needed everyowhere
+	bool image_count_changed = swapchain->image_count != create_info->image_count;
 	swapchain->image_count = create_info->image_count;
-	swapchain->image_extent = create_info->image_extent;
+	swapchain->vo_image_extent = create_info->vo_image_extent;
+	swapchain->vo_image_format = create_info->vo_image_format;
 
 	log_msg("Swapchain image count: %u\n", swapchain->image_count);
-	log_msg("Swapchain image size: (%u, %u)\n", swapchain->image_extent.width, swapchain->image_extent.height);
+	log_msg("Swapchain image size: (%u, %u)\n", swapchain->vo_image_extent.width, swapchain->vo_image_extent.height);
 
-	// if the swapchain has to be recreated then no allocation should happen
-	if(swapchain->images == NULL)
+	// if the swapchain has to be recreated then no allcation should happen
+	if(swapchain->vo_images == NULL || image_count_changed)
 	{
-		vkCall(vkGetSwapchainImagesKHR(renderer->logical_device->handle, swapchain->handle, &swapchain->image_count, NULL));
-		assert(swapchain->image_count != 0);
-		swapchain->images = heap_newv(VkImage, swapchain->image_count);
-	}
-	vkCall(vkGetSwapchainImagesKHR(renderer->logical_device->handle, swapchain->handle, &swapchain->image_count, swapchain->images));
+		// deallocate the previous image buffer
+		if(swapchain->vo_images != NULL)
+		{
+			heap_free(swapchain->vo_images);
+			heap_free(swapchain->vo_image_views);
+		}
 
-	// if the swapchain has to be recreated then no allocation should happen
-	if(swapchain->image_views == NULL)
-		swapchain->image_views = heap_newv(VkImageView, swapchain->image_count);
+		vkCall(vkGetSwapchainImagesKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, &swapchain->image_count, NULL));
+		assert(swapchain->image_count != 0);
+		swapchain->vo_images = heap_newv(VkImage, swapchain->image_count);
+		swapchain->vo_image_views = heap_newv(VkImageView, swapchain->image_count);
+	}
+	vkCall(vkGetSwapchainImagesKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, &swapchain->image_count, swapchain->vo_images));
 
 	for(u32 i = 0; i < swapchain->image_count; i++)
 	{
 		VkImageViewCreateInfo createInfo = 
 		{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-			.image = swapchain->images[i],
+			.image = swapchain->vo_images[i],
 			.viewType = VK_IMAGE_VIEW_TYPE_2D,
-			.format = create_info->image_format,
+			.format = create_info->vo_image_format,
 			.components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
 			.components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
 			.components.b = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -137,101 +164,16 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_renderer_t* r
 			.subresourceRange.baseArrayLayer = 0,
 			.subresourceRange.layerCount = 1
 		};
-		vkCall(vkCreateImageView(renderer->logical_device->handle, &createInfo, NULL, &swapchain->image_views[i]));
+		vkCall(vkCreateImageView(swapchain->renderer->logical_device->vo_handle, &createInfo, NULL, &swapchain->vo_image_views[i]));
 	}
- 
-	// create depth buffer attachment
-
-	vulkan_image_create_info_t depth_create_info = 
-	{
-		.flags = 0, 		// optional 
-		.type = VK_IMAGE_TYPE_2D,
-		.format = create_info->depth_format,
-		.width = create_info->image_extent.width,
-		.height = create_info->image_extent.height,
-		.depth = 1,
-		.layer_count = 1,
-		.tiling = VK_IMAGE_TILING_OPTIMAL,
-		.layout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.usage_mask = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-		.memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		.aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT
-	};
-	if((depth_create_info.format == VK_FORMAT_D24_UNORM_S8_UINT) || (depth_create_info.format == VK_FORMAT_D32_SFLOAT_S8_UINT))
-		depth_create_info.aspect_mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-	
-	// if the swapchain has to be recreated then allocation should happen, use *_no_alloc versions instead
-	if(swapchain->depth_image == NULL)
-		swapchain->depth_image = vulkan_image_create(renderer, &depth_create_info);
-	else 
-		vulkan_image_create_no_alloc(renderer, &depth_create_info, swapchain->depth_image);
-	
-	if(swapchain->depth_image_view == NULL)
-		swapchain->depth_image_view = vulkan_image_view_create(swapchain->depth_image, VULKAN_IMAGE_VIEW_TYPE_2D);
-	else
-		vulkan_image_view_create_no_alloc(swapchain->depth_image, VULKAN_IMAGE_VIEW_TYPE_2D, swapchain->depth_image_view);
-
-
-	VkImageView* attachments_lists[swapchain->image_count];
-	u32 attachments_count[swapchain->image_count];
-
-	// if the swapchain has to be recreated then no allocation should happen	
-	if(swapchain->framebuffer_image_views == NULL)
-		swapchain->framebuffer_image_views = heap_newv(VkImageView, 2 * swapchain->image_count);
-	
-	for(u32 i = 0; i < swapchain->image_count; i++) 
-	{
-		swapchain->framebuffer_image_views[2 * i + 0] = *(swapchain->image_views + i);
-		swapchain->framebuffer_image_views[2 * i + 1] = swapchain->depth_image_view->handle;
-		attachments_lists[i] = &swapchain->framebuffer_image_views[2 * i];
-		attachments_count[i] = 2;
-	}
-
-	// if the swapchain has to be recreated then no allocation should happen
-	if(swapchain->framebuffers == NULL)
-		swapchain->framebuffers = heap_newv(VkFramebuffer, swapchain->image_count);
-
-	for(u32 i = 0; i < swapchain->image_count; i++)
-	{
-		VkFramebufferCreateInfo createInfo =
-		{
-			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-			.renderPass = renderer->render_pass->handle,
-			.pAttachments = attachments_lists[i],
-			.attachmentCount = attachments_count[i],
-			.width = swapchain->image_extent.width,
-			.height = swapchain->image_extent.height,
-			.layers = 1
-		};
-		vkCall(vkCreateFramebuffer(renderer->logical_device->handle, &createInfo, NULL, &swapchain->framebuffers[i]));
-	}
-
 	swapchain->current_image_index = 0;
+
+	transition_image_to_layout_present_KHR(swapchain);
 }
 
-
-static void destroy_semaphores(vulkan_swapchain_t* swapchain, vulkan_renderer_t* renderer)
+static void destroy_swapchain(vulkan_swapchain_t* swapchain)
 {
-	vkDestroySemaphore(renderer->logical_device->handle, swapchain->image_available_semaphore, NULL);
-	vkDestroySemaphore(renderer->logical_device->handle, swapchain->render_finished_semaphore, NULL);
-}
-
-static void destroy_swapchain(vulkan_swapchain_t* swapchain, vulkan_renderer_t* renderer)
-{
-	vkDestroySwapchainKHR(renderer->logical_device->handle, swapchain->handle, NULL);
+	vkDestroySwapchainKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, NULL);
 	for(u32 i = 0; i < swapchain->image_count; i++)
-		vkDestroyFramebuffer(renderer->logical_device->handle, swapchain->framebuffers[i], NULL);
-	for(u32 i = 0; i < swapchain->image_count; i++)
-		vkDestroyImageView(renderer->logical_device->handle, swapchain->image_views[i], NULL);
-	vulkan_image_view_destroy(swapchain->depth_image_view);
-	vulkan_image_destroy(swapchain->depth_image);
-}
-
-static VkSemaphore get_semaphore(VkDevice device)
-{
-	VkSemaphore semaphore;
-	VkSemaphoreCreateInfo createInfo = { }; 
-	createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-	vkCall(vkCreateSemaphore(device, &createInfo, NULL, &semaphore)); 
-	return semaphore;
+		vkDestroyImageView(swapchain->renderer->logical_device->vo_handle, swapchain->vo_image_views[i], NULL);
 }

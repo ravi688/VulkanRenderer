@@ -4,6 +4,20 @@
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <bufferlib/buffer.h>
 
+// TODO: need to be refactored
+enum
+{
+	// vertex attribute binding indices
+	VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING = 0,
+	VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING = 1,
+	VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_BINDING = 2,
+
+	// vertex attribute location indices
+	VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION = 0,
+	VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION = 1,
+	VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_LOCATION = 2
+};
+
 typedef struct vulkan_renderer_t vulkan_renderer_t;
 typedef struct vulkan_mesh_t vulkan_mesh_t;
 

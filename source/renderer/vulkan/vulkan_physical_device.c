@@ -20,34 +20,41 @@ RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new()
 	return device;
 }
 
-RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_device)
+RENDERER_API void vulkan_physical_device_create_no_alloc(VkPhysicalDevice vk_device, vulkan_physical_device_t OUT device)
 {
-	vulkan_physical_device_t* device = vulkan_physical_device_new();
-	device->handle = vk_device;
+
+	memzero(device, vulkan_physical_device_t);
+
+	device->vo_handle = vk_device;
 
 	// create list of logical devices to store all the logical devices created with this physical device
 	// device->logical_devices = buf_create(sizeof(vulkan_logical_device_t*), 0, 0);
 
 	// cache the physical device properties
-	vkGetPhysicalDeviceProperties(device->handle, &device->properties);
+	vkGetPhysicalDeviceProperties(device->vo_handle, &device->vo_properties);
 
 	// cache the physical device features
-	vkGetPhysicalDeviceFeatures(device->handle, &device->features);
+	vkGetPhysicalDeviceFeatures(device->vo_handle, &device->vo_features);
 
 	// cache the queue family properties
-	vkGetPhysicalDeviceQueueFamilyProperties(device->handle, &device->queue_family_count, NULL);
+	vkGetPhysicalDeviceQueueFamilyProperties(device->vo_handle, &device->queue_family_count, NULL);
 	assert(device->queue_family_count != 0);
-	device->queue_family_properties = heap_newv(VkQueueFamilyProperties, device->queue_family_count);
-	vkGetPhysicalDeviceQueueFamilyProperties(device->handle, &device->queue_family_count, device->queue_family_properties);
+	device->vo_queue_family_properties = heap_newv(VkQueueFamilyProperties, device->queue_family_count);
+	vkGetPhysicalDeviceQueueFamilyProperties(device->vo_handle, &device->queue_family_count, device->vo_queue_family_properties);
 
 	// cache physical device extensions
-	VkResult result = vkEnumerateDeviceExtensionProperties(device->handle, NULL, &device->extension_count, NULL);
-	vulkan_result_assert_success(result);
-	device->extension_properties = heap_newv(VkExtensionProperties, device->extension_count);
-	result = vkEnumerateDeviceExtensionProperties(device->handle, NULL, &device->extension_count, device->extension_properties);
-	vulkan_result_assert_success(result);
-	vulkan_result_assert_complete(result);
+	VkResult vo_result = vkEnumerateDeviceExtensionProperties(device->vo_handle, NULL, &device->extension_count, NULL);
+	vulkan_result_assert_success(vo_result);
+	device->vo_extension_properties = heap_newv(VkExtensionProperties, device->extension_count);
+	vo_result = vkEnumerateDeviceExtensionProperties(device->vo_handle, NULL, &device->extension_count, device->vo_extension_properties);
+	vulkan_result_assert_success(vo_result);
+	vulkan_result_assert_complete(vo_result);
+}
 
+RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_device)
+{
+	vulkan_physical_device_t* device = vulkan_physical_device_new();
+	vulkan_physical_device_create_no_alloc(vk_device, device);
 	return device;
 }
 
@@ -62,9 +69,11 @@ RENDERER_API void vulkan_physical_device_release_resources(vulkan_physical_devic
 	// for(buf_ucount_t i = 0; i < buf_get_element_count(&device->logical_devices); i++)
 	// 	vulkan_logical_device_release_resources(*buf_get_ptr_at_typeof(&device->logical_devices, vulkan_logical_device_t*, i));
 	// buf_free(&device->logical_devices);
-	heap_free(device->queue_family_properties);
-	heap_free(device->extension_properties);
-	heap_free(device);
+	heap_free(device->vo_queue_family_properties);
+	heap_free(device->vo_extension_properties);
+
+	// TODO:
+	// heap_free(device);
 }
 
 
@@ -73,47 +82,47 @@ RENDERER_API VkPresentModeKHR* vulkan_physical_device_get_present_modes(vulkan_p
 {
 	check_pre_condition(device);
 	u32 count;
-	VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->handle, surface, &count, NULL);
-	vulkan_result_assert_success(result);
+	VkResult vo_result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->vo_handle, surface, &count, NULL);
+	vulkan_result_assert_success(vo_result);
 	*out_count = count;
 	if(count == 0)
 	{
 		LOG_WRN("Present mode count is zero\n");
 		return NULL;
 	}
-	VkPresentModeKHR* modes = heap_newv(VkPresentModeKHR, count);
-	result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->handle, surface, &count, modes);
-	vulkan_result_assert_success(result);
-	vulkan_result_assert_complete(result);
-	return modes;
+	VkPresentModeKHR* vo_modes = heap_newv(VkPresentModeKHR, count);
+	vo_result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->vo_handle, surface, &count, vo_modes);
+	vulkan_result_assert_success(vo_result);
+	vulkan_result_assert_complete(vo_result);
+	return vo_modes;
 }
 
 RENDERER_API VkSurfaceFormatKHR* vulkan_physical_device_get_surface_formats(vulkan_physical_device_t* device, VkSurfaceKHR surface, u32* out_count)
 {
 	check_pre_condition(device);
 	u32 count;
-	VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->handle, surface, &count, NULL);
-	vulkan_result_assert_success(result);
+	VkResult vo_result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->vo_handle, surface, &count, NULL);
+	vulkan_result_assert_success(vo_result);
 	*out_count = count;
 	if(count == 0)
 	{
 		LOG_WRN("Surface format count is zero\n");
 		return NULL;
 	}
-	VkSurfaceFormatKHR* formats = heap_newv(VkSurfaceFormatKHR, count);
-	result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->handle, surface, &count, formats);
-	vulkan_result_assert_success(result);
-	vulkan_result_assert_complete(result);
-	return formats;
+	VkSurfaceFormatKHR* vo_formats = heap_newv(VkSurfaceFormatKHR, count);
+	vo_result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->vo_handle, surface, &count, vo_formats);
+	vulkan_result_assert_success(vo_result);
+	vulkan_result_assert_complete(vo_result);
+	return vo_formats;
 }
 
 RENDERER_API VkSurfaceCapabilitiesKHR vulkan_physical_device_get_surface_capabilities(vulkan_physical_device_t* device, VkSurfaceKHR surface)
 {
 	check_pre_condition(device);
-	VkSurfaceCapabilitiesKHR capabilities;
-	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->handle, surface, &capabilities);
-	vulkan_result_assert_success(result);
-	return capabilities;
+	VkSurfaceCapabilitiesKHR vo_capabilities;
+	VkResult vo_result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->vo_handle, surface, &vo_capabilities);
+	vulkan_result_assert_success(vo_result);
+	return vo_capabilities;
 }
 
 RENDERER_API VkPhysicalDeviceLimits* vulkan_physical_device_get_limits(vulkan_physical_device_t* device)
@@ -124,19 +133,19 @@ RENDERER_API VkPhysicalDeviceLimits* vulkan_physical_device_get_limits(vulkan_ph
 RENDERER_API VkPhysicalDeviceProperties* vulkan_physical_device_get_properties(vulkan_physical_device_t* device)
 {
 	check_pre_condition(device);
-	return &device->properties;
+	return &device->vo_properties;
 }
 
 RENDERER_API VkPhysicalDeviceFeatures* vulkan_physical_device_get_features(vulkan_physical_device_t* device)
 {
 	check_pre_condition(device);
-	return &device->features;
+	return &device->vo_features;
 }
 
 RENDERER_API VkQueueFamilyProperties* vulkan_physical_device_get_queue_family_properties(vulkan_physical_device_t* device)
 {
 	check_pre_condition(device);
-	return device->queue_family_properties;
+	return device->vo_queue_family_properties;
 }
 
 RENDERER_API u32 vulkan_physical_device_get_queue_family_count(vulkan_physical_device_t* device)
@@ -164,8 +173,8 @@ RENDERER_API u32 vulkan_physical_device_find_queue_family_index_for_surface(vulk
 	for(u32 i = 0; i < count; i++)
 	{
 		VkBool32 supported = VK_FALSE;
-		VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(device->handle, i, surface, &supported);
-		vulkan_result_assert_success(result);
+		VkResult vo_result = vkGetPhysicalDeviceSurfaceSupportKHR(device->vo_handle, i, surface, &supported);
+		vulkan_result_assert_success(vo_result);
 		if(supported == VK_TRUE)
 			return i;
 	}
@@ -178,7 +187,7 @@ RENDERER_API u32 vulkan_physical_device_find_memory_type(vulkan_physical_device_
 	
 	// get physical device memory properties
 	VkPhysicalDeviceMemoryProperties memory_properties;
-	vkGetPhysicalDeviceMemoryProperties(device->handle, &memory_properties);
+	vkGetPhysicalDeviceMemoryProperties(device->vo_handle, &memory_properties);
 
 	for(u32 i = 0; i < memory_properties.memoryTypeCount; i++)
 		if((required_memory_type_bits & (1 << 0)) && ((memory_properties.memoryTypes[i].propertyFlags & required_memory_properties) == required_memory_properties))
@@ -194,7 +203,7 @@ RENDERER_API VkFormat vulkan_physical_device_find_supported_format(vulkan_physic
 	for(uint32_t i = 0; i < format_count; i++)
 	{
 		VkFormat format = formats[i];
-		vkGetPhysicalDeviceFormatProperties(device->handle, format, &properties);
+		vkGetPhysicalDeviceFormatProperties(device->vo_handle, format, &properties);
 		switch(tiling)
 		{
 			case VK_IMAGE_TILING_LINEAR:
@@ -235,7 +244,7 @@ RENDERER_API bool vulkan_physical_device_is_extension_supported(vulkan_physical_
 {
 	check_pre_condition(device);
 	for(u32 i = 0; i < device->extension_count; i++)
-		if(strcmp(device->extension_properties[i].extensionName, extension) == 0)
+		if(strcmp(device->vo_extension_properties[i].extensionName, extension) == 0)
 			return true;
 	return false;
 }
@@ -268,7 +277,7 @@ RENDERER_API void vulkan_physical_device_extensions_to_string(vulkan_physical_de
 	{
 		buf_push_char(string_buffer, '\t');
 		buf_push_char(string_buffer, '\t');
-		buf_push_string(string_buffer, device->extension_properties[i].extensionName);
+		buf_push_string(string_buffer, device->vo_extension_properties[i].extensionName);
 		buf_push_char(string_buffer, '\n');
 	}
 }
@@ -277,6 +286,6 @@ RENDERER_API void vulkan_physical_device_extensions_to_string(vulkan_physical_de
 static void check_pre_condition(vulkan_physical_device_t* device)
 {
 	assert(device != NULL);
-	assert(device->handle != VK_NULL_HANDLE);
+	assert(device->vo_handle != VK_NULL_HANDLE);
 }
 #endif /* GLOBAL_DEBUG */

@@ -39,7 +39,7 @@ static void glfwOnWindowResizeCallback(GLFWwindow* window, int width, int height
 		}
 }
 
-RENDERER_API render_window_t* render_window_init(u32 width, u32 height, const char* title, bool full_screen)
+RENDERER_API render_window_t* render_window_init(u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
 	render_window_t* window = heap_new(render_window_t);
 	memset(window, 0, sizeof(render_window_t));
@@ -48,7 +48,7 @@ RENDERER_API render_window_t* render_window_init(u32 width, u32 height, const ch
 	glfwSetErrorCallback(glfwErrorCallback);
 #endif
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+	glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
 	if(full_screen)
 		window->handle = glfwCreateWindow(width, height, title, glfwGetPrimaryMonitor(), NULL);
 	else

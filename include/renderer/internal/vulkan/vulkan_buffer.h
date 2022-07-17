@@ -4,8 +4,6 @@
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>		// u32
 
-typedef struct vulkan_renderer_t vulkan_renderer_t;
-
 typedef struct vulkan_buffer_create_info_t
 {
 	void* data;							// pointer to the data filled inside the vulkan buffer's device memory,
@@ -17,16 +15,16 @@ typedef struct vulkan_buffer_create_info_t
 	u32 size;							// capacity of the buffer in bytes, 
 										// if it is non-zero then "count" and "stride" would be ignored
 
-	VkBufferUsageFlags usage_flags;
-	VkSharingMode sharing_mode;
-	VkMemoryPropertyFlags memory_property_flags;
+	VkBufferUsageFlags vo_usage_flags;
+	VkSharingMode vo_sharing_mode;
+	VkMemoryPropertyFlags vo_memory_property_flags;
 } vulkan_buffer_create_info_t;
 
 typedef struct vulkan_buffer_t
 {
 	vulkan_renderer_t* renderer;				// pointer to the vulkan_renderer_t object
-	VkBuffer handle;
-	VkDeviceMemory memory;
+	VkBuffer vo_handle;
+	VkDeviceMemory vo_memory;
 	u32 size; 							// if create_info->size is zero then its value would be "count * stride" in bytes
 	u32 stride;							// equals to create_info->stride
 	u32 count; 							// equals to create_info->count

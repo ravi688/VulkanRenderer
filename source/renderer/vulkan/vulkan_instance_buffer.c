@@ -71,9 +71,9 @@ RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instan
 		{
 			.stride = buf_get_element_size(&host_buffer->buffer),
 			.count = count,
-			.usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-			.sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
-			.memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT	
+			.vo_usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT	
 		};
 		vulkan_buffer_create_no_alloc(instance_buffer->renderer, &create_info, device_buffer);
 		instance_buffer->has_device_buffer = true;

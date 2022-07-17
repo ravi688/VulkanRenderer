@@ -78,3 +78,6 @@
 #define heap_newv(type, count) ((type*)heap_alloc(sizeof(type) * (count)))
 
 #include <memory.h>
+
+#define memzero(ptr, type) memset(ptr, 0, sizeof(type))
+#define memzerov(ptr, type, count) memset(ptr, 0, sizeof(type) * (count))

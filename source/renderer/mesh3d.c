@@ -1329,6 +1329,7 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
 	{
 		mesh3d_positions_new(mesh, 0);
 		mesh3d_normals_new(mesh, 0);
+		mesh3d_colors_new(mesh, 0);
 		mesh3d_triangles_new(mesh, 0);
 		stl_parse_callbacks_t parse_callbacks =
 		{

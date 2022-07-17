@@ -1,7 +1,7 @@
 
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_command_buffer.h>
-
+#include <renderer/debug.h>
 
 RENDERER_API VkCommandPool vulkan_command_pool_create(vulkan_renderer_t* renderer, u32 queueFamilyIndex, VkCommandPoolCreateFlags flags)
 {
@@ -12,7 +12,8 @@ RENDERER_API VkCommandPool vulkan_command_pool_create(vulkan_renderer_t* rendere
 		.flags = flags
 	};
 	VkCommandPool pool;
-	vkCall(vkCreateCommandPool(renderer->logical_device->handle, &command_pool_create_info, NULL, &pool));
+	vkCall(vkCreateCommandPool(renderer->logical_device->vo_handle, &command_pool_create_info, NULL, &pool));
+	log_msg("CommandPool for the queueFamilyIndex: %u is created successfully\n", queueFamilyIndex);
 	return pool;
 }
 
@@ -34,7 +35,7 @@ RENDERER_API void vulkan_command_buffer_allocatev(vulkan_renderer_t* renderer, V
 	};
 
 	VkCommandBuffer buffer;
-	vkCall(vkAllocateCommandBuffers(renderer->logical_device->handle, &alloc_info, out_buffers));
+	vkCall(vkAllocateCommandBuffers(renderer->logical_device->vo_handle, &alloc_info, out_buffers));
 }
 
 RENDERER_API void vulkan_command_buffer_begin(VkCommandBuffer buffer, VkCommandBufferUsageFlags flags)
@@ -45,5 +46,15 @@ RENDERER_API void vulkan_command_buffer_begin(VkCommandBuffer buffer, VkCommandB
 		.flags = flags,
 	};
 	vkCall(vkBeginCommandBuffer(buffer, &begin_info));
+}
+
+RENDERER_API void vulkan_command_buffer_reset(VkCommandBuffer buffer, VkCommandBufferResetFlags flags) 
+{ 
+	vkCall(vkResetCommandBuffer(buffer, flags)); 
+}
+
+RENDERER_API void vulkan_command_buffer_end(VkCommandBuffer buffer) 
+{ 
+	vkCall(vkEndCommandBuffer(buffer)); 
 }
 

@@ -12,7 +12,7 @@ typedef struct vulkan_instance_t
 	VkInstance handle;
 
 	// physical devices
-	vulkan_physical_device_t** physical_devices;
+	vulkan_physical_device_t* physical_devices;
 	u32 physical_device_count;
 
 	// extensions
@@ -31,7 +31,7 @@ RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
 // getters
 RENDERER_API u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* instance);
 RENDERER_API u32 vulkan_instance_get_extension_count(vulkan_instance_t* instance, const char* layer_name);
-RENDERER_API vulkan_physical_device_t** vulkan_instance_get_physical_devices(vulkan_instance_t* instance);
+RENDERER_API vulkan_physical_device_t* vulkan_instance_get_physical_devices(vulkan_instance_t* instance);
 RENDERER_API VkExtensionProperties* vulkan_instance_get_extension_properties(vulkan_instance_t* instance, const char* layer_name);
 
 // returning bools

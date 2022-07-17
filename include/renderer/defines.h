@@ -20,7 +20,6 @@ typedef double f64;
 typedef u32 uint;
 
 
-
 #define INTERNAL
 
 #define U8_MAX UINT8_MAX
@@ -63,9 +62,12 @@ typedef u32 uint;
 #	define DEBUG_BLOCK(x)
 #endif /*GLOBAL_DEBUG*/
 
+#define INLINE inline
 
-
+/* GCC Extensions */
 #define DEPRECATED __attribute__((deprecated))
+#define FORCE_INLINE inline __attribute__((always_inline))
+#define AUTO __auto_type
 
 #ifdef RENDERER_STATIC_LIBRARY
 #	define RENDERER_API
@@ -87,7 +89,34 @@ typedef u32 uint;
 #endif // __cplusplus
 
 #ifdef RENDERER_VULKAN_DRIVER
-typedef struct vulkan_renderer_t vulkan_renderer_t;
+	typedef struct vulkan_renderer_t vulkan_renderer_t;
+#elif defined(RENDERER_OPENGL_DRIVER)
+	typedef struct opengl_renderer_t opengl_renderer_t;
+#elif defined(RENDERER_DIRECTX_DRIVER)
+	typedef struct directx_renderer_t directx_renderer_t;
+#elif defined(RENDERER_METAL_DRIVER)
+	typedef struct metal_renderer_t metal_renderer_t;
 #endif
 
 typedef struct renderer_t renderer_t;
+
+#include <renderer/assert.h>
+#define NOT_IMPLEMENTED_FUNCTION() LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__);
+
+
+#define DEREF_TO(type, ptr) (*(type*)(ptr))
+#define DEREF(ptr) (*(ptr))
+#define CAST_TO(to, s) ((to)(s))
+#define REINTERPRET_TO(to, s) (*(to*)(&s))
+
+#define OUT *
+#define IN const*
+
+#define BIT64(index) (CAST_TO(u64, 1) << index)
+#define BIT32(index) (CAST_TO(u32, 1) << index)
+#define BIT_MASK32(count) CAST_TO(u32, ~(CAST_TO(u32, ~0) << count))
+
+#define DEG2RAD 0.01745f
+#define RAD2DEG 57.29577f
+
+#define DEG * DEG2RAD

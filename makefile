@@ -356,13 +356,35 @@ shader: shader-debug
 
 shader-clean:
 	del $(subst /,\, $(SHADER_BINARIES))
+
+
+SHADER_INCLUDES = -I $(wildcard shaders/include/)
+GLSL_SHADERS = $(wildcard shaders/*.frag shaders/*.vert shaders/*/*.frag shaders/*/*.vert shaders/*/*/*.frag shaders/*/*/*.vert shaders/*/*/*/*.frag shaders/*/*/*/*.vert)
+SPIRV_SHADERS = $(addsuffix .spv, $(GLSL_SHADERS))
+SPIRV_COMPILER = glslc
+
+%.vert.spv: %.vert
+	@echo [Log] Compiling shader $< to $@
+	$(SPIRV_COMPILER) $(SHADER_INCLUDES) $< -o $@
+%.frag.spv: %.frag
+	@echo [Log] Compiling shader $< to $@
+	$(SPIRV_COMPILER) $(SHADER_INCLUDES) $< -o $@
+
+.PHONY: glsl-shader
+.PHONY: glsl-shader-clean
+
+glsl-shader: $(SPIRV_SHADERS)
+
+glsl-shader-clean:
+	del $(subst /,\, $(SPIRV_SHADERS))
+
 #-------------------------------------------
 
 #-------------------------------------------
 #		Cleaning
 #-------------------------------------------
 .PHONY: clean
-clean: bin-clean 
+clean: bin-clean glsl-shader-clean #shader-clean
 	@echo [Log] All cleaned successfully!
 #-------------------------------------------
 
@@ -373,11 +395,11 @@ clean: bin-clean
 .PHONY: build-debug
 .PHONY: run
 
-build-release: shader-release
+build-release: glsl-shader #shader-release
 	$(MAKE) lib-static-release
 	$(MAKE) release
 
-build-debug: shader-debug
+build-debug: glsl-shader #shader-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
 
