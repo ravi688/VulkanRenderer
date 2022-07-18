@@ -4,8 +4,10 @@
 
 ## Summary
 
-**Vulkan 3D renderer** is built on Vulkan API <br>
-Supported languages are C and C++ only for now.
+**Vulkan 3D renderer** is built on Vulkan API
+
+But there will be more graphics backend such as OpenGL and DirectX 12 <br>
+There are only C and C++ interface headers for now.
 
 ### Tested on
 
@@ -16,40 +18,53 @@ Supported languages are C and C++ only for now.
 5. AMD Vega 8 Graphics 512 MB (VRAM) Integrated Mobile GPU  + 12 GB of Main Memory (RAM)
 
 ### Requirements for building
+
 1. **[Msys2](https://www.msys2.org/)**
 
-1. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
+2. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
    
    ```
    gcc --version
    ```
+   
    OR
+   
    ```
    g++ --version
    ```
+   
    If this isn't already installed, run the following in MSYS2 MinGW shell
+   
    ```
    pacman -S gcc
    ```
-2. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
+
+3. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
    
    ```
    make --version
    ```
+   
    If this isn't already installed, run the following in MSYS2 MinGW shell
+   
    ```
    pacman -S make
    ```
-3. **Git version 2.35.1**, git must be installed in your machine, you can check if it is already installed by running <br>
+
+4. **Git version 2.35.1**, git must be installed in your machine, you can check if it is already installed by running <br>
    
    ```
    git --version
    ```
+   
    If this isn't already installed, run the following in MSYS2 MinGW shell
+   
    ```
    pacman -S git
    ```
-4. **glslc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
+
+5. **glslc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
+   
    ```
    pacman -S mingw-w64-x86_64-shaderc
    ```
@@ -69,6 +84,7 @@ Supported languages are C and C++ only for now.
    ```
    git clone https://github.com/ravi688/VulkanRenderer.git
    ```
+
 2. Change the working directory to `VulkanRenderer` and setup all the dependency git submodules by running the following command
    
    ```
@@ -76,20 +92,25 @@ Supported languages are C and C++ only for now.
    make -s setup
    make -s update
    ```
+
 3. Start building by running the following command
    
    ```
    make -s build
    ```
+   
    OR
+   
    ```
    make -s build-debug
    ```
+   
    For release mode
+   
    ```
    make -s build-release
    ```
-   
+
 ### Building executable manually (Optional)
 
 1. Change the working directory to `VulkanRenderer` and build the `main.exe` executable by running the following command
@@ -97,6 +118,7 @@ Supported languages are C and C++ only for now.
    ```
    make -s debug
    ```
+
 2. Now run the `main.exe` executable by running the following command
    
    ```
@@ -111,566 +133,124 @@ Supported languages are C and C++ only for now.
    make -s clean
    ```
 
-### Where to go for examples?
-
-#### For C language
-You can check `VulkanRenderer/shaders` and `VulkanRenderer/source/tests` directory for now.
-
-#### For C++ language
-You can check `VulkanRenderer/showcase/resource/shaders` and `VulkanRenderer/showcase/main.cpp` directory for now.
-
 ## Features
 
-### Shader Binary
+### Multipass Rendering
 
-`Shader defintion` (`example_shader.glsl`) source files are first compiled into a `Shader Binary` files (`example_shader.sb`) by `shader_compiler.exe` executable.
-After the compilation, the shader binary files consumed as follows:
+1. Render Pass Pool to avoid pass duplication
 
-**For C**
-```C
-shader_t* example_shader = shader_load(renderer, "resource/shaders/example_shader.sb");
+### Render Queues
 
-// use the shader
+1. Background Render Queue
 
-shader_destroy(example_shader); // destroys the vulkan objects
-shader_release_resources(example_shader); // releases some extra heap allocated memory
-```
-**For C++**
-```C++
-V3D::Shader exampleShader = myRenderer.loadShader("resource/shaders/example_shader.sb");
+2. Geometry Render Queue
 
-// use the shader
+3. Overlay Render Queue
 
-exampleShader.drop();
-```
+4. General Purpose Render Queues
 
-### Shader defintiion
+### Render Textures
 
-#### Sections
+1. Depth Render Texture
 
-Shader definition has been devided into 3 sections: `SETTINGS` `LAYOUT` `SHADER`. <br>
-`SHADER` section is devided into stages: `vertex` `tessellation` `geometry` `fragment`. <br>
-Currently `tessellation` and `geometry` are not supported.
+2. Color Render Texture
 
-```GLSL
-#section SETTINGS       // optional, to be added. As of now it is always ignored.
+3. Depth Cube Render Texture (Shadow map for point lights)
 
-// settings for fixed function stages in the graphics pipeline
+4. Color Cube Render Texture (Environment map for reflection effects)
 
-#section LAYOUT         // optional
+### Textures and Cubemaps
 
-// all the vertex attributre, push constants and descriptor sets definition should go inside this section
+1. Normal Map
 
-#section SHADER         // mandatory
+2. Albedo Map
 
-RenderPass
-{
-   SubPass
-   {
+3. Skybox &  Reflection cubemap
 
-      #stage vertex             // mendatory for now
+### Camera System
 
-      // GLSL vertex shader
+1. Multiple Cameras
 
-      #stage fragment         // mendatory for now
+2. Render Target switching
 
-      // GLSL fragment shader
-   }
-}
-```
+3. Orthographic and Perspective Projection
 
-#### Push Constants
+### Lights
 
-   Each block represents a push constant range having an offset and the size would automatically be calculated.
-   Numerical value in the square brackets after `[push_constant]` represents the offset of the push constant range in the supported buffer size by the GPU.
+1. Directional lights
 
-```GLSL
-vertex fragment [push_constant] [0] uniform Push
-{
-    mat4 mvp_matrix;
-    mat4 model_matrix;
-} push;
-```
+2. Point lights
 
-```GLSL
-vertex [push_constant] [0] uniform Push
-{
-    mat4 mvp_matrix;
-} push;
+3. Spot lights
 
-fragment [push_constant] [64] uniform Push
-{
-    mat4 model_matrix;
-} push;
-```
+### Meshes
 
-#### Vertex Attributes
-   There are two types of vertex attributes: `per-vertex` and `per-instance`. <br>
-   So, if you want the attributes to be supplied to the shader per vertex then use `per-vertex` otherwise for per instance use `per-instance`. <br>
-   First value in the square brackets represents the binding number and the second value represents the layout location number.
-```GLSL
-// for interleaved vertex buffer you can do like this, and bind the vertex buffer at binding location 0
-per-vertex [0, 0] vec3 position;
-per-vertex [0, 1] vec3 normal;
-per-vertex [0, 2] vec3 tangent;
-per-vertex [0, 3] vec2 texcoord;
+1. Support for ASCII STL, BINARY STL
 
-// for separated vertex buffers you can do like this, and bind the vertex buffers at their corresponding binding locations (i.e. 0, 1, 2, 3)
-per-vertex [0, 0] vec3 position;
-per-vertex [1, 1] vec3 normal;
-per-vertex [2, 2] vec3 tangent;
-per-vertex [3, 3] vec2 texcoord;
+2. Support for ASCII OBJ
 
-// for instanced rendering (interleaved buffer), and bind the instance data buffer at binding location 0
-per-instance [0, 0] vec3 eulerRotation;
-per-instance [0, 1] vec4 color;
+3. Mesh Trangulation and Quadrangulation
 
-// for instanced rendering (separated buffers), and bind the instance data buffers at binding locations 0 and 1
-per-instance [0, 0] vec3 eulerRotation;
-per-instance [1, 1] vec4 color;
-```
+4. Tangent Vector Generation
 
-#### Descriptor Sets
+### Text Mesh Rendering
 
-   First value in the square brackets represents the descriptor set number and the second value represents the binding number.
+1. Glyph pool to avoid glyph mesh duplication
 
-```GLSL
-fragment [0, 0] uniform Light
-{
-    vec3 color;
-    vec3 dir;
-    float intensity;
-} light;
+2. High performance internal data structure to frequently update the text data
 
-vertex [0, 1] uniform Matrices
-{
-    mat4 model_matrix;
-    mat4 view_matrix;
-    mat4 projection_matrix;
-    mat4 normal_matrix;
-} matrices;
-
-fragment vertex [0, 2] uniform Sphere
-{
-    float radius;
-    vec3 color;
-} sphere;
-
-fragment [0, 3] uniform sampler2D albedo;
-fragment [0, 4] uniform sampler2D normal_map;
-fragment [0, 5] uniform samplerCube skybox;
-```
-
-### 3D Mesh loading
-
-Supported file formats are `ASCII STL` `Binary STL` `ASCII OBJ` <br>
-STL files could be ASCII or Binary, it is automatically detected when we load the file.
-As of now only polygonal 3d models are supported, no curves and surfaces as it could be in the OBJ files.
-
-**For C**
-```C
-// load stl file, it automatically detects ASCII and Binary stl files.
-mesh3d_t* sphere = mesh3d_load("resources/Sphere.stl"); 
-
-// load obj file, it supports triangulated and quadrangulated meshes both.
-mesh3d_t* monkey = mesh3d_load("resources/Monkey.obj");
-
-// create renderable meshes (`mesh_t`)
-mesh_t* sphere_mesh = mesh_create(renderer, sphere);
-mesh_t* monkey_mesh = mesh_create(renderer, monkey);
-
-// render the meshes by called mesh3d_draw_* kind of functions
-
-mesh3d_destroy(sphere);       // destroy and release memory
-mesh3d_destroy(monkey);       // destroy and release memory
-// no mesh3d_release_resources kind of function because mesh3d_t object isn't related to vulkan at all. 
-// mesh3d is just a data structure to store 3d meshes.
-
-mesh_destroy(sphere_mesh); // destroy vulkan objects
-mesh_release_resources(sphere_mesh); // release heap memory
-
-mesh_destroy(monkey_mesh); // destroy vulkan objects
-mesh_release_resources(moneky_mesh); // release heap memory
-```
-**For C++**
-```C++
-V3D::Renderer myRenderer(V3D::RendererGPUType::DISCRETE);
-myRenderer.init();
-V3D::Mesh3D monkey = V3D::Mesh3D::load("resources/Monkey.obj");
-
-V3D::Mesh monkeyMesh = myRenderer.createMesh(monkey);
-
-// in render loop
-// monkeyMesh.draw();
-
-monkeyMesh.drop();
-monkey.drop();
-```
-
-### Textures
-
-#### 2D Textures
-
-Supported file formats are: `Windows BMP`
-
-**For C**
-```C
-// load the texture data and create required vulkan objects
-texture_t* texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "resource/textures/linuxlogo.bmp");
-texture_t* normal_map = texture_load(renderer, TEXTURE_TYPE_NORMAL, "resource/textures/normal_map.bmp");
-
-// use the texture somewhere, 
-// i.e. material_set_texture(some_material, "albedo", texture);
-// sampler2D should be used in the shader
-
-// destroy vulkan objects
-texture_destroy(texture);
-texture_destroy(normal_map);
-// release heap allocated memory
-texture_release_resources(texture);
-texture_release_resources(normal_map);
-```
-
-**For C++**
-```C++
-V3D::Texture texture = myRenderer.loadTexture(V3D::TextureType::ALBEDO, "resource/textures/linuxlogo.bmp");
-V3D::Texture normalMap = myRenderer.loadTexture(V3D::TextureType::NORMAL, "resource/textures/normal_map.bmp");
-
-// use the texture somewhere,
-// i.e. myMaterial.set("albedo",  texture);
-// or myMaterial.set("normalMap", normalMap);
-
-texture.drop();
-normalMap.drop();
-```
-
-#### Cube map Textures
-
-Supported file formats are: `Windows BMP`
-
-**For C**
-```C
-// load the 6 textures for each face and create required vulkan objects
-texture_t* skybox_texture = texture_load(renderer, TEXTURE_TYPE_CUBE,
-                                        "resource/skybox_textures/skybox/right.bmp",
-                                        "resource/skybox_textures/skybox/left.bmp",
-                                        "resource/skybox_textures/skybox/bottom.bmp",
-                                        "resource/skybox_textures/skybox/top.bmp",
-                                        "resource/skybox_textures/skybox/front.bmp", 
-                                        "resource/skybox_textures/skybox/back.bmp");
-
-// use the cubemap texture somewhere, 
-// i.e. material_set_texture(some_material, "skybox", skybox_texture);
-// samplerCube should be used in the shader
-
-// destroy vulkan objects
-texture_destroy(skybox_texture);
-
-// release heap allocated memory
-texture_release_resources(skybox_texture);
-```
-**For C++**
-```C++
-V3D::Texture skyboxTexture = myRenderer.loadTexture(V3D::TextureType::CUBE,
-                                 "resource/skybox_textures/skybox/right.bmp",
-                                 "resource/skybox_textures/skybox/left.bmp",
-                                 "resource/skybox_textures/skybox/bottom.bmp",
-                                 "resource/skybox_textures/skybox/top.bmp",
-                                 "resource/skybox_textures/skybox/front.bmp", 
-                                 "resource/skybox_textures/skybox/back.bmp");
-// use this cube map texture somehere
- 
-skyboxTexture.drop();
-```
+3. Text Mesh batching
 
 ### Materials
 
-All the descriptors defined in the shader definition file could be set by material_set_* functions.
-All the push constants defined in the shader definition file could be set by material_set_push_* functions.
-If you are defining the vertex attributes in the shader definition (source) file then make sure to set <br>
-`is_vertex_attrib_from_file` to `true` in the material_create_info_t struct, in that case the hard coded vertex attributes would be ignored.
+1. String to fast integer handles for constant lookup
 
-**For C**
-```C
-// prepare the mesh data structure
-mesh3d_t* box_mesh3d = mesh3d_load("resource/Box.obj");
-mesh3d_make_centroid_origin(box_mesh3d); // set the model's origin equal to its centroid, optional
-mesh3d_calculate_tangents(box_mesh3d);   // calculate tangents for normal mapping
+### Shaders
 
-// create renderable meshe object
-mesh_t* box = mesh_create(renderer, box_mesh3d);
+1. Multiple Render passes and Subpasses
 
-// load the shader binary file
-shader_t* box_shader = shader_load(renderer, "resource/shaders/bump_shader.sb");
+2. Custom attachments configuration
 
-u64 per_vertex_attributes[4];
-per_vertex_attributes[0] = MATERIAL_ALIGN(MATERIAL_VEC3, 0); // vertex buffer for vertex positions
-per_vertex_attributes[1] = MATERIAL_ALIGN(MATERIAL_VEC3, 1); // vertex buffer for vertex normal positions
-per_vertex_attributes[2] = MATERIAL_ALIGN(MATERIAL_VEC2, 2); // vertex buffer for vertex texture coordinates
-per_vertex_attributes[3] = MATERIAL_ALIGN(MATERIAL_VEC3, 3); // vertex buffore for vertex tangents
+3. Fixed Function pipeline configuration for each pass
 
-// prepare the material create info
-material_create_info_t box_material_info = 
-{
-    .per_vertex_attribute_binding_count = 4,     // we want four separate vertex buffers, not interleaved
-    .per_vertex_attribute_bindings = &per_vertex_attributes[0],
-    .is_vertex_attrib_from_file = true; // if you are defining the vertex attributes in the shader defintion file (source) itself
-    .shader = box_shader, 
-   .is_transparent = false    // optional
-};
 
-// create the material
-material_t* box_material = material_create(renderer, &box_material_info);
-
-// load the required textures
-texture_t* box_textures[] = 
-{ 
-    texture_load(renderer, "resource/textures/white.bmp"),
-    texture_load(renderer, "resource/textures/normal_map.bmp")
-};
-
-// set the albedo texture to its corresponding slot in the shader
-material_set_texture(box_material, "albedo", box_textures[0]);
-
-// set the normal map texture to its corresponding slot in the shader
-material_set_texture(box_material, "normal_map", box_textures[1]);
-
-// set the transformation matrices, note: uniform buffers could also be used instead of push constants
-material_set_push_mat4(box_material, "push.mvp_matrix", mat4_transpose(float)(mvp));
-material_set_push_mat4(box_material, "push.model_matrix", mat4_transpose(float)(model_matrix));
-
-// bind the material by calling material_bind(box_material, renderer)
-// render the mesh by calling mesh_draw_* functions
-
-// destroy and release mesh_t, mesh3d_t, shader, and textures
-
-// destroy vulkan objects
-material_destroy(box_material);
-
-// release heap allocated memory
-material_release_resources(box_material);
-```
-
-**For C++**
-```C++
-// prepare the mesh data structure
-V3D::Mesh3D box_mesh3d = V3D::Mesh3D::load("resource/Box.obj");
-box_mesh3d.makeCentroidOrigin(); // set the model's origin equal to its centroid, optional
-box_mesh3d.calculateTangents();   // calculate tangents for normal mapping
-
-// create renderable mesh object
-V3D::Mesh box = myRenderer.createMesh(box_mesh3d);
-
-// load the shader binary file
-V3D::Shader boxShader = myRenderer.loadShader("resource/shaders/bump_shader.sb");
-
-// create the material
-V3D::Material boxMaterial = myRenderer.createMaterial(boxShader);        //uses everything from file
-
-// load the required textures
-V3D::Texture boxTextures[] = 
-{ 
-    myRenderer.loadTexture("resource/textures/white.bmp"),
-    myRenderer.loadTexture("resource/textures/normal_map.bmp")
-};
-
-// set the albedo texture to its corresponding slot in the shader
-boxMaterial.set("albedo", boxTextures[0]);
-
-// set the normal map texture to its corresponding slot in the shader
-boxMaterial.set("normal_map", boxTextures[1]);
-
-// set the transformation matrices, note: uniform buffers could also be used instead of push constants
-boxMaterial.setPush("push.mvp_matrix", mvp.transpose());
-boxMaterial.setPush("push.model_matrix", modelMatrix.transpose());
-
-// bind the material by calling box_material.bind()
-// render the mesh by calling mesh.draw()
-
-// destroy and release V3D::Mesh, V3D::Mesh3D, V3D::Shader, and V3D::Texture
-
-boxMaterial.drop();
-```
-
-### Text Rendering
-
-Currently on text meshes are support, meaning all the glyphs are being tessellated and rendered as complex polygons.
-
-Texts are being accomplished by `font_t` `text_mesh_t` `glyph_mesh_pool_t` and `text_mesh_string_handle_t` objects. <br>
-
-#### Font
-
-**For C**
-```C
-// load the font data and allocate the required memory
-font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
-
-// use the font somewhere
-
-// destroys and releases the memory allocated by the backed third party library for parsing the true-type fonts
-font_destroy(font);    
-// release the heap memory allocated by the font_t object
-font_release_resources(font);
-```
-
-**For C++**
-```C++
-// load the font data and allocate the required memory
-V3D::Font font("resource/fonts/Pushter-Regular.ttf");
-
-// use the font somewhere
-
-font.drop();
-```
-
-#### Glyph Mesh Pool
-
-**For C**
-```C
-// load the font data and allocate the required memory
-font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
-
-// create glyph mesh pool to create renderable meshes (`mesh_t`)
-glyph_mesh_pool_t* pool = glyph_mesh_pool_create(renderer, font);
-
-// creates a new `mesh_t` because it is the first query for the glyph 'A'
-mesh_t* glyph_A = glyph_mesh_pool_get_mesh(pool, 'A'); 
-// creates a new `mesh_t` because it is the first query for the glyph 'A'
-mesh_t* glyph_B = glyph_mesh_pool_get_mesh(pool, 'B');
-// returns the already created `mesh_t` object for the glyph 'A', so value of glyph_A2 must be equals to glph_A
-mesh_t* glph_A2 = glyph_mesh_pool_get_mesh(pool, 'A');
-
-// render the meshes by calling mesh_draw_* kind of functions
-
-// destroys and releases the memory allocated by the backed third party library for parsing the true-type fonts
-font_destroy(font);    
-// release the heap memory allocated by the font_t object
-font_release_resources(font);
-
-// destoy vulkan objects
-glyph_mesh_pool_destroy(pool); 
-// release heap allocated memory
-glyph_mesh_pool_release_resources(pool); 
-```
-
-**For C++**
-```C++
-// load the font data and allocate the required memory
-V3D::Font font("resource/fonts/Pushster-Regular.ttf");
-
-// create glyph mesh pool to create renderable meshes (`mesh_t`)
-V3D::GlyphMeshPool pool = myRenderer.createGlyphMeshPool(font);
-
-// creates a new `V3D::Mesh` because it is the first query for the glyph 'A'
-V3D::Mesh glyph_A = pool.getMesh('A'); 
-// creates a new `V3D::Mesh` because it is the first query for the glyph 'A'
-V3D::Mesh glyph_B = pool.getMesh('B');
-// returns the already created `V3D::Mesh` object for the glyph 'A', so value of glyph_A2 must be equals to glph_A
-V3D::Mesh glph_A2 = pool.getMesh('A');
-
-// render the meshes by calling Mesh::draw() kind of functions
-
-font.drop();
-pool.drop();
-```
-
-#### Text Mesh and String Handles
-
-**For C**
-```C
-// load the font data and allocate the required memory
-font_t* font = font_load_and_create("resource/fonts/Pushster-Regular.ttf");
-
-// create glyph mesh pool to create renderable meshes (`mesh_t`)
-glyph_mesh_pool_t* pool = glyph_mesh_pool_create(renderer, font);
-
-// create text mesh object
-text_mesh_t* game_ui = text_mesh_create(renderer, pool);
-
-// create a string, note: these string instances would be pooled automatically
-text_mesh_string_handle_t score_text = text_mesh_string_create(game_ui);
-// set the position
-text_mesh_string_set_positionH(game_ui, score_text, vec3(float)(0, 7, 5));
-// set the scale
-text_mesh_string_set_scaleH(game_ui, score_text, vec3(float)(0.8f, 0.8f, 0.8f));
-// set the string value, note: it allocates heap memory internally if the current size of the internal buffer is less than the required.
-text_mesh_string_setH(game_ui, score_text, "Score: 456");
-
-// render the texts by calling text_mesh_draw function
-
-// destroys and releases the memory allocated by the backed third party library for parsing the true-type fonts
-font_destroy(font);    
-// release the heap memory allocated by the font_t object
-font_release_resources(font);
-
-// destoy vulkan objects
-glyph_mesh_pool_destroy(pool);
-// release heap allocated memory
-glyph_mesh_pool_release_resources(pool);
-
-// no need to destroy string handles because they are pooled inside the text_mesh_t object.
-
-// destroy vulkan objects
-text_mesh_destroy(game_ui);
-// release heap allocated memory
-text_mesh_release_resources(game_ui);
-```
-
-**For C++**
-```C++
-// load the font data and allocate the required memory
-V3D::Font font("resource/fonts/Pushster-Regular.ttf");
-
-// create glyph mesh pool to create renderable meshes (`V3D::Mesh`)
-V3D::GlyphMeshPool pool = myRenderer.createGlyphMeshPool(font);
-
-// create text mesh object
-V3D::TextMesh gameUI = myRenderer.createTextMesh(pool);
-
-// create a string, note: these string instances would be pooled automatically
-V3D::TextMesh::StringHandle scoreText = gameUI.createString();
-// set the position
-gameUI.setStringPosition(scoreText, { 0, 7, 5 });
-// set the scale
-gameUI.setStringScale(scoreText, { 0.8f, 0.8f, 0.8f });
-// set the string value, note: it allocates heap memory internally if the current size of the internal buffer is less than the required.
-gameUI.setString(scoreText, "Score: 456");
-
-// render the texts by calling gameUI.draw() function
-
-font.drop();
-pool.drop();
-// no need to destroy string handles because they are pooled inside the V3D::TextMesh object.
-gameUI.drop();
-```
 
 ## Screenshots and video clips
 
 #### Point Lights
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/V7vfsykNBPY/0.jpg)](https://www.youtube.com/watch?v=V7vfsykNBPY)
 
 #### Spot Lights
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/I390_yvlLE8/0.jpg)](https://www.youtube.com/watch?v=I390_yvlLE8)
 
 #### Render Textures
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/Ti5y9OSK6Ow/0.jpg)](https://www.youtube.com/watch?v=Ti5y9OSK6Ow)
 
 #### Skybox Rendering
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/f3wqkk3p7MA/0.jpg)](https://www.youtube.com/watch?v=f3wqkk3p7MA)
 
 #### Mesh Rendering
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/Jh2ViGbWrrE/0.jpg)](https://www.youtube.com/watch?v=Jh2ViGbWrrE)
 
 #### Specular Shading
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/nqGjmHLH4jk/0.jpg)](https://www.youtube.com/watch?v=nqGjmHLH4jk)
 
 #### Diffuse Shading
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/NQ_kysdMxHg/0.jpg)](https://www.youtube.com/watch?v=NQ_kysdMxHg)
 
 #### Color Blending and Text Rendering
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/2jXi0bTWkC4/0.jpg)](https://www.youtube.com/watch?v=2jXi0bTWkC4)
 
 #### Flat Shading
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/6K_JPCuZfFM/0.jpg)](https://www.youtube.com/watch?v=6K_JPCuZfFM)
 
 ## More?
