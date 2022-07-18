@@ -5,12 +5,8 @@
 #include <renderer/struct_descriptor.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 
-#include <hpml/vec3/header_config.h>
-#include <hpml/vec3/vec3.h>
-#include <hpml/memory/header_config.h>
-#include <hpml/memory/memory.h>
-#include <hpml/mat4/header_config.h>
-#include <hpml/mat4/mat4.h>
+#include <hpml/vec3.h>
+#include <hpml/mat4.h>
 
 typedef enum vulkan_light_type_t
 {
@@ -40,14 +36,14 @@ typedef struct vulkan_light_t
 	struct_field_handle_t intensity_handle;
 
 	// cpu side cache to reduce GPU memory access
-	mat4_t(float) projection;
-	mat4_t(float) view;
-	vec3_t(float) color;
+	mat4_t projection;
+	mat4_t view;
+	vec3_t color;
 	float intensity;
 
-	vec3_t(float) position;
-	mat4_t(float) rotation;
-	vec3_t(float) euler_rotation;
+	vec3_t position;
+	mat4_t rotation;
+	vec3_t euler_rotation;
 
 } vulkan_light_t;
 
@@ -57,7 +53,7 @@ typedef struct vulkan_directional_light_t
 {
 	vulkan_light_t base;
 	struct_field_handle_t direction_handle;
-	vec3_t(float) direction;
+	vec3_t direction;
 } vulkan_directional_light_t;
 
 typedef struct vulkan_point_light_t
@@ -73,7 +69,7 @@ typedef struct vulkan_spot_light_t
 	struct_field_handle_t direction_handle;
 	struct_field_handle_t position_handle;
 	float angle;
-	vec3_t(float) direction;
+	vec3_t direction;
 } vulkan_spot_light_t;
 
 
@@ -88,9 +84,9 @@ RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light);
 
 /* setters */
 RENDERER_API void vulkan_light_set_intensity(vulkan_light_t* light, float intensity);
-RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t(float) color);
-RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t(float) position);
-RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t(float) rotation);
+RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color);
+RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t position);
+RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation);
 RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle);
 
 

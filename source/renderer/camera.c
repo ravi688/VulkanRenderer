@@ -78,32 +78,32 @@ RENDERER_API void camera_render_to_texture(camera_t* camera, render_scene_t* sce
 
 /* getters */
 
-RENDERER_API mat4_t(float) camera_get_view(camera_t* camera)
+RENDERER_API mat4_t camera_get_view(camera_t* camera)
 {
 	return vulkan_camera_get_view(camera);
 }
 
-RENDERER_API mat4_t(float) camera_get_transform(camera_t* camera)
+RENDERER_API mat4_t camera_get_transform(camera_t* camera)
 {
 	return vulkan_camera_get_transform(camera);
 }
 
-RENDERER_API mat4_t(float) camera_get_projection(camera_t* camera)
+RENDERER_API mat4_t camera_get_projection(camera_t* camera)
 {
 	return vulkan_camera_get_projection(camera);
 }
 
-RENDERER_API vec3_t(float) camera_get_position(camera_t* camera)
+RENDERER_API vec3_t camera_get_position(camera_t* camera)
 {
 	return vulkan_camera_get_position(camera);
 }
 
-RENDERER_API vec3_t(float) camera_get_rotation(camera_t* camera)
+RENDERER_API vec3_t camera_get_rotation(camera_t* camera)
 {
 	return vulkan_camera_get_rotation(camera);
 }
 
-RENDERER_API vec2_t(float) camera_get_clip_planes(camera_t* camera)
+RENDERER_API vec2_t camera_get_clip_planes(camera_t* camera)
 {
 	return vulkan_camera_get_clip_planes(camera);
 }
@@ -131,17 +131,17 @@ RENDERER_API float camera_get_height(camera_t* camera)
 
 /* setters */
 
-RENDERER_API void camera_set_transform(camera_t* camera, mat4_t(float) transform)
+RENDERER_API void camera_set_transform(camera_t* camera, mat4_t transform)
 {
 	vulkan_camera_set_transform(camera, transform);
 }
 
-RENDERER_API void camera_set_position(camera_t* camera, vec3_t(float) position)
+RENDERER_API void camera_set_position(camera_t* camera, vec3_t position)
 {
 	vulkan_camera_set_position(camera, position);
 }
 
-RENDERER_API void camera_set_rotation(camera_t* camera, vec3_t(float) rotation)
+RENDERER_API void camera_set_rotation(camera_t* camera, vec3_t rotation)
 {
 	vulkan_camera_set_rotation(camera, rotation);
 }

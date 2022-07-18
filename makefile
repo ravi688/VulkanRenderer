@@ -114,6 +114,8 @@ update:
 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem push
 #-------------------------------------------
 
+RM := rm -f
+RM_DIR := rm -rf
 
 #-------------------------------------------
 #		Dependency Graph Generation
@@ -144,9 +146,9 @@ dgraph: $(DGRAPH_PREPROCESSED_SCRIPT) | $(DGRAPH_TARGET_DIR)
 	$(DGRAPH_COMPILER) $(DGRAPH_FLAGS) $(DGRAPH_PREPROCESSED_SCRIPT) > $(DGRAPH_TARGET)
 
 dgraph-clean: 
-	del dependency_graph\$(PROJECT_NAME).png
-	rmdir dependency_graph
-	del $(PROJECT_NAME).gv.i
+	$(RM) dependency_graph\$(PROJECT_NAME).png
+	$(RM_DIR) dependency_graph
+	$(RM) $(PROJECT_NAME).gv.i
 	@echo [Log] Dependency graphs cleaned successfully!
 #-------------------------------------------
 
@@ -289,8 +291,8 @@ UNPACK_LIBS: $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) | $(UNPACKED_OBJEC
 	cd $(UNPACKED_OBJECTS_DIR)/.temp & $(foreach var, $^, cd ../$(notdir $(basename $(var))) & $(ARCHIVER) $(ARCHIVER_UNPACK_FLAGS) ../../$(var) &)
 
 DELETE_UPACKED_OBJECTS:
-	del $(subst /,\ $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
-	rmdir $(UNPACKED_OBJECTS_DIR)
+	$(RM) $(subst /,\ $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
+	$(RM_DIR) $(UNPACKED_OBJECTS_DIR)
 
 $(TARGET_DYNAMIC_PACKED_LIB) : PRINT_DYNAMIC_INFO  $(filter-out source/main.o, $(OBJECTS)) UNPACK_LIBS | $(TARGET_LIB_DIR)
 	@echo [Log] Linking $@ ...
@@ -309,14 +311,14 @@ $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB)
 	@echo [Log] $(PROJECT_NAME) built successfully!
 
 bin-clean: 
-	del $(subst /,\, $(OBJECTS))
-	del $(__EXECUTABLE_NAME)
-	del $(subst /,\, $(TARGET_STATIC_LIB))
-	del $(subst /,\, $(TARGET_DYNAMIC_LIB))
-	del $(subst /,\, $(TARGET_DYNAMIC_IMPORT_LIB))
-	rmdir $(subst /,\, $(TARGET_LIB_DIR))
-	del $(subst /,\, $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
-	rmdir $(subst /,\, $(UNPACKED_OBJECTS_DIR))
+	$(RM) $(subst /,\, $(OBJECTS))
+	$(RM) $(__EXECUTABLE_NAME)
+	$(RM) $(subst /,\, $(TARGET_STATIC_LIB))
+	$(RM) $(subst /,\, $(TARGET_DYNAMIC_LIB))
+	$(RM) $(subst /,\, $(TARGET_DYNAMIC_IMPORT_LIB))
+	$(RM_DIR) $(subst /,\, $(TARGET_LIB_DIR))
+	$(RM) $(subst /,\, $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
+	$(RM_DIR) $(subst /,\, $(UNPACKED_OBJECTS_DIR))
 	@echo [Log] Binaries cleaned successfully!
 	$(MAKE) --directory=./dependencies/ttf2mesh clean
 	$(MAKE) --directory=./dependencies/HPML clean
@@ -355,7 +357,7 @@ shader-release: $(SHADER_BINARIES)
 shader: shader-debug
 
 shader-clean:
-	del $(subst /,\, $(SHADER_BINARIES))
+	$(RM) $(subst /,\, $(SHADER_BINARIES))
 
 
 SHADER_INCLUDES = -I $(wildcard shaders/include/)
@@ -376,7 +378,7 @@ SPIRV_COMPILER = glslc
 glsl-shader: $(SPIRV_SHADERS)
 
 glsl-shader-clean:
-	del $(subst /,\, $(SPIRV_SHADERS))
+	$(RM) $(subst /,\, $(SPIRV_SHADERS))
 
 #-------------------------------------------
 

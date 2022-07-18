@@ -56,14 +56,14 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	this->offscreenCamera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_clear(this->offscreenCamera, COLOR_RED, 1.0f);
-	camera_set_position(this->offscreenCamera, vec3_zero(float)());
-	camera_set_rotation(this->offscreenCamera, vec3(float)(0, 0, 0));
+	camera_set_position(this->offscreenCamera, vec3_zero());
+	camera_set_rotation(this->offscreenCamera, vec3(0, 0, 0));
 	camera_set_field_of_view(this->offscreenCamera, 90 DEG);
 	camera_set_active(this->offscreenCamera, false);
 
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY) | BIT64(RENDER_QUEUE_TYPE_QUEUE0));
 	this->pointLight = light_create(renderer, LIGHT_TYPE_POINT);
-	light_set_position(this->pointLight, vec3_zero(float)());
+	light_set_position(this->pointLight, vec3_zero());
 	light_set_intensity(this->pointLight, 0.5f);
 
 	this->shadowMapMaterial = material_library_getH(mlib, 
@@ -79,8 +79,8 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 							shader_library_create_shader_from_preset(slib, 
 								SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH_POINT), "DepthRefectionMaterial"));
 
-	material_set_vec4(this->material, "parameters.color", vec4(float)(1, 1, 1, 1));
-	material_set_vec4(this->depthReflectionMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
+	material_set_vec4(this->material, "parameters.color", vec4(1, 1, 1, 1));
+	material_set_vec4(this->depthReflectionMaterial, "parameters.color", vec4(1, 1, 1, 1));
 	material_set_float(this->depthReflectionMaterial, "parameters.reflectance", 1.0f);
 
 	vulkan_texture_create_info_t create_info = 
@@ -107,21 +107,21 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	this->renderObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->renderObject, this->material);
 	render_object_attach(this->renderObject, this->mesh);
-	render_object_set_transform(this->renderObject, mat4_mul(float)(2, mat4_rotation(float)(0, -90 DEG, 0), mat4_scale(float)(0.5f, 0.5f, 0.5f)));
+	render_object_set_transform(this->renderObject, mat4_mul(2, mat4_rotation(0, -90 DEG, 0), mat4_scale(0.5f, 0.5f, 0.5f)));
 
 	AUTO cubeMeshData = mesh3d_cube(1);
 	this->cubeMesh = mesh_create(renderer, cubeMeshData);
 	this->cubeObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->cubeObject, this->material);
 	render_object_attach(this->cubeObject, this->cubeMesh);
-	render_object_set_transform(this->cubeObject, mat4_mul(float)(2, mat4_translation(float)(-0.5f, 0, 0.5f), mat4_scale(float)(0.1f, 0.1f, 0.1f)));
+	render_object_set_transform(this->cubeObject, mat4_mul(2, mat4_translation(-0.5f, 0, 0.5f), mat4_scale(0.1f, 0.1f, 0.1f)));
 
-	mesh3d_transform_set(cubeMeshData, mat4_scale(float)(-1, -1, -1));
+	mesh3d_transform_set(cubeMeshData, mat4_scale(-1, -1, -1));
 	this->wallMesh = mesh_create(renderer, cubeMeshData);
 	this->wallObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->wallObject, this->material);
 	render_object_attach(this->wallObject, this->wallMesh);
-	render_object_set_transform(this->wallObject, mat4_scale(float)(3, 3, 3));
+	render_object_set_transform(this->wallObject, mat4_scale(3, 3, 3));
 
 }
 
@@ -161,12 +161,12 @@ TEST_ON_UPDATE(POINT_LIGHT_SHADOWS)
 
 	angle += deltaTime;
 	float _angle = (0.5f * sin(angle) + 0.5f) * 180.0f - 180.0f;
-	vec3_t(float) pos = vec3(float)(0.8f * sin(_angle DEG), 0, 0.8f * cos(_angle DEG));
+	vec3_t pos = vec3(0.8f * sin(_angle DEG), 0, 0.8f * cos(_angle DEG));
 	vulkan_camera_set_position_cube(this->offscreenCamera, pos);
 	light_set_position(this->pointLight, pos);
-	light_set_color(this->pointLight, vec3(float)(pos.x * 0.5f + 0.5f, pos.y * 0.5f + 0.5f, pos.z * 0.5f + 0.5f));
-	render_object_set_transform(this->cubeObject, mat4_mul(float)(2, mat4_translation(float)(pos.x, pos.y, pos.z),
-		mat4_scale(float)(0.1f, 0.1f, 0.1f)));
+	light_set_color(this->pointLight, vec3(pos.x * 0.5f + 0.5f, pos.y * 0.5f + 0.5f, pos.z * 0.5f + 0.5f));
+	render_object_set_transform(this->cubeObject, mat4_mul(2, mat4_translation(pos.x, pos.y, pos.z),
+		mat4_scale(0.1f, 0.1f, 0.1f)));
 }
 
 TEST_ON_RENDER(POINT_LIGHT_SHADOWS)

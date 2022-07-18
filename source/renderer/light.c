@@ -36,12 +36,12 @@ RENDERER_API void light_set_spot_angle(light_t* light, float angle)
 	vulkan_light_set_spot_angle(light, angle);
 }
 
-RENDERER_API void light_set_position(light_t* light, vec3_t(float) position)
+RENDERER_API void light_set_position(light_t* light, vec3_t position)
 {
 	vulkan_light_set_position(light, position);
 }
 
-RENDERER_API void light_set_rotation(light_t* light, vec3_t(float) rotation)
+RENDERER_API void light_set_rotation(light_t* light, vec3_t rotation)
 {
 	vulkan_light_set_rotation(light, rotation);
 }
@@ -51,7 +51,7 @@ RENDERER_API void light_set_intensity(light_t* light, float intensity)
 	vulkan_light_set_intensity(light, intensity);
 }
 
-RENDERER_API void light_set_color(light_t* light, vec3_t(float) color)
+RENDERER_API void light_set_color(light_t* light, vec3_t color)
 {
 	vulkan_light_set_color(light, color);
 }

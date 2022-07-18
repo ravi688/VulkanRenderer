@@ -59,17 +59,17 @@ RENDERER_API void render_object_set_material(render_object_t* obj, material_t* m
 	vulkan_render_object_set_material(obj, material);
 }
 
-RENDERER_API void render_object_set_transform(render_object_t* obj, mat4_t(float) transform)
+RENDERER_API void render_object_set_transform(render_object_t* obj, mat4_t transform)
 {
 	vulkan_render_object_set_transform(obj, transform);
 }
 
-RENDERER_API mat4_t(float) render_object_get_transform(render_object_t* obj)
+RENDERER_API mat4_t render_object_get_transform(render_object_t* obj)
 {
 	return vulkan_render_object_get_transform(obj);
 }
 
-RENDERER_API mat4_t(float) render_object_get_normal(render_object_t* obj)
+RENDERER_API mat4_t render_object_get_normal(render_object_t* obj)
 {
 	return vulkan_render_object_get_normal(obj);
 }

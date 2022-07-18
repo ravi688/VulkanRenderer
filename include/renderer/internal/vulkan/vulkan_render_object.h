@@ -10,17 +10,14 @@
 #include <renderer/struct_descriptor.h> 						// for struct_descriptor_t
 
 
-#include <hpml/memory/header_config.h>
-#include <hpml/memory/memory.h>
-#include <hpml/mat4/header_config.h>
-#include <hpml/mat4/mat4.h>
+#include <hpml/mat4.h>
 
 typedef struct vulkan_material_t vulkan_material_t;
 
 // typedef struct vulkan_object_info_t
 // {
-// 	mat4_t(float) transform;
-// 	mat4_t(float) normal;
+// 	mat4_t transform;
+// 	mat4_t normal;
 // } vulkan_object_info_t;
 
 typedef enum vulkan_render_object_type_t
@@ -76,8 +73,8 @@ RENDERER_API void vulkan_render_object_attach(vulkan_render_object_t* object, vo
 RENDERER_API void vulkan_render_object_draw(vulkan_render_object_t* object);
 RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* object, vulkan_material_t* material);
 RENDERER_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* object);
-RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* object, mat4_t(float) transform);
-RENDERER_API mat4_t(float) vulkan_render_object_get_transform(vulkan_render_object_t* object);
-RENDERER_API mat4_t(float) vulkan_render_object_get_normal(vulkan_render_object_t* object);
+RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* object, mat4_t transform);
+RENDERER_API mat4_t vulkan_render_object_get_transform(vulkan_render_object_t* object);
+RENDERER_API mat4_t vulkan_render_object_get_normal(vulkan_render_object_t* object);
 
 END_CPP_COMPATIBLE

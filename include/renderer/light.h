@@ -17,12 +17,8 @@
 #endif
 
 #include <renderer/defines.h>
-#include <hpml/vec3/header_config.h>
-#include <hpml/vec3/vec3.h>
-#include <hpml/memory/header_config.h>
-#include <hpml/memory/memory.h>
-#include <hpml/mat4/header_config.h>
-#include <hpml/mat4/mat4.h>
+#include <hpml/vec3.h>
+#include <hpml/mat4.h>
 
 typedef enum light_type_t
 {
@@ -46,9 +42,9 @@ RENDERER_API void light_destroy(light_t* light);
 RENDERER_API void light_release_resources(light_t* light);
 
 RENDERER_API void light_set_spot_angle(light_t* light, float angle);
-RENDERER_API void light_set_position(light_t* light, vec3_t(float) position);
-RENDERER_API void light_set_rotation(light_t* light, vec3_t(float) rotation);
+RENDERER_API void light_set_position(light_t* light, vec3_t position);
+RENDERER_API void light_set_rotation(light_t* light, vec3_t rotation);
 RENDERER_API void light_set_intensity(light_t* light, float intensity);
-RENDERER_API void light_set_color(light_t* light, vec3_t(float) color);
+RENDERER_API void light_set_color(light_t* light, vec3_t color);
 
 END_CPP_COMPATIBLE

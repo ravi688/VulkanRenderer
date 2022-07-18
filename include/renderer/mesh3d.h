@@ -19,16 +19,11 @@
 #include <print.h>
 #endif
 
-#include <hpml/vec3/header_config.h>
-#include <hpml/vec3/vec3.h>
-#include <hpml/vec2/header_config.h>
-#include <hpml/vec2/vec2.h>
+#include <hpml/vec3.h>
+#include <hpml/vec2.h>
 
 //For mesh3d_set_transform(), mesh3d_get_transform()
-#include <hpml/memory/header_config.h>
-#include <hpml/memory/memory.h>
-#include <hpml/mat4/header_config.h>
-#include <hpml/mat4/mat4.h>
+#include <hpml/mat4.h>
 
 #include <bufferlib/buffer.h>
 #include <renderer/defines.h>
@@ -39,10 +34,12 @@
 
 typedef u32 index_t;
 
-#ifndef VEC3_index_t_struct
-instantiate_vec3_struct(index_t);
-#define VEC3_index_t_struct
-#endif
+typedef struct vec3uint_t
+{
+	u32 x;
+	u32 y;
+	u32 z;
+} vec3uint_t;
 
 typedef struct mesh3d_t
 {
@@ -53,7 +50,7 @@ typedef struct mesh3d_t
 	BUFFER* uvs;		// location = 3
 	BUFFER* tangents; 	// location = 4
 	BUFFER* triangles;
-	mat4_t(float) transform;
+	mat4_t transform;
 } mesh3d_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -95,77 +92,77 @@ RENDERER_API function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh)
 RENDERER_API function_signature(void, mesh3d_optimize_buffer, mesh3d_t* mesh);
 
 RENDERER_API function_signature(void, mesh3d_position_add, mesh3d_t* mesh, float x, float y, float z);
-RENDERER_API function_signature(void, mesh3d_position_add_vec3, mesh3d_t* mesh, vec3_t(float) position);
+RENDERER_API function_signature(void, mesh3d_position_add_vec3, mesh3d_t* mesh, vec3_t position);
 RENDERER_API function_signature(void, mesh3d_position_set, mesh3d_t* mesh, index_t index, float x, float y, float z);
-RENDERER_API function_signature(void, mesh3d_position_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float) position);
+RENDERER_API function_signature(void, mesh3d_position_set_vec3, mesh3d_t* mesh, index_t index, vec3_t position);
 RENDERER_API function_signature(void, mesh3d_position_set_x, mesh3d_t* mesh, index_t index, float x);
 RENDERER_API function_signature(void, mesh3d_position_set_y, mesh3d_t* mesh, index_t index, float y);
 RENDERER_API function_signature(void, mesh3d_position_set_z, mesh3d_t* mesh, index_t index, float z);
-RENDERER_API function_signature(vec3_t(float), mesh3d_position_get, mesh3d_t* mesh, index_t index);
-RENDERER_API function_signature(vec3_t(float)*, mesh3d_position_get_ptr, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3_t, mesh3d_position_get, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3_t*, mesh3d_position_get_ptr, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_position_get_x, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_position_get_y, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_position_get_z, mesh3d_t* mesh, index_t index);
 
 RENDERER_API function_signature(void, mesh3d_normal_add, mesh3d_t* mesh, float x, float y, float z);
-RENDERER_API function_signature(void, mesh3d_normal_add_vec3, mesh3d_t* mesh, vec3_t(float) normal);
+RENDERER_API function_signature(void, mesh3d_normal_add_vec3, mesh3d_t* mesh, vec3_t normal);
 RENDERER_API function_signature(void, mesh3d_normal_set, mesh3d_t* mesh, index_t index, float x, float y, float z);
-RENDERER_API function_signature(void, mesh3d_normal_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  normal);
+RENDERER_API function_signature(void, mesh3d_normal_set_vec3, mesh3d_t* mesh, index_t index, vec3_t  normal);
 RENDERER_API function_signature(void, mesh3d_normal_set_x, mesh3d_t* mesh, index_t index, float x);
 RENDERER_API function_signature(void, mesh3d_normal_set_y, mesh3d_t* mesh, index_t index, float y); 
 RENDERER_API function_signature(void, mesh3d_normal_set_z, mesh3d_t* mesh, index_t index, float z);
-RENDERER_API function_signature(vec3_t(float), mesh3d_normal_get, mesh3d_t* mesh, index_t index);
-RENDERER_API function_signature(vec3_t(float)*, mesh3d_normal_get_ptr, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3_t, mesh3d_normal_get, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3_t*, mesh3d_normal_get_ptr, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_normal_get_x, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_normal_get_y, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_normal_get_z, mesh3d_t* mesh, index_t index);
 
 RENDERER_API function_signature(void, mesh3d_tangent_add, mesh3d_t* mesh, float x, float y, float z);
-RENDERER_API function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, vec3_t(float) tangent);
+RENDERER_API function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, vec3_t tangent);
 RENDERER_API function_signature(void, mesh3d_tangent_set, mesh3d_t* mesh, index_t index, float x, float y, float z);
-RENDERER_API function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  tangent);
+RENDERER_API function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, index_t index, vec3_t  tangent);
 RENDERER_API function_signature(void, mesh3d_tangent_set_x, mesh3d_t* mesh, index_t index, float x);
 RENDERER_API function_signature(void, mesh3d_tangent_set_y, mesh3d_t* mesh, index_t index, float y); 
 RENDERER_API function_signature(void, mesh3d_tangent_set_z, mesh3d_t* mesh, index_t index, float z);
-RENDERER_API function_signature(vec3_t(float), mesh3d_tangent_get, mesh3d_t* mesh, index_t index);
-RENDERER_API function_signature(vec3_t(float)*, mesh3d_tangent_get_ptr, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3_t, mesh3d_tangent_get, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3_t*, mesh3d_tangent_get_ptr, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_tangent_get_x, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_tangent_get_y, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_tangent_get_z, mesh3d_t* mesh, index_t index);
 
 RENDERER_API function_signature(void, mesh3d_triangle_add, mesh3d_t* mesh, index_t i0, index_t i1, index_t i2);
-RENDERER_API function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, vec3_t(index_t) triangle);
+RENDERER_API function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, vec3uint_t triangle);
 RENDERER_API function_signature(void, mesh3d_triangle_set, mesh3d_t* mesh, index_t index, index_t i0, index_t i1, index_t i2);
-RENDERER_API function_signature(void, mesh3d_triangle_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(index_t) triangle);
+RENDERER_API function_signature(void, mesh3d_triangle_set_vec3, mesh3d_t* mesh, index_t index, vec3uint_t triangle);
 RENDERER_API function_signature(void, mesh3d_triangle_set_0, mesh3d_t* mesh, index_t index, index_t i0);
 RENDERER_API function_signature(void, mesh3d_triangle_set_1, mesh3d_t* mesh, index_t index, index_t i1);
 RENDERER_API function_signature(void, mesh3d_triangle_set_2, mesh3d_t* mesh, index_t index, index_t i2);
-RENDERER_API function_signature(vec3_t(index_t), mesh3d_triangle_get, mesh3d_t* mesh, index_t index);
-RENDERER_API function_signature(vec3_t(index_t)*, mesh3d_triangle_get_ptr, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3uint_t, mesh3d_triangle_get, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3uint_t*, mesh3d_triangle_get_ptr, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(int, mesh3d_triangle_get_0, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(int, mesh3d_triangle_get_1, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(int, mesh3d_triangle_get_2, mesh3d_t* mesh, index_t index);
 
 RENDERER_API function_signature(void, mesh3d_uv_add, mesh3d_t* mesh, float x, float y);
-RENDERER_API function_signature(void, mesh3d_uv_add_vec2, mesh3d_t* mesh, vec2_t(float) uv);
+RENDERER_API function_signature(void, mesh3d_uv_add_vec2, mesh3d_t* mesh, vec2_t uv);
 RENDERER_API function_signature(void, mesh3d_uv_set, mesh3d_t* mesh, index_t index, float x, float y);
-RENDERER_API function_signature(void, mesh3d_uv_set_vec2, mesh3d_t* mesh, index_t index, vec2_t(float) uv);
+RENDERER_API function_signature(void, mesh3d_uv_set_vec2, mesh3d_t* mesh, index_t index, vec2_t uv);
 RENDERER_API function_signature(void, mesh3d_uv_set_x, mesh3d_t* mesh, index_t index, float x);
 RENDERER_API function_signature(void, mesh3d_uv_set_y, mesh3d_t* mesh, index_t index, float y);
-RENDERER_API function_signature(vec2_t(float), mesh3d_uv_get, mesh3d_t* mesh, index_t index);
-RENDERER_API function_signature(vec2_t(float)*, mesh3d_uv_get_ptr, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec2_t, mesh3d_uv_get, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec2_t*, mesh3d_uv_get_ptr, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_uv_get_y, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t index);
 
 RENDERER_API function_signature(void, mesh3d_color_add, mesh3d_t* mesh, float x, float y, float z);
-RENDERER_API function_signature(void, mesh3d_color_add_vec3, mesh3d_t* mesh, vec3_t(float) color);
+RENDERER_API function_signature(void, mesh3d_color_add_vec3, mesh3d_t* mesh, vec3_t color);
 RENDERER_API function_signature(void, mesh3d_color_set, mesh3d_t* mesh, index_t index, float x, float y, float z);
-RENDERER_API function_signature(void, mesh3d_color_set_vec3, mesh3d_t* mesh, index_t index, vec3_t(float)  color);
+RENDERER_API function_signature(void, mesh3d_color_set_vec3, mesh3d_t* mesh, index_t index, vec3_t  color);
 RENDERER_API function_signature(void, mesh3d_color_set_x, mesh3d_t* mesh, index_t index, float x);
 RENDERER_API function_signature(void, mesh3d_color_set_y, mesh3d_t* mesh, index_t index, float y); 
 RENDERER_API function_signature(void, mesh3d_color_set_z, mesh3d_t* mesh, index_t index, float z);
-RENDERER_API function_signature(vec3_t(float), mesh3d_color_get, mesh3d_t* mesh, index_t index);
-RENDERER_API function_signature(vec3_t(float)*, mesh3d_color_get_ptr, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3_t, mesh3d_color_get, mesh3d_t* mesh, index_t index);
+RENDERER_API function_signature(vec3_t*, mesh3d_color_get_ptr, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_color_get_x, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_color_get_y, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index);
@@ -310,10 +307,10 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_load, const char* file_path);
 RENDERER_API function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh);
 
 #define mesh3d_transform_set(...) define_alias_function_macro(mesh3d_transform_set, __VA_ARGS__)
-RENDERER_API function_signature(void, mesh3d_transform_set, mesh3d_t* mesh, mat4_t(float) transform);
+RENDERER_API function_signature(void, mesh3d_transform_set, mesh3d_t* mesh, mat4_t transform);
 
 #define mesh3d_transform_get(...) define_alias_function_macro(mesh3d_transform_get, __VA_ARGS__)
-RENDERER_API function_signature(mat4_t(float), mesh3d_transform_get, mesh3d_t* mesh);
+RENDERER_API function_signature(mat4_t, mesh3d_transform_get, mesh3d_t* mesh);
 
 #define mesh3d_positions_foreach(...) define_alias_function_macro(mesh3d_positions_foreach, __VA_ARGS__)
 #define mesh3d_normals_foreach(...) define_alias_function_macro(mesh3d_normals_foreach, __VA_ARGS__)
@@ -322,12 +319,12 @@ RENDERER_API function_signature(mat4_t(float), mesh3d_transform_get, mesh3d_t* m
 #define mesh3d_uvs_foreach(...) define_alias_function_macro(mesh3d_uvs_foreach, __VA_ARGS__)
 #define mesh3d_triangles_foreach(...) define_alias_function_macro(mesh3d_triangles_foreach, __VA_ARGS__)
 
-RENDERER_API function_signature(void, mesh3d_positions_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* position, void* user_data), void* user_data);
-RENDERER_API function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data);
-RENDERER_API function_signature(void, mesh3d_tangents_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* normal, void* user_data), void* user_data);
-RENDERER_API function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(float)* color, void* user_data), void* user_data);
-RENDERER_API function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (*visitor)(vec2_t(float)* uv, void* user_data), void* user_data);
-RENDERER_API function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t(index_t)* triangle, void* user_data), void* user_data);
+RENDERER_API function_signature(void, mesh3d_positions_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t* position, void* user_data), void* user_data);
+RENDERER_API function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t* normal, void* user_data), void* user_data);
+RENDERER_API function_signature(void, mesh3d_tangents_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t* normal, void* user_data), void* user_data);
+RENDERER_API function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t* color, void* user_data), void* user_data);
+RENDERER_API function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (*visitor)(vec2_t* uv, void* user_data), void* user_data);
+RENDERER_API function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, void (*visitor)(vec3uint_t* triangle, void* user_data), void* user_data);
 
 
 END_CPP_COMPATIBLE

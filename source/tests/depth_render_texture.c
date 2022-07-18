@@ -77,12 +77,12 @@ static void initialize(renderer_t* renderer, TEST_DATA(DEPTH_RENDER_TEXTURE)* da
 							camera_system_create_camera(data->camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_active(data->camera3, false);
 	camera_set_clear(data->camera3, COLOR_GREEN, 1.0f);
-	camera_set_position(data->camera3, vec3(float)(0, 0.6, -3.0f));
-	camera_set_rotation(data->camera3, vec3(float)(10 DEG, -90 DEG, 0));
+	camera_set_position(data->camera3, vec3(0, 0.6, -3.0f));
+	camera_set_rotation(data->camera3, vec3(10 DEG, -90 DEG, 0));
 
 	data->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
-	light_set_rotation(data->light, vec3(float)(10 DEG, -120 DEG, 0));
-	light_set_position(data->light, vec3(float)(1, 0.6f, -3.0f));
+	light_set_rotation(data->light, vec3(10 DEG, -120 DEG, 0));
+	light_set_position(data->light, vec3(1, 0.6f, -3.0f));
 
 	// create a render scene
 	data->scene = render_scene_create_from_preset(renderer, RENDER_SCENE_PRESET_TYPE_DEFAULT);
@@ -114,8 +114,8 @@ static void initialize(renderer_t* renderer, TEST_DATA(DEPTH_RENDER_TEXTURE)* da
 
 	material_set_texture(data->blueMaterial, "albedo", data->texture);
 	material_set_texture(data->greenMaterial, "albedo", data->texture);
-	material_set_vec4(data->blueMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
-	material_set_vec4(data->greenMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
+	material_set_vec4(data->blueMaterial, "parameters.color", vec4(1, 1, 1, 1));
+	material_set_vec4(data->greenMaterial, "parameters.color", vec4(1, 1, 1, 1));
 
 	data->skyboxObj = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_BACKGROUND));
 	render_object_set_material(data->skyboxObj, data->skyboxMaterial);
@@ -124,17 +124,17 @@ static void initialize(renderer_t* renderer, TEST_DATA(DEPTH_RENDER_TEXTURE)* da
 	data->obj2 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(data->obj2, data->greenMaterial);
 	render_object_attach(data->obj2, data->planeMesh);
-	render_object_set_transform(data->obj2, mat4_translation(float)(0, -0.5f, 0));
+	render_object_set_transform(data->obj2, mat4_translation(0, -0.5f, 0));
 
 	data->obj4 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(data->obj4, data->blueMaterial);
 	render_object_attach(data->obj4, data->mesh);
-	render_object_set_transform(data->obj4, mat4_mul(float)(2, mat4_scale(float)(0.5f, 0.5f, 0.5f), mat4_translation(float)(-0.8f, 0.1f, 1)));
+	render_object_set_transform(data->obj4, mat4_mul(2, mat4_scale(0.5f, 0.5f, 0.5f), mat4_translation(-0.8f, 0.1f, 1)));
 
 	data->obj1 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(data->obj1, data->blueMaterial);
 	render_object_attach(data->obj1, data->mesh);
-	render_object_set_transform(data->obj1, mat4_translation(float)(0, 0, 0));
+	render_object_set_transform(data->obj1, mat4_translation(0, 0, 0));
 
 	data->uiShaderH = shader_library_create_shader_from_preset(data->slib, SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI);
 	data->uiShaderH2 = shader_library_create_shader_from_preset(data->slib, SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2);
@@ -146,14 +146,14 @@ static void initialize(renderer_t* renderer, TEST_DATA(DEPTH_RENDER_TEXTURE)* da
 	data->obj5 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
 	render_object_set_material(data->obj5, data->uiMaterial);
 	render_object_attach(data->obj5, data->quadMesh);
-	render_object_set_transform(data->obj5, mat4_mul(float)(2, mat4_translation(float)(0, 0, -200), mat4_rotation(float)(0, 0, 90 DEG)));
-	material_set_vec4(data->uiMaterial, "parameters.color", vec4(float)(1, 1, 1, 1));
+	render_object_set_transform(data->obj5, mat4_mul(2, mat4_translation(0, 0, -200), mat4_rotation(0, 0, 90 DEG)));
+	material_set_vec4(data->uiMaterial, "parameters.color", vec4(1, 1, 1, 1));
 
 	data->obj6 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
 	render_object_set_material(data->obj6, data->uiMaterial2);
 	render_object_attach(data->obj6, data->quadMesh);
-	render_object_set_transform(data->obj6, mat4_mul(float)(2, mat4_translation(float)(0, 0, 200), mat4_rotation(float)(0, 0, 90 DEG)));
-	material_set_vec4(data->uiMaterial2, "parameters.color", vec4(float)(1, 1, 1, 1));
+	render_object_set_transform(data->obj6, mat4_mul(2, mat4_translation(0, 0, 200), mat4_rotation(0, 0, 90 DEG)));
+	material_set_vec4(data->uiMaterial2, "parameters.color", vec4(1, 1, 1, 1));
 
 
 	vulkan_texture_create_info_t create_info = 
@@ -236,7 +236,7 @@ static void update(renderer_t* renderer, float deltaTime, TEST_DATA(DEPTH_RENDER
 		data->camera_index++;
 	}
 	data->angle += deltaTime * data->speed;
-	render_object_set_transform(data->obj1, mat4_rotation(float)(0 DEG, data->angle DEG, 0 DEG));
+	render_object_set_transform(data->obj1, mat4_rotation(0 DEG, data->angle DEG, 0 DEG));
 }
 
 static void render(renderer_t* renderer, TEST_DATA(DEPTH_RENDER_TEXTURE)* data)

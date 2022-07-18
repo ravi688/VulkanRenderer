@@ -77,12 +77,8 @@
 
 #include <renderer/glyph_mesh_pool.h>
 
-#include <hpml/vec3/header_config.h>
-#include <hpml/vec3/vec3.h>
-#include <hpml/memory/header_config.h>
-#include <hpml/memory/memory.h>
-#include <hpml/mat4/header_config.h>
-#include <hpml/mat4/mat4.h>
+#include <hpml/vec3.h>
+#include <hpml/mat4.h>
 
 #include <bufferlib/buffer.h>
 
@@ -109,16 +105,16 @@ RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_st
 
 // setters
 RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* string);
-RENDERER_API void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) scale);
-RENDERER_API void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) position);
-RENDERER_API void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) rotation);
-RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t(float) transform);
+RENDERER_API void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t scale);
+RENDERER_API void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t position);
+RENDERER_API void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t rotation);
+RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t transform);
 
 // getters
 RENDERER_API const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
-RENDERER_API vec3_t(float) text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
-RENDERER_API vec3_t(float) text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
-RENDERER_API vec3_t(float) text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
-RENDERER_API mat4_t(float) text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API vec3_t text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API vec3_t text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API vec3_t text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+RENDERER_API mat4_t text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
 
 END_CPP_COMPATIBLE

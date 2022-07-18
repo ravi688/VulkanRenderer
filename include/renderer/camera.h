@@ -31,16 +31,9 @@
 #include <renderer/defines.h>
 #include <renderer/color.h>
 
-#include <hpml/vec3/header_config.h>
-#include <hpml/vec3/vec3.h>
-
-#include <hpml/vec2/header_config.h>
-#include <hpml/vec2/vec2.h>
-
-#include <hpml/memory/header_config.h>
-#include <hpml/memory/memory.h>
-#include <hpml/mat4/header_config.h>
-#include <hpml/mat4/mat4.h>
+#include <hpml/vec3.h>
+#include <hpml/vec2.h>
+#include <hpml/mat4.h>
 
 /* NOTE: should be in sync with vulkan_camera_projection_type_t */
 typedef enum camera_projection_type_t
@@ -76,21 +69,21 @@ RENDERER_API void camera_render(camera_t* camera, render_scene_t* scene, u64 que
 RENDERER_API void camera_render_to_texture(camera_t* camera, render_scene_t* scene, texture_t* texture);
 
 /* getters */
-RENDERER_API mat4_t(float) camera_get_view(camera_t* camera);
-RENDERER_API mat4_t(float) camera_get_transform(camera_t* camera);
-RENDERER_API mat4_t(float) camera_get_projection(camera_t* camera);
-RENDERER_API vec3_t(float) camera_get_position(camera_t* camera);
-RENDERER_API vec3_t(float) camera_get_rotation(camera_t* camera);
-RENDERER_API vec2_t(float) camera_get_clip_planes(camera_t* camera);
+RENDERER_API mat4_t camera_get_view(camera_t* camera);
+RENDERER_API mat4_t camera_get_transform(camera_t* camera);
+RENDERER_API mat4_t camera_get_projection(camera_t* camera);
+RENDERER_API vec3_t camera_get_position(camera_t* camera);
+RENDERER_API vec3_t camera_get_rotation(camera_t* camera);
+RENDERER_API vec2_t camera_get_clip_planes(camera_t* camera);
 RENDERER_API float camera_get_near_clip_plane(camera_t* camera);
 RENDERER_API float camera_get_far_clip_plane(camera_t* camera);
 RENDERER_API float camera_get_field_of_view(camera_t* camera);
 RENDERER_API float camera_get_height(camera_t* camera);
 
 /* setters */
-RENDERER_API void camera_set_transform(camera_t* camera, mat4_t(float) transform);
-RENDERER_API void camera_set_position(camera_t* camera, vec3_t(float) position);
-RENDERER_API void camera_set_rotation(camera_t* camera, vec3_t(float) rotation);
+RENDERER_API void camera_set_transform(camera_t* camera, mat4_t transform);
+RENDERER_API void camera_set_position(camera_t* camera, vec3_t position);
+RENDERER_API void camera_set_rotation(camera_t* camera, vec3_t rotation);
 RENDERER_API void camera_set_clip_planes(camera_t* camera, float near_clip_plane, float far_clip_plane);
 RENDERER_API void camera_set_field_of_view(camera_t* camera, float fov);
 RENDERER_API void camera_set_height(camera_t* camera, float height);

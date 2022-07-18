@@ -38,10 +38,7 @@
 	typedef metal_material_t material_t;
 #endif
 
-#include <hpml/memory/header_config.h>
-#include <hpml/memory/memory.h>
-#include <hpml/mat4/header_config.h>
-#include <hpml/mat4/mat4.h>
+#include <hpml/mat4.h>
 
 // NOTE: this should be in sync with vulkan_render_object_type_t
 typedef enum render_object_type_t
@@ -76,8 +73,8 @@ RENDERER_API void render_object_attach(render_object_t* object, void* user_data)
 RENDERER_API void render_object_draw(render_object_t* object);
 RENDERER_API void render_object_set_material(render_object_t* object, material_t* material);
 RENDERER_API material_t* render_object_get_material(render_object_t* object);
-RENDERER_API void render_object_set_transform(render_object_t* obj, mat4_t(float) transform);
-RENDERER_API mat4_t(float) render_object_get_transform(render_object_t* obj);
-RENDERER_API mat4_t(float) render_object_get_normal(render_object_t* obj);
+RENDERER_API void render_object_set_transform(render_object_t* obj, mat4_t transform);
+RENDERER_API mat4_t render_object_get_transform(render_object_t* obj);
+RENDERER_API mat4_t render_object_get_normal(render_object_t* obj);
 
 END_CPP_COMPATIBLE

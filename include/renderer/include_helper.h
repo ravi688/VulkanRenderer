@@ -89,30 +89,23 @@
 #endif
 
 #ifdef RENDERER_INCLUDE_VEC4
-#	include <hpml/vec4/header_config.h>
-#	include <hpml/vec4/vec4.h>
+#	include <hpml/vec4.h>
 #endif
 
 #ifdef RENDERER_INCLUDE_MAT4
-#	include <hpml/memory/header_config.h>
-#	include <hpml/memory/memory.h>
-#	include <hpml/mat4/header_config.h>
-#	include <hpml/mat4/mat4.h>
+#	include <hpml/mat4.h>
 #endif
 
 #ifdef RENDERER_INCLUDE_AFFINE_TRANSFORMATION
-#	include <hpml/affine_transformation/header_config.h>
-#	include <hpml/affine_transformation/affine_transformation.h>
+#	include <hpml/affine_transformation.h>
 #endif
 
 #ifdef RENDERER_INCLUDE_VEC3
-#	include <hpml/vec3/header_config.h>
-#	include <hpml/vec3/vec3.h>
+#	include <hpml/vec3.h>
 #endif
 
 #ifdef RENDERER_INCLUDE_VEC2
-#	include <hpml/vec2/header_config.h>
-#	include <hpml/vec2/vec2.h>
+#	include <hpml/vec2.h>
 #endif
 
 #ifdef RENDERER_INCLUDE_LOW_LEVEL

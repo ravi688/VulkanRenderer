@@ -11,12 +11,9 @@
 #include <string.h>												// strlen
 #include <ctype.h> 												// isspace
 
-#include <hpml/vec3/header_config.h>
-#include <hpml/vec3/vec3.h>
-#include <hpml/vec4/header_config.h>							// dependency to affine_transformation
-#include <hpml/vec4/vec4.h>
-#include <hpml/affine_transformation/header_config.h> 			// mat4_translation
-#include <hpml/affine_transformation/affine_transformation.h>
+#include <hpml/vec3.h>
+#include <hpml/vec4.h>
+#include <hpml/affine_transformation.h>
 
 #ifndef GLOBAL_DEBUG
 #	define check_pre_condition(text_mesh)
@@ -29,9 +26,9 @@ typedef struct text_mesh_string_t
 	buf_ucount_t next_index;												// 	index of the next string in the buffer
 	dictionary_t/*(u16, sub_buffer_handle_t)*/ glyph_sub_buffer_handles;	//	dictionary of sub_buffer handles in the multi_buffer of glyphs
 	BUFFER str; 															//	buffer of characters to store the supplied string
-	vec3_t(float) position;													//	position
-	vec3_t(float) rotation;													//	euler rotation
-	vec3_t(float) scale;													//	scale
+	vec3_t position;													//	position
+	vec3_t rotation;													//	euler rotation
+	vec3_t scale;													//	scale
 } text_mesh_string_t;
 
 typedef struct text_mesh_t
@@ -142,9 +139,9 @@ RENDERER_API text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text
 		string = buf_peek_ptr(strings);
 		string->glyph_sub_buffer_handles = dictionary_create(u16, buf_ucount_t, 0, dictionary_key_comparer_u16);
 		string->str = buf_create(sizeof(char), 0, 0);
-		string->position = vec3_zero(float)();
-		string->rotation = vec3_zero(float)();
-		string->scale = vec3(float)(1, 1, 1);
+		string->position = vec3_zero();
+		string->rotation = vec3_zero();
+		string->scale = vec3(1, 1, 1);
 
 		// add in inuse list
 		string->next_index = text_mesh->inuse_list;
@@ -171,9 +168,9 @@ RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_st
 	// reset the string for re-use later
 	dictionary_clear(&string->glyph_sub_buffer_handles);
 	buf_clear(&string->str, NULL);
-	string->position = vec3_zero(float)();
-	string->rotation = vec3_zero(float)();
-	string->scale = vec3(float)(1, 1, 1);
+	string->position = vec3_zero();
+	string->rotation = vec3_zero();
+	string->scale = vec3(1, 1, 1);
 
 	// remove from inuse list
 	if(prev_string != NULL)
@@ -219,8 +216,8 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
 		vulkan_instance_buffer_t* instance_buffer = get_instance_buffer(text_mesh->renderer, instance_buffers, ch);
 		multi_buffer_t* buffer = &instance_buffer->host_buffer;
 		sub_buffer_handle_t handle = get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch);
-		vec3_t(float) offset = { 0, 0, horizontal_pen};
-		offset = vec3_add(float)(2, offset, string->position);
+		vec3_t offset = { 0, 0, horizontal_pen};
+		offset = vec3_add(2, offset, string->position);
 		char bytes[36];
 		memcpy(bytes, &offset, 12);
 		memcpy(bytes + 12, &string->scale, 12);
@@ -230,28 +227,28 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
 	}
 }
 
-RENDERER_API void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) scale)
+RENDERER_API void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t scale)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	string->scale = scale;
 }
 
-RENDERER_API void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) position)
+RENDERER_API void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t position)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	string->position = position;
 }
 
-RENDERER_API void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t(float) rotation)
+RENDERER_API void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t rotation)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	string->rotation = rotation;
 }
 
-RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t(float) transform)
+RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t transform)
 {
 	check_pre_condition(text_mesh);
 }
@@ -262,28 +259,28 @@ RENDERER_API const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh
 	check_pre_condition(text_mesh);
 	return NULL;
 }
-RENDERER_API vec3_t(float) text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API vec3_t text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	return string->scale;
 }
-RENDERER_API vec3_t(float) text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API vec3_t text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	return string->position;
 }
-RENDERER_API vec3_t(float) text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API vec3_t text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	return string->rotation;
 }
-RENDERER_API mat4_t(float) text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
+RENDERER_API mat4_t text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
 	check_pre_condition(text_mesh);
-	return mat4_identity(float)();
+	return mat4_identity();
 }
 
 
