@@ -214,6 +214,8 @@ There are only C and C++ interface headers for now.
 3. Fixed Function pipeline configuration for each pass
 
 
+## Documentation
+The full documentation will be available very soon, however, for now you can have a look at the [Wiki](https://github.com/ravi688/VulkanRenderer/wiki).
 
 ## Screenshots and video clips
 
