@@ -19,8 +19,9 @@ jobs:
     - name: Version Control System Test
       run: git --version
     - name: Git setup
-      run:  git config --global user.email "rp0412204@gmail.com"
-            git config --global user.name "ravi688"
+      run: |
+          git config --global user.email "rp0412204@gmail.com" 
+          git config --global user.name "ravi688"
     - name: Setup Git submodules
       run: mingw32-make -s setup
     - name: Update Git submodules
