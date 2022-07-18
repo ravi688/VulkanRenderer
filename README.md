@@ -16,25 +16,42 @@ Supported languages are C and C++ only for now.
 5. AMD Vega 8 Graphics 512 MB (VRAM) Integrated Mobile GPU  + 12 GB of Main Memory (RAM)
 
 ### Requirements for building
+1. **[Msys2](https://www.msys2.org/)**
 
 1. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
    
    ```
    gcc --version
    ```
-   and
+   OR
    ```
    g++ --version
+   ```
+   If this isn't already installed, run the following in MSYS2 MinGW shell
+   ```
+   pacman -S gcc
    ```
 2. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
    
    ```
-   mingw32-make --version
+   make --version
    ```
-3. **Git 2.33.1.windows.1**, git must be installed in your machine, you can check if it is already installed by running <br>
+   If this isn't already installed, run the following in MSYS2 MinGW shell
+   ```
+   pacman -S make
+   ```
+3. **Git version 2.35.1**, git must be installed in your machine, you can check if it is already installed by running <br>
    
    ```
    git --version
+   ```
+   If this isn't already installed, run the following in MSYS2 MinGW shell
+   ```
+   pacman -S git
+   ```
+4. **glslc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
+   ```
+   pacman -S mingw-w64-x86_64-shaderc
    ```
 
 ### Runtime requirements
@@ -56,47 +73,29 @@ Supported languages are C and C++ only for now.
    
    ```
    cd VulkanRenderer
-   mingw32-make -s setup
+   make -s setup
+   make -s update
    ```
 3. Start building by running the following command
    
    ```
-   mingw32-make -s build
+   make -s build
+   ```
+   OR
+   ```
+   make -s build-debug
    ```
    For release mode
    ```
-   mingw32-make -s build-release
+   make -s build-release
    ```
-
-### Building Showcase (C++)
-1. Change the working directory to `VulkanRenderer/showcase` and build it by running the following commands
-
-   ```
-   cd showcase
-   mingw32-make -s build-debug
-   ```
-
-### Building shaders manually (Optional)
-
-1. Change the working directory to `VulkanRenderer/shader_compiler` and build the `shader_compiler.exe` executable by running the following command
    
-   ```
-   cd shader_compiler
-   mingw32-make -s debug
-   ```
-2. Change the working directory back to `VulkanRenderer` and build the shaders `.glsl to .sb` by running the following command
-   
-   ```
-   cd ..\VulkanRenderer
-   mingw32-make -s shader
-   ```
-
 ### Building executable manually (Optional)
 
 1. Change the working directory to `VulkanRenderer` and build the `main.exe` executable by running the following command
    
    ```
-   mingw32-make -s debug
+   make -s debug
    ```
 2. Now run the `main.exe` executable by running the following command
    
@@ -104,26 +103,18 @@ Supported languages are C and C++ only for now.
    main.exe
    ```
 
-### Cleaning shaders (Optional)
-
-1. Change the working directory to `VulkanRenderer` and clean the shaders `.sb files` by running the folliwng command
-   
-   ```
-   mingw32-make -i -s shader-clean
-   ```
-
-### Cleaning everything else (Optional)
+### Cleaning everything  (Optional)
 
 1. Change the working directory to `VulkanRenderer` and run the following command
    
    ```
-   mingw32-make -i -s clean
+   make -s clean
    ```
 
 ### Where to go for examples?
 
 #### For C language
-You can check `VulkanRenderer/resource/shaders` and `VulkanRenderer/source/main.c` directory for now.
+You can check `VulkanRenderer/shaders` and `VulkanRenderer/source/tests` directory for now.
 
 #### For C++ language
 You can check `VulkanRenderer/showcase/resource/shaders` and `VulkanRenderer/showcase/main.cpp` directory for now.
