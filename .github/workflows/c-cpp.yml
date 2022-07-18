@@ -16,8 +16,10 @@ jobs:
       run: gcc --version
     - name: Build System Test
       run: mingw32-make --version
-    - name: Setup & Updating Git submodules
-      run: mingw32-make -s setup & mingw32-make -s update
+    - name: Setup Git submodules
+      run: mingw32-make -s setup
+    - name: Update Git submodules
+      run: mingw32-make -s update
     - name: build-debug
       run: mingw32-make -s build
     - name: cleaning
