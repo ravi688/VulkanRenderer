@@ -262,3 +262,5 @@ The full documentation will be available very soon, however, for now you can hav
 ## About Me
 
 #### [LinkedIn](https://www.linkedin.com/in/ravi-prakash-095a271a8/)
+#### [Github](https://github.com/ravi688)
+#### [Medium](https://medium.com/@rp0412204)
