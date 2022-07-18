@@ -133,8 +133,6 @@ There are only C and C++ interface headers for now.
    make -s clean
    ```
 
-### Where to go for examples?
-
 ## Features
 
 ### Multipass Rendering
