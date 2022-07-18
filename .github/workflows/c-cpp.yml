@@ -17,7 +17,7 @@ jobs:
     - name: Build System Test
       run: mingw32-make --version
     - name: Setup & Updating Git submodules
-      run: mingw32-make -s setup
+      run: mingw32-make -s setup & mingw32-make -s update
     - name: build-debug
       run: mingw32-make -s build
     - name: cleaning
