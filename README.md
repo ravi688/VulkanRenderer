@@ -1,6 +1,6 @@
 ![](VulkanRendererLogo.png)
 
-[![Windows Build](https://github.com/ravi688/VulkanRenderer/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/ravi688/VulkanRenderer/actions/workflows/c-cpp.yml)
+[![Windows](https://github.com/ravi688/VulkanRenderer/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/ravi688/VulkanRenderer/actions/workflows/c-cpp.yml)
 
 ## Summary
 
@@ -645,6 +645,16 @@ gameUI.drop();
 ```
 
 ## Screenshots and video clips
+
+#### Point Lights
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/V7vfsykNBPY/0.jpg)](https://www.youtube.com/watch?v=V7vfsykNBPY)
+
+#### Spot Lights
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/I390_yvlLE8/0.jpg)](https://www.youtube.com/watch?v=I390_yvlLE8)
+
+#### Render Textures
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/Ti5y9OSK6Ow/0.jpg)](https://www.youtube.com/watch?v=Ti5y9OSK6Ow)
+
 #### Skybox Rendering
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/f3wqkk3p7MA/0.jpg)](https://www.youtube.com/watch?v=f3wqkk3p7MA)
 
