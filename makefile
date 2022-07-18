@@ -102,16 +102,16 @@ update:
 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace pull origin main
 	git -C ./dependencies/MeshLib/dependencies/DiskManager pull origin main
 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem pull origin main
-	git -C ./dependencies/ECS push
-	git -C ./dependencies/HPML push
-	git -C ./dependencies/MeshLib push
-	git	-C ./dependencies/SafeMemory push
-	git -C ./dependencies/TemplateSystem push
-	git -C ./dependencies/ttf2mesh push
-	git -C ./shared-dependencies/BufferLib push
-	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace push
-	git -C ./dependencies/MeshLib/dependencies/DiskManager push
-	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem push
+# 	git -C ./dependencies/ECS push
+# 	git -C ./dependencies/HPML push
+# 	git -C ./dependencies/MeshLib push
+# 	git	-C ./dependencies/SafeMemory push
+# 	git -C ./dependencies/TemplateSystem push
+# 	git -C ./dependencies/ttf2mesh push
+# 	git -C ./shared-dependencies/BufferLib push
+# 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace push
+# 	git -C ./dependencies/MeshLib/dependencies/DiskManager push
+# 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem push
 #-------------------------------------------
 
 RM := rm -f
