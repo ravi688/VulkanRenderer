@@ -117,11 +117,11 @@ RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass
 
 
 /* getters */
-static RENDERER_API FORCE_INLINE bool vulkan_camera_is_offscreen(vulkan_camera_t* camera)
+static FORCE_INLINE bool vulkan_camera_is_offscreen(vulkan_camera_t* camera)
 {
 	return (camera->color_render_target != NULL) || (camera->depth_render_target != NULL);
 }
-static RENDERER_API FORCE_INLINE bool vulkan_camera_is_active(vulkan_camera_t* camera)
+static FORCE_INLINE bool vulkan_camera_is_active(vulkan_camera_t* camera)
 {
 	return camera->is_active;
 }
@@ -131,13 +131,13 @@ RENDERER_API mat4_t vulkan_camera_get_projection(vulkan_camera_t* camera);
 RENDERER_API vec3_t vulkan_camera_get_position(vulkan_camera_t* camera);
 RENDERER_API vec3_t vulkan_camera_get_rotation(vulkan_camera_t* camera);
 RENDERER_API vec2_t vulkan_camera_get_clip_planes(vulkan_camera_t* camera);
-static RENDERER_API FORCE_INLINE float vulkan_camera_get_near_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_get_clip_planes(camera).x; }
-static RENDERER_API FORCE_INLINE float vulkan_camera_get_far_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_get_clip_planes(camera).y; }
+static FORCE_INLINE float vulkan_camera_get_near_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_get_clip_planes(camera).x; }
+static FORCE_INLINE float vulkan_camera_get_far_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_get_clip_planes(camera).y; }
 RENDERER_API float vulkan_camera_get_field_of_view(vulkan_camera_t* camera);
-static RENDERER_API FORCE_INLINE float vulkan_camera_get_height(vulkan_camera_t* camera) { return vulkan_camera_get_field_of_view(camera); }
+static FORCE_INLINE float vulkan_camera_get_height(vulkan_camera_t* camera) { return vulkan_camera_get_field_of_view(camera); }
 
 /* setters */
-static RENDERER_API FORCE_INLINE void vulkan_camera_set_active(vulkan_camera_t* camera, bool is_active)
+static FORCE_INLINE void vulkan_camera_set_active(vulkan_camera_t* camera, bool is_active)
 {
 	camera->is_active = is_active;
 }
@@ -147,6 +147,6 @@ RENDERER_API void vulkan_camera_set_position(vulkan_camera_t* camera, vec3_t pos
 RENDERER_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t rotation);
 RENDERER_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane);
 RENDERER_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float fov);
-static RENDERER_API FORCE_INLINE void vulkan_camera_set_height(vulkan_camera_t* camera, float height) { vulkan_camera_set_field_of_view(camera, height); }
+static FORCE_INLINE void vulkan_camera_set_height(vulkan_camera_t* camera, float height) { vulkan_camera_set_field_of_view(camera, height); }
 
 END_CPP_COMPATIBLE

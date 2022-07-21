@@ -28,11 +28,11 @@ RENDERER_API void library_destroy(library_t* lib);
 RENDERER_API void library_release_resources(library_t* lib);
 
 /* getters */
-static RENDERER_API FORCE_INLINE u32 library_get_count(library_t* lib) 
+static FORCE_INLINE u32 library_get_count(library_t* lib) 
 {
 	return buf_get_element_count(&lib->slots);
 }
-static RENDERER_API FORCE_INLINE void* library_get_at(library_t* lib, buf_ucount_t index)
+static FORCE_INLINE void* library_get_at(library_t* lib, buf_ucount_t index)
 {
 	return CAST_TO(library_slot_t*, buf_get_ptr_at(&lib->slots, index))->object;
 }

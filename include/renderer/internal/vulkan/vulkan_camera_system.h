@@ -22,11 +22,11 @@ RENDERER_API void vulkan_camera_system_destroy(vulkan_camera_system_t* system);
 RENDERER_API void vulkan_camera_system_release_resources(vulkan_camera_system_t* system);
 
 /* getters */
-static RENDERER_API FORCE_INLINE u32 vulkan_camera_system_get_count(vulkan_camera_system_t* system) 
+static FORCE_INLINE u32 vulkan_camera_system_get_count(vulkan_camera_system_t* system) 
 {
 	return library_get_count(&system->lib);
 }
-static RENDERER_API FORCE_INLINE vulkan_camera_t* vulkan_camera_system_get_at(vulkan_camera_system_t* system, buf_ucount_t index)
+static FORCE_INLINE vulkan_camera_t* vulkan_camera_system_get_at(vulkan_camera_system_t* system, buf_ucount_t index)
 {
 	return library_get_at(&system->lib, index);
 }
