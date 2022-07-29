@@ -20,8 +20,8 @@ DYNAMIC_LIB_NAME = shader_compiler.dll
 EXECUTABLE_NAME = shader_compiler
 EXTERNAL_INCLUDES = -Iinclude/shader_compiler
 EXTERNAL_LIBS = -L./external-dependency-libs -lshaderc_shared
-DEPENDENCIES = ../../.. ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
-DEPENDENCY_LIBS = ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCIES = ../../.. ../../../dependencies/PhyMacParser ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
+DEPENDENCY_LIBS = ../../../dependencies/PhyMacParser/lib/ppsr.a ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = 
 SHARED_DEPENDENCY_LIBS = 
@@ -232,6 +232,7 @@ bin-clean:
 	$(RM) $(TARGET_DYNAMIC_IMPORT_LIB)
 	$(RM_DIR) $(TARGET_LIB_DIR)
 	@echo [Log] Binaries cleaned successfully!
+	$(MAKE) --directory=./dependencies/../../../dependencies/PhyMacParser clean
 	$(MAKE) --directory=./dependencies/../../../dependencies/MeshLib/dependencies/DiskManager clean
 	$(MAKE) --directory=./dependencies/../../../shared-dependencies/BufferLib clean
 	$(MAKE) --directory=./dependencies/../../../dependencies/SafeMemory/shared-dependencies/CallTrace clean

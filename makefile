@@ -88,6 +88,7 @@ setup:
 	git -C ./dependencies/SafeMemory submodule update --init dependencies/TemplateSystem
 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace checkout main
 	git -C ./dependencies/MeshLib/dependencies/DiskManager checkout VulkanRenderer/Meshlib/main
+	git -C ./dependencies/PhyMacParser checkout VulkanRenderer/main
 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem checkout main
 	@echo [Log] Setup successfully!
 
@@ -101,6 +102,7 @@ update:
 	git -C ./shared-dependencies/BufferLib pull origin main
 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace pull origin main
 	git -C ./dependencies/MeshLib/dependencies/DiskManager pull origin main
+	git -C ./dependencies/PhyMacParser pull origin main
 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem pull origin main
 # 	git -C ./dependencies/ECS push
 # 	git -C ./dependencies/HPML push
