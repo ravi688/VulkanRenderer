@@ -17,11 +17,11 @@
 PROJECT_NAME = ShaderCompiler
 STATIC_LIB_NAME = shader_compiler.a
 DYNAMIC_LIB_NAME = shader_compiler.dll
-EXECUTABLE_NAME = main
-EXTERNAL_INCLUDES = 
+EXECUTABLE_NAME = shader_compiler
+EXTERNAL_INCLUDES = -Iinclude/shader_compiler
 EXTERNAL_LIBS = -L./external-dependency-libs -lshaderc_shared
-DEPENDENCIES = ../.. ../../dependencies/MeshLib/dependencies/DiskManager ../../shared-dependencies/BufferLib ../../dependencies/SafeMemory/shared-dependencies/CallTrace
-DEPENDENCY_LIBS = ../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../shared-dependencies/BufferLib/lib/bufferlib.a ../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCIES = ../../.. ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
+DEPENDENCY_LIBS = ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = 
 SHARED_DEPENDENCY_LIBS = 
@@ -215,10 +215,10 @@ $(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPEN
 
 $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) source/main.o
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(COMPILER_FLAGS) source/main.o $(LIBS) \
+	$(COMPILER) $(COMPILER_FLAGS) source/main.o \
 	$(addprefix -L, $(dir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
-	-o $@
+	$(LIBS) -o  $@
 	@echo [Log] $(PROJECT_NAME) built successfully!
 
 RM := rm -f
@@ -232,9 +232,9 @@ bin-clean:
 	$(RM) $(TARGET_DYNAMIC_IMPORT_LIB)
 	$(RM_DIR) $(TARGET_LIB_DIR)
 	@echo [Log] Binaries cleaned successfully!
-	$(MAKE) --directory=./dependencies/../../dependencies/MeshLib/dependencies/DiskManager clean
-	$(MAKE) --directory=./dependencies/../../shared-dependencies/BufferLib clean
-	$(MAKE) --directory=./dependencies/../../dependencies/SafeMemory/shared-dependencies/CallTrace clean
+	$(MAKE) --directory=./dependencies/../../../dependencies/MeshLib/dependencies/DiskManager clean
+	$(MAKE) --directory=./dependencies/../../../shared-dependencies/BufferLib clean
+	$(MAKE) --directory=./dependencies/../../../dependencies/SafeMemory/shared-dependencies/CallTrace clean
 
 #-------------------------------------------
 
