@@ -9,8 +9,8 @@
 	5. Muliple render passes (shadow mapping) [ done ]
 	6. Multiple sub passes (greyscale) [ done ]
 	7. Shadow mapping improvement [ done ]
-	8. Lights [ in - progress ]
-	9. Multiple light system
+	8. Lights [ done ]
+	9. Multiple light system [ in-progress ]
 	10. Deferred rendering & forward rendering
 	11. Camera and Light as a Render Object in the scene
 	12. Depth texture sharing across multiple render passes

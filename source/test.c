@@ -9,6 +9,7 @@
 #include <renderer/tests/depth_cube_render_texture.h>
 #include <renderer/tests/point_light_shadows.h>
 #include <renderer/tests/spot_light.h>
+#include <renderer/tests/shader_example.h>
 
 RENDERER_API test_t* test_new()
 {
@@ -28,6 +29,7 @@ RENDERER_API test_t* test_create(const char* name)
 	ELSE_IF(DEPTH_CUBE_RENDER_TEXTURE);
 	ELSE_IF(POINT_LIGHT_SHADOWS);
 	ELSE_IF(SPOT_LIGHT);
+	ELSE_IF(SHADER_EXAMPLE);
 	else LOG_FETAL_ERR("Unrecognized test: %s\n", name);
 	return test;
 }
