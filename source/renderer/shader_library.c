@@ -686,7 +686,12 @@ RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* libr
 
 RENDERER_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path)
 {
-	return vulkan_shader_library_load_shader(library, file_path);
+	vulkan_shader_load_info_t load_info = 
+	{
+		.path = file_path,
+		.is_vertex_attrib_from_file = true
+	};
+	return vulkan_shader_library_load_shader(library, &load_info, "Untitled");
 }
 
 RENDERER_API bool shader_library_destroy_shader(shader_library_t* library, const char* shader_name)
