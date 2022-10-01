@@ -9,7 +9,7 @@
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
 
-#include <conio.h>
+#include <renderer/conio.h>
 
 TEST_DATA(DEPTH_RENDER_TEXTURE)
 {
