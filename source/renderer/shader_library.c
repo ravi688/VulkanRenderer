@@ -1,7 +1,6 @@
 #include <renderer/shader_library.h>
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_shader_library.h>
-#include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
@@ -718,10 +717,10 @@ RENDERER_API const char* shader_library_get_nameH(shader_library_t* library, sha
 
 RENDERER_API shader_t* shader_library_getH(shader_library_t* library, shader_handle_t handle)
 {
-	return vulkan_shader_library_getH(library, handle);
+	return CAST_TO(shader_t*, vulkan_shader_library_getH(library, handle));
 }
 
 RENDERER_API shader_t* shader_library_get(shader_library_t* library, const char* shader_name)
 {
-	return vulkan_shader_library_get(library, shader_name);
+	return CAST_TO(shader_t*, vulkan_shader_library_get(library, shader_name));
 }
