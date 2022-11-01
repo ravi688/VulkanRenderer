@@ -1001,18 +1001,37 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	return shader;
 }
 
-static vulkan_shader_create_info_t* deserialize_shader_create_info(void* bytes, u32 length)
+static vulkan_shader_create_info_t* deserialize_shader_create_info(const void* bytes, u32 length)
 {
 	vulkan_shader_create_info_t* create_info = heap_new(vulkan_shader_create_info_t);
+
+	
 	// TODO:
 	return create_info;
 }
 
+/* see the v3d shader binary specification for vulkan_shader_version_t enumeration */
+typedef enum vulkan_shader_version_t
+{
+		VULKAN_SHADER_VERSION_2021 = 0,
+		VULKAN_SHADER_VERSION_2022,
+		VULKAN_SHADER_VERSION_2023,
+		VULKAN_SHADER_VERSION_MAX
+} vulkan_shader_version_t;
+
 RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* load_info)
 {
-	BUFFER* buffer = load_binary_from_file(load_info->path);
-	vulkan_shader_create_info_t* create_info = deserialize_shader_create_info(buffer->bytes, buffer->element_count);
-	buf_free(buffer);
+	vulkan_shader_create_info_t* create_info = NULL;
+	if((load_info->data != NULL) && (load_info->data_size != 0))
+		create_info = deserialize_shader_create_info(load_info->data, load_info->data_size);
+	else if(load_info->path != NULL)
+	{
+		BUFFER* buffer = load_binary_from_file(load_info->path);
+		create_info = deserialize_shader_create_info(buffer->bytes, buffer->element_count);
+		buf_free(buffer);
+	}
+	else 
+		LOG_FETAL_ERR("Unable to get the shader file data neither by a memory pointer nor by a file path\n");
 	return vulkan_shader_create(renderer, create_info);
 }
 

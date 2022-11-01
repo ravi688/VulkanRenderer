@@ -5,11 +5,14 @@
 
 RENDERER_API shader_t* shader_create(renderer_t* renderer, shader_create_info_t* create_info)
 {
-	return CAST_TO(shader_t*, vulkan_shader_create(renderer->vulkan_handle, create_info));
+	return CAST_TO(shader_t*, vulkan_shader_create(renderer->vulkan_handle, CAST_TO(vulkan_shader_create_info_t*, create_info)));
 }
 
 RENDERER_API shader_t* shader_load(renderer_t* renderer, const char* file_path)
 {
+	// TODO: there might be a possibility to check for the compatible shaders across the APIs,
+	// for example a shader compiled for vulkan might not be compatible for opengl or directx.
+	// but for now lets go with vulkan only.
 	vulkan_shader_load_info_t load_info =
 	{
 		.path = file_path,
