@@ -7,7 +7,6 @@
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
-#include <shader_compiler/compiler.h>
 
 RENDERER_API vulkan_material_t* vulkan_material_new()
 {

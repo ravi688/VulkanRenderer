@@ -16,11 +16,13 @@
 typedef struct binary_reader_t
 {
 	/* cursor position (in bytse) */
-	u32 cursor_pos;
+	u32 read_cursor;
 	/* pointer to contiguous bytes */
 	const u8* data;
 	/* size of the data (in bytes) */
 	u32 size;
+	/* stack for holding states */
+	BUFFER state_stack;
 } binary_reader_t;
 
 
@@ -59,11 +61,20 @@ RENDERER_API f64 binary_reader_f64(binary_reader_t* reader);
 /* reads and returns ptr to a null terminated string */
 RENDERER_API const char* binary_reader_str(binary_reader_t* reader);
 /* returns pointer to the current read position */
-RENDERER_API void* binary_reader_ptr(binary_reader_t* reader);
+RENDERER_API const void* binary_reader_ptr(binary_reader_t* reader);
+/* returns pointer index-th (zero based) byte */
+RENDERER_API const void* binary_reader_at(binary_reader_t* reader, u32 index);
+/* returns pointer to the current read position and moves the read position by the read size */
+#define binary_reader_read(reader, type) (type*)__binary_reader_read(reader, sizeof(type))
+RENDERER_API const void* __binary_reader_read(binary_reader_t* reader, u32 size);
 
 /* resets the internal read cursor to its initial position, which is 0*/
 RENDERER_API void binary_reader_reset(binary_reader_t* reader);
 /* sets the internal read cursor to 'pos' */
-RENDERER_API void binary_reader_set(binary_reader_t* reader, u32 pos);
+RENDERER_API void binary_reader_jump(binary_reader_t* reader, u32 pos);
+/* pushes the state of the reader on top of the state stack */
+RENDERER_API void binary_reader_push(binary_reader_t* reader);
+/* pops out the state on top of the stack and applies it to the reader */
+RENDERER_API void binary_reader_pop(binary_reader_t* reader);
 
 END_CPP_COMPATIBLE

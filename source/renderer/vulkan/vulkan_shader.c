@@ -10,10 +10,16 @@
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_description.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
+#include <renderer/internal/vulkan/vulkan_shader_loader.h>
 #include <disk_manager/file_reader.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/binary_reader.h>
+#include <renderer/dictionary.h>
+
+#include <string.h> 			// for strlen()
+#include <math.h> 				// for log2(), and ceil()
 
 RENDERER_API vulkan_shader_t* vulkan_shader_new()
 {
@@ -22,102 +28,27 @@ RENDERER_API vulkan_shader_t* vulkan_shader_new()
 	return shader;
 }
 
-static void get_vulkan_constants(VkFormat* out_formats, u32* out_indices)
+static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(u64 packed, u16 location_offset, VkVertexInputRate input_rate)
 {
-	{
-		u32 indices[22 + 1] =
-		{	0,
-			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-			13, 14, 17, 21, 22, 23, 24, 25, 26
-		};
-		memcpy(&out_indices[0], indices, sizeof(u32) * 23);
-	};
-	VkFormat vulkan_formats[27] =
-	{
-		//U8
-		VK_FORMAT_R8_UINT,
-		//U16
-		VK_FORMAT_R16_UINT,
-		//U32
-		VK_FORMAT_R32_UINT,
-		//U64
-		VK_FORMAT_R64_UINT,
-		//S8
-		VK_FORMAT_R8_SINT,
-		//S16
-		VK_FORMAT_R16_SINT,
-		//S32
-		VK_FORMAT_R32_SINT,
-		//S64
-		VK_FORMAT_R64_SINT,
-		//F32
-		VK_FORMAT_R32_SFLOAT,
-		//F64
-		VK_FORMAT_R64_SFLOAT,
-		//VEC2
-		VK_FORMAT_R32G32_SFLOAT,
-		//VEC3
-		VK_FORMAT_R32G32B32_SFLOAT,
-		//VEC4
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		//MAT2
-		VK_FORMAT_R32G32B32A32_SFLOAT,
+	u32 bits_per_type = ceil(log2((double)GLSL_TYPE_MAX_NON_OPAQUE));
+	assert(((2UL << bits_per_type) >= GLSL_TYPE_MAX_NON_OPAQUE));
 
-		//MAT3
-		VK_FORMAT_R32G32B32_SFLOAT,
-		VK_FORMAT_R32G32B32_SFLOAT,
-		VK_FORMAT_R32G32B32_SFLOAT,
+	u64 bits_mask = BIT_MASK32(bits_per_type);
 
-		//MAT4
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		VK_FORMAT_R32G32B32A32_SFLOAT,
+	BUFFER formats = buf_new(VkFormat), offsets = buf_new(u32), locations = buf_new(u16);
 
-		//IVEC2
-		VK_FORMAT_R32G32_SINT,
-		//IVEC3
-		VK_FORMAT_R32G32B32_SINT,
-		//IVEC4
-		VK_FORMAT_R32G32B32A32_SINT,
-		//UVEC2
-		VK_FORMAT_R32G32_UINT,
-		//UVEC3
-		VK_FORMAT_R32G32B32_UINT,
-		//UVEC4
-		VK_FORMAT_R32G32B32A32_UINT,
-	};
-	memcpy(&out_formats[0], vulkan_formats, sizeof(VkFormat) * 27);
-}
-
-static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(u64 packed_attributes, u16 location_offset, VkVertexInputRate input_rate)
-{
-	// get the vulkan constants
-	VkFormat vulkan_formats[27];
-	u32 indices[23];
-	get_vulkan_constants(vulkan_formats, indices);
-
-	VkFormat formats[12];
-	u32 offsets[12];
-	u16 locations[12];
-
-	u8 bits_per_type = 5;
-	u64 bits_mask = ~(0xFFFFFFFFFFFFFFFFULL << bits_per_type);
-
-	u32 i = 0;
 	u32 offset = 0;
-	while(packed_attributes != 0)
+	while(packed != 0)
 	{
-		u64 attribute_type = (packed_attributes & bits_mask);
-		if(attribute_type == 0)
-		{
-			packed_attributes >>= bits_per_type;
+		u64 type = packed & bits_mask;
+		packed >>= bits_per_type;
+		if(type == 0)
 			continue;
-		}
-		VkFormat vulkan_format = vulkan_formats[indices[attribute_type]];
-		u32 align = alignof_glsl_type(attribute_type);
+
+		VkFormat vulkan_format = vkformatof_glsl_type(type);
+		u32 align = alignof_glsl_type(type);
 		u32 field_offset = ((align - (offset % align)) % align) + offset;
-		switch(attribute_type)
+		switch(type)
 		{
 			case GLSL_TYPE_MAT3:
 				LOG_FETAL_ERR("Vertex attribute decode error: GLSL_MAT3 isn't supported yet!\n");
@@ -128,25 +59,28 @@ static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(u64 p
 			break;
 
 			default:/*or MATERIAL_MAT2*/
-				formats[i] = vulkan_format;
-				offsets[i] = field_offset;
+				buf_push(&formats, &vulkan_format);
+				buf_push(&offsets, &field_offset);
 			break;
 		}
-		packed_attributes >>= bits_per_type;
-		offset = field_offset + sizeof_glsl_type(attribute_type);
-		locations[i] = i + location_offset;
-		i++;
+		packed >>= bits_per_type;
+		offset = field_offset + sizeof_glsl_type(type);
+		location_offset++;
+		buf_push(&locations, &location_offset);
 	}
+
+	buf_fit(&formats);
+	buf_fit(&offsets);
+	buf_fit(&locations);
+
 	vulkan_vertex_buffer_layout_description_t info;
 	info.input_rate = input_rate;
-	info.attribute_count = i;
+	info.attribute_count = buf_get_element_count(&formats);
 	info.size = offset;
-	info.attribute_formats = heap_newv(VkFormat, info.attribute_count);
-	info.attribute_offsets = heap_newv(u32, info.attribute_count);
-	info.attribute_locations = heap_newv(u16, info.attribute_count);
-	memcpy(info.attribute_offsets, offsets, sizeof(u32) * info.attribute_count);
-	memcpy(info.attribute_formats, formats, sizeof(VkFormat) * info.attribute_count);
-	memcpy(info.attribute_locations, locations, sizeof(u16) * info.attribute_count);
+	info.attribute_formats = buf_get_ptr(&formats);
+	info.attribute_offsets = buf_get_ptr(&offsets);
+	info.attribute_locations = buf_get_ptr(&locations);
+
 	return info;
 }
 
@@ -182,310 +116,13 @@ static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(u64
 	return vertex_infos;
 }
 
-// static vulkan_shader_resource_description_t* create_descriptors(u32 OUT descriptor_count, BUFFER* bytes, buf_ucount_t OUT cursor)
-// {
-// 	// get the number of descriptors
-// 	u16 count = *(u16*)buf_get_ptr_at(bytes, OUT cursor); OUT cursor += 2;
-
-// 	OUT descriptor_count = count;
-
-// 	// if there are no descriptors then return
-// 	if(count == 0)
-// 		return NULL;
-
-// 	// allocate memory
-// 	vulkan_shader_resource_description_t* descriptors = heap_newv(vulkan_shader_resource_description_t, count);
-// 	memset(descriptors, 0, sizeof(vulkan_shader_resource_description_t) * count);
-
-// 	u32 temp_cursor = 0;
-// 	for(u16 i = 0; i < count; i++, OUT cursor += 4)
-// 	{
-// 		// get the offset to the descriptor
-// 		u32 offset = *(u32*)buf_get_ptr_at(bytes, OUT cursor);
-
-// 		temp_cursor = offset;
-
-// 		vulkan_shader_resource_description_t* descriptor = &descriptors[i];
-
-// 		descriptor->set_number = *(u8*)buf_get_ptr_at(bytes, temp_cursor); temp_cursor += 1;
-// 		descriptor->binding_number = *(u8*)buf_get_ptr_at(bytes, temp_cursor); temp_cursor += 1;
-// 		// assert(descriptor->set_number < 255);
-// 		// assert(descriptor->binding_number < 255);
-// 		u32 descriptor_info = *(u32*)buf_get_ptr_at(bytes, temp_cursor); temp_cursor += 4;
-// 		descriptor->is_push_constant = (descriptor_info & (1U << 16)) ? true : false;
-// 		descriptor->is_opaque = (descriptor_info & (1U << 15)) ? true : false;
-// 		descriptor->is_uniform = (descriptor_info & (1U << 14)) ? true : false;
-// 		descriptor->is_per_vertex_attribute = (descriptor_info & (1UL << 18));
-// 		descriptor->is_per_instance_attribute = (descriptor_info & (1UL << 17));
-// 		descriptor->handle.type = descriptor_info & 0xFFU;
-// 		descriptor->stage_flags = 0;
-// 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_VERTEX)))
-// 			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_VERTEX);
-// 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_TESSELLATION)))
-// 			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_TESSELLATION);
-// 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_GEOMETRY)))
-// 			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_GEOMETRY);
-// 		if(descriptor_info & (1UL << (13 - SHADER_COMPILER_SHADER_STAGE_FRAGMENT)))
-// 			descriptor->stage_flags |= (1UL << VULKAN_SHADER_TYPE_FRAGMENT);
-		
-// 		// get the name of the descriptor
-// 		const char* name = buf_get_ptr_at(bytes, temp_cursor);
-// 		u32 len = strlen(name);
-// 		assert(len < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
-// 		temp_cursor += len + 1;
-// 		strcpy(descriptor->handle.name, name);
-
-// 		if(descriptor->handle.type == GLSL_TYPE_BLOCK)
-// 		{
-// 			// ignore the block name
-// 			name = buf_get_ptr_at(bytes, temp_cursor);
-// 			len = strlen(name);
-// 			assert(len < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
-// 			temp_cursor += len + 1;
-// 		}
-
-// 		log_msg("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
-// 			i, descriptor->set_number, descriptor->binding_number, descriptor->stage_flags,
-// 			descriptor->is_push_constant ? "true" : "false", descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", (descriptor->handle.type == GLSL_TYPE_BLOCK) ? "true" : "false",
-// 			descriptor->handle.name);
-
-// 		if(descriptor->handle.type == GLSL_TYPE_BLOCK)
-// 		{
-// 			// get the number of fields in this uniform block
-// 			descriptor->handle.field_count = *(u16*)buf_get_ptr_at(bytes, temp_cursor); temp_cursor += 2;
-// 			log_msg("Field Count: %u\n", descriptor->handle.field_count);
-
-// 			// store the index of the list of fields of this uniform block in the fields buffer
-// 			indices[i] = buf_get_element_count(&fields);
-
-// 			struct_field_t* fields = NULL;
-
-// 			if(descriptor->handle.field_count > 0)
-// 				fields = heap_newv(struct_field_t, descriptor->handle.field_count);
-			
-// 			for(u16 j = 0; j < descriptor->handle.field_count; j++)
-// 			{
-// 				// get the field info
-// 				u32 field_info = *(u32*)buf_get_ptr_at(bytes, temp_cursor); temp_cursor += 4;
-				
-// 				// get the type of the fields
-// 				u8 type = field_info & 0xFFUL;
-				
-// 				// create a field object
-// 				fields[j] = (struct_field_t) { .type = type, .size = sizeof_glsl_type(type), .alignment = alignof_glsl_type(type) };
-				
-// 				// get the name of this field
-// 				const char* name = buf_get_ptr_at(bytes, temp_cursor);
-// 				u32 len = strlen(name);
-// 				assert(len < STRUCT_FIELD_MAX_NAME_SIZE);
-// 				temp_cursor += len + 1;
-// 				strcpy(fields[j].name, name);
-
-// 				log_msg("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, fields[j].type, fields[j].size, fields[j].alignment, fields[j].name);
-// 			}
-// 			descriptor->handle.fields = fields;
-// 			struct_descriptor_recalculate(&descriptor->handle);
-// 		}
-// 	}
-
-// 	OUT cursor = temp_cursor;
-	
-// 	return descriptors;
-// }
-
-// static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(u32 OUT vertex_info_count, BUFFER* bytes, buf_ucount_t OUT cursor)
-// {
-// 	// get the vulkan constants
-// 	VkFormat vulkan_formats[27];
-// 	u32 sizes[23];
-// 	u32 indices[23];
-// 	u32 alignments[23];
-// 	get_vulkan_constants(vulkan_formats, sizes, indices, alignments);
-
-// 	// get the vertex attribute count across all the vertex bindings
-// 	u32 binding_count;
-// 	vulkan_shader_resource_description_t* binding_descriptions = create_descriptors(&binding_count, bytes, cursor);
-
-// 	// allocate memory
-// 	vulkan_vertex_buffer_layout_description_t* vertex_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, binding_count);
-// 	memset(vertex_infos, 0, sizeof(vulkan_vertex_buffer_layout_description_t) * binding_count);
-
-// 	typedef struct attribute_info_t { BUFFER locations, formats, offsets; } attribute_info_t;
-// 	dictionary_t bindings = dictionary_create(u32, attribute_info_t, 1, dictionary_key_comparer_u32);
-
-// 	// iterate through each vertex attribute across all the vertex bindings
-// 	for(u32 i = 0, index = 0; i < binding_count; i++)
-// 	{
-// 		// this must be an attribute
-// 		assert(binding_descriptions[i].is_attribute);
-
-// 		// use vertex binding number as a key
-// 		u32 key = binding_descriptions[i].vertex_attrib_binding_number;
-// 		u32 location = binding_descriptions[i].vertex_attrib_location_number;
-// 		u64 glsl_type = convert_to_glsl_type(binding_descriptions[i].handle.type);
-// 		VkFormat format = vulkan_formats[indices[glsl_type]];
-// 		u32 alignment = alignments[glsl_type];
-// 		u32 size = sizes[glsl_type];
-
-// 		// if the binding number 'key' is not present then create new attribute_info_t object
-// 		if(!dictionary_contains(&bindings, &key))
-// 		{
-// 			attribute_info_t info = 
-// 			{ 
-// 				.locations = buf_create(sizeof(u32), 1, 0), 
-// 				.formats = buf_create(sizeof(VkFormat), 1, 0), 
-// 				.offsets = buf_create(sizeof(u32), 1, 0) 
-// 			};
-// 			dictionary_push(&bindings, &key, &info);
-
-// 			// add zero offset to be popped later
-// 			u32 offset = 0;
-// 			attribute_info_t* attribute_info = dictionary_get_value_ptr_at(&bindings, dictionary_get_count(&bindings) - 1);
-// 			buf_push(&attribute_info->offsets, &offset);
-
-// 			// create vertex info object for the binding 'key'
-// 			vertex_infos[index] = (vulkan_vertex_buffer_layout_description_t)
-// 			{
-// 				.binding = key,
-// 				.input_rate = binding_descriptions[i].is_per_vertex_attribute ? VK_VERTEX_INPUT_RATE_VERTEX : VK_VERTEX_INPUT_RATE_INSTANCE
-// 			};
-// 		}
-
-// 		// get pointer to the attribute info object for binding 'key'
-// 		attribute_info_t* attribute_info = dictionary_get_value_ptr(&bindings, &key);
-
-// 		// TODO: These checks should be done at the compilation time, not at the runtime
-// 		// if(buf_find_index_of(locations, &location, buf_u16_comparer) != BUF_INVALID_INDEX)
-// 		// 	LOG_FETAL_ERR("Multiple vertex attributes have the same layout location \"%u\", which is not allowed!\n", location);
-			
-// 		// add the location
-// 		buf_push(&attribute_info->locations, &location);
-// 		// add the format
-// 		buf_push(&attribute_info->formats, &format);
-
-// 		u32 offset;
-// 		// pop the previous offset
-// 		buf_pop(&attribute_info->offsets, &offset);
-// 		// snap the offset to the correct alignment for this field/attribute
-// 		offset += (alignment - (offset % alignment)) % alignment;
-// 		// add the offset
-// 		buf_push(&attribute_info->offsets, &offset);
-// 		// increment the offset by the size of this field/attribute
-// 		offset += size;
-// 		// save the offset for next iteration
-// 		buf_push(&attribute_info->offsets, &offset);
-// 	}
-
-// 	for(u32 i = 0; i < binding_count; i++)
-// 	{
-// 		vulkan_vertex_buffer_layout_description_t* vinfo = &vertex_infos[i];
-// 		attribute_info_t* ainfo = dictionary_get_value_ptr_at(&bindings, i);
-
-// 		// the final stride would be the last saved offset
-// 		vinfo->size = *(u32*)buf_peek_ptr(&ainfo->offsets);
-// 		// assign the number of attribute count
-// 		vinfo->attribute_count = buf_get_element_count(&ainfo->locations);
-// 		// assign the internal pointers to their corresponding destinations
-// 		vinfo->attribute_locations = buf_get_ptr(&ainfo->locations);
-// 		vinfo->attribute_formats = buf_get_ptr(&ainfo->formats);
-// 		vinfo->attribute_offsets = buf_get_ptr(&ainfo->offsets);
-// 	}
-
-// 	// free the temporary dictionary buffer
-// 	dictionary_free(&bindings);
-
-// 	// destroy the vulkan resource descriptors because we are done creating vertex infos out of them
-// 	destroy_set_binding_descriptors(binding_descriptions, binding_count);
-
-// 	// set the number of vulkan vertex info objects
-// 	OUT vertex_info_count = binding_count;
-
-// 	// return pointer to the final vulkan vertex info objects
-// 	return vertex_infos;
-// }
-
-// static vulkan_render_pass_description_t* create_render_pass_descriptions(u32 OUT render_pass_description_count, BUFFER* bytes, buf_ucount_t OUT cursor)
-// {
-// 	u16 description_count = DEREF_TO(buf_get_ptr_at(bytes, OUT cursor), u16); OUT cursor += 2;
-// 	if(description_count == 0)
-// 	{
-// 		OUT render_pass_description_count = 0;
-// 		return NULL;
-// 	}
-// 	vulkan_render_pass_description_t* descriptions = heap_newv(vulkan_render_pass_description_t, description_count);
-// 	memset(descriptions, 0, sizeof(vulkan_render_pass_description_t) * descriptor_count);
-// 	for(u16 i = 0; i < descriptor_count; i++)
-// 	{
-// 		// TODO:
-// 	}
-
-// 	OUT render_pass_description_count = description_count;
-// 	return descriptions;
-// }
-
-// RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* file_info)
-// {
-// 	// load the file into the main memory
-// 	BUFFER* bytes = load_binary_from_file(file_info->path);
-// 	// set the cursor to the bytes zero intially
-// 	buf_ucount_t cursor = 0;
-
-// 	// deserialize the bytes into vulkan_shader_file_t object
-// 	vulkan_shader_file_t* shader_file = heap_new(vulkan_shader_file_t);
-// 	vulkan_shader_file_result_t result = vulkan_shader_file_deserialize(buf_get_ptr(bytes), buf_get_element_count(bytes), shader_file);
-// 	ASSERT(VULKAN_SHADER_FILE_RESULT_CHECK(result) == VULKAN_SHADER_FILE_RESULT_SUCCESS);
-
-// 	// TODO:
-
-// 	// create material set bindings
-// 	u32 material_set_binding_count;
-// 	vulkan_shader_resource_description_t* material_set_bindings = create_descriptors(&material_set_binding_count, bytes, &cursor);
-
-// 	// create vertex attribute infos
-// 	u32 vertex_info_count;
-// 	vulkan_vertex_buffer_layout_description_t* vertex_infos = file_info->is_vertex_attrib_from_file ? create_vertex_infos(&vertex_info_count, bytes, &cursor) : 
-// 										decode_vulkan_vertex_infos(file_info->per_vertex_attribute_bindings,
-// 																   file_info->per_vertex_attribute_binding_count,
-// 																   file_info->per_instance_attribute_bindings,
-// 																   file_info->per_instance_attribute_binding_count);
-// 	if(file_info->is_vertex_attrib_from_file)
-// 		vertex_info_count = file_info->per_vertex_attribute_binding_count + file_info->per_instance_attribute_binding_count;
-
-// 	// create render pass descriptions
-// 	u32 render_pass_description_count;
-// 	vulkan_render_pass_description_t* render_pass_descriptions = create_render_pass_descriptions(&render_pass_description_count, bytes, &cursor);
-
-// 	// create vulkan shader
-// 	vulkan_shader_create_info_t create_info = 
-// 	{
-// 		.material_set_bindings = material_set_bindings,
-// 		.material_set_binding_coiunt = material_set_binding_count,
-
-// 		.vertex_infos = vertex_infos,
-// 		.vertex_info_count,
-
-// 		.render_pass_descriptions = render_pass_descriptions,
-// 		.render_pass_description_count = render_pass_description_count
-// 	};
-
-// 	// free up the allocated memories in the main memory because vulkan shader creates a deep copy internally
-// 	buf_free(bytes);
-// 	heap_free(material_set_bindings);
-// 	heap_free(vertex_infos);
-// 	heap_free(render_pass_descriptions);
-// 	vulkan_shader_file_destroy(shader_file);
-// 	heap_free(shader_file);
-
-// 	return vulkan_shader_create(renderer, &create_info);
-// }
-
 static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource_description_t* material_set_bindings, u32 material_set_binding_count)
 {
 	// holds the indices of the material set binding descriptors which are push constants
 	u32* descriptor_indices = heap_newv(u32, material_set_binding_count);
 
 	// TODO: add an extra parameter is_zero, if true then each block allocated in the buffer would be first zeroed-out otherwise uninitialized
-	BUFFER ranges = buf_create(sizeof(VkPushConstantRange), 0, 0);
+	BUFFER ranges = buf_new(VkPushConstantRange);
 
 	u32 range_count = 0;
 	for(u32 i = 0; i < material_set_binding_count; i++)
@@ -496,16 +133,16 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 		if(!descriptor->is_push_constant) continue;
 
 		// sanity check
-		assert(descriptor->handle.type == GLSL_TYPE_BLOCK);
+		assert(descriptor->handle.type == GLSL_TYPE_PUSH_CONSTANT);
 		
 		VkShaderStageFlagBits stage_flags = 0;
-		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_VERTEX))
+		if(descriptor->stage_flags & VULKAN_SHADER_STAGE_VERTEX_BIT)
 			stage_flags |= VK_SHADER_STAGE_VERTEX_BIT;
-		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_FRAGMENT))
+		if(descriptor->stage_flags & VULKAN_SHADER_STAGE_FRAGMENT_BIT)
 			stage_flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_GEOMETRY))
+		if(descriptor->stage_flags & VULKAN_SHADER_STAGE_GEOMETRY_BIT)
 			stage_flags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-		if(descriptor->stage_flags & (1 << VULKAN_SHADER_TYPE_TESSELLATION))
+		if(descriptor->stage_flags & VULKAN_SHADER_STAGE_TESSELLATION_BIT)
 			stage_flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 
 		// create push constant range and added it to the list of ranges
@@ -533,7 +170,8 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 		};
 	}
 
-	VkPushConstantRange max = DEREF_TO(VkPushConstantRange, buf_get_ptr_at(&ranges, 0));
+	buf_fit(&ranges);
+	VkPushConstantRange max = DEREF_TO(VkPushConstantRange, buf_get_ptr(&ranges));
 	
 	// find the max (offset + size)
 	for(u16 i = 1; i < range_count; i++)
@@ -629,7 +267,7 @@ static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_des
 	return copy_descriptors;
 }
 
-static void destroy_set_binding_descriptors(vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
+static void destroy_vulkan_shader_resource_descriptions(vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
 {
 	for(u32 i = 0; i < descriptor_count; i++)
 	{
@@ -1001,33 +639,436 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	return shader;
 }
 
-static vulkan_shader_create_info_t* deserialize_shader_create_info(const void* bytes, u32 length)
+static vulkan_shader_resource_description_t* load_descriptors(binary_reader_t* reader, u32 OUT descriptor_count)
 {
-	vulkan_shader_create_info_t* create_info = heap_new(vulkan_shader_create_info_t);
+	// read the number of descriptors
+	u16 count = binary_reader_u16(reader);
 
-	
-	// TODO:
-	return create_info;
+	OUT descriptor_count = count;
+
+	// if there are no descriptors then return
+	if(count == 0)
+		return NULL;
+
+	// allocate memory for the descriptors
+	vulkan_shader_resource_description_t* descriptors = heap_newv(vulkan_shader_resource_description_t, count);
+	memzerov(descriptors, vulkan_shader_resource_description_t, count);
+
+	for(u16 i = 0; i < count; i++)
+	{
+		// reader the offset to the descriptor
+		u32 offset = binary_reader_u32(reader);
+		binary_reader_push(reader);
+		binary_reader_jump(reader, offset);
+
+		vulkan_shader_resource_description_t* descriptor = &descriptors[i];
+
+		descriptor->set_number = binary_reader_u8(reader);
+		descriptor->binding_number = binary_reader_u8(reader);
+		// assert(descriptor->set_number < 255);
+		// assert(descriptor->binding_number < 255);
+		u32 descriptor_info = binary_reader_u32(reader);
+
+		u32 bits = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_BITS(descriptor_info);
+		descriptor->is_push_constant = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_PUSH_CONSTANT_BIT & bits;
+		descriptor->is_opaque = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_OPAQUE_BIT & bits;
+		descriptor->is_uniform = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_UNIFORM_BUFFER_BIT & bits;
+		descriptor->is_per_vertex_attribute = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_PER_VERTEX_ATTRIB_BIT & bits;
+		descriptor->is_per_instance_attribute = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_PER_INSTANCE_ATTRIB_BIT & bits;
+		descriptor->handle.type = VULKAN_GLSL_TYPE_BITS(descriptor_info);
+
+		descriptor->stage_flags = CAST_TO(u8, VULKAN_SHADER_STAGE_BITS(descriptor_info));
+		
+		// get the name of the descriptor
+		const char* name = binary_reader_str(reader);
+		assert(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
+		strcpy(descriptor->handle.name, name);
+
+		bool is_block = (descriptor->handle.type == GLSL_TYPE_UNIFORM_BUFFER)
+			|| (descriptors->handle.type == GLSL_TYPE_STORAGE_BUFFER)
+			|| (descriptors->handle.type == GLSL_TYPE_PUSH_CONSTANT);
+
+		if(is_block)
+		{
+			// ignore the block name
+			name = binary_reader_str(reader);
+			assert(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
+		}
+
+		log_msg("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
+			i, descriptor->set_number, descriptor->binding_number, descriptor->stage_flags,
+			descriptor->is_push_constant ? "true" : "false", descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", (descriptor->handle.type == GLSL_TYPE_BLOCK) ? "true" : "false",
+			descriptor->handle.name);
+
+		// if the descriptor is a block then iterate through its fields
+		if(is_block)
+		{
+			// get the number of fields in this uniform block
+			descriptor->handle.field_count = binary_reader_u16(reader);
+			log_msg("Field Count: %u\n", descriptor->handle.field_count);
+
+			struct_field_t* fields = (descriptor->handle.field_count > 0) ? heap_newv(struct_field_t, descriptor->handle.field_count) : NULL;
+			
+			for(u16 j = 0; j < descriptor->handle.field_count; j++)
+			{
+				// get the field info
+				u32 field_info = binary_reader_u32(reader);
+				
+				// get the type of the fields
+				u8 type = field_info & 0xFFUL;
+				
+				// create a field object
+				fields[j] = (struct_field_t) { .type = type, .size = sizeof_glsl_type(type), .alignment = alignof_glsl_type(type) };
+				
+				// get the name of this field
+				const char* name = binary_reader_str(reader);
+				assert(strlen(name) < STRUCT_FIELD_MAX_NAME_SIZE);
+				strcpy(fields[j].name, name);
+
+				log_msg("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, fields[j].type, fields[j].size, fields[j].alignment, fields[j].name);
+			}
+			descriptor->handle.fields = fields;
+			struct_descriptor_recalculate(&descriptor->handle);
+		}
+		binary_reader_pop(reader);
+	}
+	return descriptors;
 }
 
-/* see the v3d shader binary specification for vulkan_shader_version_t enumeration */
-typedef enum vulkan_shader_version_t
+static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(binary_reader_t* reader, u32 OUT count)
 {
-		VULKAN_SHADER_VERSION_2021 = 0,
-		VULKAN_SHADER_VERSION_2022,
-		VULKAN_SHADER_VERSION_2023,
-		VULKAN_SHADER_VERSION_MAX
-} vulkan_shader_version_t;
+	u32 descriptor_count;
+	vulkan_shader_resource_description_t* descriptors = load_descriptors(reader, &descriptor_count);
+
+	// allocate memory
+	vulkan_vertex_buffer_layout_description_t* vertex_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, descriptor_count);
+	memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, descriptor_count);
+
+	typedef struct attribute_info_t { BUFFER locations, formats, offsets; } attribute_info_t;
+	dictionary_t bindings = dictionary_create(u32, attribute_info_t, 1, dictionary_key_comparer_u32);
+
+	// iterate through each vertex attribute across all the vertex bindings
+	for(u32 i = 0, index = 0; i < descriptor_count; i++)
+	{
+		// this must be an attribute
+		assert(descriptors[i].is_attribute);
+
+		u32 location = descriptors[i].vertex_attrib_location_number;
+		glsl_type_t glsl_type = descriptors[i].handle.type;
+		VkFormat format = vkformatof_glsl_type(glsl_type);
+		u32 alignment = alignof_glsl_type(glsl_type);
+		u32 size = sizeof_glsl_type(glsl_type);
+
+		// use vertex binding number as a key
+		u32 key = descriptors[i].vertex_attrib_binding_number;
+		// if the binding number 'key' is not present then create new attribute_info_t object
+		if(!dictionary_contains(&bindings, &key))
+		{
+			attribute_info_t info = 
+			{ 
+				.locations = buf_create(sizeof(u32), 1, 0), 
+				.formats = buf_create(sizeof(VkFormat), 1, 0), 
+				.offsets = buf_create(sizeof(u32), 1, 0) 
+			};
+			dictionary_push(&bindings, &key, &info);
+
+			// add zero offset to be popped later
+			u32 offset = 0;
+			attribute_info_t* attribute_info = dictionary_get_value_ptr_at(&bindings, dictionary_get_count(&bindings) - 1);
+			buf_push(&attribute_info->offsets, &offset);
+
+			// create vertex info object for the binding 'key'
+			vertex_infos[index++] = (vulkan_vertex_buffer_layout_description_t)
+			{
+				.binding = key,
+				.input_rate = descriptors[i].is_per_vertex_attribute ? VK_VERTEX_INPUT_RATE_VERTEX : VK_VERTEX_INPUT_RATE_INSTANCE
+			};
+		}
+
+		// get pointer to the attribute info object for binding 'key'
+		attribute_info_t* attribute_info = dictionary_get_value_ptr(&bindings, &key);
+
+		// TODO: These checks should be done at the compilation time, not at the runtime
+		// if(buf_find_index_of(locations, &location, buf_u16_comparer) != BUF_INVALID_INDEX)
+		// 	LOG_FETAL_ERR("Multiple vertex attributes have the same layout location \"%u\", which is not allowed!\n", location);
+			
+		// add the location
+		buf_push(&attribute_info->locations, &location);
+		// add the format
+		buf_push(&attribute_info->formats, &format);
+
+		u32 offset;
+		// pop the previous offset
+		buf_pop(&attribute_info->offsets, &offset);
+		// snap the offset to the correct alignment for this field/attribute
+		offset += (alignment - (offset % alignment)) % alignment;
+		// add the offset
+		buf_push(&attribute_info->offsets, &offset);
+		// increment the offset by the size of this field/attribute
+		offset += size;
+		// save the offset for next iteration
+		buf_push(&attribute_info->offsets, &offset);
+	}
+
+	u32 binding_count = dictionary_get_count(&bindings);
+	for(u32 i = 0; i < binding_count; i++)
+	{
+		vulkan_vertex_buffer_layout_description_t* vinfo = &vertex_infos[i];
+		attribute_info_t* ainfo = dictionary_get_value_ptr_at(&bindings, i);
+
+		// the final stride would be the last saved offset
+		vinfo->size = *(u32*)buf_peek_ptr(&ainfo->offsets);
+		// assign the number of attribute count
+		vinfo->attribute_count = buf_get_element_count(&ainfo->locations);
+		// assign the internal pointers to their corresponding destinations
+		vinfo->attribute_locations = buf_get_ptr(&ainfo->locations);
+		vinfo->attribute_formats = buf_get_ptr(&ainfo->formats);
+		vinfo->attribute_offsets = buf_get_ptr(&ainfo->offsets);
+	}
+
+	// free the temporary dictionary buffer
+	dictionary_free(&bindings);
+
+	// destroy the vulkan resource descriptors because we are done creating vertex infos out of them
+	destroy_vulkan_shader_resource_descriptions(descriptors, descriptor_count);
+
+	// set the number of vulkan vertex info objects
+	OUT count = descriptor_count;
+
+	// return pointer to the final vulkan vertex info objects
+	return vertex_infos;
+}
+
+static vulkan_subpass_description_t* create_subpass_descriptions(binary_reader_t* reader, u32 OUT count)
+{
+	u16 description_count = binary_reader_u16(reader);
+	OUT count = description_count;
+	if(description_count == 0)
+		return NULL;
+
+	vulkan_subpass_description_t* descriptions = heap_newv(vulkan_subpass_description_t, description_count);
+	memzerov(descriptions, vulkan_subpass_description_t, description_count);
+
+	for(u16 i = 0; i < description_count; i++)
+	{
+		vulkan_subpass_description_t* description = &descriptions[i];
+
+		// read the input attachment array
+		description->input_attachment_count = binary_reader_u32(reader);
+		description->input_attachments = heap_newv(u32, description->input_attachment_count);
+		for(u16 j = 0; j < description->input_attachment_count; j++)
+			description->input_attachments[j] = binary_reader_u32(reader);
+
+		// read the color attachment array
+		description->color_attachment_count = binary_reader_u32(reader);
+		description->color_attachments = heap_newv(u32, description->color_attachment_count);
+		for(u16 j = 0; j < description->color_attachment_count; j++)
+			description->color_attachments[j] = binary_reader_u32(reader);
+
+		// read the preserve attachment array
+		description->preserve_attachment_count = binary_reader_u32(reader);
+		description->preserve_attachments = heap_newv(u32, description->preserve_attachment_count);
+		for(u16 j = 0; j < description->preserve_attachment_count; j++)
+			description->preserve_attachments[j] = binary_reader_u32(reader);
+
+		description->depth_stencil_attachment = binary_reader_u32(reader);
+		description->pipeline_description_index = binary_reader_u32(reader);
+		
+		description->sub_render_set_bindings = load_descriptors(reader, &description->sub_render_set_binding_count);	
+	}
+
+	return NULL;
+}
+
+static vulkan_render_pass_description_t* create_render_pass_descriptions(binary_reader_t* reader, u32 OUT count)
+{
+	u16 description_count = binary_reader_u16(reader);
+	OUT count = description_count;
+	if(description_count == 0)
+		return NULL;
+
+	vulkan_render_pass_description_t* descriptions = heap_newv(vulkan_render_pass_description_t, description_count);
+	memzerov(descriptions, vulkan_render_pass_description_t, description_count);
+
+	for(u16 i = 0; i < description_count; i++)
+	{
+		vulkan_render_pass_description_t* description = &descriptions[i];
+
+		// read the type of the render pass
+		description->type = CAST_TO(vulkan_render_pass_type_t, binary_reader_u32(reader));
+
+		// read the input attachment array
+		description->input_attachment_count = binary_reader_u32(reader);
+		description->input_attachments = heap_newv(u32, description->input_attachment_count);
+		for(u32 j = 0; j < description->input_attachment_count; j++)
+			description->input_attachments[j] = binary_reader_u32(reader);
+
+		// read the attachment type array
+		description->attachment_count = binary_reader_u32(reader);
+		description->attachments = heap_newv(vulkan_attachment_type_t, description->attachment_count);
+		for(u32 j = 0; j < description->attachment_count; j++)
+			description->attachments[j] = CAST_TO(vulkan_attachment_type_t, binary_reader_u32(reader));
+
+		// read the subpass dependency array
+		description->subpass_dependency_count = binary_reader_u32(reader);
+		description->subpass_dependencies = heap_newv(VkSubpassDependency, description->subpass_dependency_count);
+		for(u32 j = 0; j < description->subpass_dependency_count; j++)
+			memcpy(&description->subpass_dependencies[j], binary_reader_read(reader, VkSubpassDependency), sizeof(VkSubpassDependency));
+		
+		// read the render set binding
+		description->render_set_bindings = load_descriptors(reader, &description->render_set_binding_count);
+
+		// read the subpass descriptions array
+		description->subpass_descriptions = create_subpass_descriptions(reader, &description->subpass_count);
+	}
+
+	return descriptions;
+}
+
+static vulkan_spirv_code_t* load_spirv_codes(binary_reader_t* reader, u32 OUT count)
+{
+	// calculate the number of shader stages (vertex, geometry, fragment, etc) present in the shader binary
+	u32 shader_mask = CAST_TO(u32, binary_reader_u8(reader));
+	u32 code_count = 0; 
+	for(u32 i = 0; i < VULKAN_SHADER_STAGE_MAX; i++)
+		if(shader_mask & BIT32(i))
+			code_count++;
+	OUT count = code_count;
+
+	vulkan_spirv_code_t* codes = heap_newv(vulkan_spirv_code_t, code_count);
+	for(u8 i = 0, count = 0; i < VULKAN_SHADER_STAGE_MAX; i++)
+	{
+		u32 bit = shader_mask & BIT32(i);
+		if(bit == 0) continue;
+
+		vulkan_spirv_code_t* code = &codes[count++];
+
+		switch(bit)
+		{
+			/* vertex shader spirv */
+			case VULKAN_SHADER_STAGE_VERTEX_BIT:
+				code->type = VULKAN_SHADER_TYPE_VERTEX;
+				break;
+			/* tessellation shader spirv */
+			case VULKAN_SHADER_STAGE_TESSELLATION_BIT:
+				code->type = VULKAN_SHADER_TYPE_TESSELLATION;
+			break;
+			/* geometry shader spirv */
+			case VULKAN_SHADER_STAGE_GEOMETRY_BIT:
+				code->type = VULKAN_SHADER_TYPE_GEOMETRY;
+			break;
+			/* fragment shader spirv */
+			case VULKAN_SHADER_STAGE_FRAGMENT_BIT:
+				code->type = VULKAN_SHADER_TYPE_FRAGMENT;
+			break;
+			default:
+				// TODO: improve diagnostic messages (it should be with file name and LOC)
+				LOG_FETAL_ERR("[Shader Loader] Invalid shader stage bit \"%u\" in shader_mask\n", bit);
+			break;
+		}
+
+		code->length = binary_reader_u32(reader);
+		code->spirv = heap_newv(u32, code->length);
+		memcpy(code->spirv, binary_reader_at(reader, binary_reader_u32(reader)), code->length);
+	}
+	
+	return codes;
+}
+
+static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(binary_reader_t* reader, u32 OUT count)
+{
+	u16 description_count = binary_reader_u16(reader);
+	OUT count = description_count;
+	if(description_count == 0)
+		return NULL;
+
+	vulkan_graphics_pipeline_description_t* descriptions = heap_newv(vulkan_graphics_pipeline_description_t, description_count);
+	for(u16 i = 0; i < description_count; i++)
+	{
+		vulkan_graphics_pipeline_description_t* description = &descriptions[i];
+
+		// read vulkan_graphics_pipeline_description_t
+		description->settings = heap_new(vulkan_graphics_pipeline_settings_t);
+		memcpy(description->settings, binary_reader_read(reader, vulkan_graphics_pipeline_description_t), sizeof(vulkan_graphics_pipeline_description_t));
+
+		// read the spirv code array
+		description->spirv_codes = load_spirv_codes(reader, &description->spirv_code_count);
+	}
+
+	return descriptions;
+}
+
+static vulkan_shader_create_info_t* convert_load_info_to_create_info(vulkan_shader_load_info_t* load_info)
+{
+	binary_reader_t* reader = binary_reader_create(load_info->data, load_info->data_size);
+
+	vulkan_shader_header_t* header = binary_reader_read(reader, vulkan_shader_header_t);
+	// check if the header is a valid shader binary header
+	if(strcmp(header->str, VULKAN_SHADER_HEADER_STR) != 0)
+		LOG_FETAL_ERR("[Shader Loader] Invalid shader file header str \"%s\"", header->str);
+	if((header->version == VULKAN_SHADER_VERSION_UNDEFINED) || (header->version >= VULKAN_SHADER_VERSION_MAX))
+		LOG_FETAL_ERR("[Shader Loader] Invalid shader version \"%u\"", header->version);
+
+	// load resource descriptors for material
+	u32 descriptor_count;
+	vulkan_shader_resource_description_t* descriptors = load_descriptors(reader, &descriptor_count);
+
+	// load the next resource descriptors meant for vertex attributes and create vertex buffer layout descriptions
+	u32 vertex_info_count;
+	vulkan_vertex_buffer_layout_description_t* vertex_infos = load_info->is_vertex_attrib_from_file ? 
+										create_vertex_infos(reader, &vertex_info_count) :
+										decode_vulkan_vertex_infos(load_info->per_vertex_attribute_bindings,
+																   load_info->per_vertex_attribute_binding_count,
+																   load_info->per_instance_attribute_bindings,
+																   load_info->per_instance_attribute_binding_count);
+	if(!load_info->is_vertex_attrib_from_file)
+		vertex_info_count = load_info->per_vertex_attribute_binding_count + load_info->per_instance_attribute_binding_count;
+
+	// create graphics pipeline descriptions
+	u32 pipeline_description_count;
+	vulkan_graphics_pipeline_description_t* pipeline_descriptions = create_pipeline_descriptions(reader, &pipeline_description_count);
+
+	// create render pass descriptions
+	u32 render_pass_description_count;
+	vulkan_render_pass_description_t* render_pass_descriptions = create_render_pass_descriptions(reader, &render_pass_description_count);
+
+	// create vulkan shader
+	vulkan_shader_create_info_t* create_info = heap_new(vulkan_shader_create_info_t);
+	*create_info = (vulkan_shader_create_info_t)
+	{
+		.material_set_bindings = descriptors,
+		.material_set_binding_count = descriptor_count,
+
+		.vertex_infos = vertex_infos,
+		.vertex_info_count = vertex_info_count,
+
+		.render_pass_descriptions = render_pass_descriptions,
+		.render_pass_description_count = render_pass_description_count,
+
+		.pipeline_descriptions = pipeline_descriptions
+	};
+
+	// TODO:
+	// free up the allocated memories in the main memory because vulkan shader creates a deep copy internally
+
+	return create_info;
+}
 
 RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* load_info)
 {
 	vulkan_shader_create_info_t* create_info = NULL;
 	if((load_info->data != NULL) && (load_info->data_size != 0))
-		create_info = deserialize_shader_create_info(load_info->data, load_info->data_size);
+		create_info = convert_load_info_to_create_info(load_info);
 	else if(load_info->path != NULL)
 	{
 		BUFFER* buffer = load_binary_from_file(load_info->path);
-		create_info = deserialize_shader_create_info(buffer->bytes, buffer->element_count);
+		
+		vulkan_shader_load_info_t _load_info;
+		memcpy(&_load_info, load_info, sizeof(vulkan_shader_load_info_t));
+		_load_info.data = buffer->bytes;
+		_load_info.data_size = buffer->element_count;
+
+		create_info = convert_load_info_to_create_info(&_load_info);
 		buf_free(buffer);
 	}
 	else 
@@ -1054,7 +1095,7 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 {
 	destroy_vulkan_push_constant(&shader->push_constant);
 	destroy_vulkan_vertex_infos(shader->vertex_infos, shader->vertex_info_count);
-	destroy_set_binding_descriptors(shader->material_set_bindings, shader->material_set_binding_count);
+	destroy_vulkan_shader_resource_descriptions(shader->material_set_bindings, shader->material_set_binding_count);
 	// TODO
 	// heap_free(shader);
 }
@@ -1085,73 +1126,4 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_
 		}
 	}
 	return NULL;
-}
-
-
-// static vulkan_stage_shader_t** create_stage_shaders(vulkan_renderer_t* renderer, BUFFER* shader_binary, u32 cursor, u8* stage_count)
-// {
-// 	assert(cursor != 0xFFFFFFFF);
-	
-// 	// for now render pass count must be 1
-// 	u8 render_pass_count = *(u8*)buf_get_ptr_at(shader_binary, cursor); cursor++;
-// 	assert(render_pass_count == 1);
-
-// 	u8 shader_mask = *(u8*)buf_get_ptr_at(shader_binary, cursor); cursor++;
-// 	u8 shader_count = 0; for(u8 i = 0; i < 4; i++) { if(shader_mask & (1 << i)) shader_count++; }
-// 	*stage_count = shader_count;
-
-// 	vulkan_stage_shader_t** shaders = heap_newv(vulkan_stage_shader_t*, shader_count);
-// 	for(u8 i = 0, count = 0; i < SHADER_COMPILER_SHADER_STAGE_MAX; i++)
-// 	{
-// 		u8 bit = shader_mask & (1 << i);
-// 		if(bit == 0) continue;
-// 		u32 offset = *(u32*)buf_get_ptr_at(shader_binary, cursor); cursor += 4;
-// 		u32 length = *(u32*)buf_get_ptr_at(shader_binary, cursor); cursor += 4;
-// 		switch(bit)
-// 		{
-// 			case 1 << SHADER_COMPILER_SHADER_STAGE_VERTEX:
-// 				//Vertex shader spirv
-// 				u32* spirv = buf_get_ptr_at(shader_binary, offset);
-// 				ref(vulkan_stage_shader_t*, shaders, count) = vulkan_stage_shader_create(renderer, spirv, length, VULKAN_SHADER_TYPE_VERTEX);
-// 				count++;
-// 				break;
-// 			case 1 << SHADER_COMPILER_SHADER_STAGE_TESSELLATION:
-// 				//Tessellation shader spirv
-// 				spirv = buf_get_ptr_at(shader_binary, offset);
-// 				ref(vulkan_stage_shader_t*, shaders, count) = vulkan_stage_shader_create(renderer, spirv, length, VULKAN_SHADER_TYPE_TESSELLATION);
-// 				count++;
-// 			break;
-// 			case 1 << SHADER_COMPILER_SHADER_STAGE_GEOMETRY:
-// 				//Geometry shader spirv
-// 				spirv = buf_get_ptr_at(shader_binary, offset);
-// 				ref(vulkan_stage_shader_t*, shaders, count) = vulkan_stage_shader_create(renderer, spirv, length, VULKAN_SHADER_TYPE_GEOMETRY);
-// 				count++;
-// 			break;
-// 			case 1 << SHADER_COMPILER_SHADER_STAGE_FRAGMENT:
-// 				//Fragment shader spirv
-// 				spirv = buf_get_ptr_at(shader_binary, offset);
-// 				ref(vulkan_stage_shader_t*, shaders, count) = vulkan_stage_shader_create(renderer, spirv, length, VULKAN_SHADER_TYPE_FRAGMENT);
-// 				count++;
-// 			break;
-// 			default:
-// 				LOG_FETAL_ERR("Shader binary loading error: Invalid shader bit \"%u\" in shader_mask\n", bit);
-// 			break;
-// 		}
-// 	}
-// 	return shaders;
-// }
-
-static u32 decode_attribute_count(u64 packed_attributes)
-{
-	u8 bits_per_type = 5;
-	// log_u64(packed_attributes);
-	u64 bits_mask = ~(0xFFFFFFFFFFFFFFFFULL << bits_per_type);
-	u32 count = 0;
-	while(packed_attributes != 0)
-	{
-		if((packed_attributes & bits_mask) != 0)
-			++count;
-		packed_attributes >>= bits_per_type;
-	}
-	return count;
 }

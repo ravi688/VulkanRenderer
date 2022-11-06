@@ -25,6 +25,7 @@ typedef struct vulkan_shader_module_load_info_t
 	
 } vulkan_shader_module_load_info_t;
 
+/* vulkan_stage_shader_t renamed to vulkan_shader_module_t */
 typedef struct vulkan_shader_module_t
 {
 	vulkan_renderer_t* renderer;

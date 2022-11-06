@@ -1,6 +1,7 @@
 #include <renderer/binary_reader.h>
 #include <renderer/memory_allocator.h>
 
+#include <string.h>			// for strlen
 
 RENDERER_API binary_reader_t* binary_reader_new()
 {
@@ -15,18 +16,21 @@ RENDERER_API binary_reader_t* binary_reader_create(const void* data, u32 size)
 	reader->data = data;
 	reader->size = size;
 	reader->read_cursor = 0;
+	reader->state_stack = buf_new(u32);
 	return reader;
 }
 
 RENDERER_API void binary_reader_destroy(binary_reader_t* reader)
 {
 	reader->data = NULL;
-	reader-size = 0;
+	reader->size = 0;
 	reader->read_cursor = 0;
+	buf_clear(&reader->state_stack, NULL);
 }
 
 RENDERER_API void binary_reader_release_resources(binary_reader_t* reader)
 {
+	buf_free(&reader->state_stack);
 	heap_free(reader);
 }
 
@@ -106,12 +110,39 @@ RENDERER_API const char* binary_reader_str(binary_reader_t* reader)
 	return str;
 }
 
+RENDERER_API const void* binary_reader_at(binary_reader_t* reader, u32 index)
+{
+	return reader->data + index;
+}
+
+RENDERER_API const void* __binary_reader_read(binary_reader_t* reader, u32 size)
+{
+	u32 pos = reader->read_cursor;
+	reader->read_cursor += size;
+	return reader->data + pos;
+}
+
 RENDERER_API const void* binary_reader_ptr(binary_reader_t* reader)
 {
-	return CAST_TO(const void*, reader->data + reader->read_cursor);
+	return reader->data + reader->read_cursor;
 }
 
 RENDERER_API void binary_reader_reset(binary_reader_t* reader)
 {
 	reader->read_cursor = 0;
+}
+
+RENDERER_API void binary_reader_jump(binary_reader_t* reader, u32 pos)
+{
+	reader->read_cursor = pos;
+}
+
+RENDERER_API void binary_reader_push(binary_reader_t* reader)
+{
+	buf_push(&reader->state_stack, &reader->read_cursor);
+}
+
+RENDERER_API void binary_reader_pop(binary_reader_t* reader)
+{
+	buf_pop(&reader->state_stack, &reader->state_stack);
 }
