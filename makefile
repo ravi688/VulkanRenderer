@@ -104,16 +104,17 @@ update:
 	git -C ./dependencies/MeshLib/dependencies/DiskManager pull origin main
 	git -C ./dependencies/PhyMacParser pull origin main
 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem pull origin main
-# 	git -C ./dependencies/ECS push
-# 	git -C ./dependencies/HPML push
-# 	git -C ./dependencies/MeshLib push
-# 	git	-C ./dependencies/SafeMemory push
-# 	git -C ./dependencies/TemplateSystem push
-# 	git -C ./dependencies/ttf2mesh push
-# 	git -C ./shared-dependencies/BufferLib push
-# 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace push
-# 	git -C ./dependencies/MeshLib/dependencies/DiskManager push
-# 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem push
+	git -C ./dependencies/ECS push
+	git -C ./dependencies/HPML push
+	git -C ./dependencies/MeshLib push
+	git	-C ./dependencies/SafeMemory push
+	git -C ./dependencies/TemplateSystem push
+	git -C ./dependencies/ttf2mesh push
+	git -C ./shared-dependencies/BufferLib push
+	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace push
+	git -C ./dependencies/MeshLib/dependencies/DiskManager push
+	git -C ./dependencies/PhyMacParser push
+	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem push
 #-------------------------------------------
 
 RM := rm -f
@@ -256,6 +257,7 @@ examples-clean:
 	$(foreach var, $(dir $(EXAMPLES)) ,$(MAKE) --directory=$(var) clean & )
 
 %.o : %.c
+	@echo [Log] Compiling $< to $@
 	$(COMPILER) $(COMPILER_FLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
 
 %.a:
@@ -346,6 +348,20 @@ $(SHADER_COMPILER):
 %.sb: %.glsl $(SHADER_COMPILER)
 	@echo [Log]: Compiling shader $< to $@
 	$(SHADER_COMPILER) $< $@
+
+
+.PHONY: shader_compiler
+.PHONY: shader_compiler-debug
+.PHONY: shader_compiler-release
+.PHONY: shader_compiler-clean
+
+shader_compiler-debug: SHADER_COMPILER_COMPILATION_MODE += debug
+shader_compiler-debug: $(SHADER_COMPILER)
+shader_compiler-release: SHADER_COMPILER_COMPILATION_MODE += release
+shader_compiler-release: $(SHADER_COMPILER)
+
+shader_compiler-clean:
+	$(MAKE) --directory=$(dir $(SHADER_COMPILER)) clean
 
 .PHONY: shader-debug
 .PHONY: shader-release
