@@ -34,8 +34,8 @@ DYNAMIC_LIB_NAME = vulkanrenderer.dll
 EXECUTABLE_NAME = main.exe
 EXTERNAL_LIBRARIES = -L./external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies
-DEPENDENCIES = ../toolchain/shader_compiler ECS MeshLib MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
-DEPENDENCY_LIBS = ECS/lib/ecs.a MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCIES = ../toolchain/shader_compiler ECS MeshLib GLSLCommon Common MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
+DEPENDENCY_LIBS = ECS/lib/ecs.a MeshLib/lib/meshlib.a GLSLCommon/lib/glslcommon.a Common/lib/common.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS =  BufferLib/lib/bufferlib.a
@@ -79,6 +79,8 @@ setup:
 	git -C ./dependencies/ECS checkout VulkanRenderer/testbed/main
 	git -C ./dependencies/HPML checkout main
 	git -C ./dependencies/MeshLib checkout VulkanRenderer/main
+	git -C ./dependencies/GLSLCommon checkout main
+	git -C ./dependencies/Common checkout main
 	git	-C ./dependencies/SafeMemory checkout VulkanRenderer/main
 	git -C ./dependencies/TemplateSystem checkout main
 	git -C ./dependencies/ttf2mesh checkout master
@@ -96,6 +98,8 @@ update:
 	git -C ./dependencies/ECS pull origin main
 	git -C ./dependencies/HPML pull origin main
 	git -C ./dependencies/MeshLib pull origin main
+	git -C ./dependencies/GLSLCommon pull origin main
+	git -C ./dependencies/Common pull origin main
 	git	-C ./dependencies/SafeMemory pull origin main
 	git -C ./dependencies/TemplateSystem pull origin main
 	git -C ./dependencies/ttf2mesh pull origin master
@@ -107,6 +111,8 @@ update:
 	git -C ./dependencies/ECS push
 	git -C ./dependencies/HPML push
 	git -C ./dependencies/MeshLib push
+	git -C ./dependencies/GLSLCommon push
+	git -C ./dependencies/Common push
 	git	-C ./dependencies/SafeMemory push
 	git -C ./dependencies/TemplateSystem push
 	git -C ./dependencies/ttf2mesh push
@@ -329,6 +335,8 @@ bin-clean:
 	$(MAKE) --directory=./dependencies/ECS clean
 	$(MAKE) --directory=./dependencies/SafeMemory clean
 	$(MAKE) --directory=./dependencies/MeshLib clean
+	$(MAKE) --directory=./dependencies/GLSLCommon clean
+	$(MAKE) --directory=./dependencies/Common clean
 	$(MAKE) --directory=./shared-dependencies/BufferLib clean
 	$(MAKE) --directory=./toolchain/shader_compiler clean
 #-------------------------------------------

@@ -341,7 +341,7 @@ RENDERER_API void struct_descriptor_begin(struct_descriptor_t* descriptor, const
 RENDERER_API void struct_descriptor_end(struct_descriptor_t* descriptor);
 RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type);
 
-#include <renderer/glsl_types.h>
+#include <glslcommon/glsl_types.h>
 #define struct_descriptor_add_field_float(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_FLOAT)
 #define struct_descriptor_add_field_int(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_INT)
 #define struct_descriptor_add_field_uint(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_UINT)

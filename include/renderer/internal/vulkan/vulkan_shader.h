@@ -6,7 +6,7 @@
 #include <renderer/internal/vulkan/vulkan_attachment.h> 		// vulkan_attachment_type_t
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t, vulkan_shader_handle_t
 
-#include <renderer/glsl_types.h>
+#include <glslcommon/glsl_types.h>
 #define VERTEX_ATTRIB(value, index) ((value) << ((index) * 5))
 enum
 {

@@ -2,7 +2,7 @@
 #pragma once
 
 #include <renderer/defines.h>
-#include <renderer/glsl_types.h>
+#include <glslcommon/glsl_types.h>
 #include <renderer/internal/vulkan/vulkan_types.h> 	// vulkan_render_pass_type_t
 #include <vulkan/vulkan.h>
 
