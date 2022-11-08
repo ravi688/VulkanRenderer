@@ -20,8 +20,8 @@ DYNAMIC_LIB_NAME = shader_compiler.dll
 EXECUTABLE_NAME = shader_compiler
 EXTERNAL_INCLUDES = -Iinclude/shader_compiler
 EXTERNAL_LIBS = -L./external-dependency-libs -lshaderc_shared
-DEPENDENCIES = ../../.. ../../../dependencies/PhyMacParser ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
-DEPENDENCY_LIBS = ../../../dependencies/PhyMacParser/lib/ppsr.a ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCIES = ../../../dependencies/GLSLCommon ../../../dependencies/Common ../../../dependencies/PhyMacParser ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
+DEPENDENCY_LIBS = ../../../dependencies/GLSLCommon/glslcommon.a ../../../dependencies/Common/common.a ../../../dependencies/PhyMacParser/lib/ppsr.a ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = 
 SHARED_DEPENDENCY_LIBS = 
@@ -185,6 +185,7 @@ debug: $(TARGET)
 
 
 %.o : %.c
+	@echo Compiling $< to $@
 	$(COMPILER) $(COMPILER_FLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
 
 %.a:
@@ -232,6 +233,8 @@ bin-clean:
 	$(RM) $(TARGET_DYNAMIC_IMPORT_LIB)
 	$(RM_DIR) $(TARGET_LIB_DIR)
 	@echo [Log] Binaries cleaned successfully!
+	$(MAKE) --directory=./dependencies/../../../dependencies/GLSLCommon clean
+	$(MAKE) --directory=./dependencies/../../../dependencies/Common clean
 	$(MAKE) --directory=./dependencies/../../../dependencies/PhyMacParser clean
 	$(MAKE) --directory=./dependencies/../../../dependencies/MeshLib/dependencies/DiskManager clean
 	$(MAKE) --directory=./dependencies/../../../shared-dependencies/BufferLib clean
@@ -287,3 +290,4 @@ build-run: build
 	$(__EXECUTABLE_NAME)
 
 run: build-run
+	
