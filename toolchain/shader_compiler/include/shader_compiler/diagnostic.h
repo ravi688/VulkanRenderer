@@ -1,0 +1,55 @@
+#pragma once
+
+#include <shader_compiler/defines.h>
+#include <calltrace/calltrace.h>
+#include <bufferlib/buffer.h>
+
+
+typedef enum diagnostic_type_t
+{
+	DIAGNOSTIC_TYPE_PARSE_ERROR,			// for parse time errors, for example: failed to open file or unexpected end of file.
+	DIAGNOSTIC_TYPE_PARSE_WARNING,			// for parse time warnings.
+	DIAGNOSTIC_TYPE_PARSE_INFO,				// for parse time infos, for example: writing the intermediate outputs to a file for debugging purpose.
+	
+	DIAGNOSTIC_TYPE_SYNTAX_ERROR,			// for AST generation time errors, for example: plus sign used as an unary operator.
+	DIAGNOSTIC_TYPE_SYNTAX_WARNING,			// for AST generation time warnings.
+	DIAGNOSTIC_TYPE_SYNTAX_INFO,			// for AST generation time infos, for example: writing the intermediate outputs to a file for debugging purpose.
+	
+	DIAGNOSTIC_TYPE_SEMANTIC_ERROR,			// for semantic analysis time errors, for example: type mismatch or incorrect converstion.
+	DIAGNOSTIC_TYPE_SEMANTIC_WARNING,		// for semantic analysis time warnings.
+	DIAGNOSTIC_TYPE_SEMANTIC_INFO			// for semantic analysis time infos, for example: writing the intermediate outputs to ta  file for debugging purpose.
+
+	DIAGNOSTIC_TYPE_MAX
+} diagnostic_type_t;
+
+typedef enum diagnostic_message_t
+{
+	DIAGNOSTIC_MESSAGE_FAILED_TO_OPEN_FILE,			// the given file is not able to open
+	DIAGNOSTIC_MESSAGE_UNEXPECTED_END_OF_FILE,		// the file has unexpected end of file
+	DIAGNOSTIC_MESSAGE_MAX
+} diagnostic_message_t;
+
+typedef struct diagnostic_t
+{
+	BUFFER args;			// argument buffer for holding the pointer
+} diagnostic_t;
+
+
+BEGIN_CPP_COMPATIBLE
+
+/* constructors and destructors */
+SC_API diagnostic_t* diagnostic_new();
+SC_API diagnostic_t* diagnostic_create();
+SC_API void diagnostic_release_resources(diagnostic_t* diagnostic);
+SC_API void diagnostic_destroy(diagnostic_t* diagnostic);
+
+/* pushes a string on top of the argument stack */
+SC_API void diagnostic_push_string(diagnostic_t* diagnostic, const char* value);
+/* pushes a contiguous array of bytes pointed by 'ptr' of size 'size' on top of the argument stack */
+SC_API void diagnostic_push(diagnostic_t* diagnostic, const u8 const * ptr, u32 size);
+
+/* spits out the log message with appropriate diagnostic cateogry and diagnostic message */
+#define diagnostic_log(...) define_alias_function_macro(diagnostic_log, __VA_ARGS__)
+SC_API function_signature(void, diagnostic_log, diagnostic_t* diagnostic, diagnostic_type_t type, diagnostic_message_t message);
+
+END_CPP_COMPATIBLE
