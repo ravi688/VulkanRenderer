@@ -9,15 +9,17 @@ typedef struct binary_writer_t
 	/* 	user data (automatically resizable buffer instance, such as BUFFER)	*/
 	void* user_data;
 	/* 	ptr to a function which pushes a number of contiguous bytes on top of the memory buffer */
-	void (*push)(void* user_data, void* bytes, u32 size);
+	void (*push)(void* user_data, const void* bytes, u32 size);
 	/* 	ptr to a function which inserts a number of contiguous bytes somewhere in the memory buffer 
 		index: the index where to to start inserting the bytes
 		bytes: ptr to the contiguous bytes
 		size: the number of bytes pointed by the pointer 'bytes'
 	 */
-	void (*insert)(void* user_data, u32 index, void* bytes, u32 size);
+	void (*insert)(void* user_data, u32 index, const void* bytes, u32 size);
+	/* ptr to a function which returns internal memory buffer pointer */
+	void* (*get_ptr)(void* user_data);
 	/* ptr to a function which returns current position (number of elements) */
-	u32 (*write_cursor)(void* user_data);
+	u32 (*write_pos)(void* user_data);
 	/* a table to map mark IDs to write positions */
 	dictionary_t mark_table;
 } binary_writer_t;
@@ -38,8 +40,8 @@ typedef enum mark_type_t
 SC_API binary_writer_t* binary_writer_new();
 SC_API binary_writer_t* binary_writer_create(
 												void* user_data,
-												void (*push)(void* user_data, void* bytes, u32 size),
-												void (*insert)(void* user_data, u32 index, void* bytes, u32 size),
+												void (*push)(void* user_data, const void* bytes, u32 size),
+												void (*insert)(void* user_data, u32 index, const void* bytes, u32 size),
 												void* (*get_ptr)(void* user_data),
 												u32 (*write_pos)(void* user_data));
 SC_API void binary_writer_destroy(binary_writer_t* writer);
@@ -73,6 +75,9 @@ SC_API void binary_writer_f32(binary_writer_t* writer, f32 v);
 /* 	writes a f64 value */
 SC_API void binary_writer_f64(binary_writer_t* writer, f64 v);
 
+/* returns the current write position (number of bytes written till now) */
+SC_API u32 binary_writer_pos(binary_writer_t* writer);
+
 /* marks the 2 bytes from the current position with mark_id to be writen later */
 SC_API void binary_writer_u16_mark(binary_writer_t* writer, u32 mark_id);
 /* writes 2 bytes from the write position marked with mark_id */
@@ -86,4 +91,4 @@ SC_API void binary_writer_u32_set(binary_writer_t* writer, u32 mark_id, u32 v);
 /* marks the current position with mark_id, for variable number of bytes, to be written later */
 SC_API void binary_writer_mark(binary_writer_t* writer, u32 mark_id);
 /* writes the bytes pointed by 'bytes' with size 'size' from the write position marked with mark_id */
-SC_API void binary_writer_insert(binary_writer_t* writer, u32 mark_id, void* bytes, u32 size);
+SC_API void binary_writer_insert(binary_writer_t* writer, u32 mark_id, const void* bytes, u32 size);

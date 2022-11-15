@@ -1,15 +1,17 @@
 
-#include <shader_compiler/compiler.h>
+#include <shader_compiler/compiler/compiler.h>
 #include <disk_manager/file_reader.h>
 #include <disk_manager/file_writer.h>
 // #include <shader_compiler/standard_library.h>
 #include <shader_compiler/assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 void display_help_and_exit(const char* application_name)
 {
 	printf(
+		"Not enough arguments are given\n"
 		"%s: Help\n"
 		"\t%s <input_file_name> <output_file_name>\n"
 		"\tor\n"
@@ -21,7 +23,7 @@ void display_help_and_exit(const char* application_name)
 
 int main(int arg_count, const char* const* argv)
 {
-	if(arg_count == 1) display_help_and_exit(argv[0]);
+	if(arg_count == 1) display_help_and_exit("vsc");
 
 	const char* input_file_name = argv[1];
 	char* output_file_name;
@@ -38,7 +40,7 @@ int main(int arg_count, const char* const* argv)
 		output_file_name = alloca(strlen(argv[2]) + 1);
 		strcpy(output_file_name, argv[2]);
 	}
-	BUFFER* binary = shader_compiler_load_and_compile(input_file_name);
+	BUFFER* binary = sc_load_and_compile(input_file_name);
 	write_binary_to_file(output_file_name, binary->bytes, binary->element_count);
 	buf_free(binary);;
 	// puts("Exited Successfully");

@@ -1,4 +1,9 @@
 #include <shader_compiler/utilities/binary_writer.h>
+#include <shader_compiler/debug.h>
+#include <shader_compiler/assert.h>
+
+#include <stdlib.h>
+#include <string.h> 	// for memset
 
 
 SC_API binary_writer_t* binary_writer_new()
@@ -8,10 +13,16 @@ SC_API binary_writer_t* binary_writer_new()
 	return writer;
 }
 
+typedef struct mark_info_t
+{
+	u32 pos;
+	mark_type_t type;
+} mark_info_t;
+
 SC_API binary_writer_t* binary_writer_create(
 												void* user_data,
-												void (*push)(void* user_data, void* bytes, u32 size),
-												void (*insert)(void* user_data, u32 index, void* bytes, u32 size),
+												void (*push)(void* user_data, const void* bytes, u32 size),
+												void (*insert)(void* user_data, u32 index, const void* bytes, u32 size),
 												void* (*get_ptr)(void* user_data),
 												u32 (*write_pos)(void* user_data))
 {
@@ -22,7 +33,7 @@ SC_API binary_writer_t* binary_writer_create(
 	writer->insert = insert;
 	writer->get_ptr = get_ptr;
 	writer->write_pos = write_pos;
-	writer->mark_table = dictionary_create(u32, mark_data_t);
+	writer->mark_table = dictionary_create(u32, mark_info_t, 1, dictionary_key_comparer_u32);
 	return writer;
 }
 
@@ -103,6 +114,11 @@ SC_API void binary_writer_f64(binary_writer_t* writer, f64 v)
 	writer->push(writer->user_data, &v, sizeof(f64));
 }
 
+SC_API u32 binary_writer_pos(binary_writer_t* writer)
+{
+	return CAST_TO(u32, writer->write_pos(writer->user_data));
+}
+
 static u32 _sizeof(mark_type_t type)
 {
 	switch(type)
@@ -133,8 +149,8 @@ static void mark(binary_writer_t* writer, u32 mark_id, mark_type_t type)
 	}
 
 	/* add the mark info into the mark table */
-	mark_info_t info = { curr_write_pos, type }
-	dictionary_push(&writer->mark_table, &mark_id, &curr_write_pos);
+	mark_info_t info = { curr_write_pos, type };
+	dictionary_push(&writer->mark_table, &mark_id, &info);
 
 	/* 	allocate some bytes to accomodate the data to be written later; 
 		NOTE: passing NULL to the data ptr only allocates memory
@@ -145,7 +161,7 @@ static void mark(binary_writer_t* writer, u32 mark_id, mark_type_t type)
 }
 
 /* sets or inserts a number of bytes from the marked write position with markID 'mark_id' */
-static void set_or_insert(binary_writer_t* writer, u32 mark_id, void* bytes, u32 size)
+static void set_or_insert(binary_writer_t* writer, u32 mark_id, const void* bytes, u32 size)
 {
 	/* check if the mark ID exists in the mark table */
 	buf_ucount_t index = dictionary_find_index_of(&writer->mark_table, &mark_id);
@@ -154,8 +170,8 @@ static void set_or_insert(binary_writer_t* writer, u32 mark_id, void* bytes, u32
 		debug_log_error("[Binary Writer] There is no such mark exists with mark ID %ul", mark_id);
 		return;
 	}
-	/* get the mark_data_t for the mark ID */
-	mark_data_t* data = CAST_TO(mark_data_t*, dictionary_get_value_ptr_at(&writer->mark_table, index));
+	/* get the mark_info_t for the mark ID */
+	mark_info_t* data = CAST_TO(mark_info_t*, dictionary_get_value_ptr_at(&writer->mark_table, index));
 	switch(data->type)
 	{
 		/* if marked for variable number of bytes */
@@ -183,7 +199,7 @@ SC_API void binary_writer_u16_mark(binary_writer_t* writer, u32 mark_id)
 
 SC_API void binary_writer_u16_set(binary_writer_t* writer, u32 mark_id, u16 v)
 {
-	insert(writer, mark_id, sizeof(u16));
+	set_or_insert(writer, mark_id, &v, sizeof(u16));
 }
 
 SC_API void binary_writer_u32_mark(binary_writer_t* writer, u32 mark_id)
@@ -193,7 +209,7 @@ SC_API void binary_writer_u32_mark(binary_writer_t* writer, u32 mark_id)
 
 SC_API void binary_writer_u32_set(binary_writer_t* writer, u32 mark_id, u32 v)
 {
-	insert(writer, mark_id, sizeof(u32));
+	set_or_insert(writer, mark_id, &v, sizeof(u32));
 }
 
 SC_API void binary_writer_mark(binary_writer_t* writer, u32 mark_id)
@@ -201,7 +217,7 @@ SC_API void binary_writer_mark(binary_writer_t* writer, u32 mark_id)
 	mark(writer, mark_id, MARK_TYPE_UNDEFINED);
 }
 
-SC_API void binary_writer_insert(binary_writer_t* writer, u32 mark_id, void* bytes, u32 size)
+SC_API void binary_writer_insert(binary_writer_t* writer, u32 mark_id, const void* bytes, u32 size)
 {
 	set_or_insert(writer, mark_id, bytes, size);
 }

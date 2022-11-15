@@ -1,0 +1,168 @@
+#sb version 2022
+#sl version 2022
+
+[Name("SpotLightShader")]
+Shader
+{
+	[NoParse]
+	Properties
+	{
+		fragment vertex [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+		{
+			vec4 color;
+		} parameters;
+	}
+
+	[NoParse]
+	Layout
+	{
+		per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+		per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
+	}
+
+	RenderPass
+	{
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				depthStencil
+				{
+					depthTestEnable = true,
+					depthWriteEnable = true
+				}
+			}
+
+			glsl
+			{
+				#stage vertex
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight light;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				
+				layout(location = 0) out vec3 _position;
+				
+				void main()
+				{
+					_position = (objectInfo.transform * vec4(position, 1.0)).xyz;
+					vec4 clipPos = light.projection * light.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+				}
+
+				#stage fragment
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight light;
+				
+				layout(location = 0) in vec3 position;
+				
+				void main()
+				{
+				 	gl_FragDepth = length(position - light.position) / (20.0 - 0.04);
+				}
+			}
+		}
+
+		[Input(depth, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING)]
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					attachment { }
+				}
+
+				depthStencil
+				{
+					depthTestEnable = true,
+					depthWriteEnable = true
+				}
+			}
+
+			glsl
+			{
+				#stage vertex
+				#version 450
+				
+				#include <v3d.h>
+				
+				SPOT_LIGHT light;
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				layout(location = NORMAL_LOCATION) in vec3 normal;
+				
+				layout(location = 0) out vec3 _normal;
+				layout(location = 1) out vec3 _position;
+				
+				void main()
+				{
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+					_normal = normalize((objectInfo.normal * vec4(normal, 1)).xyz);
+					_position = (objectInfo.transform * vec4(position, 1)).xyz;
+				}
+
+				#stage fragment
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight light;
+				layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+				{
+					vec4 color;
+				} parameters;
+				layout(set = RENDER_SET, binding = TEXTURE_BINDING0) uniform sampler2D shadowMap;
+				
+				layout(location = 0) in vec3 normal;
+				layout(location = 1) in vec3 position;
+				
+				layout(location = 0) out vec4 color;
+				
+				const float shadowBias = 0.0006f;
+				const float minShadow = 0.001f;
+				const float ambient = 0.02f;
+				const float bias = 0.001f;
+				
+				void main()
+				{
+					vec4 shadowMapCoord = light.projection * light.view * vec4(position, 1.0);
+					shadowMapCoord /= shadowMapCoord.w;
+					shadowMapCoord = shadowMapCoord * 0.5 + 0.5;
+					float closestDistance = texture(shadowMap, vec2(shadowMapCoord.x, 1 - shadowMapCoord.y)).r;
+				
+					vec3 dir = position - light.position;
+					float distance = length(dir);
+				
+					float receivedShadow = 1.0f;
+				
+					if(distance > ((closestDistance * (20.0 - 0.04)) + 0.001))
+						receivedShadow = minShadow;
+				
+					vec3 normalized_dir = dir / distance;
+					float litAmount = 1;
+					if(cos(light.angle * 0.5) < dot(light.direction, normalized_dir))
+						litAmount = light.intensity / (distance * distance);
+					else
+						litAmount = 0;
+				
+					float dp = dot(normal, -normalized_dir)				;				
+					float castedShadow = max(0, dp) + bias;				
+					color = max(receivedShadow * castedShadow * litAmount, ambient) * vec4(light.color, 1) * 				parameters.color;
+				}
+			}
+		}
+	}
+}

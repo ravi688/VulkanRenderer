@@ -17,11 +17,11 @@
 PROJECT_NAME = ShaderCompiler
 STATIC_LIB_NAME = shader_compiler.a
 DYNAMIC_LIB_NAME = shader_compiler.dll
-EXECUTABLE_NAME = shader_compiler
+EXECUTABLE_NAME = vsc
 EXTERNAL_INCLUDES = -Iinclude/shader_compiler
 EXTERNAL_LIBS = -L./external-dependency-libs -lshaderc_shared
 DEPENDENCIES = ../../../dependencies/GLSLCommon ../../../dependencies/Common ../../../dependencies/PhyMacParser ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
-DEPENDENCY_LIBS = ../../../dependencies/GLSLCommon/glslcommon.a ../../../dependencies/Common/common.a ../../../dependencies/PhyMacParser/lib/ppsr.a ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCY_LIBS = ../../../dependencies/GLSLCommon/lib/glslcommon.a ../../../dependencies/Common/lib/common.a ../../../dependencies/PhyMacParser/lib/ppsr.a ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = 
 SHARED_DEPENDENCY_LIBS = 
@@ -185,7 +185,7 @@ debug: $(TARGET)
 
 
 %.o : %.c
-	@echo Compiling $< to $@
+	@echo [Log] Compiling $< to $@
 	$(COMPILER) $(COMPILER_FLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
 
 %.a:

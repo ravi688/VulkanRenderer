@@ -1,0 +1,40 @@
+#sb version 2022
+#sl version 2022
+
+[Name("MyShader")]
+Shader
+{
+
+	[NoParse]
+	Properties
+	{
+		Hello World
+	}
+
+	[NoParse]
+	Layout
+	{
+		My World
+	}
+
+	RenderPass
+	{
+
+		SubPass
+		{
+			
+			GraphicsPipeline
+			{
+
+			}
+
+			GLSL
+			{
+				#stage vertex
+				#stage fragment
+
+				__fastcall float ptr;
+			}
+		}
+	}
+}

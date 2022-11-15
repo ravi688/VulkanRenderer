@@ -1,5 +1,5 @@
 
-#include <shader_compiler/dictionary.h>
+#include <shader_compiler/utilities/dictionary.h>
 #include <shader_compiler/assert.h>
 #include <memory.h>
 #include <string.h>

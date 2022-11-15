@@ -17,7 +17,7 @@ typedef enum diagnostic_type_t
 	
 	DIAGNOSTIC_TYPE_SEMANTIC_ERROR,			// for semantic analysis time errors, for example: type mismatch or incorrect converstion.
 	DIAGNOSTIC_TYPE_SEMANTIC_WARNING,		// for semantic analysis time warnings.
-	DIAGNOSTIC_TYPE_SEMANTIC_INFO			// for semantic analysis time infos, for example: writing the intermediate outputs to ta  file for debugging purpose.
+	DIAGNOSTIC_TYPE_SEMANTIC_INFO,			// for semantic analysis time infos, for example: writing the intermediate outputs to ta  file for debugging purpose.
 
 	DIAGNOSTIC_TYPE_MAX
 } diagnostic_type_t;
@@ -26,6 +26,7 @@ typedef enum diagnostic_message_t
 {
 	DIAGNOSTIC_MESSAGE_FAILED_TO_OPEN_FILE,			// the given file is not able to open
 	DIAGNOSTIC_MESSAGE_UNEXPECTED_END_OF_FILE,		// the file has unexpected end of file
+	DIAGNOSTIC_MESSAGE_UNEXPECTED_SYMBOL,
 	DIAGNOSTIC_MESSAGE_MAX
 } diagnostic_message_t;
 

@@ -1,5 +1,5 @@
 
-#include <shader_compiler/string_utilities.h>
+#include <shader_compiler/utilities/string_utilities.h>
 
 SC_API const char* skip_whitespaces(const char* str, const char* const end)
 {
