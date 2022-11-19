@@ -1,5 +1,6 @@
 
-#include <shader_compiler/utilities/string_utilities.h>
+#include <shader_compiler/utilities/string.h>
+#include <shader_compiler/utilities/misc.h>
 
 SC_API const char* skip_whitespaces(const char* str, const char* const end)
 {
@@ -22,6 +23,12 @@ SC_API u32 get_word_length(const char* string, const char delimiter)
 	return count;
 }
 
+SC_API int safe_strncmp(const char* str1, const char* const str2, u32 len)
+{
+	int result = strncmp(str1, str2, min(strlen(str2), len));
+	return result;
+}
+
 SC_API bool is_empty(const char* start, const char* const end)
 {
 	bool empty = true;
@@ -37,9 +44,8 @@ SC_API bool is_empty(const char* start, const char* const end)
 	return empty;
 }
 
-SC_API void remove_comments(char* start, u64 length)
+SC_API void remove_comments(char* start, const char* const end)
 {
-	const char* const end = start + length;
 	bool single_line_comment_begin = false; 
 	bool multiple_line_comment_begin = false;
 

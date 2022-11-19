@@ -27,6 +27,7 @@ Shader
 	{
 		SubPass
 		{
+			[NoParse]
 			GraphicsPipeline
 			{
 				// no color attachment
@@ -39,6 +40,7 @@ Shader
 				}
 			}
 
+			[NoParse]
 			glsl
 			{
 				#stage vertex
@@ -76,6 +78,7 @@ Shader
 
 		SubPass
 		{
+			[NoParse]
 			GraphicsPipeline
 			{
 				colorBlend
@@ -91,6 +94,7 @@ Shader
 				}
 			}
 
+			[NoParse]
 			glsl
 			{
 				#stage vertex
@@ -167,6 +171,7 @@ Shader
 		[Input(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
 		SubPass
 		{
+			[NoParse]
 			GraphicsPipeline
 			{
 				colorBlend
@@ -181,6 +186,7 @@ Shader
 				}
 			}
 
+			[NoParse]
 			glsl
 			{
 				#stage vertex

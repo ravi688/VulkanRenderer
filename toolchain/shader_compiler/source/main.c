@@ -1,9 +1,8 @@
 
 #include <shader_compiler/compiler/compiler.h>
-#include <disk_manager/file_reader.h>
-#include <disk_manager/file_writer.h>
-// #include <shader_compiler/standard_library.h>
+#include <shader_compiler/defines.h>
 #include <shader_compiler/assert.h>
+#include <disk_manager/file_writer.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -27,7 +26,7 @@ int main(int arg_count, const char* const* argv)
 
 	const char* input_file_name = argv[1];
 	char* output_file_name;
-	uint32_t output_file_name_length;
+	u32 output_file_name_length;
 	if(arg_count == 2)
 	{
 		output_file_name = alloca(strlen(input_file_name) + strlen(".sb") + 1);
@@ -43,5 +42,4 @@ int main(int arg_count, const char* const* argv)
 	BUFFER* binary = sc_load_and_compile(input_file_name);
 	write_binary_to_file(output_file_name, binary->bytes, binary->element_count);
 	buf_free(binary);;
-	// puts("Exited Successfully");
 }

@@ -74,6 +74,8 @@ SC_API void binary_writer_s64(binary_writer_t* writer, s64 v);
 SC_API void binary_writer_f32(binary_writer_t* writer, f32 v);
 /* 	writes a f64 value */
 SC_API void binary_writer_f64(binary_writer_t* writer, f64 v);
+/*  writes contiguous bytes pointed by 'bytes' of length 'size' */
+SC_API void binary_writer_write(binary_writer_t* writer, void* bytes, u32 size);
 
 /* returns the current write position (number of bytes written till now) */
 SC_API u32 binary_writer_pos(binary_writer_t* writer);

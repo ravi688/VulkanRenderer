@@ -1,16 +1,14 @@
-
-
-#include <shader_compiler/compiler/settings_parser.h>
+#include <shader_compiler/compiler/codegen/gfx_pipeline.h>
 #include <shader_compiler/assert.h> 		// assert()
 #include <shader_compiler/debug.h>
-#include <shader_compiler/utilities/string_utilities.h>
+#include <shader_compiler/utilities/string.h>
 #include <shader_compiler/utilities/dictionary.h>
 
 #include <stddef.h> 			// offsetof
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct settings_parser_callbacks_t
+typedef struct callbacks_t
 {
 	void* user_data; 								// pointer to a user data
 
@@ -36,7 +34,7 @@ typedef struct settings_parser_callbacks_t
 						u32 value_length,  			// value_length: length of the string value
 						void* user_data); 			// user_data: pointer to the user data
 
-} settings_parser_callbacks_t;
+} callbacks_t;
 
 /* 	field's value writer function
 	str: pointer to a null terminated string which represents a value (in string form)
@@ -84,7 +82,7 @@ typedef struct CategoryTemplate
 } CategoryTemplate;
 
 
-static const char* parse(const char* str, u32 length, settings_parser_callbacks_t* callbacks, u32 categoryRank);
+static const char* parse(const char* str, u32 length, callbacks_t* callbacks, u32 categoryRank);
 static void begin_category(const char* name, u32 length, void* user_data);
 static void end_category(void* user_data);
 static void attribute(const char* name, u32 length, const char* value, u32 value_length, void* user_data);
@@ -92,24 +90,15 @@ static void field(const char* name, u32 length, const char* value, u32 value_len
 static dictionary_t* create_tree(UserData* data);
 static void destroy_tree(dictionary_t* tree);
 static dictionary_t setup_category_templates();
-static void link(UserData* data, BUFFER* offsetsBuffer);
+static void link(UserData* data);
 
-function_signature(const char*, parse_settings, const char* _source, buf_ucount_t length, BUFFER* buffer, BUFFER* offsets_buffer)
+SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen_buffer_t* buffer)
 {
-	CALLTRACE_BEGIN();
-	const char* string = _source;
-	const char* const end = string + length;
-	// if(is_empty(string, end))
-	// {
-	// 	LOG_MSG("SETTINGS section is empty, skipping\n");
-	// 	CALLTRACE_RETURN(_source + length);
-	// }
-
 	BUFFER stringLiteralBuffer = buf_create(sizeof(char*), 1024, 0);	 // 8 KB
 	UserData data = {};
 	data.categoryStack = buf_create(sizeof(Category*), 1, 0);
-	data.mainBaseOffset = buf_get_element_count(buffer);
-	data.mainOutput = buffer;
+	data.mainBaseOffset = buf_get_element_count(CAST_TO(BUFFER*, buffer->data));
+	data.mainOutput = CAST_TO(BUFFER*, buffer->data);
 	data.baseOffset = data.mainBaseOffset;
 	data.output = data.mainOutput;
 	data.stringBuffer = buf_create(sizeof(char), 1, 0);
@@ -119,7 +108,7 @@ function_signature(const char*, parse_settings, const char* _source, buf_ucount_
 
 	printf("baseOffset: %u\n", data.baseOffset);
 
-	settings_parser_callbacks_t callbacks =
+	callbacks_t callbacks =
 	{
 		.begin_category = begin_category,
 		.end_category = end_category,
@@ -132,10 +121,10 @@ function_signature(const char*, parse_settings, const char* _source, buf_ucount_
 	buf_push_null(&data.stringBuffer);
 	
 	// parse the string
-	parse(string, length, &callbacks, 0);
+	parse(start, end - start, &callbacks, 0);
 
 	// merge and link the outputs
-	link(&data, offsets_buffer);
+	link(&data);
 
 	// release heap allocated resources
 	destroy_tree(data.tree);
@@ -143,8 +132,6 @@ function_signature(const char*, parse_settings, const char* _source, buf_ucount_
 	buf_free(&data.stringBuffer);
 	buf_free(&data.categoryStack);
 	buf_free(&stringLiteralBuffer);
-	
-	CALLTRACE_RETURN(_source + length);
 }
 
 
@@ -302,7 +289,7 @@ static void field(const char* name, u32 length, const char* value, u32 value_len
 	field->write(value_string, buf_get_ptr_at(data->output, offset));
 }
 
-static const char* parse(const char* str, u32 length, settings_parser_callbacks_t* callbacks, u32 categoryRank)
+static const char* parse(const char* str, u32 length, callbacks_t* callbacks, u32 categoryRank)
 {
 	assert(str != NULL);
 	assert(callbacks != NULL);
@@ -392,7 +379,7 @@ static const char* parse(const char* str, u32 length, settings_parser_callbacks_
 }
 
 static Category create_graphicspipeline_category(UserData* data);
-static Category create_properties_category(UserData* data);
+// static Category create_properties_category(UserData* data);
 
 #define createStringLiteral(literal) __createStringLiteral(data->literalBuffer, literal)
 static char** __createStringLiteral(BUFFER* literalBuffer, const char* literal)
@@ -408,12 +395,12 @@ static dictionary_t* create_tree(UserData* data)
 	dictionary_t* categories = create_category_dictionary();
 	Category category = create_graphicspipeline_category(data);
 	dictionary_push(categories, createStringLiteral("graphicspipeline"), &category);
-	category = create_properties_category(data);
-	dictionary_push(categories, createStringLiteral("properties"), &category);
+	// category = create_properties_category(data);
+	// dictionary_push(categories, createStringLiteral("properties"), &category);
 	buf_ucount_t offset = buf_get_element_count(data->mainOutput);
-	buf_push_pseudo(data->mainOutput, sizeof(GraphicsPipeline) + sizeof(Properties));
+	buf_push_pseudo(data->mainOutput, sizeof(gfx_pipeline_t));
 	
-	GraphicsPipeline* pipeline = buf_get_ptr_at(data->mainOutput, offset);
+	gfx_pipeline_t* pipeline = buf_get_ptr_at(data->mainOutput, offset);
 	pipeline->inputassembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	pipeline->tessellation.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
 	pipeline->viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -474,9 +461,9 @@ static dictionary_t* create_tree(UserData* data)
 	pipeline->depthstencil.depthBoundsTestEnable = VK_FALSE;
 	pipeline->depthstencil.stencilTestEnable = VK_FALSE;
 
-	Properties* properties = buf_get_ptr_at(data->mainOutput, offset + sizeof(GraphicsPipeline));
-	properties->castShadow = true;		// default value
-	properties->receiveShadow = true; 	// default value
+	// Properties* properties = buf_get_ptr_at(data->mainOutput, offset + sizeof(gfx_pipeline_t));
+	// properties->castShadow = true;		// default value
+	// properties->receiveShadow = true; 	// default value
 
 	return categories;
 }
@@ -487,7 +474,7 @@ static void destroy_tree(dictionary_t* tree)
 }
 
 
-static void link(UserData* data, BUFFER* offsetsBuffer)
+static void link(UserData* data)
 {
 	dictionary_t* templates = &data->categoryTemplates;
 	
@@ -498,7 +485,7 @@ static void link(UserData* data, BUFFER* offsetsBuffer)
 	CategoryTemplate* attachmentTemplate = dictionary_get_value_ptr(templates, &attachmentStr);
 	CategoryTemplate* scissorTemplate = dictionary_get_value_ptr(templates, &scissorStr);
 	CategoryTemplate* viewportTemplate = dictionary_get_value_ptr(templates, &viewportStr);
-	GraphicsPipeline* pipeline = buf_get_ptr_at(data->mainOutput, data->mainBaseOffset);
+	gfx_pipeline_t* pipeline = buf_get_ptr_at(data->mainOutput, data->mainBaseOffset);
 
 	// get the instance counts as defined (explicitly) in the shader
 	u32 colorAttachmentCount = buf_get_element_count(&attachmentTemplate->instances) / sizeof(VkPipelineColorBlendAttachmentState);
@@ -524,9 +511,11 @@ static void link(UserData* data, BUFFER* offsetsBuffer)
 	}
 	// pAttachments would hold the offset of attachments
 	pipeline->colorblend.pAttachments = (void*)(buf_get_element_count(data->mainOutput));
-	// register the offset for update whenever the buffer resizes
-	buf_ucount_t index = data->mainBaseOffset + offsetof(GraphicsPipeline, colorblend.pAttachments);
-	buf_push(offsetsBuffer, &index);
+	
+	//// register the offset for update whenever the buffer resizes
+	//buf_ucount_t index = data->mainBaseOffset + offsetof(gfx_pipeline_t, colorblend.pAttachments);
+	//buf_push(offsetsBuffer, &index);
+
 	// copy (push) to main output buffer
 	buf_pushv(data->mainOutput, defaultValue, size);
 
@@ -548,9 +537,11 @@ static void link(UserData* data, BUFFER* offsetsBuffer)
 	}
 	// pScissors would hold the offset of scissors
 	pipeline->viewport.pScissors = (void*)(buf_get_element_count(data->mainOutput));
-	// register the offset for update whenever the buffer resizes		
-	index = data->mainBaseOffset + offsetof(GraphicsPipeline, viewport.pScissors);
-	buf_push(offsetsBuffer, &index);
+	
+	//// register the offset for update whenever the buffer resizes		
+	//index = data->mainBaseOffset + offsetof(gfx_pipeline_t, viewport.pScissors);
+	//buf_push(offsetsBuffer, &index);
+
 	// copy (push) to main output buffer
 	buf_pushv(data->mainOutput, defaultValue, size);
 
@@ -572,25 +563,27 @@ static void link(UserData* data, BUFFER* offsetsBuffer)
 	}
 	// pViewports would hold the offset of viewports
 	pipeline->viewport.pViewports = (void*)(buf_get_element_count(data->mainOutput));	
-	// register the offset for update whenever the buffer resizes
-	index = data->mainBaseOffset + offsetof(GraphicsPipeline, viewport.pViewports);
-	buf_push(offsetsBuffer, &index);
+	
+	//// register the offset for update whenever the buffer resizes
+	//index = data->mainBaseOffset + offsetof(gfx_pipeline_t, viewport.pViewports);
+	//buf_push(offsetsBuffer, &index);
+	
 	// copy (push) to main output buffer
 	buf_pushv(data->mainOutput, defaultValue, size);
 }
 
 static void write_bool(const char* str, void* output);
 
-static Category create_properties_category(UserData* data)
-{
-	dictionary_t* fields = create_field_dictionary();
-	u32 offset = sizeof(GraphicsPipeline);
-	Field field = { offset + offsetof(Properties, castShadow), write_bool };
-	dictionary_push(fields, createStringLiteral("castshadow"), &field);
-	field = (Field) { offset + offsetof(Properties, receiveShadow), write_bool };
-	dictionary_push(fields, createStringLiteral("receiveshadow"), &field);
-	return (Category) { .fields = fields, .categories = NULL };
-}
+// static Category create_properties_category(UserData* data)
+// {
+// 	dictionary_t* fields = create_field_dictionary();
+// 	u32 offset = sizeof(gfx_pipeline_t);
+// 	Field field = { offset + offsetof(Properties, castShadow), write_bool };
+// 	dictionary_push(fields, createStringLiteral("castshadow"), &field);
+// 	field = (Field) { offset + offsetof(Properties, receiveShadow), write_bool };
+// 	dictionary_push(fields, createStringLiteral("receiveshadow"), &field);
+// 	return (Category) { .fields = fields, .categories = NULL };
+// }
 
 static Category create_inputassembly_category(UserData* data);
 static Category create_tessellation_category(UserData* data);
@@ -642,9 +635,9 @@ static void write_VkColorComponentFlags(const char* str, void* output);
 static Category create_inputassembly_category(UserData* data)
 {
 	dictionary_t* fields = create_field_dictionary();
-	Field field = { offsetof(GraphicsPipeline, inputassembly.topology), write_VkPrimitiveTopology };
+	Field field = { offsetof(gfx_pipeline_t, inputassembly.topology), write_VkPrimitiveTopology };
 	dictionary_push(fields, createStringLiteral("topology"), &field);
-	field = (Field) { offsetof(GraphicsPipeline, inputassembly.primitiveRestartEnable), write_VkBool32 };
+	field = (Field) { offsetof(gfx_pipeline_t, inputassembly.primitiveRestartEnable), write_VkBool32 };
 	dictionary_push(fields, createStringLiteral("primitiverestartenable"), &field);
 	return (Category) { .fields = fields, .categories = NULL };
 }
@@ -652,7 +645,7 @@ static Category create_inputassembly_category(UserData* data)
 static Category create_tessellation_category(UserData* data)
 {
 	dictionary_t* fields = create_field_dictionary();
-	Field field = { offsetof(GraphicsPipeline, tessellation.patchControlPoints), write_uint32_t };
+	Field field = { offsetof(gfx_pipeline_t, tessellation.patchControlPoints), write_uint32_t };
 	dictionary_push(fields, createStringLiteral("patchcontrolpoints"), &field);
 	return (Category) { .fields = fields, .categories = NULL };
 }
@@ -714,9 +707,9 @@ static Category create_viewport_category(UserData* data)
 static Category create_viewport_state_category(UserData* data)
 {
 	dictionary_t* fields = create_field_dictionary();
-	Field field = { offsetof(GraphicsPipeline, viewport.viewportCount), write_uint32_t };
+	Field field = { offsetof(gfx_pipeline_t, viewport.viewportCount), write_uint32_t };
 	dictionary_push(fields, createStringLiteral("viewportcount"), &field);
-	field = (Field) { offsetof(GraphicsPipeline, viewport.scissorCount), write_uint32_t };
+	field = (Field) { offsetof(gfx_pipeline_t, viewport.scissorCount), write_uint32_t };
 	dictionary_push(fields, createStringLiteral("scissorcount"), &field);
 
     CategoryTemplate viewportTemplate = 
@@ -739,25 +732,25 @@ static Category create_viewport_state_category(UserData* data)
 static Category create_rasterization_category(UserData* data)
 {
 	dictionary_t* fields = create_field_dictionary();
-    Field field = { offsetof(GraphicsPipeline, rasterization.depthClampEnable), write_VkBool32 };
+    Field field = { offsetof(gfx_pipeline_t, rasterization.depthClampEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("depthclampenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, rasterization.rasterizerDiscardEnable), write_VkBool32 };
+    field = (Field) { offsetof(gfx_pipeline_t, rasterization.rasterizerDiscardEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("rasterizerdiscardenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, rasterization.polygonMode), write_VkPolygonMode };
+    field = (Field) { offsetof(gfx_pipeline_t, rasterization.polygonMode), write_VkPolygonMode };
     dictionary_push(fields, createStringLiteral("polygonmode"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, rasterization.cullMode), write_VkCullModeFlags };
+    field = (Field) { offsetof(gfx_pipeline_t, rasterization.cullMode), write_VkCullModeFlags };
     dictionary_push(fields, createStringLiteral("cullmode"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, rasterization.frontFace), write_VkFrontFace };
+    field = (Field) { offsetof(gfx_pipeline_t, rasterization.frontFace), write_VkFrontFace };
     dictionary_push(fields, createStringLiteral("frontface"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, rasterization.depthBiasEnable), write_VkBool32 };
+    field = (Field) { offsetof(gfx_pipeline_t, rasterization.depthBiasEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("depthbiasenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, rasterization.depthBiasConstantFactor), write_float };
+    field = (Field) { offsetof(gfx_pipeline_t, rasterization.depthBiasConstantFactor), write_float };
     dictionary_push(fields, createStringLiteral("depthbiasconstantfactor"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, rasterization.depthBiasClamp), write_float };
+    field = (Field) { offsetof(gfx_pipeline_t, rasterization.depthBiasClamp), write_float };
     dictionary_push(fields, createStringLiteral("depthbiasclamp"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, rasterization.depthBiasSlopeFactor), write_float };
+    field = (Field) { offsetof(gfx_pipeline_t, rasterization.depthBiasSlopeFactor), write_float };
     dictionary_push(fields, createStringLiteral("depthbiasslopefactor"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, rasterization.lineWidth), write_float };
+    field = (Field) { offsetof(gfx_pipeline_t, rasterization.lineWidth), write_float };
     dictionary_push(fields, createStringLiteral("linewidth"), &field);
 	return (Category) { .fields = fields, .categories = NULL };
 }
@@ -765,15 +758,15 @@ static Category create_rasterization_category(UserData* data)
 static Category create_multisample_category(UserData* data)
 {
 	dictionary_t* fields = create_field_dictionary();
-    Field field = { offsetof(GraphicsPipeline, multisample.rasterizationSamples), write_VkSampleCountFlagBits };
+    Field field = { offsetof(gfx_pipeline_t, multisample.rasterizationSamples), write_VkSampleCountFlagBits };
     dictionary_push(fields, createStringLiteral("rasterizationsamples"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, multisample.sampleShadingEnable), write_VkBool32 };
+    field = (Field) { offsetof(gfx_pipeline_t, multisample.sampleShadingEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("sampleshadingenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, multisample.minSampleShading), write_float };
+    field = (Field) { offsetof(gfx_pipeline_t, multisample.minSampleShading), write_float };
     dictionary_push(fields, createStringLiteral("minsampleshading"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, multisample.alphaToCoverageEnable), write_VkBool32 };
+    field = (Field) { offsetof(gfx_pipeline_t, multisample.alphaToCoverageEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("alphatocoverageenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, multisample.alphaToOneEnable), write_VkBool32 };
+    field = (Field) { offsetof(gfx_pipeline_t, multisample.alphaToOneEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("alphatooneenable"), &field);
 	return (Category) { .fields = fields, .categories = NULL };
 }
@@ -783,25 +776,25 @@ static Category create_stencil_op_category(BUFFER* literalBuffer, u32 offset);
 static Category create_depthstencil_category(UserData* data)
 {
 	dictionary_t* fields = create_field_dictionary();
-    Field field = { offsetof(GraphicsPipeline, depthstencil.depthTestEnable), write_VkBool32 };
+    Field field = { offsetof(gfx_pipeline_t, depthstencil.depthTestEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("depthtestenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, depthstencil.depthWriteEnable), write_VkBool32 };
+    field = (Field) { offsetof(gfx_pipeline_t, depthstencil.depthWriteEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("depthwriteenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, depthstencil.depthCompareOp), write_VkCompareOp };
+    field = (Field) { offsetof(gfx_pipeline_t, depthstencil.depthCompareOp), write_VkCompareOp };
     dictionary_push(fields, createStringLiteral("depthcompareop"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, depthstencil.depthBoundsTestEnable), write_VkBool32 };
+    field = (Field) { offsetof(gfx_pipeline_t, depthstencil.depthBoundsTestEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("depthboundstestenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, depthstencil.stencilTestEnable), write_VkBool32 };
+    field = (Field) { offsetof(gfx_pipeline_t, depthstencil.stencilTestEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("stenciltestenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, depthstencil.minDepthBounds), write_float };
+    field = (Field) { offsetof(gfx_pipeline_t, depthstencil.minDepthBounds), write_float };
     dictionary_push(fields, createStringLiteral("mindepthbounds"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, depthstencil.maxDepthBounds), write_float };
+    field = (Field) { offsetof(gfx_pipeline_t, depthstencil.maxDepthBounds), write_float };
     dictionary_push(fields, createStringLiteral("maxdepthbounds"), &field);
 
     dictionary_t* categories = create_category_dictionary();
-    Category category = create_stencil_op_category(data->literalBuffer, offsetof(GraphicsPipeline, depthstencil.front));
+    Category category = create_stencil_op_category(data->literalBuffer, offsetof(gfx_pipeline_t, depthstencil.front));
     dictionary_push(categories, createStringLiteral("front"), &category);
-    category = create_stencil_op_category(data->literalBuffer, offsetof(GraphicsPipeline, depthstencil.back));
+    category = create_stencil_op_category(data->literalBuffer, offsetof(gfx_pipeline_t, depthstencil.back));
     dictionary_push(categories, createStringLiteral("back"), &category);
 	return (Category) { .fields = fields, .categories = categories };
 }
@@ -832,11 +825,11 @@ static Category create_blendconstants_category(UserData* data);
 static Category create_colorblend_category(UserData* data)
 {
 	dictionary_t* fields = create_field_dictionary();
-    Field field = { offsetof(GraphicsPipeline, colorblend.logicOpEnable), write_VkBool32 };
+    Field field = { offsetof(gfx_pipeline_t, colorblend.logicOpEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("logicopenable"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, colorblend.logicOp), write_VkLogicOp };
+    field = (Field) { offsetof(gfx_pipeline_t, colorblend.logicOp), write_VkLogicOp };
     dictionary_push(fields, createStringLiteral("logicop"), &field);
-    field = (Field) { offsetof(GraphicsPipeline, colorblend.attachmentCount), write_uint32_t };
+    field = (Field) { offsetof(gfx_pipeline_t, colorblend.attachmentCount), write_uint32_t };
     dictionary_push(fields, createStringLiteral("attachmentcount"), &field);
 
     CategoryTemplate colorAttachmentTemplate = 
@@ -855,13 +848,13 @@ static Category create_colorblend_category(UserData* data)
 static Category create_blendconstants_category(UserData* data)
 {
 	dictionary_t* fields = create_field_dictionary();
-	Field field = { offsetof(GraphicsPipeline, colorblend.blendConstants[0]), write_float };
+	Field field = { offsetof(gfx_pipeline_t, colorblend.blendConstants[0]), write_float };
 	dictionary_push(fields, createStringLiteral("r"), &field);
-	field = (Field) { offsetof(GraphicsPipeline, colorblend.blendConstants[1]), write_float };
+	field = (Field) { offsetof(gfx_pipeline_t, colorblend.blendConstants[1]), write_float };
 	dictionary_push(fields, createStringLiteral("g"), &field);
-	field = (Field) { offsetof(GraphicsPipeline, colorblend.blendConstants[2]), write_float };
+	field = (Field) { offsetof(gfx_pipeline_t, colorblend.blendConstants[2]), write_float };
 	dictionary_push(fields, createStringLiteral("b"), &field);
-	field = (Field) { offsetof(GraphicsPipeline, colorblend.blendConstants[3]), write_float };
+	field = (Field) { offsetof(gfx_pipeline_t, colorblend.blendConstants[3]), write_float };
 	dictionary_push(fields, createStringLiteral("a"), &field);
 	return (Category) { .fields = fields, .categories = NULL };	
 }

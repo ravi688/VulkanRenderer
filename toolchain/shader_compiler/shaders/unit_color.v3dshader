@@ -23,6 +23,7 @@ Shader
 	{
 		SubPass
 		{
+			[NoParse]
 			GraphicsPipeline
 			{
 				colorBlend
@@ -37,6 +38,7 @@ Shader
 				}
 			}
 
+			[NoParse]
 			glsl
 			{
 				#stage vertex

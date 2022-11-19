@@ -114,6 +114,11 @@ SC_API void binary_writer_f64(binary_writer_t* writer, f64 v)
 	writer->push(writer->user_data, &v, sizeof(f64));
 }
 
+SC_API void binary_writer_write(binary_writer_t* writer, void* bytes, u32 size)
+{
+	writer->push(writer->user_data, bytes, size);
+}
+
 SC_API u32 binary_writer_pos(binary_writer_t* writer)
 {
 	return CAST_TO(u32, writer->write_pos(writer->user_data));

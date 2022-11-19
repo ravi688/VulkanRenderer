@@ -24,6 +24,7 @@ Shader
 	{
 		SubPass
 		{
+			[NoParse]
 			GraphicsPipeline
 			{
 				colorBlend

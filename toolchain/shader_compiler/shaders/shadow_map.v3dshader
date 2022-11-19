@@ -20,6 +20,7 @@ Shader
 	{
 		SubPass
 		{
+			[NoParse]
 			GraphicsPipeline
 			{
 				depthStencil
@@ -29,6 +30,7 @@ Shader
 				}
 			}
 
+			[NoParse]
 			glsl
 			{
 				#stage fragment

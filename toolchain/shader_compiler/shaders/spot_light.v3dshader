@@ -24,6 +24,7 @@ Shader
 	{
 		SubPass
 		{
+			[NoParse]
 			GraphicsPipeline
 			{
 				depthStencil
@@ -33,6 +34,7 @@ Shader
 				}
 			}
 
+			[NoParse]
 			glsl
 			{
 				#stage vertex
@@ -74,6 +76,7 @@ Shader
 		[Input(depth, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING)]
 		SubPass
 		{
+			[NoParse]
 			GraphicsPipeline
 			{
 				colorBlend
@@ -88,6 +91,7 @@ Shader
 				}
 			}
 
+			[NoParse]
 			glsl
 			{
 				#stage vertex
