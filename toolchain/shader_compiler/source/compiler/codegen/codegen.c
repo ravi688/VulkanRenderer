@@ -70,7 +70,7 @@ static void codegen_pipeline(v3d_generic_node_t* node, compiler_ctx_t* ctx, code
 
 static void codegen_glsl(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer)
 {
-	write_glsl(node->unparsed.start + ctx->src, node->unparsed.end + ctx->src, writer);
+	write_glsl(node->unparsed.start + ctx->src, node->unparsed.end + ctx->src, writer, ctx);
 }
 
 SC_API void codegen(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer)

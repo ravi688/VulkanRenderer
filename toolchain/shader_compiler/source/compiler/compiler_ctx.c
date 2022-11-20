@@ -16,7 +16,7 @@ static list_t new_u32_list(u32 count, ...)
 	return (list_t) { ptr, count };
 }
 
-SC_API compiler_ctx_t* compiler_ctx_create(const char* src)
+SC_API compiler_ctx_t* compiler_ctx_create(const char* src, const char* src_path, const char* exe_path)
 {
 	compiler_ctx_t* ctx = CAST_TO(compiler_ctx_t*, malloc(sizeof(compiler_ctx_t)));
 
@@ -66,9 +66,7 @@ SC_API compiler_ctx_t* compiler_ctx_create(const char* src)
 	ctx->keywords = CAST_TO(char**, keywords);
 
 	ctx->depth = KEYWORD_UNDEFINED;
-
-	ctx->src = src;
-
+	
 	return ctx;
 }
 

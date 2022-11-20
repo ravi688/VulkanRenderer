@@ -63,16 +63,16 @@ Shader
 				
 				#include <v3d.h>
 				
-				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
-				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+				{
+					vec4 color;
+				} parameters;
 				
-				layout(location = POSITION_LOCATION) in vec3 position;
+				layout(location = 0) out vec4 color;
 				
 				void main()
 				{
-					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
-					clipPos.y = -clipPos.y;
-					gl_Position = clipPos;
+					color = parameters.color;
 				}
 			}
 		}

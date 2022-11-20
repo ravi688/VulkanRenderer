@@ -5,8 +5,11 @@
 #include <shader_compiler/debug.h>
 #include <shader_compiler/assert.h>
 #include <phymac_parser/string.h>
+#include <disk_manager/file_reader.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <stdio.h> 	// debug purpose, remove it
 
 typedef enum shader_type_t
 {
@@ -54,9 +57,9 @@ static const char* stage_to_string(shader_stage_t stage)
 	return "Invalid-stage";
 }
 
-static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_buffer_t* writer);
+static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_buffer_t* writer, compiler_ctx_t* ctx);
 
-SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* writer)
+SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* writer, compiler_ctx_t* ctx)
 {
 	const char* _start = start;
 	
@@ -101,10 +104,127 @@ SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* wri
 	for(u32 i = 0; i < SHADER_STAGE_MAX; i++)
 		shader_count += min(1, sources[i].count);
 
-	serialize_shader(sources, shader_count, writer);
+	serialize_shader(sources, shader_count, writer, ctx);
 }
 
-static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_buffer_t* writer)
+static char* resolve_relative_file_path(const char* src_path, u32 src_index, const char* exe_path, BUFFER* buffer)
+{
+	const char* ptr1 = strrchr(exe_path, '/');
+	const char* ptr2 = strrchr(exe_path, '\\');
+	if(ptr1 < ptr2)
+		ptr1 = ptr2;
+	if(src_index != U32_MAX)
+		src_path = buf_get_ptr_at(buffer, src_index);
+	u32 r_len = strlen(src_path);
+
+	/* buf_push_pseudo_get_ptr() */
+	u32 index = buf_get_element_count(buffer);
+	buf_push_pseudo(buffer, strlen(exe_path) + r_len);
+	char* file_path = CAST_TO(char*, buf_get_ptr_at(buffer, index));
+
+	/* update src_path as the buffer has been resized (the internall memory buffer address has been) */
+	if(src_index != U32_MAX)
+		src_path = buf_get_ptr_at(buffer, src_index);
+	
+	memcpy(CAST_TO(void*, file_path), exe_path, (ptr1 - exe_path) + 1);
+	memcpy(CAST_TO(void*, file_path + (ptr1 - exe_path) + 1), src_path, r_len);
+	file_path[ptr1 - exe_path + 1 + r_len] = 0;
+	return file_path;
+}
+
+static char* merge_dir_and_file(const char* dir, const char* file, BUFFER* buffer)
+{
+	buf_clear(buffer, NULL);
+	buf_push_string(buffer, dir);
+	char* ptr = buf_peek_ptr(buffer);
+	if((*ptr != '/') || (*ptr != '\\'))
+		buf_push_char(buffer, '/');
+	buf_push_string(buffer, file);
+	buf_push_null(buffer);
+	return buf_get_ptr(buffer);
+}
+
+static shaderc_include_result* resolve_include(void* user_data, const char* requested_source, int type, const char* requesting_source, size_t include_depth)
+{
+	compiler_ctx_t* ctx = CAST_TO(compiler_ctx_t*, user_data);
+	shaderc_include_result* result = CAST_TO(shaderc_include_result*, malloc(sizeof(shaderc_include_result)));
+
+	_assert((type >= shaderc_include_type_relative) && (type <= shaderc_include_type_standard));
+	
+	debug_log_info("[Codegen] [Legacy] Requested include file: %s", requested_source);
+
+	char* file_path = NULL;
+
+	BUFFER* data = NULL;
+	BUFFER buffer = buf_new(char);
+
+	switch(type)
+	{
+		case shaderc_include_type_relative:
+		{
+			/* if the requested_source is already an absolute file path */
+			if(strchr(requested_source, ':') != NULL)
+				file_path = CAST_TO(char*, requested_source);
+			else
+				file_path = resolve_relative_file_path(requested_source, U32_MAX, ctx->exe_path, &buffer);
+			data = load_text_from_file(file_path);
+		}
+		break;
+		
+		case shaderc_include_type_standard:
+		{
+			BUFFER* dirs = &ctx->include_paths;
+			u32 dir_count = buf_get_element_count(dirs);
+			for(u32 i = 0; i < dir_count; i++)
+			{
+				const char* dir = CAST_TO(char**, buf_get_ptr_at(dirs, i))[0];
+				file_path = resolve_relative_file_path(merge_dir_and_file(dir, requested_source, &buffer), 0, ctx->exe_path, &buffer);
+				BUFFER* _data = load_text_from_file_s(file_path);
+				if(_data == NULL)
+					continue;
+				else 
+				{
+					data = _data;
+					debug_log_info("[Codegen] [Legacy] Resolved include file: %s", file_path);
+					break;
+				}
+			}
+		}
+		break;
+	}
+
+	if(data == NULL)
+	{
+		result->source_name = "";
+		result->source_name_length = 0;
+		result->content = "Include Error";
+		result->content_length = strlen(result->content);
+	}
+	else
+	{
+		result->source_name = file_path;
+		result->source_name_length = strlen(file_path);
+		result->content = buf_get_ptr(data);
+		result->content_length = buf_get_element_count(data) - 1;
+	}
+
+	
+	return result;
+}
+
+static void release_include(void* user_data, shaderc_include_result* include_result)
+{
+	free(include_result);
+}
+
+static shaderc_compile_options_t get_compile_options(compiler_ctx_t* ctx)
+{
+	shaderc_compile_options_t options = shaderc_compile_options_initialize();
+	shaderc_compile_options_set_include_callbacks(options, resolve_include, release_include, ctx);
+	return options;
+}
+
+static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_buffer_t* writer, compiler_ctx_t* ctx)
 {
 	/* calculate the shader mask */
 	u8 shader_mask = 0;
@@ -119,7 +239,7 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 	binary_writer_u8(writer->main, shader_mask);
 
 	shaderc_compiler_t compiler = shaderc_compiler_initialize();
-	shaderc_compile_options_t options = shaderc_compile_options_initialize();
+	shaderc_compile_options_t options = get_compile_options(ctx);
 	for(u8 i = 0, j = 0; i < SHADER_STAGE_MAX; i++)
 	{
 		shader_source_t source = sources[i];
@@ -137,7 +257,11 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 		shaderc_compilation_result_t result = shaderc_compile_into_spv(compiler, source.source, source.length, shader_type, stage_to_string(source.stage), "main", options);
 		_assert(result != NULL);
 		if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success)
+		{
 			debug_log_error("[Codegen] [Legacy] GLSL to SPIR-V compilation failed:\n%s", shaderc_result_get_error_message(result));
+			debug_log_info("[Codegen] [Legacy] Compilation Aborted");
+			return;
+		}
 
 		void* bytes = (void*)shaderc_result_get_bytes(result);
 		_assert(bytes != NULL);
@@ -156,6 +280,8 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 
 		shaderc_result_release(result);
 		j++;
+
+		debug_log_info("[Codegen] [Legacy] %s shader compilation success", stage_to_string(source.stage));
 	}
 	shaderc_compile_options_release(options);
 	shaderc_compiler_release(compiler);

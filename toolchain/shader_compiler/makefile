@@ -290,4 +290,22 @@ build-run: build
 	$(__EXECUTABLE_NAME)
 
 run: build-run
-	
+
+#-------------------------------------------
+#		Test
+#-------------------------------------------
+.PHONY: test
+.PHONY: test-clean
+
+SHADERS := $(wildcard shaders/*.v3dshader)
+SHADER_BINARIES := $(addsuffix .sb, $(basename $(SHADERS)))
+SHADER_INCLUDES := -I../../shaders/include
+VSC := ./vsc
+
+%.sb: %.v3dshader
+	@echo Compiling $^ to $@
+	$(VSC) $(SHADER_INCLUDES) $^ $@
+
+test: build-debug $(SHADER_BINARIES)
+test-clean:
+	$(RM) $(SHADER_BINARIES)
