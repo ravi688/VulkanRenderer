@@ -20,13 +20,14 @@ static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx, codege
 {
 	for(u32 i = 0; i < node->child_count; i++)
 	{
-		u32_pair_t pair = node->qualifiers[node->qualifier_count - 1];
+		v3d_generic_node_t* child = node->childs[i];
+		u32_pair_t pair = child->qualifiers[child->qualifier_count - 1];
 		if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_PROPERTIES], U32_PAIR_DIFF(pair)) == 0)
-			codegen_descriptions(node, ctx, writer);
+			codegen_descriptions(child, ctx, writer);
 		else if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_LAYOUT], U32_PAIR_DIFF(pair)) == 0)
-			codegen_descriptions(node, ctx, writer);
+			codegen_descriptions(child, ctx, writer);
 		else if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_RENDERPASS], U32_PAIR_DIFF(pair)) == 0)
-			codegen_renderpass(node, ctx, writer);
+			codegen_renderpass(child, ctx, writer);
 		else debug_log_error("[Codegen] Unknown Error");
 	}
 }
@@ -40,9 +41,10 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, co
 {
 	for(u32 i = 0;i < node->child_count; i++)
 	{
-		u32_pair_t pair = node->qualifiers[node->qualifier_count - 1];
-		if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_GFXPIPELINE], U32_PAIR_DIFF(pair)) == 0)
-			codegen_pipeline(node, ctx, writer);
+		v3d_generic_node_t* child = node->childs[i];
+		u32_pair_t pair = child->qualifiers[child->qualifier_count - 1];
+		if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_SUBPASS], U32_PAIR_DIFF(pair)) == 0)
+			codegen_subpass(child, ctx, writer);
 		else debug_log_error("[Codegen] Unkown Error");
 	}
 }
@@ -51,11 +53,12 @@ static void codegen_subpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, codeg
 {
 	for(u32 i = 0;i < node->child_count; i++)
 	{
-		u32_pair_t pair = node->qualifiers[node->qualifier_count - 1];
+		v3d_generic_node_t* child = node->childs[i];
+		u32_pair_t pair = child->qualifiers[node->qualifier_count - 1];
 		if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_GFXPIPELINE], U32_PAIR_DIFF(pair)) == 0)
-			codegen_pipeline(node, ctx, writer);
+			codegen_pipeline(child, ctx, writer);
 		else if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_GLSL], U32_PAIR_DIFF(pair)) == 0)
-			codegen_glsl(node, ctx, writer);
+			codegen_glsl(child, ctx, writer);
 		else debug_log_error("[Codegen] Unkown Error");
 	}
 }

@@ -97,8 +97,8 @@ SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen
 	BUFFER stringLiteralBuffer = buf_create(sizeof(char*), 1024, 0);	 // 8 KB
 	UserData data = {};
 	data.categoryStack = buf_create(sizeof(Category*), 1, 0);
-	data.mainBaseOffset = buf_get_element_count(CAST_TO(BUFFER*, buffer->data));
-	data.mainOutput = CAST_TO(BUFFER*, buffer->data);
+	data.mainBaseOffset = buf_get_element_count(CAST_TO(BUFFER*, buffer->data->user_data));
+	data.mainOutput = CAST_TO(BUFFER*, buffer->data->user_data);
 	data.baseOffset = data.mainBaseOffset;
 	data.output = data.mainOutput;
 	data.stringBuffer = buf_create(sizeof(char), 1, 0);
@@ -106,7 +106,7 @@ SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen
 	data.categoryTemplates = dictionary_create(char*, CategoryTemplate, 1, dictionary_key_comparer_string);
 	data.tree = create_tree(&data);
 
-	printf("baseOffset: %u\n", data.baseOffset);
+	debug_log_info("base offset: %u\n", data.baseOffset);
 
 	callbacks_t callbacks =
 	{
@@ -380,6 +380,14 @@ static const char* parse(const char* str, u32 length, callbacks_t* callbacks, u3
 
 static Category create_graphicspipeline_category(UserData* data);
 // static Category create_properties_category(UserData* data);
+static Category create_inputassembly_category(UserData* data);
+static Category create_tessellation_category(UserData* data);
+static Category create_viewport_state_category(UserData* data);
+static Category create_rasterization_category(UserData* data);
+static Category create_multisample_category(UserData* data);
+static Category create_depthstencil_category(UserData* data);
+static Category create_colorblend_category(UserData* data);
+// static Category create_dynamic_category(UserData* data);
 
 #define createStringLiteral(literal) __createStringLiteral(data->literalBuffer, literal)
 static char** __createStringLiteral(BUFFER* literalBuffer, const char* literal)
@@ -390,13 +398,24 @@ static char** __createStringLiteral(BUFFER* literalBuffer, const char* literal)
 	return buf_get_ptr_at(literalBuffer, index);
 }
 
+
 static dictionary_t* create_tree(UserData* data)
 {
 	dictionary_t* categories = create_category_dictionary();
-	Category category = create_graphicspipeline_category(data);
-	dictionary_push(categories, createStringLiteral("graphicspipeline"), &category);
-	// category = create_properties_category(data);
-	// dictionary_push(categories, createStringLiteral("properties"), &category);
+	Category category = create_inputassembly_category(data);
+	dictionary_push(categories, createStringLiteral("inputassembly"), &category);
+	category = create_tessellation_category(data);
+	dictionary_push(categories, createStringLiteral("tessellation"), &category);
+	category = create_viewport_state_category(data);
+	dictionary_push(categories, createStringLiteral("viewport"), &category);
+	category = create_rasterization_category(data);
+	dictionary_push(categories, createStringLiteral("rasterization"), &category);
+	category = create_multisample_category(data);
+	dictionary_push(categories, createStringLiteral("multisample"), &category);
+	category = create_depthstencil_category(data);
+	dictionary_push(categories, createStringLiteral("depthstencil"), &category);
+	category = create_colorblend_category(data);
+	dictionary_push(categories, createStringLiteral("colorblend"), &category);
 	buf_ucount_t offset = buf_get_element_count(data->mainOutput);
 	buf_push_pseudo(data->mainOutput, sizeof(gfx_pipeline_t));
 	
@@ -584,15 +603,6 @@ static void write_bool(const char* str, void* output);
 // 	dictionary_push(fields, createStringLiteral("receiveshadow"), &field);
 // 	return (Category) { .fields = fields, .categories = NULL };
 // }
-
-static Category create_inputassembly_category(UserData* data);
-static Category create_tessellation_category(UserData* data);
-static Category create_viewport_state_category(UserData* data);
-static Category create_rasterization_category(UserData* data);
-static Category create_multisample_category(UserData* data);
-static Category create_depthstencil_category(UserData* data);
-static Category create_colorblend_category(UserData* data);
-// static Category create_dynamic_category(UserData* data);
 
 static Category create_graphicspipeline_category(UserData* data)
 {

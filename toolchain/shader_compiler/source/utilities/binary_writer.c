@@ -13,12 +13,6 @@ SC_API binary_writer_t* binary_writer_new()
 	return writer;
 }
 
-typedef struct mark_info_t
-{
-	u32 pos;
-	mark_type_t type;
-} mark_info_t;
-
 SC_API binary_writer_t* binary_writer_create(
 												void* user_data,
 												void (*push)(void* user_data, const void* bytes, u32 size),
@@ -148,7 +142,7 @@ static void mark(binary_writer_t* writer, u32 mark_id, mark_type_t type)
 	buf_ucount_t index = dictionary_find_index_of(&writer->mark_table, &mark_id);
 	if(index != BUF_INVALID_INDEX)
 	{
-		debug_log_error("[Binary Writer] The write position %ul has already been marked with mark ID %ul but you are still trying to remark it with mark id: %ul",
+		debug_log_error("[Binary Writer] The write position %lu has already been marked with mark ID %lu but you are still trying to remark it with mark id: %lu",
 						curr_write_pos, (u32)index, mark_id);
 		return;
 	}
@@ -181,19 +175,31 @@ static void set_or_insert(binary_writer_t* writer, u32 mark_id, const void* byte
 	{
 		/* if marked for variable number of bytes */
 		case MARK_TYPE_UNDEFINED:
-			writer->insert(writer->user_data, index, bytes, size);
-			break;
-		/* if marked for fixed number of bytes */
-		default:
+		{
+			/* insert the bytes */
+			writer->insert(writer->user_data, data->pos, bytes, size);
+
+			/* adjust (increment) all the mark positions that are coming after the mark id 'mark_id' */
+			u32 mark_count = dictionary_get_count(&writer->mark_table);
+			for(u32 i = 0; i < mark_count; i++)
 			{
-				u32 _size = _sizeof(data->type);
-				assert(_size == size);
-				/* get the pointer to the internal memory buffer */
-				void* ptr = writer->get_ptr(writer->user_data);
-				/* copy the data from the marked positon */
-				memcpy(ptr + index, bytes, _size);
+				mark_info_t* info = dictionary_get_value_ptr_at(&writer->mark_table, i);
+				if(info->pos > data->pos)
+					info->pos += size;
 			}
 			break;
+		}
+		/* if marked for fixed number of bytes */
+		default:
+		{
+			u32 _size = _sizeof(data->type);
+			assert(_size == size);
+			/* get the pointer to the internal memory buffer */
+			void* ptr = writer->get_ptr(writer->user_data);
+			/* copy the data from the marked positon */
+			memcpy(ptr + index, bytes, _size);
+			break;
+		}
 	}
 }
 

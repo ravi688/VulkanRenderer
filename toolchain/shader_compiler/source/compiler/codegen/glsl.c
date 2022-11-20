@@ -45,7 +45,7 @@ static const char* stage_to_string(shader_stage_t stage)
 		case SHADER_STAGE_VERTEX:
 			return "vertex";
 		case SHADER_STAGE_FRAGMENT:
-			return "fragement";
+			return "fragment";
 		case SHADER_STAGE_GEOMETRY:
 			return "geometry";
 		case SHADER_STAGE_TESSELLATION:
@@ -88,7 +88,8 @@ SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* wri
 			previous_source->stage = i;
 			previous_source->count++;
 			if(previous_source->count > 1)
-				debug_log_warning("[Codegen] More than once occurrences of the stage \"%s\"", stage_to_string(i));
+				debug_log_warning("[Codegen] [Legacy] More than once occurrences of the stage \"%s\"", stage_to_string(i));
+			break;
 		}
 	}
 
@@ -130,21 +131,24 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 			case SHADER_STAGE_TESSELLATION: { shader_type = shaderc_tess_control_shader; 	break; }
 			case SHADER_STAGE_GEOMETRY: 	{ shader_type = shaderc_geometry_shader; 		break; }
 			case SHADER_STAGE_FRAGMENT: 	{ shader_type = shaderc_fragment_shader; 		break; }
-			default: debug_log_fetal_error("[Codegen] stage \"%s\" is undefined or unsupported shader stage\n", stage_to_string(source.stage));
+			default: debug_log_error("[Codegen] [Legacy] stage \"%s\" is undefined or unsupported shader stage", stage_to_string(source.stage));
 		}
+		debug_log_info("GLSL source:\n-------------\n%.*s\n--------------", source.length, source.source);
 		shaderc_compilation_result_t result = shaderc_compile_into_spv(compiler, source.source, source.length, shader_type, stage_to_string(source.stage), "main", options);
 		_assert(result != NULL);
 		if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success)
-			debug_log_fetal_error("[Codegen] %s\n%s", stage_to_string(source.stage), shaderc_result_get_error_message(result));
+			debug_log_error("[Codegen] [Legacy] GLSL to SPIR-V compilation failed:\n%s", shaderc_result_get_error_message(result));
 
 		void* bytes = (void*)shaderc_result_get_bytes(result);
 		_assert(bytes != NULL);
 		u64 length = shaderc_result_get_length(result);
 		_assert(length > 0);
 
+		_assert((MARK_ID_SPIRV_OFFSET + i) < MARK_ID_SPIRV_OFFSET_MAX);
+
 		/* write offset */
-		binary_writer_u32_mark(writer->main, MARK_ID_SPIRV_OFFSET + MAGIC_NUM0 + i);
-		binary_writer_u32_set(writer->main, MARK_ID_SPIRV_OFFSET + MAGIC_NUM0 + i, binary_writer_pos(writer->data));
+		binary_writer_u32_mark(writer->main, MARK_ID_SPIRV_OFFSET + i);
+		binary_writer_u32_set(writer->main, MARK_ID_SPIRV_OFFSET + i, binary_writer_pos(writer->data));
 		/* write length */
 		binary_writer_u32(writer->main, length);
 		/* write the SPIR-V code */

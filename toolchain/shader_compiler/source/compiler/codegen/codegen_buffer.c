@@ -52,16 +52,43 @@ SC_API void codegen_buffer_destroy(codegen_buffer_t* buffer)
 {
 	buf_clear(CAST_TO(BUFFER*, buffer->main->user_data), NULL);
 	buf_clear(CAST_TO(BUFFER*, buffer->data->user_data), NULL);
+	buf_clear(buffer->flat, NULL);
 }
 
 SC_API void codegen_buffer_release_resources(codegen_buffer_t* buffer)
 {
 	buf_free(CAST_TO(BUFFER*, buffer->main->user_data));
 	buf_free(CAST_TO(BUFFER*, buffer->data->user_data));
+	buf_free(buffer->flat);
 	free(buffer);
 }
 
 SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 {
-	return NULL;
+	u32 main_size = buf_get_element_count(CAST_TO(BUFFER*, buffer->main->user_data));
+	u32 data_size = buf_get_element_count(CAST_TO(BUFFER*, buffer->data->user_data));
+	u32 flat_size = main_size + data_size;
+	if(buffer->flat == NULL)
+		buffer->flat = BUFcreate_new(NULL, sizeof(u8), flat_size, 0);
+
+	buf_clear(buffer->flat, NULL);
+	buf_push_pseudo(buffer->flat, flat_size);
+
+	void* ptr = buf_get_ptr(buffer->flat);
+	memcpy(ptr, buf_get_ptr(CAST_TO(BUFFER*, buffer->main->user_data)), main_size);
+	memcpy(ptr + main_size, buf_get_ptr(CAST_TO(BUFFER*, buffer->data->user_data)), data_size);
+
+	dictionary_t* mark_table = &buffer->main->mark_table;
+
+	/* increment all the pointers/offsets, to data section, by main_size */
+	for(u32 i = MARK_ID_OFFSET; i < MARK_ID_OFFSET_MAX; i++)
+	{
+		buf_ucount_t index = dictionary_find_index_of(mark_table, &i);
+		if(index == BUF_INVALID_INDEX)
+			continue;
+		mark_info_t* info = dictionary_get_value_ptr_at(mark_table, index);
+		info->pos += main_size;
+	}
+
+	return buffer->flat;
 }

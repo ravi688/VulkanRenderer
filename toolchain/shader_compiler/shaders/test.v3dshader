@@ -8,13 +8,14 @@ Shader
 	[NoParse]
 	Properties
 	{
-		Hello World
+		fragment [0, 0] uniform sampler2D texture;
+		fragment [0, 1] uniform sampler2D texture2;
 	}
 
 	[NoParse]
 	Layout
 	{
-		My World
+		per_vertex [0, 0] vec3 position;
 	}
 
 	RenderPass
@@ -22,18 +23,38 @@ Shader
 
 		SubPass
 		{
-			
+			[NoParse]
 			GraphicsPipeline
 			{
-
+				depthStencil
+				{
+					depthWriteEnable = true,
+					depthTestEnable = true
+				}
 			}
 
+			[NoParse]
 			GLSL
 			{
 				#stage vertex
-				#stage fragment
+				#version 450
 
-				__fastcall float ptr;
+				layout(location = 0) in vec3 position;
+
+				void main()
+				{
+					gl_Position = vec4(position, 1.0);
+				}
+
+				#stage fragment
+				#version 450
+
+				layout(location = 0) out vec4 color;
+
+				void main()
+				{
+					color = vec4(1, 1, 1, 1);
+				}
 			}
 		}
 	}

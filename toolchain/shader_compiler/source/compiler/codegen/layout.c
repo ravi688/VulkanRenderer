@@ -2,6 +2,7 @@
 #include <shader_compiler/utilities/string.h>
 #include <shader_compiler/utilities/misc.h>
 #include <shader_compiler/debug.h>
+#include <shader_compiler/assert.h>
 #include <glslcommon/glsl_types.h>
 #include <stdlib.h>
 
@@ -9,18 +10,23 @@ static const char* parse_qualifers(const char* start, const char* end, u32 OUT b
 static const char* parse_square_brackets(const char* start, const char* end, u32 OUT bits);
 static const char* write_set_and_binding_numbers(const char* start, const char* end, u8 required, binary_writer_t* writer);
 static const char* parse_storage_qualifiers(const char* start, const char* end, u32 OUT bits);
-static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer);
+static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer, s32 depth, s32 iteration);
 
 SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* writer)
 {
 	if(is_empty(start, end))
 	{
-		debug_log_info("Properties and Layout, both blocks are empty, skipping");
+		debug_log_info("[Codegen] [Legacy] Properties and Layout, both blocks are empty, skipping");
 		binary_writer_u16(writer->main, (u16)0);
 		return;
 	}
 
-	binary_writer_u16_mark(writer->main, MARK_ID_DESCRIPTOR_COUNT);
+	static s32 iteration = -1;
+	iteration++;
+
+	_assert((MARK_ID_DESCRIPTOR_COUNT + iteration) < MARK_ID_DESCRIPTOR_COUNT_MAX);
+
+	binary_writer_u16_mark(writer->main, MARK_ID_DESCRIPTOR_COUNT + iteration);
 
 	u16 descriptor_count = 0;
 	while(start < end)
@@ -28,8 +34,10 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 		while(isspace(*start)) start++;
 		if(start >= end) break; //end of the file reached
 
-		binary_writer_u32_mark(writer->main, MARK_ID_DESCRIPTOR_OFFSET + MARK_ID_MAX + descriptor_count);
-		binary_writer_u32_set(writer->main, MARK_ID_DESCRIPTOR_OFFSET + MARK_ID_MAX + descriptor_count, binary_writer_pos(writer->data));
+		_assert((MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 5) < MARK_ID_DESCRIPTOR_OFFSET_MAX);
+		
+		binary_writer_u32_mark(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 5);
+		binary_writer_u32_set(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 5, binary_writer_pos(writer->data));
 
 		u32 bits = 0;				// description info bits
 
@@ -45,7 +53,7 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 		if(!((bits & PER_VERTEX_ATTRIB_BIT) || (bits & PER_INSTANCE_ATTRIB_BIT)))
 			start = parse_storage_qualifiers(start, end, &bits);
 
-		start = write_description(start, end, bits, writer->data);
+		start = write_description(start, end, bits, writer->data, -1, descriptor_count + iteration * 5);
 
 		descriptor_count++;
 	}
@@ -63,8 +71,9 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 	    float light_intensity;
 	} scene_data;
  */
-static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer)
+static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer, s32 depth, s32 iteration)
 {
+	depth++;
 	while(isspace(*start)) start++;
 	u32 count = get_word_length(start, 0);
 	bool found = true;
@@ -122,14 +131,11 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		while(*start != '{')
 		{
 			if(!isspace(*start))
-			{
-				count = get_word_length(start, 0);
-				debug_log_fetal_error("shader layout parse error: Unexpected symbol \"%.*s\", '{' is expected\n", count, start);
-			}
+				debug_log_error("[Codegen] [Legacy] Unexpected symbol \"%.*s\", '{' is expected", get_word_length(start, 0), start);
 			start++;
 		}
 		if((count == 0) || is_empty(block_name, block_name + count))
-			debug_log_fetal_error("shader layout parse error: Block name cannot be empty\n");
+			debug_log_error("[Codegen] [Legacy] Block name cannot be empty");
 		start++;
 
 		u32 _bits = bits;
@@ -148,20 +154,29 @@ static const char* write_description(const char* start, const char* end, u32 bit
 
 		// write block name to the buffer, count + 1 BYTES
 		binary_writer_stringn(writer, block_name, count);
-		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME);
-		binary_writer_u16_mark(writer, MARK_ID_FIELD_COUNT);
+
+		_assert((MARK_ID_IDENTIFIER_NAME + depth + iteration) < MARK_ID_IDENTIFIER_NAME_MAX);
+
+		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration);
+
+		_assert((MARK_ID_FIELD_COUNT + iteration) < MARK_ID_FIELD_COUNT_MAX);
+
+		binary_writer_u16_mark(writer, MARK_ID_FIELD_COUNT + iteration);
 
 		u16 num_elements = 0;
 		while(*start != '}')
 		{
 			u16 info;
-			start = write_description(start, end, _bits, writer);
+			start = write_description(start, end, _bits, writer, depth, iteration);
 			while(isspace(*start)) start++;
 			num_elements++;
 		}
 
+		if(num_elements == 0)
+			debug_log_warning("[Codegen] [Legacy] Block \"%.*s\" has zero elements", count, block_name);
+
 		// write number of elements to the buffer, 2 BYTES
-		binary_writer_u16_set(writer, MARK_ID_FIELD_COUNT, num_elements);
+		binary_writer_u16_set(writer, MARK_ID_FIELD_COUNT + iteration, num_elements);
 
 		start++;
 	}
@@ -170,28 +185,28 @@ static const char* write_description(const char* start, const char* end, u32 bit
 	{
 		// write type info to the buffer, 4 BYTES
 		binary_writer_u32(writer, bits);
-		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME);
+		
+		_assert((MARK_ID_IDENTIFIER_NAME + depth + iteration) < MARK_ID_IDENTIFIER_NAME_MAX);
+
+		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration);
 		start += count;
 	}
 
 	while(isspace(*start)) start++;
 	count = get_word_length(start, ';');
 	if((count == 0) || is_empty(start, start + count))
-		debug_log_fetal_error("shader layout parse error: Identifier name cannot be empty\n");
+		debug_log_error("[Codegen] [Legacy] Identifier name cannot be empty\n");
 
 	// write identifier name to the buffer, count + 1 BYTES
-	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME, start, count);
+	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration, start, count);
 	char null_char = 0;
-	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME, &null_char, 1);
+	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration, &null_char, 1);
 
 	start += count;
 	while(*start != ';')
 	{
 		if(!isspace(*start))
-		{
-			count = get_word_length(start, 0);
-			debug_log_fetal_error("shader layout parse error: Expected ';' before \"%.*s\"\n", count, start);
-		}
+			debug_log_error("[Codegen] [Legacy] Expected ';' before \"%.*s\"\n", get_word_length(start, 0), start);
 		start++;
 	}
 	start++;
@@ -206,8 +221,10 @@ static const char* parse_storage_qualifiers(const char* start, const char* end, 
 	// if(strncmp(start, "uniform", count) == 0) do nothing
 	if(strncmp(start, "buffer", count) == 0)
 		mask |= STORAGE_BUFFER_BIT;
+	else if(strncmp(start, "uniform", count) == 0)
+		{ /* do nothing */ }
 	else
-		debug_log_fetal_error("shader data layout parse error: Unrecognized storage qualifier \"%.*s\"\n", count, start);
+		debug_log_error("[Codegen] [Legacy] Unrecognized storage qualifier \"%.*s\"\n", count, start);
 	OUT bits |= mask;
 	return start + count;
 }
@@ -230,7 +247,7 @@ static const char* parse_qualifers(const char* start, const char* end, u32 OUT b
 			else if(strncmp(start + 3, "_instance", min(9, count - 3)) == 0)
 				mask |= PER_INSTANCE_ATTRIB_BIT;
 			else
-				debug_log_fetal_error("shader data layout parse error: Unrecognized vertex attribute qualifer \"%.*s\"\n", count, start);
+				debug_log_error("[Codegen] [Legacy] Unrecognized vertex attribute qualifer \"%.*s\"\n", count, start);
 			start += count;
 			found_attribute = true;
 			break;
@@ -248,7 +265,7 @@ static const char* parse_qualifers(const char* start, const char* end, u32 OUT b
 		stage_count++;
 	}
 	if((stage_count == 0) && !found_attribute)
-		debug_log_fetal_error("shader layout parse error: Unrecognized symbol \"%.*s\", expected shader stage or vertex attribute qualifer!\n", count, start);
+		debug_log_error("[Codegen] [Legacy] Unrecognized symbol \"%.*s\", expected shader stage or vertex attribute qualifer!\n", count, start);
 	OUT bits |= mask;
 	return start;
 }
@@ -270,10 +287,7 @@ static const char* parse_square_brackets(const char* start, const char* end, u32
 		while(*start != ']')
 		{
 			if(!isspace(*start))
-			{
-				len = get_word_length(start, 0);
-				debug_log_fetal_error("shader layout parse error: Unrecognized symbol \"%.*s\" in square brackets\n", len, start);
-			}
+				debug_log_error("[Codegen] [Layout] Unrecognized symbol \"%.*s\" in square brackets\n", get_word_length(start, 0), start);
 			start++;
 		}
 		start++;
@@ -309,17 +323,20 @@ PARSE_NUMBER:
 		// second iteration: write descriptor binding number/index or layout number in case of vertex attribute, 1 BYTE
 		binary_writer_u8(writer, (u8)arr_len);
 		
-		// log_u32(arr_len);
-		
 		count++;
+		
 		if(count > required)
-			debug_log_fetal_error("shader layout parse error: More than required elements found in the array index operator, \"%u\"\n", arr_len);
+		{
+			debug_log_error("[Codegen] [Legacy] More than required elements found in the array index operator, \"%u\"\n", arr_len);
+			return start;
+		}
+
 		while(*start != ']')
 		{
 			if(*start == ',')	
 				goto PARSE_NUMBER;
-			// if(!isspace(*start))
-			// 	shader_data_layout_parse_error(SHADER_DATA_LAYOUT_PARSE_ERROR_INVALID_SYMBOLE_IN_ARRAY_SIZE, 1, start + 1);
+			if(!isspace(*start))
+				debug_log_error("[Codegen] [Legacy] Invalid symbol \"%.*s\" in array size", __get_word_length(start, end, " \t\n"), start);
 			start++;
 		}
 		start++;
@@ -327,9 +344,9 @@ PARSE_NUMBER:
 	if(!found)
 	{
 		u32 len = get_word_length(start, 0);
-		debug_log_fetal_error("shader layout parse error: Expected open square bracket '[' before \"%.*s\"\n", count, start);
+		debug_log_error("[Codegen] [Legacy] Expected open square bracket '[' before \"%.*s\"\n", count, start);
 	}
 	if(count < required)
-		debug_log_fetal_error("shader layout parse error: Less than required elements found in the array index operator, \"%u\"\n", arr_len);
+		debug_log_error("[Codegen] [Legacy] Less than required elements found in the array index operator, \"%u\"\n", arr_len);
 	return start;
 }

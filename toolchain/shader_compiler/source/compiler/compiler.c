@@ -33,7 +33,6 @@ SC_API BUFFER* sc_compile(const char* start, u32 length)
 	switch(result.result)
 	{
 		case PPSR_SUCCESS:
-			debug_log_info("Shader parsed success");
 			break;
 		case PPSR_WARNING:
 			debug_log_warning(result.log_buffer);
@@ -58,6 +57,6 @@ SC_API BUFFER* sc_compile(const char* start, u32 length)
 	compiler_ctx_destroy(ctx);
 
 	BUFFER* f_buffer = codegen_buffer_flatten(buffer);
-	debug_log_info("Compiled shader binary info: { size = %llu bytes }\n", buf_get_element_count(f_buffer));
+	debug_log_info("Compiled shader binary info: { size = %llu bytes }", buf_get_element_count(f_buffer));
 	return f_buffer;
 }

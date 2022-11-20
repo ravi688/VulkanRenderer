@@ -35,6 +35,11 @@ typedef enum mark_type_t
 	MARK_TYPE_U32
 } mark_type_t;
 
+typedef struct mark_info_t
+{
+	u32 pos;
+	mark_type_t type;
+} mark_info_t;
 
 /* constructors and destructors */
 SC_API binary_writer_t* binary_writer_new();

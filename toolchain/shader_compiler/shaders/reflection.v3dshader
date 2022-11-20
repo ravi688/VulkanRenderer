@@ -7,13 +7,13 @@ Shader
 	[NoParse]
 	Properties
 	{
-		fragment vertex [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+		fragment vertex [4, 0] uniform Parameters
 		{
 			vec4 color;
 			float reflectance;
 		} parameters;
 
-		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D reflectionMap;
+		fragment [4, 1] uniform sampler2D reflectionMap;
 	}
 
 	[NoParse]
@@ -43,7 +43,7 @@ Shader
 			}
 
 			[NoParse]
-			glsl
+			GLSL
 			{
 				#stage vertex
 				#version 450
