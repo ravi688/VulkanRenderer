@@ -142,7 +142,7 @@ static void mark(binary_writer_t* writer, u32 mark_id, mark_type_t type)
 	buf_ucount_t index = dictionary_find_index_of(&writer->mark_table, &mark_id);
 	if(index != BUF_INVALID_INDEX)
 	{
-		debug_log_error("[Binary Writer] The write position %lu has already been marked with mark ID %lu but you are still trying to remark it with mark id: %lu",
+		DEBUG_LOG_ERROR("[Binary Writer] The write position %lu has already been marked with mark ID %lu but you are still trying to remark it with mark id: %lu",
 						curr_write_pos, (u32)index, mark_id);
 		return;
 	}
@@ -166,7 +166,7 @@ static void set_or_insert(binary_writer_t* writer, u32 mark_id, const void* byte
 	buf_ucount_t index = dictionary_find_index_of(&writer->mark_table, &mark_id);
 	if(index == BUF_INVALID_INDEX)
 	{
-		debug_log_error("[Binary Writer] There is no such mark exists with mark ID %ul", mark_id);
+		DEBUG_LOG_ERROR("[Binary Writer] There is no such mark exists with mark ID %ul", mark_id);
 		return;
 	}
 	/* get the mark_info_t for the mark ID */
@@ -193,7 +193,7 @@ static void set_or_insert(binary_writer_t* writer, u32 mark_id, const void* byte
 		default:
 		{
 			u32 _size = _sizeof(data->type);
-			assert(_size == size);
+			_ASSERT(_size == size);
 			/* get the pointer to the internal memory buffer */
 			void* ptr = writer->get_ptr(writer->user_data);
 			/* copy the data from the marked positon */

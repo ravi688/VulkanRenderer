@@ -50,7 +50,7 @@ SC_API void diagnostic_push_string(diagnostic_t* diagnostic, const char* value);
 SC_API void diagnostic_push(diagnostic_t* diagnostic, const u8 const * ptr, u32 size);
 
 /* spits out the log message with appropriate diagnostic cateogry and diagnostic message */
-#define diagnostic_log(...) define_alias_function_macro(diagnostic_log, __VA_ARGS__)
-SC_API function_signature(void, diagnostic_log, diagnostic_t* diagnostic, diagnostic_type_t type, diagnostic_message_t message);
+#define diagnostic_log(...) __diagnostic_log(__VA_ARGS__, __LINE__, __FUNCTION__, __FILE__)
+SC_API void __diagnostic_log(diagnostic_t* diagnostic, diagnostic_type_t type, diagnostic_message_t message, u32 __line__, const char* __function__, const char* __file__);
 
 END_CPP_COMPATIBLE

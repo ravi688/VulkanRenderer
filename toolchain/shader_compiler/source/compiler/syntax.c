@@ -21,12 +21,12 @@ static bool syntax_check_attributes(v3d_generic_attribute_t* attributes, u32 att
 		const char* str = attributes[i].name.start + start;
 		for(u32 j = 0; j < supported_count; j++)
 			if(safe_strncmp(str, attribute_keywords[supported[j]], len) != 0)
-				debug_log_warning("[Syntax] The attribute \"%.*s\" has no effect on %s", len, str, description);
+				DEBUG_LOG_WARNING("[Syntax] The attribute \"%.*s\" has no effect on %s", len, str, description);
 			else
 			{
 				is_found = true;
 				if(!syntax_check_attribute_args(&attributes[i], start))
-					debug_log_error("[Syntax] Invalid arguments passed to \"%s\"", attribute_keywords[supported[j]]);
+					DEBUG_LOG_ERROR("[Syntax] Invalid arguments passed to \"%s\"", attribute_keywords[supported[j]]);
 			}
 	}
 	return is_found;
@@ -46,7 +46,7 @@ static bool syntax_check_qualifiers(u32_pair_t* qualifiers, u32 qualifier_count,
 			if(safe_strncmp(str, keywords[supported[j]], len) != 0)
 			{
 				if(iswarn)
-					debug_log_warning("[Syntax] The qualifier \"%.*s\" has no effect", len, str);
+					DEBUG_LOG_WARNING("[Syntax] The qualifier \"%.*s\" has no effect", len, str);
 			}
 			else
 				is_found = true;
@@ -93,7 +93,7 @@ SC_API void syntax(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 	// lets ignore the anonymous blocks
 	if(node->qualifier_count == 0)
 	{
-		debug_log_error("anonymous entities (blocks) are not allowed for now");
+		DEBUG_LOG_ERROR("anonymous entities (blocks) are not allowed for now");
 		return;
 	}
 
@@ -128,9 +128,9 @@ SC_API void syntax(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 		}
 	}
 	else if(node->qualifier_count <= 1)
-		debug_log_error("[Syntax] Unexpected symbol: %.*s", len, str);
+		DEBUG_LOG_ERROR("[Syntax] Unexpected symbol: %.*s", len, str);
 	else
-		debug_log_info("[Syntax] Assuming identifier: %.*s", len, str);
+		DEBUG_LOG_INFO("[Syntax] Assuming identifier: %.*s", len, str);
 
 	/* -- syntax check for the value of the entity -- */
 	

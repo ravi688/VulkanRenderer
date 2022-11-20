@@ -213,7 +213,7 @@ Shader
 				#include <v3d.h>
 				
 				layout(
-					input_attachment_index = INPUT_ATTACHMENT_INDEX, 
+					input_attachment_index = INPUT_ATTACHMENT_BINDING0, 
 					set = SUB_RENDER_SET, 
 					binding = INPUT_ATTACHMENT_BINDING0
 					) uniform subpassInput previousColor;

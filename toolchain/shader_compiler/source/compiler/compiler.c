@@ -30,13 +30,13 @@ SC_API BUFFER* sc_compile(compiler_ctx_t* ctx)
 			debug_log_warning(result.log_buffer);
 			break;
 		case PPSR_ERROR:
-			debug_log_fetal_error(result.log_buffer);
+			DEBUG_LOG_FETAL_ERROR(result.log_buffer);
 			break;
 		case PPSR_ERROR_UNKOWN:
-			debug_log_fetal_error("Unknown error has been occured while parsing the shader");
+			DEBUG_LOG_FETAL_ERROR("Unknown error has been occured while parsing the shader");
 			break;
 		default:
-			debug_log_fetal_error("Invalid or Unrecognized result code recieved from the parser");
+			DEBUG_LOG_FETAL_ERROR("Invalid or Unrecognized result code recieved from the parser");
 	}
 
 	/* perform syntax checking */
@@ -45,6 +45,6 @@ SC_API BUFFER* sc_compile(compiler_ctx_t* ctx)
 	codegen(result.root, ctx, buffer);
 
 	BUFFER* f_buffer = codegen_buffer_flatten(buffer);
-	debug_log_info("Compiled shader binary info: { size = %llu bytes }", buf_get_element_count(f_buffer));
+	DEBUG_LOG_INFO("Compiled shader binary info: { size = %llu bytes }", buf_get_element_count(f_buffer));
 	return f_buffer;
 }

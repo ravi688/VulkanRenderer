@@ -36,7 +36,7 @@ SC_API const char* write_header(const char* start, const char* const end, binary
 				start += 7;
 				u32 ver = _strtoui64(start, (char**)&start, 10);
 				if(ver == 0)
-					debug_log_fetal_error("Invalid shader binary or language version");
+					DEBUG_LOG_FETAL_ERROR("Invalid shader binary or language version");
 				binary_writer_u32(writer, ver);
 			}
 		}

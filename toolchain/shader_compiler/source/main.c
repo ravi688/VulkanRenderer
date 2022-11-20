@@ -113,10 +113,12 @@ int main(int arg_count, const char* const* argv)
 			ptr++;
 			strcpy(ptr, "sb");
 		}
-
-		/* otherwise just append .sb */
-		ptr = sb_path + strlen(sb_path);
-		strcpy(ptr, ".sb");
+		else
+		{
+			/* otherwise just append .sb */
+			ptr = sb_path + strlen(sb_path);
+			strcpy(ptr, ".sb");
+		}
 	}
 
 	/* load the source file into memory */

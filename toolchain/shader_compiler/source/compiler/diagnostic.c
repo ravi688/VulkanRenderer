@@ -66,7 +66,7 @@ SC_API void diagnostic_push(diagnostic_t* diagnostic, const u8 const* ptr, u32 s
 	// TODO
 }
 
-SC_API function_signature(void, diagnostic_log, diagnostic_t* diagnostic, diagnostic_type_t type, diagnostic_message_t message)
+SC_API void __diagnostic_log(diagnostic_t* diagnostic, diagnostic_type_t type, diagnostic_message_t message, u32 __line__, const char* __function__, const char* __file__)
 {
 	const char* description = ""; //get_description(type);
 	switch(message)

@@ -192,7 +192,7 @@ static void begin_category(const char* name, u32 length, void* user_data)
 		// find the template for the category with name 'string'
 		index = dictionary_find_index_of(&data->categoryTemplates, &string);
 		if(index == DICTIONARY_INVALID_INDEX)
-			debug_log_fetal_error("Unrecognized category \"%s\"\n", string);
+			DEBUG_LOG_ERROR("Unrecognized category \"%s\"\n", string);
 		CategoryTemplate* template = dictionary_get_value_ptr_at(&data->categoryTemplates, index);
 
 		// if categoryArrays is null then create new dictionary for it
@@ -281,7 +281,7 @@ static void field(const char* name, u32 length, const char* value, u32 value_len
 	// find the field with name 'string' in the current category
 	u64 index = dictionary_find_index_of(currentCategory->fields, &string);
 	if(index == DICTIONARY_INVALID_INDEX)
-		debug_log_fetal_error("Unrecognized field \"%s\"\n", string);
+		DEBUG_LOG_ERROR("Unrecognized field \"%s\"\n", string);
 	Field* field = dictionary_get_value_ptr_at(currentCategory->fields, index);
 	
 	// finally write the field's value to the output buffer
@@ -301,7 +301,7 @@ static const char* parse(const char* str, u32 length, callbacks_t* callbacks, u3
 	if(str >= end)
 	{
 		if(categoryRank != 0)
-			debug_log_fetal_error("A category is not closed, expected '}' before the end of file\n");
+			DEBUG_LOG_ERROR("A category is not closed, expected '}' before the end of file\n");
 		return str;
 	}
 
@@ -337,7 +337,7 @@ static const char* parse(const char* str, u32 length, callbacks_t* callbacks, u3
 				--categoryRank;
 			}
 			else
-				debug_log_fetal_error("Unexpected '}', closing brace '}' must match with opening branch '{'\n");			
+				DEBUG_LOG_ERROR("Unexpected '}', closing brace '}' must match with opening branch '{'\n");			
 		break;
 
 		// assignment to a field
@@ -368,11 +368,11 @@ static const char* parse(const char* str, u32 length, callbacks_t* callbacks, u3
 		break;
 
 		case 0:
-			debug_log_fetal_error("Unexpected end of file\n");
+			DEBUG_LOG_ERROR("Unexpected end of file\n");
 		break;
 
 		default:
-			debug_log_fetal_error("Expected '{', '=' or ',' before \"%.*s\"\n", len, str);
+			DEBUG_LOG_ERROR("Expected '{', '=' or ',' before \"%.*s\"\n", len, str);
 	}
 	++str;
 	return parse(str, length - (str - origin), callbacks, categoryRank);
@@ -908,7 +908,7 @@ static void write_VkBool32(const char* str, void* output)
 		value = VK_TRUE;
 	else if(strcmp(str, "false") == 0)
 		value = VK_FALSE;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkBool32\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkBool32\n", str);
 	memcpy(output, &value, sizeof(value));
 }
 
@@ -967,7 +967,7 @@ static void write_VkBlendFactor(const char* str, void* output)
     		value = VK_BLEND_FACTOR_SRC1_ALPHA;
     else if(strcmp(str, "oneminussrc1alpha") == 0)
     		value = VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkBlendFactor\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkBlendFactor\n", str);
 	memcpy(output, &value, sizeof(value));
 };
 
@@ -992,7 +992,7 @@ static void write_VkStencilOp(const char* str, void* output)
     	value = VK_STENCIL_OP_INCREMENT_AND_WRAP;
     else if(strcmp(str, "decrementandwrap") == 0)
     	value = VK_STENCIL_OP_DECREMENT_AND_WRAP;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkStencilOp\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkStencilOp\n", str);
 	memcpy(output, &value, sizeof(value));
 }
 
@@ -1103,7 +1103,7 @@ static void write_VkBlendOp(const char* str, void* output)
     	value = VK_BLEND_OP_GREEN_EXT;
     else if(strcmp(str, "blueext") == 0)
     	value = VK_BLEND_OP_BLUE_EXT;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkBlendOp\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkBlendOp\n", str);
 	memcpy(output, &value, sizeof(value));  
 }
 
@@ -1127,7 +1127,7 @@ static void write_VkCompareOp(const char* str, void* output)
     	value = VK_COMPARE_OP_GREATER_OR_EQUAL;
     else if(strcmp(str, "always") == 0)
     	value = VK_COMPARE_OP_ALWAYS;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkCompareOp\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkCompareOp\n", str);
 	memcpy(output, &value, sizeof(value)); 
 }
 
@@ -1167,7 +1167,7 @@ static void write_VkLogicOp(const char* str, void* output)
     	value = VK_LOGIC_OP_NAND;
     else if(strcmp(str, "set") == 0)
     	value = VK_LOGIC_OP_SET;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkLogicOp\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkLogicOp\n", str);
 	memcpy(output, &value, sizeof(value)); 
 }
 
@@ -1197,7 +1197,7 @@ static void write_VkPrimitiveTopology(const char* str, void* output)
     	value = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
     else if(strcmp(str, "patchlist") == 0) 
     	value = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkPrimitiveTopology\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkPrimitiveTopology\n", str);
 	memcpy(output, &value, sizeof(value));
 }
 
@@ -1213,7 +1213,7 @@ static void write_VkPolygonMode(const char* str, void* output)
     	value = VK_POLYGON_MODE_POINT;
     else if(strcmp(str, "fillrectanglenv") == 0)
     	value = VK_POLYGON_MODE_FILL_RECTANGLE_NV;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkPolygonMode\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkPolygonMode\n", str);
 	memcpy(output, &value, sizeof(value));
 }
 
@@ -1223,7 +1223,7 @@ static void write_VkCullModeFlags(const char* str, void* output)
 	assert(sizeof(VkCullModeFlagBits) == 4);
 	VkCullModeFlags value = VK_CULL_MODE_BACK_BIT;
 
-	// else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkCullModeFlagBits\n", str);
+	// else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkCullModeFlagBits\n", str);
 	memcpy(output, &value, sizeof(value));
 }
 
@@ -1235,7 +1235,7 @@ static void write_VkFrontFace(const char* str, void* output)
     	value = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     else if(strcmp(str, "clockwise") == 0)
     	value = VK_FRONT_FACE_CLOCKWISE;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkFrontFace\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkFrontFace\n", str);
 	memcpy(output, &value, sizeof(value));
 }
 
@@ -1245,7 +1245,7 @@ static void write_VkSampleCountFlagBits(const char* str, void* output)
 	assert(sizeof(VkSampleCountFlagBits) == 4);
 	VkSampleCountFlagBits value = VK_SAMPLE_COUNT_1_BIT;
 
-	// else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkSampleCountFlagBits\n", str);
+	// else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkSampleCountFlagBits\n", str);
 	memcpy(output, &value, sizeof(value));
 }
 
@@ -1258,7 +1258,7 @@ static void write_VkColorComponentFlags(const char* str, void* output)
 								| VK_COLOR_COMPONENT_B_BIT
 								| VK_COLOR_COMPONENT_A_BIT;
 
-	// else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type VkColorComponentFlags\n", str);
+	// else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type VkColorComponentFlags\n", str);
 	memcpy(output, &value, sizeof(value));	
 }
 
@@ -1270,6 +1270,6 @@ static void write_bool(const char* str, void* output)
 		value = true;
 	else if(strcmp(str, "false") == 0)
 		value = false;
-	else debug_log_fetal_error("Invalid value \"%s\" has been assigned to a variable of type bool\n", str);
+	else DEBUG_LOG_ERROR("Invalid value \"%s\" has been assigned to a variable of type bool\n", str);
 	memcpy(output, &value, 1);
 }

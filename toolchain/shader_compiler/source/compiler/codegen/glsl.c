@@ -90,8 +90,12 @@ SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* wri
 			previous_source->source = start;
 			previous_source->stage = i;
 			previous_source->count++;
-			if(previous_source->count > 1)
-				debug_log_warning("[Codegen] [Legacy] More than once occurrences of the stage \"%s\"", stage_to_string(i));
+
+			DEBUG_BLOCK
+			(
+				if(previous_source->count > 1)
+					debug_log_warning("[Codegen] [Legacy] More than once occurrences of the stage \"%s\"", stage_to_string(i));
+			)
 			break;
 		}
 	}
@@ -251,24 +255,24 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 			case SHADER_STAGE_TESSELLATION: { shader_type = shaderc_tess_control_shader; 	break; }
 			case SHADER_STAGE_GEOMETRY: 	{ shader_type = shaderc_geometry_shader; 		break; }
 			case SHADER_STAGE_FRAGMENT: 	{ shader_type = shaderc_fragment_shader; 		break; }
-			default: debug_log_error("[Codegen] [Legacy] stage \"%s\" is undefined or unsupported shader stage", stage_to_string(source.stage));
+			default: DEBUG_LOG_ERROR("[Codegen] [Legacy] stage \"%s\" is undefined or unsupported shader stage", stage_to_string(source.stage));
 		}
 		debug_log_info("GLSL source:\n-------------\n%.*s\n--------------", source.length, source.source);
 		shaderc_compilation_result_t result = shaderc_compile_into_spv(compiler, source.source, source.length, shader_type, stage_to_string(source.stage), "main", options);
-		_assert(result != NULL);
+		_ASSERT(result != NULL);
 		if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success)
 		{
-			debug_log_error("[Codegen] [Legacy] GLSL to SPIR-V compilation failed:\n%s", shaderc_result_get_error_message(result));
-			debug_log_info("[Codegen] [Legacy] Compilation Aborted");
+			DEBUG_LOG_ERROR("[Codegen] [Legacy] GLSL to SPIR-V compilation failed:\n%s", shaderc_result_get_error_message(result));
+			DEBUG_LOG_ERROR("[Codegen] [Legacy] Compilation Aborted");
 			return;
 		}
 
 		void* bytes = (void*)shaderc_result_get_bytes(result);
-		_assert(bytes != NULL);
+		_ASSERT(bytes != NULL);
 		u64 length = shaderc_result_get_length(result);
-		_assert(length > 0);
+		_ASSERT(length > 0);
 
-		_assert((MARK_ID_SPIRV_OFFSET + i) < MARK_ID_SPIRV_OFFSET_MAX);
+		_ASSERT((MARK_ID_SPIRV_OFFSET + i) < MARK_ID_SPIRV_OFFSET_MAX);
 
 		/* write offset */
 		binary_writer_u32_mark(writer->main, MARK_ID_SPIRV_OFFSET + i);
@@ -281,7 +285,7 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 		shaderc_result_release(result);
 		j++;
 
-		debug_log_info("[Codegen] [Legacy] %s shader compilation success", stage_to_string(source.stage));
+		DEBUG_LOG_INFO("[Codegen] [Legacy] %s shader compilation success", stage_to_string(source.stage));
 	}
 	shaderc_compile_options_release(options);
 	shaderc_compiler_release(compiler);

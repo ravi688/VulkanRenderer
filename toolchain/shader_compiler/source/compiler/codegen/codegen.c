@@ -28,7 +28,7 @@ static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx, codege
 			codegen_descriptions(child, ctx, writer);
 		else if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_RENDERPASS], U32_PAIR_DIFF(pair)) == 0)
 			codegen_renderpass(child, ctx, writer);
-		else debug_log_error("[Codegen] Unknown Error");
+		else DEBUG_LOG_ERROR("[Codegen] Unknown Error");
 	}
 }
 
@@ -45,7 +45,7 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, co
 		u32_pair_t pair = child->qualifiers[child->qualifier_count - 1];
 		if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_SUBPASS], U32_PAIR_DIFF(pair)) == 0)
 			codegen_subpass(child, ctx, writer);
-		else debug_log_error("[Codegen] Unkown Error");
+		else DEBUG_LOG_ERROR("[Codegen] Unkown Error");
 	}
 }
 
@@ -59,7 +59,7 @@ static void codegen_subpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, codeg
 			codegen_pipeline(child, ctx, writer);
 		else if(safe_strncmp(pair.start + ctx->src, keywords[KEYWORD_GLSL], U32_PAIR_DIFF(pair)) == 0)
 			codegen_glsl(child, ctx, writer);
-		else debug_log_error("[Codegen] Unkown Error");
+		else DEBUG_LOG_ERROR("[Codegen] Unkown Error");
 	}
 }
 

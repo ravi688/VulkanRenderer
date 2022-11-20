@@ -16,7 +16,7 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 {
 	if(is_empty(start, end))
 	{
-		debug_log_info("[Codegen] [Legacy] Properties and Layout, both blocks are empty, skipping");
+		DEBUG_LOG_INFO("[Codegen] [Legacy] Properties and Layout, both blocks are empty, skipping");
 		binary_writer_u16(writer->main, (u16)0);
 		return;
 	}
@@ -24,7 +24,7 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 	static s32 iteration = -1;
 	iteration++;
 
-	_assert((MARK_ID_DESCRIPTOR_COUNT + iteration) < MARK_ID_DESCRIPTOR_COUNT_MAX);
+	_ASSERT((MARK_ID_DESCRIPTOR_COUNT + iteration) < MARK_ID_DESCRIPTOR_COUNT_MAX);
 
 	binary_writer_u16_mark(writer->main, MARK_ID_DESCRIPTOR_COUNT + iteration);
 
@@ -34,7 +34,7 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 		while(isspace(*start)) start++;
 		if(start >= end) break; //end of the file reached
 
-		_assert((MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 5) < MARK_ID_DESCRIPTOR_OFFSET_MAX);
+		_ASSERT((MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 5) < MARK_ID_DESCRIPTOR_OFFSET_MAX);
 		
 		binary_writer_u32_mark(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 5);
 		binary_writer_u32_set(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 5, binary_writer_pos(writer->data));
@@ -131,11 +131,11 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		while(*start != '{')
 		{
 			if(!isspace(*start))
-				debug_log_error("[Codegen] [Legacy] Unexpected symbol \"%.*s\", '{' is expected", get_word_length(start, 0), start);
+				DEBUG_LOG_ERROR("[Codegen] [Legacy] Unexpected symbol \"%.*s\", '{' is expected", get_word_length(start, 0), start);
 			start++;
 		}
 		if((count == 0) || is_empty(block_name, block_name + count))
-			debug_log_error("[Codegen] [Legacy] Block name cannot be empty");
+			DEBUG_LOG_ERROR("[Codegen] [Legacy] Block name cannot be empty");
 		start++;
 
 		u32 _bits = bits;
@@ -155,11 +155,11 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		// write block name to the buffer, count + 1 BYTES
 		binary_writer_stringn(writer, block_name, count);
 
-		_assert((MARK_ID_IDENTIFIER_NAME + depth + iteration) < MARK_ID_IDENTIFIER_NAME_MAX);
+		_ASSERT((MARK_ID_IDENTIFIER_NAME + depth + iteration) < MARK_ID_IDENTIFIER_NAME_MAX);
 
 		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration);
 
-		_assert((MARK_ID_FIELD_COUNT + iteration) < MARK_ID_FIELD_COUNT_MAX);
+		_ASSERT((MARK_ID_FIELD_COUNT + iteration) < MARK_ID_FIELD_COUNT_MAX);
 
 		binary_writer_u16_mark(writer, MARK_ID_FIELD_COUNT + iteration);
 
@@ -186,7 +186,7 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		// write type info to the buffer, 4 BYTES
 		binary_writer_u32(writer, bits);
 		
-		_assert((MARK_ID_IDENTIFIER_NAME + depth + iteration) < MARK_ID_IDENTIFIER_NAME_MAX);
+		_ASSERT((MARK_ID_IDENTIFIER_NAME + depth + iteration) < MARK_ID_IDENTIFIER_NAME_MAX);
 
 		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration);
 		start += count;
@@ -195,7 +195,7 @@ static const char* write_description(const char* start, const char* end, u32 bit
 	while(isspace(*start)) start++;
 	count = get_word_length(start, ';');
 	if((count == 0) || is_empty(start, start + count))
-		debug_log_error("[Codegen] [Legacy] Identifier name cannot be empty\n");
+		DEBUG_LOG_ERROR("[Codegen] [Legacy] Identifier name cannot be empty\n");
 
 	// write identifier name to the buffer, count + 1 BYTES
 	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration, start, count);
@@ -206,7 +206,7 @@ static const char* write_description(const char* start, const char* end, u32 bit
 	while(*start != ';')
 	{
 		if(!isspace(*start))
-			debug_log_error("[Codegen] [Legacy] Expected ';' before \"%.*s\"\n", get_word_length(start, 0), start);
+			DEBUG_LOG_ERROR("[Codegen] [Legacy] Expected ';' before \"%.*s\"\n", get_word_length(start, 0), start);
 		start++;
 	}
 	start++;
@@ -224,7 +224,7 @@ static const char* parse_storage_qualifiers(const char* start, const char* end, 
 	else if(strncmp(start, "uniform", count) == 0)
 		{ /* do nothing */ }
 	else
-		debug_log_error("[Codegen] [Legacy] Unrecognized storage qualifier \"%.*s\"\n", count, start);
+		DEBUG_LOG_ERROR("[Codegen] [Legacy] Unrecognized storage qualifier \"%.*s\"\n", count, start);
 	OUT bits |= mask;
 	return start + count;
 }
@@ -247,7 +247,7 @@ static const char* parse_qualifers(const char* start, const char* end, u32 OUT b
 			else if(strncmp(start + 3, "_instance", min(9, count - 3)) == 0)
 				mask |= PER_INSTANCE_ATTRIB_BIT;
 			else
-				debug_log_error("[Codegen] [Legacy] Unrecognized vertex attribute qualifer \"%.*s\"\n", count, start);
+				DEBUG_LOG_ERROR("[Codegen] [Legacy] Unrecognized vertex attribute qualifer \"%.*s\"\n", count, start);
 			start += count;
 			found_attribute = true;
 			break;
@@ -265,7 +265,7 @@ static const char* parse_qualifers(const char* start, const char* end, u32 OUT b
 		stage_count++;
 	}
 	if((stage_count == 0) && !found_attribute)
-		debug_log_error("[Codegen] [Legacy] Unrecognized symbol \"%.*s\", expected shader stage or vertex attribute qualifer!\n", count, start);
+		DEBUG_LOG_ERROR("[Codegen] [Legacy] Unrecognized symbol \"%.*s\", expected shader stage or vertex attribute qualifer!\n", count, start);
 	OUT bits |= mask;
 	return start;
 }
@@ -287,7 +287,7 @@ static const char* parse_square_brackets(const char* start, const char* end, u32
 		while(*start != ']')
 		{
 			if(!isspace(*start))
-				debug_log_error("[Codegen] [Layout] Unrecognized symbol \"%.*s\" in square brackets\n", get_word_length(start, 0), start);
+				DEBUG_LOG_ERROR("[Codegen] [Layout] Unrecognized symbol \"%.*s\" in square brackets\n", get_word_length(start, 0), start);
 			start++;
 		}
 		start++;
@@ -327,7 +327,7 @@ PARSE_NUMBER:
 		
 		if(count > required)
 		{
-			debug_log_error("[Codegen] [Legacy] More than required elements found in the array index operator, \"%u\"\n", arr_len);
+			DEBUG_LOG_ERROR("[Codegen] [Legacy] More than required elements found in the array index operator, \"%u\"\n", arr_len);
 			return start;
 		}
 
@@ -336,7 +336,7 @@ PARSE_NUMBER:
 			if(*start == ',')	
 				goto PARSE_NUMBER;
 			if(!isspace(*start))
-				debug_log_error("[Codegen] [Legacy] Invalid symbol \"%.*s\" in array size", __get_word_length(start, end, " \t\n"), start);
+				DEBUG_LOG_ERROR("[Codegen] [Legacy] Invalid symbol \"%.*s\" in array size", __get_word_length(start, end, " \t\n"), start);
 			start++;
 		}
 		start++;
@@ -344,9 +344,9 @@ PARSE_NUMBER:
 	if(!found)
 	{
 		u32 len = get_word_length(start, 0);
-		debug_log_error("[Codegen] [Legacy] Expected open square bracket '[' before \"%.*s\"\n", count, start);
+		DEBUG_LOG_ERROR("[Codegen] [Legacy] Expected open square bracket '[' before \"%.*s\"\n", count, start);
 	}
 	if(count < required)
-		debug_log_error("[Codegen] [Legacy] Less than required elements found in the array index operator, \"%u\"\n", arr_len);
+		DEBUG_LOG_ERROR("[Codegen] [Legacy] Less than required elements found in the array index operator, \"%u\"\n", arr_len);
 	return start;
 }

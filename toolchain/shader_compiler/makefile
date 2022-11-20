@@ -306,6 +306,6 @@ VSC := ./vsc
 	@echo Compiling $^ to $@
 	$(VSC) $(SHADER_INCLUDES) $^ $@
 
-test: build-debug $(SHADER_BINARIES)
+test: $(SHADER_BINARIES)
 test-clean:
 	$(RM) $(SHADER_BINARIES)
