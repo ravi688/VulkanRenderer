@@ -567,6 +567,9 @@ static void link(UserData* data)
 	// copy (push) to main output buffer
 	buf_pushv(data->mainOutput, defaultValue, size);
 
+	/* update the pipeline object pointer as the buffer has been resized and the object lies in that buffer */
+	pipeline = buf_get_ptr_at(data->mainOutput, data->mainBaseOffset);
+
 	// set the default values
 	defaultValue = (void*)pipeline->viewport.pViewports;
 	size = sizeof(VkViewport) * pipeline->viewport.viewportCount;
