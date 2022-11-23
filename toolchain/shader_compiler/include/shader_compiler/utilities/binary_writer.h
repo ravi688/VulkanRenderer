@@ -1,7 +1,7 @@
 #pragma once
 
 #include <shader_compiler/defines.h>
-#include <shader_compiler/utilities/dictionary.h>
+#include <bufferlib/buffer.h>
 
 /* binary writer is an interface to write binary data into a memory buffer conveniently */
 typedef struct binary_writer_t
@@ -21,7 +21,7 @@ typedef struct binary_writer_t
 	/* ptr to a function which returns current position (number of elements) */
 	u32 (*write_pos)(void* user_data);
 	/* a table to map mark IDs to write positions */
-	dictionary_t mark_table;
+	BUFFER mark_table;
 } binary_writer_t;
 
 /* type fo data to be written at the marked write position */
@@ -35,11 +35,15 @@ typedef enum mark_type_t
 	MARK_TYPE_U32
 } mark_type_t;
 
-typedef struct mark_info_t
+typedef struct mark_entry_t
 {
+	/* user defined mark id */
+	u32 id;
+	/* position at which this mark as been made */
 	u32 pos;
+	/* type of the mark (it's information about memory stride in the buffer) */
 	mark_type_t type;
-} mark_info_t;
+} mark_entry_t;
 
 /* constructors and destructors */
 SC_API binary_writer_t* binary_writer_new();
@@ -99,3 +103,7 @@ SC_API void binary_writer_u32_set(binary_writer_t* writer, u32 mark_id, u32 v);
 SC_API void binary_writer_mark(binary_writer_t* writer, u32 mark_id);
 /* writes the bytes pointed by 'bytes' with size 'size' from the write position marked with mark_id */
 SC_API void binary_writer_insert(binary_writer_t* writer, u32 mark_id, const void* bytes, u32 size);
+
+
+SC_API bool mark_id_comparer(void* ours, void* theirs);
+SC_API bool mark_pos_comparer(void* ours, void* theirs);

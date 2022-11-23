@@ -27,18 +27,18 @@ SC_API binary_writer_t* binary_writer_create(
 	writer->insert = insert;
 	writer->get_ptr = get_ptr;
 	writer->write_pos = write_pos;
-	writer->mark_table = dictionary_create(u32, mark_info_t, 1, dictionary_key_comparer_u32);
+	writer->mark_table = buf_new(mark_entry_t);
 	return writer;
 }
 
 SC_API void binary_writer_destroy(binary_writer_t* writer)
 {
-	dictionary_clear(&writer->mark_table);
+	buf_clear(&writer->mark_table, NULL);
 }
 
 SC_API void binary_writer_release_resources(binary_writer_t* writer)
 {
-	dictionary_free(&writer->mark_table);
+	buf_free(&writer->mark_table);
 	free(writer);
 }
 
@@ -127,10 +127,15 @@ static u32 _sizeof(mark_type_t type)
 		case MARK_TYPE_U32:
 			return 4;
 		case MARK_TYPE_UNDEFINED:
-		default:
 			return 0;
 	}
-	return type;
+	debug_log_warning("[Binary Writer] Returning _sizeof(%lu) zero as the mark type %lu is not recognized", type, type);
+	return 0;
+}
+
+SC_API bool mark_pos_comparer(void* ours, void* theirs)
+{
+	return CAST_TO(mark_entry_t*, theirs)->pos == DREF_TO(u32, ours);
 }
 
 /* marks the current write position with mark ID 'mark_id' and for the data of type 'type' */
@@ -138,18 +143,22 @@ static void mark(binary_writer_t* writer, u32 mark_id, mark_type_t type)
 {
 	/* get the current write position */
 	u32 curr_write_pos = writer->write_pos(writer->user_data);
-	/* check if the the current write position has already been marked with someother mark IDs */
-	buf_ucount_t index = dictionary_find_index_of(&writer->mark_table, &mark_id);
-	if(index != BUF_INVALID_INDEX)
-	{
-		DEBUG_LOG_ERROR("[Binary Writer] The write position %lu has already been marked with mark ID %lu but you are still trying to remark it with mark id: %lu",
-						curr_write_pos, (u32)index, mark_id);
-		return;
-	}
+
+	DEBUG_BLOCK
+	(
+		/* check if the the current write position has already been marked with someother mark IDs */
+		buf_ucount_t index = buf_find_index_of(&writer->mark_table, &curr_write_pos, mark_pos_comparer);
+		if(index != BUF_INVALID_INDEX)
+		{
+			mark_entry_t* info = buf_get_ptr_at_typeof(&writer->mark_table, mark_entry_t, index);
+			debug_log_warning("[Binary Writer] The write position %lu has already been marked with mark ID %lu, adding another mark with id %lu",
+							info->pos, info->id, mark_id);
+		}
+	)
 
 	/* add the mark info into the mark table */
-	mark_info_t info = { curr_write_pos, type };
-	dictionary_push(&writer->mark_table, &mark_id, &info);
+	mark_entry_t info = { mark_id, curr_write_pos, type };
+	buf_push(&writer->mark_table, &info);
 
 	/* 	allocate some bytes to accomodate the data to be written later; 
 		NOTE: passing NULL to the data ptr only allocates memory
@@ -159,40 +168,51 @@ static void mark(binary_writer_t* writer, u32 mark_id, mark_type_t type)
 	writer->push(writer->user_data, NULL, _sizeof(type));
 }
 
+SC_API bool mark_id_comparer(void* ours, void* theirs)
+{
+	return CAST_TO(mark_entry_t*, theirs)->id == DREF_TO(u32, ours);
+}
+
 /* sets or inserts a number of bytes from the marked write position with markID 'mark_id' */
 static void set_or_insert(binary_writer_t* writer, u32 mark_id, const void* bytes, u32 size)
 {
 	/* check if the mark ID exists in the mark table */
-	buf_ucount_t index = dictionary_find_index_of(&writer->mark_table, &mark_id);
+	buf_ucount_t index = buf_find_index_of(&writer->mark_table, &mark_id, mark_id_comparer);
 	if(index == BUF_INVALID_INDEX)
 	{
-		DEBUG_LOG_ERROR("[Binary Writer] There is no such mark exists with mark ID %ul", mark_id);
+		debug_log_warning("[Binary Writer] There is no such mark exists with mark ID %lu", mark_id);
 		return;
 	}
-	/* get the mark_info_t for the mark ID */
-	mark_info_t* data = CAST_TO(mark_info_t*, dictionary_get_value_ptr_at(&writer->mark_table, index));
-	switch(data->type)
+	
+	/* get the mark_entry_t for the mark ID */
+	mark_entry_t* entry = buf_get_ptr_at_typeof(&writer->mark_table, mark_entry_t, index);
+	switch(entry->type)
 	{
 		/* if marked for variable number of bytes */
 		case MARK_TYPE_UNDEFINED:
 		{
+			if(size == 0)
+			{
+				DEBUG_LOG_WARNING("[Binary Writer] Nothing to write, size is equal to zero");
+				break;
+			}
 			/* insert the bytes */
-			writer->insert(writer->user_data, data->pos, bytes, size);
+			writer->insert(writer->user_data, entry->pos, bytes, size);
 
 			/* adjust (increment) all the mark positions that are coming after the mark id 'mark_id' */
-			u32 mark_count = dictionary_get_count(&writer->mark_table);
+			u32 mark_count = buf_get_element_count(&writer->mark_table);
 			for(u32 i = 0; i < mark_count; i++)
 			{
-				mark_info_t* info = dictionary_get_value_ptr_at(&writer->mark_table, i);
-				if(info->pos > data->pos)
-					info->pos += size;
+				mark_entry_t* _entry = buf_get_ptr_at_typeof(&writer->mark_table, mark_entry_t, i);
+				if((_entry->pos > entry->pos) || ((_entry->pos == entry->pos) && (_entry != entry)))
+					_entry->pos += size;
 			}
 			break;
 		}
 		/* if marked for fixed number of bytes */
 		default:
 		{
-			u32 _size = _sizeof(data->type);
+			u32 _size = _sizeof(entry->type);
 			_ASSERT(_size == size);
 			/* get the pointer to the internal memory buffer */
 			void* ptr = writer->get_ptr(writer->user_data);

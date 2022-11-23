@@ -1,4 +1,5 @@
 #include <shader_compiler/compiler/codegen/codegen_buffer.h>
+#include <shader_compiler/debug.h>
 #include <string.h> 		// for memcpy
 #include <stdlib.h>
 
@@ -66,6 +67,32 @@ SC_API void codegen_buffer_release_resources(codegen_buffer_t* buffer)
 SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 {
 	u32 main_size = buf_get_element_count(CAST_TO(BUFFER*, buffer->main->user_data));
+	BUFFER* mark_table = &buffer->main->mark_table;
+
+	/* increment all the pointers/offsets, to data section, by main_size */
+	for(u32 i = MARK_ID_OFFSET; i < MARK_ID_OFFSET_MAX; i++)
+	{
+		buf_ucount_t index = buf_find_index_of(mark_table, &i, mark_id_comparer);
+		if(index == BUF_INVALID_INDEX)
+			continue;
+
+		mark_entry_t* info = buf_get_ptr_at_typeof(mark_table, mark_entry_t, index);
+		switch(info->type)
+		{
+			DEBUG_BLOCK (
+
+			case MARK_TYPE_U16:
+				debug_log_warning("[Codegen] Writing offsets in the codegen buffer must be of type u32, not u16");
+				break;
+			)
+
+			case MARK_TYPE_U32:
+				binary_writer_u32_set(buffer->main, i, info->pos + main_size);
+			default:
+				continue;
+		}
+	}
+
 	u32 data_size = buf_get_element_count(CAST_TO(BUFFER*, buffer->data->user_data));
 	u32 flat_size = main_size + data_size;
 	if(buffer->flat == NULL)
@@ -77,18 +104,6 @@ SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 	void* ptr = buf_get_ptr(buffer->flat);
 	memcpy(ptr, buf_get_ptr(CAST_TO(BUFFER*, buffer->main->user_data)), main_size);
 	memcpy(ptr + main_size, buf_get_ptr(CAST_TO(BUFFER*, buffer->data->user_data)), data_size);
-
-	dictionary_t* mark_table = &buffer->main->mark_table;
-
-	/* increment all the pointers/offsets, to data section, by main_size */
-	for(u32 i = MARK_ID_OFFSET; i < MARK_ID_OFFSET_MAX; i++)
-	{
-		buf_ucount_t index = dictionary_find_index_of(mark_table, &i);
-		if(index == BUF_INVALID_INDEX)
-			continue;
-		mark_info_t* info = dictionary_get_value_ptr_at(mark_table, index);
-		info->pos += main_size;
-	}
 
 	return buffer->flat;
 }
