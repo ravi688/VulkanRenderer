@@ -45,12 +45,14 @@ static const char* attribute_keywords[] =
 {
 	"Name",
 	"NoParse",
-	"Input"
+	"Read",
+	"Write"
 };
 
 enum
 {
 	ATTRIBUTE_NAME,
 	ATTRIBUTE_NOPARSE,
-	ATTRIBUTE_INPUT
+	ATTRIBUTE_READ,
+	ATTRIBUTE_WRITE
 };

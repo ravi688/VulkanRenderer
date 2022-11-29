@@ -9,14 +9,14 @@ SC_API const char* write_header(const char* start, const char* const end, binary
 	binary_writer_string(writer, SB_HDR_STR);
 
 	// skip the whitespaces
-	start = skip(start, " /t/n", end);
+	start = skip_ws(start, end);
 	while(*start == '#')
 	{
 		start++;
 		while(*start != '\n')
 		{
 			// skip the spaces and tabs but not the newline as it is a delimiter for a preprocessor line
-			start = skip(start, " /t", end);
+			start = skip(start, " \t", end);
 
 			// command is for shader binary generation
 			if(safe_strncmp(start, "sb", 2) == 0)

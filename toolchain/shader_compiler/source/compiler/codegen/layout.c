@@ -16,7 +16,7 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 {
 	if(is_empty(start, end))
 	{
-		DEBUG_LOG_INFO("[Codegen] [Legacy] Properties and Layout, both blocks are empty, skipping");
+		debug_log_info("[Codegen] [Legacy] Properties or Layout is empty, skipping");
 		binary_writer_u16(writer->main, (u16)0);
 		return;
 	}
@@ -131,7 +131,7 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		while(*start != '{')
 		{
 			if(!isspace(*start))
-				DEBUG_LOG_ERROR("[Codegen] [Legacy] Unexpected symbol \"%.*s\", '{' is expected", get_word_length(start, 0), start);
+				DEBUG_LOG_FETAL_ERROR("[Codegen] [Legacy] Unexpected symbol \"%.*s\", '{' is expected", get_word_length(start, 0), start);
 			start++;
 		}
 		if((count == 0) || is_empty(block_name, block_name + count))

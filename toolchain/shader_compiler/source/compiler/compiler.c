@@ -1,6 +1,7 @@
 
 #include <shader_compiler/compiler/compiler.h>
 #include <shader_compiler/debug.h>
+#include <shader_compiler/assert.h>
 #include <phymac_parser/v3d_generic.h>
 
 #include <shader_compiler/utilities/string.h>
@@ -39,10 +40,12 @@ SC_API BUFFER* sc_compile(compiler_ctx_t* ctx)
 			DEBUG_LOG_FETAL_ERROR("Invalid or Unrecognized result code recieved from the parser");
 	}
 
+	_ASSERT(result.root->child_count == 1);
+
 	/* perform syntax checking */
-	syntax(result.root, ctx);
+	syntax(result.root->childs[0], ctx);
 	/* generate code */
-	codegen(result.root, ctx, buffer);
+	codegen(result.root->childs[0], ctx, buffer);
 
 	BUFFER* f_buffer = codegen_buffer_flatten(buffer);
 	DEBUG_LOG_INFO("Compiled shader binary info: { size = %llu bytes }", buf_get_element_count(f_buffer));

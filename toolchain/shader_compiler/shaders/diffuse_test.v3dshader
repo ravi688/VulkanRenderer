@@ -31,6 +31,7 @@ Shader
 			GraphicsPipeline
 			{
 				// no color attachment
+				colorBlend { }
 
 				// depth attachment
 				depthStencil
@@ -72,7 +73,7 @@ Shader
 		}
 	}
 
-	[Input(depth, set = RENDER_SET, binding = TEXTURE_BINDING0)]
+	[Read(depth, set = RENDER_SET, binding = TEXTURE_BINDING0)]
 	RenderPass
 	{
 
@@ -168,7 +169,7 @@ Shader
 			}
 		}
 
-		[Input(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		[Read(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
 		SubPass
 		{
 			[NoParse]

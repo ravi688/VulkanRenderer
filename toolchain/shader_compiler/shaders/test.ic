@@ -1,0 +1,134 @@
+// V3D source
+Shader
+{
+	RenderPass
+	{
+		@attachment_color(#0)
+		@attachment_color(#1)
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					#0 = @attachment_new
+					@attachment_loc(#0, 0)
+					attachment { }
+					#1 = @attachment_new
+					@attachment_loc(#1, 1)
+					attachment { }
+				}
+			}
+		}
+
+		@attachment_input(#0)
+		[Read(color = 0, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		@attachment_color(#1)
+		[Write(color = 1, location = 0)]
+		@attachment_color(#2)
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					@attachment_loc(#1, 0)
+					attachment { }
+					#2 = @attachment_new
+					@attachment_loc(#2, 1)
+					attachment { }
+				}
+			}
+		}
+
+		@attachment_input(#2)
+		[Read(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		@attachment_color(#1)
+		[Write(color = 0, location = 0)]
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					@attachment_loc(#1, 0)
+					attachment { }
+					@perfwarn "The last subpass must have at most 1 write location"
+					#3 = @attachment_new
+					@attachment_loc(#3, 1)
+					attachment { }
+					@perfwarn "The last subpass must have at most 1 write location"
+					#4 = @attachment_new
+					@attachment_loc(#4, 2)
+					attachment { }
+				}
+			}
+		}
+	}
+
+	@attachment_depth
+	[Read(depth, set = RENDER_SET, binding = TEXTURE_BINDING0)]
+	RenderPass
+	{
+		@attachment_color(#0)
+		Subpass
+		{
+			GraphicsPipeline
+			{
+				#0 = @attachment_new
+				@attachment_loc(#0, 0)
+				attachment { }
+			}
+		}
+	}
+}
+
+// Intermediate code
+
+rp0 = @renderpass_begin single_frame
+	at0 = @attachment_new color
+	at1 = @attachment_new color
+	at2 = @attachment_new color
+	at3 = @attachment_new color
+	at4 = @attachment_new color
+	at5 = @attachment_new depth
+	sp0 = @subpass_begin
+		@attachment_depth at5
+		@attachment_color at0
+		@attachment_loc at0 0
+		@attachment_color at1
+		@attachment_loc at1 1
+	@subpass_end
+	sp1 = @subpass_begin
+		@attachment_depth at5
+		var0 = sp0.loctoat(0)
+		@attachment_input var0
+		@attachment_bind var0 sbrd_set inat_id0
+		@attachment_color at1
+		@attachment_loc at1 0
+		@attachment_color at2
+		@attachment_loc at2 1
+	@subpass_end sp1
+	sp2 = @subpass_begin
+		var1 = sp1.loctoat(1)
+		@attachment_input var1
+		@attachment_bind var1 sbrd_set inat_id0
+		var2 = sp1.loctoat(0)
+		@attachment_color var2
+		@attachment_loc var2 0
+		@attachment_color at3
+		@attachment_loc at3 1
+		@attachment_color at4
+		@attachment_loc at4 2
+	@subpass_end sp2
+@renderpass_end rp0
+rp1 = @renderpass_begin swapchain_target
+		var3 = rp0.depth_at
+		@attachment_depth var3
+		@attachment_bind var3
+	at0 = @attachment_new color
+		sp0 = @subpass_begin
+			@attachment_color at0
+			@attachment_loc at0 0
+		@subpass_end sp0
+@renderpass_end rp1

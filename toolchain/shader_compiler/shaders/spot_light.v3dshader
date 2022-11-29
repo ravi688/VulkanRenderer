@@ -1,6 +1,3 @@
-#sb version 2022
-#sl version 2022
-
 [Name("SpotLightShader")]
 Shader
 {
@@ -73,7 +70,7 @@ Shader
 			}
 		}
 
-		[Input(depth, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING)]
+		[Read(depth, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING)]
 		SubPass
 		{
 			[NoParse]

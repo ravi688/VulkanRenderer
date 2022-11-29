@@ -1,35 +1,271 @@
-#sb version 2022
-#sl version 2022
 
-[Name("MyShader")]
+/*// Multiple passes on a single attachment only
 Shader
 {
-
-	[NoParse]
-	Properties
-	{
-		fragment [0, 0] uniform sampler2D texture;
-		fragment [0, 1] uniform sampler2D texture2;
-	}
-
-	[NoParse]
-	Layout
-	{
-		per_vertex [0, 0] vec3 position;
-	}
-
 	RenderPass
 	{
+		//@attachment_color(#0)
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//#0 = //@attachment_new
+					attachment { }
+				}
+			}
+		}
 
+		//@attachment_color(#0)
+		[Write(color = 0, location = 0)]
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#0, 0)
+					attachment { }
+				}
+			}
+		}
+	}
+}
+
+// Same as above (with default attachments)
+Shader
+{
+	RenderPass
+	{
+		SubPass
+		{
+
+		}
+
+		SubPass
+		{
+
+		}
+	}
+}
+
+// Dead attachment elimination
+Shader
+{
+	RenderPass
+	{
+		//@attachment_color(#0)
+		//@attachment_color(#1)
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//#0 = //@attachment_new
+					//@attachment_loc(#0, 0)
+					attachment { }
+					// this should be a dead attachment as it is not being used in subsequent passes
+					//#1 = //@attachment_new
+					//@attachment_loc(#1, 1)
+					attachment { }
+				}
+			}
+		}
+
+		//@attachment_color(#0)
+		[Write(color = 0, location = 0)]
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#0, 0)
+					attachment { }
+				}
+			}
+		}
+	}
+}
+
+// Read and Write
+Shader
+{
+	RenderPass
+	{
+		//@attachment_color(#0)
+		//@attachment_color(#1)
+		//@attachment_color(#2)
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//#0 = //@attachment_new
+					//@attachment_loc(#0, 0)
+					attachment { }
+					//#1 = //@attachment_new
+					//@attachment_loc(#1, 1)
+					attachment { }
+
+					// this attachment shall survive through the presentation
+					//#2 = //@attachment_new
+					//@attachment_loc(#2, 2)
+					attachment { }
+				}
+			}
+		}
+
+		//@attachment_input(#1)
+		[Read(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		//@attachment_input(#2)
+		[Read(color = 2, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING1)]
+		//@attachment_color(#0)
+		[Write(color = 0, location = 0)]
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#0, 0)
+					attachment { }
+				}
+			}
+		}
+	}
+}
+
+// More than 3 passes
+Shader
+{
+	RenderPass
+	{
+		//@attachment_color(#0)
+		//@attachment_color(#1)
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//#0 = //@attachment_new
+					//@attachment_loc(#0, 0)
+					attachment { }
+					//#1 = //@attachment_new
+					//@attachment_loc(#1, 1)
+					attachment { }
+				}
+			}
+		}
+
+		//@attachment_input(#0)
+		[Read(color = 0, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		//@attachment_color(#1)
+		[Write(color = 1, location = 0)]
+		//@attachment_color(#2)
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#1, 0)
+					attachment { }
+					//#2 = //@attachment_new
+					//@attachment_loc(#2, 1)
+					attachment { }
+				}
+			}
+		}
+
+		//@attachment_input(#2)
+		[Read(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		//@attachment_color(#1)
+		[Write(color = 0, location = 0)]
+		SubPass
+		{
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#1, 0)
+					attachment { }
+					//@perfwarn "The last subpass must have at most 1 write location"
+					//#3 = //@attachment_new
+					//@attachment_loc(#3, 1)
+					attachment { }
+					//@perfwarn "The last subpass must have at most 1 write location"
+					//#4 = //@attachment_new
+					//@attachment_loc(#4, 2)
+					attachment { }
+				}
+			}
+		}
+	}
+}*/
+
+#sl version 2022
+#sb version 2022
+
+// Multiple Render passes
+Shader
+{
+	RenderPass
+	{
+		//@attachment_color(#0)
+		//@attachment_color(#1)
 		SubPass
 		{
 			[NoParse]
 			GraphicsPipeline
 			{
-				depthStencil
+				colorBlend
 				{
-					depthWriteEnable = true,
-					depthTestEnable = true
+					//#0 = //@attachment_new
+					//@attachment_loc(#0, 0)
+					attachment { }
+					//#1 = //@attachment_new
+					//@attachment_loc(#1, 1)
+					attachment { }
+				}
+
+				depthStencil { }
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+
+				void main() { }
+
+				#stage fragment
+
+				void main() { }
+			}
+		}
+
+		//@attachment_input(#0)
+		[Read(color = 0, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		//@attachment_color(#1)
+		[Write(color = 1, location = 0)]
+		//@attachment_color(#2)
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#1, 0)
+					attachment { }
+					//#2 = //@attachment_new
+					//@attachment_loc(#2, 1)
+					attachment { }
 				}
 			}
 
@@ -37,24 +273,81 @@ Shader
 			GLSL
 			{
 				#stage vertex
-				#version 450
 
-				layout(location = 0) in vec3 position;
-
-				void main()
-				{
-					gl_Position = vec4(position, 1.0);
-				}
+				void main() { }
 
 				#stage fragment
-				#version 450
 
-				layout(location = 0) out vec4 color;
+				void main() { }
+			}
+		}
 
-				void main()
+		//@attachment_input(#2)
+		[Read(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		//@attachment_color(#1)
+		[Write(color = 0, location = 0)]
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
 				{
-					color = vec4(1, 1, 1, 1);
+					//@attachment_loc(#1, 0)
+					attachment { }
+					//@perfwarn "The last subpass must have at most 1 write location"
+					//#3 = //@attachment_new
+					//@attachment_loc(#3, 1)
+					attachment { }
+					//@perfwarn "The last subpass must have at most 1 write location"
+					//#4 = //@attachment_new
+					//@attachment_loc(#4, 2)
+					attachment { }
 				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+
+				void main() { }
+
+				#stage fragment
+
+				void main() { }
+			}
+		}
+	}
+
+	//@attachment_depth
+	[Read(depth, set = RENDER_SET, binding = TEXTURE_BINDING0)]
+	//@attachment_color(#4)
+	[Write(color = 2, location = 0)]
+	RenderPass
+	{
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#4, 0)
+					attachment { }
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+
+				void main() { }
+
+				#stage fragment
+
+				void main() { }
 			}
 		}
 	}

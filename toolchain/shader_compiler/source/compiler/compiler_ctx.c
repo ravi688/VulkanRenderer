@@ -57,10 +57,10 @@ SC_API compiler_ctx_t* compiler_ctx_create(const char* src, const char* src_path
 	ctx->sat[KEYWORD_SHADER] = new_u32_list(1, ATTRIBUTE_NAME);
 	ctx->sat[KEYWORD_PROPERTIES] = new_u32_list(1, ATTRIBUTE_NOPARSE);
 	ctx->sat[KEYWORD_LAYOUT] = new_u32_list(1, ATTRIBUTE_NOPARSE);
-	ctx->sat[KEYWORD_RENDERPASS] = new_u32_list(1, ATTRIBUTE_INPUT);
-	ctx->sat[KEYWORD_SUBPASS] = new_u32_list(1, ATTRIBUTE_INPUT);
+	ctx->sat[KEYWORD_RENDERPASS] = new_u32_list(2, ATTRIBUTE_READ, ATTRIBUTE_WRITE);
+	ctx->sat[KEYWORD_SUBPASS] = new_u32_list(2, ATTRIBUTE_READ, ATTRIBUTE_WRITE);
 	ctx->sat[KEYWORD_GLSL] = new_u32_list(1, ATTRIBUTE_NOPARSE);
-	ctx->sat[KEYWORD_GFXPIPELINE] = PTR_U32_NULL;
+	ctx->sat[KEYWORD_GFXPIPELINE] = new_u32_list(1, ATTRIBUTE_NOPARSE);
 
 	ctx->keywords_size = sizeof(keywords) / sizeof(const char*);
 	ctx->keywords = CAST_TO(char**, keywords);

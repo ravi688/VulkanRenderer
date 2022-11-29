@@ -19,15 +19,24 @@ static bool syntax_check_attributes(v3d_generic_attribute_t* attributes, u32 att
 	{
 		u32 len = U32_PAIR_DIFF(attributes[i].name);
 		const char* str = attributes[i].name.start + start;
+		bool is_match_found = false;
 		for(u32 j = 0; j < supported_count; j++)
-			if(safe_strncmp(str, attribute_keywords[supported[j]], len) != 0)
-				DEBUG_LOG_WARNING("[Syntax] The attribute \"%.*s\" has no effect on %s", len, str, description);
-			else
+		{
+			if(safe_strncmp(str, attribute_keywords[supported[j]], len) == 0)
 			{
-				is_found = true;
-				if(!syntax_check_attribute_args(&attributes[i], start))
-					DEBUG_LOG_ERROR("[Syntax] Invalid arguments passed to \"%s\"", attribute_keywords[supported[j]]);
+				is_match_found = true;
+				break;
 			}
+		}
+
+		if(!is_match_found)
+			DEBUG_LOG_WARNING("[Syntax] The attribute \"%.*s\" has no effect on %s", len, str, description);
+		else
+		{
+			is_found = true;
+			if(!syntax_check_attribute_args(&attributes[i], start))
+				DEBUG_LOG_ERROR("[Syntax] Invalid arguments passed to \"%.*s\"", len, str);
+		}
 	}
 	return is_found;
 }
@@ -93,7 +102,7 @@ SC_API void syntax(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 	// lets ignore the anonymous blocks
 	if(node->qualifier_count == 0)
 	{
-		DEBUG_LOG_ERROR("anonymous entities (blocks) are not allowed for now");
+		DEBUG_LOG_ERROR("[Syntax] anonymous entities (blocks) are not allowed for now");
 		return;
 	}
 

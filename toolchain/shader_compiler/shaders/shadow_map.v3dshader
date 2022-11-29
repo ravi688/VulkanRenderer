@@ -23,6 +23,12 @@ Shader
 			[NoParse]
 			GraphicsPipeline
 			{
+				// no color attachments
+				colorBlend
+				{
+
+				}
+
 				depthStencil
 				{
 					depthTestEnable = true,

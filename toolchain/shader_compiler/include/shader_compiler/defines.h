@@ -11,3 +11,14 @@
 #else
 #	define SC_API
 #endif
+
+#include <stdlib.h>
+#include <string.h>
+#define new(type) (type*)_new(sizeof(type))
+
+static void* _new(u32 size)
+{
+	void* ptr = malloc(size);
+	memset(ptr, 0, size);
+	return ptr;
+}
