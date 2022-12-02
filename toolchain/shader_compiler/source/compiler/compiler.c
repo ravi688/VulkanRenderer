@@ -48,6 +48,5 @@ SC_API BUFFER* sc_compile(compiler_ctx_t* ctx)
 	codegen(result.root->childs[0], ctx, buffer);
 
 	BUFFER* f_buffer = codegen_buffer_flatten(buffer);
-	DEBUG_LOG_INFO("Compiled shader binary info: { size = %llu bytes }", buf_get_element_count(f_buffer));
 	return f_buffer;
 }

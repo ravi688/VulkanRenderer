@@ -135,6 +135,9 @@ int main(int arg_count, const char* const* argv)
 	/* kick the compilation  */	
 	BUFFER* sb = sc_compile(ctx);
 
+	u64 size = buf_get_element_count(sb);
+	DEBUG_LOG_INFO("Compiled shader binary info: { size = %llu bytes (%.1f KB) }", size, CAST_TO(float, size) / 1024);
+
 	/* write the result into disk */
 	write_binary_to_file(sb_path, buf_get_ptr(sb), buf_get_element_count(sb));
 
