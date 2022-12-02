@@ -20,6 +20,8 @@ SC_API compiler_ctx_t* compiler_ctx_create(const char* src, const char* src_path
 {
 	compiler_ctx_t* ctx = CAST_TO(compiler_ctx_t*, malloc(sizeof(compiler_ctx_t)));
 
+	ctx->string_buffer = buf_create(sizeof(char), 512, 0);
+
 	/* prepare the look ahead table */
 	ctx->lat_size = KEYWORD_MAX;
 	ctx->lat = CAST_TO(ptr_u32_pair_t*, malloc(sizeof(ptr_u32_pair_t) * KEYWORD_MAX));

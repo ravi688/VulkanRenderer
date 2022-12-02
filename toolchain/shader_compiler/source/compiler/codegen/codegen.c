@@ -134,7 +134,7 @@ typedef struct render_pass_user_data_t
 static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer);
 static void codegen_descriptions(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 count, void* user_data);
 static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 count, void* user_data);
-static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analysis, compiler_ctx_t* ctx, codegen_buffer_t* writer);
+static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analysis, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 rpindex, u32 spindex);
 static void codegen_pipeline(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 count, void* user_data);
 static void codegen_glsl(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 count, void* user_data);
 
@@ -502,6 +502,38 @@ typedef enum render_pass_type_t
 	RENDER_PASS_TYPE_SWAPCHAIN_TARGET
 } render_pass_type_t;
 
+static void write_layout2(compiler_ctx_t* ctx, codegen_buffer_t* writer, const char* format, ...)
+{
+	buf_clear(&ctx->string_buffer, NULL);
+	va_list args;
+	va_start(args, format);
+ 	buf_vprintf(&ctx->string_buffer, NULL, format, args);
+ 	va_end(args);
+	write_layout(buf_get_ptr(&ctx->string_buffer), buf_peek_ptr(&ctx->string_buffer), writer);
+}
+
+static void codegen_render_set_binding_descriptions(render_pass_analysis_t* analysis, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 index)
+{
+	/* write the color input descriptions */
+	for(u32 i = 0; i < analysis->color_bind_count; i++)
+	{
+		write_layout2(ctx, writer, 
+					"fragment [%lu, %lu] uniform sampler2D rp%lucolor%lu;",
+					analysis->color_binds[i].set_number,
+					analysis->color_binds[i].binding_number,
+					index,
+					CAST_TO(u32, i));
+	}
+
+	/* write the depth input descriptions */
+	if(analysis->depth_read != U32_MAX)
+		write_layout2(ctx, writer, 
+					"fragment [%lu, %lu] uniform sampler2D rp%ludepth;",
+					analysis->depth_bind.set_number,
+					analysis->depth_bind.binding_number,
+					index);
+}
+
 static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 iteration, void* user_data)
 {
 	render_pass_user_data_t* data = CAST_TO(render_pass_user_data_t*, user_data);
@@ -527,17 +559,41 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, co
 	/* let's keep the subpass dependencies out of the picture for now */
 	binary_writer_u32(writer->main, 0);
 
-	/* TODO: render set binding descriptions */
-	binary_writer_u32(writer->main, 0);
+	/* write the render set binding descriptions */
+	codegen_render_set_binding_descriptions(analysis, ctx, writer, iteration);
 
 	/* write the list of subpass descriptions */
 	binary_writer_u32(writer->main, analysis->subpass_count);
 
 	for(u32 i = 0; i < analysis->subpass_count; i++)
-		codegen_subpass(node->childs[i], &analysis->subpasses[i], ctx, writer);
+		codegen_subpass(node->childs[i], &analysis->subpasses[i], ctx, writer, iteration, i);
 }
 
-static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analysis, compiler_ctx_t* ctx, codegen_buffer_t* writer)
+static void codegen_sub_render_set_binding_descriptions(subpass_analysis_t* analysis, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 rpindex, u32 spindex)
+{
+	/* write the color input descriptions */
+	for(u32 i = 0; i < analysis->color_bind_count; i++)
+	{
+		write_layout2(ctx, writer, 
+					"fragment [%lu, %lu] uniform sampler2D sb%lurp%lucolor%lu;",
+					analysis->color_binds[i].set_number,
+					analysis->color_binds[i].binding_number,
+					rpindex,
+					spindex,
+					CAST_TO(u32, i));
+	}
+
+	/* write the depth input descriptions */
+	if(analysis->depth_read != U32_MAX)
+		write_layout2(ctx, writer, 
+					"fragment [%lu, %lu] uniform sampler2D sb%lurp%ludepth;",
+					analysis->depth_bind.set_number,
+					analysis->depth_bind.binding_number,
+					rpindex,
+					spindex);
+}
+
+static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analysis, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 rpindex, u32 spindex)
 {
 	/* write input attachment list */
 	bool read_depth = analysis->depth_read != U32_MAX;
@@ -563,8 +619,8 @@ static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analys
 	binary_writer_u32_mark(writer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index);
 	binary_writer_u32_set(writer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index, binary_writer_pos(writer->data));
 
-	/* TODO: sub render set binding descriptions */
-	binary_writer_u32(writer->main, 0);
+	/* write the sub render set binding descriptions */
+	codegen_sub_render_set_binding_descriptions(analysis, ctx, writer, rpindex, spindex);
 
 	/* WRITE PIPELINE DESCRIPTION INTO THE DATA SECTION */
 

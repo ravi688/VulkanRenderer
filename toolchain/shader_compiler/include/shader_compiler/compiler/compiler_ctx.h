@@ -39,6 +39,9 @@ typedef struct compiler_ctx_t
 
 	s32 current_pipeline_index;
 
+	/* internal string buffer */
+	BUFFER string_buffer;
+
 	/* public properties */	
 
 	/* ptr to the source string */

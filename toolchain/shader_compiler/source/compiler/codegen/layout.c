@@ -34,10 +34,10 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 		while(isspace(*start)) start++;
 		if(start >= end) break; //end of the file reached
 
-		_ASSERT((MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 20) < MARK_ID_DESCRIPTOR_OFFSET_MAX);
+		_ASSERT((MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 15) < MARK_ID_DESCRIPTOR_OFFSET_MAX);
 		
-		binary_writer_u32_mark(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 20);
-		binary_writer_u32_set(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 20, binary_writer_pos(writer->data));
+		binary_writer_u32_mark(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 15);
+		binary_writer_u32_set(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 15, binary_writer_pos(writer->data));
 
 		u32 bits = 0;				// description info bits
 
