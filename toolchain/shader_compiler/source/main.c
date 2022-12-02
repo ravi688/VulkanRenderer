@@ -47,7 +47,7 @@ static cmd_args_parse_result_t* parse_cmd_args(const char* const* argv, int arg_
 	cmd_args_parse_result_t* result = CAST_TO(cmd_args_parse_result_t*, malloc(sizeof(cmd_args_parse_result_t)));
 	memset(result, 0, sizeof(cmd_args_parse_result_t));
 
-	_assert(arg_count > 1);
+	_ASSERT(arg_count > 1);
 
 	result->exe_path = argv[0];
 	result->include_paths = buf_new(char*);				// list of null terminated strings
@@ -58,7 +58,7 @@ static cmd_args_parse_result_t* parse_cmd_args(const char* const* argv, int arg_
 		const char* str = argv[i];
 		u32 len = strlen(str);
 
-		_assert(len != 0);
+		_ASSERT(len != 0);
 
 		/* option */
 		if((len > 0) && (str[0] == '-'))
@@ -92,7 +92,7 @@ int main(int arg_count, const char* const* argv)
 
 	u32 path_count = buf_get_element_count(&result->paths);
 
-	_assert(path_count <= 2);
+	_ASSERT(path_count <= 2);
 
 	if(path_count == 0)
 		cmd_args_error("No source input found");
