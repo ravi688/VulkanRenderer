@@ -231,16 +231,22 @@ static shaderc_compile_options_t get_compile_options(compiler_ctx_t* ctx)
 static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_buffer_t* writer, compiler_ctx_t* ctx)
 {
 	/* calculate the shader mask */
+	_ASSERT((MARK_ID_SHADER_MASK + ctx->current_pipeline_index) < MARK_ID_SHADER_MASK_MAX);
+	binary_writer_u8_mark(writer->data, MARK_ID_SHADER_MASK + ctx->current_pipeline_index);
 	u8 shader_mask = 0;
 	for(u8 i = 0; i < SHADER_STAGE_MAX; i++)
 	{
 		shader_source_t source = sources[i];
 		if(source.length == 0) continue;
 		shader_mask |= (1 << source.stage);
+		_ASSERT((MARK_ID_SPIRV_LENGTH + i + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_LENGTH_MAX);
+		_ASSERT((MARK_ID_SPIRV_OFFSET + i + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_OFFSET_MAX);
+		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_LENGTH + i + ctx->current_pipeline_index * 2);
+		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_OFFSET + i + ctx->current_pipeline_index * 2);
 	}
 
 	/* write the shader mask */
-	binary_writer_u8(writer->main, shader_mask);
+	binary_writer_u8_set(writer->data, MARK_ID_SHADER_MASK + ctx->current_pipeline_index, shader_mask);
 
 	shaderc_compiler_t compiler = shaderc_compiler_initialize();
 	shaderc_compile_options_t options = get_compile_options(ctx);
@@ -272,13 +278,10 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 		u64 length = shaderc_result_get_length(result);
 		_ASSERT(length > 0);
 
-		_ASSERT((MARK_ID_SPIRV_OFFSET + i) < MARK_ID_SPIRV_OFFSET_MAX);
-
-		/* write offset */
-		binary_writer_u32_mark(writer->main, MARK_ID_SPIRV_OFFSET + i);
-		binary_writer_u32_set(writer->main, MARK_ID_SPIRV_OFFSET + i, binary_writer_pos(writer->data));
 		/* write length */
-		binary_writer_u32(writer->main, length);
+		binary_writer_u32_set(writer->data, MARK_ID_SPIRV_LENGTH + i + ctx->current_pipeline_index * 2, length);
+		/* write offset */
+		binary_writer_u32_set(writer->data, MARK_ID_SPIRV_OFFSET + i + ctx->current_pipeline_index * 2, binary_writer_pos(writer->data));
 		/* write the SPIR-V code */
 		binary_writer_write(writer->data, bytes, length);
 

@@ -39,7 +39,7 @@ Shader
 			[NoParse]
 			GLSL
 			{
-				#stage fragment
+				#stage vertex
 				#version 450
 				
 				#include <v3d.h>
@@ -57,7 +57,7 @@ Shader
 					gl_Position = clipPos;
 				}
 
-				#stage vertex
+				#stage fragment
 				#version 450
 				
 				void main()

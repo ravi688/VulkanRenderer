@@ -69,27 +69,36 @@ SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 	u32 main_size = buf_get_element_count(CAST_TO(BUFFER*, buffer->main->user_data));
 	BUFFER* mark_table = &buffer->main->mark_table;
 
-	/* increment all the pointers/offsets, to data section, by main_size */
-	for(u32 i = MARK_ID_OFFSET; i < MARK_ID_OFFSET_MAX; i++)
+	struct
 	{
-		buf_ucount_t index = buf_find_index_of(mark_table, &i, mark_id_comparer);
-		if(index == BUF_INVALID_INDEX)
-			continue;
+		BUFFER* mark_table;
+		binary_writer_t* writer;
+	} update_list[2] = { { &buffer->main->mark_table, buffer->main }, { &buffer->data->mark_table, buffer->data } };
 
-		mark_entry_t* info = buf_get_ptr_at_typeof(mark_table, mark_entry_t, index);
-		switch(info->type)
+	for(u32 j = 0; j < 2; j++)
+	{
+		/* increment all the pointers/offsets, to data section, by main_size */
+		for(u32 i = MARK_ID_OFFSET; i < MARK_ID_OFFSET_MAX; i++)
 		{
-			DEBUG_BLOCK (
-
-			case MARK_TYPE_U16:
-				debug_log_warning("[Codegen] Writing offsets in the codegen buffer must be of type u32, not u16");
-				break;
-			)
-
-			case MARK_TYPE_U32:
-				binary_writer_u32_set(buffer->main, i, info->pos + main_size);
-			default:
+			buf_ucount_t index = buf_find_index_of(update_list[j].mark_table, &i, mark_id_comparer);
+			if(index == BUF_INVALID_INDEX)
 				continue;
+
+			mark_entry_t* info = buf_get_ptr_at_typeof(update_list[j].mark_table, mark_entry_t, index);
+			switch(info->type)
+			{
+				DEBUG_BLOCK (
+
+				case MARK_TYPE_U16:
+					debug_log_warning("[Codegen] Writing offsets in the codegen buffer must be of type u32, not u16");
+					break;
+				)
+
+				case MARK_TYPE_U32:
+					binary_writer_u32_set(update_list[j].writer, i, info->pos + main_size);
+				default:
+					continue;
+			}
 		}
 	}
 

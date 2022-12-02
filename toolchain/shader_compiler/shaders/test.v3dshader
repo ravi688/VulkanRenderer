@@ -239,11 +239,14 @@ Shader
 			[NoParse]
 			GLSL
 			{
+
 				#stage vertex
+				#version 450
 
 				void main() { }
 
 				#stage fragment
+				#version 450
 
 				void main() { }
 			}
@@ -273,10 +276,12 @@ Shader
 			GLSL
 			{
 				#stage vertex
+				#version 450
 
 				void main() { }
 
 				#stage fragment
+				#version 450
 
 				void main() { }
 			}
@@ -310,10 +315,12 @@ Shader
 			GLSL
 			{
 				#stage vertex
+				#version 450
 
 				void main() { }
 
 				#stage fragment
+				#version 450
 
 				void main() { }
 			}
@@ -342,10 +349,12 @@ Shader
 			GLSL
 			{
 				#stage vertex
+				#version 450
 
 				void main() { }
 
 				#stage fragment
+				#version 450
 
 				void main() { }
 			}

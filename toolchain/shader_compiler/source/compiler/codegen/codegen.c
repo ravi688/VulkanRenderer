@@ -83,8 +83,6 @@ typedef struct subpass_analysis_t
 	};
 	/* write location mapping of the above color writes */
 	color_location_t* color_locations;
-	/* attachment index of depth attachment, otherwise U32_MAX */
-	u32 depth_write;
 	/* list of color reades */
 	u32* color_reads;
 	union 
@@ -93,10 +91,12 @@ typedef struct subpass_analysis_t
 		u32 color_bind_count;
 	};
 	bind_info_t* color_binds;
-	/* depth attachment index */
+	/* depth attachment index for read */
 	u32 depth_read;
 	/* descriptor bind info for the depth attachment */
 	bind_info_t depth_bind;
+	/* depth attachment index for write, otherwise U32_MAX */
+	u32 depth_write;
 } subpass_analysis_t;
 
 typedef struct render_pass_analysis_t
@@ -134,16 +134,20 @@ typedef struct render_pass_user_data_t
 static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer);
 static void codegen_descriptions(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 count, void* user_data);
 static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 count, void* user_data);
-static void codegen_subpass(subpass_analysis_t* analysis, codegen_buffer_t* writer);
+static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analysis, compiler_ctx_t* ctx, codegen_buffer_t* writer);
 static void codegen_pipeline(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 count, void* user_data);
 static void codegen_glsl(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 count, void* user_data);
 
 static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer)
 {
+	/* as per the v3d binary spec, the property descriptions come first */
 	foreach_child_node_if_name(node, keywords[KEYWORD_PROPERTIES], writer, codegen_descriptions, NULL, ctx);
+	/* the layout descriptions come after the property descriptions */
 	foreach_child_node_if_name(node, keywords[KEYWORD_LAYOUT], writer, codegen_descriptions, NULL, ctx);
+
 	u32 render_pass_count = count_child_node_if_name(node, keywords[KEYWORD_RENDERPASS], ctx->src);
 	binary_writer_u32(writer->main, render_pass_count);
+	
 	render_pass_user_data_t data = { render_pass_count, NULL };
 	foreach_child_node_if_name(node, keywords[KEYWORD_RENDERPASS], writer, codegen_renderpass, &data, ctx);
 }
@@ -224,6 +228,9 @@ static u32 parse_binding(const char* str, u32 len)
 
 static void run_sub_pass_analysis(v3d_generic_node_t* subpass, compiler_ctx_t* ctx, render_pass_analysis_t* renderpass_analysis, subpass_analysis_t* prev_analysis, BUFFER* attachments, subpass_analysis_t OUT analysis)
 {
+	/* intially the depth write must be invalid */
+	analysis->depth_write = U32_MAX;
+
 	/* because we are working with legacy compiler code, we need to find the unparsed gfx pipeline node to parse it to get more detail about it */
 	v3d_generic_node_t* unparsed_gfx_pipeline = find_child_node_if_name(subpass, keywords[KEYWORD_GFXPIPELINE], ctx->src);
 	_ASSERT(unparsed_gfx_pipeline != NULL);
@@ -241,11 +248,15 @@ static void run_sub_pass_analysis(v3d_generic_node_t* subpass, compiler_ctx_t* c
 
 		NOTE: we are determining the need of a depth attachment ahead as it is needed when we start analysing the attributes on this subpass
 	 */
-	if((renderpass_analysis->depth_attachment_index == U32_MAX) && (find_child_node_if_name(gfx_pipeline, "depthStencil", ctx->src + unparsed.start) != NULL))
+	if(find_child_node_if_name(gfx_pipeline, "depthStencil", ctx->src + unparsed.start) != NULL)
 	{
-		renderpass_analysis->depth_attachment_index = buf_get_element_count(attachments);
-		/* at0 = @attachment_new depth */
-		buf_push_auto(attachments, ATTACHMENT_TYPE_DEPTH);
+		if(renderpass_analysis->depth_attachment_index == U32_MAX)
+		{
+			renderpass_analysis->depth_attachment_index = buf_get_element_count(attachments);
+			/* at0 = @attachment_new depth */
+			buf_push_auto(attachments, ATTACHMENT_TYPE_DEPTH);
+		}
+		analysis->depth_write = renderpass_analysis->depth_attachment_index;
 	}
 
 	/* list of color reads, i.e [Read(color = ...)] attribute on a subpass */
@@ -511,7 +522,7 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, co
 
 	/* write the list of attachments */
 	binary_writer_u32(writer->main, analysis->attachment_count);
-	binary_writer_write(writer->main, (void*)analysis->attachments, analysis->attachment_count * sizeof(attachment_type_t));
+	binary_writer_write(writer->main, (void*)analysis->attachments, analysis->attachment_count * sizeof(u32));
 
 	/* let's keep the subpass dependencies out of the picture for now */
 	binary_writer_u32(writer->main, 0);
@@ -523,21 +534,56 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, co
 	binary_writer_u32(writer->main, analysis->subpass_count);
 
 	for(u32 i = 0; i < analysis->subpass_count; i++)
-		codegen_subpass(&analysis->subpasses[i], writer);
+		codegen_subpass(node->childs[i], &analysis->subpasses[i], ctx, writer);
 }
 
-static void codegen_subpass(subpass_analysis_t* analysis, codegen_buffer_t* writer)
+static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analysis, compiler_ctx_t* ctx, codegen_buffer_t* writer)
 {
+	/* write input attachment list */
+	bool read_depth = analysis->depth_read != U32_MAX;
+	u32 input_count = analysis->color_read_count + (read_depth ? 1 : 0);
+	binary_writer_u32(writer->main, input_count);
+	binary_writer_write(writer->main, (void*)analysis->color_reads, analysis->color_read_count * sizeof(u32));
+	if(read_depth)
+		binary_writer_u32(writer->main, analysis->depth_read);
 
+	/* write color attachment list */
+	binary_writer_u32(writer->main, analysis->color_write_count);
+	binary_writer_write(writer->main, (void*)analysis->color_writes, analysis->color_write_count);
+
+	/* let's keep the preserve attachment list zero for now */
+	binary_writer_u32(writer->main, 0);
+
+	/* write the depth attachment index */
+	binary_writer_u32(writer->main, analysis->depth_write);
+
+	/* write the pipeline offset */
+	ctx->current_pipeline_index++;
+	_ASSERT((MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index) < MARK_ID_PIPELINE_OFFSET_MAX);
+	binary_writer_u32_mark(writer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index);
+	binary_writer_u32_set(writer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index, binary_writer_pos(writer->data));
+
+	/* TODO: sub render set binding descriptions */
+	binary_writer_u32(writer->main, 0);
+
+	/* WRITE PIPELINE DESCRIPTION INTO THE DATA SECTION */
+
+	/* write the vulkan_graphics_pipeline_description_t object into the data section */
+	codegen_pipeline(find_child_node_if_name(node, keywords[KEYWORD_GFXPIPELINE], ctx->src), ctx, writer, 0, NULL);
+
+	/* write the spir-v binaries into the data section */
+	codegen_glsl(find_child_node_if_name(node, keywords[KEYWORD_GLSL], ctx->src), ctx, writer, 0, NULL);
 }
 
 static void codegen_pipeline(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 iteration, void* user_data)
 {
+	_ASSERT(node != NULL);
 	write_gfx_pipeline(node->unparsed.start + ctx->src, node->unparsed.end + ctx->src, writer);
 }
 
 static void codegen_glsl(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 iteration, void* user_data)
 {
+	_ASSERT(node != NULL);
 	write_glsl(node->unparsed.start + ctx->src, node->unparsed.end + ctx->src, writer, ctx);
 }
 

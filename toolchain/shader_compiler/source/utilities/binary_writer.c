@@ -122,6 +122,8 @@ static u32 _sizeof(mark_type_t type)
 {
 	switch(type)
 	{
+		case MARK_TYPE_U8:
+			return 1;
 		case MARK_TYPE_U16:
 			return 2;
 		case MARK_TYPE_U32:
@@ -221,6 +223,16 @@ static void set_or_insert(binary_writer_t* writer, u32 mark_id, const void* byte
 			break;
 		}
 	}
+}
+
+SC_API void binary_writer_u8_mark(binary_writer_t* writer, u32 mark_id)
+{
+	mark(writer, mark_id, MARK_TYPE_U8);
+}
+
+SC_API void binary_writer_u8_set(binary_writer_t* writer, u32 mark_id, u8 v)
+{
+	set_or_insert(writer, mark_id, &v, sizeof(u8));
 }
 
 SC_API void binary_writer_u16_mark(binary_writer_t* writer, u32 mark_id)

@@ -66,7 +66,8 @@ SC_API compiler_ctx_t* compiler_ctx_create(const char* src, const char* src_path
 	ctx->keywords = CAST_TO(char**, keywords);
 
 	ctx->depth = KEYWORD_UNDEFINED;
-	
+	ctx->current_pipeline_index = -1;
+
 	return ctx;
 }
 

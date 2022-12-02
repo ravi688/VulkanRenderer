@@ -37,6 +37,8 @@ typedef struct compiler_ctx_t
 	/* current depth of a block while parsing the source */
 	s32 depth;
 
+	s32 current_pipeline_index;
+
 	/* public properties */	
 
 	/* ptr to the source string */

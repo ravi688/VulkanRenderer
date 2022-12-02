@@ -29,6 +29,8 @@ typedef enum mark_type_t
 {
 	/* variable number of bytes might be inserted at the marked write position */
 	MARK_TYPE_UNDEFINED,
+	/* 1 byte to be written at the marked write position */
+	MARK_TYPE_U8,
 	/* 2 bytes to be witten at the marked write position */
 	MARK_TYPE_U16,
 	/* 4 bytes to be witten at the marked write position */
@@ -98,6 +100,10 @@ SC_API void binary_writer_u16_set(binary_writer_t* writer, u32 mark_id, u16 v);
 SC_API void binary_writer_u32_mark(binary_writer_t* writer, u32 mark_id);
 /* writes 4 bytes from the write position marked with mark_id */
 SC_API void binary_writer_u32_set(binary_writer_t* writer, u32 mark_id, u32 v);
+/* marks the 1 byte from the current position with mark_id to be writen later */
+SC_API void binary_writer_u8_mark(binary_writer_t* writer, u32 mark_id);
+/* writes 1 byte from the write position marked with mark_id */
+SC_API void binary_writer_u8_set(binary_writer_t* writer, u32 mark_id, u8 v);
 
 /* marks the current position with mark_id, for variable number of bytes, to be written later */
 SC_API void binary_writer_mark(binary_writer_t* writer, u32 mark_id);
