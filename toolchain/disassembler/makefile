@@ -18,8 +18,8 @@ EXECUTABLE_NAME = disasm
 EXTERNAL_INCLUDES = 
 EXTERNAL_LIBS = 
 
-DEPENDENCIES = ../../../dependencies/Common
-DEPENDENCY_LIBS = ../../../dependencies/Common/lib/common.a
+DEPENDENCIES = ../../../dependencies/GLSLCommon ../../../dependencies/Common  ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
+DEPENDENCY_LIBS = ../../../dependencies/GLSLCommon/lib/glslcommon.a ../../../dependencies/Common/lib/common.a  ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = 
 SHARED_DEPENDENCY_LIBS = 
@@ -231,7 +231,12 @@ bin-clean:
 	$(RM) $(TARGET_DYNAMIC_IMPORT_LIB)
 	$(RM_DIR) $(TARGET_LIB_DIR)
 	@echo [Log] Binaries cleaned successfully!
-	$(MAKE) --directory=./../../dependencies/Common clean
+	$(MAKE) --directory=./dependencies/../../../dependencies/GLSLCommon clean
+	$(MAKE) --directory=./dependencies/../../../dependencies/Common clean
+	$(MAKE) --directory=./dependencies/../../../dependencies/MeshLib/dependencies/DiskManager clean
+	$(MAKE) --directory=./dependencies/../../../shared-dependencies/BufferLib clean
+	$(MAKE) --directory=./dependencies/../../../dependencies/SafeMemory/shared-dependencies/CallTrace clean
+
 # 	$(MAKE) --directory=./shared-dependencies/CallTrace clean
 # 	$(MAKE) --directory=./dependencies/HPML clean
 # 	$(MAKE) --directory=../../shared-dependencies/HPML clean
