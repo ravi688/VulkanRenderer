@@ -643,13 +643,7 @@ static void codegen_glsl(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_
 	write_glsl(node->unparsed.start + ctx->src, node->unparsed.end + ctx->src, writer, ctx);
 }
 
-static void prepare_codegen_buffer(codegen_buffer_t* buffer)
-{
-
-}
-
 SC_API void codegen(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer)
 {
-	prepare_codegen_buffer(writer);
 	codegen_shader(node, ctx, writer);
 }
