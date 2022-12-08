@@ -305,6 +305,68 @@ static const char* parse_square_brackets(const char* start, const char* end, u32
 	return start;
 }
 
+static u32 parse_set(const char* str, u32 len)
+{
+	if(safe_strncmp(str, "CAMERA_SET", len) == 0) return 0;
+	else if(safe_strncmp(str, "GLOBAL_SET", len) == 0) return 1;
+	else if(safe_strncmp(str, "RENDER_SET", len) == 0) return 2;
+	else if(safe_strncmp(str, "SUB_RENDER_SET", len) == 0) return 3;
+	else if(safe_strncmp(str, "MATERIAL_SET", len) == 0) return 4;
+	else if(safe_strncmp(str, "OBJECT_SET", len) == 0) return 5;
+	return U32_MAX;
+}
+
+static u32 parse_location(const char* str, u32 len)
+{
+	if(safe_strncmp(str, "POSITION_LOCATION", len) == 0) return  0;
+	else if(safe_strncmp(str, "NORMAL_LOCATION", len) == 0) return 1;
+	else if(safe_strncmp(str, "TEXCOORD_LOCATION", len) == 0) return 2;
+	else if(safe_strncmp(str, "TANGENT_LOCATION", len) == 0) return 3;
+	return U32_MAX;
+}
+
+static u32 parse_binding(const char* str, u32 len)
+{
+	if(safe_strncmp(str, "CAMERA_PROPERTIES_BINDING", len) == 0) return 0;
+	else if(safe_strncmp(str, "CAMERA_BINDING", len) == 0) return 0;
+	else if(safe_strncmp(str, "LIGHT_BINDING", len) == 0) return 1;
+	else if(safe_strncmp(str, "INPUT_ATTACHMENT_BINDING0", len) == 0) return 0;
+	else if(safe_strncmp(str, "INPUT_ATTACHMENT_BINDING1", len) == 0) return 1;
+	else if(safe_strncmp(str, "INPUT_ATTACHMENT_BINDING2", len) == 0) return 2;
+	else if(safe_strncmp(str, "MATERIAL_PROPERTIES_BINDING", len) == 0) return 0;
+	else if(safe_strncmp(str, "TEXTURE_BINDING0", len) == 0) return 1;
+	else if(safe_strncmp(str, "TEXTURE_BINDING1", len) == 0) return 2;
+	else if(safe_strncmp(str, "TEXTURE_BINDING2", len) == 0) return 3;
+	else if(safe_strncmp(str, "TEXTURE_BINDING3", len) == 0) return 4;
+	else if(safe_strncmp(str, "TEXTURE_BINDING4", len) == 0) return 5;
+	else if(safe_strncmp(str, "TEXTURE_BINDING5", len) == 0) return 6;
+	else if(safe_strncmp(str, "TEXTURE_BINDING6", len) == 0) return 7;
+	else if(safe_strncmp(str, "TEXTURE_BINDING7", len) == 0) return 8;
+	else if(safe_strncmp(str, "TEXTURE_BINDING8", len) == 0) return 9;
+	else if(safe_strncmp(str, "TRANSFORM_BINDING", len) == 0) return 0;
+
+	else if(safe_strncmp(str, "POSITION_BINDING", len) == 0) return  0;
+	else if(safe_strncmp(str, "NORMAL_BINDING", len) == 0) return 1;
+	else if(safe_strncmp(str, "TEXCOORD_BINDING", len) == 0) return 2;
+	else if(safe_strncmp(str, "TANGENT_BINDING", len) == 0) return 3;
+
+	return U32_MAX;
+}
+
+static u32 try_parse_to_u32(const char* str)
+{
+	u32 len = strlen(str);
+	u32 value;
+	if((value = parse_binding(str, len)) != U32_MAX)
+		return value;
+	else if((value = parse_set(str, len)) != U32_MAX)
+		return value;
+	else if((value = parse_location(str, len)) != U32_MAX)
+		return value;
+	else
+		return strtoul(str, NULL, 0);
+}
+
 static const char* write_set_and_binding_numbers(const char* start, const char* end, u8 required, binary_writer_t* writer)
 {
 	while(isspace(*start)) start++;
@@ -318,7 +380,7 @@ PARSE_NUMBER:
 		start++;
 		while(isspace(*start)) start++;
 		u8 len = 0;
-		while(isdigit(*start)) { start++; len++; };
+		while(isalnum(*start) || (*start == '_')) { start++; len++; };
 		char sub_str[len + 1];
 		/*	
 			WARNING: 	Don't use strncpy(sub_str, start - len, len) here!
@@ -326,7 +388,7 @@ PARSE_NUMBER:
 		 				Thus, in this case, destination shall not be considered a null terminated C string (reading it as such would overflow).
 		*/
 		memcpy(sub_str, start - len, len); sub_str[len] = 0;
-		arr_len = strtoul(sub_str, NULL, 0);
+		arr_len = try_parse_to_u32(sub_str);
 
 
 		// first iteration: write descriptor set number/index or binding number in case of vertex attribute, 1 BYTE
