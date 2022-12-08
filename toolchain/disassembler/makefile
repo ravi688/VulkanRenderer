@@ -291,3 +291,21 @@ build-run: build
 	$(__EXECUTABLE_NAME)
 
 run: build-run
+
+#-------------------------------------------
+#		Test
+#-------------------------------------------
+.PHONY: test
+.PHONY: test-clean
+
+SHADER_BINARIES := $(wildcard ../shader_compiler/shaders/*.sb)
+SHADER_DISASSEMBLIES := $(addsuffix .dis, $(basename $(SHADER_BINARIES)))
+DISASM := ./disasm
+
+%.dis: %.sb
+	@echo Disassembling $^ to $@
+	$(DISASM) $^ $@
+
+test: $(SHADER_DISASSEMBLIES)
+test-clean:
+	$(RM) $(SHADER_DISASSEMBLIES)

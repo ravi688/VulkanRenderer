@@ -4,6 +4,24 @@
 #include <stdlib.h>
 
 
+static u64 get_possible_value(const void* bytes, u32 size)
+{
+	if((bytes == NULL) || (size == 0))
+		return U64_MAX;
+	switch(size)
+	{
+		case 1:
+			return CAST_TO(u64, DREF_TO(u8, bytes));
+		case 2:
+			return CAST_TO(u64, DREF_TO(u16, bytes));
+		case 4:
+			return CAST_TO(u64, DREF_TO(u32, bytes));
+		case 8:
+			return DREF_TO(u64, bytes);
+	}
+	return U64_MAX;
+}
+
 /* NOTE: we can't just pass pointer to buf_* functions to binary_writer
 	because they are macros and contain some other invisible parameters 
  */
@@ -16,12 +34,14 @@ static void writer_push(void* user_data, const void* bytes, u32 size)
 	buf_push_pseudo(CAST_TO(BUFFER*, user_data), size);
 	if(bytes != NULL)
 		memcpy(buf_get_ptr_at(user_data, index), bytes, size);
+	debug_log_info("[Codegen Buffer] %llu push, position: %u, length: %u, possible value: %llu", (u64)user_data, index, size, get_possible_value(bytes, size));
 }
 
 static void writer_insert(void* user_data, u32 index, const void* bytes, u32 size)
 {
 	buf_insert_pseudo(user_data, index, size);
 	memcpy(buf_get_ptr_at(user_data, index), bytes, size);
+	debug_log_info("[Codegen Buffer] %llu insert, position: %u, length: %u", (u64)user_data, index, size);
 }
 
 static void* writer_ptr(void* user_data)
@@ -89,13 +109,18 @@ SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 			{
 				DEBUG_BLOCK (
 
+				case MARK_TYPE_U8:
 				case MARK_TYPE_U16:
-					debug_log_warning("[Codegen] Writing offsets in the codegen buffer must be of type u32, not u16");
+					debug_log_warning("[Codegen Buffer] Writing offsets in the codegen buffer must be of type u32, not u16 or u8");
 					break;
 				)
 
 				case MARK_TYPE_U32:
-					binary_writer_u32_set(update_list[j].writer, i, info->pos + main_size);
+				{
+					AUTO writer = update_list[j].writer;
+					binary_writer_u32_set(writer, i, DREF_TO(u32, writer->get_ptr(writer->user_data) + info->pos) + main_size);
+					break;
+				}
 				default:
 					continue;
 			}
@@ -113,6 +138,9 @@ SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 	void* ptr = buf_get_ptr(buffer->flat);
 	memcpy(ptr, buf_get_ptr(CAST_TO(BUFFER*, buffer->main->user_data)), main_size);
 	memcpy(ptr + main_size, buf_get_ptr(CAST_TO(BUFFER*, buffer->data->user_data)), data_size);
+
+	debug_log_info("[Codegen Buffer] data section size: %lu", data_size);
+	debug_log_info("[Codegen Buffer] main section size: %lu", main_size);
 
 	return buffer->flat;
 }

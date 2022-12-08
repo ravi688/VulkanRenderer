@@ -17,4 +17,4 @@
 #define PER_VERTEX_ATTRIB_BIT 							BIT32(16 + 4)
 #define PER_INSTANCE_ATTRIB_BIT 						BIT32(16 + 5)
 
-SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* writer);
+SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* writer, bool is_write_count);

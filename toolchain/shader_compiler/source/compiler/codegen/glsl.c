@@ -234,15 +234,15 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 	_ASSERT((MARK_ID_SHADER_MASK + ctx->current_pipeline_index) < MARK_ID_SHADER_MASK_MAX);
 	binary_writer_u8_mark(writer->data, MARK_ID_SHADER_MASK + ctx->current_pipeline_index);
 	u8 shader_mask = 0;
-	for(u8 i = 0; i < SHADER_STAGE_MAX; i++)
+	for(u8 i = 0, j = 0; i < SHADER_STAGE_MAX; i++)
 	{
 		shader_source_t source = sources[i];
 		if(source.length == 0) continue;
 		shader_mask |= (1 << source.stage);
-		_ASSERT((MARK_ID_SPIRV_LENGTH + i + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_LENGTH_MAX);
-		_ASSERT((MARK_ID_SPIRV_OFFSET + i + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_OFFSET_MAX);
-		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_LENGTH + i + ctx->current_pipeline_index * 2);
-		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_OFFSET + i + ctx->current_pipeline_index * 2);
+		_ASSERT((MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_LENGTH_MAX);
+		_ASSERT((MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_OFFSET_MAX);
+		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2);
+		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2);
 	}
 
 	/* write the shader mask */
@@ -279,9 +279,9 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 		_ASSERT(length > 0);
 
 		/* write length */
-		binary_writer_u32_set(writer->data, MARK_ID_SPIRV_LENGTH + i + ctx->current_pipeline_index * 2, length);
+		binary_writer_u32_set(writer->data, MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2, length);
 		/* write offset */
-		binary_writer_u32_set(writer->data, MARK_ID_SPIRV_OFFSET + i + ctx->current_pipeline_index * 2, binary_writer_pos(writer->data));
+		binary_writer_u32_set(writer->data, MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2, binary_writer_pos(writer->data));
 		/* write the SPIR-V code */
 		binary_writer_write(writer->data, bytes, length);
 

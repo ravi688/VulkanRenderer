@@ -1,219 +1,80 @@
-
-/*// Multiple passes on a single attachment only
-Shader
-{
-	RenderPass
-	{
-		//@attachment_color(#0)
-		SubPass
-		{
-			GraphicsPipeline
-			{
-				colorBlend
-				{
-					//#0 = //@attachment_new
-					attachment { }
-				}
-			}
-		}
-
-		//@attachment_color(#0)
-		[Write(color = 0, location = 0)]
-		SubPass
-		{
-			GraphicsPipeline
-			{
-				colorBlend
-				{
-					//@attachment_loc(#0, 0)
-					attachment { }
-				}
-			}
-		}
-	}
-}
-
-// Same as above (with default attachments)
-Shader
-{
-	RenderPass
-	{
-		SubPass
-		{
-
-		}
-
-		SubPass
-		{
-
-		}
-	}
-}
-
-// Dead attachment elimination
-Shader
-{
-	RenderPass
-	{
-		//@attachment_color(#0)
-		//@attachment_color(#1)
-		SubPass
-		{
-			GraphicsPipeline
-			{
-				colorBlend
-				{
-					//#0 = //@attachment_new
-					//@attachment_loc(#0, 0)
-					attachment { }
-					// this should be a dead attachment as it is not being used in subsequent passes
-					//#1 = //@attachment_new
-					//@attachment_loc(#1, 1)
-					attachment { }
-				}
-			}
-		}
-
-		//@attachment_color(#0)
-		[Write(color = 0, location = 0)]
-		SubPass
-		{
-			GraphicsPipeline
-			{
-				colorBlend
-				{
-					//@attachment_loc(#0, 0)
-					attachment { }
-				}
-			}
-		}
-	}
-}
-
-// Read and Write
-Shader
-{
-	RenderPass
-	{
-		//@attachment_color(#0)
-		//@attachment_color(#1)
-		//@attachment_color(#2)
-		SubPass
-		{
-			GraphicsPipeline
-			{
-				colorBlend
-				{
-					//#0 = //@attachment_new
-					//@attachment_loc(#0, 0)
-					attachment { }
-					//#1 = //@attachment_new
-					//@attachment_loc(#1, 1)
-					attachment { }
-
-					// this attachment shall survive through the presentation
-					//#2 = //@attachment_new
-					//@attachment_loc(#2, 2)
-					attachment { }
-				}
-			}
-		}
-
-		//@attachment_input(#1)
-		[Read(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
-		//@attachment_input(#2)
-		[Read(color = 2, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING1)]
-		//@attachment_color(#0)
-		[Write(color = 0, location = 0)]
-		SubPass
-		{
-			GraphicsPipeline
-			{
-				colorBlend
-				{
-					//@attachment_loc(#0, 0)
-					attachment { }
-				}
-			}
-		}
-	}
-}
-
-// More than 3 passes
-Shader
-{
-	RenderPass
-	{
-		//@attachment_color(#0)
-		//@attachment_color(#1)
-		SubPass
-		{
-			GraphicsPipeline
-			{
-				colorBlend
-				{
-					//#0 = //@attachment_new
-					//@attachment_loc(#0, 0)
-					attachment { }
-					//#1 = //@attachment_new
-					//@attachment_loc(#1, 1)
-					attachment { }
-				}
-			}
-		}
-
-		//@attachment_input(#0)
-		[Read(color = 0, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
-		//@attachment_color(#1)
-		[Write(color = 1, location = 0)]
-		//@attachment_color(#2)
-		SubPass
-		{
-			GraphicsPipeline
-			{
-				colorBlend
-				{
-					//@attachment_loc(#1, 0)
-					attachment { }
-					//#2 = //@attachment_new
-					//@attachment_loc(#2, 1)
-					attachment { }
-				}
-			}
-		}
-
-		//@attachment_input(#2)
-		[Read(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
-		//@attachment_color(#1)
-		[Write(color = 0, location = 0)]
-		SubPass
-		{
-			GraphicsPipeline
-			{
-				colorBlend
-				{
-					//@attachment_loc(#1, 0)
-					attachment { }
-					//@perfwarn "The last subpass must have at most 1 write location"
-					//#3 = //@attachment_new
-					//@attachment_loc(#3, 1)
-					attachment { }
-					//@perfwarn "The last subpass must have at most 1 write location"
-					//#4 = //@attachment_new
-					//@attachment_loc(#4, 2)
-					attachment { }
-				}
-			}
-		}
-	}
-}*/
-
 #sl version 2022
 #sb version 2022
 
 // Multiple Render passes
 Shader
 {
+	[NoParse]
+	Properties
+	{
+		// fragment vertex [push_constant] [0, 10] uniform PushData
+		// {
+		// 	mat4 projection;
+		// 	mat4 model;
+		// 	mat4 view;
+		// 	mat4 transform;
+		// } pushData;
+
+		fragment [0, 1] uniform sampler2D abledo;
+		fragment [23, 45] buffer OutputData
+		{
+			mat4 matrix1;
+			mat4 matrix2;
+			mat3 matrix3;
+			mat2 matrix4;
+			vec4 color;
+			vec3 direction;
+			vec3 position;
+			float verbosity;
+			float vibransity;
+			float shininess;
+			float darkness;
+			float whiteness;
+		} outputData;
+
+
+		fragment [8, 12] uniform sampler2D texture1;
+		fragment [8, 12] uniform sampler2D texture2;
+		fragment [8, 12] uniform sampler2D texture3;
+		fragment [8, 12] uniform sampler2D texture4;
+		fragment [8, 12] uniform sampler2D texture5;
+		fragment [8, 12] uniform sampler2D texture6;
+		fragment [8, 12] uniform sampler2D texture7;
+
+		vertex fragment [1, 1] uniform Parameters
+		{
+			float value12345;
+			float value23331;
+			int value33233;
+		} parameters;
+
+		fragment [0, 1] uniform sampler2D abledo;
+
+		// vertex fragment [6, 7] uniform Parameters
+		// {
+		// 	float value1343;
+		// 	float value1121;
+		// 	int value3456;
+		// } parameters;
+
+		// fragment [0, 1] uniform sampler2D abledo;
+
+		// vertex fragment [34, 45] uniform Parameters
+		// {
+		// 	float value1323;
+		// 	float value1345;
+		// 	int value354;
+		// } parameters;
+	}
+
+	[NoParse]
+	Layout
+	{
+		per_vertex [0, 0] vec3 position;
+		per_vertex [1, 1] vec3 normal;
+		per_vertex [2, 2] vec2 texcoord;
+	}
+
 	RenderPass
 	{
 		//@attachment_color(#0)
@@ -329,8 +190,6 @@ Shader
 
 	//@attachment_depth
 	[Read(depth, set = RENDER_SET, binding = TEXTURE_BINDING0)]
-	//@attachment_color(#4)
-	[Write(color = 2, location = 0)]
 	RenderPass
 	{
 		SubPass

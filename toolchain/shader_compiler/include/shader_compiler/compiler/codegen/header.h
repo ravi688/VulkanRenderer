@@ -1,7 +1,7 @@
 #pragma once
 
 #include <shader_compiler/defines.h>
-#include <shader_compiler/utilities/binary_writer.h>
+#include <common/binary_writer.h>
 
 #define SB_HDR_STR "V3D Shader Binary"
 

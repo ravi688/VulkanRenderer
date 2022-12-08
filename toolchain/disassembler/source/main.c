@@ -1,5 +1,6 @@
 #include <disassembler/disasm.h>
 #include <disk_manager/file_reader.h>
+#include <disk_manager/file_writer.h>
 
 #include <disassembler/debug.h>
 #include <disassembler/assert.h>
@@ -33,10 +34,11 @@ int main(int argc, char** argv)
 		cmd_args_error("No enough arguments are given");
 
 	BUFFER* bin = load_binary_from_file(argv[1]);
-
 	BUFFER* str = disassemble(buf_get_ptr(bin), buf_get_element_count(bin));
-	
-	puts(CAST_TO(const char*, buf_get_ptr(str)));
+	if(argc > 2)
+		write_text_to_file(argv[2], buf_get_ptr(str));
+	else
+		puts(CAST_TO(const char*, buf_get_ptr(str)));
 
 	debug_log_info("disassembly success");
 

@@ -10,23 +10,28 @@ static const char* parse_qualifers(const char* start, const char* end, u32 OUT b
 static const char* parse_square_brackets(const char* start, const char* end, u32 OUT bits);
 static const char* write_set_and_binding_numbers(const char* start, const char* end, u8 required, binary_writer_t* writer);
 static const char* parse_storage_qualifiers(const char* start, const char* end, u32 OUT bits);
-static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer, s32 depth, s32 iteration);
+static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer);
 
-SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* writer)
+SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* writer, bool is_write_count)
 {
 	if(is_empty(start, end))
 	{
 		debug_log_info("[Codegen] [Legacy] Properties or Layout is empty, skipping");
-		binary_writer_u16(writer->main, (u16)0);
+		if(is_write_count)
+			binary_writer_u16(writer->main, (u16)0);
 		return;
 	}
 
-	static s32 iteration = -1;
-	iteration++;
+	static s32 cnt = -1;
+	static s32 cnt2 = -1;
+	cnt2++;
 
-	_ASSERT((MARK_ID_DESCRIPTOR_COUNT + iteration) < MARK_ID_DESCRIPTOR_COUNT_MAX);
-
-	binary_writer_u16_mark(writer->main, MARK_ID_DESCRIPTOR_COUNT + iteration);
+	if(is_write_count)
+	{
+		cnt++;
+		_ASSERT((MARK_ID_DESCRIPTOR_COUNT + cnt) < MARK_ID_DESCRIPTOR_COUNT_MAX);
+		binary_writer_u16_mark(writer->main, MARK_ID_DESCRIPTOR_COUNT + cnt);
+	}
 
 	u16 descriptor_count = 0;
 	while(start < end)
@@ -34,10 +39,11 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 		while(isspace(*start)) start++;
 		if(start >= end) break; //end of the file reached
 
-		_ASSERT((MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 15) < MARK_ID_DESCRIPTOR_OFFSET_MAX);
+		cnt2++;
+		_ASSERT((MARK_ID_DESCRIPTOR_OFFSET + cnt2) < MARK_ID_DESCRIPTOR_OFFSET_MAX);
 		
-		binary_writer_u32_mark(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 15);
-		binary_writer_u32_set(writer->main, MARK_ID_DESCRIPTOR_OFFSET + descriptor_count + iteration * 15, binary_writer_pos(writer->data));
+		binary_writer_u32_mark(writer->main, MARK_ID_DESCRIPTOR_OFFSET + cnt2);
+		binary_writer_u32_set(writer->main, MARK_ID_DESCRIPTOR_OFFSET + cnt2, binary_writer_pos(writer->data));
 
 		u32 bits = 0;				// description info bits
 
@@ -53,13 +59,16 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 		if(!((bits & PER_VERTEX_ATTRIB_BIT) || (bits & PER_INSTANCE_ATTRIB_BIT)))
 			start = parse_storage_qualifiers(start, end, &bits);
 
-		start = write_description(start, end, bits, writer->data, -1, descriptor_count + iteration * 5);
+		start = write_description(start, end, bits, writer->data);
 
 		descriptor_count++;
 	}
 
-	//Write number of descriptor count, 2 BYTES
-	binary_writer_u16_set(writer->main, MARK_ID_DESCRIPTOR_COUNT, descriptor_count);
+	if(is_write_count)
+	{
+		//Write number of descriptor count, 2 BYTES
+		binary_writer_u16_set(writer->main, MARK_ID_DESCRIPTOR_COUNT + cnt, descriptor_count);
+	}
 }
 
 /*
@@ -71,9 +80,11 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 	    float light_intensity;
 	} scene_data;
  */
-static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer, s32 depth, s32 iteration)
+static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer)
 {
-	depth++;
+	static long int cnt = -1;
+	cnt++;
+	long int _cnt = cnt;
 	while(isspace(*start)) start++;
 	u32 count = get_word_length(start, 0);
 	bool found = true;
@@ -138,7 +149,6 @@ static const char* write_description(const char* start, const char* end, u32 bit
 			DEBUG_LOG_ERROR("[Codegen] [Legacy] Block name cannot be empty");
 		start++;
 
-		u32 _bits = bits;
 		if(bits & STORAGE_BUFFER_BIT)
 			bits |= GLSL_TYPE_STORAGE_BUFFER;
 		else if(bits & PUSH_CONSTANT_BIT)
@@ -155,19 +165,19 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		// write block name to the buffer, count + 1 BYTES
 		binary_writer_stringn(writer, block_name, count);
 
-		_ASSERT((MARK_ID_IDENTIFIER_NAME + depth + iteration) < MARK_ID_IDENTIFIER_NAME_MAX);
+		_ASSERT((MARK_ID_IDENTIFIER_NAME + _cnt) < MARK_ID_IDENTIFIER_NAME_MAX);
 
-		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration);
+		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + _cnt);
 
-		_ASSERT((MARK_ID_FIELD_COUNT + iteration) < MARK_ID_FIELD_COUNT_MAX);
+		_ASSERT((MARK_ID_FIELD_COUNT + _cnt) < MARK_ID_FIELD_COUNT_MAX);
 
-		binary_writer_u16_mark(writer, MARK_ID_FIELD_COUNT + iteration);
+		binary_writer_u16_mark(writer, MARK_ID_FIELD_COUNT + _cnt);
 
 		u16 num_elements = 0;
 		while(*start != '}')
 		{
 			u16 info;
-			start = write_description(start, end, _bits, writer, depth, iteration);
+			start = write_description(start, end, 0, writer);
 			while(isspace(*start)) start++;
 			num_elements++;
 		}
@@ -176,7 +186,7 @@ static const char* write_description(const char* start, const char* end, u32 bit
 			debug_log_warning("[Codegen] [Legacy] Block \"%.*s\" has zero elements", count, block_name);
 
 		// write number of elements to the buffer, 2 BYTES
-		binary_writer_u16_set(writer, MARK_ID_FIELD_COUNT + iteration, num_elements);
+		binary_writer_u16_set(writer, MARK_ID_FIELD_COUNT + _cnt, num_elements);
 
 		start++;
 	}
@@ -186,9 +196,9 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		// write type info to the buffer, 4 BYTES
 		binary_writer_u32(writer, bits);
 		
-		_ASSERT((MARK_ID_IDENTIFIER_NAME + depth + iteration) < MARK_ID_IDENTIFIER_NAME_MAX);
+		_ASSERT((MARK_ID_IDENTIFIER_NAME + _cnt) < MARK_ID_IDENTIFIER_NAME_MAX);
 
-		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration);
+		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + _cnt);
 		start += count;
 	}
 
@@ -198,9 +208,9 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		DEBUG_LOG_ERROR("[Codegen] [Legacy] Identifier name cannot be empty\n");
 
 	// write identifier name to the buffer, count + 1 BYTES
-	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration, start, count);
 	char null_char = 0;
-	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + depth + iteration, &null_char, 1);
+	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + _cnt, &null_char, 1);
+	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + _cnt, start, count);
 
 	start += count;
 	while(*start != ';')
