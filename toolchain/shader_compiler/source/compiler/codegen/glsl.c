@@ -241,6 +241,7 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 		_ASSERT((MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_OFFSET_MAX);
 		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2);
 		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2);
+		j++;
 	}
 
 	/* write the shader mask */
