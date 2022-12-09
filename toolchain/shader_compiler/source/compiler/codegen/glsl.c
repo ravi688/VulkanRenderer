@@ -111,28 +111,26 @@ SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* wri
 	serialize_shader(sources, shader_count, writer, ctx);
 }
 
-static char* resolve_relative_file_path(const char* src_path, u32 src_index, const char* exe_path, BUFFER* buffer)
+static char* resolve_relative_file_path(const char* src_path, u32 src_index, const char* cwd, BUFFER* buffer)
 {
-	const char* ptr1 = strrchr(exe_path, '/');
-	const char* ptr2 = strrchr(exe_path, '\\');
-	if(ptr1 < ptr2)
-		ptr1 = ptr2;
 	if(src_index != U32_MAX)
 		src_path = buf_get_ptr_at(buffer, src_index);
-	u32 r_len = strlen(src_path);
+	u32 src_len = strlen(src_path);
+	u32 cwd_len = strlen(cwd);
 
 	/* buf_push_pseudo_get_ptr() */
 	u32 index = buf_get_element_count(buffer);
-	buf_push_pseudo(buffer, strlen(exe_path) + r_len);
+	buf_push_pseudo(buffer, cwd_len + src_len + 1);
 	char* file_path = CAST_TO(char*, buf_get_ptr_at(buffer, index));
 
 	/* update src_path as the buffer has been resized (the internall memory buffer address has been) */
 	if(src_index != U32_MAX)
 		src_path = buf_get_ptr_at(buffer, src_index);
 	
-	memcpy(CAST_TO(void*, file_path), exe_path, (ptr1 - exe_path) + 1);
-	memcpy(CAST_TO(void*, file_path + (ptr1 - exe_path) + 1), src_path, r_len);
-	file_path[ptr1 - exe_path + 1 + r_len] = 0;
+	memcpy(CAST_TO(void*, file_path), cwd,  cwd_len);
+	file_path[cwd_len] = '/';
+	memcpy(CAST_TO(void*, file_path + cwd_len + 1), src_path, src_len);
+	file_path[cwd_len + src_len + 1] = 0;
 	return file_path;
 }
 
@@ -170,7 +168,7 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 			if(strchr(requested_source, ':') != NULL)
 				file_path = CAST_TO(char*, requested_source);
 			else
-				file_path = resolve_relative_file_path(requested_source, U32_MAX, ctx->exe_path, &buffer);
+				file_path = resolve_relative_file_path(requested_source, U32_MAX, ctx->cwd, &buffer);
 			data = load_text_from_file(file_path);
 		}
 		break;
@@ -182,14 +180,14 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 			for(u32 i = 0; i < dir_count; i++)
 			{
 				const char* dir = CAST_TO(char**, buf_get_ptr_at(dirs, i))[0];
-				file_path = resolve_relative_file_path(merge_dir_and_file(dir, requested_source, &buffer), 0, ctx->exe_path, &buffer);
+				file_path = resolve_relative_file_path(merge_dir_and_file(dir, requested_source, &buffer), 0, ctx->cwd, &buffer);
 				BUFFER* _data = load_text_from_file_s(file_path);
+				debug_log_info("[Codegen] [Legacy] Resolved include file: %s", file_path);
 				if(_data == NULL)
 					continue;
 				else 
 				{
 					data = _data;
-					debug_log_info("[Codegen] [Legacy] Resolved include file: %s", file_path);
 					break;
 				}
 			}

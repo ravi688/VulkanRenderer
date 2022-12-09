@@ -52,6 +52,8 @@ typedef struct compiler_ctx_t
 	const char* src_path;
 	/* path to the vsc executable */
 	const char* exe_path;
+	/* current working directory */
+	const char* cwd;
 	/* list of paths to look for including the files in the standard brackets <> */
 	BUFFER include_paths;
 } compiler_ctx_t;

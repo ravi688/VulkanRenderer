@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <windows.h>
 
 void display_help_and_exit(const char* application_name)
 {
@@ -24,6 +25,8 @@ void display_help_and_exit(const char* application_name)
 
 typedef struct cmd_args_parse_result_t
 {
+	/* current working directory */
+	const char* cwd;
 	/* path the vsc executable file */
 	const char* exe_path;
 	/* unordered list of include path to be searched for when include a file with <> brackets */
@@ -42,6 +45,16 @@ static void __cmd_args_error(u32 line, const char* function, const char* file, c
 	display_help_and_exit("vsc");
 }
 
+static const char* get_cwd()
+{
+	DWORD length = GetCurrentDirectory(0, NULL);
+	_assert(length > 0);
+	LPTSTR buffer  = CAST_TO(LPTSTR, malloc(length));
+	DWORD read_length = GetCurrentDirectory(length, buffer);
+	_assert(read_length == (length - 1));
+	return CAST_TO(const char*, buffer);
+}
+
 static cmd_args_parse_result_t* parse_cmd_args(const char* const* argv, int arg_count)
 {
 	cmd_args_parse_result_t* result = CAST_TO(cmd_args_parse_result_t*, malloc(sizeof(cmd_args_parse_result_t)));
@@ -49,6 +62,7 @@ static cmd_args_parse_result_t* parse_cmd_args(const char* const* argv, int arg_
 
 	_ASSERT(arg_count > 1);
 
+	result->cwd = get_cwd();
 	result->exe_path = argv[0];
 	result->include_paths = buf_new(char*);				// list of null terminated strings
 	result->paths = buf_new(char*);						// list of null terminated strings
@@ -130,6 +144,7 @@ int main(int arg_count, const char* const* argv)
 	ctx->src_len = buf_get_element_count(src);
 	ctx->src_path = src_path;
 	ctx->exe_path = result->exe_path;
+	ctx->cwd = result->cwd;
 	memcpy(&ctx->include_paths, &result->include_paths, sizeof(BUFFER));
 	
 	/* kick the compilation  */	
