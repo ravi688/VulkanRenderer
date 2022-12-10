@@ -56,7 +56,8 @@ static bool foreach_child_node_if_name(v3d_generic_node_t* node, const char* nam
 typedef enum attachment_type_t
 {
 	ATTACHMENT_TYPE_COLOR = 0UL,
-	ATTACHMENT_TYPE_DEPTH
+	ATTACHMENT_TYPE_DEPTH = 2UL,
+	ATTACHMENT_TYPE_STENCIL = 4UL
 } attachment_type_t;
 
 typedef struct color_location_t
@@ -445,6 +446,64 @@ static void run_sub_pass_analysis(v3d_generic_node_t* subpass, compiler_ctx_t* c
 	debug_log_info("[Subpass analysis] end");
 }
 
+static void reorder_attachments(render_pass_analysis_t* renderpass)
+{
+	if(renderpass->depth_attachment_index == U32_MAX) return;
+
+	debug_log_info("[Renderpass analysis] Attachment reorder begin");
+
+	u32 prev_index = renderpass->depth_attachment_index;
+	u32 depth_attachment = renderpass->attachments[renderpass->depth_attachment_index];
+	for(u32 i = prev_index; i < (renderpass->attachment_count - 1); i++)
+		renderpass->attachments[i] = renderpass->attachments[i + 1];
+	renderpass->attachments[renderpass->attachment_count - 1] = depth_attachment;
+	renderpass->depth_attachment_index = renderpass->attachment_count - 1;
+
+	debug_log_info("[Renderpass analysis] previous depth attachment index: %lu, now: %lu", prev_index, renderpass->depth_attachment_index);
+
+	for(u32 i = 0; i < renderpass->subpass_count; i++)
+	{
+		subpass_analysis_t* subpass = &renderpass->subpasses[i];
+		if(subpass->depth_write != U32_MAX)
+		{
+			DEBUG_BLOCK( u32 depth_write = subpass->depth_write; )
+			subpass->depth_write = renderpass->depth_attachment_index;
+			debug_log_info("[Renderpass analysis] subpass depth write: %lu, now: %lu", depth_write, subpass->depth_write);
+		}
+		if(subpass->depth_read != U32_MAX)
+		{
+			DEBUG_BLOCK( u32 depth_read = subpass->depth_read; )
+			subpass->depth_read = renderpass->depth_attachment_index;
+			subpass->depth_bind.attachment_index = renderpass->depth_attachment_index;
+			debug_log_info("[Renderpass analysis] subpass depth read: %lu, now: %lu", depth_read, subpass->depth_read);
+		}
+
+		for(u32 j = 0; j < subpass->color_read_count; j++)
+		{
+			if(subpass->color_reads[j] > prev_index)
+			{
+				DEBUG_BLOCK( u32 color_read = subpass->color_reads[j]; )
+				subpass->color_reads[j]--;
+				subpass->color_binds[j].attachment_index--;
+				debug_log_info("[Renderpass analysis] subpass color read: %lu, now: %lu", color_read, subpass->color_reads[j]);
+			}
+		}
+
+		for(u32 j = 0; j < subpass->color_write_count; j++)
+		{
+			if(subpass->color_writes[j] > prev_index)
+			{
+				DEBUG_BLOCK( u32 color_write = subpass->color_writes[j]; )
+				subpass->color_writes[j]--;
+				subpass->color_locations[j].attachment_index--;
+				debug_log_info("[Renderpass analysis] subpass color write: %lu, now: %lu", color_write, subpass->color_writes[j]);
+			}
+		}
+	}
+
+	debug_log_info("[Renderpass analysis] Attachment reorder end");
+}
+
 static void run_render_pass_analysis(v3d_generic_node_t* renderpass, compiler_ctx_t* ctx, render_pass_analysis_t* prev_analysis, render_pass_analysis_t OUT analysis)
 {
 	debug_log_info("[Renderpass analysis] begin");
@@ -525,6 +584,9 @@ static void run_render_pass_analysis(v3d_generic_node_t* renderpass, compiler_ct
 			/* do nothing for now */
 		}
 	}
+
+	reorder_attachments(analysis);
+
 	debug_log_info("[Renderpass analysis] end");
 }
 
@@ -594,7 +656,7 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, co
 	binary_writer_write(writer->main, (void*)analysis->attachments, analysis->attachment_count * sizeof(u32));
 
 	/* let's keep the subpass dependencies out of the picture for now */
-	binary_writer_u32(writer->main, 13);
+	binary_writer_u32(writer->main, 0);
 
 	/* write the render set binding descriptions */
 	codegen_render_set_binding_descriptions(analysis, ctx, writer, iteration);
