@@ -40,7 +40,8 @@ static void disasm_header(binary_reader_t* reader, BUFFER* str)
 	u32 cmd;
 	u32 bversion = U32_MAX;
 	u32 lversion = U32_MAX;
-	while(true)
+	u32 count = binary_reader_u32(reader);
+	while(count > 0)
 	{
 		cmd = binary_reader_u32(reader);
 		/* shader binary */
@@ -69,6 +70,7 @@ static void disasm_header(binary_reader_t* reader, BUFFER* str)
 		}
 		if((bversion != U32_MAX) && (lversion != U32_MAX))
 			break;
+		--count;
 	}
 
 	_printf(str, "Language Version: %lu\n", lversion);

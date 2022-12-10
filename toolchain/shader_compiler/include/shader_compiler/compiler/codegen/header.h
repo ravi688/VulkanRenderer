@@ -1,7 +1,7 @@
 #pragma once
 
 #include <shader_compiler/defines.h>
-#include <common/binary_writer.h>
+#include <shader_compiler/compiler/codegen/codegen_buffer.h>
 
 #define SB_HDR_STR "V3D Shader Binary"
 
@@ -48,4 +48,4 @@ typedef struct sb_header_t
 	sb_version_t sb_version;
 } sb_header_t;
 
-SC_API const char* write_header(const char* start, const char* const end, binary_writer_t* writer);
+SC_API const char* write_header(const char* start, const char* const end, codegen_buffer_t* writer);

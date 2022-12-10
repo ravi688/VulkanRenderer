@@ -19,7 +19,7 @@ SC_API BUFFER* sc_compile(compiler_ctx_t* ctx)
 	codegen_buffer_t* buffer = codegen_buffer_create();
 
 	// write the file header
-	ctx->src = start = write_header(start, end, buffer->main);
+	ctx->src = start = write_header(start, end, buffer);
 
 	// parse the source code (perhaps partially)
 	ppsr_v3d_generic_parse_result_t result = ppsr_v3d_generic_parse(start, CAST_TO(u32, end - start));
