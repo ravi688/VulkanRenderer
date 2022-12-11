@@ -650,7 +650,6 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP:
 			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
 				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
 				add_shader(&pipelines, "shaders/presets/lit/color/shadow.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
 				add_shader(&pipelines, "shaders/presets/diffuse/shadow.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);

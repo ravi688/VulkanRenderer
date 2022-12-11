@@ -34,6 +34,12 @@ RENDERER_API void vulkan_graphics_pipeline_description_begin(vulkan_renderer_t* 
 		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 		.primitiveRestartEnable = VK_FALSE
 	};
+
+	settings->tessellation = (VkPipelineTessellationStateCreateInfo)
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO
+	};
+
 	VkViewport* viewport = heap_new(VkViewport);
 	viewport[0] = (VkViewport)
 	{

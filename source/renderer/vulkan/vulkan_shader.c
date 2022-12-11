@@ -12,10 +12,10 @@
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <renderer/internal/vulkan/vulkan_shader_loader.h>
 #include <disk_manager/file_reader.h>
+#include <common/binary_reader.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 #include <renderer/memory_allocator.h>
-#include <renderer/binary_reader.h>
 #include <renderer/dictionary.h>
 
 #include <string.h> 			// for strlen()
@@ -679,11 +679,6 @@ static vulkan_shader_resource_description_t* load_descriptors(binary_reader_t* r
 
 		descriptor->stage_flags = CAST_TO(u8, VULKAN_SHADER_STAGE_BITS(descriptor_info));
 		
-		// get the name of the descriptor
-		const char* name = binary_reader_str(reader);
-		assert(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
-		strcpy(descriptor->handle.name, name);
-
 		bool is_block = (descriptor->handle.type == GLSL_TYPE_UNIFORM_BUFFER)
 			|| (descriptors->handle.type == GLSL_TYPE_STORAGE_BUFFER)
 			|| (descriptors->handle.type == GLSL_TYPE_PUSH_CONSTANT);
@@ -691,13 +686,18 @@ static vulkan_shader_resource_description_t* load_descriptors(binary_reader_t* r
 		if(is_block)
 		{
 			// ignore the block name
-			name = binary_reader_str(reader);
+			const char* name = binary_reader_str(reader);
 			assert(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
 		}
 
+		// get the name of the descriptor
+		const char* name = binary_reader_str(reader);
+		assert(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
+		strcpy(descriptor->handle.name, name);
+
 		log_msg("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
 			i, descriptor->set_number, descriptor->binding_number, descriptor->stage_flags,
-			descriptor->is_push_constant ? "true" : "false", descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", (descriptor->handle.type == GLSL_TYPE_BLOCK) ? "true" : "false",
+			descriptor->is_push_constant ? "true" : "false", descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", is_block ? "true" : "false",
 			descriptor->handle.name);
 
 		// if the descriptor is a block then iterate through its fields
@@ -739,6 +739,12 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(binary_rea
 {
 	u32 descriptor_count;
 	vulkan_shader_resource_description_t* descriptors = load_descriptors(reader, &descriptor_count);
+
+	// set the number of descriptors (vulkan vertex info objects)
+	OUT count = descriptor_count;
+
+	if(descriptor_count == 0)
+		return NULL;
 
 	// allocate memory
 	vulkan_vertex_buffer_layout_description_t* vertex_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, descriptor_count);
@@ -832,108 +838,22 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(binary_rea
 	// destroy the vulkan resource descriptors because we are done creating vertex infos out of them
 	destroy_vulkan_shader_resource_descriptions(descriptors, descriptor_count);
 
-	// set the number of vulkan vertex info objects
-	OUT count = descriptor_count;
-
 	// return pointer to the final vulkan vertex info objects
 	return vertex_infos;
-}
-
-static vulkan_subpass_description_t* create_subpass_descriptions(binary_reader_t* reader, u32 OUT count)
-{
-	u16 description_count = binary_reader_u16(reader);
-	OUT count = description_count;
-	if(description_count == 0)
-		return NULL;
-
-	vulkan_subpass_description_t* descriptions = heap_newv(vulkan_subpass_description_t, description_count);
-	memzerov(descriptions, vulkan_subpass_description_t, description_count);
-
-	for(u16 i = 0; i < description_count; i++)
-	{
-		vulkan_subpass_description_t* description = &descriptions[i];
-
-		// read the input attachment array
-		description->input_attachment_count = binary_reader_u32(reader);
-		description->input_attachments = heap_newv(u32, description->input_attachment_count);
-		for(u16 j = 0; j < description->input_attachment_count; j++)
-			description->input_attachments[j] = binary_reader_u32(reader);
-
-		// read the color attachment array
-		description->color_attachment_count = binary_reader_u32(reader);
-		description->color_attachments = heap_newv(u32, description->color_attachment_count);
-		for(u16 j = 0; j < description->color_attachment_count; j++)
-			description->color_attachments[j] = binary_reader_u32(reader);
-
-		// read the preserve attachment array
-		description->preserve_attachment_count = binary_reader_u32(reader);
-		description->preserve_attachments = heap_newv(u32, description->preserve_attachment_count);
-		for(u16 j = 0; j < description->preserve_attachment_count; j++)
-			description->preserve_attachments[j] = binary_reader_u32(reader);
-
-		description->depth_stencil_attachment = binary_reader_u32(reader);
-		description->pipeline_description_index = binary_reader_u32(reader);
-		
-		description->sub_render_set_bindings = load_descriptors(reader, &description->sub_render_set_binding_count);	
-	}
-
-	return NULL;
-}
-
-static vulkan_render_pass_description_t* create_render_pass_descriptions(binary_reader_t* reader, u32 OUT count)
-{
-	u16 description_count = binary_reader_u16(reader);
-	OUT count = description_count;
-	if(description_count == 0)
-		return NULL;
-
-	vulkan_render_pass_description_t* descriptions = heap_newv(vulkan_render_pass_description_t, description_count);
-	memzerov(descriptions, vulkan_render_pass_description_t, description_count);
-
-	for(u16 i = 0; i < description_count; i++)
-	{
-		vulkan_render_pass_description_t* description = &descriptions[i];
-
-		// read the type of the render pass
-		description->type = CAST_TO(vulkan_render_pass_type_t, binary_reader_u32(reader));
-
-		// read the input attachment array
-		description->input_attachment_count = binary_reader_u32(reader);
-		description->input_attachments = heap_newv(u32, description->input_attachment_count);
-		for(u32 j = 0; j < description->input_attachment_count; j++)
-			description->input_attachments[j] = binary_reader_u32(reader);
-
-		// read the attachment type array
-		description->attachment_count = binary_reader_u32(reader);
-		description->attachments = heap_newv(vulkan_attachment_type_t, description->attachment_count);
-		for(u32 j = 0; j < description->attachment_count; j++)
-			description->attachments[j] = CAST_TO(vulkan_attachment_type_t, binary_reader_u32(reader));
-
-		// read the subpass dependency array
-		description->subpass_dependency_count = binary_reader_u32(reader);
-		description->subpass_dependencies = heap_newv(VkSubpassDependency, description->subpass_dependency_count);
-		for(u32 j = 0; j < description->subpass_dependency_count; j++)
-			memcpy(&description->subpass_dependencies[j], binary_reader_read(reader, VkSubpassDependency), sizeof(VkSubpassDependency));
-		
-		// read the render set binding
-		description->render_set_bindings = load_descriptors(reader, &description->render_set_binding_count);
-
-		// read the subpass descriptions array
-		description->subpass_descriptions = create_subpass_descriptions(reader, &description->subpass_count);
-	}
-
-	return descriptions;
 }
 
 static vulkan_spirv_code_t* load_spirv_codes(binary_reader_t* reader, u32 OUT count)
 {
 	// calculate the number of shader stages (vertex, geometry, fragment, etc) present in the shader binary
-	u32 shader_mask = CAST_TO(u32, binary_reader_u8(reader));
+	u32 shader_mask = binary_reader_u8(reader);
 	u32 code_count = 0; 
 	for(u32 i = 0; i < VULKAN_SHADER_STAGE_MAX; i++)
 		if(shader_mask & BIT32(i))
 			code_count++;
 	OUT count = code_count;
+
+	if(code_count == 0)
+		return NULL;
 
 	vulkan_spirv_code_t* codes = heap_newv(vulkan_spirv_code_t, code_count);
 	for(u8 i = 0, count = 0; i < VULKAN_SHADER_STAGE_MAX; i++)
@@ -968,14 +888,158 @@ static vulkan_spirv_code_t* load_spirv_codes(binary_reader_t* reader, u32 OUT co
 		}
 
 		code->length = binary_reader_u32(reader);
+		u32 offset = binary_reader_u32(reader);
+		binary_reader_push(reader);
+		binary_reader_jump(reader, offset);
 		code->spirv = heap_newv(u32, code->length);
-		memcpy(code->spirv, binary_reader_at(reader, binary_reader_u32(reader)), code->length);
+		memcpy(code->spirv, __binary_reader_read(reader, code->length), code->length);
+		binary_reader_pop(reader);
 	}
 	
 	return codes;
 }
 
-static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(binary_reader_t* reader, u32 OUT count)
+static u32 create_add_pipeline_description(binary_reader_t* reader, BUFFER* pipeline_descriptions)
+{
+	buf_push_pseudo(pipeline_descriptions, 1);
+	vulkan_graphics_pipeline_description_t* description = buf_peek_ptr(pipeline_descriptions);
+
+	u32 offset = binary_reader_u32(reader);
+	binary_reader_push(reader);
+	binary_reader_jump(reader, offset);
+
+	// read vulkan_graphics_pipeline_description_t
+	const vulkan_graphics_pipeline_settings_t* pipeline = binary_reader_read(reader, vulkan_graphics_pipeline_settings_t);
+	description->settings = heap_new(vulkan_graphics_pipeline_settings_t);
+	memcpy(description->settings, pipeline, sizeof(vulkan_graphics_pipeline_settings_t));
+
+	VkPipelineColorBlendAttachmentState* attachments = heap_newv(VkPipelineColorBlendAttachmentState, description->settings->colorblend.attachmentCount);
+	u32 attachments_size = sizeof(VkPipelineColorBlendAttachmentState) * description->settings->colorblend.attachmentCount;
+	memcpy(attachments, __binary_reader_read(reader, attachments_size), attachments_size);
+	description->settings->colorblend.pAttachments = attachments;
+
+	VkRect2D* scissors = heap_newv(VkRect2D, description->settings->viewport.scissorCount);
+	u32 scissors_size = sizeof(VkRect2D) * description->settings->viewport.scissorCount;
+	memcpy(scissors, __binary_reader_read(reader, scissors_size), scissors_size);
+	description->settings->viewport.pScissors = scissors;
+
+	VkViewport* viewports = heap_newv(VkViewport, description->settings->viewport.viewportCount);
+	u32 viewports_size = sizeof(VkViewport) * description->settings->viewport.viewportCount;
+	memcpy(viewports, __binary_reader_read(reader, viewports_size), viewports_size);
+	description->settings->viewport.pViewports = viewports;
+
+	// read the spirv code array
+	description->spirv_codes = load_spirv_codes(reader, &description->spirv_code_count);
+
+	binary_reader_pop(reader);
+	return buf_get_element_count(pipeline_descriptions) - 1;
+}
+
+static vulkan_subpass_description_t* create_subpass_descriptions(binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
+{
+	u32 description_count = binary_reader_u32(reader);
+	OUT count = description_count;
+	if(description_count == 0)
+		return NULL;
+
+	vulkan_subpass_description_t* descriptions = heap_newv(vulkan_subpass_description_t, description_count);
+	memzerov(descriptions, vulkan_subpass_description_t, description_count);
+
+	for(u32 i = 0; i < description_count; i++)
+	{
+		vulkan_subpass_description_t* description = &descriptions[i];
+
+		// read the input attachment array
+		description->input_attachment_count = binary_reader_u32(reader);
+		if(description->input_attachment_count > 0)
+		{
+			description->input_attachments = heap_newv(u32, description->input_attachment_count);
+			for(u32 j = 0; j < description->input_attachment_count; j++)
+				description->input_attachments[j] = binary_reader_u32(reader);
+		}
+
+		// read the color attachment array
+		description->color_attachment_count = binary_reader_u32(reader);
+		if(description->color_attachment_count > 0)
+		{
+			description->color_attachments = heap_newv(u32, description->color_attachment_count);
+			for(u32 j = 0; j < description->color_attachment_count; j++)
+				description->color_attachments[j] = binary_reader_u32(reader);
+		}
+
+		// read the preserve attachment array
+		description->preserve_attachment_count = binary_reader_u32(reader);
+		if(description->preserve_attachment_count > 0)
+		{
+			description->preserve_attachments = heap_newv(u32, description->preserve_attachment_count);
+			for(u32 j = 0; j < description->preserve_attachment_count; j++)
+				description->preserve_attachments[j] = binary_reader_u32(reader);
+		}	
+
+		description->depth_stencil_attachment = binary_reader_u32(reader);
+		description->pipeline_description_index = create_add_pipeline_description(reader, pipeline_descriptions);
+		
+		description->sub_render_set_bindings = load_descriptors(reader, &description->sub_render_set_binding_count);	
+	}
+
+	return descriptions;
+}
+
+static vulkan_render_pass_description_t* create_render_pass_descriptions(binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
+{
+	u32 description_count = binary_reader_u32(reader);
+	OUT count = description_count;
+	if(description_count == 0)
+		return NULL;
+
+	vulkan_render_pass_description_t* descriptions = heap_newv(vulkan_render_pass_description_t, description_count);
+	memzerov(descriptions, vulkan_render_pass_description_t, description_count);
+
+	for(u32 i = 0; i < description_count; i++)
+	{
+		vulkan_render_pass_description_t* description = &descriptions[i];
+
+		// read the type of the render pass
+		description->type = CAST_TO(vulkan_render_pass_type_t, binary_reader_u32(reader));
+
+		// read the input attachment array
+		description->input_attachment_count = binary_reader_u32(reader);
+		if(description->input_attachment_count > 0)
+		{
+			description->input_attachments = heap_newv(u32, description->input_attachment_count);
+			for(u32 j = 0; j < description->input_attachment_count; j++)
+				description->input_attachments[j] = binary_reader_u32(reader);
+		}
+
+		// read the attachment type array
+		description->attachment_count = binary_reader_u32(reader);
+		if(description->attachment_count > 0)
+		{
+			description->attachments = heap_newv(vulkan_attachment_type_t, description->attachment_count);
+			for(u32 j = 0; j < description->attachment_count; j++)
+				description->attachments[j] = CAST_TO(vulkan_attachment_type_t, binary_reader_u32(reader));
+		}
+
+		// read the subpass dependency array
+		description->subpass_dependency_count = binary_reader_u32(reader);
+		if(description->subpass_dependency_count > 0)
+		{
+			description->subpass_dependencies = heap_newv(VkSubpassDependency, description->subpass_dependency_count);
+			for(u32 j = 0; j < description->subpass_dependency_count; j++)
+				memcpy(&description->subpass_dependencies[j], binary_reader_read(reader, VkSubpassDependency), sizeof(VkSubpassDependency));
+		}
+		
+		// read the render set binding
+		description->render_set_bindings = load_descriptors(reader, &description->render_set_binding_count);
+
+		// read the subpass descriptions array
+		description->subpass_descriptions = create_subpass_descriptions(reader, &description->subpass_count, pipeline_descriptions);
+	}
+
+	return descriptions;
+}
+
+/*static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(binary_reader_t* reader, u32 OUT count)
 {
 	u16 description_count = binary_reader_u16(reader);
 	OUT count = description_count;
@@ -996,18 +1060,63 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(bina
 	}
 
 	return descriptions;
+}*/
+
+typedef struct header_t
+{
+	u32 sb_version;
+	u32 sl_version;
+} header_t;
+
+static header_t* read_header(binary_reader_t* reader)
+{
+	if(strncmp(binary_reader_str(reader), "V3D Shader Binary", strlen("V3D Shader Binary")) != 0)
+		LOG_FETAL_ERR("[Shader Loader] Invalid file header, file is broken");
+
+	header_t* header = heap_new(header_t);
+	u32 cmd;
+	header->sb_version = U32_MAX;
+	header->sl_version = U32_MAX;
+	u32 count = binary_reader_u32(reader);
+	while(count > 0)
+	{
+		cmd = binary_reader_u32(reader);
+		/* shader binary */
+		switch(cmd)
+		{
+			case 1:
+			{
+				/* version of the sb */
+				if((header->sb_version = binary_reader_u32(reader)) != 2022)
+					LOG_FETAL_ERR("[Shader Loader] Invalid shader binary version, renderer-1.0 only supports version 2022");
+				break;
+			}
+
+			case 2:
+			{
+				/* skip the version of the shader language as we don't need in dissembling the file */
+				header->sl_version = binary_reader_u32(reader);
+				break;
+			}
+			
+			default:
+			{
+				LOG_FETAL_ERR("[Shader Loader] Unable to find the shader binary version, file is broken");
+				break;
+			}
+		}
+		if((header->sb_version != U32_MAX) && (header->sl_version != U32_MAX))
+			break;
+		--count;
+	}
+	return header;
 }
 
 static vulkan_shader_create_info_t* convert_load_info_to_create_info(vulkan_shader_load_info_t* load_info)
 {
 	binary_reader_t* reader = binary_reader_create(load_info->data, load_info->data_size);
 
-	vulkan_shader_header_t* header = binary_reader_read(reader, vulkan_shader_header_t);
-	// check if the header is a valid shader binary header
-	if(strcmp(header->str, VULKAN_SHADER_HEADER_STR) != 0)
-		LOG_FETAL_ERR("[Shader Loader] Invalid shader file header str \"%s\"", header->str);
-	if((header->version == VULKAN_SHADER_VERSION_UNDEFINED) || (header->version >= VULKAN_SHADER_VERSION_MAX))
-		LOG_FETAL_ERR("[Shader Loader] Invalid shader version \"%u\"", header->version);
+	read_header(reader);
 
 	// load resource descriptors for material
 	u32 descriptor_count;
@@ -1024,13 +1133,14 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(vulkan_shad
 	if(!load_info->is_vertex_attrib_from_file)
 		vertex_info_count = load_info->per_vertex_attribute_binding_count + load_info->per_instance_attribute_binding_count;
 
-	// create graphics pipeline descriptions
-	u32 pipeline_description_count;
-	vulkan_graphics_pipeline_description_t* pipeline_descriptions = create_pipeline_descriptions(reader, &pipeline_description_count);
+	// create an empty list of graphics pipeline descriptions
+	BUFFER pipeline_descriptions = buf_new(vulkan_graphics_pipeline_description_t);
 
 	// create render pass descriptions
 	u32 render_pass_description_count;
-	vulkan_render_pass_description_t* render_pass_descriptions = create_render_pass_descriptions(reader, &render_pass_description_count);
+	vulkan_render_pass_description_t* render_pass_descriptions = create_render_pass_descriptions(reader, &render_pass_description_count, &pipeline_descriptions);
+
+	buf_fit(&pipeline_descriptions);
 
 	// create vulkan shader
 	vulkan_shader_create_info_t* create_info = heap_new(vulkan_shader_create_info_t);
@@ -1045,11 +1155,14 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(vulkan_shad
 		.render_pass_descriptions = render_pass_descriptions,
 		.render_pass_description_count = render_pass_description_count,
 
-		.pipeline_descriptions = pipeline_descriptions
+		.pipeline_descriptions = CAST_TO(vulkan_graphics_pipeline_description_t*, buf_get_ptr(&pipeline_descriptions))
 	};
 
 	// TODO:
 	// free up the allocated memories in the main memory because vulkan shader creates a deep copy internally
+
+	binary_reader_destroy(reader);
+	binary_reader_release_resources(reader);
 
 	return create_info;
 }

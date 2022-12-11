@@ -5,12 +5,6 @@
 
 #define INTERNAL
 
-#ifdef GLOBAL_DEBUG
-#	define DEBUG_BLOCK(x) x
-#else
-#	define DEBUG_BLOCK(x)
-#endif /*GLOBAL_DEBUG*/
-
 #ifdef RENDERER_STATIC_LIBRARY
 #	define RENDERER_API
 #elif RENDERER_DYNAMIC_LIBRARY

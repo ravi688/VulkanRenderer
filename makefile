@@ -344,31 +344,33 @@ bin-clean:
 #-------------------------------------------
 #		Shader Compilation
 #-------------------------------------------
-SHADER_COMPILER = ./toolchain/shader_compiler/shader_compiler.exe
-SHADER_SOURCES = $(wildcard ./showcase/resource/shaders/*.glsl)
-SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
+SHADER_INCLUDES = -I$(wildcard shaders/include/)
+
+SHADER_COMPILER = ./toolchain/shader_compiler/vsc.exe
+SHADER_SOURCES = $(wildcard ./shaders/presets/*.v3dshader)
+SHADER_BINARIES = $(subst .v3dshader,.sb, $(SHADER_SOURCES))
 
 SHADER_COMPILER_COMPILATION_MODE =
 
 $(SHADER_COMPILER):
 	$(MAKE) --directory=$(dir $@) $(SHADER_COMPILER_COMPILATION_MODE)
 
-%.sb: %.glsl $(SHADER_COMPILER)
+%.sb: %.v3dshader $(SHADER_COMPILER)
 	@echo [Log]: Compiling shader $< to $@
-	$(SHADER_COMPILER) $< $@
+	$(SHADER_COMPILER) $(SHADER_INCLUDES) $< $@
 
 
-.PHONY: shader_compiler
-.PHONY: shader_compiler-debug
-.PHONY: shader_compiler-release
-.PHONY: shader_compiler-clean
+.PHONY: vsc
+.PHONY: vsc-debug
+.PHONY: vsc-release
+.PHONY: vsc-clean
 
-shader_compiler-debug: SHADER_COMPILER_COMPILATION_MODE += debug
-shader_compiler-debug: $(SHADER_COMPILER)
-shader_compiler-release: SHADER_COMPILER_COMPILATION_MODE += release
-shader_compiler-release: $(SHADER_COMPILER)
+vsc-debug: SHADER_COMPILER_COMPILATION_MODE += debug
+vsc-debug: $(SHADER_COMPILER)
+vsc-release: SHADER_COMPILER_COMPILATION_MODE += release
+vsc-release: $(SHADER_COMPILER)
 
-shader_compiler-clean:
+vsc-clean:
 	$(MAKE) --directory=$(dir $(SHADER_COMPILER)) clean
 
 .PHONY: shader-debug
@@ -386,7 +388,6 @@ shader-clean:
 	$(RM) $(subst /,\, $(SHADER_BINARIES))
 
 
-SHADER_INCLUDES = -I $(wildcard shaders/include/)
 GLSL_SHADERS = $(wildcard shaders/*.frag shaders/*.vert shaders/*/*.frag shaders/*/*.vert shaders/*/*/*.frag shaders/*/*/*.vert shaders/*/*/*/*.frag shaders/*/*/*/*.vert)
 SPIRV_SHADERS = $(addsuffix .spv, $(GLSL_SHADERS))
 SPIRV_COMPILER = glslc
@@ -412,7 +413,7 @@ glsl-shader-clean:
 #		Cleaning
 #-------------------------------------------
 .PHONY: clean
-clean: bin-clean glsl-shader-clean #shader-clean
+clean: bin-clean glsl-shader-clean vsc-clean #shader-clean
 	@echo [Log] All cleaned successfully!
 #-------------------------------------------
 
@@ -423,11 +424,11 @@ clean: bin-clean glsl-shader-clean #shader-clean
 .PHONY: build-debug
 .PHONY: run
 
-build-release: glsl-shader #shader-release
+build-release: glsl-shader vsc-release  shader-release
 	$(MAKE) lib-static-release
 	$(MAKE) release
 
-build-debug: glsl-shader #shader-debug
+build-debug: glsl-shader vsc-debug shader-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
 

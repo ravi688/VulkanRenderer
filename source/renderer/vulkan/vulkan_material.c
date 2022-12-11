@@ -22,7 +22,7 @@ static u16 calculate_uniform_resource_count(vulkan_shader_t* shader)
 	u16 count = shader->material_set_binding_count;
 	u16 uniform_count = 0;
 	for(u16 i = 0; i < count; i++)
-		if(!shader->material_set_bindings[i].is_attribute)
+		if(shader->material_set_bindings[i].handle.type == GLSL_TYPE_UNIFORM_BUFFER)
 			++uniform_count;
 	return uniform_count;
 }
@@ -43,7 +43,7 @@ static void setup_material_resources(vulkan_material_t* material)
 			continue;
 		vulkan_uniform_resource_t* resource = &uniform_resources[j];
 		j++;
-		if((binding->handle.type == GLSL_TYPE_BLOCK) && (!binding->is_push_constant))
+		if(binding->handle.type == GLSL_TYPE_UNIFORM_BUFFER)
 		{
 			u32 size = struct_descriptor_sizeof(&binding->handle);
 			resource->index = i;

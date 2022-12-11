@@ -2,25 +2,18 @@
 
 #include <renderer/defines.h>
 
-typedef enum vulkan_shader_version_t
+typedef enum vulkan_shader_binary_version_t
 {
-	VULKAN_SHADER_VERSION_UNDEFINED = 0UL,
-	VULKAN_SHADER_VERSION_2021,
-	VULKAN_SHADER_VERSION_2022,
-	VULKAN_SHADER_VERSION_MAX
-} vulkan_shader_version_t;
+	VULKAN_SHADER_BINARY_VERSION_UNDEFINED = 0UL,
+	VULKAN_SHADER_BINARY_VERSION_2021,
+	VULKAN_SHADER_BINARY_VERSION_2022,
+	VULKAN_SHADER_BINARY_VERSION_MAX
+} vulkan_shader_binary_version_t;
 
-#define VULKAN_SHADER_HEADER_STR "V3D SHADER BINARY"
-
-typedef struct vulkan_shader_header_t
-{
-	const char* str;
-	vulkan_shader_version_t version;
-} vulkan_shader_header_t;
+#define VULKAN_SHADER_HEADER_STR "V3D Shader Binary"
 
 typedef enum vulkan_resource_descriptor_type_t
 {
-	VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_UNDEFINED = 0UL,
 	/* resource descriptor is a block with push_constant layout qualifier.
 		{ fragment | vertex | geometry | tessellation } [push_constant] uniform block_name { }
 	 */
@@ -53,6 +46,6 @@ typedef enum vulkan_resource_descriptor_type_t
 } vulkan_resource_descriptor_type_t;
 
 /* decode descriptor_info (u32) */
-#define VULKAN_SHADER_STAGE_BITS(descriptor_info) (((descriptor_info) >> 8) & 0xFFUL)
+#define VULKAN_SHADER_STAGE_BITS(descriptor_info) (((descriptor_info) & 0xFF00UL) >> 8)
 #define VULKAN_GLSL_TYPE_BITS(descriptor_info) ((descriptor_info) & 0xFFUL)
-#define VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_BITS(descriptor_info) ((descriptor_info) >> 16)
+#define VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_BITS(descriptor_info) (((descriptor_info) & 0xFF0000UL) >> 16)

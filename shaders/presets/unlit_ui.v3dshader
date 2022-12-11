@@ -1,0 +1,98 @@
+
+#sl version 2022
+#sb version 2022
+
+Shader
+{
+	[NoParse]
+	Properties
+	{
+		vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+		{
+			vec4 color;
+		} parameters;
+
+		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
+	}
+
+	[NoParse]
+	Layout
+	{
+		per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+		per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec2 texcoord;
+	}
+
+	RenderPass
+	{
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					attachment { }
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				CAMERA cameraInfo;
+				OBJECT objectInfo;
+				
+				POSITION position;
+				TEXCOORD texcoord;
+				
+				layout(location = 0) out vec2 _texcoord;
+				
+				void main()
+				{
+					vec4 clipPos = cameraInfo.screen * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+					_texcoord = texcoord;
+				}
+
+
+				#stage fragment
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				MATERIAL_PROPERTIES
+				{
+					vec4 color;
+				} parameters;
+				
+				layout(set = MATERIAL_SET, binding = TEXTURE_BINDING0) uniform sampler2D albedo;
+				
+				layout(location = 0) in vec2 texcoord;
+				
+				layout(location = 0) out vec4 color;
+				
+				float linearize(float depth, float n, float f)
+				{
+					float t = ((n - f) * depth + f) * (f - n);
+					return n * f * 1 / t;
+				}
+				
+				void main()
+				{
+					vec2 uv = vec2(texcoord.x, 1 - texcoord.y);
+					float depth = texture(albedo, uv).r;
+					float linear_depth = linearize(depth, 0.04, 20.0);
+					color = parameters.color * vec4(linear_depth, linear_depth, linear_depth, 1.0);
+				}
+
+			}
+		}
+	}
+}

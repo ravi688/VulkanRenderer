@@ -70,7 +70,7 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 			binding->stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
 		switch(descriptor->handle.type)
 		{
-			case GLSL_TYPE_BLOCK:
+			case GLSL_TYPE_UNIFORM_BUFFER:
 				binding->descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			break;
 			

@@ -1,0 +1,10 @@
+
+#pragma once
+
+#include <renderer/test.h>
+
+BEGIN_CPP_COMPATIBLE
+
+TEST_DECLARE(ENVIRONMENT_REFLECTIONS_LOAD);
+
+END_CPP_COMPATIBLE
