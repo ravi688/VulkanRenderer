@@ -472,9 +472,9 @@ static dictionary_t* create_tree(UserData* data)
 	pipeline->multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
 	pipeline->depthstencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	pipeline->depthstencil.depthTestEnable = VK_TRUE;
-	pipeline->depthstencil.depthWriteEnable = VK_TRUE;
-	pipeline->depthstencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	pipeline->depthstencil.depthTestEnable = VK_FALSE;
+	pipeline->depthstencil.depthWriteEnable = VK_FALSE;
+	pipeline->depthstencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 	pipeline->depthstencil.depthBoundsTestEnable = VK_FALSE;
 	pipeline->depthstencil.stencilTestEnable = VK_FALSE;
 
@@ -518,18 +518,12 @@ static void link(UserData* data)
 	u32 scissorCount = buf_get_element_count(&scissorTemplate->instances) / sizeof(VkRect2D);
 	u32 viewportCount = buf_get_element_count(&viewportTemplate->instances) / sizeof(VkViewport);
 
-	// pAttachments would hold the offset of attachments
-	pipeline->colorblend.pAttachments = (void*)(buf_get_element_count(data->mainOutput));
+	pipeline->colorblend.attachmentCount = colorAttachmentCount;
 	if(colorAttachmentCount != 0)
 	{
-		u32 size = buf_get_element_count(&attachmentTemplate->instances);
-		pipeline->colorblend.attachmentCount = size / sizeof(VkPipelineColorBlendAttachmentState);
-		buf_pushv(data->mainOutput, buf_get_ptr(&attachmentTemplate->instances), size);
-	}
-	else
-	{
-		pipeline->colorblend.attachmentCount = 1;
-		buf_pushv(data->mainOutput, (void*)&data->defaultColorBlendAttachmentState, sizeof(VkPipelineColorBlendAttachmentState));
+		// pAttachments would hold the offset of attachments
+		pipeline->colorblend.pAttachments = (void*)(buf_get_element_count(data->mainOutput));
+		buf_pushv(data->mainOutput, buf_get_ptr(&attachmentTemplate->instances), buf_get_element_count(&attachmentTemplate->instances));
 	}
 
 	/* update the pipeline object pointer as the buffer has been resized and the object lies in that buffer */

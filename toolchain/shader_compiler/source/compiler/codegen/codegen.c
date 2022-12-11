@@ -446,11 +446,11 @@ static void run_sub_pass_analysis(v3d_generic_node_t* subpass, compiler_ctx_t* c
 	debug_log_info("[Subpass analysis] end");
 }
 
-static void reorder_attachments(render_pass_analysis_t* renderpass)
+static void reorder_attachments_phase1(render_pass_analysis_t* renderpass)
 {
 	if(renderpass->depth_attachment_index == U32_MAX) return;
 
-	debug_log_info("[Renderpass analysis] Attachment reorder begin");
+	debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase1] begin");
 
 	u32 prev_index = renderpass->depth_attachment_index;
 	u32 depth_attachment = renderpass->attachments[renderpass->depth_attachment_index];
@@ -459,7 +459,7 @@ static void reorder_attachments(render_pass_analysis_t* renderpass)
 	renderpass->attachments[renderpass->attachment_count - 1] = depth_attachment;
 	renderpass->depth_attachment_index = renderpass->attachment_count - 1;
 
-	debug_log_info("[Renderpass analysis] previous depth attachment index: %lu, now: %lu", prev_index, renderpass->depth_attachment_index);
+	debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase1] previous depth attachment index: %lu, now: %lu", prev_index, renderpass->depth_attachment_index);
 
 	for(u32 i = 0; i < renderpass->subpass_count; i++)
 	{
@@ -468,14 +468,14 @@ static void reorder_attachments(render_pass_analysis_t* renderpass)
 		{
 			DEBUG_BLOCK( u32 depth_write = subpass->depth_write; )
 			subpass->depth_write = renderpass->depth_attachment_index;
-			debug_log_info("[Renderpass analysis] subpass depth write: %lu, now: %lu", depth_write, subpass->depth_write);
+			debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase1] subpass depth write: %lu, now: %lu", depth_write, subpass->depth_write);
 		}
 		if(subpass->depth_read != U32_MAX)
 		{
 			DEBUG_BLOCK( u32 depth_read = subpass->depth_read; )
 			subpass->depth_read = renderpass->depth_attachment_index;
 			subpass->depth_bind.attachment_index = renderpass->depth_attachment_index;
-			debug_log_info("[Renderpass analysis] subpass depth read: %lu, now: %lu", depth_read, subpass->depth_read);
+			debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase1] subpass depth read: %lu, now: %lu", depth_read, subpass->depth_read);
 		}
 
 		for(u32 j = 0; j < subpass->color_read_count; j++)
@@ -485,7 +485,7 @@ static void reorder_attachments(render_pass_analysis_t* renderpass)
 				DEBUG_BLOCK( u32 color_read = subpass->color_reads[j]; )
 				subpass->color_reads[j]--;
 				subpass->color_binds[j].attachment_index--;
-				debug_log_info("[Renderpass analysis] subpass color read: %lu, now: %lu", color_read, subpass->color_reads[j]);
+				debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase1] subpass color read: %lu, now: %lu", color_read, subpass->color_reads[j]);
 			}
 		}
 
@@ -496,12 +496,67 @@ static void reorder_attachments(render_pass_analysis_t* renderpass)
 				DEBUG_BLOCK( u32 color_write = subpass->color_writes[j]; )
 				subpass->color_writes[j]--;
 				subpass->color_locations[j].attachment_index--;
-				debug_log_info("[Renderpass analysis] subpass color write: %lu, now: %lu", color_write, subpass->color_writes[j]);
+				debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase1] subpass color write: %lu, now: %lu", color_write, subpass->color_writes[j]);
 			}
 		}
 	}
 
-	debug_log_info("[Renderpass analysis] Attachment reorder end");
+	debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase1] end");
+}
+
+static void reorder_attachments_phase2(render_pass_analysis_t* renderpass)
+{
+	_ASSERT(renderpass->attachment_count >= 1);
+	
+	debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase2] begin");
+
+	/* index of the color attachment which qualifies for presentation */
+	u32 present_index = (renderpass->depth_attachment_index == U32_MAX) ? 
+						(renderpass->attachment_count - 1) : 
+						((renderpass->attachment_count > 1) ? (renderpass->attachment_count - 2) : U32_MAX);
+	if(present_index == U32_MAX)
+		return;
+
+	u32 color_attachment = renderpass->attachments[present_index];
+	for(u32 i = present_index; i > 0; i--)
+		renderpass->attachments[i] = renderpass->attachments[i - 1];
+
+	for(u32 i = 0; i < renderpass->subpass_count; i++)
+	{
+		subpass_analysis_t* subpass = &renderpass->subpasses[i];
+		for(u32 j = 0;j < subpass->color_read_count; j++)
+		{
+			if(subpass->color_reads[j] < present_index)
+			{
+				DEBUG_BLOCK(u32 color_read = subpass->color_reads[j]; )
+				subpass->color_reads[j]++;
+				subpass->color_binds[j].attachment_index++;
+				debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase2] subpass color read: %lu, now: %lu", color_read, subpass->color_reads[j]);
+			}
+			else if(subpass->color_reads[j] == present_index)
+			{
+				DEBUG_LOG_WARNING("[Renderpass analysis] [Attachment reorder] [Phase2] Swapchain attachment (the last one) is being read in subpass %lu", i);
+				subpass->color_reads[j] = 0;
+				subpass->color_binds[j].attachment_index = 0;
+			}
+		}
+		for(u32 j = 0; j < subpass->color_write_count; j++)
+		{
+			if(subpass->color_writes[j] < present_index)
+			{
+				DEBUG_BLOCK(u32 color_write = subpass->color_writes[j]; )
+				subpass->color_writes[j]++;
+				subpass->color_locations[j].attachment_index++;
+				debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase2] subpass color write: %lu, now: %lu", color_write, subpass->color_writes[j]);
+			}
+			else if(subpass->color_writes[j] == present_index)
+			{
+				subpass->color_writes[j] = 0;
+				subpass->color_locations[j].attachment_index = 0;
+			}
+		}
+	}
+	debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase2] end");
 }
 
 static void run_render_pass_analysis(v3d_generic_node_t* renderpass, compiler_ctx_t* ctx, render_pass_analysis_t* prev_analysis, render_pass_analysis_t OUT analysis)
@@ -585,7 +640,8 @@ static void run_render_pass_analysis(v3d_generic_node_t* renderpass, compiler_ct
 		}
 	}
 
-	reorder_attachments(analysis);
+	reorder_attachments_phase1(analysis);
+	reorder_attachments_phase2(analysis);
 
 	debug_log_info("[Renderpass analysis] end");
 }
