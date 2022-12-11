@@ -48,7 +48,7 @@ static void* create_buffer_and_map(vulkan_camera_t* camera, vulkan_buffer_t OUT 
 static void setup_gpu_resources(vulkan_camera_t* camera)
 {
 	// setup camera struct definiton
-	struct_descriptor_begin(&camera->struct_definition, "cameraInfo", GLSL_TYPE_BLOCK);
+	struct_descriptor_begin(&camera->struct_definition, "cameraInfo", GLSL_TYPE_UNIFORM_BUFFER);
 		struct_descriptor_add_field(&camera->struct_definition, "transform", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "projection", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "view", GLSL_TYPE_MAT4);

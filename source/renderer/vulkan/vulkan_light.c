@@ -41,7 +41,7 @@ RENDERER_API vulkan_light_t* vulkan_light_new(vulkan_light_type_t type)
 static void setup_gpu_resources(vulkan_light_t* light)
 {
 	// setup light struct definition
-	struct_descriptor_begin(&light->struct_definition, "lightInfo", GLSL_TYPE_BLOCK);
+	struct_descriptor_begin(&light->struct_definition, "lightInfo", GLSL_TYPE_UNIFORM_BUFFER);
 		struct_descriptor_add_field(&light->struct_definition, "projection", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&light->struct_definition, "view", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&light->struct_definition, "color", GLSL_TYPE_VEC3);

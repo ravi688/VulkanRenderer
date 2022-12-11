@@ -1,6 +1,10 @@
 [Name("GroundShader")]
+[API(Vulkan)]
+[Version(2022)]
 Shader
 {
+    #include <utility.h>
+
     // Descriptor Sets
     Properties
     {
@@ -10,27 +14,41 @@ Shader
         // SUB_RENDER_SET
         // OBJECT_SET
 
-        fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D normalMap;
-        fragment [MATERIAL_SET, TEXTURE_BINDING1] uniform sampler2D normalMap2;
-        fragment [MATERIAL_SET, TEXTURE_BINDING2] uniform sampler2D specularMap;
-        fragment [MATERIAL_SET, TEXTURE_BINDING3] uniform sampler2D heightMap;
+        [FloatArray] { a, b, c, d } fourValues;
 
-        fragment vertex [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+
+        [MATERIAL_SET, TEXTURE_BINDING0]
+        fragment uniform sampler2D normalMap;
+        [MATERIAL_SET, TEXTURE_BINDING1]
+        fragment uniform sampler2D normalMap2;
+        [MATERIAL_SET, TEXTURE_BINDING2]
+        fragment uniform sampler2D specularMap;
+        [MATERIAL_SET, TEXTURE_BINDING3]
+        fragment uniform sampler2D heightMap;
+
+        [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING]
+        fragment vertex uniform Parameters
         {
             float specularity;
             float roughness;
             float reflectance;
+            Color color = green;
         } parameters;
     }
 
     // Vertex Attribute Descriptions
     VertexBufferLayout
     {
-        per-vertex [0, POSITION_LOCATION] vec3 position;
-        per-vertex [1, NORMAL_LOCATION] vec3 normal;
-        per-vertex [2, TEXCOORD_LOCATION] vec2 texcoord;
-        per-vertex [3, COLOR_LOCATION] vec4 color;
-        per-vertex [4, TANGENT_LOCATION] vec3 tangent;
+        [0, POSITION_LOCATION]
+        per_vertex vec3 position;
+        [1, NORMAL_LOCATION]
+        per_vertex vec3 normal;
+        [2, TEXCOORD_LOCATION]
+        per_vertex vec2 texcoord;
+        [3, COLOR_LOCATION]
+        per_vertex vec4 color;
+        [4, TANGENT_LOCATION]
+        per_vertex vec3 tangent;
     }
         
     RenderPass

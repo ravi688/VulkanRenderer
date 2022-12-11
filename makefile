@@ -34,8 +34,8 @@ DYNAMIC_LIB_NAME = vulkanrenderer.dll
 EXECUTABLE_NAME = main.exe
 EXTERNAL_LIBRARIES = -L./external-dependency-libs -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies
-DEPENDENCIES = ../shader_compiler ECS MeshLib MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
-DEPENDENCY_LIBS = ECS/lib/ecs.a MeshLib/lib/meshlib.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCIES = ../toolchain/shader_compiler ECS MeshLib GLSLCommon Common MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
+DEPENDENCY_LIBS = ECS/lib/ecs.a MeshLib/lib/meshlib.a GLSLCommon/lib/glslcommon.a Common/lib/common.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS =  BufferLib/lib/bufferlib.a
@@ -79,6 +79,8 @@ setup:
 	git -C ./dependencies/ECS checkout VulkanRenderer/testbed/main
 	git -C ./dependencies/HPML checkout main
 	git -C ./dependencies/MeshLib checkout VulkanRenderer/main
+	git -C ./dependencies/GLSLCommon checkout main
+	git -C ./dependencies/Common checkout main
 	git	-C ./dependencies/SafeMemory checkout VulkanRenderer/main
 	git -C ./dependencies/TemplateSystem checkout main
 	git -C ./dependencies/ttf2mesh checkout master
@@ -88,6 +90,7 @@ setup:
 	git -C ./dependencies/SafeMemory submodule update --init dependencies/TemplateSystem
 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace checkout main
 	git -C ./dependencies/MeshLib/dependencies/DiskManager checkout VulkanRenderer/Meshlib/main
+	git -C ./dependencies/PhyMacParser checkout VulkanRenderer/main
 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem checkout main
 	@echo [Log] Setup successfully!
 
@@ -95,23 +98,29 @@ update:
 	git -C ./dependencies/ECS pull origin main
 	git -C ./dependencies/HPML pull origin main
 	git -C ./dependencies/MeshLib pull origin main
+	git -C ./dependencies/GLSLCommon pull origin main
+	git -C ./dependencies/Common pull origin main
 	git	-C ./dependencies/SafeMemory pull origin main
 	git -C ./dependencies/TemplateSystem pull origin main
 	git -C ./dependencies/ttf2mesh pull origin master
 	git -C ./shared-dependencies/BufferLib pull origin main
 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace pull origin main
 	git -C ./dependencies/MeshLib/dependencies/DiskManager pull origin main
+	git -C ./dependencies/PhyMacParser pull origin main
 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem pull origin main
-# 	git -C ./dependencies/ECS push
-# 	git -C ./dependencies/HPML push
-# 	git -C ./dependencies/MeshLib push
-# 	git	-C ./dependencies/SafeMemory push
-# 	git -C ./dependencies/TemplateSystem push
-# 	git -C ./dependencies/ttf2mesh push
-# 	git -C ./shared-dependencies/BufferLib push
-# 	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace push
-# 	git -C ./dependencies/MeshLib/dependencies/DiskManager push
-# 	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem push
+	git -C ./dependencies/ECS push
+	git -C ./dependencies/HPML push
+	git -C ./dependencies/MeshLib push
+	git -C ./dependencies/GLSLCommon push
+	git -C ./dependencies/Common push
+	git	-C ./dependencies/SafeMemory push
+	git -C ./dependencies/TemplateSystem push
+	git -C ./dependencies/ttf2mesh push
+	git -C ./shared-dependencies/BufferLib push
+	git -C ./dependencies/SafeMemory/shared-dependencies/CallTrace push
+	git -C ./dependencies/MeshLib/dependencies/DiskManager push
+	git -C ./dependencies/PhyMacParser push
+	git -C ./dependencies/SafeMemory/dependencies/TemplateSystem push
 #-------------------------------------------
 
 RM := rm -f
@@ -254,6 +263,7 @@ examples-clean:
 	$(foreach var, $(dir $(EXAMPLES)) ,$(MAKE) --directory=$(var) clean & )
 
 %.o : %.c
+	@echo [Log] Compiling $< to $@
 	$(COMPILER) $(COMPILER_FLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
 
 %.a:
@@ -325,25 +335,43 @@ bin-clean:
 	$(MAKE) --directory=./dependencies/ECS clean
 	$(MAKE) --directory=./dependencies/SafeMemory clean
 	$(MAKE) --directory=./dependencies/MeshLib clean
+	$(MAKE) --directory=./dependencies/GLSLCommon clean
+	$(MAKE) --directory=./dependencies/Common clean
 	$(MAKE) --directory=./shared-dependencies/BufferLib clean
-	$(MAKE) --directory=./shader_compiler clean
+	$(MAKE) --directory=./toolchain/shader_compiler clean
 #-------------------------------------------
 
 #-------------------------------------------
 #		Shader Compilation
 #-------------------------------------------
-SHADER_COMPILER = ./shader_compiler/shader_compiler.exe
-SHADER_SOURCES = $(wildcard ./showcase/resource/shaders/*.glsl)
-SHADER_BINARIES = $(subst .glsl,.sb, $(SHADER_SOURCES))
+SHADER_INCLUDES = -I$(wildcard shaders/include/)
+
+SHADER_COMPILER = ./toolchain/shader_compiler/vsc.exe
+SHADER_SOURCES = $(wildcard ./shaders/presets/*.v3dshader)
+SHADER_BINARIES = $(subst .v3dshader,.sb, $(SHADER_SOURCES))
 
 SHADER_COMPILER_COMPILATION_MODE =
 
 $(SHADER_COMPILER):
 	$(MAKE) --directory=$(dir $@) $(SHADER_COMPILER_COMPILATION_MODE)
 
-%.sb: %.glsl $(SHADER_COMPILER)
+%.sb: %.v3dshader $(SHADER_COMPILER)
 	@echo [Log]: Compiling shader $< to $@
-	$(SHADER_COMPILER) $< $@
+	$(SHADER_COMPILER) $(SHADER_INCLUDES) $< $@
+
+
+.PHONY: vsc
+.PHONY: vsc-debug
+.PHONY: vsc-release
+.PHONY: vsc-clean
+
+vsc-debug: SHADER_COMPILER_COMPILATION_MODE += debug
+vsc-debug: $(SHADER_COMPILER)
+vsc-release: SHADER_COMPILER_COMPILATION_MODE += release
+vsc-release: $(SHADER_COMPILER)
+
+vsc-clean:
+	$(MAKE) --directory=$(dir $(SHADER_COMPILER)) clean
 
 .PHONY: shader-debug
 .PHONY: shader-release
@@ -360,7 +388,6 @@ shader-clean:
 	$(RM) $(subst /,\, $(SHADER_BINARIES))
 
 
-SHADER_INCLUDES = -I $(wildcard shaders/include/)
 GLSL_SHADERS = $(wildcard shaders/*.frag shaders/*.vert shaders/*/*.frag shaders/*/*.vert shaders/*/*/*.frag shaders/*/*/*.vert shaders/*/*/*/*.frag shaders/*/*/*/*.vert)
 SPIRV_SHADERS = $(addsuffix .spv, $(GLSL_SHADERS))
 SPIRV_COMPILER = glslc
@@ -386,7 +413,7 @@ glsl-shader-clean:
 #		Cleaning
 #-------------------------------------------
 .PHONY: clean
-clean: bin-clean glsl-shader-clean #shader-clean
+clean: bin-clean glsl-shader-clean vsc-clean #shader-clean
 	@echo [Log] All cleaned successfully!
 #-------------------------------------------
 
@@ -397,11 +424,11 @@ clean: bin-clean glsl-shader-clean #shader-clean
 .PHONY: build-debug
 .PHONY: run
 
-build-release: glsl-shader #shader-release
+build-release: glsl-shader vsc-release  shader-release
 	$(MAKE) lib-static-release
 	$(MAKE) release
 
-build-debug: glsl-shader #shader-debug
+build-debug: glsl-shader vsc-debug shader-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
 

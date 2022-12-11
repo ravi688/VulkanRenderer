@@ -1,0 +1,222 @@
+#sl version 2022
+#sb version 2022
+
+// Multiple Render passes
+Shader
+{
+	[NoParse]
+	Properties
+	{
+		// fragment vertex [push_constant] [0, 10] uniform PushData
+		// {
+		// 	mat4 projection;
+		// 	mat4 model;
+		// 	mat4 view;
+		// 	mat4 transform;
+		// } pushData;
+
+		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D abledo;
+		fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] buffer OutputData
+		{
+			mat4 matrix1;
+			mat4 matrix2;
+			mat3 matrix3;
+			mat2 matrix4;
+			vec4 color;
+			vec3 direction;
+			vec3 position;
+			float verbosity;
+			float vibransity;
+			float shininess;
+			float darkness;
+			float whiteness;
+		} outputData;
+
+
+		fragment [MATERIAL_SET, TEXTURE_BINDING1] uniform sampler2D texture1;
+		fragment [MATERIAL_SET, TEXTURE_BINDING2] uniform sampler2D texture2;
+		fragment [MATERIAL_SET, TEXTURE_BINDING3] uniform sampler2D texture3;
+		fragment [MATERIAL_SET, TEXTURE_BINDING4] uniform sampler2D texture4;
+		fragment [MATERIAL_SET, TEXTURE_BINDING5] uniform sampler2D texture5;
+		fragment [MATERIAL_SET, TEXTURE_BINDING6] uniform sampler2D texture6;
+		fragment [MATERIAL_SET, TEXTURE_BINDING7] uniform sampler2D texture7;
+
+		vertex fragment [MATERIAL_SET, 1] uniform Parameters
+		{
+			float value12345;
+			float value23331;
+			int value33233;
+		} parameters;
+
+		fragment [MATERIAL_SET, 1] uniform sampler2D abledo;
+
+		// vertex fragment [6, 7] uniform Parameters
+		// {
+		// 	float value1343;
+		// 	float value1121;
+		// 	int value3456;
+		// } parameters;
+
+		// fragment [0, 1] uniform sampler2D abledo;
+
+		// vertex fragment [34, 45] uniform Parameters
+		// {
+		// 	float value1323;
+		// 	float value1345;
+		// 	int value354;
+		// } parameters;
+	}
+
+	[NoParse]
+	Layout
+	{
+		per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+		per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
+		per_vertex [TEXCOORD_BINDING, TEXCOORD_LOCATION] vec2 texcoord;
+	}
+
+	RenderPass
+	{
+		//@attachment_color(#0)
+		//@attachment_color(#1)
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//#0 = //@attachment_new
+					//@attachment_loc(#0, 0)
+					attachment { }
+					//#1 = //@attachment_new
+					//@attachment_loc(#1, 1)
+					attachment { }
+				}
+
+				depthStencil { }
+			}
+
+			[NoParse]
+			GLSL
+			{
+
+				#stage vertex
+				#version 450
+
+				void main() { }
+
+				#stage fragment
+				#version 450
+
+				void main() { }
+			}
+		}
+
+		//@attachment_input(#0)
+		[Read(color = 0, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		//@attachment_color(#1)
+		[Write(color = 1, location = 0)]
+		//@attachment_color(#2)
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#1, 0)
+					attachment { }
+					//#2 = //@attachment_new
+					//@attachment_loc(#2, 1)
+					attachment { }
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+				#version 450
+
+				void main() { }
+
+				#stage fragment
+				#version 450
+
+				void main() { }
+			}
+		}
+
+		//@attachment_input(#2)
+		[Read(color = 1, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		//@attachment_color(#1)
+		[Write(color = 0, location = 0)]
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#1, 0)
+					attachment { }
+					//@perfwarn "The last subpass must have at most 1 write location"
+					//#3 = //@attachment_new
+					//@attachment_loc(#3, 1)
+					attachment { }
+					//@perfwarn "The last subpass must have at most 1 write location"
+					//#4 = //@attachment_new
+					//@attachment_loc(#4, 2)
+					attachment { }
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+				#version 450
+
+				void main() { }
+
+				#stage fragment
+				#version 450
+
+				void main() { }
+			}
+		}
+	}
+
+	//@attachment_depth
+	[Read(depth, set = RENDER_SET, binding = TEXTURE_BINDING0)]
+	RenderPass
+	{
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					//@attachment_loc(#4, 0)
+					attachment { }
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+				#version 450
+
+				void main() { }
+
+				#stage fragment
+				#version 450
+
+				void main() { }
+			}
+		}
+	}
+}

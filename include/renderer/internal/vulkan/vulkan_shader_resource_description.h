@@ -3,7 +3,7 @@
 
 #include <renderer/defines.h>
 #include <renderer/struct_descriptor.h>
-#include <renderer/glsl_types.h>
+#include <glslcommon/glsl_types.h>
 
 typedef struct vulkan_shader_resource_description_t
 {

@@ -1,0 +1,22 @@
+
+Installed Packages:
+1. A File Icon (github.com/SublimeText/AFileIcon)
+2. Color Scheme - Chormodynamics (github.com/MagickStack/Chromodynamics)
+3. FileManager (math2001.github.io/FileManager)
+4. Package Control
+
+Editor Config:
+
+{
+	"font_size": 14,
+	"caret_extra_top": 0,
+	"caret_extra_bottom": 0,
+	"caret_extra_width": 10,
+	"save_on_focus_lost": true,
+	"theme": "auto",
+	"color_scheme": "Packages/Color Scheme - Chromodynamics/Chromodynamics.tmTheme",
+	"ignored_packages":
+	[
+		"Vintage",
+	],
+}

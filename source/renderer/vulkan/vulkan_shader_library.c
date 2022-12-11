@@ -105,13 +105,9 @@ RENDERER_API vulkan_shader_handle_t vulkan_shader_library_create_shader(vulkan_s
 	return vulkan_shader_library_add(library, vulkan_shader_create(library->renderer, create_info), vulkan_shader_name);
 }
 
-RENDERER_API vulkan_shader_handle_t vulkan_shader_library_load_shader(vulkan_shader_library_t* library, const char* file_path)
+RENDERER_API vulkan_shader_handle_t vulkan_shader_library_load_shader(vulkan_shader_library_t* library, vulkan_shader_load_info_t* load_info, const char* shader_name)
 {
-	vulkan_shader_load_info_t load_info = 
-	{
-		.path = file_path,
-	};
-	return vulkan_shader_library_add(library, vulkan_shader_load(library->renderer, &load_info), "TODO:");
+	return vulkan_shader_library_add(library, vulkan_shader_load(library->renderer, load_info), shader_name);
 }
 
 static bool vulkan_shader_library_remove(vulkan_shader_library_t* library, const char* vulkan_shader_name)

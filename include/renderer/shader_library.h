@@ -4,34 +4,20 @@
 #include <renderer/defines.h>
 
 #ifdef RENDERER_VULKAN_DRIVER
-	#include <renderer/internal/vulkan/vulkan_shader_library.h>
+	typedef struct vulkan_shader_library_t vulkan_shader_library_t;
 	typedef vulkan_shader_library_t shader_library_t;
-	typedef vulkan_shader_t shader_t;
-	typedef vulkan_shader_create_info_t shader_create_info_t;
-	typedef vulkan_shader_handle_t shader_handle_t;
-	#define SHADER_HANDLE_INVALID VULKAN_SHADER_HANDLE_INVALID
 #elif defined(RENDERER_OPENGL_DRIVER)
-	#include <renderer/internal/opengl/opengl_shader_library.h>
+	typedef struct opengl_shader_library_t opengl_shader_library_t;
 	typedef opengl_shader_library_t shader_library_t;
-	typedef opengl_shader_t shader_t;
-	typedef opengl_shader_create_info_t shader_create_info_t;
-	typedef opengl_shader_handle_t shader_handle_t;
-	#define SHADER_HANDLE_INVALID OPENGL_SHADER_HANDLE_INVALID
 #elif defined(RENDERER_DIRECTX_DRIVER)
-	#include <renderer/internal/directx/directx_shader_library.h>
+	typedef struct directx_shader_library_t directx_shader_library_t;
 	typedef directx_shader_library_t shader_library_t;
-	typedef directx_shader_t shader_t;
-	typedef directx_shader_create_info_t shader_create_info_t;
-	typedef directx_shader_handle_t shader_handle_t;
-	#define SHADER_HANDLE_INVALID DIRECTX_SHADER_HANDLE_INVALID
 #elif defined(RENDERER_METAL_DRIVER)
-	#include <renderer/internal/metal/metal_shader_library.h>
+	typedef struct metal_shader_library_t metal_shader_library_t;
 	typedef metal_shader_library_t shader_library_t;
-	typedef metal_shader_t shader_t;
-	typedef metal_shader_create_info_t shader_create_info_t;
-	typedef metal_shader_handle_t shader_handle_t;
-	#define SHADER_HANDLE_INVALID METAL_SHADER_HANDLE_INVALID
 #endif
+
+#include <renderer/shader.h> 		// for shader_handle_t, shader_t*, shader_create_info_t etc.
 
 typedef enum shader_library_shader_preset_t
 {

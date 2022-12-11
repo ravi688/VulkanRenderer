@@ -21,7 +21,7 @@ RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_begin_unifo
 	description->binding_number = binding_number;
 	description->stage_flags = (1 << VULKAN_SHADER_TYPE_VERTEX) | (1 << VULKAN_SHADER_TYPE_FRAGMENT);
 
-	struct_descriptor_begin(&description->handle, name, GLSL_TYPE_BLOCK);
+	struct_descriptor_begin(&description->handle, name, GLSL_TYPE_UNIFORM_BUFFER);
 	return &description->handle;
 }
 

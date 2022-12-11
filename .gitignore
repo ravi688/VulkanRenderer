@@ -1,0 +1,13 @@
+
+# ignore object files
+*.o
+
+# ignore executables
+*.exe
+
+# ignore spirv files
+*.spv
+
+# ignore archives
+*.a
+

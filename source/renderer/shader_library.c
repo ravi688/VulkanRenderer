@@ -1,7 +1,6 @@
 #include <renderer/shader_library.h>
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_shader_library.h>
-#include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
@@ -651,7 +650,6 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP:
 			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
 				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
 				add_shader(&pipelines, "shaders/presets/lit/color/shadow.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
 				add_shader(&pipelines, "shaders/presets/diffuse/shadow.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
@@ -686,7 +684,12 @@ RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* libr
 
 RENDERER_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path)
 {
-	return vulkan_shader_library_load_shader(library, file_path);
+	vulkan_shader_load_info_t load_info = 
+	{
+		.path = file_path,
+		.is_vertex_attrib_from_file = true
+	};
+	return vulkan_shader_library_load_shader(library, &load_info, "Untitled");
 }
 
 RENDERER_API bool shader_library_destroy_shader(shader_library_t* library, const char* shader_name)
@@ -713,10 +716,10 @@ RENDERER_API const char* shader_library_get_nameH(shader_library_t* library, sha
 
 RENDERER_API shader_t* shader_library_getH(shader_library_t* library, shader_handle_t handle)
 {
-	return vulkan_shader_library_getH(library, handle);
+	return CAST_TO(shader_t*, vulkan_shader_library_getH(library, handle));
 }
 
 RENDERER_API shader_t* shader_library_get(shader_library_t* library, const char* shader_name)
 {
-	return vulkan_shader_library_get(library, shader_name);
+	return CAST_TO(shader_t*, vulkan_shader_library_get(library, shader_name));
 }

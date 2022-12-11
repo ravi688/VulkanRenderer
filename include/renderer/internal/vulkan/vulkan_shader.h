@@ -6,7 +6,7 @@
 #include <renderer/internal/vulkan/vulkan_attachment.h> 		// vulkan_attachment_type_t
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t, vulkan_shader_handle_t
 
-#include <renderer/glsl_types.h>
+#include <glslcommon/glsl_types.h>
 #define VERTEX_ATTRIB(value, index) ((value) << ((index) * 5))
 enum
 {
@@ -18,8 +18,25 @@ enum
 
 typedef struct vulkan_shader_load_info_t
 {
-	/* file path of the file to be loaded */
+	/* 	file path of the file to be loaded 
+		if NULL then 'data' will be used.
+	 */
 	const char* path;
+
+	/* 	pointer to the continguous bytes loaded in the memory (preloaded)
+		if NULL then path will be used to load the file,
+		if both are not NULL then 'data' will get preference as it is faster to process
+		already loaded data.
+	 */
+	const void* data;
+
+	/*
+		size of the memory block pointed by the 'data' pointer in bytes.
+		if it is zero then path will be used to load the file,
+		if both are 0 or NULL then any function consuming this struct will throw an error.
+	 */
+	u32 data_size;
+
 	/*
 		if true, then shader would look for the vertex attribute descriptions in the file to be loaded
 		if false, then shader would decode the endcoded vertex attribute descriptions in 64 bit numbers

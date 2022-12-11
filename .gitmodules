@@ -19,3 +19,12 @@
 [submodule "dependencies/ECS"]
 	path = dependencies/ECS
 	url = https://github.com/ravi688/EntityComponentSystem.git
+[submodule "dependencies/PhyMacParser"]
+	path = dependencies/PhyMacParser
+	url = https://github.com/ravi688/PhyMacParser.git
+[submodule "dependencies/GLSLCommon"]
+	path = dependencies/GLSLCommon
+	url = https://github.com/ravi688/GLSLCommon.git
+[submodule "dependencies/Common"]
+	path = dependencies/Common
+	url = https://github.com/ravi688/Common.git
