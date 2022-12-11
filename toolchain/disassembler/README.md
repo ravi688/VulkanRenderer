@@ -1,2 +1,3 @@
-# TemplateRepository
-This repository contains template for a project in C language
+# V3DShader Disassembler
+
+This disassembler can be used to disassemble the compiled V3D shader binary file.
