@@ -191,16 +191,16 @@ static void disasm_descriptor_info(binary_reader_t* reader, BUFFER* str)
 	for(u32 i = 0; i < VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_MAX; i++)
 	{
 		if((descriptor_type_bits & BIT32(i)) != 0)
-			_printf(str, "%s ", descriptor_type_to_string(i));
+			_printf(str, "%s(u32: %lu) ", descriptor_type_to_string(i), i);
 	}
 
 	u32 shader_bits = (info & 0xFF00) >> 8;
 	for(u32 i = 0; i < VULKAN_SHADER_STAGE_MAX; i++)
 	{
 		if((shader_bits & BIT32(i)) != 0)
-			_printf(str, "%s ", shader_stage_to_string(i));
+			_printf(str, "%s(u32: %lu) ", shader_stage_to_string(i), i);
 	}
-	_printf(str, "%s ", glsl_type_to_string((u8)(info & 0xFF)));
+	_printf(str, "%s(u32: %lu) ", glsl_type_to_string((u8)(info & 0xFF)), (u32)(info & 0xFF));
 
 	bool is_block = (descriptor_type_bits & VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_PUSH_CONSTANT_BIT) ||
 		(descriptor_type_bits & VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_STORAGE_BUFFER_BIT) || 
@@ -257,8 +257,9 @@ INLINE static const char* render_pass_type_to_string(render_pass_type_t type)
 
 typedef enum attachment_type_t
 {
-	ATTACHMENT_TYPE_COLOR,
-	ATTACHMENT_TYPE_DEPTH
+	ATTACHMENT_TYPE_COLOR = 0UL,
+	ATTACHMENT_TYPE_DEPTH = 2UL,
+	ATTACHMENT_TYPE_STENCIL = 4UL
 } attachment_type_t;
 
 INLINE static const char* attachment_type_to_string(attachment_type_t type)
@@ -267,6 +268,7 @@ INLINE static const char* attachment_type_to_string(attachment_type_t type)
 	{
 		CASE_RETURN_STR(ATTACHMENT_TYPE_COLOR);
 		CASE_RETURN_STR(ATTACHMENT_TYPE_DEPTH);
+		CASE_RETURN_STR(ATTACHMENT_TYPE_STENCIL);
 		default: return "undefined";
 	}
 }
@@ -350,20 +352,29 @@ static void disasm_subpasses(binary_reader_t* reader, BUFFER* str, u32 attachmen
 		u32 read_count = binary_reader_u32(reader);
 		_printf(str, "read count: %lu", read_count);
 		for(u32 j = 0; j < read_count; j++)
-			_printf(str, " %s", attachment_type_to_string(attachments[binary_reader_u32(reader)]));
+		{
+			u32 index = binary_reader_u32(reader);
+			_printf(str, " %s(id: %lu)", attachment_type_to_string(attachments[index]), index);
+		}
 		u32 color_count = binary_reader_u32(reader);
 		_printf(str, "\ncolor count: %lu", color_count);
 		for(u32 j = 0; j < color_count; j++)
-			_printf(str, " %s", attachment_type_to_string(attachments[binary_reader_u32(reader)]));
+		{
+			u32 index = binary_reader_u32(reader);
+			_printf(str, " %s(id: %lu)", attachment_type_to_string(attachments[index]), index);
+		}
 		u32 preserve_count = binary_reader_u32(reader);
 		_printf(str, "\npreserve count: %lu", preserve_count);
 		for(u32 j = 0; j < preserve_count; j++)
-			_printf(str, " %s", attachment_type_to_string(attachments[binary_reader_u32(reader)]));
+		{
+			u32 index = binary_reader_u32(reader);
+			_printf(str, " %s(id: %lu)", attachment_type_to_string(attachments[index]), index);
+		}
 		u32 depth_stencil = binary_reader_u32(reader);
 		if(depth_stencil == U32_MAX)
 			_printf(str, "\ndepth stencil: U32_MAX\n");
 		else
-			_printf(str, "\ndepth stencil: %s\n", attachment_type_to_string(attachments[depth_stencil]));
+			_printf(str, "\ndepth stencil: %s(id: %lu)\n", attachment_type_to_string(attachments[depth_stencil]), depth_stencil);
 		disasm_pipeline_description(reader, str);
 		_printf(str, "sub render set bindings: ");
 		disasm_descriptions(reader, str);
@@ -391,7 +402,10 @@ static void disasm_renderpasses(binary_reader_t* reader, BUFFER* str)
 		prev_attachments = attachments;
 		prev_attachment_count = attachment_count;
 		for(u32 j = 0; j < attachment_count; j++)
-			_printf(str, " %s", attachment_type_to_string(binary_reader_u32(reader)));
+		{
+			attachment_type_t type = binary_reader_u32(reader);
+			_printf(str, " %s(u32: %lu)", attachment_type_to_string(type), type);
+		}
 		u32 subpass_dependency_count = binary_reader_u32(reader);
 		_printf(str, "\nsubpass dependency count: %lu\n", subpass_dependency_count);
 		_printf(str, "render set bindings: ");
