@@ -79,8 +79,8 @@ setup:
 	git -C ./dependencies/ECS checkout VulkanRenderer/testbed/main
 	git -C ./dependencies/HPML checkout main
 	git -C ./dependencies/MeshLib checkout VulkanRenderer/main
-	git -C ./dependencies/GLSLCommon checkout main
-	git -C ./dependencies/Common checkout main
+	git -C ./dependencies/GLSLCommon checkout VulkanRenderer/main
+	git -C ./dependencies/Common checkout VulkanRenderer/main
 	git	-C ./dependencies/SafeMemory checkout VulkanRenderer/main
 	git -C ./dependencies/TemplateSystem checkout main
 	git -C ./dependencies/ttf2mesh checkout master
