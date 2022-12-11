@@ -146,13 +146,13 @@ static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx, codege
 	if(!foreach_child_node_if_name(node, keywords[KEYWORD_PROPERTIES], writer, codegen_descriptions, NULL, ctx))
 	{
 		/* if there is no properties block then just write the number of material properties to be zero */
-		binary_writer_u32(writer->main, 0);
+		binary_writer_u16(writer->main, 0);
 	}
 	/* the layout descriptions come after the property descriptions */
 	if(!foreach_child_node_if_name(node, keywords[KEYWORD_LAYOUT], writer, codegen_descriptions, NULL, ctx))
 	{
 		/* if there is no layout block then just write the number of layout descriptions to be zero */
-		binary_writer_u32(writer->main, 0);
+		binary_writer_u16(writer->main, 0);
 	}
 
 	u32 render_pass_count = count_child_node_if_name(node, keywords[KEYWORD_RENDERPASS], ctx->src);
@@ -689,6 +689,14 @@ static void codegen_render_set_binding_descriptions(render_pass_analysis_t* anal
 					index);
 }
 
+static bool has_color_attachment(render_pass_analysis_t* analysis)
+{
+	for(u32 i = 0; i < analysis->attachment_count; i++)
+		if(analysis->attachments[i] == ATTACHMENT_TYPE_COLOR)
+			return true;
+	return false;
+}
+
 static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 iteration, void* user_data)
 {
 	render_pass_user_data_t* data = CAST_TO(render_pass_user_data_t*, user_data);
@@ -699,7 +707,7 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, co
 	_ASSERT(analysis->attachment_count != 0);
 
 	/* write the type of the render pass, if this is the last pass then it must be type of SWAPCHAIN_TARGET */
-	binary_writer_u32(writer->main, (iteration == data->render_pass_count) ? RENDER_PASS_TYPE_SWAPCHAIN_TARGET : RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
+	binary_writer_u32(writer->main, ((iteration == data->render_pass_count) && has_color_attachment(analysis)) ? RENDER_PASS_TYPE_SWAPCHAIN_TARGET : RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
 
 	/* write the list of input attachments */
 	u32 input_count = analysis->color_read_count + ((analysis->depth_read == U32_MAX) ? 0 : 1);
