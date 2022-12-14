@@ -11,9 +11,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: msys2/setup-msys2@v2
         with:
-          msystem: UCRT64
+          msystem: MINGW64
           update: true
-          install: git gcc make mingw-w64-ucrt-x86_64-shaderc
+          install: git gcc make mingw-w64-x86_64-shaderc
       - name: CI-Build
         run: |
           echo 'Running in MSYS2!'
