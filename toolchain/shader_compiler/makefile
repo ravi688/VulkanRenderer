@@ -275,11 +275,13 @@ build-project-internal-release:
 	$(MAKE) -f $(addsuffix .makefile, $(PROJECT_NAME)) release
 
 build-release:
+	$(MAKE) init
 	$(MAKE) build-project-internal-release
 	$(MAKE) lib-static-release
 	$(MAKE) release
 
 build-debug:
+	$(MAKE) init
 	$(MAKE) build-project-internal-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
