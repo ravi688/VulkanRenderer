@@ -353,7 +353,7 @@ SHADER_BINARIES = $(subst .v3dshader,.sb, $(SHADER_SOURCES))
 SHADER_COMPILER_COMPILATION_MODE =
 
 $(SHADER_COMPILER):
-	$(MAKE) --directory=$(dir $@) $(SHADER_COMPILER_COMPILATION_MODE)
+	$(MAKE) --directory=$(dir $@) build-$(SHADER_COMPILER_COMPILATION_MODE)
 
 %.sb: %.v3dshader $(SHADER_COMPILER)
 	@echo [Log]: Compiling shader $< to $@
@@ -365,6 +365,7 @@ $(SHADER_COMPILER):
 .PHONY: vsc-release
 .PHONY: vsc-clean
 
+vsc: vsc-debug
 vsc-debug: SHADER_COMPILER_COMPILATION_MODE += debug
 vsc-debug: $(SHADER_COMPILER)
 vsc-release: SHADER_COMPILER_COMPILATION_MODE += release
@@ -378,9 +379,9 @@ vsc-clean:
 .PHONY: shader
 .PHONY: shader-clean
 
-shader-debug: SHADER_COMPILER_COMPILATION_MODE += debug
+shader-debug: vsc-debug
 shader-debug: $(SHADER_BINARIES)
-shader-release: SHADER_COMPILER_COMPILATION_MODE += release
+shader-release: vsc-release
 shader-release: $(SHADER_BINARIES)
 shader: shader-debug
 
