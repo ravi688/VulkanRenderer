@@ -4,6 +4,9 @@
 #include <phymac_parser/string.h>
 #include <stdlib.h>
 
+/* adding due to ucrt64 compilation issues */
+#include <stdio.h>
+
 SC_API const char* write_header(const char* start, const char* const end, codegen_buffer_t* writer)
 {
 	binary_writer_string(writer->main, SB_HDR_STR);
