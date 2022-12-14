@@ -13,7 +13,7 @@ jobs:
         with:
           msystem: UCRT64
           update: true
-          install: git gcc shaderc make
+          install: git gcc make mingw-w64-ucrt-x86_64-shaderc
       - name: CI-Build
         run: |
           echo 'Running in MSYS2!'
