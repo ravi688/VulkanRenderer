@@ -18,7 +18,7 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          install: git gcc make mingw-w64-x86_64-shaderc
+          install: git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc
       - name: CI-Build
         run: |
           echo 'Running in MSYS2!'
