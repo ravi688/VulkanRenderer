@@ -12,7 +12,7 @@ Shader
 			vec4 color;
 		} parameters;
 
-		fragment [MATERIAL-SET, TEXTURE_BINDING0] uniform sampler2D shadowMap;
+		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D shadowMap;
 	}
 
 	[NoParse]
