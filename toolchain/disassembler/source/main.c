@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-NO_RETURN_FUNCTION void display_help_and_exit(const char* application_name)
+NO_RETURN_FUNCTION static void display_help_and_exit(const char* application_name)
 {
 	printf(
 		"%s: Help\n"
