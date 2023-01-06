@@ -8,6 +8,12 @@
 #include <shader_compiler/debug.h>
 #include <shader_compiler/assert.h>
 
+/* 	finds a child node in the parent node 'node' if matches name 'name'.
+	node: parent node
+	name: ptr to the name string to be compared with (must be null terminated)
+	start: ptr to the source string
+	returns a valid ptr if a match is found, otherwise NULL
+ */
 static v3d_generic_node_t* find_child_node_if_name(v3d_generic_node_t* node, const char* name, const char* const start)
 {
 	for(u32 i = 0; i < node->child_count; i++)
@@ -21,6 +27,12 @@ static v3d_generic_node_t* find_child_node_if_name(v3d_generic_node_t* node, con
 	return NULL;
 }
 
+/*	returns the number of child node found with matching name 'name', zero otherwise.
+	node: parent node
+	name: ptr to the name string to be compared with (must be null terminated)
+	start: ptr to the source string
+	returns an unsigned 32-bit integer (number of nodes found) otherwise zero.
+ */
 static u32 count_child_node_if_name(v3d_generic_node_t* node, const char* name, const char* const start)
 {
 	u32 count = 0;
@@ -35,6 +47,20 @@ static u32 count_child_node_if_name(v3d_generic_node_t* node, const char* name, 
 	return count;
 }
 
+/*	visits each child node matching name 'name'
+	node: parent node
+	name: ptr to the name string to be compared with (must be null terminated)
+	writer: ptr the codegen_buffer_t* object (it might be needed to the visitor)
+	visitor: ptr to the visitor function
+		node: ptr to the node for the current invocation
+		ctx: ptr to the compiler context object
+		writer: ptr to the codegne_buffer_t* object
+		count: zero based invocation count (0 means first invocation)
+		user_data: ptr to the user data object
+	user_data: ptr to the user data needed by the visitor
+	ctx: ptr to the compiler context object	
+	returns true if the number of visits greater than 0 otherwise false.
+ */
 static bool foreach_child_node_if_name(v3d_generic_node_t* node, const char* name, codegen_buffer_t* writer, void (*visitor)(v3d_generic_node_t* node, compiler_ctx_t* ctx, codegen_buffer_t* writer, u32 count, void* user_data), void* user_data, compiler_ctx_t* ctx)
 {
 	u32 count = 0;
@@ -188,6 +214,11 @@ static u32_pair_t node_name(v3d_generic_node_t* node)
 	return node->qualifiers[node->qualifier_count - 1];
 }
 
+/* 	parses the string pointed by 'str' of size 'length' (sized extension to strtoul) and returns numerical value
+	str: ptr to the string
+	len: length of the string pointed by 'str'
+	returns the numerical value of 'str'
+ */
 static u32 strntoul(const char* str, u32 len)
 {
 	char str1[len + 1];
@@ -446,6 +477,7 @@ static void run_sub_pass_analysis(v3d_generic_node_t* subpass, compiler_ctx_t* c
 	debug_log_info("[Subpass analysis] end");
 }
 
+/* reoders the attachments of a renderpass to put the depth stencil attachment at last */
 static void reorder_attachments_phase1(render_pass_analysis_t* renderpass)
 {
 	if(renderpass->depth_attachment_index == U32_MAX) return;
@@ -504,6 +536,7 @@ static void reorder_attachments_phase1(render_pass_analysis_t* renderpass)
 	debug_log_info("[Renderpass analysis] [Attachment reorder] [Phase1] end");
 }
 
+/* reoders the attachments of a renderpass to put the presentable color attachment at first */
 static void reorder_attachments_phase2(render_pass_analysis_t* renderpass)
 {
 	_ASSERT(renderpass->attachment_count >= 1);
@@ -654,6 +687,7 @@ typedef enum render_pass_type_t
 	RENDER_PASS_TYPE_SWAPCHAIN_TARGET
 } render_pass_type_t;
 
+/* immediate version of 'write_layout' function */
 static void write_layout2(compiler_ctx_t* ctx, codegen_buffer_t* writer, const char* format, ...)
 {
 	buf_clear(&ctx->string_buffer, NULL);

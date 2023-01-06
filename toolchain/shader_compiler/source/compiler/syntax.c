@@ -108,11 +108,11 @@ SC_API void syntax(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 
 	/* -- syntax check for the entity definition -- */
 
-	u32 depth = ctx->depth;
-	/* get the list of expected symbols in the current depth (not the block though)*/
-	const u32* look_ahead_symbols = CAST_TO(u32*, ctx->lat[ctx->depth].ptr);
+	u32 current_symbol = ctx->current_symbol;
+	/* get the list of expected symbols in the current current_symbol (not the block though)*/
+	const u32* look_ahead_symbols = CAST_TO(u32*, ctx->lat[ctx->current_symbol].ptr);
 	/* get the number of expected symbols */
-	u32 symbol_count = ctx->lat[ctx->depth].size;
+	u32 symbol_count = ctx->lat[ctx->current_symbol].size;
 	
 	/* get the identifier name (the last qualifier) */
 	u32_pair_t name = node->qualifiers[node->qualifier_count - 1];
@@ -132,7 +132,7 @@ SC_API void syntax(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 							ctx->sat[symbol].ptr, ctx->sat[symbol].size,
 							keywords[symbol], false);
 				_assert(result == true);
-				ctx->depth = symbol;
+				ctx->current_symbol = symbol;
 			}
 		}
 	}
@@ -152,5 +152,5 @@ SC_API void syntax(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 	for(u32 i = 0; i < node->child_count; i++)
 		syntax(node->childs[i], ctx);
 
-	ctx->depth = depth;
+	ctx->current_symbol = current_symbol;
 }

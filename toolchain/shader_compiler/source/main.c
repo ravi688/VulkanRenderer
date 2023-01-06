@@ -45,6 +45,9 @@ static void __cmd_args_error(u32 line, const char* function, const char* file, c
 	display_help_and_exit("vsc");
 }
 
+/* 	returns the current working directory
+	NOTE: windows only
+ */
 static const char* get_cwd()
 {
 	DWORD length = GetCurrentDirectory(0, NULL);

@@ -809,12 +809,18 @@ enum
 	MARK_ID_FIELD_COUNT = MARK_ID_FIELD_COUNT_0
 };
 
+/* abstract buffer used to store the compiled shader binary */
 typedef struct codegen_buffer_t
 {
+	/* main section writer is used to write the descriptions to the data section */
 	binary_writer_t* main;
+	/* data section writer is used to write in the data section, such as gfx pipeline descriptions */
 	binary_writer_t* data;
+	/* lazily allocated flat buffer, it will point to a valid flat buffer after calling codegen_buffer_flatten() */
 	BUFFER* flat;
 } codegen_buffer_t;
+
+BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
 SC_API codegen_buffer_t* codegen_buffer_new();
@@ -822,5 +828,10 @@ SC_API codegen_buffer_t* codegen_buffer_create();
 SC_API void codegen_destroy(codegen_buffer_t* buffer);
 SC_API void codegen_release_resources(codegen_buffer_t* buffer);
 
-/* flattens the codegen buffer and returns pointer to the BUFFER instance */
+/* 	flattens the codegen buffer and returns pointer to the BUFFER instance 
+	buffer: the codegen_buffer_t object to be flattened
+	returns pointer to the BUFFER object containing flat binaries (bytes)
+ */
 SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer);
+
+END_CPP_COMPATIBLE

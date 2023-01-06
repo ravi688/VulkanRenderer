@@ -18,7 +18,7 @@ typedef struct compiler_ctx_t
 {
 	/* private/internal properties */
 
-	/* table for looking the expected symbols in the current depth */
+	/* table for looking the expected symbols after the current symbol */
 	look_ahead_table_t lat;
 	/* number of elements in the look ahead table */
 	u32 lat_size;
@@ -34,8 +34,8 @@ typedef struct compiler_ctx_t
 	char** keywords;
 	/* number of elements in the keywords list */
 	u32 keywords_size;
-	/* current depth of a block while parsing the source */
-	s32 depth;
+	/* current symbol while syntax checking */
+	s32 current_symbol;
 
 	s32 current_pipeline_index;
 
@@ -60,5 +60,10 @@ typedef struct compiler_ctx_t
 
 #define PTR_U32_NULL (ptr_u32_pair_t) { }
 
+BEGIN_CPP_COMPATIBLE
+
+/* constructors and destructors */
 SC_API compiler_ctx_t* compiler_ctx_create();
 SC_API void compiler_ctx_destroy(compiler_ctx_t* ctx);
+
+END_CPP_COMPATIBLE

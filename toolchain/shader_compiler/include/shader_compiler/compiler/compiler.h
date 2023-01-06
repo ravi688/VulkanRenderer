@@ -4,9 +4,15 @@
 #include <shader_compiler/compiler/compiler_ctx.h>
 #include <bufferlib/buffer.h>
 
+BEGIN_CPP_COMPATIBLE
+
 /*
-	Compiles given source code (string) of length 'length' (without null character)
-	into shader binary and returns a BUFFER object ptr containing the compiled shader
-	binary data.
+	compiles a V3D shader source configured inside the compiler_ctx_t object
+	ctx: compilation context (it also includes the source to be compiled)
+	returns a pointer to a BUFFER object
+
+	see: Documents/V3D/V3DShaderBinarySpec.docx for format of the compiled binary output.
  */
 SC_API BUFFER* sc_compile(compiler_ctx_t* ctx);
+
+END_CPP_COMPATIBLE

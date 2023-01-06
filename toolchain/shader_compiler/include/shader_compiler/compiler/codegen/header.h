@@ -6,9 +6,7 @@
 #define SB_HDR_STR "V3D Shader Binary"
 
 
-/* compiler command category
-   i.e. #sb version 2022
-*/
+/* compiler command category */
 typedef enum cmplr_cmd_cat_t
 {
 	/* command is related to shader binary generation */
@@ -35,17 +33,17 @@ typedef enum sl_version_t
 	SL_VERSION_2022
 } sl_version_t;
 
-// shader binary header
-typedef struct sb_header_t
-{
-	// file identification header for shader binary
-	const char* header_str;
+/*	parses the string pointed by 'start', ends at 'end', and writes the file header to the codegen buffer 'writer'
+	start: pointer to the stsart of the string
+	end: pointer to the end of the string (must point to null character)
+	writer: codgen buffer to which write the file header to.
 
-	// shader language version
-	sl_version_t sl_version;
-
-	// shader binary version
-	sb_version_t sb_version;
-} sb_header_t;
-
+	NOTE: the expected string should be as follows:
+	-------------------------
+	#sl version 2022
+	#sl version 2022
+	-------------------------
+	the above string must appear before the "Shader" block
+	see: //Documents/V3D/V3DShaderLangSpec.docx
+ */
 SC_API const char* write_header(const char* start, const char* const end, codegen_buffer_t* writer);

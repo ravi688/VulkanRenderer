@@ -30,6 +30,7 @@ enum
 	KEYWORD_MAX
 };
 
+/* note: the name of the blocks are also treated as qualifiers */
 enum
 {
 	QUALIFIER_SHADER = KEYWORD_SHADER,
@@ -41,6 +42,7 @@ enum
 	QUALIFIER_GFXPIPELINE = KEYWORD_GFXPIPELINE
 };
 
+/* attributes */
 static const char* attribute_keywords[] = 
 {
 	"Name",
@@ -49,6 +51,7 @@ static const char* attribute_keywords[] =
 	"Write"
 };
 
+/* attribute enumerations */
 enum
 {
 	ATTRIBUTE_NAME,
