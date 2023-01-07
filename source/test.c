@@ -41,7 +41,23 @@ RENDERER_API test_t* test_create(const char* name)
 	ELSE_IF(SPOT_LIGHT);
 	ELSE_IF(SPOT_LIGHT_LOAD);
 	ELSE_IF(CUBE);
-	else LOG_FETAL_ERR("Unrecognized test: %s\n", name);
+	else
+	{
+		printf 	(
+					"supported tests: \n"
+					"\tDEPTH_RENDER_TEXTURE\n"
+					"\tENVIRONMENT_REFLECTIONS\n"
+					"\tENVIRONMENT_REFLECTIONS_LOAD\n"
+					"\tDEPTH_CUBE_RENDER_TEXTURE\n"
+					"\tDEPTH_CUBE_RENDER_TEXTURE_LOAD\n"
+					"\tPOINT_LIGHT_SHADOWS\n"
+					"\tPOINT_LIGHT_SHADOWS_LOAD\n"
+					"\tSPOT_LIGHT\n"
+					"\tSPOT_LIGHT_LOAD\n"
+					"\tCUBE\n"
+				);
+		exit(0);
+	}
 	return test;
 }
 

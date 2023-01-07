@@ -9,11 +9,7 @@ int main(int argc, const char** argv)
 {
 	memory_allocator_init(&argv);
 
-	test_t* test;
-	if(argc < 2)
-		test = test_create(DEFAULT_TEST_NAME);
-	else 
-		test = test_create(argv[1]);
+	test_t* test = test_create((argc > 1) ? argv[1] : "");
 	AUTO driver = renderer_init(GPU_TYPE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, FULL_SCREEN ? true : false, RESIZABLE ? true : false);
 
 	test->initialize(driver, test->user_data);
