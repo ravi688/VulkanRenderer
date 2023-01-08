@@ -1,0 +1,263 @@
+
+#sl version 2022
+#sb version 2022
+
+Shader
+{
+	[NoParse]
+	Properties
+	{
+		vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+		{
+			vec4 color;
+		} parameters;
+	}
+
+	[NoParse]
+	Layout
+	{
+		per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+		per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
+	}
+
+	RenderPass
+	{
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					attachment { }
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				layout(location = NORMAL_LOCATION) in vec3 normal;
+				
+				layout(location = 0) out vec3 _normal;
+				
+				void main()
+				{
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+					_normal = normalize((objectInfo.normal * vec4(normal, 0)).xyz);
+				}
+
+				#stage fragment
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight lightInfo;
+				
+				layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+				{
+					vec4 color;
+				} parameters;
+				
+				
+				layout(location = 0) in vec3 _normal;
+				
+				layout(location = 0) out vec4 color;
+				
+				void main()
+				{
+					float dp = 0.5 * dot(-_normal, lightInfo.direction) + 0.5;
+					color = parameters.color * dp * vec4(lightInfo.color, 1);
+				}
+
+			}
+		}
+
+		[Read(color = 0, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					attachment { }
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+
+				#stage vertex
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+
+				layout(location = 0) out vec4 outPosition;
+				
+				void main()
+				{
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+					outPosition = clipPos;
+				}
+
+				#stage fragment
+
+				#version 450
+
+				#include <v3d.h>
+
+				layout(input_attachment_index = INPUT_ATTACHMENT_BINDING0, 
+						set = SUB_RENDER_SET, 
+						binding = INPUT_ATTACHMENT_BINDING0) uniform subpassInput prevColor;
+
+				layout(location = 0) out vec4 outColor;
+				layout(location = 0) in vec4 inPosition;
+				void main()
+				{
+					vec4 _prevColor = subpassLoad(prevColor).rgba;
+					outColor = _prevColor * inPosition;
+				}
+			}
+		}
+
+		[Write(color = 0, location = 0)]
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{ 
+					attachment { }
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				layout(location = NORMAL_LOCATION) in vec3 normal;
+
+				layout(location = 0) out vec2 outxyPos;
+				
+				void main()
+				{
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+					outxyPos = clipPos.xy / clipPos.w;
+				}
+
+				#stage fragment
+
+				#version 450
+
+				#include <v3d.h>
+
+				layout(location = 0) out vec4 outColor;
+
+				layout(location = 0) in vec2 inxyPos;
+
+				void main()
+				{
+					if((inxyPos.x * inxyPos.x + inxyPos.y * inxyPos.y) < 0.05)
+						outColor = vec4(1, 1, 1, 1);
+					else discard;
+				}
+			}
+		}
+
+		[Write(color = 0, location = 0)]
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{ 
+					attachment { }
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				layout(location = NORMAL_LOCATION) in vec3 normal;
+
+				layout(location = 0) out vec2 outxyPos;
+				
+				void main()
+				{
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+					outxyPos = clipPos.xy / clipPos.w;
+				}
+
+				#stage fragment
+
+				#version 450
+
+				#include <v3d.h>
+
+				layout(location = 0) out vec4 outColor;
+
+				layout(location = 0) in vec2 inxyPos;
+
+				void main()
+				{
+					float v = inxyPos.x * inxyPos.x + inxyPos.y * inxyPos.y; 
+					if((v > 0.05) && (v < 0.07))
+						outColor = vec4(0, 0, 0, 1);
+					else discard;
+				}
+			}
+		}
+	}
+}
