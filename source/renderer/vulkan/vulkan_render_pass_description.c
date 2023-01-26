@@ -84,22 +84,22 @@ RENDERER_API void vulkan_render_pass_description_end_subpass(vulkan_render_pass_
 	
 	buffer = CAST_TO(BUFFER*, subpass->color_attachments);
 	subpass->color_attachment_count = buf_get_element_count(buffer);
-	subpass->color_attachments = buf_get_ptr(buffer);
+	subpass->color_attachments = (subpass->color_attachment_count == 0) ? NULL : buf_get_ptr(buffer);
 	heap_free(buffer);
 	
 	buffer = CAST_TO(BUFFER*, subpass->input_attachments);
 	subpass->input_attachment_count = buf_get_element_count(buffer);
-	subpass->input_attachments = buf_get_ptr(buffer);
+	subpass->input_attachments = (subpass->input_attachment_count == 0) ? NULL : buf_get_ptr(buffer);
 	heap_free(buffer);
 
 	buffer = CAST_TO(BUFFER*, subpass->preserve_attachments);
 	subpass->preserve_attachment_count = buf_get_element_count(buffer);
-	subpass->preserve_attachments = buf_get_ptr(buffer);
+	subpass->preserve_attachments = (subpass->preserve_attachment_count == 0) ? NULL : buf_get_ptr(buffer);
 	heap_free(buffer);
 
 	buffer = CAST_TO(BUFFER*, subpass->sub_render_set_bindings);
-	subpass->sub_render_set_bindings = buf_get_ptr(buffer);
 	subpass->sub_render_set_binding_count = buf_get_element_count(buffer);
+	subpass->sub_render_set_bindings = (subpass->sub_render_set_binding_count == 0) ? NULL : buf_get_ptr(buffer);
 	heap_free(buffer);
 }
 
@@ -113,22 +113,22 @@ RENDERER_API void vulkan_render_pass_description_end(vulkan_render_pass_descript
 {
 	BUFFER* buffer = CAST_TO(BUFFER*, description->attachments);
 	description->attachment_count = buf_get_element_count(buffer);
-	description->attachments = buf_get_ptr(buffer);
+	description->attachments = (description->attachment_count == 0) ? NULL : buf_get_ptr(buffer);
 	heap_free(buffer);
 	buffer = CAST_TO(BUFFER*, description->input_attachments);
 	description->input_attachment_count = buf_get_element_count(buffer);
-	description->input_attachments = buf_get_ptr(buffer);
+	description->input_attachments = (description->input_attachment_count == 0) ? NULL : buf_get_ptr(buffer);
 	heap_free(buffer);
 	buffer = CAST_TO(BUFFER*, description->subpass_descriptions);
 	description->subpass_count = buf_get_element_count(buffer);
-	description->subpass_descriptions = buf_get_ptr(buffer);
+	description->subpass_descriptions = (description->subpass_count == 0) ? NULL : buf_get_ptr(buffer);
 	heap_free(buffer);
 	buffer = CAST_TO(BUFFER*, description->subpass_dependencies);
 	description->subpass_dependency_count = buf_get_element_count(buffer);
-	description->subpass_dependencies = buf_get_ptr(buffer);
+	description->subpass_dependencies = (description->subpass_dependency_count == 0) ? NULL : buf_get_ptr(buffer);
 	heap_free(buffer);
 	buffer = CAST_TO(BUFFER*, description->render_set_bindings);
-	description->render_set_bindings = buf_get_ptr(buffer);
 	description->render_set_binding_count = buf_get_element_count(buffer);
+	description->render_set_bindings = (description->render_set_binding_count == 0) ? NULL : buf_get_ptr(buffer);
 	heap_free(buffer);
 }
