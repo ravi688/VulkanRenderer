@@ -11,3 +11,8 @@
 # ignore archives
 *.a
 
+# ignore vulkan 3d shader binaries
+*.sb
+
+# ignore .dump files
+*.dump
