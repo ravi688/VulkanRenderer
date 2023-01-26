@@ -21,8 +21,6 @@
 #include <renderer/tests/TID-14.case2.h>
 #include <renderer/tests/TID-14.case3.h>
 
-#include <renderer/tests/TID-28.case1.h>
-
 RENDERER_API test_t* test_new()
 {
 	test_t* test = heap_new(test_t);
@@ -50,7 +48,6 @@ RENDERER_API test_t* test_create(const char* name)
 	ELSE_IF(TID_14_CASE_1);
 	ELSE_IF(TID_14_CASE_2);
 	ELSE_IF(TID_14_CASE_3);
-	ELSE_IF(TID_28_CASE_1);
 	else
 	{
 		printf 	(
@@ -68,7 +65,6 @@ RENDERER_API test_t* test_create(const char* name)
 					"\tTID_14_CASE_1\n"
 					"\tTID_14_CASE_2\n"
 					"\tTID_14_CASE_3\n"
-					"\tTID_28_CASE_1\n"
 				);
 		exit(0);
 	}
