@@ -1,7 +1,6 @@
 
 #include <renderer/tests/TID-28.case1.h>
 
-#define RENDERER_INCLUDE_EVERYTHING_INTERNAL
 #define RENDERER_INCLUDE_MATH
 #define RENDERER_INCLUDE_3D_MESH_RENDER_SYSTEM
 #define RENDERER_INCLUDE_3D_LIGHT_SYSTEM
@@ -52,8 +51,8 @@ TEST_DATA(TID_28_CASE_1)
 
 	mesh_t* quadMesh;
 
-	vulkan_texture_t* colorRenderTexture;
-	vulkan_texture_t* depthRenderTexture;
+	render_texture_t* colorRenderTexture;
+	render_texture_t* depthRenderTexture;
 
 	float angle;
 	float speed;
@@ -156,22 +155,18 @@ static void initialize(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
 	material_set_vec4(data->uiMaterial2, "parameters.color", vec4(1, 1, 1, 1));
 
 
-	vulkan_texture_create_info_t create_info = 
+	render_texture_create_info_t create_info = 
 	{
 		.width = renderer_get_window(renderer)->width,
 		.height = renderer_get_window(renderer)->height,
 		.depth = 1,
 		.channel_count = 4,
-		.type = VULKAN_TEXTURE_TYPE_ALBEDO | VULKAN_TEXTURE_TYPE_RENDER_TARGET,
-		.initial_usage = VULKAN_TEXTURE_USAGE_SAMPLED,
-		.usage = VULKAN_TEXTURE_USAGE_RENDER_TARGET,
-		.final_usage = VULKAN_TEXTURE_USAGE_SAMPLED,
-		.technique = VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH
+		.type = RENDER_TEXTURE_TYPE_ALBEDO
 	};
-	data->colorRenderTexture = vulkan_texture_create(renderer->vulkan_handle, &create_info);
+	data->colorRenderTexture = render_texture_create(renderer, &create_info);
 
-	create_info.type = VULKAN_TEXTURE_TYPE_DEPTH | VULKAN_TEXTURE_TYPE_RENDER_TARGET;
-	data->depthRenderTexture = vulkan_texture_create(renderer->vulkan_handle, &create_info);
+	create_info.type = RENDER_TEXTURE_TYPE_DEPTH;
+	data->depthRenderTexture = render_texture_create(renderer, &create_info);
 
 	material_set_texture(data->uiMaterial, "albedo", data->depthRenderTexture);
 	material_set_texture(data->uiMaterial2, "albedo", data->colorRenderTexture);
@@ -185,11 +180,12 @@ static void initialize(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
 }
 
 static void terminate(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
-{	texture_destroy(data->colorRenderTexture);
-	texture_release_resources(data->colorRenderTexture);
+{	
+	render_texture_destroy(data->colorRenderTexture);
+	render_texture_release_resources(data->colorRenderTexture);
 
-	texture_destroy(data->depthRenderTexture);
-	texture_release_resources(data->depthRenderTexture);
+	render_texture_destroy(data->depthRenderTexture);
+	render_texture_release_resources(data->depthRenderTexture);
 
 	texture_destroy(data->texture);
 	texture_release_resources(data->texture);

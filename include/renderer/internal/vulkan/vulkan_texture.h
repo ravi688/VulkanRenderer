@@ -104,6 +104,9 @@ typedef struct vulkan_texture_t
 
 BEGIN_CPP_COMPATIBLE
 
+/* creates a new vulkan_texture_t object, ready to be used in vulkan_texture_create_no_alloc function */
+RENDERER_API vulkan_texture_t* vulkan_texture_new();
+
 /*	
 	description:
 		creates a vulkan texture of a type 'type'
