@@ -139,6 +139,7 @@
 #		include <renderer/internal/vulkan/vulkan_shader_module.h>
 #		include <renderer/internal/vulkan/vulkan_swapchain.h>
 #		include <renderer/internal/vulkan/vulkan_texture.h>
+#		include <renderer/internal/vulkan/vulkan_render_texture.h>
 #		include <renderer/internal/vulkan/vulkan_to_string.h>
 #		include <renderer/internal/vulkan/vulkan_types.h>
 #	endif
@@ -164,6 +165,7 @@
 #	include <renderer/material.h>
 #	include <renderer/color.h>
 #	include <renderer/texture.h>
+#	include <renderer/render_texture.h>
 #endif
 
 #ifdef RENDERER_INCLUDE_CORE_INTERNAL
@@ -178,6 +180,7 @@
 #		include <renderer/internal/vulkan/vulkan_material.h>
 #		include <renderer/internal/vulkan/vulkan_camera.h>
 #		include <renderer/internal/vulkan/vulkan_texture.h>
+#		include <renderer/internal/vulkan/vulkan_render_texture.h>
 #	endif
 #endif
 

@@ -630,21 +630,31 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		 */
 		VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_STORE;
 		
+		/* 	if the attachment is a color attachment and related to the swapchain target then it should be loaded first
+			otherwise if the color attachment doesn't belong to the swapchain then it should be cleared first.
+			if the attachment is a depth attachemnt, then it should be clear first as well.
+		 */
 		VkAttachmentLoadOp load_op = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
 									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
 									  VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR) : VK_ATTACHMENT_LOAD_OP_CLEAR;
 
+		/*	if the attachment is a color attachment and related to the swapchain target then it should have OPTIMAL layout,
+			as the driver will be free to choose the internal layout of the swapchain images to better utilize the hardware.
+			if the color attachment doesn't belong to the swapchain target then it should have UNDEFINED layout.
+			if the attachment is a depth attachment then it should have UNDEFINED layout.
+		 */
 		VkImageLayout initial_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
 									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
 									  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED) : VK_IMAGE_LAYOUT_UNDEFINED;
-									
+		
+		/*	final layout shall be OPTIMAL to better utilize the hardware */
 		VkImageLayout final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
 									VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : 
 									VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		
 		vulkan_attachment_next_pass_usage_t usage = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_NONE;
 
-		// supplementary attachments would always be swapchain image
+		/* supplementary attachments shall always be swapchain image */
 		if(is_supplementary)
 		{
 			assert(pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR);
