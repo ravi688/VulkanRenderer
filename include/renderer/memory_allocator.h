@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 /*
@@ -36,11 +34,9 @@
 #	define stack_alloc(size) checked_alloca(size)
 #	define stack_free(basePtr) checked_free(basePtr)
 #	define heap_free(basePtr) checked_free(basePtr)
-#	define ref(type, validPtr, index) checked_ref(type, validPtr, index)
-#   define refp(type, validPtr, index) checked_refp(type, validPtr, index)
-#endif
-
-#ifdef USE_GARBAGE_COLLECTOR
+#	define get_element(type, validPtr, index) checked_ref(type, validPtr, index)
+#   define get_element_ptr(type, validPtr, index) checked_refp(type, validPtr, index)
+#elif defined(USE_GARBAGE_COLLECTOR)
 #	if defined(GLOBAL_DEBUG) && !defined(GARBAGE_COLLECTOR_DEBUG)
 #		define GARBAGE_COLLECTOR_DEBUG
 #	elif defined(GLOBAL_RELEASE) && !defined(GARBAGE_COLLECTOR_RELEASE)
@@ -48,18 +44,16 @@
 #	endif
 #	include <renderer/garbage_collector.h>
 #	include <stdlib.h>
-#	define memory_allocator_init(x) GC_START(x)
+#	define memory_allocator_init(stackBaseAddress) GC_START(stackBaseAddress)
 #	define memory_allocator_terminate() GC_STOP()
 #   define add_alloc(basePtr, size) basePtr
 #	define heap_alloc(size) GC_ALLOC(size)
 #	define stack_alloc(size) alloca(size)
 #	define stack_free(basePtr)
 #	define heap_free(basePtr) GC_FREE(basePtr)
-#	define ref(type, validPtr, index) validPtr[index]
-#   define refp(type, validPtr, index) (&(validPtr[index]))
-#endif
-
-#ifdef USE_STDLIB
+#   define get_element(type, validPtr, index) (validPtr)[index]
+#   define get_element_ptr(type, validPtr, index) (&(validPtr)[index])
+#elif defined(USE_STDLIB)
 #	include <stdlib.h>
 #	define memory_allocator_init(x)
 #	define memory_allocator_terminate()
@@ -68,8 +62,8 @@
 #	define stack_alloc(size) alloca(size)
 #	define stack_free(basePtr) 
 #	define heap_free(basePtr) free(basePtr)
-#	define ref(type, validPtr, index) validPtr[index]
-#   define refp(type, validPtr, index) (&(validPtr[index]))
+#   define get_element(type, validPtr, index) (validPtr)[index]
+#   define get_element_ptr(type, validPtr, index) (&(validPtr)[index])
 #endif
 
 #define stack_new(type) ((type*)stack_alloc(sizeof(type)))

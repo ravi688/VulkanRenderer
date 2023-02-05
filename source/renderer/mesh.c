@@ -29,7 +29,7 @@ RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data
 	for(u8 i = 0; i < MESH3D_MAX_ATTRIBUTE_COUNT; i++)
 	{
 		if((buffers[i] == NULL) || (buffers[i]->element_count == 0)) continue;
-		vulkan_vertex_buffer_create_info_t* create_info = refp(vulkan_vertex_buffer_create_info_t, vertex_buffer_infos, buffer_count);
+		vulkan_vertex_buffer_create_info_t* create_info = &vertex_buffer_infos[buffer_count];
 		create_info->data = buffers[i]->bytes;
 		create_info->stride = buffers[i]->element_size;
 		create_info->count = buffers[i]->element_count;

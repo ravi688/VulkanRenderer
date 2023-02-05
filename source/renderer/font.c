@@ -33,7 +33,7 @@ RENDERER_API font_t* font_create(void* bytes, u64 length)
 RENDERER_API void font_destroy(font_t* font)
 {
 	assert(font != NULL);
-	ttf_free(refp(font_t, font, 0)->handle);
+	ttf_free(get_element_ptr(font_t, font, 0)->handle);
 }
 
 
