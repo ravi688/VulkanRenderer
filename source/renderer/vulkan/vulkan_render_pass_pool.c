@@ -13,7 +13,7 @@
 RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new()
 {
 	vulkan_render_pass_pool_t* pool = heap_new(vulkan_render_pass_pool_t);
-	memset(pool, 0, sizeof(vulkan_render_pass_pool_t));
+	memzero(pool, vulkan_render_pass_pool_t);
 	return pool;
 }
 RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_pool_t OUT pool)

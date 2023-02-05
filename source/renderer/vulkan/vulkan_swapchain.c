@@ -12,7 +12,7 @@ static void destroy_swapchain(vulkan_swapchain_t* swapchain);
 RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new()
 {
 	vulkan_swapchain_t* swapchain = heap_new(vulkan_swapchain_t);
-	memset(swapchain, 0, sizeof(vulkan_swapchain_t));
+	memzero(swapchain, vulkan_swapchain_t);
 	return swapchain;
 }
 

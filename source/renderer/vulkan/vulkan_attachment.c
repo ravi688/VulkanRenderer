@@ -11,7 +11,7 @@
 RENDERER_API vulkan_attachment_t* vulkan_attachment_new()
 {
 	vulkan_attachment_t* attachment = heap_new(vulkan_attachment_t);
-	memset(attachment, 0, sizeof(vulkan_attachment_t));
+	memzero(attachment, vulkan_attachment_t);
 	return attachment;
 }
 

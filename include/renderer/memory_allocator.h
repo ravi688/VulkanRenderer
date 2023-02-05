@@ -36,6 +36,10 @@
 #	define heap_free(basePtr) checked_free(basePtr)
 #	define get_element(type, validPtr, index) checked_ref(type, validPtr, index)
 #   define get_element_ptr(type, validPtr, index) checked_refp(type, validPtr, index)
+#   define MEM_CHECK(ptr) get_element_ptr(u8, ptr, 0)
+#   define var(type, id) type* id = stack_alloc(sizeof(type))
+#   define val(id) *id
+#   define ptr(id) id
 #elif defined(USE_GARBAGE_COLLECTOR)
 #	if defined(GLOBAL_DEBUG) && !defined(GARBAGE_COLLECTOR_DEBUG)
 #		define GARBAGE_COLLECTOR_DEBUG
@@ -53,6 +57,10 @@
 #	define heap_free(basePtr) GC_FREE(basePtr)
 #   define get_element(type, validPtr, index) (validPtr)[index]
 #   define get_element_ptr(type, validPtr, index) (&(validPtr)[index])
+#   define MEM_CHECK(ptr)
+#   define var(type, id) type id
+#   define val(id) id
+#   define ptr(id) &id
 #elif defined(USE_STDLIB)
 #	include <stdlib.h>
 #	define memory_allocator_init(x)
@@ -64,6 +72,10 @@
 #	define heap_free(basePtr) free(basePtr)
 #   define get_element(type, validPtr, index) (validPtr)[index]
 #   define get_element_ptr(type, validPtr, index) (&(validPtr)[index])
+#   define MEM_CHECK(ptr)
+#   define var(type, id) type id
+#   define val(id) id
+#   define ptr(id) &id
 #endif
 
 #define stack_new(type) ((type*)stack_alloc(sizeof(type)))
@@ -75,3 +87,4 @@
 
 #define memzero(ptr, type) memset(ptr, 0, sizeof(type))
 #define memzerov(ptr, type, count) memset(ptr, 0, sizeof(type) * (count))
+

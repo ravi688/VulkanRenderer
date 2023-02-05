@@ -15,7 +15,7 @@ RENDERER_API void text_mesh_draw(text_mesh_t* text);
 RENDERER_API vulkan_render_object_t* vulkan_render_object_new()
 {
 	vulkan_render_object_t* obj = heap_new(vulkan_render_object_t);
-	memset(obj, 0, sizeof(vulkan_render_object_t));
+	memzero(obj, vulkan_render_object_t);
 	return obj;
 }
 

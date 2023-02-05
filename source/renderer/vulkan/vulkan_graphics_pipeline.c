@@ -13,7 +13,7 @@
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
 {
 	vulkan_graphics_pipeline_t* pipeline = heap_new(vulkan_graphics_pipeline_t);
-	memset(pipeline, 0, sizeof(vulkan_graphics_pipeline_t));
+	memzero(pipeline, vulkan_graphics_pipeline_t);
 	return pipeline;
 }
 

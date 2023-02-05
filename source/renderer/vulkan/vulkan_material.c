@@ -11,7 +11,7 @@
 RENDERER_API vulkan_material_t* vulkan_material_new()
 {
 	vulkan_material_t* material = heap_new(vulkan_material_t);
-	memset(material, 0, sizeof(vulkan_material_t));
+	memzero(material, vulkan_material_t);
 	return material;
 }
 
@@ -591,7 +591,6 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 
 RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vulkan_material_t* material, const char* name)
 {
-	assert(material != NULL);
 	assert(material->shader != NULL);
 
 	if(material->shader->material_set_binding_count == 0)

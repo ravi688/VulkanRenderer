@@ -9,7 +9,7 @@
 RENDERER_API vulkan_shader_library_t* vulkan_shader_library_new()
 {
 	vulkan_shader_library_t* library = heap_new(vulkan_shader_library_t);
-	memset(library, 0, sizeof(vulkan_shader_library_t));
+	memzero(library, vulkan_shader_library_t);
 	return library;
 }
 

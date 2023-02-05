@@ -137,7 +137,7 @@ static VkFence get_unsigned_fence(VkDevice device)
 RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
 	vulkan_renderer_t* renderer = heap_new(vulkan_renderer_t);
-	memset(renderer, 0, sizeof(vulkan_renderer_t));
+	memzero(renderer, vulkan_renderer_t);
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[3] = { "VK_KHR_surface", "VK_KHR_win32_surface" };
@@ -219,7 +219,7 @@ DEBUG_BLOCK
 
 	// create logical device
 	VkPhysicalDeviceFeatures* minimum_required_features = heap_new(VkPhysicalDeviceFeatures);
-	memset(minimum_required_features, 0, sizeof(VkPhysicalDeviceFeatures));
+	memzero(minimum_required_features, VkPhysicalDeviceFeatures);
 
 	u32 queue_family_indices[2] =
 	{
@@ -350,10 +350,10 @@ static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t
 		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 	};
 
-	vulkan_descriptor_set_layout_t layout;
-	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, &layout);
+	var (vulkan_descriptor_set_layout_t, layout);
+	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, ptr (layout));
 	log_msg("Object descriptor set layout has been created successfully\n");
-	return layout;
+	return val (layout);
 }
 
 static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t* renderer)
@@ -366,10 +366,10 @@ static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t
 		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 	};
 
-	vulkan_descriptor_set_layout_t layout;
-	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, &layout);
+	var (vulkan_descriptor_set_layout_t, layout);
+	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, ptr (layout));
 	log_msg("Camera descriptor set layout has been created successfully\n");
-	return layout;
+	return val (layout);
 }
 
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer)
@@ -389,10 +389,11 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		}
 	};
-	vulkan_descriptor_set_layout_t layout;
-	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, 2, &layout);
+
+	var (vulkan_descriptor_set_layout_t, layout);
+	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, 2, ptr (layout));
 	log_msg("Global descriptor set layout has been created successfully\n");
-	return layout;	
+	return val (layout);	
 }
 
 

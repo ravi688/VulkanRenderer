@@ -24,7 +24,7 @@
 RENDERER_API vulkan_shader_t* vulkan_shader_new()
 {
 	vulkan_shader_t* shader = heap_new(vulkan_shader_t);
-	memset(shader, 0, sizeof(vulkan_shader_t));
+	memzero(shader, vulkan_shader_t);
 	return shader;
 }
 
@@ -94,7 +94,7 @@ static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(u64
 
 	// allocate memory
 	vulkan_vertex_buffer_layout_description_t* vertex_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, binding_count);
-	memset(vertex_infos, 0, sizeof(vulkan_vertex_buffer_layout_description_t) * binding_count);
+	memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, binding_count);
 	
 	u32 binding_number = 0;
 	u16 location_number_offset = 0;

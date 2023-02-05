@@ -9,7 +9,6 @@
 
 RENDERER_API font_t* font_load_and_create(const char* file_name)
 {
-	assert(file_name != NULL);
 	BUFFER* file_data = load_binary_from_file(file_name);
 	font_t* font = font_create(file_data->bytes, file_data->element_count);
 	buf_free(file_data);
@@ -21,7 +20,7 @@ RENDERER_API font_t* font_create(void* bytes, u64 length)
 	assert(bytes != NULL);
 	assert(length != 0);
 	font_t* font = heap_new(font_t);
-	memset(font, 0, sizeof(font_t));
+	memzero(font, font_t);
 	int result = ttf_load_from_mem(bytes, length, &font->handle, false);
 	if((result != 0) || (font->handle == NULL))
 	{
@@ -32,7 +31,6 @@ RENDERER_API font_t* font_create(void* bytes, u64 length)
 
 RENDERER_API void font_destroy(font_t* font)
 {
-	assert(font != NULL);
 	ttf_free(get_element_ptr(font_t, font, 0)->handle);
 }
 

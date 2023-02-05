@@ -17,7 +17,7 @@
 RENDERER_API vulkan_camera_t* vulkan_camera_new()
 {
 	vulkan_camera_t* camera = heap_new(vulkan_camera_t);
-	memset(camera, 0, sizeof(vulkan_camera_t));
+	memzero(camera, vulkan_camera_t);
 	return camera;
 }
 

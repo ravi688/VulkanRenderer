@@ -10,7 +10,7 @@
 RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new()
 {
 	vulkan_descriptor_set_t* set = heap_new(vulkan_descriptor_set_t);
-	memset(set, 0, sizeof(vulkan_descriptor_set_t));
+	memzero(set, vulkan_descriptor_set_t);
 	set->vo_handle = VK_NULL_HANDLE;
 	return set;
 }

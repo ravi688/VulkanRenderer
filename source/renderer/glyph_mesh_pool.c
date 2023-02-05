@@ -6,13 +6,6 @@
 #include <renderer/assert.h> 	// assert
 #include <ctype.h> 				// isspace
 
-#ifndef GLOBAL_DEBUG
-#	define check_pre_condition(pool)
-#else
-	static void check_pre_condition(glyph_mesh_pool_t* pool);
-#endif /*GLOBAL_DEBUG*/
-
-
 typedef	struct glyph_mesh_t
 {
 	mesh_t* mesh;
@@ -30,7 +23,7 @@ typedef	struct glyph_mesh_pool_t
 RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new()
 {
 	glyph_mesh_pool_t* pool = heap_new(glyph_mesh_pool_t);
-	memset(pool, 0, sizeof(glyph_mesh_pool_t));
+	memzero(pool, glyph_mesh_pool_t);
 	return pool;
 }
 
@@ -46,7 +39,6 @@ RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, fon
 
 RENDERER_API void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool)
 {
-	check_pre_condition(pool);
 	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
 	{
 		glyph_mesh_t* ptr = dictionary_get_value_ptr_at(&pool->glyph_meshes, i);
@@ -57,7 +49,6 @@ RENDERER_API void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool)
 
 RENDERER_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool)
 {
-	check_pre_condition(pool);
 	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
 	{
 		glyph_mesh_t* ptr = dictionary_get_value_ptr_at(&pool->glyph_meshes, i);
@@ -71,13 +62,11 @@ RENDERER_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool)
 
 RENDERER_API font_t* glyph_mesh_pool_get_font(glyph_mesh_pool_t* pool)
 {
-	check_pre_condition(pool);
 	return pool->font;
 }
 
 RENDERER_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph)
 {
-	check_pre_condition(pool);
 	if(isspace(glyph)) return NULL;
 
 	mesh_t* mesh;
@@ -96,13 +85,3 @@ RENDERER_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph
 	}
 	return mesh;
 }
-
-
-#ifdef GLOBAL_DEBUG
-static void check_pre_condition(glyph_mesh_pool_t* pool)
-{
-	assert(pool != NULL);
-	assert(pool->renderer != NULL);
-	assert(pool->font != NULL);
-}
-#endif /*GLOBAL_DEBUG*/

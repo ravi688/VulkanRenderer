@@ -5,22 +5,15 @@
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
 
-#ifdef GLOBAL_DEBUG
-	static void check_pre_condition(vulkan_logical_device_t* device);
-#else
-#	define check_pre_condition(device)
-#endif /* GLOBAL_DEBUG */
-
 RENDERER_API vulkan_logical_device_t* vulkan_logical_device_new()
 {
 	vulkan_logical_device_t* device = heap_new(vulkan_logical_device_t);
-	memset(device, 0, sizeof(vulkan_logical_device_t));
+	memzero(device, vulkan_logical_device_t);
 	return device;	
 }
 
 RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* physical_device, vulkan_logical_device_create_info_t* device_create_info)
 {
-	assert(device_create_info != NULL);
 	vulkan_logical_device_t* device = vulkan_logical_device_new();
 	u32* family_indices = device_create_info->queue_family_indices;
 	u32 family_index_count = device_create_info->queue_family_index_count;
@@ -104,18 +97,7 @@ RENDERER_API void vulkan_logical_device_release_resources(vulkan_logical_device_
 
 RENDERER_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index)
 {
-	check_pre_condition(device);
 	VkQueue vo_queue;
 	vkGetDeviceQueue(device->vo_handle, family_index, queue_index, &vo_queue);
 	return vo_queue;
 }
-
-
-#ifdef GLOBAL_DEBUG
-static void check_pre_condition(vulkan_logical_device_t* device)
-{
-	assert(device != NULL);
-	assert(device->vo_handle != VK_NULL_HANDLE);
-}
-#endif /* GLOBAL_DEBUG */
-

@@ -22,7 +22,7 @@ static VkDescriptorSetLayout get_null_set_layout(vulkan_renderer_t* renderer)
 RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_new()
 {
 	vulkan_descriptor_set_layout_t* layout = heap_new(vulkan_descriptor_set_layout_t);
-	memset(layout, 0, sizeof(vulkan_descriptor_set_layout_t));
+	memzero(layout, vulkan_descriptor_set_layout_t);
 	layout->vo_handle = VK_NULL_HANDLE;
 	return layout;
 }
@@ -44,7 +44,7 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 	}
 	// allocate memory
 	VkDescriptorSetLayoutBinding* bindings = heap_newv(VkDescriptorSetLayoutBinding, descriptor_count);
-	memset(bindings, 0, sizeof(VkDescriptorSetLayoutBinding) * descriptor_count);
+	memzerov(bindings, VkDescriptorSetLayoutBinding, descriptor_count);
 
 	u32 binding_count = 0;
 	for(u32 i = 0; i < descriptor_count; i++)

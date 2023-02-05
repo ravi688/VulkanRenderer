@@ -7,16 +7,14 @@
 RENDERER_API vulkan_image_t* vulkan_image_new()
 {
 	vulkan_image_t* image = heap_new(vulkan_image_t);
-	memset(image, 0, sizeof(vulkan_image_t));
+	memzero(image, vulkan_image_t);
 	return image;
 }
 
 RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* image)
 {
-	assert(create_info != NULL);
 	assert(!((create_info->vo_type == VK_IMAGE_TYPE_2D) && (create_info->depth > 1)));
 	assert(create_info->depth != 0);
-	assert(image != NULL);
 
 	memzero(image, vulkan_image_t);
 

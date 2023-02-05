@@ -16,7 +16,7 @@
 RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new()
 {
 	vulkan_render_queue_t* queue = heap_new(vulkan_render_queue_t);
-	memset(queue, 0, sizeof(vulkan_render_queue_t));
+	memzero(queue, vulkan_render_queue_t);
 	return queue;
 }
 

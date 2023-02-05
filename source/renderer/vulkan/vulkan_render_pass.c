@@ -14,7 +14,7 @@
 RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new()
 {
 	vulkan_render_pass_t* render_pass = heap_new(vulkan_render_pass_t);
-	memset(render_pass, 0, sizeof(vulkan_render_pass_t));
+	memzero(render_pass, vulkan_render_pass_t);
 	return render_pass;
 }
 

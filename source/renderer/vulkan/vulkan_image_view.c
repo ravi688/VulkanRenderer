@@ -10,19 +10,13 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
-#ifdef GLOBAL_DEBUG
-	static void check_pre_condition(vulkan_image_view_t* view);
-#else
-#	define check_pre_condition(view)
-#endif /* GLOBAL_DEBUG */
-
 static VkImageViewType get_view_type(vulkan_image_view_type_t type);
 static u32 get_layer_count(vulkan_image_view_type_t type);
 
 RENDERER_API vulkan_image_view_t* vulkan_image_view_new()
 {
 	vulkan_image_view_t* view = heap_new(vulkan_image_view_t);
-	memset(view, 0, sizeof(vulkan_image_view_t));
+	memzero(view, vulkan_image_view_t);
 	return view;
 }
 
@@ -78,13 +72,11 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
 
 RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
 {
-	check_pre_condition(view);
 	vkDestroyImageView(view->renderer->logical_device->vo_handle, view->vo_handle, NULL);
 }
 
 RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)
 {
-	check_pre_condition(view);
 	// TODO
 	// heap_free(view);
 }
@@ -330,10 +322,3 @@ static u32 get_layer_count(vulkan_image_view_type_t type)
     		return VK_IMAGE_VIEW_TYPE_2D;
 	}
 }
-
-#ifdef GLOBAL_DEBUG
-static void check_pre_condition(vulkan_image_view_t* view)
-{
-	assert(view != NULL);
-}
-#endif /* GLOBAL_DEBUG */

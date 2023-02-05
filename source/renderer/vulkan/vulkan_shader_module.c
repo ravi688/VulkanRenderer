@@ -13,7 +13,7 @@ static VkPipelineShaderStageCreateInfo get_pipeline_shader_stage_create_info(VkS
 RENDERER_API vulkan_shader_module_t* vulkan_shader_module_new()
 {
 	vulkan_shader_module_t* shader = heap_new(vulkan_shader_module_t);
-	memset(shader, 0, sizeof(vulkan_shader_module_t));
+	memzero(shader, vulkan_shader_module_t);
 	return shader;
 }
 

@@ -11,13 +11,12 @@
 RENDERER_API vulkan_texture_t* vulkan_texture_new()
 {
 	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
-	memset(texture, 0, sizeof(vulkan_texture_t));
+	memzero(texture, vulkan_texture_t);
 	return texture;
 }
 
 RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info)
 {
-	assert(create_info != NULL);
 	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
 	vulkan_texture_create_no_alloc(renderer, create_info, texture);
 	return texture;
@@ -366,7 +365,6 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 
 RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
 {
-	assert(texture != NULL);
 	if(texture->vo_image_sampler != VK_NULL_HANDLE)
 	{
 		vkDestroySampler(texture->renderer->logical_device->vo_handle, texture->vo_image_sampler, NULL);
@@ -380,7 +378,6 @@ RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
 
 RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
 {
-	assert(texture != NULL);
 	vulkan_image_view_release_resources(&texture->image_view);
 	for(u32 i = 0; i < texture->image_view_count; i++)
 		vulkan_image_view_release_resources(&texture->image_views[i]);
