@@ -3,7 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 RENDERER_API vulkan_logical_device_t* vulkan_logical_device_new()
 {

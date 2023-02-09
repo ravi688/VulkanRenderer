@@ -7,7 +7,7 @@
 #include <renderer/internal/vulkan/vulkan_command.h>
 #include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 static VkImageViewType get_view_type(vulkan_image_view_type_t type);

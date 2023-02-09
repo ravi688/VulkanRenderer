@@ -4,7 +4,7 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>  					// vkCall
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/internal/vulkan/vulkan_types.h> 			// vulkan_shader_type_t
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 static VkDescriptorSetLayout get_null_set_layout(vulkan_renderer_t* renderer)
 {

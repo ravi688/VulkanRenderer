@@ -3,7 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/assert.h>
-#include <renderer/memory_allocator.h> 	// heap_new, heap_newv, heap_free
+#include <renderer/alloc.h> 	// heap_new, heap_newv, heap_free
 #include <stdio.h> 		// sprintf
 #include <string.h>		// strcmp
 

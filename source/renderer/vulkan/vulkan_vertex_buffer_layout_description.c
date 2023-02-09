@@ -1,6 +1,6 @@
 
 #include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <bufferlib/buffer.h>
 
 #define create_buffer(type) __create_buffer(sizeof(type))

@@ -2,7 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new()

@@ -59,3 +59,8 @@ typedef struct renderer_t renderer_t;
 #	define RENDERER_COMPILER_MINGW
 #endif // MINGW
 
+#ifdef GLOBAL_DEBUG
+#	define INLINE_IF_DEBUG_MODE INLINE
+#else
+#	define INLINE_IF_DEBUG_MODE /* no inline */
+#endif /* GLOBAL_DEBUG */

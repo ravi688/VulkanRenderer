@@ -7,7 +7,7 @@
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_command.h>
 #include <renderer/render_window.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 

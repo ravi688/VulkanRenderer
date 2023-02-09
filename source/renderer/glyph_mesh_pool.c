@@ -1,7 +1,7 @@
 
 #include <renderer/glyph_mesh_pool.h>
 #include <renderer/mesh3d.h>	// mesh3d_t
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/dictionary.h> // dictionary_t
 #include <renderer/assert.h> 	// assert
 #include <ctype.h> 				// isspace

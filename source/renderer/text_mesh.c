@@ -4,7 +4,7 @@
 #include <renderer/mesh3d.h>									// mesh3d_t
 #include <renderer/internal/vulkan/vulkan_mesh.h> 				// vulkan_mesh_create_and_vertex_buffer
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h> 	// vulkan_instance_buffer_t
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <renderer/dictionary.h>											// dictionary_t
 #include <renderer/multi_buffer.h>										// mult_buffer_t

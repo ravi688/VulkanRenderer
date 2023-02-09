@@ -2,7 +2,7 @@
 #include <renderer/struct_descriptor.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <string.h>
 #include <bufferlib/buffer.h>
 

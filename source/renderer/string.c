@@ -1,6 +1,6 @@
 
 #include <renderer/string.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 #include <string.h>
 

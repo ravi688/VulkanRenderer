@@ -2,7 +2,7 @@
 #include <renderer/render_object.h>
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_object.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 /* constructors and destructors */
 RENDERER_API render_object_t* render_object_new()

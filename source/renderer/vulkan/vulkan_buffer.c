@@ -1,7 +1,7 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 RENDERER_API void vulkan_buffer_init(vulkan_buffer_t* buffer)

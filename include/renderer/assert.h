@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <calltrace/calltrace.h>
 
+#include <renderer/debug.h>
+
 #ifdef ASSERT
 #	undef ASSERT
 #endif
@@ -46,43 +48,5 @@
 #	define assert_wrn(condition)
 #	define ASSERT_NOT_NULL(ptr)
 #endif
-	
-#if defined(GLOBAL_DEBUG)
-#	define LOG_MSG(...) log_msg(__VA_ARGS__)
-#	define LOG_ERR(...) log_err(__VA_ARGS__)
-#	define LOG_WRN(...) log_wrn(__VA_ARGS__)
-#	define LOG_FETAL_ERR(...) log_fetal_err(__VA_ARGS__)
-#else
-#	define LOG_WRN(...) debug_log("[Warning]: ", __VA_ARGS__)
-#	define LOG_MSG(...) debug_log("[Log]: ", __VA_ARGS__)
-#	define LOG_ERR(...) debug_log("[Error]: ", __VA_ARGS__)
-#	define LOG_FETAL_ERR(...) debug_log_exit("[Fetal Error]: ", __VA_ARGS__)
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cpluscplus
-
-static void debug_log(const char* description, const char* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	printf(description);
-	vprintf(format, args);
-	va_end(args);
-}
-
-static void debug_log_exit(const char* description, const char* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	debug_log(description, format, args);
-	va_end(args);
-	exit(0);
-}
 
 #define ASSERT_CALLED_ONCE() static int __FUNCTION__##call_counter = 0; ++__FUNCTION__##call_counter; ASSERT(__FUNCTION__##call_counter == 1, "%s has been called more than once\n", __FUNCTION__)
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus

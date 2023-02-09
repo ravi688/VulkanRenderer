@@ -2,7 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_render_object.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 typedef struct vulkan_mesh_t vulkan_mesh_t;

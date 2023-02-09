@@ -29,7 +29,7 @@
 #include <renderer/defines.h>
 #include <renderer/assert.h>
 
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 #define __UVS_ARE_NOT_FOUND__ "mesh3d_t::uvs are not found, make sure to call mesh3d_uvs_new(count) first\n"
 #define __NORMALS_ARE_NOT_FOUND__ "mesh3d_t::normals are not found, make sure to call mesh3d_normals_new(count) first\n"

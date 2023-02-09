@@ -5,7 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 RENDERER_API vulkan_texture_t* vulkan_texture_new()

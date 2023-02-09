@@ -7,7 +7,7 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/render_window.h>
 
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_new()
 {

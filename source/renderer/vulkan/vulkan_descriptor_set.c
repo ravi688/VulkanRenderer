@@ -5,7 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new()
 {

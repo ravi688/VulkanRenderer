@@ -5,7 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_attachment.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/debug.h>
 
 /* constructors & destructors */

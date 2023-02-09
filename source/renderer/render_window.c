@@ -4,7 +4,7 @@
 #include <renderer/assert.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
 
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <stdio.h>
 
 #define GLFW_INCLUDE_VULKAN

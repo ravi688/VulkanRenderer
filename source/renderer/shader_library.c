@@ -9,7 +9,7 @@
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 #include <disk_manager/file_reader.h>
 #include <string.h> 		// strcpy

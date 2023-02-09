@@ -1,7 +1,7 @@
 
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 #include <renderer/shader_library.h>
 #include <renderer/material_library.h>

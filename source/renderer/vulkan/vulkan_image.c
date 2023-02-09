@@ -2,7 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_image.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 RENDERER_API vulkan_image_t* vulkan_image_new()
 {

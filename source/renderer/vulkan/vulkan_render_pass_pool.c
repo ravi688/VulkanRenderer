@@ -4,7 +4,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_attachment.h>
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 #include <string.h>

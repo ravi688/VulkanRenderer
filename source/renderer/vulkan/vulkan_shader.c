@@ -15,7 +15,7 @@
 #include <common/binary_reader.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/dictionary.h>
 
 #include <string.h> 			// for strlen()

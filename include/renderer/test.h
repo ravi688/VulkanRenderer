@@ -57,7 +57,7 @@ RENDERER_API void test_destroy(test_t* test);
 END_CPP_COMPATIBLE
 
 
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 #define TEST_DATA(NAME) struct NAME##_t
 #define TEST_NAME(NAME) NAME##_name

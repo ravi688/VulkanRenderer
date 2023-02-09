@@ -1,6 +1,6 @@
 
 #include <renderer/test.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <string.h>
 
@@ -25,6 +25,8 @@
 #include <renderer/tests/TID-28.case2.h>
 #include <renderer/tests/TID-28.case3.h>
 #include <renderer/tests/TID-28.case4.h>
+
+#include <renderer/tests/TID-42.case1.h>
 
 RENDERER_API test_t* test_new()
 {
@@ -57,6 +59,7 @@ RENDERER_API test_t* test_create(const char* name)
 	ELSE_IF(TID_28_CASE_2);
 	ELSE_IF(TID_28_CASE_3);
 	ELSE_IF(TID_28_CASE_4);
+	ELSE_IF(TID_42_CASE_1);
 	else
 	{
 		printf 	(
@@ -78,6 +81,7 @@ RENDERER_API test_t* test_create(const char* name)
 					"\tTID_28_CASE_2\n"	
 					"\tTID_28_CASE_3\n"	
 					"\tTID_28_CASE_4\n"	
+					"\tTID_42_CASE_1\n"	
 				);
 		exit(0);
 	}

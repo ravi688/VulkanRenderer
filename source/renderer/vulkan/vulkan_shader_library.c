@@ -1,7 +1,7 @@
 #include <renderer/internal/vulkan/vulkan_shader_library.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/io.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/debug.h>
 #include <string.h>
 

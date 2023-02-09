@@ -8,7 +8,7 @@
 #include <renderer/internal/vulkan/vulkan_camera_system.h>
 #include <renderer/render_window.h>
 #include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/debug.h>
 
 RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new()

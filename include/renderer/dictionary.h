@@ -88,6 +88,6 @@ RENDERER_API bool dictionary_key_comparer_s8(void* v1, void* v2);
 RENDERER_API bool dictionary_key_comparer_float(void* v1, void* v2);
 RENDERER_API bool dictionary_key_comparer_double(void* v1, void* v2);
 RENDERER_API bool dictionary_key_comparer_string(void* v1, void* v2);
-
+RENDERER_API bool dictionary_key_comparer_ptr(void* v1, void* v2);
 
 END_CPP_COMPATIBLE

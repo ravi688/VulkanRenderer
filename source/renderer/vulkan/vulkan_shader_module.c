@@ -4,7 +4,7 @@
 #include <disk_manager/file_reader.h>
 
 #include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 static VkShaderModule get_shader_module(VkDevice device, void* spirv, u32 length);
 static VkPipelineShaderStageCreateInfo get_pipeline_shader_stage_create_info(VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point);

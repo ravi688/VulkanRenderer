@@ -4,7 +4,7 @@
 #include <renderer/renderer.h>
 #include <renderer/render_pass_pool.h>
 
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 /* constructors & destructors */

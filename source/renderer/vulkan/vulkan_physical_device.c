@@ -3,7 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 #include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <string.h> 		// strcmp
 
 // constructors and destructors

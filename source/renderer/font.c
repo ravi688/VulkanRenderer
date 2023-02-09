@@ -1,7 +1,7 @@
 
 #include <renderer/font.h>
 #include <renderer/mesh3d.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <disk_manager/file_reader.h>
 #include <ttf2mesh.h>
 #include <renderer/assert.h>

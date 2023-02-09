@@ -7,7 +7,7 @@
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <renderer/render_window.h>
 
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <disk_manager/file_reader.h>
 
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()

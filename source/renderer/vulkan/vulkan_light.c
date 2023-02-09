@@ -1,7 +1,7 @@
 
 #include <renderer/internal/vulkan/vulkan_light.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 #include <hpml/vec4.h>
 #include <hpml/affine_transformation.h>
@@ -17,19 +17,19 @@ RENDERER_API vulkan_light_t* vulkan_light_new(vulkan_light_type_t type)
 	{
 		case VULKAN_LIGHT_TYPE_DIRECTIONAL:
 			light = CAST_TO(vulkan_light_t*, heap_new(vulkan_directional_light_t));
-			memzero(light, vulkan_directional_light_t);
+			unsafe_memzero(light, vulkan_directional_light_t);
 		break;
 		case VULKAN_LIGHT_TYPE_POINT:
 			light =	CAST_TO(vulkan_light_t*, heap_new(vulkan_point_light_t));
-			memzero(light, vulkan_point_light_t);
+			unsafe_memzero(light, vulkan_point_light_t);
 		break;
 		case VULKAN_LIGHT_TYPE_SPOT:
 			light = CAST_TO(vulkan_light_t*, heap_new(vulkan_spot_light_t));
-			memzero(light, vulkan_spot_light_t);
+			unsafe_memzero(light, vulkan_spot_light_t);
 		break;
 		case VULKAN_LIGHT_TYPE_AMBIENT:
 			light = CAST_TO(vulkan_light_t*, heap_new(vulkan_ambient_light_t));
-			memzero(light, vulkan_ambient_light_t);
+			unsafe_memzero(light, vulkan_ambient_light_t);
 		break;
 		default:
 			UNSUPPORTED_LIGHT_TYPE(type);

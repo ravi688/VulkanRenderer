@@ -11,7 +11,7 @@
 #include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new()
 {

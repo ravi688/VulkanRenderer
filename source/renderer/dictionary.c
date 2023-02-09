@@ -261,6 +261,10 @@ RENDERER_API bool dictionary_key_comparer_string(void* v1, void* v2)
 	return (*(char**)v1) == (*(char**)v2);
 }
 
+RENDERER_API bool dictionary_key_comparer_ptr(void* v1, void* v2)
+{
+	return CAST_TO(void*, DREF_TO(u64, v1)) == CAST_TO(void*, DREF_TO(u64, v2));
+}
 
 
 #ifdef GLOBAL_DEBUG

@@ -5,7 +5,7 @@
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_attachment.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 
 RENDERER_API vulkan_camera_system_t* vulkan_camera_system_new()
