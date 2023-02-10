@@ -13,10 +13,12 @@ typedef struct MemoryObject2
 
 const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_2 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
 
+typedef struct MemoryObject1 MemoryObject1;
 typedef struct MemoryObject4
 {
 	SIZE(128);
 	MemoryObject2* obj2;
+	MemoryObject1* obj1;
 } MemoryObject4;
 
 const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_4 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
@@ -34,6 +36,7 @@ typedef struct MemoryObject1
 	SIZE(1024);
 	MemoryObject2* obj2;
 	MemoryObject3* obj3;
+	MemoryObject1* self_reference;
 } MemoryObject1;
 
 const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_1 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
@@ -98,6 +101,8 @@ TEST_ON_INITIALIZE(TID_42_CASE_1)
 
 	this->obj3->obj4 = this->obj4;
 	this->obj4->obj2 = this->obj2;
+
+	this->obj1->self_reference = this->obj1;
 
 	memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(this->allocator);
 	memory_allocation_tree_serialize_to_file(tree, "memory_allocation_tree.dump");

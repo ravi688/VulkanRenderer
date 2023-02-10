@@ -121,8 +121,16 @@ typedef struct memory_allocation_debug_node_t
     memory_allocation_debug_node_t** children;
 } memory_allocation_debug_node_t;
 
-/* root is a tree */
-typedef memory_allocation_debug_node_t memory_allocation_tree_t;
+typedef struct memory_allocation_tree_t
+{
+    /* root node of the tree, it is separately allocated */
+    memory_allocation_debug_node_t* root;
+
+    /* list of all the nodes present in the tree (except the root)
+     * the nodes are contiguously allocated, and hence it is required to preserve the ptr
+     * to later free it, memory_allocation_tree_destroy() */
+    memory_allocation_debug_node_t* nodes;
+} memory_allocation_tree_t;
 
 /* enumeration for the possible cases when allocating memory through the user provided callbacks */
 typedef enum allocate_result_flags_t

@@ -65,8 +65,12 @@ RENDERER_API void memory_allocator_dealloc(memory_allocator_t* allocator, void* 
 
 enum
 {
+	/* if this node is visited, useful when building the allocation tree */
 	ALREADY_VISITED = BIT64(0),
-	EVER_REFERENCED = BIT64(1)
+	/* if this node is every referenced other than self referenced */
+	OTHER_REFERENCED = BIT64(1),
+	/* if this node references to itself */
+	SELF_REFERENCED = BIT64(2)
 };
 
 static memory_allocation_debug_node_t* find_if(memory_allocation_debug_node_t* nodes, u32 count, bool (*condition)(memory_allocation_debug_node_t* node, void* user_data), void* user_data)
@@ -91,7 +95,7 @@ static bool condition_address_matches(memory_allocation_debug_node_t* node, void
 {
 	bool matches = CAST_TO(u64, node->allocation->ptr) == DREF_TO(u64, user_data);
 	if(matches)
-		node->__internal_debug_flags |= EVER_REFERENCED;
+		node->__internal_debug_flags |= OTHER_REFERENCED;
 	return matches;
 }
 
@@ -134,7 +138,17 @@ static memory_allocation_debug_node_t* resolve_references(memory_allocation_map_
 		{
 			memory_allocation_debug_node_t* referenced_node = find_if(nodes, count, condition_address_matches, node->allocation->ptr + dword_offset);
 			if(referenced_node != NULL)
-				buf_push(&references, &referenced_node);
+			{
+				if(referenced_node == node)
+				{
+					node->__internal_debug_flags |= SELF_REFERENCED;
+					node->__internal_debug_flags &= ~OTHER_REFERENCED;
+				}
+				/* only add this node in the list of references when the reference is not a self reference
+				 * as adding self reference to the list of references leads to a cycle, hence infinite loop in traversal. */
+				else
+					buf_push(&references, &referenced_node);
+			}
 		}
 
 		node->child_count = buf_get_element_count(&references);
@@ -147,7 +161,7 @@ static memory_allocation_tree_t* build_tree(memory_allocation_debug_node_t* node
 {
 	BUFFER unref_nodes = buf_new(memory_allocation_debug_node_t*);
 	for(u32 i = 0; i < count; i++)
-		if((nodes[i].__internal_debug_flags & EVER_REFERENCED) == 0)
+		if((nodes[i].__internal_debug_flags & OTHER_REFERENCED) == 0)
 		{
 			memory_allocation_debug_node_t* ptr = nodes + i;
 			buf_push(&unref_nodes, &ptr);
@@ -156,10 +170,13 @@ static memory_allocation_tree_t* build_tree(memory_allocation_debug_node_t* node
 	memory_allocation_debug_node_t* root = heap_new(memory_allocation_debug_node_t);
 	memzero(root, memory_allocation_debug_node_t);
 
-	root->__internal_debug_flags = CAST_TO(u64, nodes);
 	root->child_count = buf_get_element_count(&unref_nodes);
 	root->children = CAST_TO(memory_allocation_debug_node_t**, buf_get_ptr(&unref_nodes));
-	return root;;
+
+	memory_allocation_tree_t* tree = heap_new(memory_allocation_tree_t);
+	tree->nodes = nodes;
+	tree->root = root;
+	return tree;;
 }
 
 static INLINE memory_allocation_tree_t* build_allocation_tree(memory_allocation_map_t* allocation_map)
@@ -174,23 +191,24 @@ RENDERER_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(me
 
 RENDERER_API void memory_allocation_tree_destroy(memory_allocation_tree_t* tree)
 {
-	heap_free(CAST_TO(void*, tree->__internal_debug_flags));
+	heap_free(tree->nodes);
+	heap_free(tree->root);
 	heap_free(tree);
 }
 
-static u32 memory_allocation_tree_calculate_size(memory_allocation_tree_t* tree)
+static u32 memory_allocation_tree_calculate_size(memory_allocation_debug_node_t* node)
 {
 	/* calculate the sizes of the children recursively */
 	u32 referenced_sized = 0;
-	for(u32 i = 0; i < tree->child_count; i++)
+	for(u32 i = 0; i < node->child_count; i++)
 	{
-		AUTO child = tree->children[i];
+		AUTO child = node->children[i];
 		/* if the size for the child has already been calculated then don't calculate again */
-		referenced_sized += (child->__internal_size != U32_MAX) ? child->__internal_size :  memory_allocation_tree_calculate_size(tree->children[i]);
+		referenced_sized += (child->__internal_size != U32_MAX) ? child->__internal_size :  memory_allocation_tree_calculate_size(node->children[i]);
 	}
 
 	/* the root of the tree doesn't have allocation */
-	return tree->__internal_size = (((tree->allocation == NULL) ? 0 : tree->allocation->size) + referenced_sized);
+	return node->__internal_size = (((node->allocation == NULL) ? 0 : node->allocation->size) + referenced_sized);
 }
 
 static void memory_allocation_debug_node_to_string(const memory_allocation_debug_node_t* node, string_builder_t* builder)
@@ -214,6 +232,8 @@ static void memory_allocation_debug_node_to_string(const memory_allocation_debug
 	}
 	string_builder_append(builder, "ref_count: %u\n", node->child_count);
 	string_builder_append(builder, "ref_size: %u\n", node->__internal_size - ((node->allocation == NULL) ? 0 : node->allocation->size));
+	string_builder_append(builder, "other referenced: %s\n", (node->__internal_debug_flags & OTHER_REFERENCED) ? "true" : "false");
+	string_builder_append(builder, "self referenced: %s\n", (node->__internal_debug_flags & SELF_REFERENCED) ? "true" : "false");
 
 	string_builder_increment_indentation(builder);
 	for(u32 i = 0; i < node->child_count; i++)
@@ -231,11 +251,11 @@ RENDERER_API void memory_allocation_tree_serialize_to_file(memory_allocation_tre
 {
 	string_builder_t* builder = string_builder_create(512);
 
-	u32 size = memory_allocation_tree_calculate_size(tree);
+	u32 size = memory_allocation_tree_calculate_size(tree->root);
 
 	string_builder_append(builder, "TOTAL BYTES ALLOCATED: %u (%.1f KB)\n", size, CAST_TO(float, size) / 1024);
 	string_builder_append(builder, "ALLOCATION TREE:\n\n");
-	memory_allocation_debug_node_to_string(tree, builder);
+	memory_allocation_debug_node_to_string(tree->root, builder);
 
 	string_builder_append_null(builder);
 	write_text_to_file(file_path, string_builder_get_str(builder));
