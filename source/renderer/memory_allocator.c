@@ -59,8 +59,8 @@ RENDERER_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __mem
 
 RENDERER_API void memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr)
 {
-	dictionary_remove(&allocator->allocation_map, &ptr);
 	allocator->deallocate(ptr);
+	dictionary_remove(&allocator->allocation_map, &ptr);
 }
 
 enum
