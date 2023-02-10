@@ -1,6 +1,9 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
+#include <renderer/string_builder.h>
 #include <renderer/assert.h>
+
+#include <disk_manager/file_writer.h>
 
 #include <math.h>
 #include <stdlib.h>
@@ -111,7 +114,10 @@ static memory_allocation_debug_node_t* resolve_references(memory_allocation_map_
 	memzerov(nodes, memory_allocation_debug_node_t, count);
 
 	for(u32 i = 0; i < count; i++)
+	{
 		nodes[i].allocation = CAST_TO(memory_allocation_t*, dictionary_get_value_ptr_at(allocation_map, i));
+		nodes[i].__internal_size = U32_MAX;
+	}
 
 	assert(sizeof(void*) == U64_SIZE);
 	const u32 num_bits = calculate_bits_required(U64_SIZE);
@@ -172,19 +178,69 @@ RENDERER_API void memory_allocation_tree_destroy(memory_allocation_tree_t* tree)
 	heap_free(tree);
 }
 
-RENDERER_API void memory_allocation_tree_serialize_to_file(const memory_allocation_tree_t* tree, const char* const file_path)
+static u32 memory_allocation_tree_calculate_size(memory_allocation_tree_t* tree)
 {
-	static int depth = -1;
-
-	depth++;
-
+	/* calculate the sizes of the children recursively */
+	u32 referenced_sized = 0;
 	for(u32 i = 0; i < tree->child_count; i++)
 	{
-		debug_log_info("[%d]", depth);
-		memory_allocation_tree_serialize_to_file(tree->children[i], NULL);
+		AUTO child = tree->children[i];
+		/* if the size for the child has already been calculated then don't calculate again */
+		referenced_sized += (child->__internal_size != U32_MAX) ? child->__internal_size :  memory_allocation_tree_calculate_size(tree->children[i]);
 	}
 
-	depth--;
+	/* the root of the tree doesn't have allocation */
+	return tree->__internal_size = (((tree->allocation == NULL) ? 0 : tree->allocation->size) + referenced_sized);
+}
+
+static void memory_allocation_debug_node_to_string(const memory_allocation_debug_node_t* node, string_builder_t* builder)
+{
+	string_builder_append(builder, "ALLOC\n");
+	string_builder_append(builder, "{\n");
+	string_builder_increment_indentation(builder);
+	if(node->allocation != NULL)
+	{
+		string_builder_append(builder, "type_id: %u\n", node->allocation->debug_info.allocation_type);
+		string_builder_append(builder, "type_str: %s\n", node->allocation->debug_info.allocation_type_str);
+		string_builder_append(builder, "size: %u\n", node->allocation->size);
+		string_builder_append(builder, "address: %p\n", node->allocation->ptr);
+	}
+	else
+	{
+		string_builder_append(builder, "type_id: UNDEFINED\n");
+		string_builder_append(builder, "type_str: UNDEFINED\n");
+		string_builder_append(builder, "size: 0\n");
+		string_builder_append(builder, "address: UNDEFINED\n");
+	}
+	string_builder_append(builder, "ref_count: %u\n", node->child_count);
+	string_builder_append(builder, "ref_size: %u\n", node->__internal_size - ((node->allocation == NULL) ? 0 : node->allocation->size));
+
+	string_builder_increment_indentation(builder);
+	for(u32 i = 0; i < node->child_count; i++)
+	{
+		string_builder_append(builder, "\n");
+		memory_allocation_debug_node_to_string(node->children[i], builder);
+	}
+	string_builder_decrement_indentation(builder);
+
+	string_builder_decrement_indentation(builder);
+	string_builder_append(builder, "}\n");
+}
+
+RENDERER_API void memory_allocation_tree_serialize_to_file(memory_allocation_tree_t* tree, const char* const file_path)
+{
+	string_builder_t* builder = string_builder_create(512);
+
+	u32 size = memory_allocation_tree_calculate_size(tree);
+
+	string_builder_append(builder, "TOTAL BYTES ALLOCATED: %u (%.1f KB)\n", size, CAST_TO(float, size) / 1024);
+	string_builder_append(builder, "ALLOCATION TREE:\n\n");
+	memory_allocation_debug_node_to_string(tree, builder);
+
+	string_builder_append_null(builder);
+	write_text_to_file(file_path, string_builder_get_str(builder));
+
+	string_builder_destroy(builder);
 }
 
 RENDERER_API memory_allocation_footprint_t* memory_allocator_get_footprint(memory_allocator_t* allocator)

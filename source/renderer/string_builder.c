@@ -1,0 +1,75 @@
+#include <renderer/string_builder.h>
+#include <renderer/assert.h>
+#include <renderer/alloc.h>
+#include <stdarg.h>
+
+RENDERER_API string_builder_t* string_builder_create(u32 capacity)
+{
+	string_builder_t* builder = heap_new(string_builder_t);
+	builder->string_buffer = buf_create(sizeof(char), capacity, 0);
+	builder->indentation_buffer = buf_create(sizeof(char), 1, 0);
+	return builder;
+}
+
+RENDERER_API void string_builder_destroy(string_builder_t* builder)
+{
+	buf_free(&builder->string_buffer);
+	buf_free(&builder->indentation_buffer);
+	heap_free(builder);
+}
+
+RENDERER_API void string_builder_append(string_builder_t* builder, const char* const format, ...)
+{
+	MEM_CHECK(builder);
+
+	va_list args;
+
+	/* get the required size of the format string */
+	va_start(args, format);
+	u32 required_size = vsnprintf(NULL, 0, format, args);
+	va_end(args);
+
+	/* if nothing to write, return */
+	if(required_size == 0)
+		return;
+
+	u32 indentation_level = buf_get_element_count(&builder->indentation_buffer);
+
+	/* extend the string buffer to accomodate the formatted string and the indentation string */
+	buf_ucount_t index = buf_get_element_count(&builder->string_buffer);
+	buf_push_pseudo(&builder->string_buffer, required_size + 1 + indentation_level);
+	void* ptr = buf_get_ptr_at(&builder->string_buffer, index);
+
+	/* put the indentiation string into the buffer */
+	if(indentation_level > 0)
+		memcpy(ptr, buf_get_ptr(&builder->indentation_buffer), indentation_level);
+
+	/* format the string and put that into the buffer */
+	va_start(args, format);
+	u32 written_size = vsnprintf(CAST_TO(char*, ptr + indentation_level), required_size + 1, format, args);
+	assert(written_size == required_size);
+	va_end(args);
+
+	/* pop out the null character */
+	buf_pop_pseudo(&builder->string_buffer, 1);
+}
+
+RENDERER_API void string_builder_append_null(string_builder_t* builder)
+{
+	buf_push_null(&builder->string_buffer);
+}
+
+RENDERER_API void string_builder_increment_indentation(string_builder_t* builder)
+{
+	buf_push_char(&builder->indentation_buffer, '\t');
+}
+
+RENDERER_API void string_builder_decrement_indentation(string_builder_t* builder)
+{
+	buf_pop(&builder->indentation_buffer, NULL);
+}
+
+RENDERER_API char* string_builder_get_str(string_builder_t* builder)
+{
+	return CAST_TO(char*, buf_get_ptr(&builder->string_buffer));
+}

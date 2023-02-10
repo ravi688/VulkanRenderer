@@ -109,7 +109,9 @@ typedef struct memory_allocation_t
 typedef struct memory_allocation_debug_node_t memory_allocation_debug_node_t;
 typedef struct memory_allocation_debug_node_t
 {
-    /* internal debug flags */
+    /* [internal] size of the memory allocation including the size of the referenced allocations recursively */
+    u32 __internal_size;
+    /* [internal] debug flags */
     u64 __internal_debug_flags;
     /* pointer to the memory allocation object to which this node corresponds */
     memory_allocation_t* allocation;
@@ -196,7 +198,7 @@ RENDERER_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(me
 /* destroys the memory allocation tree (frees up the allocated memory) */
 RENDERER_API void memory_allocation_tree_destroy(memory_allocation_tree_t* tree);
 /* serializes the memory_allocation_tree_t object into a file (human readable text file) */
-RENDERER_API void memory_allocation_tree_serialize_to_file(const memory_allocation_tree_t* tree, const char* const file_path);
+RENDERER_API void memory_allocation_tree_serialize_to_file(memory_allocation_tree_t* tree, const char* const file_path);
 
 /* returns a valid memory footprint analysis if MEMORY_ALLOCATION_PRESIST_FOOTPRINT_ANALYSIS_BIT bit is set, otherwise NULL */
 RENDERER_API memory_allocation_footprint_t* memory_allocator_get_footprint(memory_allocator_t* allocator);
