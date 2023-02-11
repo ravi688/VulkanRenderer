@@ -12,10 +12,16 @@ typedef struct __memory_allocation_debug_info_t
     memory_allocation_type_t allocation_type;
     /* string, holds the debug name for the allocation type */
     const char* allocation_type_str;
+    /* line number at which this allocation has been made */
+    u32 line;
+    /* function name in which this allocation has been made */
+    const char* function_str;
+    /* file name in which this allocation has been made */
+    const char* file_str;
 } __memory_allocation_debug_info_t;
 
 /* helper macro to create inlined __memory_allocation_debug_info_t object */
-#define __memory_allocation_debug_info(allocation_type) (__memory_allocation_debug_info_t) { allocation_type, #allocation_type }
+#define __memory_allocation_debug_info(allocation_type) (__memory_allocation_debug_info_t) { allocation_type, #allocation_type, __LINE__, __FUNCTION__, __FILE__ }
 
 /* flags that can be set at the time of the create of memory_allocator_t object */
 typedef enum memory_allocation_bit_flags_t

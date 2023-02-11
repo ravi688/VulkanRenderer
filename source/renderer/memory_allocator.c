@@ -251,6 +251,9 @@ static void memory_allocation_debug_node_to_string(const memory_allocation_debug
 	{
 		string_builder_append(builder, "type_id: %u\n", node->allocation->debug_info.allocation_type);
 		string_builder_append(builder, "type_str: %s\n", node->allocation->debug_info.allocation_type_str);
+		string_builder_append(builder, "line: %u\n", node->allocation->debug_info.line);
+		string_builder_append(builder, "function: %s\n", node->allocation->debug_info.function_str);
+		string_builder_append(builder, "file: %s\n", node->allocation->debug_info.file_str);
 		string_builder_append(builder, "size: %u\n", node->allocation->size);
 		string_builder_append(builder, "address: %p\n", node->allocation->ptr);
 	}
@@ -258,6 +261,9 @@ static void memory_allocation_debug_node_to_string(const memory_allocation_debug
 	{
 		string_builder_append(builder, "type_id: UNDEFINED\n");
 		string_builder_append(builder, "type_str: UNDEFINED\n");
+		string_builder_append(builder, "line: UNDEFINED\n");
+		string_builder_append(builder, "function: UNDEFINED\n");
+		string_builder_append(builder, "file: UNDEFINED\n");
 		string_builder_append(builder, "size: 0\n");
 		string_builder_append(builder, "address: UNDEFINED\n");
 	}
