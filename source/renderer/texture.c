@@ -77,7 +77,7 @@ RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type,
 	bmp_t bmp_data[file_path_count];
 	for(u32 i = 0; i < file_path_count; i++)
 	{
-		bmp_data[i] = bmp_load(va_arg(file_paths, const char*));
+		bmp_data[i] = bmp_load(renderer->allocator, va_arg(file_paths, const char*));
 		data[i].data = bmp_data[i].data;
 		data[i].width = bmp_data[i].width;
 		data[i].height = bmp_data[i].height;

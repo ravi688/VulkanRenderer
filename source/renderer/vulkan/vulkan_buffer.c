@@ -1,6 +1,7 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 
@@ -9,9 +10,9 @@ RENDERER_API void vulkan_buffer_init(vulkan_buffer_t* buffer)
 	memzero(buffer, vulkan_buffer_t);
 }
 
-RENDERER_API vulkan_buffer_t* vulkan_buffer_new()
+RENDERER_API vulkan_buffer_t* vulkan_buffer_new(memory_allocator_t* allocator)
 {
-	vulkan_buffer_t* buffer = heap_new(vulkan_buffer_t);
+	vulkan_buffer_t* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_BUFFER, vulkan_buffer_t);
 	vulkan_buffer_init(buffer);
 	return buffer;
 }
@@ -19,7 +20,7 @@ RENDERER_API vulkan_buffer_t* vulkan_buffer_new()
 
 RENDERER_API vulkan_buffer_t* vulkan_buffer_create(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info)
 {
-	vulkan_buffer_t* buffer = vulkan_buffer_new();
+	vulkan_buffer_t* buffer = vulkan_buffer_new(renderer->allocator);
 	vulkan_buffer_create_no_alloc(renderer, create_info, buffer);
 	return buffer;
 }

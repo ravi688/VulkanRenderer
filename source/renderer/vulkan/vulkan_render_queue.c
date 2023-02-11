@@ -11,18 +11,19 @@
 #include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new()
+RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator)
 {
-	vulkan_render_queue_t* queue = heap_new(vulkan_render_queue_t);
+	vulkan_render_queue_t* queue = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_QUEUE, vulkan_render_queue_t);
 	memzero(queue, vulkan_render_queue_t);
 	return queue;
 }
 
 RENDERER_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type)
 {
-	vulkan_render_queue_t* queue = vulkan_render_queue_new();
+	vulkan_render_queue_t* queue = vulkan_render_queue_new(renderer->allocator);
 	vulkan_render_queue_create_no_alloc(renderer, type, queue);
 	return queue;
 }
@@ -92,7 +93,7 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 		u32 subpass_count = vulkan_render_pass_pool_getH(queue->renderer->render_pass_pool, DEREF_TO(vulkan_render_pass_handle_t, dictionary_get_key_ptr_at(&queue->render_pass_handles, i)))->subpass_count;
 		for(u32 j = 0; j < subpass_count; j++)
 			buf_free(&list[i]);
-		heap_free(list);
+		memory_allocator_dealloc(queue->renderer->allocator, list);
 	}
 	dictionary_free(&queue->render_pass_handles);
 
@@ -106,7 +107,7 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 		dictionary_free(map);
 	}
 	dictionary_free(&queue->shader_handles);
-	heap_free(queue);
+	memory_allocator_dealloc(queue->renderer->allocator, queue);
 }
 
 RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue)
@@ -163,7 +164,7 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 		u32 subpass_count = passes[i].subpass_count;
 		if(!dictionary_contains(&queue->render_pass_handles, &passes[i].handle))
 		{
-			lists = heap_newv(subpass_shader_list_t, subpass_count);
+			lists = memory_allocator_alloc_obj_array(queue->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_SUBPASS_SHADER_LIST_ARRAY, subpass_shader_list_t, subpass_count);
 			for(u32 j = 0; j < subpass_count; j++)
 				lists[j] = buf_create(sizeof(vulkan_shader_handle_t), 1, 0);
 			dictionary_add(&queue->render_pass_handles, &passes[i].handle, &lists);

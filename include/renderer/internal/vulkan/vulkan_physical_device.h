@@ -9,6 +9,7 @@
 
 typedef struct vulkan_physical_device_t
 {
+	vulkan_renderer_t* renderer;
 	VkPhysicalDevice vo_handle;
 	VkPhysicalDeviceProperties vo_properties;			// cached properties
 	VkPhysicalDeviceFeatures vo_features;				// cached features
@@ -22,9 +23,9 @@ typedef struct vulkan_physical_device_t
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new();
-RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_device);
-RENDERER_API void vulkan_physical_device_create_no_alloc(VkPhysicalDevice vk_device, vulkan_physical_device_t OUT device);
+RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new(memory_allocator_t* allocator);
+RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(vulkan_renderer_t* renderer, VkPhysicalDevice vk_device);
+RENDERER_API void vulkan_physical_device_create_no_alloc(vulkan_renderer_t* renderer, VkPhysicalDevice vk_device, vulkan_physical_device_t OUT device);
 RENDERER_API void vulkan_physical_device_destroy(vulkan_physical_device_t* device);
 RENDERER_API void vulkan_physical_device_release_resources(vulkan_physical_device_t* device);
 

@@ -1,31 +1,32 @@
 
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <bufferlib/buffer.h>
 #include <disk_manager/file_reader.h>
 
-#define create_buffer(type) __create_buffer(sizeof(type))
-static BUFFER* __create_buffer(u32 size)
+#define create_buffer(allocator, type) __create_buffer(allocator, sizeof(type))
+static BUFFER* __create_buffer(memory_allocator_t* allocator, u32 size)
 {
-	BUFFER* buffer = heap_new(BUFFER);
+	BUFFER* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
 	*buffer = buf_create(size, 1, 0);
 	return buffer;
 }
 
 RENDERER_API void vulkan_graphics_pipeline_description_begin(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_description_t* description)
 {
-	vulkan_graphics_pipeline_settings_t* settings = heap_new(vulkan_graphics_pipeline_settings_t);
+	vulkan_graphics_pipeline_settings_t* settings = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_SETTINGS, vulkan_graphics_pipeline_settings_t);
 	memzero(settings, vulkan_graphics_pipeline_settings_t);
 	description->settings = settings;
 
-	description->spirv_codes = CAST_TO(vulkan_spirv_code_t*, create_buffer(vulkan_spirv_code_t));
+	description->spirv_codes = CAST_TO(vulkan_spirv_code_t*, create_buffer(renderer->allocator, vulkan_spirv_code_t));
 
 	settings->colorblend = (VkPipelineColorBlendStateCreateInfo)
 	{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
 		.logicOpEnable = VK_FALSE,
-		.pAttachments = CAST_TO(VkPipelineColorBlendAttachmentState*, create_buffer(VkPipelineColorBlendAttachmentState))
+		.pAttachments = CAST_TO(VkPipelineColorBlendAttachmentState*, create_buffer(renderer->allocator, VkPipelineColorBlendAttachmentState))
 	};
 
 	settings->inputassembly = (VkPipelineInputAssemblyStateCreateInfo)
@@ -141,15 +142,15 @@ RENDERER_API void vulkan_graphics_pipeline_description_add_shader(vulkan_graphic
 	buf_push(CAST_TO(BUFFER*, description->spirv_codes), &code);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_end(vulkan_graphics_pipeline_description_t* description)
+RENDERER_API void vulkan_graphics_pipeline_description_end(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_description_t* description)
 {
 	VkPipelineColorBlendStateCreateInfo* info = &description->settings->colorblend;
 	BUFFER* buffer = CAST_TO(BUFFER*, info->pAttachments);
 	info->attachmentCount = buf_get_element_count(buffer);
 	info->pAttachments = CAST_TO(VkPipelineColorBlendAttachmentState*, buf_get_ptr(buffer));
-	heap_free(buffer);
+	memory_allocator_dealloc(renderer->allocator, buffer);
 	buffer = CAST_TO(BUFFER*, description->spirv_codes);
 	description->spirv_code_count = buf_get_element_count(buffer);
 	description->spirv_codes = buf_get_ptr(buffer);
-	heap_free(buffer);
+	memory_allocator_dealloc(renderer->allocator, buffer);
 }

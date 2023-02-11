@@ -2,14 +2,16 @@
 #include <renderer/internal/vulkan/vulkan_instance.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/assert.h>
 #include <renderer/alloc.h> 	// heap_new, heap_newv, heap_free
+#include <renderer/memory_allocator.h>
 #include <stdio.h> 		// sprintf
 #include <string.h>		// strcmp
 
-RENDERER_API vulkan_instance_t* vulkan_instance_new()
+RENDERER_API vulkan_instance_t* vulkan_instance_new(memory_allocator_t* allocator)
 {
-	vulkan_instance_t* instance = heap_new(vulkan_instance_t);
+	vulkan_instance_t* instance = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_INSTANCE, vulkan_instance_t);
 	memzero(instance, vulkan_instance_t);
 	instance->handle = VK_NULL_HANDLE;			// invalid
 	instance->extension_count = U32_MAX; 		// invalid
@@ -17,9 +19,10 @@ RENDERER_API vulkan_instance_t* vulkan_instance_new()
 	return instance;
 }
 
-RENDERER_API vulkan_instance_t* vulkan_instance_create(const char* const* extensions, u32 extension_count)
+RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* renderer, const char* const* extensions, u32 extension_count)
 {
-	vulkan_instance_t* instance = vulkan_instance_new();
+	vulkan_instance_t* instance = vulkan_instance_new(renderer->allocator);
+	instance->renderer = renderer;
 	const char* supported_extensions[extension_count];
 	u32 supported_extension_count = 0;
 	for(u32 i = 0; i < extension_count; i++)
@@ -76,14 +79,14 @@ RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
 {
 	assert(instance != NULL);
 	if(instance->extension_properties != NULL)
-		heap_free(instance->extension_properties);
+		memory_allocator_dealloc(instance->renderer->allocator, instance->extension_properties);
 	if(instance->physical_devices != NULL)
 	{
 		for(u32 i = 0; i < instance->physical_device_count; i++)
 			vulkan_physical_device_release_resources(&instance->physical_devices[i]);
-		heap_free(instance->physical_devices);
+		memory_allocator_dealloc(instance->renderer->allocator, instance->physical_devices);
 	}
-	heap_free(instance);
+	memory_allocator_dealloc(instance->renderer->allocator, instance);
 }
 
 RENDERER_API u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* instance)
@@ -114,14 +117,14 @@ RENDERER_API vulkan_physical_device_t* vulkan_instance_get_physical_devices(vulk
 		return instance->physical_devices;
 	u32 physical_device_count = vulkan_instance_get_physical_device_count(instance);
 	if(physical_device_count == 0) return NULL;
-	instance->physical_devices = heap_newv(vulkan_physical_device_t, physical_device_count);
-	VkPhysicalDevice* vk_devices = heap_newv(VkPhysicalDevice, physical_device_count);
+	instance->physical_devices = memory_allocator_alloc_obj_array(instance->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_PHYSICAL_DEVICE_ARRAY, vulkan_physical_device_t, physical_device_count);
+	VkPhysicalDevice* vk_devices = memory_allocator_alloc_obj_array(instance->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PHYSICAL_DEVICE_ARRAY, VkPhysicalDevice, physical_device_count);
 	VkResult result = vkEnumeratePhysicalDevices(instance->handle, &physical_device_count, vk_devices);
 	vulkan_result_assert_complete(result);
 	vulkan_result_assert_success(result);
 	for(u32 i = 0; i < physical_device_count; i++)
-		vulkan_physical_device_create_no_alloc(vk_devices[i], &instance->physical_devices[i]);
-	heap_free(vk_devices);
+		vulkan_physical_device_create_no_alloc(instance->renderer, vk_devices[i], &instance->physical_devices[i]);
+	memory_allocator_dealloc(instance->renderer->allocator, vk_devices);
 	return instance->physical_devices;
 }
 
@@ -132,7 +135,7 @@ RENDERER_API VkExtensionProperties* vulkan_instance_get_extension_properties(vul
 		return instance->extension_properties;
 	u32 extension_count = vulkan_instance_get_extension_count(instance, layer_name);
 	if(extension_count == 0) return NULL;
-	instance->extension_properties = heap_newv(VkExtensionProperties, extension_count);
+	instance->extension_properties = memory_allocator_alloc_obj_array(instance->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_EXTENSION_PROPERTIES_ARRAY, VkExtensionProperties, extension_count);
 	VkResult result = vkEnumerateInstanceExtensionProperties(layer_name, &extension_count, instance->extension_properties);
 	vulkan_result_assert_complete(result);
 	vulkan_result_assert_success(result);

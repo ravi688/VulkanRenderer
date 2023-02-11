@@ -7,21 +7,22 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 
 #include <renderer/renderer.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
 #include <renderer/assert.h>
 
 /* constructors & destructors */
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new()
+RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator)
 {
-	vulkan_render_scene_t* scene = heap_new(vulkan_render_scene_t);
+	vulkan_render_scene_t* scene = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_SCENE, vulkan_render_scene_t);
 	memzero(scene, vulkan_render_scene_t);
 	return scene;
 }
 
 RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info)
 {
-	vulkan_render_scene_t* scene = vulkan_render_scene_new();
+	vulkan_render_scene_t* scene = vulkan_render_scene_new(renderer->allocator);
 	vulkan_render_scene_create_no_alloc(renderer, create_info, scene);
 	return scene;
 }

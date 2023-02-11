@@ -4,9 +4,9 @@
 #include <renderer/internal/vulkan/vulkan_light.h>
 
 /* constructors & destructors */
-RENDERER_API light_t* light_new(light_type_t type)
+RENDERER_API light_t* light_new(memory_allocator_t* allocator, light_type_t type)
 {
-	return vulkan_light_new(type);
+	return vulkan_light_new(allocator, type);
 }
 
 RENDERER_API light_t* light_create(renderer_t* renderer, light_type_t type)

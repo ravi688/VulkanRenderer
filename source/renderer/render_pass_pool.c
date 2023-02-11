@@ -9,9 +9,9 @@
 #include <renderer/debug.h>
 
 /* constructors & destructors */
-RENDERER_API render_pass_pool_t* render_pass_pool_new()
+RENDERER_API render_pass_pool_t* render_pass_pool_new(memory_allocator_t* allocator)
 {
-	return vulkan_render_pass_pool_new();
+	return vulkan_render_pass_pool_new(allocator);
 }
 
 RENDERER_API render_pass_pool_t* render_pass_pool_create(renderer_t* renderer)

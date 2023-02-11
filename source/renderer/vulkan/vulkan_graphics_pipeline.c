@@ -6,13 +6,13 @@
 #include <renderer/internal/vulkan/vulkan_shader_module.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <renderer/render_window.h>
-
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <disk_manager/file_reader.h>
 
-RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new()
+RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_allocator_t* allocator)
 {
-	vulkan_graphics_pipeline_t* pipeline = heap_new(vulkan_graphics_pipeline_t);
+	vulkan_graphics_pipeline_t* pipeline = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE, vulkan_graphics_pipeline_t);
 	memzero(pipeline, vulkan_graphics_pipeline_t);
 	return pipeline;
 }
@@ -116,7 +116,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
 {
-	vulkan_graphics_pipeline_t* pipeline = vulkan_graphics_pipeline_new();
+	vulkan_graphics_pipeline_t* pipeline = vulkan_graphics_pipeline_new(renderer->allocator);
 	vulkan_graphics_pipeline_create_no_alloc(renderer, create_info, pipeline);
 	return pipeline;
 }
@@ -134,5 +134,5 @@ RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* p
 
 RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)
 {
-	heap_free(pipeline);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline);
 }

@@ -2,22 +2,24 @@
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_to_string.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/assert.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <string.h> 		// strcmp
 
 // constructors and destructors
-RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new()
+RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new(memory_allocator_t* allocator)
 {
-	vulkan_physical_device_t* device = heap_new(vulkan_physical_device_t);
+	vulkan_physical_device_t* device = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_PHYSICAL_DEVICE, vulkan_physical_device_t);
 	memzero(device, vulkan_physical_device_t);
 	return device;
 }
 
-RENDERER_API void vulkan_physical_device_create_no_alloc(VkPhysicalDevice vk_device, vulkan_physical_device_t OUT device)
+RENDERER_API void vulkan_physical_device_create_no_alloc(vulkan_renderer_t* renderer, VkPhysicalDevice vk_device, vulkan_physical_device_t OUT device)
 {
-
 	memzero(device, vulkan_physical_device_t);
+	device->renderer = renderer;
 
 	device->vo_handle = vk_device;
 
@@ -33,7 +35,7 @@ RENDERER_API void vulkan_physical_device_create_no_alloc(VkPhysicalDevice vk_dev
 	// cache the queue family properties
 	vkGetPhysicalDeviceQueueFamilyProperties(device->vo_handle, &device->queue_family_count, NULL);
 	assert(device->queue_family_count != 0);
-	device->vo_queue_family_properties = heap_newv(VkQueueFamilyProperties, device->queue_family_count);
+	device->vo_queue_family_properties = memory_allocator_alloc_obj_array(device->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_QUEUE_FAMILY_PROPERTIES_ARRAY, VkQueueFamilyProperties, device->queue_family_count);
 	vkGetPhysicalDeviceQueueFamilyProperties(device->vo_handle, &device->queue_family_count, device->vo_queue_family_properties);
 
 	// cache physical device extensions
@@ -45,10 +47,10 @@ RENDERER_API void vulkan_physical_device_create_no_alloc(VkPhysicalDevice vk_dev
 	vulkan_result_assert_complete(vo_result);
 }
 
-RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(VkPhysicalDevice vk_device)
+RENDERER_API vulkan_physical_device_t* vulkan_physical_device_create(vulkan_renderer_t* renderer, VkPhysicalDevice vk_device)
 {
-	vulkan_physical_device_t* device = vulkan_physical_device_new();
-	vulkan_physical_device_create_no_alloc(vk_device, device);
+	vulkan_physical_device_t* device = vulkan_physical_device_new(renderer->allocator);
+	vulkan_physical_device_create_no_alloc(renderer, vk_device, device);
 	return device;
 }
 
@@ -63,8 +65,8 @@ RENDERER_API void vulkan_physical_device_release_resources(vulkan_physical_devic
 	// for(buf_ucount_t i = 0; i < buf_get_element_count(&device->logical_devices); i++)
 	// 	vulkan_logical_device_release_resources(*buf_get_ptr_at_typeof(&device->logical_devices, vulkan_logical_device_t*, i));
 	// buf_free(&device->logical_devices);
-	heap_free(device->vo_queue_family_properties);
-	heap_free(device->vo_extension_properties);
+	memory_allocator_dealloc(device->renderer->allocator, device->vo_queue_family_properties);
+	memory_allocator_dealloc(device->renderer->allocator, device->vo_extension_properties);
 
 	// TODO:
 	// heap_free(device);
@@ -83,7 +85,7 @@ RENDERER_API VkPresentModeKHR* vulkan_physical_device_get_present_modes(vulkan_p
 		LOG_WRN("Present mode count is zero\n");
 		return NULL;
 	}
-	VkPresentModeKHR* vo_modes = heap_newv(VkPresentModeKHR, count);
+	VkPresentModeKHR* vo_modes = memory_allocator_alloc_obj_array(device->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PRESENT_MODE_KHR_ARRAY, VkPresentModeKHR, count);
 	vo_result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->vo_handle, surface, &count, vo_modes);
 	vulkan_result_assert_success(vo_result);
 	vulkan_result_assert_complete(vo_result);
@@ -101,7 +103,7 @@ RENDERER_API VkSurfaceFormatKHR* vulkan_physical_device_get_surface_formats(vulk
 		LOG_WRN("Surface format count is zero\n");
 		return NULL;
 	}
-	VkSurfaceFormatKHR* vo_formats = heap_newv(VkSurfaceFormatKHR, count);
+	VkSurfaceFormatKHR* vo_formats = memory_allocator_alloc_obj_array(device->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SURFACE_FORMAT_KHR_ARRAY, VkSurfaceFormatKHR, count);
 	vo_result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->vo_handle, surface, &count, vo_formats);
 	vulkan_result_assert_success(vo_result);
 	vulkan_result_assert_complete(vo_result);

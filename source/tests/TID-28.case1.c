@@ -96,7 +96,7 @@ static void initialize(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
 											"showcase/resource/skybox_textures/skybox/top.bmp",
 											"showcase/resource/skybox_textures/skybox/front.bmp", 
 											"showcase/resource/skybox_textures/skybox/back.bmp");
-	data->skyboxGeometry = mesh3d_cube(5.0f);
+	data->skyboxGeometry = mesh3d_cube(renderer->allocator, 5.0f);
 	mesh3d_flip_triangles(data->skyboxGeometry);
 	data->skyboxMesh = mesh_create(renderer, data->skyboxGeometry);
 	data->skyboxShaderH = shader_library_load_shader(data->slib, "shaders/presets/skybox.sb");
@@ -108,8 +108,8 @@ static void initialize(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
 	data->shader = shader_library_getH(data->slib, data->shaderH);
 	data->blueMaterial = material_library_getH(data->mlib, material_library_create_materialH(data->mlib, data->shaderH, "BlueColorMaterial"));
 	data->greenMaterial = material_library_getH(data->mlib, material_library_create_materialH(data->mlib, data->shaderH, "GreenColorMaterial"));
-	data->mesh = mesh_create(renderer, mesh3d_cube(1.0f));
-	data->planeMesh = mesh_create(renderer, mesh3d_plane(2.0f));
+	data->mesh = mesh_create(renderer, mesh3d_cube(renderer->allocator, 1.0f));
+	data->planeMesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 2.0f));
 
 	material_set_texture(data->blueMaterial, "albedo", data->texture);
 	material_set_texture(data->greenMaterial, "albedo", data->texture);
@@ -141,7 +141,7 @@ static void initialize(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
 	data->uiMaterial2 = material_library_getH(data->mlib, material_library_create_materialH(data->mlib, data->uiShaderH2, "UIMaterial2"));
 
 	render_scene_add_queue(data->scene, RENDER_QUEUE_TYPE_QUEUE0);
-	data->quadMesh = mesh_create(renderer, mesh3d_plane(400));
+	data->quadMesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 400));
 	data->obj5 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
 	render_object_set_material(data->obj5, data->uiMaterial);
 	render_object_attach(data->obj5, data->quadMesh);

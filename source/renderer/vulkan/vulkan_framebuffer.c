@@ -6,12 +6,12 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/render_window.h>
-
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_new()
+RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_new(memory_allocator_t* allocator)
 {
-	vulkan_framebuffer_t* framebuffer = heap_new(vulkan_framebuffer_t);
+	vulkan_framebuffer_t* framebuffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_FRAMEBUFFER, vulkan_framebuffer_t);
 	memzero(framebuffer, vulkan_framebuffer_t);
 	return framebuffer;
 }
@@ -39,7 +39,7 @@ static void vulkan_framebuffer_recreate(vulkan_framebuffer_t* framebuffer)
 
 RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_create(vulkan_renderer_t* renderer, vulkan_render_pass_t* render_pass, u32 id)
 {
-	vulkan_framebuffer_t* framebuffer = vulkan_framebuffer_new();
+	vulkan_framebuffer_t* framebuffer = vulkan_framebuffer_new(renderer->allocator);
 	vulkan_framebuffer_create_no_alloc(renderer, render_pass, id, framebuffer);
 	return framebuffer;
 }
@@ -51,7 +51,7 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 	framebuffer->vo_handle = VK_NULL_HANDLE;
 	framebuffer->pass = render_pass;
 	framebuffer->id = id;
-	framebuffer->image_views = heap_newv(VkImageView, render_pass->attachment_count);
+	framebuffer->image_views = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, render_pass->attachment_count);
 
 	framebuffer->is_supplementary_supported = (render_pass->supplementary_attachments != NULL)
 											&& (render_pass->supplementary_attachment_count != 0);
@@ -65,13 +65,17 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
     // TODO: Revert this change after implementing and testing the point light shadows
    	// if(render_pass->required_framebuffer_count == renderer->swapchain->image_count)
    	// {
-		u32 attachment_count = render_pass->attachment_count;
+
+    	/* NOTE: attachment count for a render pass = allocated attachment count (internal attachments) + suplementary attachment count (external attachments) 
+    	 * since because the suplementary attachments would always be swapchain presentable sRGB (color) attachments, 
+    	 * we only have to check for internal allocated attachments if they are depth attachments. */
+		u32 allocated_attachment_count = render_pass->allocated_attachment_count;
 #ifdef GLOBAL_DEBUG
 		u32 depth_count = 0;
 #endif
-		for(u32 i = 0; i < attachment_count; i++)
+		for(u32 i = 0; i < allocated_attachment_count; i++)
 		{
-			if(render_pass->attachments[i].image.vo_format == VK_FORMAT_D32_SFLOAT)
+			if(render_pass->allocated_attachments[i].image.vo_format == VK_FORMAT_D32_SFLOAT)
 			{
 #ifdef GLOBAL_DEBUG
 				depth_count++;
@@ -92,7 +96,7 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 
 	s32 num_created_image_views = CAST_TO(s32, render_pass->attachment_count) - CAST_TO(s32, render_pass->supplementary_attachment_count);;
 	for(s32 i = 0; i < num_created_image_views; i++)
-		framebuffer->image_views[i + render_pass->supplementary_attachment_count] = render_pass->attachments[i].image_view.vo_handle;
+		framebuffer->image_views[i + render_pass->supplementary_attachment_count] = render_pass->allocated_attachments[i].image_view.vo_handle;
 
 	vulkan_framebuffer_recreate(framebuffer);
 }
@@ -104,7 +108,7 @@ RENDERER_API void vulkan_framebuffer_destroy(vulkan_framebuffer_t* framebuffer)
 
 RENDERER_API void vulkan_framebuffer_release_resources(vulkan_framebuffer_t* framebuffer)
 {
-	heap_free(framebuffer->image_views);
+	memory_allocator_dealloc(framebuffer->renderer->allocator, framebuffer->image_views);
 	// heap_free(framebuffer);
 }
 
@@ -147,6 +151,6 @@ RENDERER_API void vulkan_framebuffer_restore_depth(vulkan_framebuffer_t* framebu
 	assert(framebuffer->depth_index != U32_MAX);
 
 	u32 index = framebuffer->depth_index;
-	framebuffer->image_views[index] = framebuffer->pass->attachments[CAST_TO(s32, index) - 1].image_view.vo_handle;
+	framebuffer->image_views[index] = framebuffer->pass->allocated_attachments[CAST_TO(s32, index) - 1].image_view.vo_handle;
 	vulkan_framebuffer_recreate(framebuffer);
 }

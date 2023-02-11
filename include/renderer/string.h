@@ -6,6 +6,7 @@
 
 typedef struct string_t
 {
+	memory_allocator_t* allocator;
 	char* data;			// ptr to the string data
 	u32 length;			// length of the string (exclusive of the null character)
 } string_t;
@@ -17,7 +18,7 @@ typedef struct string_t
 	returns:
 		string_t, string_t object
  */
-RENDERER_API string_t string_create(const char* str);
+RENDERER_API string_t string_create(memory_allocator_t* allocator, const char* str);
 
 static FORCE_INLINE string_t string_null() { return (string_t) { NULL, 0 }; }
 

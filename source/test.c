@@ -1,5 +1,6 @@
 
 #include <renderer/test.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <string.h>
@@ -28,9 +29,9 @@
 
 #include <renderer/tests/TID-42.case1.h>
 
-RENDERER_API test_t* test_new()
+RENDERER_API test_t* test_new(memory_allocator_t* allocator)
 {
-	test_t* test = heap_new(test_t);
+	test_t* test = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_TEST, test_t);
 	memzero(test, test_t);
 	return test;
 }
@@ -38,9 +39,10 @@ RENDERER_API test_t* test_new()
 #define IF(NAME) if(strcmp(name, TEST_NAME(NAME)) == 0) NAME##_get_callbacks(test)
 #define ELSE_IF(NAME) else IF(NAME)
 
-RENDERER_API test_t* test_create(const char* name)
+RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 {
-	test_t* test = test_new();
+	test_t* test = test_new(allocator);
+	test->allocator = allocator;
 	IF(DEPTH_RENDER_TEXTURE);
 	ELSE_IF(DEPTH_RENDER_TEXTURE_LOAD);
 	ELSE_IF(ENVIRONMENT_REFLECTIONS);
@@ -90,5 +92,5 @@ RENDERER_API test_t* test_create(const char* name)
 
 RENDERER_API void test_destroy(test_t* test)
 {
-	heap_free(test);
+	memory_allocator_dealloc(test->allocator, test);
 }

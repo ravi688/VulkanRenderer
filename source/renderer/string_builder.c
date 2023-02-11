@@ -1,11 +1,13 @@
 #include <renderer/string_builder.h>
 #include <renderer/assert.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <stdarg.h>
 
-RENDERER_API string_builder_t* string_builder_create(u32 capacity)
+RENDERER_API string_builder_t* string_builder_create(memory_allocator_t* allocator, u32 capacity)
 {
-	string_builder_t* builder = heap_new(string_builder_t);
+	string_builder_t* builder = (allocator == NULL) ? heap_new(string_builder_t) : memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRING_BUILDER, string_builder_t);
+	builder->allocator = allocator;
 	builder->string_buffer = buf_create(sizeof(char), capacity, 0);
 	builder->indentation_buffer = buf_create(sizeof(char), 1, 0);
 	return builder;
@@ -15,7 +17,10 @@ RENDERER_API void string_builder_destroy(string_builder_t* builder)
 {
 	buf_free(&builder->string_buffer);
 	buf_free(&builder->indentation_buffer);
-	heap_free(builder);
+	if(builder->allocator != NULL)
+		memory_allocator_dealloc(builder->allocator, builder);
+	else
+		heap_free(builder);
 }
 
 RENDERER_API void string_builder_append(string_builder_t* builder, const char* const format, ...)

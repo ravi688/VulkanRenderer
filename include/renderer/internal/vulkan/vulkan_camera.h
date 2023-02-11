@@ -95,7 +95,7 @@ typedef struct vulkan_camera_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_camera_t* vulkan_camera_new();
+RENDERER_API vulkan_camera_t* vulkan_camera_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info);
 RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info, vulkan_camera_t OUT camera);
 RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera);

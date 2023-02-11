@@ -36,7 +36,7 @@ typedef struct vulkan_shader_module_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_shader_module_t* vulkan_shader_module_new();
+RENDERER_API vulkan_shader_module_t* vulkan_shader_module_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_shader_module_t* vulkan_shader_module_create(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info);
 RENDERER_API void vulkan_shader_module_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info, vulkan_shader_module_t OUT shader);
 RENDERER_API vulkan_shader_module_t* vulkan_shader_module_load(vulkan_renderer_t* renderer, vulkan_shader_module_load_info_t* load_info);

@@ -46,7 +46,7 @@
 #endif
 
 /* constructors & destructors */
-RENDERER_API material_library_t* material_library_new();
+RENDERER_API material_library_t* material_library_new(memory_allocator_t* allocator);
 RENDERER_API material_library_t* material_library_create(renderer_t* renderer, shader_library_t* shader_library);
 RENDERER_API void material_library_destroy(material_library_t* library);
 RENDERER_API void material_library_release_resources(material_library_t* library);

@@ -3,7 +3,7 @@
 #include <renderer/debug.h>
 #include <renderer/assert.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
-
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <stdio.h>
 
@@ -39,10 +39,11 @@ static void glfwOnWindowResizeCallback(GLFWwindow* window, int width, int height
 		}
 }
 
-RENDERER_API render_window_t* render_window_init(u32 width, u32 height, const char* title, bool full_screen, bool resizable)
+RENDERER_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
-	render_window_t* window = heap_new(render_window_t);
-	memset(window, 0, sizeof(render_window_t));
+	render_window_t* window = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDER_WINDOW, render_window_t);
+	memzero(window, render_window_t);
+	window->allocator = allocator;
 	glfwInit();
 #if GLOBAL_DEBUG
 	glfwSetErrorCallback(glfwErrorCallback);
@@ -98,7 +99,7 @@ RENDERER_API void render_window_destroy(render_window_t* window)
 	glfwTerminate();
 	if(window->resize_event != NULL)
 		buf_free(window->resize_event);
-	heap_free(window);
+	memory_allocator_dealloc(window->allocator, window);
 	log_msg("Render window destroyed successfully\n");
 }
 

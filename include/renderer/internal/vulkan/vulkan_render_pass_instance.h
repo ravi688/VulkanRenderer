@@ -15,7 +15,7 @@ typedef struct vulkan_render_pass_instance_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_render_pass_instance_t* vulkan_render_pass_instance_new();
+RENDERER_API vulkan_render_pass_instance_t* vulkan_render_pass_instance_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_render_pass_instance_t* vulkan_render_pass_instance_create(vulkan_render_pass_t* pass);
 RENDERER_API void vulkan_render_pass_instance_destroy(vulkan_render_pass_instance_t* instance);
 RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_instance_t* instance);

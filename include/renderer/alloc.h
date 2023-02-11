@@ -27,8 +27,8 @@
 #		define SAFE_MEMORY_RELEASE
 #	endif
 #	include <safe_memory/safe_memory.h>
-#	define memory_allocator_init(x) safe_memory_init()
-#	define memory_allocator_terminate() safe_memory_terminate()
+#	define alloc_init(x) safe_memory_init()
+#	define alloc_terminate() safe_memory_terminate()
 #   define add_alloc(basePtr, size) checked(basePtr, size)
 #	define heap_alloc(size) checked_malloc(size)
 #	define stack_alloc(size) checked_alloca(size)
@@ -48,8 +48,8 @@
 #	endif
 #	include <renderer/garbage_collector.h>
 #	include <stdlib.h>
-#	define memory_allocator_init(stackBaseAddress) GC_START(stackBaseAddress)
-#	define memory_allocator_terminate() GC_STOP()
+#	define alloc_init(stackBaseAddress) GC_START(stackBaseAddress)
+#	define alloc_terminate() GC_STOP()
 #   define add_alloc(basePtr, size) basePtr
 #	define heap_alloc(size) GC_ALLOC(size)
 #	define stack_alloc(size) alloca(size)
@@ -63,8 +63,8 @@
 #   define ptr(id) &id
 #elif defined(USE_STDLIB)
 #	include <stdlib.h>
-#	define memory_allocator_init(x)
-#	define memory_allocator_terminate()
+#	define alloc_init(x)
+#	define alloc_terminate()
 #   define add_alloc(basePtr, size) basePtr
 #	define heap_alloc(size) malloc(size)
 #	define stack_alloc(size) alloca(size)

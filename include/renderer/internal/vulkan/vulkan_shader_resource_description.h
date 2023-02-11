@@ -36,8 +36,8 @@ typedef struct vulkan_shader_resource_description_t
 } vulkan_shader_resource_description_t;
 
 
-RENDERER_API void vulkan_shader_resource_description_add_opaque(vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 set_number, u32 binding_number);
+RENDERER_API void vulkan_shader_resource_description_add_opaque(vulkan_renderer_t* renderer,  vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 set_number, u32 binding_number);
 
-RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_begin_uniform(vulkan_shader_resource_description_t* description, const char* name, u32 set_number, u32 binding_number);
+RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_begin_uniform(vulkan_renderer_t* renderer, vulkan_shader_resource_description_t* description, const char* name, u32 set_number, u32 binding_number);
 
-RENDERER_API void vulkan_shader_resource_description_end_uniform(vulkan_shader_resource_description_t* description);
+RENDERER_API void vulkan_shader_resource_description_end_uniform(vulkan_renderer_t* renderer, vulkan_shader_resource_description_t* description);

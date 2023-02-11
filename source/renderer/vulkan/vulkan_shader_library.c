@@ -1,14 +1,16 @@
 #include <renderer/internal/vulkan/vulkan_shader_library.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/io.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/debug.h>
 #include <string.h>
 
 /* constructors & destructors */
-RENDERER_API vulkan_shader_library_t* vulkan_shader_library_new()
+RENDERER_API vulkan_shader_library_t* vulkan_shader_library_new(memory_allocator_t* allocator)
 {
-	vulkan_shader_library_t* library = heap_new(vulkan_shader_library_t);
+	vulkan_shader_library_t* library = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_LIBRARY, vulkan_shader_library_t);
 	memzero(library, vulkan_shader_library_t);
 	return library;
 }
@@ -25,7 +27,7 @@ RENDERER_API void vulkan_shader_library_create_no_alloc(vulkan_renderer_t* rende
 
 RENDERER_API vulkan_shader_library_t* vulkan_shader_library_create(vulkan_renderer_t* renderer)
 {
-	vulkan_shader_library_t* library = vulkan_shader_library_new();
+	vulkan_shader_library_t* library = vulkan_shader_library_new(renderer->allocator);
 	vulkan_shader_library_create_no_alloc(renderer, library);
 	return library;
 }
@@ -91,7 +93,7 @@ static vulkan_shader_handle_t vulkan_shader_library_add(vulkan_shader_library_t*
 	// create a new slot
 	vulkan_shader_library_slot_t slot = 
 	{
-		.name = (vulkan_shader_name != NULL) ? string_create(vulkan_shader_name) : string_null(),
+		.name = (vulkan_shader_name != NULL) ? string_create(library->renderer->allocator, vulkan_shader_name) : string_null(),
 		.shader = shader,
 		.handle = handle
 	};

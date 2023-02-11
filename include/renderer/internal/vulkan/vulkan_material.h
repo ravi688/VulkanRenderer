@@ -52,7 +52,7 @@ typedef struct vulkan_material_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_material_t* vulkan_material_new();
+RENDERER_API vulkan_material_t* vulkan_material_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_material_t* vulkan_material_create(vulkan_renderer_t* renderer, vulkan_shader_t* shader);
 RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_t* shader, vulkan_material_t* material);
 RENDERER_API void vulkan_material_destroy(vulkan_material_t* material);

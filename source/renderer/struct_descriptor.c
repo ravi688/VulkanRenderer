@@ -2,6 +2,7 @@
 #include <renderer/struct_descriptor.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <string.h>
 #include <bufferlib/buffer.h>
@@ -293,25 +294,25 @@ RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, c
 	field->alignment = alignof_glsl_type(type);
 }
 
-RENDERER_API void struct_descriptor_begin(struct_descriptor_t* descriptor, const char* name, u8 type)
+RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type)
 {
 	memzero(descriptor, struct_descriptor_t);
 	
 	strcpy(descriptor->name, name);
 	descriptor->type = type;
 
-	BUFFER* buffer = heap_new(BUFFER);
+	BUFFER* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
 	BUFFER _buffer = buf_create(sizeof(struct_field_t), 1, 0);
 	memcpy(buffer, &_buffer, sizeof(BUFFER));
 	descriptor->fields = CAST_TO(struct_field_t*, buffer);
 }
 
-RENDERER_API void struct_descriptor_end(struct_descriptor_t* descriptor)
+RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor)
 {
 	BUFFER* buffer = CAST_TO(BUFFER*, descriptor->fields);
 	descriptor->fields = buf_get_ptr(buffer);
 	descriptor->field_count = buf_get_element_count(buffer);
-	heap_free(buffer);
+	memory_allocator_dealloc(allocator, buffer);
 	struct_descriptor_recalculate(descriptor);
 }
 

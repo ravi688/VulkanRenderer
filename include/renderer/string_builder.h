@@ -7,6 +7,7 @@
 /* string builder is used to build string efficiently with convenience */
 typedef struct string_builder_t
 {
+	memory_allocator_t* allocator;
 	/* stores the main string buffer */
 	BUFFER string_buffer;
 	/* stores the list of tab character ('\t') */
@@ -16,7 +17,7 @@ typedef struct string_builder_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API string_builder_t* string_builder_create(u32 capacity);
+RENDERER_API string_builder_t* string_builder_create(memory_allocator_t* allocator, u32 capacity);
 RENDERER_API void string_builder_destroy(string_builder_t* builder);
 
 /* appends the formatted string to the internal character buffer */

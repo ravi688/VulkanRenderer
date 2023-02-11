@@ -4,9 +4,9 @@
 #include <renderer/renderer.h>
 
 /* constructors and destructors */
-RENDERER_API camera_system_t* camera_system_new()
+RENDERER_API camera_system_t* camera_system_new(memory_allocator_t* allocator)
 {
-	return vulkan_camera_system_new();
+	return vulkan_camera_system_new(allocator);
 }
 
 RENDERER_API camera_system_t* camera_system_create(renderer_t* renderer)

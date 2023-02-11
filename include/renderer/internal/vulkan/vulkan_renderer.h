@@ -24,9 +24,11 @@ typedef enum vulkan_renderer_gpu_type_t
 	VULKAN_RENDERER_GPU_TYPE_DISCRETE				// selects discrete gpu if present, otherwise fallbacks to integrated
 } vulkan_renderer_gpu_type_t;
 
+typedef struct memory_allocator_t memory_allocator_t;
 
 typedef struct vulkan_renderer_t
 {
+	memory_allocator_t* allocator;
 	vulkan_instance_t* instance;
 	vulkan_logical_device_t* logical_device;
 	vulkan_physical_device_t* physical_device;
@@ -70,7 +72,7 @@ typedef struct vulkan_renderer_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable);
+RENDERER_API vulkan_renderer_t* vulkan_renderer_init(memory_allocator_t* allocator, vulkan_renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable);
 RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer);
 
 /* submits the recorded command buffer to the graphics queue and performs presentation */

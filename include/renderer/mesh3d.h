@@ -51,12 +51,13 @@ typedef struct mesh3d_t
 	BUFFER* tangents; 	// location = 4
 	BUFFER* triangles;
 	mat4_t transform;
+	memory_allocator_t* allocator;
 } mesh3d_t;
 
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API function_signature_void(mesh3d_t*, mesh3d_new);
+RENDERER_API function_signature(mesh3d_t*, mesh3d_new, memory_allocator_t* allocator);
 RENDERER_API function_signature(void, mesh3d_destroy, mesh3d_t* mesh);
 
 RENDERER_API function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, index_t count);
@@ -167,7 +168,7 @@ RENDERER_API function_signature(float, mesh3d_color_get_x, mesh3d_t* mesh, index
 RENDERER_API function_signature(float, mesh3d_color_get_y, mesh3d_t* mesh, index_t index);
 RENDERER_API function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index);
 
-#define mesh3d_new(...) define_alias_function_void_macro(mesh3d_new)
+#define mesh3d_new(...) define_alias_function_macro(mesh3d_new, __VA_ARGS__)
 #define mesh3d_destroy(...) define_alias_function_macro(mesh3d_destroy, __VA_ARGS__)
 
 #define mesh3d_positions_new(...) define_alias_function_macro(mesh3d_positions_new, __VA_ARGS__)
@@ -279,9 +280,9 @@ RENDERER_API function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index
 #define mesh3d_color_get_z(...) define_alias_function_macro(mesh3d_color_get_z, __VA_ARGS__)
 
 
-RENDERER_API function_signature(mesh3d_t*, mesh3d_cube, float size);
+RENDERER_API function_signature(mesh3d_t*, mesh3d_cube, memory_allocator_t* allocator, float size);
 #define mesh3d_cube(...) define_alias_function_macro(mesh3d_cube, __VA_ARGS__)
-RENDERER_API function_signature(mesh3d_t*, mesh3d_plane, float size);
+RENDERER_API function_signature(mesh3d_t*, mesh3d_plane, memory_allocator_t* allocator, float size);
 #define mesh3d_plane(...) define_alias_function_macro(mesh3d_plane, __VA_ARGS__)
 
 RENDERER_API function_signature(index_t, mesh3d_sizeof_position, mesh3d_t* mesh);
@@ -301,7 +302,7 @@ RENDERER_API function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh);
 
 
 #define mesh3d_load(...) define_alias_function_macro(mesh3d_load, __VA_ARGS__)
-RENDERER_API function_signature(mesh3d_t*, mesh3d_load, const char* file_path);
+RENDERER_API function_signature(mesh3d_t*, mesh3d_load, memory_allocator_t* allocator, const char* file_path);
 
 #define mesh3d_make_centroid_origin(...) define_alias_function_macro(mesh3d_make_centroid_origin, __VA_ARGS__)
 RENDERER_API function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh);

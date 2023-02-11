@@ -101,8 +101,8 @@ TEST_ON_INITIALIZE(DEPTH_CUBE_RENDER_TEXTURE_LOAD)
 	material_set_texture(this->skyboxMaterial, "albedo", this->skyboxTexture);
 	material_set_texture(this->material, "reflectionMap", this->environmentMap);
 	material_set_float(this->material, "parameters.reflectance", 1);
-	AUTO cubeMeshData = mesh3d_cube(1);
-	AUTO torusMeshData = mesh3d_load("models/Sphere.obj");
+	AUTO cubeMeshData = mesh3d_cube(renderer->allocator, 1);
+	AUTO torusMeshData = mesh3d_load(renderer->allocator, "models/Sphere.obj");
 	mesh3d_make_centroid_origin(torusMeshData);
 	mesh3d_transform_set(torusMeshData, mat4_rotation(0, 0, 30 DEG));
 

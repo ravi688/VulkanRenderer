@@ -8,14 +8,14 @@
 
 static u32 get_vulkan_index_from_stride(u32 stride);
 
-RENDERER_API mesh_t* mesh_new()
+RENDERER_API mesh_t* mesh_new(memory_allocator_t* allocator)
 {
-	return vulkan_mesh_new();
+	return vulkan_mesh_new(allocator);
 }
 
 RENDERER_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 {
-	mesh_t* vulkan_mesh = vulkan_mesh_new();
+	mesh_t* vulkan_mesh = vulkan_mesh_new(renderer->allocator);
 	mesh_create_no_alloc(renderer, mesh_data, vulkan_mesh);
 	return vulkan_mesh;
 }

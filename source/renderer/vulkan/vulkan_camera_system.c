@@ -5,21 +5,22 @@
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_attachment.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
 
-RENDERER_API vulkan_camera_system_t* vulkan_camera_system_new()
+RENDERER_API vulkan_camera_system_t* vulkan_camera_system_new(memory_allocator_t* allocator)
 {
-	vulkan_camera_system_t* system = heap_new(vulkan_camera_system_t);
+	vulkan_camera_system_t* system = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CAMERA_SYSTEM, vulkan_camera_system_t);
 	memzero(system, vulkan_camera_system_t);
 	return system;
 }
 
 RENDERER_API vulkan_camera_system_t* vulkan_camera_system_create(vulkan_renderer_t* renderer)
 {
-	vulkan_camera_system_t* system = vulkan_camera_system_new();
+	vulkan_camera_system_t* system = vulkan_camera_system_new(renderer->allocator);
 	system->renderer = renderer;
-	library_create_no_alloc(&system->lib);
+	library_create_no_alloc(renderer->allocator, &system->lib);
 	return system;
 }
 
@@ -44,12 +45,12 @@ RENDERER_API void vulkan_camera_system_release_resources(vulkan_camera_system_t*
 
 static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_create_info_clear(vulkan_renderer_t* renderer)
 {
-	vulkan_render_pass_create_info_t* create_info = heap_new(vulkan_render_pass_create_info_t);
+	vulkan_render_pass_create_info_t* create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO, vulkan_render_pass_create_info_t);
 	memzero(create_info, vulkan_render_pass_create_info_t);
 	
 	create_info->framebuffer_count = renderer->swapchain->image_count;
 	create_info->attachment_count = 1;
-	create_info->attachments = heap_new(VkAttachmentDescription);
+	create_info->attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION, VkAttachmentDescription);
 	create_info->attachments[0] = (VkAttachmentDescription)
 	{
 		.format = renderer->swapchain->vo_image_format,
@@ -61,20 +62,20 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 		.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 	};
-	create_info->attachment_usages = heap_new(vulkan_attachment_next_pass_usage_t);
+	create_info->attachment_usages = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE, vulkan_attachment_next_pass_usage_t);
 	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
 
 	create_info->supplementary_attachment_count = 1;
 	create_info->supplementary_attachments = renderer->swapchain->vo_image_views;
 
-	VkAttachmentReference* color_attachments = heap_new(VkAttachmentReference);
+	VkAttachmentReference* color_attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE, VkAttachmentReference);
 	color_attachments[0] = (VkAttachmentReference)
 	{
 		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		.attachment = 0
 	};
 	create_info->subpass_count = 1;
-	create_info->subpasses = heap_new(vulkan_subpass_create_info_t);
+	create_info->subpasses = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO, vulkan_subpass_create_info_t);
 	create_info->subpasses[0] = (vulkan_subpass_create_info_t)
 	{
 		.pipeline_bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -83,7 +84,7 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 	};
 
 	create_info->subpass_dependency_count = 2;
-	VkSubpassDependency* dependencies = create_info->subpass_dependencies = heap_newv(VkSubpassDependency, create_info->subpass_dependency_count);
+	VkSubpassDependency* dependencies = create_info->subpass_dependencies = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SUBPASS_DEPENDENCY_ARRAY, VkSubpassDependency, create_info->subpass_dependency_count);
 	dependencies[0] = (VkSubpassDependency)
 	{
 		.srcSubpass = VK_SUBPASS_EXTERNAL,

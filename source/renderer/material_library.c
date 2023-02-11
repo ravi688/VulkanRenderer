@@ -5,9 +5,9 @@
 
 
 /* constructors & destructors */
-RENDERER_API material_library_t* material_library_new()
+RENDERER_API material_library_t* material_library_new(memory_allocator_t* allocator)
 {
-	return vulkan_material_library_new();
+	return vulkan_material_library_new(allocator);
 }
 
 RENDERER_API material_library_t* material_library_create(renderer_t* renderer, shader_library_t* shader_library)

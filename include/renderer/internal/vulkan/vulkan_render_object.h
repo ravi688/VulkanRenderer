@@ -63,7 +63,7 @@ typedef struct vulkan_render_object_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructurs */
-RENDERER_API vulkan_render_object_t* vulkan_render_object_new();
+RENDERER_API vulkan_render_object_t* vulkan_render_object_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info);
 RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object);
 RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* object);

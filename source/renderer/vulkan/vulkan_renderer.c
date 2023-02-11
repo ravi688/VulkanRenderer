@@ -16,8 +16,16 @@
 #include <renderer/assert.h>
 #include <renderer/defines.h>
 #include <renderer/alloc.h>
+#include <renderer/memory_allocator.h>
 
 #include <stdio.h> 		// puts
+
+static void memory_allocator_dump(memory_allocator_t* allocator, const char* const file_path)
+{
+	memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(allocator);
+	memory_allocation_tree_serialize_to_file(tree, file_path);
+	memory_allocation_tree_destroy(tree);
+}
 
 static void vulkan_renderer_on_window_resize(render_window_t* window, void* renderer);
 
@@ -134,14 +142,15 @@ static VkFence get_unsigned_fence(VkDevice device)
 	return fence;
 }
 
-RENDERER_API vulkan_renderer_t* vulkan_renderer_init(vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
+RENDERER_API vulkan_renderer_t* vulkan_renderer_init(memory_allocator_t* allocator, vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
-	vulkan_renderer_t* renderer = heap_new(vulkan_renderer_t);
+	vulkan_renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDERER, vulkan_renderer_t);
 	memzero(renderer, vulkan_renderer_t);
+	renderer->allocator = allocator;
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[3] = { "VK_KHR_surface", "VK_KHR_win32_surface" };
-	renderer->instance = vulkan_instance_create(extensions, 2);
+	renderer->instance = vulkan_instance_create(renderer, extensions, 2);
 	vulkan_physical_device_t* physical_devices = vulkan_instance_get_physical_devices(renderer->instance);
 	u32 physical_device_count = vulkan_instance_get_physical_device_count(renderer->instance);
 
@@ -160,7 +169,7 @@ DEBUG_BLOCK
 
 
 	// create window
-	renderer->window = render_window_init(width, height, title, full_screen, resizable);
+	renderer->window = render_window_init(allocator, width, height, title, full_screen, resizable);
 	render_window_subscribe_on_resize(renderer->window, vulkan_renderer_on_window_resize, renderer);
 
 	// create surface
@@ -191,7 +200,7 @@ DEBUG_BLOCK
 	buf_push_null(&log_buffer);
 	log_msg(buf_get_ptr(&log_buffer));
 )
-	heap_free(surface_formats);
+	memory_allocator_dealloc(renderer->allocator, surface_formats);
 	
 	// setup the present mode
 	u32 present_mode_count;
@@ -209,7 +218,7 @@ DEBUG_BLOCK
 	buf_push_null(&log_buffer);
 	log_msg(buf_get_ptr(&log_buffer));
 )
-	heap_free(present_modes);
+	memory_allocator_dealloc(renderer->allocator, present_modes);
 
 	// setup swap extent
 	VkExtent2D image_extent = find_extent(&surface_capabilities, renderer->window);
@@ -218,7 +227,7 @@ DEBUG_BLOCK
 	u32 image_count = clamp_u32(surface_capabilities.minImageCount + 1, surface_capabilities.minImageCount, surface_capabilities.maxImageCount);
 
 	// create logical device
-	VkPhysicalDeviceFeatures* minimum_required_features = heap_new(VkPhysicalDeviceFeatures);
+	VkPhysicalDeviceFeatures* minimum_required_features = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PHYSICAL_DEVICE_FEATURES, VkPhysicalDeviceFeatures);
 	memzero(minimum_required_features, VkPhysicalDeviceFeatures);
 
 	u32 queue_family_indices[2] =
@@ -249,7 +258,7 @@ DEBUG_BLOCK
 		.features = minimum_required_features
 	};
 	renderer->logical_device = vulkan_logical_device_create(physical_device, &logical_device_create_info);
-	heap_free(minimum_required_features);
+	memory_allocator_dealloc(renderer->allocator, minimum_required_features);
 
 DEBUG_BLOCK
 (
@@ -270,7 +279,7 @@ DEBUG_BLOCK
 	renderer->vo_command_pool = vulkan_command_pool_create(renderer, queue_family_indices[0], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 	
 	// setup command buffers
-	renderer->vo_command_buffers = heap_newv(VkCommandBuffer, image_count);
+	renderer->vo_command_buffers = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CMD_BUFFER_ARRAY, VkCommandBuffer, image_count);
 	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, image_count, renderer->vo_command_buffers);
 	log_msg("Command Buffers has been allocated successfully\n");
 
@@ -478,6 +487,9 @@ RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
 
 RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
+	AUTO allocator = renderer->allocator;
+	// memory_allocator_dump(renderer->allocator, "memdump1.dump");
+
 	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 
 	// destroy camera system
@@ -537,8 +549,9 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_instance_destroy(renderer->instance);
 	vulkan_instance_release_resources(renderer->instance);
 	
-	heap_free(renderer->vo_command_buffers);
-	heap_free(renderer);
+	memory_allocator_dealloc(renderer->allocator, renderer->vo_command_buffers);
+
+	memory_allocator_dealloc(renderer->allocator, renderer);
 	LOG_MSG("Renderer exited successfully\n");
 }
 

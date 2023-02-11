@@ -27,7 +27,7 @@ typedef struct vulkan_framebuffer_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_new();
+RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_create(vulkan_renderer_t* renderer, vulkan_render_pass_t* render_pass, u32 id);
 RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_t* render_pass, u32 id, vulkan_framebuffer_t OUT framebuffer);
 RENDERER_API void vulkan_framebuffer_destroy(vulkan_framebuffer_t* framebuffer);

@@ -77,7 +77,7 @@ BEGIN_CPP_COMPATIBLE
 	returns:
 		pointer to newly created vulkan_descriptor_set_t object on the heap
  */
-RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new();
+RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new(memory_allocator_t* allocator);
 
 /* 
 	description:

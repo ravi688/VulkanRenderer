@@ -68,7 +68,7 @@ TEST_ON_INITIALIZE(SPOT_LIGHT)
 
 	material_set_vec4(this->unlitMaterial, "parameters.color", vec4(1, 1, 1, 1));
 
-	AUTO sphereMeshData = mesh3d_load("models/Monkey.obj");
+	AUTO sphereMeshData = mesh3d_load(renderer->allocator, "models/Monkey.obj");
 	mesh3d_make_centroid_origin(sphereMeshData);
 
 	this->mesh = mesh_create(renderer, sphereMeshData);
@@ -77,7 +77,7 @@ TEST_ON_INITIALIZE(SPOT_LIGHT)
 	render_object_attach(this->renderObject, this->mesh);
 	render_object_set_transform(this->renderObject, mat4_mul(2, mat4_rotation(0, -90 DEG, 0), mat4_scale(0.3f, 0.3f, 0.3f)));
 
-	AUTO cubeMeshData = mesh3d_cube(1);
+	AUTO cubeMeshData = mesh3d_cube(renderer->allocator, 1);
 	this->cubeMesh = mesh_create(renderer, cubeMeshData);
 	this->cubeObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->cubeObject, this->unlitMaterial);

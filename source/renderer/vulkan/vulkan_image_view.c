@@ -7,22 +7,23 @@
 #include <renderer/internal/vulkan/vulkan_command.h>
 #include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 static VkImageViewType get_view_type(vulkan_image_view_type_t type);
 static u32 get_layer_count(vulkan_image_view_type_t type);
 
-RENDERER_API vulkan_image_view_t* vulkan_image_view_new()
+RENDERER_API vulkan_image_view_t* vulkan_image_view_new(memory_allocator_t* allocator)
 {
-	vulkan_image_view_t* view = heap_new(vulkan_image_view_t);
+	vulkan_image_view_t* view = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE_VIEW, vulkan_image_view_t);
 	memzero(view, vulkan_image_view_t);
 	return view;
 }
 
 RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info)
 {
-	vulkan_image_view_t* view = vulkan_image_view_new();
+	vulkan_image_view_t* view = vulkan_image_view_new(renderer->allocator);
 	vulkan_image_view_create_no_alloc(renderer, create_info, view);
 	return view;
 }

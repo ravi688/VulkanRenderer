@@ -2,19 +2,22 @@
 #include <renderer/internal/vulkan/vulkan_logical_device.h>
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/assert.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_logical_device_t* vulkan_logical_device_new()
+RENDERER_API vulkan_logical_device_t* vulkan_logical_device_new(memory_allocator_t* allocator)
 {
-	vulkan_logical_device_t* device = heap_new(vulkan_logical_device_t);
+	vulkan_logical_device_t* device = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_LOGICAL_DEVICE, vulkan_logical_device_t);
 	memzero(device, vulkan_logical_device_t);
 	return device;	
 }
 
 RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* physical_device, vulkan_logical_device_create_info_t* device_create_info)
 {
-	vulkan_logical_device_t* device = vulkan_logical_device_new();
+	vulkan_logical_device_t* device = vulkan_logical_device_new(physical_device->renderer->allocator);
+	device->renderer = physical_device->renderer;
 	u32* family_indices = device_create_info->queue_family_indices;
 	u32 family_index_count = device_create_info->queue_family_index_count;
 	
@@ -40,7 +43,7 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physic
 	// TODO: Make priorities configurable
 	float priority = 1;
 
-	VkDeviceQueueCreateInfo* queue_create_infos = heap_newv(VkDeviceQueueCreateInfo, queue_family_count);
+	VkDeviceQueueCreateInfo* queue_create_infos = memory_allocator_alloc_obj_array(physical_device->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_DEVICE_QUEUE_CREATE_INFO_ARRAY, VkDeviceQueueCreateInfo, queue_family_count);
 	memset(queue_create_infos, 0, sizeof(VkDeviceQueueCreateInfo) * queue_family_count);
 	for(u32 i = 0; i < queue_family_count; i++)
 	{
@@ -78,7 +81,7 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physic
 	VkResult result = vkCreateDevice(physical_device->vo_handle, &create_info, NULL, &device->vo_handle);
 	vulkan_result_assert_success(result);
 
-	heap_free(queue_create_infos);
+	memory_allocator_dealloc(physical_device->renderer->allocator, queue_create_infos);
 
 	log_msg("Logical device created successfully\n");
 	return device;	
@@ -92,7 +95,7 @@ RENDERER_API void vulkan_logical_device_destroy(vulkan_logical_device_t* device)
 
 RENDERER_API void vulkan_logical_device_release_resources(vulkan_logical_device_t* device)
 {
-	heap_free(device);
+	memory_allocator_dealloc(device->renderer->allocator, device);
 }
 
 RENDERER_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index)

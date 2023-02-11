@@ -57,7 +57,7 @@ typedef struct vulkan_mesh_t
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-vulkan_mesh_t* vulkan_mesh_new();
+vulkan_mesh_t* vulkan_mesh_new(memory_allocator_t* allocator);
 vulkan_mesh_t* vulkan_mesh_create(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info);
 void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh);
 void vulkan_mesh_destroy(vulkan_mesh_t* mesh);

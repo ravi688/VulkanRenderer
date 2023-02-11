@@ -2,15 +2,16 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <memory.h>
 #include <renderer/assert.h>
 
 static u32 get_index_stride(VkIndexType index_type);
 
-RENDERER_API vulkan_mesh_t* vulkan_mesh_new()
+RENDERER_API vulkan_mesh_t* vulkan_mesh_new(memory_allocator_t* allocator)
 {
-	vulkan_mesh_t* mesh = heap_new(vulkan_mesh_t);
+	vulkan_mesh_t* mesh = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MESH, vulkan_mesh_t);
 	memzero(mesh, vulkan_mesh_t);
 	return mesh;
 }
@@ -73,7 +74,7 @@ RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulka
 
 RENDERER_API vulkan_mesh_t* vulkan_mesh_create(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info)
 {
-	vulkan_mesh_t* mesh = vulkan_mesh_new();
+	vulkan_mesh_t* mesh = vulkan_mesh_new(renderer->allocator);
 	vulkan_mesh_create_no_alloc(renderer, create_info, mesh);
 	return mesh;
 }

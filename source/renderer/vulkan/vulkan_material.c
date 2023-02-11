@@ -6,11 +6,12 @@
 #include <renderer/internal/vulkan/vulkan_types.h>
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/assert.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_material_t* vulkan_material_new()
+RENDERER_API vulkan_material_t* vulkan_material_new(memory_allocator_t* allocator)
 {
-	vulkan_material_t* material = heap_new(vulkan_material_t);
+	vulkan_material_t* material = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MATERIAL, vulkan_material_t);
 	memzero(material, vulkan_material_t);
 	return material;
 }
@@ -34,8 +35,8 @@ static void setup_material_resources(vulkan_material_t* material)
 	if(count == 0) return;
 
 	vulkan_shader_resource_description_t* bindings = material->shader->material_set_bindings;
-	vulkan_uniform_resource_t* uniform_resources = heap_newv(vulkan_uniform_resource_t, count);
-	memset(uniform_resources, 0, sizeof(vulkan_uniform_resource_t) * count);
+	vulkan_uniform_resource_t* uniform_resources = memory_allocator_alloc_obj_array(material->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_UNIFORM_RESOURCE_ARRAY, vulkan_uniform_resource_t, count);
+	memzerov(uniform_resources, vulkan_uniform_resource_t, count);
 	for(u16 i = 0, j = 0; i < material->shader->material_set_binding_count; i++)
 	{
 		vulkan_shader_resource_description_t* binding = &bindings[i];
@@ -84,7 +85,7 @@ RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, v
 RENDERER_API vulkan_material_t* vulkan_material_create(vulkan_renderer_t* renderer, vulkan_shader_t* shader)
 {
 	// allocate memory and intitalize
-	vulkan_material_t* material = vulkan_material_new();
+	vulkan_material_t* material = vulkan_material_new(renderer->allocator);
 	
 	// create material
 	vulkan_material_create_no_alloc(renderer, shader, material);
@@ -105,7 +106,7 @@ RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 		if(material->uniform_resources[i].index != 0xFFFF)
 			vulkan_buffer_release_resources(&material->uniform_resources[i].buffer);
 	if(material->uniform_resource_count != 0)
-		heap_free(material->uniform_resources);
+		memory_allocator_dealloc(material->renderer->allocator, material->uniform_resources);
 	// TODO
 	// heap_free(material);
 }

@@ -23,7 +23,7 @@ typedef struct mesh3d_t mesh3d_t;
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API mesh_t* mesh_new();
+RENDERER_API mesh_t* mesh_new(memory_allocator_t* allocator);
 RENDERER_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data);
 RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
 RENDERER_API void mesh_destroy(mesh_t* mesh);

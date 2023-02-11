@@ -3,6 +3,7 @@
 #include <renderer/assert.h>
 #include <disk_manager/file_reader.h>
 #include <meshlib/parsers/binary.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/debug.h>
 
@@ -23,7 +24,7 @@ static void bmp_parse_error(parse_error_t error)
 	}
 }
 
-RENDERER_API function_signature(bmp_t, bmp_load, const char* file_path)
+RENDERER_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, const char* file_path)
 {
 	CALLTRACE_BEGIN();
 	BUFFER* file_data = load_binary_from_file(file_path);
@@ -53,7 +54,7 @@ RENDERER_API function_signature(bmp_t, bmp_load, const char* file_path)
 	binary_parser_skip_bytes(offset);
 
 	u8 channel_count = (bpp >> 3); /* (Bits Per Pixels) / Bits per byte*/
-	u8* data = heap_newv(u8, 4 * width * height);
+	u8* data = CAST_TO(u8*, memory_allocator_alloc(allocator, MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, sizeof(u8) * 4 * width * height));
 	u8* dst = data;
 	const u8* src = parser.bytes;
 	u8 pad_channel_count = 4 - channel_count;
@@ -80,13 +81,13 @@ RENDERER_API function_signature(bmp_t, bmp_load, const char* file_path)
 	}
 	assert((void*)dst <= ((void*)data + 4 * width * height));
 	buf_free(file_data);
-	CALLTRACE_RETURN((bmp_t) { .data = data, .channel_count = 4, .width = width, .height = height });
+	CALLTRACE_RETURN((bmp_t) { .allocator = allocator, .data = data, .channel_count = 4, .width = width, .height = height });
 }
 
 
 RENDERER_API function_signature(void, bmp_destroy, bmp_t bmp)
 {
 	CALLTRACE_BEGIN();
-	heap_free(bmp.data);
+	memory_allocator_dealloc(bmp.allocator, bmp.data);
 	CALLTRACE_END();
 }

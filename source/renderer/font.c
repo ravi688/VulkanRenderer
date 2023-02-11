@@ -1,26 +1,28 @@
 
 #include <renderer/font.h>
 #include <renderer/mesh3d.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <disk_manager/file_reader.h>
 #include <ttf2mesh.h>
 #include <renderer/assert.h>
 
 
-RENDERER_API font_t* font_load_and_create(const char* file_name)
+RENDERER_API font_t* font_load_and_create(memory_allocator_t* allocator, const char* file_name)
 {
 	BUFFER* file_data = load_binary_from_file(file_name);
-	font_t* font = font_create(file_data->bytes, file_data->element_count);
+	font_t* font = font_create(allocator, file_data->bytes, file_data->element_count);
 	buf_free(file_data);
 	return font;
 }
 
-RENDERER_API font_t* font_create(void* bytes, u64 length)
+RENDERER_API font_t* font_create(memory_allocator_t* allocator, void* bytes, u64 length)
 {
 	assert(bytes != NULL);
 	assert(length != 0);
-	font_t* font = heap_new(font_t);
+	font_t* font = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_FONT, font_t);
 	memzero(font, font_t);
+	font->allocator = allocator;
 	int result = ttf_load_from_mem(bytes, length, &font->handle, false);
 	if((result != 0) || (font->handle == NULL))
 	{
@@ -37,7 +39,7 @@ RENDERER_API void font_destroy(font_t* font)
 
 RENDERER_API void font_release_resources(font_t* font)
 {
-	heap_free(font);
+	memory_allocator_dealloc(font->allocator, font);
 }
 
 RENDERER_API void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quality,  mesh3d_t* out_mesh)

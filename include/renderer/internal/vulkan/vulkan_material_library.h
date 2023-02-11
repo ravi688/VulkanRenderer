@@ -26,7 +26,7 @@ typedef struct vulkan_material_library_t
 } vulkan_material_library_t;
 
 /* constructors & destructors */
-RENDERER_API vulkan_material_library_t* vulkan_material_library_new();
+RENDERER_API vulkan_material_library_t* vulkan_material_library_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_material_library_t* vulkan_material_library_create(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library);
 RENDERER_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library, vulkan_material_library_t OUT library);
 RENDERER_API void vulkan_material_library_destroy(vulkan_material_library_t* library);

@@ -15,15 +15,16 @@
 #include <common/binary_reader.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/dictionary.h>
 
 #include <string.h> 			// for strlen()
 #include <math.h> 				// for log2(), and ceil()
 
-RENDERER_API vulkan_shader_t* vulkan_shader_new()
+RENDERER_API vulkan_shader_t* vulkan_shader_new(memory_allocator_t* allocator)
 {
-	vulkan_shader_t* shader = heap_new(vulkan_shader_t);
+	vulkan_shader_t* shader = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER, vulkan_shader_t);
 	memzero(shader, vulkan_shader_t);
 	return shader;
 }
@@ -84,7 +85,7 @@ static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(u64 p
 	return info;
 }
 
-static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(u64* per_vertex_attribute_bindings,
+static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(memory_allocator_t* allocator, u64* per_vertex_attribute_bindings,
 												 		u32 per_vertex_attribute_binding_count,
 												 		u64* per_instance_attribute_bindings,
 												 		u32 per_instance_attribute_binding_count)
@@ -93,7 +94,7 @@ static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(u64
 	u32 binding_count = per_vertex_attribute_binding_count + per_instance_attribute_binding_count;
 
 	// allocate memory
-	vulkan_vertex_buffer_layout_description_t* vertex_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, binding_count);
+	vulkan_vertex_buffer_layout_description_t* vertex_infos = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_ARRAY, vulkan_vertex_buffer_layout_description_t, binding_count);
 	memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, binding_count);
 	
 	u32 binding_number = 0;
@@ -116,10 +117,10 @@ static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(u64
 	return vertex_infos;
 }
 
-static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource_description_t* material_set_bindings, u32 material_set_binding_count)
+static vulkan_push_constant_t create_vulkan_push_constant(memory_allocator_t* allocator, vulkan_shader_resource_description_t* material_set_bindings, u32 material_set_binding_count)
 {
 	// holds the indices of the material set binding descriptors which are push constants
-	u32* descriptor_indices = heap_newv(u32, material_set_binding_count);
+	u32* descriptor_indices = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, material_set_binding_count);
 
 	// TODO: add an extra parameter is_zero, if true then each block allocated in the buffer would be first zeroed-out otherwise uninitialized
 	BUFFER ranges = buf_new(VkPushConstantRange);
@@ -182,7 +183,7 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 	}
 
 	// allocate memory with the size of the push_constant_buffer to (max.offset + max.size)
-	void* push_constant_buffer = heap_alloc(max.offset + max.size);
+	void* push_constant_buffer = memory_allocator_alloc(allocator, MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, max.offset + max.size);
 
 	// map each range
 	for(u16 i = 0; i < range_count; i++)
@@ -195,7 +196,7 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 		struct_descriptor_map(&material_set_bindings[descriptor_indices[i]].handle, push_constant_buffer + range.offset);
 	}
 
-	heap_free(descriptor_indices);
+	memory_allocator_dealloc(allocator, descriptor_indices);
 
 	// return the vulkan_push_constant_t object
 	return (vulkan_push_constant_t)
@@ -207,29 +208,29 @@ static vulkan_push_constant_t create_vulkan_push_constant(vulkan_shader_resource
 	};
 }
 
-static void destroy_vulkan_push_constant(vulkan_push_constant_t* push_constant)
+static void destroy_vulkan_push_constant(memory_allocator_t* allocator, vulkan_push_constant_t* push_constant)
 {
 	if((push_constant->ranges == NULL) || (push_constant->buffer == NULL))
 		return;
 	/* NOTE: this hasn't been allocated with heap_*, instead malloc internally by BUFFER */
 	free(push_constant->ranges);
-	heap_free(push_constant->buffer);
+	memory_allocator_dealloc(allocator, push_constant->buffer);
 }
 
-static vulkan_vertex_buffer_layout_description_t* create_deep_copy_of_vulkan_vertex_infos(vulkan_vertex_buffer_layout_description_t* vertex_infos, u32 vertex_info_count)
+static vulkan_vertex_buffer_layout_description_t* create_deep_copy_of_vulkan_vertex_infos(memory_allocator_t* allocator, vulkan_vertex_buffer_layout_description_t* vertex_infos, u32 vertex_info_count)
 {
 	if((vertex_infos == NULL) || (vertex_info_count == 0))
 		return NULL;
-	vulkan_vertex_buffer_layout_description_t* copy_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, vertex_info_count);
+	vulkan_vertex_buffer_layout_description_t* copy_infos = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_ARRAY, vulkan_vertex_buffer_layout_description_t, vertex_info_count);
 	for(u32 i = 0; i < vertex_info_count; i++)
 	{
 		copy_infos[i] = vertex_infos[i];
 
 		u32 attribute_count = vertex_infos[i].attribute_count;
 
-		copy_infos[i].attribute_formats = heap_newv(VkFormat, attribute_count);
-		copy_infos[i].attribute_offsets = heap_newv(u32, attribute_count);
-		copy_infos[i].attribute_locations = heap_newv(u16, attribute_count);
+		copy_infos[i].attribute_formats = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_FORMAT_ARRAY, VkFormat, attribute_count);
+		copy_infos[i].attribute_offsets = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, attribute_count);
+		copy_infos[i].attribute_locations = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U16_ARRAY, u16, attribute_count);
 
 		memcpy(copy_infos[i].attribute_formats, vertex_infos[i].attribute_formats, sizeof(VkFormat) * attribute_count);
 		memcpy(copy_infos[i].attribute_offsets, vertex_infos[i].attribute_offsets, sizeof(VkFormat) * attribute_count);
@@ -238,26 +239,26 @@ static vulkan_vertex_buffer_layout_description_t* create_deep_copy_of_vulkan_ver
 	return copy_infos;
 }
 
-static void destroy_vulkan_vertex_infos(vulkan_vertex_buffer_layout_description_t* vertex_infos, u32 vertex_info_count)
+static void destroy_vulkan_vertex_infos(memory_allocator_t* allocator, vulkan_vertex_buffer_layout_description_t* vertex_infos, u32 vertex_info_count)
 {
 	for(u32 i = 0; i < vertex_info_count; i++)
 	{
-		heap_free(vertex_infos[i].attribute_formats);
-		heap_free(vertex_infos[i].attribute_offsets);
-		heap_free(vertex_infos[i].attribute_locations);
+		memory_allocator_dealloc(allocator, vertex_infos[i].attribute_formats);
+		memory_allocator_dealloc(allocator, vertex_infos[i].attribute_offsets);
+		memory_allocator_dealloc(allocator, vertex_infos[i].attribute_locations);
 	}
-	heap_free(vertex_infos);
+	memory_allocator_dealloc(allocator, vertex_infos);
 }
 
-static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_descriptors(vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
+static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_descriptors(memory_allocator_t* allocator, vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
 {
-	vulkan_shader_resource_description_t* copy_descriptors = heap_newv(vulkan_shader_resource_description_t, descriptor_count);
+	vulkan_shader_resource_description_t* copy_descriptors = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, descriptor_count);
 	for(u32 i = 0; i < descriptor_count; i++)
 	{
 		copy_descriptors[i] = descriptors[i];
 		if(descriptors[i].handle.field_count != 0)
 		{
-			copy_descriptors[i].handle.fields = heap_newv(struct_field_t, descriptors[i].handle.field_count);
+			copy_descriptors[i].handle.fields = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, descriptors[i].handle.field_count);
 			memcpy(copy_descriptors[i].handle.fields, descriptors[i].handle.fields, sizeof(struct_field_t) * descriptors[i].handle.field_count);
 			struct_descriptor_recalculate(&copy_descriptors[i].handle);
 		}
@@ -267,14 +268,14 @@ static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_des
 	return copy_descriptors;
 }
 
-static void destroy_vulkan_shader_resource_descriptions(vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
+static void destroy_vulkan_shader_resource_descriptions(memory_allocator_t* allocator, vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
 {
 	for(u32 i = 0; i < descriptor_count; i++)
 	{
 		if(descriptors[i].handle.fields != NULL)
-			heap_free(descriptors[i].handle.fields);
+			memory_allocator_dealloc(allocator, descriptors[i].handle.fields);
 	}
-	heap_free(descriptors);
+	memory_allocator_dealloc(allocator, descriptors);
 }
 
 typedef struct vulkan_pipeline_common_data_t
@@ -325,7 +326,7 @@ static void write_render_pass_descriptors(vulkan_render_pass_t* previous_pass, v
 		u32 count = pass_description->render_set_binding_count;
 		for(u32 i = 0; i < count; i++)
 			vulkan_descriptor_set_write_texture(&pass->render_set, pass_description->render_set_bindings[i].binding_number,
-				CAST_TO(vulkan_texture_t*, &previous_pass->attachments[pass_description->input_attachments[i]]));
+				CAST_TO(vulkan_texture_t*, &previous_pass->allocated_attachments[pass_description->input_attachments[i] - previous_pass->supplementary_attachment_count]));
 	}
 
 	// write subpass descriptions
@@ -336,7 +337,7 @@ static void write_render_pass_descriptors(vulkan_render_pass_t* previous_pass, v
 		u32 count = subpass->sub_render_set_binding_count;
 		for(u32 j = 0; j < count; j++)
 			vulkan_descriptor_set_write_texture(&pass->sub_render_sets[i], subpass->sub_render_set_bindings[j].binding_number,
-				CAST_TO(vulkan_texture_t*, &pass->attachments[subpass->input_attachments[j] - pass->supplementary_attachment_count]));
+				CAST_TO(vulkan_texture_t*, &pass->allocated_attachments[subpass->input_attachments[j] - pass->supplementary_attachment_count]));
 	}
 }
 
@@ -591,7 +592,7 @@ static VkSubpassDependency* create_and_resolve_subpass_dependencies(vulkan_rende
 
 static vulkan_render_pass_create_info_t* convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_t* next_pass)
 {
-	vulkan_render_pass_create_info_t* create_info = heap_new(vulkan_render_pass_create_info_t);
+	vulkan_render_pass_create_info_t* create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO, vulkan_render_pass_create_info_t);
 	memzero(create_info, vulkan_render_pass_create_info_t);
 
 	// number of frame buffers to create
@@ -600,13 +601,13 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 	// list of attachments to bound for each frame buffer
 	assert(pass->attachment_count > 0);
 	create_info->attachment_description_count = pass->attachment_count;
-	create_info->attachment_descriptions = heap_newv(VkAttachmentDescription, pass->attachment_count);
-	create_info->attachment_usages = heap_newv(vulkan_attachment_next_pass_usage_t, pass->attachment_count);
+	create_info->attachment_descriptions = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, pass->attachment_count);
+	create_info->attachment_usages = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE_ARRAY, vulkan_attachment_next_pass_usage_t, pass->attachment_count);
 
 	if(pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET)
 	{
 		assert(create_info->framebuffer_count == renderer->swapchain->image_count);
-		create_info->supplementary_attachments = heap_newv(VkImageView, renderer->swapchain->image_count);
+		create_info->supplementary_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, renderer->swapchain->image_count);
 		create_info->supplementary_attachment_count = 1;
 		for(u32 i = 0; i < renderer->swapchain->image_count; i++)
 			create_info->supplementary_attachments[i] = renderer->swapchain->vo_image_views[i];
@@ -705,7 +706,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 
 	assert(pass->subpass_description_count > 0);
 	create_info->subpass_count = pass->subpass_description_count;
-	create_info->subpasses = heap_newv(vulkan_subpass_create_info_t, pass->subpass_count);
+	create_info->subpasses = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO_ARRAY, vulkan_subpass_create_info_t, pass->subpass_count);
 	memzerov(create_info->subpasses, vulkan_subpass_create_info_t, pass->subpass_count);
 	for(u32 i = 0; i < pass->subpass_count; i++)
 	{
@@ -716,7 +717,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		create_info->subpasses[i].color_attachment_count = pass->subpass_descriptions[i].color_attachment_count;
 		
 		if(pass->subpass_descriptions[i].color_attachment_count > 0)
-			create_info->subpasses[i].color_attachments = heap_newv(VkAttachmentReference, create_info->subpasses[i].color_attachment_count);
+			create_info->subpasses[i].color_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, create_info->subpasses[i].color_attachment_count);
 		
 		for(u32 j = 0; j < create_info->subpasses[i].color_attachment_count; j++)
 		{
@@ -727,7 +728,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 
 		create_info->subpasses[i].input_attachment_count = pass->subpass_descriptions[i].input_attachment_count;
 		if(pass->subpass_descriptions[i].input_attachment_count > 0)
-			create_info->subpasses[i].input_attachments = heap_newv(VkAttachmentReference, create_info->subpasses[i].input_attachment_count);
+			create_info->subpasses[i].input_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, create_info->subpasses[i].input_attachment_count);
 		
 		for(u32 j = 0; j < create_info->subpasses[i].input_attachment_count; j++)
 		{
@@ -740,7 +741,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 
 		if(pass->subpass_descriptions[i].depth_stencil_attachment != U32_MAX)
 		{
-			VkAttachmentReference* depth_stencil_attachment = heap_new(VkAttachmentReference);
+			VkAttachmentReference* depth_stencil_attachment = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE,  VkAttachmentReference);
 			assert(pass->attachments[pass->subpass_descriptions[i].depth_stencil_attachment] == VULKAN_ATTACHMENT_TYPE_DEPTH);
 			depth_stencil_attachment->attachment = pass->subpass_descriptions[i].depth_stencil_attachment;
 			depth_stencil_attachment->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -761,7 +762,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* descriptions, u32 description_count, vulkan_pipeline_common_data_t* common_data)
 {
 	// allocate memory
-	vulkan_shader_render_pass_t* passes = heap_newv(vulkan_shader_render_pass_t, description_count);
+	vulkan_shader_render_pass_t* passes = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RENDER_PASS_ARRAY, vulkan_shader_render_pass_t, description_count);
 
 	BUFFER set_layouts = buf_create(sizeof(VkDescriptorSetLayout), 1, 0);
 	BUFFER shader_modules = buf_create(sizeof(vulkan_shader_module_t), 1, 0);
@@ -778,16 +779,16 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 		// create a render pass object in the pool, no duplicate render pass would be created
 		vulkan_render_pass_create_info_t* create_info = convert_render_pass_description_to_create_info(renderer, &descriptions[i], (i < (description_count - 1)) ? &descriptions[i + 1] : NULL);
 		vulkan_render_pass_handle_t handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, create_info);
-		heap_free(create_info);
+		memory_allocator_dealloc(renderer->allocator, create_info);
 
 		// assing the handle and subpass count
 		passes[i].handle = handle;
 		u32 subpass_count = passes[i].subpass_count = descriptions[i].subpass_count;
 
 		// allocate memory for pipeline layouts & graphics pipelines
-		vulkan_pipeline_layout_t* pipeline_layouts = heap_newv(vulkan_pipeline_layout_t, subpass_count);
+		vulkan_pipeline_layout_t* pipeline_layouts = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_PIPELINE_LAYOUT_ARRAY, vulkan_pipeline_layout_t, subpass_count);
 		memzerov(pipeline_layouts, vulkan_pipeline_layout_t, subpass_count);
-		vulkan_graphics_pipeline_t* pipelines = heap_newv(vulkan_graphics_pipeline_t, subpass_count);
+		vulkan_graphics_pipeline_t* pipelines = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_ARRAY, vulkan_graphics_pipeline_t, subpass_count);
 		memzerov(pipelines, vulkan_graphics_pipeline_t, subpass_count);
 
 		vulkan_render_pass_t* render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, handle);
@@ -894,15 +895,15 @@ static VkSubpassDependency* merge_subpass_dependencies(vulkan_renderer_t* render
 
 RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, vulkan_shader_create_info_t* create_info)
 {
-	vulkan_shader_t* shader = vulkan_shader_new();
+	vulkan_shader_t* shader = vulkan_shader_new(renderer->allocator);
 	shader->renderer = renderer;
 
 	shader->handle = VULKAN_SHADER_HANDLE_INVALID;
-	shader->push_constant = create_vulkan_push_constant(create_info->material_set_bindings, create_info->material_set_binding_count);
-	shader->vertex_infos = create_deep_copy_of_vulkan_vertex_infos(create_info->vertex_infos, create_info->vertex_info_count);
+	shader->push_constant = create_vulkan_push_constant(renderer->allocator, create_info->material_set_bindings, create_info->material_set_binding_count);
+	shader->vertex_infos = create_deep_copy_of_vulkan_vertex_infos(renderer->allocator, create_info->vertex_infos, create_info->vertex_info_count);
 	shader->vertex_info_count = create_info->vertex_info_count;
 	vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, create_info->material_set_bindings, create_info->material_set_binding_count, &shader->material_set_layout);
-	shader->material_set_bindings = create_deep_copy_of_set_binding_descriptors(create_info->material_set_bindings, create_info->material_set_binding_count);
+	shader->material_set_bindings = create_deep_copy_of_set_binding_descriptors(renderer->allocator, create_info->material_set_bindings, create_info->material_set_binding_count);
 	shader->material_set_binding_count = create_info->material_set_binding_count;
 	vulkan_pipeline_common_data_t common_data = 
 	{
@@ -931,7 +932,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	return shader;
 }
 
-static vulkan_shader_resource_description_t* load_descriptors(binary_reader_t* reader, u32 OUT descriptor_count)
+static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT descriptor_count)
 {
 	// read the number of descriptors
 	u16 count = binary_reader_u16(reader);
@@ -943,7 +944,7 @@ static vulkan_shader_resource_description_t* load_descriptors(binary_reader_t* r
 		return NULL;
 
 	// allocate memory for the descriptors
-	vulkan_shader_resource_description_t* descriptors = heap_newv(vulkan_shader_resource_description_t, count);
+	vulkan_shader_resource_description_t* descriptors = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, count);
 	memzerov(descriptors, vulkan_shader_resource_description_t, count);
 
 	for(u16 i = 0; i < count; i++)
@@ -999,7 +1000,7 @@ static vulkan_shader_resource_description_t* load_descriptors(binary_reader_t* r
 			descriptor->handle.field_count = binary_reader_u16(reader);
 			log_msg("Field Count: %u\n", descriptor->handle.field_count);
 
-			struct_field_t* fields = (descriptor->handle.field_count > 0) ? heap_newv(struct_field_t, descriptor->handle.field_count) : NULL;
+			struct_field_t* fields = (descriptor->handle.field_count > 0) ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, descriptor->handle.field_count) : NULL;
 			
 			for(u16 j = 0; j < descriptor->handle.field_count; j++)
 			{
@@ -1027,10 +1028,10 @@ static vulkan_shader_resource_description_t* load_descriptors(binary_reader_t* r
 	return descriptors;
 }
 
-static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(binary_reader_t* reader, u32 OUT count)
+static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count)
 {
 	u32 descriptor_count;
-	vulkan_shader_resource_description_t* descriptors = load_descriptors(reader, &descriptor_count);
+	vulkan_shader_resource_description_t* descriptors = load_descriptors(allocator, reader, &descriptor_count);
 
 	// set the number of descriptors (vulkan vertex info objects)
 	OUT count = descriptor_count;
@@ -1039,7 +1040,7 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(binary_rea
 		return NULL;
 
 	// allocate memory
-	vulkan_vertex_buffer_layout_description_t* vertex_infos = heap_newv(vulkan_vertex_buffer_layout_description_t, descriptor_count);
+	vulkan_vertex_buffer_layout_description_t* vertex_infos = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_ARRAY, vulkan_vertex_buffer_layout_description_t, descriptor_count);
 	memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, descriptor_count);
 
 	typedef struct attribute_info_t { BUFFER locations, formats, offsets; } attribute_info_t;
@@ -1128,13 +1129,13 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(binary_rea
 	dictionary_free(&bindings);
 
 	// destroy the vulkan resource descriptors because we are done creating vertex infos out of them
-	destroy_vulkan_shader_resource_descriptions(descriptors, descriptor_count);
+	destroy_vulkan_shader_resource_descriptions(allocator, descriptors, descriptor_count);
 
 	// return pointer to the final vulkan vertex info objects
 	return vertex_infos;
 }
 
-static vulkan_spirv_code_t* load_spirv_codes(binary_reader_t* reader, u32 OUT count)
+static vulkan_spirv_code_t* load_spirv_codes(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count)
 {
 	// calculate the number of shader stages (vertex, geometry, fragment, etc) present in the shader binary
 	u32 shader_mask = binary_reader_u8(reader);
@@ -1147,7 +1148,7 @@ static vulkan_spirv_code_t* load_spirv_codes(binary_reader_t* reader, u32 OUT co
 	if(code_count == 0)
 		return NULL;
 
-	vulkan_spirv_code_t* codes = heap_newv(vulkan_spirv_code_t, code_count);
+	vulkan_spirv_code_t* codes = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SPIRV_CODE_ARRAY, vulkan_spirv_code_t, code_count);
 	for(u8 i = 0, count = 0; i < VULKAN_SHADER_STAGE_MAX; i++)
 	{
 		u32 bit = shader_mask & BIT32(i);
@@ -1183,7 +1184,7 @@ static vulkan_spirv_code_t* load_spirv_codes(binary_reader_t* reader, u32 OUT co
 		u32 offset = binary_reader_u32(reader);
 		binary_reader_push(reader);
 		binary_reader_jump(reader, offset);
-		code->spirv = heap_newv(u32, code->length);
+		code->spirv = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, code->length);
 		memcpy(code->spirv, __binary_reader_read(reader, code->length), code->length);
 		binary_reader_pop(reader);
 	}
@@ -1191,7 +1192,7 @@ static vulkan_spirv_code_t* load_spirv_codes(binary_reader_t* reader, u32 OUT co
 	return codes;
 }
 
-static u32 create_add_pipeline_description(binary_reader_t* reader, BUFFER* pipeline_descriptions)
+static u32 create_add_pipeline_description(memory_allocator_t* allocator, binary_reader_t* reader, BUFFER* pipeline_descriptions)
 {
 	buf_push_pseudo(pipeline_descriptions, 1);
 	vulkan_graphics_pipeline_description_t* description = buf_peek_ptr(pipeline_descriptions);
@@ -1202,39 +1203,39 @@ static u32 create_add_pipeline_description(binary_reader_t* reader, BUFFER* pipe
 
 	// read vulkan_graphics_pipeline_description_t
 	const vulkan_graphics_pipeline_settings_t* pipeline = binary_reader_read(reader, vulkan_graphics_pipeline_settings_t);
-	description->settings = heap_new(vulkan_graphics_pipeline_settings_t);
+	description->settings = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_SETTINGS, vulkan_graphics_pipeline_settings_t);
 	memcpy(description->settings, pipeline, sizeof(vulkan_graphics_pipeline_settings_t));
 
-	VkPipelineColorBlendAttachmentState* attachments = heap_newv(VkPipelineColorBlendAttachmentState, description->settings->colorblend.attachmentCount);
+	VkPipelineColorBlendAttachmentState* attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PIPELINE_COLOR_BLEND_ATTACHMENT_STATE_ARRAY, VkPipelineColorBlendAttachmentState, description->settings->colorblend.attachmentCount);
 	u32 attachments_size = sizeof(VkPipelineColorBlendAttachmentState) * description->settings->colorblend.attachmentCount;
 	memcpy(attachments, __binary_reader_read(reader, attachments_size), attachments_size);
 	description->settings->colorblend.pAttachments = attachments;
 
-	VkRect2D* scissors = heap_newv(VkRect2D, description->settings->viewport.scissorCount);
+	VkRect2D* scissors = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_RECT2D_ARRAY, VkRect2D, description->settings->viewport.scissorCount);
 	u32 scissors_size = sizeof(VkRect2D) * description->settings->viewport.scissorCount;
 	memcpy(scissors, __binary_reader_read(reader, scissors_size), scissors_size);
 	description->settings->viewport.pScissors = scissors;
 
-	VkViewport* viewports = heap_newv(VkViewport, description->settings->viewport.viewportCount);
+	VkViewport* viewports = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VIEWPORT_ARRAY,  VkViewport, description->settings->viewport.viewportCount);
 	u32 viewports_size = sizeof(VkViewport) * description->settings->viewport.viewportCount;
 	memcpy(viewports, __binary_reader_read(reader, viewports_size), viewports_size);
 	description->settings->viewport.pViewports = viewports;
 
 	// read the spirv code array
-	description->spirv_codes = load_spirv_codes(reader, &description->spirv_code_count);
+	description->spirv_codes = load_spirv_codes(allocator, reader, &description->spirv_code_count);
 
 	binary_reader_pop(reader);
 	return buf_get_element_count(pipeline_descriptions) - 1;
 }
 
-static vulkan_subpass_description_t* create_subpass_descriptions(binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
+static vulkan_subpass_description_t* create_subpass_descriptions(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
 {
 	u32 description_count = binary_reader_u32(reader);
 	OUT count = description_count;
 	if(description_count == 0)
 		return NULL;
 
-	vulkan_subpass_description_t* descriptions = heap_newv(vulkan_subpass_description_t, description_count);
+	vulkan_subpass_description_t* descriptions = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_DESCRIPTION_ARRAY, vulkan_subpass_description_t, description_count);
 	memzerov(descriptions, vulkan_subpass_description_t, description_count);
 
 	for(u32 i = 0; i < description_count; i++)
@@ -1245,7 +1246,7 @@ static vulkan_subpass_description_t* create_subpass_descriptions(binary_reader_t
 		description->input_attachment_count = binary_reader_u32(reader);
 		if(description->input_attachment_count > 0)
 		{
-			description->input_attachments = heap_newv(u32, description->input_attachment_count);
+			description->input_attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, description->input_attachment_count);
 			for(u32 j = 0; j < description->input_attachment_count; j++)
 				description->input_attachments[j] = binary_reader_u32(reader);
 		}
@@ -1254,7 +1255,7 @@ static vulkan_subpass_description_t* create_subpass_descriptions(binary_reader_t
 		description->color_attachment_count = binary_reader_u32(reader);
 		if(description->color_attachment_count > 0)
 		{
-			description->color_attachments = heap_newv(u32, description->color_attachment_count);
+			description->color_attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, description->color_attachment_count);
 			for(u32 j = 0; j < description->color_attachment_count; j++)
 				description->color_attachments[j] = binary_reader_u32(reader);
 		}
@@ -1263,28 +1264,28 @@ static vulkan_subpass_description_t* create_subpass_descriptions(binary_reader_t
 		description->preserve_attachment_count = binary_reader_u32(reader);
 		if(description->preserve_attachment_count > 0)
 		{
-			description->preserve_attachments = heap_newv(u32, description->preserve_attachment_count);
+			description->preserve_attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, description->preserve_attachment_count);
 			for(u32 j = 0; j < description->preserve_attachment_count; j++)
 				description->preserve_attachments[j] = binary_reader_u32(reader);
 		}	
 
 		description->depth_stencil_attachment = binary_reader_u32(reader);
-		description->pipeline_description_index = create_add_pipeline_description(reader, pipeline_descriptions);
+		description->pipeline_description_index = create_add_pipeline_description(allocator, reader, pipeline_descriptions);
 		
-		description->sub_render_set_bindings = load_descriptors(reader, &description->sub_render_set_binding_count);	
+		description->sub_render_set_bindings = load_descriptors(allocator, reader, &description->sub_render_set_binding_count);	
 	}
 
 	return descriptions;
 }
 
-static vulkan_render_pass_description_t* create_render_pass_descriptions(binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
+static vulkan_render_pass_description_t* create_render_pass_descriptions(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
 {
 	u32 description_count = binary_reader_u32(reader);
 	OUT count = description_count;
 	if(description_count == 0)
 		return NULL;
 
-	vulkan_render_pass_description_t* descriptions = heap_newv(vulkan_render_pass_description_t, description_count);
+	vulkan_render_pass_description_t* descriptions = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_DESCRIPTION_ARRAY, vulkan_render_pass_description_t, description_count);
 	memzerov(descriptions, vulkan_render_pass_description_t, description_count);
 
 	for(u32 i = 0; i < description_count; i++)
@@ -1298,7 +1299,7 @@ static vulkan_render_pass_description_t* create_render_pass_descriptions(binary_
 		description->input_attachment_count = binary_reader_u32(reader);
 		if(description->input_attachment_count > 0)
 		{
-			description->input_attachments = heap_newv(u32, description->input_attachment_count);
+			description->input_attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, description->input_attachment_count);
 			for(u32 j = 0; j < description->input_attachment_count; j++)
 				description->input_attachments[j] = binary_reader_u32(reader);
 		}
@@ -1307,7 +1308,7 @@ static vulkan_render_pass_description_t* create_render_pass_descriptions(binary_
 		description->attachment_count = binary_reader_u32(reader);
 		if(description->attachment_count > 0)
 		{
-			description->attachments = heap_newv(vulkan_attachment_type_t, description->attachment_count);
+			description->attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_TYPE_ARRAY, vulkan_attachment_type_t, description->attachment_count);
 			for(u32 j = 0; j < description->attachment_count; j++)
 				description->attachments[j] = CAST_TO(vulkan_attachment_type_t, binary_reader_u32(reader));
 		}
@@ -1316,16 +1317,16 @@ static vulkan_render_pass_description_t* create_render_pass_descriptions(binary_
 		description->subpass_dependency_count = binary_reader_u32(reader);
 		if(description->subpass_dependency_count > 0)
 		{
-			description->subpass_dependencies = heap_newv(VkSubpassDependency, description->subpass_dependency_count);
+			description->subpass_dependencies = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SUBPASS_DEPENDENCY_ARRAY, VkSubpassDependency, description->subpass_dependency_count);
 			for(u32 j = 0; j < description->subpass_dependency_count; j++)
 				memcpy(&description->subpass_dependencies[j], binary_reader_read(reader, VkSubpassDependency), sizeof(VkSubpassDependency));
 		}
 		
 		// read the render set binding
-		description->render_set_bindings = load_descriptors(reader, &description->render_set_binding_count);
+		description->render_set_bindings = load_descriptors(allocator, reader, &description->render_set_binding_count);
 
 		// read the subpass descriptions array
-		description->subpass_descriptions = create_subpass_descriptions(reader, &description->subpass_count, pipeline_descriptions);
+		description->subpass_descriptions = create_subpass_descriptions(allocator, reader, &description->subpass_count, pipeline_descriptions);
 	}
 
 	return descriptions;
@@ -1360,12 +1361,12 @@ typedef struct header_t
 	u32 sl_version;
 } header_t;
 
-static header_t* read_header(binary_reader_t* reader)
+static header_t* read_header(memory_allocator_t* allocator,  binary_reader_t* reader)
 {
 	if(strncmp(binary_reader_str(reader), "V3D Shader Binary", strlen("V3D Shader Binary")) != 0)
 		LOG_FETAL_ERR("[Shader Loader] Invalid file header, file is broken");
 
-	header_t* header = heap_new(header_t);
+	header_t* header = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_HEADER, header_t);
 	u32 cmd;
 	header->sb_version = U32_MAX;
 	header->sl_version = U32_MAX;
@@ -1404,21 +1405,21 @@ static header_t* read_header(binary_reader_t* reader)
 	return header;
 }
 
-static vulkan_shader_create_info_t* convert_load_info_to_create_info(vulkan_shader_load_info_t* load_info)
+static vulkan_shader_create_info_t* convert_load_info_to_create_info(memory_allocator_t* allocator, vulkan_shader_load_info_t* load_info)
 {
 	binary_reader_t* reader = binary_reader_create(load_info->data, load_info->data_size);
 
-	read_header(reader);
+	read_header(allocator, reader);
 
 	// load resource descriptors for material
 	u32 descriptor_count;
-	vulkan_shader_resource_description_t* descriptors = load_descriptors(reader, &descriptor_count);
+	vulkan_shader_resource_description_t* descriptors = load_descriptors(allocator, reader, &descriptor_count);
 
 	// load the next resource descriptors meant for vertex attributes and create vertex buffer layout descriptions
 	u32 vertex_info_count;
 	vulkan_vertex_buffer_layout_description_t* vertex_infos = load_info->is_vertex_attrib_from_file ? 
-										create_vertex_infos(reader, &vertex_info_count) :
-										decode_vulkan_vertex_infos(load_info->per_vertex_attribute_bindings,
+										create_vertex_infos(allocator, reader, &vertex_info_count) :
+										decode_vulkan_vertex_infos(allocator, load_info->per_vertex_attribute_bindings,
 																   load_info->per_vertex_attribute_binding_count,
 																   load_info->per_instance_attribute_bindings,
 																   load_info->per_instance_attribute_binding_count);
@@ -1430,12 +1431,12 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(vulkan_shad
 
 	// create render pass descriptions
 	u32 render_pass_description_count;
-	vulkan_render_pass_description_t* render_pass_descriptions = create_render_pass_descriptions(reader, &render_pass_description_count, &pipeline_descriptions);
+	vulkan_render_pass_description_t* render_pass_descriptions = create_render_pass_descriptions(allocator, reader, &render_pass_description_count, &pipeline_descriptions);
 
 	buf_fit(&pipeline_descriptions);
 
 	// create vulkan shader
-	vulkan_shader_create_info_t* create_info = heap_new(vulkan_shader_create_info_t);
+	vulkan_shader_create_info_t* create_info = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_CREATE_INFO, vulkan_shader_create_info_t);
 	*create_info = (vulkan_shader_create_info_t)
 	{
 		.material_set_bindings = descriptors,
@@ -1463,7 +1464,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vu
 {
 	vulkan_shader_create_info_t* create_info = NULL;
 	if((load_info->data != NULL) && (load_info->data_size != 0))
-		create_info = convert_load_info_to_create_info(load_info);
+		create_info = convert_load_info_to_create_info(renderer->allocator, load_info);
 	else if(load_info->path != NULL)
 	{
 		BUFFER* buffer = load_binary_from_file(load_info->path);
@@ -1473,7 +1474,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vu
 		_load_info.data = buffer->bytes;
 		_load_info.data_size = buffer->element_count;
 
-		create_info = convert_load_info_to_create_info(&_load_info);
+		create_info = convert_load_info_to_create_info(renderer->allocator, &_load_info);
 		buf_free(buffer);
 	}
 	else 
@@ -1498,9 +1499,9 @@ RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 
 RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 {
-	destroy_vulkan_push_constant(&shader->push_constant);
-	destroy_vulkan_vertex_infos(shader->vertex_infos, shader->vertex_info_count);
-	destroy_vulkan_shader_resource_descriptions(shader->material_set_bindings, shader->material_set_binding_count);
+	destroy_vulkan_push_constant(shader->renderer->allocator, &shader->push_constant);
+	destroy_vulkan_vertex_infos(shader->renderer->allocator, shader->vertex_infos, shader->vertex_info_count);
+	destroy_vulkan_shader_resource_descriptions(shader->renderer->allocator, shader->material_set_bindings, shader->material_set_binding_count);
 	// TODO
 	// heap_free(shader);
 }

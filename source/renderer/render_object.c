@@ -5,9 +5,9 @@
 #include <renderer/alloc.h>
 
 /* constructors and destructors */
-RENDERER_API render_object_t* render_object_new()
+RENDERER_API render_object_t* render_object_new(memory_allocator_t* allocator)
 {
-	return vulkan_render_object_new();
+	return vulkan_render_object_new(allocator);
 }
 
 RENDERER_API render_object_t* render_object_create(renderer_t* renderer, render_object_create_info_t* create_info)

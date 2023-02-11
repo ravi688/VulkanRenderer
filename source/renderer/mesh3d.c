@@ -29,6 +29,7 @@
 #include <renderer/defines.h>
 #include <renderer/assert.h>
 
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
 #define __UVS_ARE_NOT_FOUND__ "mesh3d_t::uvs are not found, make sure to call mesh3d_uvs_new(count) first\n"
@@ -42,12 +43,13 @@
 static function_signature(void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, func_ptr_sig(void*, getter, mesh3d_t*, index_t), void (*visitor)(void*, void*), void* user_data);
 
 
-RENDERER_API function_signature_void(mesh3d_t*, mesh3d_new)
+RENDERER_API function_signature(mesh3d_t*, mesh3d_new, memory_allocator_t* allocator)
 {
 	CALLTRACE_BEGIN();
 	ASSERT(sizeof(buf_ucount_t) == sizeof(u64), "sizeof(buf_ucount_t) != sizeof(u64), this has to be 8 bytes because of VK_INDEX_TYPE_U64\n");
-	mesh3d_t* mesh  = heap_new(mesh3d_t);
+	mesh3d_t* mesh  = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_MESH3D, mesh3d_t);
 	memzero(mesh, mesh3d_t);
+	mesh->allocator = allocator;
 	mat4_move(mesh->transform, mat4_identity());
 	CALLTRACE_RETURN(mesh);
 }
@@ -243,7 +245,7 @@ RENDERER_API function_signature(void, mesh3d_destroy, mesh3d_t* mesh)
 	if(mesh->positions != NULL)
 		buf_free(mesh->triangles);
 
-	heap_free(mesh);
+	memory_allocator_dealloc(mesh->allocator, mesh);
 
 	CALLTRACE_END();
 }
@@ -983,10 +985,10 @@ RENDERER_API function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh)
 	CALLTRACE_RETURN(buf_get_element_size(mesh->triangles) / 3);
 }
 
-RENDERER_API function_signature(mesh3d_t*, mesh3d_plane, float size)
+RENDERER_API function_signature(mesh3d_t*, mesh3d_plane, memory_allocator_t* allocator, float size)
 {
 	CALLTRACE_BEGIN();
-	mesh3d_t* mesh = mesh3d_new();
+	mesh3d_t* mesh = mesh3d_new(allocator);
 	mesh3d_positions_new(mesh, 4);
 	mesh3d_triangles_new(mesh, 2);
 	mesh3d_normals_new(mesh, 4);
@@ -1016,10 +1018,10 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_plane, float size)
 	CALLTRACE_RETURN(mesh);
 }
 
-RENDERER_API function_signature(mesh3d_t*, mesh3d_cube, float size)
+RENDERER_API function_signature(mesh3d_t*, mesh3d_cube, memory_allocator_t* allocator, float size)
 {
 	CALLTRACE_BEGIN();
-	mesh3d_t* mesh = mesh3d_new();
+	mesh3d_t* mesh = mesh3d_new(allocator);
 	mesh3d_positions_new(mesh, 24);
 	mesh3d_triangles_new(mesh, 12);
 	mesh3d_normals_new(mesh, 24);
@@ -1220,11 +1222,11 @@ static void obj_vertex_position(float* position, void* user_data);
 static void obj_vertex_texcoord(float* texcoord, void* user_data);
 static void obj_facet(u32* facet, u32 attribute_count, u32 face_vertex_count, void* user_data);
 
-RENDERER_API function_signature(mesh3d_t*, mesh3d_load, const char* file_path)
+RENDERER_API function_signature(mesh3d_t*, mesh3d_load, memory_allocator_t* allocator, const char* file_path)
 {
 	CALLTRACE_BEGIN();
 	const char* extension = strrchr(file_path, '.');
-	mesh3d_t* mesh = mesh3d_new();
+	mesh3d_t* mesh = mesh3d_new(allocator);
 	BUFFER* buffer = NULL;
 	if(!strcmp(extension, EXTENSION_STL))
 	{

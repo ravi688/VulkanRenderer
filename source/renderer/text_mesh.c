@@ -46,9 +46,9 @@ static sub_buffer_handle_t get_sub_buffer_handle(multi_buffer_t* multi_buffer, d
 static vulkan_instance_buffer_t* get_instance_buffer(renderer_t* renderer, dictionary_t* buffers, u16 key);
 
 // constructors and destructors
-RENDERER_API text_mesh_t* text_mesh_new()
+RENDERER_API text_mesh_t* text_mesh_new(memory_allocator_t* allocator)
 {
-	text_mesh_t* mesh = heap_new(text_mesh_t);
+	text_mesh_t* mesh = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_TEXT_MESH, text_mesh_t);
 	memzero(mesh, text_mesh_t);
 	return mesh;
 }
@@ -56,7 +56,7 @@ RENDERER_API text_mesh_t* text_mesh_new()
 RENDERER_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool)
 {
 	assert(pool != NULL);
-	text_mesh_t* text_mesh = text_mesh_new();
+	text_mesh_t* text_mesh = text_mesh_new(renderer->allocator);
 	text_mesh->renderer = renderer;
 	text_mesh->instance_buffers = dictionary_create(u16, vulkan_instance_buffer_t, 0, dictionary_key_comparer_u16);
 	text_mesh->strings = buf_create(sizeof(text_mesh_string_t), 1, 0);
@@ -87,7 +87,7 @@ RENDERER_API void text_mesh_release_resources(text_mesh_t* text_mesh)
 		dictionary_free(&((text_mesh_string_t*)buf_get_ptr_at(strings, i))->glyph_sub_buffer_handles);
 	buf_free(strings);
 	dictionary_free(instance_buffers);
-	heap_free(text_mesh);
+	memory_allocator_dealloc(text_mesh->renderer->allocator, text_mesh);
 }
 
 // logic functions

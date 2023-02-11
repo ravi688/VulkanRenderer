@@ -30,7 +30,7 @@
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API camera_system_t* camera_system_new();
+RENDERER_API camera_system_t* camera_system_new(memory_allocator_t* allocator);
 RENDERER_API camera_system_t* camera_system_create(renderer_t* renderer);
 RENDERER_API void camera_system_destroy(camera_system_t* system);
 RENDERER_API void camera_system_release_resources(camera_system_t* system);

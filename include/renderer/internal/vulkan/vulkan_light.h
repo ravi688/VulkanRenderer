@@ -76,7 +76,7 @@ typedef struct vulkan_spot_light_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_light_t* vulkan_light_new(vulkan_light_type_t type);
+RENDERER_API vulkan_light_t* vulkan_light_new(memory_allocator_t* allocator, vulkan_light_type_t type);
 RENDERER_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vulkan_light_type_t type);
 RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_light_type_t type, vulkan_light_t OUT light);
 RENDERER_API void vulkan_light_destroy(vulkan_light_t* light);

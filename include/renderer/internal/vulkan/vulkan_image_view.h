@@ -51,7 +51,7 @@ typedef struct vulkan_image_view_t
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API vulkan_image_view_t* vulkan_image_view_new();
+RENDERER_API vulkan_image_view_t* vulkan_image_view_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info);
 RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info, vulkan_image_view_t OUT view);
 RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view);

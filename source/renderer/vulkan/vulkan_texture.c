@@ -5,19 +5,20 @@
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 
-RENDERER_API vulkan_texture_t* vulkan_texture_new()
+RENDERER_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator)
 {
-	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
+	vulkan_texture_t* texture = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_TEXTURE, vulkan_texture_t);
 	memzero(texture, vulkan_texture_t);
 	return texture;
 }
 
 RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info)
 {
-	vulkan_texture_t* texture = heap_new(vulkan_texture_t);
+	vulkan_texture_t* texture = vulkan_texture_new(renderer->allocator);
 	vulkan_texture_create_no_alloc(renderer, create_info, texture);
 	return texture;
 }
@@ -286,7 +287,7 @@ static vulkan_image_view_t* create_write_image_views(vulkan_texture_t* texture, 
 	}
 	assert(texture->image.layer_count >= 6);
 	OUT view_count = 6;
-	vulkan_image_view_t* views = heap_newv(vulkan_image_view_t, 6);
+	vulkan_image_view_t* views = memory_allocator_alloc_obj_array(texture->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE_VIEW_ARRAY, vulkan_image_view_t, 6);
 	for(u32 i = 0; i < 6; i++)
 	{
 		vulkan_image_view_create_info_t create_info = 
@@ -382,6 +383,9 @@ RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
 	for(u32 i = 0; i < texture->image_view_count; i++)
 		vulkan_image_view_release_resources(&texture->image_views[i]);
 	vulkan_image_release_resources(&texture->image);
+	
+	if(texture->image_views != NULL)
+		memory_allocator_dealloc(texture->renderer->allocator, texture->image_views);
 	// TODO
 	// heap_free(texture);
 }

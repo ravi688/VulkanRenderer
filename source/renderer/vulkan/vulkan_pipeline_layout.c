@@ -2,12 +2,13 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 
-RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new()
+RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new(memory_allocator_t* allocator)
 {
-	vulkan_pipeline_layout_t* layout = heap_new(vulkan_pipeline_layout_t);
+	vulkan_pipeline_layout_t* layout = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_PIPELINE_LAYOUT, vulkan_pipeline_layout_t);
 	memzero(layout, vulkan_pipeline_layout_t);
 	return layout;
 }
@@ -30,7 +31,7 @@ RENDERER_API void vulkan_pipeline_layout_create_no_alloc(vulkan_renderer_t* rend
 
 RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info)
 {
-	vulkan_pipeline_layout_t* layout = vulkan_pipeline_layout_new();
+	vulkan_pipeline_layout_t* layout = vulkan_pipeline_layout_new(renderer->allocator);
 	vulkan_pipeline_layout_create_no_alloc(renderer, create_info, layout);
 	return layout;
 }

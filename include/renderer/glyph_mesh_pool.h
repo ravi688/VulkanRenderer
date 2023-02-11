@@ -9,7 +9,7 @@ typedef struct glyph_mesh_pool_t glyph_mesh_pool_t;
 BEGIN_CPP_COMPATIBLE
 
 // contructors and destructors
-RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new();
+RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new(memory_allocator_t* allocator);
 RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font);
 RENDERER_API void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool);
 RENDERER_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool);

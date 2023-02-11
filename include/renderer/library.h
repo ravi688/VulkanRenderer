@@ -14,6 +14,7 @@ typedef struct library_slot_t
 
 typedef struct library_t
 {
+	memory_allocator_t* allocator;
 	BUFFER slots;
 	BUFFER relocation_table;
 } library_t;
@@ -21,9 +22,9 @@ typedef struct library_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API library_t* library_new();
-RENDERER_API library_t* library_create();
-RENDERER_API void library_create_no_alloc(library_t OUT lib);
+RENDERER_API library_t* library_new(memory_allocator_t* allocator);
+RENDERER_API library_t* library_create(memory_allocator_t* allocator);
+RENDERER_API void library_create_no_alloc(memory_allocator_t* allocator, library_t OUT lib);
 RENDERER_API void library_destroy(library_t* lib);
 RENDERER_API void library_release_resources(library_t* lib);
 

@@ -63,7 +63,7 @@ typedef struct vulkan_attachment_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_attachment_t* vulkan_attachment_new();
+RENDERER_API vulkan_attachment_t* vulkan_attachment_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_attachment_t* vulkan_attachment_create(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info);
 RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment);
 RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment);

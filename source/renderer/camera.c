@@ -8,9 +8,9 @@
 #include <renderer/assert.h>
 
 /* constructors & destructors */
-RENDERER_API camera_t* camera_new()
+RENDERER_API camera_t* camera_new(memory_allocator_t* allocator)
 {
-	return vulkan_camera_new();
+	return vulkan_camera_new(allocator);
 }
 
 RENDERER_API camera_t* camera_create(renderer_t* renderer, camera_projection_type_t projection_type)

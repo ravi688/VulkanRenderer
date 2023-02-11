@@ -2,11 +2,12 @@
 #include <renderer/internal/vulkan/vulkan_image.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/assert.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_image_t* vulkan_image_new()
+RENDERER_API vulkan_image_t* vulkan_image_new(memory_allocator_t* allocator)
 {
-	vulkan_image_t* image = heap_new(vulkan_image_t);
+	vulkan_image_t* image = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE, vulkan_image_t);
 	memzero(image, vulkan_image_t);
 	return image;
 }
@@ -62,7 +63,7 @@ RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulk
 
 RENDERER_API vulkan_image_t* vulkan_image_create(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info)
 {
-	vulkan_image_t* image = vulkan_image_new();
+	vulkan_image_t* image = vulkan_image_new(renderer->allocator);
 	vulkan_image_create_no_alloc(renderer, create_info, image);
 	return image;
 }

@@ -73,7 +73,7 @@ typedef struct render_scene_create_info_t
 } render_scene_create_info_t;
 
 /* constructors & destructors */
-RENDERER_API render_scene_t* render_scene_new();
+RENDERER_API render_scene_t* render_scene_new(memory_allocator_t* allocator);
 RENDERER_API render_scene_t* render_scene_create(renderer_t* renderer, render_scene_create_info_t* create_info);
 RENDERER_API void render_scene_create_no_alloc(renderer_t* renderer, render_scene_create_info_t* create_info, render_scene_t OUT scene);
 RENDERER_API render_scene_t* render_scene_create_from_preset(renderer_t* renderer, render_scene_preset_type_t type);

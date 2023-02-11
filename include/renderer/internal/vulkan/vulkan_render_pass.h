@@ -92,10 +92,14 @@ typedef struct vulkan_render_pass_t
 	/* vulkan object handle */
 	VkRenderPass vo_handle;
 
-	/* attachments for one frame buffer */
-	vulkan_attachment_t* attachments;
+	/* allocted  attachments for one frame buffer */
+	vulkan_attachment_t* allocated_attachments;
+	/* number of attachments allocated */
+	u32 allocated_attachment_count;
+
 	union
 	{
+		/* attachment_count or clear_value_count = suplementary_attachment_count + allocated_attachment_count */
 		u32 attachment_count;
 		u32 clear_value_count;
 	};
@@ -148,7 +152,7 @@ BEGIN_CPP_COMPATIBLE
 	returns:
 		pointer to newly created vulkan_render_pass_t object on heap
  */
-RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new();
+RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new(memory_allocator_t* allocator);
 
 /*
 	description:

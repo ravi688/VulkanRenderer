@@ -249,7 +249,7 @@ static void memory_allocation_debug_node_to_string(const memory_allocation_debug
 
 RENDERER_API void memory_allocation_tree_serialize_to_file(memory_allocation_tree_t* tree, const char* const file_path)
 {
-	string_builder_t* builder = string_builder_create(512);
+	string_builder_t* builder = string_builder_create(NULL, 512);
 
 	u32 size = memory_allocation_tree_calculate_size(tree->root);
 

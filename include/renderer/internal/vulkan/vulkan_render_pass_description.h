@@ -75,10 +75,10 @@ typedef struct vulkan_render_pass_description_t
 } vulkan_render_pass_description_t;
 
 
-RENDERER_API void vulkan_render_pass_description_begin(vulkan_render_pass_description_t* description, vulkan_render_pass_type_t type);
-RENDERER_API void vulkan_render_pass_description_add_input(vulkan_render_pass_description_t* description, glsl_type_t type, u32 index, u32 binding);
+RENDERER_API void vulkan_render_pass_description_begin(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* description, vulkan_render_pass_type_t type);
+RENDERER_API void vulkan_render_pass_description_add_input(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* description, glsl_type_t type, u32 index, u32 binding);
 RENDERER_API void vulkan_render_pass_description_add_attachment(vulkan_render_pass_description_t* description, vulkan_attachment_type_t type);
-RENDERER_API void vulkan_render_pass_description_begin_subpass(vulkan_render_pass_description_t* description, u32 pipeline_index);
+RENDERER_API void vulkan_render_pass_description_begin_subpass(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* description, u32 pipeline_index);
 
 typedef enum vulkan_attachment_reference_type_t
 {
@@ -89,7 +89,7 @@ typedef enum vulkan_attachment_reference_type_t
 	VUKLAN_ATTACHMENT_REFERENCE_TYPE_PRESERVE
 } vulkan_attachment_reference_type_t;
 
-RENDERER_API void vulkan_render_pass_description_add_attachment_reference(vulkan_render_pass_description_t* description, vulkan_attachment_reference_type_t type, u32 reference, u32 binding);
-RENDERER_API void vulkan_render_pass_description_end_subpass(vulkan_render_pass_description_t* description);
+RENDERER_API void vulkan_render_pass_description_add_attachment_reference(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* description, vulkan_attachment_reference_type_t type, u32 reference, u32 binding);
+RENDERER_API void vulkan_render_pass_description_end_subpass(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* description);
 RENDERER_API void vulkan_render_pass_description_add_subpass_dependency(vulkan_render_pass_description_t* description, VkSubpassDependency* dependency);
-RENDERER_API void vulkan_render_pass_description_end(vulkan_render_pass_description_t* description);
+RENDERER_API void vulkan_render_pass_description_end(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* description);

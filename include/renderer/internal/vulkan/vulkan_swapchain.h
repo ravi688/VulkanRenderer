@@ -29,7 +29,7 @@ typedef struct vulkan_swapchain_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new();
+RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_swapchain_t* vulkan_swapchain_create(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info);
 RENDERER_API void vulkan_swapchain_create_no_alloc(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info, vulkan_swapchain_t OUT swapchain);
 RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain);

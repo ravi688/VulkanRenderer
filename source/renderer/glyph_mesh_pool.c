@@ -1,6 +1,7 @@
-
 #include <renderer/glyph_mesh_pool.h>
 #include <renderer/mesh3d.h>	// mesh3d_t
+#include <renderer/renderer.h>
+#include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/dictionary.h> // dictionary_t
 #include <renderer/assert.h> 	// assert
@@ -20,9 +21,9 @@ typedef	struct glyph_mesh_pool_t
 } glyph_mesh_pool_t;
 
 // constructors and destructors
-RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new()
+RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new(memory_allocator_t* allocator)
 {
-	glyph_mesh_pool_t* pool = heap_new(glyph_mesh_pool_t);
+	glyph_mesh_pool_t* pool = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_GLYPH_MESH_POOL, glyph_mesh_pool_t);
 	memzero(pool, glyph_mesh_pool_t);
 	return pool;
 }
@@ -30,7 +31,7 @@ RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new()
 RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font)
 {
 	assert(font != NULL);
-	glyph_mesh_pool_t* pool = glyph_mesh_pool_new();
+	glyph_mesh_pool_t* pool = glyph_mesh_pool_new(renderer->allocator);
 	pool->glyph_meshes = dictionary_create(u16, glyph_mesh_t, 0, dictionary_key_comparer_u16);
 	pool->renderer = renderer;
 	pool->font = font;
@@ -55,7 +56,7 @@ RENDERER_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool)
 		mesh_release_resources(ptr->mesh);
 	}
 	dictionary_clear(&pool->glyph_meshes);
-	heap_free(pool);
+	memory_allocator_dealloc(pool->renderer->allocator, pool);
 }
 
 // getters
@@ -72,7 +73,7 @@ RENDERER_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph
 	mesh_t* mesh;
 	if(!dictionary_contains(&pool->glyph_meshes, &glyph))
 	{
-		mesh3d_t* mesh3d = mesh3d_new();
+		mesh3d_t* mesh3d = mesh3d_new(pool->renderer->allocator);
 		font_get_glyph_mesh(pool->font, glyph, FONT_GLYPH_MESH_QUALITY_LOW, mesh3d);
 		mesh = mesh_create(pool->renderer, mesh3d);
 		glyph_mesh_t glyph_mesh = { .mesh = mesh, .mesh3d = mesh3d };

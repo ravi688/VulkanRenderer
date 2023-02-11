@@ -54,7 +54,7 @@ typedef enum camera_render_target_type_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API camera_t* camera_new();
+RENDERER_API camera_t* camera_new(memory_allocator_t* allocator);
 RENDERER_API camera_t* camera_create(renderer_t* renderer, camera_projection_type_t projection_type);
 RENDERER_API void camera_create_no_alloc(renderer_t* renderer, camera_projection_type_t projection_type, camera_t OUT camera);
 RENDERER_API void camera_destroy(camera_t* camera);
