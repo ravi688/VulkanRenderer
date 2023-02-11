@@ -48,7 +48,7 @@
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API render_pass_pool_t* render_pass_pool_new();
+RENDERER_API render_pass_pool_t* render_pass_pool_new(memory_allocator_t* allocator);
 RENDERER_API render_pass_pool_t* render_pass_pool_create(renderer_t* renderer);
 RENDERER_API void render_pass_pool_destroy(render_pass_pool_t* pool);
 RENDERER_API void render_pass_pool_release_resources(render_pass_pool_t* pool);

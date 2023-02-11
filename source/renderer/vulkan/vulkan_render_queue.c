@@ -12,17 +12,18 @@
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
-RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new()
+RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator)
 {
-	vulkan_render_queue_t* queue = heap_new(vulkan_render_queue_t);
-	memset(queue, 0, sizeof(vulkan_render_queue_t));
+	vulkan_render_queue_t* queue = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_QUEUE, vulkan_render_queue_t);
+	memzero(queue, vulkan_render_queue_t);
 	return queue;
 }
 
 RENDERER_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type)
 {
-	vulkan_render_queue_t* queue = vulkan_render_queue_new();
+	vulkan_render_queue_t* queue = vulkan_render_queue_new(renderer->allocator);
 	vulkan_render_queue_create_no_alloc(renderer, type, queue);
 	return queue;
 }
@@ -37,9 +38,9 @@ RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* rendere
 
 	queue->handle = VULKAN_RENDER_QUEUE_HANDLE_INVALID;
 	queue->renderer = renderer;
-	assert(sizeof(vulkan_render_pass_handle_t) == sizeof(buf_ucount_t));
+	_debug_assert__(sizeof(vulkan_render_pass_handle_t) == sizeof(buf_ucount_t));
 	queue->render_pass_handles = dictionary_create(vulkan_render_pass_handle_t, subpass_shader_list_t*, 1, dictionary_key_comparer_buf_ucount_t);
-	assert(sizeof(vulkan_shader_handle_t) == sizeof(buf_ucount_t));
+	_debug_assert__(sizeof(vulkan_shader_handle_t) == sizeof(buf_ucount_t));
 	queue->shader_handles = dictionary_create(vulkan_shader_handle_t, material_and_render_object_list_map_t, 1, dictionary_key_comparer_buf_ucount_t);
 	queue->is_ready = false;
 }
@@ -92,7 +93,7 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 		u32 subpass_count = vulkan_render_pass_pool_getH(queue->renderer->render_pass_pool, DEREF_TO(vulkan_render_pass_handle_t, dictionary_get_key_ptr_at(&queue->render_pass_handles, i)))->subpass_count;
 		for(u32 j = 0; j < subpass_count; j++)
 			buf_free(&list[i]);
-		heap_free(list);
+		memory_allocator_dealloc(queue->renderer->allocator, list);
 	}
 	dictionary_free(&queue->render_pass_handles);
 
@@ -106,7 +107,7 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 		dictionary_free(map);
 	}
 	dictionary_free(&queue->shader_handles);
-	heap_free(queue);
+	memory_allocator_dealloc(queue->renderer->allocator, queue);
 }
 
 RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue)
@@ -163,7 +164,7 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 		u32 subpass_count = passes[i].subpass_count;
 		if(!dictionary_contains(&queue->render_pass_handles, &passes[i].handle))
 		{
-			lists = heap_newv(subpass_shader_list_t, subpass_count);
+			lists = memory_allocator_alloc_obj_array(queue->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_SUBPASS_SHADER_LIST_ARRAY, subpass_shader_list_t, subpass_count);
 			for(u32 j = 0; j < subpass_count; j++)
 				lists[j] = buf_create(sizeof(vulkan_shader_handle_t), 1, 0);
 			dictionary_add(&queue->render_pass_handles, &passes[i].handle, &lists);
@@ -187,7 +188,7 @@ RENDERER_API void vulkan_render_queue_remove_shaderH();
 
 RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_handle_t handle)
 {
-	assert(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
+	_debug_assert__(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
 	vulkan_render_object_t* object = handle;
 	material_and_render_object_list_map_t* map = dictionary_get_value_ptr(&queue->shader_handles, &object->material->shader->handle);
 	render_object_list_t* list = dictionary_get_value_ptr(map, &object->material->handle);
@@ -207,7 +208,7 @@ RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
 
 RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera)
 {
-	// ASSERT_WRN(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it\n");
+	// debug_assert_wrn__(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it\n");
 	// get the pointers to render pass pool, shader library and material library
 	vulkan_render_pass_pool_t* pass_pool = queue->renderer->render_pass_pool;
 	vulkan_shader_library_t* shader_library = queue->renderer->shader_library;

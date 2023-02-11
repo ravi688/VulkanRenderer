@@ -4,7 +4,7 @@
 #include <renderer/mesh3d.h>									// mesh3d_t
 #include <renderer/internal/vulkan/vulkan_mesh.h> 				// vulkan_mesh_create_and_vertex_buffer
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h> 	// vulkan_instance_buffer_t
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <renderer/dictionary.h>											// dictionary_t
 #include <renderer/multi_buffer.h>										// mult_buffer_t
@@ -46,17 +46,17 @@ static sub_buffer_handle_t get_sub_buffer_handle(multi_buffer_t* multi_buffer, d
 static vulkan_instance_buffer_t* get_instance_buffer(renderer_t* renderer, dictionary_t* buffers, u16 key);
 
 // constructors and destructors
-RENDERER_API text_mesh_t* text_mesh_new()
+RENDERER_API text_mesh_t* text_mesh_new(memory_allocator_t* allocator)
 {
-	text_mesh_t* mesh = heap_new(text_mesh_t);
-	memset(mesh, 0, sizeof(text_mesh_t));
+	text_mesh_t* mesh = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_TEXT_MESH, text_mesh_t);
+	memzero(mesh, text_mesh_t);
 	return mesh;
 }
 
 RENDERER_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool)
 {
-	assert(pool != NULL);
-	text_mesh_t* text_mesh = text_mesh_new();
+	_debug_assert__(pool != NULL);
+	text_mesh_t* text_mesh = text_mesh_new(renderer->allocator);
 	text_mesh->renderer = renderer;
 	text_mesh->instance_buffers = dictionary_create(u16, vulkan_instance_buffer_t, 0, dictionary_key_comparer_u16);
 	text_mesh->strings = buf_create(sizeof(text_mesh_string_t), 1, 0);
@@ -68,7 +68,6 @@ RENDERER_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool
 
 RENDERER_API void text_mesh_destroy(text_mesh_t* text_mesh)
 {
-	check_pre_condition(text_mesh);
 	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
 	BUFFER* strings = &text_mesh->strings;
 	for(buf_ucount_t i = 0; i < dictionary_get_count(instance_buffers); i++)
@@ -80,7 +79,6 @@ RENDERER_API void text_mesh_destroy(text_mesh_t* text_mesh)
 
 RENDERER_API void text_mesh_release_resources(text_mesh_t* text_mesh)
 {
-	check_pre_condition(text_mesh);
 	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
 	BUFFER* strings = &text_mesh->strings;
 	for(buf_ucount_t i = 0; i < dictionary_get_count(instance_buffers); i++)
@@ -89,13 +87,12 @@ RENDERER_API void text_mesh_release_resources(text_mesh_t* text_mesh)
 		dictionary_free(&((text_mesh_string_t*)buf_get_ptr_at(strings, i))->glyph_sub_buffer_handles);
 	buf_free(strings);
 	dictionary_free(instance_buffers);
-	heap_free(text_mesh);
+	memory_allocator_dealloc(text_mesh->renderer->allocator, text_mesh);
 }
 
 // logic functions
 RENDERER_API void text_mesh_draw(text_mesh_t* text_mesh)
 {
-	check_pre_condition(text_mesh);
 	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
 	buf_ucount_t count = dictionary_get_count(instance_buffers);
 	for(buf_ucount_t i = 0; i < count; i++)
@@ -114,7 +111,6 @@ RENDERER_API void text_mesh_draw(text_mesh_t* text_mesh)
 // constructors and destructors
 RENDERER_API text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh)
 {
-	check_pre_condition(text_mesh);
 	BUFFER* strings = &text_mesh->strings;
 	text_mesh_string_t* string; 
 	if(text_mesh->free_list != BUF_INVALID_INDEX)
@@ -152,7 +148,6 @@ RENDERER_API text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text
 
 RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
-	check_pre_condition(text_mesh);
 	BUFFER* strings = &text_mesh->strings;
 	buf_ucount_t index = text_mesh->inuse_list;
 	text_mesh_string_t* prev_string = NULL;
@@ -161,7 +156,7 @@ RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_st
 		prev_string = buf_get_ptr_at(strings, index);
 		index = prev_string->next_index;
 	}
-	assert(index != BUF_INVALID_INDEX);			// failed to find a string with index "handle"
+	_debug_assert__(index != BUF_INVALID_INDEX);			// failed to find a string with index "handle"
 
 	text_mesh_string_t* string = buf_get_ptr_at(strings, index);
 	
@@ -186,7 +181,6 @@ RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_st
 // setters
 RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* str)
 {
-	check_pre_condition(text_mesh);
 	// TODO: ensure handle isn't in the free-list, meaning it has been already destroyed, this check should be in debug mode only
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	u32 len = strlen(str);
@@ -229,69 +223,50 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
 
 RENDERER_API void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t scale)
 {
-	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	string->scale = scale;
 }
 
 RENDERER_API void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t position)
 {
-	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	string->position = position;
 }
 
 RENDERER_API void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t rotation)
 {
-	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	string->rotation = rotation;
 }
 
 RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t transform)
 {
-	check_pre_condition(text_mesh);
 }
 
 // getters
 RENDERER_API const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
-	check_pre_condition(text_mesh);
 	return NULL;
 }
 RENDERER_API vec3_t text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
-	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	return string->scale;
 }
 RENDERER_API vec3_t text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
-	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	return string->position;
 }
 RENDERER_API vec3_t text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
-	check_pre_condition(text_mesh);
 	text_mesh_string_t* string = buf_get_ptr_at(&text_mesh->strings, handle);
 	return string->rotation;
 }
 RENDERER_API mat4_t text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
-	check_pre_condition(text_mesh);
 	return mat4_identity();
 }
-
-
-#ifdef GLOBAL_DEBUG
-static void check_pre_condition(text_mesh_t* text_mesh)
-{
-	assert(text_mesh != NULL);
-}
-#endif /*GLOBAL_DEBUG*/
-
-
 
 static sub_buffer_handle_t get_sub_buffer_handle(multi_buffer_t* multi_buffer, dictionary_t* handles, u16 key)
 {

@@ -1,9 +1,9 @@
 #include <renderer/material.h>
 #include <renderer/renderer.h>
 
-RENDERER_API material_t* material_new()
+RENDERER_API material_t* material_new(memory_allocator_t* allocator)
 {
-	return vulkan_material_new();
+	return vulkan_material_new(allocator);
 }
 
 RENDERER_API material_t* material_create(renderer_t* renderer, shader_t* shader)

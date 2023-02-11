@@ -6,11 +6,12 @@
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
-RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new()
+RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new(memory_allocator_t* allocator)
 {
-	vulkan_descriptor_set_t* set = heap_new(vulkan_descriptor_set_t);
-	memset(set, 0, sizeof(vulkan_descriptor_set_t));
+	vulkan_descriptor_set_t* set = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_DESCRIPTOR_SET, vulkan_descriptor_set_t);
+	memzero(set, vulkan_descriptor_set_t);
 	set->vo_handle = VK_NULL_HANDLE;
 	return set;
 }
@@ -37,7 +38,7 @@ RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* rende
 
 RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(vulkan_renderer_t* renderer, vulkan_descriptor_set_create_info_t* create_info)
 {
-	vulkan_descriptor_set_t* set = vulkan_descriptor_set_new();
+	vulkan_descriptor_set_t* set = vulkan_descriptor_set_new(renderer->allocator);
 	vulkan_descriptor_set_create_no_alloc(renderer, create_info, set);
 	return set;
 }
@@ -79,10 +80,10 @@ static VkImageLayout get_layout(VkFormat format)
 
 RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_texture_t* texture)
 {
-	assert(texture->image_view.vo_handle != VK_NULL_HANDLE);
+	_debug_assert__(texture->image_view.vo_handle != VK_NULL_HANDLE);
 	
 	// NOTE: texture->vo_image_sampler might be VK_NULL_HANDLE in case of subpassInput
-	// assert(texture->vo_image_sampler != VK_NULL_HANDLE);
+	// _debug_assert__(texture->vo_image_sampler != VK_NULL_HANDLE);
 	VkDescriptorImageInfo image_info =
 	{
 		.imageLayout = get_layout(texture->image.vo_format),

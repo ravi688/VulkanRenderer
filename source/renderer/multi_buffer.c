@@ -28,7 +28,7 @@ inline static buf_ucount_t get_master_index(sub_buffer_t* sub_buffer, buf_ucount
 // constructors and destructors
 RENDERER_API void multi_buffer_create(u32 element_size, u32 capacity, multi_buffer_t* out_multi_buffer)
 {
-	assert(out_multi_buffer != NULL);
+	_debug_assert__(out_multi_buffer != NULL);
 	out_multi_buffer->buffer = buf_create(element_size, capacity, 0);
 	out_multi_buffer->sub_buffers = buf_create(sizeof(sub_buffer_t), 1, 0);
 }
@@ -148,7 +148,7 @@ RENDERER_API buf_ucount_t multi_buffer_sub_buffer_get_capacity(multi_buffer_t* m
 
 RENDERER_API void multi_buffer_sub_buffer_get_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* out_value)
 {
-	assert(out_value != NULL);
+	_debug_assert__(out_value != NULL);
 	check_pre_condition(multi_buffer);
 	buf_get_at(&multi_buffer->buffer, get_master_index(get_sub_buffer(multi_buffer, handle), index), out_value);
 }
@@ -162,7 +162,7 @@ RENDERER_API void* multi_buffer_sub_buffer_get_ptr_at(multi_buffer_t* multi_buff
 // setters
 RENDERER_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value)
 {
-	assert(in_value != NULL);
+	_debug_assert__(in_value != NULL);
 	check_pre_condition(multi_buffer);
 	buf_set_at(&multi_buffer->buffer, get_master_index(get_sub_buffer(multi_buffer, handle), index), in_value);
 }
@@ -170,12 +170,12 @@ RENDERER_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* multi_buffer, s
 #ifdef GLOBAL_DEBUG
 static void check_pre_condition(multi_buffer_t* multi_buffer)
 {
-	assert(multi_buffer != NULL);
+	_debug_assert__(multi_buffer != NULL);
 }
 
 static void check_handle(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
-	assert(handle < buf_get_element_count(&multi_buffer->sub_buffers));
-	assert(handle != BUF_INVALID_INDEX);
+	_debug_assert__(handle < buf_get_element_count(&multi_buffer->sub_buffers));
+	_debug_assert__(handle != BUF_INVALID_INDEX);
 }
 #endif /*GLOBAL_DEBUG*/

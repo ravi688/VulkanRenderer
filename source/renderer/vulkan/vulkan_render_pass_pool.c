@@ -4,16 +4,18 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_attachment.h>
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 #include <string.h>
 
 /* constructors & destructors */
-RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new()
+RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new(memory_allocator_t* allocator)
 {
-	vulkan_render_pass_pool_t* pool = heap_new(vulkan_render_pass_pool_t);
-	memset(pool, 0, sizeof(vulkan_render_pass_pool_t));
+	vulkan_render_pass_pool_t* pool = memory_allocator_alloc_obj(allocator, MEMORy_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_POOL, vulkan_render_pass_pool_t);
+	memzero(pool, vulkan_render_pass_pool_t);
 	return pool;
 }
 RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_pool_t OUT pool)
@@ -28,7 +30,7 @@ RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* ren
 
 RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_create(vulkan_renderer_t* renderer)
 {
-	vulkan_render_pass_pool_t* pool = vulkan_render_pass_pool_new();
+	vulkan_render_pass_pool_t* pool = vulkan_render_pass_pool_new(renderer->allocator);
 	vulkan_render_pass_pool_create_no_alloc(renderer, pool);
 	return pool;
 }
@@ -186,52 +188,52 @@ static bool render_pass_create_info_compare(void* create_info, void* ref)
 	return b6;
 }
 
-static void vulkan_resource_descriptor_deep_copy(vulkan_shader_resource_description_t* dst, vulkan_shader_resource_description_t* src)
+static void vulkan_resource_descriptor_deep_copy(memory_allocator_t* allocator, vulkan_shader_resource_description_t* dst, vulkan_shader_resource_description_t* src)
 {
 	memcpy(dst, src, sizeof(vulkan_shader_resource_description_t));
 	if(src->handle.field_count > 0)
 	{
-		dst->handle.fields = heap_newv(struct_field_t, src->handle.field_count);
+		dst->handle.fields = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, src->handle.field_count);
 		memcpy(dst->handle.fields, src->handle.fields, sizeof(struct_field_t) * src->handle.field_count);
 	}
 }
 
-static void vulkan_subpass_create_info_deep_copy(vulkan_subpass_create_info_t* dst, vulkan_subpass_create_info_t* src)
+static void vulkan_subpass_create_info_deep_copy(memory_allocator_t* allocator, vulkan_subpass_create_info_t* dst, vulkan_subpass_create_info_t* src)
 {
 	memcpy(dst, src, sizeof(vulkan_subpass_create_info_t));
-	dst->color_attachments = src->color_attachment_count ? heap_newv(VkAttachmentReference, src->color_attachment_count) : NULL;
+	dst->color_attachments = src->color_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, src->color_attachment_count) : NULL;
 	memcpy(dst->color_attachments, src->color_attachments, sizeof(VkAttachmentReference) * src->color_attachment_count);
-	dst->input_attachments = src->input_attachment_count ? heap_newv(VkAttachmentReference, src->input_attachment_count) : NULL;
+	dst->input_attachments = src->input_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, src->input_attachment_count) : NULL;
 	memcpy(dst->input_attachments, src->input_attachments, sizeof(VkAttachmentReference) * src->input_attachment_count);
-	dst->preserve_attachments = src->preserve_attachment_count ? heap_newv(u32, src->preserve_attachment_count) : NULL;
+	dst->preserve_attachments = src->preserve_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, src->preserve_attachment_count) : NULL;
 	memcpy(dst->preserve_attachments, src->preserve_attachments, sizeof(u32) * src->preserve_attachment_count);
 			
-	dst->sub_render_set_bindings = src->sub_render_set_binding_count ? heap_newv(vulkan_shader_resource_description_t, src->sub_render_set_binding_count) : NULL;
+	dst->sub_render_set_bindings = src->sub_render_set_binding_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, src->sub_render_set_binding_count) : NULL;
 	for(u32 j = 0; j < src->sub_render_set_binding_count; j++)
-		vulkan_resource_descriptor_deep_copy(&dst->sub_render_set_bindings[j], &src->sub_render_set_bindings[j]);	
+		vulkan_resource_descriptor_deep_copy(allocator, &dst->sub_render_set_bindings[j], &src->sub_render_set_bindings[j]);	
 }
 
-static void vulkan_render_pass_create_info_deep_copy(vulkan_render_pass_create_info_t* dst, vulkan_render_pass_create_info_t* src)
+static void vulkan_render_pass_create_info_deep_copy(memory_allocator_t* allocator, vulkan_render_pass_create_info_t* dst, vulkan_render_pass_create_info_t* src)
 {
 	memcpy(dst, src, sizeof(vulkan_render_pass_create_info_t));
-	dst->attachment_descriptions = src->attachment_description_count ? heap_newv(VkAttachmentDescription, src->attachment_description_count) : NULL;
+	dst->attachment_descriptions = src->attachment_description_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, src->attachment_description_count) : NULL;
 	memcpy(dst->attachment_descriptions, src->attachment_descriptions, sizeof(VkAttachmentDescription) * src->attachment_description_count);
 
-	assert(src->subpass_count > 0);
-	dst->subpasses = heap_newv(vulkan_subpass_create_info_t, src->subpass_count);
+	_debug_assert__(src->subpass_count > 0);
+	dst->subpasses = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO_ARRAY, vulkan_subpass_create_info_t, src->subpass_count);
 	memcpy(dst->subpasses, src->subpasses, sizeof(vulkan_subpass_create_info_t) * src->subpass_count);
 	for(u32 i = 0; i < src->subpass_count; i++)
-		vulkan_subpass_create_info_deep_copy(&dst->subpasses[i], &src->subpasses[i]);
+		vulkan_subpass_create_info_deep_copy(allocator, &dst->subpasses[i], &src->subpasses[i]);
 
 	if(src->subpass_dependency_count > 0)
 	{
-		dst->subpass_dependencies = heap_newv(VkSubpassDependency, src->subpass_dependency_count);
+		dst->subpass_dependencies = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SUBPASS_DEPENDENCY_ARRAY, VkSubpassDependency, src->subpass_dependency_count);
 		memcpy(dst->subpass_dependencies, src->subpass_dependencies, sizeof(VkSubpassDependency) * src->subpass_dependency_count);
 	}
 
-	dst->render_set_bindings = src->render_set_binding_count ? heap_newv(vulkan_shader_resource_description_t, src->render_set_binding_count) : NULL;
+	dst->render_set_bindings = src->render_set_binding_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, src->render_set_binding_count) : NULL;
 	for(u32 i = 0; i < src->render_set_binding_count; i++)
-		vulkan_resource_descriptor_deep_copy(&dst->render_set_bindings[i], &src->render_set_bindings[i]);
+		vulkan_resource_descriptor_deep_copy(allocator, &dst->render_set_bindings[i], &src->render_set_bindings[i]);
 }
 
 static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info)
@@ -245,8 +247,8 @@ static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_re
 		buf_ucount_t index = buf_get_element_count(&pool->slots);
 		buf_push(&pool->relocation_table, &index);
 
-		vulkan_render_pass_create_info_t* copy_create_info = heap_new(vulkan_render_pass_create_info_t);
-		vulkan_render_pass_create_info_deep_copy(copy_create_info, create_info);
+		vulkan_render_pass_create_info_t* copy_create_info = memory_allocator_alloc_obj(pool->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO, vulkan_render_pass_create_info_t);
+		vulkan_render_pass_create_info_deep_copy(pool->renderer->allocator, copy_create_info, create_info);
 
 		vulkan_render_pass_pool_slot_t slot = 
 		{

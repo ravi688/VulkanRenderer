@@ -9,6 +9,7 @@ typedef struct vulkan_physical_device_t vulkan_physical_device_t;
 
 typedef struct vulkan_instance_t
 {
+	vulkan_renderer_t* renderer;
 	VkInstance handle;
 
 	// physical devices
@@ -23,8 +24,8 @@ typedef struct vulkan_instance_t
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API vulkan_instance_t* vulkan_instance_new();
-RENDERER_API vulkan_instance_t* vulkan_instance_create(const char* const* extensions, u32 extension_count);
+RENDERER_API vulkan_instance_t* vulkan_instance_new(memory_allocator_t* allocator);
+RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* renderer, const char* const* extensions, u32 extension_count);
 RENDERER_API void vulkan_instance_destroy(vulkan_instance_t* instance);
 RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance);
 

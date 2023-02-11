@@ -6,9 +6,9 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 
 /* constructors and destructors */
-RENDERER_API render_pass_t* render_pass_new()
+RENDERER_API render_pass_t* render_pass_new(memory_allocator_t* allocator)
 {
-	return vulkan_render_pass_new();
+	return vulkan_render_pass_new(allocator);
 }
 
 RENDERER_API render_pass_t* render_pass_create(renderer_t* renderer, render_pass_create_info_t* create_info)

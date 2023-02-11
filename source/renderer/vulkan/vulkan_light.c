@@ -2,6 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_light.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 #include <hpml/vec4.h>
 #include <hpml/affine_transformation.h>
@@ -10,26 +11,26 @@
 
 #define UNSUPPORTED_LIGHT_TYPE(type) LOG_FETAL_ERR("Unsupported light type: %u\n", type)
 
-RENDERER_API vulkan_light_t* vulkan_light_new(vulkan_light_type_t type)
+RENDERER_API vulkan_light_t* vulkan_light_new(memory_allocator_t* allocator, vulkan_light_type_t type)
 {
 	vulkan_light_t* light;
 	switch(type)
 	{
 		case VULKAN_LIGHT_TYPE_DIRECTIONAL:
-			light = CAST_TO(vulkan_light_t*, heap_new(vulkan_directional_light_t));
-			memzero(light, vulkan_directional_light_t);
+			light = CAST_TO(vulkan_light_t*, memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_DIRECTIONAL_LIGHT, vulkan_directional_light_t));
+			unsafe_memzero(light, vulkan_directional_light_t);
 		break;
 		case VULKAN_LIGHT_TYPE_POINT:
-			light =	CAST_TO(vulkan_light_t*, heap_new(vulkan_point_light_t));
-			memzero(light, vulkan_point_light_t);
+			light =	CAST_TO(vulkan_light_t*, memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_POINT_LIGHT, vulkan_point_light_t));
+			unsafe_memzero(light, vulkan_point_light_t);
 		break;
 		case VULKAN_LIGHT_TYPE_SPOT:
-			light = CAST_TO(vulkan_light_t*, heap_new(vulkan_spot_light_t));
-			memzero(light, vulkan_spot_light_t);
+			light = CAST_TO(vulkan_light_t*, memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SPOT_LIGHT, vulkan_spot_light_t));
+			unsafe_memzero(light, vulkan_spot_light_t);
 		break;
 		case VULKAN_LIGHT_TYPE_AMBIENT:
-			light = CAST_TO(vulkan_light_t*, heap_new(vulkan_ambient_light_t));
-			memzero(light, vulkan_ambient_light_t);
+			light = CAST_TO(vulkan_light_t*, memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_AMBIENT_LIGHT, vulkan_ambient_light_t));
+			unsafe_memzero(light, vulkan_ambient_light_t);
 		break;
 		default:
 			UNSUPPORTED_LIGHT_TYPE(type);
@@ -41,7 +42,7 @@ RENDERER_API vulkan_light_t* vulkan_light_new(vulkan_light_type_t type)
 static void setup_gpu_resources(vulkan_light_t* light)
 {
 	// setup light struct definition
-	struct_descriptor_begin(&light->struct_definition, "lightInfo", GLSL_TYPE_UNIFORM_BUFFER);
+	struct_descriptor_begin(light->renderer->allocator, &light->struct_definition, "lightInfo", GLSL_TYPE_UNIFORM_BUFFER);
 		struct_descriptor_add_field(&light->struct_definition, "projection", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&light->struct_definition, "view", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&light->struct_definition, "color", GLSL_TYPE_VEC3);
@@ -65,7 +66,7 @@ static void setup_gpu_resources(vulkan_light_t* light)
 			default:
 				UNSUPPORTED_LIGHT_TYPE(light->type);
 		};
-	struct_descriptor_end(&light->struct_definition);
+	struct_descriptor_end(light->renderer->allocator, &light->struct_definition);
 
 	// create uniform buffers and write to the descriptor set GLOBAL_SET at bindings GLOBAL_CAMERA and GLOBAL_LIGHT
 	vulkan_buffer_create_info_t create_info = 
@@ -117,7 +118,7 @@ static void setup_gpu_resources(vulkan_light_t* light)
 
 RENDERER_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vulkan_light_type_t type)
 {
-	vulkan_light_t* light = vulkan_light_new(type);
+	vulkan_light_t* light = vulkan_light_new(renderer->allocator, type);
 	vulkan_light_create_no_alloc(renderer, type, light);
 	return light;
 }

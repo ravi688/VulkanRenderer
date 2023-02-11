@@ -3,29 +3,24 @@
 #include <renderer/internal/vulkan/vulkan_mesh.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <memory.h>
 #include <renderer/assert.h>
 
-#ifdef GLOBAL_DEBUG
-	static void check_pre_condition(vulkan_mesh_t* mesh);
-#else
-#	define check_pre_condition(mesh)
-#endif
-
 static u32 get_index_stride(VkIndexType index_type);
 
-RENDERER_API vulkan_mesh_t* vulkan_mesh_new()
+RENDERER_API vulkan_mesh_t* vulkan_mesh_new(memory_allocator_t* allocator)
 {
-	vulkan_mesh_t* mesh = heap_new(vulkan_mesh_t);
-	memset(mesh, 0, sizeof(vulkan_mesh_t));
+	vulkan_mesh_t* mesh = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MESH, vulkan_mesh_t);
+	memzero(mesh, vulkan_mesh_t);
 	return mesh;
 }
 
 RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
 {
-	assert(renderer->logical_device->vo_handle != VK_NULL_HANDLE);
-	assert(create_info != 0);
-	assert(mesh != NULL);
+	_debug_assert__(renderer->logical_device->vo_handle != VK_NULL_HANDLE);
+	_debug_assert__(create_info != 0);
+	_debug_assert__(mesh != NULL);
 
 	memzero(mesh, vulkan_mesh_t);
 
@@ -79,14 +74,13 @@ RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulka
 
 RENDERER_API vulkan_mesh_t* vulkan_mesh_create(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info)
 {
-	vulkan_mesh_t* mesh = vulkan_mesh_new();
+	vulkan_mesh_t* mesh = vulkan_mesh_new(renderer->allocator);
 	vulkan_mesh_create_no_alloc(renderer, create_info, mesh);
 	return mesh;
 }
 
 RENDERER_API void vulkan_mesh_destroy(vulkan_mesh_t* mesh)
 {
-	check_pre_condition(mesh);
 	for(u32 i = 0; i < mesh->vertex_buffers.element_count; i++)
 		vulkan_buffer_destroy((vulkan_buffer_t*)buf_get_ptr_at(&mesh->vertex_buffers, i));
 	buf_clear(&mesh->vertex_buffers, NULL);
@@ -97,7 +91,6 @@ RENDERER_API void vulkan_mesh_destroy(vulkan_mesh_t* mesh)
 
 RENDERER_API void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 {
-	check_pre_condition(mesh);
 	//NOTE: We are using BUFFER of vulkan_buffer_t itself, which is not allocated by safe_memory/memory_allocator
 	//so, no need to call release_resources kind of function because they call heap_free internally, which tries to
 	//free as if it was allocated by safe_memory/memory_allocator
@@ -123,8 +116,7 @@ RENDERER_API void vulkan_mesh_draw(vulkan_mesh_t* mesh)
 
 RENDERER_API void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer)
 {
-	check_pre_condition(mesh);
-	assert(buffer != NULL);
+	_debug_assert__(buffer != NULL);
 
 	VkDeviceSize offsets[1] = { 0 };
 	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
@@ -136,9 +128,8 @@ RENDERER_API void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buf
 
 RENDERER_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u32 instance_count)
 {
-	check_pre_condition(mesh);
-	assert(mesh->index_buffer != NULL);
-	assert(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
+	_debug_assert__(mesh->index_buffer != NULL);
+	_debug_assert__(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
 	
 	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
 	vkCmdBindIndexBuffer(vo_command_buffer, mesh->index_buffer->vo_handle, 0, mesh->index_type);
@@ -150,7 +141,6 @@ RENDERER_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u
 
 RENDERER_API void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh)
 {
-	check_pre_condition(mesh);
 	
 	VkDeviceSize offsets[1] = { 0 };
 	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
@@ -160,9 +150,8 @@ RENDERER_API void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh)
 
 RENDERER_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 instance_count)
 {
-	check_pre_condition(mesh);
-	assert(mesh->index_buffer != NULL);
-	assert(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
+	_debug_assert__(mesh->index_buffer != NULL);
+	_debug_assert__(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
 	
 	VkDeviceSize offsets[1] = { 0 };
 	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
@@ -177,7 +166,6 @@ RENDERER_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 in
 
 RENDERER_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_count)
 {
-	check_pre_condition(mesh);
 	
 	VkDeviceSize offsets[1] = { 0 };
 	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
@@ -191,10 +179,9 @@ RENDERER_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_c
 
 RENDERER_API void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_vertex_buffer_create_info_t* create_info)
 {
-	check_pre_condition(mesh);
-	assert(create_info != NULL);
-	assert(create_info->count != 0);
-	assert(create_info->data != NULL);
+	_debug_assert__(create_info != NULL);
+	_debug_assert__(create_info->count != 0);
+	_debug_assert__(create_info->data != NULL);
 	
 	vulkan_buffer_create_info_t buffer_create_info =
 	{
@@ -225,12 +212,3 @@ static u32 get_index_stride(VkIndexType index_type)
 		default: LOG_FETAL_ERR("Index buffer creation failed, \"%u\" index type isn't defined\n", index_type);
 	}
 }
-
-
-#ifdef GLOBAL_DEBUG
-static void check_pre_condition(vulkan_mesh_t* mesh)
-{
-	assert(mesh != NULL);
-	assert(mesh->renderer != NULL);
-}
-#endif /* GLOBAL_DEBUG */

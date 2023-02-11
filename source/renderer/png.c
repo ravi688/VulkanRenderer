@@ -1,9 +1,11 @@
 
 #include <renderer/png.h>
+#include <renderer/debug.h>
 #include <renderer/assert.h>
 #include <disk_manager/file_reader.h>
 #include <disk_manager/file_writer.h>
 #include <meshlib/parsers/binary.h>
+#include <stdio.h>
 
 /*this is the little endian version of the big endian png signature: 89 50 4E 47 0D 0A 1A 0A*/
 #define PNG_SIGNATURE 0x0a1a0a0d474e5089L

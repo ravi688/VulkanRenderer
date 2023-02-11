@@ -113,7 +113,7 @@ BEGIN_CPP_COMPATIBLE
 	description: Creates a render queue object
 	returns: ptr to the newly created vulkan_render_queue_t object
  */
-RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new();
+RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator);
 
 /*
 	description: Creates a render queue object

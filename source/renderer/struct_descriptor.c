@@ -3,6 +3,7 @@
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <string.h>
 #include <bufferlib/buffer.h>
 
@@ -22,7 +23,7 @@
 
 RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 {
-	assert(descriptor != NULL);
+	_debug_assert__(descriptor != NULL);
 	if((descriptor->fields == 0) || (descriptor->field_count == 0) || (descriptor->field_count == 0xFFFF))
 		return;
 	struct_field_t* fields = descriptor->fields;
@@ -39,26 +40,26 @@ RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 
 RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr)
 {
-	assert(descriptor != NULL);
+	_debug_assert__(descriptor != NULL);
 	descriptor->ptr = ptr;
 }
 
 RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor)
 {
-	assert(descriptor != NULL);
+	_debug_assert__(descriptor != NULL);
 	descriptor->ptr = NULL;
 }
 
 RENDERER_API u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor)
 {
-	assert(descriptor != NULL);
+	_debug_assert__(descriptor != NULL);
 	return descriptor->size;
 }
 
 RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* field_name)
 {
-	assert(descriptor != NULL);
-	assert(descriptor->field_count < 0xFFFF);
+	_debug_assert__(descriptor != NULL);
+	_debug_assert__(descriptor->field_count < 0xFFFF);
 	for(u16 i = 0; i < descriptor->field_count; i++)
 		if(strcmp(descriptor->fields[i].name, field_name) == 0)
 			return i;
@@ -293,25 +294,25 @@ RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, c
 	field->alignment = alignof_glsl_type(type);
 }
 
-RENDERER_API void struct_descriptor_begin(struct_descriptor_t* descriptor, const char* name, u8 type)
+RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type)
 {
 	memzero(descriptor, struct_descriptor_t);
 	
 	strcpy(descriptor->name, name);
 	descriptor->type = type;
 
-	BUFFER* buffer = heap_new(BUFFER);
+	BUFFER* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
 	BUFFER _buffer = buf_create(sizeof(struct_field_t), 1, 0);
 	memcpy(buffer, &_buffer, sizeof(BUFFER));
 	descriptor->fields = CAST_TO(struct_field_t*, buffer);
 }
 
-RENDERER_API void struct_descriptor_end(struct_descriptor_t* descriptor)
+RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor)
 {
 	BUFFER* buffer = CAST_TO(BUFFER*, descriptor->fields);
 	descriptor->fields = buf_get_ptr(buffer);
 	descriptor->field_count = buf_get_element_count(buffer);
-	heap_free(buffer);
+	memory_allocator_dealloc(allocator, buffer);
 	struct_descriptor_recalculate(descriptor);
 }
 
@@ -319,9 +320,9 @@ RENDERER_API void struct_descriptor_end(struct_descriptor_t* descriptor)
 #ifdef GLOBAL_DEBUG
 static void check_precondition(struct_descriptor_t* descriptor, struct_field_handle_t handle)
 {
-	assert(descriptor != NULL);
-	assert(descriptor->ptr != NULL);
-	assert(descriptor->fields != NULL);
-	assert(handle < descriptor->field_count);
+	_debug_assert__(descriptor != NULL);
+	_debug_assert__(descriptor->ptr != NULL);
+	_debug_assert__(descriptor->fields != NULL);
+	_debug_assert__(handle < descriptor->field_count);
 }
 #endif

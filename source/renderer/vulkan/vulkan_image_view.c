@@ -8,27 +8,22 @@
 #include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
-
-#ifdef GLOBAL_DEBUG
-	static void check_pre_condition(vulkan_image_view_t* view);
-#else
-#	define check_pre_condition(view)
-#endif /* GLOBAL_DEBUG */
 
 static VkImageViewType get_view_type(vulkan_image_view_type_t type);
 static u32 get_layer_count(vulkan_image_view_type_t type);
 
-RENDERER_API vulkan_image_view_t* vulkan_image_view_new()
+RENDERER_API vulkan_image_view_t* vulkan_image_view_new(memory_allocator_t* allocator)
 {
-	vulkan_image_view_t* view = heap_new(vulkan_image_view_t);
-	memset(view, 0, sizeof(vulkan_image_view_t));
+	vulkan_image_view_t* view = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE_VIEW, vulkan_image_view_t);
+	memzero(view, vulkan_image_view_t);
 	return view;
 }
 
 RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info)
 {
-	vulkan_image_view_t* view = vulkan_image_view_new();
+	vulkan_image_view_t* view = vulkan_image_view_new(renderer->allocator);
 	vulkan_image_view_create_no_alloc(renderer, create_info, view);
 	return view;
 }
@@ -54,7 +49,7 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
 		.subresourceRange.layerCount = (create_info->layer_count == 0) ? get_layer_count(create_info->view_type) : create_info->layer_count
 	};
 
-	assert(view_create_info.subresourceRange.levelCount > 0);
+	_debug_assert__(view_create_info.subresourceRange.levelCount > 0);
 	assert((view_create_info.subresourceRange.baseArrayLayer + view_create_info.subresourceRange.layerCount) <= create_info->image->layer_count);
 	
 	memcpy(&view->vo_subresource_range, &view_create_info.subresourceRange, sizeof(VkImageSubresourceRange));
@@ -78,13 +73,11 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
 
 RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
 {
-	check_pre_condition(view);
 	vkDestroyImageView(view->renderer->logical_device->vo_handle, view->vo_handle, NULL);
 }
 
 RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)
 {
-	check_pre_condition(view);
 	// TODO
 	// heap_free(view);
 }
@@ -235,8 +228,8 @@ u32 get_texel_size_from_format(VkFormat format)
 
 RENDERER_API void vulkan_image_view_copy_from_buffer(vulkan_image_view_t* view, vulkan_buffer_t* buffer)
 {
-	assert(view->vo_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	assert(view->image->depth == 1);
+	_debug_assert__(view->vo_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	_debug_assert__(view->image->depth == 1);
 	vulkan_renderer_t* renderer = view->renderer;
 	VkBufferImageCopy region =
 	{
@@ -259,7 +252,7 @@ RENDERER_API void vulkan_image_view_copy_from_buffer(vulkan_image_view_t* view, 
 
 RENDERER_API void vulkan_image_view_upload_data(vulkan_image_view_t* view, void* data)
 {
-	assert(data != NULL);
+	_debug_assert__(data != NULL);
 	
 	// TODO: vulkan_image_get_size(view->image);
 	u32 size = view->image->width * view->image->height * get_texel_size_from_format(view->image->vo_format);
@@ -330,10 +323,3 @@ static u32 get_layer_count(vulkan_image_view_type_t type)
     		return VK_IMAGE_VIEW_TYPE_2D;
 	}
 }
-
-#ifdef GLOBAL_DEBUG
-static void check_pre_condition(vulkan_image_view_t* view)
-{
-	assert(view != NULL);
-}
-#endif /* GLOBAL_DEBUG */

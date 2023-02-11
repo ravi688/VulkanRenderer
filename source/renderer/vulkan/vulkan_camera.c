@@ -8,16 +8,17 @@
 #include <renderer/internal/vulkan/vulkan_command.h>
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <renderer/debug.h>
 
 #include <hpml/vec4.h>
 #include <hpml/affine_transformation.h>
 
-RENDERER_API vulkan_camera_t* vulkan_camera_new()
+RENDERER_API vulkan_camera_t* vulkan_camera_new(memory_allocator_t* allocator)
 {
-	vulkan_camera_t* camera = heap_new(vulkan_camera_t);
-	memset(camera, 0, sizeof(vulkan_camera_t));
+	vulkan_camera_t* camera = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CAMERA, vulkan_camera_t);
+	memzero(camera, vulkan_camera_t);
 	return camera;
 }
 
@@ -31,7 +32,7 @@ static void* create_buffer_and_map(vulkan_camera_t* camera, vulkan_buffer_t OUT 
 		.vo_sharing_mode = camera->renderer->vo_sharing_mode,
 		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
-	assert(create_info.size == (64 * 4));
+	_debug_assert__(create_info.size == (64 * 4));
 	vulkan_buffer_create_no_alloc(camera->renderer, &create_info, buffer);
 
 	vulkan_descriptor_set_create_info_t set_create_info = 
@@ -48,12 +49,12 @@ static void* create_buffer_and_map(vulkan_camera_t* camera, vulkan_buffer_t OUT 
 static void setup_gpu_resources(vulkan_camera_t* camera)
 {
 	// setup camera struct definiton
-	struct_descriptor_begin(&camera->struct_definition, "cameraInfo", GLSL_TYPE_UNIFORM_BUFFER);
+	struct_descriptor_begin(camera->renderer->allocator, &camera->struct_definition, "cameraInfo", GLSL_TYPE_UNIFORM_BUFFER);
 		struct_descriptor_add_field(&camera->struct_definition, "transform", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "projection", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "view", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "screen", GLSL_TYPE_MAT4);
-	struct_descriptor_end(&camera->struct_definition);
+	struct_descriptor_end(camera->renderer->allocator, &camera->struct_definition);
 
 	camera->transform_handle = struct_descriptor_get_field_handle(&camera->struct_definition, "transform");
 	camera->projection_handle = struct_descriptor_get_field_handle(&camera->struct_definition, "projection");
@@ -140,7 +141,7 @@ static void recreate_projection(render_window_t* window, void* user_data)
 
 RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info)
 {
-	vulkan_camera_t* camera = vulkan_camera_new();
+	vulkan_camera_t* camera = vulkan_camera_new(renderer->allocator);
 	vulkan_camera_create_no_alloc(renderer, create_info, camera);
 	return camera;
 }
@@ -162,7 +163,7 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	BUFFER buffer = buf_new(vulkan_framebuffer_t);
 	buf_push(&camera->framebuffers, &buffer);
 
-	camera->clear_buffer = heap_newv(VkClearValue, camera->default_render_pass->attachment_count);
+	camera->clear_buffer = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_CLEAR_VALUE_ARRAY, VkClearValue, camera->default_render_pass->attachment_count);
 	memcpy(camera->clear_buffer, camera->default_render_pass->vo_clear_values, sizeof(VkClearValue) * camera->default_render_pass->attachment_count);
 
 	render_window_t* window = vulkan_renderer_get_window(renderer);
@@ -400,7 +401,7 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 		camera->max_shot_count = 6;
 		if(camera->shot_rotations == NULL)
 		{
-			camera->shot_rotations = heap_newv(vec3_t, camera->max_shot_count);
+			camera->shot_rotations = memory_allocator_alloc_obj_array(camera->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VEC3_ARRAY, vec3_t, camera->max_shot_count);
 			camera->shot_rotations[0] = vec3(0, -90 DEG, 0); // right
 			camera->shot_rotations[1] = vec3(0, 90 DEG, 0); 	// left
 			camera->shot_rotations[2] = vec3(0, 0, 90 DEG); // bottom
@@ -507,7 +508,7 @@ RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulka
 
 RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_framebuffer_list_handle_t handle)
 {
-	assert(handle != VULKAN_FRAMEBUFFER_LIST_HANDLE_INVALID);
+	_debug_assert__(handle != VULKAN_FRAMEBUFFER_LIST_HANDLE_INVALID);
 	return CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, camera->current_shot_index)), handle));
 }
 
@@ -580,7 +581,7 @@ RENDERER_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t tr
 RENDERER_API void vulkan_camera_set_position_cube(vulkan_camera_t* camera, vec3_t position)
 {
 	camera->position = position;
-	assert(camera->max_shot_count == 6);
+	_debug_assert__(camera->max_shot_count == 6);
 	for(u32 i = 0; i < 6; i++)
 	{
 		struct_descriptor_map(&camera->struct_definition, camera->buffer_mappings[i]);

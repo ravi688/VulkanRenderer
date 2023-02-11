@@ -13,7 +13,7 @@
 RENDERER_API function_signature(dictionary_t, __dictionary_create, u32 key_size, u32 value_size, u64 capacity, bool (*key_comparer)(void* compare_key, void* key))
 {
 	CALLTRACE_BEGIN();
-	assert(key_comparer != NULL);
+	_debug_assert__(key_comparer != NULL);
 	assert_wrn((key_size + value_size) < 1024);
 	dictionary_t dictionary;
 	dictionary.buffer = buf_create(key_size + value_size, capacity, 0);
@@ -180,7 +180,7 @@ RENDERER_API function_signature(void, dictionary_remove, dictionary_t* dictionar
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	bool result = buf_remove(&dictionary->buffer, key, dictionary->key_comparer);
-	assert(result == true);
+	_debug_assert__(result == true);
 	CALLTRACE_END();
 }
 
@@ -261,15 +261,19 @@ RENDERER_API bool dictionary_key_comparer_string(void* v1, void* v2)
 	return (*(char**)v1) == (*(char**)v2);
 }
 
+RENDERER_API bool dictionary_key_comparer_ptr(void* v1, void* v2)
+{
+	return CAST_TO(void*, DREF_TO(u64, v1)) == CAST_TO(void*, DREF_TO(u64, v2));
+}
 
 
 #ifdef GLOBAL_DEBUG
 static void check_pre_condition(dictionary_t* dictionary)
 {
-	assert(dictionary != NULL);
-	assert(dictionary->key_comparer != 0);
-	assert_wrn(dictionary->key_size != 0);
-	assert_wrn(dictionary->value_size != 0);
+	_debug_assert__(dictionary != NULL);
+	_debug_assert__(dictionary->key_comparer != 0);
+	_debug_assert_wrn__(dictionary->key_size != 0);
+	_debug_assert_wrn__(dictionary->value_size != 0);
 	assert_wrn((dictionary->key_size + dictionary->value_size) < 1024);
 }
 #endif /*GLOBAL_DEBUG*/

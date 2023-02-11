@@ -3,21 +3,22 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 // TODO: remove it after debugging
 #include <renderer/debug.h>
 
-RENDERER_API vulkan_attachment_t* vulkan_attachment_new()
+RENDERER_API vulkan_attachment_t* vulkan_attachment_new(memory_allocator_t* allocator)
 {
-	vulkan_attachment_t* attachment = heap_new(vulkan_attachment_t);
-	memset(attachment, 0, sizeof(vulkan_attachment_t));
+	vulkan_attachment_t* attachment = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT, vulkan_attachment_t);
+	memzero(attachment, vulkan_attachment_t);
 	return attachment;
 }
 
 RENDERER_API vulkan_attachment_t* vulkan_attachment_create(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info)
 {
-	vulkan_attachment_t* attachment = vulkan_attachment_new();
+	vulkan_attachment_t* attachment = vulkan_attachment_new(renderer->allocator);
 	vulkan_attachment_create_no_alloc(renderer, create_info, attachment);
 	return attachment;
 }

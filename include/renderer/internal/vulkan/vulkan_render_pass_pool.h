@@ -31,7 +31,7 @@ typedef struct vulkan_render_pass_pool_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new();
+RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_create(vulkan_renderer_t* renderer);
 RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_pool_t OUT pool);
 RENDERER_API void vulkan_render_pass_pool_destroy(vulkan_render_pass_pool_t* pool);

@@ -62,7 +62,7 @@ typedef struct render_object_create_info_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API render_object_t* render_object_new();
+RENDERER_API render_object_t* render_object_new(memory_allocator_t* allocator);
 RENDERER_API render_object_t* render_object_create(renderer_t* renderer, render_object_create_info_t* create_info);
 RENDERER_API void render_object_create_no_alloc(renderer_t* renderer, render_object_create_info_t* create_info, render_object_t OUT object);
 RENDERER_API void render_object_destroy(render_object_t* object);

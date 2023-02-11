@@ -43,7 +43,7 @@ TEST_ON_INITIALIZE(CUBE)
 
 	material_set_vec4(this->material, "parameters.color", vec4(1, 1, 1, 1));
 
-	AUTO cubeMeshData = mesh3d_cube(1);
+	AUTO cubeMeshData = mesh3d_cube(renderer->allocator, 1);
 
 	this->mesh = mesh_create(renderer, cubeMeshData);
 	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));

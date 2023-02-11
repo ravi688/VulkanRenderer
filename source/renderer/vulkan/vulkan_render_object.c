@@ -3,6 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 typedef struct vulkan_mesh_t vulkan_mesh_t;
@@ -12,10 +13,10 @@ typedef struct text_mesh_t text_mesh_t;
 RENDERER_API void text_mesh_draw(text_mesh_t* text);
 
 
-RENDERER_API vulkan_render_object_t* vulkan_render_object_new()
+RENDERER_API vulkan_render_object_t* vulkan_render_object_new(memory_allocator_t* allocator)
 {
-	vulkan_render_object_t* obj = heap_new(vulkan_render_object_t);
-	memset(obj, 0, sizeof(vulkan_render_object_t));
+	vulkan_render_object_t* obj = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_OBJECT, vulkan_render_object_t);
+	memzero(obj, vulkan_render_object_t);
 	return obj;
 }
 
@@ -30,10 +31,10 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 	vulkan_descriptor_set_create_no_alloc(object->renderer, &set_create_info, &object->object_set);
 
 	// setup object struct definiton
-	struct_descriptor_begin(&object->struct_definition, "objectInfo", GLSL_TYPE_UNIFORM_BUFFER);
+	struct_descriptor_begin(object->renderer->allocator, &object->struct_definition, "objectInfo", GLSL_TYPE_UNIFORM_BUFFER);
 		struct_descriptor_add_field(&object->struct_definition, "transform", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&object->struct_definition, "normal", GLSL_TYPE_MAT4);
-	struct_descriptor_end(&object->struct_definition);
+	struct_descriptor_end(object->renderer->allocator, &object->struct_definition);
 
 	// create uniform buffers and write to the descriptor set OBJECT_SET at binding TRANSFORM_BINDING
 	vulkan_buffer_create_info_t create_info = 
@@ -43,7 +44,7 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 		.vo_sharing_mode = object->renderer->vo_sharing_mode,
 		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
-	assert(create_info.size == (64 * 2));
+	_debug_assert__(create_info.size == (64 * 2));
 	vulkan_buffer_create_no_alloc(object->renderer, &create_info, &object->buffer);
 	struct_descriptor_map(&object->struct_definition, vulkan_buffer_map(&object->buffer));
 	vulkan_descriptor_set_write_uniform_buffer(&object->object_set, VULKAN_DESCRIPTOR_BINDING_TRANSFORM, &object->buffer);
@@ -54,7 +55,7 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 
 RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info)
 {
-	vulkan_render_object_t* object = vulkan_render_object_new();
+	vulkan_render_object_t* object = vulkan_render_object_new(renderer->allocator);
 	vulkan_render_object_create_no_alloc(renderer, create_info, object);
 	return object;
 }
@@ -124,7 +125,7 @@ RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* obj,
 		vulkan_render_queue_removeH(obj->queue, obj->handle);
 	obj->material = material;
 	vulkan_render_object_handle_t handle = vulkan_render_queue_add(obj->queue, obj);
-	assert(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
+	_debug_assert__(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
 }
 
 RENDERER_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* obj)

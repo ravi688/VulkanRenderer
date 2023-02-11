@@ -43,7 +43,7 @@ typedef struct vulkan_graphics_pipeline_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new();
+RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info);
 RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline);
 RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline);

@@ -35,7 +35,7 @@ typedef enum light_type_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API light_t* light_new();
+RENDERER_API light_t* light_new(memory_allocator_t* allocator, light_type_t type);
 RENDERER_API light_t* light_create(renderer_t* renderer, light_type_t type);
 RENDERER_API void light_create_no_alloc(renderer_t* renderer, light_type_t type, light_t OUT light);
 RENDERER_API void light_destroy(light_t* light);

@@ -8,27 +8,28 @@
 
 #include <renderer/renderer.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 #include <renderer/assert.h>
 
 /* constructors & destructors */
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new()
+RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator)
 {
-	vulkan_render_scene_t* scene = heap_new(vulkan_render_scene_t);
+	vulkan_render_scene_t* scene = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_SCENE, vulkan_render_scene_t);
 	memzero(scene, vulkan_render_scene_t);
 	return scene;
 }
 
 RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info)
 {
-	vulkan_render_scene_t* scene = vulkan_render_scene_new();
+	vulkan_render_scene_t* scene = vulkan_render_scene_new(renderer->allocator);
 	vulkan_render_scene_create_no_alloc(renderer, create_info, scene);
 	return scene;
 }
 
 RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info, vulkan_render_scene_t OUT scene)
 {
-	assert(sizeof(vulkan_render_queue_type_t) == sizeof(s32));
+	_debug_assert__(sizeof(vulkan_render_queue_type_t) == sizeof(s32));
 	scene->renderer = renderer;
 	scene->queues = dictionary_create(vulkan_render_queue_type_t, vulkan_render_queue_t, 1, dictionary_key_comparer_s32);
 	if((create_info == NULL) || (create_info->required_queue_count == 0))
@@ -186,7 +187,7 @@ RENDERER_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_obje
 	if(queue_index == DICTIONARY_INVALID_INDEX)
 		LOG_FETAL_ERR("render scene doesn't contain the requested queue type %u\n", queue_type);
 	vulkan_render_queue_t* queue = dictionary_get_value_ptr_at(&scene->queues, queue_index);
-	assert(sizeof(buf_ucount_t) == sizeof(vulkan_render_queue_handle_t));
+	_debug_assert__(sizeof(buf_ucount_t) == sizeof(vulkan_render_queue_handle_t));
 	vulkan_render_object_handle_t handle = vulkan_render_queue_add(queue, object);
 	return (vulkan_render_scene_object_handle_t) 
 	{ 

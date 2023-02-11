@@ -3,9 +3,9 @@
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
 
-RENDERER_API render_queue_t* render_queue_new()
+RENDERER_API render_queue_t* render_queue_new(memory_allocator_t* allocator)
 {
-	return vulkan_render_queue_new();
+	return vulkan_render_queue_new(allocator);
 }
 
 RENDERER_API render_queue_t* render_queue_create(renderer_t* renderer, render_queue_type_t type)

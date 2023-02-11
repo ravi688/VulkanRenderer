@@ -33,13 +33,13 @@ typedef struct font_glyph_info_t
 typedef struct font_t
 {
 	ttf_t* handle;
-
+	memory_allocator_t* allocator;
 } font_t;
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API font_t* font_create(void* bytes, u64 length);
-RENDERER_API font_t* font_load_and_create(const char* file_name);
+RENDERER_API font_t* font_create(memory_allocator_t* allocator, void* bytes, u64 length);
+RENDERER_API font_t* font_load_and_create(memory_allocator_t* allocator, const char* file_name);
 RENDERER_API void font_destroy(font_t* font);
 RENDERER_API void font_release_resources(font_t* font);
 

@@ -337,8 +337,8 @@ RENDERER_API void struct_descriptor_get_mat4(struct_descriptor_t* descriptor, st
 RENDERER_API void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
 RENDERER_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
 
-RENDERER_API void struct_descriptor_begin(struct_descriptor_t* descriptor, const char* name, u8 type);
-RENDERER_API void struct_descriptor_end(struct_descriptor_t* descriptor);
+RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type);
+RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
 RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type);
 
 #include <glslcommon/glsl_types.h>

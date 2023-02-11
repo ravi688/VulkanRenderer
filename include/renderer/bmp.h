@@ -6,6 +6,7 @@
 
 typedef struct bmp_t
 {
+	memory_allocator_t* allocator;
 	void* data;
 	u32 width;
 	u32 height;
@@ -20,7 +21,7 @@ extern "C"
 #define bmp_load(...) define_alias_function_macro(bmp_load, __VA_ARGS__)
 #define bmp_destroy(...) define_alias_function_macro(bmp_destroy, __VA_ARGS__)
 
-RENDERER_API function_signature(bmp_t, bmp_load, const char* file_path);
+RENDERER_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, const char* file_path);
 RENDERER_API function_signature(void, bmp_destroy, bmp_t bmp);
 
 

@@ -2,26 +2,27 @@
 #include <renderer/font.h>
 #include <renderer/mesh3d.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <disk_manager/file_reader.h>
 #include <ttf2mesh.h>
 #include <renderer/assert.h>
 
 
-RENDERER_API font_t* font_load_and_create(const char* file_name)
+RENDERER_API font_t* font_load_and_create(memory_allocator_t* allocator, const char* file_name)
 {
-	assert(file_name != NULL);
 	BUFFER* file_data = load_binary_from_file(file_name);
-	font_t* font = font_create(file_data->bytes, file_data->element_count);
+	font_t* font = font_create(allocator, file_data->bytes, file_data->element_count);
 	buf_free(file_data);
 	return font;
 }
 
-RENDERER_API font_t* font_create(void* bytes, u64 length)
+RENDERER_API font_t* font_create(memory_allocator_t* allocator, void* bytes, u64 length)
 {
-	assert(bytes != NULL);
-	assert(length != 0);
-	font_t* font = heap_new(font_t);
-	memset(font, 0, sizeof(font_t));
+	_debug_assert__(bytes != NULL);
+	_debug_assert__(length != 0);
+	font_t* font = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_FONT, font_t);
+	memzero(font, font_t);
+	font->allocator = allocator;
 	int result = ttf_load_from_mem(bytes, length, &font->handle, false);
 	if((result != 0) || (font->handle == NULL))
 	{
@@ -32,19 +33,18 @@ RENDERER_API font_t* font_create(void* bytes, u64 length)
 
 RENDERER_API void font_destroy(font_t* font)
 {
-	assert(font != NULL);
-	ttf_free(refp(font_t, font, 0)->handle);
+	ttf_free(get_element_ptr(font_t, font, 0)->handle);
 }
 
 
 RENDERER_API void font_release_resources(font_t* font)
 {
-	heap_free(font);
+	memory_allocator_dealloc(font->allocator, font);
 }
 
 RENDERER_API void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quality,  mesh3d_t* out_mesh)
 {
-	assert(out_mesh != NULL);
+	_debug_assert__(out_mesh != NULL);
 	mesh3d_positions_new(out_mesh, 0);
 	// mesh3d_colors_new(out_mesh, 0);
 	mesh3d_triangles_new(out_mesh, 0);
@@ -60,7 +60,7 @@ RENDERER_API void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quali
 		default: LOG_FETAL_ERR("Invalid font mesh quality: %u\n", mesh_quality);
 	}
 	int result = ttf_glyph2mesh(&font->handle->glyphs[info.index], &mesh, quality, TTF_FEATURES_DFLT);
-	assert(result == TTF_DONE);
+	_debug_assert__(result == TTF_DONE);
 
 	float max_y = 0, min_y = 0, max_x = 0, min_x = 0;
 	for(int i = 0; i < mesh->nvert; i++)

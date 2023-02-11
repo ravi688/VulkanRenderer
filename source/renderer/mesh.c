@@ -4,38 +4,38 @@
 #include <renderer/mesh.h>
 #include <renderer/mesh3d.h>
 #include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 static u32 get_vulkan_index_from_stride(u32 stride);
 
-RENDERER_API mesh_t* mesh_new()
+RENDERER_API mesh_t* mesh_new(memory_allocator_t* allocator)
 {
-	return vulkan_mesh_new();
+	return vulkan_mesh_new(allocator);
 }
 
 RENDERER_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 {
-	mesh_t* vulkan_mesh = vulkan_mesh_new();
+	mesh_t* vulkan_mesh = vulkan_mesh_new(renderer->allocator);
 	mesh_create_no_alloc(renderer, mesh_data, vulkan_mesh);
 	return vulkan_mesh;
 }
 
 RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
 {
-	ASSERT(mesh_data != NULL, "Failed to create mesh_t, mesh3d_t* mesh_data == NULL\n");
+	debug_assert__(mesh_data != NULL, "Failed to create mesh_t, mesh3d_t* mesh_data == NULL\n");
 	vulkan_vertex_buffer_create_info_t* vertex_buffer_infos = stack_newv(vulkan_vertex_buffer_create_info_t, MESH3D_MAX_ATTRIBUTE_COUNT);
 	BUFFER** buffers = (BUFFER**)mesh_data;
 	u8 buffer_count = 0;
 	for(u8 i = 0; i < MESH3D_MAX_ATTRIBUTE_COUNT; i++)
 	{
 		if((buffers[i] == NULL) || (buffers[i]->element_count == 0)) continue;
-		vulkan_vertex_buffer_create_info_t* create_info = refp(vulkan_vertex_buffer_create_info_t, vertex_buffer_infos, buffer_count);
+		vulkan_vertex_buffer_create_info_t* create_info = &vertex_buffer_infos[buffer_count];
 		create_info->data = buffers[i]->bytes;
 		create_info->stride = buffers[i]->element_size;
 		create_info->count = buffers[i]->element_count;
 		++buffer_count;
 	}
-	assert_wrn(buffer_count != 0);
+	_debug_assert_wrn__(buffer_count != 0);
 
 	vulkan_mesh_create_info_t create_info =
 	{

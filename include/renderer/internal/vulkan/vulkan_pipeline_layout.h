@@ -23,7 +23,7 @@ typedef struct vulkan_pipeline_layout_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new();
+RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info);
 RENDERER_API void vulkan_pipeline_layout_create_no_alloc(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info, vulkan_pipeline_layout_t OUT layout);
 RENDERER_API void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* layout);

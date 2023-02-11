@@ -5,21 +5,22 @@
 #include <renderer/internal/vulkan/vulkan_command.h>
 #include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info);
 static void destroy_swapchain(vulkan_swapchain_t* swapchain);
 
-RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new()
+RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new(memory_allocator_t* allocator)
 {
-	vulkan_swapchain_t* swapchain = heap_new(vulkan_swapchain_t);
-	memset(swapchain, 0, sizeof(vulkan_swapchain_t));
+	vulkan_swapchain_t* swapchain = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SWAPCHAIN, vulkan_swapchain_t);
+	memzero(swapchain, vulkan_swapchain_t);
 	return swapchain;
 }
 
 RENDERER_API vulkan_swapchain_t* vulkan_swapchain_create(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
 {
 	// allocate memory and initialize it
-	vulkan_swapchain_t* swapchain = vulkan_swapchain_new();
+	vulkan_swapchain_t* swapchain = vulkan_swapchain_new(renderer->allocator);
 	vulkan_swapchain_create_no_alloc(renderer, create_info, swapchain);
 	return swapchain;
 }
@@ -51,8 +52,8 @@ RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain)
 
 RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain)
 {
-	heap_free(swapchain->vo_image_views);
-	heap_free(swapchain->vo_images);
+	memory_allocator_dealloc(swapchain->renderer->allocator, swapchain->vo_image_views);
+	memory_allocator_dealloc(swapchain->renderer->allocator, swapchain->vo_images);
 	// TODO
 	// heap_free(swapchain);
 }
@@ -140,9 +141,9 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_cre
 		}
 
 		vkCall(vkGetSwapchainImagesKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, &swapchain->image_count, NULL));
-		assert(swapchain->image_count != 0);
-		swapchain->vo_images = heap_newv(VkImage, swapchain->image_count);
-		swapchain->vo_image_views = heap_newv(VkImageView, swapchain->image_count);
+		_debug_assert__(swapchain->image_count != 0);
+		swapchain->vo_images = memory_allocator_alloc_obj_array(swapchain->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_ARRAY, VkImage, swapchain->image_count);
+		swapchain->vo_image_views = memory_allocator_alloc_obj_array(swapchain->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, swapchain->image_count);
 	}
 	vkCall(vkGetSwapchainImagesKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, &swapchain->image_count, swapchain->vo_images));
 

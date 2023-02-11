@@ -5,6 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/internal/vulkan/vulkan_types.h> 			// vulkan_shader_type_t
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 static VkDescriptorSetLayout get_null_set_layout(vulkan_renderer_t* renderer)
 {
@@ -19,17 +20,17 @@ static VkDescriptorSetLayout get_null_set_layout(vulkan_renderer_t* renderer)
 	return layout;
 }
 
-RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_new()
+RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_new(memory_allocator_t* allocator)
 {
-	vulkan_descriptor_set_layout_t* layout = heap_new(vulkan_descriptor_set_layout_t);
-	memset(layout, 0, sizeof(vulkan_descriptor_set_layout_t));
+	vulkan_descriptor_set_layout_t* layout = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_DESCRIPTOR_SET_LAYOUT, vulkan_descriptor_set_layout_t);
+	memzero(layout, vulkan_descriptor_set_layout_t);
 	layout->vo_handle = VK_NULL_HANDLE;
 	return layout;
 }
 
 RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_create(vulkan_renderer_t* renderer, VkDescriptorSetLayoutBinding* bindings, u32 binding_count)
 {
-	vulkan_descriptor_set_layout_t* layout = vulkan_descriptor_set_layout_new();
+	vulkan_descriptor_set_layout_t* layout = vulkan_descriptor_set_layout_new(renderer->allocator);
 	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, binding_count, layout);
 	return layout;
 }
@@ -43,8 +44,8 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 		return;
 	}
 	// allocate memory
-	VkDescriptorSetLayoutBinding* bindings = heap_newv(VkDescriptorSetLayoutBinding, descriptor_count);
-	memset(bindings, 0, sizeof(VkDescriptorSetLayoutBinding) * descriptor_count);
+	VkDescriptorSetLayoutBinding* bindings = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_DESCRIPTOR_SET_LAYOUT_BINDING_ARRAY, VkDescriptorSetLayoutBinding, descriptor_count);
+	memzerov(bindings, VkDescriptorSetLayoutBinding, descriptor_count);
 
 	u32 binding_count = 0;
 	for(u32 i = 0; i < descriptor_count; i++)
@@ -90,12 +91,12 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 		binding_count++;
 	}
 	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, binding_count, layout);
-	heap_free(bindings);	
+	memory_allocator_dealloc(renderer->allocator, bindings);	
 }
 
 RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_create_from_resource_descriptors(vulkan_renderer_t* renderer, vulkan_shader_resource_description_t* bindings, u32 binding_count)
 {
-	vulkan_descriptor_set_layout_t* layout = vulkan_descriptor_set_layout_new();
+	vulkan_descriptor_set_layout_t* layout = vulkan_descriptor_set_layout_new(renderer->allocator);
 	vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, bindings, binding_count, layout);
 	return layout;
 }

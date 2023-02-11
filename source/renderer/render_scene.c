@@ -6,9 +6,9 @@
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
 
 /* constructors & destructors */
-RENDERER_API render_scene_t* render_scene_new()
+RENDERER_API render_scene_t* render_scene_new(memory_allocator_t* allocator)
 {
-	return vulkan_render_scene_new();
+	return vulkan_render_scene_new(allocator);
 }
 
 RENDERER_API render_scene_t* render_scene_create(renderer_t* renderer, render_scene_create_info_t* create_info)

@@ -88,7 +88,7 @@ typedef struct text_mesh_t text_mesh_t;
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API text_mesh_t* text_mesh_new();
+RENDERER_API text_mesh_t* text_mesh_new(memory_allocator_t* allocator);
 RENDERER_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool);
 RENDERER_API void text_mesh_destroy(text_mesh_t* text);
 RENDERER_API void text_mesh_release_resources(text_mesh_t* text);

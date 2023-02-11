@@ -51,6 +51,7 @@
 #endif
 
 typedef struct render_window_t render_window_t;
+typedef struct memory_allocator_t memory_allocator_t;
 
 typedef struct renderer_t
 {
@@ -69,6 +70,8 @@ typedef struct renderer_t
 		driver_t* handle;
 		driver_t* driver;
 	};
+	
+	memory_allocator_t* allocator;
 	// shader_library_t* shader_library;
 	// material_library_t* material_library;
 	// render_pass_pool_t* render_pass_pool;
@@ -83,7 +86,7 @@ typedef enum renderer_gpu_type_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API renderer_t* renderer_init(renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable);
+RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable);
 RENDERER_API void renderer_terminate(renderer_t* renderer);
 RENDERER_API void renderer_update(renderer_t* renderer);
 RENDERER_API bool renderer_is_running(renderer_t* renderer);

@@ -46,4 +46,4 @@ RENDERER_API void vulkan_graphics_pipeline_description_add_color_blend_state(vul
 RENDERER_API void vulkan_graphics_pipeline_description_set_depth_stencil(vulkan_graphics_pipeline_description_t* description, VkBool32 depthWrite, VkBool32 depthTest);
 RENDERER_API void vulkan_graphics_pipeline_description_set_depth_bias(vulkan_graphics_pipeline_description_t* description, float factor, float clamp, float slope_factor);
 RENDERER_API void vulkan_graphics_pipeline_description_add_shader(vulkan_graphics_pipeline_description_t* description, const char* file_path, vulkan_shader_type_t type);
-RENDERER_API void vulkan_graphics_pipeline_description_end(vulkan_graphics_pipeline_description_t* description);
+RENDERER_API void vulkan_graphics_pipeline_description_end(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_description_t* description);

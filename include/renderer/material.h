@@ -41,7 +41,7 @@
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API material_t* material_new();
+RENDERER_API material_t* material_new(memory_allocator_t* allocator);
 RENDERER_API material_t* material_create(renderer_t* renderer, shader_t* shader);
 RENDERER_API void material_create_no_alloc(renderer_t* renderer, shader_t* shader, material_t* material);
 RENDERER_API void material_destroy(material_t* material);

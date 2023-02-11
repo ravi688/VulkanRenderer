@@ -51,7 +51,7 @@ RENDERER_API void vulkan_buffer_init(vulkan_buffer_t* buffer);
 	returns:
 		pointer to newly created vulkan_buffer_t object on the heap
  */
-RENDERER_API vulkan_buffer_t* vulkan_buffer_new();
+RENDERER_API vulkan_buffer_t* vulkan_buffer_new(memory_allocator_t* allocator);
 
 /* 
 	description:

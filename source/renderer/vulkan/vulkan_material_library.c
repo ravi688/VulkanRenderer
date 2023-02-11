@@ -1,14 +1,16 @@
 #include <renderer/internal/vulkan/vulkan_material_library.h>
 #include <renderer/internal/vulkan/vulkan_shader_library.h>
 #include <renderer/internal/vulkan/vulkan_material.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 #include <renderer/debug.h>
 
 /* constructors & destructors */
-RENDERER_API vulkan_material_library_t* vulkan_material_library_new()
+RENDERER_API vulkan_material_library_t* vulkan_material_library_new(memory_allocator_t* allocator)
 {
-	vulkan_material_library_t* library = heap_new(vulkan_material_library_t);
-	memset(library, 0, sizeof(vulkan_material_library_t));
+	vulkan_material_library_t* library = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MATERIAL_LIBRARY, vulkan_material_library_t);
+	memzero(library, vulkan_material_library_t);
 	return library;
 }
 
@@ -25,7 +27,7 @@ RENDERER_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* ren
 
 RENDERER_API vulkan_material_library_t* vulkan_material_library_create(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library)
 {
-	vulkan_material_library_t* library = vulkan_material_library_new();
+	vulkan_material_library_t* library = vulkan_material_library_new(renderer->allocator);
 	vulkan_material_library_create_no_alloc(renderer, shader_library, library);
 	return library;
 }
@@ -67,7 +69,7 @@ static vulkan_material_handle_t vulkan_material_library_add(vulkan_material_libr
 	// create a new slot
 	vulkan_material_library_slot_t slot = 
 	{
-		.name = (material_name != NULL) ? string_create(material_name) : string_null(),
+		.name = (material_name != NULL) ? string_create(library->renderer->allocator, material_name) : string_null(),
 		.material = material,
 		.handle = handle
 	};

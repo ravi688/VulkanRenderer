@@ -5,21 +5,22 @@
 
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 static VkShaderModule get_shader_module(VkDevice device, void* spirv, u32 length);
 static VkPipelineShaderStageCreateInfo get_pipeline_shader_stage_create_info(VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point);
 
 
-RENDERER_API vulkan_shader_module_t* vulkan_shader_module_new()
+RENDERER_API vulkan_shader_module_t* vulkan_shader_module_new(memory_allocator_t* allocator)
 {
-	vulkan_shader_module_t* shader = heap_new(vulkan_shader_module_t);
-	memset(shader, 0, sizeof(vulkan_shader_module_t));
+	vulkan_shader_module_t* shader = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_MODULE, vulkan_shader_module_t);
+	memzero(shader, vulkan_shader_module_t);
 	return shader;
 }
 
 RENDERER_API vulkan_shader_module_t* vulkan_shader_module_create(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info)
 {
-	vulkan_shader_module_t* shader = vulkan_shader_module_new();
+	vulkan_shader_module_t* shader = vulkan_shader_module_new(renderer->allocator);
 	vulkan_shader_module_create_no_alloc(renderer, create_info, shader);
 	return shader;
 }
@@ -43,7 +44,7 @@ RENDERER_API void vulkan_shader_module_load_no_alloc(vulkan_renderer_t* renderer
 
 RENDERER_API vulkan_shader_module_t* vulkan_shader_module_load(vulkan_renderer_t* renderer, vulkan_shader_module_load_info_t* load_info)
 {
-	vulkan_shader_module_t* shader = vulkan_shader_module_new();
+	vulkan_shader_module_t* shader = vulkan_shader_module_new(renderer->allocator);
 	vulkan_shader_module_load_no_alloc(renderer, load_info, shader);
 	return shader;
 }

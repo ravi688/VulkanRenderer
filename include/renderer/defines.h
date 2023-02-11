@@ -26,6 +26,7 @@
 #endif
 
 typedef struct renderer_t renderer_t;
+typedef struct memory_allocator_t memory_allocator_t;
 
 #include <renderer/assert.h>
 #define NOT_IMPLEMENTED_FUNCTION() LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__);
@@ -59,3 +60,8 @@ typedef struct renderer_t renderer_t;
 #	define RENDERER_COMPILER_MINGW
 #endif // MINGW
 
+#ifdef GLOBAL_DEBUG
+#	define INLINE_IF_DEBUG_MODE INLINE
+#else
+#	define INLINE_IF_DEBUG_MODE /* no inline */
+#endif /* GLOBAL_DEBUG */

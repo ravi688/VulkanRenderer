@@ -64,7 +64,7 @@ typedef enum shader_library_shader_preset_t
 } shader_library_shader_preset_t;
 
 /* constructors & destructors */
-RENDERER_API shader_library_t* shader_library_new();
+RENDERER_API shader_library_t* shader_library_new(memory_allocator_t* allocator);
 RENDERER_API shader_library_t* shader_library_create(renderer_t* renderer);
 RENDERER_API shader_library_t* shader_library_load_folder(renderer_t* renderer, const char* folder_path);
 RENDERER_API void shader_library_destroy(shader_library_t* library);

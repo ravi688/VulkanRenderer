@@ -41,6 +41,7 @@ typedef struct renderer_t renderer_t;
 
 typedef struct test_t
 {
+	memory_allocator_t* allocator;
 	void* user_data;
 	void (*initialize)(renderer_t* driver, void* user_data);
 	void (*render)(renderer_t* driver, void* user_data);
@@ -50,14 +51,14 @@ typedef struct test_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API test_t* test_new();
-RENDERER_API test_t* test_create(const char* test_name);
+RENDERER_API test_t* test_new(memory_allocator_t* allocator);
+RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* test_name);
 RENDERER_API void test_destroy(test_t* test);
 
 END_CPP_COMPATIBLE
 
 
-#include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 #define TEST_DATA(NAME) struct NAME##_t
 #define TEST_NAME(NAME) NAME##_name
