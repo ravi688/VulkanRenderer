@@ -93,10 +93,7 @@ static bool condition_unvisited(memory_allocation_debug_node_t* node, void* user
 
 static bool condition_address_matches(memory_allocation_debug_node_t* node, void* user_data)
 {
-	bool matches = CAST_TO(u64, node->allocation->ptr) == DREF_TO(u64, user_data);
-	if(matches)
-		node->__internal_debug_flags |= OTHER_REFERENCED;
-	return matches;
+	return CAST_TO(u64, node->allocation->ptr) == DREF_TO(u64, user_data);
 }
 
 static INLINE u32 calculate_bits_required(u32 max_number) { return ceil(log2(max_number)); }
@@ -111,6 +108,23 @@ static INLINE void memory_allocation_dump(memory_allocation_t* allocation)
 					allocation->ptr);
 }
 
+static bool is_cyclic_reference(memory_allocation_debug_node_t* node, memory_allocation_debug_node_t* reference)
+{
+	if(node == NULL)
+		return false;
+	else if(node->allocation->ptr == reference->allocation->ptr)
+		return true;
+
+	u32 parent_count = buf_get_element_count(&node->parents);
+	memory_allocation_debug_node_t** parents = buf_get_ptr(&node->parents);
+
+	for(u32 i = 0; i < parent_count; i++)
+		if(is_cyclic_reference(parents[i], reference))
+			return true;
+
+	return false;
+}
+
 static memory_allocation_debug_node_t* resolve_references(memory_allocation_map_t* allocation_map)
 {
 	u32 count = dictionary_get_count(allocation_map);
@@ -121,6 +135,7 @@ static memory_allocation_debug_node_t* resolve_references(memory_allocation_map_
 	{
 		nodes[i].allocation = CAST_TO(memory_allocation_t*, dictionary_get_value_ptr_at(allocation_map, i));
 		nodes[i].__internal_size = U32_MAX;
+		nodes[i].parents = buf_new(memory_allocation_debug_node_t*);
 	}
 
 	_debug_assert__(sizeof(void*) == U64_SIZE);
@@ -139,15 +154,30 @@ static memory_allocation_debug_node_t* resolve_references(memory_allocation_map_
 			memory_allocation_debug_node_t* referenced_node = find_if(nodes, count, condition_address_matches, node->allocation->ptr + dword_offset);
 			if(referenced_node != NULL)
 			{
+				/* if there is a self reference */
 				if(referenced_node == node)
 				{
 					node->__internal_debug_flags |= SELF_REFERENCED;
 					node->__internal_debug_flags &= ~OTHER_REFERENCED;
 				}
+				/* if there is a cyclic reference or the node is already referenced by other nodes */
+				else if(is_cyclic_reference(node, referenced_node) || (referenced_node->__internal_debug_flags & OTHER_REFERENCED))
+				{
+					/* more debug information */
+				}
 				/* only add this node in the list of references when the reference is not a self reference
 				 * as adding self reference to the list of references leads to a cycle, hence infinite loop in traversal. */
 				else
+				{
+					/* now this node has been referenced */
+					referenced_node->__internal_debug_flags |= OTHER_REFERENCED;
+
+					/* add the referenced node into the list of references */
 					buf_push(&references, &referenced_node);
+
+					/* add the node into the list of the parents of the referenced node */
+					buf_push(&referenced_node->parents, &node);
+				}
 			}
 		}
 
@@ -172,6 +202,7 @@ static memory_allocation_tree_t* build_tree(memory_allocation_debug_node_t* node
 
 	root->child_count = buf_get_element_count(&unref_nodes);
 	root->children = CAST_TO(memory_allocation_debug_node_t**, buf_get_ptr(&unref_nodes));
+	root->parents = buf_new(memory_allocation_debug_node_t*);
 
 	memory_allocation_tree_t* tree = heap_new(memory_allocation_tree_t);
 	tree->nodes = nodes;

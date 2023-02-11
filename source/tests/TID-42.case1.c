@@ -6,9 +6,11 @@
 
 #define SIZE(num_bytes) char bytes[num_bytes]
 
+typedef struct MemoryObject3 MemoryObject3;
 typedef struct MemoryObject2
 {
 	SIZE(64);
+	MemoryObject3* obj3;
 } MemoryObject2;
 
 const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_2 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
@@ -63,11 +65,10 @@ offsetof(MemoryObject1, __debug_ptr2__)*/
 			|
 		--------------------
 		|					|
-	MemoryObject3		MemoryObject2
-		|
-	MemoryObject4
-		|
-	MemoryObject2
+	MemoryObject3 <----MemoryObject2
+		| 					|
+	MemoryObject4 		    |
+		|___________________|
 
  */
 
@@ -98,10 +99,9 @@ TEST_ON_INITIALIZE(TID_42_CASE_1)
 
 	this->obj1->obj2 = this->obj2;
 	this->obj1->obj3 = this->obj3;
-
 	this->obj3->obj4 = this->obj4;
 	this->obj4->obj2 = this->obj2;
-
+	this->obj2->obj3 = this->obj3;
 	this->obj1->self_reference = this->obj1;
 
 	memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(this->allocator);

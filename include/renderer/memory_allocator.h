@@ -3,6 +3,7 @@
 #include <renderer/defines.h>
 
 #include <renderer/memory_allocation_type.h>
+#include <bufferlib/buffer.h>
 
 /* holds the debug info for each memory allocation */
 typedef struct __memory_allocation_debug_info_t
@@ -60,6 +61,8 @@ typedef struct memory_allocation_debug_node_t
     u32 child_count;
     /* pointer to the list of pointers to the memory_allocation_debug_node_t objects which are directly reachable from this memory allocation object */
     memory_allocation_debug_node_t** children;
+    /* pointer to the list of pointers to the memory_allocation_debug_node_t objects which can directly reach this memory allocation object, used for detecting cycles in the tree/graph */
+    BUFFER parents;
 } memory_allocation_debug_node_t;
 
 typedef struct memory_allocation_tree_t

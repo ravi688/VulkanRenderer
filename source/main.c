@@ -5,6 +5,8 @@
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
 
+#include <conio.h>
+
 static allocate_result_t allocate(u32 size, u32 align)
 {
 	if((size == 0) || (align == 0))
@@ -42,6 +44,18 @@ int main(int argc, const char** argv)
 
 	while(renderer_is_running(driver))
 	{
+		if(kbhit())
+		{
+			if(getch() == 'd')
+			{
+				/* this should be pushed into another thread to not to halt the main thread! */
+				debug_log_info("Building memory allocation tree...");
+				memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(allocator);
+				memory_allocation_tree_serialize_to_file(tree, "memory_allocation_tree.dump");
+				memory_allocation_tree_destroy(tree);
+				debug_log_info("Memory allocation tree built successfully");
+			}
+		}
 		float deltaTime = time_get_delta_time(&tHandle);
 		renderer_begin_frame(driver);
 		test->render(driver, test->user_data);
