@@ -6,6 +6,7 @@
 #include <renderer/renderer.h>
 
 #include <conio.h>
+#include <signal.h>
 
 static allocate_result_t allocate(u32 size, u32 align)
 {
@@ -24,6 +25,45 @@ static void deallocate(void* ptr)
 	heap_free(ptr);
 }
 
+static void memory_allocation_tree_dump(memory_allocator_t* allocator)
+{
+	debug_log_info("Building memory allocation tree...");
+	memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(allocator);
+	memory_allocation_tree_serialize_to_file(tree, "memory_allocation_tree.dump");
+	memory_allocation_tree_destroy(tree);
+	debug_log_info("Memory allocation tree built successfully");
+}
+
+static memory_allocator_t* allocator;
+
+#define signal_handler(signal, handler) static void signal##_handler(int signal) { handler; }
+
+signal_handler(__SIGINT, memory_allocation_tree_dump(allocator))
+signal_handler(__SIGILL, memory_allocation_tree_dump(allocator))
+signal_handler(__SIGABRT_COMPAT, memory_allocation_tree_dump(allocator))
+signal_handler(__SIGFPE, memory_allocation_tree_dump(allocator))
+signal_handler(__SIGSEGV, memory_allocation_tree_dump(allocator))
+signal_handler(__SIGTERM, memory_allocation_tree_dump(allocator))
+signal_handler(__SIGBREAK, memory_allocation_tree_dump(allocator))
+signal_handler(__SIGABRT, memory_allocation_tree_dump(allocator))
+signal_handler(__SIGABRT2, memory_allocation_tree_dump(allocator))
+
+/* TODO: there are extra things have to be done to get memory dump whenever the program crashes,
+ * 1. all the assertions must use __builtin_trap() to raise SIGILL.
+ * 2. all the fetal errors or just errors must use __builtin_trap() to raise SIGILL. */
+static void setup_signal_handlers()
+{
+	_debug_assert__(signal(SIGINT, __SIGINT_handler) != SIG_ERR);
+	_debug_assert__(signal(SIGILL, __SIGILL_handler) != SIG_ERR);
+	_debug_assert__(signal(SIGABRT_COMPAT, __SIGABRT_COMPAT_handler) != SIG_ERR);
+	_debug_assert__(signal(SIGFPE, __SIGFPE_handler) != SIG_ERR);
+	_debug_assert__(signal(SIGSEGV, __SIGSEGV_handler) != SIG_ERR);
+	_debug_assert__(signal(SIGTERM, __SIGTERM_handler) != SIG_ERR);
+	_debug_assert__(signal(SIGBREAK, __SIGBREAK_handler) != SIG_ERR);
+	_debug_assert__(signal(SIGABRT, __SIGABRT_handler) != SIG_ERR);
+	_debug_assert__(signal(SIGABRT2, __SIGABRT2_handler) != SIG_ERR);
+}
+
 int main(int argc, const char** argv)
 {
 	alloc_init(&argv);
@@ -33,7 +73,9 @@ int main(int argc, const char** argv)
 		.allocate = allocate,
 		.deallocate = deallocate
 	};
-	memory_allocator_t* allocator = memory_allocator_create(&create_info);
+	allocator = memory_allocator_create(&create_info);
+
+	setup_signal_handlers();
 
 	test_t* test = test_create(allocator, (argc > 1) ? argv[1] : "");
 	AUTO driver = renderer_init(allocator, GPU_TYPE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, FULL_SCREEN ? true : false, RESIZABLE ? true : false);
@@ -49,11 +91,7 @@ int main(int argc, const char** argv)
 			if(getch() == 'd')
 			{
 				/* this should be pushed into another thread to not to halt the main thread! */
-				debug_log_info("Building memory allocation tree...");
-				memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(allocator);
-				memory_allocation_tree_serialize_to_file(tree, "memory_allocation_tree.dump");
-				memory_allocation_tree_destroy(tree);
-				debug_log_info("Memory allocation tree built successfully");
+				memory_allocation_tree_dump(allocator);
 			}
 		}
 		float deltaTime = time_get_delta_time(&tHandle);
