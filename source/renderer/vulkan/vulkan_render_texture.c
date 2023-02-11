@@ -1,6 +1,7 @@
 #include <renderer/internal/vulkan/vulkan_render_texture.h>
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/debug.h>
 
 RENDERER_API vulkan_render_texture_t* vulkan_render_texture_create(vulkan_renderer_t* renderer, vulkan_render_texture_create_info_t* create_info)
 {

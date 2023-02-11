@@ -47,7 +47,7 @@ RENDERER_API vulkan_shader_library_t* vulkan_shader_library_load_folder(vulkan_r
 	// {
 	// 	file_info_t* info = buf_get_ptr_at(&files, i);
 	// 	vulkan_shader_handle_t handle = vulkan_shader_library_load_shader(library, info->path);
-	// 	ASSERT(handle != SHADER_HANDLE_INVALID, "Loading shader \"%s\" failed\n", info->path);
+	// 	debug_assert__(handle != SHADER_HANDLE_INVALID, "Loading shader \"%s\" failed\n", info->path);
 	// }
 	// buf_free(&files);
 	// return library;

@@ -18,9 +18,9 @@ RENDERER_API vulkan_mesh_t* vulkan_mesh_new(memory_allocator_t* allocator)
 
 RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
 {
-	assert(renderer->logical_device->vo_handle != VK_NULL_HANDLE);
-	assert(create_info != 0);
-	assert(mesh != NULL);
+	_debug_assert__(renderer->logical_device->vo_handle != VK_NULL_HANDLE);
+	_debug_assert__(create_info != 0);
+	_debug_assert__(mesh != NULL);
 
 	memzero(mesh, vulkan_mesh_t);
 
@@ -116,7 +116,7 @@ RENDERER_API void vulkan_mesh_draw(vulkan_mesh_t* mesh)
 
 RENDERER_API void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer)
 {
-	assert(buffer != NULL);
+	_debug_assert__(buffer != NULL);
 
 	VkDeviceSize offsets[1] = { 0 };
 	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
@@ -128,8 +128,8 @@ RENDERER_API void vulkan_mesh_bind_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buf
 
 RENDERER_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u32 instance_count)
 {
-	assert(mesh->index_buffer != NULL);
-	assert(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
+	_debug_assert__(mesh->index_buffer != NULL);
+	_debug_assert__(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
 	
 	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
 	vkCmdBindIndexBuffer(vo_command_buffer, mesh->index_buffer->vo_handle, 0, mesh->index_type);
@@ -150,8 +150,8 @@ RENDERER_API void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh)
 
 RENDERER_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 instance_count)
 {
-	assert(mesh->index_buffer != NULL);
-	assert(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
+	_debug_assert__(mesh->index_buffer != NULL);
+	_debug_assert__(mesh->index_type != VK_INDEX_TYPE_MAX_ENUM);
 	
 	VkDeviceSize offsets[1] = { 0 };
 	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
@@ -179,9 +179,9 @@ RENDERER_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_c
 
 RENDERER_API void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_vertex_buffer_create_info_t* create_info)
 {
-	assert(create_info != NULL);
-	assert(create_info->count != 0);
-	assert(create_info->data != NULL);
+	_debug_assert__(create_info != NULL);
+	_debug_assert__(create_info->count != 0);
+	_debug_assert__(create_info->data != NULL);
 	
 	vulkan_buffer_create_info_t buffer_create_info =
 	{

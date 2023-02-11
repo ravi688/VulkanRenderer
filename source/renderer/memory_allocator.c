@@ -123,11 +123,11 @@ static memory_allocation_debug_node_t* resolve_references(memory_allocation_map_
 		nodes[i].__internal_size = U32_MAX;
 	}
 
-	assert(sizeof(void*) == U64_SIZE);
+	_debug_assert__(sizeof(void*) == U64_SIZE);
 	const u32 num_bits = calculate_bits_required(U64_SIZE);
 
 	/* for now we are building our project in 64-bit machine */
-	assert(num_bits == 3);
+	_debug_assert__(num_bits == 3);
 
 	memory_allocation_debug_node_t* node;
 	while((node = find_if(nodes, count, condition_unvisited, NULL)) != NULL)

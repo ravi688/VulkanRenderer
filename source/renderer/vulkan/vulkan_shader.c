@@ -134,7 +134,7 @@ static vulkan_push_constant_t create_vulkan_push_constant(memory_allocator_t* al
 		if(!descriptor->is_push_constant) continue;
 
 		// sanity check
-		assert(descriptor->handle.type == GLSL_TYPE_PUSH_CONSTANT);
+		_debug_assert__(descriptor->handle.type == GLSL_TYPE_PUSH_CONSTANT);
 		
 		VkShaderStageFlagBits stage_flags = 0;
 		if(descriptor->stage_flags & VULKAN_SHADER_STAGE_VERTEX_BIT)
@@ -190,7 +190,7 @@ static vulkan_push_constant_t create_vulkan_push_constant(memory_allocator_t* al
 	{
 		VkPushConstantRange range = DEREF_TO(VkPushConstantRange, buf_get_ptr_at(&ranges, i));
 		// offsets must be in inceasing order and should be in the bounds of the buffer size which is (max.offset + max.size)
-		assert(range.offset < (max.offset + max.size));
+		_debug_assert__(range.offset < (max.offset + max.size));
 
 		// map
 		struct_descriptor_map(&material_set_bindings[descriptor_indices[i]].handle, push_constant_buffer + range.offset);
@@ -444,7 +444,7 @@ static u32 get_most_recent_subpass_index_writing_to_depth(const vulkan_render_pa
 		if(subpass->depth_stencil_attachment != U32_MAX)
 			index = i;
 	}
-	assert(index != U32_MAX);
+	_debug_assert__(index != U32_MAX);
 	return index;
 }
 
@@ -599,14 +599,14 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 	create_info->framebuffer_count = get_framebuffer_count_from_render_pass_type(pass->type, renderer->swapchain->image_count);
 	
 	// list of attachments to bound for each frame buffer
-	assert(pass->attachment_count > 0);
+	_debug_assert__(pass->attachment_count > 0);
 	create_info->attachment_description_count = pass->attachment_count;
 	create_info->attachment_descriptions = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, pass->attachment_count);
 	create_info->attachment_usages = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE_ARRAY, vulkan_attachment_next_pass_usage_t, pass->attachment_count);
 
 	if(pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET)
 	{
-		assert(create_info->framebuffer_count == renderer->swapchain->image_count);
+		_debug_assert__(create_info->framebuffer_count == renderer->swapchain->image_count);
 		create_info->supplementary_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, renderer->swapchain->image_count);
 		create_info->supplementary_attachment_count = 1;
 		for(u32 i = 0; i < renderer->swapchain->image_count; i++)
@@ -658,7 +658,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		/* supplementary attachments shall always be swapchain image */
 		if(is_supplementary)
 		{
-			assert(pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR);
+			_debug_assert__(pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR);
 			store_op = VK_ATTACHMENT_STORE_OP_STORE;
 			usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
 		}
@@ -704,7 +704,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 	create_info->render_set_bindings = pass->render_set_bindings;
 	create_info->render_set_binding_count = pass->render_set_binding_count;
 
-	assert(pass->subpass_description_count > 0);
+	_debug_assert__(pass->subpass_description_count > 0);
 	create_info->subpass_count = pass->subpass_description_count;
 	create_info->subpasses = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO_ARRAY, vulkan_subpass_create_info_t, pass->subpass_count);
 	memzerov(create_info->subpasses, vulkan_subpass_create_info_t, pass->subpass_count);
@@ -742,7 +742,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		if(pass->subpass_descriptions[i].depth_stencil_attachment != U32_MAX)
 		{
 			VkAttachmentReference* depth_stencil_attachment = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE,  VkAttachmentReference);
-			assert(pass->attachments[pass->subpass_descriptions[i].depth_stencil_attachment] == VULKAN_ATTACHMENT_TYPE_DEPTH);
+			_debug_assert__(pass->attachments[pass->subpass_descriptions[i].depth_stencil_attachment] == VULKAN_ATTACHMENT_TYPE_DEPTH);
 			depth_stencil_attachment->attachment = pass->subpass_descriptions[i].depth_stencil_attachment;
 			depth_stencil_attachment->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			create_info->subpasses[i].depth_stencil_attachment = depth_stencil_attachment;
@@ -958,8 +958,8 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 
 		descriptor->set_number = binary_reader_u8(reader);
 		descriptor->binding_number = binary_reader_u8(reader);
-		// assert(descriptor->set_number < 255);
-		// assert(descriptor->binding_number < 255);
+		// _debug_assert__(descriptor->set_number < 255);
+		// _debug_assert__(descriptor->binding_number < 255);
 		u32 descriptor_info = binary_reader_u32(reader);
 
 		u32 bits = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_BITS(descriptor_info);
@@ -980,12 +980,12 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 		{
 			// ignore the block name
 			const char* name = binary_reader_str(reader);
-			assert(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
+			_debug_assert__(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
 		}
 
 		// get the name of the descriptor
 		const char* name = binary_reader_str(reader);
-		assert(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
+		_debug_assert__(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
 		strcpy(descriptor->handle.name, name);
 
 		log_msg("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
@@ -1015,7 +1015,7 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 				
 				// get the name of this field
 				const char* name = binary_reader_str(reader);
-				assert(strlen(name) < STRUCT_FIELD_MAX_NAME_SIZE);
+				_debug_assert__(strlen(name) < STRUCT_FIELD_MAX_NAME_SIZE);
 				strcpy(fields[j].name, name);
 
 				log_msg("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, fields[j].type, fields[j].size, fields[j].alignment, fields[j].name);
@@ -1050,7 +1050,7 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 	for(u32 i = 0, index = 0; i < descriptor_count; i++)
 	{
 		// this must be an attribute
-		assert(descriptors[i].is_attribute);
+		_debug_assert__(descriptors[i].is_attribute);
 
 		u32 location = descriptors[i].vertex_attrib_location_number;
 		glsl_type_t glsl_type = descriptors[i].handle.type;
@@ -1513,7 +1513,7 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shade
 	{
 		if(shader->render_passes[i].handle == handle)
 		{
-			assert(subpass_index < shader->render_passes[i].subpass_count);
+			_debug_assert__(subpass_index < shader->render_passes[i].subpass_count);
 			return &shader->render_passes[i].pipelines[subpass_index];
 		}
 	}
@@ -1527,7 +1527,7 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_
 	{
 		if(shader->render_passes[i].handle == handle)
 		{
-			assert(subpass_index < shader->render_passes[i].subpass_count);
+			_debug_assert__(subpass_index < shader->render_passes[i].subpass_count);
 			return &shader->render_passes[i].pipeline_layouts[subpass_index];
 		}
 	}

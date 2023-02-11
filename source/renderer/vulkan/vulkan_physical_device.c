@@ -34,7 +34,7 @@ RENDERER_API void vulkan_physical_device_create_no_alloc(vulkan_renderer_t* rend
 
 	// cache the queue family properties
 	vkGetPhysicalDeviceQueueFamilyProperties(device->vo_handle, &device->queue_family_count, NULL);
-	assert(device->queue_family_count != 0);
+	_debug_assert__(device->queue_family_count != 0);
 	device->vo_queue_family_properties = memory_allocator_alloc_obj_array(device->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_QUEUE_FAMILY_PROPERTIES_ARRAY, VkQueueFamilyProperties, device->queue_family_count);
 	vkGetPhysicalDeviceQueueFamilyProperties(device->vo_handle, &device->queue_family_count, device->vo_queue_family_properties);
 

@@ -49,7 +49,7 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
 		.subresourceRange.layerCount = (create_info->layer_count == 0) ? get_layer_count(create_info->view_type) : create_info->layer_count
 	};
 
-	assert(view_create_info.subresourceRange.levelCount > 0);
+	_debug_assert__(view_create_info.subresourceRange.levelCount > 0);
 	assert((view_create_info.subresourceRange.baseArrayLayer + view_create_info.subresourceRange.layerCount) <= create_info->image->layer_count);
 	
 	memcpy(&view->vo_subresource_range, &view_create_info.subresourceRange, sizeof(VkImageSubresourceRange));
@@ -228,8 +228,8 @@ u32 get_texel_size_from_format(VkFormat format)
 
 RENDERER_API void vulkan_image_view_copy_from_buffer(vulkan_image_view_t* view, vulkan_buffer_t* buffer)
 {
-	assert(view->vo_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	assert(view->image->depth == 1);
+	_debug_assert__(view->vo_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	_debug_assert__(view->image->depth == 1);
 	vulkan_renderer_t* renderer = view->renderer;
 	VkBufferImageCopy region =
 	{
@@ -252,7 +252,7 @@ RENDERER_API void vulkan_image_view_copy_from_buffer(vulkan_image_view_t* view, 
 
 RENDERER_API void vulkan_image_view_upload_data(vulkan_image_view_t* view, void* data)
 {
-	assert(data != NULL);
+	_debug_assert__(data != NULL);
 	
 	// TODO: vulkan_image_get_size(view->image);
 	u32 size = view->image->width * view->image->height * get_texel_size_from_format(view->image->vo_format);

@@ -285,7 +285,7 @@ static vulkan_image_view_t* create_write_image_views(vulkan_texture_t* texture, 
 		OUT view_count = 0;
 		return NULL;
 	}
-	assert(texture->image.layer_count >= 6);
+	_debug_assert__(texture->image.layer_count >= 6);
 	OUT view_count = 6;
 	vulkan_image_view_t* views = memory_allocator_alloc_obj_array(texture->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE_VIEW_ARRAY, vulkan_image_view_t, 6);
 	for(u32 i = 0; i < 6; i++)
@@ -322,8 +322,8 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 	texture->technique = create_info->technique;
 	texture->current_stage = VULKAN_TEXTURE_USAGE_STAGE_UNDEFINED;
 
-	assert(create_info->depth == 1); 	// for now, the depth must be 1
-	assert(create_info->channel_count == 4);
+	_debug_assert__(create_info->depth == 1); 	// for now, the depth must be 1
+	_debug_assert__(create_info->channel_count == 4);
 
 	vulkan_image_create_info_t image_info =
 	{
@@ -512,7 +512,7 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 	vulkan_texture_type_t type = texture->type;
 	if(type & VULKAN_TEXTURE_TYPE_CUBE)
 	{
-		assert(data_count == 6);
+		_debug_assert__(data_count == 6);
 		for(u32 i = 0; i < data_count; i++)
 		{
 			assert((data[i].width == texture->width) && (data[i].height == texture->height));
@@ -520,7 +520,7 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 			assert((data[i].depth == texture->depth) && (data[i].depth == 1));
 		}
 		u32 texture_size = data[0].width * data[0].height * data[0].channel_count;
-		assert(texture_size > 0);
+		_debug_assert__(texture_size > 0);
 		vulkan_buffer_create_info_t create_info = 
 		{
 			.count = data_count,
@@ -547,8 +547,8 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 			case VULKAN_TEXTURE_TYPE_DEPTH:
 			case VULKAN_TEXTURE_TYPE_NORMAL:
 			{
-				assert(data_count >= 1);
-				assert(data[0].channel_count == 4);
+				_debug_assert__(data_count >= 1);
+				_debug_assert__(data[0].channel_count == 4);
 				vulkan_buffer_create_info_t create_info = 
 				{
 					.data = data[0].data,

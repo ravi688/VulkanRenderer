@@ -4,6 +4,7 @@
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <renderer/tests/depth_render_texture.h>
 #include <renderer/tests/depth_render_texture.load.h>

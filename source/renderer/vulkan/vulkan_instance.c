@@ -77,7 +77,7 @@ RENDERER_API void vulkan_instance_destroy(vulkan_instance_t* instance)
 
 RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
 {
-	assert(instance != NULL);
+	_debug_assert__(instance != NULL);
 	if(instance->extension_properties != NULL)
 		memory_allocator_dealloc(instance->renderer->allocator, instance->extension_properties);
 	if(instance->physical_devices != NULL)
@@ -91,23 +91,23 @@ RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
 
 RENDERER_API u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* instance)
 {
-	assert(instance != NULL);
+	_debug_assert__(instance != NULL);
 	if(instance->physical_device_count != U32_MAX)
 		return instance->physical_device_count;
 	VkResult result = vkEnumeratePhysicalDevices(instance->handle, &instance->physical_device_count, NULL);
 	vulkan_result_assert_success(result);
-	assert_wrn(instance->physical_device_count != 0);
+	_debug_assert_wrn__(instance->physical_device_count != 0);
 	return instance->physical_device_count;
 }
 
 RENDERER_API u32 vulkan_instance_get_extension_count(vulkan_instance_t* instance, const char* layer_name)
 {
-	assert(layer_name == NULL); 		// for now it should be null, since we are not enabling any layers
+	_debug_assert__(layer_name == NULL); 		// for now it should be null, since we are not enabling any layers
 	if(instance->extension_count != U32_MAX)
 		return instance->extension_count;
 	VkResult result = vkEnumerateInstanceExtensionProperties(layer_name, &instance->extension_count, NULL);
 	vulkan_result_assert_success(result);
-	assert_wrn(instance->extension_count != 0);
+	_debug_assert_wrn__(instance->extension_count != 0);
 	return instance->extension_count;
 }
 
@@ -130,7 +130,7 @@ RENDERER_API vulkan_physical_device_t* vulkan_instance_get_physical_devices(vulk
 
 RENDERER_API VkExtensionProperties* vulkan_instance_get_extension_properties(vulkan_instance_t* instance, const char* layer_name)
 {
-	assert(layer_name == NULL); 		// for now it should be null, since we are not enabling any layers
+	_debug_assert__(layer_name == NULL); 		// for now it should be null, since we are not enabling any layers
 	if(instance->extension_properties != NULL)
 		return instance->extension_properties;
 	u32 extension_count = vulkan_instance_get_extension_count(instance, layer_name);
@@ -145,7 +145,7 @@ RENDERER_API VkExtensionProperties* vulkan_instance_get_extension_properties(vul
 // returning bools
 RENDERER_API bool vulkan_instance_is_extension_supported(vulkan_instance_t* instance, const char* extension, const char* layer_name)
 {
-	assert(layer_name == NULL);
+	_debug_assert__(layer_name == NULL);
 	u32 extension_count = vulkan_instance_get_extension_count(instance, layer_name);
 	VkExtensionProperties* properties = vulkan_instance_get_extension_properties(instance, layer_name);
 	for(u32 i = 0; i < extension_count; i++)

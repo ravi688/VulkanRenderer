@@ -55,7 +55,7 @@ RENDERER_API text_mesh_t* text_mesh_new(memory_allocator_t* allocator)
 
 RENDERER_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool)
 {
-	assert(pool != NULL);
+	_debug_assert__(pool != NULL);
 	text_mesh_t* text_mesh = text_mesh_new(renderer->allocator);
 	text_mesh->renderer = renderer;
 	text_mesh->instance_buffers = dictionary_create(u16, vulkan_instance_buffer_t, 0, dictionary_key_comparer_u16);
@@ -156,7 +156,7 @@ RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_st
 		prev_string = buf_get_ptr_at(strings, index);
 		index = prev_string->next_index;
 	}
-	assert(index != BUF_INVALID_INDEX);			// failed to find a string with index "handle"
+	_debug_assert__(index != BUF_INVALID_INDEX);			// failed to find a string with index "handle"
 
 	text_mesh_string_t* string = buf_get_ptr_at(strings, index);
 	

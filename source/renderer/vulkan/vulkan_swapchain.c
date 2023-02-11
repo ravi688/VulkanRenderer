@@ -141,7 +141,7 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_cre
 		}
 
 		vkCall(vkGetSwapchainImagesKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, &swapchain->image_count, NULL));
-		assert(swapchain->image_count != 0);
+		_debug_assert__(swapchain->image_count != 0);
 		swapchain->vo_images = memory_allocator_alloc_obj_array(swapchain->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_ARRAY, VkImage, swapchain->image_count);
 		swapchain->vo_image_views = memory_allocator_alloc_obj_array(swapchain->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, swapchain->image_count);
 	}

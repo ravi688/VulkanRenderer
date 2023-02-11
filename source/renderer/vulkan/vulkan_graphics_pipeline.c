@@ -19,7 +19,7 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_all
 
 RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline)
 {
-	assert(create_info->shader_module_count > 0);
+	_debug_assert__(create_info->shader_module_count > 0);
 
 	memzero(pipeline, vulkan_graphics_pipeline_t);
 

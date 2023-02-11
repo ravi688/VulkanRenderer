@@ -38,9 +38,9 @@ RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* rendere
 
 	queue->handle = VULKAN_RENDER_QUEUE_HANDLE_INVALID;
 	queue->renderer = renderer;
-	assert(sizeof(vulkan_render_pass_handle_t) == sizeof(buf_ucount_t));
+	_debug_assert__(sizeof(vulkan_render_pass_handle_t) == sizeof(buf_ucount_t));
 	queue->render_pass_handles = dictionary_create(vulkan_render_pass_handle_t, subpass_shader_list_t*, 1, dictionary_key_comparer_buf_ucount_t);
-	assert(sizeof(vulkan_shader_handle_t) == sizeof(buf_ucount_t));
+	_debug_assert__(sizeof(vulkan_shader_handle_t) == sizeof(buf_ucount_t));
 	queue->shader_handles = dictionary_create(vulkan_shader_handle_t, material_and_render_object_list_map_t, 1, dictionary_key_comparer_buf_ucount_t);
 	queue->is_ready = false;
 }
@@ -188,7 +188,7 @@ RENDERER_API void vulkan_render_queue_remove_shaderH();
 
 RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_handle_t handle)
 {
-	assert(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
+	_debug_assert__(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
 	vulkan_render_object_t* object = handle;
 	material_and_render_object_list_map_t* map = dictionary_get_value_ptr(&queue->shader_handles, &object->material->shader->handle);
 	render_object_list_t* list = dictionary_get_value_ptr(map, &object->material->handle);
@@ -208,7 +208,7 @@ RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
 
 RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera)
 {
-	// ASSERT_WRN(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it\n");
+	// debug_assert_wrn__(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it\n");
 	// get the pointers to render pass pool, shader library and material library
 	vulkan_render_pass_pool_t* pass_pool = queue->renderer->render_pass_pool;
 	vulkan_shader_library_t* shader_library = queue->renderer->shader_library;

@@ -3,6 +3,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 RENDERER_API string_builder_t* string_builder_create(memory_allocator_t* allocator, u32 capacity)
 {
@@ -52,7 +53,7 @@ RENDERER_API void string_builder_append(string_builder_t* builder, const char* c
 	/* format the string and put that into the buffer */
 	va_start(args, format);
 	u32 written_size = vsnprintf(CAST_TO(char*, ptr + indentation_level), required_size + 1, format, args);
-	assert(written_size == required_size);
+	_debug_assert__(written_size == required_size);
 	va_end(args);
 
 	/* pop out the null character */

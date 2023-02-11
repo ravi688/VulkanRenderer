@@ -55,7 +55,7 @@ RENDERER_API library_slot_handle_t library_create_slot(library_t* lib, void* obj
 
 RENDERER_API void* library_getH(library_t* lib, library_slot_handle_t handle)
 {
-	assert(handle != LIBRARY_SLOT_HANDLE_INVALID);
+	_debug_assert__(handle != LIBRARY_SLOT_HANDLE_INVALID);
 	buf_ucount_t index;
 	buf_get_at(&lib->relocation_table, handle, &index);
 	return CAST_TO(library_slot_t*, buf_get_ptr_at(&lib->slots, index))->object;
@@ -63,7 +63,7 @@ RENDERER_API void* library_getH(library_t* lib, library_slot_handle_t handle)
 
 RENDERER_API void library_destroy_slotH(library_t* lib, library_slot_handle_t handle)
 {
-	assert(handle != LIBRARY_SLOT_HANDLE_INVALID);
+	_debug_assert__(handle != LIBRARY_SLOT_HANDLE_INVALID);
 	buf_ucount_t index;
 	buf_get_at(&lib->relocation_table, handle, &index);
 	if(!buf_remove_at(&lib->slots, index, NULL))

@@ -18,3 +18,24 @@
 #	define LOG_ERR(...) DEBUG_LOG_ERROR(__VA_ARGS__)
 #	define LOG_FETAL_ERR(...) DEBUG_LOG_FETAL_ERROR(__VA_ARGS__)
 #endif
+
+
+#include <renderer/defines.h>
+
+#if defined(debug_break)
+#undef debug_break
+#endif
+
+typedef enum debug_break_reason_t
+{
+	DEBUG_BREAK_REASON_NONE,
+	DEBUG_BREAK_REASON_INVALID_MEMORY_ACCESS,
+	DEBUG_BREAK_REASON_ASSERTION_FAILED,
+	DEBUG_BREAK_REASON_UNKNOWN
+} debug_break_reason_t;
+
+BEGIN_CPP_COMPATIBLE
+
+RENDERER_API NO_RETURN_FUNCTION void debug_break__(debug_break_reason_t reason);
+
+END_CPP_COMPATIBLE

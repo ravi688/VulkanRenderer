@@ -22,7 +22,7 @@ RENDERER_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 
 RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
 {
-	ASSERT(mesh_data != NULL, "Failed to create mesh_t, mesh3d_t* mesh_data == NULL\n");
+	debug_assert__(mesh_data != NULL, "Failed to create mesh_t, mesh3d_t* mesh_data == NULL\n");
 	vulkan_vertex_buffer_create_info_t* vertex_buffer_infos = stack_newv(vulkan_vertex_buffer_create_info_t, MESH3D_MAX_ATTRIBUTE_COUNT);
 	BUFFER** buffers = (BUFFER**)mesh_data;
 	u8 buffer_count = 0;
@@ -35,7 +35,7 @@ RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data
 		create_info->count = buffers[i]->element_count;
 		++buffer_count;
 	}
-	assert_wrn(buffer_count != 0);
+	_debug_assert_wrn__(buffer_count != 0);
 
 	vulkan_mesh_create_info_t create_info =
 	{

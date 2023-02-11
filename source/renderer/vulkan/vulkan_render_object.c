@@ -44,7 +44,7 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 		.vo_sharing_mode = object->renderer->vo_sharing_mode,
 		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
-	assert(create_info.size == (64 * 2));
+	_debug_assert__(create_info.size == (64 * 2));
 	vulkan_buffer_create_no_alloc(object->renderer, &create_info, &object->buffer);
 	struct_descriptor_map(&object->struct_definition, vulkan_buffer_map(&object->buffer));
 	vulkan_descriptor_set_write_uniform_buffer(&object->object_set, VULKAN_DESCRIPTOR_BINDING_TRANSFORM, &object->buffer);
@@ -125,7 +125,7 @@ RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* obj,
 		vulkan_render_queue_removeH(obj->queue, obj->handle);
 	obj->material = material;
 	vulkan_render_object_handle_t handle = vulkan_render_queue_add(obj->queue, obj);
-	assert(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
+	_debug_assert__(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
 }
 
 RENDERER_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* obj)

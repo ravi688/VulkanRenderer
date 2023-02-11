@@ -80,7 +80,7 @@ RENDERER_API void render_window_unsubscribe_on_resize(render_window_t* window, v
 {
 	if(window->resize_event == NULL) return;
 	bool result = buf_remove(window->resize_event, callback, (bool (*)(void*, void*))comparer);
-	ASSERT(result == true, "Failed to unsubscribe %u from render_window_t::resize_event\n", callback);
+	debug_assert__(result == true, "Failed to unsubscribe %u from render_window_t::resize_event\n", callback);
 }
 
 RENDERER_API bool render_window_should_close(render_window_t* window)

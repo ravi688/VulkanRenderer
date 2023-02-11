@@ -2,7 +2,7 @@
 #include <renderer/texture.h>
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/bmp.h>
-#include <renderer/assert.h> 	// LOG_FETAL_ERR
+#include <renderer/debug.h>
 #include <stdarg.h> 		// va_start, va_end, va_list
 
 RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info)

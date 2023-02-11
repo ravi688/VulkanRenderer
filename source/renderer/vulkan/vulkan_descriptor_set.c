@@ -80,10 +80,10 @@ static VkImageLayout get_layout(VkFormat format)
 
 RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_texture_t* texture)
 {
-	assert(texture->image_view.vo_handle != VK_NULL_HANDLE);
+	_debug_assert__(texture->image_view.vo_handle != VK_NULL_HANDLE);
 	
 	// NOTE: texture->vo_image_sampler might be VK_NULL_HANDLE in case of subpassInput
-	// assert(texture->vo_image_sampler != VK_NULL_HANDLE);
+	// _debug_assert__(texture->vo_image_sampler != VK_NULL_HANDLE);
 	VkDescriptorImageInfo image_info =
 	{
 		.imageLayout = get_layout(texture->image.vo_format),

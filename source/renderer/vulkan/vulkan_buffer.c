@@ -78,8 +78,8 @@ RENDERER_API void vulkan_buffer_release_resources(vulkan_buffer_t* buffer)
 
 RENDERER_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* data, u32 data_size)
 {
-	assert(data != NULL);
-	assert_wrn(data_size != 0);
+	_debug_assert__(data != NULL);
+	_debug_assert_wrn__(data_size != 0);
 	assert((buffer_offset + data_size) <= buffer->size);
 
 	void* ptr;
@@ -90,7 +90,7 @@ RENDERER_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_of
 
 RENDERER_API void* vulkan_buffer_map(vulkan_buffer_t* buffer)
 {
-	assert_wrn(buffer->size != 0);
+	_debug_assert_wrn__(buffer->size != 0);
 	void* ptr;
 	vkMapMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory, 0, buffer->size, 0, &ptr);
 	return ptr;

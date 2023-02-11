@@ -30,7 +30,7 @@ RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new(memory_allocator_t* allocato
 
 RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font)
 {
-	assert(font != NULL);
+	_debug_assert__(font != NULL);
 	glyph_mesh_pool_t* pool = glyph_mesh_pool_new(renderer->allocator);
 	pool->glyph_meshes = dictionary_create(u16, glyph_mesh_t, 0, dictionary_key_comparer_u16);
 	pool->renderer = renderer;

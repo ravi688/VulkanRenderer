@@ -15,7 +15,7 @@ RENDERER_API vulkan_image_t* vulkan_image_new(memory_allocator_t* allocator)
 RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* image)
 {
 	assert(!((create_info->vo_type == VK_IMAGE_TYPE_2D) && (create_info->depth > 1)));
-	assert(create_info->depth != 0);
+	_debug_assert__(create_info->depth != 0);
 
 	memzero(image, vulkan_image_t);
 
@@ -70,7 +70,7 @@ RENDERER_API vulkan_image_t* vulkan_image_create(vulkan_renderer_t* renderer, vu
 
 RENDERER_API void vulkan_image_destroy(vulkan_image_t* image)
 {
-	assert(image != NULL);
+	_debug_assert__(image != NULL);
 	vkDestroyImage(image->renderer->logical_device->vo_handle, image->vo_handle, NULL);
 	vkFreeMemory(image->renderer->logical_device->vo_handle, image->vo_memory, NULL);
 }

@@ -1,8 +1,8 @@
 
 #include <renderer/internal/vulkan/vulkan_result.h>
-#include <renderer/assert.h>
+#include <renderer/debug.h>
 #include <stdlib.h>
-
+#include <stdio.h>
 
 RENDERER_API void __vulkan_result_assert_success(VkResult result, u32 line, const char* fnname, const char* flname)
 {
@@ -62,7 +62,7 @@ RENDERER_API void vulkan_result_assert_no_error(VkResult result)
 
 RENDERER_API void vulkan_result_to_string(VkResult result, BUFFER* string_buffer)
 {
-	assert(buf_get_element_size(string_buffer) == sizeof(char));
+	_debug_assert__(buf_get_element_size(string_buffer) == sizeof(char));
 	buf_push_string(string_buffer, (char*)vulkan_result_to_string_literal(result));
 }
 

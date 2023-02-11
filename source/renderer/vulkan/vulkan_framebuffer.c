@@ -86,11 +86,11 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 		}
 
 #ifdef GLOBAL_DEBUG
-		assert_wrn(depth_count <= 1);
+		_debug_assert_wrn__(depth_count <= 1);
 #endif
 	// }
 
-	assert(render_pass->supplementary_attachment_count <= 1);
+	_debug_assert__(render_pass->supplementary_attachment_count <= 1);
 	for(u32 j = 0; j < render_pass->supplementary_attachment_count; j++)
 		framebuffer->image_views[j] = render_pass->supplementary_attachments[j + framebuffer->id * render_pass->supplementary_attachment_count];
 
@@ -117,7 +117,7 @@ RENDERER_API void vulkan_framebuffer_set_supplementary(vulkan_framebuffer_t* fra
 	if(!framebuffer->is_supplementary_supported) return;
 
 	// for now supplementary attachment count must be one; just for swapchain color attachment
-	assert(framebuffer->pass->supplementary_attachment_count == 1);
+	_debug_assert__(framebuffer->pass->supplementary_attachment_count == 1);
 	
 	framebuffer->image_views[0] = view->vo_handle;
 	vulkan_framebuffer_recreate(framebuffer);
@@ -129,7 +129,7 @@ RENDERER_API void vulkan_framebuffer_restore_supplementary(vulkan_framebuffer_t*
 	vulkan_render_pass_t* render_pass = framebuffer->pass;
 
 	// for now supplementary attachment count must be one; just for swapchain color attachment
-	assert(render_pass->supplementary_attachment_count == 1);
+	_debug_assert__(render_pass->supplementary_attachment_count == 1);
 	
 	framebuffer->image_views[0] = render_pass->supplementary_attachments[framebuffer->id * render_pass->supplementary_attachment_count];
 	vulkan_framebuffer_recreate(framebuffer);
@@ -139,7 +139,7 @@ RENDERER_API void vulkan_framebuffer_set_depth(vulkan_framebuffer_t* framebuffer
 {
 	if(!framebuffer->is_depth_supported) return;
 
-	assert(framebuffer->depth_index != U32_MAX);
+	_debug_assert__(framebuffer->depth_index != U32_MAX);
 	framebuffer->image_views[framebuffer->depth_index] = view->vo_handle;
 	vulkan_framebuffer_recreate(framebuffer);
 }
@@ -148,7 +148,7 @@ RENDERER_API void vulkan_framebuffer_restore_depth(vulkan_framebuffer_t* framebu
 {
 	if(!framebuffer->is_depth_supported) return;
 
-	assert(framebuffer->depth_index != U32_MAX);
+	_debug_assert__(framebuffer->depth_index != U32_MAX);
 
 	u32 index = framebuffer->depth_index;
 	framebuffer->image_views[index] = framebuffer->pass->allocated_attachments[CAST_TO(s32, index) - 1].image_view.vo_handle;

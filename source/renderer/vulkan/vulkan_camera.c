@@ -32,7 +32,7 @@ static void* create_buffer_and_map(vulkan_camera_t* camera, vulkan_buffer_t OUT 
 		.vo_sharing_mode = camera->renderer->vo_sharing_mode,
 		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
-	assert(create_info.size == (64 * 4));
+	_debug_assert__(create_info.size == (64 * 4));
 	vulkan_buffer_create_no_alloc(camera->renderer, &create_info, buffer);
 
 	vulkan_descriptor_set_create_info_t set_create_info = 
@@ -508,7 +508,7 @@ RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulka
 
 RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_framebuffer_list_handle_t handle)
 {
-	assert(handle != VULKAN_FRAMEBUFFER_LIST_HANDLE_INVALID);
+	_debug_assert__(handle != VULKAN_FRAMEBUFFER_LIST_HANDLE_INVALID);
 	return CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, camera->current_shot_index)), handle));
 }
 
@@ -581,7 +581,7 @@ RENDERER_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t tr
 RENDERER_API void vulkan_camera_set_position_cube(vulkan_camera_t* camera, vec3_t position)
 {
 	camera->position = position;
-	assert(camera->max_shot_count == 6);
+	_debug_assert__(camera->max_shot_count == 6);
 	for(u32 i = 0; i < 6; i++)
 	{
 		struct_descriptor_map(&camera->struct_definition, camera->buffer_mappings[i]);

@@ -219,7 +219,7 @@ static void vulkan_render_pass_create_info_deep_copy(memory_allocator_t* allocat
 	dst->attachment_descriptions = src->attachment_description_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, src->attachment_description_count) : NULL;
 	memcpy(dst->attachment_descriptions, src->attachment_descriptions, sizeof(VkAttachmentDescription) * src->attachment_description_count);
 
-	assert(src->subpass_count > 0);
+	_debug_assert__(src->subpass_count > 0);
 	dst->subpasses = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO_ARRAY, vulkan_subpass_create_info_t, src->subpass_count);
 	memcpy(dst->subpasses, src->subpasses, sizeof(vulkan_subpass_create_info_t) * src->subpass_count);
 	for(u32 i = 0; i < src->subpass_count; i++)

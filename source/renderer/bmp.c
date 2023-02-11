@@ -58,8 +58,8 @@ RENDERER_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, 
 	u8* dst = data;
 	const u8* src = parser.bytes;
 	u8 pad_channel_count = 4 - channel_count;
-	assert(pad_channel_count >= 0);
-	assert(pad_channel_count <= 4);
+	_debug_assert__(pad_channel_count >= 0);
+	_debug_assert__(pad_channel_count <= 4);
 	u32 pixel_count = width * height;
 	while(pixel_count > 0)
 	{

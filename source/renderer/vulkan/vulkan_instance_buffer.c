@@ -6,7 +6,7 @@
 // constructors and destructors
 RENDERER_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)
 {
-	assert(out_instance_buffer != NULL);
+	_debug_assert__(out_instance_buffer != NULL);
 	multi_buffer_create(create_info->stride, create_info->capacity, &out_instance_buffer->host_buffer);
 	vulkan_buffer_init(&out_instance_buffer->device_buffer);
 	out_instance_buffer->renderer = renderer;

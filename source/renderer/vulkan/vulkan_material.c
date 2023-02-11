@@ -18,7 +18,7 @@ RENDERER_API vulkan_material_t* vulkan_material_new(memory_allocator_t* allocato
 
 static u16 calculate_uniform_resource_count(vulkan_shader_t* shader)
 {
-	assert(shader != NULL);
+	_debug_assert__(shader != NULL);
 	if(shader->material_set_bindings == NULL) return 0;
 	u16 count = shader->material_set_binding_count;
 	u16 uniform_count = 0;
@@ -30,7 +30,7 @@ static u16 calculate_uniform_resource_count(vulkan_shader_t* shader)
 
 static void setup_material_resources(vulkan_material_t* material)
 {
-	assert(material->shader != NULL);
+	_debug_assert__(material->shader != NULL);
 	u16 count = calculate_uniform_resource_count(material->shader);
 	if(count == 0) return;
 
@@ -410,9 +410,9 @@ RENDERER_API void vulkan_material_set_mat4H(vulkan_material_t* material, vulkan_
 
 RENDERER_API void vulkan_material_set_textureH(vulkan_material_t* material, vulkan_material_field_handle_t handle, vulkan_texture_t* texture)
 {
-	assert(handle.index < material->shader->material_set_binding_count);
+	_debug_assert__(handle.index < material->shader->material_set_binding_count);
 	vulkan_shader_resource_description_t descriptor = material->shader->material_set_bindings[handle.index];
-	// assert(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
+	// _debug_assert__(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
 	vulkan_descriptor_set_write_texture(&material->material_set, descriptor.binding_number, texture);
 }
 
@@ -572,7 +572,7 @@ RENDERER_API vulkan_texture_t* vulkan_material_get_texture2d(vulkan_material_t* 
 static void get_record_and_field_name(const char* const full_name, char out_struct_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE], char out_field_name[STRUCT_FIELD_MAX_NAME_SIZE])
 {
 	u32 len = strlen(full_name);
-	assert(len != 0);
+	_debug_assert__(len != 0);
 	const char* ptr = strchr(full_name, '.');
 	memset(out_field_name, 0, STRUCT_FIELD_MAX_NAME_SIZE);
 	memset(out_struct_name, 0, STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
@@ -584,15 +584,15 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 	}
 	u16 struct_name_len = (u16)(ptr - full_name);
 	u16 field_name_len = (u16)(len - struct_name_len - 1);
-	assert(struct_name_len < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
-	assert(field_name_len < STRUCT_FIELD_MAX_NAME_SIZE);
+	_debug_assert__(struct_name_len < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
+	_debug_assert__(field_name_len < STRUCT_FIELD_MAX_NAME_SIZE);
 	memcpy(out_struct_name, full_name, struct_name_len);
 	memcpy(out_field_name, ptr + 1, field_name_len);
 }
 
 RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vulkan_material_t* material, const char* name)
 {
-	assert(material->shader != NULL);
+	_debug_assert__(material->shader != NULL);
 
 	if(material->shader->material_set_binding_count == 0)
 		LOG_WRN("Couldn't get field handle to \"%s\", reason: material->shader->material_set_binding_count == 0\n", name);

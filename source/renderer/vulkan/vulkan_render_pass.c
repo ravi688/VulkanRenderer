@@ -64,7 +64,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	render_pass->handle = VULKAN_RENDER_PASS_HANDLE_INVALID;
 	render_pass->required_framebuffer_count = create_info->framebuffer_count;
 
-	assert(create_info->subpass_count > 0);
+	_debug_assert__(create_info->subpass_count > 0);
 	VkSubpassDescription* subpasses = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SUBPASS_DESCRIPTION_ARRAY, VkSubpassDescription, create_info->subpass_count);
 	for(u32 i = 0; i < create_info->subpass_count; i++)
 	{
@@ -81,7 +81,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		};
 	}
 
-	assert(create_info->attachment_description_count > 0);
+	_debug_assert__(create_info->attachment_description_count > 0);
 	// VkAttachmentDescription* attachment_descriptions = heap_newv(VkAttachmentDescription, create_info->attachment_description_count);
 	// memcpy(attachment_descriptions, create_info->attachment_descriptions, sizeof(VkAttachmentDescription) * create_info->attachment_description_count);
 	
@@ -105,7 +105,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	render_pass->supplementary_attachment_count = create_info->supplementary_attachment_count;
 	render_pass->supplementary_attachments = create_info->supplementary_attachments;
 	render_pass->allocated_attachment_count = CAST_TO(s32, render_pass->attachment_count) - CAST_TO(s32, render_pass->supplementary_attachment_count);
-	assert(render_pass->allocated_attachment_count >= 0);
+	_debug_assert__(render_pass->allocated_attachment_count >= 0);
 	render_pass->allocated_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_ARRAY, vulkan_attachment_t, render_pass->allocated_attachment_count);
 	memzerov(render_pass->allocated_attachments, vulkan_attachment_t, render_pass->allocated_attachment_count);
 	for(u32 i = 0; i < render_pass->allocated_attachment_count; i++)

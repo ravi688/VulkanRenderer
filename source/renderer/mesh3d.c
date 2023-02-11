@@ -46,7 +46,7 @@ static function_signature(void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, 
 RENDERER_API function_signature(mesh3d_t*, mesh3d_new, memory_allocator_t* allocator)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(sizeof(buf_ucount_t) == sizeof(u64), "sizeof(buf_ucount_t) != sizeof(u64), this has to be 8 bytes because of VK_INDEX_TYPE_U64\n");
+	debug_assert__(sizeof(buf_ucount_t) == sizeof(u64), "sizeof(buf_ucount_t) != sizeof(u64), this has to be 8 bytes because of VK_INDEX_TYPE_U64\n");
 	mesh3d_t* mesh  = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_MESH3D, mesh3d_t);
 	memzero(mesh, mesh3d_t);
 	mesh->allocator = allocator;
@@ -63,7 +63,7 @@ RENDERER_API function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, inde
 		mesh->positions = NULL;
 	}
 	mesh->positions = BUFcreate(NULL, sizeof(vec3_t), count, 0);
-	ASSERT(mesh->positions != NULL, "mesh->positions == NULL\n");
+	debug_assert__(mesh->positions != NULL, "mesh->positions == NULL\n");
 	CALLTRACE_END();
 }
 
@@ -185,41 +185,41 @@ RENDERER_API function_signature(void, mesh3d_uvs_free, mesh3d_t* mesh)
 RENDERER_API function_signature(index_t, mesh3d_positions_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->positions != NULL, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->positions != NULL, __POSITIONS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_count(mesh->positions));
 }
 
 RENDERER_API function_signature(index_t, mesh3d_normals_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->normals != NULL, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->normals != NULL, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_count(mesh->normals));
 }
 
 RENDERER_API function_signature(index_t, mesh3d_tangents_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->tangents != NULL, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->tangents != NULL, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_count(mesh->tangents));
 }
 
 RENDERER_API function_signature(index_t, mesh3d_uvs_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->uvs != NULL, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->uvs != NULL, __UVS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_count(mesh->uvs));
 }
 
 RENDERER_API function_signature(index_t, mesh3d_colors_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_count(mesh->colors));
 }
 RENDERER_API function_signature(index_t, mesh3d_triangles_count, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->triangles != NULL, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(mesh->triangles != NULL, __TRIANGLES_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_count(mesh->triangles));
 }
 
@@ -309,7 +309,7 @@ RENDERER_API function_signature(bool, mesh3d_has_triangles, mesh3d_t* mesh)
 RENDERER_API function_signature(void, mesh3d_flip_triangles, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	assert(mesh != NULL);
+	_debug_assert__(mesh != NULL);
 	buf_ucount_t triangle_count = mesh3d_triangles_count(mesh);
 	for(buf_ucount_t i = 0; i < triangle_count; i++)
 	{
@@ -369,8 +369,8 @@ static vec3_t get_tangent(mesh3d_t* mesh, index_t i0, index_t i1, index_t i2)
 RENDERER_API function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	assert(mesh != NULL);
-	assert_wrn(mesh3d_positions_count(mesh) >= 3); 		// there should be at least one triangle
+	_debug_assert__(mesh != NULL);
+	_debug_assert_wrn__(mesh3d_positions_count(mesh) >= 3); 		// there should be at least one triangle
 
 	// allocate memory for tangents and initialize them with vec3_zero
 	buf_ucount_t vertex_count = mesh3d_positions_count(mesh);
@@ -405,7 +405,7 @@ RENDERER_API function_signature(void, mesh3d_calculate_tangents, mesh3d_t* mesh)
 RENDERER_API function_signature(void, mesh3d_position_add, mesh3d_t* mesh, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	vec3_t v = {x, y, z};
 	buf_push(mesh->positions, &v);
 	CALLTRACE_END();
@@ -414,7 +414,7 @@ RENDERER_API function_signature(void, mesh3d_position_add, mesh3d_t* mesh, float
 RENDERER_API function_signature(void, mesh3d_position_add_vec3, mesh3d_t* mesh, vec3_t  v)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	buf_push(mesh->positions, (void*)(&v));
 	CALLTRACE_END();
 }
@@ -422,7 +422,7 @@ RENDERER_API function_signature(void, mesh3d_position_add_vec3, mesh3d_t* mesh, 
 RENDERER_API function_signature(void, mesh3d_position_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	vec3_t* v = buf_get_ptr_at_typeof(mesh->positions, vec3_t, index);
 	v->x = x; v->y = y; v->z = z;
 	CALLTRACE_END();
@@ -431,7 +431,7 @@ RENDERER_API function_signature(void, mesh3d_position_set, mesh3d_t* mesh, index
 RENDERER_API function_signature(void, mesh3d_position_set_vec3, mesh3d_t* mesh, index_t index, vec3_t  position)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	buf_set_at(mesh->positions, index, (void*)(&position));
 	CALLTRACE_END();
 }
@@ -439,7 +439,7 @@ RENDERER_API function_signature(void, mesh3d_position_set_vec3, mesh3d_t* mesh, 
 RENDERER_API function_signature(void, mesh3d_position_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->positions, vec3_t, index)->x = x;
 	CALLTRACE_END();
 }
@@ -447,7 +447,7 @@ RENDERER_API function_signature(void, mesh3d_position_set_x, mesh3d_t* mesh, ind
 RENDERER_API function_signature(void, mesh3d_position_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->positions, vec3_t, index)->y = y;
 	CALLTRACE_END();
 }
@@ -455,7 +455,7 @@ RENDERER_API function_signature(void, mesh3d_position_set_y, mesh3d_t* mesh, ind
 RENDERER_API function_signature(void, mesh3d_position_set_z, mesh3d_t* mesh, index_t index, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->positions, vec3_t, index)->z = z;
 	CALLTRACE_END();
 }
@@ -463,42 +463,42 @@ RENDERER_API function_signature(void, mesh3d_position_set_z, mesh3d_t* mesh, ind
 RENDERER_API function_signature(vec3_t,  mesh3d_position_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->positions, vec3_t, index));
 }
 
 RENDERER_API function_signature(vec3_t*, mesh3d_position_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->positions, vec3_t, index));
 }
 
 RENDERER_API function_signature(float, mesh3d_position_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->positions, vec3_t, index)->x);
 }
 
 RENDERER_API function_signature(float, mesh3d_position_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->positions, vec3_t, index)->y);
 }
 
 RENDERER_API function_signature(float, mesh3d_position_get_z, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->positions, vec3_t, index)->z);
 }
 
 RENDERER_API function_signature(void, mesh3d_normal_add, mesh3d_t* mesh, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	vec3_t n = {x, y, z};
 	buf_push(mesh->normals, &n);
 	CALLTRACE_END();
@@ -507,7 +507,7 @@ RENDERER_API function_signature(void, mesh3d_normal_add, mesh3d_t* mesh, float x
 RENDERER_API function_signature(void, mesh3d_normal_add_vec3, mesh3d_t* mesh, vec3_t  v)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	buf_push(mesh->normals, (void*)(&v));
 	CALLTRACE_END();
 }
@@ -515,7 +515,7 @@ RENDERER_API function_signature(void, mesh3d_normal_add_vec3, mesh3d_t* mesh, ve
 RENDERER_API function_signature(void, mesh3d_normal_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	vec3_t* n = buf_get_ptr_at_typeof(mesh->normals, vec3_t, index);
 	n->x = x; n->y = y; n->z = z;
 	CALLTRACE_END();
@@ -524,7 +524,7 @@ RENDERER_API function_signature(void, mesh3d_normal_set, mesh3d_t* mesh, index_t
 RENDERER_API function_signature(void, mesh3d_normal_set_vec3, mesh3d_t* mesh, index_t index, vec3_t  normal)
 {
 	CALLTRACE_BEGIN();
- 	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+ 	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
  	buf_set_at(mesh->normals, index, (void*)(&normal));
 	CALLTRACE_END();
 }
@@ -532,7 +532,7 @@ RENDERER_API function_signature(void, mesh3d_normal_set_vec3, mesh3d_t* mesh, in
 RENDERER_API function_signature(void, mesh3d_normal_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->normals, vec3_t, index)->x = x;
 	CALLTRACE_END();
 }
@@ -540,7 +540,7 @@ RENDERER_API function_signature(void, mesh3d_normal_set_x, mesh3d_t* mesh, index
 RENDERER_API function_signature(void, mesh3d_normal_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->normals, vec3_t, index)->y = y;
 	CALLTRACE_END();
 }
@@ -548,7 +548,7 @@ RENDERER_API function_signature(void, mesh3d_normal_set_y, mesh3d_t* mesh, index
 RENDERER_API function_signature(void, mesh3d_normal_set_z, mesh3d_t* mesh, index_t index, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->normals, vec3_t, index)->z = z;
 	CALLTRACE_END();
 }
@@ -556,35 +556,35 @@ RENDERER_API function_signature(void, mesh3d_normal_set_z, mesh3d_t* mesh, index
 RENDERER_API function_signature(vec3_t, mesh3d_normal_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->normals, vec3_t, index));
 }
 
 RENDERER_API function_signature(vec3_t*, mesh3d_normal_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->normals, vec3_t, index));
 }
 
 RENDERER_API function_signature(float, mesh3d_normal_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->normals, vec3_t, index)->x);
 }
 
 RENDERER_API function_signature(float, mesh3d_normal_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->normals, vec3_t, index)->y);
 }
 
 RENDERER_API function_signature(float, mesh3d_normal_get_z, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->normals, vec3_t, index)->z);
 }
 
@@ -592,7 +592,7 @@ RENDERER_API function_signature(float, mesh3d_normal_get_z, mesh3d_t* mesh, inde
 RENDERER_API function_signature(void, mesh3d_tangents_add, mesh3d_t* mesh, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	vec3_t n = {x, y, z};
 	buf_push(mesh->tangents, &n);
 	CALLTRACE_END();
@@ -601,7 +601,7 @@ RENDERER_API function_signature(void, mesh3d_tangents_add, mesh3d_t* mesh, float
 RENDERER_API function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, vec3_t  v)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	buf_push(mesh->tangents, (void*)(&v));
 	CALLTRACE_END();
 }
@@ -609,7 +609,7 @@ RENDERER_API function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, v
 RENDERER_API function_signature(void, mesh3d_tangent_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	vec3_t* n = buf_get_ptr_at_typeof(mesh->tangents, vec3_t, index);
 	n->x = x; n->y = y; n->z = z;
 	CALLTRACE_END();
@@ -618,7 +618,7 @@ RENDERER_API function_signature(void, mesh3d_tangent_set, mesh3d_t* mesh, index_
 RENDERER_API function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, index_t index, vec3_t  tangent)
 {
 	CALLTRACE_BEGIN();
- 	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+ 	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
  	buf_set_at(mesh->tangents, index, (void*)(&tangent));
 	CALLTRACE_END();
 }
@@ -626,7 +626,7 @@ RENDERER_API function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, i
 RENDERER_API function_signature(void, mesh3d_tangent_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->tangents, vec3_t, index)->x = x;
 	CALLTRACE_END();
 }
@@ -634,7 +634,7 @@ RENDERER_API function_signature(void, mesh3d_tangent_set_x, mesh3d_t* mesh, inde
 RENDERER_API function_signature(void, mesh3d_tangent_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->tangents, vec3_t, index)->y = y;
 	CALLTRACE_END();
 }
@@ -642,7 +642,7 @@ RENDERER_API function_signature(void, mesh3d_tangent_set_y, mesh3d_t* mesh, inde
 RENDERER_API function_signature(void, mesh3d_tangent_set_z, mesh3d_t* mesh, index_t index, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->tangents, vec3_t, index)->z = z;
 	CALLTRACE_END();
 }
@@ -650,42 +650,42 @@ RENDERER_API function_signature(void, mesh3d_tangent_set_z, mesh3d_t* mesh, inde
 RENDERER_API function_signature(vec3_t, mesh3d_tangent_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->tangents, vec3_t, index));
 }
 
 RENDERER_API function_signature(vec3_t*, mesh3d_tangent_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t, index));
 }
 
 RENDERER_API function_signature(float, mesh3d_tangent_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t, index)->x);
 }
 
 RENDERER_API function_signature(float, mesh3d_tangent_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t, index)->y);
 }
 
 RENDERER_API function_signature(float, mesh3d_tangent_get_z, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->tangents, vec3_t, index)->z);
 }
 
 RENDERER_API function_signature(void, mesh3d_color_add, mesh3d_t* mesh, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	vec3_t n = {x, y, z};
 	buf_push(mesh->colors, &n);
 	CALLTRACE_END();
@@ -694,7 +694,7 @@ RENDERER_API function_signature(void, mesh3d_color_add, mesh3d_t* mesh, float x,
 RENDERER_API function_signature(void, mesh3d_color_add_vec3, mesh3d_t* mesh, vec3_t  v)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	buf_push(mesh->colors, (void*)(&v));
 	CALLTRACE_END();
 }
@@ -702,7 +702,7 @@ RENDERER_API function_signature(void, mesh3d_color_add_vec3, mesh3d_t* mesh, vec
 RENDERER_API function_signature(void, mesh3d_color_set, mesh3d_t* mesh, index_t index, float x, float y, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	vec3_t* n = buf_get_ptr_at_typeof(mesh->colors, vec3_t, index);
 	n->x = x; n->y = y; n->z = z;
 	CALLTRACE_END();
@@ -711,7 +711,7 @@ RENDERER_API function_signature(void, mesh3d_color_set, mesh3d_t* mesh, index_t 
 RENDERER_API function_signature(void, mesh3d_color_set_vec3, mesh3d_t* mesh, index_t index, vec3_t  color)
 {
 	CALLTRACE_BEGIN();
- 	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+ 	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
  	buf_set_at(mesh->colors, index, (void*)(&color));
 	CALLTRACE_END();
 }
@@ -719,7 +719,7 @@ RENDERER_API function_signature(void, mesh3d_color_set_vec3, mesh3d_t* mesh, ind
 RENDERER_API function_signature(void, mesh3d_color_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->colors, vec3_t, index)->x = x;
 	CALLTRACE_END();
 }
@@ -727,7 +727,7 @@ RENDERER_API function_signature(void, mesh3d_color_set_x, mesh3d_t* mesh, index_
 RENDERER_API function_signature(void, mesh3d_color_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->colors, vec3_t, index)->y = y;
 	CALLTRACE_END();
 }
@@ -735,7 +735,7 @@ RENDERER_API function_signature(void, mesh3d_color_set_y, mesh3d_t* mesh, index_
 RENDERER_API function_signature(void, mesh3d_color_set_z, mesh3d_t* mesh, index_t index, float z)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->colors, vec3_t, index)->z = z;
 	CALLTRACE_END();
 }
@@ -743,35 +743,35 @@ RENDERER_API function_signature(void, mesh3d_color_set_z, mesh3d_t* mesh, index_
 RENDERER_API function_signature(vec3_t, mesh3d_color_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->colors, vec3_t, index));
 }
 
 RENDERER_API function_signature(vec3_t*, mesh3d_color_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->colors, vec3_t, index));
 }
 
 RENDERER_API function_signature(float, mesh3d_color_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->colors, vec3_t, index)->x);
 }
 
 RENDERER_API function_signature(float, mesh3d_color_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->colors, vec3_t, index)->y);
 }
 
 RENDERER_API function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->colors, vec3_t, index)->z);
 }
 
@@ -779,7 +779,7 @@ RENDERER_API function_signature(float, mesh3d_color_get_z, mesh3d_t* mesh, index
 RENDERER_API function_signature(void, mesh3d_triangle_add, mesh3d_t* mesh, index_t i0, index_t i1, index_t i2)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	vec3uint_t i = {i0, i1, i2};
 	buf_push(mesh->triangles, &i);
 	CALLTRACE_END();
@@ -788,7 +788,7 @@ RENDERER_API function_signature(void, mesh3d_triangle_add, mesh3d_t* mesh, index
 RENDERER_API function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, vec3uint_t  v)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	buf_push(mesh->triangles, (void*)(&v));
 	CALLTRACE_END();
 }
@@ -796,7 +796,7 @@ RENDERER_API function_signature(void, mesh3d_triangle_add_vec3, mesh3d_t* mesh, 
 RENDERER_API function_signature(void, mesh3d_triangle_set, mesh3d_t* mesh, index_t index, index_t i0, index_t i1, index_t i2)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	vec3uint_t* t =  buf_get_ptr_at_typeof(mesh->triangles, vec3uint_t, index);
 	t->x = i0; t->y = i1; t->z = i2;
 	CALLTRACE_END();
@@ -805,7 +805,7 @@ RENDERER_API function_signature(void, mesh3d_triangle_set, mesh3d_t* mesh, index
 RENDERER_API function_signature(void, mesh3d_triangle_set_vec3, mesh3d_t* mesh, index_t index, vec3uint_t  v)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	buf_set_at(mesh->triangles, index, (void*)(&v));
 	CALLTRACE_END();
 }
@@ -813,7 +813,7 @@ RENDERER_API function_signature(void, mesh3d_triangle_set_vec3, mesh3d_t* mesh, 
 RENDERER_API function_signature(void, mesh3d_triangle_set_0, mesh3d_t* mesh, index_t index, index_t i0)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->triangles, vec3uint_t, index)->x = i0;
 	CALLTRACE_END();
 }
@@ -821,7 +821,7 @@ RENDERER_API function_signature(void, mesh3d_triangle_set_0, mesh3d_t* mesh, ind
 RENDERER_API function_signature(void, mesh3d_triangle_set_1, mesh3d_t* mesh, index_t index, index_t i1)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->triangles, vec3uint_t, index)->x = i1;
 	CALLTRACE_END();
 }
@@ -829,7 +829,7 @@ RENDERER_API function_signature(void, mesh3d_triangle_set_1, mesh3d_t* mesh, ind
 RENDERER_API function_signature(void, mesh3d_triangle_set_2, mesh3d_t* mesh, index_t index, index_t i2)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->triangles, vec3uint_t, index)->x = i2;
 	CALLTRACE_END();
 }
@@ -837,42 +837,42 @@ RENDERER_API function_signature(void, mesh3d_triangle_set_2, mesh3d_t* mesh, ind
 RENDERER_API function_signature(vec3uint_t,  mesh3d_triangle_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->triangles, vec3uint_t, index));
 }
 
 RENDERER_API function_signature(vec3uint_t*, mesh3d_triangle_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3uint_t, index));
 }
 
 RENDERER_API function_signature(int, mesh3d_triangle_get_0, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3uint_t, index)->x);
 }
 
 RENDERER_API function_signature(int, mesh3d_triangle_get_1, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3uint_t, index)->y);
 }
 
 RENDERER_API function_signature(int, mesh3d_triangle_get_2, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->triangles, __TRIANGLES_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->triangles, vec3uint_t, index)->z);
 }
 
 RENDERER_API function_signature(void, mesh3d_uv_add, mesh3d_t* mesh, float x, float y)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
 	vec2_t uv = {x, y};
 	buf_push(mesh->uvs, &uv);
 	CALLTRACE_END();
@@ -881,7 +881,7 @@ RENDERER_API function_signature(void, mesh3d_uv_add, mesh3d_t* mesh, float x, fl
 RENDERER_API function_signature(void, mesh3d_uv_add_vec2, mesh3d_t* mesh, vec2_t v)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
 	buf_push(mesh->uvs, (void*)(&v));
 	CALLTRACE_END();
 }
@@ -889,7 +889,7 @@ RENDERER_API function_signature(void, mesh3d_uv_add_vec2, mesh3d_t* mesh, vec2_t
 RENDERER_API function_signature(void, mesh3d_uv_set, mesh3d_t* mesh, index_t index, float x, float y)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
 	vec2_t* v = buf_get_ptr_at_typeof(mesh->uvs, vec2_t, index);
 	v->x = x; v->y = y;
 	CALLTRACE_END();
@@ -898,7 +898,7 @@ RENDERER_API function_signature(void, mesh3d_uv_set, mesh3d_t* mesh, index_t ind
 RENDERER_API function_signature(void, mesh3d_uv_set_vec2, mesh3d_t* mesh, index_t index, vec2_t  uv)
 {
 	CALLTRACE_BEGIN();
- 	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+ 	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
  	buf_set_at(mesh->uvs, index, (void*)(&uv));
 	CALLTRACE_END();
 }
@@ -906,7 +906,7 @@ RENDERER_API function_signature(void, mesh3d_uv_set_vec2, mesh3d_t* mesh, index_
 RENDERER_API function_signature(void, mesh3d_uv_set_x, mesh3d_t* mesh, index_t index, float x)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->uvs, vec2_t, index)->x = x;
 	CALLTRACE_END();
 }
@@ -914,7 +914,7 @@ RENDERER_API function_signature(void, mesh3d_uv_set_x, mesh3d_t* mesh, index_t i
 RENDERER_API function_signature(void, mesh3d_uv_set_y, mesh3d_t* mesh, index_t index, float y)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
 	buf_get_ptr_at_typeof(mesh->uvs, vec2_t, index)->y = y;
 	CALLTRACE_END();
 }
@@ -922,28 +922,28 @@ RENDERER_API function_signature(void, mesh3d_uv_set_y, mesh3d_t* mesh, index_t i
 RENDERER_API function_signature(vec2_t,  mesh3d_uv_get, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(*buf_get_ptr_at_typeof(mesh->uvs, vec2_t, index));
 }
 
 RENDERER_API function_signature(vec2_t*, mesh3d_uv_get_ptr, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->uvs, vec2_t, index));
 }
 
 RENDERER_API function_signature(float, mesh3d_uv_get_y, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->uvs, vec2_t, index)->y);
 }
 
 RENDERER_API function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t index)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(NULL != mesh->uvs, __UVS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_ptr_at_typeof(mesh->uvs, vec2_t, index)->x);
 }
 
@@ -951,37 +951,37 @@ RENDERER_API function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t 
 RENDERER_API function_signature(index_t, mesh3d_sizeof_position, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->positions != NULL, __POSITIONS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->positions != NULL, __POSITIONS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->positions));
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_normal, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->normals != NULL, __NORMALS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->normals != NULL, __NORMALS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->normals));
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_tangent, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->tangents != NULL, __TANGENTS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->tangents != NULL, __TANGENTS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->tangents));
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_color, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->colors));
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_uv, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->uvs != NULL, __UVS_ARE_NOT_FOUND__);
+	debug_assert__(mesh->uvs != NULL, __UVS_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->uvs));
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh->triangles != NULL, __TRIANGLES_ARE_NOT_FOUND__);
+	debug_assert__(mesh->triangles != NULL, __TRIANGLES_ARE_NOT_FOUND__);
 	CALLTRACE_RETURN(buf_get_element_size(mesh->triangles) / 3);
 }
 
@@ -1140,7 +1140,7 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_cube, memory_allocator_t* allo
 RENDERER_API function_signature(void, mesh3d_positions_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t* position, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh3d_has_positions(mesh), "!mesh3d_has_positions(mesh)\n");
+	debug_assert__(mesh3d_has_positions(mesh), "!mesh3d_has_positions(mesh)\n");
 	mesh3d_foreach(mesh, mesh->positions, (void*)func_ptr(mesh3d_position_get_ptr), (void*)visitor, user_data);
 	CALLTRACE_END();
 }
@@ -1148,7 +1148,7 @@ RENDERER_API function_signature(void, mesh3d_positions_foreach, mesh3d_t* mesh, 
 RENDERER_API function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t* normal, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh3d_has_normals(mesh), "!mesh3d_has_normals(mesh)\n");
+	debug_assert__(mesh3d_has_normals(mesh), "!mesh3d_has_normals(mesh)\n");
 	mesh3d_foreach(mesh, mesh->normals, (void*)func_ptr(mesh3d_normal_get_ptr), (void*)visitor, user_data);
 	CALLTRACE_END();
 }
@@ -1156,7 +1156,7 @@ RENDERER_API function_signature(void, mesh3d_normals_foreach, mesh3d_t* mesh, vo
 RENDERER_API function_signature(void, mesh3d_tangents_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t* normal, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh3d_has_tangents(mesh), "!mesh3d_has_tangents(mesh)\n");
+	debug_assert__(mesh3d_has_tangents(mesh), "!mesh3d_has_tangents(mesh)\n");
 	mesh3d_foreach(mesh, mesh->tangents, (void*)func_ptr(mesh3d_tangent_get_ptr), (void*)visitor, user_data);
 	CALLTRACE_END();
 }
@@ -1164,7 +1164,7 @@ RENDERER_API function_signature(void, mesh3d_tangents_foreach, mesh3d_t* mesh, v
 RENDERER_API function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, void (*visitor)(vec3_t* color, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh3d_has_colors(mesh), "!mesh3d_has_colors(mesh)\n");
+	debug_assert__(mesh3d_has_colors(mesh), "!mesh3d_has_colors(mesh)\n");
 	mesh3d_foreach(mesh, mesh->colors, (void*)func_ptr(mesh3d_color_get_ptr), (void*)visitor, user_data);
 	CALLTRACE_END();
 }
@@ -1172,7 +1172,7 @@ RENDERER_API function_signature(void, mesh3d_colors_foreach, mesh3d_t* mesh, voi
 RENDERER_API function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (*visitor)(vec2_t* uv, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh3d_has_uvs(mesh), "!mesh3d_has_uvs(mesh)\n");
+	debug_assert__(mesh3d_has_uvs(mesh), "!mesh3d_has_uvs(mesh)\n");
 	mesh3d_foreach(mesh, mesh->uvs, (void*)func_ptr(mesh3d_uv_get_ptr), (void*)visitor, user_data);
  	CALLTRACE_END();
 }
@@ -1181,7 +1181,7 @@ RENDERER_API function_signature(void, mesh3d_uvs_foreach, mesh3d_t* mesh, void (
 RENDERER_API function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, void (*visitor)(vec3uint_t* triangle, void* user_data), void* user_data)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh3d_has_triangles(mesh), "!mesh3d_has_triangles(mesh)\n");
+	debug_assert__(mesh3d_has_triangles(mesh), "!mesh3d_has_triangles(mesh)\n");
 	mesh3d_foreach(mesh, mesh->triangles, (void*)func_ptr(mesh3d_triangle_get_ptr), (void*)visitor, user_data);
 	CALLTRACE_END();
 }
@@ -1205,7 +1205,7 @@ RENDERER_API function_signature(mat4_t, mesh3d_transform_get, mesh3d_t* mesh)
 RENDERER_API function_signature(void, mesh3d_make_centroid_origin, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(mesh3d_has_positions(mesh), "!mesh3d_has_positions(mesh)\n");
+	debug_assert__(mesh3d_has_positions(mesh), "!mesh3d_has_positions(mesh)\n");
 	vec3_t centroid = vec3_zero();
 	for(buf_ucount_t i = 0; i < mesh3d_positions_count(mesh); i++)
 		centroid = vec3_add(2, centroid, mesh3d_position_get(mesh, i));
@@ -1260,7 +1260,7 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_load, memory_allocator_t* allo
 			temp[count] = getc(file);
 			++count;
 		}
-		ASSERT(count == len, "File \"%s\" is too short to parse\n", file_path);
+		debug_assert__(count == len, "File \"%s\" is too short to parse\n", file_path);
 		rewind(file); fclose(file);
 
 		//This may be true in binary case also, but that would mean the binary file is corrupted or someone has tried to fake it as ASCII
@@ -1268,14 +1268,14 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_load, memory_allocator_t* allo
 		{
 			//parse the file as ascii
 			buffer = load_text_from_file(file_path);
-			ASSERT(buf_get_element_count(buffer) > STL_MINIMUM_ASCII_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_ASCII_FILE_LENGTH\n", file_path);
+			debug_assert__(buf_get_element_count(buffer) > STL_MINIMUM_ASCII_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_ASCII_FILE_LENGTH\n", file_path);
 			stl_parse_ascii(buffer->bytes, buffer->element_count, &parse_callbacks);
 		}
 		else
 		{
 			//parse the file as binary
 			buffer = load_binary_from_file(file_path);
-			ASSERT(buf_get_element_count(buffer) > STL_MINIMUM_BINARY_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_BINARY_FILE_LENGTH\n", file_path);
+			debug_assert__(buf_get_element_count(buffer) > STL_MINIMUM_BINARY_FILE_LENGTH, "length of the file \"%s\" is less than STL_MINIMUM_BINARY_FILE_LENGTH\n", file_path);
 			stl_parse_binary(buffer->bytes, buffer->element_count, &parse_callbacks);
 		}
 	}
@@ -1283,7 +1283,7 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_load, memory_allocator_t* allo
 	else if(!strcmp(extension, EXTENSION_OBJ))
 	{
 		buffer = load_text_from_file(file_path);
-		ASSERT(buf_get_element_count(buffer) > OBJ_MINIMUM_ASCII_FILE_LENGTH, "length of the file \"%s\" is less than OBJ_MINIMUM_ASCII_FILE_LENGTH\n", file_path);
+		debug_assert__(buf_get_element_count(buffer) > OBJ_MINIMUM_ASCII_FILE_LENGTH, "length of the file \"%s\" is less than OBJ_MINIMUM_ASCII_FILE_LENGTH\n", file_path);
 		mesh3d_positions_new(mesh, 0);
 		mesh3d_triangles_new(mesh, 0);
 		mesh3d_uvs_new(mesh, 0);
@@ -1453,8 +1453,8 @@ static void obj_facet(u32* facet, u32 attribute_count, u32 face_vertex_count, vo
 static function_signature(void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, func_ptr_sig(void*, getter, mesh3d_t*, index_t), void (*visitor)(void*, void*), void* user_data)
 {
 	CALLTRACE_BEGIN();
-	ASSERT(visitor != NULL, "visitor == NULL\n");
-	ASSERT(func_ptr(getter) != NULL, "getter == NULL\n");
+	debug_assert__(visitor != NULL, "visitor == NULL\n");
+	debug_assert__(func_ptr(getter) != NULL, "getter == NULL\n");
 	buf_ucount_t count = buf_get_element_count(buffer);
 	for(buf_ucount_t i = 0; i < count; i++)
 		visitor(getter(mesh, i), user_data);
