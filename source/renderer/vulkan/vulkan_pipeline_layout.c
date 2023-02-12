@@ -2,6 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
@@ -26,7 +27,7 @@ RENDERER_API void vulkan_pipeline_layout_create_no_alloc(vulkan_renderer_t* rend
 		.pushConstantRangeCount = create_info->push_constant_range_count,
 		.pPushConstantRanges = create_info->vo_push_constant_ranges
 	};
-	vkCall(vkCreatePipelineLayout(renderer->logical_device->vo_handle, &pipeline_layout_info, NULL, &layout->vo_handle));
+	vkCall(vkCreatePipelineLayout(renderer->logical_device->vo_handle, &pipeline_layout_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &layout->vo_handle));
 }
 
 RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info)
@@ -39,7 +40,7 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(vulkan_rend
 
 RENDERER_API void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* layout)
 {
-	vkDestroyPipelineLayout(layout->renderer->logical_device->vo_handle, layout->vo_handle, NULL);
+	vkDestroyPipelineLayout(layout->renderer->logical_device->vo_handle, layout->vo_handle, VULKAN_ALLOCATION_CALLBACKS(layout->renderer));
 }
 
 RENDERER_API void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* layout)

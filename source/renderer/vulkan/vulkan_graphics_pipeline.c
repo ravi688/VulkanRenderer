@@ -5,6 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_swapchain.h>
 #include <renderer/internal/vulkan/vulkan_shader_module.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
@@ -107,7 +108,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.basePipelineHandle = VK_NULL_HANDLE, // Optional
 		.basePipelineIndex = -1 // Optional
 	};
-	vkCall(vkCreateGraphicsPipelines(renderer->logical_device->vo_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, NULL, &pipeline->vo_handle));
+	vkCall(vkCreateGraphicsPipelines(renderer->logical_device->vo_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &pipeline->vo_handle));
 
 	buf_free(&attribute_descriptions);
 	heap_free(binding_descriptions);

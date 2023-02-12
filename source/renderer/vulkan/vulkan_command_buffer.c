@@ -1,6 +1,7 @@
 
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_command_buffer.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/debug.h>
 
 RENDERER_API VkCommandPool vulkan_command_pool_create(vulkan_renderer_t* renderer, u32 queueFamilyIndex, VkCommandPoolCreateFlags flags)
@@ -12,7 +13,7 @@ RENDERER_API VkCommandPool vulkan_command_pool_create(vulkan_renderer_t* rendere
 		.flags = flags
 	};
 	VkCommandPool pool;
-	vkCall(vkCreateCommandPool(renderer->logical_device->vo_handle, &command_pool_create_info, NULL, &pool));
+	vkCall(vkCreateCommandPool(renderer->logical_device->vo_handle, &command_pool_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &pool));
 	log_msg("CommandPool for the queueFamilyIndex: %u is created successfully\n", queueFamilyIndex);
 	return pool;
 }

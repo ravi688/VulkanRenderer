@@ -11,6 +11,7 @@
 #include <renderer/internal/vulkan/vulkan_camera_system.h>
 #include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/internal/vulkan/vulkan_to_string.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/render_window.h>
 #include <renderer/debug.h>
 #include <renderer/assert.h>
@@ -127,18 +128,18 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t* renderer);
 static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t* renderer);
 static void setup_global_set(vulkan_renderer_t* renderer);
-static VkSemaphore get_semaphore(VkDevice device)
+static VkSemaphore get_semaphore(vulkan_renderer_t* renderer)
 {
 	VkSemaphore semaphore;
 	VkSemaphoreCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO }; 
-	vkCall(vkCreateSemaphore(device, &createInfo, NULL, &semaphore)); 
+	vkCall(vkCreateSemaphore(renderer->logical_device->vo_handle, &createInfo, VULKAN_ALLOCATION_CALLBACKS(renderer), &semaphore)); 
 	return semaphore;
 }
-static VkFence get_unsigned_fence(VkDevice device)
+static VkFence get_unsigned_fence(vulkan_renderer_t* renderer)
 {
 	VkFence fence;
 	VkFenceCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-	vkCall(vkCreateFence(device, &createInfo, NULL, &fence));
+	vkCall(vkCreateFence(renderer->logical_device->vo_handle, &createInfo, VULKAN_ALLOCATION_CALLBACKS(renderer), &fence));
 	return fence;
 }
 
@@ -147,6 +148,7 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_init(memory_allocator_t* allocat
 	vulkan_renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDERER, vulkan_renderer_t);
 	memzero(renderer, vulkan_renderer_t);
 	renderer->allocator = allocator;
+	renderer->vk_allocator = vulkan_allocator_create(allocator);
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[3] = { "VK_KHR_surface", "VK_KHR_win32_surface" };
@@ -173,7 +175,7 @@ DEBUG_BLOCK
 	render_window_subscribe_on_resize(renderer->window, vulkan_renderer_on_window_resize, renderer);
 
 	// create surface
-	render_window_get_vulkan_surface(renderer->window, &(renderer->instance->handle), &(renderer->vo_surface));
+	render_window_get_vulkan_surface(renderer->window, renderer, &(renderer->vo_surface));
 
 	VkSurfaceCapabilitiesKHR surface_capabilities = vulkan_physical_device_get_surface_capabilities(physical_device, renderer->vo_surface);
 DEBUG_BLOCK
@@ -271,9 +273,9 @@ DEBUG_BLOCK
 )
 
 	// create semaphores
-	renderer->vo_image_available_semaphore = get_semaphore(renderer->logical_device->vo_handle);
-	renderer->vo_render_finished_semaphore = get_semaphore(renderer->logical_device->vo_handle);
-	renderer->vo_fence = get_unsigned_fence(renderer->logical_device->vo_handle);
+	renderer->vo_image_available_semaphore = get_semaphore(renderer);
+	renderer->vo_render_finished_semaphore = get_semaphore(renderer);
+	renderer->vo_fence = get_unsigned_fence(renderer);
 
 	// setup command pool
 	renderer->vo_command_pool = vulkan_command_pool_create(renderer, queue_family_indices[0], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -318,7 +320,7 @@ DEBUG_BLOCK
 		.maxSets = 60,
 		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 	};
-	vkCall(vkCreateDescriptorPool(renderer->logical_device->vo_handle, &pool_create_info, NULL, &renderer->vo_descriptor_pool));
+	vkCall(vkCreateDescriptorPool(renderer->logical_device->vo_handle, &pool_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &renderer->vo_descriptor_pool));
 	log_msg("Descriptor pool has been allocated successfully\n");
 
 	renderer->global_set_layout = create_global_set_layout(renderer);
@@ -525,21 +527,21 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_swapchain_release_resources(renderer->swapchain);
 
 	// NOTE: VkSurfaceKHR must be destroyed after the swapchain	
-	vkDestroySurfaceKHR(renderer->instance->handle, renderer->vo_surface, NULL);
+	vkDestroySurfaceKHR(renderer->instance->handle, renderer->vo_surface, VULKAN_ALLOCATION_CALLBACKS(renderer));
 	render_window_destroy(renderer->window);
 	
 	// destroy semaphores
-	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_image_available_semaphore, NULL);
-	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_render_finished_semaphore, NULL);
+	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_image_available_semaphore, VULKAN_ALLOCATION_CALLBACKS(renderer));
+	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_render_finished_semaphore, VULKAN_ALLOCATION_CALLBACKS(renderer));
 
 	// destroy fences
-	vkDestroyFence(renderer->logical_device->vo_handle, renderer->vo_fence, NULL);
+	vkDestroyFence(renderer->logical_device->vo_handle, renderer->vo_fence, VULKAN_ALLOCATION_CALLBACKS(renderer));
 
-	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vo_descriptor_pool, NULL);
+	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vo_descriptor_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
 	
 	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, 1, &renderer->vo_aux_command_buffer);
 	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, renderer->swapchain->image_count, renderer->vo_command_buffers);
-	vkDestroyCommandPool(renderer->logical_device->vo_handle, renderer->vo_command_pool, NULL);
+	vkDestroyCommandPool(renderer->logical_device->vo_handle, renderer->vo_command_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
 	
 	// destroy logical device
 	vulkan_logical_device_destroy(renderer->logical_device);
@@ -549,6 +551,8 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_instance_destroy(renderer->instance);
 	vulkan_instance_release_resources(renderer->instance);
 	
+	vulkan_allocator_destroy(renderer->vk_allocator);
+
 	memory_allocator_dealloc(renderer->allocator, renderer->vo_command_buffers);
 
 	memory_allocator_dealloc(renderer->allocator, renderer);

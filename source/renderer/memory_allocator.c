@@ -8,19 +8,68 @@
 #include <math.h>
 #include <stdlib.h>
 
-static allocate_result_t stdlib_malloc(u32 size, u32 align)
+#ifdef _CRT_ALLOCATION_DEFINED
+#	define aligned_alloc(size, align) _aligned_malloc(size, align)
+#	define __aligned_realloc(old_ptr, old_size, old_align, size, align) _aligned_realloc(old_ptr, size, align)
+#else
+/*#	ifndef aligned_alloc */
+#	warning "are you sure your stdlib implementation supports aligned_alloc?"
+/*# endif*/
+	static void* __aligned_realloc(void* old_ptr, u32 old_size, u32 old_align, u32 size, u32 align)
+	{
+		void* new_ptr = aligned_alloc(size, align);
+	
+		if(old_ptr == NULL)
+			return new_ptr;
+	
+		memcpy(new_ptr, old_ptr, old_align);
+	
+		free(old_ptr);
+	
+		return new_ptr;
+	}
+#endif /* _CRT_ALLOCATION_DEFINED */
+
+#define ALLOCATION_FLAG_NO_ALIGN_RESTRICTION U32_MAX
+
+#define debug_assert_aligned_memory(ptr, align) \
+	debug_assert__(((align == U32_MAX) || ((align != U32_MAX) && ((CAST_TO(u64, ptr) % align) == 0))),\
+		"unaligned memory address %p is returned by %s while the alignment requested was %u",\
+		ptr,\
+		(align == ALLOCATION_FLAG_NO_ALIGN_RESTRICTION) ? "stdlib::realloc" : "__aligned_realloc",\
+		align);
+
+static allocate_result_t stdlib_malloc(u32 size, u32 align, void* user_data)
 {
 	if((size == 0) || (align == 0))
 		return (allocate_result_t) { ALLOCATE_RESULT_INVALID_REQUEST, NULL };
 
-	void* ptr = malloc(size);
+	void* ptr = (align == ALLOCATION_FLAG_NO_ALIGN_RESTRICTION) ? malloc(size) : aligned_alloc(size, align);
+
+	debug_assert_aligned_memory(ptr, align);
+
 	if(ptr == NULL)
 		return (allocate_result_t) { ALLOCATE_RESULT_OUT_OF_MEMORY, NULL };
 
 	return (allocate_result_t) { ALLOCATE_RESULT_SUCCESS, ptr };
 }
 
-static void stdlib_free(void* ptr)
+static allocate_result_t stdlib_realloc(void* old_ptr, u32 old_size, u32 old_align, u32 size, u32 align, void* user_data)
+{
+	if((size == 0) || (align == 0))
+		return (allocate_result_t) { ALLOCATE_RESULT_INVALID_REQUEST, NULL };
+
+	void* ptr = (align == ALLOCATION_FLAG_NO_ALIGN_RESTRICTION) ? realloc(old_ptr, size) : __aligned_realloc(old_ptr, old_size, old_align, size, align);
+	
+	debug_assert_aligned_memory(ptr, align);
+
+	if(ptr == NULL)
+		return (allocate_result_t) { ALLOCATE_RESULT_OUT_OF_MEMORY, NULL };
+
+	return (allocate_result_t) { ALLOCATE_RESULT_SUCCESS, ptr };
+}
+
+static void stdlib_free(void* ptr, void* user_data)
 {
 	free(ptr);
 }
@@ -31,6 +80,7 @@ RENDERER_API memory_allocator_t* memory_allocator_create(const memory_allocator_
 	memzero(allocator, memory_allocator_t);
 	allocator->allocation_map = dictionary_create(void*, memory_allocation_t, 1, dictionary_key_comparer_ptr);
 	allocator->allocate = (create_info->allocate == NULL) ? stdlib_malloc : create_info->allocate;
+	allocator->reallocate = (create_info->reallocate == NULL) ? stdlib_realloc : create_info->reallocate;
 	allocator->deallocate = (create_info->deallocate == NULL) ? stdlib_free : create_info->deallocate;
 	return allocator;
 }
@@ -43,7 +93,12 @@ RENDERER_API void memory_allocator_destroy(memory_allocator_t* allocator)
 
 RENDERER_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size)
 {
-	allocate_result_t result = allocator->allocate(size, size);
+	return __memory_allocator_aligned_alloc(allocator, debug_info, size, ALLOCATION_FLAG_NO_ALIGN_RESTRICTION);
+}
+
+RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
+{
+	allocate_result_t result = allocator->allocate(size, align, allocator->user_data);
 	if(result.flags != ALLOCATE_RESULT_SUCCESS)
 		return NULL;
 
@@ -51,15 +106,60 @@ RENDERER_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __mem
 	{
 		.debug_info = debug_info,
 		.size = size,
+		.align = align,
 		.ptr = result.ptr
 	};
-	dictionary_add(&allocator->allocation_map, &allocation.ptr, &allocation);
-	return allocation.ptr;
+	dictionary_add(&allocator->allocation_map, &result.ptr, &allocation);
+	return result.ptr;
+}
+
+RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* allocator, void* old_ptr,  __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
+{
+	memory_allocation_t* old_alloc = NULL;
+	buf_ucount_t index = BUF_INVALID_INDEX;
+
+	/* if old_ptr is not NULL then find the previous allocation */
+	if(old_ptr != NULL)
+	{
+		index = dictionary_find_index_of(&allocator->allocation_map, &old_ptr);
+		_debug_assert__(index != BUF_INVALID_INDEX);
+		old_alloc = CAST_TO(memory_allocation_t*, dictionary_get_value_ptr_at(&allocator->allocation_map, index));
+	}
+
+	allocate_result_t result = allocator->reallocate(old_ptr, 
+													(old_alloc == NULL) ? 0 : old_alloc->size, 
+													(old_alloc == NULL) ? 0 : old_alloc->align,
+													size, align, allocator->user_data);
+	if(result.flags != ALLOCATE_RESULT_SUCCESS)
+		return NULL;
+
+	/* if old alloation is NULL, that means new allocation info has to be added */
+	if(old_alloc == NULL)
+	{
+		memory_allocation_t allocation =
+		{
+			.debug_info = debug_info,
+			.size = size,
+			.align = align,
+			.ptr = result.ptr
+		};
+		dictionary_add(&allocator->allocation_map, &allocation.ptr, &allocation);
+	}
+	/* otherwise just overwrite it */
+	else
+	{
+		old_alloc->debug_info = debug_info;
+		old_alloc->size = size;
+		old_alloc->align = align;
+		old_alloc->ptr = result.ptr;
+	}
+
+	return result.ptr;
 }
 
 RENDERER_API void memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr)
 {
-	allocator->deallocate(ptr);
+	allocator->deallocate(ptr, allocator->user_data);
 	dictionary_remove(&allocator->allocation_map, &ptr);
 }
 
@@ -255,6 +355,7 @@ static void memory_allocation_debug_node_to_string(const memory_allocation_debug
 		string_builder_append(builder, "function: %s\n", node->allocation->debug_info.function_str);
 		string_builder_append(builder, "file: %s\n", node->allocation->debug_info.file_str);
 		string_builder_append(builder, "size: %u\n", node->allocation->size);
+		string_builder_append(builder, "align: %u\n", node->allocation->align);
 		string_builder_append(builder, "address: %p\n", node->allocation->ptr);
 	}
 	else
@@ -265,6 +366,7 @@ static void memory_allocation_debug_node_to_string(const memory_allocation_debug
 		string_builder_append(builder, "function: UNDEFINED\n");
 		string_builder_append(builder, "file: UNDEFINED\n");
 		string_builder_append(builder, "size: 0\n");
+		string_builder_append(builder, "align: ALLOCATION_FLAG_NO_ALIGN_RESTRICTION\n");
 		string_builder_append(builder, "address: UNDEFINED\n");
 	}
 	string_builder_append(builder, "ref_count: %u\n", node->child_count);

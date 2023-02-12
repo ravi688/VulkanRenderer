@@ -3,6 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/assert.h>
 #include <renderer/alloc.h> 	// heap_new, heap_newv, heap_free
 #include <renderer/memory_allocator.h>
@@ -58,8 +59,7 @@ RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* render
 		.ppEnabledExtensionNames = supported_extensions
 	};
 	
-	VkResult result = vkCreateInstance(&create_info, NULL, &instance->handle);
-	vulkan_result_assert_success(result);
+	vkCall(vkCreateInstance(&create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &instance->handle));
 	log_msg("Vulkan instance created successfully\n");
 	return instance;
 }
@@ -70,7 +70,7 @@ RENDERER_API void vulkan_instance_destroy(vulkan_instance_t* instance)
 		for(u32 i = 0; i < instance->physical_device_count; i++)
 			vulkan_physical_device_destroy(&instance->physical_devices[i]);
 	if(instance->handle != VK_NULL_HANDLE)
-		vkDestroyInstance(instance->handle, NULL);
+		vkDestroyInstance(instance->handle, VULKAN_ALLOCATION_CALLBACKS(instance->renderer));
 	instance->handle = VK_NULL_HANDLE;
 	log_msg("Vulkan instance destroyed successfully\n");
 }

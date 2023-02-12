@@ -1,13 +1,14 @@
 #include <renderer/internal/vulkan/vulkan_shader_module.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <disk_manager/file_reader.h>
 
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-static VkShaderModule get_shader_module(VkDevice device, void* spirv, u32 length);
+static VkShaderModule get_shader_module(vulkan_renderer_t* renderer, void* spirv, u32 length);
 static VkPipelineShaderStageCreateInfo get_pipeline_shader_stage_create_info(VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point);
 
 
@@ -30,14 +31,14 @@ RENDERER_API void vulkan_shader_module_create_no_alloc(vulkan_renderer_t* render
 	memzero(shader, vulkan_shader_module_t);
 
 	shader->renderer = renderer;
-	shader->vo_module = get_shader_module(renderer->logical_device->vo_handle, create_info->spirv, create_info->length);
+	shader->vo_module = get_shader_module(renderer, create_info->spirv, create_info->length);
 	shader->vo_stage = get_pipeline_shader_stage_create_info(shader->vo_module, create_info->type, "main");
 }
 
 RENDERER_API void vulkan_shader_module_load_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_load_info_t* load_info, vulkan_shader_module_t OUT shader)
 {
 	BUFFER* shader_bytes = load_binary_from_file(load_info->file_path);
-	shader->vo_module = get_shader_module(renderer->logical_device->vo_handle, shader_bytes->bytes, shader_bytes->element_count);
+	shader->vo_module = get_shader_module(renderer, shader_bytes->bytes, shader_bytes->element_count);
 	shader->vo_stage = get_pipeline_shader_stage_create_info(shader->vo_module, load_info->type, "main");
 	buf_free(shader_bytes);
 }
@@ -51,7 +52,7 @@ RENDERER_API vulkan_shader_module_t* vulkan_shader_module_load(vulkan_renderer_t
 
 RENDERER_API void vulkan_shader_module_destroy(vulkan_shader_module_t* shader)
 {
-	vkDestroyShaderModule(shader->renderer->logical_device->vo_handle, shader->vo_module, NULL);
+	vkDestroyShaderModule(shader->renderer->logical_device->vo_handle, shader->vo_module, VULKAN_ALLOCATION_CALLBACKS(shader->renderer));
 }
 
 RENDERER_API void vulkan_shader_module_release_resources(vulkan_shader_module_t* shader)
@@ -59,14 +60,14 @@ RENDERER_API void vulkan_shader_module_release_resources(vulkan_shader_module_t*
 	heap_free(shader);
 }
 
- static VkShaderModule get_shader_module(VkDevice device, void* spirv, u32 length)
+ static VkShaderModule get_shader_module(vulkan_renderer_t* renderer, void* spirv, u32 length)
 {
 	VkShaderModuleCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	createInfo.codeSize = length;
 	createInfo.pCode = spirv;
 	VkShaderModule shader_module;
-	vkCall(vkCreateShaderModule(device, &createInfo, NULL, &shader_module));
+	vkCall(vkCreateShaderModule(renderer->logical_device->vo_handle, &createInfo, VULKAN_ALLOCATION_CALLBACKS(renderer), &shader_module));
 	return shader_module;
 }
 

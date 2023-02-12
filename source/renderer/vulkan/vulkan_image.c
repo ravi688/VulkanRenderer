@@ -1,6 +1,7 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_image.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
@@ -35,7 +36,7 @@ RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulk
 		.sharingMode = renderer->vo_sharing_mode,
 		.samples = VK_SAMPLE_COUNT_1_BIT
 	};
-	vkCall(vkCreateImage(renderer->logical_device->vo_handle, &image_info, NULL, &image->vo_handle));
+	vkCall(vkCreateImage(renderer->logical_device->vo_handle, &image_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &image->vo_handle));
 	
 	// get memory requirements
 	VkMemoryRequirements memory_requirements;
@@ -48,7 +49,7 @@ RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulk
 		.allocationSize = memory_requirements.size,
 		.memoryTypeIndex = vulkan_physical_device_find_memory_type(renderer->physical_device, memory_requirements.memoryTypeBits, create_info->vo_memory_properties_mask)
 	};
-	vkCall(vkAllocateMemory(renderer->logical_device->vo_handle, &alloc_info, NULL, &image->vo_memory));
+	vkCall(vkAllocateMemory(renderer->logical_device->vo_handle, &alloc_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &image->vo_memory));
 	vkCall(vkBindImageMemory(renderer->logical_device->vo_handle, image->vo_handle, image->vo_memory, 0));
 	
 	image->vo_type = create_info->vo_type;
@@ -71,8 +72,8 @@ RENDERER_API vulkan_image_t* vulkan_image_create(vulkan_renderer_t* renderer, vu
 RENDERER_API void vulkan_image_destroy(vulkan_image_t* image)
 {
 	_debug_assert__(image != NULL);
-	vkDestroyImage(image->renderer->logical_device->vo_handle, image->vo_handle, NULL);
-	vkFreeMemory(image->renderer->logical_device->vo_handle, image->vo_memory, NULL);
+	vkDestroyImage(image->renderer->logical_device->vo_handle, image->vo_handle, VULKAN_ALLOCATION_CALLBACKS(image->renderer));
+	vkFreeMemory(image->renderer->logical_device->vo_handle, image->vo_memory, VULKAN_ALLOCATION_CALLBACKS(image->renderer));
 }
 
 RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image)

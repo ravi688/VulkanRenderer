@@ -8,7 +8,7 @@
 #include <conio.h>
 #include <signal.h>
 
-static allocate_result_t allocate(u32 size, u32 align)
+static allocate_result_t allocate(u32 size, u32 align, void* user_data)
 {
 	if((size == 0) || (align == 0))
 		return (allocate_result_t) { ALLOCATE_RESULT_INVALID_REQUEST, NULL };
@@ -20,7 +20,21 @@ static allocate_result_t allocate(u32 size, u32 align)
 	return (allocate_result_t) { ALLOCATE_RESULT_SUCCESS, ptr };
 }
 
-static void deallocate(void* ptr)
+// static allocate_result_t reallocate(void* old_ptr, u32 old_size, u32 old_align, u32 size, u32 align, void* user_data)
+// {
+// 	void* new_ptr = aligned_alloc(size, align);
+	
+// 		if(old_ptr == NULL)
+// 			return new_ptr;
+	
+// 		memcpy(new_ptr, old_ptr, old_align);
+	
+// 		free(old_ptr);
+	
+// 		return new_ptr;
+// }
+
+static void deallocate(void* ptr, void* user_data)
 {
 	heap_free(ptr);
 }
@@ -70,8 +84,9 @@ int main(int argc, const char** argv)
 
 	memory_allocator_create_info_t create_info = 
 	{
-		.allocate = allocate,
-		.deallocate = deallocate
+		// .allocate = allocate,
+		// .reallocate = reallocate,
+		// .deallocate = deallocate
 	};
 	allocator = memory_allocator_create(&create_info);
 

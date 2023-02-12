@@ -6,6 +6,7 @@
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_framebuffer.h>
 #include <renderer/internal/vulkan/vulkan_camera_system.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/render_window.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
@@ -95,7 +96,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		.dependencyCount = create_info->subpass_dependency_count,
 		.pDependencies = create_info->subpass_dependencies
 	};
-	vkCall(vkCreateRenderPass(renderer->logical_device->vo_handle, &render_pass_create_info, NULL, &render_pass->vo_handle));
+	vkCall(vkCreateRenderPass(renderer->logical_device->vo_handle, &render_pass_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &render_pass->vo_handle));
 	log_ptr(render_pass->vo_handle);
 	// heap_free(attachment_descriptions);
 	memory_allocator_dealloc(renderer->allocator, subpasses);
@@ -166,7 +167,7 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 	// TODO
 
 	// destory the vulkan render pass object
-	vkDestroyRenderPass(render_pass->renderer->logical_device->vo_handle, render_pass->vo_handle, NULL);
+	vkDestroyRenderPass(render_pass->renderer->logical_device->vo_handle, render_pass->vo_handle, VULKAN_ALLOCATION_CALLBACKS(render_pass->renderer));
 	
 	// destroy the vulkan attachments
 	for(u32 i = 0; i < render_pass->allocated_attachment_count; i++)

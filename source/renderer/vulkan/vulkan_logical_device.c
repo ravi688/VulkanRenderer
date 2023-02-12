@@ -3,6 +3,7 @@
 #include <renderer/internal/vulkan/vulkan_physical_device.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
@@ -78,8 +79,7 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physic
 		.pEnabledFeatures = device_create_info->features
 	};
 
-	VkResult result = vkCreateDevice(physical_device->vo_handle, &create_info, NULL, &device->vo_handle);
-	vulkan_result_assert_success(result);
+	vkCall(vkCreateDevice(physical_device->vo_handle, &create_info, VULKAN_ALLOCATION_CALLBACKS(physical_device->renderer), &device->vo_handle));
 
 	memory_allocator_dealloc(physical_device->renderer->allocator, queue_create_infos);
 
@@ -89,7 +89,7 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physic
 
 RENDERER_API void vulkan_logical_device_destroy(vulkan_logical_device_t* device)
 {
-	vkDestroyDevice(device->vo_handle, NULL);
+	vkDestroyDevice(device->vo_handle, VULKAN_ALLOCATION_CALLBACKS(device->renderer));
 	log_msg("Logical device destroyed successfully\n");
 }
 

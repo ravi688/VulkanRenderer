@@ -3,6 +3,9 @@
 #include <renderer/debug.h>
 #include <renderer/assert.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_instance.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <stdio.h>
@@ -17,7 +20,7 @@ typedef struct event_args_t
 	void (*callback)(render_window_t* window, void* user_data);
 } event_args_t;
 
-static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, VkInstance vk_instance);
+static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, vulkan_renderer_t* driver);
 
 #if GLOBAL_DEBUG
 static void glfwErrorCallback(int code, const char* description)
@@ -108,19 +111,16 @@ RENDERER_API void render_window_get_framebuffer_extent(render_window_t* window, 
 	glfwGetFramebufferSize(window->handle, out_width, out_height);
 }
 
-RENDERER_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_instance, void* out_surface)
+RENDERER_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_driver, void* out_surface)
 {
-	VkSurfaceKHR surface;
-	VkInstance instance;
-	memcpy(&instance, vk_instance, sizeof(VkInstance));
-	surface = glfw_get_vulkan_surface(window->handle, instance);
+	VkSurfaceKHR surface = glfw_get_vulkan_surface(window->handle, CAST_TO(vulkan_renderer_t*, vk_driver));
 	memcpy(out_surface, &surface, sizeof(VkSurfaceKHR));
 }
 
-static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, VkInstance vk_instance)
+static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, vulkan_renderer_t* driver)
 {
 	VkSurfaceKHR surface; 
-	vkCall(glfwCreateWindowSurface(vk_instance, window, NULL, &surface));
+	vkCall(glfwCreateWindowSurface(driver->instance->handle, window, VULKAN_ALLOCATION_CALLBACKS(driver), &surface));
 	log_msg("Vulkan surface created successfully\n");
 	return surface;
 }
