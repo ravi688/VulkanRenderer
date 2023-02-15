@@ -123,11 +123,12 @@ typedef struct memory_allocator_create_info_t
     allocate_result_t (*reallocate)(void* old_ptr, u32 old_size, u32 old_align, u32 size, u32 align, void* user_data);
 	/* user provided free function, used to deallocate memory chunks from the host memory, 
 	 * if NULL then the memory allocator will use the stdlib.free */
-	void (*deallocate)(void* ptr, void* user_data);
+	void (*deallocate)(void* ptr, bool was_aligned, void* user_data);
 
 } memory_allocator_create_info_t;
 
 #include <renderer/dictionary.h>
+#include <renderer/alloc.h>
 
 /* memory_allocation_map_t holds list of memory allocations and maps one-to-one each allocation with its memory address */
 typedef dictionary_t memory_allocation_map_t;
@@ -144,7 +145,7 @@ typedef struct memory_allocator_t
     /* user provided realloc function, used to reallocate memory chunks in the host memory */
     allocate_result_t (*reallocate)(void* old_ptr, u32 old_size, u32 old_align, u32 size, u32 align, void* user_data);
     /* user provided free function, used to deallocate memory chunks from the host memory */ 
-    void (*deallocate)(void* ptr, void* user_data);
+    void (*deallocate)(void* ptr, bool was_aligned, void* user_data);
 } memory_allocator_t;
 
 
@@ -157,16 +158,37 @@ RENDERER_API void memory_allocator_destroy(memory_allocator_t* allocator);
 /* allocates memory chunk and attaches appropriate debug information to that chunk */
 #define memory_allocator_alloc_obj_array(allocator, allocation_type, type, count) CAST_TO(type*, memory_allocator_alloc(allocator, allocation_type, sizeof(type) * (count)))
 #define memory_allocator_alloc_obj(allocator, allocation_type, type) CAST_TO(type*, memory_allocator_alloc(allocator, allocation_type, sizeof(type)))
-#define memory_allocator_alloc(allocator, allocation_type, size) __memory_allocator_alloc(allocator, __memory_allocation_debug_info(allocation_type), size)
+
+#ifdef MEMORY_METRICS
+#   define memory_allocator_alloc(allocator, allocation_type, size) __memory_allocator_alloc(allocator, __memory_allocation_debug_info(allocation_type), size)
+#else
+#   define memory_allocator_alloc(allocator, allocation_type, size) heap_alloc(size)
+#endif
+
 RENDERER_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size);
 /* allocates memory chunk with alignment, and attaches appropriate debug information to that chunk */
 #define memory_allocator_aligned_alloc(allocator, allocation_type, size, align) __memory_allocator_aligned_alloc(allocator, __memory_allocation_debug_info(allocation_type), size, align)
 RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size, u32 align);
 /* rellocates memory chunk with alignment, and attaches or overwrites appropriate debug information to that chunk */
-#define memory_allocator_aligned_realloc(allocator, old_ptr, allocation_type, size, align) __memory_allocator_aligned_realloc(allocator, old_ptr, __memory_allocation_debug_info(allocation_type), size, align)
+#ifdef MEMORY_METRICS
+#   define memory_allocator_aligned_realloc(allocator, old_ptr, allocation_type, size, align) __memory_allocator_aligned_realloc(allocator, old_ptr, __memory_allocation_debug_info(allocation_type), size, align)
+#else 
+#   define memory_allocator_aligned_realloc(allocator, old_ptr, allocation_type, size, align) heap_aligned_realloc(old_ptr, size, align)
+#endif
 RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size, u32 align);
 /* deallocates memory chunk */
-RENDERER_API void memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr);
+#ifdef MEMORY_METRICS
+#   define memory_allocator_dealloc(allocator, ptr) __memory_allocator_dealloc(allocator, ptr)
+#else
+#   define memory_allocator_dealloc(allocator, ptr) heap_free(ptr)
+#endif
+RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr);
+
+#ifdef MEMORY_METRICS
+#   define memory_allocator_aligned_deallocate(allocator, ptr) __memory_allocator_dealloc(allocator, ptr)
+#else
+#   define memory_allocator_aligned_deallocate(allocator, ptr) heap_aligned_free(ptr)
+#endif
 
 /* builds a memory allocation tree, usually it is used for debug logging purpose */
 RENDERER_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(memory_allocator_t* allocator);

@@ -213,9 +213,9 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
 		vec3_t offset = { 0, 0, horizontal_pen};
 		offset = vec3_add(2, offset, string->position);
 		char bytes[36];
-		memcpy(bytes, &offset, 12);
-		memcpy(bytes + 12, &string->scale, 12);
-		memcpy(bytes + 24, &string->rotation, 12);
+		memcopyv(bytes, &offset, u8, 12);
+		memcopyv(bytes + 12, &string->scale, u8, 12);
+		memcopyv(bytes + 24, &string->rotation, u8, 12);
 		sub_buffer_push(buffer, handle, bytes);
 		horizontal_pen += info.advance_width;
 	}

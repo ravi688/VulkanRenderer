@@ -8,13 +8,14 @@
 
 RENDERER_API void vulkan_buffer_init(vulkan_buffer_t* buffer)
 {
+	/* vulkan_buffer_t might be composited into another object's stack memory */
 	memzero(buffer, vulkan_buffer_t);
 }
 
 RENDERER_API vulkan_buffer_t* vulkan_buffer_new(memory_allocator_t* allocator)
 {
 	vulkan_buffer_t* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_BUFFER, vulkan_buffer_t);
-	vulkan_buffer_init(buffer);
+	memzero(buffer, vulkan_buffer_t);
 	return buffer;
 }
 
@@ -85,7 +86,7 @@ RENDERER_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_of
 
 	void* ptr;
 	vkMapMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory, 0, buffer->size, 0, &ptr);
-	memcpy(ptr + buffer_offset, data, data_size);
+	memcopyv(ptr + buffer_offset, data, u8, data_size);
 	vkUnmapMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory);
 }
 

@@ -46,7 +46,7 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 	}
 	// allocate memory
 	VkDescriptorSetLayoutBinding* bindings = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_DESCRIPTOR_SET_LAYOUT_BINDING_ARRAY, VkDescriptorSetLayoutBinding, descriptor_count);
-	memzerov(bindings, VkDescriptorSetLayoutBinding, descriptor_count);
+	safe_memzerov(bindings, VkDescriptorSetLayoutBinding, descriptor_count);
 
 	u32 binding_count = 0;
 	for(u32 i = 0; i < descriptor_count; i++)

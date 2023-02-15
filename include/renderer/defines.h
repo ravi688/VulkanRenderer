@@ -61,7 +61,7 @@ typedef struct memory_allocator_t memory_allocator_t;
 #endif // MINGW
 
 #ifdef GLOBAL_DEBUG
-#	define INLINE_IF_DEBUG_MODE INLINE
+#	define INLINE_IF_RELEASE_MODE INLINE
 #else
-#	define INLINE_IF_DEBUG_MODE /* no inline */
+#	define INLINE_IF_RELEASE_MODE /* no inline */
 #endif /* GLOBAL_DEBUG */

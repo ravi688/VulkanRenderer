@@ -137,8 +137,8 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_cre
 		// deallocate the previous image buffer
 		if(swapchain->vo_images != NULL)
 		{
-			heap_free(swapchain->vo_images);
-			heap_free(swapchain->vo_image_views);
+			memory_allocator_dealloc(swapchain->renderer->allocator, swapchain->vo_images);
+			memory_allocator_dealloc(swapchain->renderer->allocator, swapchain->vo_image_views);
 		}
 
 		vkCall(vkGetSwapchainImagesKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, &swapchain->image_count, NULL));

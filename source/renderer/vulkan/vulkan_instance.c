@@ -37,7 +37,7 @@ RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* render
 		}
 	}
 	if(supported_extension_count == 0)
-		memzerov((void*)supported_extensions, char*, extension_count);
+		safe_memzerov((void*)supported_extensions, char*, extension_count);
 
 	VkApplicationInfo app_info = 
 	{

@@ -57,7 +57,7 @@ RENDERER_API void vulkan_shader_module_destroy(vulkan_shader_module_t* shader)
 
 RENDERER_API void vulkan_shader_module_release_resources(vulkan_shader_module_t* shader)
 {
-	heap_free(shader);
+	memory_allocator_dealloc(shader->renderer->allocator, shader);
 }
 
  static VkShaderModule get_shader_module(vulkan_renderer_t* renderer, void* spirv, u32 length)

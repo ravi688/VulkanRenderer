@@ -53,7 +53,7 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
 	_debug_assert__(view_create_info.subresourceRange.levelCount > 0);
 	assert((view_create_info.subresourceRange.baseArrayLayer + view_create_info.subresourceRange.layerCount) <= create_info->image->layer_count);
 	
-	memcpy(&view->vo_subresource_range, &view_create_info.subresourceRange, sizeof(VkImageSubresourceRange));
+	memcopy(&view->vo_subresource_range, &view_create_info.subresourceRange, VkImageSubresourceRange);
 	switch(create_info->image->vo_format)
 	{
 		case VK_FORMAT_R8G8B8A8_UNORM:

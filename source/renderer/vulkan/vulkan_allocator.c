@@ -1,5 +1,6 @@
 #include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/alloc.h>
 
 static void* VKAPI_CALL vulkan_allocation(void* user_data, size_t size, size_t align, VkSystemAllocationScope allocation_scope)
 {
@@ -19,7 +20,8 @@ static void* VKAPI_CALL vulkan_reallocation(void* user_data, void* original, siz
 
 static void VKAPI_CALL vulkan_free(void* user_data, void* memory)
 {
-	memory_allocator_dealloc(CAST_TO(memory_allocator_t*, user_data), memory);
+	heap_silent_aligned_free(memory);
+	// memory_allocator_dealloc(CAST_TO(vulkan_allocator_t*, user_data)->allocator, memory);
 }
 
 static void VKAPI_CALL vulkan_internal_allocation_notification(void* user_data, size_t size, VkInternalAllocationType allocation_type, VkSystemAllocationScope allocation_scope)
@@ -49,6 +51,7 @@ static INLINE VkAllocationCallbacks get_allocation_callbacks(vulkan_allocator_t*
 RENDERER_API vulkan_allocator_t* vulkan_allocator_create(memory_allocator_t* allocator)
 {
 	vulkan_allocator_t* vk_allocator = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ALLOCATOR, vulkan_allocator_t);
+	memzero(vk_allocator, vulkan_allocator_t);
 	vk_allocator->allocator = allocator;
 	vk_allocator->vo_callbacks = get_allocation_callbacks(vk_allocator);
 	vk_allocator->current_allocation_type = MEMORY_ALLOCATION_TYPE_VKAPI;

@@ -1,6 +1,6 @@
 
 #include <renderer/dictionary.h>
-#include <memory.h>
+#include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 #ifndef GLOBAL_DEBUG
@@ -38,8 +38,8 @@ RENDERER_API function_signature(void, dictionary_get_at, dictionary_t* dictionar
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	void* ptr = buf_get_ptr_at(&dictionary->buffer, index);
-	memcpy(out_key, ptr, dictionary->key_size);
-	memcpy(out_value, ptr + dictionary->key_size, dictionary->value_size);
+	memcopyv(out_key, ptr, u8, dictionary->key_size);
+	memcopyv(out_value, ptr + dictionary->key_size, u8, dictionary->value_size);
 	CALLTRACE_END();
 }
 
@@ -49,7 +49,7 @@ RENDERER_API function_signature(void, dictionary_get_value, dictionary_t* dictio
 	check_pre_condition(dictionary);
 	BUFFER* buffer = &dictionary->buffer;
 	void* ptr = buf_get_ptr_at(buffer, buf_find_index_of(buffer, key, dictionary->key_comparer));
-	memcpy(out_value, ptr + dictionary->key_size, dictionary->value_size);
+	memcopyv(out_value, ptr + dictionary->key_size, u8, dictionary->value_size);
 	CALLTRACE_END();
 }
 
@@ -62,7 +62,7 @@ RENDERER_API function_signature(bool, dictionary_try_get_value, dictionary_t* di
 	if(index == BUF_INVALID_INDEX)
 		CALLTRACE_RETURN(false);
 	void* ptr = buf_get_ptr_at(buffer, index);
-	memcpy(out_value, ptr + dictionary->key_size, dictionary->value_size);
+	memcopyv(out_value, ptr + dictionary->key_size, u8, dictionary->value_size);
 	CALLTRACE_RETURN(true);	
 }
 
@@ -70,7 +70,7 @@ RENDERER_API function_signature(void, dictionary_get_key_at, dictionary_t* dicti
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
-	memcpy(out_key, buf_get_ptr_at(&dictionary->buffer, index), dictionary->key_size);
+	memcopyv(out_key, buf_get_ptr_at(&dictionary->buffer, index), u8, dictionary->key_size);
 	CALLTRACE_END();	
 }
 
@@ -85,7 +85,7 @@ RENDERER_API function_signature(void, dictionary_get_value_at, dictionary_t* dic
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
-	memcpy(out_value, buf_get_ptr_at(&dictionary->buffer, index) + dictionary->key_size, dictionary->value_size);
+	memcopyv(out_value, buf_get_ptr_at(&dictionary->buffer, index) + dictionary->key_size, u8, dictionary->value_size);
 	CALLTRACE_END();
 }
 
@@ -125,8 +125,8 @@ RENDERER_API function_signature(void, dictionary_set_at, dictionary_t* dictionar
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	void* ptr = buf_get_ptr_at(&dictionary->buffer, index);
-	memcpy(ptr, in_key, dictionary->key_size);
-	memcpy(ptr + dictionary->key_size, in_value, dictionary->value_size);
+	memcopyv(ptr, in_key, u8, dictionary->key_size);
+	memcopyv(ptr + dictionary->key_size, in_value, u8, dictionary->value_size);
 	CALLTRACE_END();
 }
 
@@ -136,7 +136,7 @@ RENDERER_API function_signature(void, dictionary_set_value, dictionary_t* dictio
 	check_pre_condition(dictionary);
 	BUFFER* buffer = &dictionary->buffer;
 	void* ptr = buf_get_ptr_at(buffer, buf_find_index_of(buffer, key, dictionary->key_comparer));
-	memcpy(ptr + dictionary->key_size, in_value, dictionary->value_size);
+	memcopyv(ptr + dictionary->key_size, in_value, u8, dictionary->value_size);
 	CALLTRACE_END();
 }
 
@@ -145,7 +145,7 @@ RENDERER_API function_signature(void, dictionary_set_value_at, dictionary_t* dic
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	void* ptr = buf_get_ptr_at(&dictionary->buffer, index);
-	memcpy(ptr + dictionary->key_size, in_value, dictionary->value_size);
+	memcopyv(ptr + dictionary->key_size, in_value, u8, dictionary->value_size);
 	CALLTRACE_END();
 }
 
@@ -154,12 +154,12 @@ RENDERER_API function_signature(void, dictionary_push, dictionary_t* dictionary,
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
-	// NOTE: buf_push internally uses memcpy, so here we are calling memcpy two times more
+	// NOTE: buf_push internally uses memcopyv, so here we are calling memcopyv two times more
 	//		 We could have used buf_push_pseudo(buffer, 1) but it internally uses memset(bytes, 0, size) which zeros out the memory
 	// TODO: So, create an another version of buf_push_pseudo leaving the memory uninitialized
 	u8 bytes[dictionary->key_size + dictionary->value_size];
-	memcpy(bytes, in_key, dictionary->key_size);
-	memcpy(bytes + dictionary->key_size, in_value, dictionary->value_size);
+	memcopyv(bytes, in_key, u8, dictionary->key_size);
+	memcopyv(bytes + dictionary->key_size, in_value, u8, dictionary->value_size);
 	buf_push(&dictionary->buffer, bytes);
 	CALLTRACE_END();
 }
@@ -169,8 +169,8 @@ RENDERER_API function_signature(void, dictionary_pop, dictionary_t* dictionary, 
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	void* ptr = buf_peek_ptr(&dictionary->buffer);
-	memcpy(out_key, ptr, dictionary->key_size);
-	memcpy(out_value, ptr + dictionary->key_size, dictionary->value_size);
+	memcopyv(out_key, ptr, u8, dictionary->key_size);
+	memcopyv(out_value, ptr + dictionary->key_size, u8, dictionary->value_size);
 	buf_pop(&dictionary->buffer, NULL);
 	CALLTRACE_END();
 }

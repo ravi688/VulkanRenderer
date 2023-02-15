@@ -123,14 +123,6 @@ static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_
 	return buf_get_ptr(&bindings);
 }
 
-#define create_buffer(type) __create_buffer(sizeof(type))
-static BUFFER* __create_buffer(u32 size)
-{
-	BUFFER* buffer = heap_new(BUFFER);
-	*buffer = buf_create(size, 1, 0);
-	return buffer;
-}
-
 static void begin_vertex_binding(vulkan_renderer_t* renderer, BUFFER* list, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
 {
 	vulkan_vertex_buffer_layout_description_begin(renderer, create_element(list), stride, input_rate, binding_number);
@@ -663,7 +655,7 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 
 static vulkan_shader_create_info_t* get_create_info_from_preset(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset)
 {
-	vulkan_shader_create_info_t* create_info = heap_new(vulkan_shader_create_info_t);
+	vulkan_shader_create_info_t* create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_CREATE_INFO, vulkan_shader_create_info_t);
 	create_info->material_set_bindings = create_material_set_binding(renderer, preset, &create_info->material_set_binding_count);
 	create_info->vertex_infos = create_vertex_info(renderer, preset, &create_info->vertex_info_count);
 	create_info->render_pass_descriptions = create_render_pass_description(renderer, preset, &create_info->render_pass_description_count);

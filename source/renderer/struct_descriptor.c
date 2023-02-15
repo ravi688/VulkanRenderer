@@ -78,12 +78,12 @@ RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(struct_des
 
 static inline void __cpy_data_from(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const data, u16 size)
 {
-	memcpy(descriptor->ptr + descriptor->fields[handle].offset, data, size);
+	memcopyv(descriptor->ptr + descriptor->fields[handle].offset, data, u8, size);
 }
 
 static inline void __cpy_data_to(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const data, u16 size)
 {
-	memcpy(data, descriptor->ptr + descriptor->fields[handle].offset, size);
+	memcopyv(data, descriptor->ptr + descriptor->fields[handle].offset, u8, size);
 }
 
 RENDERER_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in)
@@ -303,7 +303,7 @@ RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_
 
 	BUFFER* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
 	BUFFER _buffer = buf_create(sizeof(struct_field_t), 1, 0);
-	memcpy(buffer, &_buffer, sizeof(BUFFER));
+	memcopy(buffer, &_buffer, BUFFER);
 	descriptor->fields = CAST_TO(struct_field_t*, buffer);
 }
 

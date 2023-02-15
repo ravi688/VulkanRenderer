@@ -63,7 +63,7 @@ RENDERER_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, 
 	u32 pixel_count = width * height;
 	while(pixel_count > 0)
 	{
-		memcpy(dst, src, channel_count);
+		memcopyv(dst, src, u8, channel_count);
 		dst += channel_count;
 		src += channel_count;
 		for(u8 i = 0; i < pad_channel_count; i++)

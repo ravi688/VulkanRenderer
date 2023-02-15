@@ -190,23 +190,23 @@ static bool render_pass_create_info_compare(void* create_info, void* ref)
 
 static void vulkan_resource_descriptor_deep_copy(memory_allocator_t* allocator, vulkan_shader_resource_description_t* dst, vulkan_shader_resource_description_t* src)
 {
-	memcpy(dst, src, sizeof(vulkan_shader_resource_description_t));
+	memcopy(dst, src, vulkan_shader_resource_description_t);
 	if(src->handle.field_count > 0)
 	{
 		dst->handle.fields = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, src->handle.field_count);
-		memcpy(dst->handle.fields, src->handle.fields, sizeof(struct_field_t) * src->handle.field_count);
+		memcopyv(dst->handle.fields, src->handle.fields, struct_field_t, src->handle.field_count);
 	}
 }
 
 static void vulkan_subpass_create_info_deep_copy(memory_allocator_t* allocator, vulkan_subpass_create_info_t* dst, vulkan_subpass_create_info_t* src)
 {
-	memcpy(dst, src, sizeof(vulkan_subpass_create_info_t));
+	memcopy(dst, src, vulkan_subpass_create_info_t);
 	dst->color_attachments = src->color_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, src->color_attachment_count) : NULL;
-	memcpy(dst->color_attachments, src->color_attachments, sizeof(VkAttachmentReference) * src->color_attachment_count);
+	memcopyv(dst->color_attachments, src->color_attachments, VkAttachmentReference, src->color_attachment_count);
 	dst->input_attachments = src->input_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, src->input_attachment_count) : NULL;
-	memcpy(dst->input_attachments, src->input_attachments, sizeof(VkAttachmentReference) * src->input_attachment_count);
+	memcopyv(dst->input_attachments, src->input_attachments, VkAttachmentReference, src->input_attachment_count);
 	dst->preserve_attachments = src->preserve_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, src->preserve_attachment_count) : NULL;
-	memcpy(dst->preserve_attachments, src->preserve_attachments, sizeof(u32) * src->preserve_attachment_count);
+	memcopyv(dst->preserve_attachments, src->preserve_attachments, u32, src->preserve_attachment_count);
 			
 	dst->sub_render_set_bindings = src->sub_render_set_binding_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, src->sub_render_set_binding_count) : NULL;
 	for(u32 j = 0; j < src->sub_render_set_binding_count; j++)
@@ -215,20 +215,20 @@ static void vulkan_subpass_create_info_deep_copy(memory_allocator_t* allocator, 
 
 static void vulkan_render_pass_create_info_deep_copy(memory_allocator_t* allocator, vulkan_render_pass_create_info_t* dst, vulkan_render_pass_create_info_t* src)
 {
-	memcpy(dst, src, sizeof(vulkan_render_pass_create_info_t));
+	memcopy(dst, src, vulkan_render_pass_create_info_t);
 	dst->attachment_descriptions = src->attachment_description_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, src->attachment_description_count) : NULL;
-	memcpy(dst->attachment_descriptions, src->attachment_descriptions, sizeof(VkAttachmentDescription) * src->attachment_description_count);
+	memcopyv(dst->attachment_descriptions, src->attachment_descriptions, VkAttachmentDescription, src->attachment_description_count);
 
 	_debug_assert__(src->subpass_count > 0);
 	dst->subpasses = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO_ARRAY, vulkan_subpass_create_info_t, src->subpass_count);
-	memcpy(dst->subpasses, src->subpasses, sizeof(vulkan_subpass_create_info_t) * src->subpass_count);
+	memcopyv(dst->subpasses, src->subpasses, vulkan_subpass_create_info_t, src->subpass_count);
 	for(u32 i = 0; i < src->subpass_count; i++)
 		vulkan_subpass_create_info_deep_copy(allocator, &dst->subpasses[i], &src->subpasses[i]);
 
 	if(src->subpass_dependency_count > 0)
 	{
 		dst->subpass_dependencies = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SUBPASS_DEPENDENCY_ARRAY, VkSubpassDependency, src->subpass_dependency_count);
-		memcpy(dst->subpass_dependencies, src->subpass_dependencies, sizeof(VkSubpassDependency) * src->subpass_dependency_count);
+		memcopyv(dst->subpass_dependencies, src->subpass_dependencies, VkSubpassDependency, src->subpass_dependency_count);
 	}
 
 	dst->render_set_bindings = src->render_set_binding_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, src->render_set_binding_count) : NULL;

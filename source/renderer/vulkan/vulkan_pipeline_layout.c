@@ -45,7 +45,7 @@ RENDERER_API void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* layou
 
 RENDERER_API void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* layout)
 {
-	heap_free(layout);
+	memory_allocator_dealloc(layout->renderer->allocator, layout);
 }
 
 

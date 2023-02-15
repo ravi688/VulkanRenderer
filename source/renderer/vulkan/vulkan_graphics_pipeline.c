@@ -26,12 +26,12 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 
 	pipeline->renderer = renderer;
 	// copy the shader stage create info to a continuous array of VkPipelineShaderStageCreateInfo
-	VkPipelineShaderStageCreateInfo* shader_stages = heap_newv(VkPipelineShaderStageCreateInfo, create_info->shader_module_count);
+	VkPipelineShaderStageCreateInfo* shader_stages = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PIPELINE_SHADER_STAGE_CREATE_INFO_ARRAY, VkPipelineShaderStageCreateInfo, create_info->shader_module_count);
 	for(u32 i = 0; i < create_info->shader_module_count; i++)
 		shader_stages[i] = create_info->shader_modules[i].vo_stage;
 
 	// setup vertex input binding and descriptions
-	VkVertexInputBindingDescription* binding_descriptions = heap_newv(VkVertexInputBindingDescription, create_info->vertex_attribute_binding_count);
+	VkVertexInputBindingDescription* binding_descriptions = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VERTEX_INPUT_BINDING_DESCRIPTION_ARRAY, VkVertexInputBindingDescription, create_info->vertex_attribute_binding_count);
 	BUFFER attribute_descriptions = buf_create(sizeof(VkVertexInputAttributeDescription), 0, 0);
 
 	for(u32 i = 0; i < create_info->vertex_attribute_binding_count; i++)
@@ -111,8 +111,8 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 	vkCall(vkCreateGraphicsPipelines(renderer->logical_device->vo_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &pipeline->vo_handle));
 
 	buf_free(&attribute_descriptions);
-	heap_free(binding_descriptions);
-	heap_free(shader_stages);
+	memory_allocator_dealloc(renderer->allocator, binding_descriptions);
+	memory_allocator_dealloc(renderer->allocator, shader_stages);
 }
 
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)

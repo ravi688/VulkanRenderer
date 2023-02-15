@@ -301,7 +301,7 @@ DEBUG_BLOCK
 		.queue_family_index_count = (queue_family_indices[0] == queue_family_indices[1]) ? 1 : 2,
 		.vo_present_mode = present_mode
 	};
-	memcpy(&renderer->swapchain_create_info, &swapchain_info, sizeof(vulkan_swapchain_create_info_t));
+	memcopy(&renderer->swapchain_create_info, &swapchain_info, vulkan_swapchain_create_info_t);
 	renderer->swapchain = vulkan_swapchain_create(renderer, &swapchain_info);
 
 

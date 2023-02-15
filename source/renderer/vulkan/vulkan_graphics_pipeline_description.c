@@ -41,7 +41,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_begin(vulkan_renderer_t* 
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO
 	};
 
-	VkViewport* viewport = heap_new(VkViewport);
+	VkViewport* viewport = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VIEWPORT, VkViewport);
 	viewport[0] = (VkViewport)
 	{
 		.x = 0,
@@ -51,7 +51,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_begin(vulkan_renderer_t* 
 		.minDepth = 0,
 		.maxDepth = 1.0f
 	};
-	VkRect2D* scissor = heap_new(VkRect2D);
+	VkRect2D* scissor = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_RECT2D, VkRect2D);
 	scissor[0] = (VkRect2D)
 	{
 		.offset = { 0, 0 },
