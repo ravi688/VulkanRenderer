@@ -25,10 +25,13 @@ typedef enum vulkan_renderer_gpu_type_t
 } vulkan_renderer_gpu_type_t;
 
 typedef struct memory_allocator_t memory_allocator_t;
+typedef struct vulkan_allocator_t vulkan_allocator_t;
 
 typedef struct vulkan_renderer_t
 {
 	memory_allocator_t* allocator;
+	vulkan_allocator_t* vk_allocator;
+
 	vulkan_instance_t* instance;
 	vulkan_logical_device_t* logical_device;
 	vulkan_physical_device_t* physical_device;

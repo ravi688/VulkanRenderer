@@ -34,12 +34,12 @@ RENDERER_API void render_pass_pool_release_resources(render_pass_pool_t* pool)
 
 static vulkan_render_pass_create_info_t* build_shadow_map_render_pass_create_info(vulkan_renderer_t* renderer)
 {
-	vulkan_render_pass_create_info_t* create_info = heap_new(vulkan_render_pass_create_info_t);
+	vulkan_render_pass_create_info_t* create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO, vulkan_render_pass_create_info_t);
 	memzero(create_info, vulkan_render_pass_create_info_t);
 	
 	create_info->framebuffer_count = 1;
 	create_info->attachment_count = 1;
-	create_info->attachments = heap_new(VkAttachmentDescription);
+	create_info->attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION, VkAttachmentDescription);
 	create_info->attachments[0] = (VkAttachmentDescription)
 	{
 		.format = VK_FORMAT_D32_SFLOAT,
@@ -51,20 +51,20 @@ static vulkan_render_pass_create_info_t* build_shadow_map_render_pass_create_inf
 		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		.finalLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
 	};
-	create_info->attachment_usages = heap_new(vulkan_attachment_next_pass_usage_t);
+	create_info->attachment_usages = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE, vulkan_attachment_next_pass_usage_t);
 	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED;
 
 	// create_info->supplementary_attachment_count = 1;
 	// create_info->supplementary_attachments = renderer->swapchain->vo_image_views;
 
-	VkAttachmentReference* depth_stencil_attachment = heap_new(VkAttachmentReference);
+	VkAttachmentReference* depth_stencil_attachment = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE, VkAttachmentReference);
 	depth_stencil_attachment[0] = (VkAttachmentReference)
 	{
 		.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 		.attachment = 0
 	};
 	create_info->subpass_count = 1;
-	create_info->subpasses = heap_new(vulkan_subpass_create_info_t);
+	create_info->subpasses = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO, vulkan_subpass_create_info_t);
 	create_info->subpasses[0] = (vulkan_subpass_create_info_t)
 	{
 		.pipeline_bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -76,12 +76,12 @@ static vulkan_render_pass_create_info_t* build_shadow_map_render_pass_create_inf
 
 static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_create_info(vulkan_renderer_t* renderer, VkAttachmentLoadOp loadOp)
 {
-	vulkan_render_pass_create_info_t* create_info = heap_new(vulkan_render_pass_create_info_t);
+	vulkan_render_pass_create_info_t* create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO, vulkan_render_pass_create_info_t);
 	memzero(create_info, vulkan_render_pass_create_info_t);
 	
 	create_info->framebuffer_count = renderer->swapchain->image_count;
 	create_info->attachment_count = 1;
-	create_info->attachments = heap_new(VkAttachmentDescription);
+	create_info->attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION, VkAttachmentDescription);
 	create_info->attachments[0] = (VkAttachmentDescription)
 	{
 		.format = renderer->swapchain->vo_image_format,
@@ -93,20 +93,20 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 	};
-	create_info->attachment_usages = heap_new(vulkan_attachment_next_pass_usage_t);
+	create_info->attachment_usages = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE, vulkan_attachment_next_pass_usage_t);
 	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
 
 	create_info->supplementary_attachment_count = 1;
 	create_info->supplementary_attachments = renderer->swapchain->vo_image_views;
 
-	VkAttachmentReference* color_attachments = heap_new(VkAttachmentReference);
+	VkAttachmentReference* color_attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE, VkAttachmentReference);
 	color_attachments[0] = (VkAttachmentReference)
 	{
 		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		.attachment = 0
 	};
 	create_info->subpass_count = 1;
-	create_info->subpasses = heap_new(vulkan_subpass_create_info_t);
+	create_info->subpasses = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO, vulkan_subpass_create_info_t);
 	create_info->subpasses[0] = (vulkan_subpass_create_info_t)
 	{
 		.pipeline_bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -147,7 +147,7 @@ RENDERER_API render_pass_handle_t render_pass_pool_create_pass_from_preset(rende
 			return RENDER_PASS_HANDLE_INVALID;
 	}
 	AUTO handle = vulkan_render_pass_pool_create_pass(pool, create_info);
-	heap_free(create_info);
+	memory_allocator_dealloc(CAST_TO(vulkan_render_pass_t*, pool)->renderer->allocator, create_info);
 	log_msg("Render pass has been created or fetched from pool with preset: %s\n", preset_to_string(preset));
 	return handle;
 }

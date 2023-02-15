@@ -5,6 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_result.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
@@ -229,7 +230,7 @@ static VkSampler get_default_sampler(vulkan_renderer_t* renderer)
 		.maxLod = 0.0f
 	};
 	VkSampler sampler;
-	vkCall(vkCreateSampler(renderer->logical_device->vo_handle, &create_info, NULL, &sampler));
+	vkCall(vkCreateSampler(renderer->logical_device->vo_handle, &create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &sampler));
 	return sampler;
 }
 
@@ -368,7 +369,7 @@ RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
 {
 	if(texture->vo_image_sampler != VK_NULL_HANDLE)
 	{
-		vkDestroySampler(texture->renderer->logical_device->vo_handle, texture->vo_image_sampler, NULL);
+		vkDestroySampler(texture->renderer->logical_device->vo_handle, texture->vo_image_sampler, VULKAN_ALLOCATION_CALLBACKS(texture->renderer));
 		texture->vo_image_sampler = VK_NULL_HANDLE;
 	}
 	vulkan_image_view_destroy(&texture->image_view);

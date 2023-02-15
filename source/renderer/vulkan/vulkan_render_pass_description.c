@@ -108,7 +108,7 @@ RENDERER_API void vulkan_render_pass_description_end_subpass(vulkan_renderer_t* 
 RENDERER_API void vulkan_render_pass_description_add_subpass_dependency(vulkan_render_pass_description_t* description, VkSubpassDependency* dependency)
 {
 	VkSubpassDependency* dst_dependency = create_element(CAST_TO(BUFFER*, description->subpass_dependencies));
-	memcpy(dst_dependency, dependency, sizeof(VkSubpassDependency));
+	memcopy(dst_dependency, dependency, VkSubpassDependency);
 }
 
 RENDERER_API void vulkan_render_pass_description_end(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* description)

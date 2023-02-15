@@ -2,6 +2,7 @@
 #include <renderer/internal/vulkan/vulkan_attachment.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
@@ -114,7 +115,7 @@ static VkImageAspectFlags get_image_aspect_from_format(VkFormat format)
 }
 
 
-static VkSampler create_sampler(VkDevice device)
+static VkSampler create_sampler(vulkan_renderer_t* renderer)
 {
 	VkSamplerCreateInfo cInfo = 
 	{
@@ -137,7 +138,7 @@ static VkSampler create_sampler(VkDevice device)
 	};
 
 	VkSampler sampler;
-	vkCall(vkCreateSampler(device, &cInfo, NULL, &sampler));
+	vkCall(vkCreateSampler(renderer->logical_device->vo_handle, &cInfo, VULKAN_ALLOCATION_CALLBACKS(renderer), &sampler));
 	return sampler;
 }
 
@@ -194,7 +195,7 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 	if((create_info->next_pass_usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) != 0)
 	{
 		attachment->vo_descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		attachment->sampler = create_sampler(renderer->logical_device->vo_handle);
+		attachment->sampler = create_sampler(renderer);
 	}
 	else
 	{
@@ -209,7 +210,7 @@ RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)
 	vulkan_image_destroy(&attachment->image);
 	vulkan_image_view_destroy(&attachment->image_view);
 	if(attachment->sampler != VK_NULL_HANDLE)
-		vkDestroySampler(attachment->renderer->logical_device->vo_handle, attachment->sampler, NULL);
+		vkDestroySampler(attachment->renderer->logical_device->vo_handle, attachment->sampler, VULKAN_ALLOCATION_CALLBACKS(attachment->renderer));
 }
 
 RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment)

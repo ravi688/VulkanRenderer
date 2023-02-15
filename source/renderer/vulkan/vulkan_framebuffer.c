@@ -5,6 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_defines.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
@@ -34,7 +35,7 @@ static void vulkan_framebuffer_recreate(vulkan_framebuffer_t* framebuffer)
 		.height = framebuffer->renderer->window->height,
 		.layers = 1
 	};
-	vkCall(vkCreateFramebuffer(framebuffer->renderer->logical_device->vo_handle, &framebuffer_create_info, NULL, &framebuffer->vo_handle));
+	vkCall(vkCreateFramebuffer(framebuffer->renderer->logical_device->vo_handle, &framebuffer_create_info, VULKAN_ALLOCATION_CALLBACKS(framebuffer->renderer), &framebuffer->vo_handle));
 }
 
 RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_create(vulkan_renderer_t* renderer, vulkan_render_pass_t* render_pass, u32 id)
@@ -103,7 +104,7 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 
 RENDERER_API void vulkan_framebuffer_destroy(vulkan_framebuffer_t* framebuffer)
 {
-	vkDestroyFramebuffer(framebuffer->renderer->logical_device->vo_handle, framebuffer->vo_handle, NULL);
+	vkDestroyFramebuffer(framebuffer->renderer->logical_device->vo_handle, framebuffer->vo_handle, VULKAN_ALLOCATION_CALLBACKS(framebuffer->renderer));
 }
 
 RENDERER_API void vulkan_framebuffer_release_resources(vulkan_framebuffer_t* framebuffer)

@@ -41,7 +41,7 @@ RENDERER_API void vulkan_physical_device_create_no_alloc(vulkan_renderer_t* rend
 	// cache physical device extensions
 	VkResult vo_result = vkEnumerateDeviceExtensionProperties(device->vo_handle, NULL, &device->extension_count, NULL);
 	vulkan_result_assert_success(vo_result);
-	device->vo_extension_properties = heap_newv(VkExtensionProperties, device->extension_count);
+	device->vo_extension_properties = memory_allocator_alloc_obj_array(device->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_EXTENSION_PROPERTIES_ARRAY, VkExtensionProperties, device->extension_count);
 	vo_result = vkEnumerateDeviceExtensionProperties(device->vo_handle, NULL, &device->extension_count, device->vo_extension_properties);
 	vulkan_result_assert_success(vo_result);
 	vulkan_result_assert_complete(vo_result);

@@ -4,6 +4,7 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>  					// vkCall
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/internal/vulkan/vulkan_types.h> 			// vulkan_shader_type_t
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
@@ -16,7 +17,7 @@ static VkDescriptorSetLayout get_null_set_layout(vulkan_renderer_t* renderer)
 	};
 
 	VkDescriptorSetLayout layout;
-	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->vo_handle, &layout_create_info, NULL, &layout));
+	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->vo_handle, &layout_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &layout));
 	return layout;
 }
 
@@ -45,7 +46,7 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 	}
 	// allocate memory
 	VkDescriptorSetLayoutBinding* bindings = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_DESCRIPTOR_SET_LAYOUT_BINDING_ARRAY, VkDescriptorSetLayoutBinding, descriptor_count);
-	memzerov(bindings, VkDescriptorSetLayoutBinding, descriptor_count);
+	safe_memzerov(bindings, VkDescriptorSetLayoutBinding, descriptor_count);
 
 	u32 binding_count = 0;
 	for(u32 i = 0; i < descriptor_count; i++)
@@ -122,7 +123,7 @@ RENDERER_API void vulkan_descriptor_set_layout_destroy(vulkan_descriptor_set_lay
 {
 	if(layout->vo_handle != VK_NULL_HANDLE)
 	{
-		vkDestroyDescriptorSetLayout(layout->renderer->logical_device->vo_handle, layout->vo_handle, NULL);
+		vkDestroyDescriptorSetLayout(layout->renderer->logical_device->vo_handle, layout->vo_handle, VULKAN_ALLOCATION_CALLBACKS(layout->renderer));
 		layout->vo_handle = VK_NULL_HANDLE;
 	}
 }

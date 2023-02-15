@@ -18,19 +18,19 @@ RENDERER_API vulkan_light_t* vulkan_light_new(memory_allocator_t* allocator, vul
 	{
 		case VULKAN_LIGHT_TYPE_DIRECTIONAL:
 			light = CAST_TO(vulkan_light_t*, memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_DIRECTIONAL_LIGHT, vulkan_directional_light_t));
-			unsafe_memzero(light, vulkan_directional_light_t);
+			memzero(light, vulkan_directional_light_t);
 		break;
 		case VULKAN_LIGHT_TYPE_POINT:
 			light =	CAST_TO(vulkan_light_t*, memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_POINT_LIGHT, vulkan_point_light_t));
-			unsafe_memzero(light, vulkan_point_light_t);
+			memzero(light, vulkan_point_light_t);
 		break;
 		case VULKAN_LIGHT_TYPE_SPOT:
 			light = CAST_TO(vulkan_light_t*, memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SPOT_LIGHT, vulkan_spot_light_t));
-			unsafe_memzero(light, vulkan_spot_light_t);
+			memzero(light, vulkan_spot_light_t);
 		break;
 		case VULKAN_LIGHT_TYPE_AMBIENT:
 			light = CAST_TO(vulkan_light_t*, memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_AMBIENT_LIGHT, vulkan_ambient_light_t));
-			unsafe_memzero(light, vulkan_ambient_light_t);
+			memzero(light, vulkan_ambient_light_t);
 		break;
 		default:
 			UNSUPPORTED_LIGHT_TYPE(type);

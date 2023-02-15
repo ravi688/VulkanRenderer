@@ -40,6 +40,6 @@ RENDERER_API void render_window_unsubscribe_on_resize(render_window_t* window, v
 RENDERER_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height);
 
 //API specific extensions
-RENDERER_API void render_window_get_vulkan_surface(render_window_t* window, void* vulkan_instance, void* out_surface);
+RENDERER_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_driver, void* out_surface);
 
 END_CPP_COMPATIBLE

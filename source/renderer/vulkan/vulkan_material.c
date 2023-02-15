@@ -36,12 +36,15 @@ static void setup_material_resources(vulkan_material_t* material)
 
 	vulkan_shader_resource_description_t* bindings = material->shader->material_set_bindings;
 	vulkan_uniform_resource_t* uniform_resources = memory_allocator_alloc_obj_array(material->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_UNIFORM_RESOURCE_ARRAY, vulkan_uniform_resource_t, count);
-	memzerov(uniform_resources, vulkan_uniform_resource_t, count);
+	safe_memzerov(uniform_resources, vulkan_uniform_resource_t, count);
 	for(u16 i = 0, j = 0; i < material->shader->material_set_binding_count; i++)
 	{
 		vulkan_shader_resource_description_t* binding = &bindings[i];
-		if(binding->is_attribute)
+		if(binding->is_attribute || binding->is_opaque || binding->is_push_constant)
 			continue;
+
+		_debug_assert__(j < count);
+
 		vulkan_uniform_resource_t* resource = &uniform_resources[j];
 		j++;
 		if(binding->handle.type == GLSL_TYPE_UNIFORM_BUFFER)
@@ -578,7 +581,7 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 	memset(out_struct_name, 0, STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
 	if(ptr == NULL)
 	{
-		memcpy(out_struct_name, full_name, len);
+		memcopyv(out_struct_name, full_name, u8, len);
 		strcpy(out_field_name, "<UndefinedField>");
 		return;
 	}
@@ -586,8 +589,8 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 	u16 field_name_len = (u16)(len - struct_name_len - 1);
 	_debug_assert__(struct_name_len < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
 	_debug_assert__(field_name_len < STRUCT_FIELD_MAX_NAME_SIZE);
-	memcpy(out_struct_name, full_name, struct_name_len);
-	memcpy(out_field_name, ptr + 1, field_name_len);
+	memcopyv(out_struct_name, full_name, u8, struct_name_len);
+	memcopyv(out_field_name, ptr + 1, u8, field_name_len);
 }
 
 RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vulkan_material_t* material, const char* name)

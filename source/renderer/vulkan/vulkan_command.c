@@ -3,7 +3,7 @@
 #include <renderer/assert.h>
 
 #include <stdarg.h>
-#include <string.h>	 // memcpy
+#include <renderer/alloc.h>	 // memcopyv
 
 RENDERER_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkImage image,
 		VkImageSubresourceRange* subresource,
@@ -25,6 +25,6 @@ RENDERER_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkI
 		.srcAccessMask = src_access_mask,
 		.dstAccessMask = dst_access_mask
 	};
-	memcpy(&barrier.subresourceRange, subresource, sizeof(VkImageSubresourceRange));
+	memcopy(&barrier.subresourceRange, subresource, VkImageSubresourceRange);
 	vkCmdPipelineBarrier(cb, src_pipeline_stage, dst_pipeline_stage, 0, 0, NULL, 0, NULL, 1, &barrier);
 }

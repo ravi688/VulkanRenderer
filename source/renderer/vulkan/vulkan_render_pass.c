@@ -6,6 +6,7 @@
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_framebuffer.h>
 #include <renderer/internal/vulkan/vulkan_camera_system.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/render_window.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
@@ -83,7 +84,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 
 	_debug_assert__(create_info->attachment_description_count > 0);
 	// VkAttachmentDescription* attachment_descriptions = heap_newv(VkAttachmentDescription, create_info->attachment_description_count);
-	// memcpy(attachment_descriptions, create_info->attachment_descriptions, sizeof(VkAttachmentDescription) * create_info->attachment_description_count);
+	// memcopyv(attachment_descriptions, create_info->attachment_descriptions, VkAttachmentDescription, create_info->attachment_description_count);
 	
 	VkRenderPassCreateInfo render_pass_create_info = 
 	{
@@ -95,7 +96,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		.dependencyCount = create_info->subpass_dependency_count,
 		.pDependencies = create_info->subpass_dependencies
 	};
-	vkCall(vkCreateRenderPass(renderer->logical_device->vo_handle, &render_pass_create_info, NULL, &render_pass->vo_handle));
+	vkCall(vkCreateRenderPass(renderer->logical_device->vo_handle, &render_pass_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &render_pass->vo_handle));
 	log_ptr(render_pass->vo_handle);
 	// heap_free(attachment_descriptions);
 	memory_allocator_dealloc(renderer->allocator, subpasses);
@@ -107,7 +108,8 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	render_pass->allocated_attachment_count = CAST_TO(s32, render_pass->attachment_count) - CAST_TO(s32, render_pass->supplementary_attachment_count);
 	_debug_assert__(render_pass->allocated_attachment_count >= 0);
 	render_pass->allocated_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_ARRAY, vulkan_attachment_t, render_pass->allocated_attachment_count);
-	memzerov(render_pass->allocated_attachments, vulkan_attachment_t, render_pass->allocated_attachment_count);
+	if(render_pass->allocated_attachment_count >= 1)
+		safe_memzerov(render_pass->allocated_attachments, vulkan_attachment_t, render_pass->allocated_attachment_count);
 	for(u32 i = 0; i < render_pass->allocated_attachment_count; i++)
 	{
 		vulkan_attachment_create_info_t attachment_create_info = 
@@ -122,7 +124,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 
 	// create clear values for each attachment in this render pass
 	render_pass->vo_clear_values = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_CLEAR_VALUE_ARRAY, VkClearValue, render_pass->attachment_count);
-	memzerov(render_pass->vo_clear_values, VkClearValue, render_pass->attachment_count);
+	safe_memzerov(render_pass->vo_clear_values, VkClearValue, render_pass->attachment_count);
 	render_pass->vo_formats = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_FORMAT_ARRAY, VkFormat, render_pass->attachment_count);
 	for(u32 i = 0; i < render_pass->attachment_count; i++)
 	{
@@ -166,7 +168,7 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 	// TODO
 
 	// destory the vulkan render pass object
-	vkDestroyRenderPass(render_pass->renderer->logical_device->vo_handle, render_pass->vo_handle, NULL);
+	vkDestroyRenderPass(render_pass->renderer->logical_device->vo_handle, render_pass->vo_handle, VULKAN_ALLOCATION_CALLBACKS(render_pass->renderer));
 	
 	// destroy the vulkan attachments
 	for(u32 i = 0; i < render_pass->allocated_attachment_count; i++)

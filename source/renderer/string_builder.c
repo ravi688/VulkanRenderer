@@ -48,7 +48,7 @@ RENDERER_API void string_builder_append(string_builder_t* builder, const char* c
 
 	/* put the indentiation string into the buffer */
 	if(indentation_level > 0)
-		memcpy(ptr, buf_get_ptr(&builder->indentation_buffer), indentation_level);
+		memcopyv(ptr, buf_get_ptr(&builder->indentation_buffer), u8, indentation_level);
 
 	/* format the string and put that into the buffer */
 	va_start(args, format);

@@ -164,7 +164,7 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	buf_push(&camera->framebuffers, &buffer);
 
 	camera->clear_buffer = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_CLEAR_VALUE_ARRAY, VkClearValue, camera->default_render_pass->attachment_count);
-	memcpy(camera->clear_buffer, camera->default_render_pass->vo_clear_values, sizeof(VkClearValue) * camera->default_render_pass->attachment_count);
+	memcopyv(camera->clear_buffer, camera->default_render_pass->vo_clear_values, VkClearValue, camera->default_render_pass->attachment_count);
 
 	render_window_t* window = vulkan_renderer_get_window(renderer);
 

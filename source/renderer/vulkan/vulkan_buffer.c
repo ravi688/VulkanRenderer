@@ -1,19 +1,21 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 
 RENDERER_API void vulkan_buffer_init(vulkan_buffer_t* buffer)
 {
+	/* vulkan_buffer_t might be composited into another object's stack memory */
 	memzero(buffer, vulkan_buffer_t);
 }
 
 RENDERER_API vulkan_buffer_t* vulkan_buffer_new(memory_allocator_t* allocator)
 {
 	vulkan_buffer_t* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_BUFFER, vulkan_buffer_t);
-	vulkan_buffer_init(buffer);
+	memzero(buffer, vulkan_buffer_t);
 	return buffer;
 }
 
@@ -41,7 +43,7 @@ RENDERER_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vul
 		.usage = create_info->vo_usage_flags,
 		.sharingMode = create_info->vo_sharing_mode
 	};
-	vkCall(vkCreateBuffer(renderer->logical_device->vo_handle, &buffer_create_info, NULL, &buffer->vo_handle));
+	vkCall(vkCreateBuffer(renderer->logical_device->vo_handle, &buffer_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &buffer->vo_handle));
 
 	// get memory requirements
     VkMemoryRequirements vo_memory_requirements;
@@ -54,7 +56,7 @@ RENDERER_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vul
 		.allocationSize = vo_memory_requirements.size,
 		.memoryTypeIndex = vulkan_physical_device_find_memory_type(renderer->physical_device, vo_memory_requirements.memoryTypeBits, create_info->vo_memory_property_flags)
 	};
-	vkCall(vkAllocateMemory(renderer->logical_device->vo_handle, &alloc_info, NULL, &buffer->vo_memory));
+	vkCall(vkAllocateMemory(renderer->logical_device->vo_handle, &alloc_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &buffer->vo_memory));
 	vkCall(vkBindBufferMemory(renderer->logical_device->vo_handle, buffer->vo_handle, buffer->vo_memory, 0));
 
 	buffer->stride = create_info->stride;
@@ -66,8 +68,8 @@ RENDERER_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vul
 
 RENDERER_API void vulkan_buffer_destroy(vulkan_buffer_t* buffer)
 {
-	vkDestroyBuffer(buffer->renderer->logical_device->vo_handle, buffer->vo_handle, NULL);
-	vkFreeMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory, NULL);
+	vkDestroyBuffer(buffer->renderer->logical_device->vo_handle, buffer->vo_handle, VULKAN_ALLOCATION_CALLBACKS(buffer->renderer));
+	vkFreeMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory, VULKAN_ALLOCATION_CALLBACKS(buffer->renderer));
 }
 
 RENDERER_API void vulkan_buffer_release_resources(vulkan_buffer_t* buffer)
@@ -84,7 +86,7 @@ RENDERER_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_of
 
 	void* ptr;
 	vkMapMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory, 0, buffer->size, 0, &ptr);
-	memcpy(ptr + buffer_offset, data, data_size);
+	memcopyv(ptr + buffer_offset, data, u8, data_size);
 	vkUnmapMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory);
 }
 

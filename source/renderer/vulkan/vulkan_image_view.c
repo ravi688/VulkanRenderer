@@ -7,6 +7,7 @@
 #include <renderer/internal/vulkan/vulkan_command.h>
 #include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
+#include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
@@ -52,7 +53,7 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
 	_debug_assert__(view_create_info.subresourceRange.levelCount > 0);
 	assert((view_create_info.subresourceRange.baseArrayLayer + view_create_info.subresourceRange.layerCount) <= create_info->image->layer_count);
 	
-	memcpy(&view->vo_subresource_range, &view_create_info.subresourceRange, sizeof(VkImageSubresourceRange));
+	memcopy(&view->vo_subresource_range, &view_create_info.subresourceRange, VkImageSubresourceRange);
 	switch(create_info->image->vo_format)
 	{
 		case VK_FORMAT_R8G8B8A8_UNORM:
@@ -67,13 +68,12 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
     	default:
     		view_create_info.components = (VkComponentMapping) { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY };
 	}
-	VkResult result = vkCreateImageView(view->renderer->logical_device->vo_handle, &view_create_info, NULL, &view->vo_handle);
-	vulkan_result_assert_success(result);
+	vkCall(vkCreateImageView(view->renderer->logical_device->vo_handle, &view_create_info, VULKAN_ALLOCATION_CALLBACKS(view->renderer), &view->vo_handle));
 }
 
 RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
 {
-	vkDestroyImageView(view->renderer->logical_device->vo_handle, view->vo_handle, NULL);
+	vkDestroyImageView(view->renderer->logical_device->vo_handle, view->vo_handle, VULKAN_ALLOCATION_CALLBACKS(view->renderer));
 }
 
 RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)

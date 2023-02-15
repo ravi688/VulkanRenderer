@@ -61,98 +61,98 @@ TEST_DATA(TID_28_CASE_1)
 
 SETUP_TEST(TID_28_CASE_1);
 
-static void initialize(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
+TEST_ON_INITIALIZE(TID_28_CASE_1)
 {
-	data->camera_system = renderer_get_camera_system(renderer);
+	this->camera_system = renderer_get_camera_system(renderer);
 
 	// TODO: every scene will have their own camera system ( Camera sets )
 	// create a camera
-	data->camera = camera_system_getH(data->camera_system,
-							camera_system_create_camera(data->camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(data->camera, COLOR_WHITE, 1.0f);
-	camera_set_active(data->camera, true);
+	this->camera = camera_system_getH(this->camera_system,
+							camera_system_create_camera(this->camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
+	camera_set_clear(this->camera, COLOR_WHITE, 1.0f);
+	camera_set_active(this->camera, true);
 
-	data->camera3 = camera_system_getH(data->camera_system,
-							camera_system_create_camera(data->camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_active(data->camera3, false);
-	camera_set_clear(data->camera3, COLOR_GREEN, 1.0f);
-	camera_set_position(data->camera3, vec3(0, 0.6, -3.0f));
-	camera_set_rotation(data->camera3, vec3(10 DEG, -90 DEG, 0));
+	this->camera3 = camera_system_getH(this->camera_system,
+							camera_system_create_camera(this->camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
+	camera_set_active(this->camera3, false);
+	camera_set_clear(this->camera3, COLOR_GREEN, 1.0f);
+	camera_set_position(this->camera3, vec3(0, 0.6, -3.0f));
+	camera_set_rotation(this->camera3, vec3(10 DEG, -90 DEG, 0));
 
-	data->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
-	light_set_rotation(data->light, vec3(10 DEG, -120 DEG, 0));
-	light_set_position(data->light, vec3(1, 0.6f, -3.0f));
+	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
+	light_set_rotation(this->light, vec3(10 DEG, -120 DEG, 0));
+	light_set_position(this->light, vec3(1, 0.6f, -3.0f));
 
 	// create a render scene
-	data->scene = render_scene_create_from_preset(renderer, RENDER_SCENE_PRESET_TYPE_DEFAULT);
+	this->scene = render_scene_create_from_preset(renderer, RENDER_SCENE_PRESET_TYPE_DEFAULT);
 
-	data->slib = renderer_get_shader_library(renderer);
-	data->mlib = renderer_get_material_library(renderer);
+	this->slib = renderer_get_shader_library(renderer);
+	this->mlib = renderer_get_material_library(renderer);
 
-	data->skyboxTexture = texture_load(renderer, TEXTURE_TYPE_CUBE, 
+	this->skyboxTexture = texture_load(renderer, TEXTURE_TYPE_CUBE, 
 											"showcase/resource/skybox_textures/skybox/right.bmp",
 											"showcase/resource/skybox_textures/skybox/left.bmp",
 											"showcase/resource/skybox_textures/skybox/bottom.bmp",
 											"showcase/resource/skybox_textures/skybox/top.bmp",
 											"showcase/resource/skybox_textures/skybox/front.bmp", 
 											"showcase/resource/skybox_textures/skybox/back.bmp");
-	data->skyboxGeometry = mesh3d_cube(renderer->allocator, 5.0f);
-	mesh3d_flip_triangles(data->skyboxGeometry);
-	data->skyboxMesh = mesh_create(renderer, data->skyboxGeometry);
-	data->skyboxShaderH = shader_library_load_shader(data->slib, "shaders/presets/skybox.sb");
-	data->skyboxMaterial = material_library_getH(data->mlib, material_library_create_materialH(data->mlib, data->skyboxShaderH, "SkyboxMaterial"));
-	material_set_texture(data->skyboxMaterial, "albedo", data->skyboxTexture);
+	this->skyboxGeometry = mesh3d_cube(renderer->allocator, 5.0f);
+	mesh3d_flip_triangles(this->skyboxGeometry);
+	this->skyboxMesh = mesh_create(renderer, this->skyboxGeometry);
+	this->skyboxShaderH = shader_library_load_shader(this->slib, "shaders/presets/skybox.sb");
+	this->skyboxMaterial = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->skyboxShaderH, "SkyboxMaterial"));
+	material_set_texture(this->skyboxMaterial, "albedo", this->skyboxTexture);
 
-	data->texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Smile.bmp");
-	data->shaderH = shader_library_load_shader(data->slib, "shaders/presets/TID-28.case1.sb");
-	data->shader = shader_library_getH(data->slib, data->shaderH);
-	data->blueMaterial = material_library_getH(data->mlib, material_library_create_materialH(data->mlib, data->shaderH, "BlueColorMaterial"));
-	data->greenMaterial = material_library_getH(data->mlib, material_library_create_materialH(data->mlib, data->shaderH, "GreenColorMaterial"));
-	data->mesh = mesh_create(renderer, mesh3d_cube(renderer->allocator, 1.0f));
-	data->planeMesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 2.0f));
+	this->texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Smile.bmp");
+	this->shaderH = shader_library_load_shader(this->slib, "shaders/presets/TID-28.case1.sb");
+	this->shader = shader_library_getH(this->slib, this->shaderH);
+	this->blueMaterial = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->shaderH, "BlueColorMaterial"));
+	this->greenMaterial = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->shaderH, "GreenColorMaterial"));
+	this->mesh = mesh_create(renderer, mesh3d_cube(renderer->allocator, 1.0f));
+	this->planeMesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 2.0f));
 
-	material_set_texture(data->blueMaterial, "albedo", data->texture);
-	material_set_texture(data->greenMaterial, "albedo", data->texture);
-	material_set_vec4(data->blueMaterial, "parameters.color", vec4(1, 1, 1, 1));
-	material_set_vec4(data->greenMaterial, "parameters.color", vec4(1, 1, 1, 1));
+	material_set_texture(this->blueMaterial, "albedo", this->texture);
+	material_set_texture(this->greenMaterial, "albedo", this->texture);
+	material_set_vec4(this->blueMaterial, "parameters.color", vec4(1, 1, 1, 1));
+	material_set_vec4(this->greenMaterial, "parameters.color", vec4(1, 1, 1, 1));
 
-	data->skyboxObj = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_BACKGROUND));
-	render_object_set_material(data->skyboxObj, data->skyboxMaterial);
-	render_object_attach(data->skyboxObj, data->skyboxMesh);
+	this->skyboxObj = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_BACKGROUND));
+	render_object_set_material(this->skyboxObj, this->skyboxMaterial);
+	render_object_attach(this->skyboxObj, this->skyboxMesh);
 
-	data->obj2 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(data->obj2, data->greenMaterial);
-	render_object_attach(data->obj2, data->planeMesh);
-	render_object_set_transform(data->obj2, mat4_translation(0, -0.5f, 0));
+	this->obj2 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->obj2, this->greenMaterial);
+	render_object_attach(this->obj2, this->planeMesh);
+	render_object_set_transform(this->obj2, mat4_translation(0, -0.5f, 0));
 
-	data->obj4 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(data->obj4, data->blueMaterial);
-	render_object_attach(data->obj4, data->mesh);
-	render_object_set_transform(data->obj4, mat4_mul(2, mat4_scale(0.5f, 0.5f, 0.5f), mat4_translation(-0.8f, 0.1f, 1)));
+	this->obj4 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->obj4, this->blueMaterial);
+	render_object_attach(this->obj4, this->mesh);
+	render_object_set_transform(this->obj4, mat4_mul(2, mat4_scale(0.5f, 0.5f, 0.5f), mat4_translation(-0.8f, 0.1f, 1)));
 
-	data->obj1 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(data->obj1, data->blueMaterial);
-	render_object_attach(data->obj1, data->mesh);
-	render_object_set_transform(data->obj1, mat4_translation(0, 0, 0));
+	this->obj1 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->obj1, this->blueMaterial);
+	render_object_attach(this->obj1, this->mesh);
+	render_object_set_transform(this->obj1, mat4_translation(0, 0, 0));
 
-	data->uiShaderH = shader_library_load_shader(data->slib, "shaders/presets/unlit_ui.sb");
-	data->uiShaderH2 = shader_library_load_shader(data->slib, "shaders/presets/unlit_ui2.sb");
-	data->uiMaterial = material_library_getH(data->mlib, material_library_create_materialH(data->mlib, data->uiShaderH, "UIMaterial"));
-	data->uiMaterial2 = material_library_getH(data->mlib, material_library_create_materialH(data->mlib, data->uiShaderH2, "UIMaterial2"));
+	this->uiShaderH = shader_library_load_shader(this->slib, "shaders/presets/unlit_ui.sb");
+	this->uiShaderH2 = shader_library_load_shader(this->slib, "shaders/presets/unlit_ui2.sb");
+	this->uiMaterial = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->uiShaderH, "UIMaterial"));
+	this->uiMaterial2 = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->uiShaderH2, "UIMaterial2"));
 
-	render_scene_add_queue(data->scene, RENDER_QUEUE_TYPE_QUEUE0);
-	data->quadMesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 400));
-	data->obj5 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
-	render_object_set_material(data->obj5, data->uiMaterial);
-	render_object_attach(data->obj5, data->quadMesh);
-	render_object_set_transform(data->obj5, mat4_mul(2, mat4_translation(0, 0, -200), mat4_rotation(0, 0, 90 DEG)));
-	material_set_vec4(data->uiMaterial, "parameters.color", vec4(1, 1, 1, 1));
+	render_scene_add_queue(this->scene, RENDER_QUEUE_TYPE_QUEUE0);
+	this->quadMesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 400));
+	this->obj5 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
+	render_object_set_material(this->obj5, this->uiMaterial);
+	render_object_attach(this->obj5, this->quadMesh);
+	render_object_set_transform(this->obj5, mat4_mul(2, mat4_translation(0, 0, -200), mat4_rotation(0, 0, 90 DEG)));
+	material_set_vec4(this->uiMaterial, "parameters.color", vec4(1, 1, 1, 1));
 
-	data->obj6 = render_scene_getH(data->scene, render_scene_create_object(data->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
-	render_object_set_material(data->obj6, data->uiMaterial2);
-	render_object_attach(data->obj6, data->quadMesh);
-	render_object_set_transform(data->obj6, mat4_mul(2, mat4_translation(0, 0, 200), mat4_rotation(0, 0, 90 DEG)));
-	material_set_vec4(data->uiMaterial2, "parameters.color", vec4(1, 1, 1, 1));
+	this->obj6 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
+	render_object_set_material(this->obj6, this->uiMaterial2);
+	render_object_attach(this->obj6, this->quadMesh);
+	render_object_set_transform(this->obj6, mat4_mul(2, mat4_translation(0, 0, 200), mat4_rotation(0, 0, 90 DEG)));
+	material_set_vec4(this->uiMaterial2, "parameters.color", vec4(1, 1, 1, 1));
 
 
 	render_texture_create_info_t create_info = 
@@ -163,85 +163,85 @@ static void initialize(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
 		.channel_count = 4,
 		.type = RENDER_TEXTURE_TYPE_ALBEDO
 	};
-	data->colorRenderTexture = render_texture_create(renderer, &create_info);
+	this->colorRenderTexture = render_texture_create(renderer, &create_info);
 
 	create_info.type = RENDER_TEXTURE_TYPE_DEPTH;
-	data->depthRenderTexture = render_texture_create(renderer, &create_info);
+	this->depthRenderTexture = render_texture_create(renderer, &create_info);
 
-	material_set_texture(data->uiMaterial, "albedo", data->depthRenderTexture);
-	material_set_texture(data->uiMaterial2, "albedo", data->colorRenderTexture);
+	material_set_texture(this->uiMaterial, "albedo", this->depthRenderTexture);
+	material_set_texture(this->uiMaterial2, "albedo", this->colorRenderTexture);
 	
-	camera_set_render_target(data->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, data->colorRenderTexture);
-	camera_set_render_target(data->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, data->depthRenderTexture);
+	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, this->colorRenderTexture);
+	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->depthRenderTexture);
 
-	data->angle = 0;
-	data->speed = 20;
-	data->camera_index = 0;
+	this->angle = 0;
+	this->speed = 20;
+	this->camera_index = 0;
 }
 
-static void terminate(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
+TEST_ON_TERMINATE(TID_28_CASE_1)
 {	
-	render_texture_destroy(data->colorRenderTexture);
-	render_texture_release_resources(data->colorRenderTexture);
+	render_texture_destroy(this->colorRenderTexture);
+	render_texture_release_resources(this->colorRenderTexture);
 
-	render_texture_destroy(data->depthRenderTexture);
-	render_texture_release_resources(data->depthRenderTexture);
+	render_texture_destroy(this->depthRenderTexture);
+	render_texture_release_resources(this->depthRenderTexture);
 
-	texture_destroy(data->texture);
-	texture_release_resources(data->texture);
+	texture_destroy(this->texture);
+	texture_release_resources(this->texture);
 
-	texture_destroy(data->skyboxTexture);
-	texture_release_resources(data->skyboxTexture);
+	texture_destroy(this->skyboxTexture);
+	texture_release_resources(this->skyboxTexture);
 
-	mesh_destroy(data->quadMesh);
-	mesh_release_resources(data->quadMesh);
-	mesh_destroy(data->planeMesh);
-	mesh_release_resources(data->planeMesh);
-	mesh_destroy(data->mesh);
-	mesh_release_resources(data->mesh);
+	mesh_destroy(this->quadMesh);
+	mesh_release_resources(this->quadMesh);
+	mesh_destroy(this->planeMesh);
+	mesh_release_resources(this->planeMesh);
+	mesh_destroy(this->mesh);
+	mesh_release_resources(this->mesh);
 
-	mesh_destroy(data->skyboxMesh);
-	mesh_release_resources(data->skyboxMesh);
+	mesh_destroy(this->skyboxMesh);
+	mesh_release_resources(this->skyboxMesh);
 
-	render_scene_destroy(data->scene);
-	render_scene_release_resources(data->scene);
+	render_scene_destroy(this->scene);
+	render_scene_release_resources(this->scene);
 
-	light_destroy(data->light);
-	light_release_resources(data->light);
-
-	heap_free(data);
+	light_destroy(this->light);
+	light_release_resources(this->light);
 }
 
-static void update(renderer_t* renderer, float deltaTime, TEST_DATA(TID_28_CASE_1)* data)
-{	if(kbhit())
+TEST_ON_UPDATE(TID_28_CASE_1)
+{	
+	if(kbhit())
 	{
 		getch();
-		switch(data->camera_index % 2)
+		switch(this->camera_index % 2)
 		{
 			case 1:
-				camera_set_render_target(data->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, data->colorRenderTexture);
-				camera_set_render_target(data->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, data->depthRenderTexture);
-				camera_set_active(data->camera, true);
+				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, this->colorRenderTexture);
+				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->depthRenderTexture);
+				camera_set_active(this->camera, true);
 				break;
 			case 0:
-				camera_set_render_target(data->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_SCREEN);
-				camera_set_render_target(data->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_SCREEN);
-				camera_set_active(data->camera, false);
+				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_SCREEN);
+				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_SCREEN);
+				camera_set_active(this->camera, false);
 				break;
 		}
-		data->camera_index++;
+		this->camera_index++;
 	}
-	data->angle += deltaTime * data->speed;
-	render_object_set_transform(data->obj1, mat4_rotation(0 DEG, data->angle DEG, 0 DEG));
+	this->angle += deltaTime * this->speed;
+	render_object_set_transform(this->obj1, mat4_rotation(0 DEG, this->angle DEG, 0 DEG));
 }
 
-static void render(renderer_t* renderer, TEST_DATA(TID_28_CASE_1)* data)
-{	// activate the offscreen camera and exclude the queue QUEUE0
-	camera_set_active(data->camera3, true);
-	render_scene_render(data->scene, BIT64(RENDER_QUEUE_TYPE_GEOMETRY)
+TEST_ON_RENDER(TID_28_CASE_1)
+{	
+	// activate the offscreen camera and exclude the queue QUEUE0
+	camera_set_active(this->camera3, true);
+	render_scene_render(this->scene, BIT64(RENDER_QUEUE_TYPE_GEOMETRY)
 							 | BIT64(RENDER_QUEUE_TYPE_BACKGROUND), RENDER_SCENE_CLEAR);
 		
 	// deactivate the offscreen camera and render only for QUEUE0
-	camera_set_active(data->camera3, false);
-	render_scene_render(data->scene, BIT64(RENDER_QUEUE_TYPE_QUEUE0), RENDER_SCENE_DONT_CARE);
+	camera_set_active(this->camera3, false);
+	render_scene_render(this->scene, BIT64(RENDER_QUEUE_TYPE_QUEUE0), RENDER_SCENE_DONT_CARE);
 }

@@ -1,7 +1,7 @@
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h>
 #include <renderer/assert.h>
-#include <memory.h> 			// memcpy
+#include <renderer/alloc.h> 			// memcopyv
 
 // constructors and destructors
 RENDERER_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)
@@ -79,7 +79,7 @@ RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instan
 	{
 		u32 num_bytes = sub_buffer_get_count(host_buffer, i) * device_buffer->stride;
 		if(num_bytes == 0) continue;
-		memcpy(ptr, sub_buffer_get_ptr(host_buffer, i), num_bytes);
+		memcopyv(ptr, sub_buffer_get_ptr(host_buffer, i), u8, num_bytes);
 		ptr += num_bytes;
 	}
 	vulkan_buffer_unmap(device_buffer);

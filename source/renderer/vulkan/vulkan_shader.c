@@ -95,7 +95,7 @@ static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(mem
 
 	// allocate memory
 	vulkan_vertex_buffer_layout_description_t* vertex_infos = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_ARRAY, vulkan_vertex_buffer_layout_description_t, binding_count);
-	memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, binding_count);
+	safe_memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, binding_count);
 	
 	u32 binding_number = 0;
 	u16 location_number_offset = 0;
@@ -232,9 +232,9 @@ static vulkan_vertex_buffer_layout_description_t* create_deep_copy_of_vulkan_ver
 		copy_infos[i].attribute_offsets = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, attribute_count);
 		copy_infos[i].attribute_locations = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U16_ARRAY, u16, attribute_count);
 
-		memcpy(copy_infos[i].attribute_formats, vertex_infos[i].attribute_formats, sizeof(VkFormat) * attribute_count);
-		memcpy(copy_infos[i].attribute_offsets, vertex_infos[i].attribute_offsets, sizeof(VkFormat) * attribute_count);
-		memcpy(copy_infos[i].attribute_locations, vertex_infos[i].attribute_locations, sizeof(VkFormat) * attribute_count);
+		memcopyv(copy_infos[i].attribute_formats, vertex_infos[i].attribute_formats, VkFormat, attribute_count);
+		memcopyv(copy_infos[i].attribute_offsets, vertex_infos[i].attribute_offsets, u32, attribute_count);
+		memcopyv(copy_infos[i].attribute_locations, vertex_infos[i].attribute_locations, u16, attribute_count);
 	}
 	return copy_infos;
 }
@@ -259,7 +259,7 @@ static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_des
 		if(descriptors[i].handle.field_count != 0)
 		{
 			copy_descriptors[i].handle.fields = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, descriptors[i].handle.field_count);
-			memcpy(copy_descriptors[i].handle.fields, descriptors[i].handle.fields, sizeof(struct_field_t) * descriptors[i].handle.field_count);
+			memcopyv(copy_descriptors[i].handle.fields, descriptors[i].handle.fields, struct_field_t, descriptors[i].handle.field_count);
 			struct_descriptor_recalculate(&copy_descriptors[i].handle);
 		}
 		else
@@ -707,7 +707,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 	_debug_assert__(pass->subpass_description_count > 0);
 	create_info->subpass_count = pass->subpass_description_count;
 	create_info->subpasses = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO_ARRAY, vulkan_subpass_create_info_t, pass->subpass_count);
-	memzerov(create_info->subpasses, vulkan_subpass_create_info_t, pass->subpass_count);
+	safe_memzerov(create_info->subpasses, vulkan_subpass_create_info_t, pass->subpass_count);
 	for(u32 i = 0; i < pass->subpass_count; i++)
 	{
 		create_info->subpasses[i].sub_render_set_bindings = pass->subpass_descriptions[i].sub_render_set_bindings;
@@ -787,9 +787,9 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 
 		// allocate memory for pipeline layouts & graphics pipelines
 		vulkan_pipeline_layout_t* pipeline_layouts = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_PIPELINE_LAYOUT_ARRAY, vulkan_pipeline_layout_t, subpass_count);
-		memzerov(pipeline_layouts, vulkan_pipeline_layout_t, subpass_count);
+		safe_memzerov(pipeline_layouts, vulkan_pipeline_layout_t, subpass_count);
 		vulkan_graphics_pipeline_t* pipelines = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_ARRAY, vulkan_graphics_pipeline_t, subpass_count);
-		memzerov(pipelines, vulkan_graphics_pipeline_t, subpass_count);
+		safe_memzerov(pipelines, vulkan_graphics_pipeline_t, subpass_count);
 
 		vulkan_render_pass_t* render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, handle);
 		write_render_pass_descriptors(previous_pass, (i > 0) ? &descriptions[i - 1] : NULL,
@@ -945,7 +945,7 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 
 	// allocate memory for the descriptors
 	vulkan_shader_resource_description_t* descriptors = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, count);
-	memzerov(descriptors, vulkan_shader_resource_description_t, count);
+	safe_memzerov(descriptors, vulkan_shader_resource_description_t, count);
 
 	for(u16 i = 0; i < count; i++)
 	{
@@ -1041,7 +1041,7 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 
 	// allocate memory
 	vulkan_vertex_buffer_layout_description_t* vertex_infos = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_ARRAY, vulkan_vertex_buffer_layout_description_t, descriptor_count);
-	memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, descriptor_count);
+	safe_memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, descriptor_count);
 
 	typedef struct attribute_info_t { BUFFER locations, formats, offsets; } attribute_info_t;
 	dictionary_t bindings = dictionary_create(u32, attribute_info_t, 1, dictionary_key_comparer_u32);
@@ -1185,7 +1185,7 @@ static vulkan_spirv_code_t* load_spirv_codes(memory_allocator_t* allocator, bina
 		binary_reader_push(reader);
 		binary_reader_jump(reader, offset);
 		code->spirv = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, code->length);
-		memcpy(code->spirv, __binary_reader_read(reader, code->length), code->length);
+		memcopyv(code->spirv, __binary_reader_read(reader, code->length), u8, code->length);
 		binary_reader_pop(reader);
 	}
 	
@@ -1204,21 +1204,21 @@ static u32 create_add_pipeline_description(memory_allocator_t* allocator, binary
 	// read vulkan_graphics_pipeline_description_t
 	const vulkan_graphics_pipeline_settings_t* pipeline = binary_reader_read(reader, vulkan_graphics_pipeline_settings_t);
 	description->settings = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_SETTINGS, vulkan_graphics_pipeline_settings_t);
-	memcpy(description->settings, pipeline, sizeof(vulkan_graphics_pipeline_settings_t));
+	memcopy(description->settings, pipeline, vulkan_graphics_pipeline_settings_t);
 
 	VkPipelineColorBlendAttachmentState* attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PIPELINE_COLOR_BLEND_ATTACHMENT_STATE_ARRAY, VkPipelineColorBlendAttachmentState, description->settings->colorblend.attachmentCount);
 	u32 attachments_size = sizeof(VkPipelineColorBlendAttachmentState) * description->settings->colorblend.attachmentCount;
-	memcpy(attachments, __binary_reader_read(reader, attachments_size), attachments_size);
+	memcopyv(attachments, __binary_reader_read(reader, attachments_size), u8, attachments_size);
 	description->settings->colorblend.pAttachments = attachments;
 
 	VkRect2D* scissors = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_RECT2D_ARRAY, VkRect2D, description->settings->viewport.scissorCount);
 	u32 scissors_size = sizeof(VkRect2D) * description->settings->viewport.scissorCount;
-	memcpy(scissors, __binary_reader_read(reader, scissors_size), scissors_size);
+	memcopyv(scissors, __binary_reader_read(reader, scissors_size), u8, scissors_size);
 	description->settings->viewport.pScissors = scissors;
 
 	VkViewport* viewports = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VIEWPORT_ARRAY,  VkViewport, description->settings->viewport.viewportCount);
 	u32 viewports_size = sizeof(VkViewport) * description->settings->viewport.viewportCount;
-	memcpy(viewports, __binary_reader_read(reader, viewports_size), viewports_size);
+	memcopyv(viewports, __binary_reader_read(reader, viewports_size), u8, viewports_size);
 	description->settings->viewport.pViewports = viewports;
 
 	// read the spirv code array
@@ -1236,7 +1236,7 @@ static vulkan_subpass_description_t* create_subpass_descriptions(memory_allocato
 		return NULL;
 
 	vulkan_subpass_description_t* descriptions = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_DESCRIPTION_ARRAY, vulkan_subpass_description_t, description_count);
-	memzerov(descriptions, vulkan_subpass_description_t, description_count);
+	safe_memzerov(descriptions, vulkan_subpass_description_t, description_count);
 
 	for(u32 i = 0; i < description_count; i++)
 	{
@@ -1286,7 +1286,7 @@ static vulkan_render_pass_description_t* create_render_pass_descriptions(memory_
 		return NULL;
 
 	vulkan_render_pass_description_t* descriptions = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_DESCRIPTION_ARRAY, vulkan_render_pass_description_t, description_count);
-	memzerov(descriptions, vulkan_render_pass_description_t, description_count);
+	safe_memzerov(descriptions, vulkan_render_pass_description_t, description_count);
 
 	for(u32 i = 0; i < description_count; i++)
 	{
@@ -1319,7 +1319,7 @@ static vulkan_render_pass_description_t* create_render_pass_descriptions(memory_
 		{
 			description->subpass_dependencies = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SUBPASS_DEPENDENCY_ARRAY, VkSubpassDependency, description->subpass_dependency_count);
 			for(u32 j = 0; j < description->subpass_dependency_count; j++)
-				memcpy(&description->subpass_dependencies[j], binary_reader_read(reader, VkSubpassDependency), sizeof(VkSubpassDependency));
+				memcopy(&description->subpass_dependencies[j], binary_reader_read(reader, VkSubpassDependency), VkSubpassDependency);
 		}
 		
 		// read the render set binding
@@ -1346,7 +1346,7 @@ static vulkan_render_pass_description_t* create_render_pass_descriptions(memory_
 
 		// read vulkan_graphics_pipeline_description_t
 		description->settings = heap_new(vulkan_graphics_pipeline_settings_t);
-		memcpy(description->settings, binary_reader_read(reader, vulkan_graphics_pipeline_description_t), sizeof(vulkan_graphics_pipeline_description_t));
+		memcopy(description->settings, binary_reader_read(reader, vulkan_graphics_pipeline_description_t), vulkan_graphics_pipeline_description_t);
 
 		// read the spirv code array
 		description->spirv_codes = load_spirv_codes(reader, &description->spirv_code_count);
@@ -1470,7 +1470,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vu
 		BUFFER* buffer = load_binary_from_file(load_info->path);
 		
 		vulkan_shader_load_info_t _load_info;
-		memcpy(&_load_info, load_info, sizeof(vulkan_shader_load_info_t));
+		memcopy(&_load_info, load_info, vulkan_shader_load_info_t);
 		_load_info.data = buffer->bytes;
 		_load_info.data_size = buffer->element_count;
 
