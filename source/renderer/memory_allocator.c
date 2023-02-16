@@ -78,9 +78,9 @@ static allocate_result_t stdlib_malloc(u32 size, u32 align, void* user_data)
 
 	void* ptr = NULL;
 	if(align == ALLOCATION_FLAG_NO_ALIGN_RESTRICTION)
-		ptr = malloc(size);
+		ptr = heap_alloc(size);
 	else
-		ptr = _aligned_malloc(size, align);
+		ptr = heap_aligned_alloc(size, align);
 
 	debug_assert_aligned_memory(ptr, align);
 
@@ -97,9 +97,9 @@ static allocate_result_t stdlib_realloc(void* old_ptr, u32 old_size, u32 old_ali
 
 	void* ptr = NULL;
 	if(align == ALLOCATION_FLAG_NO_ALIGN_RESTRICTION)
-		ptr =  realloc(old_ptr, size);
+		ptr =  heap_realloc(old_ptr, size);
 	else
-		ptr =  _aligned_realloc(old_ptr, size, align);
+		ptr =  heap_aligned_realloc(old_ptr, size, align);
 	
 	debug_assert_aligned_memory(ptr, align);
 
