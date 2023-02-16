@@ -31,6 +31,7 @@
 #	define alloc_terminate() safe_memory_terminate()
 #   define add_alloc(basePtr, size) checked(basePtr, size)
 #	define heap_alloc(size) checked_malloc(size)
+#   define heap_realloc(old_ptr, size) checked_realloc(old_ptr, size)
 #   define heap_aligned_alloc(size, align) checked_aligned_malloc(size, align)
 #   define heap_aligned_realloc(old_ptr, size, align) checked_aligned_realloc(old_ptr, size, align)
 #	define stack_alloc(size) checked_alloca(size)
@@ -57,6 +58,7 @@
 #	define alloc_terminate() GC_STOP()
 #   define add_alloc(basePtr, size) basePtr
 #	define heap_alloc(size) GC_ALLOC(size)
+#   define heap_realloc(old_ptr, size)
 #   define heap_aligned_alloc(size, align)
 #   define heap_aligned_realloc(old_ptr, size, align)
 #	define stack_alloc(size) alloca(size)
@@ -85,6 +87,7 @@ static INLINE_IF_RELEASE_MODE void _debug_aligned_free(void* ptr) { if(ptr == NU
 #	define alloc_terminate()
 #   define add_alloc(basePtr, size) basePtr
 #	define heap_alloc(size) _debug_malloc(size)
+#   define heap_realloc(old_ptr, size) _debug_realloc(old_ptr, size)
 #   define heap_aligned_alloc(size, align) _debug_aligned_malloc(size, align)
 #   define heap_aligned_realloc(old_ptr, size, align) _debug_aligned_realloc(old_ptr, size, align)
 #	define stack_alloc(size) alloca(size)
