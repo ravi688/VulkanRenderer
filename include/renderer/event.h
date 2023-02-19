@@ -12,24 +12,39 @@
 typedef enum signal_t
 {
 	SIGNAL_NOTHING = 0,
-	SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH,
 	SIGNAL_VULKAN_IMAGE_RECREATE_FINISH,
-	SIGNAL_VULKAN_FRAMEBUFFER_RECREATE,
+	SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH,
+	SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH,
+	SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH,
 	SIGNAL_ALL
 } signal_t;
 
 typedef enum signal_bits_t
 {
 	SIGNAL_NOTHING_BIT = BIT32(SIGNAL_NOTHING),
-	SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT = BIT32(SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH),
 	SIGNAL_VULKAN_IMAGE_RECREATE_FINISH_BIT = BIT32(SIGNAL_VULKAN_IMAGE_RECREATE_FINISH),
-	SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH_BIT = BIT32(SIGNAL_VULKAN_FRAMEBUFFER_RECREATE),
+	SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT = BIT32(SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH),
+	SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT = BIT32(SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH),
+	SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH_BIT = BIT32(SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH),
 	SIGNAL_ALL_BIT = 0xFFFFFFFFULL
 } signal_bits_t;
 
 /* publisher_data: pointer to the data owned by the publisher of the event 
  * handler_data: pointer to the same data during the event subscription */
-typedef void (*event_handler_t)(void* publisher_data, void* handler_data);
+typedef void (*__event_handler_t)(void* publisher_data, void* handler_data);
+
+#ifdef GLOBAL_DEBUG
+	typedef struct event_handler_debug_t
+	{
+		__event_handler_t handler;
+		const char* handler_str;
+	} event_handler_debug_t;
+	typedef event_handler_debug_t event_handler_t;
+# 	define EVENT_HANDLER(handler) (event_handler_debug_t) { handler, #handler }
+#else
+	typedef __event_handler_t event_handler_t;
+# 	define EVENT_HANDLER(handler) CAST_TO(event_handler_t, handler)
+#endif /* GLOBAL_DEBUG */
 
 /* unique handle to each subscription */
 typedef u32 event_subscription_handle_t;
@@ -49,21 +64,48 @@ typedef struct event_subscription_create_info_t
 		signal_bits_t wait_bits;
 	};
 	/* signal to raise after calling the event handler */
-	signal_bits_t signal;
+	union
+	{
+		signal_bits_t signal;
+		signal_bits_t signal_bits;
+	};
 } event_subscription_create_info_t;
 
 /* forward declaration */
 typedef	struct memory_allocator_t memory_allocator_t;
+typedef struct string_builder_t string_builder_t;
 
 typedef struct event_t
 {
+	/* pointer to the memory allocator */
 	memory_allocator_t* allocator;
+	/* pointer to the string builder (created internally) */
+	string_builder_t* string_builder;
+	/* pointer to the data of the publisher (which calls event_publish()), 
+	 * passed as the first parameter in each handler invocation */
 	void* publisher_data;
+	/* pointer to the signal table (list of u32 of size SIGNAL_ALL), (created internally) */
 	u32* signal_table;;
-	u32* stage_signal_table;;
+	/* pointer to the temporary signal table (list of u32 of size SIGNAL_ALL), (created internally) 
+	 * it is used during the call to event_publish() to execute the invocations in ordered manner based
+	 * on the waiting and signalling signals. */
+	u32* stage_signal_table;
+	/* list of subscriptions (created internally) */
 	BUFFER subscribers;
+	/* list of temprary indicies (u32), (created internally)
+	 * it is used during the call to event_publish() to execute the invocations in ordered manner based
+	 * on the waiting and signalling signals. */
+	BUFFER stage_subscribers;
+	/* list of temprary indicies (u32), (created internally)
+	 * it is used during the call to event_publish() to execute the invocations in ordered manner based
+	 * on the waiting and signalling signals. */
+	BUFFER stage_subscribers_swap;
+	/* list of event_subscription_handle_t(s) which have been unclaimed/released by the unsubscribed handlers (created internally).*/
 	BUFFER unsubscribed_handles;
+	/* internall counter to assign unique handlers to each subscriptions (created internally) */
 	event_subscription_handle_t handle_counter;
+	/* set this true if you just want to see the execution order of the handlers but not the call */
+	bool is_dump_only;
 } event_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -78,8 +120,11 @@ RENDERER_API void event_release_resources(event_t* event);
 /* calls all the event handlers subscribed to this event */
 RENDERER_API void event_publish(event_t* event);
 /* adds a subscription to the event subscription list */
-RENDERER_API event_subscription_handle_t event_subscribe(event_t* event, event_subscription_create_info_t* create_info);
+#define event_subscribe(event, create_info) __event_subscribe(event, create_info, __LINE__, __FUNCTION__, __FILE__)
+RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file);
 /* removes a subscription from the event subscription list */
 RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t handle);
+/* dumps the subscribers to this event onto stdout */
+RENDERER_API void event_dump(event_t* event);
 
 END_CPP_COMPATIBLE

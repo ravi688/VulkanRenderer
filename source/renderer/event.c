@@ -1,14 +1,29 @@
 #include <renderer/event.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/string_builder.h>
 
 typedef event_subscription_create_info_t invocation_data_t;
 
+/* structure to store source level debug information for the subscription */
+typedef struct debug_info_t 
+{ 
+	/* line number in the file */
+	u32 line;
+	/* name of the function in the file */
+	const char* function_str;
+	/* name of the file */
+	const char* file_str;
+} debug_info_t;
+
+/* structure to store all the data related to subscription */
 typedef struct subscription_t
 {
 	/* nothing but the event_subscription_create_info_t */
 	invocation_data_t invocation_data;
 	/* handle to be able to search this subscription into a list of subscribers */
 	event_subscription_handle_t handle;
+	/* source level debug info */
+	debug_info_t debug_info;
 } subscription_t;
 
 RENDERER_API event_t* event_new(memory_allocator_t* allocator)
@@ -30,73 +45,148 @@ RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* pub
 {
 	memzero(event, event_t);
 	event->allocator = allocator;
+	event->string_builder = string_builder_create(allocator, 512);
 	event->publisher_data = publisher_data;
-	event->signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_ALL + 1);
-	event->stage_signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_ALL + 1);
+	event->signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_ALL);
+	event->stage_signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_ALL);
 	event->subscribers = buf_new(subscription_t);
+	event->stage_subscribers = buf_new(u32);
+	event->stage_subscribers_swap = buf_new(u32);
 	event->unsubscribed_handles = buf_new(event_subscription_handle_t);
-	for(u32 i = SIGNAL_NOTHING; i <= SIGNAL_ALL; i++)
+	event->is_dump_only = false;
+
+	/* initially all the signals would be down */
+	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_ALL; i++)
 		event->signal_table[i] = U32_MAX;
+	/* but the nothing signal would always be up */
 	event->signal_table[SIGNAL_NOTHING] = 0;
 }
 
 RENDERER_API void event_destroy(event_t* event)
 {
-	for(u32 i = SIGNAL_NOTHING; i <= SIGNAL_ALL; i++)
+	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_ALL; i++)
 		event->signal_table[i] = U32_MAX;
 	event->publisher_data = NULL;
+	buf_clear(&event->stage_subscribers, NULL);
+	buf_clear(&event->stage_subscribers_swap, NULL);
 	buf_clear(&event->subscribers, NULL);
 	buf_clear(&event->unsubscribed_handles, NULL);
 }
 
 RENDERER_API void event_release_resources(event_t* event)
 {
+	string_builder_destroy(event->string_builder);
 	memory_allocator_dealloc(event->allocator, event->signal_table);
 	memory_allocator_dealloc(event->allocator, event->stage_signal_table);
+	buf_free(&event->stage_subscribers);
+	buf_free(&event->stage_subscribers_swap);
 	buf_free(&event->subscribers);
 	buf_free(&event->unsubscribed_handles);
 }
 
+/* checks if all the wait signals have been raised or not, if yes returns true, otherwise false */
 static bool signal_waits_done(event_t* event, signal_bits_t wait_bits)
 {
-	for(u32 i = SIGNAL_NOTHING; i <= SIGNAL_ALL; i++)
+	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_ALL; i++)
 		if((wait_bits & BIT32(i)) && (event->stage_signal_table[i] != U32_MAX) && (event->stage_signal_table[i] > 0))
 			return false;
 	return true;
 }
 
-static u32 get_bit_pos(u32 bit)
-{
-	if((bit & SIGNAL_ALL_BIT) == SIGNAL_ALL_BIT)
-		return SIGNAL_ALL;
+#ifdef GLOBAL_DEBUG
+# 	define GET_HANDLER(subscription_info) (&(subscription_info))->handler.handler
+#else
+#	define GET_HANDLER(subscription_info) (&(subscription_info))->handler
+#endif /* GLOBAL_DEBUG */
 
-	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_ALL; i++)
-		if((bit & BIT32(i)) == BIT32(i))
-			return i;
-	return U32_MAX;
-}
+/* dumps the subscription data in the string builder */
+static void subscription_dump(memory_allocator_t* allocator, subscription_t* subscription, string_builder_t* builder);
 
 RENDERER_API void event_publish(event_t* event)
 {
-	memcopyv(event->stage_signal_table, event->signal_table, u32, SIGNAL_ALL + 1);
+	/* create a copy of the signal table because it will modified during the invocations 
+	 * also, signal table is used to determine how many subscribers/invocations can raise a particular signal */
+	memcopyv(event->stage_signal_table, event->signal_table, u32, SIGNAL_ALL);
 
+	/* copy sequential indicies into the stage subscribers list */
+	buf_clear(&event->stage_subscribers, NULL);
 	u32 count = buf_get_element_count(&event->subscribers);
 	for(u32 i = 0; i < count; i++)
+		buf_push(&event->stage_subscribers, &i);
+
+	/* we will be mainting two buffers and swap them whenever the number of invocations yet to be invoked is greater than zero */
+	BUFFER* swap_buffer = &event->stage_subscribers_swap;
+	BUFFER* stage_buffer = &event->stage_subscribers;
+
+	/* debuggin purpose only */
+	if(event->is_dump_only)
 	{
-		AUTO subscription = buf_get_ptr_at_typeof(&event->subscribers, subscription_t, i);
-		if(signal_waits_done(event, subscription->invocation_data.wait_for))
-		{
-			subscription->invocation_data.handler(event->publisher_data, subscription->invocation_data.handler_data);
-			u32 bit_pos = get_bit_pos(subscription->invocation_data.signal);
-			if(event->stage_signal_table[bit_pos] > 0)
-				event->stage_signal_table[bit_pos]--;
-		}
+		string_builder_clear(event->string_builder);
+		string_builder_append(event->string_builder, "\n");
 	}
+
+	do 
+	{
+		/* clear the swap buffer as this will be used to collect waiting handlers */
+		buf_clear(swap_buffer, NULL);
+
+		/* iterate over the yet to be invoked handlers */
+		for(u32 i = 0; i < count; i++)
+		{
+			/* get the index of any one subscription */
+			u32 index;
+			buf_get_at(stage_buffer, i, &index);
+
+			/* get pointer to the subscription with the help of the index we just got */
+			AUTO subscription = buf_get_ptr_at_typeof(&event->subscribers, subscription_t, index);
+
+			/* if all the signals have been raised to which this subscription/invocation was waiting upon */
+			if(signal_waits_done(event, subscription->invocation_data.wait_for))
+			{
+				AUTO handler = GET_HANDLER(subscription->invocation_data);
+				
+				/* if is_dump_only is true then just dump the invocation order but don't make a call to the handlers */
+				if(!event->is_dump_only && (handler != NULL))
+					handler(event->publisher_data, subscription->invocation_data.handler_data);
+				if(event->is_dump_only)
+					subscription_dump(event->allocator, subscription, event->string_builder);
+
+				/* raise the signals which are requested to be raised by this invocation */
+				for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_ALL; i++)
+				{
+					if((subscription->invocation_data.signal_bits & BIT32(i)) == BIT32(i))
+					{
+						_debug_assert__(event->stage_signal_table[i] != U32_MAX);
+						_debug_assert__(event->stage_signal_table[i] > 0);
+						event->stage_signal_table[i]--;
+					}
+				}
+			}
+			/* otherwise put this into waiting buffer, because it is still waiting upon some other signals to be raised by some other invocations */
+			else
+				buf_push(swap_buffer, &index);
+		}
+
+		/* swap the buffers */
+		BUFFER* temp = swap_buffer;
+		swap_buffer = stage_buffer;
+		stage_buffer = temp;
+
+		/* if there are handlers yet to be invoked, then iterate over again with leftover handlers */
+	} while((count = buf_get_element_count(stage_buffer)) > 0);
+
+	/* debugging purpose only */
+	if(event->is_dump_only)
+	{
+		string_builder_append_null(event->string_builder);
+		debug_log_info(string_builder_get_str(event->string_builder));
+	}
+	debug_log_info("***--event-publish-end---***");
 }
 
-RENDERER_API event_subscription_handle_t event_subscribe(event_t* event, event_subscription_create_info_t* create_info)
+RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file)
 {
-	subscription_t subscription;
+	subscription_t subscription = { .debug_info = { line, function, file } };
 	
 	/* copy the invocation data */
 	memcopy(&subscription.invocation_data, create_info, invocation_data_t);
@@ -104,7 +194,7 @@ RENDERER_API event_subscription_handle_t event_subscribe(event_t* event, event_s
 	/* generate a unique handle */
 	event_subscription_handle_t handle = EVENT_SUBSCRIPTION_HANDLE_INVALID;
 
-	/* if there is exist unclaimed handle then just use it */
+	/* if there exist unclaimed handle then just use it */
 	if(buf_get_element_count(&event->unsubscribed_handles) > 0)
 		buf_pop(&event->unsubscribed_handles, &handle);
 	/* otherwise create a new handle by incrementing the counter */
@@ -115,28 +205,18 @@ RENDERER_API event_subscription_handle_t event_subscribe(event_t* event, event_s
 	}
 	subscription.handle = handle;
 
-	u32 count = buf_get_element_count(&event->subscribers);
-	signal_bits_t raised_signals = SIGNAL_NOTHING_BIT;
-	u32 index = 0;
-	for(u32 i = 0; i < count; i++)
-	{
-		AUTO _subscription = buf_get_ptr_at_typeof(&event->subscribers, subscription_t, i);
-		raised_signals |= _subscription->invocation_data.signal;
-		if(((raised_signals & subscription.invocation_data.wait_bits) == subscription.invocation_data.wait_bits)
-			|| ((_subscription->invocation_data.wait_bits & subscription.invocation_data.signal) == subscription.invocation_data.signal))
-			break;
-		index++;
-	}
-	buf_insert_at(&event->subscribers, index, &subscription);
+	buf_push(&event->subscribers, &subscription);
 
-	u32 bit_pos = get_bit_pos(subscription.invocation_data.signal);
-	if(bit_pos != SIGNAL_NOTHING)
+	for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_ALL; i++)
 	{
-		/* increment the number of handlers that will raise the signal */
-		if(event->signal_table[bit_pos] == U32_MAX)
-			event->signal_table[bit_pos] = 1;
-		else
-			event->signal_table[bit_pos]++;
+		if((subscription.invocation_data.signal_bits & BIT32(i)) == BIT32(i))
+		{
+			/* increment the number of handlers that will raise the signal */
+			if(event->signal_table[i] == U32_MAX)
+				event->signal_table[i] = 1;
+			else
+				event->signal_table[i]++;
+		}
 	}
 
 	return handle;
@@ -150,7 +230,6 @@ static bool handle_comparer(void* handle, void* subscription)
 RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t handle)
 {
 	/* remove the subscriber, and if success then add the just unclaimed handle to the list of unsubscribed handles to be later used */
-
 	buf_ucount_t index = buf_find_index_of(&event->subscribers, &handle, handle_comparer);
 	if(index != BUF_INVALID_INDEX)
 	{
@@ -158,12 +237,84 @@ RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t 
 		bool result = buf_remove_at(&event->subscribers, index, &subscription);
 		_debug_assert__(result == true);
 		buf_push(&event->unsubscribed_handles, &handle);
-		u32 bit_pos = get_bit_pos(subscription.invocation_data.signal);
-		_debug_assert__(event->signal_table[bit_pos] != U32_MAX);
-		if((bit_pos != SIGNAL_NOTHING) && (event->signal_table[bit_pos] > 0))
-			event->signal_table[bit_pos]--;
+		for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_ALL; i++)
+		{
+			if((subscription.invocation_data.signal_bits & BIT32(i)) == BIT32(i))
+			{
+				_debug_assert__(event->signal_table[i] != U32_MAX);
+
+				if(event->signal_table[i] > 0)
+					event->signal_table[i]--;
+			}
+		}
 	}
 	/* otherwise it is an error */
 	else
 		debug_log_error("event subscription handle %llu has already been unsubscribed or it is a corrupted handle", handle);
+}
+
+
+static const char* signal_to_string(signal_t bit)
+{
+	switch(bit)
+	{
+		case SIGNAL_NOTHING_BIT: return "SIGNAL_NOTHING_BIT";
+		case SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT: return "SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT";
+		case SIGNAL_VULKAN_IMAGE_RECREATE_FINISH_BIT: return "SIGNAL_VULKAN_IMAGE_RECREATE_FINISH_BIT";
+		case SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT: return "SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT";
+		case SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH_BIT: return "SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH_BIT";
+		case SIGNAL_ALL_BIT: return "SIGNAL_ALL_BIT";
+	}
+	return "<UNDEFINED>";
+}
+
+static char* signal_bits_to_string(memory_allocator_t* allocator, signal_bits_t bits)
+{
+	string_builder_t* builder = string_builder_create(allocator, 128);
+	if((bits & SIGNAL_ALL_BIT) == SIGNAL_ALL_BIT)
+	{
+		string_builder_append(builder, "SIGNAL_ALL_BIT");
+		return string_builder_get_str(builder);
+	}
+	for(u32 i = SIGNAL_NOTHING; i <= SIGNAL_ALL; i++)
+	{
+		if((bits & BIT32(i)) == BIT32(i))
+		{
+			string_builder_append(builder, "%s", signal_to_string(bits & BIT32(i)));
+			if((bits >> (i + 1)) > 0)
+				string_builder_append(builder, " | ");
+		}
+	}
+	return string_builder_get_str(builder);
+}
+
+static void subscription_dump(memory_allocator_t* allocator, subscription_t* subscription, string_builder_t* builder)
+{
+	string_builder_append(builder, "{\n");
+	string_builder_increment_indentation(builder);
+		string_builder_append(builder, ".location = { %lu, %s, %s }\n", subscription->debug_info.line, subscription->debug_info.function_str, subscription->debug_info.file_str);
+		string_builder_append(builder, ".handler = %s (%p)\n", subscription->invocation_data.handler.handler_str, subscription->invocation_data.handler.handler);
+		string_builder_append(builder, ".handler_data = %p\n", subscription->invocation_data.handler_data);
+		string_builder_append(builder, ".wait_bits = %s\n", signal_bits_to_string(allocator, subscription->invocation_data.wait_bits));
+		string_builder_append(builder, ".signal_bits = %s\n", signal_bits_to_string(allocator, subscription->invocation_data.signal_bits));
+		string_builder_append(builder, ".handle = %llu\n", subscription->handle);
+	string_builder_decrement_indentation(builder);
+	string_builder_append(builder, "}\n");
+}
+
+RENDERER_API void event_dump(event_t* event)
+{
+#ifdef GLOBAL_DEBUG
+	string_builder_t* builder = string_builder_create(event->allocator, 512);
+	
+	u32 count = buf_get_element_count(&event->subscribers);
+	if(count > 0)
+		string_builder_append(builder, "\n");
+	for(u32 i = 0; i < count; i++)
+		subscription_dump(event->allocator, buf_get_ptr_at_typeof(&event->subscribers, subscription_t, i), builder);
+
+	string_builder_append_null(builder);
+	debug_log_info(string_builder_get_str(builder));
+	string_builder_destroy(builder);
+#endif /* GLOBAL_DEBUG */
 }

@@ -34,4 +34,7 @@ RENDERER_API void string_builder_decrement_indentation(string_builder_t* builder
 /* returns the internal string buffer */
 RENDERER_API char* string_builder_get_str(string_builder_t* builder);
 
+/* clears the string buffer and indentation buffer */
+RENDERER_API void string_builder_clear(string_builder_t* builder);
+
 END_CPP_COMPATIBLE

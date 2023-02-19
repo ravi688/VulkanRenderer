@@ -79,3 +79,9 @@ RENDERER_API char* string_builder_get_str(string_builder_t* builder)
 {
 	return CAST_TO(char*, buf_get_ptr(&builder->string_buffer));
 }
+
+RENDERER_API void string_builder_clear(string_builder_t* builder)
+{
+	buf_clear(&builder->string_buffer, NULL);
+	buf_clear(&builder->indentation_buffer, NULL);
+}
