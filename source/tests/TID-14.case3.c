@@ -1,5 +1,5 @@
 
-#include <renderer/tests/cube.h>
+#include <renderer/tests/TID-14.case3.h>
 
 #define RENDERER_INCLUDE_EVERYTHING_INTERNAL
 #define RENDERER_INCLUDE_MATH
