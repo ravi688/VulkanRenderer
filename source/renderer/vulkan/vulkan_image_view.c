@@ -74,6 +74,7 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
 RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
 {
 	vkDestroyImageView(view->renderer->logical_device->vo_handle, view->vo_handle, VULKAN_ALLOCATION_CALLBACKS(view->renderer));
+	view->vo_handle = VK_NULL_HANDLE;
 }
 
 RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)

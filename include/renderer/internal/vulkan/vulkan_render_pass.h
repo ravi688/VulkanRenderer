@@ -8,6 +8,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t
+#include <renderer/event.h>
 
 #define VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN (~0UL)
 
@@ -61,9 +62,12 @@ typedef struct vulkan_render_pass_create_info_t
 		u32 attachment_count;
 	};
 
-	/* list of extra attachments in the foreach framebuffer such as swapchain image view */
-	VkImageView* supplementary_attachments;
+	/* 2d list, list of extra attachments in the foreach framebuffer, such as swapchain image view */
+	VkImageView* vo_supplementary_attachments;
+	/* must equal to supplementary_attachment_bucket_count * supplementary_attachment_bucket_depth */
 	u32 supplementary_attachment_count;
+	u32 supplementary_attachment_bucket_count;
+	u32 supplementary_attachment_bucket_depth;
 
 	/* list of subpass create infos */
 	vulkan_subpass_create_info_t* subpasses;
@@ -105,13 +109,12 @@ typedef struct vulkan_render_pass_t
 	};
 
 	/* supplementary attachments for a frame buffer 
-		NOTE: this is not a deep copy or internal allocation, 
-		instead it points to the create info's supplementary attachments.
-		This way updating the supplementary attachments results in updates to internal framebuffers for this render pass
-		which is useful when the render window resizes.
-	 */
-	VkImageView* supplementary_attachments;
+	 * NOTE: this is a deep copy of the data given by the create info struct */
+	VkImageView* vo_supplementary_attachments;
+	/* must equal to supplementary_attachment_bucket_count * supplementary_attachment_bucket_depth */
 	u32 supplementary_attachment_count;
+	u32 supplementary_attachment_bucket_count;
+	u32 supplementary_attachment_bucket_depth;
 
 	/* clear value for each attachment in the frame buffer */
 	VkClearValue* vo_clear_values;
@@ -140,6 +143,10 @@ typedef struct vulkan_render_pass_t
 
 	/* formats of each attachment [only for internal use] */
 	VkFormat* vo_formats;
+
+	/* subscription handle for allocated attachment recreate */
+	event_subscription_handle_t attachment_recreate_handle;
+
 } vulkan_render_pass_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -231,5 +238,15 @@ RENDERER_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass);
 		nothing
  */
 RENDERER_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass);
+
+typedef struct vulkan_render_pass_refresh_info_t
+{
+	VkImageView* vo_supplementary_attachments;
+	u32 supplementary_attachment_count;
+	u32 supplementary_attachment_bucket_count;
+	u32 supplementary_attachment_bucket_depth;
+} vulkan_render_pass_refresh_info_t;
+
+RENDERER_API void vulkan_render_pass_refresh(vulkan_render_pass_t* render_pass, vulkan_render_pass_refresh_info_t* info);
 
 END_CPP_COMPATIBLE

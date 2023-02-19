@@ -71,6 +71,9 @@ typedef struct vulkan_renderer_t
 	vulkan_material_library_t* material_library;
 	vulkan_render_pass_pool_t* render_pass_pool;
 	vulkan_camera_system_t* camera_system;
+
+	event_subscription_handle_t swapchain_recreate_handle;
+	
 } vulkan_renderer_t;
 
 BEGIN_CPP_COMPATIBLE

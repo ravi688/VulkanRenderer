@@ -8,6 +8,7 @@
 #include <renderer/internal/vulkan/vulkan_handles.h> 	// vulkan_render_pass_handle_t
 #include <renderer/internal/vulkan/vulkan_types.h> 		// vulkan_render_target_render_technique_t
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h> 	// vulkan_descriptor_set_t
+#include <renderer/event.h>
 
 #include <hpml/vec3.h>
 #include <hpml/vec2.h>
@@ -90,6 +91,12 @@ typedef struct vulkan_camera_t
 	mat4_t screen;
 
 	vec3_t* shot_rotations;
+
+	event_subscription_handle_t projection_recreate_handle;
+	event_subscription_handle_t screen_projection_recreate_handle;
+	event_subscription_handle_t framebuffers_recreate_handle;
+	event_subscription_handle_t default_render_pass_refresh_handle;
+
 } vulkan_camera_t;
 
 BEGIN_CPP_COMPATIBLE

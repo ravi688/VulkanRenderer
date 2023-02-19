@@ -73,7 +73,9 @@ RENDERER_API void vulkan_image_destroy(vulkan_image_t* image)
 {
 	_debug_assert__(image != NULL);
 	vkDestroyImage(image->renderer->logical_device->vo_handle, image->vo_handle, VULKAN_ALLOCATION_CALLBACKS(image->renderer));
+	image->vo_handle = VK_NULL_HANDLE;
 	vkFreeMemory(image->renderer->logical_device->vo_handle, image->vo_memory, VULKAN_ALLOCATION_CALLBACKS(image->renderer));
+	image->vo_memory = VK_NULL_HANDLE;
 }
 
 RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image)

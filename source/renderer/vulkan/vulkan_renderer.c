@@ -28,7 +28,7 @@ static void memory_allocator_dump(memory_allocator_t* allocator, const char* con
 	memory_allocation_tree_destroy(tree);
 }
 
-static void vulkan_renderer_on_window_resize(render_window_t* window, void* renderer);
+static void recreate_swapchain(void* _window, void* renderer);
 
 RENDERER_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer) { return renderer->window; }
 
@@ -172,7 +172,15 @@ DEBUG_BLOCK
 
 	// create window
 	renderer->window = render_window_init(allocator, width, height, title, full_screen, resizable);
-	render_window_subscribe_on_resize(renderer->window, vulkan_renderer_on_window_resize, renderer);
+	event_subscription_create_info_t subscription = 
+	{
+		.handler = EVENT_HANDLER(recreate_swapchain),
+		.handler_data = (void*)renderer,
+		.wait_for = SIGNAL_NOTHING_BIT,
+		/* swapchain creation involes image creation (internally though), and image view creation */
+		.signal = SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT
+	};
+	renderer->swapchain_recreate_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
 
 	// create surface
 	render_window_get_vulkan_surface(renderer->window, renderer, &(renderer->vo_surface));
@@ -489,6 +497,8 @@ RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
 
 RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
+	event_unsubscribe(renderer->window->on_resize_event, renderer->swapchain_recreate_handle);
+
 	AUTO allocator = renderer->allocator;
 	// memory_allocator_dump(renderer->allocator, "memdump1.dump");
 
@@ -559,11 +569,12 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	LOG_MSG("Renderer exited successfully\n");
 }
 
-static void vulkan_renderer_on_window_resize(render_window_t* window, void* _renderer)
+static void recreate_swapchain(void* _window, void* _renderer)
 {
+	AUTO window = CAST_TO(render_window_t*, _window);
 	vulkan_renderer_t* renderer = _renderer;
-	log_msg("Window is resized: %u, %u\n", window->width, window->height);
 	VkSurfaceCapabilitiesKHR surface_capabilities = vulkan_physical_device_get_surface_capabilities(renderer->physical_device, renderer->vo_surface);
 	renderer->swapchain_create_info.vo_image_extent = find_extent(&surface_capabilities, window);
 	vulkan_swapchain_refresh(renderer->swapchain, &renderer->swapchain_create_info);
+	debug_log_info("Swapchain recreate success");
 }

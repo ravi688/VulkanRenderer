@@ -5,7 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h> // vulkan_descriptor_set_layout_t
 #include <renderer/internal/vulkan/vulkan_attachment.h> 		// vulkan_attachment_type_t
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t, vulkan_shader_handle_t
-
+#include <renderer/event.h>
 #include <glslcommon/glsl_types.h>
 #define VERTEX_ATTRIB(value, index) ((value) << ((index) * 5))
 enum
@@ -148,6 +148,10 @@ typedef struct vulkan_shader_t
 	/* ptr to the currently bound pipeline */
 	vulkan_graphics_pipeline_t* current_bound_pipeline;
 
+	/* handle to the graphics pipeline recreate subscription for render window resize */
+	event_subscription_handle_t pipeline_recreate_handle;
+	/* handle to the render pass refresh subscription for render window resize */
+	event_subscription_handle_t render_pass_refresh_handle;
 } vulkan_shader_t;
 
 /*

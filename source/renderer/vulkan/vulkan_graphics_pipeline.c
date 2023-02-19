@@ -18,38 +18,57 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_all
 	return pipeline;
 }
 
+static u32 calculate_attribute_description_count(vulkan_vertex_buffer_layout_description_t* binding_descriptions, u32 binding_description_count)
+{
+	u32 count = 0;
+	for(u32 i = 0; i < binding_description_count; i++)
+		count += binding_descriptions[i].attribute_count;
+	return count;
+}
+
 RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline)
 {
-	_debug_assert__(create_info->shader_module_count > 0);
+	_debug_assert__(create_info->spirv_code_count > 0);
 
 	memzero(pipeline, vulkan_graphics_pipeline_t);
 
 	pipeline->renderer = renderer;
+
+	pipeline->shader_module_count = create_info->spirv_code_count;
+	/* list of shader modules to be created from the spirv codes */
+	pipeline->shader_modules = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_MODULE_ARRAY, vulkan_shader_module_t, pipeline->shader_module_count);
 	// copy the shader stage create info to a continuous array of VkPipelineShaderStageCreateInfo
-	VkPipelineShaderStageCreateInfo* shader_stages = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PIPELINE_SHADER_STAGE_CREATE_INFO_ARRAY, VkPipelineShaderStageCreateInfo, create_info->shader_module_count);
-	for(u32 i = 0; i < create_info->shader_module_count; i++)
-		shader_stages[i] = create_info->shader_modules[i].vo_stage;
+	pipeline->vo_shader_stages = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PIPELINE_SHADER_STAGE_CREATE_INFO_ARRAY, VkPipelineShaderStageCreateInfo, pipeline->shader_module_count);
+	for(u32 i = 0; i < pipeline->shader_module_count; i++)
+	{
+		vulkan_shader_module_create_info_t module_create_info = REINTERPRET_TO(vulkan_shader_module_create_info_t, create_info->spirv_codes[i]);
+		vulkan_shader_module_create_no_alloc(renderer, &module_create_info, &pipeline->shader_modules[i]);
+		pipeline->vo_shader_stages[i] = pipeline->shader_modules[i].vo_stage;
+	}
 
 	// setup vertex input binding and descriptions
-	VkVertexInputBindingDescription* binding_descriptions = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VERTEX_INPUT_BINDING_DESCRIPTION_ARRAY, VkVertexInputBindingDescription, create_info->vertex_attribute_binding_count);
-	BUFFER attribute_descriptions = buf_create(sizeof(VkVertexInputAttributeDescription), 0, 0);
+	pipeline->binding_description_count = create_info->vertex_attribute_binding_count;
+	pipeline->vo_binding_descriptions = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VERTEX_INPUT_BINDING_DESCRIPTION_ARRAY, VkVertexInputBindingDescription, pipeline->binding_description_count);
+	pipeline->attribute_description_count = calculate_attribute_description_count(create_info->vertex_attribute_bindings, create_info->vertex_attribute_binding_count);
+	pipeline->vo_attribute_descriptions = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_ARRAY, VkVertexInputAttributeDescription, pipeline->attribute_description_count);
 
-	for(u32 i = 0; i < create_info->vertex_attribute_binding_count; i++)
+	for(u32 i = 0, k = 0; i < create_info->vertex_attribute_binding_count; i++)
 	{
-		binding_descriptions[i].binding = create_info->vertex_attribute_bindings[i].binding;
-		binding_descriptions[i].stride = create_info->vertex_attribute_bindings[i].size;
-		binding_descriptions[i].inputRate = create_info->vertex_attribute_bindings[i].input_rate;
+		pipeline->vo_binding_descriptions[i].binding = create_info->vertex_attribute_bindings[i].binding;
+		pipeline->vo_binding_descriptions[i].stride = create_info->vertex_attribute_bindings[i].size;
+		pipeline->vo_binding_descriptions[i].inputRate = create_info->vertex_attribute_bindings[i].input_rate;
 
-		for(u32 j = 0; j < create_info->vertex_attribute_bindings[i].attribute_count; j++)
+		for(u32 j = 0; j < create_info->vertex_attribute_bindings[i].attribute_count; j++, k++)
 		{
-			VkVertexInputAttributeDescription description =
+			_debug_assert__(k < pipeline->attribute_description_count);
+
+			pipeline->vo_attribute_descriptions[k] = (VkVertexInputAttributeDescription)
 			{
 				.binding = create_info->vertex_attribute_bindings[i].binding,
 				.location = create_info->vertex_attribute_bindings[i].attribute_locations[j],
 				.format = create_info->vertex_attribute_bindings[i].attribute_formats[j],
 				.offset = create_info->vertex_attribute_bindings[i].attribute_offsets[j]
 			};
-			buf_push(&attribute_descriptions, &description);
 		}
 	}
 
@@ -57,46 +76,66 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = 
 	{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, 
-		.vertexBindingDescriptionCount = create_info->vertex_attribute_binding_count, 
-		.pVertexBindingDescriptions = binding_descriptions, 
-		.vertexAttributeDescriptionCount = attribute_descriptions.element_count, 
-		.pVertexAttributeDescriptions = attribute_descriptions.bytes
+		.vertexBindingDescriptionCount = pipeline->binding_description_count, 
+		.pVertexBindingDescriptions = pipeline->vo_binding_descriptions, 
+		.vertexAttributeDescriptionCount = pipeline->attribute_description_count, 
+		.pVertexAttributeDescriptions = pipeline->vo_attribute_descriptions
 	};
 
 	// setup the viewport and scissor
-	VkPipelineViewportStateCreateInfo* viewport_state = &create_info->settings->viewport;
-	if(viewport_state->viewportCount > 0)
+	pipeline->viewport_count = create_info->settings->viewport.viewportCount;
+	pipeline->vo_viewports = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VIEWPORT_ARRAY, VkViewport, pipeline->viewport_count);
+	for(int i = 0; i < pipeline->viewport_count; i++)
 	{
-		VkViewport* viewports = (void*)viewport_state->pViewports;
-		for(int i = 0; i < viewport_state->viewportCount; i++)
+		VkViewport viewport = create_info->settings->viewport.pViewports[i];
+		pipeline->vo_viewports[i] = (VkViewport)
 		{
-			if(viewports[i].width == 0)
-				viewports[i].width = renderer->swapchain->vo_image_extent.width;
-			if(viewports[i].height == 0)
-				viewports[i].height = renderer->swapchain->vo_image_extent.height;
-		}
+			.x = 0,
+			.y = 0,
+			.width = (viewport.width == 0) ? renderer->swapchain->vo_image_extent.width : viewport.width,
+			.height = (viewport.height == 0) ? renderer->swapchain->vo_image_extent.height : viewport.height,
+			.minDepth = 0,
+			.maxDepth = 1
+		};
 	}
-	if(viewport_state->scissorCount > 0)
+	pipeline->scissor_count = create_info->settings->viewport.scissorCount;
+	pipeline->vo_scissors = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_RECT2D_ARRAY, VkRect2D, pipeline->scissor_count);
+	for(int i = 0; i < pipeline->scissor_count; i++)
 	{
-		VkRect2D* scissors = (void*)viewport_state->pScissors;
-		for(int i = 0; i < viewport_state->scissorCount; i++)
+		VkRect2D scissor = create_info->settings->viewport.pScissors[i];
+		pipeline->vo_scissors[i] = (VkRect2D)
 		{
-			if(scissors[i].extent.width == 0)
-				scissors[i].extent.width = renderer->swapchain->vo_image_extent.width;
-			if(scissors[i].extent.height == 0)
-				scissors[i].extent.height = renderer->swapchain->vo_image_extent.height;
-		}
+			.offset = (VkOffset2D)
+			{
+				.x = 0,
+				.y = 0
+			},
+			.extent = (VkExtent2D)
+			{
+				.width = renderer->swapchain->vo_image_extent.width,
+				.height = renderer->swapchain->vo_image_extent.height
+			}
+		};
 	}
+
+	VkPipelineViewportStateCreateInfo viewport_state = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		.viewportCount = pipeline->viewport_count,
+		.pViewports = pipeline->vo_viewports,
+		.scissorCount = pipeline->scissor_count,
+		.pScissors = pipeline->vo_scissors
+	};
 
 	// create graphics pipeline
 	VkGraphicsPipelineCreateInfo pipeline_create_info = 
 	{
 		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-		.stageCount = create_info->shader_module_count,
-		.pStages = shader_stages,
+		.stageCount = pipeline->shader_module_count,
+		.pStages = pipeline->vo_shader_stages,
 		.pVertexInputState = &vertex_input_state,
 		.pInputAssemblyState = &create_info->settings->inputassembly,
-		.pViewportState = viewport_state,
+		.pViewportState = &viewport_state,
 		.pRasterizationState = &create_info->settings->rasterization,
 		.pMultisampleState = &create_info->settings->multisample,
 		.pDepthStencilState = &create_info->settings->depthstencil,
@@ -110,9 +149,11 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 	};
 	vkCall(vkCreateGraphicsPipelines(renderer->logical_device->vo_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &pipeline->vo_handle));
 
-	buf_free(&attribute_descriptions);
-	memory_allocator_dealloc(renderer->allocator, binding_descriptions);
-	memory_allocator_dealloc(renderer->allocator, shader_stages);
+	pipeline->settings = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_SETTINGS, vulkan_graphics_pipeline_settings_t);
+	memcopy(pipeline->settings, create_info->settings, vulkan_graphics_pipeline_settings_t);
+	pipeline->layout = create_info->layout;
+	pipeline->render_pass = create_info->render_pass;
+	pipeline->subpass_index = create_info->subpass_index;
 }
 
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
@@ -128,12 +169,83 @@ RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipe
 	vkCmdBindPipeline(pipeline->renderer->vo_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vo_handle);
 }
 
+RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* pipeline, vulkan_graphics_pipeline_refresh_info_t* info)
+{
+	_debug_assert__(pipeline->vo_handle != VK_NULL_HANDLE);
+
+	/* destroy the outdated pipeline */
+	// vulkan_graphics_pipeline_destroy(pipeline);
+
+	/* recreate the pipeline */
+
+	VkPipelineVertexInputStateCreateInfo vertex_input_state = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, 
+		.vertexBindingDescriptionCount = pipeline->binding_description_count, 
+		.pVertexBindingDescriptions = pipeline->vo_binding_descriptions, 
+		.vertexAttributeDescriptionCount = pipeline->attribute_description_count, 
+		.pVertexAttributeDescriptions = pipeline->vo_attribute_descriptions
+	};
+
+	_debug_assert__(pipeline->viewport_count == 1);
+	for(int i = 0; i < pipeline->viewport_count; i++)
+	{
+		pipeline->vo_viewports[i].width = info->width;
+		pipeline->vo_viewports[i].height = info->height;
+	}
+
+	_debug_assert__(pipeline->scissor_count == 1);
+	for(int i = 0; i < pipeline->scissor_count; i++)
+	{
+		pipeline->vo_scissors[i].extent.width = info->width;
+		pipeline->vo_scissors[i].extent.height = info->height;
+	}
+
+	VkPipelineViewportStateCreateInfo viewport_state = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		.viewportCount = pipeline->viewport_count,
+		.pViewports = pipeline->vo_viewports,
+		.scissorCount = pipeline->scissor_count,
+		.pScissors = pipeline->vo_scissors
+	};
+
+	// create graphics pipeline
+	VkGraphicsPipelineCreateInfo pipeline_create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.stageCount = pipeline->shader_module_count,
+		.pStages = pipeline->vo_shader_stages,
+		.pVertexInputState = &vertex_input_state,
+		.pInputAssemblyState = &pipeline->settings->inputassembly,
+		.pViewportState = &viewport_state,
+		.pRasterizationState = &pipeline->settings->rasterization,
+		.pMultisampleState = &pipeline->settings->multisample,
+		.pDepthStencilState = &pipeline->settings->depthstencil,
+		.pColorBlendState = &pipeline->settings->colorblend,
+		.pDynamicState = &pipeline->settings->dynamic,
+		.layout = pipeline->layout->vo_handle,
+		.renderPass = pipeline->render_pass->vo_handle,
+		.subpass = pipeline->subpass_index,
+		.basePipelineHandle = VK_NULL_HANDLE, // Optional
+		.basePipelineIndex = -1 // Optional
+	};
+	vkCall(vkCreateGraphicsPipelines(pipeline->renderer->logical_device->vo_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, VULKAN_ALLOCATION_CALLBACKS(pipeline->renderer), &pipeline->vo_handle));
+}
+
 RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline)
 {
-	vkDestroyPipeline(pipeline->renderer->logical_device->vo_handle, pipeline->vo_handle, NULL);
+	vkDestroyPipeline(pipeline->renderer->logical_device->vo_handle, pipeline->vo_handle, VULKAN_ALLOCATION_CALLBACKS(pipeline->renderer));
+	pipeline->vo_handle = VK_NULL_HANDLE;
 }
 
 RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)
 {
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->shader_modules);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_shader_stages);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_binding_descriptions);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_attribute_descriptions);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_viewports);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_scissors);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline);
 }

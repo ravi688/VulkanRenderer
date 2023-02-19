@@ -256,7 +256,7 @@ static VkSampler get_cubmap_sampler(vulkan_renderer_t* renderer)
 		.maxLod = 0.0f
 	};
 	VkSampler sampler;
-	vkCall(vkCreateSampler(renderer->logical_device->vo_handle, &create_info, NULL, &sampler));
+	vkCall(vkCreateSampler(renderer->logical_device->vo_handle, &create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &sampler));
 	return sampler;
 }
 

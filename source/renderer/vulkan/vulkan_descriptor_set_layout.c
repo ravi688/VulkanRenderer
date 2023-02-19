@@ -113,7 +113,7 @@ RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc(vulkan_renderer_t
 		.pBindings = bindings
 	};
 	VkDescriptorSetLayout set_layout;
-	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->vo_handle, &layout_create_info, NULL, &set_layout));
+	vkCall(vkCreateDescriptorSetLayout(renderer->logical_device->vo_handle, &layout_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &set_layout));
 
 	layout->renderer = renderer;
 	layout->vo_handle = set_layout;

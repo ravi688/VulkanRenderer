@@ -41,7 +41,6 @@ RENDERER_API void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, vulkan
 {
 	destroy_swapchain(swapchain);
 	create_swapchain(swapchain, create_info);
-	log_msg("Swapchain refreshed successfully\n");
 }
 
 RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain)
@@ -128,9 +127,6 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_cre
 	swapchain->vo_image_extent = create_info->vo_image_extent;
 	swapchain->vo_image_format = create_info->vo_image_format;
 
-	log_msg("Swapchain image count: %u\n", swapchain->image_count);
-	log_msg("Swapchain image size: (%u, %u)\n", swapchain->vo_image_extent.width, swapchain->vo_image_extent.height);
-
 	// if the swapchain has to be recreated then no allcation should happen
 	if(swapchain->vo_images == NULL || image_count_changed)
 	{
@@ -166,7 +162,7 @@ static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_cre
 			.subresourceRange.baseArrayLayer = 0,
 			.subresourceRange.layerCount = 1
 		};
-		vkCall(vkCreateImageView(swapchain->renderer->logical_device->vo_handle, &createInfo, NULL, &swapchain->vo_image_views[i]));
+		vkCall(vkCreateImageView(swapchain->renderer->logical_device->vo_handle, &createInfo, VULKAN_ALLOCATION_CALLBACKS(swapchain->renderer), &swapchain->vo_image_views[i]));
 	}
 	swapchain->current_image_index = 0;
 
