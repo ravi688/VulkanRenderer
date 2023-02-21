@@ -47,8 +47,8 @@ RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* pub
 	event->allocator = allocator;
 	event->string_builder = string_builder_create(allocator, 512);
 	event->publisher_data = publisher_data;
-	event->signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_ALL);
-	event->stage_signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_ALL);
+	event->signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_COUNT);
+	event->stage_signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_COUNT);
 	event->subscribers = buf_new(subscription_t);
 	event->stage_subscribers = buf_new(u32);
 	event->stage_subscribers_swap = buf_new(u32);
@@ -56,7 +56,7 @@ RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* pub
 	event->is_dump_only = false;
 
 	/* initially all the signals would be down */
-	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_ALL; i++)
+	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_MAX; i++)
 		event->signal_table[i] = U32_MAX;
 	/* but the nothing signal would always be up */
 	event->signal_table[SIGNAL_NOTHING] = 0;
@@ -64,7 +64,7 @@ RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* pub
 
 RENDERER_API void event_destroy(event_t* event)
 {
-	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_ALL; i++)
+	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_MAX; i++)
 		event->signal_table[i] = U32_MAX;
 	event->publisher_data = NULL;
 	buf_clear(&event->stage_subscribers, NULL);
@@ -87,7 +87,7 @@ RENDERER_API void event_release_resources(event_t* event)
 /* checks if all the wait signals have been raised or not, if yes returns true, otherwise false */
 static bool signal_waits_done(event_t* event, signal_bits_t wait_bits)
 {
-	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_ALL; i++)
+	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_MAX; i++)
 		if((wait_bits & BIT32(i)) && (event->stage_signal_table[i] != U32_MAX) && (event->stage_signal_table[i] > 0))
 			return false;
 	return true;
@@ -106,7 +106,7 @@ RENDERER_API void event_publish(event_t* event)
 {
 	/* create a copy of the signal table because it will modified during the invocations 
 	 * also, signal table is used to determine how many subscribers/invocations can raise a particular signal */
-	memcopyv(event->stage_signal_table, event->signal_table, u32, SIGNAL_ALL);
+	memcopyv(event->stage_signal_table, event->signal_table, u32, SIGNAL_COUNT);
 
 	/* copy sequential indicies into the stage subscribers list */
 	buf_clear(&event->stage_subscribers, NULL);
@@ -151,8 +151,9 @@ RENDERER_API void event_publish(event_t* event)
 				if(event->is_dump_only)
 					subscription_dump(event->allocator, subscription, event->string_builder);
 
-				/* raise the signals which are requested to be raised by this invocation */
-				for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_ALL; i++)
+				/* raise the signals which are requested to be raised by this invocation
+				 * NOTE: no handler can raise SIGNAL_NOTHING_BIT as it is already raised */
+				for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_MAX; i++)
 				{
 					if((subscription->invocation_data.signal_bits & BIT32(i)) == BIT32(i))
 					{
@@ -187,7 +188,7 @@ RENDERER_API void event_publish(event_t* event)
 RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file)
 {
 	subscription_t subscription = { .debug_info = { line, function, file } };
-	
+
 	/* copy the invocation data */
 	memcopy(&subscription.invocation_data, create_info, invocation_data_t);
 
@@ -200,14 +201,22 @@ RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event
 	/* otherwise create a new handle by incrementing the counter */
 	else
 	{
-		event->handle_counter++;
 		handle = event->handle_counter;
+		event->handle_counter++;
 	}
 	subscription.handle = handle;
 
+	/* if the subscribed handler doesn't wait for SIGNAL_ALL_BIT then it must raise SIGNAL_ALL_BIT
+	 * NOTE: all hander must raise SIGNAL_ALL_BIT except the ones which are waiting upon SIGNAL_ALL_BIT */
+	if((subscription.invocation_data.wait_bits & SIGNAL_ALL_BIT) != SIGNAL_ALL_BIT)
+		subscription.invocation_data.signal_bits |= SIGNAL_ALL_BIT;
+	/* if the subscribed handler waits for SIGNAL_ALL_BIT and raises SIGNAL_ALL_BIT as well */
+	else if((subscription.invocation_data.signal_bits & SIGNAL_ALL_BIT) == SIGNAL_ALL_BIT)
+		subscription.invocation_data.signal_bits = ~SIGNAL_ALL_BIT;
+
 	buf_push(&event->subscribers, &subscription);
 
-	for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_ALL; i++)
+	for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_MAX; i++)
 	{
 		if((subscription.invocation_data.signal_bits & BIT32(i)) == BIT32(i))
 		{
@@ -237,7 +246,7 @@ RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t 
 		bool result = buf_remove_at(&event->subscribers, index, &subscription);
 		_debug_assert__(result == true);
 		buf_push(&event->unsubscribed_handles, &handle);
-		for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_ALL; i++)
+		for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_MAX; i++)
 		{
 			if((subscription.invocation_data.signal_bits & BIT32(i)) == BIT32(i))
 			{
@@ -271,12 +280,8 @@ static const char* signal_to_string(signal_t bit)
 static char* signal_bits_to_string(memory_allocator_t* allocator, signal_bits_t bits)
 {
 	string_builder_t* builder = string_builder_create(allocator, 128);
-	if((bits & SIGNAL_ALL_BIT) == SIGNAL_ALL_BIT)
-	{
-		string_builder_append(builder, "SIGNAL_ALL_BIT");
-		return string_builder_get_str(builder);
-	}
-	for(u32 i = SIGNAL_NOTHING; i <= SIGNAL_ALL; i++)
+
+	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_MAX; i++)
 	{
 		if((bits & BIT32(i)) == BIT32(i))
 		{

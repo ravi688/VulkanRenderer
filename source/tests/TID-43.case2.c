@@ -78,6 +78,11 @@ TEST_ON_INITIALIZE(TID_43_CASE_2)
 	subscription.signal = SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT;
 	event_subscribe(this->event, &subscription);
 
+	subscription.handler = EVENT_HANDLER(NULL);
+	subscription.wait_for = SIGNAL_ALL_BIT;
+	subscription.signal = SIGNAL_NOTHING_BIT;
+	event_subscribe(this->event, &subscription);
+	
 	subscription.handler = EVENT_HANDLER(recreate_allocated_attachments);
 	subscription.wait_for = SIGNAL_NOTHING_BIT;
 	subscription.signal = SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT;
@@ -110,7 +115,14 @@ TEST_ON_INITIALIZE(TID_43_CASE_2)
 	subscription.handler = EVENT_HANDLER(refresh_default_render_pass);
 	subscription.wait_for = SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT;
 	subscription.signal = SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT;
-	event_subscribe(this->event, &subscription);	
+	event_subscribe(this->event, &subscription);
+
+	subscription.handler = EVENT_HANDLER(NULL);
+	subscription.wait_for = SIGNAL_ALL_BIT;
+	subscription.signal = SIGNAL_NOTHING_BIT;
+	event_subscribe(this->event, &subscription);
+
+	this->event->is_dump_only = true;	
 
 	event_dump(this->event);;
 }
