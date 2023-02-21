@@ -775,7 +775,7 @@ static void codegen_sub_render_set_binding_descriptions(subpass_analysis_t* anal
 	for(u32 i = 0; i < analysis->color_bind_count; i++)
 	{
 		write_layout2(ctx, writer, 
-					"fragment [%lu, %lu] uniform sampler2D sb%lurp%lucolor%lu;",
+					"fragment [%lu, %lu] uniform subpassInput sb%lurp%lucolor%lu;",
 					analysis->color_binds[i].set_number,
 					analysis->color_binds[i].binding_number,
 					rpindex,
@@ -786,7 +786,7 @@ static void codegen_sub_render_set_binding_descriptions(subpass_analysis_t* anal
 	/* write the depth input descriptions */
 	if(analysis->depth_read != U32_MAX)
 		write_layout2(ctx, writer, 
-					"fragment [%lu, %lu] uniform sampler2D sb%lurp%ludepth;",
+					"fragment [%lu, %lu] uniform subpassInput sb%lurp%ludepth;",
 					analysis->depth_bind.set_number,
 					analysis->depth_bind.binding_number,
 					rpindex,
