@@ -26,7 +26,9 @@ static void glfwErrorCallback(int code, const char* description)
 
 static void glfwOnWindowResizeCallback(GLFWwindow* glfw_window, int width, int height)
 {
-	event_publish(CAST_TO(render_window_t*, glfwGetWindowUserPointer(glfw_window))->on_resize_event);
+	AUTO window = CAST_TO(render_window_t*, glfwGetWindowUserPointer(glfw_window));
+	render_window_get_framebuffer_extent(window, &window->width, &window->height);
+	event_publish(window->on_resize_event);
 }
 
 RENDERER_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
