@@ -794,6 +794,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 		// create deep copy of render set bindings, sub render set bindings and input attachment references to be used for rewriting vulkan descriptors when the window resizes
 		// meaning when the images are recreated.
 		passes[i].render_set_bindings = create_deep_copy_of_set_binding_descriptors(renderer->allocator, descriptions[i].render_set_bindings, descriptions[i].render_set_binding_count);
+		passes[i].render_set_binding_count = descriptions[i].render_set_binding_count;
 		passes[i].input_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, descriptions[i].input_attachment_count);
 		passes[i].input_attachment_count = descriptions[i].input_attachment_count;
 		memcopyv(passes[i].input_attachments, descriptions[i].input_attachments, u32, descriptions[i].input_attachment_count);
