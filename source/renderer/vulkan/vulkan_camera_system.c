@@ -65,8 +65,10 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 	create_info->attachment_usages = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE, vulkan_attachment_next_pass_usage_t);
 	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
 
-	create_info->supplementary_attachment_count = 1;
-	create_info->supplementary_attachments = renderer->swapchain->vo_image_views;
+	create_info->supplementary_attachment_bucket_depth = renderer->swapchain->image_count;
+	create_info->supplementary_attachment_bucket_count = 1;
+	create_info->supplementary_attachment_count = create_info->supplementary_attachment_bucket_count * create_info->supplementary_attachment_bucket_depth;
+	create_info->vo_supplementary_attachments = renderer->swapchain->vo_image_views;
 
 	VkAttachmentReference* color_attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE, VkAttachmentReference);
 	color_attachments[0] = (VkAttachmentReference)

@@ -1,5 +1,5 @@
 
-#include <renderer/tests/TID-14.case1.h>
+#include <renderer/tests/TID-43.case4.h>
 
 #define RENDERER_INCLUDE_EVERYTHING_INTERNAL
 #define RENDERER_INCLUDE_MATH
@@ -8,7 +8,7 @@
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
 
-TEST_DATA(TID_14_CASE_1)
+TEST_DATA(TID_43_CASE_4)
 {
 	render_scene_t* scene;
 	camera_t* camera;
@@ -20,9 +20,9 @@ TEST_DATA(TID_14_CASE_1)
 	float angular_speed;
 };
 
-SETUP_TEST(TID_14_CASE_1);
+SETUP_TEST(TID_43_CASE_4);
 
-TEST_ON_INITIALIZE(TID_14_CASE_1)
+TEST_ON_INITIALIZE(TID_43_CASE_4)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
 	AUTO slib = renderer_get_shader_library(renderer);
@@ -39,7 +39,7 @@ TEST_ON_INITIALIZE(TID_14_CASE_1)
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
 							shader_library_load_shader(slib, 
-								"shaders/presets/TID-14.case1.sb"), "MyMaterial"));
+								"shaders/presets/TID-43.case4.sb"), "MyMaterial"));
 
 	material_set_vec4(this->material, "parameters.color", vec4(1, 1, 1, 1));
 
@@ -54,7 +54,7 @@ TEST_ON_INITIALIZE(TID_14_CASE_1)
 	this->angular_speed = 60 DEG;
 }
 
-TEST_ON_TERMINATE(TID_14_CASE_1)
+TEST_ON_TERMINATE(TID_43_CASE_4)
 {
 	mesh_destroy(this->mesh);
 	mesh_release_resources(this->mesh);
@@ -65,13 +65,13 @@ TEST_ON_TERMINATE(TID_14_CASE_1)
 }
 
 
-TEST_ON_UPDATE(TID_14_CASE_1)
+TEST_ON_UPDATE(TID_43_CASE_4)
 {
 	this->angle += this->angular_speed * deltaTime;
 	render_object_set_transform(this->render_object, mat4_rotation_y(this->angle));
 }
 
-TEST_ON_RENDER(TID_14_CASE_1)
+TEST_ON_RENDER(TID_43_CASE_4)
 {
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 }

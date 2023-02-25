@@ -129,14 +129,54 @@ static void vulkan_camera_recalculate_screen_projection(vulkan_camera_t* camera)
 		mat4_ortho_projection(-0.04f, 100, window->height, (float)window->width / window->height));
 }
 
-static void recreate_screen_projection(render_window_t* window, void* user_data)
+static void recreate_screen_projection(void* window, void* user_data)
 {
 	vulkan_camera_recalculate_screen_projection(CAST_TO(vulkan_camera_t*, user_data));
 }
 
-static void recreate_projection(render_window_t* window, void* user_data)
+static void recreate_projection(void* window, void* user_data)
 {
 	vulkan_camera_recalculate_projection(CAST_TO(vulkan_camera_t*, user_data));
+}
+
+static void recreate_framebuffers(void* _window, void* user_data)
+{
+	AUTO window = CAST_TO(render_window_t*, _window);
+	vulkan_framebuffer_refresh_info_t info = 
+	{
+		.width = window->width,
+		.height = window->height,
+		.is_update_image_views = true
+	};
+
+	AUTO camera = CAST_TO(vulkan_camera_t*, user_data);
+	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
+	for(buf_ucount_t i = 0; i < count; i++)
+	{
+		BUFFER* buffer = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, i));
+		buf_ucount_t count1 = buf_get_element_count(buffer);
+		for(buf_ucount_t j = 0; j < count1; j++)
+		{
+			AUTO framebuffer = CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(buffer, j));
+			vulkan_framebuffer_refresh(framebuffer, &info);
+		}
+	}
+	debug_log_info("Framebuffer recreate success");
+}
+
+static void refresh_default_render_pass(void* publisher_data, void* handler_data)
+{
+	AUTO camera = CAST_TO(vulkan_camera_t*, handler_data);
+	vulkan_render_pass_refresh_info_t refresh_info = 
+	{
+		.supplementary_attachment_bucket_count = 1,
+		.supplementary_attachment_bucket_depth = camera->renderer->swapchain->image_count,
+		.supplementary_attachment_count = camera->renderer->swapchain->image_count /* x 1 */,
+		.vo_supplementary_attachments = camera->renderer->swapchain->vo_image_views
+	};
+
+	vulkan_render_pass_refresh(camera->default_render_pass, &refresh_info);
+	debug_log_info("Camera default render pass refresh success");
 }
 
 RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info)
@@ -193,10 +233,6 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	camera->rotation = vec3(0, 0, -22 DEG);
 	vulkan_camera_recalculate_transform(camera);
 
-	render_window_subscribe_on_resize(vulkan_renderer_get_window(renderer), recreate_projection, camera);
-	render_window_subscribe_on_resize(vulkan_renderer_get_window(renderer), recreate_screen_projection, camera);
-
-
 	// register all the render passes with this camera
 	vulkan_render_pass_pool_t* pass_pool = renderer->render_pass_pool;
 	buf_ucount_t pass_count = vulkan_render_pass_pool_get_count(pass_pool);
@@ -206,11 +242,42 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 		pass->framebuffer_list_handle = vulkan_camera_register_render_pass(camera, pass);
 	}
 
+	event_subscription_create_info_t subscription = 
+	{
+		.handler = EVENT_HANDLER(recreate_projection),
+		.handler_data = (void*)camera,
+		.wait_for = SIGNAL_NOTHING_BIT,
+		.signal = SIGNAL_NOTHING_BIT
+	};
+	camera->projection_recreate_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
+	subscription.handler = EVENT_HANDLER(recreate_screen_projection);
+	camera->screen_projection_recreate_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
+	subscription.handler = EVENT_HANDLER(recreate_framebuffers);
+	subscription.wait_for = SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT | SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT;
+	subscription.signal = SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH_BIT;
+	camera->framebuffers_recreate_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
+
+	if(camera->default_render_pass != NULL)
+	{
+		subscription.handler = EVENT_HANDLER(refresh_default_render_pass);
+		subscription.wait_for = SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT;
+		subscription.signal = SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT;
+		camera->default_render_pass_refresh_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
+	}
+	else
+		camera->default_render_pass_refresh_handle = EVENT_SUBSCRIPTION_HANDLE_INVALID;
+
 	log_msg("Vulkan Camera has been created successfully\n");
 }
 
 RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 {
+	event_unsubscribe(camera->renderer->window->on_resize_event, camera->projection_recreate_handle);
+	event_unsubscribe(camera->renderer->window->on_resize_event, camera->screen_projection_recreate_handle);
+	event_unsubscribe(camera->renderer->window->on_resize_event, camera->framebuffers_recreate_handle);
+	if(camera->default_render_pass != NULL)
+		event_unsubscribe(camera->renderer->window->on_resize_event, camera->default_render_pass_refresh_handle);
+
 	struct_descriptor_unmap(&camera->struct_definition);
 	for(u32 i = 0; i < camera->buffer_count; i++)
 	{
@@ -420,7 +487,12 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 				{
 					buf_push_pseudo(&buffer, 1);
 					vulkan_framebuffer_t* framebuffer = CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, peek_handle)), j));
-					vulkan_framebuffer_create_no_alloc(camera->renderer, framebuffer->pass, framebuffer->id, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(&buffer)));
+					vulkan_framebuffer_create_info_t create_info = 
+					{
+						.render_pass = framebuffer->pass,
+						.id = framebuffer->id,
+					};
+					vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(&buffer)));
 				}
 				buf_push(&camera->framebuffers, &buffer);
 
@@ -523,7 +595,12 @@ RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass
 		{
 			BUFFER* buffer = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, j));
 			buf_push_pseudo(buffer, 1);
-			vulkan_framebuffer_create_no_alloc(camera->renderer, pass, i, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(buffer)));
+			vulkan_framebuffer_create_info_t create_info = 
+			{
+				.render_pass = pass,
+				.id = i
+			};
+			vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(buffer)));
 		}
 	}
 	return handle;

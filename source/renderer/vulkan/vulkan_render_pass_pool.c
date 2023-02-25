@@ -180,7 +180,7 @@ static bool render_pass_create_info_compare(void* create_info, void* ref)
 			&& compare_attachment_descriptions(c1->attachment_count, c1->attachment_descriptions, c2->attachment_descriptions);
 	bool b3 = b2 && compare_attachment_usages(c1->attachment_count, c1->attachment_usages, c2->attachment_usages);
 	bool b4 = b3 && (c1->supplementary_attachment_count == c2->supplementary_attachment_count)
-			&& compare_supplementary_attachments(c1->supplementary_attachment_count, c1->supplementary_attachments, c2->supplementary_attachments);
+			&& compare_supplementary_attachments(c1->supplementary_attachment_count, c1->vo_supplementary_attachments, c2->vo_supplementary_attachments);
 	bool b5 = b4 && (c1->subpass_count == c2->subpass_count) 
 			&& compare_subpass_create_infos(c1->subpass_count, c1->subpasses, c2->subpasses);
 	bool b6 = b5 && (c1->render_set_binding_count == c2->render_set_binding_count)

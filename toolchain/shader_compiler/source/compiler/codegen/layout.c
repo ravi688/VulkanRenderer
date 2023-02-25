@@ -104,6 +104,11 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		bits |= GLSL_TYPE_SAMPLER_CUBE;
 		bits |= OPAQUE_BIT;
 	}
+	else if(strncmp(start, "subpassInput", count) == 0)
+	{
+		bits |= GLSL_TYPE_SUBPASS_INPUT;
+		bits |= OPAQUE_BIT;
+	}
 	else if(strncmp(start, "vec4", count) == 0)
 		bits |= GLSL_TYPE_VEC4;
 	else if(strncmp(start, "vec3", count) == 0)

@@ -57,6 +57,11 @@ typedef struct vulkan_attachment_t
 
 	/* type of the descriptor to which this attachment to be bound as vulkan_texture_t */
 	VkDescriptorType vo_descriptor_type;
+
+	/* copy of the vulkan image create info structure passed while calling vulkan_attachment_create or vulkan_attachment_create_no_alloc */
+	vulkan_image_create_info_t* image_create_info;
+	/* copy of the vulkan image view create info structure passed while calling vulkan_attachment_create or vulkan_attachment_create_no_alloc */
+	vulkan_image_view_create_info_t* view_create_info;
 } vulkan_attachment_t;
 
 
@@ -68,6 +73,18 @@ RENDERER_API vulkan_attachment_t* vulkan_attachment_create(vulkan_renderer_t* re
 RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment);
 RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment);
 RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment);
+
+/* structure to hold the refresh information for vulkan attachment object */
+typedef struct vulkan_attachment_refresh_info_t
+{
+	/* width of the attachment */
+	u32 width;
+	/* height of the attachment */
+	u32 height;
+} vulkan_attachment_refresh_info_t;
+
+/* refreshes the attachment object */
+RENDERER_API void vulkan_attachment_refresh(vulkan_attachment_t* attachment, vulkan_attachment_refresh_info_t* info);
 
 /* getters */
 RENDERER_API vulkan_image_t* vulkan_attachment_get_image(vulkan_attachment_t* attachment);

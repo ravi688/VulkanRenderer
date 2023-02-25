@@ -5,7 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h> // vulkan_descriptor_set_layout_t
 #include <renderer/internal/vulkan/vulkan_attachment.h> 		// vulkan_attachment_type_t
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t, vulkan_shader_handle_t
-
+#include <renderer/event.h>
 #include <glslcommon/glsl_types.h>
 #define VERTEX_ATTRIB(value, index) ((value) << ((index) * 5))
 enum
@@ -88,14 +88,38 @@ typedef struct vulkan_shader_create_info_t
 typedef struct vulkan_graphics_pipeline_t vulkan_graphics_pipeline_t;
 typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;
 
+typedef struct vulkan_shader_subpass_t
+{
+	/* ptr to the pipeline layout object for this subpass  */
+	vulkan_pipeline_layout_t* pipeline_layout;
+	/* ptr to the graphics pipeline object for this subpass  */
+	vulkan_graphics_pipeline_t* pipeline;
+	/* deep copy of sub render set bindings passed with the subpass description */
+	vulkan_shader_resource_description_t* sub_render_set_bindings;
+	/* number of sub render set bindings */
+	u32 sub_render_set_binding_count;
+	/* deep copy of input attachment references passed with the subpass description */
+	u32* input_attachments;
+	/* number of input attachments */
+	u32 input_attachment_count;
+} vulkan_shader_subpass_t;
+
 typedef struct vulkan_shader_render_pass_t
 {
 	/* handle to the render pass instance into the render pass pool */
 	vulkan_render_pass_handle_t handle;
-	/* ptr to the list of vulkan_pipeline_layout_t objects for each sub pass */
-	vulkan_pipeline_layout_t* pipeline_layouts;
-	/* ptr to the list of vulkan_graphics_pipeline_layout_t objects for each sub pass */
-	vulkan_graphics_pipeline_t* pipelines;
+	/* deep copy of render set bindings passed with the render pass description 
+	 * dimensions: [render_set_binding_count] */
+	vulkan_shader_resource_description_t* render_set_bindings;
+	/* number of render set bindings */
+	u32 render_set_binding_count;
+	/* deep copy of input attachment references passed with the subpass description */
+	u32* input_attachments;
+	/* number of input attachments */
+	u32 input_attachment_count;
+
+	/* pointer to the list of vulkan shader subpasses */	
+	vulkan_shader_subpass_t* subpasses;
 	/* number of subpasses in this render pass */
 	u32 subpass_count;
 } vulkan_shader_render_pass_t;
@@ -148,6 +172,12 @@ typedef struct vulkan_shader_t
 	/* ptr to the currently bound pipeline */
 	vulkan_graphics_pipeline_t* current_bound_pipeline;
 
+	/* handle to the graphics pipeline recreate subscription for render window resize */
+	event_subscription_handle_t pipeline_recreate_handle;
+	/* handle to the render pass refresh subscription for render window resize */
+	event_subscription_handle_t render_pass_refresh_handle;
+	/* handle to the rewrite render pass descriptors subscription for render window resize */
+	event_subscription_handle_t rewrite_descriptors_handle;
 } vulkan_shader_t;
 
 /*

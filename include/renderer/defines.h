@@ -62,6 +62,8 @@ typedef struct memory_allocator_t memory_allocator_t;
 
 #ifdef GLOBAL_DEBUG
 #	define INLINE_IF_RELEASE_MODE INLINE
+#	define IF_DEBUG_MODE(x) x
 #else
 #	define INLINE_IF_RELEASE_MODE /* no inline */
+#	define IF_DEBUG_MODE(x) 
 #endif /* GLOBAL_DEBUG */

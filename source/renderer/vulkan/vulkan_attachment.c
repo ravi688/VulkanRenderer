@@ -203,6 +203,12 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 			attachment->vo_descriptor_type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
 		attachment->sampler = VK_NULL_HANDLE;
 	}
+
+	/* cache the view create info and image create info to be later used while refreshing the attachment */
+	attachment->image_create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VULKAN_IMAGE_CREATE_INFO, vulkan_image_create_info_t);
+	memcopy(attachment->image_create_info, &image_create_info, vulkan_image_create_info_t);
+	attachment->view_create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VULKAN_IMAGE_VIEW_CREATE_INFO, vulkan_image_view_create_info_t);
+	memcopy(attachment->view_create_info, &view_create_info, vulkan_image_view_create_info_t);
 }
 
 RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)
@@ -210,13 +216,29 @@ RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)
 	vulkan_image_destroy(&attachment->image);
 	vulkan_image_view_destroy(&attachment->image_view);
 	if(attachment->sampler != VK_NULL_HANDLE)
+	{
 		vkDestroySampler(attachment->renderer->logical_device->vo_handle, attachment->sampler, VULKAN_ALLOCATION_CALLBACKS(attachment->renderer));
+		attachment->sampler = VK_NULL_HANDLE;
+	}
 }
 
 RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment)
 {
+	memory_allocator_dealloc(attachment->renderer->allocator, attachment->image_create_info);
+	memory_allocator_dealloc(attachment->renderer->allocator, attachment->view_create_info);
 	// TODO
 	// heap_free(attachment);
+}
+
+RENDERER_API void vulkan_attachment_refresh(vulkan_attachment_t* attachment, vulkan_attachment_refresh_info_t* info)
+{
+	/* we can't just call vulkan_attachment_destroy as we need to persist the sampler object (recreating that is a redundant thing) */
+	vulkan_image_destroy(&attachment->image);
+	attachment->image_create_info->width = info->width;
+	attachment->image_create_info->height = info->height;
+	vulkan_image_create_no_alloc(attachment->renderer, attachment->image_create_info, &attachment->image);
+	vulkan_image_view_destroy(&attachment->image_view);
+	vulkan_image_view_create_no_alloc(attachment->renderer, attachment->view_create_info, &attachment->image_view);
 }
 
 RENDERER_API vulkan_image_t* vulkan_attachment_get_image(vulkan_attachment_t* attachment)
