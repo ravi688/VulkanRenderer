@@ -93,6 +93,9 @@ typedef struct vulkan_render_pass_t
 
 	vulkan_render_pass_handle_t handle;
 
+	/* number of instances of this render pass (call to vulkan_render_pass_instance_create_* increments it */
+	u32 instance_count;
+
 	/* vulkan object handle */
 	VkRenderPass vo_handle;
 
@@ -136,10 +139,6 @@ typedef struct vulkan_render_pass_t
 
 	/* render set layout for this render pass */
 	vulkan_descriptor_set_layout_t render_set_layout;
-
-	/* render set for this render pass */
-	vulkan_descriptor_set_t render_set;
-
 
 	/* formats of each attachment [only for internal use] */
 	VkFormat* vo_formats;
