@@ -75,6 +75,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	memzero(render_pass, vulkan_render_pass_t);
 
 	render_pass->renderer = renderer;
+	render_pass->instance_count = 0;
 	render_pass->subpass_count = create_info->subpass_count;
 	render_pass->current_subpass_index = 0;
 	render_pass->handle = VULKAN_RENDER_PASS_HANDLE_INVALID;
@@ -160,7 +161,6 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		.vo_pool = renderer->vo_descriptor_pool,
 		.layout = &render_pass->render_set_layout
 	};
-	vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &render_pass->render_set);
 
 	// create sub render set layouts & subb render sets
 	render_pass->sub_render_set_layouts = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_DESCRIPTOR_SET_LAYOUT_ARRAY, vulkan_descriptor_set_layout_t, create_info->subpass_count);
@@ -214,7 +214,6 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 	}
 
 	// destroy the vulkan descriptor sets and layouts (render set and layout)
-	vulkan_descriptor_set_destroy(&render_pass->render_set);
 	vulkan_descriptor_set_layout_destroy(&render_pass->render_set_layout);
 }
 

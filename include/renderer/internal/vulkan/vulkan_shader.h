@@ -5,6 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h> // vulkan_descriptor_set_layout_t
 #include <renderer/internal/vulkan/vulkan_attachment.h> 		// vulkan_attachment_type_t
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t, vulkan_shader_handle_t
+#include <renderer/internal/vulkan/vulkan_render_pass_instance.h>
 #include <renderer/event.h>
 #include <glslcommon/glsl_types.h>
 #define VERTEX_ATTRIB(value, index) ((value) << ((index) * 5))
@@ -106,8 +107,8 @@ typedef struct vulkan_shader_subpass_t
 
 typedef struct vulkan_shader_render_pass_t
 {
-	/* handle to the render pass instance into the render pass pool */
-	vulkan_render_pass_handle_t handle;
+	/* pointer to the render pass instance object */
+	vulkan_render_pass_instance_t instance;
 	/* deep copy of render set bindings passed with the render pass description 
 	 * dimensions: [render_set_binding_count] */
 	vulkan_shader_resource_description_t* render_set_bindings;
@@ -199,5 +200,6 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader);
 /* logic functions */
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index);
 RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index);
+RENDERER_API vulkan_render_pass_instance_t* vulkan_shader_get_render_pass_instance(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle);
 
 END_CPP_COMPATIBLE

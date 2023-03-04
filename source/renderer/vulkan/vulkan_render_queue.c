@@ -161,16 +161,16 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 	for(u32 i = 0; i < pass_count; i++)
 	{
 		subpass_shader_list_t* lists;
-		u32 subpass_count = passes[i].subpass_count;
-		if(!dictionary_contains(&queue->render_pass_handles, &passes[i].handle))
+		u32 subpass_count = passes[i].instance.render_pass->subpass_count;
+		if(!dictionary_contains(&queue->render_pass_handles, &passes[i].instance.render_pass->handle))
 		{
 			lists = memory_allocator_alloc_obj_array(queue->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_SUBPASS_SHADER_LIST_ARRAY, subpass_shader_list_t, subpass_count);
 			for(u32 j = 0; j < subpass_count; j++)
 				lists[j] = buf_create(sizeof(vulkan_shader_handle_t), 1, 0);
-			dictionary_add(&queue->render_pass_handles, &passes[i].handle, &lists);
+			dictionary_add(&queue->render_pass_handles, &passes[i].instance.render_pass->handle, &lists);
 		}
 		else
-			lists = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr(&queue->render_pass_handles, &passes[i].handle));
+			lists = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr(&queue->render_pass_handles, &passes[i].instance.render_pass->handle));
 		for(u32 j = 0; j < subpass_count; j++)
 		{
 			if(buf_find_index_of(&lists[j], &obj->material->shader->handle, buf_u64_comparer) == BUF_INVALID_INDEX)
@@ -259,7 +259,7 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 				// bind GLOBAL_SET
 				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, pipeline_layout); 
 				// bind RENDER_SET
-				vulkan_descriptor_set_bind(&pass->render_set, VULKAN_DESCRIPTOR_SET_RENDER, pipeline_layout);
+				vulkan_descriptor_set_bind(&vulkan_shader_get_render_pass_instance(shader, pass_handle)->render_set, VULKAN_DESCRIPTOR_SET_RENDER, pipeline_layout);
 				// bind SUB_RENDER_SET
 				vulkan_descriptor_set_bind(&pass->sub_render_sets[j], VULKAN_DESCRIPTOR_SET_SUB_RENDER, pipeline_layout);
 

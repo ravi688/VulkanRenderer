@@ -97,7 +97,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 					"\tTID_43_CASE_1\n"	
 					"\tTID_43_CASE_2\n"	
 					"\tTID_43_CASE_3\n"	
-					"\tTID_43_CASE_4\n"	
+					"\tTID_43_CASE_4\n"
 				);
 		exit(0);
 	}
