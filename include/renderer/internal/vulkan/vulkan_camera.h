@@ -1,4 +1,18 @@
 
+/*
+	CAMERA
+	---------------------------
+
+	Camera is responsible for capturing photos (frames) of the scene in which they are placed.
+
+	A camera knows or at least allows to configure the following things:
+		1. How wide we can capture (field of view)
+		2. How far we can capture (far clip plane)
+		3. How near we can capture (near clip plane)
+		4. Where to render (render target)
+
+ */
+
 #pragma once
 
 #include <renderer/defines.h>
@@ -31,9 +45,12 @@ typedef enum vulkan_camera_render_target_type_t
 	VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH
 } vulkan_camera_render_target_type_t;
 
+/* strucutre to hold camera create information */
 typedef struct vulkan_camera_create_info_t
 {
+	/* projection type of the camera */
 	vulkan_camera_projection_type_t projection_type;
+	/* default render pass handle (to be used for clearing the screen or if there are no objects in the scene to render) */
 	vulkan_render_pass_handle_t default_render_pass;
 } vulkan_camera_create_info_t;
 
@@ -44,54 +61,109 @@ typedef struct vulkan_framebuffer_t vulkan_framebuffer_t;
 
 typedef struct vulkan_camera_t
 {
+	/* pointer to the vulkan api context */
 	vulkan_renderer_t* renderer;
 
+	/* clears values for the default render pass (for each attachment) */
 	VkClearValue* clear_buffer;
 
+	/* transform informations for each shot position (faces of the cube, otherwise just one face (2d)) */
 	vulkan_buffer_t buffers[6];
 	vulkan_descriptor_set_t sets[6];
 	void* buffer_mappings[6];
+	/* number of transform informations (1 if render target is not cube, otherwise 6) */
 	union
 	{
 		u32 buffer_count;
 		u32 set_count;
 	};
 
+	/* pointer to the default render pass object (created internally using the default render pass handle passed in create info struct) */
 	vulkan_render_pass_t* default_render_pass;
 
-	vulkan_texture_t* color_render_target; 	// NULL, if the target is the swapchain color attachment
-	vulkan_texture_t* depth_render_target; 	// NULL, if the target is the backed depth attachment
+	/* current color render target texture (NULL if the target is the swapchain color attachment (screen)) */
+	vulkan_texture_t* color_render_target;
+	/* current depth render target texture (NULL if the target is the backed depth attachment */
+	vulkan_texture_t* depth_render_target;
 
+	/* 2 dimensional jagged array of vulkan_framebuffer_t objects 
+	 * dimensions: [max_shot_count][sum:{render_pass[i].required_framebuffer_count}] */
 	BUFFER framebuffers;
 
+	/* renderable area of the render target to which render the output */
+	struct
+	{
+		struct
+		{
+			/* offset in the x axis (for now it is ignored) */
+			u32 x;
+			/* offset in the y axis (for now it is ignored) */
+			u32 y;
+		} offset;
+		struct
+		{
+			/* width of the render area (starts from the offset.x and ends at (offset.x + width)) */
+			u32 width;
+			/* height of the render area (starts from the offset.y and ends at (offset.y + height)) */
+			u32 height;
+		} extent;
+	} render_area;
+
+	/* maximum number of shot that can be taken in this frame; 1 if current render target is not cube, otherwise 6 */
 	u32 max_shot_count;
-	u32 current_shot_index; 	// will always be shot_taken - 1
+	/* index of the current shot being taken */
+	u32 current_shot_index;
+	/* number of shot taken in this frame */
 	u32 shot_taken;
 
+	/* 	uniform CameraInfo 
+	   	{
+			mat4 transform;
+			mat4 projection;
+			mat4 view;
+			mat4 screen; 
+	  	} 
+	*/
 	struct_descriptor_t struct_definition;
 	struct_field_handle_t transform_handle;
 	struct_field_handle_t projection_handle;
 	struct_field_handle_t view_handle;
 	struct_field_handle_t screen_handle;
 
+	/* true, if this camera is active, otherwise false */
 	bool is_active;
+	/* projection type for this camera */
 	vulkan_camera_projection_type_t projection_type;
+	/* distance of far clip plane from this camera */
 	float far_clip_plane;
+	/* distance of near clip plane from this camera */
 	float near_clip_plane;
+	/* height: (for orthographic projection)
+	 * field of view: (for perspective projection) in radians */
 	union
 	{
 		float height;
 		float field_of_view;
 	};
+
+	/* position of this camera in 3D space */
 	vec3_t position;
+	/* euler angle rotation of this camera in 3D space */
 	vec3_t rotation;
+	/* transform matrix for this camera (can be calculated from the above data (position and rotation)) */
 	mat4_t transform;
+	/* view matrix for this camera (inverse of the transform matrix) */
 	mat4_t view;
+	/* projection matrix for this camera */
 	mat4_t projection;
+	/* UI projection matrix for this camera (useful for rendering UI) */
 	mat4_t screen;
 
+	/* euler angle rotation for each shot (towards each face of the cube) 
+	 * it is NULL initially, but once render target is set to a valid render texture then it's size becomes 6 */
 	vec3_t* shot_rotations;
 
+	/* even subscription handles */
 	event_subscription_handle_t projection_recreate_handle;
 	event_subscription_handle_t screen_projection_recreate_handle;
 	event_subscription_handle_t framebuffers_recreate_handle;

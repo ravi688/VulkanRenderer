@@ -35,6 +35,8 @@
 #include <renderer/tests/TID-43.case3.h>
 #include <renderer/tests/TID-43.case4.h>
 
+#include <renderer/tests/TID-48.case1.h>
+
 RENDERER_API test_t* test_new(memory_allocator_t* allocator)
 {
 	test_t* test = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_TEST, test_t);
@@ -72,6 +74,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 	ELSE_IF(TID_43_CASE_2);
 	ELSE_IF(TID_43_CASE_3);
 	ELSE_IF(TID_43_CASE_4);
+	ELSE_IF(TID_48_CASE_1);
 	else
 	{
 		printf 	(
@@ -98,6 +101,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 					"\tTID_43_CASE_2\n"	
 					"\tTID_43_CASE_3\n"	
 					"\tTID_43_CASE_4\n"
+					"\tTID_48_CASE_1\n"
 				);
 		exit(0);
 	}

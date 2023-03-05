@@ -44,8 +44,8 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 
 	vulkan_framebuffer_refresh_info_t info = 
 	{
-		.width = renderer->window->width,
-		.height = renderer->window->height,
+		.width = create_info->width,
+		.height = create_info->height,
 		.is_update_image_views = true
 	};
 	vulkan_framebuffer_refresh(framebuffer, &info);

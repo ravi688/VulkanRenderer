@@ -197,6 +197,14 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	camera->framebuffers = buf_create(sizeof(BUFFER), 1, 0);
 	camera->shot_taken = 0;
 	camera->current_shot_index = 0;
+	
+	render_window_t* window = vulkan_renderer_get_window(renderer);
+
+	/* initially the camera will render to the screen (swapchain image) */
+	camera->render_area.extent.width = window->width;
+	camera->render_area.extent.height = window->height;
+	camera->render_area.offset.x = 0;
+	camera->render_area.offset.y = 0;
 
 	// create framebuffer list for the shot 1 initially
 	camera->max_shot_count = 1;
@@ -206,7 +214,6 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	camera->clear_buffer = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_CLEAR_VALUE_ARRAY, VkClearValue, camera->default_render_pass->attachment_count);
 	memcopyv(camera->clear_buffer, camera->default_render_pass->vo_clear_values, VkClearValue, camera->default_render_pass->attachment_count);
 
-	render_window_t* window = vulkan_renderer_get_window(renderer);
 
 	setup_gpu_resources(camera);
 
@@ -466,6 +473,11 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 	if((texture != VULKAN_CAMERA_RENDER_TARGET_SCREEN) && ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE))
 	{
 		camera->max_shot_count = 6;
+		_debug_assert__(texture->width == texture->height);
+		camera->render_area.extent.width = texture->width;
+		camera->render_area.extent.height = texture->height;
+		camera->render_area.offset.x = 0;
+		camera->render_area.offset.y = 0;
 		if(camera->shot_rotations == NULL)
 		{
 			camera->shot_rotations = memory_allocator_alloc_obj_array(camera->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VEC3_ARRAY, vec3_t, camera->max_shot_count);
@@ -485,12 +497,16 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 				BUFFER buffer = buf_new(vulkan_framebuffer_t);
 				for(u32 j = 0; j < count; j++)
 				{
-					buf_push_pseudo(&buffer, 1);
+					/* get the existing framebuffer (we require its id and render pass to create framebuffers for other faces of the cube) */
 					vulkan_framebuffer_t* framebuffer = CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, peek_handle)), j));
+					
+					buf_push_pseudo(&buffer, 1);
 					vulkan_framebuffer_create_info_t create_info = 
 					{
 						.render_pass = framebuffer->pass,
 						.id = framebuffer->id,
+						.width = texture->width,
+						.height = texture->height
 					};
 					vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(&buffer)));
 				}
@@ -598,7 +614,9 @@ RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass
 			vulkan_framebuffer_create_info_t create_info = 
 			{
 				.render_pass = pass,
-				.id = i
+				.id = i,
+				.width = camera->renderer->window->width,
+				.height = camera->renderer->window->height
 			};
 			vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(buffer)));
 		}

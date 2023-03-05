@@ -15,6 +15,10 @@ typedef struct vulkan_framebuffer_create_info_t
 	vulkan_render_pass_t* render_pass;
 	/* index of this framebuffer in the list */
 	u32 id;	
+	/* width of the framebuffer */
+	u32 width;
+	/* height of the framebuffer */
+	u32 height;
 } vulkan_framebuffer_create_info_t;
 
 typedef struct vulkan_framebuffer_t

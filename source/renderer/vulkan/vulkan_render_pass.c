@@ -267,8 +267,8 @@ RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u3
 	VkRenderPassBeginInfo render_pass_begin_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-		.renderArea.offset = (VkOffset2D) { 0, 0 },
-		.renderArea.extent = (VkExtent2D) { render_pass->renderer->window->width, render_pass->renderer->window->height },
+		.renderArea.offset = (VkOffset2D) { camera->render_area.offset.x, camera->render_area.offset.y },
+		.renderArea.extent = (VkExtent2D) { camera->render_area.extent.width, camera->render_area.extent.height },
 		.framebuffer = framebuffers[framebuffer_index].vo_handle,
 		.renderPass = render_pass->vo_handle,
 		.clearValueCount = render_pass->clear_value_count,
