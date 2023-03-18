@@ -205,15 +205,30 @@ RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* p
 	for(int i = 0; i < pipeline->viewport_count; i++)
 	{
 		if(pipeline->is_user_defined_viewport)
-		pipeline->vo_viewports[i].width = pipeline->is_user_defined_viewport ? pipeline->vo_user_defined_viewports[i].width : info->width;
-		pipeline->vo_viewports[i].height = pipeline->is_user_defined_viewport ? pipeline->vo_user_defined_viewports[i].height : info->height;
+		{
+			pipeline->vo_viewports[i].width = pipeline->vo_user_defined_viewports[i].width;
+			pipeline->vo_viewports[i].height = pipeline->vo_user_defined_viewports[i].height;
+		}
+		else
+		{
+			pipeline->vo_viewports[i].width = info->width;
+			pipeline->vo_viewports[i].height = info->height;
+		}
 	}
 
 	_debug_assert__(pipeline->scissor_count == 1);
 	for(int i = 0; i < pipeline->scissor_count; i++)
 	{
-		pipeline->vo_scissors[i].extent.width = pipeline->is_user_defined_scissor ? pipeline->vo_user_defined_scissors[i].extent.width : info->width;
-		pipeline->vo_scissors[i].extent.height = pipeline->is_user_defined_scissor ? pipeline->vo_user_defined_scissors[i].extent.height : info->height;
+		if(pipeline->is_user_defined_scissor)
+		{
+			pipeline->vo_scissors[i].extent.width = pipeline->vo_user_defined_scissors[i].extent.width;
+			pipeline->vo_scissors[i].extent.height = pipeline->vo_user_defined_scissors[i].extent.height;
+		}
+		else
+		{
+			pipeline->vo_scissors[i].extent.width = info->width;
+			pipeline->vo_scissors[i].extent.height = info->height;
+		}
 	}
 
 	VkPipelineViewportStateCreateInfo viewport_state = 
