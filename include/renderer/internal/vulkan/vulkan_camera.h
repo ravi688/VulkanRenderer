@@ -11,6 +11,21 @@
 		3. How near we can capture (near clip plane)
 		4. Where to render (render target)
 
+	Creating a camera creates the following things:
+		1. A 2d jagged array of framebuffer objects for each render pass for each shot (1 or 6)
+		2. An array of attachments for each render pass
+		3. A uniform buffer for supplying camera transform information.
+
+	Disabling a camera does the following things:
+		1. Doesn't execute any render passes (always return false upon rendering request)
+		2. As a result doesn't write anything to the swapchain buffer (or a render texture)
+
+	
+	Cases
+	1. Two or more cameras in the scene; only one of them will be active:
+		1. Two or more Uniform buffers (CameraInfo { transform, view, ... })
+	2. Two camera in the scene; both are active simultaneously and divide the render surface in two
+		1. 
  */
 
 #pragma once
@@ -90,6 +105,15 @@ typedef struct vulkan_camera_t
 	 * dimensions: [max_shot_count][sum:{render_pass[i].required_framebuffer_count}] */
 	BUFFER framebuffers;
 
+	/* size of the render target */
+	struct 
+	{
+		/* width of the render target (render window width in case of rendering to a window) */
+		u32 width;
+		/* height of the render target (render window height in case of rendering to a window) */
+		u32 height;
+	} render_target_size;
+
 	/* renderable area of the render target to which render the output */
 	struct
 	{
@@ -108,6 +132,33 @@ typedef struct vulkan_camera_t
 			u32 height;
 		} extent;
 	} render_area;
+
+	/* true, if the render area is defined as relative by calling vulkan_camera_set_render_area_relative(...)
+	 * otherwise, false.
+	 */
+	bool is_render_area_relative;
+	/* true, if the render area is equal to the size of the render target (full size), otherwise false */
+	bool is_render_area_full;
+
+	/* renderable area of the render target relative to the global viewport (size of the swapchain)  */
+	struct
+	{
+		struct
+		{
+			/* absolute_x = x * width of the swapchain image */
+			u32 x;
+			/* absolute_y = y * height of the swapchian image */
+			u32 y;
+		} offset;
+
+		struct
+		{
+			/* absolute_width = width * width of the swapchain image */
+			u32 width;
+			/* absolute_height = height * height of the swapchain image */
+			u32 height;
+		} extent;
+	} render_area_relative;
 
 	/* maximum number of shot that can be taken in this frame; 1 if current render target is not cube, otherwise 6 */
 	u32 max_shot_count;
@@ -164,6 +215,7 @@ typedef struct vulkan_camera_t
 	vec3_t* shot_rotations;
 
 	/* even subscription handles */
+	event_subscription_handle_t render_area_recalculate_handle;
 	event_subscription_handle_t projection_recreate_handle;
 	event_subscription_handle_t screen_projection_recreate_handle;
 	event_subscription_handle_t framebuffers_recreate_handle;
@@ -227,5 +279,21 @@ RENDERER_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t rot
 RENDERER_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane);
 RENDERER_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float fov);
 static FORCE_INLINE void vulkan_camera_set_height(vulkan_camera_t* camera, float height) { vulkan_camera_set_field_of_view(camera, height); }
+/* 	offset_x: offset in the x direction relative to the global viewport
+	offset_y: offset in the y direction relative to the global viewport 
+	width: width of the render area following the offset_x
+	height: height of the render area following the offset_y 
+	NOTE: calling this function overrides any values (and any effects) set by vulkan_camera_set_render_area_relative(...) function.
+*/
+RENDERER_API void vulkan_camera_set_render_area(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height);
+/*	offset_x: valid values are from 0 to 100
+	offset_y: valid values are from 0 to 100
+	width: valid values are from 0 to 100
+	height: valid values are from 0 to 100
+	NOTE: calling this function overrides any values set by vulkan_camera_set_render_area(...) function.
+ */
+RENDERER_API void vulkan_camera_set_render_area_relative(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height);
+/*	sets the render area to the size of the render window */
+RENDERER_API void vulkan_camera_set_render_area_default(vulkan_camera_t* camera);
 
 END_CPP_COMPATIBLE

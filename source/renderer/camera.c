@@ -160,3 +160,18 @@ RENDERER_API void camera_set_height(camera_t* camera, float height)
 {
 	vulkan_camera_set_height(camera, height);
 }
+
+RENDERER_API void camera_set_render_area(camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
+{
+	vulkan_camera_set_render_area(camera, offset_x, offset_y, width, height);
+}
+
+RENDERER_API void camera_set_render_area_relative(camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
+{
+	vulkan_camera_set_render_area_relative(camera, offset_x, offset_y, width, height);
+}
+
+RENDERER_API void camera_set_render_area_default(camera_t* camera)
+{
+	vulkan_camera_set_render_area_default(camera);
+}

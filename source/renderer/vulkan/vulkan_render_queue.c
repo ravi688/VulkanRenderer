@@ -248,6 +248,9 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 
 				// get the graphics pipeline for this render pass and sub pass 'j'
 				vulkan_graphics_pipeline_t* pipeline = vulkan_shader_get_pipeline(shader, pass->handle, j);
+
+				_debug_assert__(pipeline->render_pass == pass);
+
 				// bind pipeline
 				vulkan_graphics_pipeline_bind(pipeline);
 				

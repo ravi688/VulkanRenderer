@@ -87,6 +87,8 @@ RENDERER_API void camera_set_rotation(camera_t* camera, vec3_t rotation);
 RENDERER_API void camera_set_clip_planes(camera_t* camera, float near_clip_plane, float far_clip_plane);
 RENDERER_API void camera_set_field_of_view(camera_t* camera, float fov);
 RENDERER_API void camera_set_height(camera_t* camera, float height);
-
+RENDERER_API void camera_set_render_area(camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height);
+RENDERER_API void camera_set_render_area_relative(camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height);
+RENDERER_API void camera_set_render_area_default(camera_t* camera);
 
 END_CPP_COMPATIBLE

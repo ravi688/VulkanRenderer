@@ -90,7 +90,6 @@ static void vulkan_camera_set_projection(vulkan_camera_t* camera, mat4_t project
 
 static void vulkan_camera_recalculate_projection(vulkan_camera_t* camera)
 {
-	render_window_t* window = vulkan_renderer_get_window(camera->renderer);
 	mat4_t projection;
 	switch(camera->projection_type)
 	{
@@ -98,13 +97,13 @@ static void vulkan_camera_recalculate_projection(vulkan_camera_t* camera)
 			mat4_move(projection, mat4_persp_projection(camera->near_clip_plane, 
 																	   camera->far_clip_plane, 
 																	   camera->field_of_view, 
-																	   (float)window->width / (float)window->height));
+																	   (float)camera->render_area.extent.width / (float)camera->render_area.extent.height));
 			break;
 		case VULKAN_CAMERA_PROJECTION_TYPE_ORTHOGRAPHIC:
 			mat4_move(projection, mat4_ortho_projection(camera->near_clip_plane, 
 																	   camera->far_clip_plane, 
 																	   camera->height, 
-																	   (float)window->width / (float)window->height));
+																	   (float)camera->render_area.extent.width / (float)camera->render_area.extent.height));
 			break;
 		case VULKAN_CAMERA_PROJECTION_TYPE_STEROGRAPHIC:
 			LOG_FETAL_ERR("VULKAN_CAMERA_PROJECTION_TYPE_STEROGRAPHIC isn't supported yet!\n");
@@ -124,9 +123,36 @@ static void vulkan_camera_recalculate_transform(vulkan_camera_t* camera)
 
 static void vulkan_camera_recalculate_screen_projection(vulkan_camera_t* camera)
 {
-	render_window_t* window = vulkan_renderer_get_window(camera->renderer);
 	vulkan_camera_set_screen_projection(camera, 
-		mat4_ortho_projection(-0.04f, 100, window->height, (float)window->width / window->height));
+		mat4_ortho_projection(-0.04f, 100, camera->render_area.extent.height, (float)camera->render_area.extent.width / (float)camera->render_area.extent.height));
+}
+
+static INLINE_IF_RELEASE_MODE bool vulkan_camera_is_render_area_absolute(vulkan_camera_t* camera)
+{
+	return (!camera->is_render_area_relative) && (!camera->is_render_area_full);
+}
+
+static void vulkan_camera_recalculate_render_area_from_relative(vulkan_camera_t* camera);
+static void recalculate_render_area_and_render_target_size(void* _window, void* user_data)
+{
+	AUTO window = CAST_TO(render_window_t*, _window);
+	AUTO camera = CAST_TO(vulkan_camera_t*, user_data);
+
+	/* update the render target size */
+	camera->render_target_size.width = window->width;
+	camera->render_target_size.height = window->height;
+
+	if(camera->is_render_area_relative)
+	{
+		_debug_assert__(camera->is_render_area_full == false);
+		vulkan_camera_recalculate_render_area_from_relative(camera);
+	}
+	else if(camera->is_render_area_full)
+	{
+		_debug_assert__(!vulkan_camera_is_render_area_absolute(camera));
+		/* set the render area to the size of the render window */
+		vulkan_camera_set_render_area_default(camera);
+	}
 }
 
 static void recreate_screen_projection(void* window, void* user_data)
@@ -141,15 +167,14 @@ static void recreate_projection(void* window, void* user_data)
 
 static void recreate_framebuffers(void* _window, void* user_data)
 {
-	AUTO window = CAST_TO(render_window_t*, _window);
+	AUTO camera = CAST_TO(vulkan_camera_t*, user_data);
 	vulkan_framebuffer_refresh_info_t info = 
 	{
-		.width = window->width,
-		.height = window->height,
+		.width = camera->render_target_size.width,
+		.height = camera->render_target_size.height,
 		.is_update_image_views = true
 	};
 
-	AUTO camera = CAST_TO(vulkan_camera_t*, user_data);
 	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
 	for(buf_ucount_t i = 0; i < count; i++)
 	{
@@ -199,12 +224,11 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	camera->current_shot_index = 0;
 	
 	render_window_t* window = vulkan_renderer_get_window(renderer);
+	camera->render_target_size.width = window->width;
+	camera->render_target_size.height = window->height;
 
 	/* initially the camera will render to the screen (swapchain image) */
-	camera->render_area.extent.width = window->width;
-	camera->render_area.extent.height = window->height;
-	camera->render_area.offset.x = 0;
-	camera->render_area.offset.y = 0;
+	vulkan_camera_set_render_area_default(camera);
 
 	// create framebuffer list for the shot 1 initially
 	camera->max_shot_count = 1;
@@ -251,16 +275,20 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 
 	event_subscription_create_info_t subscription = 
 	{
-		.handler = EVENT_HANDLER(recreate_projection),
+		.handler = EVENT_HANDLER(recalculate_render_area_and_render_target_size),
 		.handler_data = (void*)camera,
 		.wait_for = SIGNAL_NOTHING_BIT,
-		.signal = SIGNAL_NOTHING_BIT
+		.signal = SIGNAL_VULKAN_CAMERA_RENDER_AREA_RECALCULATE_FINISH_BIT
 	};
+	camera->render_area_recalculate_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
+	subscription.handler = EVENT_HANDLER(recreate_projection),
+	subscription.wait_for = SIGNAL_VULKAN_CAMERA_RENDER_AREA_RECALCULATE_FINISH_BIT;
+	subscription.signal = SIGNAL_NOTHING_BIT;
 	camera->projection_recreate_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
 	subscription.handler = EVENT_HANDLER(recreate_screen_projection);
 	camera->screen_projection_recreate_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
 	subscription.handler = EVENT_HANDLER(recreate_framebuffers);
-	subscription.wait_for = SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT | SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT;
+	subscription.wait_for = SIGNAL_VULKAN_CAMERA_RENDER_AREA_RECALCULATE_FINISH_BIT | SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT | SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT;
 	subscription.signal = SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH_BIT;
 	camera->framebuffers_recreate_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
 
@@ -279,6 +307,7 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 
 RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 {
+	event_unsubscribe(camera->renderer->window->on_resize_event, camera->render_area_recalculate_handle);
 	event_unsubscribe(camera->renderer->window->on_resize_event, camera->projection_recreate_handle);
 	event_unsubscribe(camera->renderer->window->on_resize_event, camera->screen_projection_recreate_handle);
 	event_unsubscribe(camera->renderer->window->on_resize_event, camera->framebuffers_recreate_handle);
@@ -470,14 +499,25 @@ RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color
 
 RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_texture_t* texture)
 {
+	/* if the render texture is not referencing the screen (render window) */
+	if(texture != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+	{
+		camera->render_target_size.width = texture->width;
+		camera->render_target_size.height = texture->height;
+	}
+	else
+	{
+		AUTO window = vulkan_renderer_get_window(camera->renderer);
+		camera->render_target_size.width = window->width;
+		camera->render_target_size.height = window->height;
+	}
+	
 	if((texture != VULKAN_CAMERA_RENDER_TARGET_SCREEN) && ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE))
 	{
+		/* rendering to cube requires the images (faces of the cube) to be square (sides must be same) */
+		_debug_assert__(camera->render_target_size.width == camera->render_target_size.height);
+
 		camera->max_shot_count = 6;
-		_debug_assert__(texture->width == texture->height);
-		camera->render_area.extent.width = texture->width;
-		camera->render_area.extent.height = texture->height;
-		camera->render_area.offset.x = 0;
-		camera->render_area.offset.y = 0;
 		if(camera->shot_rotations == NULL)
 		{
 			camera->shot_rotations = memory_allocator_alloc_obj_array(camera->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VEC3_ARRAY, vec3_t, camera->max_shot_count);
@@ -505,8 +545,8 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 					{
 						.render_pass = framebuffer->pass,
 						.id = framebuffer->id,
-						.width = texture->width,
-						.height = texture->height
+						.width = camera->render_target_size.width,
+						.height = camera->render_target_size.height
 					};
 					vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(&buffer)));
 				}
@@ -615,8 +655,8 @@ RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass
 			{
 				.render_pass = pass,
 				.id = i,
-				.width = camera->renderer->window->width,
-				.height = camera->renderer->window->height
+				.width = camera->render_target_size.width,
+				.height = camera->render_target_size.height
 			};
 			vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(buffer)));
 		}
@@ -715,3 +755,52 @@ RENDERER_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float
 	vulkan_camera_recalculate_projection(camera);
 }
 
+RENDERER_API void vulkan_camera_set_render_area(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
+{
+	/* render area is not absolute (size defined by the user) */
+	camera->is_render_area_relative = false;
+	camera->is_render_area_full = false;
+	camera->render_area.extent.width = width;
+	camera->render_area.extent.height = height;
+	camera->render_area.offset.x = offset_x;
+	camera->render_area.offset.y = offset_y;
+	_debug_assert__((camera->render_area.extent.width + camera->render_area.offset.x) <= camera->render_target_size.width);
+	_debug_assert__((camera->render_area.extent.height + camera->render_area.offset.y) <= camera->render_target_size.height);
+	vulkan_camera_recalculate_projection(camera);
+}
+
+/* calculates the absolute render area from the relative render area */
+static void vulkan_camera_recalculate_render_area_from_relative(vulkan_camera_t* camera)
+{
+	_debug_assert__(camera->is_render_area_relative == true);
+	float inverse_100 = 1 / (float)100;
+	camera->render_area.extent.width = CAST_TO(u32, camera->render_target_size.width * camera->render_area_relative.extent.width * inverse_100);
+	camera->render_area.extent.height = CAST_TO(u32, camera->render_target_size.height * camera->render_area_relative.extent.height * inverse_100);
+	camera->render_area.offset.x = CAST_TO(u32, camera->render_target_size.width * camera->render_area_relative.offset.x);
+	camera->render_area.offset.y = CAST_TO(u32, camera->render_target_size.height * camera->render_area_relative.offset.y);
+	_debug_assert__((camera->render_area.extent.width + camera->render_area.offset.x) <= camera->render_target_size.width);
+	_debug_assert__((camera->render_area.extent.height + camera->render_area.offset.y) <= camera->render_target_size.height);
+	vulkan_camera_recalculate_projection(camera);
+}
+
+RENDERER_API void vulkan_camera_set_render_area_relative(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
+{
+	/* render is now relative (in general, not the size of the render window) */
+	camera->is_render_area_relative = true;
+	camera->is_render_area_full = false;
+	camera->render_area_relative.extent.width = width;
+	camera->render_area_relative.extent.height = height;
+	camera->render_area_relative.offset.x = offset_x;
+	camera->render_area_relative.offset.y = offset_y;
+	vulkan_camera_recalculate_render_area_from_relative(camera);
+}
+
+RENDERER_API void vulkan_camera_set_render_area_default(vulkan_camera_t* camera)
+{
+	camera->is_render_area_relative = false;
+	camera->is_render_area_full = true;
+	camera->render_area.extent.width = camera->render_target_size.width;
+	camera->render_area.extent.height = camera->render_target_size.height;
+	camera->render_area.offset.x = 0;
+	camera->render_area.offset.y = 0;
+}

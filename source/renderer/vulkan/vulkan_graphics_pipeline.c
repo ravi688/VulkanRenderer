@@ -85,9 +85,15 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 	// setup the viewport and scissor
 	pipeline->viewport_count = create_info->settings->viewport.viewportCount;
 	pipeline->vo_viewports = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VIEWPORT_ARRAY, VkViewport, pipeline->viewport_count);
+	pipeline->vo_user_defined_viewports = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VIEWPORT_ARRAY, VkViewport, pipeline->viewport_count);
+	pipeline->is_user_defined_viewport = false;
 	for(int i = 0; i < pipeline->viewport_count; i++)
 	{
 		VkViewport viewport = create_info->settings->viewport.pViewports[i];
+		
+		if((!pipeline->is_user_defined_viewport) && (viewport.width != 0) && (viewport.height != 0))
+			pipeline->is_user_defined_viewport = true;
+
 		pipeline->vo_viewports[i] = (VkViewport)
 		{
 			.x = 0,
@@ -97,25 +103,33 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 			.minDepth = 0,
 			.maxDepth = 1
 		};
+		pipeline->vo_user_defined_viewports[i] = viewport;
 	}
 	pipeline->scissor_count = create_info->settings->viewport.scissorCount;
 	pipeline->vo_scissors = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_RECT2D_ARRAY, VkRect2D, pipeline->scissor_count);
+	pipeline->vo_user_defined_scissors = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_RECT2D_ARRAY, VkRect2D, pipeline->scissor_count);
+	pipeline->is_user_defined_scissor = false;
 	for(int i = 0; i < pipeline->scissor_count; i++)
 	{
 		VkRect2D scissor = create_info->settings->viewport.pScissors[i];
+		
+		if((!pipeline->is_user_defined_scissor) && (scissor.extent.width != 0) && (scissor.extent.height != 0))
+			pipeline->is_user_defined_scissor = true;
+
 		pipeline->vo_scissors[i] = (VkRect2D)
 		{
 			.offset = (VkOffset2D)
 			{
-				.x = 0,
-				.y = 0
+				.x = scissor.offset.x,
+				.y = scissor.offset.y
 			},
 			.extent = (VkExtent2D)
 			{
-				.width = renderer->swapchain->vo_image_extent.width,
-				.height = renderer->swapchain->vo_image_extent.height
+				.width = (scissor.extent.width == 0) ? renderer->swapchain->vo_image_extent.width : scissor.extent.width,
+				.height = (scissor.extent.height == 0) ? renderer->swapchain->vo_image_extent.height : scissor.extent.height
 			}
 		};
+		pipeline->vo_user_defined_scissors[i] = scissor;
 	}
 
 	VkPipelineViewportStateCreateInfo viewport_state = 
@@ -190,15 +204,16 @@ RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* p
 	_debug_assert__(pipeline->viewport_count == 1);
 	for(int i = 0; i < pipeline->viewport_count; i++)
 	{
-		pipeline->vo_viewports[i].width = info->width;
-		pipeline->vo_viewports[i].height = info->height;
+		if(pipeline->is_user_defined_viewport)
+		pipeline->vo_viewports[i].width = pipeline->is_user_defined_viewport ? pipeline->vo_user_defined_viewports[i].width : info->width;
+		pipeline->vo_viewports[i].height = pipeline->is_user_defined_viewport ? pipeline->vo_user_defined_viewports[i].height : info->height;
 	}
 
 	_debug_assert__(pipeline->scissor_count == 1);
 	for(int i = 0; i < pipeline->scissor_count; i++)
 	{
-		pipeline->vo_scissors[i].extent.width = info->width;
-		pipeline->vo_scissors[i].extent.height = info->height;
+		pipeline->vo_scissors[i].extent.width = pipeline->is_user_defined_scissor ? pipeline->vo_user_defined_scissors[i].extent.width : info->width;
+		pipeline->vo_scissors[i].extent.height = pipeline->is_user_defined_scissor ? pipeline->vo_user_defined_scissors[i].extent.height : info->height;
 	}
 
 	VkPipelineViewportStateCreateInfo viewport_state = 
@@ -246,6 +261,8 @@ RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pip
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_binding_descriptions);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_attribute_descriptions);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_viewports);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_viewports);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_scissors);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_scissors);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline);
 }
