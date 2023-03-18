@@ -795,8 +795,8 @@ static void vulkan_camera_recalculate_render_area_from_relative(vulkan_camera_t*
 	float inverse_100 = 1 / (float)100;
 	camera->render_area.extent.width = CAST_TO(u32, camera->render_target_size.width * camera->render_area_relative.extent.width * inverse_100);
 	camera->render_area.extent.height = CAST_TO(u32, camera->render_target_size.height * camera->render_area_relative.extent.height * inverse_100);
-	camera->render_area.offset.x = CAST_TO(u32, camera->render_target_size.width * camera->render_area_relative.offset.x);
-	camera->render_area.offset.y = CAST_TO(u32, camera->render_target_size.height * camera->render_area_relative.offset.y);
+	camera->render_area.offset.x = CAST_TO(u32, camera->render_target_size.width * camera->render_area_relative.offset.x * inverse_100);
+	camera->render_area.offset.y = CAST_TO(u32, camera->render_target_size.height * camera->render_area_relative.offset.y * inverse_100);
 	_debug_assert__((camera->render_area.extent.width + camera->render_area.offset.x) <= camera->render_target_size.width);
 	_debug_assert__((camera->render_area.extent.height + camera->render_area.offset.y) <= camera->render_target_size.height);
 	vulkan_camera_recalculate_projection(camera);

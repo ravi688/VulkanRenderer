@@ -213,16 +213,9 @@ RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipe
 		};
 		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 	}
-	/* setupt the scissor if there is no user defined scissors in v3d shader */
+	/* setup the scissor if there is no user defined scissors in v3d shader */
 	if(!pipeline->is_user_defined_scissor)
-	{
-		VkRect2D scissor = 
-		{
-			.offset = { 0, 0 },
-			.extent = pipeline->render_pass->vo_current_render_area.extent
-		};
-		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
-	}
+		vkCmdSetScissor(command_buffer, 0, 1, &pipeline->render_pass->vo_current_render_area);
 }
 
 RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* pipeline, vulkan_graphics_pipeline_refresh_info_t* info)

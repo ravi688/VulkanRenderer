@@ -297,6 +297,7 @@ static char* signal_bits_to_string(memory_allocator_t* allocator, signal_bits_t 
 
 static void subscription_dump(memory_allocator_t* allocator, subscription_t* subscription, string_builder_t* builder)
 {
+#ifdef GLOBAL_DEBUG
 	string_builder_append(builder, "{\n");
 	string_builder_increment_indentation(builder);
 		string_builder_append(builder, ".location = { %lu, %s, %s }\n", subscription->debug_info.line, subscription->debug_info.function_str, subscription->debug_info.file_str);
@@ -307,6 +308,7 @@ static void subscription_dump(memory_allocator_t* allocator, subscription_t* sub
 		string_builder_append(builder, ".handle = %llu\n", subscription->handle);
 	string_builder_decrement_indentation(builder);
 	string_builder_append(builder, "}\n");
+#endif /* GLOBAL_DEBUG */
 }
 
 RENDERER_API void event_dump(event_t* event)

@@ -10,22 +10,7 @@
 		2. How far we can capture (far clip plane)
 		3. How near we can capture (near clip plane)
 		4. Where to render (render target)
-
-	Creating a camera creates the following things:
-		1. A 2d jagged array of framebuffer objects for each render pass for each shot (1 or 6)
-		2. An array of attachments for each render pass
-		3. A uniform buffer for supplying camera transform information.
-
-	Disabling a camera does the following things:
-		1. Doesn't execute any render passes (always return false upon rendering request)
-		2. As a result doesn't write anything to the swapchain buffer (or a render texture)
-
-	
-	Cases
-	1. Two or more cameras in the scene; only one of them will be active:
-		1. Two or more Uniform buffers (CameraInfo { transform, view, ... })
-	2. Two camera in the scene; both are active simultaneously and divide the render surface in two
-		1. 
+		5. How much the render target size is
  */
 
 #pragma once
