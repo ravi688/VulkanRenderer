@@ -46,8 +46,8 @@ RENDERER_API void vulkan_graphics_pipeline_description_begin(vulkan_renderer_t* 
 	{
 		.x = 0,
 		.y = 0,
-		.width = renderer->swapchain->vo_image_extent.width,
-		.height = renderer->swapchain->vo_image_extent.height,
+		.width = 0,
+		.height = 0,
 		.minDepth = 0,
 		.maxDepth = 1.0f
 	};
@@ -55,7 +55,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_begin(vulkan_renderer_t* 
 	scissor[0] = (VkRect2D)
 	{
 		.offset = { 0, 0 },
-		.extent = renderer->swapchain->vo_image_extent
+		.extent = { 0, 0 }
 	};
 	settings->viewport = (VkPipelineViewportStateCreateInfo)
 	{
