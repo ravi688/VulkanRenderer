@@ -131,5 +131,9 @@ RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event
 RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t handle);
 /* dumps the subscribers to this event onto stdout */
 RENDERER_API void event_dump(event_t* event);
+/* sets a subscription identified by 'handle' as active or inactive
+ * if a subscrpition becomes inactive then it's handler will not be executed but it would still be considered as executed
+ * meaning if some subscriptions were waiting on that subscription to be executed, all those subscriptoins would be executed after that. */
+RENDERER_API void event_set_subscription_active(event_t* event, bool is_active, event_subscription_handle_t handle);
 
 END_CPP_COMPATIBLE
