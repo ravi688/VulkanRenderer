@@ -263,12 +263,18 @@ RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u3
 	framebuffer_index = min(render_pass->required_framebuffer_count - 1, framebuffer_index);
 
 	vulkan_framebuffer_t* framebuffers = vulkan_camera_get_framebuffer_list(camera, render_pass->framebuffer_list_handle);
+	
+	render_pass->vo_current_render_area = (VkRect2D)
+	{
+		.offset = { camera->render_area.offset.x, camera->render_area.offset.y },
+		.extent = { camera->render_area.extent.width, camera->render_area.extent.height }
+	};
+
 	// begin the render pass
 	VkRenderPassBeginInfo render_pass_begin_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-		.renderArea.offset = (VkOffset2D) { camera->render_area.offset.x, camera->render_area.offset.y },
-		.renderArea.extent = (VkExtent2D) { camera->render_area.extent.width, camera->render_area.extent.height },
+		.renderArea = render_pass->vo_current_render_area,
 		.framebuffer = framebuffers[framebuffer_index].vo_handle,
 		.renderPass = render_pass->vo_handle,
 		.clearValueCount = render_pass->clear_value_count,

@@ -89,6 +89,11 @@ typedef struct vulkan_graphics_pipeline_t
 	/* index of the subpass for which this gfx pipeline would work */
 	u32 subpass_index;
 
+	/* list of dynamic states determined at the time of pipeline creation */
+	VkDynamicState* vo_dynamic_states;
+	/* number of dynamic states */
+	u32 dynamic_state_count;
+
 } vulkan_graphics_pipeline_t;
 
 BEGIN_CPP_COMPATIBLE

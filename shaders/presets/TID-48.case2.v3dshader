@@ -37,34 +37,6 @@ Shader
 					depthWriteEnable = true,
 					depthTestEnable = true
 				}
-
-   				Viewport
-    			{
-        			viewport
-        			{
-            			x = 0,
-            			y = 0,
-            			width = 400,
-            			height = 800,
-            			minDepth = 0,
-            			maxDepth = 1
-        			}
-
-        			scissor
-        			{
-            			offset
-            			{
-                			x = 0,
-                			y = 0
-            			}
-
-            			extent
-            			{
-            			    width = 400,
-            			    height = 800
-            			}
-        			}
-    			}
 			}
 
 			[NoParse]

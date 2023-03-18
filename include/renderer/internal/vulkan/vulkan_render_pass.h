@@ -146,6 +146,9 @@ typedef struct vulkan_render_pass_t
 	/* subscription handle for allocated attachment recreate */
 	event_subscription_handle_t attachment_recreate_handle;
 
+	/* current render area (set/updated whenever vulkan_render_pass_begin(...) is called) */
+	VkRect2D vo_current_render_area;
+
 } vulkan_render_pass_t;
 
 BEGIN_CPP_COMPATIBLE

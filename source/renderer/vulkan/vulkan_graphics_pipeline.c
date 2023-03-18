@@ -141,6 +141,23 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.pScissors = pipeline->vo_scissors
 	};
 
+	BUFFER dynamic_states = buf_new(VkDynamicState);
+	if(!pipeline->is_user_defined_viewport)
+		buf_push_auto(&dynamic_states, VK_DYNAMIC_STATE_VIEWPORT);
+	if(!pipeline->is_user_defined_scissor)
+		buf_push_auto(&dynamic_states, VK_DYNAMIC_STATE_SCISSOR);
+
+	/* cache result as that would be needed at the time of pipeline refresh */
+	pipeline->dynamic_state_count = CAST_TO(u32, buf_get_element_count(&dynamic_states));
+	pipeline->vo_dynamic_states = (pipeline->dynamic_state_count == 0) ? NULL : CAST_TO(VkDynamicState*, buf_get_ptr(&dynamic_states));
+
+	VkPipelineDynamicStateCreateInfo dynamic_state_create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+		.dynamicStateCount = pipeline->dynamic_state_count,
+		.pDynamicStates = pipeline->vo_dynamic_states
+	};
+
 	// create graphics pipeline
 	VkGraphicsPipelineCreateInfo pipeline_create_info = 
 	{
@@ -154,7 +171,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.pMultisampleState = &create_info->settings->multisample,
 		.pDepthStencilState = &create_info->settings->depthstencil,
 		.pColorBlendState = &create_info->settings->colorblend,
-		.pDynamicState = &create_info->settings->dynamic,
+		.pDynamicState = &dynamic_state_create_info,//&create_info->settings->dynamic TODO: most of pipeline setup shall go offline (shader_compiler),
 		.layout = create_info->layout->vo_handle,
 		.renderPass = create_info->render_pass->vo_handle,
 		.subpass = create_info->subpass_index,
@@ -179,12 +196,41 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_
 
 RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline)
 {
-	u32 image_index = pipeline->renderer->swapchain->current_image_index;
-	vkCmdBindPipeline(pipeline->renderer->vo_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vo_handle);
+	AUTO command_buffer = pipeline->renderer->vo_command_buffers[pipeline->renderer->swapchain->current_image_index];
+	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vo_handle);
+
+	/* setup the viewport if there is no user defined viewports in v3d shader */
+	if(!pipeline->is_user_defined_viewport)
+	{
+		VkViewport viewport = 
+		{
+			.x = pipeline->render_pass->vo_current_render_area.offset.x,
+			.y = pipeline->render_pass->vo_current_render_area.offset.y,
+			.width = pipeline->render_pass->vo_current_render_area.extent.width,
+			.height = pipeline->render_pass->vo_current_render_area.extent.height,
+			.minDepth = 0.0f,
+			.maxDepth = 1.0f
+		};
+		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+	}
+	/* setupt the scissor if there is no user defined scissors in v3d shader */
+	if(!pipeline->is_user_defined_scissor)
+	{
+		VkRect2D scissor = 
+		{
+			.offset = { 0, 0 },
+			.extent = pipeline->render_pass->vo_current_render_area.extent
+		};
+		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+	}
 }
 
 RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* pipeline, vulkan_graphics_pipeline_refresh_info_t* info)
 {
+	/* if there is nothing to update, we don't need to recreate the graphics pipeline unneccessarily */
+	if((!pipeline->is_user_defined_scissor) && (!pipeline->is_user_defined_viewport))
+		return;
+
 	_debug_assert__(pipeline->vo_handle != VK_NULL_HANDLE);
 
 	/* destroy the outdated pipeline */
@@ -240,6 +286,13 @@ RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* p
 		.pScissors = pipeline->vo_scissors
 	};
 
+	VkPipelineDynamicStateCreateInfo dynamic_state_create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+		.dynamicStateCount = pipeline->dynamic_state_count,
+		.pDynamicStates = pipeline->vo_dynamic_states
+	};
+
 	// create graphics pipeline
 	VkGraphicsPipelineCreateInfo pipeline_create_info = 
 	{
@@ -253,7 +306,7 @@ RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* p
 		.pMultisampleState = &pipeline->settings->multisample,
 		.pDepthStencilState = &pipeline->settings->depthstencil,
 		.pColorBlendState = &pipeline->settings->colorblend,
-		.pDynamicState = &pipeline->settings->dynamic,
+		.pDynamicState = &dynamic_state_create_info,
 		.layout = pipeline->layout->vo_handle,
 		.renderPass = pipeline->render_pass->vo_handle,
 		.subpass = pipeline->subpass_index,
