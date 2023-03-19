@@ -361,7 +361,8 @@ static void transition_target_layout_for_write(VkFormat format, vulkan_image_vie
 		case VK_FORMAT_B8G8R8A8_SRGB:
 			vulkan_command_image_layout_transition(cb, view->image->vo_handle,
 				&view->vo_subresource_range,
-				/* oldLayout: */ VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				/* VK_IMAGE_LAYOUT_UNDEFINED: we don't care about the previous results because the results would be overwritten anyway */
+				/* oldLayout: */ VK_IMAGE_LAYOUT_UNDEFINED,
 				/* newLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 				/* srcAccess: */ VK_ACCESS_SHADER_READ_BIT,
 				/* dstAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -371,7 +372,8 @@ static void transition_target_layout_for_write(VkFormat format, vulkan_image_vie
 		case VK_FORMAT_D32_SFLOAT:
 			vulkan_command_image_layout_transition(cb, view->image->vo_handle,
 				&view->vo_subresource_range,
-				/* oldLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+				/* VK_IMAGE_LAYOUT_UNDEFINED: we don't care about the previous results because the results would be overwritten anyway */
+				/* oldLayout: */ VK_IMAGE_LAYOUT_UNDEFINED,
 				/* newLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 				/* srcAccess: */ VK_ACCESS_SHADER_READ_BIT,
 				/* dstAccess: */ VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
