@@ -501,36 +501,54 @@ RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color
 
 RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_texture_t* texture)
 {
-	/* if the render texture is not referencing the screen (render window) */
-	if(texture != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+
+	switch(target_type)
+	{
+		case VULKAN_CAMERA_RENDER_TARGET_TYPE_COLOR:
+			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+				camera->color_render_target = NULL;
+			else camera->color_render_target = texture;
+		break;
+		case VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH:
+			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+				camera->depth_render_target = NULL;
+			else camera->depth_render_target = texture;
+		break;
+	}
+
+	/* if the either of color and depth render texture is not referencing the screen (render window) */
+	if((camera->color_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN)
+		|| (camera->depth_render_target != VULKAN_CAMERA_RENDER_TARGET_SCREEN))
 	{
 		camera->render_target_size.width = texture->width;
 		camera->render_target_size.height = texture->height;
-		AUTO on_resize_event = vulkan_renderer_get_window(camera->renderer)->on_resize_event;
-		event_set_subscription_active(camera->renderer->window->on_resize_event, camera->render_area_recalculate_handle, false);
-		event_set_subscription_active(camera->renderer->window->on_resize_event, camera->projection_recreate_handle, false);
-		event_set_subscription_active(camera->renderer->window->on_resize_event, camera->screen_projection_recreate_handle, false);
-		event_set_subscription_active(camera->renderer->window->on_resize_event, camera->framebuffers_recreate_handle, false);
+		AUTO window = vulkan_renderer_get_window(camera->renderer);
+		event_set_subscription_active(window->on_resize_event, camera->render_area_recalculate_handle, false);
+		event_set_subscription_active(window->on_resize_event, camera->projection_recreate_handle, false);
+		event_set_subscription_active(window->on_resize_event, camera->screen_projection_recreate_handle, false);
+		event_set_subscription_active(window->on_resize_event, camera->framebuffers_recreate_handle, false);
 		if(camera->default_render_pass != NULL)
-			event_set_subscription_active(camera->renderer->window->on_resize_event, camera->default_render_pass_refresh_handle, false);
+			event_set_subscription_active(window->on_resize_event, camera->default_render_pass_refresh_handle, false);
 	}
 	else
 	{
 		AUTO window = vulkan_renderer_get_window(camera->renderer);
-		camera->render_target_size.width = window->width;
-		camera->render_target_size.height = window->height;
-		AUTO on_resize_event = vulkan_renderer_get_window(camera->renderer)->on_resize_event;
-		event_set_subscription_active(camera->renderer->window->on_resize_event, camera->render_area_recalculate_handle, true);
-		event_set_subscription_active(camera->renderer->window->on_resize_event, camera->projection_recreate_handle, true);
-		event_set_subscription_active(camera->renderer->window->on_resize_event, camera->screen_projection_recreate_handle, true);
-		event_set_subscription_active(camera->renderer->window->on_resize_event, camera->framebuffers_recreate_handle, true);
+		event_set_subscription_active(window->on_resize_event, camera->render_area_recalculate_handle, true);
+		event_set_subscription_active(window->on_resize_event, camera->projection_recreate_handle, true);
+		event_set_subscription_active(window->on_resize_event, camera->screen_projection_recreate_handle, true);
+		event_set_subscription_active(window->on_resize_event, camera->framebuffers_recreate_handle, true);
 		if(camera->default_render_pass != NULL)
-			event_set_subscription_active(camera->renderer->window->on_resize_event, camera->default_render_pass_refresh_handle, true);
+			event_set_subscription_active(window->on_resize_event, camera->default_render_pass_refresh_handle, true);
 		/* publish the event (though it is violataion of a observer pattern) explicitly as the window may have been resized 
 		 * SET_RENDER_TARGET (subscriptions get inactive)
 		 * RESIZE
 		 * SET_RENDER_TARGET (subscriptions get active) */
-		event_publish(on_resize_event);
+		if((camera->render_target_size.width != window->width) || (camera->render_target_size.height != window->height))
+		{
+			camera->render_target_size.width = window->width;
+			camera->render_target_size.height = window->height;
+			event_publish(window->on_resize_event);
+		}
 	}
 	
 	if((texture != VULKAN_CAMERA_RENDER_TARGET_SCREEN) && ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE))
@@ -625,20 +643,6 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 			default:
 				LOG_FETAL_ERR("Invalid vulkan camera render target type: %u\n", target_type);
 		}
-	}
-
-	switch(target_type)
-	{
-		case VULKAN_CAMERA_RENDER_TARGET_TYPE_COLOR:
-			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-				camera->color_render_target = NULL;
-			else camera->color_render_target = texture;
-		break;
-		case VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH:
-			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-				camera->depth_render_target = NULL;
-			else camera->depth_render_target = texture;
-		break;
 	}
 }
 

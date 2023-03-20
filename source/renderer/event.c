@@ -328,12 +328,15 @@ RENDERER_API void event_dump(event_t* event)
 #endif /* GLOBAL_DEBUG */
 }
 
-RENDERER_API void event_set_subscription_active(event_t* event, bool is_active, event_subscription_handle_t handle)
+RENDERER_API void event_set_subscription_active(event_t* event, event_subscription_handle_t handle, bool is_active)
 {
 	/* remove the subscriber, and if success then add the just unclaimed handle to the list of unsubscribed handles to be later used */
 	buf_ucount_t index = buf_find_index_of(&event->subscribers, &handle, handle_comparer);
 	if(index != BUF_INVALID_INDEX)
-		CAST_TO(subscription_t*,  buf_get_ptr_at(&event->subscribers, index))->is_active = is_active;
+	{
+		AUTO subscription = CAST_TO(subscription_t*,  buf_get_ptr_at(&event->subscribers, index));
+		subscription->is_active = is_active;
+	}
 	/* otherwise it is an error */
 	else
 		debug_log_error("no subscription with event subscription handle %llu has been found, is that a corrupt handle?", handle);
