@@ -10,9 +10,8 @@ RENDERER_API void __vulkan_result_assert_success(VkResult result, u32 line, cons
 		return;
 	BUFFER buffer = buf_create(sizeof(char), 0, 0);
 	vulkan_result_to_string(result, &buffer);
-	debug_assert(line, fnname, flname, DESCRIPTION(false), " assertion was result != VK_SUCCESS, but result equals to \"%s\"", vulkan_result_to_string_literal(result));
+	debug_assert(line, fnname, flname, DESCRIPTION(false), " assertion was result == VK_SUCCESS, but result equals to \"%s\"", vulkan_result_to_string_literal(result));
 	buf_free(&buffer);
-	exit(0);
 }
 
 // RENDERER_API void vulkan_result_assert_success(VkResult result)
@@ -21,7 +20,7 @@ RENDERER_API void __vulkan_result_assert_success(VkResult result, u32 line, cons
 // 		return;
 // 	BUFFER buffer = buf_create(sizeof(char), 0, 0);
 // 	vulkan_result_to_string(result, &buffer);
-// 	LOG_ERR("[Assertion Failed]: assertion was result != VK_SUCCESS, but result equals to \"%s\"\n", vulkan_result_to_string_literal(result));
+// 	LOG_ERR("[Assertion Failed]: assertion was result == VK_SUCCESS, but result equals to \"%s\"\n", vulkan_result_to_string_literal(result));
 // 	buf_free(&buffer);
 // 	exit(0);
 // }
@@ -32,9 +31,8 @@ RENDERER_API void __vulkan_result_assert_on_time(VkResult result, u32 line, cons
 		return;
 	BUFFER buffer = buf_create(sizeof(char), 0, 0);
 	vulkan_result_to_string(result, &buffer);
-	debug_assert(line, fnname, flname, DESCRIPTION(false), "assertion was result != VK_TIMEOUT, but result equals to \"%s\"", vulkan_result_to_string_literal(result));
+	debug_assert(line, fnname, flname, DESCRIPTION(false), "assertion was result == VK_TIMEOUT, but result equals to \"%s\"", vulkan_result_to_string_literal(result));
 	buf_free(&buffer);
-	exit(0);
 }
 
 RENDERER_API void __vulkan_result_assert_complete(VkResult result, u32 line, const char* fnname, const char* flname)
@@ -43,9 +41,8 @@ RENDERER_API void __vulkan_result_assert_complete(VkResult result, u32 line, con
 		return;
 	BUFFER buffer = buf_create(sizeof(char), 0, 0);
 	vulkan_result_to_string(result, &buffer);
-	debug_assert(line, fnname, flname, DESCRIPTION(false), "assertion was result != VK_INCOMPLETE, but result equals to \"%s\"", vulkan_result_to_string_literal(result));
+	debug_assert(line, fnname, flname, DESCRIPTION(false), "assertion was result == VK_INCOMPLETE, but result equals to \"%s\"", vulkan_result_to_string_literal(result));
 	buf_free(&buffer);
-	exit(0);
 }
 
 RENDERER_API void __vulkan_result_assert_no_error(VkResult result, u32 line, const char* fnname, const char* flname)
@@ -56,7 +53,6 @@ RENDERER_API void __vulkan_result_assert_no_error(VkResult result, u32 line, con
 	vulkan_result_to_string(result, &buffer);
 	debug_assert(line, fnname, flname, DESCRIPTION(false), "assertion was result is not an error, but result equals to \"%s\"", vulkan_result_to_string_literal(result));
 	buf_free(&buffer);
-	exit(0);
 }
 
 RENDERER_API void vulkan_result_to_string(VkResult result, BUFFER* string_buffer)
