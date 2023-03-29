@@ -5,8 +5,8 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_image_view.h>
 #include <renderer/internal/vulkan/vulkan_framebuffer.h>
-#include <renderer/internal/vulkan/vulkan_camera_system.h>
 #include <renderer/internal/vulkan/vulkan_allocator.h>
+#include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/render_window.h>
 #include <renderer/assert.h>
 #include <renderer/memory_allocator.h>
@@ -176,12 +176,6 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 		vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &render_pass->sub_render_sets[i]);
 	}
 
-	// register this render pass to all the cameras
-	vulkan_camera_system_t* camera_system = renderer->camera_system;
-	u32 camera_count = vulkan_camera_system_get_count(camera_system);
-	for(u32 i = 0; i < camera_count; i++)
-		render_pass->framebuffer_list_handle = vulkan_camera_register_render_pass(vulkan_camera_system_get_at(camera_system, i), render_pass);
-
 	event_subscription_create_info_t subscription =
 	{
 		.handler = EVENT_HANDLER(recreate_allocated_attachments),
@@ -262,7 +256,7 @@ RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u3
 	framebuffer_index = (framebuffer_index == VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN) ? render_pass->renderer->swapchain->current_image_index : framebuffer_index;
 	framebuffer_index = min(render_pass->required_framebuffer_count - 1, framebuffer_index);
 
-	vulkan_framebuffer_t* framebuffers = vulkan_camera_get_framebuffer_list(camera, render_pass->framebuffer_list_handle);
+	vulkan_framebuffer_t* framebuffers = vulkan_camera_get_framebuffer_list(camera, render_pass->handle);
 	
 	render_pass->vo_current_render_area = (VkRect2D)
 	{

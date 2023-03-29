@@ -58,6 +58,23 @@ typedef struct vulkan_render_pass_t vulkan_render_pass_t;
 typedef struct vulkan_render_scene_t vulkan_render_scene_t;
 typedef struct vulkan_texture_t vulkan_texture_t;
 typedef struct vulkan_framebuffer_t vulkan_framebuffer_t;
+typedef struct vulkan_attachment_t vulkan_attachment_t;
+
+/* stores framebuffer objects and attachment objects for a render pass registered with this camera */
+typedef struct vulkan_camera_render_pass_t
+{
+	/* handle to the actual render pass in the render pass pool */
+	vulkan_render_pass_handle_t handle;
+	/* list of framebuffers for this render pass */
+	BUFFER /* vulkan_framebuffer_t */ framebuffers;
+	/* number of framebuffers for the one face of the cube 
+	 * it is always equal to framebuffers.count / camera.max_shot_count */
+	u32 framebuffer_count_in_one_face;
+	/* list of attachments for this render pass */
+	vulkan_attachment_t* attachments;
+	/* number of attachment objects for this render pass */
+	u32 attachment_count;
+} vulkan_camera_render_pass_t;
 
 typedef struct vulkan_camera_t
 {
@@ -86,9 +103,8 @@ typedef struct vulkan_camera_t
 	/* current depth render target texture (NULL if the target is the backed depth attachment */
 	vulkan_texture_t* depth_render_target;
 
-	/* 2 dimensional jagged array of vulkan_framebuffer_t objects 
-	 * dimensions: [max_shot_count][sum:{render_pass[i].required_framebuffer_count}] */
-	BUFFER framebuffers;
+	/* list of registered render pass */
+	BUFFER /* vulkan_camera_render_pass_t */ render_passes;
 
 	/* size of the render target */
 	struct 
@@ -228,8 +244,8 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask);
 RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_texture_t* texture);
 
-RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_framebuffer_list_handle_t handle);
-RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* pass);
+RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle);
+RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* pass);
 
 
 /* getters */

@@ -123,7 +123,6 @@ typedef struct vulkan_render_pass_t
 	VkClearValue* vo_clear_values;
 
 	u32 required_framebuffer_count;
-	vulkan_framebuffer_list_handle_t framebuffer_list_handle;
 
 	/* sub render set layouts for this render pass */
 	vulkan_descriptor_set_layout_t* sub_render_set_layouts;

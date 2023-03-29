@@ -6,6 +6,7 @@
 #include <renderer/internal/vulkan/vulkan_framebuffer.h>
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_command.h>
+#include <renderer/internal/vulkan/vulkan_attachment.h>
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
@@ -174,17 +175,13 @@ static void recreate_framebuffers(void* _window, void* user_data)
 		.height = camera->render_target_size.height,
 		.is_update_image_views = true
 	};
-
-	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
-	for(buf_ucount_t i = 0; i < count; i++)
+	u32 pass_count = buf_get_element_count(&camera->render_passes);
+	for(u32 i = 0; i < pass_count; i++)
 	{
-		BUFFER* buffer = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, i));
-		buf_ucount_t count1 = buf_get_element_count(buffer);
-		for(buf_ucount_t j = 0; j < count1; j++)
-		{
-			AUTO framebuffer = CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(buffer, j));
-			vulkan_framebuffer_refresh(framebuffer, &info);
-		}
+		AUTO pass = buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i);
+		u32 framebuffer_count = buf_get_element_count(&pass->framebuffers);
+		for(u32 j = 0; j < framebuffer_count; j++)
+			vulkan_framebuffer_refresh(buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, j), &info);
 	}
 	debug_log_info("Framebuffer recreate success");
 }
@@ -219,9 +216,11 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	camera->default_render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, create_info->default_render_pass);
 	camera->projection_type = create_info->projection_type;
 	camera->is_active = true;
-	camera->framebuffers = buf_create(sizeof(BUFFER), 1, 0);
+	camera->render_passes = buf_new(vulkan_camera_render_pass_t);
 	camera->shot_taken = 0;
 	camera->current_shot_index = 0;
+	// set the max shot count equal to 1 by default (it can never be zero)
+	camera->max_shot_count = 1;
 	
 	render_window_t* window = vulkan_renderer_get_window(renderer);
 	camera->render_target_size.width = window->width;
@@ -229,11 +228,6 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 
 	/* initially the camera will render to the screen (swapchain image) */
 	vulkan_camera_set_render_area_default(camera);
-
-	// create framebuffer list for the shot 1 initially
-	camera->max_shot_count = 1;
-	BUFFER buffer = buf_new(vulkan_framebuffer_t);
-	buf_push(&camera->framebuffers, &buffer);
 
 	camera->clear_buffer = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_CLEAR_VALUE_ARRAY, VkClearValue, camera->default_render_pass->attachment_count);
 	memcopyv(camera->clear_buffer, camera->default_render_pass->vo_clear_values, VkClearValue, camera->default_render_pass->attachment_count);
@@ -268,10 +262,7 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	vulkan_render_pass_pool_t* pass_pool = renderer->render_pass_pool;
 	buf_ucount_t pass_count = vulkan_render_pass_pool_get_count(pass_pool);
 	for(buf_ucount_t i = 0; i < pass_count; i++)
-	{
-		vulkan_render_pass_t* pass = vulkan_render_pass_pool_get_at(pass_pool, i);
-		pass->framebuffer_list_handle = vulkan_camera_register_render_pass(camera, pass);
-	}
+		vulkan_camera_register_render_pass(camera, vulkan_render_pass_pool_get_at(pass_pool, i));
 
 	event_subscription_create_info_t subscription = 
 	{
@@ -321,13 +312,16 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 		vulkan_buffer_unmap(&camera->buffers[i]);
 		vulkan_buffer_destroy(&camera->buffers[i]);
 	}
-	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
-	for(buf_ucount_t i = 0; i < count; i++)
+	buf_ucount_t pass_count = buf_get_element_count(&camera->render_passes);
+	for(buf_ucount_t i = 0; i < pass_count; i++)
 	{
-		BUFFER* buffer = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, i));
-		buf_ucount_t count1 = buf_get_element_count(buffer);
-		for(buf_ucount_t j = 0; j < count1; j++)
-			vulkan_framebuffer_destroy(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(buffer, j)));
+		AUTO pass = buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i);
+		u32 framebuffer_count = buf_get_element_count(&pass->framebuffers);
+		for(buf_ucount_t j = 0; j < framebuffer_count; j++)
+			vulkan_framebuffer_destroy(buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, j));
+		buf_clear(&pass->framebuffers, NULL);
+		for(buf_ucount_t j = 0; j < pass->attachment_count; j++)
+			vulkan_attachment_destroy(&pass->attachments[j]);
 	}
 	log_msg("Vulkan Camera has been destroyed successfully\n");
 }
@@ -339,16 +333,14 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 		vulkan_descriptor_set_release_resources(&camera->sets[i]);
 		vulkan_buffer_release_resources(&camera->buffers[i]);
 	}
-	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
+	buf_ucount_t count = buf_get_element_count(&camera->render_passes);
 	for(buf_ucount_t i = 0; i < count; i++)
 	{
-		BUFFER* buffer = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, i));
-		buf_ucount_t count1 = buf_get_element_count(buffer);
-		for(buf_ucount_t j = 0; j < count1; j++)
-			vulkan_framebuffer_release_resources(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(buffer, j)));
-		buf_free(buffer);
+		AUTO pass = buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i);
+		buf_free(&pass->framebuffers);
+		memory_allocator_dealloc(camera->renderer->allocator, pass->attachments);
 	}
-	buf_free(&camera->framebuffers);
+	buf_free(&camera->render_passes);
 	// TODO
 	// heap_free(camera);
 }
@@ -567,77 +559,105 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 			camera->shot_rotations[4] = vec3(0, 0, 0); 		// front
 			camera->shot_rotations[5] = vec3(0, 180 DEG, 0); // back
 
-			/* NOTE: we can't get the pointer to the peek element because the buffer will resize itself
-				upon the push so the ptr will become invalid to access */
-			buf_ucount_t peek_handle = buf_get_element_count(&camera->framebuffers) - 1;
-			buf_ucount_t count = buf_get_element_count(buf_peek_ptr(&camera->framebuffers));
+			/* we need to duplicate the framebuffers in each render pass 5 times as the existing framebuffers also count */
+			u32 pass_count = buf_get_element_count(&camera->render_passes);
+			for(u32 i = 0; i < pass_count; i++)
+			{
+				AUTO pass = buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i);
+				u32 framebuffer_count = buf_get_element_count(&pass->framebuffers);
+
+				/* for each cube face (one already exist, so only 5) */
+				for(u32 j = 0; j < 5; j++)
+				{
+					/* duplicate the framebuffers within the same buffer */
+					for(u32 k = 0; k < framebuffer_count; k++)
+					{
+						/* buffer resizing function must be called first otherwise pointer might get invalidated due to resize */
+						buf_push_pseudo(&pass->framebuffers, 1);
+						AUTO new_framebuffer = CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(&pass->framebuffers));
+						/* pointer to exisiting framebuffer to be used as a reference for duplication */
+						AUTO framebuffer = buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, k);
+						vulkan_framebuffer_create_info_t create_info = 
+						{
+							.render_pass = framebuffer->pass,
+							.id = framebuffer->id,
+							.width = camera->render_target_size.width,
+							.height = camera->render_target_size.height
+						};
+						vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, new_framebuffer);
+					}
+				}
+			}
+
+			/* we also need to duplicate the uniform buffers (that contains shot transform information) 5 times more */
 			for(u32 i = 0; i < 5; i++)
 			{
-				BUFFER buffer = buf_new(vulkan_framebuffer_t);
-				for(u32 j = 0; j < count; j++)
-				{
-					/* get the existing framebuffer (we require its id and render pass to create framebuffers for other faces of the cube) */
-					vulkan_framebuffer_t* framebuffer = CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, peek_handle)), j));
-					
-					buf_push_pseudo(&buffer, 1);
-					vulkan_framebuffer_create_info_t create_info = 
-					{
-						.render_pass = framebuffer->pass,
-						.id = framebuffer->id,
-						.width = camera->render_target_size.width,
-						.height = camera->render_target_size.height
-					};
-					vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(&buffer)));
-				}
-				buf_push(&camera->framebuffers, &buffer);
-
 				camera->buffer_mappings[i + 1] = create_buffer_and_map(camera, &camera->buffers[i + 1], &camera->sets[i + 1]);
 				memcpy(camera->buffer_mappings[i + 1], camera->buffer_mappings[0], struct_descriptor_sizeof(&camera->struct_definition));
 			}
+			/* update the number of buffer count (it is now duplicated to 6) */
 			camera->buffer_count = 6;
+			/* copy the values from the very first buffer to the newly created (duplicated) buffers */
 			vulkan_camera_set_position_cube(camera, camera->position);
 		}
 	}
 	else
 		camera->max_shot_count = 1;
 
-
-	buf_ucount_t count = buf_get_element_count(&camera->framebuffers);
-	for(buf_ucount_t i = 0; i < count; i++)
+	/* recreate framebuffers to redirect the color or depth output to the supplied render target */
+	u32 pass_count = buf_get_element_count(&camera->render_passes);
+	for(u32 i = 0; i < pass_count; i++)
 	{
-		BUFFER* framebuffers = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, i));
-		buf_ucount_t framebuffer_count = buf_get_element_count(framebuffers);
+		AUTO pass = buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i);
+
+		/* totol number of framebuffers in this renderpass shot_count * framebuffer_in_one_face */
+		u32 framebuffer_count = buf_get_element_count(&pass->framebuffers);
+
 		switch(target_type)
 		{
 			case VULKAN_CAMERA_RENDER_TARGET_TYPE_COLOR:
 				if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-					for(buf_ucount_t j = 0; j < framebuffer_count; j++)
-						vulkan_framebuffer_restore_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(framebuffers, j)));
+					for(u32 j = 0; j < framebuffer_count; j++)
+						vulkan_framebuffer_restore_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&pass->framebuffers, j)));
 				else
 				{
-					vulkan_image_view_t* view;
 					if((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE)
-						view = &texture->image_views[i];
+					{
+						_debug_assert__(pass->framebuffer_count_in_one_face == (framebuffer_count / camera->max_shot_count));
+						for(u32 j = 0; j < framebuffer_count; j++)
+						{
+							AUTO view = texture->image_views + j / pass->framebuffer_count_in_one_face;
+							vulkan_framebuffer_set_supplementary(buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, j), view);
+						}
+					}
 					else
-						view = &texture->image_view;
-					for(buf_ucount_t j = 0; j < framebuffer_count; j++)
-						vulkan_framebuffer_set_supplementary(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(framebuffers, j)), view);
+					{
+						for(u32 j = 0; j < framebuffer_count; j++)
+							vulkan_framebuffer_set_supplementary(buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, j), &texture->image_view);
+					}
 				}
 
 			break;
 			case VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH:
 				if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-					for(buf_ucount_t j = 0; j < framebuffer_count; j++)
-						vulkan_framebuffer_restore_depth(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(framebuffers, j)));
+					for(u32 j = 0; j < framebuffer_count; j++)
+						vulkan_framebuffer_restore_depth(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(&pass->framebuffers, j)));
 				else
 				{
-					vulkan_image_view_t* view;
 					if((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE)
-						view = &texture->image_views[i];
+					{
+						_debug_assert__(pass->framebuffer_count_in_one_face == (framebuffer_count / camera->max_shot_count));
+						for(u32 j = 0; j < framebuffer_count; j++)
+						{
+							AUTO view = texture->image_views + j / pass->framebuffer_count_in_one_face;
+							vulkan_framebuffer_set_depth(buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, j), view);
+						}
+					}
 					else
-						view = &texture->image_view;
-					for(buf_ucount_t j = 0; j < framebuffer_count; j++)
-						vulkan_framebuffer_set_depth(CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(framebuffers, j)), view);
+					{
+						for(u32 j = 0; j < framebuffer_count; j++)
+							vulkan_framebuffer_set_depth(buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, j), &texture->image_view);
+					}
 				}
 			break;
 			default:
@@ -659,34 +679,53 @@ RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulka
 
 }
 
-RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_framebuffer_list_handle_t handle)
+static bool render_pass_handle_comparer(void* handle, void* render_pass)
 {
-	_debug_assert__(handle != VULKAN_FRAMEBUFFER_LIST_HANDLE_INVALID);
-	return CAST_TO(vulkan_framebuffer_t*, buf_get_ptr_at(CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, camera->current_shot_index)), handle));
+	return DREF_TO(vulkan_render_pass_handle_t, handle) == CAST_TO(vulkan_camera_render_pass_t*, render_pass)->handle;
 }
 
-RENDERER_API vulkan_framebuffer_list_handle_t vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* pass)
+RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle)
 {
-	if(pass->required_framebuffer_count <= 0)
-		return VULKAN_FRAMEBUFFER_LIST_HANDLE_INVALID;
-	buf_ucount_t handle = buf_get_element_count(CAST_TO(BUFFER*, buf_peek_ptr(&camera->framebuffers)));
+	AUTO index = buf_find_index_of(&camera->render_passes, &handle, render_pass_handle_comparer);
+	_debug_assert__(index != BUF_INVALID_INDEX);
+	AUTO pass = buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, index);
+	u32 framebuffer_count = buf_get_element_count(&pass->framebuffers);
+	return buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, camera->current_shot_index * (framebuffer_count / camera->max_shot_count));
+}
+
+RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* render_pass)
+{
+	_debug_assert__(render_pass->handle != VULKAN_RENDER_PASS_HANDLE_INVALID);
+	/* make sure none of the render pass get registered more than once */
+	debug_assert__(buf_find_index_of(&camera->render_passes, &render_pass->handle, render_pass_handle_comparer) == BUF_INVALID_INDEX,
+		"render pass with handle %llu has already been registered, but you are still trying to register it", render_pass->handle);
+
+	buf_push_pseudo(&camera->render_passes, 1);
+
+	AUTO pass = CAST_TO(vulkan_camera_render_pass_t*, buf_peek_ptr(&camera->render_passes));
+	pass->handle = render_pass->handle;
+
+	/* setup framebuffers for this render pass */
+	pass->framebuffer_count_in_one_face = render_pass->required_framebuffer_count;
+	pass->framebuffers = buf_new(vulkan_framebuffer_t);
+	vulkan_framebuffer_create_info_t create_info = 
+	{
+		.render_pass = render_pass,
+		.width = camera->render_target_size.width,
+		.height = camera->render_target_size.height
+	};
+
 	for(u32 j = 0; j < camera->max_shot_count; j++)
 	{
-		for(u32 i = 0; i < pass->required_framebuffer_count; i++)
+		for(u32 i = 0; i < pass->framebuffer_count_in_one_face; i++)
 		{
-			BUFFER* buffer = CAST_TO(BUFFER*, buf_get_ptr_at(&camera->framebuffers, j));
-			buf_push_pseudo(buffer, 1);
-			vulkan_framebuffer_create_info_t create_info = 
-			{
-				.render_pass = pass,
-				.id = i,
-				.width = camera->render_target_size.width,
-				.height = camera->render_target_size.height
-			};
-			vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(buffer)));
+			buf_push_pseudo(&pass->framebuffers, 1);
+			create_info.id = i;
+			vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, CAST_TO(vulkan_framebuffer_t*, buf_peek_ptr(&pass->framebuffers)));
 		}
 	}
-	return handle;
+
+	/* setup attachments for this render pass */
 }
 
 /* getters */

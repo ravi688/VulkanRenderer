@@ -5,6 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_attachment.h>
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_camera_system.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
@@ -281,6 +282,11 @@ RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vul
 	{
 		slot->render_pass = vulkan_render_pass_create(pool->renderer, create_info);
 		slot->render_pass->handle = slot->handle;
+		// register this render pass to all the cameras
+		vulkan_camera_system_t* camera_system = pool->renderer->camera_system;
+		u32 camera_count = vulkan_camera_system_get_count(camera_system);
+		for(u32 i = 0; i < camera_count; i++)
+			vulkan_camera_register_render_pass(vulkan_camera_system_get_at(camera_system, i), slot->render_pass);
 	}
 	return slot->handle;
 }
