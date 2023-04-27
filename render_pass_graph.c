@@ -203,38 +203,60 @@ static void __private__assert(bool assertion, const char* description, u32 line,
 
 #define foreach_arg(type_ptr, id, count) ARGS_BEGIN(count); u32 __i__ = 0; for(type_ptr id = (((count) == 0) ? (type_ptr)(NULL) : ARGS_GET(type_ptr)); __i__ < count; __i__++, id = ARGS_GET(type_ptr), (__i__ == count) ? ARGS_END() : (void)(1))
 
+/* structure to hold a pair of u32 and bool values */
 typedef struct u32_bool_pair_t
 {
+	/* pass id */
 	u32 id;
+	/* true, if this dependency is resolved otherwise false */
 	u32 resolved;
 } u32_bool_pair_t;
 
 typedef struct pass_t pass_t;
 
+/* structure to hold render pass information such as execution dependencies, and next pass executions */
 typedef struct pass_t
 {
+	/* unique id assigned to this pass at the time creation */
 	u32 id;
 
+	/* list of next passes to be executed after this pass */
 	u32* nexts;
+	/* number of passes in the above list */
 	u32 next_count;
+	/* list of previous passes which have to be executed before this pass */
 	u32_bool_pair_t* prevs;
+	/* number of passes in the above list */
 	u32 prev_count;
-	// u32 hit_count;
-	// u32 ways;
 
+	/* true if this pass is completed (dependencies resolved, and this is executed after that) */
 	bool has_completed;
+	/* true if one of it's dependencies get resolved (then it becomes dirty, means need to be executed again) */
 	bool is_dirty;
 } pass_t;
 
+/* structure to hold graph of render passes */
 typedef struct graph_t
 {
+	/* list of unique render passes in this graph */
 	pass_t** passes;
+	/* number of passes in the above list */
 	u32 pass_count;
+	/* max number of pases that this graph can hold */
 	u32 max_pass_count;
+
+	/* following fields are modified at runtime (when the execution resolution happens) */
+
+	/* list of passes (their ids) which are waiting to be executed again once their dependencies get resolved */
 	u32* waiting_list;
+	/* number of passes (ids) in the above list */
 	u32 waiting_list_size;
+	/**/
+	pass_t** stack;
+	u32 stack_depth;
 } graph_t;
 
+/* creates a graph object with several fix sized allocations */
 static graph_t* create_graph(u32 max_pass_count)
 {
 	graph_t* graph = (graph_t*)malloc(sizeof(graph_t));
@@ -243,9 +265,11 @@ static graph_t* create_graph(u32 max_pass_count)
 	graph->passes = (pass_t**)malloc(sizeof(pass_t*) * max_pass_count);
 	memset(graph->passes, 0, sizeof(pass_t*) * max_pass_count);
 	graph->waiting_list = (u32*)malloc(sizeof(u32) * max_pass_count);
+	graph->stack = (pass_t**)malloc(sizeof(pass_t*) * graph->max_pass_count);
 	return graph;
 }
 
+/* clears the graph for the next usage */
 static void clear_graph(graph_t* graph)
 {
 	for(u32 i = 0; i < graph->pass_count; i++)
@@ -255,9 +279,11 @@ static void clear_graph(graph_t* graph)
 		free(graph->passes[i]);
 	}
 	graph->pass_count = 0;
+	debug_assert(graph->stack_depth == 0);
+	debug_assert(graph->waiting_list_size == 0);
 }
 
-
+/* creates a new pass in the graph 'graph' */
 static pass_t* create(graph_t* graph)
 {
 	debug_assert(graph->max_pass_count > graph->pass_count);
@@ -272,6 +298,7 @@ static pass_t* create(graph_t* graph)
 	return pass;
 }
 
+/* finds a pass object by it's id in the graph */
 static pass_t* id_to_pass(graph_t* graph, u32 id)
 {
 	for(u32 i = 0; i < graph->pass_count; i++)
@@ -281,6 +308,7 @@ static pass_t* id_to_pass(graph_t* graph, u32 id)
 	return NULL;
 }
 
+/* sets up the next render passes for the pass 'current' */
 static void set_nexts(graph_t* graph, pass_t* current, u32 next_count, ...)
 {
 	debug_assert(next_count <= graph->max_pass_count);
@@ -294,71 +322,10 @@ static void set_nexts(graph_t* graph, pass_t* current, u32 next_count, ...)
 	}
 }
 
-// static u32 find_in_stack(pass_t** stack, u32 stack_depth, pass_t* pass)
-// {
-// 	for(u32 i = 0; i < stack_depth; i++)
-// 		if(stack[i] == pass)
-// 			return i;
-// 	return U32_MAX;
-// }
-
-// static void increment_ways(graph_t* graph, pass_t* current, u32 ways)
-// {
-// 	static pass_t** stack = NULL;
-// 	static u32 stack_depth = 0;
-	
-// 	if(stack == NULL)
-// 		stack = (pass_t**)malloc(sizeof(pass_t*) * graph->max_pass_count);
-
-// 	current->ways++;
-// 	current->hit_count++;
-
-// 	stack[stack_depth++] = current;
-
-// 	for(u32 i = 0; i < current->next_count; i++)
-// 	{
-// 		pass_t* next_pass = id_to_pass(graph, current->nexts[i]);
-// 		u32 index;
-// 		if(((index = find_in_stack(stack, stack_depth, next_pass)) != U32_MAX) && (stack[index]->hit_count >= stack[index]->prev_count))
-// 			continue;
-// 		increment_ways(graph, next_pass, ways);
-// 	}
-
-// 	assert(stack_depth > 0);
-// 	stack_depth--;
-// }
-
-// static u32 reorder_passes(graph_t* graph)
-// {
-// 	u32 start_count = 0;
-// 	for(u32 i = 0; i < graph->pass_count; i++)
-// 	{
-// 		if(graph->passes[i]->prev_count == 0)
-// 		{
-// 			pass_t* save = graph->passes[i];
-// 			u32 j = i;
-// 			while(j > 0)
-// 			{
-// 				graph->passes[j] = graph->passes[j - 1];
-// 				j--;
-// 			}
-// 			graph->passes[0] = save;
-// 			start_count++;
-// 		}
-// 	}
-// 	return start_count;
-// }
-
-// static void graph_bake(graph_t* graph)
-// {
-// 	u32 start_count = reorder_passes(graph);
-// 	for(u32 i = 0; i < start_count; i++)
-// 		increment_ways(graph, graph->passes[i], 1);
-// }
-
+/* dumps the pass information on stdout */
 static void dump(pass_t* pass)
 {
-	printf("Render Pass: { ID: %lu, Nexts = { ", pass->id);
+	printf("\t%lu -> { ", pass->id);
 	for(u32 i = 0; i < pass->next_count; i++)
 	{
 		printf("%lu", pass->nexts[i]);
@@ -366,18 +333,21 @@ static void dump(pass_t* pass)
 			putchar(',');
 		putchar(' ');
 	}
-	printf("}, NextCount: %lu }\n", pass->next_count);
+	printf("}\n", pass->next_count);
 }
 
+/* dumps the entire graph of the passes in the graph 'graph' in dot language */
 static void graph_dump(graph_t* graph)
 {
 	puts(	"------------------------------\n"
 			"Render Pass Graph\n"
-			"------------------------------");
+			"------------------------------\ndigraph\n{");
 	for(u32 i = 0; i < graph->pass_count; i++)
 		dump(graph->passes[i]);
+	puts("}");
 }
 
+/* returns the id of the least dependent (whose prev count is least) pass out of the list of passes 'passes' */
 static u32 get_least_dependent(graph_t* graph, u32* passes, u32 pass_count)
 {
 	if(pass_count == 0)
@@ -399,27 +369,7 @@ static u32 get_least_dependent(graph_t* graph, u32* passes, u32 pass_count)
 	return index;
 }
 
-static u32 get_least_dependent2(pass_t** passes, u32 pass_count)
-{
-	if(pass_count == 0)
-		return U32_MAX;
-
-	pass_t* pass = passes[0];
-
-	u32 prev_count = pass->prev_count;
-	u32 index = 0;
-	for(u32 i = 1; i < pass_count; i++)
-	{
-		pass_t* pass = passes[i];
-		if(prev_count > pass->prev_count)
-		{
-			prev_count = pass->prev_count;
-			index = i;
-		}
-	}
-	return index;
-}
-
+/* removes a pass from the list of passes (ids) 'list' by it's index in the list and returns the new size of the list */
 static u32 remove_pass(u32 index, u32* list, u32 list_size)
 {
 	debug_assert(list_size > 0);
@@ -432,9 +382,119 @@ static u32 remove_pass(u32 index, u32* list, u32 list_size)
 	return list_size;
 }
 
+/* returns true if all the dependencies (prevs) have been resolved (executed) */
+static bool all_dependencies_resolved(graph_t* graph, pass_t* pass)
+{
+	for(u32 i = 0; i < pass->prev_count; i++)
+		if(!pass->prevs[i].resolved)
+			return false;
+	return true;
+}
+
+/* returns true if the 'next' pass has to be executed after the 'current' pass */
+static bool nexts_contains(pass_t* current, pass_t* next)
+{
+	for(u32 i = 0; i < current->next_count; i++)
+		if(current->nexts[i] == next->id)
+			return true;
+	return false;
+}
+
+/* marks a pass and it's children as dirty (to be executed) recursively */
+static void mark_dirty(graph_t* graph, pass_t* pass)
+{
+	assert(graph->stack_depth < graph->max_pass_count);
+
+	/* mark this pass dirty */
+	pass->is_dirty = true;
+
+	/* we are using stack to detect cycles and avoid inifinite recursion */
+	graph->stack[graph->stack_depth++] = pass;
+
+	for(u32 i = 0; i < pass->next_count; i++)
+	{
+		pass_t* next_pass = id_to_pass(graph, pass->nexts[i]);
+		
+		/* set to true if cycle is detected */
+		bool is_continue = false;
+		for(u32 j = 0; j < graph->stack_depth; j++)
+		{
+			if((next_pass == graph->stack[i]) || nexts_contains(next_pass, graph->stack[i]))
+			{
+				is_continue = true;
+				break;
+			}
+		}
+
+		/* don't go further as there is a cycle */
+		if(is_continue)
+			continue;
+
+		mark_dirty(graph, next_pass);
+	}
+
+	assert(graph->stack_depth > 0);
+	graph->stack_depth--;
+}
+
+static void generate_execution_sequence(graph_t* graph, pass_t* pass);
+
+/* executes all possible passes whose dependencies have been resolved and the pass is yet to be executed */
+static void try_execute_waits(graph_t* graph)
+{
+	/* determine which passes have to be executed (mark theom dirty) */
+	u32 count = 0;
+	pass_t* passes[graph->max_pass_count];
+	for(u32 i = 0; i < graph->waiting_list_size; i++)
+	{
+		pass_t* pass = id_to_pass(graph, graph->waiting_list[i]);
+		if(all_dependencies_resolved(graph, pass) && !pass->has_completed)
+		{
+			mark_dirty(graph, pass);
+			passes[count] = pass;
+			count++;
+		}
+	}
+
+	/* execute the dirty passes */
+	while(count > 0)
+	{
+		--count;
+		generate_execution_sequence(graph, passes[count]);
+	}
+
+	/* update the waiting list count */
+	graph->waiting_list_size -= count;
+}
+
+/* dumps the waiting list (pass ids) */
+static void dump_waiting_list(graph_t* graph)
+{
+	printf("Waitings: ");
+	for(u32 i = 0; i < graph->waiting_list_size; i++)
+		printf("%lu ", graph->waiting_list[i]);
+	puts("");
+}
+
+/* puts a pass with id 'pass' into the waiting list */
+static void wait(graph_t* graph, u32 pass)
+{
+	debug_assert(graph->waiting_list_size < graph->max_pass_count);
+	for(u32 i = 0; i < graph->waiting_list_size; i++)
+		if(graph->waiting_list[i] == pass)
+			return;
+	graph->waiting_list[graph->waiting_list_size] = pass;
+	graph->waiting_list_size++;
+	dump_waiting_list(graph);
+}
+
+/* executes a pass 'pass' and removes it from the waiting list if it is in the list */
 static void execute(graph_t* graph, pass_t* pass)
 {
+	/* execute here (for now just dump the id) */
 	printf("Execute Render Pass { ID: %lu }\n", pass->id);
+
+	/* mark this pass as resolved for all the next passes which are dependent on it */
 	for(u32 i = 0; i < pass->next_count; i++)
 	{
 		pass_t* next_pass = id_to_pass(graph, pass->nexts[i]);
@@ -447,77 +507,45 @@ static void execute(graph_t* graph, pass_t* pass)
 			}
 		}
 	}
+
+	/* this pass is no more dirty */
 	pass->is_dirty = false;
-}
 
-static bool all_dependencies_resolved(graph_t* graph, pass_t* pass)
-{
-	for(u32 i = 0; i < pass->prev_count; i++)
-		if(!pass->prevs[i].resolved)
-			return false;
-	return true;
-}
-
-static void generate_execution_sequence(graph_t* graph, pass_t* pass);
-
-static bool nexts_contains(pass_t* current, pass_t* next)
-{
-	for(u32 i = 0; i < current->next_count; i++)
-		if(current->nexts[i] == next->id)
-			return true;
-	return false;
-}
-
-static void mark_dirty(graph_t* graph, pass_t* pass)
-{
-	pass->is_dirty = true;
-	for(u32 i = 0; i < pass->next_count; i++)
+	/* remove this pass from the waiting list if found */
+	for(u32 i = 0; i < graph->waiting_list_size; i++)
 	{
-		pass_t* next_pass = id_to_pass(graph, pass->nexts[i]);
-		if(!nexts_contains(next_pass, pass))
-			mark_dirty(graph, next_pass);
-	}
-}
-
-static void try_execute_waits(graph_t* graph)
-{
-	for(u32 i = 0; i < graph->waiting_list_size;)
-	{
-		pass_t* pass = id_to_pass(graph, graph->waiting_list[i]);
-		if(all_dependencies_resolved(graph, pass) && !pass->has_completed)
+		if(graph->waiting_list[i] == pass->id)
 		{
-			mark_dirty(graph, pass);
-			generate_execution_sequence(graph, pass);
-			if(graph->waiting_list_size > 0)
-				graph->waiting_list_size = remove_pass(i, graph->waiting_list, graph->waiting_list_size);
-			continue;
+			u32 j = i;
+			graph->waiting_list_size--;
+			while(j < graph->waiting_list_size)
+			{
+				graph->waiting_list[j] = graph->waiting_list[j + 1];
+				j++;
+			}
+			break;
 		}
-		i++;
 	}
 }
 
-static void wait(graph_t* graph, u32 pass)
-{
-	debug_assert(graph->waiting_list_size < graph->max_pass_count);
-	printf("Wait Render Pass { ID: %lu }\n", pass);
-	graph->waiting_list[graph->waiting_list_size] = pass;
-	graph->waiting_list_size++;
-}
-
+/* generates the execution sequence of the render passes (resolves the pass dependencies) */
 static void generate_execution_sequence(graph_t* graph, pass_t* pass)
 {
-	bool all_resolved = all_dependencies_resolved(graph, pass);
-	if(all_resolved && pass->has_completed && !pass->is_dirty)
+	/* if the pass has been completed then just return */
+	if(pass->has_completed)
 		return;
 	
+	/* otherwise execute the pass */
 	execute(graph, pass);
 
-	if(all_resolved)
+	/* if all dependencies resolved then mark this pass as completed */
+	if(all_dependencies_resolved(graph, pass))
 		pass->has_completed = true;
 
 	u32 next_count = pass->next_count;
 	while(next_count > 0)
 	{
+		/* get the least dependent next pass (as that would be easier to solve for) */
 		u32 index = get_least_dependent(graph, pass->nexts, next_count);
 		debug_assert(index != U32_MAX);
 		pass_t* next_pass = id_to_pass(graph, pass->nexts[index]);
@@ -535,12 +563,18 @@ static void dump_execution_sequence(graph_t* graph)
 	puts(	"------------------------------\n"
 			"Render Pass Execution Sequence\n"
 			"------------------------------");
-	generate_execution_sequence(graph, graph->passes[get_least_dependent2(graph->passes, graph->pass_count)]);
+	
+	/* generate the execution sequence for each starting node (the passes which don't dependent on any other pass) */
+	for(u32 i = 0; i < graph->pass_count; i++)
+	{
+		if(graph->passes[i]->prev_count == 0)
+			generate_execution_sequence(graph, graph->passes[i]);
+	}
 }
 
-typedef void (*test_func_ptr_t)(graph_t* graph);
+typedef const char* (*test_func_ptr_t)(graph_t* graph);
 
-static void test1(graph_t* graph)
+static const char* test1(graph_t* graph)
 {
 	/* create the nodes */
 	pass_t* rp1 = create(graph);
@@ -556,9 +590,11 @@ static void test1(graph_t* graph)
 	set_nexts(graph, rp3, 1, rp6, rp4);
 	set_nexts(graph, rp4, 2, rp6, rp5);
 	set_nexts(graph, rp6, 3, rp5, rp3, rp2);
+
+	return __FUNCTION__;
 }
 
-static void test2(graph_t* graph)
+static const char* test2(graph_t* graph)
 {
 	/* create the nodes */
 	pass_t* p1 = create(graph);
@@ -569,11 +605,13 @@ static void test2(graph_t* graph)
 
 	/* setup the dependencies */
 	set_nexts(graph, p1, 2, p2, p4);
-	set_nexts(graph, p2, 3, p3, p4, p5);
+	set_nexts(graph, p2, 3, p4, p3, p5);
 	set_nexts(graph, p4, 1, p2);
+
+	return __FUNCTION__;
 }
 
-static void test3(graph_t* graph)
+static const char* test3(graph_t* graph)
 {
 	/* create the nodes */
 	pass_t* rp1 = create(graph);
@@ -588,23 +626,24 @@ static void test3(graph_t* graph)
 	set_nexts(graph, rp2, 1, rp3);
 	set_nexts(graph, rp3, 2, rp6, rp4);
 	set_nexts(graph, rp4, 2, rp6, rp5);
-	/* Works fine: set_nexts(graph, rp6, 2, rp5, rp3); */
+	// set_nexts(graph, rp6, 2, rp5, rp3); 
 	set_nexts(graph, rp6, 3, rp5, rp3, rp2);
+
+	return __FUNCTION__;
 }
 
 int main()
 {
 	graph_t* graph = create_graph(10);
 
-	test_func_ptr_t tests[] = { /*test1,*/ test2, test3 };
+	test_func_ptr_t tests[] = { test1,  test2 , test3 };
 	u32 test_count = sizeof(tests) / sizeof(test_func_ptr_t);
 
 	for(u32 i = 0; i < test_count; i++)
 	{
 		clear_graph(graph);
-		printf("test_id: %lu\n", i + 1);
-		tests[i](graph);
-		// graph_bake(graph);
+		const char* test_id = tests[i](graph);
+		printf("test_id: %s\n", test_id);
 		graph_dump(graph);
 		dump_execution_sequence(graph);
 		if((i + 1) != test_count)
