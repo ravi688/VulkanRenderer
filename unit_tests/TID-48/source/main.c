@@ -242,9 +242,12 @@ static bool isAllDependenciesResolved(RenderPassGraph* graph, RenderPassGraphNod
 	return dependencyCount == 0;
 }
 
-static void sortStagingList(RenderPassGraph* graph, BUFFER* stagingList)
+static bool nodeHandleGreaterThan(void* lhs, void* rhs, void* user_data)
 {
-
+	RenderPassGraph* graph = CAST_TO(RenderPassGraph*, user_data);
+	AUTO lhsNode = buf_get_ptr_at_typeof(&graph->nodes, RenderPassGraphNode, DREF_TO(RenderPassGraphNodeHandle, lhs));
+	AUTO rhsNode = buf_get_ptr_at_typeof(&graph->nodes, RenderPassGraphNode, DREF_TO(RenderPassGraphNodeHandle, rhs));
+	return buf_get_element_count(&lhsNode->nextPassNodeHandles) > buf_get_element_count(&rhsNode->nextPassNodeHandles);
 }
 
 static void BuildOptimizedRenderPath(RenderPassGraph* graph)
@@ -266,7 +269,7 @@ static void BuildOptimizedRenderPath(RenderPassGraph* graph)
 		}
 
 		/* now sort nodes in the staging list in the order of decreasing number of child nodes (nextPassHandles) */
-		sortStagingList(graph, &stagingList);
+		buf_sort(&stagingList, nodeHandleGreaterThan, (void*)graph);
 			
 		/* commit them into optimized render path buffer */
 		u32 stageCount = buf_get_element_count(&stagingList);
@@ -471,6 +474,31 @@ static Shader* LoadShader6(Context* context)
 
 int main()
 {
+	BUFFER testBuffer = buf_new(u32);
+	u32 value = 100; buf_push(&testBuffer, &value);
+	value = 120; buf_push(&testBuffer, &value);
+	value = 20; buf_push(&testBuffer, &value);
+	value = 12; buf_push(&testBuffer, &value);
+	value = 10; buf_push(&testBuffer, &value);
+	value = 34; buf_push(&testBuffer, &value);
+	value = 50; buf_push(&testBuffer, &value);
+	value = 620; buf_push(&testBuffer, &value);
+	value = 220; buf_push(&testBuffer, &value);
+	value = 50; buf_push(&testBuffer, &value);
+	value = 720; buf_push(&testBuffer, &value);
+	value = 820; buf_push(&testBuffer, &value);
+	value = 920; buf_push(&testBuffer, &value);
+	value = 0; buf_push(&testBuffer, &value);
+	printf("Unsorted Elements: ");
+	buf_traverse_elements(&testBuffer, 0, buf_get_element_count(&testBuffer) - 1, buf_u32_print, NULL);
+	puts("");
+	/* sort in descending order */
+	buf_sort(&testBuffer, buf_u32_greater_than, NULL);
+	printf("Sorted Elements: ");
+	buf_traverse_elements(&testBuffer, 0, buf_get_element_count(&testBuffer) - 1, buf_u32_print, NULL);
+	puts("");
+	buf_free(&testBuffer);
+
 	Context* context = ContextCreate();
 	Shader* shader1 = LoadShader1(context);
 	Shader* shader2 = LoadShader2(context);
