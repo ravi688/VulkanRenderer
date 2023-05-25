@@ -45,27 +45,6 @@ RENDERER_API void shader_library_release_resources(shader_library_t* library)
 
 #define UNSUPPORTED_PRESET(preset) LOG_FETAL_ERR("Unsupported shader preset type %u\n", preset)
 
-static void* create_element(BUFFER* list)
-{
-	buf_push_pseudo(list, 1);
-	return buf_peek_ptr(list);	
-}
-
-static void add_opaque(vulkan_renderer_t* renderer, BUFFER* list, const char* name, u32 type, u32 set_number, u32 binding_number)
-{
-	vulkan_shader_resource_description_add_opaque(renderer, create_element(list), name, type, set_number, binding_number);
-}
-
-static struct_descriptor_t* begin_uniform(vulkan_renderer_t* renderer, BUFFER* list, const char* name, u32 set_number, u32 binding_number)
-{
-	return vulkan_shader_resource_description_begin_uniform(renderer, create_element(list), name, set_number, binding_number);
-}
-
-static void end_uniform(vulkan_renderer_t* renderer, BUFFER* list)
-{
-	vulkan_shader_resource_description_end_uniform(renderer, buf_peek_ptr(list));
-}
-
 static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset, u32 OUT binding_count)
 {
 	BUFFER bindings = buf_new(vulkan_shader_resource_description_t);
@@ -123,21 +102,6 @@ static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_
 	return buf_get_ptr(&bindings);
 }
 
-static void begin_vertex_binding(vulkan_renderer_t* renderer, BUFFER* list, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
-{
-	vulkan_vertex_buffer_layout_description_begin(renderer, create_element(list), stride, input_rate, binding_number);
-}
-
-static void add_vertex_attribute(BUFFER* list, u16 location, VkFormat format, u32 offset)
-{
-	vulkan_vertex_buffer_layout_description_add_attribute(buf_peek_ptr(list), location, format, offset);
-}
-
-static void end_vertex_binding(vulkan_renderer_t* renderer, BUFFER* list)
-{
-	vulkan_vertex_buffer_layout_description_end(renderer, buf_peek_ptr(list));
-}
-
 static vulkan_vertex_buffer_layout_description_t* create_vertex_info(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset, u32 OUT vertex_info_count)
 {
 	BUFFER attributes = buf_new(vulkan_vertex_buffer_layout_description_t);
@@ -191,45 +155,6 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(vulkan_rend
 	OUT vertex_info_count = buf_get_element_count(&attributes);
 	buf_fit(&attributes);
 	return buf_get_ptr(&attributes);
-}
-
-static void begin_pass(vulkan_renderer_t* renderer, BUFFER* list, vulkan_render_pass_type_t type)
-{
-	vulkan_render_pass_description_begin(renderer, create_element(list), type);
-}
-
-static void add_input(vulkan_renderer_t* renderer, BUFFER* list, u32 index, u32 binding)
-{
-	vulkan_render_pass_description_add_input(renderer, buf_peek_ptr(list), GLSL_TYPE_SAMPLER_2D, index, binding);
-}
-
-static void add_attachment(BUFFER* list, vulkan_attachment_type_t type)
-{
-	vulkan_render_pass_description_add_attachment(buf_peek_ptr(list), type);
-}
-
-static void add_dependency(BUFFER* list, VkSubpassDependency* dependency)
-{
-	vulkan_render_pass_description_add_subpass_dependency(buf_peek_ptr(list), dependency);
-}
-
-static void begin_subpass(vulkan_renderer_t* renderer, BUFFER* list, u32 pipeline_index)
-{
-	vulkan_render_pass_description_begin_subpass(renderer, buf_peek_ptr(list), pipeline_index);
-}
-static void add_attachment_reference(vulkan_renderer_t* renderer, BUFFER* list, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
-{
-	vulkan_render_pass_description_add_attachment_reference(renderer, buf_peek_ptr(list), type, reference, binding);
-}
-
-static void end_subpass(vulkan_renderer_t* renderer, BUFFER* list)
-{
-	vulkan_render_pass_description_end_subpass(renderer, buf_peek_ptr(list));
-}
-
-static void end_pass(vulkan_renderer_t* renderer, BUFFER* list)
-{
-	vulkan_render_pass_description_end(renderer, buf_peek_ptr(list));
 }
 
 static vulkan_render_pass_description_t* create_render_pass_description(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset, u32 OUT pass_count)
@@ -469,36 +394,6 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 	OUT pass_count = buf_get_element_count(&passes);
 	buf_fit(&passes);
 	return buf_get_ptr(&passes);
-}
-
-static void begin_pipeline(vulkan_renderer_t* renderer, BUFFER* list)
-{
-	vulkan_graphics_pipeline_description_begin(renderer, create_element(list));
-}
-
-static void add_color_blend_state(BUFFER* list, VkBool32 blendEnable)
-{
-	vulkan_graphics_pipeline_description_add_color_blend_state(buf_peek_ptr(list), blendEnable);
-}
-
-static void set_depth_stencil(BUFFER* list, VkBool32 depthWrite, VkBool32 depthTest)
-{
-	vulkan_graphics_pipeline_description_set_depth_stencil(buf_peek_ptr(list), depthWrite, depthTest);
-}
-
-static void set_depth_bias(BUFFER* list, float factor, float clamp, float slope_factor)
-{
-	vulkan_graphics_pipeline_description_set_depth_bias(buf_peek_ptr(list), factor, clamp, slope_factor);
-}
-
-static void add_shader(BUFFER* list, const char* file_path, vulkan_shader_type_t type)
-{
-	vulkan_graphics_pipeline_description_add_shader(buf_peek_ptr(list), file_path, type);
-}
-
-static void end_pipeline(vulkan_renderer_t* renderer, BUFFER* list)
-{
-	vulkan_graphics_pipeline_description_end(renderer, buf_peek_ptr(list));
 }
 
 static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset)

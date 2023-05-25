@@ -12,6 +12,7 @@
 typedef enum signal_t
 {
 	SIGNAL_NOTHING = 0,
+	SIGNAL_VULKAN_CAMERA_RENDER_AREA_RECALCULATE_FINISH,
 	SIGNAL_VULKAN_IMAGE_RECREATE_FINISH,
 	SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH,
 	SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH,
@@ -25,6 +26,7 @@ typedef enum signal_t
 typedef enum signal_bits_t
 {
 	SIGNAL_NOTHING_BIT = BIT32(SIGNAL_NOTHING),
+	SIGNAL_VULKAN_CAMERA_RENDER_AREA_RECALCULATE_FINISH_BIT = BIT32(SIGNAL_VULKAN_CAMERA_RENDER_AREA_RECALCULATE_FINISH),
 	SIGNAL_VULKAN_IMAGE_RECREATE_FINISH_BIT = BIT32(SIGNAL_VULKAN_IMAGE_RECREATE_FINISH),
 	SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT = BIT32(SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH),
 	SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT = BIT32(SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH),
@@ -129,5 +131,9 @@ RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event
 RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t handle);
 /* dumps the subscribers to this event onto stdout */
 RENDERER_API void event_dump(event_t* event);
+/* sets a subscription identified by 'handle' as active or inactive
+ * if a subscrpition becomes inactive then it's handler will not be executed but it would still be considered as executed
+ * meaning if some subscriptions were waiting on that subscription to be executed, all those subscriptoins would be executed after that. */
+RENDERER_API void event_set_subscription_active(event_t* event, event_subscription_handle_t handle, bool is_active);
 
 END_CPP_COMPATIBLE

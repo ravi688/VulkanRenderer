@@ -38,9 +38,15 @@ static vulkan_render_pass_create_info_t* build_shadow_map_render_pass_create_inf
 	memzero(create_info, vulkan_render_pass_create_info_t);
 	
 	create_info->framebuffer_count = 1;
-	create_info->attachment_count = 1;
-	create_info->attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION, VkAttachmentDescription);
-	create_info->attachments[0] = (VkAttachmentDescription)
+
+	/* setup framebuffer attachments layout description */
+	create_info->framebuffer_layout_description = (vulkan_framebuffer_attachments_layout_description_t)
+	{
+		.attachment_count = 1,
+		.attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION, VkAttachmentDescription),
+		.attachment_usages = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE, vulkan_attachment_next_pass_usage_t)
+	};
+	create_info->framebuffer_layout_description.attachments[0] = (VkAttachmentDescription)
 	{
 		.format = VK_FORMAT_D32_SFLOAT,
 		.samples = VK_SAMPLE_COUNT_1_BIT,
@@ -51,8 +57,7 @@ static vulkan_render_pass_create_info_t* build_shadow_map_render_pass_create_inf
 		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		.finalLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
 	};
-	create_info->attachment_usages = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE, vulkan_attachment_next_pass_usage_t);
-	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED;
+	create_info->framebuffer_layout_description.attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED;
 
 	// create_info->supplementary_attachment_count = 1;
 	// create_info->supplementary_attachments = renderer->swapchain->vo_image_views;
@@ -80,9 +85,20 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 	memzero(create_info, vulkan_render_pass_create_info_t);
 	
 	create_info->framebuffer_count = renderer->swapchain->image_count;
-	create_info->attachment_count = 1;
-	create_info->attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION, VkAttachmentDescription);
-	create_info->attachments[0] = (VkAttachmentDescription)
+
+	/* setup framebuffer attachments layout description */
+	create_info->framebuffer_layout_description = (vulkan_framebuffer_attachments_layout_description_t)
+	{
+		.attachment_count = 1,
+		.attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION, VkAttachmentDescription),
+		.attachment_usages = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE, vulkan_attachment_next_pass_usage_t),
+		.supplementary_attachment_bucket_depth = renderer->swapchain->image_count,
+		.supplementary_attachment_bucket_count = 1,
+		/* supplementary_attachment_count = supplementary_attachment_bucket_count * supplementary_attachment_bucket_depth */
+		.supplementary_attachment_count = 1 * renderer->swapchain->image_count,
+		.vo_supplementary_attachments = renderer->swapchain->vo_image_views
+	};
+	create_info->framebuffer_layout_description.attachments[0] = (VkAttachmentDescription)
 	{
 		.format = renderer->swapchain->vo_image_format,
 		.samples = VK_SAMPLE_COUNT_1_BIT,
@@ -93,13 +109,7 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 	};
-	create_info->attachment_usages = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE, vulkan_attachment_next_pass_usage_t);
-	create_info->attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
-
-	create_info->supplementary_attachment_bucket_depth = renderer->swapchain->image_count;
-	create_info->supplementary_attachment_bucket_count = 1;
-	create_info->supplementary_attachment_count = create_info->supplementary_attachment_bucket_count * create_info->supplementary_attachment_bucket_depth;
-	create_info->vo_supplementary_attachments = renderer->swapchain->vo_image_views;
+	create_info->framebuffer_layout_description.attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
 
 	VkAttachmentReference* color_attachments = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE, VkAttachmentReference);
 	color_attachments[0] = (VkAttachmentReference)
@@ -148,15 +158,24 @@ RENDERER_API render_pass_handle_t render_pass_pool_create_pass_from_preset(rende
 		default:
 			return RENDER_PASS_HANDLE_INVALID;
 	}
-	AUTO handle = vulkan_render_pass_pool_create_pass(pool, create_info);
+	vulkan_render_pass_input_info_t input = 
+	{
+		.input_attachment_count = 0,
+		.input_attachments = NULL,
+		.subpass_inputs = memory_allocator_alloc_obj(pool->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_INPUT_INFO, vulkan_subpass_input_info_t)
+	};
+
+	memzero(input.subpass_inputs, vulkan_subpass_input_info_t);
+
+	AUTO handle = vulkan_render_pass_pool_create_pass(pool, create_info, &input);
 	memory_allocator_dealloc(CAST_TO(vulkan_render_pass_t*, pool)->renderer->allocator, create_info);
 	log_msg("Render pass has been created or fetched from pool with preset: %s\n", preset_to_string(preset));
 	return handle;
 }
 
-RENDERER_API render_pass_handle_t render_pass_pool_create_pass(render_pass_pool_t* pool, render_pass_create_info_t* create_info)
+RENDERER_API render_pass_handle_t render_pass_pool_create_pass(render_pass_pool_t* pool, render_pass_create_info_t* create_info, render_pass_input_info_t* input)
 {
-	return vulkan_render_pass_pool_create_pass(pool, create_info);
+	return vulkan_render_pass_pool_create_pass(pool, create_info, input);
 }
 
 RENDERER_API render_pass_t* render_pass_pool_getH(render_pass_pool_t* pool, render_pass_handle_t handle)

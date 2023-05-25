@@ -85,9 +85,15 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 	// setup the viewport and scissor
 	pipeline->viewport_count = create_info->settings->viewport.viewportCount;
 	pipeline->vo_viewports = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VIEWPORT_ARRAY, VkViewport, pipeline->viewport_count);
+	pipeline->vo_user_defined_viewports = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_VIEWPORT_ARRAY, VkViewport, pipeline->viewport_count);
+	pipeline->is_user_defined_viewport = false;
 	for(int i = 0; i < pipeline->viewport_count; i++)
 	{
 		VkViewport viewport = create_info->settings->viewport.pViewports[i];
+		
+		if((!pipeline->is_user_defined_viewport) && (viewport.width != 0) && (viewport.height != 0))
+			pipeline->is_user_defined_viewport = true;
+
 		pipeline->vo_viewports[i] = (VkViewport)
 		{
 			.x = 0,
@@ -97,25 +103,33 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 			.minDepth = 0,
 			.maxDepth = 1
 		};
+		pipeline->vo_user_defined_viewports[i] = viewport;
 	}
 	pipeline->scissor_count = create_info->settings->viewport.scissorCount;
 	pipeline->vo_scissors = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_RECT2D_ARRAY, VkRect2D, pipeline->scissor_count);
+	pipeline->vo_user_defined_scissors = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_RECT2D_ARRAY, VkRect2D, pipeline->scissor_count);
+	pipeline->is_user_defined_scissor = false;
 	for(int i = 0; i < pipeline->scissor_count; i++)
 	{
 		VkRect2D scissor = create_info->settings->viewport.pScissors[i];
+		
+		if((!pipeline->is_user_defined_scissor) && (scissor.extent.width != 0) && (scissor.extent.height != 0))
+			pipeline->is_user_defined_scissor = true;
+
 		pipeline->vo_scissors[i] = (VkRect2D)
 		{
 			.offset = (VkOffset2D)
 			{
-				.x = 0,
-				.y = 0
+				.x = scissor.offset.x,
+				.y = scissor.offset.y
 			},
 			.extent = (VkExtent2D)
 			{
-				.width = renderer->swapchain->vo_image_extent.width,
-				.height = renderer->swapchain->vo_image_extent.height
+				.width = (scissor.extent.width == 0) ? renderer->swapchain->vo_image_extent.width : scissor.extent.width,
+				.height = (scissor.extent.height == 0) ? renderer->swapchain->vo_image_extent.height : scissor.extent.height
 			}
 		};
+		pipeline->vo_user_defined_scissors[i] = scissor;
 	}
 
 	VkPipelineViewportStateCreateInfo viewport_state = 
@@ -125,6 +139,23 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.pViewports = pipeline->vo_viewports,
 		.scissorCount = pipeline->scissor_count,
 		.pScissors = pipeline->vo_scissors
+	};
+
+	BUFFER dynamic_states = buf_new(VkDynamicState);
+	if(!pipeline->is_user_defined_viewport)
+		buf_push_auto(&dynamic_states, VK_DYNAMIC_STATE_VIEWPORT);
+	if(!pipeline->is_user_defined_scissor)
+		buf_push_auto(&dynamic_states, VK_DYNAMIC_STATE_SCISSOR);
+
+	/* cache result as that would be needed at the time of pipeline refresh */
+	pipeline->dynamic_state_count = CAST_TO(u32, buf_get_element_count(&dynamic_states));
+	pipeline->vo_dynamic_states = (pipeline->dynamic_state_count == 0) ? NULL : CAST_TO(VkDynamicState*, buf_get_ptr(&dynamic_states));
+
+	VkPipelineDynamicStateCreateInfo dynamic_state_create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+		.dynamicStateCount = pipeline->dynamic_state_count,
+		.pDynamicStates = pipeline->vo_dynamic_states
 	};
 
 	// create graphics pipeline
@@ -140,7 +171,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.pMultisampleState = &create_info->settings->multisample,
 		.pDepthStencilState = &create_info->settings->depthstencil,
 		.pColorBlendState = &create_info->settings->colorblend,
-		.pDynamicState = &create_info->settings->dynamic,
+		.pDynamicState = &dynamic_state_create_info,//&create_info->settings->dynamic TODO: most of pipeline setup shall go offline (shader_compiler),
 		.layout = create_info->layout->vo_handle,
 		.renderPass = create_info->render_pass->vo_handle,
 		.subpass = create_info->subpass_index,
@@ -165,12 +196,39 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_
 
 RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline)
 {
-	u32 image_index = pipeline->renderer->swapchain->current_image_index;
-	vkCmdBindPipeline(pipeline->renderer->vo_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vo_handle);
+	AUTO command_buffer = pipeline->renderer->vo_command_buffers[pipeline->renderer->swapchain->current_image_index];
+	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vo_handle);
+
+	debug_assert__(!pipeline->is_user_defined_viewport, "For now let's focus on full render area of the render target\n");
+
+	/* setup the viewport if there is no user defined viewports in v3d shader */
+	if(!pipeline->is_user_defined_viewport)
+	{
+		VkViewport viewport = 
+		{
+			.x = pipeline->render_pass->vo_current_render_area.offset.x,
+			.y = pipeline->render_pass->vo_current_render_area.offset.y,
+			.width = pipeline->render_pass->vo_current_render_area.extent.width,
+			.height = pipeline->render_pass->vo_current_render_area.extent.height,
+			.minDepth = 0.0f,
+			.maxDepth = 1.0f
+		};
+		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+	}
+	
+	debug_assert__(!pipeline->is_user_defined_scissor, "For now let's focus on full render area of the render target\n");
+	
+	/* setup the scissor if there is no user defined scissors in v3d shader */
+	if(!pipeline->is_user_defined_scissor)
+		vkCmdSetScissor(command_buffer, 0, 1, &pipeline->render_pass->vo_current_render_area);
 }
 
 RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* pipeline, vulkan_graphics_pipeline_refresh_info_t* info)
 {
+	/* if there is nothing to update, we don't need to recreate the graphics pipeline unneccessarily */
+	if((!pipeline->is_user_defined_scissor) && (!pipeline->is_user_defined_viewport))
+		return;
+
 	_debug_assert__(pipeline->vo_handle != VK_NULL_HANDLE);
 
 	/* destroy the outdated pipeline */
@@ -190,15 +248,31 @@ RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* p
 	_debug_assert__(pipeline->viewport_count == 1);
 	for(int i = 0; i < pipeline->viewport_count; i++)
 	{
-		pipeline->vo_viewports[i].width = info->width;
-		pipeline->vo_viewports[i].height = info->height;
+		if(pipeline->is_user_defined_viewport)
+		{
+			pipeline->vo_viewports[i].width = pipeline->vo_user_defined_viewports[i].width;
+			pipeline->vo_viewports[i].height = pipeline->vo_user_defined_viewports[i].height;
+		}
+		else
+		{
+			pipeline->vo_viewports[i].width = info->width;
+			pipeline->vo_viewports[i].height = info->height;
+		}
 	}
 
 	_debug_assert__(pipeline->scissor_count == 1);
 	for(int i = 0; i < pipeline->scissor_count; i++)
 	{
-		pipeline->vo_scissors[i].extent.width = info->width;
-		pipeline->vo_scissors[i].extent.height = info->height;
+		if(pipeline->is_user_defined_scissor)
+		{
+			pipeline->vo_scissors[i].extent.width = pipeline->vo_user_defined_scissors[i].extent.width;
+			pipeline->vo_scissors[i].extent.height = pipeline->vo_user_defined_scissors[i].extent.height;
+		}
+		else
+		{
+			pipeline->vo_scissors[i].extent.width = info->width;
+			pipeline->vo_scissors[i].extent.height = info->height;
+		}
 	}
 
 	VkPipelineViewportStateCreateInfo viewport_state = 
@@ -208,6 +282,13 @@ RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* p
 		.pViewports = pipeline->vo_viewports,
 		.scissorCount = pipeline->scissor_count,
 		.pScissors = pipeline->vo_scissors
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamic_state_create_info = 
+	{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+		.dynamicStateCount = pipeline->dynamic_state_count,
+		.pDynamicStates = pipeline->vo_dynamic_states
 	};
 
 	// create graphics pipeline
@@ -223,7 +304,7 @@ RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* p
 		.pMultisampleState = &pipeline->settings->multisample,
 		.pDepthStencilState = &pipeline->settings->depthstencil,
 		.pColorBlendState = &pipeline->settings->colorblend,
-		.pDynamicState = &pipeline->settings->dynamic,
+		.pDynamicState = &dynamic_state_create_info,
 		.layout = pipeline->layout->vo_handle,
 		.renderPass = pipeline->render_pass->vo_handle,
 		.subpass = pipeline->subpass_index,
@@ -246,6 +327,8 @@ RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pip
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_binding_descriptions);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_attribute_descriptions);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_viewports);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_viewports);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_scissors);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_scissors);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline);
 }

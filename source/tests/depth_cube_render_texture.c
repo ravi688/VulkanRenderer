@@ -36,6 +36,18 @@ TEST_DATA(DEPTH_CUBE_RENDER_TEXTURE)
 
 SETUP_TEST(DEPTH_CUBE_RENDER_TEXTURE);
 
+TEST_ON_RENDERER_INITIALIZE(DEPTH_CUBE_RENDER_TEXTURE)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "DEPTH_CUBE_RENDER_TEXTURE",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(DEPTH_CUBE_RENDER_TEXTURE)
 {
 	this->angle = 0;
@@ -78,8 +90,8 @@ TEST_ON_INITIALIZE(DEPTH_CUBE_RENDER_TEXTURE)
 
 	vulkan_texture_create_info_t create_info = 
 	{
-		.width = renderer_get_window(renderer)->width,
-		.height = renderer_get_window(renderer)->height,
+		.width = 512,
+		.height = 512,
 		.depth = 1,
 		.channel_count = 4,
 		.type = VULKAN_TEXTURE_TYPE_DEPTH | VULKAN_TEXTURE_TYPE_CUBE | VULKAN_TEXTURE_TYPE_RENDER_TARGET ,
@@ -123,6 +135,8 @@ TEST_ON_INITIALIZE(DEPTH_CUBE_RENDER_TEXTURE)
 	render_object_set_material(this->skyboxObject, this->skyboxMaterial);
 	render_object_attach(this->skyboxObject, this->skyboxMesh);
 	render_object_set_transform(this->skyboxObject, mat4_scale(10, 10, 10));
+
+	render_scene_build_queues(this->scene);
 }
 
 TEST_ON_TERMINATE(DEPTH_CUBE_RENDER_TEXTURE)

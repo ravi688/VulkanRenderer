@@ -3,6 +3,8 @@
 #include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/renderer.h>
 #include <renderer/render_pass_pool.h>
+#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
@@ -15,22 +17,20 @@ RENDERER_API camera_t* camera_new(memory_allocator_t* allocator)
 
 RENDERER_API camera_t* camera_create(renderer_t* renderer, camera_projection_type_t projection_type)
 {
-	render_pass_pool_t* pool = renderer_get_render_pass_pool(renderer);
-	vulkan_camera_create_info_t create_info = 
-	{
-		.projection_type = REINTERPRET_TO(vulkan_camera_projection_type_t, projection_type),
-		.default_render_pass = render_pass_pool_create_pass_from_preset(pool, RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN_CLEAR),
-	};
-	return vulkan_camera_create(renderer->vulkan_handle, &create_info);
+	camera_t* camera = camera_new(renderer->allocator);
+	camera_create_no_alloc(renderer, projection_type, camera);
+	return camera;
 }
 
 RENDERER_API void camera_create_no_alloc(renderer_t* renderer, camera_projection_type_t projection_type, camera_t OUT camera)
 {
 	render_pass_pool_t* pool = renderer_get_render_pass_pool(renderer);
+	/* create a new path as we wan't to keep default camera pass isolated */
+	vulkan_render_pass_pool_create_path(renderer->vulkan_driver->render_pass_pool);
 	vulkan_camera_create_info_t create_info = 
 	{
 		.projection_type = REINTERPRET_TO(vulkan_camera_projection_type_t, projection_type),
-		.default_render_pass = render_pass_pool_create_pass_from_preset(pool, RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN),
+		.swapchain_depth_clear_pass = render_pass_pool_create_pass_from_preset(pool, RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN),
 	};
 	vulkan_camera_create_no_alloc(renderer->vulkan_handle, &create_info, camera);
 }
@@ -159,4 +159,19 @@ RENDERER_API void camera_set_field_of_view(camera_t* camera, float fov)
 RENDERER_API void camera_set_height(camera_t* camera, float height)
 {
 	vulkan_camera_set_height(camera, height);
+}
+
+RENDERER_API void camera_set_render_area(camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
+{
+	vulkan_camera_set_render_area(camera, offset_x, offset_y, width, height);
+}
+
+RENDERER_API void camera_set_render_area_relative(camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
+{
+	vulkan_camera_set_render_area_relative(camera, offset_x, offset_y, width, height);
+}
+
+RENDERER_API void camera_set_render_area_default(camera_t* camera)
+{
+	vulkan_camera_set_render_area_default(camera);
 }

@@ -189,6 +189,10 @@ RENDERER_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_obje
 	vulkan_render_queue_t* queue = dictionary_get_value_ptr_at(&scene->queues, queue_index);
 	_debug_assert__(sizeof(buf_ucount_t) == sizeof(vulkan_render_queue_handle_t));
 	vulkan_render_object_handle_t handle = vulkan_render_queue_add(queue, object);
+	
+	/* the handel must be invalid as there is no material attached to the render object (it is just newly created!) */
+	_debug_assert__(handle == VULKAN_RENDER_OBJECT_HANDLE_INVALID);
+
 	return (vulkan_render_scene_object_handle_t) 
 	{ 
 		(handle == VULKAN_RENDER_OBJECT_HANDLE_INVALID) ? object : handle, 
@@ -202,3 +206,14 @@ RENDERER_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* sce
 	vulkan_render_queue_removeH(queue, handle.object_handle);
 }
 
+RENDERER_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene)
+{
+	debug_log_info("Render Queue Graphs");
+	u32 count = dictionary_get_count(&scene->queues);
+	for(u32 i = 0; i < count; i++)
+	{
+		AUTO queue = CAST_TO(vulkan_render_queue_t*, dictionary_get_value_ptr_at(&scene->queues, i));
+		debug_log_info("Queue type: %s", vulkan_render_queue_type_str(queue->type));
+		vulkan_render_queue_build(queue);
+	}
+}

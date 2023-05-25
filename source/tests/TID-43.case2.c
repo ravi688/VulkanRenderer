@@ -56,6 +56,18 @@ static void refresh_render_passes(void* publisher_data, void* handler_data)
 	debug_log_info("Render passes refresh success");
 }
 
+TEST_ON_RENDERER_INITIALIZE(TID_32_CASE_2)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "TID_32_CASE_2",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(TID_43_CASE_2)
 {
 	memory_allocator_create_info_t create_info = 

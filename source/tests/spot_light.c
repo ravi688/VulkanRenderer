@@ -37,6 +37,18 @@ TEST_DATA(SPOT_LIGHT)
 
 SETUP_TEST(SPOT_LIGHT);
 
+TEST_ON_RENDERER_INITIALIZE(SPOT_LIGHT)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "SPOT_LIGHT",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(SPOT_LIGHT)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
@@ -90,6 +102,7 @@ TEST_ON_INITIALIZE(SPOT_LIGHT)
 	render_object_attach(this->wallObject, this->wallMesh);
 	render_object_set_transform(this->wallObject, mat4_scale(3, 3, 3));
 
+	render_scene_build_queues(this->scene);
 }
 
 TEST_ON_TERMINATE(SPOT_LIGHT)

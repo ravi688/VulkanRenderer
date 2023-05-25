@@ -18,6 +18,7 @@
 #include <renderer/tests/spot_light.load.h>
 
 #include <renderer/tests/cube.h>
+#include <renderer/tests/texture_sampling.h>
 
 #include <renderer/tests/TID-14.case1.h>
 #include <renderer/tests/TID-14.case2.h>
@@ -34,6 +35,12 @@
 #include <renderer/tests/TID-43.case2.h>
 #include <renderer/tests/TID-43.case3.h>
 #include <renderer/tests/TID-43.case4.h>
+
+#include <renderer/tests/TID-48.case1.h>
+#include <renderer/tests/TID-48.case2.h>
+#include <renderer/tests/TID-48.case3.h>
+#include <renderer/tests/TID-48.case4.h>
+#include <renderer/tests/TID-48.case5.h>
 
 RENDERER_API test_t* test_new(memory_allocator_t* allocator)
 {
@@ -60,6 +67,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 	ELSE_IF(SPOT_LIGHT);
 	ELSE_IF(SPOT_LIGHT_LOAD);
 	ELSE_IF(CUBE);
+	ELSE_IF(TEXTURE_SAMPLING);
 	ELSE_IF(TID_14_CASE_1);
 	ELSE_IF(TID_14_CASE_2);
 	ELSE_IF(TID_14_CASE_3);
@@ -72,11 +80,17 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 	ELSE_IF(TID_43_CASE_2);
 	ELSE_IF(TID_43_CASE_3);
 	ELSE_IF(TID_43_CASE_4);
+	ELSE_IF(TID_48_CASE_1);
+	ELSE_IF(TID_48_CASE_2);
+	ELSE_IF(TID_48_CASE_3);
+	ELSE_IF(TID_48_CASE_4);
+	ELSE_IF(TID_48_CASE_5);
 	else
 	{
 		printf 	(
 					"supported tests: \n"
 					"\tDEPTH_RENDER_TEXTURE\n"
+					"\tDEPTH_RENDER_TEXTURE_LOAD\n"
 					"\tENVIRONMENT_REFLECTIONS\n"
 					"\tENVIRONMENT_REFLECTIONS_LOAD\n"
 					"\tDEPTH_CUBE_RENDER_TEXTURE\n"
@@ -86,6 +100,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 					"\tSPOT_LIGHT\n"
 					"\tSPOT_LIGHT_LOAD\n"
 					"\tCUBE\n"
+					"\tTEXTURE_SAMPLING\n"
 					"\tTID_14_CASE_1\n"
 					"\tTID_14_CASE_2\n"
 					"\tTID_14_CASE_3\n"
@@ -98,6 +113,11 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 					"\tTID_43_CASE_2\n"	
 					"\tTID_43_CASE_3\n"	
 					"\tTID_43_CASE_4\n"
+					"\tTID_48_CASE_1\n"
+					"\tTID_48_CASE_2\n"
+					"\tTID_48_CASE_3\n"
+					"\tTID_48_CASE_4\n"
+					"\tTID_48_CASE_5\n"
 				);
 		exit(0);
 	}

@@ -40,14 +40,15 @@ typedef struct vulkan_subpass_create_info_t
 
 typedef enum vulkan_attachment_next_pass_usage_t vulkan_attachment_next_pass_usage_t;
 
-typedef struct vulkan_render_pass_create_info_t
+/* structure to hold all the information for creating vulkan_attachment_t objects and setting up framebuffer attachments */
+typedef struct vulkan_framebuffer_attachments_layout_description_t
 {
-	/*
-		usually it would be equal to the number of swapchain images if there is only one RenderPass
-		but if there are multiple passes and successive passes consumes previous results then it woulbe equal to one
-	*/
-	u32 framebuffer_count;
-
+	/* 2d list, list of extra attachments in the foreach framebuffer, such as swapchain image view */
+	VkImageView* vo_supplementary_attachments;
+	/* must equal to supplementary_attachment_bucket_count * supplementary_attachment_bucket_depth */
+	u32 supplementary_attachment_count;
+	u32 supplementary_attachment_bucket_count;
+	u32 supplementary_attachment_bucket_depth;
 	/* list of attachment descriptions */
 	union
 	{
@@ -61,13 +62,18 @@ typedef struct vulkan_render_pass_create_info_t
 		u32 attachment_description_count;
 		u32 attachment_count;
 	};
+} vulkan_framebuffer_attachments_layout_description_t;
 
-	/* 2d list, list of extra attachments in the foreach framebuffer, such as swapchain image view */
-	VkImageView* vo_supplementary_attachments;
-	/* must equal to supplementary_attachment_bucket_count * supplementary_attachment_bucket_depth */
-	u32 supplementary_attachment_count;
-	u32 supplementary_attachment_bucket_count;
-	u32 supplementary_attachment_bucket_depth;
+typedef struct vulkan_render_pass_create_info_t
+{
+	/*
+		usually it would be equal to the number of swapchain images if there is only one RenderPass
+		but if there are multiple passes and successive passes consumes previous results then it woulbe equal to one
+	*/
+	u32 framebuffer_count;
+
+	/* description of attachments and their usages for this render pass */
+	vulkan_framebuffer_attachments_layout_description_t framebuffer_layout_description;
 
 	/* list of subpass create infos */
 	vulkan_subpass_create_info_t* subpasses;
@@ -93,16 +99,8 @@ typedef struct vulkan_render_pass_t
 
 	vulkan_render_pass_handle_t handle;
 
-	/* number of instances of this render pass (call to vulkan_render_pass_instance_create_* increments it */
-	u32 instance_count;
-
 	/* vulkan object handle */
 	VkRenderPass vo_handle;
-
-	/* allocted  attachments for one frame buffer */
-	vulkan_attachment_t* allocated_attachments;
-	/* number of attachments allocated */
-	u32 allocated_attachment_count;
 
 	union
 	{
@@ -111,25 +109,13 @@ typedef struct vulkan_render_pass_t
 		u32 clear_value_count;
 	};
 
-	/* supplementary attachments for a frame buffer 
-	 * NOTE: this is a deep copy of the data given by the create info struct */
-	VkImageView* vo_supplementary_attachments;
-	/* must equal to supplementary_attachment_bucket_count * supplementary_attachment_bucket_depth */
-	u32 supplementary_attachment_count;
-	u32 supplementary_attachment_bucket_count;
-	u32 supplementary_attachment_bucket_depth;
-
 	/* clear value for each attachment in the frame buffer */
 	VkClearValue* vo_clear_values;
 
 	u32 required_framebuffer_count;
-	vulkan_framebuffer_list_handle_t framebuffer_list_handle;
 
 	/* sub render set layouts for this render pass */
 	vulkan_descriptor_set_layout_t* sub_render_set_layouts;
-
-	/* list of sub render sets, i.e. for each sub pass */
-	vulkan_descriptor_set_t* sub_render_sets;
 
 	/* number of subpasses in this render pass */	
 	u32 subpass_count;
@@ -143,8 +129,8 @@ typedef struct vulkan_render_pass_t
 	/* formats of each attachment [only for internal use] */
 	VkFormat* vo_formats;
 
-	/* subscription handle for allocated attachment recreate */
-	event_subscription_handle_t attachment_recreate_handle;
+	/* current render area (set/updated whenever vulkan_render_pass_begin(...) is called) */
+	VkRect2D vo_current_render_area;
 
 } vulkan_render_pass_t;
 
@@ -237,15 +223,5 @@ RENDERER_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass);
 		nothing
  */
 RENDERER_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass);
-
-typedef struct vulkan_render_pass_refresh_info_t
-{
-	VkImageView* vo_supplementary_attachments;
-	u32 supplementary_attachment_count;
-	u32 supplementary_attachment_bucket_count;
-	u32 supplementary_attachment_bucket_depth;
-} vulkan_render_pass_refresh_info_t;
-
-RENDERER_API void vulkan_render_pass_refresh(vulkan_render_pass_t* render_pass, vulkan_render_pass_refresh_info_t* info);
 
 END_CPP_COMPATIBLE

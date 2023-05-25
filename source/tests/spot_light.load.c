@@ -37,6 +37,18 @@ TEST_DATA(SPOT_LIGHT_LOAD)
 
 SETUP_TEST(SPOT_LIGHT_LOAD);
 
+TEST_ON_RENDERER_INITIALIZE(SPOT_LIGHT_LOAD)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "SPOT_LIGHT_LOAD",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(SPOT_LIGHT_LOAD)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
@@ -45,7 +57,7 @@ TEST_ON_INITIALIZE(SPOT_LIGHT_LOAD)
 
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(this->camera, COLOR_BLACK, 1.0f);
+	camera_set_clear(this->camera, COLOR_GREEN, 1.0f);
 	camera_set_active(this->camera, true);
 
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
@@ -90,6 +102,7 @@ TEST_ON_INITIALIZE(SPOT_LIGHT_LOAD)
 	render_object_attach(this->wallObject, this->wallMesh);
 	render_object_set_transform(this->wallObject, mat4_scale(3, 3, 3));
 
+	render_scene_build_queues(this->scene);
 }
 
 TEST_ON_TERMINATE(SPOT_LIGHT_LOAD)

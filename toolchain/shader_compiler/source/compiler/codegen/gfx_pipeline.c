@@ -417,13 +417,13 @@ static void setup_default_values(UserData* data)
 	data->defaultScissor = (VkRect2D)
 	{
 		.offset = { .x = 0, .y = 0 },
-		.extent = { .width = 800, .height = 800 }
+		.extent = { .width = 0, .height = 0 }
 	};
 
 	data->defaultViewport = (VkViewport)
 	{
 		.x = 0, .y = 0,
-		.width = 800, .height = 800,
+		.width = 0, .height = 0,
 		.minDepth = 0, .maxDepth = 1
 	};
 }

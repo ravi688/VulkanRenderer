@@ -84,6 +84,18 @@ TEST_DATA(TID_42_CASE_1)
 
 SETUP_TEST(TID_42_CASE_1);
 
+TEST_ON_RENDERER_INITIALIZE(TID_42_CASE_1)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "TID_42_CASE_1",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(TID_42_CASE_1)
 {
 	memory_allocator_create_info_t create_info = 

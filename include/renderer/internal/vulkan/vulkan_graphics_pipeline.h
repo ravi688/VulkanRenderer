@@ -66,13 +66,21 @@ typedef struct vulkan_graphics_pipeline_t
 
 	/* list of viewports */
 	VkViewport* vo_viewports;
+	/* list of user defined viewports (in the v3d shader) */
+	VkViewport* vo_user_defined_viewports;
 	/* number of viewports */
 	u32 viewport_count;
+	/* true if user defined viewport in v3d shader, otherwise false*/
+	bool is_user_defined_viewport;
 
 	/* list of scissors */
 	VkRect2D* vo_scissors;
+	/* list of user defined scissors (in the v3d shader) */
+	VkRect2D* vo_user_defined_scissors;
 	/* number of scissors */
 	u32 scissor_count;
+	/* true if user defined scissor in v3d shader, otherwise false */
+	bool is_user_defined_scissor;
 
 	/* pointer to the pipeline layout this gfx pipeline created with */
 	vulkan_pipeline_layout_t* layout;
@@ -80,6 +88,11 @@ typedef struct vulkan_graphics_pipeline_t
 	vulkan_render_pass_t* render_pass;
 	/* index of the subpass for which this gfx pipeline would work */
 	u32 subpass_index;
+
+	/* list of dynamic states determined at the time of pipeline creation */
+	VkDynamicState* vo_dynamic_states;
+	/* number of dynamic states */
+	u32 dynamic_state_count;
 
 } vulkan_graphics_pipeline_t;
 

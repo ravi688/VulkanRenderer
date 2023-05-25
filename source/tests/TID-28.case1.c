@@ -61,6 +61,18 @@ TEST_DATA(TID_28_CASE_1)
 
 SETUP_TEST(TID_28_CASE_1);
 
+TEST_ON_RENDERER_INITIALIZE(TID_28_CASE_1)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "TID_28_CASE_1",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(TID_28_CASE_1)
 {
 	this->camera_system = renderer_get_camera_system(renderer);
@@ -157,8 +169,8 @@ TEST_ON_INITIALIZE(TID_28_CASE_1)
 
 	render_texture_create_info_t create_info = 
 	{
-		.width = renderer_get_window(renderer)->width,
-		.height = renderer_get_window(renderer)->height,
+		.width = 512,
+		.height = 512,
 		.depth = 1,
 		.channel_count = 4,
 		.type = RENDER_TEXTURE_TYPE_ALBEDO
@@ -177,6 +189,8 @@ TEST_ON_INITIALIZE(TID_28_CASE_1)
 	this->angle = 0;
 	this->speed = 20;
 	this->camera_index = 0;
+
+	render_scene_build_queues(this->scene);
 }
 
 TEST_ON_TERMINATE(TID_28_CASE_1)

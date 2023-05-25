@@ -1,0 +1,83 @@
+
+#sl version 2022
+#sb version 2022
+
+Shader
+{
+	[NoParse]
+	Properties
+	{
+		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
+	}
+
+	[NoParse]
+	Layout
+	{
+		per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+		per_vertex [TEXCOORD_BINDING, TEXCOORD_LOCATION] vec2 texcoord;
+	}
+
+	RenderPass
+	{
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					attachment { }
+				}
+
+				depthStencil
+				{
+					depthWriteEnable = true,
+					depthTestEnable = true
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				layout(location = TEXCOORD_LOCATION) in vec2 texcoord;
+
+				layout(location = 0) out vec2 _texcoord;
+
+				void main()
+				{
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+					_texcoord = texcoord;
+				}
+
+				#stage fragment
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = MATERIAL_SET, binding = TEXTURE_BINDING0) uniform sampler2D albedo;
+				
+				layout(location = 0) in vec2 _texcoord;
+				layout(location = 0) out vec4 color;
+				
+				void main()
+				{
+					color = texture(albedo, _texcoord).rgba;
+				}
+				
+			}
+		}
+	}
+}

@@ -88,3 +88,7 @@ RENDERER_API void render_scene_destroy_objectH(render_scene_t* scene, render_sce
 	vulkan_render_scene_destroy_objectH(scene, handle);
 }
 
+RENDERER_API void render_scene_build_queues(render_scene_t* scene)
+{
+	vulkan_render_scene_build_queues(scene);
+}

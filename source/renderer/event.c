@@ -24,6 +24,8 @@ typedef struct subscription_t
 	event_subscription_handle_t handle;
 	/* source level debug info */
 	debug_info_t debug_info;
+	/* true if this subscription is active, otherwise false */
+	bool is_active;
 } subscription_t;
 
 RENDERER_API event_t* event_new(memory_allocator_t* allocator)
@@ -146,9 +148,9 @@ RENDERER_API void event_publish(event_t* event)
 				AUTO handler = GET_HANDLER(subscription->invocation_data);
 				
 				/* if is_dump_only is true then just dump the invocation order but don't make a call to the handlers */
-				if(!event->is_dump_only && (handler != NULL))
+				if(!event->is_dump_only && (handler != NULL) && subscription->is_active)
 					handler(event->publisher_data, subscription->invocation_data.handler_data);
-				if(event->is_dump_only)
+				else if(event->is_dump_only)
 					subscription_dump(event->allocator, subscription, event->string_builder);
 
 				/* raise the signals which are requested to be raised by this invocation
@@ -187,7 +189,7 @@ RENDERER_API void event_publish(event_t* event)
 
 RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file)
 {
-	subscription_t subscription = { .debug_info = { line, function, file } };
+	subscription_t subscription = { .debug_info = { line, function, file }, .is_active = true };
 
 	/* copy the invocation data */
 	memcopy(&subscription.invocation_data, create_info, invocation_data_t);
@@ -295,6 +297,7 @@ static char* signal_bits_to_string(memory_allocator_t* allocator, signal_bits_t 
 
 static void subscription_dump(memory_allocator_t* allocator, subscription_t* subscription, string_builder_t* builder)
 {
+#ifdef GLOBAL_DEBUG
 	string_builder_append(builder, "{\n");
 	string_builder_increment_indentation(builder);
 		string_builder_append(builder, ".location = { %lu, %s, %s }\n", subscription->debug_info.line, subscription->debug_info.function_str, subscription->debug_info.file_str);
@@ -305,6 +308,7 @@ static void subscription_dump(memory_allocator_t* allocator, subscription_t* sub
 		string_builder_append(builder, ".handle = %llu\n", subscription->handle);
 	string_builder_decrement_indentation(builder);
 	string_builder_append(builder, "}\n");
+#endif /* GLOBAL_DEBUG */
 }
 
 RENDERER_API void event_dump(event_t* event)
@@ -322,4 +326,18 @@ RENDERER_API void event_dump(event_t* event)
 	debug_log_info(string_builder_get_str(builder));
 	string_builder_destroy(builder);
 #endif /* GLOBAL_DEBUG */
+}
+
+RENDERER_API void event_set_subscription_active(event_t* event, event_subscription_handle_t handle, bool is_active)
+{
+	/* remove the subscriber, and if success then add the just unclaimed handle to the list of unsubscribed handles to be later used */
+	buf_ucount_t index = buf_find_index_of(&event->subscribers, &handle, handle_comparer);
+	if(index != BUF_INVALID_INDEX)
+	{
+		AUTO subscription = CAST_TO(subscription_t*,  buf_get_ptr_at(&event->subscribers, index));
+		subscription->is_active = is_active;
+	}
+	/* otherwise it is an error */
+	else
+		debug_log_error("no subscription with event subscription handle %llu has been found, is that a corrupt handle?", handle);
 }

@@ -318,30 +318,6 @@ static VkFormat get_image_format_from_attachment_type(vulkan_attachment_type_t t
 	return VK_FORMAT_UNDEFINED;
 }
 
-static void write_render_pass_descriptors(vulkan_shader_render_pass_t* previous_shader_pass, vulkan_shader_render_pass_t* shader_pass)
-{
-	if(previous_shader_pass != NULL)
-	{
-		vulkan_render_pass_t* previous_pass = previous_shader_pass->instance.render_pass;
-		u32 count = shader_pass->render_set_binding_count;
-		for(u32 i = 0; i < count; i++)
-			vulkan_descriptor_set_write_texture(&shader_pass->instance.render_set, shader_pass->render_set_bindings[i].binding_number,
-				CAST_TO(vulkan_texture_t*, &previous_pass->allocated_attachments[shader_pass->input_attachments[i] - previous_pass->supplementary_attachment_bucket_count]));
-	}
-
-	// write subpass descriptions
-	vulkan_render_pass_t* pass = shader_pass->instance.render_pass;
-	u32 subpass_count = pass->subpass_count;
-	for(u32 i = 0; i < subpass_count; i++)
-	{
-		vulkan_shader_subpass_t* subpass = &shader_pass->subpasses[i];
-		u32 count = subpass->sub_render_set_binding_count;
-		for(u32 j = 0; j < count; j++)
-			vulkan_descriptor_set_write_texture(&pass->sub_render_sets[i], subpass->sub_render_set_bindings[j].binding_number,
-				CAST_TO(vulkan_texture_t*, &pass->allocated_attachments[subpass->input_attachments[j] - pass->supplementary_attachment_bucket_count]));
-	}
-}
-
 static bool u32_list_contains(const u32* const list, const u32 count, const u32 value)
 {
 	for(u32 i = 0; i < count; i++)
@@ -601,29 +577,29 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 	
 	// list of attachments to bound for each frame buffer
 	_debug_assert__(pass->attachment_count > 0);
-	create_info->attachment_description_count = pass->attachment_count;
-	create_info->attachment_descriptions = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, pass->attachment_count);
-	create_info->attachment_usages = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE_ARRAY, vulkan_attachment_next_pass_usage_t, pass->attachment_count);
+	create_info->framebuffer_layout_description.attachment_description_count = pass->attachment_count;
+	create_info->framebuffer_layout_description.attachment_descriptions = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, pass->attachment_count);
+	create_info->framebuffer_layout_description.attachment_usages = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT_NEXT_PASS_USAGE_ARRAY, vulkan_attachment_next_pass_usage_t, pass->attachment_count);
 
 	if(pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET)
 	{
 		_debug_assert__(create_info->framebuffer_count == renderer->swapchain->image_count);
-		create_info->supplementary_attachment_bucket_count = 1;
-		create_info->supplementary_attachment_bucket_depth = renderer->swapchain->image_count;
-		create_info->supplementary_attachment_count = create_info->supplementary_attachment_bucket_depth * create_info->supplementary_attachment_bucket_count;
-		create_info->vo_supplementary_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, create_info->supplementary_attachment_count);
+		create_info->framebuffer_layout_description.supplementary_attachment_bucket_count = 1;
+		create_info->framebuffer_layout_description.supplementary_attachment_bucket_depth = renderer->swapchain->image_count;
+		create_info->framebuffer_layout_description.supplementary_attachment_count = create_info->framebuffer_layout_description.supplementary_attachment_bucket_depth * create_info->framebuffer_layout_description.supplementary_attachment_bucket_count;
+		create_info->framebuffer_layout_description.vo_supplementary_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, create_info->framebuffer_layout_description.supplementary_attachment_count);
 		
-		for(u32 i = 0; i < create_info->supplementary_attachment_bucket_count; i++)
-			for(u32 j = 0; j < create_info->supplementary_attachment_bucket_depth; j++)
+		for(u32 i = 0; i < create_info->framebuffer_layout_description.supplementary_attachment_bucket_count; i++)
+			for(u32 j = 0; j < create_info->framebuffer_layout_description.supplementary_attachment_bucket_depth; j++)
 			{
-				u32 stride = i * create_info->supplementary_attachment_bucket_depth;
-				create_info->vo_supplementary_attachments[j + stride] = renderer->swapchain->vo_image_views[j/* + stride */];
+				u32 stride = i * create_info->framebuffer_layout_description.supplementary_attachment_bucket_depth;
+				create_info->framebuffer_layout_description.vo_supplementary_attachments[j + stride] = renderer->swapchain->vo_image_views[j/* + stride */];
 			}
 	}
 
 	for(u32 i = 0; i < pass->attachment_count; i++)
 	{
-		bool is_supplementary = i < create_info->supplementary_attachment_bucket_count;
+		bool is_supplementary = i < create_info->framebuffer_layout_description.supplementary_attachment_bucket_count;
 
 
 		/*
@@ -641,20 +617,20 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		
 		/* 	if the attachment is a color attachment and related to the swapchain target then it should be loaded first
 			otherwise if the color attachment doesn't belong to the swapchain then it should be cleared first.
-			if the attachment is a depth attachemnt, then it should be clear first as well.
+			if the attachment is a depth attachemnt, then we need to load it as camera pass has cleared it earlier.
 		 */
 		VkAttachmentLoadOp load_op = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
 									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
-									  VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR) : VK_ATTACHMENT_LOAD_OP_CLEAR;
+									  VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR) : VK_ATTACHMENT_LOAD_OP_LOAD;
 
 		/*	if the attachment is a color attachment and related to the swapchain target then it should have OPTIMAL layout,
 			as the driver will be free to choose the internal layout of the swapchain images to better utilize the hardware.
 			if the color attachment doesn't belong to the swapchain target then it should have UNDEFINED layout.
-			if the attachment is a depth attachment then it should have UNDEFINED layout.
+			if the attachment is a depth attachment then it should be preserved hence VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 		 */
 		VkImageLayout initial_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
 									 (((pass->type == VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET) && is_supplementary) ?
-									  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED) : VK_IMAGE_LAYOUT_UNDEFINED;
+									  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED) : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		
 		/*	final layout shall be OPTIMAL to better utilize the hardware */
 		VkImageLayout final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ? 
@@ -694,7 +670,16 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 			}
 		}
 
-		create_info->attachment_descriptions[i] = (VkAttachmentDescription)
+		if(((usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) == VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED)
+			&& (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_DEPTH))
+		{
+			initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+			load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			_debug_assert__(final_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+			_debug_assert__(store_op == VK_ATTACHMENT_STORE_OP_STORE);
+		}
+
+		create_info->framebuffer_layout_description.attachment_descriptions[i] = (VkAttachmentDescription)
 		{
 			.format = get_image_format_from_attachment_type(pass->attachments[i]),
 			.samples = VK_SAMPLE_COUNT_1_BIT,
@@ -706,7 +691,7 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 			.finalLayout = final_layout
 		};
 
-		create_info->attachment_usages[i] = usage;
+		create_info->framebuffer_layout_description.attachment_usages[i] = usage;
 	}
 
 	create_info->render_set_bindings = pass->render_set_bindings;
@@ -780,28 +765,42 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	// push global set layout, at GLOBAL_SET = 1
 	buf_push(&set_layouts, &renderer->global_set_layout.vo_handle);
 
+	vulkan_render_pass_pool_create_path(renderer->render_pass_pool);
+
 	for(u32 i = 0; i < description_count; i++)
 	{
 		// create a render pass object in the pool, no duplicate render pass would be created
 		vulkan_render_pass_create_info_t* create_info = convert_render_pass_description_to_create_info(renderer, &descriptions[i], (i < (description_count - 1)) ? &descriptions[i + 1] : NULL);
+		
+		/* prepare render pass and submit input objects */
+		u32 subpass_count = passes[i].subpass_count = descriptions[i].subpass_count;
 
-		/* create render pass instance for this shader */
-		vulkan_render_pass_instance_create_info_t instance_create_info = 
+		vulkan_render_pass_input_info_t input = { .input_attachment_count = descriptions[i].input_attachment_count };
+		
+		input.input_attachments = (input.input_attachment_count == 0) ? NULL : memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, input.input_attachment_count);
+		if(input.input_attachments != NULL)
+			memcopyv(input.input_attachments, descriptions[i].input_attachments, u32, descriptions[i].input_attachment_count);
+
+		input.subpass_inputs = (subpass_count == 0) ? NULL : memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_INPUT_INFO_ARRAY, vulkan_subpass_input_info_t, subpass_count);
+		for(u32 j = 0; j < subpass_count; j++)
 		{
-			.render_pass_handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, create_info)
-		};
-		vulkan_render_pass_instance_create_no_alloc(renderer, &instance_create_info, &passes[i].instance);
+			vulkan_subpass_description_t* subpass_description = &descriptions[i].subpass_descriptions[j];
+			input.subpass_inputs[j].input_attachment_count = subpass_description->input_attachment_count;
+			input.subpass_inputs[j].input_attachments = (subpass_description->input_attachment_count == 0) ? NULL : memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, subpass_description->input_attachment_count);
+			if(input.subpass_inputs[j].input_attachments != NULL)
+				memcopyv(input.subpass_inputs[j].input_attachments, subpass_description->input_attachments, u32, subpass_description->input_attachment_count);
+		}
+		
+		/* create render pass for this shader */
+		passes[i].handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, create_info, &input);
+
 		memory_allocator_dealloc(renderer->allocator, create_info);
 
-		u32 subpass_count = passes[i].subpass_count = descriptions[i].subpass_count;
 
 		// create deep copy of render set bindings, sub render set bindings and input attachment references to be used for rewriting vulkan descriptors when the window resizes
 		// meaning when the images are recreated.
 		passes[i].render_set_bindings = create_deep_copy_of_set_binding_descriptors(renderer->allocator, descriptions[i].render_set_bindings, descriptions[i].render_set_binding_count);
 		passes[i].render_set_binding_count = descriptions[i].render_set_binding_count;
-		passes[i].input_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, descriptions[i].input_attachment_count);
-		passes[i].input_attachment_count = descriptions[i].input_attachment_count;
-		memcopyv(passes[i].input_attachments, descriptions[i].input_attachments, u32, descriptions[i].input_attachment_count);
 		passes[i].subpasses = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_SUBPASS_ARRAY, vulkan_shader_subpass_t, subpass_count);
 		for(u32 j = 0; j < subpass_count; j++)
 		{
@@ -810,13 +809,12 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 			passes[i].subpasses[j].sub_render_set_bindings = create_deep_copy_of_set_binding_descriptors(renderer->allocator, 
 																												subpass_description->sub_render_set_bindings, 
 																												subpass_description->sub_render_set_binding_count);
-			passes[i].subpasses[j].input_attachments = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, subpass_description->input_attachment_count);
-			memcopyv(passes[i].subpasses[j].input_attachments, subpass_description->input_attachments, u32, subpass_description->input_attachment_count);
 		}
 
-		write_render_pass_descriptors((i > 0) ? &passes[i - 1] : NULL, &passes[i]);
 
-		vulkan_render_pass_t* render_pass = passes[i].instance.render_pass;
+		/* create pipeline layout and graphics pipelines */
+
+		vulkan_render_pass_t* render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, passes[i].handle);
 
 		// push render set layout, at RENDER_SET = 2
 		buf_push(&set_layouts, &render_pass->render_set_layout.vo_handle);
@@ -896,37 +894,6 @@ static VkSubpassDependency* merge_subpass_dependencies(vulkan_renderer_t* render
 	return (count == 0) ? NULL : buf_get_ptr(&new_dependencies);
 }
 
-static void rewrite_render_pass_descriptors(void* publisher_data, void* handler_data)
-{
-	AUTO shader = CAST_TO(vulkan_shader_t*, handler_data);
-
-	u32 render_pass_count = shader->render_pass_count;
-	for(u32 i = 0; i < render_pass_count; i++)
-		write_render_pass_descriptors((i > 0) ? &shader->render_passes[i - 1] : NULL, &shader->render_passes[i]);
-
-	debug_log_info("Write render pass descriptors success");
-}
-
-static void refresh_render_passes(void* publisher_data, void* handler_data)
-{
-	AUTO shader = CAST_TO(vulkan_shader_t*, handler_data);
-	for(u32 i = 0; i < shader->render_pass_count; i++)
-	{
-		AUTO render_pass = shader->render_passes[i].instance.render_pass;
-		u32 bucket_count = render_pass->supplementary_attachment_bucket_count;
-		vulkan_render_pass_refresh_info_t refresh_info = 
-		{
-			.supplementary_attachment_bucket_count = bucket_count,
-			/* if supplementary_attachment_bucket_count is zero, that means this render pass is of type VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER */
-			.supplementary_attachment_bucket_depth = (bucket_count == 0) ? 0 : shader->renderer->swapchain->image_count,
-			.supplementary_attachment_count = shader->renderer->swapchain->image_count * bucket_count,
-			.vo_supplementary_attachments = shader->renderer->swapchain->vo_image_views
-		};
-		vulkan_render_pass_refresh(render_pass, &refresh_info);
-	}
-	debug_log_info("Render pass refresh success");
-}
-
 static void recreate_graphics_pipelines(void* publisher_data, void* handler_data)
 {
 	AUTO window = CAST_TO(render_window_t*, publisher_data);
@@ -981,6 +948,8 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	}
 	shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, create_info->render_pass_description_count, &common_data);
 	shader->render_pass_count = create_info->render_pass_description_count;
+	shader->pass_counter = 0;
+	shader->subpass_counter = 0;
 
 	event_subscription_create_info_t subscription_info = 
 	{
@@ -991,16 +960,6 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	};
 	
 	shader->pipeline_recreate_handle = event_subscribe(renderer->window->on_resize_event, &subscription_info);
-
-	subscription_info.handler = EVENT_HANDLER(refresh_render_passes);
-	subscription_info.wait_for = SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT;
-	subscription_info.signal = SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT;
-	shader->render_pass_refresh_handle = event_subscribe(renderer->window->on_resize_event, &subscription_info);
-
-	subscription_info.handler = EVENT_HANDLER(rewrite_render_pass_descriptors);
-	subscription_info.wait_for = SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT;
-	subscription_info.signal = SIGNAL_NOTHING_BIT;
-	shader->rewrite_descriptors_handle = event_subscribe(renderer->window->on_resize_event, &subscription_info);
 
 	return shader;
 }
@@ -1558,8 +1517,8 @@ RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vu
 RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 {
 	event_unsubscribe(shader->renderer->window->on_resize_event, shader->pipeline_recreate_handle);
-	event_unsubscribe(shader->renderer->window->on_resize_event, shader->render_pass_refresh_handle);
-	event_unsubscribe(shader->renderer->window->on_resize_event, shader->rewrite_descriptors_handle);
+	// event_unsubscribe(shader->renderer->window->on_resize_event, shader->render_pass_refresh_handle);
+	// event_unsubscribe(shader->renderer->window->on_resize_event, shader->rewrite_descriptors_handle);
 
 	shader->handle = VULKAN_SHADER_HANDLE_INVALID;
 	vulkan_descriptor_set_layout_destroy(&shader->material_set_layout);
@@ -1571,7 +1530,7 @@ RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 			vulkan_pipeline_layout_destroy(shader->render_passes[i].subpasses[j].pipeline_layout);
 			vulkan_graphics_pipeline_destroy(shader->render_passes[i].subpasses[j].pipeline);
 		}
-		vulkan_render_pass_instance_destroy(&shader->render_passes[i].instance);
+		// vulkan_render_pass_instance_destroy(&shader->render_passes[i].instance);
 	}
 }
 
@@ -1589,7 +1548,7 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shade
 	u32 count = shader->render_pass_count;
 	for(u32 i = 0; i < count; i++)
 	{
-		if(shader->render_passes[i].instance.render_pass->handle == handle)
+		if(shader->render_passes[i].handle == handle)
 		{
 			_debug_assert__(subpass_index < shader->render_passes[i].subpass_count);
 			return shader->render_passes[i].subpasses[subpass_index].pipeline;
@@ -1603,7 +1562,7 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_
 	u32 count = shader->render_pass_count;
 	for(u32 i = 0; i < count; i++)
 	{
-		if(shader->render_passes[i].instance.render_pass->handle == handle)
+		if(shader->render_passes[i].handle == handle)
 		{
 			_debug_assert__(subpass_index < shader->render_passes[i].subpass_count);
 			return shader->render_passes[i].subpasses[subpass_index].pipeline_layout;
@@ -1612,11 +1571,28 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_
 	return NULL;
 }
 
-RENDERER_API vulkan_render_pass_instance_t* vulkan_shader_get_render_pass_instance(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle)
+RENDERER_API vulkan_render_pass_handle_t vulkan_shader_get_prev_pass_handle(vulkan_shader_t* shader)
 {
-	u32 count = shader->render_pass_count;
-	for(u32 i = 0; i < count; i++)
-		if(shader->render_passes[i].instance.render_pass->handle == handle)
-			return &shader->render_passes[i].instance;
-	return NULL;
+	return (shader->pass_counter == 0) ? VULKAN_RENDER_PASS_HANDLE_INVALID : shader->render_passes[shader->pass_counter - 1].handle;
+}
+
+RENDERER_API bool vulkan_shader_render_pass_is_next(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle)
+{
+	AUTO pass = &shader->render_passes[shader->pass_counter];
+	if((shader->pass_counter < shader->render_pass_count) && (pass->handle == handle))
+	{
+		shader->subpass_counter++;
+		if(shader->subpass_counter == pass->subpass_count)
+		{
+			shader->pass_counter++;
+			shader->subpass_counter = 0;
+		}
+		return true;
+	}
+	return false;
+}
+
+RENDERER_API void vulkan_shader_render_pass_counter_reset(vulkan_shader_t* shader)
+{
+	shader->pass_counter = 0;
 }
