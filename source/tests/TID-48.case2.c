@@ -22,6 +22,18 @@ TEST_DATA(TID_48_CASE_2)
 
 SETUP_TEST(TID_48_CASE_2);
 
+TEST_ON_RENDERER_INITIALIZE(TID_48_CASE_2)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "TID_48_CASE_2",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(TID_48_CASE_2)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
@@ -53,6 +65,8 @@ TEST_ON_INITIALIZE(TID_48_CASE_2)
 
 	this->angle = 0;
 	this->angular_speed = 60 DEG;
+
+	render_scene_build_queues(this->scene);
 }
 
 TEST_ON_TERMINATE(TID_48_CASE_2)

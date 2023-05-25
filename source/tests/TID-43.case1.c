@@ -41,6 +41,18 @@ static void swapchain_recreate(void* publisher_data, void* handler_data)
 	debug_log_info("Swapchain recreate success!");
 }
 
+TEST_ON_RENDERER_INITIALIZE(TID_43_CASE_1)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "TID_43_CASE_1",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(TID_43_CASE_1)
 {
 	memory_allocator_create_info_t create_info = 

@@ -62,7 +62,7 @@ typedef struct RenderPassGraph
 {
 	RenderPassGraphSlotList slots;
 	RenderPassGraphNodeList nodes;
-	RenderPassGraphSlotHandle prevPassNodeHandle;
+	RenderPassGraphNodeHandle prevPassNodeHandle;
 	RenderPassGraphNodeHandleList optimizedRenderPath;
 } RenderPassGraph;
 

@@ -62,6 +62,18 @@ TEST_DATA(DEPTH_RENDER_TEXTURE_LOAD)
 
 SETUP_TEST(DEPTH_RENDER_TEXTURE_LOAD);
 
+TEST_ON_RENDERER_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "DEPTH_RENDER_TEXTURE_LOAD",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
 {
 	this->camera_system = renderer_get_camera_system(renderer);
@@ -158,8 +170,8 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
 
 	vulkan_texture_create_info_t create_info = 
 	{
-		.width = renderer_get_window(renderer)->width,
-		.height = renderer_get_window(renderer)->height,
+		.width = 512,
+		.height = 512,
 		.depth = 1,
 		.channel_count = 4,
 		.type = VULKAN_TEXTURE_TYPE_ALBEDO | VULKAN_TEXTURE_TYPE_RENDER_TARGET,
@@ -182,6 +194,8 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
 	this->angle = 0;
 	this->speed = 20;
 	this->camera_index = 0;
+
+	render_scene_build_queues(this->scene);
 }
 
 TEST_ON_TERMINATE(DEPTH_RENDER_TEXTURE_LOAD)

@@ -93,7 +93,8 @@ int main(int argc, const char** argv)
 	setup_signal_handlers();
 
 	test_t* test = test_create(allocator, (argc > 1) ? argv[1] : "");
-	AUTO driver = renderer_init(allocator, GPU_TYPE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, FULL_SCREEN ? true : false, RESIZABLE ? true : false);
+	renderer_initialization_data_t data = test->renderer_initialize();
+	AUTO driver = renderer_init(allocator, data.gpu_type, data.window_width, data.window_height, data.window_name, data.is_fullscreen, data.is_resizable);
 
 	test->initialize(driver, test->user_data);
 

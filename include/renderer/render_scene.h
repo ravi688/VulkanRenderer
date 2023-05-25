@@ -87,3 +87,4 @@ RENDERER_API void render_scene_render(render_scene_t* scene, u64 queue_mask, u32
 RENDERER_API render_object_t* render_scene_getH(render_scene_t* scene, render_scene_object_handle_t handle);
 RENDERER_API render_scene_object_handle_t render_scene_create_object(render_scene_t* scene, render_object_type_t object_type, render_queue_type_t queue_type);
 RENDERER_API void render_scene_destroy_objectH(render_scene_t* scene, render_scene_object_handle_t handle);
+RENDERER_API void render_scene_build_queues(render_scene_t* scene);

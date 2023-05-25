@@ -199,6 +199,8 @@ RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipe
 	AUTO command_buffer = pipeline->renderer->vo_command_buffers[pipeline->renderer->swapchain->current_image_index];
 	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vo_handle);
 
+	debug_assert__(!pipeline->is_user_defined_viewport, "For now let's focus on full render area of the render target\n");
+
 	/* setup the viewport if there is no user defined viewports in v3d shader */
 	if(!pipeline->is_user_defined_viewport)
 	{
@@ -213,6 +215,9 @@ RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipe
 		};
 		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 	}
+	
+	debug_assert__(!pipeline->is_user_defined_scissor, "For now let's focus on full render area of the render target\n");
+	
 	/* setup the scissor if there is no user defined scissors in v3d shader */
 	if(!pipeline->is_user_defined_scissor)
 		vkCmdSetScissor(command_buffer, 0, 1, &pipeline->render_pass->vo_current_render_area);

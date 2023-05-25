@@ -42,6 +42,18 @@ TEST_DATA(POINT_LIGHT_SHADOWS_LOAD)
 
 SETUP_TEST(POINT_LIGHT_SHADOWS_LOAD);
 
+TEST_ON_RENDERER_INITIALIZE(POINT_LIGHT_SHADOWS_LOAD)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "POINT_LIGHT_SHADOWS_LOAD",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS_LOAD)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
@@ -85,8 +97,8 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS_LOAD)
 
 	vulkan_texture_create_info_t create_info = 
 	{
-		.width = renderer_get_window(renderer)->width,
-		.height = renderer_get_window(renderer)->height,
+		.width = 512,
+		.height = 512,
 		.depth = 1,
 		.channel_count = 4,
 		.type = VULKAN_TEXTURE_TYPE_DEPTH | VULKAN_TEXTURE_TYPE_CUBE | VULKAN_TEXTURE_TYPE_RENDER_TARGET ,
@@ -122,6 +134,8 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS_LOAD)
 	render_object_set_material(this->wallObject, this->material);
 	render_object_attach(this->wallObject, this->wallMesh);
 	render_object_set_transform(this->wallObject, mat4_scale(3, 3, 3));
+
+	render_scene_build_queues(this->scene);
 
 }
 

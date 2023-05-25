@@ -5,7 +5,6 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h> // vulkan_descriptor_set_layout_t
 #include <renderer/internal/vulkan/vulkan_attachment.h> 		// vulkan_attachment_type_t
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t, vulkan_shader_handle_t
-#include <renderer/internal/vulkan/vulkan_render_pass_instance.h>
 #include <renderer/event.h>
 #include <glslcommon/glsl_types.h>
 #define VERTEX_ATTRIB(value, index) ((value) << ((index) * 5))
@@ -99,25 +98,24 @@ typedef struct vulkan_shader_subpass_t
 	vulkan_shader_resource_description_t* sub_render_set_bindings;
 	/* number of sub render set bindings */
 	u32 sub_render_set_binding_count;
-	/* deep copy of input attachment references passed with the subpass description */
-	u32* input_attachments;
-	/* number of input attachments */
-	u32 input_attachment_count;
+	// /* deep copy of input attachment references passed with the subpass description */
+	// u32* input_attachments;
+	// /* number of input attachments */
+	// u32 input_attachment_count;
 } vulkan_shader_subpass_t;
 
 typedef struct vulkan_shader_render_pass_t
 {
-	/* pointer to the render pass instance object */
-	vulkan_render_pass_instance_t instance;
+	vulkan_render_pass_handle_t handle;
 	/* deep copy of render set bindings passed with the render pass description 
 	 * dimensions: [render_set_binding_count] */
 	vulkan_shader_resource_description_t* render_set_bindings;
 	/* number of render set bindings */
 	u32 render_set_binding_count;
-	/* deep copy of input attachment references passed with the subpass description */
-	u32* input_attachments;
-	/* number of input attachments */
-	u32 input_attachment_count;
+	// /* deep copy of input attachment references passed with the subpass description */
+	// u32* input_attachments;
+	// /* number of input attachments */
+	// u32 input_attachment_count;
 
 	/* pointer to the list of vulkan shader subpasses */	
 	vulkan_shader_subpass_t* subpasses;
@@ -170,15 +168,20 @@ typedef struct vulkan_shader_t
 	/* PUSH CONSTANTS */
 	vulkan_push_constant_t push_constant;
 
-	/* ptr to the currently bound pipeline */
-	vulkan_graphics_pipeline_t* current_bound_pipeline;
-
 	/* handle to the graphics pipeline recreate subscription for render window resize */
 	event_subscription_handle_t pipeline_recreate_handle;
 	/* handle to the render pass refresh subscription for render window resize */
 	event_subscription_handle_t render_pass_refresh_handle;
 	/* handle to the rewrite render pass descriptors subscription for render window resize */
 	event_subscription_handle_t rewrite_descriptors_handle;
+
+	/* counts the number of passes run 
+	 * initialized in vulkan_shader_create() to zero 
+	 * incremented by one upon calling vulkan_shader_render_pass_is_next() */
+	u32 pass_counter;
+	/* counts the number of subpasses run for the render pass at [pass_counter] */
+	u32 subpass_counter;
+
 } vulkan_shader_t;
 
 /*
@@ -200,6 +203,11 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader);
 /* logic functions */
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index);
 RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index);
-RENDERER_API vulkan_render_pass_instance_t* vulkan_shader_get_render_pass_instance(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle);
+/* returns handle to the previous render pass which ran, otherwise VULKAN_RENDER_PASS_HANDLE_INVALID */
+RENDERER_API vulkan_render_pass_handle_t vulkan_shader_get_prev_pass_handle(vulkan_shader_t* shader);
+/* returns true if the handle matches with the next pass's handle the shader exepects to be executed */
+RENDERER_API bool vulkan_shader_render_pass_is_next(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle);
+/* resets the pass_counter variable to zero for next rendering */
+RENDERER_API void vulkan_shader_render_pass_counter_reset(vulkan_shader_t* shader);
 
 END_CPP_COMPATIBLE

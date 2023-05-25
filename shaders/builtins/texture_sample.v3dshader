@@ -7,11 +7,6 @@ Shader
 	[NoParse]
 	Properties
 	{
-		vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
-		{
-			vec4 color;
-		} parameters;
-
 		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
 	}
 
@@ -33,6 +28,12 @@ Shader
 				{
 					attachment { }
 				}
+
+				depthStencil
+				{
+					depthWriteEnable = true,
+					depthTestEnable = true
+				}
 			}
 
 			[NoParse]
@@ -44,22 +45,21 @@ Shader
 				
 				#include <v3d.h>
 				
-				CAMERA cameraInfo;
-				OBJECT objectInfo;
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 				
-				POSITION position;
-				TEXCOORD texcoord;
-				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				layout(location = TEXCOORD_LOCATION) in vec2 texcoord;
+
 				layout(location = 0) out vec2 _texcoord;
-				
+
 				void main()
 				{
-					vec4 clipPos = cameraInfo.screen * objectInfo.transform * vec4(position, 1);
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
 					clipPos.y = -clipPos.y;
 					gl_Position = clipPos;
 					_texcoord = texcoord;
 				}
-
 
 				#stage fragment
 
@@ -67,31 +67,16 @@ Shader
 				
 				#include <v3d.h>
 				
-				MATERIAL_PROPERTIES
-				{
-					vec4 color;
-				} parameters;
-				
 				layout(set = MATERIAL_SET, binding = TEXTURE_BINDING0) uniform sampler2D albedo;
 				
-				layout(location = 0) in vec2 texcoord;
-				
+				layout(location = 0) in vec2 _texcoord;
 				layout(location = 0) out vec4 color;
-				
-				float linearize(float depth, float n, float f)
-				{
-					float t = ((n - f) * depth + f) * (f - n);
-					return n * f * 1 / t;
-				}
 				
 				void main()
 				{
-					vec2 uv = vec2(texcoord.x, 1 - texcoord.y);
-					float depth = texture(albedo, uv).r;
-					float linear_depth = linearize(depth, 0.04, 20.0);
-					color = parameters.color * vec4(linear_depth, linear_depth, linear_depth, 1.0);
+					color = texture(albedo, _texcoord).rgba;
 				}
-
+				
 			}
 		}
 	}

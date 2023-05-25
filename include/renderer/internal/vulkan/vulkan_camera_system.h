@@ -5,6 +5,7 @@
 #include <renderer/defines.h>
 #include <renderer/internal/vulkan/vulkan_handles.h>
 #include <renderer/internal/vulkan/vulkan_camera.h>
+#include <renderer/internal/vulkan/vulkan_attachment.h>
 
 typedef struct vulkan_camera_system_t
 {

@@ -42,6 +42,18 @@ TEST_DATA(TID_48_CASE_4)
 
 SETUP_TEST(TID_48_CASE_4);
 
+TEST_ON_RENDERER_INITIALIZE(TID_48_CASE_4)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "TID_48_CASE_4",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(TID_48_CASE_4)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
@@ -85,8 +97,8 @@ TEST_ON_INITIALIZE(TID_48_CASE_4)
 
 	vulkan_texture_create_info_t create_info = 
 	{
-		.width = renderer_get_window(renderer)->width,
-		.height = renderer_get_window(renderer)->height,
+		.width = 512,
+		.height = 512,
 		.depth = 1,
 		.channel_count = 4,
 		.type = VULKAN_TEXTURE_TYPE_DEPTH | VULKAN_TEXTURE_TYPE_CUBE | VULKAN_TEXTURE_TYPE_RENDER_TARGET ,
@@ -123,6 +135,7 @@ TEST_ON_INITIALIZE(TID_48_CASE_4)
 	render_object_attach(this->wallObject, this->wallMesh);
 	render_object_set_transform(this->wallObject, mat4_scale(3, 3, 3));
 
+	render_scene_build_queues(this->scene);
 }
 
 TEST_ON_TERMINATE(TID_48_CASE_4)

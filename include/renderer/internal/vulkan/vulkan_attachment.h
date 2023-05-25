@@ -53,7 +53,7 @@ typedef struct vulkan_attachment_t
 	vulkan_image_view_t image_view;
 
 	/* sampler for this attachment if it has to be used in the next render pass, otherwise VK_NULL_HANDLE */
-	VkSampler sampler;
+	VkSampler vo_sampler;
 
 	/* type of the descriptor to which this attachment to be bound as vulkan_texture_t */
 	VkDescriptorType vo_descriptor_type;
@@ -74,17 +74,17 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment);
 RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment);
 
-/* structure to hold the refresh information for vulkan attachment object */
-typedef struct vulkan_attachment_refresh_info_t
+/* structure to hold the recreate information for vulkan attachment object */
+typedef struct vulkan_attachment_recreate_info_t
 {
 	/* width of the attachment */
 	u32 width;
 	/* height of the attachment */
 	u32 height;
-} vulkan_attachment_refresh_info_t;
+} vulkan_attachment_recreate_info_t;
 
-/* refreshes the attachment object */
-RENDERER_API void vulkan_attachment_refresh(vulkan_attachment_t* attachment, vulkan_attachment_refresh_info_t* info);
+/* recreates the attachment object */
+RENDERER_API void vulkan_attachment_recreate(vulkan_attachment_t* attachment, vulkan_attachment_recreate_info_t* info);
 
 /* getters */
 RENDERER_API vulkan_image_t* vulkan_attachment_get_image(vulkan_attachment_t* attachment);

@@ -21,28 +21,24 @@
 
 #include <renderer/defines.h>
 
-#define DEFAULT_TEST_NAME "SPOT_LIGHT"
-
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 800
-#define GPU_TYPE RENDERER_GPU_TYPE_DISCRETE
-#define FULL_SCREEN 0
-#define RESIZABLE 1
-#define WINDOW_NAME "3D Renderer"
-
-#if (FULL_SCREEN == 1)
-#	undef WINDOW_WIDTH
-#	define WINDOW_WIDTH 1920
-#	undef WINDOW_HEIGHT
-#	define WINDOW_HEIGHT 1080
-#endif
-
 typedef struct renderer_t renderer_t;
+
+typedef struct renderer_initialization_data_t
+{
+	u32 /* renderer_gpu_type_t*/ gpu_type;
+	u32 window_width;
+	u32 window_height;
+	const char* window_name;
+	bool is_fullscreen;
+	bool is_resizable;
+} renderer_initialization_data_t;
 
 typedef struct test_t
 {
 	memory_allocator_t* allocator;
 	void* user_data;
+
+	renderer_initialization_data_t (*renderer_initialize)(void);
 	void (*initialize)(renderer_t* driver, void* user_data);
 	void (*render)(renderer_t* driver, void* user_data);
 	void (*update)(renderer_t* driver, float deltaTime, void* user_data);
@@ -69,12 +65,14 @@ RENDERER_API test_t* NAME##_get_callbacks(test_t* test)
 #define SETUP_TEST(NAME) \
 TEST_DATA(NAME);\
 const char* TEST_NAME(NAME) = #NAME;\
+static renderer_initialization_data_t renderer_initialize();\
 static void initialize(renderer_t* renderer, TEST_DATA(NAME)* this);\
 static void terminate(renderer_t* renderer, TEST_DATA(NAME)* this);\
 static void update(renderer_t* renderer, float deltaTime, TEST_DATA(NAME)* this);\
 static void render(renderer_t* renderer, TEST_DATA(NAME)* this);\
 RENDERER_API test_t* NAME##_get_callbacks(test_t* test)\
 {\
+	test->renderer_initialize = (void*)renderer_initialize;\
 	test->initialize = (void*)initialize;\
 	test->terminate = (void*)terminate;\
 	test->update = (void*)update;\
@@ -82,7 +80,7 @@ RENDERER_API test_t* NAME##_get_callbacks(test_t* test)\
 	test->user_data = heap_alloc(sizeof(TEST_DATA(NAME)));\
 }
 
-
+#define TEST_ON_RENDERER_INITIALIZE(NAME) static renderer_initialization_data_t renderer_initialize()
 #define TEST_ON_INITIALIZE(NAME) static void initialize(renderer_t* renderer, TEST_DATA(NAME)* this)
 #define TEST_ON_TERMINATE(NAME) static void terminate(renderer_t* renderer, TEST_DATA(NAME)* this)
 #define TEST_ON_UPDATE(NAME) static void update(renderer_t* renderer, float deltaTime, TEST_DATA(NAME)* this)

@@ -41,6 +41,18 @@ TEST_DATA(TID_28_CASE_2)
 
 SETUP_TEST(TID_28_CASE_2);
 
+TEST_ON_RENDERER_INITIALIZE(TID_28_CASE_2)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "TID_28_CASE_2",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(TID_28_CASE_2)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
@@ -84,8 +96,8 @@ TEST_ON_INITIALIZE(TID_28_CASE_2)
 
 	render_texture_create_info_t create_info = 
 	{
-		.width = renderer_get_window(renderer)->width,
-		.height = renderer_get_window(renderer)->height,
+		.width = 512,
+		.height = 512,
 		.depth = 1,
 		.channel_count = 4,
 		.type = RENDER_TEXTURE_TYPE_DEPTH_CUBE
@@ -118,6 +130,7 @@ TEST_ON_INITIALIZE(TID_28_CASE_2)
 	render_object_attach(this->wallObject, this->wallMesh);
 	render_object_set_transform(this->wallObject, mat4_scale(3, 3, 3));
 
+	render_scene_build_queues(this->scene);
 }
 
 TEST_ON_TERMINATE(TID_28_CASE_2)

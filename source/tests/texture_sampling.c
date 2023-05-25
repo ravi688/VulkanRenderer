@@ -1,5 +1,13 @@
 
-#include <renderer/tests/TID-43.case3.h>
+/*
+	test id: TEXTURE_SAMPLING
+	Tests render to depth texture and present that to screen.
+	while depth texture's dimensions is rectangular rather than square
+	and different from the swapchain's dimensions
+ */
+
+
+#include <renderer/tests/TID-48.case5.h>
 
 #define RENDERER_INCLUDE_EVERYTHING_INTERNAL
 #define RENDERER_INCLUDE_MATH
@@ -8,25 +16,29 @@
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
 
-TEST_DATA(TID_43_CASE_3)
+TEST_DATA(TEXTURE_SAMPLING)
 {
 	render_scene_t* scene;
+
 	camera_t* camera;
+
 	light_t* light;
 	material_t* material;
 	mesh_t* mesh;
 	render_object_t* render_object;
 	float angle;
 	float angular_speed;
+
+	texture_t* texture;
 };
 
-SETUP_TEST(TID_43_CASE_3);
+SETUP_TEST(TEXTURE_SAMPLING);
 
-TEST_ON_RENDERER_INITIALIZE(TID_43_CASE_3)
+TEST_ON_RENDERER_INITIALIZE(TEXTURE_SAMPLING)
 {
 	return (renderer_initialization_data_t)
 	{
-		.window_name = "TID_43_CASE_3",
+		.window_name = "TEXTURE_SAMPLING",
 		.window_width = 800,
 		.window_height = 800,
 		.is_resizable = true,
@@ -34,7 +46,7 @@ TEST_ON_RENDERER_INITIALIZE(TID_43_CASE_3)
 	};
 }
 
-TEST_ON_INITIALIZE(TID_43_CASE_3)
+TEST_ON_INITIALIZE(TEXTURE_SAMPLING)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
 	AUTO slib = renderer_get_shader_library(renderer);
@@ -42,7 +54,7 @@ TEST_ON_INITIALIZE(TID_43_CASE_3)
 
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(this->camera, COLOR_BLACK, 1.0f);
+	camera_set_clear(this->camera, COLOR_GREEN, 1.0f);
 	camera_set_active(this->camera, true);
 
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
@@ -51,25 +63,27 @@ TEST_ON_INITIALIZE(TID_43_CASE_3)
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
 							shader_library_load_shader(slib, 
-								"shaders/presets/TID-43.case3.sb"), "MyMaterial"));
+								"shaders/builtins/texture_sample.sb"), "MyMaterial"));
 
-	material_set_vec4(this->material, "parameters.color", vec4(1, 1, 1, 1));
+	this->texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Smile.bmp");
 
-	AUTO cubeMeshData = mesh3d_cube(renderer->allocator, 1);
+	material_set_texture(this->material, "albedo", this->texture);
 
-	this->mesh = mesh_create(renderer, cubeMeshData);
+	this->mesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 1));
 	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->render_object, this->material);
 	render_object_attach(this->render_object, this->mesh);
+	render_object_set_transform(this->render_object, mat4_mul(3, mat4_scale(1, 1, 1), mat4_rotation_z(0 DEG), mat4_translation(0.0f, 0.0f, 0)));
 
-	this->angle = 0;
-	this->angular_speed = 60 DEG;
 
 	render_scene_build_queues(this->scene);
+
 }
 
-TEST_ON_TERMINATE(TID_43_CASE_3)
+TEST_ON_TERMINATE(TEXTURE_SAMPLING)
 {
+	texture_destroy(this->texture);
+	texture_release_resources(this->texture);
 	mesh_destroy(this->mesh);
 	mesh_release_resources(this->mesh);
 	light_destroy(this->light);
@@ -79,13 +93,11 @@ TEST_ON_TERMINATE(TID_43_CASE_3)
 }
 
 
-TEST_ON_UPDATE(TID_43_CASE_3)
+TEST_ON_UPDATE(TEXTURE_SAMPLING)
 {
-	this->angle += this->angular_speed * deltaTime;
-	render_object_set_transform(this->render_object, mat4_rotation_y(this->angle));
 }
 
-TEST_ON_RENDER(TID_43_CASE_3)
+TEST_ON_RENDER(TEXTURE_SAMPLING)
 {
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 }

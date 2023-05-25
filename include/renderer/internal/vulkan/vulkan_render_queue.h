@@ -64,6 +64,7 @@
 #include <renderer/dictionary.h> 	// for dictionary_t
 
 #include <renderer/internal/vulkan/vulkan_handles.h>
+#include <renderer/internal/vulkan/vulkan_render_pass_graph.h>
 
 typedef struct vulkan_render_object_t vulkan_render_object_t;
 typedef struct vulkan_camera_t vulkan_camera_t;
@@ -90,11 +91,38 @@ typedef enum vulkan_render_queue_type_t
 	VULKAN_RENDER_QUEUE_TYPE_MIN = VULKAN_RENDER_QUEUE_TYPE_UNDEFINED, 	// minimum invalid value
 } vulkan_render_queue_type_t;
 
+static INLINE_IF_RELEASE_MODE const char* vulkan_render_queue_type_str(const vulkan_render_queue_type_t type)
+{
+	switch(type)
+	{
+		case VULKAN_RENDER_QUEUE_TYPE_UNDEFINED : return "VULKAN_RENDER_QUEUE_TYPE_UNDEFINED";
+		case VULKAN_RENDER_QUEUE_TYPE_BACKGROUND : return "VULKAN_RENDER_QUEUE_TYPE_BACKGROUND";
+		case VULKAN_RENDER_QUEUE_TYPE_GEOMETRY : return "VULKAN_RENDER_QUEUE_TYPE_GEOMETRY";
+		case VULKAN_RENDER_QUEUE_TYPE_ALPHA_TESTED : return "VULKAN_RENDER_QUEUE_TYPE_ALPHA_TESTED";
+		case VULKAN_RENDER_QUEUE_TYPE_GEOMETRY_LAST : return "VULKAN_RENDER_QUEUE_TYPE_GEOMETRY_LAST";
+		case VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT : return "VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT";
+		case VULKAN_RENDER_QUEUE_TYPE_OVERLAY : return "VULKAN_RENDER_QUEUE_TYPE_OVERLAY";
+		case VULKAN_RENDER_QUEUE_TYPE_QUEUE0 : return "VULKAN_RENDER_QUEUE_TYPE_QUEUE0";
+		case VULKAN_RENDER_QUEUE_TYPE_QUEUE1 : return "VULKAN_RENDER_QUEUE_TYPE_QUEUE1";
+		case VULKAN_RENDER_QUEUE_TYPE_QUEUE2 : return "VULKAN_RENDER_QUEUE_TYPE_QUEUE2";
+		case VULKAN_RENDER_QUEUE_TYPE_QUEUE3 : return "VULKAN_RENDER_QUEUE_TYPE_QUEUE3";
+		case VULKAN_RENDER_QUEUE_TYPE_QUEUE4 : return "VULKAN_RENDER_QUEUE_TYPE_QUEUE4";
+		case VULKAN_RENDER_QUEUE_TYPE_QUEUE5 : return "VULKAN_RENDER_QUEUE_TYPE_QUEUE5";
+		case VULKAN_RENDER_QUEUE_TYPE_QUEUE6 : return "VULKAN_RENDER_QUEUE_TYPE_QUEUE6";
+		case VULKAN_RENDER_QUEUE_TYPE_QUEUE7 : return "VULKAN_RENDER_QUEUE_TYPE_QUEUE7";
+		case VULKAN_RENDER_QUEUE_TYPE_MAX : return "VULKAN_RENDER_QUEUE_TYPE_MAX";
+	}
+	return "<undefined>";
+}
+
 typedef struct vulkan_render_queue_t
 {
 	vulkan_renderer_t* renderer;
 
 	vulkan_render_queue_handle_t handle;  // handle to this queue in the vulkan render scene
+
+	/* type of this queue */
+	vulkan_render_queue_type_t type;
 
 	/* < vulkan_render_pass_handle_t, list of <list of shader handles > >*/
 	dictionary_t render_pass_handles;
@@ -102,6 +130,10 @@ typedef struct vulkan_render_queue_t
 	dictionary_t shader_handles;
 	/* true if this render queue is ready to dispatch */
 	bool is_ready;
+
+	/* render pass graph for this render queue */
+	vulkan_render_pass_graph_t pass_graph;
+
 } vulkan_render_queue_t;
 
 

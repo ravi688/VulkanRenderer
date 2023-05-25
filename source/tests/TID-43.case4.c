@@ -22,6 +22,18 @@ TEST_DATA(TID_43_CASE_4)
 
 SETUP_TEST(TID_43_CASE_4);
 
+TEST_ON_RENDERER_INITIALIZE(TID_43_CASE_4)
+{
+	return (renderer_initialization_data_t)
+	{
+		.window_name = "TID_43_CASE_4",
+		.window_width = 800,
+		.window_height = 800,
+		.is_resizable = true,
+		.is_fullscreen = false
+	};
+}
+
 TEST_ON_INITIALIZE(TID_43_CASE_4)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
@@ -30,7 +42,7 @@ TEST_ON_INITIALIZE(TID_43_CASE_4)
 
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(this->camera, COLOR_BLACK, 1.0f);
+	camera_set_clear(this->camera, 	COLOR_GREEN, 1.0f);
 	camera_set_active(this->camera, true);
 
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
@@ -49,6 +61,8 @@ TEST_ON_INITIALIZE(TID_43_CASE_4)
 	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->render_object, this->material);
 	render_object_attach(this->render_object, this->mesh);
+
+	render_scene_build_queues(this->scene);
 
 	this->angle = 0;
 	this->angular_speed = 60 DEG;

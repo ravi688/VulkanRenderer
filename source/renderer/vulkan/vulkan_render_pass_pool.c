@@ -26,6 +26,7 @@ RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* ren
 	pool->renderer = renderer;
 	pool->relocation_table = buf_create(sizeof(vulkan_render_pass_handle_t), 1, 0);
 	pool->slots = buf_create(sizeof(vulkan_render_pass_pool_slot_t), 1, 0);
+	vulkan_render_pass_graph_create_no_alloc(renderer, &pool->pass_graph);
 	log_msg("Vulkan render pass pool has been created successfully\n");
 }
 
@@ -41,6 +42,7 @@ RENDERER_API void vulkan_render_pass_pool_destroy(vulkan_render_pass_pool_t* poo
 	buf_ucount_t count = buf_get_element_count(&pool->slots);
 	for(buf_ucount_t i = 0; i < count; i++)
 		vulkan_render_pass_destroy(CAST_TO(vulkan_render_pass_pool_slot_t*, buf_get_ptr_at(&pool->slots, i))->render_pass);
+	vulkan_render_pass_graph_destroy(&pool->pass_graph);
 	log_msg("Vulkan render pass pool has been destroyed successfully\n");
 }
 
@@ -60,6 +62,7 @@ RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_p
 	}
 	buf_free(&pool->relocation_table);
 	buf_free(&pool->slots);
+	vulkan_render_pass_graph_release_resources(&pool->pass_graph);
 	// TODO
 	// heap_free(pool);
 }
@@ -177,12 +180,12 @@ static bool render_pass_create_info_compare(void* create_info, void* ref)
 	vulkan_render_pass_create_info_t* c1 = CAST_TO(vulkan_render_pass_create_info_t*, create_info);
 	vulkan_render_pass_create_info_t* c2 = CAST_TO(vulkan_render_pass_pool_slot_t*, ref)->create_info;
 	bool b1 = c1->framebuffer_count == c2->framebuffer_count;
-	bool b2 = b1 && (c1->attachment_count == c2->attachment_count)
-			&& compare_attachment_descriptions(c1->attachment_count, c1->attachment_descriptions, c2->attachment_descriptions);
-	bool b3 = b2 && compare_attachment_usages(c1->attachment_count, c1->attachment_usages, c2->attachment_usages);
-	bool b4 = b3 && (c1->supplementary_attachment_count == c2->supplementary_attachment_count)
-			&& compare_supplementary_attachments(c1->supplementary_attachment_count, c1->vo_supplementary_attachments, c2->vo_supplementary_attachments);
-	bool b5 = b4 && (c1->subpass_count == c2->subpass_count) 
+	bool b2 = b1 && (c1->framebuffer_layout_description.attachment_count == c2->framebuffer_layout_description.attachment_count)
+			&& compare_attachment_descriptions(c1->framebuffer_layout_description.attachment_count, c1->framebuffer_layout_description.attachment_descriptions, c2->framebuffer_layout_description.attachment_descriptions);
+	bool b3 = b2 && compare_attachment_usages(c1->framebuffer_layout_description.attachment_count, c1->framebuffer_layout_description.attachment_usages, c2->framebuffer_layout_description.attachment_usages);
+	// bool b4 = b3 && (c1->supplementary_attachment_count == c2->supplementary_attachment_count)
+	// 		&& compare_supplementary_attachments(c1->supplementary_attachment_count, c1->vo_supplementary_attachments, c2->vo_supplementary_attachments);
+	bool b5 = b3 && (c1->subpass_count == c2->subpass_count) 
 			&& compare_subpass_create_infos(c1->subpass_count, c1->subpasses, c2->subpasses);
 	bool b6 = b5 && (c1->render_set_binding_count == c2->render_set_binding_count)
 			&& compare_resource_descriptors(c1->render_set_binding_count, c1->render_set_bindings, c2->render_set_bindings);
@@ -217,39 +220,50 @@ static void vulkan_subpass_create_info_deep_copy(memory_allocator_t* allocator, 
 static void vulkan_render_pass_create_info_deep_copy(memory_allocator_t* allocator, vulkan_render_pass_create_info_t* dst, vulkan_render_pass_create_info_t* src)
 {
 	memcopy(dst, src, vulkan_render_pass_create_info_t);
-	dst->attachment_descriptions = src->attachment_description_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, src->attachment_description_count) : NULL;
-	memcopyv(dst->attachment_descriptions, src->attachment_descriptions, VkAttachmentDescription, src->attachment_description_count);
 
+	/* clone vulkan_framebuffer_attachments_layout_description_t */
+	dst->framebuffer_layout_description.vo_supplementary_attachments = src->framebuffer_layout_description.supplementary_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkImageView, src->framebuffer_layout_description.supplementary_attachment_count) : NULL;
+	memcopyv(dst->framebuffer_layout_description.vo_supplementary_attachments, src->framebuffer_layout_description.vo_supplementary_attachments, VkImageView, src->framebuffer_layout_description.supplementary_attachment_count);
+	dst->framebuffer_layout_description.attachment_descriptions = src->framebuffer_layout_description.attachment_description_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, src->framebuffer_layout_description.attachment_description_count) : NULL;
+	memcopyv(dst->framebuffer_layout_description.attachment_descriptions, src->framebuffer_layout_description.attachment_descriptions, VkAttachmentDescription, src->framebuffer_layout_description.attachment_description_count);
+	dst->framebuffer_layout_description.attachment_usages = src->framebuffer_layout_description.attachment_description_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, vulkan_attachment_next_pass_usage_t, src->framebuffer_layout_description.attachment_description_count) : NULL;
+	memcopyv(dst->framebuffer_layout_description.attachment_usages, src->framebuffer_layout_description.attachment_usages, vulkan_attachment_next_pass_usage_t, src->framebuffer_layout_description.attachment_description_count);
+
+	/* clone subpass create infos */
 	_debug_assert__(src->subpass_count > 0);
 	dst->subpasses = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO_ARRAY, vulkan_subpass_create_info_t, src->subpass_count);
 	memcopyv(dst->subpasses, src->subpasses, vulkan_subpass_create_info_t, src->subpass_count);
 	for(u32 i = 0; i < src->subpass_count; i++)
 		vulkan_subpass_create_info_deep_copy(allocator, &dst->subpasses[i], &src->subpasses[i]);
 
+	/* clone subpass dependencies */
 	if(src->subpass_dependency_count > 0)
 	{
 		dst->subpass_dependencies = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SUBPASS_DEPENDENCY_ARRAY, VkSubpassDependency, src->subpass_dependency_count);
 		memcopyv(dst->subpass_dependencies, src->subpass_dependencies, VkSubpassDependency, src->subpass_dependency_count);
 	}
 
+	/* clone render set bindings */
 	dst->render_set_bindings = src->render_set_binding_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, src->render_set_binding_count) : NULL;
 	for(u32 i = 0; i < src->render_set_binding_count; i++)
 		vulkan_resource_descriptor_deep_copy(allocator, &dst->render_set_bindings[i], &src->render_set_bindings[i]);
 }
 
-static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info)
+static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_input_info_t* input)
 {	
 	buf_ucount_t handle = buf_find_index_of(&pool->slots, create_info, render_pass_create_info_compare);
 	if(handle == BUF_INVALID_INDEX)
 	{
-		log_msg("Creating new Render pass\n");
 		// generate a new handle
 		handle = buf_get_element_count(&pool->relocation_table);
 		buf_ucount_t index = buf_get_element_count(&pool->slots);
 		buf_push(&pool->relocation_table, &index);
 
-		vulkan_render_pass_create_info_t* copy_create_info = memory_allocator_alloc_obj(pool->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO, vulkan_render_pass_create_info_t);
-		vulkan_render_pass_create_info_deep_copy(pool->renderer->allocator, copy_create_info, create_info);
+		debug_log_info("Creating new Render pass (handle: %llu)", handle);
+
+		memory_allocator_t* allocator = pool->renderer->allocator;
+		vulkan_render_pass_create_info_t* copy_create_info = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO, vulkan_render_pass_create_info_t);
+		vulkan_render_pass_create_info_deep_copy(allocator, copy_create_info, create_info);
 
 		vulkan_render_pass_pool_slot_t slot = 
 		{
@@ -257,6 +271,27 @@ static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_re
 			.create_info = copy_create_info,
 			.render_pass = NULL
 		};
+
+		/* deep copy the vulkan_renderpass_input_info_t object */
+		if(input->input_attachment_count != 0)
+		{
+			slot.input.input_attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, input->input_attachment_count);
+			slot.input.input_attachment_count = input->input_attachment_count;
+			memcopyv(slot.input.input_attachments, input->input_attachments, u32, input->input_attachment_count);
+		}
+
+		if(input->subpass_inputs != NULL)
+		{
+			slot.input.subpass_inputs = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_INPUT_INFO_ARRAY, vulkan_subpass_input_info_t, create_info->subpass_count);
+			for(u32 i = 0; i < create_info->subpass_count; i++)
+			{
+				slot.input.subpass_inputs[i].input_attachments = (input->subpass_inputs[i].input_attachment_count == 0) ? NULL : memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, input->subpass_inputs[i].input_attachment_count);
+				slot.input.subpass_inputs[i].input_attachment_count = input->subpass_inputs[i].input_attachment_count;
+				if(slot.input.subpass_inputs[i].input_attachments != NULL)
+					memcopyv(slot.input.subpass_inputs[i].input_attachments, input->subpass_inputs[i].input_attachments, u32, input->subpass_inputs[i].input_attachment_count);
+			}
+		}
+
 		buf_push(&pool->slots, &slot);
 		return handle;
 	}
@@ -268,26 +303,41 @@ static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_re
 	return CAST_TO(vulkan_render_pass_pool_slot_t*, buf_get_ptr_at(&pool->slots, handle))->handle;
 }
 
-static vulkan_render_pass_pool_slot_t* vulkan_render_pass_pool_get_slotH(vulkan_render_pass_pool_t* pool, vulkan_render_pass_handle_t handle)
+RENDERER_API vulkan_render_pass_pool_slot_t* vulkan_render_pass_pool_get_slotH(vulkan_render_pass_pool_t* pool, vulkan_render_pass_handle_t handle)
 {
 	vulkan_render_pass_handle_t index;
 	buf_get_at(&pool->relocation_table, handle, &index);
 	return buf_get_ptr_at(&pool->slots, index);
 }
 
-RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info)
+RENDERER_API void vulkan_render_pass_pool_create_path(vulkan_render_pass_pool_t* pool)
 {
-	vulkan_render_pass_pool_slot_t* slot = vulkan_render_pass_pool_get_slotH(pool, vulkan_render_pass_pool_create_slot(pool, create_info));
+	vulkan_render_pass_graph_create_path(&pool->pass_graph);
+	pool->prev_pass_handle = VULKAN_RENDER_PASS_HANDLE_INVALID;
+}
+
+RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_input_info_t* input)
+{
+	/* create a render pass if not already exists */
+	vulkan_render_pass_pool_slot_t* slot = vulkan_render_pass_pool_get_slotH(pool, vulkan_render_pass_pool_create_slot(pool, create_info, input));
 	if(slot->render_pass == NULL)
 	{
 		slot->render_pass = vulkan_render_pass_create(pool->renderer, create_info);
 		slot->render_pass->handle = slot->handle;
-		// register this render pass to all the cameras
-		vulkan_camera_system_t* camera_system = pool->renderer->camera_system;
-		u32 camera_count = vulkan_camera_system_get_count(camera_system);
-		for(u32 i = 0; i < camera_count; i++)
-			vulkan_camera_register_render_pass(vulkan_camera_system_get_at(camera_system, i), slot->render_pass);
 	}
+
+	// register this render pass to all the cameras
+	vulkan_camera_system_t* camera_system = pool->renderer->camera_system;
+	u32 camera_count = vulkan_camera_system_get_count(camera_system);
+	for(u32 i = 0; i < camera_count; i++)
+		vulkan_camera_register_render_pass(vulkan_camera_system_get_at(camera_system, i), slot->render_pass, vulkan_render_pass_pool_get_prev_pass_handle(pool),  &slot->create_info->framebuffer_layout_description);
+	
+	vulkan_render_pass_graph_add(&pool->pass_graph, slot->handle);
+	debug_log_info("RenderPassPool: Add");
+	vulkan_render_pass_graph_dump(&pool->pass_graph);
+
+	pool->prev_pass_handle = slot->handle;
+
 	return slot->handle;
 }
 
