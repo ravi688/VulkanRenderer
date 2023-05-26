@@ -781,7 +781,7 @@ typedef enum update_mask_t
 	UPDATE_ALLOCATED_ATTACHMENTS_BIT = BIT32(2)
 } update_mask_t;
 
-static void update_image_views_for_camera_pass(vulkan_camera_t* camera, vulkan_camera_render_pass_t* pass, update_mask_t mask, u32 swapchain_image_index, u32 cube_face_index)
+static void update_image_views_for_camera_pass(vulkan_camera_t* camera, vulkan_camera_render_pass_t* pass, update_mask_t mask, u32 image_index, u32 cube_face_index)
 {
 	u32 counter = 0;
 
@@ -790,15 +790,15 @@ static void update_image_views_for_camera_pass(vulkan_camera_t* camera, vulkan_c
 	{
 		if(camera->color_render_target != NULL)
 		{
-			if(is_texture_cube(camera->color_render_target))
+			if((image_index == U32_MAX) && is_texture_cube(camera->color_render_target))
 				pass->vo_image_views[counter] = camera->color_render_target->image_views[cube_face_index].vo_handle;
-			else
+			else if(image_index != U32_MAX)
 				pass->vo_image_views[counter] = camera->color_render_target->image_view.vo_handle;
 		}
-		else
+		else if(image_index != U32_MAX)
 		{
 			_debug_assert__(pass->swapchain_attachment_index == 0);
-			pass->vo_image_views[counter] = camera->renderer->swapchain->vo_image_views[swapchain_image_index];
+			pass->vo_image_views[counter] = camera->renderer->swapchain->vo_image_views[image_index];
 		}
 		counter++;
 	}
@@ -844,12 +844,12 @@ static void update_image_views_for_camera_pass(vulkan_camera_t* camera, vulkan_c
 			depth_attachment = camera->current_depth_attachment;
 		}
 
-		if(is_attachment_cube(depth_attachment))
+		if((image_index == U32_MAX) && is_attachment_cube(depth_attachment))
 		{
 			_debug_assert__(is_depth_render_target(camera) == true);
 			pass->vo_image_views[counter++] = CAST_TO(vulkan_texture_t*, depth_attachment)->image_views[cube_face_index].vo_handle;
 		}
-		else 
+		else if(image_index != U32_MAX)
 			pass->vo_image_views[counter++] = depth_attachment->image_view.vo_handle;
 	}
 }
@@ -887,16 +887,18 @@ static void create_or_recreate_framebuffers_for_camera_pass(vulkan_camera_t* cam
 
 	if(is_pass_supports_color_rendering(pass))
 	{
-		update_mask |= UPDATE_COLOR_IMAGE_BIT;
 		if((camera->color_render_target != NULL) && is_texture_cube(camera->color_render_target))
 			cube_update_mask |= UPDATE_COLOR_IMAGE_BIT;
+		else
+			update_mask |= UPDATE_COLOR_IMAGE_BIT;
 	}
 
 	if(is_pass_supports_depth_rendering(pass))
 	{
-		update_mask |= UPDATE_DEPTH_IMAGE_BIT;
 		if((camera->depth_render_target != NULL) && is_texture_cube(camera->depth_render_target))
 			cube_update_mask |= UPDATE_DEPTH_IMAGE_BIT;
+		else
+			update_mask |= UPDATE_DEPTH_IMAGE_BIT;
 	}
 
 	update_image_views_for_camera_pass(camera, pass, UPDATE_ALLOCATED_ATTACHMENTS_BIT, 0 /* ignored */, 0 /* ignored */);
@@ -910,11 +912,11 @@ static void create_or_recreate_framebuffers_for_camera_pass(vulkan_camera_t* cam
 
 	for(u32 i = 0, k = 0; i < camera->max_shot_count; i++)
 	{
-		update_image_views_for_camera_pass(camera, pass, cube_update_mask, 0 /* ignored */, i);
+		update_image_views_for_camera_pass(camera, pass, cube_update_mask, U32_MAX, i);
 
 		for(u32 j = 0; j < pass->framebuffer_count_in_one_face; j++, k++)
 		{
-			update_image_views_for_camera_pass(camera, pass, update_mask, j, 0 /* ignored */);
+			update_image_views_for_camera_pass(camera, pass, update_mask, j, U32_MAX);
 
 			create_info.id = j;
 			vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, k));
