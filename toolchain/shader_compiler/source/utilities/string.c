@@ -1,6 +1,32 @@
+/*
+	***This is computer generated notice - Do not modify it***
+
+	VulkanRenderer (inclusive of its dependencies and subprojects 
+	such as toolchains written by the same author) is a software to render 
+	2D & 3D geometries by writing C/C++ code and shaders.
+
+	File: string.c is a part of VulkanRenderer
+
+	Copyright (C) 2023  Author: Ravi Prakash Singh
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+*/
+
 
 #include <shader_compiler/utilities/string.h>
 #include <shader_compiler/utilities/misc.h>
+#include <common/debug.h>
 
 SC_API const char* skip_whitespaces(const char* str, const char* const end)
 {
@@ -46,47 +72,27 @@ SC_API bool is_empty(const char* start, const char* const end)
 
 SC_API void remove_comments(char* start, const char* const end)
 {
-	bool single_line_comment_begin = false; 
-	bool multiple_line_comment_begin = false;
-
-	while(start < end)
+	const char* cmt_start = start;
+	while(((end - cmt_start) >= 4) && ((cmt_start = strstr(cmt_start, "/*")) != NULL))
 	{
-		if(!multiple_line_comment_begin && !single_line_comment_begin)
-		{
-			bool found = true;
-			if(strncmp(start, "//", 2) == 0)
-				single_line_comment_begin = true;
-			else if(strncmp(start, "/*", 2) == 0)
-				multiple_line_comment_begin = true;
-			else found = false;
-			if(found)
-			{
-				start[0] = ' ';
-				start[1] = ' ';
-				start++;
-			}
-			start++;
-			continue;
-		}
-		if(multiple_line_comment_begin)
-		{
-			if(strncmp(start, "*/", 2) == 0)
-				multiple_line_comment_begin = false;
-			start[0] = ' ';
-			start[1] = ' ';
-			start += 2;
-			continue;
-		}
-		else if(single_line_comment_begin)
-		{
-			const char* ptr = strchr(start, '\n');
-			if(ptr == NULL)
-				ptr = end;
-			if(ptr != start)
-				memset(start, ' ', ptr - start);
-			start = (char*)(ptr + 1);
-			single_line_comment_begin = false;
-			continue;
-		}
+		const char* cmt_end = strstr(cmt_start + 2, "*/");
+		if(cmt_end == NULL)
+			DEBUG_LOG_FETAL_ERROR("[Parse error]: Multiline comment is not closed");
+		else cmt_end += 2;
+		memset((void*)cmt_start, (int)(' '), cmt_end - cmt_start);
+		cmt_start = cmt_end;
+	}
+
+	cmt_start = start;
+	while(((end - cmt_start) >= 2) && ((cmt_start = strstr(cmt_start, "//")) != NULL))
+	{
+		const char* cmt_end = strchr(cmt_start + 2, '\n');
+		/* //...EOF */
+		if(cmt_end == NULL)
+			cmt_end = end;
+		/* //...\n */
+		else cmt_end += 1;
+		memset((void*)cmt_start, (int)(' '), cmt_end - cmt_start);
+		cmt_start = cmt_end;
 	}
 }
