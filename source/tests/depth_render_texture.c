@@ -195,8 +195,8 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE)
 
 	vulkan_texture_create_info_t create_info = 
 	{
-		.width = 512,
-		.height = 512,
+		.width = 800,
+		.height = 800,
 		.depth = 1,
 		.channel_count = 4,
 		.type = VULKAN_TEXTURE_TYPE_ALBEDO | VULKAN_TEXTURE_TYPE_RENDER_TARGET,
@@ -213,8 +213,8 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE)
 	material_set_texture(this->uiMaterial, "albedo", this->depthRenderTexture);
 	material_set_texture(this->uiMaterial2, "albedo", this->colorRenderTexture);
 	
-	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, this->colorRenderTexture);
-	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->depthRenderTexture);
+	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, this->colorRenderTexture);
+	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, this->depthRenderTexture);
 
 	this->angle = 0;
 	this->speed = 20;

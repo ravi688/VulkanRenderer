@@ -81,9 +81,10 @@ RENDERER_API void camera_set_active(camera_t* camera, bool is_active)
 	vulkan_camera_set_active(camera, is_active);
 }
 
-RENDERER_API void camera_set_render_target(camera_t* camera, camera_render_target_type_t target_type, texture_t* texture)
+RENDERER_API void camera_set_render_target(camera_t* camera, camera_render_target_type_t target_type, camera_render_target_binding_type_t binding_type, texture_t* texture)
 {
-	vulkan_camera_set_render_target(camera, REINTERPRET_TO(vulkan_camera_render_target_type_t, target_type), texture);
+	vulkan_camera_set_render_target(camera, REINTERPRET_TO(vulkan_camera_render_target_type_t, target_type),
+											REINTERPRET_TO(vulkan_camera_render_target_binding_type_t, binding_type), texture);
 }
 
 RENDERER_API bool camera_is_active(camera_t* camera)

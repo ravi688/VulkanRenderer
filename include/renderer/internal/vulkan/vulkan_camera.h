@@ -176,6 +176,14 @@ static const char* vulkan_camera_render_target_status_str(vulkan_camera_render_t
 	return "<undefined>";
 }
 
+typedef enum vulkan_camera_render_target_binding_type_t
+{
+	/* the framebuffers will be created with this render target along with other render targets / attachments */
+	VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED,
+	/* the framebuffers will be created with this render target only (but with other internal attachments which are required by the renderpasses) */
+	VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE
+} vulkan_camera_render_target_binding_type_t;
+
 typedef struct vulkan_camera_t
 {
 	/* pointer to the vulkan api context */
@@ -226,6 +234,18 @@ typedef struct vulkan_camera_t
 
 	bool is_color_supported;
 	bool is_depth_supported;
+
+	/* how does the color render target binds to the framebuffer,
+	 * if external depth render target is present then whether to share the framebuffer with it or not,
+	 * otherwise it has no meaning */
+	vulkan_camera_render_target_binding_type_t color_binding_type;
+	/* how does the depth render target binds to the framebuffer 
+	 * if external depth render target is present then whether to share the framebuffer with color target 
+	 * (either swapchain or external) or not,
+	 * if external depth render target is not present but default depth render target is being used then 
+	 * it has no meaning.
+	 * Also if the camera doesn't supports depth rendering then it has no meaning in this case too. */
+	vulkan_camera_render_target_binding_type_t depth_binding_type;
 
 	/* list of registered render pass */
 	vulkan_camera_render_pass_list_t render_passes;
@@ -376,7 +396,7 @@ RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera);
 RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera);
 RENDERER_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags);
 RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth);
-RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_texture_t* texture);
+RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_camera_render_target_binding_type_t binding_type, vulkan_texture_t* texture);
 RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask);
 RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_texture_t* texture);
 

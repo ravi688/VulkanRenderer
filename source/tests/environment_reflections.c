@@ -115,8 +115,8 @@ TEST_ON_INITIALIZE(ENVIRONMENT_REFLECTIONS)
 
 	vulkan_texture_create_info_t create_info = 
 	{
-		.width = 512,
-		.height = 512,
+		.width = 800,
+		.height = 800,
 		.depth = 1,
 		.channel_count = 4,
 		.type = VULKAN_TEXTURE_TYPE_ALBEDO | VULKAN_TEXTURE_TYPE_CUBE | VULKAN_TEXTURE_TYPE_RENDER_TARGET ,
@@ -126,7 +126,7 @@ TEST_ON_INITIALIZE(ENVIRONMENT_REFLECTIONS)
 		.technique = VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH 
 	};	
 	this->environmentMap = vulkan_texture_create(renderer->vulkan_handle, &create_info);
-	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_COLOR, this->environmentMap);
+	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, this->environmentMap);
 
 	this->skyboxTexture = texture_load(renderer, TEXTURE_TYPE_CUBE, 
 											"showcase/resource/skybox_textures/skybox/right.bmp",
@@ -197,9 +197,9 @@ TEST_ON_UPDATE(ENVIRONMENT_REFLECTIONS)
 		getch();
 		swap = !swap;
 		if(swap)
-			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_SCREEN);
+			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, CAMERA_RENDER_TARGET_SCREEN);
 		else 
-			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_COLOR, this->environmentMap);
+			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, this->environmentMap);
 	}
 	mat4_t transform = mat4_mul(3, mat4_translation(-1, 0.2f, 0.3f), mat4_rotation(0, this->angle DEG, 0), mat4_scale(0.3f, 0.3f, 0.3f));
 	render_object_set_transform(this->render_object2, transform);

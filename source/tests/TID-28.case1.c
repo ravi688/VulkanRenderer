@@ -194,8 +194,8 @@ TEST_ON_INITIALIZE(TID_28_CASE_1)
 
 	render_texture_create_info_t create_info = 
 	{
-		.width = 512,
-		.height = 512,
+		.width = 800,
+		.height = 800,
 		.depth = 1,
 		.channel_count = 4,
 		.type = RENDER_TEXTURE_TYPE_ALBEDO
@@ -208,8 +208,8 @@ TEST_ON_INITIALIZE(TID_28_CASE_1)
 	material_set_texture(this->uiMaterial, "albedo", this->depthRenderTexture);
 	material_set_texture(this->uiMaterial2, "albedo", this->colorRenderTexture);
 	
-	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, this->colorRenderTexture);
-	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->depthRenderTexture);
+	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, this->colorRenderTexture);
+	camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, this->depthRenderTexture);
 
 	this->angle = 0;
 	this->speed = 20;
@@ -257,13 +257,13 @@ TEST_ON_UPDATE(TID_28_CASE_1)
 		switch(this->camera_index % 2)
 		{
 			case 1:
-				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, this->colorRenderTexture);
-				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->depthRenderTexture);
+				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, this->colorRenderTexture);
+				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, this->depthRenderTexture);
 				camera_set_active(this->camera, true);
 				break;
 			case 0:
-				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_SCREEN);
-				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_SCREEN);
+				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, CAMERA_RENDER_TARGET_SCREEN);
+				camera_set_render_target(this->camera3, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, CAMERA_RENDER_TARGET_SCREEN);
 				camera_set_active(this->camera, false);
 				break;
 		}
