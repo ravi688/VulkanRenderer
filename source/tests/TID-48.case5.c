@@ -169,20 +169,20 @@ TEST_ON_UPDATE(TID_48_CASE_5)
 	{
 		char ch = getch();
 		if(ch == 't')
-			camera_set_render_target(this->offscreen_camera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_SCREEN);
+			camera_set_render_target(this->offscreen_camera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, CAMERA_RENDER_TARGET_SCREEN);
 		else if(ch == 'y')
 		{
 			render_object_set_material(this->quadObject, this->depthPresentMaterial);
-			camera_set_render_target(this->offscreen_camera, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->depth_texture);
+			camera_set_render_target(this->offscreen_camera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->depth_texture);
 		}
 		else if(ch == 'u')
 		{
-			camera_set_render_target(this->offscreen_camera, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_SCREEN);
+			camera_set_render_target(this->offscreen_camera, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, CAMERA_RENDER_TARGET_SCREEN);
 		}
 		else if(ch == 'i')
 		{
 			render_object_set_material(this->quadObject, this->colorPresentMaterial);
-			camera_set_render_target(this->offscreen_camera, CAMERA_RENDER_TARGET_TYPE_COLOR, this->color_texture);
+			camera_set_render_target(this->offscreen_camera, CAMERA_RENDER_TARGET_TYPE_COLOR, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, this->color_texture);
 		}
 	}
 }

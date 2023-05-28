@@ -121,14 +121,14 @@ TEST_ON_INITIALIZE(TID_28_CASE_2)
 
 	render_texture_create_info_t create_info = 
 	{
-		.width = 512,
-		.height = 512,
+		.width = 800,
+		.height = 800,
 		.depth = 1,
 		.channel_count = 4,
 		.type = RENDER_TEXTURE_TYPE_DEPTH_CUBE
 	};	
 	this->shadowMap = render_texture_create(renderer, &create_info);
-	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->shadowMap);
+	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->shadowMap);
 	material_set_texture(this->depthReflectionMaterial, "reflectionMap", this->shadowMap);
 	material_set_texture(this->material, "shadowMap", this->shadowMap);
 
@@ -187,9 +187,9 @@ TEST_ON_UPDATE(TID_28_CASE_2)
 		getch();
 		swap = !swap;
 		if(swap)
-			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_SCREEN);
+			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, CAMERA_RENDER_TARGET_SCREEN);
 		else 
-			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->shadowMap);
+			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->shadowMap);
 	}
 
 	angle += deltaTime;

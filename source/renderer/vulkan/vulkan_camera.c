@@ -455,6 +455,8 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	camera->prev_render_target_size.height = camera->render_target_size.height;
 
 	camera->render_target_status = VULKAN_CAMERA_RENDER_TARGET_STATUS_DUPLEX_SWAPCHAIN_DEPTH;
+	camera->color_binding_type = VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED;
+	camera->depth_binding_type = VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED;
 
 	/* create a copy of clear values so that the clear values can be modified, by calling vulkan_camera_set_clear(),  without affecting the original clear values */
 	camera->clear_buffer = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_CLEAR_VALUE_ARRAY, VkClearValue, camera->swapchain_depth_clear_pass->attachment_count);
@@ -987,7 +989,7 @@ static void update_image_views_and_recreate_framebuffers(vulkan_camera_t* camera
 		create_or_recreate_framebuffers_for_camera_pass(camera, buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i));
 }
 
-static void vulkan_camera_set_color_render_target_screen(vulkan_camera_t* camera)
+static void vulkan_camera_set_color_render_target_screen(vulkan_camera_t* camera, vulkan_camera_render_target_binding_type_t binding_type)
 {
 	camera->color_render_target = NULL;
 	AUTO window = vulkan_renderer_get_window(camera->renderer);
@@ -1018,9 +1020,22 @@ static void vulkan_camera_set_color_render_target_screen(vulkan_camera_t* camera
 	set_active_all_on_resize_subscriptions(camera, true);
 }
 
-static void vulkan_camera_set_color_render_target_texture(vulkan_camera_t* camera, vulkan_texture_t* texture)
+static void vulkan_camera_set_color_render_target_texture(vulkan_camera_t* camera, vulkan_camera_render_target_binding_type_t binding_type, vulkan_texture_t* texture)
 {
 	_debug_assert__(texture != NULL);
+
+	if(binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE)
+	{
+		if(camera->is_depth_supported && (camera->depth_binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED))
+			debug_log_warning("It is not possible to Exclusively render color values, as the render passes might require depth buffer for correct rendering");
+		else if(camera->is_depth_supported && (camera->depth_binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE))
+		{
+			debug_log_error("Color and Depth render target both have binding type as EXCLUSIVE which is not allowed");
+			return;
+		}
+	}
+
+	_debug_assert__(binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED);
 
 	/* update color render target and render target size */
 	camera->color_render_target = texture;
@@ -1068,7 +1083,7 @@ static void vulkan_camera_set_color_render_target_texture(vulkan_camera_t* camer
 	set_active_all_on_resize_subscriptions(camera, false);
 }
 
-static void vulkan_camera_set_depth_render_target_screen(vulkan_camera_t* camera)
+static void vulkan_camera_set_depth_render_target_screen(vulkan_camera_t* camera, vulkan_camera_render_target_binding_type_t binding_type)
 {
 	/* update depth render target, current depth attachment and render target size */
 	camera->depth_render_target = NULL;
@@ -1160,45 +1175,69 @@ static void vulkan_camera_create_or_recreate_depth_framebuffers(vulkan_camera_t*
 	camera->depth_framebuffer_count = max(camera->depth_framebuffer_count, camera->max_shot_count);
 }
 
-static void vulkan_camera_set_depth_render_target_texture(vulkan_camera_t* camera, vulkan_texture_t* texture)
+static void vulkan_camera_set_depth_render_target_texture(vulkan_camera_t* camera, vulkan_camera_render_target_binding_type_t binding_type, vulkan_texture_t* texture)
 {
 	_debug_assert__(texture != NULL);
+
+	if(binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE)
+	{
+		if(camera->color_binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE)
+		{
+			debug_log_error("Color and depth render target both have binding type as EXCLUSIVE, which is not possible");
+			return;
+		}
+		else if(camera->color_render_target != NULL)
+			debug_log_warning("Camera is no longer rendering to the supplied external color render target as depth binding type is EXCLUSIVE");
+	}
 	
 	/* update depth render target, current depth attachment and render target size */
 	camera->depth_render_target = texture;
 	camera->current_depth_attachment = DYNAMIC_CAST(vulkan_attachment_t*, camera->depth_render_target);
 	set_render_target_size(camera, texture->width, texture->height);
 
-	/* if vulkan_camera_set_render_target(RENDER_TARGET_TYPE_COLOR, <non null value>) has already been called
-	 * and now the user is calling vulkan_camera_set_render_target(RENDER_TARGET_TYPE_DEPTH, <non null value>)
-	 * That means the user wants to draw on external textures for both the values color and depth. */
-	if(camera->color_render_target != NULL)
+	if(binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED)
 	{
-		/* If the image dimensions are equal (external depth and color render targets) then draw over both of them */
-		if(is_texture_size_equal_to(camera->color_render_target, texture->width, texture->height))
+		if(camera->color_binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE)
 		{
-			/* So, recreate framebuffers with the updated camera->current_depth_attachment and the existing camera->color_render_target */
-			update_image_views_and_recreate_framebuffers(camera);
-			camera->render_target_status = VULKAN_CAMERA_RENDER_TARGET_STATUS_DUPLEX_EXTERNAL_COLOR_EXTERNAL_DEPTH;
+			debug_log_error("Color render target has binding type as EXCLUSIVE (i.e. it can't be shared)");
 			return;
 		}
-		/* But if the dimensions of those external textures doesn't match then drawing over the two textures is not possible. */
-		else
-			invalid_operation(COLOR_AND_DEPTH_RENDER_TARGET_DIMENSION_MISMATCH);
-	}
-	else if((camera->allocated_attachment_size.width == texture->width) && (camera->allocated_attachment_size.height == texture->height))
-	{
-		debug_log_warning("Depth atachment is external (not resizable) while color attachment is swapchain image, undefined results might occur after resizing the window");
-		/* So, recreate framebuffers with the updated camera->current_depth_attachment and the swapchain image */
-		update_image_views_and_recreate_framebuffers(camera);
-		camera->render_target_status = VULKAN_CAMERA_RENDER_TARGET_STATUS_DUPLEX_SWAPCHAIN_EXTERNAL_DEPTH;
-		return;
+
+		camera->depth_binding_type = VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED;
+
+		/* if vulkan_camera_set_render_target(RENDER_TARGET_TYPE_COLOR, <non null value>) has already been called
+		 * and now the user is calling vulkan_camera_set_render_target(RENDER_TARGET_TYPE_DEPTH, <non null value>)
+		 * That means the user wants to draw on external textures for both the values color and depth. */
+		if(camera->color_render_target != NULL)
+		{
+			/* If the image dimensions are equal (external depth and color render targets) then draw over both of them */
+			if(is_texture_size_equal_to(camera->color_render_target, texture->width, texture->height))
+			{
+				/* So, recreate framebuffers with the updated camera->current_depth_attachment and the existing camera->color_render_target */
+				update_image_views_and_recreate_framebuffers(camera);
+				camera->render_target_status = VULKAN_CAMERA_RENDER_TARGET_STATUS_DUPLEX_EXTERNAL_COLOR_EXTERNAL_DEPTH;
+				return;
+			}
+			/* But if the dimensions of those external textures doesn't match then drawing over the two textures is not possible. */
+			else
+				invalid_operation(COLOR_AND_DEPTH_RENDER_TARGET_DIMENSION_MISMATCH);
+		}
+		else if((camera->allocated_attachment_size.width == texture->width) && (camera->allocated_attachment_size.height == texture->height))
+		{
+			debug_log_warning("Depth atachment is external (not resizable) while color attachment is swapchain image, undefined results might occur after resizing the window");
+			/* So, recreate framebuffers with the updated camera->current_depth_attachment and the swapchain image */
+			update_image_views_and_recreate_framebuffers(camera);
+			camera->render_target_status = VULKAN_CAMERA_RENDER_TARGET_STATUS_DUPLEX_SWAPCHAIN_EXTERNAL_DEPTH;
+			return;
+		}
 	}
 
 	/* Otherwise only render depth values to the texture (no need to render color values)
 	 * so we can use the builtins/depth_shader.v3dshader to render all the objects efficiently with just one depth render pass */
 
 	/* setup for depth only rendering (simplex) */
+
+	_debug_assert__(binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE);
 
 	/* if depth material is not loaded then load it (but just once) 
 	 * this depth material will be used to render all objects using this camera 
@@ -1225,12 +1264,13 @@ static void vulkan_camera_set_depth_render_target_texture(vulkan_camera_t* camer
 	
 	vulkan_camera_create_or_recreate_depth_framebuffers(camera, texture->width, texture->height);
 	camera->render_target_status = VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_EXTERNAL_DEPTH;
+	camera->depth_binding_type = VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE;
 
 	/* since we are only writing to a depth attachment (which is external and non-resizable), we have to disable window resize callbacks */
 	set_active_all_on_resize_subscriptions(camera, false);
 }
 
-RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_texture_t* texture)
+RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_camera_render_target_binding_type_t binding_type, vulkan_texture_t* texture)
 {	
 	if((texture != VULKAN_CAMERA_RENDER_TARGET_SCREEN) && ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE))
 	{
@@ -1269,18 +1309,23 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 		case VULKAN_CAMERA_RENDER_TARGET_TYPE_COLOR:
 		{
 			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-				vulkan_camera_set_color_render_target_screen(camera);
+				vulkan_camera_set_color_render_target_screen(camera, binding_type);
 			else
-				vulkan_camera_set_color_render_target_texture(camera, texture);
+				vulkan_camera_set_color_render_target_texture(camera, binding_type, texture);
 
 			break;
 		}
 		case VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH:
 		{
+			if(!camera->is_depth_supported)
+			{
+				debug_log_warning("Camera doesn't support rendering to depth attachment/texture");
+				break;
+			}
 			if(texture == VULKAN_CAMERA_RENDER_TARGET_SCREEN)
-				vulkan_camera_set_depth_render_target_screen(camera);
+				vulkan_camera_set_depth_render_target_screen(camera, binding_type);
 			else
-				vulkan_camera_set_depth_render_target_texture(camera, texture);
+				vulkan_camera_set_depth_render_target_texture(camera, binding_type, texture);
 
 			break;
 		}

@@ -122,8 +122,8 @@ TEST_ON_INITIALIZE(TID_48_CASE_1)
 
 	vulkan_texture_create_info_t create_info = 
 	{
-		.width = 512,
-		.height = 512,
+		.width = 800,
+		.height = 800,
 		.depth = 1,
 		.channel_count = 4,
 		.type = VULKAN_TEXTURE_TYPE_DEPTH | VULKAN_TEXTURE_TYPE_CUBE | VULKAN_TEXTURE_TYPE_RENDER_TARGET ,
@@ -133,7 +133,7 @@ TEST_ON_INITIALIZE(TID_48_CASE_1)
 		.technique = VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH 
 	};	
 	this->shadowMap = vulkan_texture_create(renderer->vulkan_handle, &create_info);
-	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->shadowMap);
+	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->shadowMap);
 	material_set_texture(this->depthReflectionMaterial, "reflectionMap", this->shadowMap);
 	material_set_texture(this->material, "shadowMap", this->shadowMap);
 
@@ -192,9 +192,9 @@ TEST_ON_UPDATE(TID_48_CASE_1)
 		getch();
 		swap = !swap;
 		if(swap)
-			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_SCREEN);
+			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, CAMERA_RENDER_TARGET_SCREEN);
 		else 
-			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, this->shadowMap);
+			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->shadowMap);
 	}
 
 	angle += deltaTime;
