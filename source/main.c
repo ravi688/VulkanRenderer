@@ -29,6 +29,7 @@
 #define RENDERER_INCLUDE_TIMING
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
+#include <renderer/legal/legal.h>
 
 #include <conio.h>
 #include <signal.h>
@@ -105,6 +106,7 @@ static void setup_signal_handlers()
 
 int main(int argc, const char** argv)
 {
+	legal_show_notice(argv[0]);
 	alloc_init(&argv);
 
 	memory_allocator_create_info_t create_info = 
