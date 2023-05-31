@@ -35,14 +35,10 @@ typedef struct vulkan_shader_resource_description_t
 {
 	struct_descriptor_t handle;
 	bool is_push_constant;						// is this a push constant ?
-	union
+	struct
 	{
-		struct
-		{
-			bool is_per_vertex_attribute; 		// does this represents per vertex attribute ?
-			bool is_per_instance_attribute; 	// does this represents per instance attribute ?
-		};
-		u16 is_attribute;						// is this an attribute ?
+		bool is_per_vertex_attribute; 		// does this represents per vertex attribute ?
+		bool is_per_instance_attribute; 	// does this represents per instance attribute ?
 	};
 	bool is_opaque;								// is this an opaque handle to a resource ?
 	bool is_uniform;							// is this an uniform resource ?
@@ -81,4 +77,9 @@ static INLINE_IF_RELEASE_MODE struct_descriptor_t* begin_uniform(vulkan_renderer
 static INLINE_IF_RELEASE_MODE void end_uniform(vulkan_renderer_t* renderer, BUFFER* list)
 {
 	vulkan_shader_resource_description_end_uniform(renderer, buf_peek_ptr(list));
+}
+
+static INLINE_IF_RELEASE_MODE bool vulkan_shader_resource_description_is_attribute(vulkan_shader_resource_description_t* description)
+{
+	return description->is_per_vertex_attribute || description->is_per_instance_attribute;
 }

@@ -79,7 +79,7 @@ RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_
 		vulkan_shader_resource_description_t* descriptor = &descriptors[i];
 
 		// if this is a push constant range or a vertex attribute then skip it
-		if(descriptor->is_push_constant || descriptor->is_attribute)
+		if(descriptor->is_push_constant || vulkan_shader_resource_description_is_attribute(descriptor))
 			continue;
 
 		VkDescriptorSetLayoutBinding* binding = &bindings[binding_count];

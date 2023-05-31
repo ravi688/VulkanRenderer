@@ -255,7 +255,7 @@ static vulkan_vertex_buffer_layout_description_t* create_deep_copy_of_vulkan_ver
 
 		copy_infos[i].attribute_formats = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_FORMAT_ARRAY, VkFormat, attribute_count);
 		copy_infos[i].attribute_offsets = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, attribute_count);
-		copy_infos[i].attribute_locations = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U16_ARRAY, u16, attribute_count);
+		copy_infos[i].attribute_locations = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, attribute_count);
 
 		memcopyv(copy_infos[i].attribute_formats, vertex_infos[i].attribute_formats, VkFormat, attribute_count);
 		memcopyv(copy_infos[i].attribute_offsets, vertex_infos[i].attribute_offsets, u32, attribute_count);
@@ -1090,11 +1090,12 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 	u32 descriptor_count;
 	vulkan_shader_resource_description_t* descriptors = load_descriptors(allocator, reader, &descriptor_count);
 
-	// set the number of descriptors (vulkan vertex info objects)
-	OUT count = descriptor_count;
-
 	if(descriptor_count == 0)
+	{
+		// set the number of bindings to zero
+		OUT count = 0;
 		return NULL;
+	}
 
 	// allocate memory
 	vulkan_vertex_buffer_layout_description_t* vertex_infos = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_ARRAY, vulkan_vertex_buffer_layout_description_t, descriptor_count);
@@ -1107,7 +1108,7 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 	for(u32 i = 0, index = 0; i < descriptor_count; i++)
 	{
 		// this must be an attribute
-		_debug_assert__(descriptors[i].is_attribute);
+		_debug_assert__(vulkan_shader_resource_description_is_attribute(&descriptors[i]));
 
 		u32 location = descriptors[i].vertex_attrib_location_number;
 		glsl_type_t glsl_type = descriptors[i].handle.type;
@@ -1145,8 +1146,8 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 		attribute_info_t* attribute_info = dictionary_get_value_ptr(&bindings, &key);
 
 		// TODO: These checks should be done at the compilation time, not at the runtime
-		// if(buf_find_index_of(locations, &location, buf_u16_comparer) != BUF_INVALID_INDEX)
-		// 	LOG_FETAL_ERR("Multiple vertex attributes have the same layout location \"%u\", which is not allowed!\n", location);
+		if(buf_find_index_of(&attribute_info->locations, &location, buf_u32_comparer) != BUF_INVALID_INDEX)
+			LOG_FETAL_ERR("Multiple vertex attributes have the same layout location \"%u\", which is not allowed!\n", location);
 			
 		// add the location
 		buf_push(&attribute_info->locations, &location);
@@ -1181,6 +1182,9 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 		vinfo->attribute_formats = buf_get_ptr(&ainfo->formats);
 		vinfo->attribute_offsets = buf_get_ptr(&ainfo->offsets);
 	}
+
+	// set the number of bindings
+	OUT count = binding_count;
 
 	// free the temporary dictionary buffer
 	dictionary_free(&bindings);
