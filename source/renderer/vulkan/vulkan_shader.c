@@ -255,11 +255,11 @@ static vulkan_vertex_buffer_layout_description_t* create_deep_copy_of_vulkan_ver
 
 		copy_infos[i].attribute_formats = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_FORMAT_ARRAY, VkFormat, attribute_count);
 		copy_infos[i].attribute_offsets = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, attribute_count);
-		copy_infos[i].attribute_locations = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U16_ARRAY, u16, attribute_count);
+		copy_infos[i].attribute_locations = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, attribute_count);
 
 		memcopyv(copy_infos[i].attribute_formats, vertex_infos[i].attribute_formats, VkFormat, attribute_count);
 		memcopyv(copy_infos[i].attribute_offsets, vertex_infos[i].attribute_offsets, u32, attribute_count);
-		memcopyv(copy_infos[i].attribute_locations, vertex_infos[i].attribute_locations, u16, attribute_count);
+		memcopyv(copy_infos[i].attribute_locations, vertex_infos[i].attribute_locations, u32, attribute_count);
 	}
 	return copy_infos;
 }
@@ -1090,30 +1090,25 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 	u32 descriptor_count;
 	vulkan_shader_resource_description_t* descriptors = load_descriptors(allocator, reader, &descriptor_count);
 
-	// set the number of descriptors (vulkan vertex info objects)
-	OUT count = descriptor_count;
-
 	if(descriptor_count == 0)
+	{
+		// set the number of bindings to zero
+		OUT count = 0;
 		return NULL;
+	}
 
 	// allocate memory
 	vulkan_vertex_buffer_layout_description_t* vertex_infos = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_ARRAY, vulkan_vertex_buffer_layout_description_t, descriptor_count);
 	safe_memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, descriptor_count);
 
-	typedef struct attribute_info_t { BUFFER locations, formats, offsets; } attribute_info_t;
+	typedef struct attribute_info_t { BUFFER locations, formats, offsets; u32 largest_element_size; } attribute_info_t;
 	dictionary_t bindings = dictionary_create(u32, attribute_info_t, 1, dictionary_key_comparer_u32);
 
 	// iterate through each vertex attribute across all the vertex bindings
 	for(u32 i = 0, index = 0; i < descriptor_count; i++)
 	{
 		// this must be an attribute
-		_debug_assert__(descriptors[i].is_attribute);
-
-		u32 location = descriptors[i].vertex_attrib_location_number;
-		glsl_type_t glsl_type = descriptors[i].handle.type;
-		VkFormat format = vkformatof_glsl_type(glsl_type);
-		u32 alignment = alignof_glsl_type(glsl_type);
-		u32 size = sizeof_glsl_type(glsl_type);
+		_debug_assert__(vulkan_shader_resource_description_is_attribute(&descriptors[i]));
 
 		// use vertex binding number as a key
 		u32 key = descriptors[i].vertex_attrib_binding_number;
@@ -1124,7 +1119,8 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 			{ 
 				.locations = buf_create(sizeof(u32), 1, 0), 
 				.formats = buf_create(sizeof(VkFormat), 1, 0), 
-				.offsets = buf_create(sizeof(u32), 1, 0) 
+				.offsets = buf_create(sizeof(u32), 1, 0),
+				.largest_element_size = 0
 			};
 			dictionary_push(&bindings, &key, &info);
 
@@ -1144,23 +1140,33 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 		// get pointer to the attribute info object for binding 'key'
 		attribute_info_t* attribute_info = dictionary_get_value_ptr(&bindings, &key);
 
+		u32 location = descriptors[i].vertex_attrib_location_number;
+
 		// TODO: These checks should be done at the compilation time, not at the runtime
-		// if(buf_find_index_of(locations, &location, buf_u16_comparer) != BUF_INVALID_INDEX)
-		// 	LOG_FETAL_ERR("Multiple vertex attributes have the same layout location \"%u\", which is not allowed!\n", location);
+		if(buf_find_index_of(&attribute_info->locations, &location, buf_u32_comparer) != BUF_INVALID_INDEX)
+			LOG_FETAL_ERR("Multiple vertex attributes have the same layout location \"%u\", which is not allowed!\n", location);
 			
 		// add the location
 		buf_push(&attribute_info->locations, &location);
+		
+		glsl_type_t glsl_type = descriptors[i].handle.type;
+		
 		// add the format
+		VkFormat format = vkformatof_glsl_type(glsl_type);
 		buf_push(&attribute_info->formats, &format);
 
 		u32 offset;
 		// pop the previous offset
 		buf_pop(&attribute_info->offsets, &offset);
 		// snap the offset to the correct alignment for this field/attribute
+		u32 alignment = alignof_glsl_type(glsl_type);
 		offset += (alignment - (offset % alignment)) % alignment;
 		// add the offset
 		buf_push(&attribute_info->offsets, &offset);
 		// increment the offset by the size of this field/attribute
+		u32 size = sizeof_glsl_type(glsl_type);
+		if(max(alignment, size) > attribute_info->largest_element_size)
+			attribute_info->largest_element_size = max(alignment, size);
 		offset += size;
 		// save the offset for next iteration
 		buf_push(&attribute_info->offsets, &offset);
@@ -1173,14 +1179,18 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 		attribute_info_t* ainfo = dictionary_get_value_ptr_at(&bindings, i);
 
 		// the final stride would be the last saved offset
-		vinfo->size = *(u32*)buf_peek_ptr(&ainfo->offsets);
+		u32 offset = *(u32*)buf_peek_ptr(&ainfo->offsets);
+		vinfo->size = offset + (ainfo->largest_element_size - offset % ainfo->largest_element_size) % ainfo->largest_element_size;
 		// assign the number of attribute count
 		vinfo->attribute_count = buf_get_element_count(&ainfo->locations);
 		// assign the internal pointers to their corresponding destinations
-		vinfo->attribute_locations = buf_get_ptr(&ainfo->locations);
-		vinfo->attribute_formats = buf_get_ptr(&ainfo->formats);
-		vinfo->attribute_offsets = buf_get_ptr(&ainfo->offsets);
+		vinfo->attribute_locations = CAST_TO(u32*, buf_get_ptr(&ainfo->locations));
+		vinfo->attribute_formats = CAST_TO(VkFormat*, buf_get_ptr(&ainfo->formats));
+		vinfo->attribute_offsets = CAST_TO(u32*, buf_get_ptr(&ainfo->offsets));
 	}
+
+	// set the number of bindings
+	OUT count = binding_count;
 
 	// free the temporary dictionary buffer
 	dictionary_free(&bindings);

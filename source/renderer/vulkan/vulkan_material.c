@@ -65,7 +65,7 @@ static void setup_material_resources(vulkan_material_t* material)
 	for(u16 i = 0, j = 0; i < material->shader->material_set_binding_count; i++)
 	{
 		vulkan_shader_resource_description_t* binding = &bindings[i];
-		if(binding->is_attribute || binding->is_opaque || binding->is_push_constant)
+		if(vulkan_shader_resource_description_is_attribute(binding) || binding->is_opaque || binding->is_push_constant)
 			continue;
 
 		_debug_assert__(j < count);
@@ -637,7 +637,7 @@ RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vul
 	for(u16 i = 0, j = 0; i < binding_count; i++)
 	{
 		vulkan_shader_resource_description_t* binding = &bindings[i];
-		if(binding->is_attribute)
+		if(vulkan_shader_resource_description_is_attribute(binding))
 			continue;
 		if(strcmp(binding->handle.name, struct_name) == 0)
 		{

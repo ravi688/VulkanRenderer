@@ -135,13 +135,13 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(vulkan_rend
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
 		case SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP:
-			begin_vertex_binding(renderer, &attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+			begin_vertex_binding(renderer, &attributes, 16, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(renderer, &attributes);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
-			begin_vertex_binding(renderer, &attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+			begin_vertex_binding(renderer, &attributes, 16, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(renderer, &attributes);
 			begin_vertex_binding(renderer, &attributes, 8, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_BINDING);
@@ -155,19 +155,19 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(vulkan_rend
 		case SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT:
 		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR:
-			begin_vertex_binding(renderer, &attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+			begin_vertex_binding(renderer, &attributes, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(renderer, &attributes);
-			begin_vertex_binding(renderer, &attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
+			begin_vertex_binding(renderer, &attributes, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(renderer, &attributes);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
-			begin_vertex_binding(renderer, &attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+			begin_vertex_binding(renderer, &attributes, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(renderer, &attributes);
-			begin_vertex_binding(renderer, &attributes, 12, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
+			begin_vertex_binding(renderer, &attributes, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(renderer, &attributes);
 			begin_vertex_binding(renderer, &attributes, 8, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_BINDING);

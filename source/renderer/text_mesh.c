@@ -46,6 +46,8 @@
 	static void check_pre_condition(text_mesh_t* text_mesh);
 #endif /*GLOBAL_DEBUG*/
 
+#define INSTANCE_BUFFER_STRIDE (sizeof(vec4_t) /* offset (vec3 + 1 padding) */ + sizeof(vec4_t) /* scale (vec3 + 1 padding) */+ sizeof(vec4_t) /* rotation (vec3 + 1 padding) */)
+
 typedef struct text_mesh_string_t
 {
 	buf_ucount_t next_index;												// 	index of the next string in the buffer
@@ -237,10 +239,20 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
 		sub_buffer_handle_t handle = get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch);
 		vec3_t offset = { 0, 0, horizontal_pen};
 		offset = vec3_add(2, offset, string->position);
-		char bytes[36];
-		memcopyv(bytes, &offset, u8, 12);
-		memcopyv(bytes + 12, &string->scale, u8, 12);
-		memcopyv(bytes + 24, &string->rotation, u8, 12);
+		char bytes[INSTANCE_BUFFER_STRIDE];
+
+		/* copy the offset */
+		vec4_t offset4 = { offset.x, offset.y, offset.z, 0 };
+		memcopyv(bytes, &offset4, u8, 16);
+		
+		/* copy the scale */
+		vec4_t scale4 = { string->scale.x, string->scale.y, string->scale.z, 0 };
+		memcopyv(bytes + 16, &scale4, u8, 16);
+
+		/* copy the rotation */
+		vec4_t rotation4 = { string->rotation.x, string->rotation.y, string->rotation.z, 0 };
+		memcopyv(bytes + 28, &rotation4, u8, 16);
+
 		sub_buffer_push(buffer, handle, bytes);
 		horizontal_pen += info.advance_width;
 	}
@@ -315,7 +327,7 @@ static vulkan_instance_buffer_t* get_instance_buffer(renderer_t* renderer, dicti
 		vulkan_instance_buffer_t buffer;
 		vulkan_instance_buffer_create_info_t create_info = 
 		{
-			.stride = 36,		// vec3 offset, vec3 scale, vec3 rotation
+			.stride = INSTANCE_BUFFER_STRIDE,
 			.capacity = 10,
 		};
 		vulkan_instance_buffer_create(renderer->handle, &create_info, &buffer);

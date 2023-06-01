@@ -56,6 +56,12 @@
 
 #define MESH3D_MAX_ATTRIBUTE_COUNT 5
 #define MESH3D_INDEX_SIZE 4 //sizeof(u32)
+#define MESH3D_VERTEX_ATTRIB_POSITION_SIZE sizeof(vec4_t)
+#define MESH3D_VERTEX_ATTRIB_NORMAL_SIZE sizeof(vec4_t)
+#define MESH3D_VERTEX_ATTRIB_COLOR_SIZE sizeof(vec4_t)
+#define MESH3D_VERTEX_ATTRIB_UV_SIZE sizeof(vec2_t)
+#define MESH3D_VERTEX_ATTRIB_TANGENT_SIZE sizeof(vec4_t)
+#define MESH3D_VERTEX_ATTRIB_TRIANGLE_SIZE sizeof(vec3uint_t)
 
 typedef u32 index_t;
 

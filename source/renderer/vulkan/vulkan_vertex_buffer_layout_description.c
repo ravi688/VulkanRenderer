@@ -47,7 +47,7 @@ RENDERER_API void vulkan_vertex_buffer_layout_description_begin(vulkan_renderer_
 	description->input_rate = input_rate;
 	description->size = stride;
 
-	description->attribute_locations = CAST_TO(u16*, create_buffer(renderer->allocator, u16));
+	description->attribute_locations = CAST_TO(u32*, create_buffer(renderer->allocator, u32));
 	description->attribute_formats = CAST_TO(VkFormat*, create_buffer(renderer->allocator, VkFormat));
 	description->attribute_offsets = CAST_TO(u32*, create_buffer(renderer->allocator, u32));
 }
