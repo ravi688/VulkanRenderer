@@ -5,7 +5,7 @@
 	such as toolchains written by the same author) is a software to render 
 	2D & 3D geometries by writing C/C++ code and shaders.
 
-	File: TID-48.case5.h is a part of VulkanRenderer
+	File: text_mesh.h is a part of VulkanRenderer
 
 	Copyright (C) 2023  Author: Ravi Prakash Singh
 
