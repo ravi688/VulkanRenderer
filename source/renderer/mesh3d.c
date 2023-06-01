@@ -87,7 +87,7 @@ RENDERER_API function_signature(void, mesh3d_positions_new, mesh3d_t* mesh, inde
 		buf_free(mesh->positions);
 		mesh->positions = NULL;
 	}
-	mesh->positions = BUFcreate(NULL, sizeof(vec3_t), count, 0);
+	mesh->positions = BUFcreate(NULL, MESH3D_VERTEX_ATTRIB_POSITION_SIZE /* sizeof(vec4_t) */, count, 0);
 	debug_assert__(mesh->positions != NULL, "mesh->positions == NULL\n");
 	CALLTRACE_END();
 }
@@ -100,7 +100,7 @@ RENDERER_API function_signature(void, mesh3d_normals_new, mesh3d_t* mesh, index_
 		buf_free(mesh->normals);
 		mesh->normals = NULL;
 	}
-	mesh->normals = BUFcreate(NULL, sizeof(vec3_t), count, 0);
+	mesh->normals = BUFcreate(NULL, MESH3D_VERTEX_ATTRIB_NORMAL_SIZE /* sizeof(vec4_t) */, count, 0);
 	CALLTRACE_END();
 }
 
@@ -112,7 +112,7 @@ RENDERER_API function_signature(void, mesh3d_tangents_new, mesh3d_t* mesh, index
 		buf_free(mesh->tangents);
 		mesh->tangents = NULL;
 	}
-	mesh->tangents = BUFcreate(NULL, sizeof(vec3_t), count, 0);
+	mesh->tangents = BUFcreate(NULL, MESH3D_VERTEX_ATTRIB_TANGENT_SIZE /* sizeof(vec4_t) */, count, 0);
 	CALLTRACE_END();
 }
 
@@ -124,7 +124,7 @@ RENDERER_API function_signature(void, mesh3d_colors_new, mesh3d_t* mesh, index_t
 		buf_free(mesh->colors);
 		mesh->colors = NULL;
 	}
-	mesh->colors = BUFcreate(NULL, sizeof(vec3_t), count, 0);
+	mesh->colors = BUFcreate(NULL, MESH3D_VERTEX_ATTRIB_COLOR_SIZE /* sizeof(vec4_t) */, count, 0);
 	CALLTRACE_END();
 }
 
@@ -137,7 +137,7 @@ RENDERER_API function_signature(void, mesh3d_triangles_new, mesh3d_t* mesh, inde
 		buf_free(mesh->triangles);
 		mesh->triangles = NULL;
 	}
-	mesh->triangles = BUFcreate(NULL, sizeof(vec3uint_t), count, 0);
+	mesh->triangles = BUFcreate(NULL, MESH3D_VERTEX_ATTRIB_TRIANGLE_SIZE /* sizeof(vec3uint_t) */, count, 0);
 	CALLTRACE_END();
 }
 
@@ -149,7 +149,7 @@ RENDERER_API function_signature(void, mesh3d_uvs_new, mesh3d_t* mesh, index_t co
 		buf_free(mesh->uvs);
 		mesh->uvs = NULL;
 	}
-	mesh->uvs = BUFcreate(NULL, sizeof(vec2_t), count, 0);
+	mesh->uvs = BUFcreate(NULL, MESH3D_VERTEX_ATTRIB_UV_SIZE /* sizeof(vec2_t) */, count, 0);
 	CALLTRACE_END();
 }
 
@@ -431,7 +431,7 @@ RENDERER_API function_signature(void, mesh3d_position_add, mesh3d_t* mesh, float
 {
 	CALLTRACE_BEGIN();
 	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
-	vec3_t v = {x, y, z};
+	vec4_t v = { x, y, z, 0 };
 	buf_push(mesh->positions, &v);
 	CALLTRACE_END();
 }
@@ -440,7 +440,8 @@ RENDERER_API function_signature(void, mesh3d_position_add_vec3, mesh3d_t* mesh, 
 {
 	CALLTRACE_BEGIN();
 	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
-	buf_push(mesh->positions, (void*)(&v));
+	vec4_t v4 = { v.x, v.y, v.z, 0 };
+	buf_push(mesh->positions, &v4);
 	CALLTRACE_END();
 }
 
@@ -457,7 +458,8 @@ RENDERER_API function_signature(void, mesh3d_position_set_vec3, mesh3d_t* mesh, 
 {
 	CALLTRACE_BEGIN();
 	debug_assert__(NULL != mesh->positions, __POSITIONS_ARE_NOT_FOUND__);
-	buf_set_at(mesh->positions, index, (void*)(&position));
+	vec4_t v4 = { position.x, position.y, position.z, 0 };
+	buf_set_at(mesh->positions, index, &v4);
 	CALLTRACE_END();
 }
 
@@ -524,7 +526,7 @@ RENDERER_API function_signature(void, mesh3d_normal_add, mesh3d_t* mesh, float x
 {
 	CALLTRACE_BEGIN();
 	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
-	vec3_t n = {x, y, z};
+	vec4_t n = { x, y, z, 0 };
 	buf_push(mesh->normals, &n);
 	CALLTRACE_END();
 }
@@ -533,7 +535,8 @@ RENDERER_API function_signature(void, mesh3d_normal_add_vec3, mesh3d_t* mesh, ve
 {
 	CALLTRACE_BEGIN();
 	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
-	buf_push(mesh->normals, (void*)(&v));
+	vec4_t v4 = { v.x, v.y, v.z, 0 };
+	buf_push(mesh->normals, &v4);
 	CALLTRACE_END();
 }
 
@@ -550,7 +553,8 @@ RENDERER_API function_signature(void, mesh3d_normal_set_vec3, mesh3d_t* mesh, in
 {
 	CALLTRACE_BEGIN();
  	debug_assert__(NULL != mesh->normals, __NORMALS_ARE_NOT_FOUND__);
- 	buf_set_at(mesh->normals, index, (void*)(&normal));
+ 	vec4_t normal4 = { normal.x, normal.y, normal.z, 0 };
+ 	buf_set_at(mesh->normals, index, &normal4);
 	CALLTRACE_END();
 }
 
@@ -618,7 +622,7 @@ RENDERER_API function_signature(void, mesh3d_tangents_add, mesh3d_t* mesh, float
 {
 	CALLTRACE_BEGIN();
 	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
-	vec3_t n = {x, y, z};
+	vec4_t n = { x, y, z, 0 };
 	buf_push(mesh->tangents, &n);
 	CALLTRACE_END();
 }
@@ -627,7 +631,8 @@ RENDERER_API function_signature(void, mesh3d_tangent_add_vec3, mesh3d_t* mesh, v
 {
 	CALLTRACE_BEGIN();
 	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
-	buf_push(mesh->tangents, (void*)(&v));
+	vec4_t v4 = { v.x, v.y, v.z, 0 };
+	buf_push(mesh->tangents, &v4);
 	CALLTRACE_END();
 }
 
@@ -644,7 +649,8 @@ RENDERER_API function_signature(void, mesh3d_tangent_set_vec3, mesh3d_t* mesh, i
 {
 	CALLTRACE_BEGIN();
  	debug_assert__(NULL != mesh->tangents, __TANGENTS_ARE_NOT_FOUND__);
- 	buf_set_at(mesh->tangents, index, (void*)(&tangent));
+ 	vec4_t tangent4 = { tangent.x, tangent.y, tangent.z, 0 };
+ 	buf_set_at(mesh->tangents, index, &tangent4);
 	CALLTRACE_END();
 }
 
@@ -711,7 +717,7 @@ RENDERER_API function_signature(void, mesh3d_color_add, mesh3d_t* mesh, float x,
 {
 	CALLTRACE_BEGIN();
 	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
-	vec3_t n = {x, y, z};
+	vec4_t n = {x, y, z, 1 };
 	buf_push(mesh->colors, &n);
 	CALLTRACE_END();
 }
@@ -720,7 +726,8 @@ RENDERER_API function_signature(void, mesh3d_color_add_vec3, mesh3d_t* mesh, vec
 {
 	CALLTRACE_BEGIN();
 	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
-	buf_push(mesh->colors, (void*)(&v));
+	vec4_t v4 = { v.x, v.y, v.z, 1 };
+	buf_push(mesh->colors, &v4);
 	CALLTRACE_END();
 }
 
@@ -737,7 +744,8 @@ RENDERER_API function_signature(void, mesh3d_color_set_vec3, mesh3d_t* mesh, ind
 {
 	CALLTRACE_BEGIN();
  	debug_assert__(NULL != mesh->colors, __COLORS_ARE_NOT_FOUND__);
- 	buf_set_at(mesh->colors, index, (void*)(&color));
+ 	vec4_t color4 = { color.x, color.y, color.z, 1 };
+ 	buf_set_at(mesh->colors, index, &color4);
 	CALLTRACE_END();
 }
 
@@ -976,38 +984,32 @@ RENDERER_API function_signature(float, mesh3d_uv_get_x, mesh3d_t* mesh, index_t 
 RENDERER_API function_signature(index_t, mesh3d_sizeof_position, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	debug_assert__(mesh->positions != NULL, __POSITIONS_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_element_size(mesh->positions));
+	CALLTRACE_RETURN(MESH3D_VERTEX_ATTRIB_POSITION_SIZE);
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_normal, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	debug_assert__(mesh->normals != NULL, __NORMALS_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_element_size(mesh->normals));
+	CALLTRACE_RETURN(MESH3D_VERTEX_ATTRIB_NORMAL_SIZE);
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_tangent, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	debug_assert__(mesh->tangents != NULL, __TANGENTS_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_element_size(mesh->tangents));
+	CALLTRACE_RETURN(MESH3D_VERTEX_ATTRIB_TANGENT_SIZE);
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_color, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	debug_assert__(mesh->colors != NULL, __COLORS_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_element_size(mesh->colors));
+	CALLTRACE_RETURN(MESH3D_VERTEX_ATTRIB_COLOR_SIZE);
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_uv, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	debug_assert__(mesh->uvs != NULL, __UVS_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_element_size(mesh->uvs));
+	CALLTRACE_RETURN(MESH3D_VERTEX_ATTRIB_UV_SIZE);
 }
 RENDERER_API function_signature(index_t, mesh3d_sizeof_index, mesh3d_t* mesh)
 {
 	CALLTRACE_BEGIN();
-	debug_assert__(mesh->triangles != NULL, __TRIANGLES_ARE_NOT_FOUND__);
-	CALLTRACE_RETURN(buf_get_element_size(mesh->triangles) / 3);
+	CALLTRACE_RETURN(MESH3D_VERTEX_ATTRIB_TRIANGLE_SIZE / 3);
 }
 
 RENDERER_API function_signature(mesh3d_t*, mesh3d_plane, memory_allocator_t* allocator, float size)
@@ -1321,9 +1323,9 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_load, memory_allocator_t* allo
 			BUFFER texcoord_buffer;		// temporary buffer to store texture coordinates
 		} user_data;
 		user_data.mesh = mesh;
-		user_data.normal_buffer = buf_create(sizeof(float) * 3, 0, 0);
-		user_data.position_buffer = buf_create(sizeof(float) * 3, 0, 0);
-		user_data.texcoord_buffer = buf_create(sizeof(float) * 2, 0, 0);
+		user_data.normal_buffer = buf_create(MESH3D_VERTEX_ATTRIB_NORMAL_SIZE, 0, 0);
+		user_data.position_buffer = buf_create(MESH3D_VERTEX_ATTRIB_POSITION_SIZE, 0, 0);
+		user_data.texcoord_buffer = buf_create(MESH3D_VERTEX_ATTRIB_UV_SIZE, 0, 0);
 		obj_parse_callbacks_t parse_callbacks =
 		{
 			.user_data = &user_data,
@@ -1402,13 +1404,15 @@ static void print_facet(u32* facet, u32 attrib_count, u32 face_vertex_count, voi
 static void obj_vertex_normal(float* normal, void* user_data)
 {
 	// print_normal(normal, NULL);
-	buf_push(&((BUFFER*)(user_data + sizeof(mesh3d_t*)))[0], normal);
+	vec4_t n = { normal[0], normal[1], normal[2], 1 };
+	buf_push(&((BUFFER*)(user_data + sizeof(mesh3d_t*)))[0], &n);
 }
 
 static void obj_vertex_position(float* position, void* user_data)
 {
 	// print_position(position, NULL);
-	buf_push(&((BUFFER*)(user_data + sizeof(mesh3d_t*)))[1], position);
+	vec4_t p = { position[0], position[1], position[2], 0 };
+	buf_push(&((BUFFER*)(user_data + sizeof(mesh3d_t*)))[1], &p);
 }
 
 static void obj_vertex_texcoord(float* texcoord, void* user_data)
