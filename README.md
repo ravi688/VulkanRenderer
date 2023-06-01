@@ -149,7 +149,7 @@ There are only C and C++ interface headers for now.
 
 4. General Purpose Render Queues
 
-### Render Textures
+### Render Textures  (Hybrid render textures)
 
 1. Depth Render Texture
 
@@ -174,6 +174,7 @@ There are only C and C++ interface headers for now.
 2. Render Target switching
 
 3. Orthographic and Perspective Projection
+4. Split rendering
 
 ### Lights
 
@@ -207,7 +208,7 @@ There are only C and C++ interface headers for now.
 
 ### Shaders
 
-1. Multiple Render passes and Subpasses
+1. Multiple Render passes and Subpasses (fully control over the input and output attachments)
 
 2. Custom attachments configuration
 
