@@ -26,7 +26,7 @@
 
 #include <renderer/multi_buffer.h>
 #include <renderer/assert.h>
-#include <memory.h>
+#include <renderer/memory_allocator.h>
 
 #ifndef GLOBAL_DEBUG
 #	define check_pre_condition(multi_buffer)
@@ -156,6 +156,46 @@ RENDERER_API void multi_buffer_sub_buffer_clear(multi_buffer_t* multi_buffer, su
 	void* bytes = buf_get_ptr(&multi_buffer->buffer);
 	memset(bytes + sub_buffer->ptr * buf_get_element_size(&multi_buffer->buffer), 0, buf_get_element_size(&multi_buffer->buffer) * sub_buffer->count);
 	sub_buffer->count = 0;
+}
+
+RENDERER_API buf_ucount_t multi_buffer_sub_buffer_find_index_of(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal)
+{
+	check_pre_condition(multi_buffer);
+	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
+	if(sub_buffer->count == 0)
+		return BUF_INVALID_INDEX;
+	void* ptr = buf_get_ptr_at(&multi_buffer->buffer, get_master_index(sub_buffer, 0));
+	u32 element_size = buf_get_element_size(&multi_buffer->buffer);
+	for(u32 i = 0; i < sub_buffer->count; i++, ptr += element_size)
+		if(is_equal(ptr, in_value))
+			return CAST_TO(buf_ucount_t, i);
+	return BUF_INVALID_INDEX;
+}
+
+RENDERER_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal)
+{
+	check_pre_condition(multi_buffer);
+	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
+	if(sub_buffer->count == 0)
+		return false;
+	void* ptr = buf_get_ptr_at(&multi_buffer->buffer, get_master_index(sub_buffer, 0));
+	u32 element_size = buf_get_element_size(&multi_buffer->buffer);
+	for(u32 i = 0; i < sub_buffer->count; i++, ptr += element_size)
+		if(is_equal(ptr, in_value))
+		{
+			sub_buffer->count--;
+			u32 remaining_count = sub_buffer->count - i;
+			while(remaining_count > 0)
+			{
+				memcpy(ptr, ptr + element_size, element_size);
+				ptr += element_size;
+				--remaining_count;
+			}
+			return true;
+		}
+
+	/* failed to remove, as the value doesn't exist in the buffer */
+	return false;	
 }
 
 // getters

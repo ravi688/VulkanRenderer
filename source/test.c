@@ -45,6 +45,7 @@
 #include <renderer/tests/cube.h>
 #include <renderer/tests/texture_sampling.h>
 #include <renderer/tests/text_mesh.h>
+#include <renderer/tests/bitmap_text.h>
 
 #include <renderer/tests/TID-14.case1.h>
 #include <renderer/tests/TID-14.case2.h>
@@ -95,6 +96,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 	ELSE_IF(CUBE);
 	ELSE_IF(TEXTURE_SAMPLING);
 	ELSE_IF(TEXT_MESH);
+	ELSE_IF(BITMAP_TEXT);
 	ELSE_IF(TID_14_CASE_1);
 	ELSE_IF(TID_14_CASE_2);
 	ELSE_IF(TID_14_CASE_3);
@@ -129,6 +131,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 					"\tCUBE\n"
 					"\tTEXTURE_SAMPLING\n"
 					"\tTEXT_MESH\n"
+					"\tBITMAP_TEXT\n"
 					"\tTID_14_CASE_1\n"
 					"\tTID_14_CASE_2\n"
 					"\tTID_14_CASE_3\n"
