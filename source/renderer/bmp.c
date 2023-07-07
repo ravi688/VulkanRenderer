@@ -32,6 +32,7 @@
 #include <renderer/alloc.h>
 #include <renderer/debug.h>
 #include <stdio.h> // FILE
+#include <stb/stb_image_write.h>
 
 #define PARSE_ASSERT(boolean, ERROR) if(!(boolean)) bmp_parse_error(ERROR)
 
@@ -147,58 +148,61 @@ RENDERER_API function_signature(void, bmp_write, void* data, u32 width, u32 heig
 {
 	CALLTRACE_BEGIN();
 
-	/* **NOTE** we are writing uncompressed pixel data */
+	// /* **NOTE** we are writing uncompressed pixel data */
 
-	FILE* file = fopen(file_path, "w");
+	// FILE* file = fopen(file_path, "w");
 
-	u32 pixel_data_size = (width * channel_count + width % 4) * height;
+	// u32 pixel_data_size = (width * channel_count + width % 4) * height;
 	
-	/* write bitmap file header */
-	WORD_write(file, BIT16_PACK8('M', 'B'));
-	DWORD_write(file, 54 + pixel_data_size);
-	WORD_write(file, 0);
-	WORD_write(file, 0);
-	DWORD_write(file, 54);
+	// /* write bitmap file header */
+	// WORD_write(file, BIT16_PACK8('M', 'B'));
+	// DWORD_write(file, 54 + pixel_data_size);
+	// WORD_write(file, 0);
+	// WORD_write(file, 0);
+	// DWORD_write(file, 54);
 
-	/* write bitmap info header */
-	DWORD_write(file, 40);
-	LONG_write(file, width);
-	LONG_write(file, height);
-	WORD_write(file, 1);
-	WORD_write(file, channel_count * 8);
-	DWORD_write(file, 0);
-	DWORD_write(file, 0);
-	LONG_write(file, 0);
-	LONG_write(file, 0);
-	DWORD_write(file, 0);
-	DWORD_write(file, 0);
+	// /* write bitmap info header */
+	// DWORD_write(file, 40);
+	// LONG_write(file, width);
+	// LONG_write(file, height);
+	// WORD_write(file, 1);
+	// WORD_write(file, channel_count * 8);
+	// DWORD_write(file, 0);
+	// DWORD_write(file, 0);
+	// LONG_write(file, 0);
+	// LONG_write(file, 0);
+	// DWORD_write(file, 0);
+	// DWORD_write(file, 0);
 
-	/* NOTE: Here pixel data is interpreted as laid out in row major form starting from left 
-	 * Hence, start of the texture (0, 0) is on the top-left of the bitmap texture */
+	// /* NOTE: Here pixel data is interpreted as laid out in row major form starting from left 
+	//  * Hence, start of the texture (0, 0) is on the top-left of the bitmap texture */
 
-	u32 horizontal_stride = width * channel_count;
-	u32 size = width * height * channel_count;
-	void* _data = data + size - horizontal_stride;
+	// u32 horizontal_stride = width * channel_count;
+	// u32 size = width * height * channel_count;
+	// void* _data = data + size - horizontal_stride;
 
-	/* write pixel data */
-	for(u32 i = 0; i < height; i++, _data -= horizontal_stride)
-	{
-		for(u32 j = 0; j < width; j++)
-		{
-			u8* pixel = CAST_TO(u8*, _data + j * channel_count);
+	// /* write pixel data */
+	// for(u32 i = 0; i < height; i++, _data -= horizontal_stride)
+	// {
+	// 	for(u32 j = 0; j < width; j++)
+	// 	{
+	// 		u8* pixel = CAST_TO(u8*, _data + j * channel_count);
 			
-			u8 swizzle[channel_count];
-			for(u32 k = 0; k < channel_count; k++)
-				swizzle[k] = pixel[channel_count - 1 - k];
+	// 		u8 swizzle[channel_count];
+	// 		for(u32 k = 0; k < channel_count; k++)
+	// 			swizzle[k] = pixel[channel_count - 1 - k];
 
-			write(file, swizzle, channel_count);
-		}
-		for(u32 j = 0; j < (width % 4); j++)
-			fputc(0, file);
-	}
+	// 		write(file, swizzle, channel_count);
+	// 	}
+	// 	for(u32 j = 0; j < (width % 4); j++)
+	// 		fputc(0, file);
+	// }
 
-	fflush(file);
-	fclose(file);
+	// fflush(file);
+	// fclose(file);
+
+	stbi_write_bmp(file_path, width, height, channel_count, data);
+
 	CALLTRACE_END();
 }
 

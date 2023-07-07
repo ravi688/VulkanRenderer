@@ -20,7 +20,7 @@ RENDERER_API buffer2d_view_t buffer2d_view_create(buffer_t* backed_buffer, u32 w
 static INLINE_IF_RELEASE_MODE void buffer2d_view_destroy(buffer2d_view_t* view) { }
 
 RENDERER_API void buffer2d_view_resize(buffer2d_view_t* view, u32 width, u32 height);
-RENDERER_API void buffer2d_view_clear(buffer2d_view_t* view);
+RENDERER_API void buffer2d_view_clear(buffer2d_view_t* view, void* clear_value);
 
 /* getters */
 static INLINE_IF_RELEASE_MODE buffer_t* buffer2d_view_get_backed_buffer(buffer2d_view_t* view) { return view->backed_buffer; }

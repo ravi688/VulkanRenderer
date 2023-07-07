@@ -147,7 +147,10 @@ RENDERER_API u32 hash_table_get_count(hash_table_t* table)
 
 RENDERER_API void* hash_table_get_value(hash_table_t* table, void* key)
 {
-	return DREF_VOID_PTR(__hash_table_get_value(table, key)) + table->key_size;
+	void* ptr = __hash_table_get_value(table, key);
+	if(ptr == NULL)
+		return NULL;
+	return DREF_VOID_PTR(ptr) + table->key_size;
 }
 
 RENDERER_API void hash_table_foreach(hash_table_t* table, void (*visitor)(void* key, void* value, void* user_data), void* user_data)

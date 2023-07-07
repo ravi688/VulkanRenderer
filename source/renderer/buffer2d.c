@@ -143,9 +143,12 @@ static void add_filled_rect(buffer2d_t* buffer, irect2d_t rect, void* key PARAM_
 	hash_table_add(&buffer->filled_rects, key, (void*)&rect_info);
 }
 
-static void write_data(buffer2d_t* buffer, irect2d_t rect, void* data)
+static void write_data(buffer2d_t* buffer, irect2d_t rect, void* data, u32 size, bool is_broadcast)
 {
-	buffer2d_view_set_at(BASE(buffer), rect.offset.x, rect.offset.y, rect.extent.width, rect.extent.height, data);	
+	if(is_broadcast)
+		buffer2d_view_broadcast_rect(BASE(buffer), rect, data, size);
+	else
+		buffer2d_view_set_rect(BASE(buffer), rect, data);	
 }
 
 static bool is_inside(ioffset2d_t p, ioffset2d_t tl, ioffset2d_t br)
@@ -225,7 +228,7 @@ static void recalculate_vacant_rects(buffer2d_t* buffer, rect2d_info_key_t vacan
 	hash_table_remove(&buffer->vacant_rects, (void*)&vacant_rect_info_key);
 }
 
-static ioffset2d_t pack_data2d(buffer2d_t* buffer, iextent2d_t extent, void* data)
+static ioffset2d_t pack_data2d(buffer2d_t* buffer, iextent2d_t extent, void* data, u32 size, bool is_broadcast)
 {
 	/* find a rect which can accomodate a data of size { width, height } */
 	rect2d_info_key_t vacant_rect_key = find_best_matching_rect(buffer, extent);
@@ -244,7 +247,7 @@ static ioffset2d_t pack_data2d(buffer2d_t* buffer, iextent2d_t extent, void* dat
 
 	/* write the data to the buffer */
 	if(data != NULL)
-		write_data(buffer, irect2d(rect_info->rect.offset, extent), data);
+		write_data(buffer, irect2d(rect_info->rect.offset, extent), data, size, is_broadcast);
 
 	/* save the offset as this vacant rect will be removed in 'recalculate_vacant_rects' */
 	ioffset2d_t offset = rect_info->rect.offset;
@@ -254,10 +257,46 @@ static ioffset2d_t pack_data2d(buffer2d_t* buffer, iextent2d_t extent, void* dat
 	return offset;
 }
 
+#ifdef GLOBAL_DEBUG
+
+static icolor3_t filled_colors[] = 
+{
+	{ 255, 255, 255 },
+	{ 0, 0, 0 },
+	{ 0, 255, 0 },
+	{ 255, 0, 0 },
+	{ 255, 255, 0 },
+	{ 128, 255, 0 },
+	{ 255, 50, 0 },
+	{ 255, 170, 0 }
+};
+
+RENDERER_API void buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height)
+{
+	static u32 counter = 0;
+	static u32 colors_size = SIZEOF_ARRAY(filled_colors);
+	if(counter >= colors_size)
+		counter = 0;
+	else
+		++counter;
+	buffer2d_push(buffer, key, value, width, height, filled_colors[counter]);
+}
+
+#endif/*GLOBAL_DEBUG*/
+
 RENDERER_API void buffer2d_push(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color))
 {
 	/* pack the data */
-	ioffset2d_t offset = pack_data2d(buffer, iextent2d(width, height), value);
+	ioffset2d_t offset = pack_data2d(buffer, iextent2d(width, height), value, 0 /* ignored */, false /* don't broadcast */);
+
+	/* add the entry into the hash table 'elements' */
+	add_filled_rect(buffer, irect2d(offset, iextent2d(width, height)), key PARAM_IF_DEBUG(color));
+}
+
+RENDERER_API void buffer2d_push_broadcast(buffer2d_t* buffer, void* key, void* value, u32 size, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color))
+{
+	/* pack the data */
+	ioffset2d_t offset = pack_data2d(buffer, iextent2d(width, height), value, size, true);
 
 	/* add the entry into the hash table 'elements' */
 	add_filled_rect(buffer, irect2d(offset, iextent2d(width, height)), key PARAM_IF_DEBUG(color));
@@ -281,7 +320,7 @@ static void push_again(void* key, void* value, void* user_data)
 	buffer2d_view_get_rect(CAST_TO(pair_t(buffer2d_t*, buffer2d_view_t*)*, user_data)->second, filled_rect_info->rect_info.rect, data);
 
 	/* pack it again and update the new position (offset) */
-	AUTO offset = pack_data2d(CAST_TO(pair_t(buffer2d_t*, buffer2d_view_t*)*, user_data)->first, filled_rect_info->rect_info.rect.extent, data);
+	AUTO offset = pack_data2d(CAST_TO(pair_t(buffer2d_t*, buffer2d_view_t*)*, user_data)->first, filled_rect_info->rect_info.rect.extent, data, 0, false);
 	filled_rect_info->rect_info.rect.offset = offset;
 }
 
@@ -297,7 +336,7 @@ RENDERER_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_colu
 	buffer2d_view_resize(base, num_rows, num_columns);
 
 	/* clear the backed buffer as it is now invalidated and we need to write on it again */
-	buffer2d_view_clear(base);
+	buffer2d_view_clear(base, NULL);
 
 	/* clear the vacant rects as space has been resized so exisiting vacant rects are now invalidated */
 	clear_vacant_rects(buffer);
@@ -315,9 +354,9 @@ RENDERER_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_colu
 	buf_free(&old_backed_buffer);
 }
 
-RENDERER_API void buffer2d_clear(buffer2d_t* buffer)
+RENDERER_API void buffer2d_clear(buffer2d_t* buffer, void* clear_value)
 {
-	buf_clear(BASE(buffer)->backed_buffer, NULL);
+	buffer2d_view_clear(BASE(buffer), clear_value);
 	hash_table_clear(&buffer->filled_rects);
 	clear_vacant_rects(buffer);
 }
@@ -344,7 +383,7 @@ static void dump_filled_rect(void* key, void* value, void* user_data)
 	buffer2d_view_broadcast_rect(CAST_TO(buffer2d_view_t*, user_data), _rect, &rect->color, sizeof(icolor3_t));
 }
 
-static icolor3_t colors[] =
+static icolor3_t vacant_colors[] =
 {
 	{ 50, 100, 255 },
 	{ 60, 90, 255 },
@@ -364,7 +403,7 @@ static void dump_vacant_rect(void* key, void* value, void* user_data)
 	static u32 counter = 0;
 	++counter;
 
-	buffer2d_view_broadcast_rect(CAST_TO(buffer2d_view_t*, user_data), _rect, &colors[counter % SIZEOF_ARRAY(colors)], sizeof(icolor3_t));
+	buffer2d_view_broadcast_rect(CAST_TO(buffer2d_view_t*, user_data), _rect, &vacant_colors[counter % SIZEOF_ARRAY(vacant_colors)], sizeof(icolor3_t));
 }
 
 RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name)

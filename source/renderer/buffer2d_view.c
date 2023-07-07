@@ -20,9 +20,9 @@ RENDERER_API void buffer2d_view_resize(buffer2d_view_t* view, u32 width, u32 hei
 	view->size = iextent2d(width, height);
 }
 
-RENDERER_API void buffer2d_view_clear(buffer2d_view_t* view)
+RENDERER_API void buffer2d_view_clear(buffer2d_view_t* view, void* clear_value)
 {
-	buf_clear(view->backed_buffer, NULL);
+	buf_clear(view->backed_buffer, clear_value);
 	buf_set_element_count(view->backed_buffer, IEXTENT2D_AREA(view->size));
 	_debug_assert__(buf_get_element_count(view->backed_buffer) == buf_get_capacity(view->backed_buffer));
 }
@@ -33,8 +33,8 @@ RENDERER_API void buffer2d_view_set_at(buffer2d_view_t* view, u32 loc_x, u32 loc
 	_debug_assert__((loc_y + size_y) <= view->size.y);
 
 	u8* _data = CAST_TO(u8*, in_data);
-	for(u32 i = 0; i < size_y; i++)
-		for(u32 j = 0, k = 0; j < size_x; j++, k++)
+	for(u32 i = 0, k = 0; i < size_y; i++)
+		for(u32 j = 0; j < size_x; j++, k++)
 			buf_set_at(view->backed_buffer, (loc_y + i) * view->size.x + (loc_x + j), &_data[k]);
 }
 
@@ -54,8 +54,8 @@ RENDERER_API void buffer2d_view_get_at(buffer2d_view_t* view, u32 loc_x, u32 loc
 	_debug_assert__((loc_y + size_y) <= view->size.y);
 
 	u8* _data = CAST_TO(u8*, out_data);
-	for(u32 i = 0; i < size_y; i++)
-		for(u32 j = 0, k = 0; j < size_x; j++, k++)
+	for(u32 i = 0, k = 0; i < size_y; i++)
+		for(u32 j = 0; j < size_x; j++, k++)
 			buf_get_at(view->backed_buffer, (loc_y + i) * view->size.x + (loc_x + j), &_data[k]);
 }
 

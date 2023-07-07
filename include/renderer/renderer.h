@@ -78,6 +78,8 @@
 typedef struct render_window_t render_window_t;
 typedef struct memory_allocator_t memory_allocator_t;
 
+typedef struct FT_LibraryRec_  *FT_Library;
+
 typedef struct renderer_t
 {
 	union
@@ -97,6 +99,7 @@ typedef struct renderer_t
 	};
 	
 	memory_allocator_t* allocator;
+	FT_Library ft_library;
 	// shader_library_t* shader_library;
 	// material_library_t* material_library;
 	// render_pass_pool_t* render_pass_pool;

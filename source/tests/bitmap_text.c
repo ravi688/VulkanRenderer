@@ -17,6 +17,16 @@
 #include <renderer/color.h>
 #include <renderer/buffer2d.h>
 
+#include <FreeType/ft2build.h>
+#include <FreeType/freetype/freetype.h>
+#include <FreeType/freetype/ftimage.h>
+
+#include <renderer/system/display.h>
+
+#include <renderer/bitmap_glyph_pool.h>
+
+#include <disk_manager/file_reader.h>
+
 TEST_DATA(BITMAP_TEXT)
 {
 	render_scene_t* scene;
@@ -88,7 +98,7 @@ void test_bitmap()
 	/*f32 half_diag = sqrt(2) * 256;
 	s32 wave_number = 1;*/
 	s32 num_divisons = 8;
-	icolor3_t data[512 * 512];
+	u8 data[512 * 512];
 	for(s32 i = 0; i < 512; i++)
 	{
 		for(s32 j = 0; j < 512; j++)
@@ -100,22 +110,22 @@ void test_bitmap()
 			AUTO color = color3(fmaxf(sin(t), 0), fmaxf(sin(t - 1.57f), 0), t);
 			data[i * 512 + j] = icolor3(color.r * 255, color.g * 255, color.b * 255);
 			*/			
-			// s32 size = 512 / num_divisons;
-			// s32 y = (i / size) * size;
-			// s32 x = (j / size) * size;
+			s32 size = 512 / num_divisons;
+			s32 y = (i / size) * size;
+			s32 x = (j / size) * size;
 
-			// if(((i >= x) && (i < (size + x))) && ((j >= y) < (size + y)))
+			if(((i >= x) && (i < (size + x))) && ((j >= y) < (size + y)))
+				data[i * 512 + j] = 255 /*ICOLOR3_YELLOW*/;
+			else
+				data[i * 512 + j] = 0 /*ICOLOR3_BLUE*/;
+
+			// if(i < 100)
 			// 	data[i * 512 + j] = ICOLOR3_YELLOW;
 			// else
 			// 	data[i * 512 + j] = ICOLOR3_BLUE;
-
-			if(i < 100)
-				data[i * 512 + j] = ICOLOR3_YELLOW;
-			else
-				data[i * 512 + j] = ICOLOR3_BLUE;
 		}
 	}
-	bmp_write(data, 512, 512, 3, "test_bitmap.bmp");
+	bmp_write(data, 512, 512, 1, "test_bitmap.bmp");
 }
 
 static void test_buffer2d_view()
@@ -158,6 +168,231 @@ typedef struct input_t
 	u32 height;
 } input_t;
 
+static icolor3_t colors[] = 
+{
+	{ 255, 255, 255 },
+	{ 0, 0, 0 },
+	{ 0, 255, 0 },
+	{ 0, 0, 255 },
+	{ 255, 0, 0 },
+	{ 0, 255, 255 },
+	{ 128, 255, 255 },
+	{ 150, 50, 50 },
+	{ 255, 170, 170 }
+};
+
+#define KEY __COUNTER__
+
+input_t inputs[] = 
+{
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 128, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 5, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 64, 128 },
+	{ KEY, 480, 32 },
+	{ KEY, 32, 448 },
+	{ KEY, 5, 128 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+	{ KEY, 32, 32 },
+};
+
 static void test_buffer2d()
 {
 	buffer2d_create_info_t create_info = 
@@ -170,231 +405,6 @@ static void test_buffer2d()
 		.key_hash_function = u32_hash
 	};
 	buffer2d_t buffer = buffer2d_create(&create_info);
-
-	icolor3_t colors[] = 
-	{
-		ICOLOR3_WHITE,
-		ICOLOR3_BLACK,
-		ICOLOR3_GREEN,
-		ICOLOR3_BLUE,
-		ICOLOR3_RED,
-		ICOLOR3_YELLOW,
-		ICOLOR3_ORANGE,
-		ICOLOR3_BROWN,
-		ICOLOR3_PINK
-	};
-
-	#define KEY __COUNTER__
-
-	input_t inputs[] = 
-	{
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 128, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 5, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 64, 128 },
-		{ KEY, 480, 32 },
-		{ KEY, 32, 448 },
-		{ KEY, 5, 128 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-		{ KEY, 32, 32 },
-	};
 
 	u32 input_count = SIZEOF_ARRAY(inputs);
 	for(u32 i = 0; i < input_count; i++)
@@ -410,6 +420,120 @@ static void test_buffer2d()
 	buffer2d_destroy(&buffer);
 }
 
+static void test_glyph_rasterization(renderer_t* renderer)
+{
+	BUFFER* data = load_binary_from_file("showcase/resource/fonts/arial.ttf");
+
+	FT_Face face;
+	AUTO error = FT_New_Memory_Face(renderer->ft_library, data->bytes, data->element_count, 0, &face);
+
+	if(error)
+	{
+		debug_log_error("An error occurred while loading font file");
+		return;
+	}
+
+	debug_log_info("Num glyphs: %lu", face->num_glyphs);
+
+	AUTO dpi = display_get_dpi();
+	debug_log_info("DPI: width = %lu dpi, height = %lu dpi", dpi.x, dpi.y);
+
+	error = FT_Set_Char_Size(face, 0, 11*64, dpi.x, dpi.y);
+
+	if(error)
+	{
+		debug_log_error("Couldn't set the char size");
+		return;
+	}
+
+	AUTO glyph_index = FT_Get_Char_Index(face, 'A');
+
+	_debug_assert__(glyph_index != 65);
+
+	error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT);
+
+	if(error)
+	{
+		debug_log_error("Couldn't load the glyph");
+		return;
+	}
+
+	error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+
+	if(error)
+	{
+		debug_log_error("Couldn't render the glyph");
+		return;
+	}
+
+	AUTO glyph_bitmap = face->glyph->bitmap;
+
+	_debug_assert__(glyph_bitmap.pixel_mode == 2);
+	bmp_write(glyph_bitmap.buffer, glyph_bitmap.width, glyph_bitmap.rows, 1, "test_glyph.bmp");
+
+	FT_Done_Face(face);
+	buf_free(data);
+}
+
+static void test_buffer2d_backed_buffer_dump()
+{
+	buffer2d_create_info_t create_info = 
+	{
+		.size = { sizeof(icolor3_t) * 1024, 1024 },
+		.buffer = NULL,
+		.resize_mode = BUFFER2D_RESIZE_MODE_ASPECT_RATIO_STRICT,
+		.key_size = sizeof(u32), // UTF-32
+		.key_comparer = u32_equal_to,
+		.key_hash_function = u32_hash
+	};
+	buffer2d_t bitmap = buffer2d_create(&create_info);
+	u8 default_color = 255;
+	buffer2d_clear(&bitmap, (void*)&default_color);
+
+	u32 input_count = SIZEOF_ARRAY(inputs);
+	for(u32 i = 0; i < input_count; i++)
+	{
+		IF_DEBUG( AUTO color = colors[i % SIZEOF_ARRAY(colors)] );
+		buffer2d_push_broadcast(&bitmap, &inputs[i].key, IF_DEBUG((void*)&color) ELSE(NULL), sizeof(icolor3_t), inputs[i].width * sizeof(icolor3_t), inputs[i].height PARAM_IF_DEBUG(color));
+	}
+
+	void* ptr = buf_get_ptr(buffer2d_get_backed_buffer(&bitmap));
+	bmp_write(ptr, BASE(&bitmap)->size.x / sizeof(icolor3_t), BASE(&bitmap)->size.y, 3, "test_buffer2d_backed_buffer_dump.bmp");
+
+	buffer2d_destroy(&bitmap);
+}
+
+static void test_glyph_packing(renderer_t* renderer)
+{
+	/* create font */
+	font_t font;
+	font_load_and_create_no_alloc(renderer, "showcase/resource/fonts/arial.ttf", &font);
+	font_set_char_size(&font, 12);
+
+	/* create bitmap glyph pool */
+	bitmap_glyph_pool_create_info_t create_info = 
+	{
+		.size = { 128, 128 },
+		.buffer = NULL,
+		.font = &font
+	};
+	bitmap_glyph_pool_t* pool = bitmap_glyph_pool_create(renderer, &create_info);
+
+	for(char i = 32; i < 86; ++i)
+	{
+		glyph_texcoord_t texcoord;
+		bitmap_glyph_pool_get_texcoord(pool, i, &texcoord);
+	}
+
+	IF_DEBUG( bitmap_glyph_pool_dump(pool, "test_bitmap_glyph_pool_dump.bmp") );
+	IF_DEBUG( bitmap_glyph_pool_dump_bb(pool, "test_bitmap_glyph_pool_dump_bb.bmp") );
+
+	bitmap_glyph_pool_destroy(pool);
+	bitmap_glyph_pool_release_resources(pool);
+
+	font_destroy(&font);
+}
+
 TEST_ON_INITIALIZE(BITMAP_TEXT)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
@@ -418,7 +542,7 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(this->camera, COLOR_GREEN, 1.0f);
+	camera_set_clear(this->camera, COLOR_BLACK, 1.0f);
 	camera_set_active(this->camera, true);
 	camera_set_transform(this->camera, mat4_mul(2, mat4_translation(-1.8f, 0.6f, 0), mat4_rotation(0, 0, -22 * DEG2RAD)));
 
@@ -431,11 +555,11 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 	this->isScreenSpace = 1;
 	material_set_int(this->material, "parameters.isScreenSpace", 1);
 
-	this->font = font_load_and_create(renderer->allocator, "showcase/resource/fonts/arial.ttf");
+	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
 	this->glyph_pool = glyph_mesh_pool_create(renderer, this->font);
 	this->text_mesh = text_mesh_create(renderer, this->glyph_pool);
 	this->string_handle = text_mesh_string_create(this->text_mesh);
-	text_mesh_string_setH(this->text_mesh, this->string_handle, "Screen Space");
+	text_mesh_string_setH(this->text_mesh, this->string_handle, "AVLTNAaTgIMI");
 
 	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->render_object, this->material);
@@ -448,6 +572,9 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 	test_bitmap();
 	test_buffer2d_view();
 	test_buffer2d();
+	test_glyph_rasterization(renderer);
+	test_buffer2d_backed_buffer_dump();
+	test_glyph_packing(renderer);
 }
 
 TEST_ON_TERMINATE(BITMAP_TEXT)

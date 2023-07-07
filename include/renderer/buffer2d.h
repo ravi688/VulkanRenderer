@@ -98,12 +98,17 @@ RENDERER_API buffer_t* buffer2d_get_backed_buffer(buffer2d_t* buffer);
 RENDERER_API filled_rect_info_t* buffer2d_get_rect(buffer2d_t* buffer, void* key);
 /* fills 'out_data' with the data contained by 'rect_info' */
 RENDERER_API void buffer2d_get_rect_data(buffer2d_t* buffer, filled_rect_info_t* rect_info, void* out_data);
-/* creates a buffer2d element and adds a value with a key and size (width, height) , incrementing the*/
+#ifdef GLOBAL_DEBUG
+RENDERER_API void buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height);
+#endif /* GLOBAL_DEBUG */
+/* creates a buffer2d element and adds a value with a key and size (width, height) */
 RENDERER_API void buffer2d_push(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color));
+/* creates a buffer2d element and broadcasts a value of size 'size' to the entire rect with a key */
+RENDERER_API void buffer2d_push_broadcast(buffer2d_t* buffer, void* key, void* value, u32 size, u32 width, u32 heigh PARAM_IF_DEBUG(icolor3_t color));
 /* issues warning if the resize doesn't comply with the 'resize_mode' specified while creating this buffer */
 RENDERER_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_columns);
 /* clears the entire buffer */
-RENDERER_API void buffer2d_clear(buffer2d_t* buffer);
+RENDERER_API void buffer2d_clear(buffer2d_t* buffer, void* clear_value);
 /* returns (filled area) / (total area) */
 RENDERER_API f32 buffer2d_get_packing_efficiency(buffer2d_t* buffer);
 

@@ -29,52 +29,177 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <disk_manager/file_reader.h>
+#include <disk_manager/file_writer.h>
 #include <ttf2mesh.h>
 #include <renderer/assert.h>
+#include <renderer/system/display.h>
+#include <renderer/renderer.h>
 
+#include <Freetype/freetype.h>
+#include <Freetype/ftimage.h>
 
-RENDERER_API font_t* font_load_and_create(memory_allocator_t* allocator, const char* file_name)
+#include <ctype.h> // isgraph
+
+RENDERER_API font_t* font_new(memory_allocator_t* allocator)
 {
-	BUFFER* file_data = load_binary_from_file(file_name);
-	font_t* font = font_create(allocator, file_data->bytes, file_data->element_count);
-	buf_free(file_data);
+	font_t* font = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_FONT, font_t);
+	memzero(font, font_t);
 	return font;
 }
 
-RENDERER_API font_t* font_create(memory_allocator_t* allocator, void* bytes, u64 length)
+RENDERER_API font_t* font_create(renderer_t* renderer, void* bytes, u64 length)
+{
+	font_t* font = font_new(renderer->allocator);
+	font_create_no_alloc(renderer, bytes, length, font);
+	return font;
+}
+
+RENDERER_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 length, font_t OUT font)
 {
 	_debug_assert__(bytes != NULL);
 	_debug_assert__(length != 0);
-	font_t* font = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_FONT, font_t);
 	memzero(font, font_t);
-	font->allocator = allocator;
-	int result = ttf_load_from_mem(bytes, length, &font->handle, false);
-	if((result != 0) || (font->handle == NULL))
+	font->renderer = renderer;
+	font->dpi = display_get_dpi();
+
+	/* save the font data */
+	font->ft_data = memory_allocator_alloc(renderer->allocator, MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, length);
+	memcpy(font->ft_data, bytes, length);
+	font->ft_data_size = length;
+
+	/* we need to create a temporary buffer as ttf_load_from_mem modifies the content of the buffer */
+	void* temp_buffer = memory_allocator_alloc(renderer->allocator, MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, length);
+	memcpy(temp_buffer, bytes, length);
+	/* WARNING: ttf_load_from_mem modifies the buffer, which had c caused a bug in which FT_New_Memory_Face was returning error code 2*/
+	int result = ttf_load_from_mem(temp_buffer, length, &font->ttf_handle, false);
+	if((result != 0) || (font->ttf_handle == NULL))
 	{
-		LOG_FETAL_ERR("Failed to create font, bytes = %p, length = %u\n", bytes, length);
+		debug_log_fetal_error("Failed to create ttf2mesh font, bytes = %p, length = %lu", bytes, length);
+		font->ttf_handle = NULL;
 	}
+	memory_allocator_dealloc(renderer->allocator, temp_buffer);
+
+	AUTO error = FT_New_Memory_Face(renderer->ft_library, font->ft_data, font->ft_data_size, 0, &font->ft_handle);
+	if(error != 0)
+	{
+		debug_log_fetal_error("Failed to create free type face, bytes = %p, length = %lu", bytes, length);
+		font->ft_handle = NULL;
+		memory_allocator_dealloc(renderer->allocator, font->ft_data);
+		font->ft_data = NULL;
+		font->ft_data_size = 0;
+	}
+	else
+	{
+		error = FT_Set_Char_Size(font->ft_handle, 0, 11UL << 6, font->dpi.x, font->dpi.y);
+		if(error != 0)
+			debug_log_fetal_error("Failed to set char size");
+	}
+}
+
+RENDERER_API font_t* font_load_and_create(renderer_t* renderer, const char* file_name)
+{
+	font_t* font = font_new(renderer->allocator);
+	font_load_and_create_no_alloc(renderer, file_name, font);
 	return font;
+}
+
+RENDERER_API void font_load_and_create_no_alloc(renderer_t* renderer, const char* file_name, font_t OUT font)
+{
+	BUFFER* data = load_binary_from_file(file_name);
+	font_create_no_alloc(renderer, data->bytes, data->element_count, font);
+	buf_free(data);
 }
 
 RENDERER_API void font_destroy(font_t* font)
 {
-	ttf_free(get_element_ptr(font_t, font, 0)->handle);
+	if(font->ttf_handle != NULL)
+		ttf_free(font->ttf_handle);
+	if(font->ft_handle != NULL)
+	{
+		FT_Done_Face(font->ft_handle);
+		memory_allocator_dealloc(font->renderer->allocator, font->ft_data);
+	}
 }
-
 
 RENDERER_API void font_release_resources(font_t* font)
 {
-	memory_allocator_dealloc(font->allocator, font);
+	memory_allocator_dealloc(font->renderer->allocator, font);
 }
 
-RENDERER_API void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quality,  mesh3d_t* out_mesh)
+RENDERER_API void font_set_char_size(font_t* font, u32 point_size)
+{
+	if(font->ft_handle != NULL)
+		FT_Set_Char_Size(font->ft_handle, 0, point_size * 64, font->dpi.x, font->dpi.y);
+}
+
+RENDERER_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info_t OUT glyph_info)
+{
+	if(font->ft_handle != NULL)
+	{
+		AUTO glyph_index = FT_Get_Char_Index(font->ft_handle, unicode);
+		AUTO error = FT_Load_Glyph(font->ft_handle, glyph_index, FT_LOAD_DEFAULT);
+		if(!isgraph(CAST_TO(s32, unicode)))
+			return false;
+		if(error != 0)
+		{
+			debug_log_fetal_error("Failed to load glyph Unicode (%lu)", unicode);
+			return false;
+		}
+
+		if(glyph_info == NULL)
+			return true;
+
+		FT_GlyphSlot glyph_slot = font->ft_handle->glyph;
+
+		/* fill up the glyph information */
+		glyph_info->index = glyph_slot->glyph_index;
+		glyph_info->advance_width = glyph_slot->advance.x;
+		_debug_assert__(glyph_slot->advance.x == glyph_slot->metrics.horiAdvance);
+		glyph_info->width = glyph_slot->metrics.width;
+		glyph_info->height = glyph_slot->metrics.height;
+		glyph_info->bearing_x = glyph_slot->metrics.horiBearingX;
+		glyph_info->bearing_y = glyph_slot->metrics.horiBearingY;
+	}
+	IF_DEBUG (else { debug_log_fetal_error("Freetype font is NULL, couldn't load glyph %lu", unicode); return false; })
+	return true;
+}
+
+RENDERER_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bitmap_t OUT bitmap)
+{
+	if(font->ft_handle != NULL)
+	{
+		if(!isgraph(CAST_TO(s32, unicode)))
+			return false;
+		_debug_assert__(bitmap != NULL);
+		AUTO error = FT_Render_Glyph(font->ft_handle->glyph, FT_RENDER_MODE_NORMAL);
+		if(error != 0)
+		{
+			debug_log_fetal_error("Failed to render glyph Unicode (%lu)", unicode);
+			return false;
+		}
+
+		if(bitmap == NULL)
+			return true;
+
+		FT_Bitmap _bitmap = font->ft_handle->glyph->bitmap;
+		_debug_assert__(_bitmap.pixel_mode == 2);
+		bitmap->pixels = _bitmap.buffer;
+		bitmap->width = _bitmap.width;
+		bitmap->height = _bitmap.rows;
+		bitmap->channel_count = 1;
+	}
+	IF_DEBUG (else { debug_log_fetal_error("Freetype font is NULL, couldn't render glyph %lu", unicode); return false; })
+	return true;
+}
+
+RENDERER_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_quality,  mesh3d_t OUT out_mesh)
 {
 	_debug_assert__(out_mesh != NULL);
 	mesh3d_positions_new(out_mesh, 0);
 	// mesh3d_colors_new(out_mesh, 0);
 	mesh3d_triangles_new(out_mesh, 0);
 	font_glyph_info_t info;
-	font_get_glyph_info(font, wide_char, &info);
+	font_get_glyph_info(font, unicode, &info);
 	ttf_mesh_t* mesh;
 	u8 quality;
 	switch(mesh_quality)
@@ -84,7 +209,7 @@ RENDERER_API void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quali
 		case FONT_GLYPH_MESH_QUALITY_HIGH: quality = TTF_QUALITY_HIGH; break;
 		default: LOG_FETAL_ERR("Invalid font mesh quality: %u\n", mesh_quality);
 	}
-	int result = ttf_glyph2mesh(&font->handle->glyphs[info.index], &mesh, quality, TTF_FEATURES_DFLT);
+	int result = ttf_glyph2mesh(&font->ttf_handle->glyphs[info.index], &mesh, quality, TTF_FEATURES_DFLT);
 	_debug_assert__(result == TTF_DONE);
 
 	float max_y = 0, min_y = 0, max_x = 0, min_x = 0;
@@ -110,14 +235,14 @@ RENDERER_API void font_get_glyph_mesh(font_t* font, u16 wide_char, u8 mesh_quali
 }
 
 
-RENDERER_API void font_get_glyph_info(font_t* font, u16 wide_char, font_glyph_info_t* out_info)
+RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_t* out_info)
 {
-	int index = ttf_find_glyph(font->handle, wide_char);
+	int index = ttf_find_glyph(font->ttf_handle, unicode);
 	if(index < 0)
 	{
-		LOG_FETAL_ERR("Font error: couldn't find glyph \"%c\"\n", wide_char);
+		LOG_FETAL_ERR("Font error: couldn't find glyph \"%c\"\n", unicode);
 	}
-	ttf_glyph_t info = font->handle->glyphs[index];
+	ttf_glyph_t info = font->ttf_handle->glyphs[index];
 	out_info->left_side_bearing =  info.lbearing;
 	out_info->right_side_bearing = info.rbearing;
 	out_info->advance_width = info.advance;
