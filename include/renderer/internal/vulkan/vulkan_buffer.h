@@ -34,6 +34,7 @@ typedef struct vulkan_buffer_create_info_t
 	void* data;							// pointer to the data filled inside the vulkan buffer's device memory,
 										// if no data is available to copy/fill right now then it can be left NULL
 	
+	/* TODO: rename 'count' to 'capacity' */
 	u32 count;							// entity count; number of entities to be stored of size "stride"
 	u32 stride;							// stride; size of each entity
 
@@ -50,7 +51,7 @@ typedef struct vulkan_buffer_t
 	vulkan_renderer_t* renderer;				// pointer to the vulkan_renderer_t object
 	VkBuffer vo_handle;
 	VkDeviceMemory vo_memory;
-	u32 size; 							// if create_info->size is zero then its value would be "count * stride" in bytes
+	u32 size; 							// size of the buffer in bytes
 	u32 stride;							// equals to create_info->stride
 	u32 count; 							// equals to create_info->count
 } vulkan_buffer_t;
@@ -156,5 +157,9 @@ RENDERER_API void* vulkan_buffer_map(vulkan_buffer_t* buffer);
  */
 RENDERER_API void vulkan_buffer_unmap(vulkan_buffer_t* buffer);
 
+static INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_size(vulkan_buffer_t* buffer)
+{
+	return buffer->size;
+}
 
 END_CPP_COMPATIBLE

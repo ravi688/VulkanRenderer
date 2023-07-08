@@ -78,7 +78,7 @@ typedef struct vulkan_texture_data_t
 	u32 width;				// width of the texture in texels
 	u32 height;				// height of the texture in texels
 	u32 depth; 				// depth of the texture in texels
-	u8 channel_count;		// number of channels present in the texture, for now it must be 4 (RGBA)
+	u8 channel_count;		// number of channels present in the texture, valid range [1, 4]
 } vulkan_texture_data_t;
 
 typedef struct vulkan_texture_create_info_t
@@ -86,7 +86,7 @@ typedef struct vulkan_texture_create_info_t
 	u32 width;
 	u32 height;
 	u32 depth;
-	u8 channel_count; 		// ignored if this is a depth texture, otherwise it must be 4
+	u8 channel_count; 		// ignored if this is a depth texture, otherwise valid values are in the range [1, 4]
 
 	vulkan_texture_type_t type;						// type of the final vulkan texure i.e VULKAN_TEXTURE_TYPE_ALBEDO, VULKAN_TEXTURE_TYPE_NORMAL or VULKAN_TEXTURE_TYPE_CUBE
 	vulkan_texture_usage_t initial_usage; 			// intial usage of the texture
@@ -126,6 +126,8 @@ typedef struct vulkan_texture_t
 
 	vulkan_texture_usage_stage_t current_stage;
 } vulkan_texture_t;
+
+#define VULKAN_TEXTURE(ptr) DYNAMIC_CAST(vulkan_texture_t*, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -169,5 +171,16 @@ RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulk
 
 /* uploads the data to the GPU local memory */
 RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data_count, vulkan_texture_data_t* data);
+
+static INLINE_IF_RELEASE_MODE vulkan_image_view_t* vulkan_texture_get_image_views(vulkan_texture_t* texture)
+{
+	return ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == 0) ? &texture->image_view : texture->image_views;
+}
+
+static INLINE_IF_RELEASE_MODE u32 vulkan_texture_get_image_view_count(vulkan_texture_t* texture)
+{
+	return ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == 0) ? 1 : texture->image_view_count;
+}
+static INLINE_IF_RELEASE_MODE vulkan_texture_usage_stage_t vulkan_texture_get_usage_stage(vulkan_texture_t* texture) { return texture->current_stage; }
 
 END_CPP_COMPATIBLE

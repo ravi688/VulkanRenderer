@@ -47,7 +47,7 @@ RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_g
 		debug_log_error("Failed to initialize free type library");
 
 	// create the renderer
-	renderer->vulkan_handle = vulkan_renderer_init(allocator, CAST_TO(vulkan_renderer_gpu_type_t, gpu_type), width, height, title, full_screen, resizable);
+	renderer->vulkan_handle = vulkan_renderer_init(renderer, CAST_TO(vulkan_renderer_gpu_type_t, gpu_type), width, height, title, full_screen, resizable);
 
 	return renderer;
 }

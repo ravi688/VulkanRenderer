@@ -30,6 +30,30 @@
 #include <renderer/debug.h>
 #include <stdarg.h> 		// va_start, va_end, va_list
 
+static vulkan_texture_usage_t get_vulkan_texture_usage(texture_usage_t usage)
+{
+	switch(usage)
+	{
+		case TEXTURE_USAGE_NONE:
+			return VULKAN_TEXTURE_USAGE_NONE;
+		case TEXTURE_USAGE_SAMPLED:
+			return VULKAN_TEXTURE_USAGE_SAMPLED;
+		case TEXTURE_USAGE_TRANSFER_DST:
+			return VULKAN_TEXTURE_USAGE_TRANSFER_DST;
+		case TEXTURE_USAGE_TRANSFER_SRC:
+			return VULKAN_TEXTURE_USAGE_TRANSFER_SRC;
+		case TEXTURE_USAGE_PRESENT:
+			return VULKAN_TEXTURE_USAGE_PRESENT;
+		case TEXTURE_USAGE_RENDER_TARGET:
+			return VULKAN_TEXTURE_USAGE_RENDER_TARGET;
+		case TEXTURE_USAGE_ATTACHMENT:
+			return VULKAN_TEXTURE_USAGE_ATTACHMENT;
+		default:
+			debug_log_fetal_error("Invalid texture_usage_t usage: %lu", usage);
+	}
+	return VULKAN_TEXTURE_USAGE_NONE;
+}
+
 RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info)
 {
 	vulkan_texture_type_t vulkan_type;
@@ -59,9 +83,10 @@ RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info
 		.depth = create_info->depth, 
 		.channel_count = create_info->channel_count, 
 		.type = vulkan_type,
-		.initial_usage = VULKAN_TEXTURE_USAGE_TRANSFER_DST,
-		.usage = VULKAN_TEXTURE_USAGE_NONE,
-		.final_usage = VULKAN_TEXTURE_USAGE_SAMPLED
+		.initial_usage = get_vulkan_texture_usage(create_info->initial_usage),
+		.usage = get_vulkan_texture_usage(create_info->usage),
+		.final_usage = get_vulkan_texture_usage(create_info->final_usage),
+		.technique = VULKAN_RENDER_TARGET_TECHNIQUE_UNDEFINED /* ignored because this texture is not a render texture */
 	};
 
 	return vulkan_texture_create(renderer->handle, &vulkan_create_info);
@@ -117,7 +142,10 @@ RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type,
 		.height = data[0].height,
 		.depth = data[0].depth,
 		.channel_count = data[0].channel_count,
-		.type = type
+		.type = type,
+		.initial_usage = TEXTURE_USAGE_TRANSFER_DST,
+		.usage = TEXTURE_USAGE_SAMPLED,
+		.final_usage = TEXTURE_USAGE_SAMPLED
 	};
 	texture_t* texture = texture_create(renderer, &create_info);
 
@@ -129,6 +157,44 @@ RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type,
 		bmp_destroy(bmp_data[i]);
 
 	return texture;
+}
+
+RENDERER_API void texture_upload_data(texture_t* texture, u32 data_count, texture_data_t* data)
+{
+	vulkan_texture_data_t vk_data[data_count];
+	for(u32 i = 0; i < data_count; i++)
+	{
+		vk_data[i] = (vulkan_texture_data_t)
+		{
+			.data = data[i].data,
+			.width = data[i].width,
+			.height = data[i].height,
+			.depth = data[i].depth,
+			.channel_count = data[i].channel_count
+		};
+	}
+	vulkan_texture_upload_data(texture, data_count, vk_data);
+}
+
+RENDERER_API void texture_set_usage_stage(texture_t* texture, texture_usage_stage_t stage)
+{
+	vulkan_texture_usage_stage_t vk_stage = VULKAN_TEXTURE_USAGE_STAGE_UNDEFINED;
+	switch(stage)
+	{
+		case TEXTURE_USAGE_STAGE_INITIAL:
+			vk_stage = VULKAN_TEXTURE_USAGE_STAGE_INITIAL;
+			break;
+		case TEXTURE_USAGE_STAGE_USAGE:
+			vk_stage = VULKAN_TEXTURE_USAGE_STAGE_USAGE;
+			break;
+		case TEXTURE_USAGE_STAGE_FINAL:
+			vk_stage = VULKAN_TEXTURE_USAGE_STAGE_FINAL;
+			break;
+		default:
+			debug_log_warning("The texture usage stage seems to be UNDEFINED or Invalid", stage);
+			break;
+	}
+	vulkan_texture_set_usage_stage(texture, vk_stage);
 }
 
 RENDERER_API void texture_destroy(texture_t* texture)

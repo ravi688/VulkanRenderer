@@ -16,14 +16,12 @@
 #include <renderer/bmp.h>
 #include <renderer/color.h>
 #include <renderer/buffer2d.h>
+#include <renderer/system/display.h>
+#include <renderer/bitmap_glyph_atlas_texture.h>
 
 #include <FreeType/ft2build.h>
 #include <FreeType/freetype/freetype.h>
 #include <FreeType/freetype/ftimage.h>
-
-#include <renderer/system/display.h>
-
-#include <renderer/bitmap_glyph_pool.h>
 
 #include <disk_manager/file_reader.h>
 

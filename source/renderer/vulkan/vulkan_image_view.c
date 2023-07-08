@@ -173,6 +173,10 @@ static void get_access_and_stage_flags(VkAccessFlags OUT src_access, VkAccessFla
 					OUT dst_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 					OUT dst_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 				break;
+				case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+					OUT dst_access = VK_ACCESS_MEMORY_WRITE_BIT;
+					OUT dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+				break;
 				default:
 					UNDEFINED_LAYOUT_TRANSITION(oldLayout, finalLayout);
 			}

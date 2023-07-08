@@ -62,6 +62,7 @@ RENDERER_API buffer2d_t buffer2d_create(buffer2d_create_info_t* create_info)
 
 RENDERER_API void buffer2d_destroy(buffer2d_t* buffer)
 {
+	buffer2d_view_destroy(BASE(buffer));
 	if(buffer->is_backed_buffer_owner)
 		buf_free(BASE(buffer)->backed_buffer);
 	hash_table_free(&buffer->filled_rects);

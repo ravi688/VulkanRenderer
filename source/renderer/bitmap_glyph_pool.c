@@ -68,15 +68,18 @@ RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, utf3
 		_debug_assert__(info != NULL);
 	}
 
-	irect2d_t rect = info->rect_info.rect;
-	iextent2d_t size = BASE(&pool->pixels)->size;
-	OUT texcoord = (glyph_texcoord_t)
+	if(texcoord != NULL)
 	{
-		.tltc = { (f32)rect.offset.x / size.width, (f32)rect.offset.y / size.height },
-		.trtc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)rect.offset.y / size.height },
-		.bltc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height },
-		.brtc = { (f32)rect.offset.x / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height }
-	};
+		irect2d_t rect = info->rect_info.rect;
+		iextent2d_t size = BASE(&pool->pixels)->size;
+		OUT texcoord = (glyph_texcoord_t)
+		{
+			.tltc = { (f32)rect.offset.x / size.width, (f32)rect.offset.y / size.height },
+			.trtc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)rect.offset.y / size.height },
+			.bltc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height },
+			.brtc = { (f32)rect.offset.x / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height }
+		};
+	}
 	return true;
 }
 
