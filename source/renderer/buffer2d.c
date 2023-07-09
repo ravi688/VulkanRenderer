@@ -1,6 +1,7 @@
 #include <renderer/buffer2d.h>
 #include <renderer/hash_table.h>
 #include <renderer/bmp.h>
+#include <renderer/memory_allocator.h>
 
 static rect2d_info_key_t generate_rect2d_info_key(buffer2d_t* buffer)
 {
@@ -21,57 +22,90 @@ static rect2d_info_key_t add_vacant_rect(buffer2d_t* buffer, irect2d_t rect)
 	return key;
 }
 
-RENDERER_API buffer2d_t buffer2d_create(buffer2d_create_info_t* create_info)
+RENDERER_API buffer2d_t* buffer2d_new(memory_allocator_t* allocator)
+{
+	buffer2d_t* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER2D, buffer2d_t);
+	memzero(buffer, buffer2d_t);
+	return buffer;
+}
+
+RENDERER_API buffer2d_t* buffer2d_create(memory_allocator_t* allocator, buffer2d_create_info_t* create_info)
+{
+	buffer2d_t* buffer = buffer2d_new(allocator);
+	buffer2d_create_no_alloc(allocator, create_info, buffer);
+	return buffer;
+}
+
+RENDERER_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer2d_create_info_t* create_info, buffer2d_t OUT buffer)
 {
 	debug_assert__(create_info->resize_mode == BUFFER2D_RESIZE_MODE_ASPECT_RATIO_STRICT, "For now we will only support BUFFER2D_RESIZE_MODE_ASPECT_RATIO_STRICT");
 	
-	buffer2d_t buffer = 
-	{ 
-		.is_backed_buffer_owner = false,
-		.resize_mode = create_info->resize_mode,
-		.filled_rects = __hash_table_create(create_info->key_size, 
-										sizeof(filled_rect_info_t),
-										128, 
-										create_info->key_comparer, 
-										create_info->key_hash_function),
-		.vacant_rects = hash_table_create(rect2d_info_key_t, rect2d_info_t, 512, u32_equal_to, u32_hash),
-		.counter = 0
-	};
+	memzero(buffer, buffer2d_t);
 
-	buffer_t* backed_buffer = create_info->buffer;
-	/* setup the backed buffer */
-	if(backed_buffer != NULL)
-	{
-		_release_assert__(buf_get_element_size(backed_buffer) == sizeof(u8));
-		buf_clear(backed_buffer, NULL);
-	}
+	buffer->is_backed_buffer_owner = false,
+	buffer->resize_mode = create_info->resize_mode,
+	buffer->filled_rects = __hash_table_create(create_info->key_size, 
+									sizeof(filled_rect_info_t),
+									128, 
+									create_info->key_comparer, 
+									create_info->key_hash_function),
+	buffer->vacant_rects = hash_table_create(rect2d_info_key_t, rect2d_info_t, 512, u32_equal_to, u32_hash),
+	buffer->counter = 0;
+
+	/* create 2d view if not supplied by the user */
+	if(create_info->view != NULL)
+		buffer->view = create_info->view;
 	else
 	{
-		backed_buffer = BUFcreate(NULL, sizeof(u8), IEXTENT2D_AREA(create_info->size), 0);
-		buffer.is_backed_buffer_owner = true;
+		buffer2d_view_create_info_t view_create_info = 
+		{
+			.size = create_info->size,
+			.buffer = NULL
+		};
+		buffer->view = buffer2d_view_create(buffer->allocator, &view_create_info);
+		buffer->is_view_owner = true;
 	}
 
-	/* construct the base class (buffer2d_view_t) */
-	*BASE(&buffer) = buffer2d_view_create(backed_buffer, create_info->size.x, create_info->size.y);
+	_release_assert__((buffer->view->size.x == create_info->size.x) && (buffer->view->size.y == create_info->size.y));
+
+	/* create linear buffer if not supplied by the user */
+	buffer_t* backed_buffer = create_info->buffer;
+	if((backed_buffer == NULL) && (buffer2d_view_get_backed_buffer(buffer->view) == NULL))
+	{
+		backed_buffer = BUFcreate(NULL, sizeof(u8), IEXTENT2D_AREA(create_info->size), 0);
+		buffer->is_backed_buffer_owner = true;
+	}
+	
+	if(buffer2d_view_get_backed_buffer(buffer->view) == NULL)
+	{
+		buf_clear(backed_buffer, NULL);
+		buffer2d_view_set_buffer(buffer->view, backed_buffer);
+	}
 
 	/* initially the entire buffer is empty/vacant */
-	add_vacant_rect(&buffer, irect2d(ioffset2d(0, 0), BASE(&buffer)->size));
-
-	return buffer;
+	add_vacant_rect(buffer, irect2d(ioffset2d(0, 0), buffer->view->size));
 }
 
 RENDERER_API void buffer2d_destroy(buffer2d_t* buffer)
 {
-	buffer2d_view_destroy(BASE(buffer));
+	if(buffer->is_view_owner)
+		buffer2d_view_destroy(buffer->view);
 	if(buffer->is_backed_buffer_owner)
-		buf_free(BASE(buffer)->backed_buffer);
+		buf_free(buffer->view->backed_buffer);
 	hash_table_free(&buffer->filled_rects);
 	hash_table_free(&buffer->vacant_rects);
 }
 
+RENDERER_API void buffer2d_release_resources(buffer2d_t* buffer)
+{
+	if(buffer->is_view_owner)
+		buffer2d_view_release_resources(buffer->view);
+	memory_allocator_dealloc(buffer->allocator, buffer);
+}
+
 RENDERER_API buffer_t* buffer2d_get_backed_buffer(buffer2d_t* buffer)
 {
-	return BASE(buffer)->backed_buffer;
+	return buffer->view->backed_buffer;
 }
 
 RENDERER_API filled_rect_info_t* buffer2d_get_rect(buffer2d_t* buffer, void* key)
@@ -81,7 +115,7 @@ RENDERER_API filled_rect_info_t* buffer2d_get_rect(buffer2d_t* buffer, void* key
 
 RENDERER_API void buffer2d_get_rect_data(buffer2d_t* buffer, filled_rect_info_t* rect_info, void* out_data)
 {
-	buffer2d_view_get_rect(BASE(buffer), rect_info->rect_info.rect, out_data);
+	buffer2d_view_get_rect(buffer->view, rect_info->rect_info.rect, out_data);
 }
 
 typedef struct _user_data_t
@@ -147,9 +181,9 @@ static void add_filled_rect(buffer2d_t* buffer, irect2d_t rect, void* key PARAM_
 static void write_data(buffer2d_t* buffer, irect2d_t rect, void* data, u32 size, bool is_broadcast)
 {
 	if(is_broadcast)
-		buffer2d_view_broadcast_rect(BASE(buffer), rect, data, size);
+		buffer2d_view_broadcast_rect(buffer->view, rect, data, size);
 	else
-		buffer2d_view_set_rect(BASE(buffer), rect, data);	
+		buffer2d_view_set_rect(buffer->view, rect, data);	
 }
 
 static bool is_inside(ioffset2d_t p, ioffset2d_t tl, ioffset2d_t br)
@@ -229,16 +263,18 @@ static void recalculate_vacant_rects(buffer2d_t* buffer, rect2d_info_key_t vacan
 	hash_table_remove(&buffer->vacant_rects, (void*)&vacant_rect_info_key);
 }
 
-static ioffset2d_t pack_data2d(buffer2d_t* buffer, iextent2d_t extent, void* data, u32 size, bool is_broadcast)
+static ioffset2d_t pack_data2d(buffer2d_t* buffer, iextent2d_t extent, void* data, u32 size, bool is_broadcast, bool OUT is_resized)
 {
 	/* find a rect which can accomodate a data of size { width, height } */
 	rect2d_info_key_t vacant_rect_key = find_best_matching_rect(buffer, extent);
 
+	bool _is_resized = false;
 	/* keep expanding the buffer until an empty rect is found */
 	while(vacant_rect_key == RECT2D_INFO_KEY_INVALID)
 	{
-		buffer2d_resize(buffer, get_double_size(BASE(buffer)->size.x), get_double_size(BASE(buffer)->size.y));
+		buffer2d_resize(buffer, get_double_size(buffer->view->size.x), get_double_size(buffer->view->size.y));
 		vacant_rect_key = find_best_matching_rect(buffer, extent);
+		_is_resized = true;
 	}
 
 	/* get the information of the rect */
@@ -254,6 +290,9 @@ static ioffset2d_t pack_data2d(buffer2d_t* buffer, iextent2d_t extent, void* dat
 	ioffset2d_t offset = rect_info->rect.offset;
 	/* recalculates the list of empty rectangles which constitute the entire empty space */
 	recalculate_vacant_rects(buffer, vacant_rect_key, rect_info, extent);
+
+	if(is_resized != NULL)
+		OUT is_resized = _is_resized;
 
 	return offset;
 }
@@ -272,7 +311,7 @@ static icolor3_t filled_colors[] =
 	{ 255, 170, 0 }
 };
 
-RENDERER_API void buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height)
+RENDERER_API bool buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height)
 {
 	static u32 counter = 0;
 	static u32 colors_size = SIZEOF_ARRAY(filled_colors);
@@ -280,34 +319,40 @@ RENDERER_API void buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value
 		counter = 0;
 	else
 		++counter;
-	buffer2d_push(buffer, key, value, width, height, filled_colors[counter]);
+	return buffer2d_push(buffer, key, value, width, height, filled_colors[counter]);
 }
 
 #endif/*GLOBAL_DEBUG*/
 
-RENDERER_API void buffer2d_push(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color))
+RENDERER_API bool buffer2d_push(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color))
 {
 	/* pack the data */
-	ioffset2d_t offset = pack_data2d(buffer, iextent2d(width, height), value, 0 /* ignored */, false /* don't broadcast */);
+	bool is_resized = false;
+	ioffset2d_t offset = pack_data2d(buffer, iextent2d(width, height), value, 0 /* ignored */, false /* don't broadcast */, &is_resized);
 
 	/* add the entry into the hash table 'elements' */
 	add_filled_rect(buffer, irect2d(offset, iextent2d(width, height)), key PARAM_IF_DEBUG(color));
+
+	return is_resized;
 }
 
-RENDERER_API void buffer2d_push_broadcast(buffer2d_t* buffer, void* key, void* value, u32 size, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color))
+RENDERER_API bool buffer2d_push_broadcast(buffer2d_t* buffer, void* key, void* value, u32 size, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color))
 {
 	/* pack the data */
-	ioffset2d_t offset = pack_data2d(buffer, iextent2d(width, height), value, size, true);
+	bool is_resized = false;
+	ioffset2d_t offset = pack_data2d(buffer, iextent2d(width, height), value, size, true, &is_resized);
 
 	/* add the entry into the hash table 'elements' */
 	add_filled_rect(buffer, irect2d(offset, iextent2d(width, height)), key PARAM_IF_DEBUG(color));
+
+	return is_resized;
 }
 
 static void clear_vacant_rects(buffer2d_t* buffer)
 {
 	hash_table_clear(&buffer->vacant_rects);
 	buffer->counter = 0;
-	add_vacant_rect(buffer, irect2d(ioffset2d(0, 0), BASE(buffer)->size));
+	add_vacant_rect(buffer, irect2d(ioffset2d(0, 0), buffer->view->size));
 }
 
 typedef_pair_t(buffer2d_t*, buffer2d_view_t*);
@@ -321,23 +366,31 @@ static void push_again(void* key, void* value, void* user_data)
 	buffer2d_view_get_rect(CAST_TO(pair_t(buffer2d_t*, buffer2d_view_t*)*, user_data)->second, filled_rect_info->rect_info.rect, data);
 
 	/* pack it again and update the new position (offset) */
-	AUTO offset = pack_data2d(CAST_TO(pair_t(buffer2d_t*, buffer2d_view_t*)*, user_data)->first, filled_rect_info->rect_info.rect.extent, data, 0, false);
+	bool is_resized;
+	AUTO offset = pack_data2d(CAST_TO(pair_t(buffer2d_t*, buffer2d_view_t*)*, user_data)->first, filled_rect_info->rect_info.rect.extent, data, 0, false, &is_resized);
 	filled_rect_info->rect_info.rect.offset = offset;
+	_debug_assert__(is_resized == false);
 }
 
 RENDERER_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_columns)
 {
-	buffer2d_view_t* base = BASE(buffer);
+	buffer2d_view_t* view = buffer->view;
 	
 	/* save the data temporarily as we need it later to repack the filled rects into resized buffer2d */
-	buffer_t old_backed_buffer = buf_get_clone(base->backed_buffer);
-	buffer2d_view_t old_view = buffer2d_view_create(&old_backed_buffer, base->size.x, base->size.y);
+	buffer_t old_backed_buffer = buf_get_clone(view->backed_buffer);
+	buffer2d_view_create_info_t view_create_info = 
+	{
+		.size = view->size,
+		.buffer = &old_backed_buffer
+	};
+	buffer2d_view_t old_view;
+	buffer2d_view_create_no_alloc(buffer->allocator, &view_create_info, &old_view);
 
 	/* resize the backed buffer (it will invalid the exisiting written data and vacant rects ) */
-	buffer2d_view_resize(base, num_rows, num_columns);
+	buffer2d_view_resize(view, num_rows, num_columns);
 
 	/* clear the backed buffer as it is now invalidated and we need to write on it again */
-	buffer2d_view_clear(base, NULL);
+	buffer2d_view_clear(view, NULL);
 
 	/* clear the vacant rects as space has been resized so exisiting vacant rects are now invalidated */
 	clear_vacant_rects(buffer);
@@ -357,7 +410,7 @@ RENDERER_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_colu
 
 RENDERER_API void buffer2d_clear(buffer2d_t* buffer, void* clear_value)
 {
-	buffer2d_view_clear(BASE(buffer), clear_value);
+	buffer2d_view_clear(buffer->view, clear_value);
 	hash_table_clear(&buffer->filled_rects);
 	clear_vacant_rects(buffer);
 }
@@ -371,7 +424,7 @@ RENDERER_API f32 buffer2d_get_packing_efficiency(buffer2d_t* buffer)
 {
 	u32 filled_area = 0;
 	hash_table_foreach(&buffer->filled_rects, accumulate_area, &filled_area);
-	return (f32)filled_area / IEXTENT2D_AREA(BASE(buffer)->size);
+	return (f32)filled_area / IEXTENT2D_AREA(buffer->view->size);
 }
 
 #ifdef GLOBAL_DEBUG
@@ -410,7 +463,7 @@ static void dump_vacant_rect(void* key, void* value, void* user_data)
 RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name)
 {
 	/* get the size of the bitmap dump */
-	AUTO size = BASE(buffer)->size;
+	AUTO size = buffer->view->size;
 	
 	/* allocate pixel data buffer */
 	buffer_t pixel_data = buf_create(sizeof(icolor3_t), IEXTENT2D_AREA(size), 0);
@@ -425,7 +478,13 @@ RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name)
 	buf_set_capacity(&pixel_data, sizeof(icolor3_t) * IEXTENT2D_AREA(size));
 
 	/* create a 2d view of the pixel data buffer, to be able write pixel data with 2d location */
-	buffer2d_view_t view = buffer2d_view_create(&pixel_data, size.x * sizeof(icolor3_t), size.y);
+	buffer2d_view_create_info_t view_create_info = 
+	{
+		.size = { size.x * sizeof(icolor3_t), size.y },
+		.buffer = &pixel_data
+	};
+	buffer2d_view_t view;
+	buffer2d_view_create_no_alloc(buffer->allocator, &view_create_info, &view);
 
 	/* write colors to the pixel data buffer */
 

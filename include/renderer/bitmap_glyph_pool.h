@@ -26,6 +26,8 @@ typedef struct bitmap_glyph_pool_create_info_t
 	font_t* font;
 	/* optional buffer to be used as a pixel buffer inside the bitmap_glyph_pool_t */
 	buffer_t* buffer;
+	/* optinal 2d view */
+	buffer2d_view_t* view;
 } bitmap_glyph_pool_create_info_t;
 
 typedef struct bitmap_glyph_pool_t
@@ -50,7 +52,7 @@ static INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_clear(bitmap_glyph_pool_t* 
 /* returns the font used by this bitmap glyph pool */
 static INLINE_IF_RELEASE_MODE font_t* bitmap_glyph_pool_get_font(bitmap_glyph_pool_t* pool) { return pool->font; }
 /* returns the texture coordinates of the glyph represented by the unicode encoding 'unicode' */
-RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, utf32_t unicode, glyph_texcoord_t OUT texcoord);
+RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, utf32_t unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized);
 
 #ifdef GLOBAL_DEBUG
 /* creates a file and dumps the colors values in the bitmap to the file (.bmp) */

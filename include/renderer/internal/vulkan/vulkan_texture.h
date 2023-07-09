@@ -95,6 +95,14 @@ typedef struct vulkan_texture_create_info_t
 	vulkan_render_target_technique_t technique; 	// ignored if this texture is not being used as a render target
 } vulkan_texture_create_info_t;
 
+typedef struct vulkan_texture_recreate_info_t
+{
+	u32 width;
+	u32 height;
+	u32 depth;
+	u32 channel_count;
+} vulkan_texture_recreate_info_t;
+
 typedef struct vulkan_texture_t
 {
 	vulkan_renderer_t* renderer; 							// pointer to the vulkan_renderer_t object
@@ -145,6 +153,7 @@ RENDERER_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator)
  */
 RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info);
 RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info, vulkan_texture_t OUT texture);
+RENDERER_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_texture_recreate_info_t* recreate_info);
 
 /*
 	description:

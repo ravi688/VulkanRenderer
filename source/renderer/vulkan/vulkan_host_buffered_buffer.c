@@ -67,7 +67,7 @@ RENDERER_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulk
 }
 
 
-RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer)
+RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer, bool OUT is_resized)
 {
 	buffer_t* host_buffer = vulkan_host_buffered_buffer_get_host_buffer(buffer);
 	vulkan_buffer_t* device_buffer = vulkan_host_buffered_buffer_get_device_buffer(buffer);
@@ -98,6 +98,8 @@ RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer
 		};
 		vulkan_buffer_create_no_alloc(buffer->renderer, &create_info, device_buffer);
 		buffer->has_device_buffer = true;
+		if(is_resized != NULL)
+			OUT is_resized = true;
 	}
 
 	_debug_assert__(buffer->has_device_buffer == true);

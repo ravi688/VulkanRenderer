@@ -48,7 +48,12 @@ RENDERER_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t
 	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &texture->buffer);
 
 	/* create 2d view for the above linear buffer */
-	texture->view = buffer2d_view_create(vulkan_host_buffered_buffer_get_host_buffer(&texture->buffer), create_info->width, create_info->height);
+	buffer2d_view_create_info_t view_create_info = 
+	{
+		.size = { create_info->width, create_info->height },
+		.buffer = vulkan_host_buffered_buffer_get_host_buffer(&texture->buffer),
+	};
+	buffer2d_view_create_no_alloc(renderer->allocator, &view_create_info, &texture->view);
 }
 
 RENDERER_API void vulkan_host_buffered_texture_destroy(vulkan_host_buffered_texture_t* texture)
@@ -64,17 +69,40 @@ RENDERER_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buf
 }
 
 
-RENDERER_API void vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture)
+RENDERER_API bool vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture, bool OUT is_resized)
 {
 	/* transfer the data from host to the staging device buffer via PCI-E */
-	vulkan_host_buffered_buffer_commit(&texture->buffer);
-	_debug_assert__(vulkan_texture_get_image_view_count(BASE(texture)) == 1);
-	/* save the current usage stage */
-	AUTO stage = vulkan_texture_get_usage_stage(BASE(texture));
-	/* transition the image layout to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL */
-	vulkan_texture_set_usage_stage(BASE(texture), VULKAN_TEXTURE_USAGE_STAGE_INITIAL);
-	/* transfer the data from staging device buffer to the VkDeviceMemory of the texture  */
-	vulkan_image_view_copy_from_buffer(vulkan_texture_get_image_views(BASE(texture)), vulkan_host_buffered_buffer_get_device_buffer(&texture->buffer));
-	/* restore the usage stage */
-	vulkan_texture_set_usage_stage(BASE(texture), stage);
+	bool _is_resized = false;
+	bool is_updated = vulkan_host_buffered_buffer_commit(&texture->buffer, &_is_resized);
+
+	/* if the host side and device side linear buffers has been resized then resize the VkImage and corresponding VkDeviceMemory */
+	if(_is_resized)
+	{
+		vulkan_texture_recreate_info_t recreate_info = 
+		{
+			.width = texture->view.size.width,
+			.height = texture->view.size.height,
+			.depth = BASE(texture)->depth,
+			.channel_count = BASE(texture)->channel_count
+		};
+		vulkan_texture_recreate(BASE(texture), &recreate_info);
+	}
+
+	if(is_updated)
+	{
+		_debug_assert__(vulkan_texture_get_image_view_count(BASE(texture)) == 1);
+		/* save the current usage stage */
+		AUTO stage = vulkan_texture_get_usage_stage(BASE(texture));
+		/* transition the image layout to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL */
+		vulkan_texture_set_usage_stage(BASE(texture), VULKAN_TEXTURE_USAGE_STAGE_INITIAL);
+		/* transfer the data from staging device buffer to the VkDeviceMemory of the texture  */
+		vulkan_image_view_copy_from_buffer(vulkan_texture_get_image_views(BASE(texture)), vulkan_host_buffered_buffer_get_device_buffer(&texture->buffer));
+		/* restore the usage stage */
+		vulkan_texture_set_usage_stage(BASE(texture), stage);
+	}
+
+	if(is_resized != NULL)
+		OUT is_resized = _is_resized;
+
+	return is_updated;
 }

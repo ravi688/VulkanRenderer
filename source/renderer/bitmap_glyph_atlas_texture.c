@@ -49,9 +49,9 @@ RENDERER_API font_t* bitmap_glyph_atlas_texture_get_font(bitmap_glyph_atlas_text
 	return vulkan_bitmap_glyph_atlas_texture_get_font(texture);
 }
 
-RENDERER_API void bitmap_glyph_atlas_texture_commit(bitmap_glyph_atlas_texture_t* texture)
+RENDERER_API bool bitmap_glyph_atlas_texture_commit(bitmap_glyph_atlas_texture_t* texture, bool OUT is_resized)
 {
-	return vulkan_bitmap_glyph_atlas_texture_commit(texture);
+	return vulkan_bitmap_glyph_atlas_texture_commit(texture, is_resized);
 }
 
 RENDERER_API bool bitmap_glyph_atlas_texture_get_texcoord(bitmap_glyph_atlas_texture_t* texture, utf32_t unicode, glyph_texcoord_t OUT texcoord)
@@ -59,3 +59,9 @@ RENDERER_API bool bitmap_glyph_atlas_texture_get_texcoord(bitmap_glyph_atlas_tex
 	return vulkan_bitmap_glyph_atlas_texture_get_texcoord(texture, unicode, texcoord);
 }
 
+#ifdef GLOBAL_DEBUG
+RENDERER_API void bitmap_glyph_atlas_texture_dump(bitmap_glyph_atlas_texture_t* texture, const char* file_path)
+{
+	vulkan_bitmap_glyph_atlas_texture_dump(texture, file_path);
+}
+#endif /* GLOBAL_DEBUG */

@@ -40,8 +40,9 @@ RENDERER_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t
 RENDERER_API void vulkan_host_buffered_texture_destroy(vulkan_host_buffered_texture_t* texture);
 RENDERER_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buffered_texture_t* texture);
 
-/* flushes the host side buffer to the device (gpu) side VkDeviceMemory */
-RENDERER_API void vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture);
+/* flushes the host side buffer to the device (gpu) side VkDeviceMemory 
+ * returns true if either the contents are updated or the internal VkImage, VkDeviceMemory, and VkBuffer has been recreated */
+RENDERER_API bool vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture, bool OUT is_resized);
 /* returns pointer to the 2d view object used over the host side linear buffer */
 static INLINE_IF_RELEASE_MODE buffer2d_view_t* vulkan_host_buffered_texture_get_view(vulkan_host_buffered_texture_t* texture)
 { 

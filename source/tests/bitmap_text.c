@@ -126,7 +126,7 @@ void test_bitmap()
 	bmp_write(data, 512, 512, 1, "test_bitmap.bmp");
 }
 
-static void test_buffer2d_view()
+static void test_buffer2d_view(renderer_t* renderer)
 {
 	iextent2d_t size = { 512, 512 };
 	buffer_t pixels = buf_create(sizeof(icolor3_t), IEXTENT2D_AREA(size), 0);
@@ -135,7 +135,13 @@ static void test_buffer2d_view()
 	buf_set_element_size(&pixels, 1); // as buffer2d_view only works with element_size = 1 buffers
 	buf_set_capacity(&pixels, sizeof(icolor3_t) * IEXTENT2D_AREA(size));
 
-	buffer2d_view_t view = buffer2d_view_create(&pixels, size.x * sizeof(icolor3_t), size.y);
+	buffer2d_view_create_info_t view_create_info = 
+	{
+		.size = { size.x * sizeof(icolor3_t), size.y },
+		.buffer = &pixels
+	};
+	buffer2d_view_t view;
+	buffer2d_view_create_no_alloc(renderer->allocator, &view_create_info, &view);
 
 	icolor3_t colors[IEXTENT2D_AREA(size)];
 	for(u32 i = 0; i < IEXTENT2D_AREA(size); i++)
@@ -391,7 +397,7 @@ input_t inputs[] =
 	{ KEY, 32, 32 },
 };
 
-static void test_buffer2d()
+static void test_buffer2d(renderer_t* renderer)
 {
 	buffer2d_create_info_t create_info = 
 	{
@@ -402,7 +408,8 @@ static void test_buffer2d()
 		.key_comparer = u32_equal_to,
 		.key_hash_function = u32_hash
 	};
-	buffer2d_t buffer = buffer2d_create(&create_info);
+	buffer2d_t buffer;
+	buffer2d_create_no_alloc(renderer->allocator, &create_info, &buffer);
 
 	u32 input_count = SIZEOF_ARRAY(inputs);
 	for(u32 i = 0; i < input_count; i++)
@@ -473,7 +480,7 @@ static void test_glyph_rasterization(renderer_t* renderer)
 	buf_free(data);
 }
 
-static void test_buffer2d_backed_buffer_dump()
+static void test_buffer2d_backed_buffer_dump(renderer_t* renderer)
 {
 	buffer2d_create_info_t create_info = 
 	{
@@ -484,7 +491,8 @@ static void test_buffer2d_backed_buffer_dump()
 		.key_comparer = u32_equal_to,
 		.key_hash_function = u32_hash
 	};
-	buffer2d_t bitmap = buffer2d_create(&create_info);
+	buffer2d_t bitmap;
+	buffer2d_create_no_alloc(renderer->allocator, &create_info, &bitmap);
 	u8 default_color = 255;
 	buffer2d_clear(&bitmap, (void*)&default_color);
 
@@ -496,7 +504,7 @@ static void test_buffer2d_backed_buffer_dump()
 	}
 
 	void* ptr = buf_get_ptr(buffer2d_get_backed_buffer(&bitmap));
-	bmp_write(ptr, BASE(&bitmap)->size.x / sizeof(icolor3_t), BASE(&bitmap)->size.y, 3, "test_buffer2d_backed_buffer_dump.bmp");
+	bmp_write(ptr, bitmap.view->size.x / sizeof(icolor3_t), bitmap.view->size.y, 3, "test_buffer2d_backed_buffer_dump.bmp");
 
 	buffer2d_destroy(&bitmap);
 }
@@ -520,7 +528,7 @@ static void test_glyph_packing(renderer_t* renderer)
 	for(char i = 32; i < 86; ++i)
 	{
 		glyph_texcoord_t texcoord;
-		bitmap_glyph_pool_get_texcoord(pool, i, &texcoord);
+		bitmap_glyph_pool_get_texcoord(pool, i, &texcoord, NULL);
 	}
 
 	IF_DEBUG( bitmap_glyph_pool_dump(pool, "test_bitmap_glyph_pool_dump.bmp") );
@@ -568,10 +576,10 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 
 	test_hash_table();
 	test_bitmap();
-	test_buffer2d_view();
-	test_buffer2d();
+	test_buffer2d_view(renderer);
+	test_buffer2d(renderer);
 	test_glyph_rasterization(renderer);
-	test_buffer2d_backed_buffer_dump();
+	test_buffer2d_backed_buffer_dump(renderer);
 	test_glyph_packing(renderer);
 }
 

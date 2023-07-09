@@ -29,6 +29,8 @@ typedef struct buffer2d_create_info_t
 	iextent2d_t size;
 	/* optional user provided backed buffer, otherwise it will be created internally */
 	buffer_t* buffer;
+	/* optinal user provided 2d view */
+	buffer2d_view_t* view;
 	/* resize mode of this buffer */
 	buffer2d_resize_mode_t resize_mode;
 	/* key size */
@@ -70,9 +72,15 @@ typedef hash_table_t vacant_rect_info_table_t;
 
 typedef struct buffer2d_t
 {
-	DERIVE_FROM(buffer2d_view_t);
+	memory_allocator_t* allocator;
+	/* linear buffer */
+	buffer_t* buffer;
+	/* 2d view of the linear buffer */
+	buffer2d_view_t* view;
 	/* true if the backed buffer is created by buffer2d itself, false if supplied by the user */
 	bool is_backed_buffer_owner;
+	/* true if the 2d view is created by buffer2d itself, false if supplied by the user */
+	bool is_view_owner;
 	/* resize mode of this buffer */
 	buffer2d_resize_mode_t resize_mode;
 
@@ -89,8 +97,11 @@ typedef struct buffer2d_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructurs */
-RENDERER_API buffer2d_t buffer2d_create(buffer2d_create_info_t* create_info);
+RENDERER_API buffer2d_t* buffer2d_new(memory_allocator_t* allocator);
+RENDERER_API buffer2d_t* buffer2d_create(memory_allocator_t* allocator, buffer2d_create_info_t* create_info);
+RENDERER_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer2d_create_info_t* create_info, buffer2d_t OUT buffer);
 RENDERER_API void buffer2d_destroy(buffer2d_t* buffer);
+RENDERER_API void buffer2d_release_resources(buffer2d_t* buffer);
 
 /* returns pointer to the backed buffer */
 RENDERER_API buffer_t* buffer2d_get_backed_buffer(buffer2d_t* buffer);
@@ -99,12 +110,14 @@ RENDERER_API filled_rect_info_t* buffer2d_get_rect(buffer2d_t* buffer, void* key
 /* fills 'out_data' with the data contained by 'rect_info' */
 RENDERER_API void buffer2d_get_rect_data(buffer2d_t* buffer, filled_rect_info_t* rect_info, void* out_data);
 #ifdef GLOBAL_DEBUG
-RENDERER_API void buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height);
+RENDERER_API bool buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height);
 #endif /* GLOBAL_DEBUG */
-/* creates a buffer2d element and adds a value with a key and size (width, height) */
-RENDERER_API void buffer2d_push(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color));
-/* creates a buffer2d element and broadcasts a value of size 'size' to the entire rect with a key */
-RENDERER_API void buffer2d_push_broadcast(buffer2d_t* buffer, void* key, void* value, u32 size, u32 width, u32 heigh PARAM_IF_DEBUG(icolor3_t color));
+/* creates a buffer2d element and adds a value with a key and size (width, height) 
+ * returns true if the size has been resized, otherwise false */
+RENDERER_API bool buffer2d_push(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color));
+/* creates a buffer2d element and broadcasts a value of size 'size' to the entire rect with a key
+ * returns true if the size has been resized, otherwise false */
+RENDERER_API bool buffer2d_push_broadcast(buffer2d_t* buffer, void* key, void* value, u32 size, u32 width, u32 heigh PARAM_IF_DEBUG(icolor3_t color));
 /* issues warning if the resize doesn't comply with the 'resize_mode' specified while creating this buffer */
 RENDERER_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_columns);
 /* clears the entire buffer */

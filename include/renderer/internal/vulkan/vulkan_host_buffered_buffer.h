@@ -38,6 +38,7 @@ RENDERER_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buff
 RENDERER_API buffer_t* vulkan_host_buffered_buffer_get_host_buffer(vulkan_host_buffered_buffer_t* buffer);
 RENDERER_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulkan_host_buffered_buffer_t* buffer);
 
-RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer);
+/* returns true if either the exisiting VkBuffer has been updated with new data or VkBuffer is recreated upon resize */
+RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer, bool OUT is_resized);
 
 END_CPP_COMPATIBLE

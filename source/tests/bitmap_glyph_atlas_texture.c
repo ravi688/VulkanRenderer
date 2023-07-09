@@ -140,7 +140,11 @@ TEST_ON_UPDATE(BITMAP_GLYPH_ATLAS_TEXTURE)
 	{
 		getch();
 		bitmap_glyph_atlas_texture_get_texcoord(this->texture, ch, NULL);
-		bitmap_glyph_atlas_texture_commit(this->texture);
+		bool is_resized = false;
+		bitmap_glyph_atlas_texture_commit(this->texture, &is_resized);
+		bitmap_glyph_atlas_texture_dump(this->texture, "BITMAP_GLYPH_ATLAS_TEXTURE.bmp");
+		if(is_resized)
+			material_set_texture(this->material, "albedo", TEXTURE(this->texture));
 		ch++;
 	}
 }

@@ -1,13 +1,53 @@
 #include <renderer/buffer2d_view.h>
+#include <renderer/memory_allocator.h>
 
-RENDERER_API buffer2d_view_t buffer2d_view_create(buffer_t* backed_buffer, u32 width, u32 height)
+RENDERER_API buffer2d_view_t* buffer2d_view_new(memory_allocator_t* allocator)
 {
-	_debug_assert__(backed_buffer != NULL);
-	_debug_assert__(buf_get_element_size(backed_buffer) == 1);
-	if(buf_get_capacity(backed_buffer) < (width * height))
-		buf_resize(backed_buffer, width * height);
-	buf_set_element_count(backed_buffer, buf_get_capacity(backed_buffer));
-	return (buffer2d_view_t) { .backed_buffer = backed_buffer, .size = { width, height } };
+	buffer2d_view_t* view = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER2D_VIEW, buffer2d_view_t);
+	memzero(view, buffer2d_view_t);
+	return view;
+}
+
+RENDERER_API buffer2d_view_t* buffer2d_view_create(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info)
+{
+	buffer2d_view_t* view = buffer2d_view_new(allocator);
+	buffer2d_view_create_no_alloc(allocator, create_info, view);
+	return view;
+}
+
+RENDERER_API void buffer2d_view_create_no_alloc(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info, buffer2d_view_t OUT view)
+{
+	memzero(view, buffer2d_view_t);
+	view->allocator = allocator;
+	view->size = create_info->size;
+
+	if(create_info->buffer != NULL)
+		buffer2d_view_set_buffer(view, create_info->buffer);
+}
+
+RENDERER_API void buffer2d_view_destroy(buffer2d_view_t* view)
+{
+	/* nothing */
+}
+
+RENDERER_API void buffer2d_view_release_resources(buffer2d_view_t* view)
+{
+	memory_allocator_dealloc(view->allocator, view);
+}
+
+RENDERER_API void buffer2d_view_set_buffer(buffer2d_view_t* view, buffer_t* buffer)
+{
+	if(buffer == NULL)
+	{
+		view->backed_buffer = NULL;
+		return;
+	}
+	_debug_assert__(buf_get_element_size(buffer) == 1);
+	if(buf_get_capacity(buffer) < (IEXTENT2D_AREA(view->size)))
+		buf_resize(buffer, IEXTENT2D_AREA(view->size));
+	buf_set_element_count(buffer, IEXTENT2D_AREA(view->size));
+
+	view->backed_buffer = buffer;
 }
 
 RENDERER_API void buffer2d_view_resize(buffer2d_view_t* view, u32 width, u32 height)

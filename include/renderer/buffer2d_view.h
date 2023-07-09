@@ -4,8 +4,17 @@
 #include <bufferlib/buffer.h>
 #include <renderer/rect.h> // iextent2d_t
 
+typedef struct buffer2d_view_create_info_t
+{
+	/* size of the view */
+	iextent2d_t size;
+	/* linear buffer (it should be a valid pointer to a buffer_t object) */
+	buffer_t* buffer;
+} buffer2d_view_create_info_t;
+
 typedef struct buffer2d_view_t
 {
+	memory_allocator_t* allocator;
 	buffer_t* backed_buffer;
 	iextent2d_t size;
 } buffer2d_view_t;
@@ -16,9 +25,13 @@ typedef struct buffer2d_view_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructor and destructures */
-RENDERER_API buffer2d_view_t buffer2d_view_create(buffer_t* backed_buffer, u32 width, u32 height);
-static INLINE_IF_RELEASE_MODE void buffer2d_view_destroy(buffer2d_view_t* view) { }
+RENDERER_API buffer2d_view_t* buffer2d_view_new(memory_allocator_t* allocator);
+RENDERER_API buffer2d_view_t* buffer2d_view_create(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info);
+RENDERER_API void buffer2d_view_create_no_alloc(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info, buffer2d_view_t OUT view);
+RENDERER_API void buffer2d_view_destroy(buffer2d_view_t* view);
+RENDERER_API void buffer2d_view_release_resources(buffer2d_view_t* view);
 
+RENDERER_API void buffer2d_view_set_buffer(buffer2d_view_t* view, buffer_t* buffer);
 RENDERER_API void buffer2d_view_resize(buffer2d_view_t* view, u32 width, u32 height);
 RENDERER_API void buffer2d_view_clear(buffer2d_view_t* view, void* clear_value);
 
