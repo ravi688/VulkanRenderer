@@ -107,11 +107,7 @@ RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type,
 	switch(type)
 	{
 		case TEXTURE_TYPE_ALBEDO:
-			file_path_count = 1;
-			break;
 		case TEXTURE_TYPE_NORMAL:
-			file_path_count = 1;
-			break;
 		case TEXTURE_TYPE_CUBE_COMBINED:
 			file_path_count = 1;
 			break;

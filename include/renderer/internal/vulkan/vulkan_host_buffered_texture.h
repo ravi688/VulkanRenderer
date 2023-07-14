@@ -27,6 +27,7 @@ typedef struct vulkan_host_buffered_texture_t
 	vulkan_host_buffered_buffer_t buffer;
 	/* 2d view of the above linear buffer */
 	buffer2d_view_t view;
+	bool is_dirty;
 } vulkan_host_buffered_texture_t;
 
 #define VULKAN_HOST_BUFFERED_TEXTURE(ptr) DYNAMIC_CAST(vulkan_host_buffered_texture_t*, ptr)
@@ -40,19 +41,27 @@ RENDERER_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t
 RENDERER_API void vulkan_host_buffered_texture_destroy(vulkan_host_buffered_texture_t* texture);
 RENDERER_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buffered_texture_t* texture);
 
-/* flushes the host side buffer to the device (gpu) side VkDeviceMemory 
- * returns true if either the contents are updated or the internal VkImage, VkDeviceMemory, and VkBuffer has been recreated */
-RENDERER_API bool vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture, bool OUT is_resized);
 /* returns pointer to the 2d view object used over the host side linear buffer */
 static INLINE_IF_RELEASE_MODE buffer2d_view_t* vulkan_host_buffered_texture_get_view(vulkan_host_buffered_texture_t* texture)
 { 
+	texture->is_dirty = true;	
 	return &texture->view; 
 }
 /* returns pointer to the host side linear buffer object */
 static INLINE_IF_RELEASE_MODE buffer_t* vulkan_host_buffered_texture_get_host_buffer(vulkan_host_buffered_texture_t* texture) 
 { 
-	return vulkan_host_buffered_buffer_get_host_buffer(&texture->buffer); 
+	texture->is_dirty = true;
+	return vulkan_host_buffered_buffer_get_host_buffer(&texture->buffer);
 }
+
+static INLINE_IF_RELEASE_MODE void vulkan_host_buffered_texture_set_dirty(vulkan_host_buffered_texture_t* texture, bool is_dirty)
+{
+	texture->is_dirty = is_dirty;
+}
+
+/* flushes the host side buffer to the device (gpu) side VkDeviceMemory 
+ * returns true if either the contents are updated or the internal VkImage, VkDeviceMemory, and VkBuffer has been recreated */
+RENDERER_API bool vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture, bool OUT is_resized);
 
 
 END_CPP_COMPATIBLE

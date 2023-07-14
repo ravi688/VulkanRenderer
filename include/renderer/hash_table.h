@@ -42,7 +42,7 @@ RENDERER_API bool hash_table_remove(hash_table_t* table, void* key);
 RENDERER_API bool hash_table_contains(hash_table_t* table, void* key);
 /* returns the number of key value pairs in the hash table */
 RENDERER_API u32 hash_table_get_count(hash_table_t* table);
-/* returns pointer to the value by it's key */
+/* returns pointer to the value by it's key, NULL if the key doesn't exists */
 RENDERER_API void* hash_table_get_value(hash_table_t* table, void* key);
 /* visits each key value pairs in the hash table */
 RENDERER_API void hash_table_foreach(hash_table_t* table, void (*visitor)(void* key, void* value, void* user_data), void* user_data);

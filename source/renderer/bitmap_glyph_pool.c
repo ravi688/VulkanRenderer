@@ -79,11 +79,16 @@ RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, utf3
 		{
 			.tltc = { (f32)rect.offset.x / size.width, (f32)rect.offset.y / size.height },
 			.trtc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)rect.offset.y / size.height },
-			.bltc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height },
-			.brtc = { (f32)rect.offset.x / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height }
+			.brtc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height },
+			.bltc = { (f32)rect.offset.x / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height }
 		};
 	}
 	return true;
+}
+
+RENDERER_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, utf32_t unicode)
+{
+	return buffer2d_get_rect(&pool->pixels, &unicode) != NULL;
 }
 
 RENDERER_API void bitmap_glyph_pool_dump(bitmap_glyph_pool_t* pool, const char* file_path)

@@ -120,7 +120,10 @@ RENDERER_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* 
 	return buf_get_element_count(sub_buffers) - 1;
 }
 
-RENDERER_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle); /*TODO*/
+RENDERER_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
+{
+	assert_not_implemented();
+}
 
 // logic functions
 RENDERER_API void multi_buffer_sub_buffer_push(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value)

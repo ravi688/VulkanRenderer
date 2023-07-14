@@ -56,6 +56,8 @@ typedef struct vulkan_buffer_t
 	u32 count; 							// equals to create_info->count
 } vulkan_buffer_t;
 
+typedef vulkan_buffer_t* vulkan_buffer_ptr_t;
+#define VULKAN_BUFFER(ptr) CAST_TO(vulkan_buffer_ptr_t, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -160,6 +162,12 @@ RENDERER_API void vulkan_buffer_unmap(vulkan_buffer_t* buffer);
 static INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_size(vulkan_buffer_t* buffer)
 {
 	return buffer->size;
+}
+
+/* NOTE: this may not return a valid result as 'count' is not always defined */
+static INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_count(vulkan_buffer_t* buffer)
+{
+	return buffer->count;
 }
 
 END_CPP_COMPATIBLE

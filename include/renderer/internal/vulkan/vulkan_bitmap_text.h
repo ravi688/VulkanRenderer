@@ -2,12 +2,13 @@
 
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
-#include <renderer/internal/vulkan/vulkan_instance_buffer.h>
 #include <renderer/internal/vulkan/vulkan_host_buffered_buffer.h>
+#include <renderer/internal/vulkan/vulkan_instance_buffer.h>
+#include <renderer/internal/vulkan/vulkan_mesh.h>
 #include <renderer/dictionary.h>
 #include <renderer/rect.h> // rect2d_t
-#include <hpml/vec3.h>
-#include <hpml/mat4.h>
+#include <hpml/mat4.h> 	// mat4_t
+#include <hpml/vec3.h> 	// vec3_t
 #include <glslcommon/glsl_types.h>
 
 
@@ -24,7 +25,7 @@ typedef struct glsl_glyph_texcoord_t
 	glsl_vec2_t bltc;
 } glsl_glyph_texcoord_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
 
-#define __glsl_sizeof_glsl_glyph_texcoord_t 		(4 * glsl_sizeof(glsl_vec2_t))
+#define __glsl_sizeof_glsl_glyph_texcoord_t 		(4 * __glsl_sizeof_glsl_vec2_t)
 
 /* element of Glyph Render Data (GRD) buffer */
 typedef struct glsl_glyph_render_data_t
@@ -41,51 +42,63 @@ typedef struct glsl_glyph_render_data_t
 	/* index of the string's transform to which this glyph instance belongs into the String Transform Buffer (ST Buffer) */
 	/* per_instance [BTM_TXT_STID_BND, BTM_TXT_STID_LOC, BTM_TXT_STID_COMP] in uint stid; */
 	glsl_uint_t stid;
+	/* scale of this glyph instance 
+	 * per_instance [BTM_TXT_SCAL_BND, BTM_TXT_SCAL_LOC, BTM_TXT_SCAL_COMP] in vec3 scal; */
+	glsl_vec3_t scal;
 } glsl_glyph_render_data_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
 
-#define __glsl_sizeof_glsl_glyph_render_data_t 		(2 * __glsl_sizeof_glsl_vec4_t)
+#define __glsl_sizeof_glsl_glyph_render_data_t 		(3 * __glsl_sizeof_glsl_vec4_t)
 
 /* element of Text String Transform (TST) buffer */
 typedef glsl_mat4_t text_string_transform_t;
 
 /* character buffer to store the characters in a string */
-typedef BUFFER char_buffer_t;
+typedef buffer_t char_buffer_t;
 typedef buf_ucount_t vulkan_bitmap_text_string_handle_t;
-typedef dictionary_t vulkan_bitmap_glyph_sub_buffer_handle_map_t;
+typedef dictionary_t vulkan_bitmap_glyph_sub_buffer_handle_table_t;
 
 typedef struct vulkan_bitmap_text_string_t
 {
 	/* handle to the next free string if this string is in the free list or inuse string if this is in the inuse list */
 	vulkan_bitmap_text_string_handle_t next;
-	/* holds list of subbuffers mapped to each elements in the set 'Union over the character array of this string', i.e. unique characters */
-	vulkan_bitmap_glyph_sub_buffer_handle_map_t glyph_sub_buffer_handles;
+	sub_buffer_handle_t render_data_handle;
 	/* string */
 	char_buffer_t chars;
 	/* a rectangle in a 3D space
 	 * holds the position and the extents of the text */
-	rect2d_t rect;
+	struct { offset3d_t offset; extent2d_t extent; } rect;
 	/* transform matrix applied to this string */
 	mat4_t transform;
+	/* id assigned to this string */
+	u32 index;
 } vulkan_bitmap_text_string_t;
+
+typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_texture_t;
+
+typedef struct vulkan_bitmap_text_create_info_t
+{
+	vulkan_bitmap_glyph_atlas_texture_t* texture;
+} vulkan_bitmap_text_create_info_t;
 
 typedef vulkan_instance_buffer_t vulkan_host_multibuffered_buffer_t;
 
 /* Glyph Texture Coordinate (GTC) buffer */
 typedef vulkan_host_buffered_buffer_t vulkan_bitmap_glyph_texcoord_buffer_t;
 /* Glyph Render Data (GRD) buffer */
-typedef vulkan_host_multibuffered_buffer_t  vulkan_bitmap_glyph_render_data_buffer_t;
+typedef vulkan_host_multibuffered_buffer_t vulkan_bitmap_glyph_render_data_buffer_t;
 /* Text String Transform (TST) buffer */
 typedef vulkan_host_buffered_buffer_t vulkan_bitmap_text_string_transform_buffer_t;
 
-typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_texture_t;
+typedef buffer_t vulkan_bitmap_text_string_list_t;
 
-typedef BUFFER vulkan_bitmap_text_string_list_t;
-/* u16:glyph, vulkan_bitmap_glyph_render_data_buffer_t: render data */
-typedef dictionary_t vulkan_bitmap_glyph_render_data_map_t;
+typedef dictionary_t glyph_texcoord_index_table_t;
+
+typedef struct vulkan_material_t vulkan_material_t;
 
 typedef struct vulkan_bitmap_text_t
 {
 	vulkan_renderer_t* renderer;
+	vulkan_material_t* material;
 
 	/* CPU side */
 
@@ -98,23 +111,36 @@ typedef struct vulkan_bitmap_text_t
 
 	/* GPU side */
 
-	vulkan_bitmap_glyph_atlas_texture_t* glyph_atlas_texture;
+	union 
+	{ 
+		vulkan_bitmap_glyph_atlas_texture_t* glyph_atlas_texture;
+		vulkan_bitmap_glyph_atlas_texture_t* texture;
+	};
 	/* GRD buffers mapped to each unique glyph across all the text strings */
-	vulkan_bitmap_glyph_render_data_map_t glyph_render_data_buffers;
-	/* TST buffer */
-	vulkan_bitmap_text_string_transform_buffer_t text_string_transform_buffer;
+	vulkan_bitmap_glyph_render_data_buffer_t glyph_render_data_buffer;
 	/* GTC buffer */
 	vulkan_bitmap_glyph_texcoord_buffer_t glyph_texcoord_buffer;
+	/* TST buffer */
+	vulkan_bitmap_text_string_transform_buffer_t text_string_transform_buffer;
+
+	glyph_texcoord_index_table_t glyph_texcoord_index_table;
+
+	/* instances of this quad will be drawn to lay out the glyph bitmaps */
+	vulkan_mesh_t quad_mesh;
+
 } vulkan_bitmap_text_t;
 
 
 BEGIN_CPP_COMPATIBLE
 
 RENDERER_API vulkan_bitmap_text_t* vulkan_bitmap_text_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_bitmap_text_t* vulkan_bitmap_text_create(vulkan_renderer_t* renderer, vulkan_bitmap_glyph_atlas_texture_t* bga_texture);
-RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_glyph_atlas_texture_t* bga_texture, vulkan_bitmap_text_t OUT text);
+RENDERER_API vulkan_bitmap_text_t* vulkan_bitmap_text_create(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info);
+RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info, vulkan_bitmap_text_t OUT text);
 RENDERER_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text);
 RENDERER_API void vulkan_bitmap_text_release_resources(vulkan_bitmap_text_t* text);
+
+RENDERER_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text);
+RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material);
 
 RENDERER_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulkan_bitmap_text_t* text);
 RENDERER_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);

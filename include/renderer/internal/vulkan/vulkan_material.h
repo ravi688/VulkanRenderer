@@ -126,6 +126,7 @@ RENDERER_API mat2_t vulkan_material_get_mat2(vulkan_material_t* material, const 
 RENDERER_API mat4_t vulkan_material_get_mat4(vulkan_material_t* material, const char* name);
 RENDERER_API vulkan_texture_t* vulkan_material_get_texture2d(vulkan_material_t* material, const char* name);
 
+/* setters */
 RENDERER_API void vulkan_material_set_push_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle, float value);
 RENDERER_API void vulkan_material_set_push_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle, int value);
 RENDERER_API void vulkan_material_set_push_uintH(vulkan_material_t* material, vulkan_material_field_handle_t handle, uint value);
@@ -163,5 +164,8 @@ RENDERER_API void vulkan_material_set_vec4(vulkan_material_t* material, const ch
 RENDERER_API void vulkan_material_set_mat2(vulkan_material_t* material, const char* name, mat2_t m);
 RENDERER_API void vulkan_material_set_mat4(vulkan_material_t* material, const char* name, mat4_t m);
 RENDERER_API void vulkan_material_set_texture(vulkan_material_t* material, const char* name, vulkan_texture_t* texture);
+
+RENDERER_API void vulkan_material_set_array_size(vulkan_material_t* material, const char* name, u32 size);
+RENDERER_API void vulkan_material_set_buffer(vulkan_material_t* material, const char* block_name, vulkan_buffer_t* buffer);
 
 END_CPP_COMPATIBLE

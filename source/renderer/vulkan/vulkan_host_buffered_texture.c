@@ -71,6 +71,11 @@ RENDERER_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buf
 
 RENDERER_API bool vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture, bool OUT is_resized)
 {
+	if(!texture->is_dirty)
+		return false;
+
+	texture->is_dirty = false;
+	
 	/* transfer the data from host to the staging device buffer via PCI-E */
 	bool _is_resized = false;
 	bool is_updated = vulkan_host_buffered_buffer_commit(&texture->buffer, &_is_resized);

@@ -43,7 +43,10 @@ typedef struct vulkan_instance_buffer_t
 	vulkan_buffer_t device_buffer;			// buffer in the device memory
 	multi_buffer_t host_buffer;				// buffer in the host memory
 	bool has_device_buffer; 				// initially only host-side buffer is created and used; so it would be false if *_commit never called
+	bool is_dirty;
 } vulkan_instance_buffer_t;
+
+#define VULKAN_INSTANCE_BUFFER(ptr) CAST_TO(vulkan_instance_buffer_t*, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -56,9 +59,18 @@ RENDERER_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffe
 RENDERER_API multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer);
 RENDERER_API vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer);
 
+static bool vulkan_instance_buffer_has_device_buffer(vulkan_instance_buffer_t* instance_buffer)
+{
+	return vulkan_instance_buffer_get_device_buffer(instance_buffer) != NULL;
+}
+static INLINE_IF_RELEASE_MODE void vulkan_instance_buffer_set_dirty(vulkan_instance_buffer_t* instance_buffer, bool is_dirty)
+{
+	instance_buffer->is_dirty = is_dirty;
+}
+
 // logic functions
 
 // returns true when this buffer should be binded in the pipeline, otherwise false
-RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer);
+RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer, bool OUT is_resized);
 
 END_CPP_COMPATIBLE

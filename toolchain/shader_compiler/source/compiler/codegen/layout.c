@@ -350,8 +350,9 @@ static u32 parse_location(const char* str, u32 len)
 {
 	if(safe_strncmp(str, "POSITION_LOCATION", len) == 0) return  0;
 	else if(safe_strncmp(str, "NORMAL_LOCATION", len) == 0) return 1;
-	else if(safe_strncmp(str, "TEXCOORD_LOCATION", len) == 0) return 2;
-	else if(safe_strncmp(str, "TANGENT_LOCATION", len) == 0) return 3;
+	else if(safe_strncmp(str, "COLOR_LOCATION", len) == 0) return 2;
+	else if(safe_strncmp(str, "TEXCOORD_LOCATION", len) == 0) return 3;
+	else if(safe_strncmp(str, "TANGENT_LOCATION", len) == 0) return 4;
 	return U32_MAX;
 }
 
@@ -377,8 +378,9 @@ static u32 parse_binding(const char* str, u32 len)
 
 	else if(safe_strncmp(str, "POSITION_BINDING", len) == 0) return  0;
 	else if(safe_strncmp(str, "NORMAL_BINDING", len) == 0) return 1;
-	else if(safe_strncmp(str, "TEXCOORD_BINDING", len) == 0) return 2;
-	else if(safe_strncmp(str, "TANGENT_BINDING", len) == 0) return 3;
+	else if(safe_strncmp(str, "COLOR_BINDING", len) == 0) return  2;
+	else if(safe_strncmp(str, "TEXCOORD_BINDING", len) == 0) return 3;
+	else if(safe_strncmp(str, "TANGENT_BINDING", len) == 0) return 4;
 
 	return U32_MAX;
 }

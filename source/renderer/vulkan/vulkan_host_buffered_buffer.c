@@ -53,12 +53,15 @@ RENDERER_API void vulkan_host_buffered_buffer_destroy(vulkan_host_buffered_buffe
 RENDERER_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buffered_buffer_t* buffer)
 {
 	buf_free(&buffer->host_buffer);
+	memory_allocator_dealloc(buffer->allocator, buffer);
 }
 
 
 RENDERER_API buffer_t* vulkan_host_buffered_buffer_get_host_buffer(vulkan_host_buffered_buffer_t* buffer)
 {
-	return &buffer->host_buffer;
+	AUTO host_buffer = &buffer->host_buffer;
+	buffer->is_dirty = true;
+	return host_buffer;
 }
 
 RENDERER_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulkan_host_buffered_buffer_t* buffer)
@@ -69,10 +72,15 @@ RENDERER_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulk
 
 RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer, bool OUT is_resized)
 {
+	if(!buffer->is_dirty)
+		return false;
+
+	buffer->is_dirty = false;
+
 	buffer_t* host_buffer = vulkan_host_buffered_buffer_get_host_buffer(buffer);
 	vulkan_buffer_t* device_buffer = vulkan_host_buffered_buffer_get_device_buffer(buffer);
 	
-	u32 size = buf_get_element_count(host_buffer);
+	u32 size = buf_get_element_count(host_buffer) * buf_get_element_size(host_buffer);
 
 	if(size == 0)
 		/* no update on the gpu side buffer */
@@ -105,8 +113,7 @@ RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer
 	_debug_assert__(buffer->has_device_buffer == true);
 	
 	/* copy the host side buffer to the GPU side buffer */
-	_debug_assert__(buf_get_element_size(host_buffer) == sizeof(u8));
-	vulkan_buffer_copy_data(device_buffer, 0, buf_get_ptr(host_buffer), buf_get_element_count(host_buffer));
+	vulkan_buffer_copy_data(device_buffer, 0, buf_get_ptr(host_buffer), size);
 
 	/* updated the gpu side buffer */
 	return true;

@@ -67,9 +67,78 @@
 /* location constants  */
 #define POSITION_LOCATION  0
 #define NORMAL_LOCATION 1
-#define TEXCOORD_LOCATION 2
-#define TANGENT_LOCATION 3
+#define COLOR_LOCATION 2
+#define TEXCOORD_LOCATION 3
+#define TANGENT_LOCATION 4
 
+/* <begin> for Vertex Attributes */
+/* NOTE: vertex attributes are not interleaved so we need to store them in separate buffers */
+#define VTX_POS_BIN 0 /* binding of the position attribute */
+#define VTX_NML_BIN 1 /* binding of the normal attribute */
+#define VTX_TXC_BIN 2 /* binding of the texture coordinate attribute */
+#define VTX_TNG_BIN 3 /* binding of the tangent attribute */
+
+#define VTX_POS_LOC 0 /* location of the position attribute */
+#define VTX_NML_LOC 1 /* location of the normal attribute */
+#define VTX_TXC_LOC 2 /* location of the texture coordinate attribute */
+#define VTX_TNG_LOC 3 /* location of the tangent attribute */
+/* <end> for Vertex Attributes */
+
+/* <begin> bitmap text shader  */
+#	define BTM_TXT_BND 4
+	/* <begin> per instance of the glyphs */
+# 	define BTM_TXT_TLTC_BND BTM_TXT_BND /* binding of top left texture coordinate of the quad */
+# 	define BTM_TXT_TRTC_BND BTM_TXT_BND /* binding of top right texture coordinate of the quad */
+# 	define BTM_TXT_BRTC_BND BTM_TXT_BND /* binding of bottom right texture coordinate of the quad */
+# 	define BTM_TXT_BLTC_BND BTM_TXT_BND /* binding of bottom left texture coordinate of the quad */
+#	define BTM_TXT_OFST_BND BTM_TXT_BND /* binding of offset of the quad (vec3) */
+#	define BTM_TXT_XTNT_BND BTM_TXT_BND /* binding of extent of the quad (vec2) */
+#	define BTM_TXT_ROTN_BND BTM_TXT_BND /* binding of rotation of the quad (vec3) */
+#	define BTM_TXT_STID_BND BTM_TXT_BND /* binding of string id of the quad (to which it belongs) (uint) */
+# 	define BTM_TXT_TLTC_LOC 4 /* location of top left texture coordinate of the quad */
+# 	define BTM_TXT_TRTC_LOC 4 /* location of top right texture coordinate of the quad */
+# 	define BTM_TXT_BRTC_LOC 5 /* location of bottom right texture coordinate of the quad */
+# 	define BTM_TXT_BLTC_LOC 5 /* location of bottom left texture coordinate of the quad */
+#	define BTM_TXT_OFST_LOC 6 /* location of offset of the quad (vec3) */
+#	define BTM_TXT_XTNT_LOC 7 /* location of extent of the quad (vec2) */
+#	define BTM_TXT_ROTN_LOC 8 /* location of rotation of the quad (vec3) */
+#	define BTM_TXT_STID_LOC 8 /* location of string id of the quad (uint) */
+# 	define BTM_TXT_TLTC_COMP 0 /* component of top left texture coordinate of the quad */
+# 	define BTM_TXT_TRTC_COMP 2 /* component of top right texture coordinate of the quad */
+# 	define BTM_TXT_BRTC_COMP 0 /* component of bottom right texture coordinate of the quad */
+# 	define BTM_TXT_BLTC_COMP 2 /* component of bottom left texture coordinate of the quad */
+#	define BTM_TXT_OFST_COMP 0 /* component of offset of the quad */
+#	define BTM_TXT_XTNT_COMP 0 /* component of extent of the quad */
+#	define BTM_TXT_ROTN_COMP 0 /* component of rotation of the quad */
+#	define BTM_TXT_STID_COMP 3 /* component of string id of the quad */
+	/* <end> per instance of the glyphs */
+	/* <begin> per string object */
+#	define BTM_TXT_TNFM_SET OBJECT_SET /* set number of the list of transform matrices */
+#	define BTM_TXT_TNFM_BND (TRANSFORM_BINDING + 1) /* binding of the list of transform matrices */
+	/* <end> per string object */
+/* <end> bitmap text shader */
+
+/* <begin> mesh text shader */
+#	define MSH_TXT_BND 5
+	/* <begin> per instance of the glyph */
+#	define MSH_TXT_OFST_BND MSH_TXT_BND /* binding of offset of the instanced mesh of the glyph */
+#	define MSH_TXT_SCAL_BND MSH_TXT_BND /* binding of scale of the instanced mesh of the glyph */
+#	define MSH_TXT_ROTN_BND MSH_TXT_BND /* binding of rotation of the instanced mesh of the glyph */
+#	define MSH_TXT_STID_BND MSH_TXT_BND /* binding of string id of the instanced mesh of the glyph */
+#	define MSH_TXT_OFST_LOC 4 /* location of offset of the instanced mesh (vec3) */
+#	define MSH_TXT_SCAL_LOC 5 /* location of scale of the instanced mesh (vec3) */
+#	define MSH_TXT_ROTN_LOC 6 /* location of rotation of the instanced mesh (vec3) */
+#	define MSH_TXT_STID_LOC 6 /* location of string id of the instanced mesh (to which it belongs) (uint) */
+#	define MSH_TXT_OFST_COMP 0 /* component of offset of the instanced mesh  */
+#	define MSH_TXT_SCAL_COMP 0 /* component of scale of the instanced mesh */
+#	define MSH_TXT_ROTN_COMP 0 /* component of rotation of the instanced mesh */
+#	define MSH_TXT_STID_COMP 3 /* component of string id of the instanced mesh */
+	/* <end> per instance of the glyph */
+	/* <begin> per string object */
+#	define MSH_TXT_TNFM_SET OBJECT_SET /* set number of the list of transform matrices */
+#	define MSH_TXT_TNFM_BND (TRANSFORM_BINDING + 1) /* binding of the list of transform matrices */
+	/* <end> per string object */
+/* <end> mesh text shader */
 
 #define POSITION layout(location = POSITION_LOCATION) in vec3
 #define NORMAL layout(location = NORMAL_LOCATION) in vec3

@@ -58,6 +58,7 @@ RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data
 		create_info->data = buffers[i]->bytes;
 		create_info->stride = buffers[i]->element_size;
 		create_info->count = buffers[i]->element_count;
+		create_info->binding = i;
 		++buffer_count;
 	}
 	_debug_assert_wrn__(buffer_count != 0);

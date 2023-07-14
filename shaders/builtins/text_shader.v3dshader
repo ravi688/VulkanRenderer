@@ -41,9 +41,9 @@ Shader
     Layout
     {
         per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 local_position;
-        per_instance [1, 1] vec3 offset;
-        per_instance [1, 2] vec3 scale;
-        per_instance [1, 3] vec3 rotation;
+        per_instance [5, 1] vec3 offset;
+        per_instance [5, 2] vec3 scale;
+        per_instance [5, 3] vec3 rotation;
     }
     
     RenderPass

@@ -53,6 +53,7 @@ typedef enum vulkan_render_object_type_t
 } vulkan_render_object_type_t;
 
 typedef void (*draw_call_handler_t)(void* object);
+typedef void (*material_set_handler_t)(void* object, vulkan_material_t* material);
 
 typedef struct vulkan_render_object_create_info_t
 {
@@ -74,6 +75,7 @@ typedef struct vulkan_render_object_t
 	vulkan_material_t* material;
 	void* user_data;
 	draw_call_handler_t draw;
+	material_set_handler_t set_material;
 	vulkan_descriptor_set_t object_set;
 	vulkan_buffer_t buffer;
 

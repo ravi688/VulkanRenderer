@@ -53,3 +53,35 @@ RENDERER_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkI
 	memcopy(&barrier.subresourceRange, subresource, VkImageSubresourceRange);
 	vkCmdPipelineBarrier(cb, src_pipeline_stage, dst_pipeline_stage, 0, 0, NULL, 0, NULL, 1, &barrier);
 }
+
+RENDERER_API void vulkan_command_bind_vertex_buffers(VkCommandBuffer cb, u32* bindings, VkBuffer* buffers, u32 buffer_count)
+{
+#if GLOBAL_DEBUG
+	_debug_assert__(buffer_count >= 1);
+	for(u32 i = 0; i < (buffer_count - 1); i++)
+		if(bindings[i] >= bindings[i + 1])
+			debug_log_fetal_error("Either the bindings are not sorted in increasing order correctly or duplicate bindings exists");
+#endif /* GLOBAL_DEBUG */
+
+	u32 group_size = 0;
+	u32 i = 0;
+	while(i < buffer_count)
+	{
+		/* group consecutive bindings */
+		group_size = 1;
+		u32 group = i++;
+		for(; i < buffer_count; i++, group_size++)
+			if(bindings[i - 1] == bindings[i])
+				continue;
+			else
+				break;
+
+		/* create offsets */
+		VkDeviceSize offsets[group_size];
+		for(u32 j = 0; j < group_size; j++)
+			offsets[j] = 0;
+
+		/* binding vertex buffers with consecutive bind points */
+		vkCmdBindVertexBuffers(cb, bindings[group], group_size, &buffers[group], offsets);
+	}
+}

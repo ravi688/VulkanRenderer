@@ -6,11 +6,8 @@
 #include <renderer/tests/bitmap_text.h>
 
 #define RENDERER_INCLUDE_MATH
-#define RENDERER_INCLUDE_3D_TEXT_RENDER_SYSTEM
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
-
-#include <conio.h>
 
 #include <renderer/hash_table.h>
 #include <renderer/bmp.h>
@@ -18,6 +15,7 @@
 #include <renderer/buffer2d.h>
 #include <renderer/system/display.h>
 #include <renderer/bitmap_glyph_atlas_texture.h>
+#include <renderer/bitmap_text.h>
 
 #include <FreeType/ft2build.h>
 #include <FreeType/freetype/freetype.h>
@@ -31,14 +29,14 @@ TEST_DATA(BITMAP_TEXT)
 
 	camera_t* camera;
 
-	glyph_mesh_pool_t* glyph_pool;
 	font_t* font;
 
-	text_mesh_t* text_mesh;
-	text_mesh_string_handle_t string_handle;
+	bitmap_glyph_atlas_texture_t* texture;
+	bitmap_text_t* text;
+	bitmap_text_string_handle_t text_string_handle;
 
-	render_object_t* render_object;
-	material_t* material;
+	render_object_t* text_object;
+	material_t* text_material;
 
 	int isScreenSpace; /* bools are not support currently in V3DShader (see: TID64)*/
 };
@@ -554,43 +552,53 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
 
-	this->material = material_library_getH(mlib, 
-							material_library_create_materialH(mlib, 
-							shader_library_load_shader(slib, 
-								"shaders/builtins/text_shader.sb"), "MyMaterial"));
-	this->isScreenSpace = 1;
-	material_set_int(this->material, "parameters.isScreenSpace", 1);
+	this->text_material = material_library_getH(mlib,
+						 	material_library_create_materialH(mlib,
+						 	shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT), 
+						 	"BitmapTextShaderTest"));
 
 	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
-	this->glyph_pool = glyph_mesh_pool_create(renderer, this->font);
-	this->text_mesh = text_mesh_create(renderer, this->glyph_pool);
-	this->string_handle = text_mesh_string_create(this->text_mesh);
-	text_mesh_string_setH(this->text_mesh, this->string_handle, "AVLTNAaTgIMI");
+	font_set_char_size(this->font, 50);
 
-	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(this->render_object, this->material);
-	render_object_attach(this->render_object, this->text_mesh);
-	render_object_set_transform(this->render_object, mat4_translation(0.0f, 0.0f, -3.0f));
+	/* bitmap text */
+	bitmap_glyph_atlas_texture_create_info_t texture_create_info = { 512, 512, this->font };
+	this->texture = bitmap_glyph_atlas_texture_create(renderer, &texture_create_info);
+	material_set_texture(this->text_material, "bga", TEXTURE(this->texture));
+	material_set_float(this->text_material, "parameters.color.r", 0.0f);
+	material_set_float(this->text_material, "parameters.color.g", 1.0f);
+	material_set_float(this->text_material, "parameters.color.b", 0.0f);
+	this->text = bitmap_text_create(renderer, this->texture);
+	this->text_string_handle = bitmap_text_string_create(this->text);
+	bitmap_text_string_setH(this->text, this->text_string_handle, "@Imprint 1.0.0");
+
+	bitmap_glyph_atlas_texture_dump(this->texture, "bitmap_glyph_atlas_texture.dump.bmp");
+
+	this->text_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->text_object, this->text_material);
+	render_object_attach(this->text_object, this->text);
+	render_object_set_transform(this->text_object, mat4_translation(0.0f, 0.0f, -3.0f));
 
 	render_scene_build_queues(this->scene);
 
-	test_hash_table();
-	test_bitmap();
-	test_buffer2d_view(renderer);
-	test_buffer2d(renderer);
-	test_glyph_rasterization(renderer);
-	test_buffer2d_backed_buffer_dump(renderer);
-	test_glyph_packing(renderer);
+	// test_hash_table();
+	// test_bitmap();
+	// test_buffer2d_view(renderer);
+	// test_buffer2d(renderer);
+	// test_glyph_rasterization(renderer);
+	// test_buffer2d_backed_buffer_dump(renderer);
+	// test_glyph_packing(renderer);
 }
 
 TEST_ON_TERMINATE(BITMAP_TEXT)
 {
-	text_mesh_destroy(this->text_mesh);
-	text_mesh_release_resources(this->text_mesh);
+	bitmap_text_destroy(this->text);
+	bitmap_text_release_resources(this->text);
+	bitmap_glyph_atlas_texture_destroy(this->texture);
+	bitmap_glyph_atlas_texture_release_resources(this->texture);
+	
 	font_destroy(this->font);
 	font_release_resources(this->font);
-	glyph_mesh_pool_destroy(this->glyph_pool);
-	glyph_mesh_pool_release_resources(this->glyph_pool);
+
 	render_scene_destroy(this->scene);
 	render_scene_release_resources(this->scene);
 }
@@ -598,21 +606,7 @@ TEST_ON_TERMINATE(BITMAP_TEXT)
 
 TEST_ON_UPDATE(BITMAP_TEXT)
 {
-	if(kbhit())
-	{
-		getch();
-		this->isScreenSpace = !this->isScreenSpace;
-		material_set_int(this->material, "parameters.isScreenSpace", this->isScreenSpace);
-		switch(this->isScreenSpace)
-		{
-			case 0:
-				text_mesh_string_setH(this->text_mesh, this->string_handle, "World Space");
-				break;
-			case 1:
-				text_mesh_string_setH(this->text_mesh, this->string_handle, "Screen Space");
-				break;
-		}
-	}
+	bitmap_glyph_atlas_texture_commit(this->texture, NULL);
 }
 
 TEST_ON_RENDER(BITMAP_TEXT)

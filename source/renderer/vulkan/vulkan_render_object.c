@@ -33,9 +33,15 @@
 
 typedef struct vulkan_mesh_t vulkan_mesh_t;
 RENDERER_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh);
+RENDERER_API void vulkan_mesh_set_material(vulkan_mesh_t* mesh, vulkan_material_t* material);
 
 typedef struct text_mesh_t text_mesh_t;
 RENDERER_API void text_mesh_draw(text_mesh_t* text);
+RENDERER_API void text_mesh_set_material(text_mesh_t* text, vulkan_material_t* material);
+
+typedef struct vulkan_bitmap_text_t vulkan_bitmap_text_t;
+RENDERER_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text);
+RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material);
 
 
 RENDERER_API vulkan_render_object_t* vulkan_render_object_new(memory_allocator_t* allocator)
@@ -97,12 +103,15 @@ RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* render
 	{
 		case VULKAN_RENDER_OBJECT_TYPE_MESH:
 			object->draw = CAST_TO(draw_call_handler_t, vulkan_mesh_draw_indexed);
+			object->set_material = CAST_TO(material_set_handler_t, vulkan_mesh_set_material);
 			break;
 		case VULKAN_RENDER_OBJECT_TYPE_TEXT_MESH:
 			object->draw = CAST_TO(draw_call_handler_t, text_mesh_draw);
+			object->set_material = CAST_TO(material_set_handler_t, text_mesh_set_material);
 			break;
 		case VULKAN_RENDER_OBJECT_TYPE_TEXT: 	// TODO
-			LOG_FETAL_ERR("TEXT render object are yet to be defined\n");
+			object->draw = CAST_TO(draw_call_handler_t, vulkan_bitmap_text_draw);
+			object->set_material = CAST_TO(material_set_handler_t, vulkan_bitmap_text_set_material);
 			break;
 		default:
 			if(create_info->draw_handler == NULL)
@@ -136,6 +145,8 @@ RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t*
 RENDERER_API void vulkan_render_object_attach(vulkan_render_object_t* obj, void* user_data)
 {
 	obj->user_data = user_data;
+	if((user_data != NULL) && (obj->set_material != NULL) && (obj->material != NULL))
+		obj->set_material(obj->user_data, obj->material);
 }
 
 RENDERER_API void vulkan_render_object_draw(vulkan_render_object_t* obj)
@@ -151,6 +162,9 @@ RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* obj,
 	obj->material = material;
 	vulkan_render_object_handle_t handle = vulkan_render_queue_add(obj->queue, obj);
 	_debug_assert__(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
+	
+	if(obj->user_data != NULL)
+		obj->set_material(obj->user_data, material);
 }
 
 RENDERER_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* obj)

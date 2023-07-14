@@ -89,11 +89,9 @@ RENDERER_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 le
 		font->ft_data_size = 0;
 	}
 	else
-	{
-		error = FT_Set_Char_Size(font->ft_handle, 0, 11UL << 6, font->dpi.x, font->dpi.y);
-		if(error != 0)
-			debug_log_fetal_error("Failed to set char size");
-	}
+		font_set_char_size(font, 11);
+
+	font->glyph_info_table = hash_table_create(utf32_t, font_glyph_info_t, 128, utf32_equal_to, utf32_hash);
 }
 
 RENDERER_API font_t* font_load_and_create(renderer_t* renderer, const char* file_name)
@@ -119,6 +117,7 @@ RENDERER_API void font_destroy(font_t* font)
 		FT_Done_Face(font->ft_handle);
 		memory_allocator_dealloc(font->renderer->allocator, font->ft_data);
 	}
+	hash_table_free(&font->glyph_info_table);
 }
 
 RENDERER_API void font_release_resources(font_t* font)
@@ -129,7 +128,9 @@ RENDERER_API void font_release_resources(font_t* font)
 RENDERER_API void font_set_char_size(font_t* font, u32 point_size)
 {
 	if(font->ft_handle != NULL)
-		FT_Set_Char_Size(font->ft_handle, 0, point_size * 64, font->dpi.x, font->dpi.y);
+		if(FT_Set_Char_Size(font->ft_handle, 0, point_size * 64, font->dpi.x, font->dpi.y) != 0)
+			debug_log_fetal_error("Failed to set char size");
+	font->point_size = point_size;
 }
 
 RENDERER_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info_t OUT glyph_info)
@@ -138,30 +139,42 @@ RENDERER_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info
 	{
 		AUTO glyph_index = FT_Get_Char_Index(font->ft_handle, unicode);
 		AUTO error = FT_Load_Glyph(font->ft_handle, glyph_index, FT_LOAD_DEFAULT);
-		if(!isgraph(CAST_TO(s32, unicode)))
-			return false;
 		if(error != 0)
 		{
 			debug_log_fetal_error("Failed to load glyph Unicode (%lu)", unicode);
 			return false;
 		}
 
-		if(glyph_info == NULL)
-			return true;
 
 		FT_GlyphSlot glyph_slot = font->ft_handle->glyph;
 
+		font_glyph_info_t info = { };
+
 		/* fill up the glyph information */
-		glyph_info->index = glyph_slot->glyph_index;
-		glyph_info->advance_width = glyph_slot->advance.x;
+		info.index = glyph_slot->glyph_index;
+		info.advance_width = CAST_TO(f32, glyph_slot->advance.x);
 		_debug_assert__(glyph_slot->advance.x == glyph_slot->metrics.horiAdvance);
-		glyph_info->width = glyph_slot->metrics.width;
-		glyph_info->height = glyph_slot->metrics.height;
-		glyph_info->bearing_x = glyph_slot->metrics.horiBearingX;
-		glyph_info->bearing_y = glyph_slot->metrics.horiBearingY;
+		info.width = CAST_TO(f32, glyph_slot->metrics.width);
+		info.height = CAST_TO(f32, glyph_slot->metrics.height);
+		info.bearing_x = CAST_TO(f32, glyph_slot->metrics.horiBearingX);
+		info.bearing_y = CAST_TO(f32, glyph_slot->metrics.horiBearingY);
+		info.right_side_bearing = info.advance_width - (info.left_side_bearing + info.width);
+		info.min_x = info.bearing_x;
+		info.min_y = info.bearing_y - info.height;
+		info.max_x = info.bearing_x + info.width;
+		info.max_y = info.bearing_y;
+		info.is_graph = isgraph(CAST_TO(s32, unicode)) != 0;
+
+		if(!hash_table_contains(&font->glyph_info_table, &unicode))
+			hash_table_add(&font->glyph_info_table, &unicode, &info);
+
+		if(glyph_info != NULL)
+			OUT glyph_info = info;
+
+		return info.is_graph;
 	}
 	IF_DEBUG (else { debug_log_fetal_error("Freetype font is NULL, couldn't load glyph %lu", unicode); return false; })
-	return true;
+	return false;
 }
 
 RENDERER_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bitmap_t OUT bitmap)
@@ -251,4 +264,16 @@ RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_
 	out_info->min_y = info.ybounds[0];
 	out_info->max_y = info.ybounds[1];
 	out_info->index = index;
+}
+
+RENDERER_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info)
+{
+	void* ptr = hash_table_get_value(&font->glyph_info_table, &unicode);
+	if(ptr != NULL)
+		OUT info = DREF_TO(font_glyph_info_t, ptr);
+	else
+	{
+		font_load_glyph(font, unicode, info);
+		debug_log_warning("no glyph info found for the glyph %lu, calling font_load_glyph to get info", unicode);
+	}
 }

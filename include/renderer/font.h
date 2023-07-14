@@ -30,6 +30,7 @@
 #include <renderer/rect.h> 	// iextent2d_t
 #include <renderer/comparer.h> // u32_equal_to
 #include <renderer/hash_function.h> // u32_hash
+#include <renderer/hash_table.h>
 
 typedef u32 utf32_t;
 #define utf32_equal_to u32_equal_to
@@ -81,6 +82,9 @@ typedef struct font_glyph_info_t
 	/* right side bearing (distance of the right most edge of the bouding box of the glyph from the advance width 
 	 * it can be calculated as: advance_width - left_side_bearing - width */
 	f32 right_side_bearing;
+
+	/* true if this glyph has a grpahical representation, otherwise false */
+	bool is_graph;
 } font_glyph_info_t;
 
 typedef struct glyph_bitmap_t
@@ -109,6 +113,9 @@ typedef struct font_t
 	};
 	/* display resolution in dpi */
 	iextent2d_t dpi;
+	f32 point_size;
+	/* cached glyph infos as we are not sure how does the FT_Load_Glyph works and how much expensive it is */
+	hash_table_t glyph_info_table;
 } font_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -135,5 +142,7 @@ RENDERER_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_qua
 
 /* fills 'info' with information of the glyph represented by unicode encoding 'unicode' */
 RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
+/* fills 'info' with information of the glyph only but calls font_load_glyph internally if required (be careful) */
+RENDERER_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
 
 END_CPP_COMPATIBLE

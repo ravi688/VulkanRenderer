@@ -44,6 +44,7 @@ typedef struct multi_buffer_t
 } multi_buffer_t;
 
 typedef buf_ucount_t sub_buffer_handle_t;
+#define SUB_BUFFER_HANDLE_INVALID BUF_INVALID_INDEX
 
 BEGIN_CPP_COMPATIBLE
 

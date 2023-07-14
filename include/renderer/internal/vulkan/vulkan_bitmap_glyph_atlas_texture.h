@@ -54,7 +54,12 @@ RENDERER_API bool vulkan_bitmap_glyph_atlas_texture_commit(vulkan_bitmap_glyph_a
  * returns: true if the glyph has graphical representation and there are no errors */
 static INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, utf32_t unicode, glyph_texcoord_t OUT texcoord)
 {
+	vulkan_host_buffered_texture_set_dirty(BASE(texture), true);
 	return bitmap_glyph_pool_get_texcoord(&texture->pool, unicode, texcoord, NULL);
+}
+static INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_contains_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, utf32_t unicode)
+{
+	return bitmap_glyph_pool_contains_texcoord(&texture->pool, unicode);
 }
 #ifdef GLOBAL_DEBUG
 static INLINE_IF_RELEASE_MODE void vulkan_bitmap_glyph_atlas_texture_dump(vulkan_bitmap_glyph_atlas_texture_t* texture, const char* file_path)
