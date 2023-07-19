@@ -47,20 +47,32 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_rende
 		.view = vulkan_host_buffered_texture_get_view(BASE(texture))
 	};
 	bitmap_glyph_pool_create_no_alloc(RENDERER(renderer), &bgp_create_info, &texture->pool);
+
+	texture->on_resize_event = event_create(renderer->allocator, texture);
 }
 
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_destroy(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
 	vulkan_host_buffered_texture_destroy(BASE(texture));
 	bitmap_glyph_pool_destroy(&texture->pool);
+	event_destroy(texture->on_resize_event);
 }
 
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_release_resources(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
+	event_destroy(texture->on_resize_event);
 	memory_allocator_dealloc(texture->renderer->allocator, texture);
 }
 
 RENDERER_API bool vulkan_bitmap_glyph_atlas_texture_commit(vulkan_bitmap_glyph_atlas_texture_t* texture, bool OUT is_resized)
 {
-	return vulkan_host_buffered_texture_commit(BASE(texture), is_resized);
+	bool _is_resized = false;
+	bool result = vulkan_host_buffered_texture_commit(BASE(texture), &_is_resized);
+	if(_is_resized)
+	{
+		event_publish(texture->on_resize_event);
+		if(is_resized != NULL)
+			OUT is_resized = _is_resized;
+	}
+	return result;
 }

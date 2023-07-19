@@ -83,6 +83,9 @@ typedef struct font_glyph_info_t
 	 * it can be calculated as: advance_width - left_side_bearing - width */
 	f32 right_side_bearing;
 
+	f32 bitmap_top;
+	f32 bitmap_left;
+
 	/* true if this glyph has a grpahical representation, otherwise false */
 	bool is_graph;
 } font_glyph_info_t;
@@ -144,5 +147,17 @@ RENDERER_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_qua
 RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
 /* fills 'info' with information of the glyph only but calls font_load_glyph internally if required (be careful) */
 RENDERER_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
+
+static INLINE_IF_RELEASE_MODE f32 get_inches_from_point_size(u32 point_size)
+{
+	/* 72 points make 1 inch */
+	return point_size * 1.0 / 72;
+}
+
+static INLINE_IF_RELEASE_MODE u32 get_pixels_from_point_size(u32 point_size, u32 dpi)
+{
+	/* convert inches to pixels by multiplying with 'dots per inch' */
+	return CAST_TO(u32, (get_inches_from_point_size(point_size) * dpi));
+}
 
 END_CPP_COMPATIBLE

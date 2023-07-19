@@ -85,7 +85,8 @@ static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_
 						struct_descriptor_add_field(Color, "b", GLSL_TYPE_FLOAT);
 					struct_descriptor_end(renderer->allocator, Color);
 				parameters = begin_uniform(renderer, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
-					struct_descriptor_add_field(parameters, "isScreenSpace", GLSL_TYPE_UINT);
+					struct_descriptor_add_field(parameters, "win_size", GLSL_TYPE_UVEC2);
+					struct_descriptor_add_field(parameters, "tex_size", GLSL_TYPE_UVEC2);
 					struct_descriptor_add_field2(parameters, "color", Color);
 				end_uniform(renderer, &bindings);
 			}

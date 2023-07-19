@@ -558,12 +558,11 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 						 	"BitmapTextShaderTest"));
 
 	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
-	font_set_char_size(this->font, 50);
+	font_set_char_size(this->font, 40);
 
 	/* bitmap text */
 	bitmap_glyph_atlas_texture_create_info_t texture_create_info = { 512, 512, this->font };
 	this->texture = bitmap_glyph_atlas_texture_create(renderer, &texture_create_info);
-	material_set_texture(this->text_material, "bga", TEXTURE(this->texture));
 	material_set_float(this->text_material, "parameters.color.r", 0.0f);
 	material_set_float(this->text_material, "parameters.color.g", 1.0f);
 	material_set_float(this->text_material, "parameters.color.b", 0.0f);
@@ -580,13 +579,13 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 
 	render_scene_build_queues(this->scene);
 
-	// test_hash_table();
-	// test_bitmap();
-	// test_buffer2d_view(renderer);
-	// test_buffer2d(renderer);
-	// test_glyph_rasterization(renderer);
-	// test_buffer2d_backed_buffer_dump(renderer);
-	// test_glyph_packing(renderer);
+	test_hash_table();
+	test_bitmap();
+	test_buffer2d_view(renderer);
+	test_buffer2d(renderer);
+	test_glyph_rasterization(renderer);
+	test_buffer2d_backed_buffer_dump(renderer);
+	test_glyph_packing(renderer);
 }
 
 TEST_ON_TERMINATE(BITMAP_TEXT)
@@ -606,6 +605,13 @@ TEST_ON_TERMINATE(BITMAP_TEXT)
 
 TEST_ON_UPDATE(BITMAP_TEXT)
 {
+	static int counter = 0;
+	counter++;
+	if(counter == 66000)
+		counter = 0;
+	char buffer[32];
+	sprintf(buffer, "BTM_TEXT: %d", counter);
+	bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
 	bitmap_glyph_atlas_texture_commit(this->texture, NULL);
 }
 

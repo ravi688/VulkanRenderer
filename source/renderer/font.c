@@ -128,7 +128,7 @@ RENDERER_API void font_release_resources(font_t* font)
 RENDERER_API void font_set_char_size(font_t* font, u32 point_size)
 {
 	if(font->ft_handle != NULL)
-		if(FT_Set_Char_Size(font->ft_handle, 0, point_size * 64, font->dpi.x, font->dpi.y) != 0)
+		if(FT_Set_Char_Size(font->ft_handle, 0, get_pixels_from_point_size(point_size, font->dpi.y) << 6, font->dpi.x, font->dpi.y) != 0)
 			debug_log_fetal_error("Failed to set char size");
 	font->point_size = point_size;
 }
@@ -152,12 +152,14 @@ RENDERER_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info
 
 		/* fill up the glyph information */
 		info.index = glyph_slot->glyph_index;
-		info.advance_width = CAST_TO(f32, glyph_slot->advance.x);
+		info.advance_width = CAST_TO(f32, glyph_slot->advance.x >> 6);
 		_debug_assert__(glyph_slot->advance.x == glyph_slot->metrics.horiAdvance);
-		info.width = CAST_TO(f32, glyph_slot->metrics.width);
-		info.height = CAST_TO(f32, glyph_slot->metrics.height);
-		info.bearing_x = CAST_TO(f32, glyph_slot->metrics.horiBearingX);
-		info.bearing_y = CAST_TO(f32, glyph_slot->metrics.horiBearingY);
+		info.width = CAST_TO(f32, glyph_slot->metrics.width >> 6);
+		info.height = CAST_TO(f32, glyph_slot->metrics.height >> 6);
+		info.bearing_x = CAST_TO(f32, glyph_slot->metrics.horiBearingX >> 6);
+		info.bearing_y = CAST_TO(f32, glyph_slot->metrics.horiBearingY >> 6);
+		info.bitmap_top = CAST_TO(f32, glyph_slot->bitmap_top >> 6);
+		info.bitmap_left = CAST_TO(f32, glyph_slot->bitmap_left >> 6);
 		info.right_side_bearing = info.advance_width - (info.left_side_bearing + info.width);
 		info.min_x = info.bearing_x;
 		info.min_y = info.bearing_y - info.height;

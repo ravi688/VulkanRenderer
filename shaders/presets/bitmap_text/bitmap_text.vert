@@ -16,7 +16,8 @@ struct Color
 
 layout(std430, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
-    int isScreenSpace;
+    uvec2 win_size;
+    uvec2 tex_size;
     Color color;
 } parameters;
 
@@ -69,15 +70,13 @@ void main()
 
     GlyphTexCoord texcoord = gtc_buffer[indx];
 
-    float dpi = 141.0;
-    float dpi_inv = 1 / dpi;
-    vec2 tex_size = vec2(512, 512);
-    vec2 win_size = vec2(800, 800);
+    vec2 tex_size = parameters.tex_size;
+    vec2 win_size = parameters.win_size;
+    vec2 glyph_size = vec2(texcoord.trtc.x - texcoord.tltc.x, texcoord.bltc.y - texcoord.tltc.y) * tex_size;
 
-    float _scale_x = (texcoord.trtc.x - texcoord.tltc.x) * tex_size.x * dpi_inv * (1.0 / (win_size.x * dpi_inv));
-    float _scale_y = (texcoord.bltc.y - texcoord.tltc.y) * tex_size.y * dpi_inv * (1.0 / (win_size.y * dpi_inv));
-    float _space = ofst.x * 0.1f;
-    gl_Position = vec4(position.x * _scale_x + _space - 0.1 * 8, -position.y * _scale_y, 0, 1.0);
+    float _scale_x = glyph_size.x / win_size.x;
+    float _scale_y = glyph_size.y / win_size.y;
+    gl_Position = vec4(position.x * _scale_x + ofst.x / win_size.x, -(position.y * _scale_y + ofst.y / win_size.y), 0, 1.0);
 
     if(gl_VertexIndex == 0)
         out_texcoord = texcoord.tltc;

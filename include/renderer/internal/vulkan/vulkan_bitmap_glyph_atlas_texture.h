@@ -15,6 +15,8 @@ typedef struct vulkan_bitmap_glyph_atlas_texture_create_info_t
 	font_t* font;
 } vulkan_bitmap_glyph_atlas_texture_create_info_t;
 
+typedef struct event_t event_t;
+
 typedef struct vulkan_bitmap_glyph_atlas_texture_t
 {
 	/* holds the actual host side pixel buffer and device side pixel buffer (VkImage) */
@@ -22,6 +24,7 @@ typedef struct vulkan_bitmap_glyph_atlas_texture_t
 	vulkan_renderer_t* renderer;
 	/* facilitates pooling of rasterized glyphs, works on the host side pixel buffer */
 	bitmap_glyph_pool_t pool;
+	event_t* on_resize_event;
 } vulkan_bitmap_glyph_atlas_texture_t;
 
 #define VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE(ptr) DYNAMIC_CAST(vulkan_bitmap_glyph_atlas_texture_t*, ptr)
@@ -35,6 +38,15 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_rende
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_destroy(vulkan_bitmap_glyph_atlas_texture_t* texture);
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_release_resources(vulkan_bitmap_glyph_atlas_texture_t* texture);
 
+
+static INLINE_IF_RELEASE_MODE event_t* vulkan_bitmap_glyph_atlas_texture_get_on_resize_event(vulkan_bitmap_glyph_atlas_texture_t*  texture)
+{
+	return texture->on_resize_event;
+}
+static INLINE_IF_RELEASE_MODE iextent2d_t vulkan_bitmap_glyph_atlas_texture_get_size(vulkan_bitmap_glyph_atlas_texture_t* texture)
+{
+	return buffer2d_view_get_size(vulkan_host_buffered_texture_get_view(BASE(texture)));
+}
 /* returns pointer to the bitmap_glyph_pool_t object */
 static INLINE_IF_RELEASE_MODE bitmap_glyph_pool_t* vulkan_bitmap_glyph_atlas_texture_get_pool(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {

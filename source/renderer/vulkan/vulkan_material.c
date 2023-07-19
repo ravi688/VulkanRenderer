@@ -429,6 +429,24 @@ RENDERER_API void vulkan_material_set_vec4H(vulkan_material_t* material, vulkan_
 	unmap_descriptor(material, handle);
 }
 
+RENDERER_API void vulkan_material_set_uvec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec2_t value)
+{
+	struct_descriptor_set_uvec2(map_descriptor(material, handle), handle.field_handle, (uint*)&value);
+	unmap_descriptor(material, handle);
+}
+
+RENDERER_API void vulkan_material_set_uvec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec3_t value)
+{
+	struct_descriptor_set_uvec3(map_descriptor(material, handle), handle.field_handle, (uint*)&value);
+	unmap_descriptor(material, handle);
+}
+
+RENDERER_API void vulkan_material_set_uvec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec4_t value)
+{
+	struct_descriptor_set_uvec4(map_descriptor(material, handle), handle.field_handle, (uint*)&value);
+	unmap_descriptor(material, handle);
+}
+
 RENDERER_API void vulkan_material_set_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat2_t value)
 {
 	struct_descriptor_set_mat2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
@@ -540,6 +558,21 @@ RENDERER_API void vulkan_material_set_vec3(vulkan_material_t* material, const ch
 RENDERER_API void vulkan_material_set_vec4(vulkan_material_t* material, const char* name, vec4_t v)
 {
 	vulkan_material_set_vec4H(material, vulkan_material_get_field_handle(material, name), v);
+}
+
+RENDERER_API void vulkan_material_set_uvec2(vulkan_material_t* material, const char* name, uvec2_t v)
+{
+	vulkan_material_set_uvec2H(material, vulkan_material_get_field_handle(material, name), v);
+}
+
+RENDERER_API void vulkan_material_set_uvec3(vulkan_material_t* material, const char* name, uvec3_t v)
+{
+ 	vulkan_material_set_uvec3H(material, vulkan_material_get_field_handle(material, name), v);
+}
+
+RENDERER_API void vulkan_material_set_uvec4(vulkan_material_t* material, const char* name, uvec4_t v)
+{
+	vulkan_material_set_uvec4H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
 RENDERER_API void vulkan_material_set_mat2(vulkan_material_t* material, const char* name, mat2_t m)

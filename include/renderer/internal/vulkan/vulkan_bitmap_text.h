@@ -6,6 +6,7 @@
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
 #include <renderer/dictionary.h>
+#include <renderer/event.h> // event_subscription_handle_t
 #include <renderer/rect.h> // rect2d_t
 #include <hpml/mat4.h> 	// mat4_t
 #include <hpml/vec3.h> 	// vec3_t
@@ -128,7 +129,11 @@ typedef struct vulkan_bitmap_text_t
 	/* instances of this quad will be drawn to lay out the glyph bitmaps */
 	vulkan_mesh_t quad_mesh;
 
+	event_subscription_handle_t bga_texture_update_handle;
+
 } vulkan_bitmap_text_t;
+
+#define VULKAN_BITMAP_TEXT(ptr) CAST_TO(vulkan_bitmap_text_t*, ptr)
 
 
 BEGIN_CPP_COMPATIBLE
