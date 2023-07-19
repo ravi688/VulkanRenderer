@@ -53,14 +53,17 @@ RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 		return;
 	struct_field_t* fields = descriptor->fields;
 	u32 offset = 0;
-	descriptor->size = 0;
+	u32 align = 0;
 	for(u16 i = 0; i < descriptor->field_count; i++)
 	{
-		u16 align = fields[i].alignment;
-		fields[i].offset = ((align - (offset % align)) % align) + offset;
+		u16 field_align = fields[i].alignment;
+		if(align < field_align)
+			align = field_align;
+		fields[i].offset = ((field_align - (offset % field_align)) % field_align) + offset;
 		offset = fields[i].offset + fields[i].size;
 	}
 	descriptor->size = offset;
+	descriptor->align = align;
 }
 
 RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr)
@@ -81,15 +84,103 @@ RENDERER_API u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor)
 	return descriptor->size;
 }
 
-RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* field_name)
+RENDERER_API u32 struct_descriptor_alignof(struct_descriptor_t* descriptor)
+{
+	_debug_assert__(descriptor != NULL);
+	return descriptor->align;
+}
+
+RENDERER_API bool struct_descriptor_is_variable_sized(struct_descriptor_t* descriptor)
+{
+	for(u32 i = 0; i < descriptor->field_count; i++)
+	{
+		AUTO field = descriptor->fields[i];
+		if((field.is_array && (field.array_size == U32_MAX)) || (field.record != NULL && struct_descriptor_is_variable_sized(field.record)))
+			return true;
+	}
+	return false;
+}
+
+static struct_field_t* get_field(struct_descriptor_t* descriptor, const char* name, u32 name_len)
+{
+	/* get the index of the field */
+	u16 index = 0; 
+	bool is_found = false;
+	while(index < descriptor->field_count)
+	{
+		if(strncmp(descriptor->fields[index].name, name, name_len) == 0)
+		{
+			is_found = true;
+			break;
+		}
+		++index;
+	}
+
+	/* if not such field is found then return invalid handle */
+	if(!is_found)
+		return NULL;
+
+	return &descriptor->fields[index];
+}
+
+RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* name)
 {
 	_debug_assert__(descriptor != NULL);
 	_debug_assert__(descriptor->field_count < 0xFFFF);
-	for(u16 i = 0; i < descriptor->field_count; i++)
-		if(strcmp(descriptor->fields[i].name, field_name) == 0)
-			return i;
-	LOG_WRN("Returning STRUCT_FIELD_INVALID_HANDLE, field_name: %s\n", field_name);
-	return STRUCT_FIELD_INVALID_HANDLE;
+	_debug_assert__(name != NULL);
+
+	const char* ptr = strchr(name, '.');
+	AUTO field = get_field(descriptor, name, (ptr == NULL) ? strlen(name) : (ptr - name));
+
+	if(field == NULL)
+	{
+		debug_log_warning("Returning STRUCT_FIELD_INVALID_HANDLE, name: %s", name);
+		return STRUCT_FIELD_INVALID_HANDLE;
+	}
+
+	/* if this field is not a record then just return it's offset and size */
+	if(field->record == NULL)
+	{
+		release_assert__(!((field->is_array) && (field->array_size == U32_MAX)), "You can't get a handle to a variable sized field, first make it fixed sized");
+		
+		if(field->is_array)
+			return BIT64_PACK32(field->offset, field->size * field->array_size);
+
+		return BIT64_PACK32(field->offset, field->size);
+	}
+
+	release_assert__((field->record == NULL) || (!struct_descriptor_is_variable_sized(field->record)), "You can't get a handle to a variable sized field, first make it fixed sized");
+	
+	/* otherwise get the offset and size recursively */
+	u64 handle = struct_descriptor_get_field_handle(field->record, ptr + 1);
+	if(handle == STRUCT_FIELD_INVALID_HANDLE)
+		return handle;
+	return BIT64_PACK32(field->offset + BIT64_UNPACK32(handle, 1), BIT64_UNPACK32(handle, 0));
+}
+
+RENDERER_API void struct_descriptor_set_array_size(struct_descriptor_t* descriptor, const char* name, u32 size)
+{
+	_debug_assert__(descriptor != NULL);
+	_debug_assert__(descriptor->field_count < 0xFFFF);
+	_debug_assert__(name != NULL);
+
+	const char* ptr = strchr(name, '.');
+	AUTO field = get_field(descriptor, name, (ptr == NULL) ? strlen(name) : (ptr - name));
+
+	release_assert__(field != NULL, "The field \"%s\" is not found", name);
+
+	/* if this is the last name in the fully qualified name */
+	if(ptr == NULL)
+	{
+		release_assert__(field->is_array, "The field \"%s\" is not an array so it couldn't be variable sized", name);
+		field->array_size = size;
+		return;
+	}
+
+	release_assert__(!struct_descriptor_is_variable_sized(field->record), "The field \"%s\" is variable sized record so it can't be declared as an array at all", name);
+	
+	/* set array size recursively */
+	struct_descriptor_set_array_size(field->record, ptr + 1, size);
 }
 
 #ifndef GLOBAL_DEBUG
@@ -103,12 +194,14 @@ RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(struct_des
 
 static inline void __cpy_data_from(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const data, u16 size)
 {
-	memcopyv(descriptor->ptr + descriptor->fields[handle].offset, data, u8, size);
+	_release_assert__(BIT64_UNPACK32(handle, 0) == size);
+	memcopyv(descriptor->ptr + BIT64_UNPACK32(handle, 1), data, u8, BIT64_UNPACK32(handle, 0));
 }
 
 static inline void __cpy_data_to(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const data, u16 size)
 {
-	memcopyv(data, descriptor->ptr + descriptor->fields[handle].offset, u8, size);
+	_release_assert__(BIT64_UNPACK32(handle, 0) == size);
+	memcopyv(data, descriptor->ptr + BIT64_UNPACK32(handle, 1), u8, BIT64_UNPACK32(handle, 0));
 }
 
 RENDERER_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in)
@@ -310,20 +403,67 @@ static struct_field_t* create_field(struct_descriptor_t* descriptor)
 	return buf_peek_ptr(fields);
 }
 
-RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type)
+static void prvt_strncpy(char* const dst, const char* src)
 {
+	_debug_assert__(strlen(src) < STRUCT_MAX_NAME_SIZE);
+	strncpy(dst, src, STRUCT_MAX_NAME_SIZE);
+}
+
+static struct_field_t* prvt_add_field(struct_descriptor_t* descriptor, const char* name, u8 type)
+{
+	if(struct_descriptor_is_variable_sized(descriptor))
+		debug_log_fetal_error("The interface layout descriptor is variable sized, so no more fields can be added");
 	struct_field_t* field = create_field(descriptor);
-	strcpy(field->name, name);
+	prvt_strncpy(field->name, name);
 	field->type = type;
 	field->size = sizeof_glsl_type(type);
 	field->alignment = alignof_glsl_type(type);
+	field->record = NULL;
+	return field;
+}
+
+RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type)
+{
+	prvt_add_field(descriptor, name, type);
+}
+
+static struct_field_t* prvt_add_field2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record)
+{
+	if(struct_descriptor_is_variable_sized(descriptor))
+		debug_log_fetal_error("The interface layout descriptor is variable sized, so no more fields can be added");
+	struct_field_t* field = create_field(descriptor);
+	prvt_strncpy(field->name, name);
+	field->type = record->type;
+	struct_descriptor_recalculate(record);
+	field->size = struct_descriptor_sizeof(record);
+	field->alignment = struct_descriptor_alignof(record);
+	field->record = record;
+}
+
+RENDERER_API void struct_descriptor_add_field2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record)
+{
+	prvt_add_field2(descriptor, name, record);
+}
+
+RENDERER_API void struct_descriptor_add_field_array(struct_descriptor_t* descriptor, const char* name, u8 type, u32 array_size)
+{
+	struct_field_t* field = prvt_add_field(descriptor, name, type);
+	field->is_array = true;
+	field->array_size = array_size;
+}
+
+RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record, u32 array_size)
+{
+	struct_field_t* field = prvt_add_field2(descriptor, name, record);
+	field->is_array = true;
+	field->array_size = array_size;	
 }
 
 RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type)
 {
 	memzero(descriptor, struct_descriptor_t);
 	
-	strcpy(descriptor->name, name);
+	prvt_strncpy(descriptor->name, name);
 	descriptor->type = type;
 
 	BUFFER* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
@@ -348,6 +488,6 @@ static void check_precondition(struct_descriptor_t* descriptor, struct_field_han
 	_debug_assert__(descriptor != NULL);
 	_debug_assert__(descriptor->ptr != NULL);
 	_debug_assert__(descriptor->fields != NULL);
-	_debug_assert__(handle < descriptor->field_count);
+	// _debug_assert__(handle < descriptor->field_count);
 }
 #endif

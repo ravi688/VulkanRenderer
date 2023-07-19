@@ -74,16 +74,21 @@ static void setup_material_resources(vulkan_material_t* material)
 		j++;
 		if(binding->handle.type == GLSL_TYPE_UNIFORM_BUFFER)
 		{
-			u32 size = struct_descriptor_sizeof(&binding->handle);
 			resource->index = i;
-			vulkan_buffer_create_info_t create_info =
+			/* if this uniform interface block has a fixed size then create vulkan uniform buffer for it */
+			if(!struct_descriptor_is_variable_sized(&binding->handle))
 			{
-				.size = size,
-				.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-			};
-			vulkan_buffer_create_no_alloc(material->renderer, &create_info, &resource->buffer);
-			vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, &resource->buffer);
+				u32 size = struct_descriptor_sizeof(&binding->handle);
+				vulkan_buffer_create_info_t create_info =
+				{
+					.size = size,
+					.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+				};
+				vulkan_buffer_create_no_alloc(material->renderer, &create_info, &resource->buffer);
+				vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, &resource->buffer);
+			}
+			/* otherwise don't create vulkan uniform buffer for it */
 		}
 		else
 			resource->index = 0xFFFF;
@@ -424,6 +429,24 @@ RENDERER_API void vulkan_material_set_vec4H(vulkan_material_t* material, vulkan_
 	unmap_descriptor(material, handle);
 }
 
+RENDERER_API void vulkan_material_set_uvec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec2_t value)
+{
+	struct_descriptor_set_uvec2(map_descriptor(material, handle), handle.field_handle, (uint*)&value);
+	unmap_descriptor(material, handle);
+}
+
+RENDERER_API void vulkan_material_set_uvec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec3_t value)
+{
+	struct_descriptor_set_uvec3(map_descriptor(material, handle), handle.field_handle, (uint*)&value);
+	unmap_descriptor(material, handle);
+}
+
+RENDERER_API void vulkan_material_set_uvec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec4_t value)
+{
+	struct_descriptor_set_uvec4(map_descriptor(material, handle), handle.field_handle, (uint*)&value);
+	unmap_descriptor(material, handle);
+}
+
 RENDERER_API void vulkan_material_set_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat2_t value)
 {
 	struct_descriptor_set_mat2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
@@ -537,6 +560,21 @@ RENDERER_API void vulkan_material_set_vec4(vulkan_material_t* material, const ch
 	vulkan_material_set_vec4H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
+RENDERER_API void vulkan_material_set_uvec2(vulkan_material_t* material, const char* name, uvec2_t v)
+{
+	vulkan_material_set_uvec2H(material, vulkan_material_get_field_handle(material, name), v);
+}
+
+RENDERER_API void vulkan_material_set_uvec3(vulkan_material_t* material, const char* name, uvec3_t v)
+{
+ 	vulkan_material_set_uvec3H(material, vulkan_material_get_field_handle(material, name), v);
+}
+
+RENDERER_API void vulkan_material_set_uvec4(vulkan_material_t* material, const char* name, uvec4_t v)
+{
+	vulkan_material_set_uvec4H(material, vulkan_material_get_field_handle(material, name), v);
+}
+
 RENDERER_API void vulkan_material_set_mat2(vulkan_material_t* material, const char* name, mat2_t m)
 {
 	vulkan_material_set_mat2H(material, vulkan_material_get_field_handle(material, name), m);
@@ -602,12 +640,14 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 	u32 len = strlen(full_name);
 	_debug_assert__(len != 0);
 	const char* ptr = strchr(full_name, '.');
-	memset(out_field_name, 0, STRUCT_FIELD_MAX_NAME_SIZE);
+	if(out_field_name != NULL)
+		memset(out_field_name, 0, STRUCT_FIELD_MAX_NAME_SIZE);
 	memset(out_struct_name, 0, STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
 	if(ptr == NULL)
 	{
 		memcopyv(out_struct_name, full_name, u8, len);
-		strcpy(out_field_name, "<UndefinedField>");
+		if(out_field_name != NULL)
+			strcpy(out_field_name, "<UndefinedField>");
 		return;
 	}
 	u16 struct_name_len = (u16)(ptr - full_name);
@@ -615,7 +655,8 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 	_debug_assert__(struct_name_len < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
 	_debug_assert__(field_name_len < STRUCT_FIELD_MAX_NAME_SIZE);
 	memcopyv(out_struct_name, full_name, u8, struct_name_len);
-	memcopyv(out_field_name, ptr + 1, u8, field_name_len);
+	if(out_field_name != NULL)
+		memcopyv(out_field_name, ptr + 1, u8, field_name_len);
 }
 
 RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vulkan_material_t* material, const char* name)
@@ -633,7 +674,7 @@ RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vul
 	vulkan_shader_resource_description_t* bindings = material->shader->material_set_bindings;
 	u16 index = 0xFFFF;
 	u16 uniform_index = 0xFFFF;
-	u16 field_handle = STRUCT_FIELD_INVALID_HANDLE;
+	struct_field_handle_t field_handle = STRUCT_FIELD_INVALID_HANDLE;
 	for(u16 i = 0, j = 0; i < binding_count; i++)
 	{
 		vulkan_shader_resource_description_t* binding = &bindings[i];
@@ -654,4 +695,61 @@ RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vul
 		return (vulkan_material_field_handle_t) { .index = index, .uniform_index = uniform_index, .field_handle = field_handle };
 	LOG_FETAL_ERR("symbol \"%s\" isn't found in the shader resource bindings\n", name);
 	return (vulkan_material_field_handle_t) { .index = 0xFFFF, .uniform_index = 0xFFFF, .field_handle = STRUCT_FIELD_INVALID_HANDLE };
+}
+
+typedef_pair_t(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*);
+
+static pair_t(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*) get_uniform_resource_descriptor(vulkan_material_t* material, const char* block_name)
+{
+	for(u16 i = 0; i < material->uniform_resource_count; i++)
+	{
+		vulkan_uniform_resource_t* uniform = &material->uniform_resources[i];
+		vulkan_shader_resource_description_t* binding = &material->shader->material_set_bindings[uniform->index];
+		if(strcmp(binding->handle.name, block_name) == 0)
+			return make_pair(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*) { uniform, binding };
+	}
+	return make_pair(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*) { NULL, NULL };
+}
+
+RENDERER_API void vulkan_material_set_array_size(vulkan_material_t* material, const char* name, u32 size)
+{
+	/* split the name into block_name and field_name */
+	char block_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE];
+	char field_name[STRUCT_FIELD_MAX_NAME_SIZE];
+	get_record_and_field_name(name, block_name, field_name);
+	release_assert__(strcmp(field_name, "<UndefinedField>") != 0, "\"%s\" is not a fully qualified array name", name);
+
+	AUTO resource_descriptor = get_uniform_resource_descriptor(material, block_name);
+
+	/* get the interface block descriptor and set the array size */
+	struct_descriptor_t* descriptor = &resource_descriptor.second->handle;
+	release_assert__(descriptor != NULL, "Unable to find block name \"%s\" in the material", block_name);
+	struct_descriptor_set_array_size(descriptor, field_name, size);
+
+	_debug_assert__(!struct_descriptor_is_variable_sized(descriptor));
+}
+
+RENDERER_API void vulkan_material_set_buffer(vulkan_material_t* material, const char* block_name, vulkan_buffer_t* buffer)
+{
+	AUTO resource_descriptor = get_uniform_resource_descriptor(material, block_name);
+	_debug_assert__(resource_descriptor.first != NULL);
+
+	AUTO binding = resource_descriptor.second;
+
+	/* if the buffer is NULL then create a new vulkan buffer */
+	if(buffer == NULL)
+	{
+		AUTO uniform = resource_descriptor.first;
+		vulkan_buffer_create_info_t create_info =
+		{
+			.size = struct_descriptor_sizeof(&binding->handle),
+			.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		};
+		vulkan_buffer_create_no_alloc(material->renderer, &create_info, &uniform->buffer);
+		buffer = &uniform->buffer;
+	}
+
+	/* write the descriptor */
+	vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, buffer);
 }

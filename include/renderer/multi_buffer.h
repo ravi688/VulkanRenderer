@@ -28,6 +28,7 @@
 
 #include <bufferlib/buffer.h>
 #include <renderer/defines.h>
+#include <renderer/comparer.h> // comparer_t
 
 typedef struct sub_buffer_t
 {
@@ -43,6 +44,7 @@ typedef struct multi_buffer_t
 } multi_buffer_t;
 
 typedef buf_ucount_t sub_buffer_handle_t;
+#define SUB_BUFFER_HANDLE_INVALID BUF_INVALID_INDEX
 
 BEGIN_CPP_COMPATIBLE
 
@@ -71,9 +73,13 @@ RENDERER_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* buffer, sub_bu
 RENDERER_API void multi_buffer_sub_buffer_push(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value);
 RENDERER_API void multi_buffer_sub_buffer_push_back(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value);
 RENDERER_API void multi_buffer_sub_buffer_clear(multi_buffer_t* buffer, sub_buffer_handle_t handle);
+RENDERER_API buf_ucount_t multi_buffer_sub_buffer_find_index_of(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal);
+RENDERER_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal);
 #define sub_buffer_push multi_buffer_sub_buffer_push
 #define sub_buffer_push_back multi_buffer_sub_buffer_push_back
 #define sub_buffer_clear multi_buffer_sub_buffer_clear
+#define sub_buffer_find_index_of multi_buffer_sub_buffer_find_index_of
+#define sub_buffer_remove multi_buffer_sub_buffer_remove
 
 // setters
 RENDERER_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value);
@@ -88,6 +94,6 @@ RENDERER_API void* multi_buffer_sub_buffer_get_ptr_at(multi_buffer_t* buffer, su
 #define sub_buffer_get_capacity multi_buffer_sub_buffer_get_capacity
 #define sub_buffer_get_at multi_buffer_sub_buffer_get_at
 #define sub_buffer_get_ptr_at multi_buffer_sub_buffer_get_ptr_at
-#define sub_buffer_get_ptr(buffer, handle) multi_buffer_sub_buffer_get_ptr_at(buffer, handle, 0)
+#define sub_buffer_get_ptr(buffer, handle) sub_buffer_get_ptr_at(buffer, handle, 0)
 
 END_CPP_COMPATIBLE

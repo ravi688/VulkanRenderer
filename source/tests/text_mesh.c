@@ -92,7 +92,7 @@ TEST_ON_INITIALIZE(TEXT_MESH)
 	this->isScreenSpace = 1;
 	material_set_int(this->material, "parameters.isScreenSpace", 1);
 
-	this->font = font_load_and_create(renderer->allocator, "showcase/resource/fonts/arial.ttf");
+	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
 	this->glyph_pool = glyph_mesh_pool_create(renderer, this->font);
 	this->text_mesh = text_mesh_create(renderer, this->glyph_pool);
 	this->string_handle = text_mesh_string_create(this->text_mesh);

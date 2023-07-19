@@ -88,19 +88,39 @@ typedef struct memory_allocator_t memory_allocator_t;
 #ifdef GLOBAL_DEBUG
 #	define INLINE_IF_RELEASE_MODE INLINE
 #	define IF_DEBUG_MODE(x) x
+#	define ELSE(x)
 #	define debug_if(x) if(x)
 #	define debug_else 	else
 #	define debug_else_if(x) else debug_if(x)
 #else
 #	define INLINE_IF_RELEASE_MODE /* no inline */
 #	define IF_DEBUG_MODE(x)
+#	define ELSE(x) x
 #	define debug_if(x)
 #	define debug_else
 #	define debug_else_if(x)
 #endif /* GLOBAL_DEBUG */
+
+#define IF_DEBUG(x) IF_DEBUG_MODE(x)
+#define PARAM_IF_DEBUG(x) , x
 
 static INLINE_IF_RELEASE_MODE u32 max(u32 v1, u32 v2) { return (v1 > v2) ? v1 : v2; }
 static INLINE_IF_RELEASE_MODE u32 min(u32 v1, u32 v2) { return (v1 < v2) ? v1 : v2; }
 
 
 #define DYNAMIC_CAST(target_type, ptr) CAST_TO(target_type, ptr)
+
+#define typedef_pair_t(T1, T2) struct __pair_##T1_##T2_t { T1 first; T2 second; }
+#define pair_t(T1, T2) struct __pair_##T1_##T2_t
+#define make_pair(T1, T2) (pair_t(T1, T2))
+
+#define typedef_tuple2_t(T1, T2) struct __tuple_##T1_##T2_t { T1 first; T2 second; }
+#define tuple2_t(T1, T2) struct __tuple_##T1_##T2_t
+#define make_tuple2(T1, T2) (tuple2_t(T1, T2))
+
+#define typedef_tuple3_t(T1, T2, T3) struct __tuple_##T1_##T2_##T3_t { T1 first; T2 second; T3 third; }
+#define tuple3_t(T1, T2, T3) struct __tuple_##T1_##T2_##T3_t
+#define make_tuple3(T1, T2, T3) (tuple3_t(T1, T2))
+
+#define SIZEOF_ARRAY(array) (sizeof(array) / sizeof((array)[0]))
+#define DREF_VOID_PTR(ptr) CAST_TO(void*, DREF_TO(u8*, (void**)(ptr)))

@@ -293,14 +293,22 @@
 #pragma once
 
 #include <renderer/defines.h>
-#define STRUCT_FIELD_MAX_NAME_SIZE 32
-#define STRUCT_DESCRIPTOR_MAX_NAME_SIZE 32
-#define STRUCT_FIELD_INVALID_HANDLE 0xFFFF
+#define STRUCT_FIELD_MAX_NAME_SIZE 128
+#define STRUCT_DESCRIPTOR_MAX_NAME_SIZE 128
+#define STRUCT_MAX_NAME_SIZE 128
+#define STRUCT_FIELD_INVALID_HANDLE U64_MAX
+
+typedef struct struct_descriptor_t struct_descriptor_t;
 
 typedef struct struct_field_t
 {
 	char name[STRUCT_FIELD_MAX_NAME_SIZE];
 	u8 type;
+
+	struct_descriptor_t* record;
+
+	bool is_array;
+	u32 array_size;
 	
 	INTERNAL u16 size;
 	INTERNAL u16 alignment;
@@ -316,17 +324,29 @@ typedef struct struct_descriptor_t
 	
 	INTERNAL void* ptr;
 	INTERNAL u32 size;
+	INTERNAL u32 align;
 } struct_descriptor_t;
 
-typedef u16 struct_field_handle_t;
+/* u32: offset, u32: size */
+typedef u64 struct_field_handle_t;
 
 BEGIN_CPP_COMPATIBLE
+
+RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type);
+RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
+RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type);
+RENDERER_API void struct_descriptor_add_field2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record);
+RENDERER_API void struct_descriptor_add_field_array(struct_descriptor_t* descriptor, const char* name, u8 type, u32 array_size);
+RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record, u32 array_size);
 
 RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr);
 RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor);
 RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor);
 RENDERER_API u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor);
+RENDERER_API u32 struct_descriptor_alignof(struct_descriptor_t* descriptor);
+RENDERER_API bool struct_descriptor_is_variable_sized(struct_descriptor_t* descriptor);
 RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* field_name);
+RENDERER_API void struct_descriptor_set_array_size(struct_descriptor_t* descriptor, const char* name, u32 size);
 
 RENDERER_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in);
 RENDERER_API void struct_descriptor_set_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
@@ -361,10 +381,6 @@ RENDERER_API void struct_descriptor_get_uvec2(struct_descriptor_t* descriptor, s
 RENDERER_API void struct_descriptor_get_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
 RENDERER_API void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
 RENDERER_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
-
-RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type);
-RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
-RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type);
 
 #include <glslcommon/glsl_types.h>
 #define struct_descriptor_add_field_float(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_FLOAT)

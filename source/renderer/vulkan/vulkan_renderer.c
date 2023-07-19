@@ -42,6 +42,7 @@
 #include <renderer/assert.h>
 #include <renderer/defines.h>
 #include <renderer/alloc.h>
+#include <renderer/renderer.h>
 #include <renderer/memory_allocator.h>
 
 #include <stdio.h> 		// puts
@@ -168,12 +169,13 @@ static VkFence get_unsigned_fence(vulkan_renderer_t* renderer)
 	return fence;
 }
 
-RENDERER_API vulkan_renderer_t* vulkan_renderer_init(memory_allocator_t* allocator, vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
+RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
-	vulkan_renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDERER, vulkan_renderer_t);
+	vulkan_renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_renderer, vulkan_renderer_t);
 	memzero(renderer, vulkan_renderer_t);
-	renderer->allocator = allocator;
-	renderer->vk_allocator = vulkan_allocator_create(allocator);
+	renderer->renderer = _renderer;
+	renderer->allocator = _renderer->allocator;
+	renderer->vk_allocator = vulkan_allocator_create(_renderer->allocator);
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[3] = { "VK_KHR_surface", "VK_KHR_win32_surface" };
@@ -196,7 +198,7 @@ DEBUG_BLOCK
 
 
 	// create window
-	renderer->window = render_window_init(allocator, width, height, title, full_screen, resizable);
+	renderer->window = render_window_init(renderer->allocator, width, height, title, full_screen, resizable);
 	event_subscription_create_info_t subscription = 
 	{
 		.handler = EVENT_HANDLER(recreate_swapchain),

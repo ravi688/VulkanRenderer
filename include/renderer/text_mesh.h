@@ -101,6 +101,7 @@
 #pragma once
 
 #include <renderer/glyph_mesh_pool.h>
+#include <renderer/material.h> // material_t
 
 #include <hpml/vec3.h>
 #include <hpml/mat4.h>
@@ -120,6 +121,7 @@ RENDERER_API void text_mesh_release_resources(text_mesh_t* text);
 
 // logic functions
 RENDERER_API void text_mesh_draw(text_mesh_t* text);
+RENDERER_API void text_mesh_set_material(text_mesh_t* text, material_t* material);
 
 
 typedef buf_ucount_t text_mesh_string_handle_t;

@@ -52,7 +52,7 @@ RENDERER_API void vulkan_vertex_buffer_layout_description_begin(vulkan_renderer_
 	description->attribute_offsets = CAST_TO(u32*, create_buffer(renderer->allocator, u32));
 }
 
-RENDERER_API void vulkan_vertex_buffer_layout_description_add_attribute(vulkan_vertex_buffer_layout_description_t* description, u16 location, VkFormat format, u32 offset)
+RENDERER_API void vulkan_vertex_buffer_layout_description_add_attribute(vulkan_vertex_buffer_layout_description_t* description, u32 location, VkFormat format, u32 offset)
 {
 	buf_push_auto(CAST_TO(BUFFER*, description->attribute_locations), location);
 	buf_push_auto(CAST_TO(BUFFER*, description->attribute_formats), format);

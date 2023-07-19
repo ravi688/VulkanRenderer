@@ -42,6 +42,8 @@ typedef struct renderer_t renderer_t;
 	typedef metal_texture_t texture_t;
 #endif
 
+#define TEXTURE(ptr) CAST_TO(texture_t*, ptr)
+
 #include <renderer/defines.h>
 #include <stdarg.h>
 
@@ -54,6 +56,26 @@ typedef enum texture_type_t
 	TEXTURE_TYPE_CUBE = TEXTURE_TYPE_CUBE_SEPARATED				// by default the cube map would be 6 separate textures
 } texture_type_t;
 
+typedef enum texture_usage_t
+{
+	TEXTURE_USAGE_NONE = 0,
+	TEXTURE_USAGE_SAMPLED = BIT32(0),		// when the texture used in the shader
+	TEXTURE_USAGE_TRANSFER_DST = BIT32(1), 	// when the texture to be filled with data
+	TEXTURE_USAGE_TRANSFER_SRC = BIT32(2), 	// when the texture data has to be copied somewhere
+	TEXTURE_USAGE_PRESENT = BIT32(3), 		// when the texture used as a post-processing intermediate image, and finally present it
+	TEXTURE_USAGE_RENDER_TARGET = BIT32(4), 	// when the texture used as a render target to draw over it
+	TEXTURE_USAGE_ATTACHMENT = BIT32(5), 	// when the texture used as an attachment in the framebuffer
+	TEXTURE_USAGE_COPY = TEXTURE_USAGE_TRANSFER_SRC,
+	TEXTURE_USAGE_PASTE = TEXTURE_USAGE_TRANSFER_DST
+} texture_usage_t;
+
+typedef enum texture_usage_stage_t
+{
+	TEXTURE_USAGE_STAGE_UNDEFINED,
+	TEXTURE_USAGE_STAGE_INITIAL,
+	TEXTURE_USAGE_STAGE_USAGE,
+	TEXTURE_USAGE_STAGE_FINAL
+} texture_usage_stage_t;
 
 typedef struct texture_data_t
 {
@@ -71,6 +93,9 @@ typedef struct texture_create_info_t
 	u32 depth;
 	u8 channel_count;
 	texture_type_t type; 						// type of the this texture
+	texture_usage_t initial_usage;
+	texture_usage_t usage;
+	texture_usage_t final_usage;
 } texture_create_info_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -108,6 +133,28 @@ RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, 
 		pointer to the newly created texture object
  */
 RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths);
+
+/*
+	description:
+		uploads pixel data buffer supplied by 'data' to the GPU side memory
+	params:
+		texture: pointer to a valid texture_t object
+		data: pointer to texture_data_t object referencing valid pixel data buffer and dimensions
+	returns:
+		nothing
+ */
+RENDERER_API void texture_upload_data(texture_t* texture, u32 data_count, texture_data_t* data);
+
+/* 
+	description:
+		performs required image layout transitions based on the passed usage stage 'stage'
+	params:
+		texture: pointer to a valid texture_t object
+		stage: the usage stage to transition to
+	returns:
+		nothing
+ */
+RENDERER_API void texture_set_usage_stage(texture_t* texture, texture_usage_stage_t stage);
 
 /*
 	description:

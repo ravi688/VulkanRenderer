@@ -253,6 +253,7 @@ RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t positi
 			AUTO _light = CAST_TO(vulkan_spot_light_t*, light);
 			struct_descriptor_set_vec3(&light->struct_definition, _light->position_handle, CAST_TO(float*, &position));
 		}
+		break;
 		case VULKAN_LIGHT_TYPE_POINT:
 		{
 			AUTO _light = CAST_TO(vulkan_point_light_t*, light);

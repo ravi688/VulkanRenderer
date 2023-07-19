@@ -30,53 +30,47 @@
 
 /* API level object selection */
 #ifdef RENDERER_VULKAN_DRIVER
-	typedef struct vulkan_renderer_t vulkan_renderer_t;
+#	include <renderer/internal/vulkan/vulkan_renderer.h>
 	typedef vulkan_renderer_t driver_t;
-	typedef struct vulkan_render_pass_pool_t vulkan_render_pass_pool_t;
 	typedef vulkan_render_pass_pool_t render_pass_pool_t;
-	typedef struct vulkan_shader_library_t vulkan_shader_library_t;
 	typedef vulkan_shader_library_t shader_library_t;
-	typedef struct vulkan_material_library_t vulkan_material_library_t;
 	typedef vulkan_material_library_t material_library_t;
-	typedef struct vulkan_camera_system_t vulkan_camera_system_t;
 	typedef vulkan_camera_system_t camera_system_t;
+#	define RENDERER(vk_ptr) ((vk_ptr)->renderer)
+#	define VULKAN_RENDERER(ptr) ((ptr)->vulkan_handle)
 #elif RENDERER_OPENGL_DRIVER
-	typedef struct opengl_renderer_t opengl_renderer_t;
+#	include <renderer/internal/opengl/opengl_renderer.h>
 	typedef opengl_renderer_t driver_t;
-	typedef struct opengl_render_pass_pool_t opengl_render_pass_pool_t;
 	typedef opengl_render_pass_pool_t render_pass_pool_t;
-	typedef struct opengl_shader_library_t opengl_shader_library_t;
 	typedef opengl_shader_library_t shader_library_t;
-	typedef struct opengl_material_library_t opengl_material_library_t;
 	typedef opengl_material_library_t material_library_t;
-	typedef struct opengl_camera_system_t opengl_camera_system_t;
 	typedef opengl_camera_system_t camera_system_t;
+#	define RENDERER(gl_ptr) ((gl_ptr)->renderer)
+#	define OPENGL_RENDERER(ptr) ((ptr)->opengl_handle)
 #elif RENDERER_DIRECTX_DRIVER
-	typedef struct directx_renderer_t directx_renderer_t;
+#	include <renderer/internal/directx/directx_renderer.h>
 	typedef directx_renderer_t driver_t;
-	typedef struct directx_render_pass_pool_t directx_render_pass_pool_t;
 	typedef directx_render_pass_pool_t render_pass_pool_t;
-	typedef struct directx_shader_library_t directx_shader_library_t;
 	typedef directx_shader_library_t shader_library_t;
-	typedef struct directx_material_library_t directx_material_library_t;
 	typedef directx_material_library_t material_library_t;
-	typedef struct directx_camera_system_t directx_camera_system_t;
 	typedef directx_camera_system_t camera_system_t;
+#	define RENDERER(dx_ptr) ((dx_ptr)->renderer)
+#	define DIRECTX_RENDERER(ptr) ((ptr)->directx_handle)	
 #elif RENDERER_METAL_DRIVER
-	typedef struct metal_renderer_t metal_renderer_t;
+#	include <renderer/internal/metal/metal_renderer.h>
 	typedef metal_renderer_t driver_t;
-	typedef struct metal_render_pass_pool_t metal_render_pass_pool_t;
 	typedef metal_render_pass_pool_t render_pass_pool_t;
-	typedef struct metal_shader_library_t metal_shader_library_t;
 	typedef metal_shader_library_t shader_library_t;
-	typedef struct material_shader_library_t material_shader_library_t;
 	typedef metal_material_library_t material_library_t;
-	typedef struct metal_camera_system_t metal_camera_system_t;
 	typedef metal_camera_system_t camera_system_t;
+#	define RENDERER(mt_ptr) ((mt_ptr)->renderer)
+#	define METAL_RENDERER(ptr) ((ptr)->metal_handle)
 #endif
 
 typedef struct render_window_t render_window_t;
 typedef struct memory_allocator_t memory_allocator_t;
+
+typedef struct FT_LibraryRec_  *FT_Library;
 
 typedef struct renderer_t
 {
@@ -97,6 +91,7 @@ typedef struct renderer_t
 	};
 	
 	memory_allocator_t* allocator;
+	FT_Library ft_library;
 	// shader_library_t* shader_library;
 	// material_library_t* material_library;
 	// render_pass_pool_t* render_pass_pool;

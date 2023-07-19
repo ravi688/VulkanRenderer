@@ -29,6 +29,7 @@
 #include <renderer/mesh3d.h>									// mesh3d_t
 #include <renderer/internal/vulkan/vulkan_mesh.h> 				// vulkan_mesh_create_and_vertex_buffer
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h> 	// vulkan_instance_buffer_t
+#include <renderer/internal/vulkan/vulkan_command.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 #include <renderer/dictionary.h>											// dictionary_t
@@ -61,6 +62,7 @@ typedef struct text_mesh_string_t
 typedef struct text_mesh_t
 {
 	renderer_t* renderer;
+	material_t* material;
 	glyph_mesh_pool_t* pool;												// pool from which the mesh_t should be queried from for a particular glyph
 	dictionary_t /*(u16, vulkan_instance_buffer_t)*/ instance_buffers;		// array of instance_buffer mapped to each unique glyph considering all the strings
 	BUFFER /*text_mesh_string_t*/ strings;									// array of string (text_mesh_string_t) instances
@@ -126,13 +128,20 @@ RENDERER_API void text_mesh_draw(text_mesh_t* text_mesh)
 	{
 		u16 glyph = *(u16*)dictionary_get_key_ptr_at(instance_buffers, i);
 		vulkan_instance_buffer_t* instance_buffer = dictionary_get_value_ptr_at(instance_buffers, i);
-		if(!vulkan_instance_buffer_commit(instance_buffer))
+		if(!vulkan_instance_buffer_has_device_buffer(instance_buffer))
 			continue;
 		mesh_t* mesh = glyph_mesh_pool_get_mesh(text_mesh->pool, glyph);
 		vulkan_mesh_bind_all_vertex_buffers(mesh);
-		vulkan_mesh_bind_vertex_buffer(mesh, &instance_buffer->device_buffer);
+		u32 binding = 5;
+		AUTO vk_renderer = VULKAN_RENDERER(text_mesh->renderer);
+		vulkan_command_bind_vertex_buffers(vk_renderer->vo_command_buffers[vk_renderer->swapchain->current_image_index], &binding, &instance_buffer->device_buffer.vo_handle, 1);
 		vulkan_mesh_draw_indexed_instanced_only(mesh, instance_buffer->device_buffer.count);
 	}
+}
+
+RENDERER_API void text_mesh_set_material(text_mesh_t* text, material_t* material)
+{
+	text->material = material;
 }
 
 // constructors and destructors
@@ -214,11 +223,12 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
 	dictionary_t* instance_buffers = &text_mesh->instance_buffers;
 
 	// clear the sub buffers
-	for(u32 i = 0; i < dictionary_get_count(&string->glyph_sub_buffer_handles); i++)
+	u32 handle_count = dictionary_get_count(&string->glyph_sub_buffer_handles);
+	for(u32 i = 0; i < handle_count; i++)
 	{
 		u16 ch;
 		dictionary_get_key_at(&string->glyph_sub_buffer_handles, i, &ch);
-		multi_buffer_t* buffer = &(get_instance_buffer(text_mesh->renderer, instance_buffers, ch)->host_buffer);
+		multi_buffer_t* buffer = vulkan_instance_buffer_get_host_buffer(get_instance_buffer(text_mesh->renderer, instance_buffers, ch));
 		sub_buffer_clear(buffer, get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch));
 	}
 
@@ -235,7 +245,7 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
 			continue;
 		}
 		vulkan_instance_buffer_t* instance_buffer = get_instance_buffer(text_mesh->renderer, instance_buffers, ch);
-		multi_buffer_t* buffer = &instance_buffer->host_buffer;
+		multi_buffer_t* buffer = vulkan_instance_buffer_get_host_buffer(instance_buffer);
 		sub_buffer_handle_t handle = get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch);
 		vec3_t offset = { 0, 0, horizontal_pen};
 		offset = vec3_add(2, offset, string->position);
@@ -255,6 +265,19 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
 
 		sub_buffer_push(buffer, handle, bytes);
 		horizontal_pen += info.advance_width;
+
+		vulkan_instance_buffer_commit(instance_buffer, NULL);
+	}
+
+	/* update the device side buffers if not updated in the above loop */
+
+	/* sub buffer handle count might have been increased due to new glyphs */
+	handle_count = dictionary_get_count(&string->glyph_sub_buffer_handles);
+	for(u32 i = 0; i < handle_count; i++)
+	{
+		u16 ch;
+		dictionary_get_key_at(&string->glyph_sub_buffer_handles, i, &ch);
+		vulkan_instance_buffer_commit(get_instance_buffer(text_mesh->renderer, instance_buffers, ch), NULL);
 	}
 }
 

@@ -83,10 +83,11 @@ static VkImageType get_image_type_from_texture_type(vulkan_texture_type_t type)
 	return 0;
 }
 
-static VkFormat get_format_from_texture_type(vulkan_texture_type_t type)
+static VkFormat get_format(vulkan_texture_type_t type, u32 channel_count)
 {
 	if(type & VULKAN_TEXTURE_TYPE_RENDER_TARGET)
 	{
+		release_assert__(channel_count == 4, "Currently render textures doesn't support channel counts other than 4 but you've given %lu", channel_count);
 		switch(type & BIT_MASK32(4))
 		{
 			case VULKAN_TEXTURE_TYPE_ALBEDO:
@@ -102,13 +103,46 @@ static VkFormat get_format_from_texture_type(vulkan_texture_type_t type)
 		}
 	}
 
+	if((channel_count > 4) || (channel_count < 1))
+		debug_log_fetal_error("Invalid channel count: %lu", channel_count);
+
 	switch(type & BIT_MASK32(3))
 	{
 		case VULKAN_TEXTURE_TYPE_ALBEDO:
+		{
+			switch(channel_count)
+			{
+				case 1:
+					return VK_FORMAT_R8_SRGB;
+				case 2:
+					return VK_FORMAT_R8G8_SRGB;
+				case 3:
+					return VK_FORMAT_R8G8B8_SRGB;
+				case 4:
+					return VK_FORMAT_R8G8B8A8_SRGB;
+				default:
+					return VK_FORMAT_UNDEFINED;
+			}
 			return VK_FORMAT_R8G8B8A8_SRGB;
+		}
 		case VULKAN_TEXTURE_TYPE_COLOR:
 		case VULKAN_TEXTURE_TYPE_NORMAL:
+		{
+			switch(channel_count)
+			{
+				case 1:
+					return VK_FORMAT_R8_UNORM;
+				case 2:
+					return VK_FORMAT_R8G8_UNORM;
+				case 3:
+					return VK_FORMAT_R8G8B8_UNORM;
+				case 4:
+					return VK_FORMAT_R8G8B8A8_UNORM;
+				default:
+					return VK_FORMAT_UNDEFINED;
+			}
 			return VK_FORMAT_R8G8B8A8_UNORM;
+		}
 		case VULKAN_TEXTURE_TYPE_DEPTH:
 			return VK_FORMAT_D32_SFLOAT;
 		default:
@@ -313,7 +347,7 @@ static vulkan_image_view_t* create_write_image_views(vulkan_texture_t* texture, 
 	}
 	_debug_assert__(texture->image.layer_count >= 6);
 	OUT view_count = 6;
-	vulkan_image_view_t* views = memory_allocator_alloc_obj_array(texture->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE_VIEW_ARRAY, vulkan_image_view_t, 6);
+	vulkan_image_view_t* views = (texture->image_views != NULL) ? texture->image_views : memory_allocator_alloc_obj_array(texture->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE_VIEW_ARRAY, vulkan_image_view_t, 6);
 	for(u32 i = 0; i < 6; i++)
 	{
 		vulkan_image_view_create_info_t create_info = 
@@ -349,7 +383,6 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 	texture->current_stage = VULKAN_TEXTURE_USAGE_STAGE_UNDEFINED;
 
 	_debug_assert__(create_info->depth == 1); 	// for now, the depth must be 1
-	_debug_assert__(create_info->channel_count == 4);
 
 	vulkan_image_create_info_t image_info =
 	{
@@ -359,7 +392,7 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 		.height = create_info->height,
 		.depth = create_info->depth,
 		.layer_count = get_layer_count_from_texture_type(texture->type),
-		.vo_format = get_format_from_texture_type(texture->type),
+		.vo_format = get_format(texture->type, create_info->channel_count),
 		.vo_tiling = VK_IMAGE_TILING_OPTIMAL,
 		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
 		.vo_usage_mask = get_usage(texture->type, create_info->initial_usage | create_info->usage | create_info->final_usage, create_info->technique),
@@ -388,6 +421,72 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
  		texture->vo_image_sampler = VK_NULL_HANDLE;
 
 	vulkan_texture_set_usage_stage(texture, VULKAN_TEXTURE_USAGE_STAGE_INITIAL);
+}
+
+RENDERER_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_texture_recreate_info_t* recreate_info)
+{
+	if((texture->width == recreate_info->width)
+	 	&& (texture->height == recreate_info->height)
+	 	&& (texture->depth == recreate_info->depth)
+	 	&& (texture->channel_count == recreate_info->channel_count))
+	 	return;
+
+	/* destroy images and image views */
+
+	vulkan_image_view_destroy(&texture->image_view);
+	vulkan_image_destroy(&texture->image);
+
+	if(texture->image_views != NULL)
+	{
+		_debug_assert__(texture->image_view_count != 0);
+		for(u32 i = 0; i < texture->image_view_count; i++)
+			vulkan_image_view_destroy(&texture->image_views[i]);
+	}
+
+	/* recreate images and image views */
+
+	texture->width = recreate_info->width;
+	texture->height = recreate_info->height;
+	texture->depth = recreate_info->depth;
+	texture->channel_count = recreate_info->channel_count;
+
+	_debug_assert__(recreate_info->depth == 1); 	// for now, the depth must be 1
+
+	vulkan_image_create_info_t image_info =
+	{
+		.vo_flags = get_flags_from_texture_type(texture->type),
+		.vo_type = get_image_type_from_texture_type(texture->type),
+		.width = recreate_info->width,
+		.height = recreate_info->height,
+		.depth = recreate_info->depth,
+		.layer_count = get_layer_count_from_texture_type(texture->type),
+		.vo_format = get_format(texture->type, recreate_info->channel_count),
+		.vo_tiling = VK_IMAGE_TILING_OPTIMAL,
+		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.vo_usage_mask = get_usage(texture->type, texture->initial_usage | texture->usage | texture->final_usage, texture->technique),
+		.vo_memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		.vo_aspect_mask = get_aspect(texture->type)
+	};
+	vulkan_image_create_no_alloc(texture->renderer, &image_info, &texture->image);
+
+	vulkan_image_view_create_info_t view_create_info = 
+	{ 
+		.image = &texture->image, 
+		.vo_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.view_type = get_view_type_from_texture_type(texture->type),
+		.base_mip_level = 0,
+		.level_count = 1,
+		.base_array_layer = 0,
+		.layer_count = image_info.layer_count
+	};
+ 	vulkan_image_view_create_no_alloc(texture->renderer, &view_create_info, &texture->image_view);
+
+ 	texture->image_views = create_write_image_views(texture, &texture->image_view_count);
+
+ 	if((texture->usage | texture->initial_usage | texture->final_usage) & VULKAN_TEXTURE_USAGE_SAMPLED)
+ 		_release_assert__(texture->vo_image_sampler != VK_NULL_HANDLE);
+
+	vulkan_texture_set_usage_stage(texture, texture->current_stage);
 }
 
 RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
@@ -440,10 +539,7 @@ static vulkan_texture_usage_t get_current_usage(vulkan_texture_t* texture)
 RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulkan_texture_usage_stage_t stage)
 {
 	if(stage == texture->current_stage)
-	{
-		log_wrn("stage == texture->current_stage");
 	 	return;
-	}
 	vulkan_texture_usage_t usage = get_usage_from_stage(texture, stage);
 	vulkan_texture_type_t type = texture->type;
 
@@ -530,7 +626,7 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 	vulkan_texture_usage_t current_usage = get_current_usage(texture);
 	if(current_usage != VULKAN_TEXTURE_USAGE_TRANSFER_DST)
 	{
-		log_err("Uploading texture data isn't possible as the current texture usage doesn't contain VULKAN_TEXTURE_USAGE_TRANSFER_DST flag\n");
+		debug_log_error("Uploading texture data isn't possible as the current texture usage doesn't contain VULKAN_TEXTURE_USAGE_TRANSFER_DST flag");
 		return;
 	}
 	
@@ -574,7 +670,7 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 			case VULKAN_TEXTURE_TYPE_NORMAL:
 			{
 				_debug_assert__(data_count >= 1);
-				_debug_assert__(data[0].channel_count == 4);
+				_debug_assert__(data[0].channel_count == texture->channel_count);
 				vulkan_buffer_create_info_t create_info = 
 				{
 					.data = data[0].data,
