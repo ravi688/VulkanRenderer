@@ -363,6 +363,9 @@ DEBUG_BLOCK
 	renderer->camera_set_layout = create_camera_set_layout(renderer);
 	setup_global_set(renderer);
 
+	/* create GPU buffer (till now the logical device has been created) to store window details to be made available to shaders */
+	render_window_initialize_api_buffer(renderer->window, renderer);
+
 	// create the shader and material library
 	renderer->shader_library = vulkan_shader_library_create(renderer);
 	renderer->material_library = vulkan_material_library_create(renderer, renderer->shader_library);
@@ -420,7 +423,7 @@ static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t
 
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer)
 {
-	VkDescriptorSetLayoutBinding bindings[2] = 
+	VkDescriptorSetLayoutBinding bindings[3] = 
 	{
 		{
 			.binding = VULKAN_DESCRIPTOR_BINDING_CAMERA,
@@ -433,11 +436,17 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = 1,
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+		},
+		{
+			.binding = VULKAN_DESCRIPTOR_BINDING_SCREEN,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		}
 	};
 
 	var (vulkan_descriptor_set_layout_t, layout);
-	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, 2, ptr (layout));
+	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, 3, ptr (layout));
 	log_msg("Global descriptor set layout has been created successfully\n");
 	return val (layout);	
 }

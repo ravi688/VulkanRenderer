@@ -3,7 +3,15 @@
 #extension GL_EXT_scalar_block_layout : enable
 
 #include <v3d.h>
-                
+
+layout(set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
+{
+    uvec2 resolution;
+    uvec2 dpi;
+    uvec2 window_size;
+    mat4 matrix;    
+} displayInfo;
+
 layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
 layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
@@ -71,7 +79,7 @@ void main()
     GlyphTexCoord texcoord = gtc_buffer[indx];
 
     vec2 tex_size = parameters.tex_size;
-    vec2 win_size = parameters.win_size;
+    vec2 win_size = vec2(displayInfo.window_size); //parameters.win_size;
     vec2 glyph_size = vec2(texcoord.trtc.x - texcoord.tltc.x, texcoord.bltc.y - texcoord.tltc.y) * tex_size;
 
     float _scale_x = glyph_size.x / win_size.x;

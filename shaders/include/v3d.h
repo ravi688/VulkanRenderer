@@ -40,6 +40,7 @@
 // should be used with GLOBAL_SET
 #define CAMERA_BINDING 0 		// binding for camera properties
 #define LIGHT_BINDING 1 		// binding for light properties
+#define SCREEN_BINDING 2
 
 // should be used with SUB_RENDER_SET
 #define INPUT_ATTACHMENT_BINDING0 0
