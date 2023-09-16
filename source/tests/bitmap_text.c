@@ -622,7 +622,7 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 		{
 			bitmap_text_set_render_space_type(this->text, BITMAP_TEXT_RENDER_SPACE_TYPE_3D);
 			debug_log_info("BITMAP_TEXT_RENDER_SPACE_TYPE_3D");
-			render_object_set_transform(this->text_object, mat4_translation(0.0f, 0.0f, 0.0f));
+			render_object_set_transform(this->text_object, mat4_mul(3, mat4_rotation_y(45 DEG), mat4_scale(0.005f, 0.005f, 0.005f), mat4_translation(0.0f, 0.0f, -0.5f)));
 		}
 	}
 
