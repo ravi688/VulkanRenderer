@@ -5,6 +5,7 @@
 #include <renderer/internal/vulkan/vulkan_material.h>
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/system/display.h> // display_get_dpi()
 
 RENDERER_API vulkan_bitmap_text_t* vulkan_bitmap_text_new(memory_allocator_t* allocator)
 {
@@ -77,6 +78,8 @@ RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer
 	text->text_strings = buf_new(vulkan_bitmap_text_string_t);
 	text->free_list = BUF_INVALID_INDEX;
 	text->inuse_list = BUF_INVALID_INDEX;
+	text->render_space_type = VULKAN_BITMAP_TEXT_RENDER_SPACE_TYPE_2D;
+	text->render_surface_type = VULKAN_BITMAP_TEXT_RENDER_SURFACE_TYPE_CAMERA;
 
 	/* setup BGA texture */
 	_debug_assert__(create_info->texture != NULL);
@@ -198,12 +201,44 @@ RENDERER_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text)
 		vulkan_buffer_get_count(vulkan_instance_buffer_get_device_buffer(&text->glyph_render_data_buffer)));
 }
 
+static void set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type)
+{
+	switch(space_type)
+	{
+		case VULKAN_BITMAP_TEXT_RENDER_SPACE_TYPE_2D:
+			vulkan_material_set_int(text->material, "parameters.space_type", 0);
+			break;
+		case VULKAN_BITMAP_TEXT_RENDER_SPACE_TYPE_3D:
+			vulkan_material_set_int(text->material, "parameters.space_type", 1);
+			break;
+		default:
+			debug_log_error("Invalid vulkan bitmap text space type: %lu", space_type);
+			break;
+	}
+}
+
+static void set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_surface_type_t surface_type)
+{
+	switch(surface_type)
+	{
+		case VULKAN_BITMAP_TEXT_RENDER_SURFACE_TYPE_CAMERA:
+			vulkan_material_set_int(text->material, "parameters.surface_type", 1);
+			break;
+		case VULKAN_BITMAP_TEXT_RENDER_SURFACE_TYPE_SCREEN:
+			vulkan_material_set_int(text->material, "parameters.surface_type", 0);
+			break;
+		default:
+			debug_log_error("Invalid vulkan bitmap text render surface type: %lu", surface_type);
+			break;
+	}
+}
+
 RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material)
 {
 	text->material = material;
 
-	AUTO window = vulkan_renderer_get_window(text->renderer);
-	vulkan_material_set_uvec2(material, "parameters.win_size", (uvec2_t) { window->width, window->height });
+	set_render_space_type(text, text->render_space_type);
+	set_render_surface_type(text, text->render_surface_type);
 
 	vulkan_material_set_texture(material, "bga", VULKAN_TEXTURE(text->texture));
 	AUTO tex_size = vulkan_bitmap_glyph_atlas_texture_get_size(text->texture);
@@ -355,6 +390,32 @@ static u32 get_or_create_glyph_texture_coordinate(vulkan_bitmap_text_t* text, ut
 }
 
 /* setters */
+RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type)
+{
+	if(text->render_space_type == space_type)
+		return;
+	text->render_space_type = space_type;
+
+	/* if there is no material assigned then do nothing, and save the data (as above) to later apply the changes (whenver the material becomes available) */
+	if(text->material == NULL)
+		return;
+
+	set_render_space_type(text, space_type);
+}
+
+RENDERER_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_surface_type_t surface_type)
+{
+	if(text->render_surface_type == surface_type)
+		return;
+	text->render_surface_type = surface_type;
+
+	/* if there is no material assigned then do nothing, and save the data (as above) to later apply the changes */
+	if(text->material == NULL)
+		return;
+
+	set_render_surface_type(text, surface_type);
+}
+
 RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle, const char* string)
 {
 	AUTO text_string = buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, handle);
@@ -363,23 +424,28 @@ RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vu
 	multi_buffer_sub_buffer_clear(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), text_string->render_data_handle);
 	buf_clear(&text_string->chars, NULL);
 
+	font_t* font = vulkan_bitmap_text_get_font(text);
+
 	u32 len = strlen(string);
 	u32 string_width = 0;
 	for(u32 i = 0; i < len; i++)
 	{
 		font_glyph_info_t info;
 		utf32_t ch = string[i];
-		font_get_glyph_info2(vulkan_bitmap_glyph_atlas_texture_get_font(text->texture), ch, &info);
+		font_get_glyph_info2(font, ch, &info);
 		string_width += info.advance_width;
 	}
 
 	/* rewrite on the sub buffers */
+
 	float horizontal_pen = 0.0f;
+	/* offset added to y coordinate, to adjust the anchor of the text to the top-left corner */
+	f32 anchor_offset_y = get_pixels_from_point_size((font_get_ascender(font) / font_get_units_per_em(font)) * font_get_char_size(font), display_get_dpi().y);
 	for(u32 i = 0; i < len; i++)
 	{
 		utf32_t ch = string[i];
 		font_glyph_info_t info;
-		font_get_glyph_info2(vulkan_bitmap_glyph_atlas_texture_get_font(text->texture), ch, &info);
+		font_get_glyph_info2(font, ch, &info);
 		
 		if(!info.is_graph)
 		{
@@ -390,7 +456,7 @@ RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vu
 		// _debug_assert__(info.bitmap_top == info.bearing_y);
 		glsl_glyph_render_data_t data = 
 		{
-			.ofst = { horizontal_pen + info.width * 0.5f + info.bearing_x - string_width * 0.5f, info.height * 0.5f + (info.bearing_y - info.height), 0 },
+			.ofst = { horizontal_pen + info.width * 0.5f + info.bearing_x/* - string_width * 0.5f*/, info.height * 0.5f + (info.bearing_y - info.height) - anchor_offset_y, 0 },
 			.indx = get_or_create_glyph_texture_coordinate(text, ch),
 			.rotn = { ((i%3) == 0) ? 1 : 0, ((i%3) == 1) ? 1 : 0, ((i%3) == 2) ? 1 : 0 },
 			.stid = text_string->index,
@@ -469,3 +535,8 @@ RENDERER_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_
 	return mat4_identity();
 }
 
+RENDERER_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text)
+{
+	_debug_assert__(text->texture != NULL);
+	return vulkan_bitmap_glyph_atlas_texture_get_font(text->texture);
+}

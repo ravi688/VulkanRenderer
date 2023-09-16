@@ -50,10 +50,24 @@ static void glfwErrorCallback(int code, const char* description)
 }
 #endif
 
+static void update_screen_info(render_window_t* window)
+{
+	/* set the window size value */
+	AUTO size = iextent2d(window->width, window->height);
+	struct_descriptor_set_uvec2(&window->screen_info_struct, window->size_field, CAST_TO(uint*, &size));
+
+	/* set the screen matrix */
+	AUTO matrix = mat4_ortho_projection(-0.04f, 100, size.height, (f32)size.width / (f32)size.height);
+	mat4_move(matrix, mat4_transpose(matrix));
+	struct_descriptor_set_mat4(&window->screen_info_struct, window->matrix_field, CAST_TO(f32*, &matrix));
+}
+
 static void glfwOnWindowResizeCallback(GLFWwindow* glfw_window, int width, int height)
 {
 	AUTO window = CAST_TO(render_window_t*, glfwGetWindowUserPointer(glfw_window));
 	render_window_get_framebuffer_extent(window, &window->width, &window->height);
+	/* update the screen matrix and window size in the global set */
+	update_screen_info(window);
 	event_publish(window->on_resize_event);
 }
 
@@ -172,12 +186,7 @@ RENDERER_API void render_window_initialize_api_buffer(render_window_t* window, v
 	AUTO dpi = display_get_dpi();
 	struct_descriptor_set_uvec2(&window->screen_info_struct, window->dpi_field, CAST_TO(uint*, &dpi));
 
-	/* set the window size value */
-	AUTO size = iextent2d(window->width, window->height);
-	struct_descriptor_set_uvec2(&window->screen_info_struct, window->size_field, CAST_TO(uint*, &size));
-
-	/* set the screen matrix */
-	AUTO matrix = mat4_ortho_projection(-0.04f, 100, size.height, (f32)size.width / (f32)size.height);
-	struct_descriptor_set_mat4(&window->screen_info_struct, window->matrix_field, CAST_TO(f32*, &matrix));
+	/* set the screen matrix and window size */
+	update_screen_info(window);
 }
 

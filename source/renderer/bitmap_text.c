@@ -41,6 +41,42 @@ RENDERER_API void bitmap_text_string_destroyH(bitmap_text_t* text, bitmap_text_s
 }
 
 /* setters */
+RENDERER_API void bitmap_text_set_render_space_type(bitmap_text_t* text, bitmap_text_render_space_type_t space_type)
+{
+	vulkan_bitmap_text_render_space_type_t vk_space_type;
+	switch(space_type)
+	{
+		case BITMAP_TEXT_RENDER_SPACE_TYPE_2D:
+			vk_space_type = VULKAN_BITMAP_TEXT_RENDER_SPACE_TYPE_2D;
+			break;
+		case BITMAP_TEXT_RENDER_SPACE_TYPE_3D:
+			vk_space_type = VULKAN_BITMAP_TEXT_RENDER_SPACE_TYPE_3D;
+			break;
+		default:
+			debug_log_error("Invalid bitmap text render space type: %lu", space_type);
+			break;
+	}
+	vulkan_bitmap_text_set_render_space_type(text, vk_space_type);
+}
+
+RENDERER_API void bitmap_text_set_render_surface_type(bitmap_text_t* text, bitmap_text_render_surface_type_t surface_type)
+{
+	vulkan_bitmap_text_render_surface_type_t vk_surface_type;
+	switch(surface_type)
+	{
+		case BITMAP_TEXT_RENDER_SURFACE_TYPE_CAMERA:
+			vk_surface_type = VULKAN_BITMAP_TEXT_RENDER_SURFACE_TYPE_CAMERA;
+			break;
+		case BITMAP_TEXT_RENDER_SURFACE_TYPE_SCREEN:
+			vk_surface_type = VULKAN_BITMAP_TEXT_RENDER_SURFACE_TYPE_SCREEN;
+			break;
+		default:
+			debug_log_error("Invalid bitmap text render surface type: %lu", surface_type);
+			break;
+	}
+	vulkan_bitmap_text_set_render_surface_type(text, vk_surface_type);
+}
+
 RENDERER_API void bitmap_text_string_setH(bitmap_text_t* text, bitmap_text_string_handle_t handle, const char* string)
 {
 	vulkan_bitmap_text_string_setH(text, handle, string);

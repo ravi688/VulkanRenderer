@@ -6,12 +6,28 @@
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
 #include <renderer/dictionary.h>
+#include <renderer/types.h>
 #include <renderer/event.h> // event_subscription_handle_t
 #include <renderer/rect.h> // rect2d_t
 #include <hpml/mat4.h> 	// mat4_t
 #include <hpml/vec3.h> 	// vec3_t
 #include <glslcommon/glsl_types.h>
 
+typedef enum vulkan_bitmap_text_render_space_type_t
+{
+	/* selects the 'screen projection matrix' from the camera's projection matrices */
+	VULKAN_BITMAP_TEXT_RENDER_SPACE_TYPE_2D,
+	/* selects the 'orthographic/perspective matrix' from the camera's projection matrices */
+	VULKAN_BITMAP_TEXT_RENDER_SPACE_TYPE_3D
+} vulkan_bitmap_text_render_space_type_t;
+
+typedef enum vulkan_bitmap_text_render_surface_type_t
+{
+	/* the text will be rendered on to the camera's view */
+	VULKAN_BITMAP_TEXT_RENDER_SURFACE_TYPE_CAMERA,
+	/* the text will be rendered on to the screen (i.e. will not be affected by the any camera's transformations or projections) */
+	VULKAN_BITMAP_TEXT_RENDER_SURFACE_TYPE_SCREEN
+} vulkan_bitmap_text_render_surface_type_t;
 
 /* element of Glyph Texture Coordinate (GTC) buffer */
 typedef struct glsl_glyph_texcoord_t
@@ -96,10 +112,17 @@ typedef dictionary_t glyph_texcoord_index_table_t;
 
 typedef struct vulkan_material_t vulkan_material_t;
 
+typedef struct font_t font_t;
+
 typedef struct vulkan_bitmap_text_t
 {
 	vulkan_renderer_t* renderer;
 	vulkan_material_t* material;
+
+	/* render space type of this text */
+	vulkan_bitmap_text_render_space_type_t render_space_type;
+	/* render surface type of this text */
+	vulkan_bitmap_text_render_surface_type_t render_surface_type;
 
 	/* CPU side */
 
@@ -151,18 +174,20 @@ RENDERER_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create
 RENDERER_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 
 /* setters */
+RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type);
+RENDERER_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_surface_type_t surface_type);
 RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char* string);
 RENDERER_API void vulkan_bitmap_text_string_set_scaleH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, vec3_t scale);
 RENDERER_API void vulkan_bitmap_text_string_set_positionH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, vec3_t position);
 RENDERER_API void vulkan_bitmap_text_string_set_rotationH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, vec3_t rotation);
 RENDERER_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform);
 
-/* setters */
+/* getters */
 RENDERER_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 RENDERER_API vec3_t vulkan_bitmap_text_string_get_scaleH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 RENDERER_API vec3_t vulkan_bitmap_text_string_get_positionH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 RENDERER_API vec3_t vulkan_bitmap_text_string_get_rotationH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 RENDERER_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
-
+RENDERER_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text);
 
 END_CPP_COMPATIBLE

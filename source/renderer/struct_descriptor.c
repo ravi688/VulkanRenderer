@@ -72,6 +72,11 @@ RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* p
 	descriptor->ptr = ptr;
 }
 
+RENDERER_API void* struct_descriptor_get_mapped(struct_descriptor_t* descriptor)
+{
+	return descriptor->ptr;
+}
+
 RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor)
 {
 	_debug_assert__(descriptor != NULL);

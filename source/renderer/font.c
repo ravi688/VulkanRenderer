@@ -128,7 +128,7 @@ RENDERER_API void font_release_resources(font_t* font)
 RENDERER_API void font_set_char_size(font_t* font, u32 point_size)
 {
 	if(font->ft_handle != NULL)
-		if(FT_Set_Char_Size(font->ft_handle, 0, get_pixels_from_point_size(point_size, font->dpi.y) << 6, font->dpi.x, font->dpi.y) != 0)
+		if(FT_Set_Char_Size(font->ft_handle, 0, point_size << 6, font->dpi.x, font->dpi.y) != 0)
 			debug_log_fetal_error("Failed to set char size");
 	font->point_size = point_size;
 }
@@ -189,7 +189,7 @@ RENDERER_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bit
 		AUTO error = FT_Render_Glyph(font->ft_handle->glyph, FT_RENDER_MODE_NORMAL);
 		if(error != 0)
 		{
-			debug_log_fetal_error("Failed to render glyph Unicode (%lu)", unicode);
+			debug_log_fetal_error("Failed to render glyph Unicode (%lu), did you called font_load_glyph() first?", unicode);
 			return false;
 		}
 
@@ -278,4 +278,16 @@ RENDERER_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph
 		font_load_glyph(font, unicode, info);
 		debug_log_warning("no glyph info found for the glyph %lu, calling font_load_glyph to get info", unicode);
 	}
+}
+
+RENDERER_API f32 font_get_ascender(font_t* font)
+{
+	_release_assert__(font->ft_handle != NULL);
+	return CAST_TO(f32, font->ft_handle->ascender);
+}
+
+RENDERER_API f32 font_get_units_per_em(font_t* font)
+{
+	_release_assert__(font->ft_handle != NULL);
+	return CAST_TO(f32, font->ft_handle->units_per_EM);
 }
