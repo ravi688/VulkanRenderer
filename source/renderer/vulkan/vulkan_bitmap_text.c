@@ -488,51 +488,10 @@ RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vu
 	}
 }
 
-RENDERER_API void vulkan_bitmap_text_string_set_scaleH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle, vec3_t scale)
-{
-
-}
-
-RENDERER_API void vulkan_bitmap_text_string_set_positionH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle, vec3_t position)
-{
-
-}
-
-RENDERER_API void vulkan_bitmap_text_string_set_rotationH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle, vec3_t rotation)
-{
-
-}
-
-RENDERER_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle, mat4_t transform)
-{
-
-}
-
-
 /* setters */
 RENDERER_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle)
 {
-
-}
-
-RENDERER_API vec3_t vulkan_bitmap_text_string_get_scaleH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle)
-{
-	return vec3_zero();
-}
-
-RENDERER_API vec3_t vulkan_bitmap_text_string_get_positionH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle)
-{
-	return vec3_zero();
-}
-
-RENDERER_API vec3_t vulkan_bitmap_text_string_get_rotationH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle)
-{
-	return vec3_zero();
-}
-
-RENDERER_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle)
-{
-	return mat4_identity();
+	return CAST_TO(const char*, buf_get_ptr(&buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, handle)->chars));
 }
 
 RENDERER_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text)

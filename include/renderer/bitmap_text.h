@@ -56,16 +56,8 @@ RENDERER_API void bitmap_text_set_render_space_type(bitmap_text_t* text, bitmap_
 RENDERER_API void bitmap_text_set_render_surface_type(bitmap_text_t* text, bitmap_text_render_surface_type_t surface_type);
 
 RENDERER_API void bitmap_text_string_setH(bitmap_text_t* text, bitmap_text_string_handle_t handle, const char* string);
-RENDERER_API void bitmap_text_string_set_scaleH(bitmap_text_t* text, bitmap_text_string_handle_t handle, vec3_t scale);
-RENDERER_API void bitmap_text_string_set_positionH(bitmap_text_t* text, bitmap_text_string_handle_t handle, vec3_t position);
-RENDERER_API void bitmap_text_string_set_rotationH(bitmap_text_t* text, bitmap_text_string_handle_t handle, vec3_t rotation);
-RENDERER_API void bitmap_text_string_set_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle, mat4_t transform);
 
 /* setters */
 RENDERER_API const char* bitmap_text_string_getH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
-RENDERER_API vec3_t bitmap_text_string_get_scaleH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
-RENDERER_API vec3_t bitmap_text_string_get_positionH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
-RENDERER_API vec3_t bitmap_text_string_get_rotationH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
-RENDERER_API mat4_t bitmap_text_string_get_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 
 END_CPP_COMPATIBLE

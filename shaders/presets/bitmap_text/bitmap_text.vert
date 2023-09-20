@@ -84,7 +84,7 @@ void main()
             {
                 case 1:
                     clipPos = cameraInfo.screen * world;
-                    out_color = vec3(1.0, 0.0, 0.0);
+                    out_color = vec3(1.0, 1.0, 1.0);
                     break;
                 case 0:
                     clipPos = displayInfo.matrix * world;

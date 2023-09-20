@@ -560,7 +560,7 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 						 	"BitmapTextShaderTest"));
 
 	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
-	font_set_char_size(this->font, 34);
+	font_set_char_size(this->font, 24);
 
 	/* bitmap text */
 	bitmap_glyph_atlas_texture_create_info_t texture_create_info = { 512, 512, this->font };
@@ -616,7 +616,7 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 		{
 			bitmap_text_set_render_space_type(this->text, BITMAP_TEXT_RENDER_SPACE_TYPE_2D);
 			debug_log_info("BITMAP_TEXT_RENDER_SPACE_TYPE_2D");
-			render_object_set_transform(this->text_object, mat4_translation(0.0f, 400.0f, -400.0f));
+			render_object_set_transform(this->text_object, mat4_mul(2, mat4_translation(0.0f, 400.0f, -400.0f), mat4_rotation_x(10 DEG)));
 		}
 		else
 		{
@@ -631,7 +631,7 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 	if(counter == 66000)
 		counter = 0;
 	char buffer[32];
-	sprintf(buffer, "BTM_TEXTgyl^@: %d", counter);
+	sprintf(buffer, "Hardwork with dedication suffices to complete a project: %d", counter);
 	bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
 	bitmap_glyph_atlas_texture_commit(this->texture, NULL);
 }

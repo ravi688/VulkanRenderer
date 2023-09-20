@@ -177,17 +177,9 @@ RENDERER_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text,
 RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type);
 RENDERER_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_surface_type_t surface_type);
 RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char* string);
-RENDERER_API void vulkan_bitmap_text_string_set_scaleH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, vec3_t scale);
-RENDERER_API void vulkan_bitmap_text_string_set_positionH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, vec3_t position);
-RENDERER_API void vulkan_bitmap_text_string_set_rotationH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, vec3_t rotation);
-RENDERER_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform);
 
 /* getters */
 RENDERER_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
-RENDERER_API vec3_t vulkan_bitmap_text_string_get_scaleH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
-RENDERER_API vec3_t vulkan_bitmap_text_string_get_positionH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
-RENDERER_API vec3_t vulkan_bitmap_text_string_get_rotationH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
-RENDERER_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 RENDERER_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text);
 
 END_CPP_COMPATIBLE
