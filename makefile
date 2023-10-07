@@ -62,7 +62,7 @@ all: dgraph release
 	echo digraph $(PROJECT_NAME) { $(PROJECT_NAME); } > $@
 	@echo [Log] $@ created successfully!
 
-$(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR): 
+$(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR):
 	mkdir $(subst /,\,$@)
 	@echo [Log] $@ created successfully!
 $(UNPACKED_OBJECTS_DIR):
@@ -154,7 +154,7 @@ $(DGRAPH_TARGET_DIR):
 dgraph: $(DGRAPH_PREPROCESSED_SCRIPT) | $(DGRAPH_TARGET_DIR)
 	$(DGRAPH_COMPILER) $(DGRAPH_FLAGS) $(DGRAPH_PREPROCESSED_SCRIPT) > $(DGRAPH_TARGET)
 
-dgraph-clean: 
+dgraph-clean:
 	$(RM) dependency_graph\$(PROJECT_NAME).png
 	$(RM_DIR) dependency_graph
 	$(RM) $(PROJECT_NAME).gv.i
@@ -192,15 +192,54 @@ RELEASE_DEFINES = -DHPML_RELEASE_MODE -DLOG_RELEASE -DGLOBAL_RELEASE -DRELEASE
 # 	RENDERER_{VULKAN | OPENGL | DIRECTX | METAL}_DRIVER
 #	USE_VULKAN_ALLOCATOR
 # 	MEMORY_METRICS
-DEFINES = -DMEMORY_ALLOCATION_SAFETY_LEVEL_0 -DRENDERER_VULKAN_DRIVER #-DUSE_VULKAN_ALLOCATOR #-DMEMORY_METRICS 
+DEFINES = -DMEMORY_ALLOCATION_SAFETY_LEVEL_0 -DRENDERER_VULKAN_DRIVER #-DUSE_VULKAN_ALLOCATOR #-DMEMORY_METRICS
 
 COMPILER_FLAGS= -m64
+LINKER_FLAGS= -m64
 DYNAMIC_LIBRARY_COMPILATION_FLAG = -shared
 DYNAMIC_IMPORT_LIBRARY_FLAG = -Wl,--out-implib,
 COMPILER = gcc
 ARCHIVER_FLAGS = -rc
 ARCHIVER_UNPACK_FLAGS = -x
 ARCHIVER = ar
+
+ifeq ($(STACK_PROTECT),1)
+	COMPILER_FLAGS += -fstack-protector
+	LINKER_FLAGS += -fstack-protector
+endif
+
+ifeq ($(ADDRESS_SANITIZE),1)
+	COMPILER_FLAGS += -fsanitize=address -static-libasan
+	LINKER_FLAGS += -fsanitize=address -static-libasan
+endif
+
+ifeq ($(SHADOW_CALL_STACK_SANITIZE),1)
+	COMPILER_FLAGS += -fsanitize=shadow-call-stack
+	LINKER_FLAGS += -fsanitize=shadow-call-stack
+endif
+
+ifeq ($(LEAK_SANITIZE),1)
+	# no need to add it to COMPILER_FLAGS, as this flag only causes a library linking which overrides the malloc
+	LINKER_FLAGS += -fsanitize=leak
+endif
+
+ifeq ($(PROF),1)
+	COMPILER_FLAGS += -p
+	LINKER_FLAGS += -p
+endif
+
+ifeq ($(GPROF),1)
+	COMPILER_FLAGS += -pg
+	LINKER_FLAGS += -pg
+endif
+
+ifeq ($(NOOPT),1)
+	COMPILER_FLAGS += -O0
+	LINKER_FLAGS += -O0
+endif
+
+DEBUG_COMPILER_FLAGS= -g #-fsanitize=integer-divide-by-zero // why it is not working on windows 64 bit?
+DEBUG_LINKER_FLAGS= -g #-fsanitize=integer-divide-by-zero  // why it is not working on windows 64 bit?
 
 TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefix lib, $(notdir $(TARGET_DYNAMIC_LIB).a)))
 
@@ -212,7 +251,7 @@ TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefi
 .PHONY: lib-dynamic-release
 .PHONY: release
 .PHONY: debug
-.PHONY: $(TARGET)	
+.PHONY: $(TARGET)
 .PHONY: bin-clean
 .PHONY: PRINT_MESSAGE1
 
@@ -220,7 +259,8 @@ all: release
 lib-static: lib-static-release
 lib-static-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_STATIC_LIBRARY
 lib-static-debug: __STATIC_LIB_COMMAND = lib-static-debug
-lib-static-debug: COMPILER_FLAGS += -g
+lib-static-debug: COMPILER_FLAGS += $(DEBUG_COMPILER_FLAGS)
+lib-static-debug: LINKER_FLAGS += $(DEBUG_LINKER_FLAGS)
 lib-static-debug: $(TARGET_STATIC_LIB)
 lib-static-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_STATIC_LIBRARY
 lib-static-release: __STATIC_LIB_COMMAND = lib-static-release
@@ -229,17 +269,20 @@ lib-static-release: $(TARGET_STATIC_LIB)
 lib-dynamic: lib-dynamic-release
 lib-dynamic-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
 lib-dynamic-debug: __STATIC_LIB_COMMAND = lib-static-dynamic-debug
-lib-dynamic-debug: COMPILER_FLAGS += -g -fPIC
+lib-dynamic-debug: COMPILER_FLAGS += $(DEBUG_COMPILER_FLAGS) -fPIC
+lib-dynamic-debug: LINKER_FLAGS += $(DEBUG_LINKER_FLAGS) -fPIC
 lib-dynamic-debug: $(TARGET_DYNAMIC_LIB)
 lib-dynamic-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_DYNAMIC_LIBRARY
 lib-dynamic-release: __STATIC_LIB_COMMAND = lib-static-dynamic-release
 lib-dynamic-release: COMPILER_FLAGS += -fPIC
+lib-dynamic-release: LINKER_FLAGS += -fPIC
 lib-dynamic-release: $(TARGET_DYNAMIC_LIB)
 
 .PHONY: lib-dynamic-packed-debug
 lib-dynamic-packed-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_DYNAMIC_LIBRARY
 lib-dynamic-packed-debug: __STATIC_LIB_COMMAND = lib-static-dynamic-debug
-lib-dynamic-packed-debug: COMPILER_FLAGS += -g -fPIC
+lib-dynamic-packed-debug: COMPILER_FLAGS += $(DEBUG_COMPILER_FLAGS) -fPIC
+lib-dynamic-packed-debug: LINKER_FLAGS += $(DEBUG_LINKER_FLAGS) -fPIC
 lib-dynamic-packed-debug: $(TARGET_DYNAMIC_PACKED_LIB)
 
 release: DEFINES += $(RELEASE_DEFINES) -DBUILD_EXECUTABLE
@@ -247,7 +290,8 @@ release: __STATIC_LIB_COMMAND = lib-static-release
 release: $(TARGET)
 debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_EXECUTABLE
 debug: __STATIC_LIB_COMMAND = lib-static-debug
-debug: COMPILER_FLAGS += -g
+debug: COMPILER_FLAGS += $(DEBUG_COMPILER_FLAGS)
+debug: LINKER_FLAGS += $(DEBUG_LINKER_FLAGS)
 debug: $(TARGET)
 
 # Building examples
@@ -276,22 +320,22 @@ examples-clean:
 	$(MAKE) --directory=$(subst lib/, ,$(dir $@)) $(__STATIC_LIB_COMMAND)
 	@echo [Log] $@ built successfully!
 
-$(TARGET_LIB_DIR): 
+$(TARGET_LIB_DIR):
 	mkdir $@
 
-PRINT_STATIC_INFO: 
+PRINT_STATIC_INFO:
 	@echo [Log] Building $(TARGET_STATIC_LIB) ...
 
-PRINT_DYNAMIC_INFO: 
+PRINT_DYNAMIC_INFO:
 	@echo [Log] Building $(TARGET_DYNAMIC_LIB) ...
 
-$(TARGET_STATIC_LIB) : PRINT_STATIC_INFO $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_LIB_DIR) 
+$(TARGET_STATIC_LIB) : PRINT_STATIC_INFO $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_LIB_DIR)
 	$(ARCHIVER) $(ARCHIVER_FLAGS) $@ $(filter-out $<, $^)
 	@echo [Log] $@ built successfully!
 
 $(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_LIB_DIR)
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(COMPILER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(filter-out source/main.o, $(OBJECTS)) \
+	$(COMPILER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(filter-out source/main.o, $(OBJECTS)) \
 	$(addprefix -L, $(dir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(LIBS) \
@@ -311,21 +355,21 @@ DELETE_UPACKED_OBJECTS:
 
 $(TARGET_DYNAMIC_PACKED_LIB) : PRINT_DYNAMIC_INFO  $(filter-out source/main.o, $(OBJECTS)) UNPACK_LIBS | $(TARGET_LIB_DIR)
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(COMPILER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG)  $(wildcard $(UNPACKED_OBJECTS_DIR)/*/*.o) $(filter-out source/main.o, $(OBJECTS)) \
+	$(COMPILER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG)  $(wildcard $(UNPACKED_OBJECTS_DIR)/*/*.o) $(filter-out source/main.o, $(OBJECTS)) \
 	$(LIBS) \
 	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
 	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
 
 $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) source/main.o
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(COMPILER_FLAGS) source/main.o \
+	$(COMPILER) $(LINKER_FLAGS) source/main.o \
 	$(addprefix -L, $(dir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(LIBS) \
 	-o $@
 	@echo [Log] $(PROJECT_NAME) built successfully!
 
-bin-clean: 
+bin-clean:
 	$(RM) $(subst /,\, $(OBJECTS))
 	$(RM) $(__EXECUTABLE_NAME)
 	$(RM) $(subst /,\, $(TARGET_STATIC_LIB))
