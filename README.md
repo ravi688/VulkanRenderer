@@ -202,6 +202,8 @@ There are only C and C++ interface headers for now.
 
 3. Text Mesh batching
 
+### Bitmap Text Rendering
+
 ### Materials
 
 1. String to fast integer handles for constant lookup
