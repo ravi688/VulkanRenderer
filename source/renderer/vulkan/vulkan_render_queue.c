@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_render_queue.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -137,7 +137,7 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 		dictionary_free(map);
 	}
 	dictionary_free(&queue->shader_handles);
-	
+
 	vulkan_render_pass_graph_release_resources(&queue->pass_graph);
 
 	memory_allocator_dealloc(queue->renderer->allocator, queue);
@@ -188,7 +188,7 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 		render_object_list_t list = buf_create(sizeof(vulkan_render_object_t*), 1, 0);
 		dictionary_add(map, &obj->material->handle, &list);
 	}
-	
+
 	/* if this object doesn't exists then add it */
 	render_object_list_t* list = dictionary_get_value_ptr(map, &obj->material->handle);
 	if(buf_find_index_of(list, &obj, buf_ptr_comparer) == BUF_INVALID_INDEX)
@@ -214,7 +214,7 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 		}
 		else
 			lists = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr(&queue->render_pass_handles, &passes[i].handle));
-		
+
 		for(u32 j = 0; j < subpass_count; j++)
 		{
 			/* if this shader doesn't exist then add it */
@@ -282,9 +282,9 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 			vulkan_render_pass_handle_t pass_handle = shader->render_passes[i].handle;
 			vulkan_render_pass_t* pass = vulkan_render_pass_pool_getH(pass_pool, pass_handle);
 			_debug_assert__(shader->render_passes[i].subpass_count == pass->subpass_count);
-			
+
 			vulkan_render_pass_begin(pass, 0, camera);
-			
+
 			u32 subpass_count = pass->subpass_count;
 			for(u32 j = 0; j < subpass_count;)
 			{
@@ -308,7 +308,7 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 				/* bind CAMERA_SET */
 				vulkan_descriptor_set_bind(&camera->sets[camera->current_shot_index], VULKAN_DESCRIPTOR_SET_CAMERA, layout);
 				/* bind GLOBAL_SET */
-				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, layout); 
+				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, layout);
 
 				vulkan_render_pass_descriptor_sets_t* render_pass_descriptor_sets = vulkan_camera_get_descriptor_sets(camera, prev_pass_handle, pass_handle);
 				/* bind RENDER_SET */
@@ -319,7 +319,7 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 
 				/* bind MATERIAL_SET */
 				vulkan_descriptor_set_bind(&material->material_set, VULKAN_DESCRIPTOR_SET_MATERIAL, layout);
-				
+
 				/* push constants from CPU memory to the GPU memory */
 				vulkan_material_push_constants(material, layout);
 
@@ -372,43 +372,47 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 		u32 unique_pass_count = dictionary_get_count(&queue->render_pass_handles);
 		for(u32 i = 0; i < unique_pass_count; i++)
 		{
-			DEBUG_BLOCK 
+			DEBUG_BLOCK
 			(
 				vulkan_render_pass_handle_t pass_handle;
 				dictionary_get_key_at(&queue->render_pass_handles, i, &pass_handle);
 				_debug_assert__(vulkan_render_pass_pool_getH(pass_pool, pass_handle)->subpass_count > 0);
 			)
-			
+
 			subpass_shader_list_t* lists = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr_at(&queue->render_pass_handles, i));
-			
+
 			BUFFER* shaders = &lists[0];
 			u32 shader_count = buf_get_element_count(shaders);
 			for(u32 k = 0; k < shader_count; k++)
 				vulkan_shader_render_pass_counter_reset(vulkan_shader_library_getH(shader_library, DEREF_TO(vulkan_shader_handle_t, buf_get_ptr_at(shaders, k))));
 		}
 	}
-	
+
 	// iterate through each render pass
 	for(u32 i = 0; i < pass_count; i++)
 	{
 		/* get render pass handle */
 		vulkan_render_pass_graph_node_handle_t pass_node_handle;
-		buf_get_at(pass_node_handles, i, &pass_node_handle);
+		buf_get_at_s(pass_node_handles, i, &pass_node_handle);
 		vulkan_render_pass_handle_t pass_handle;
-		buf_get_at(&queue->pass_graph.nodes, pass_node_handle, &pass_handle);
+		{
+			vulkan_render_pass_graph_node_t pass_node;
+			buf_get_at_s(&queue->pass_graph.nodes, pass_node_handle, &pass_node);
+			pass_handle = pass_node.pass_handle;
+		}
 
 		// get the pointer to the render pass object
 		vulkan_render_pass_t* pass = vulkan_render_pass_pool_getH(pass_pool, pass_handle);
 
 		// begin the render pass
 		vulkan_render_pass_begin(pass, queue->renderer->swapchain->current_image_index, camera);
-		
+
 		// get the number of sub passes that this render pass has
 		u32 sub_pass_count = pass->subpass_count;
-		
-		// get the list of shader handles for each sub pass in this render pass		
+
+		// get the list of shader handles for each sub pass in this render pass
 		subpass_shader_list_t* lists = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr(&queue->render_pass_handles, &pass_handle));
-	
+
 		// iterate through each subpass
 		for(u32 j = 0; j < sub_pass_count;)
 		{
@@ -419,15 +423,15 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 			{
 				vulkan_shader_handle_t shader_handle = DEREF_TO(vulkan_shader_handle_t, buf_get_ptr_at(&lists[j], k));
 				vulkan_shader_t* shader = vulkan_shader_library_getH(shader_library, shader_handle);
-				
+
 				/* NOTE: this function must be called before vulkan_shader_render_pass_is_next() function to get correct values */
 				vulkan_render_pass_handle_t prev_pass_handle = vulkan_shader_get_prev_pass_handle(shader);
 
 				if(!vulkan_shader_render_pass_is_next(shader, pass_handle))
 					/* for now, all shaders for a subpass must be same
-					 * meaning if one shader has 3 subpasses then rest of the shaders would also have 
+					 * meaning if one shader has 3 subpasses then rest of the shaders would also have
 					 * 3 subpasses for the same render pass.
-					 * hence if one shader's checklist is complete then rest of the all shader's checklists 
+					 * hence if one shader's checklist is complete then rest of the all shader's checklists
 					 * must also be complete  */
 					continue;
 
@@ -439,14 +443,14 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 
 				// bind pipeline
 				vulkan_graphics_pipeline_bind(pipeline);
-				
+
 				// get the pipeline layout for this render pass and sub pass 'j'
 				vulkan_pipeline_layout_t* pipeline_layout = vulkan_shader_get_pipeline_layout(shader, pass->handle, j);
 
 				// bind CAMERA_SET
 				vulkan_descriptor_set_bind(&camera->sets[camera->current_shot_index], VULKAN_DESCRIPTOR_SET_CAMERA, pipeline_layout);
 				// bind GLOBAL_SET
-				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, pipeline_layout); 
+				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, pipeline_layout);
 
 				vulkan_render_pass_descriptor_sets_t* render_pass_descriptor_sets = vulkan_camera_get_descriptor_sets(camera, prev_pass_handle, pass_handle);
 				// bind RENDER_SET
@@ -467,10 +471,10 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 
 					// get the pointer to the material object
 					vulkan_material_t* material = vulkan_material_library_getH(material_library, material_handle);
-					
+
 					// bind MATERIAL_SET
 					vulkan_descriptor_set_bind(&material->material_set, VULKAN_DESCRIPTOR_SET_MATERIAL, pipeline_layout);
-					
+
 					// push constants from CPU memory to the GPU memory
 					vulkan_material_push_constants(material, pipeline_layout);
 

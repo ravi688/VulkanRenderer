@@ -57,10 +57,10 @@ static INLINE_IF_RELEASE_MODE font_t* vulkan_bitmap_glyph_atlas_texture_get_font
 {
 	return bitmap_glyph_pool_get_font(&texture->pool);
 }
-/* flushes the host side font bitmap to the GPU side memory (it might also destroy and create VkDeviceMemory) 
+/* flushes the host side font bitmap to the GPU side memory (it might also destroy and create VkDeviceMemory)
  * returns true if either the internal buffers, images and image views has been updated or recreated */
 RENDERER_API bool vulkan_bitmap_glyph_atlas_texture_commit(vulkan_bitmap_glyph_atlas_texture_t* texture, bool OUT is_resized);
-/* quality: quality of the rasterized glyph, ranges from 0 to 255 inclusive 
+/* quality: quality of the rasterized glyph, ranges from 0 to 255 inclusive
  * unicode: glyph's unicode value to rasterize
  * texcoords: the texture coordinates (list of 4 vec2(s)), filled by this function if the glyph has graphical representation
  * returns: true if the glyph has graphical representation and there are no errors */

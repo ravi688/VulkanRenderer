@@ -48,6 +48,12 @@ enum
 	// bindings for GLOBAL_SET
 	VULKAN_DESCRIPTOR_BINDING_CAMERA = 0,
 	VULKAN_DESCRIPTOR_BINDING_LIGHT = 1,
+	/* holds information related to the screen such as:
+	 * 1. display resolution (width x height, in pixels)
+	 * 2. display dpi (horizontal_dpi x vertical_dpi, in pixels / inch)
+	 * 3. window size (width x height, in pixels)
+	 * 4. screen_matrix  */
+	VULKAN_DESCRIPTOR_BINDING_SCREEN = 2,
 
 	// bindings for SUB_RENDER_SET
 	VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0 = 0,

@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: multi_buffer.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -112,7 +112,7 @@ RENDERER_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* 
 		// extend the master buffer to fit the newly created sub_buffer's capacity
 		buf_push_pseudo(buffer, capacity);
 	sub_buffer->capacity = capacity;
-	
+
 	// set the element count in the newly created sub_buffer to zero
 	sub_buffer->count = 0;
 
@@ -131,14 +131,14 @@ RENDERER_API void multi_buffer_sub_buffer_push(multi_buffer_t* multi_buffer, sub
 	check_pre_condition(multi_buffer);
 	BUFFER* sub_buffers = &multi_buffer->sub_buffers;
 	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
-	
+
 	// resize the master buffer if needed
 	buf_ucount_t new_count = sub_buffer->count + 1;
 	buf_ucount_t prev_capacity = sub_buffer->capacity;
 	sub_buffer->capacity = (sub_buffer->capacity == 0) ? 1 : sub_buffer->capacity;
 	if(sub_buffer->capacity < new_count)
 		sub_buffer->capacity <<= 1; 		// multiply by 2
-	if(prev_capacity != sub_buffer->capacity)
+	if(sub_buffer->capacity > prev_capacity)
 	{
 		buf_ucount_t diff = sub_buffer->capacity - prev_capacity;
 		buf_insert_pseudo(&multi_buffer->buffer, sub_buffer->ptr + sub_buffer->count, diff);
@@ -198,7 +198,7 @@ RENDERER_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, s
 		}
 
 	/* failed to remove, as the value doesn't exist in the buffer */
-	return false;	
+	return false;
 }
 
 // getters

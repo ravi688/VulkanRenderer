@@ -148,6 +148,15 @@ RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_
 /* fills 'info' with information of the glyph only but calls font_load_glyph internally if required (be careful) */
 RENDERER_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
 
+/* returns the ascender of the face (the ascender of the glyph having heighest value in the face) */
+RENDERER_API f32 font_get_ascender(font_t* font);
+
+/* returns the units (in point size) per EM */
+RENDERER_API f32 font_get_units_per_em(font_t* font);
+
+/* returns the point size of the characters in the font */
+static INLINE_IF_RELEASE_MODE f32 font_get_char_size(font_t* font) { return font->point_size; }
+
 static INLINE_IF_RELEASE_MODE f32 get_inches_from_point_size(u32 point_size)
 {
 	/* 72 points make 1 inch */

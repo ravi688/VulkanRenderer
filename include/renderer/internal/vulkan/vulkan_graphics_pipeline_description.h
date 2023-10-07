@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_graphics_pipeline_description.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -66,6 +66,7 @@ typedef struct vulkan_graphics_pipeline_description_t
 
 } vulkan_graphics_pipeline_description_t;
 
+#define VULKAN_GRAPHICS_PIPELINE_DESCRIPTION(ptr) CAST_TO(vulkan_graphics_pipeline_description_t*, ptr)
 
 RENDERER_API void vulkan_graphics_pipeline_description_begin(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_description_t* description);
 RENDERER_API void vulkan_graphics_pipeline_description_add_color_blend_state(vulkan_graphics_pipeline_description_t* description, VkBool32 blendEnable);
@@ -73,6 +74,13 @@ RENDERER_API void vulkan_graphics_pipeline_description_set_depth_stencil(vulkan_
 RENDERER_API void vulkan_graphics_pipeline_description_set_depth_bias(vulkan_graphics_pipeline_description_t* description, float factor, float clamp, float slope_factor);
 RENDERER_API void vulkan_graphics_pipeline_description_add_shader(vulkan_graphics_pipeline_description_t* description, const char* file_path, vulkan_shader_type_t type);
 RENDERER_API void vulkan_graphics_pipeline_description_end(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_description_t* description);
+
+RENDERER_API VkPipelineRasterizationStateCreateInfo* vulkan_graphics_pipeline_description_get_rasterization(vulkan_graphics_pipeline_description_t* description);
+
+static VkPipelineRasterizationStateCreateInfo* get_rasterization(BUFFER* list)
+{
+	return vulkan_graphics_pipeline_description_get_rasterization(VULKAN_GRAPHICS_PIPELINE_DESCRIPTION(buf_peek_ptr(list)));
+}
 
 static void begin_pipeline(vulkan_renderer_t* renderer, BUFFER* list)
 {
