@@ -82,8 +82,18 @@ RENDERER_API void bitmap_text_string_setH(bitmap_text_t* text, bitmap_text_strin
 	vulkan_bitmap_text_string_setH(text, handle, string);
 }
 
-/* setters */
+RENDERER_API void bitmap_text_string_set_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle, mat4_t transform)
+{
+	vulkan_bitmap_text_string_set_transformH(text, handle, transform);
+}
+
+/* getters */
 RENDERER_API const char* bitmap_text_string_getH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
 {
 	return vulkan_bitmap_text_string_getH(text, handle);
+}
+
+RENDERER_API mat4_t bitmap_text_string_get_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
+{
+	return vulkan_bitmap_text_string_get_transformH(text, handle);
 }

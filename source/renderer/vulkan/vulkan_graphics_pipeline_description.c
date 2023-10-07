@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_graphics_pipeline_description.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -132,7 +132,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_add_color_blend_state(vul
 		.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
 		.colorBlendOp = VK_BLEND_OP_ADD,
 		.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-		.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE	
+		.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE
 	};
 	VkPipelineColorBlendStateCreateInfo* info = &description->settings->colorblend;
 	buf_push(CAST_TO(BUFFER*, info->pAttachments), &state);
@@ -158,7 +158,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_set_depth_bias(vulkan_gra
 RENDERER_API void vulkan_graphics_pipeline_description_add_shader(vulkan_graphics_pipeline_description_t* description, const char* file_path, vulkan_shader_type_t type)
 {
 	BUFFER* data = load_binary_from_file(file_path);
-	vulkan_spirv_code_t code = 
+	vulkan_spirv_code_t code =
 	{
 		.type = type,
 		.spirv = data->bytes,
@@ -178,4 +178,9 @@ RENDERER_API void vulkan_graphics_pipeline_description_end(vulkan_renderer_t* re
 	description->spirv_code_count = buf_get_element_count(buffer);
 	description->spirv_codes = buf_get_ptr(buffer);
 	memory_allocator_dealloc(renderer->allocator, buffer);
+}
+
+RENDERER_API VkPipelineRasterizationStateCreateInfo* vulkan_graphics_pipeline_description_get_rasterization(vulkan_graphics_pipeline_description_t* description)
+{
+	return &description->settings->rasterization;
 }

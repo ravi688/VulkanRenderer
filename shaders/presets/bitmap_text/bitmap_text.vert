@@ -9,7 +9,7 @@ layout(set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
     uvec2 resolution;
     uvec2 dpi;
     uvec2 window_size;
-    mat4 matrix;    
+    mat4 matrix;
 } displayInfo;
 
 layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
@@ -45,20 +45,20 @@ layout(std430, set = MATERIAL_SET, binding = TEXTURE_BINDING1) uniform GTCBuffer
 
 layout(std430, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer
 {
-    mat4[] tst_buffer;
+    mat4[128] tst_buffer;
 };
 
 layout(location = POSITION_LOCATION) in vec3 position;
-                
+
 layout(location = 5, component = 0) in vec3 ofst;
 layout(location = 5, component = 3) in float indx_f;
-layout(location = 6, component = 0) in vec3 rotn;
+layout(location = 6, component = 0) in vec3 rotn; // not required
 layout(location = 6, component = 3) in float stid_f;
-layout(location = 7, component = 0) in vec3 scal;
+layout(location = 7, component = 0) in vec3 scal; // not required
 
 layout(location = 0) out vec2 out_texcoord;
 layout(location = 1) out vec3 out_color;
-                
+
 void main()
 {
     uint indx = floatBitsToUint(indx_f);
@@ -72,7 +72,7 @@ void main()
 
     vec4 pos = vec4((position.x * glyph_size.x + ofst.x) * 0.5, (position.y * glyph_size.y + ofst.y) * 0.5, 0, 1.0);
 
-    vec4 world = objectInfo.transform * pos.zyxw;
+    vec4 world = objectInfo.transform * tst_buffer[stid] * pos.zyxw;
 
     vec4 clipPos;
 
@@ -84,11 +84,9 @@ void main()
             {
                 case 1:
                     clipPos = cameraInfo.screen * world;
-                    out_color = vec3(1.0, 1.0, 1.0);
                     break;
                 case 0:
                     clipPos = displayInfo.matrix * world;
-                    out_color = vec3(0.5, 0.5, 0.0);
                     break;
             }
             break;
@@ -99,11 +97,9 @@ void main()
             {
                 case 1:
                     clipPos = cameraInfo.projection * cameraInfo.view * world;
-                    out_color = vec3(0.0, 1.0, 0.0);
                     break;
                 case 0:
                     clipPos = displayInfo.matrix * world;
-                    out_color = vec3(0.0, 0.5, 0.5);
                     break;
             }
             break;
@@ -121,5 +117,5 @@ void main()
     else if(gl_VertexIndex == 3)
         out_texcoord = texcoord.bltc;
 
-    // out_color = vec3(parameters.color.r, parameters.color.g, parameters.color.b);
+    out_color = vec3(parameters.color.r, parameters.color.g, parameters.color.b);
 }

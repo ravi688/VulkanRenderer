@@ -3,7 +3,7 @@
 
 RENDERER_API hash_table_t __hash_table_create(u32 key_size, u32 value_size, u32 capacity, comparer_t key_comparer, hash_function_t key_hash_function)
 {
-	hash_table_t table = 
+	hash_table_t table =
 	{
 		.key_size = key_size,
 		.value_size = value_size,
@@ -22,7 +22,7 @@ RENDERER_API hash_table_t __hash_table_create(u32 key_size, u32 value_size, u32 
 		AUTO handle = multi_buffer_sub_buffer_create(&table.buffer, 1);
 		buf_push(&table.bucket_handles, &handle);
 	}
-	
+
 	return table;
 }
 
@@ -94,7 +94,7 @@ RENDERER_API void hash_table_add(hash_table_t* table, void* key, void* value)
 		return;
 	}
 
-	/* create key value pair on the stack memory */
+	/* create key value pair in the heap memory */
 	void* key_value_pair = create_key_value_pair(table, key, value);
 	/* add the key value pair into the bucket */
 	sub_buffer_push(&table->buffer, bucket_handle, &key_value_pair);

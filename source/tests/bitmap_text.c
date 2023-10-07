@@ -36,6 +36,7 @@ TEST_DATA(BITMAP_TEXT)
 	bitmap_glyph_atlas_texture_t* texture;
 	bitmap_text_t* text;
 	bitmap_text_string_handle_t text_string_handle;
+	bitmap_text_string_handle_t another_string_handle;
 
 	render_object_t* text_object;
 	material_t* text_material;
@@ -63,18 +64,47 @@ static void print_key_value_pair(void* key, void* value, void* user_data)
 	debug_log_info("Pair: %s, %lu", *(char**)key, DREF_TO(u32, value));
 }
 
+static void print_key_value_pair_i(void* key, void* value, void* user_data)
+{
+	debug_log_info("Pair: %lu, %lu", *(u32*)key, DREF_TO(u32, value));
+}
+
 static void test_hash_table()
 {
 	/* hash table test */
+
+	hash_table_t _table = hash_table_create(u64, u32, 5, u64_equal_to, u64_hash);
+	u64 key = 40;
+	u32 _value = 500;
+	hash_table_add(&_table, &key, &_value);
+	key = 41; _value = 600;
+	hash_table_add(&_table, &key, &_value);
+	key = 46; _value = 800;
+	hash_table_add(&_table, &key, &_value);
+	key = 52; _value = 700;
+	hash_table_add(&_table, &key, &_value);
+	key = 62; _value = 800;
+	hash_table_add(&_table, &key, &_value);
+	key = 33; _value = 900;
+	hash_table_add(&_table, &key, &_value);
+	hash_table_foreach(&_table, print_key_value_pair_i, NULL);
+	hash_table_free(&_table);
+
 	hash_table_t table = hash_table_create(const char*, u32, 5, string_equal_to, string_hash);
 	const char* str = "Hello World";
 	u32 value = 100;
-	hash_table_add(&table, &str, &value); value = 200; str = "Hello World 2";
-	hash_table_add(&table, &str, &value); value = 300; str = "ABCD";
-	hash_table_add(&table, &str, &value); value = 500; str = "3434";
-	hash_table_add(&table, &str, &value); value = 5430; str = "3435";
-	hash_table_add(&table, &str, &value); value = 505; str = "3436";
-	hash_table_add(&table, &str, &value); value = 5023; str = "3437";
+	hash_table_add(&table, &str, &value); value = 200;
+	str = "Hello World 2";
+	hash_table_add(&table, &str, &value); value = 300;
+	str = "ABCD";
+	hash_table_add(&table, &str, &value); value = 500;
+	str = "3434";
+	hash_table_add(&table, &str, &value); value = 5430;
+	const char* _str = "343654";
+	hash_table_add(&table, &_str, &value); value = 505;
+	str = "3436";
+	hash_table_add(&table, &str, &value); value = 5023;
+	str = "3437";
 
 	str = "Hello World";
 	debug_log_info("(\"%s\", %lu)", str, DREF_TO(u32, hash_table_get_value(&table, &str)));
@@ -86,7 +116,7 @@ static void test_hash_table()
 	str = "ABCD";
 	hash_table_remove(&table, &str);
 
-	hash_table_foreach(&table, print_key_value_pair, NULL);	
+	hash_table_foreach(&table, print_key_value_pair, NULL);
 
 	hash_table_free(&table);
 }
@@ -102,12 +132,12 @@ void test_bitmap()
 		for(s32 j = 0; j < 512; j++)
 		{
 			/* ** Not sure why this is not working and giving completely unexpected results */
-			/*			
+			/*
 			f32 t = vec2_magnitude(vec2_sub(vec2(i, j), vec2(256, 256))) / half_diag;
 			t = t * wave_number * 3.14159f;
 			AUTO color = color3(fmaxf(sin(t), 0), fmaxf(sin(t - 1.57f), 0), t);
 			data[i * 512 + j] = icolor3(color.r * 255, color.g * 255, color.b * 255);
-			*/			
+			*/
 			s32 size = 512 / num_divisons;
 			s32 y = (i / size) * size;
 			s32 x = (j / size) * size;
@@ -135,7 +165,7 @@ static void test_buffer2d_view(renderer_t* renderer)
 	buf_set_element_size(&pixels, 1); // as buffer2d_view only works with element_size = 1 buffers
 	buf_set_capacity(&pixels, sizeof(icolor3_t) * IEXTENT2D_AREA(size));
 
-	buffer2d_view_create_info_t view_create_info = 
+	buffer2d_view_create_info_t view_create_info =
 	{
 		.size = { size.x * sizeof(icolor3_t), size.y },
 		.buffer = &pixels
@@ -172,7 +202,7 @@ typedef struct input_t
 	u32 height;
 } input_t;
 
-static icolor3_t colors[] = 
+static icolor3_t colors[] =
 {
 	{ 255, 255, 255 },
 	{ 0, 0, 0 },
@@ -187,7 +217,7 @@ static icolor3_t colors[] =
 
 #define KEY __COUNTER__
 
-input_t inputs[] = 
+input_t inputs[] =
 {
 	{ KEY, 32, 32 },
 	{ KEY, 32, 32 },
@@ -399,7 +429,7 @@ input_t inputs[] =
 
 static void test_buffer2d(renderer_t* renderer)
 {
-	buffer2d_create_info_t create_info = 
+	buffer2d_create_info_t create_info =
 	{
 		.size = { 512, 512 },
 		.buffer = NULL,
@@ -482,7 +512,7 @@ static void test_glyph_rasterization(renderer_t* renderer)
 
 static void test_buffer2d_backed_buffer_dump(renderer_t* renderer)
 {
-	buffer2d_create_info_t create_info = 
+	buffer2d_create_info_t create_info =
 	{
 		.size = { sizeof(icolor3_t) * 1024, 1024 },
 		.buffer = NULL,
@@ -517,7 +547,7 @@ static void test_glyph_packing(renderer_t* renderer)
 	font_set_char_size(&font, 12);
 
 	/* create bitmap glyph pool */
-	bitmap_glyph_pool_create_info_t create_info = 
+	bitmap_glyph_pool_create_info_t create_info =
 	{
 		.size = { 128, 128 },
 		.buffer = NULL,
@@ -540,6 +570,20 @@ static void test_glyph_packing(renderer_t* renderer)
 	font_destroy(&font);
 }
 
+static void test_bufferlib()
+{
+	buffer_t buffer = buf_new(u32);
+	buf_push_u32(&buffer, 100);
+	buf_push_u32(&buffer, 300);
+	buf_push_u32(&buffer, 400);
+	buf_push_u32(&buffer, 500);
+	buf_push_u32(&buffer, 700);
+	buf_traverse_elements(&buffer, 0, buf_get_element_count(&buffer) - 1, buf_u32_print, NULL); puts("");
+	buf_insert_pseudo(&buffer, 3, 4);
+	buf_traverse_elements(&buffer, 0, buf_get_element_count(&buffer) - 1, buf_u32_print, NULL); puts("");
+	buf_free(&buffer);
+}
+
 TEST_ON_INITIALIZE(BITMAP_TEXT)
 {
 	AUTO camera_system = renderer_get_camera_system(renderer);
@@ -556,7 +600,7 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 
 	this->text_material = material_library_getH(mlib,
 						 	material_library_create_materialH(mlib,
-						 	shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT), 
+						 	shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT),
 						 	"BitmapTextShaderTest"));
 
 	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
@@ -565,19 +609,21 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 	/* bitmap text */
 	bitmap_glyph_atlas_texture_create_info_t texture_create_info = { 512, 512, this->font };
 	this->texture = bitmap_glyph_atlas_texture_create(renderer, &texture_create_info);
-	material_set_float(this->text_material, "parameters.color.r", 0.0f);
+	material_set_float(this->text_material, "parameters.color.r", 1.0f);
 	material_set_float(this->text_material, "parameters.color.g", 1.0f);
-	material_set_float(this->text_material, "parameters.color.b", 0.0f);
+	material_set_float(this->text_material, "parameters.color.b", 1.0f);
 	this->text = bitmap_text_create(renderer, this->texture);
 	this->text_string_handle = bitmap_text_string_create(this->text);
-	bitmap_text_string_setH(this->text, this->text_string_handle, "@Imprint 1.0.0");
+	this->another_string_handle = bitmap_text_string_create(this->text);
+	bitmap_text_string_setH(this->text, this->another_string_handle, "% Hello World");
+	bitmap_text_string_setH(this->text, this->text_string_handle, "Hardwork with dedication suffices to c");
 
 	bitmap_glyph_atlas_texture_dump(this->texture, "bitmap_glyph_atlas_texture.dump.bmp");
 
 	this->text_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->text_object, this->text_material);
 	render_object_attach(this->text_object, this->text);
-	render_object_set_transform(this->text_object, mat4_translation(0.0f, 400.0f, -400.0f));
+	bitmap_text_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 400.0f, -400.0f));
 
 	render_scene_build_queues(this->scene);
 
@@ -588,6 +634,7 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 	test_glyph_rasterization(renderer);
 	test_buffer2d_backed_buffer_dump(renderer);
 	test_glyph_packing(renderer);
+	test_bufferlib();
 }
 
 TEST_ON_TERMINATE(BITMAP_TEXT)
@@ -596,7 +643,7 @@ TEST_ON_TERMINATE(BITMAP_TEXT)
 	bitmap_text_release_resources(this->text);
 	bitmap_glyph_atlas_texture_destroy(this->texture);
 	bitmap_glyph_atlas_texture_release_resources(this->texture);
-	
+
 	font_destroy(this->font);
 	font_release_resources(this->font);
 
@@ -616,13 +663,15 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 		{
 			bitmap_text_set_render_space_type(this->text, BITMAP_TEXT_RENDER_SPACE_TYPE_2D);
 			debug_log_info("BITMAP_TEXT_RENDER_SPACE_TYPE_2D");
-			render_object_set_transform(this->text_object, mat4_mul(2, mat4_translation(0.0f, 400.0f, -400.0f), mat4_rotation_x(10 DEG)));
+			render_object_set_transform(this->text_object, mat4_identity());
+			bitmap_text_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 400.0f, -400.0f));
 		}
 		else
 		{
 			bitmap_text_set_render_space_type(this->text, BITMAP_TEXT_RENDER_SPACE_TYPE_3D);
 			debug_log_info("BITMAP_TEXT_RENDER_SPACE_TYPE_3D");
 			render_object_set_transform(this->text_object, mat4_mul(3, mat4_rotation_y(45 DEG), mat4_scale(0.005f, 0.005f, 0.005f), mat4_translation(0.0f, 0.0f, -0.5f)));
+			bitmap_text_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 30.0f, 0.0f));
 		}
 	}
 
@@ -630,9 +679,11 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 	counter++;
 	if(counter == 66000)
 		counter = 0;
-	char buffer[32];
+	char buffer[128] =  { };
 	sprintf(buffer, "Hardwork with dedication suffices to complete a project: %d", counter);
 	bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
+	sprintf(buffer, "Another string: %f", CAST_TO(float, counter) / 13434.0f);
+	bitmap_text_string_setH(this->text, this->another_string_handle, buffer);
 	bitmap_glyph_atlas_texture_commit(this->texture, NULL);
 }
 
@@ -640,4 +691,3 @@ TEST_ON_RENDER(BITMAP_TEXT)
 {
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 }
-

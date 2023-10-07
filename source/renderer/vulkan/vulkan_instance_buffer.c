@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_instance_buffer.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <renderer/internal/vulkan/vulkan_defines.h>
@@ -39,13 +39,13 @@ RENDERER_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vul
 	out_instance_buffer->has_device_buffer = false;
 	if(create_info->capacity > 0)
 	{
-		vulkan_buffer_create_info_t _create_info = 
+		vulkan_buffer_create_info_t _create_info =
 		{
 			.stride = create_info->stride,
 			.count = create_info->capacity,
 			.vo_usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 			.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
-			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT	
+			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		};
 		vulkan_buffer_create_no_alloc(renderer, &_create_info, &out_instance_buffer->device_buffer);
 		out_instance_buffer->has_device_buffer = true;
@@ -98,7 +98,7 @@ RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instan
 	u32 count = 0;
 	for(u32 i = 0; i < sub_buffer_count; i++)
 		count += sub_buffer_get_count(host_buffer, i);
-	
+
 	bool _is_resized = false;
 
 	// here count is capacity of the device_buffer
@@ -106,13 +106,13 @@ RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instan
 	{
 		if(instance_buffer->has_device_buffer)
 			vulkan_buffer_destroy(device_buffer);
-		vulkan_buffer_create_info_t create_info = 
+		vulkan_buffer_create_info_t create_info =
 		{
 			.stride = buf_get_element_size(&host_buffer->buffer),
 			.count = count,
 			.vo_usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 			.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
-			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT	
+			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		};
 		vulkan_buffer_create_no_alloc(instance_buffer->renderer, &create_info, device_buffer);
 		instance_buffer->has_device_buffer = true;
@@ -124,7 +124,7 @@ RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instan
 	device_buffer->count = count;
 	device_buffer->size = device_buffer->stride * count;
 	if(device_buffer->count == 0) return false;
-	
+
 	// copy the elements from all the sub buffers to the device buffer contiguously (no gaps, as there could be due to capacities of the sub buffers)
 	void* ptr = vulkan_buffer_map(device_buffer);
 	for(u32 i = 0; i < sub_buffer_count; i++)

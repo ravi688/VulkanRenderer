@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: shader_library.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <renderer/shader_library.h>
@@ -116,7 +116,7 @@ static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_
 		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
 			parameters = begin_uniform(renderer, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
-			end_uniform(renderer, &bindings);	
+			end_uniform(renderer, &bindings);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
@@ -124,13 +124,13 @@ static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
 			parameters = begin_uniform(renderer, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
-			end_uniform(renderer, &bindings);	
+			end_uniform(renderer, &bindings);
 			add_opaque(renderer, &bindings, "albedo", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT:
 			parameters = begin_uniform(renderer, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
-			end_uniform(renderer, &bindings);	
+			end_uniform(renderer, &bindings);
 			add_opaque(renderer, &bindings, "shadowMap", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR:
@@ -147,7 +147,7 @@ static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_
 			parameters = begin_uniform(renderer, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
 				struct_descriptor_add_field(parameters, "reflectance", GLSL_TYPE_FLOAT);
-			end_uniform(renderer, &bindings);	
+			end_uniform(renderer, &bindings);
 			add_opaque(renderer, &bindings, "reflectionMap", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP:
@@ -338,7 +338,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				begin_subpass(renderer, &passes, 0);
 					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
 				end_subpass(renderer, &passes);
-				
+
 				// let the clear happen first
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 				dependency.dstSubpass = 0;
@@ -375,7 +375,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				begin_subpass(renderer, &passes, 0);
 					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
 				end_subpass(renderer, &passes);
-				
+
 				// let the clear happen first
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 				dependency.dstSubpass = 0;
@@ -475,6 +475,7 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
 			begin_pipeline(renderer, &pipelines);
 				add_color_blend_state(&pipelines, VK_FALSE);
+				//get_rasterization(&pipelines)->polygonMode = VK_POLYGON_MODE_LINE;
 				add_shader(&pipelines, "shaders/presets/bitmap_text/bitmap_text.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
 				add_shader(&pipelines, "shaders/presets/bitmap_text/bitmap_text.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
 			end_pipeline(renderer, &pipelines);
@@ -649,7 +650,7 @@ RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* libr
 
 RENDERER_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path)
 {
-	vulkan_shader_load_info_t load_info = 
+	vulkan_shader_load_info_t load_info =
 	{
 		.path = file_path,
 		.is_vertex_attrib_from_file = true

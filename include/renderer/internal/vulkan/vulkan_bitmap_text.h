@@ -59,7 +59,7 @@ typedef struct glsl_glyph_render_data_t
 	/* index of the string's transform to which this glyph instance belongs into the String Transform Buffer (ST Buffer) */
 	/* per_instance [BTM_TXT_STID_BND, BTM_TXT_STID_LOC, BTM_TXT_STID_COMP] in uint stid; */
 	glsl_uint_t stid;
-	/* scale of this glyph instance 
+	/* scale of this glyph instance
 	 * per_instance [BTM_TXT_SCAL_BND, BTM_TXT_SCAL_LOC, BTM_TXT_SCAL_COMP] in vec3 scal; */
 	glsl_vec3_t scal;
 } glsl_glyph_render_data_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
@@ -78,6 +78,8 @@ typedef struct vulkan_bitmap_text_string_t
 {
 	/* handle to the next free string if this string is in the free list or inuse string if this is in the inuse list */
 	vulkan_bitmap_text_string_handle_t next;
+	/* handle to this string */
+	vulkan_bitmap_text_string_handle_t handle;
 	sub_buffer_handle_t render_data_handle;
 	/* string */
 	char_buffer_t chars;
@@ -86,8 +88,6 @@ typedef struct vulkan_bitmap_text_string_t
 	struct { offset3d_t offset; extent2d_t extent; } rect;
 	/* transform matrix applied to this string */
 	mat4_t transform;
-	/* id assigned to this string */
-	u32 index;
 } vulkan_bitmap_text_string_t;
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_texture_t;
@@ -135,8 +135,8 @@ typedef struct vulkan_bitmap_text_t
 
 	/* GPU side */
 
-	union 
-	{ 
+	union
+	{
 		vulkan_bitmap_glyph_atlas_texture_t* glyph_atlas_texture;
 		vulkan_bitmap_glyph_atlas_texture_t* texture;
 	};
@@ -177,9 +177,11 @@ RENDERER_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text,
 RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type);
 RENDERER_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_surface_type_t surface_type);
 RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char* string);
+RENDERER_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform);
 
 /* getters */
 RENDERER_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
+RENDERER_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 RENDERER_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text);
 
 END_CPP_COMPATIBLE

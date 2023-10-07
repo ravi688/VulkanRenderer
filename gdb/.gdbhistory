@@ -1,0 +1,1562 @@
+r
+quit
+r
+quit
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break render_window.c:60
+r
+p size
+p size.height
+p size.width
+p (float)size.width / size.height
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break vulkan_bitmap_text.c:440
+r
+next
+p ascender
+next
+p info.advanced_width
+p info.advance_width
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break font.c:82
+r
+next
+p font->ft_handle->units_per_EM
+p font->ft_handle->height
+p font->ft_handle->ascender
+p font->ft_handle->max_advance_width
+p font->ft_handle->max_advance_height
+quit
+r
+quit
+r
+quit
+r
+quit
+break vulkan_bitmap_text.c:441q
+break vulkan_bitmap_text.c:441
+r
+p font->ft_handle->units_per_em
+p font->ft_handle->units_per_EM
+p font->ft_handle->size
+p font->ft_handle->size->metrics
+quit
+r
+quit
+break vulkan_bitmap_text.c:456
+r
+p info
+p font
+p font->ft_handle->units_per_EM
+p font->ft_handle->ascender
+p font->ft_handle->bbox
+quit
+r
+quit
+break vulkan_bitmap_text.c:440
+r
+p font->ft_handle->units_per_EM
+p font->ft_handle->size->metrics
+quit
+r
+quit
+r
+quit
+r
+quit
+break vulkan_bitmap_text.c:456
+r
+p info
+quit
+r
+quit
+break vulkan_bitmap_text.c:456
+r
+p info
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break vulkan_bitmap_text.c:441
+r
+p font->ft_handle->ascender
+p font->ft_handle->units_per_EM
+quit
+r
+quit
+break vulkan_bitmap_text.c:441
+r
+p font->ft_handle->units_per_EM
+p font->ft_handle->bbox.yMax
+p font->ft_handle->ascender
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+clear
+ls
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quity
+quit
+r
+quit
+r
+quit
+r
+quity
+quity
+quit 
+r
+quity
+quit 
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+quit
+r
+quit
+r
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+quit
+r
+quit
+r
+set args TEXT_MESH_LOAD
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break tests/bitmap_text.c:639
+r
+step
+step
+next
+c
+step
+step
+next
+c
+delete
+c
+quit
+break vulkan_bitmap_text.c:128
+r
+p buffer_create_info
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break tests/bitmap_text.c:584
+r
+p buffer
+p strlen(buffer)
+p (uint32_t)strlen(buffer)
+quit
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break tests/bitmap_text.c:584
+r
+step
+step
+next
+next
+p len
+next
+until 456
+next
+until len==40
+next
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break tests/bitmap_text.c:584
+r
+step
+step
+next
+p text->glyph_render_data_buffer.buffer
+p vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer
+next
+next
+next
+p text_string->chars
+next
+until 456
+next
+break 486
+continue 32
+p ch
+p (char)ch
+display (char)ch
+c
+c
+c
+c
+c
+c
+c
+display vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer
+c
+c
+quit
+r
+quit
+r
+quit
+r
+quity
+quit 
+r
+quit
+r
+quit
+r
+quit
+break tests/bitmap_text.c:584
+r
+next
+p bitmap_text_string_getH(this->text, this->another_string_handle)
+quit
+r
+quit
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break tests/bitmap_text.c:575
+r
+p this->another_string_handle
+p this->text_string_handle
+quit
+r
+quit
+r
+quit
+break vulkan_bitmap_texture.c:504
+quit
+break tests/bitmap_text.c:576
+r
+step
+step
+next
+until 504
+step
+next
+p sub_buffer_count
+next
+p count
+next
+next
+p count
+next
+next
+p count
+quit
+break vulkan_bitmap_text.c:299
+r
+p text_string->render_data_handle
+c
+p text_string->render_data_handle
+quit
+break tests/bitmap_text.c:575
+r
+step
+step
+p handle
+quit
+r
+quit
+r
+quti
+y
+quit
+break tests/bitmap_text.c:575
+r
+quit
+break bitmap_text_string_setH
+r
+p handle
+stp
+step
+next
+p *text_string
+list
+step
+next
+step
+next
+p *sub_buffer
+p sub_buffer
+next
+step
+next
+c
+step
+next
+* text_string
+p *text_string
+list
+step
+next
+step
+step
+next
+p sub_buffer
+p *sub_buffer
+next
+next
+until 471
+next
+next
+step
+next
+step
+step
+next
+p *sub_buffer
+next
+next
+next
+p *sub_buffer
+next
+next
+step
+next
+step
+next
+p *sub_buffer
+next
+p *sub_buffer
+break 
+delete 
+break vulkan_instance_buffer_commit
+c
+next
+p sub_buffer_count
+next
+next
+p i
+next
+p count
+next
+p i
+next
+p count
+next
+p count
+p device_buffer->count
+p count
+quit
+break multi_buffer_sub_buffer_get_count
+r
+bt
+c
+bt
+c
+ bt
+c
+bt
+c 
+bt
+c 
+bt
+c
+bt
+quit
+break tests/bitmap_text.c:575
+break multi_buffer_sub_buffer_get_count
+delete 2
+list
+breakpoints
+display breakpoitns
+display breakpoints
+display breakpoint
+info
+info break
+info args
+info address
+info break
+c
+r
+break multi_buffer_sub_buffer_get_count
+c
+bt
+c
+bt
+quit
+break vulkan_instance_buffer_commit
+r
+bt
+list
+next
+p sub_buffer_count
+next
+p count
+next
+p count
+next
+p count
+next
+r
+next
+p handle
+next
+next
+next
+p i
+next
+p count
+next
+p pi
+p i
+next
+p count
+next
+c
+next
+next
+p count
+quit
+break tests/bitmap_text.c:574
+r
+step
+step
+next
+next
+break
+delete 3
+info break
+r
+c
+c
+step
+next
+step
+step
+next
+watch *sub_buffer
+delete watchpoint
+p sub_buffer
+watch *0x1e855309d58
+c
+list
+info watch
+delete watchpoint
+info watch
+delete 5
+delete 4
+info watch
+watch *0x1e855309d58
+info watch
+c
+c
+bt
+p diff
+p *(sub_buffer_t*)0x1e855309d58
+c
+quit
+break tests/bitmap_text.c:576
+r
+break vulkan_instance_buffer_commit
+c
+next
+next
+step
+next
+next
+next
+quit
+break tests/bitmap_text.c:576
+c
+r
+break vulkan_instance_buffer_commit
+c
+net
+next
+step
+next
+step
+next
+next
+step
+info registers
+p *(sub_buffer_t*)0x10d9f0aa1f8
+p *(sub_buffer_t*)0x10d92741978
+step
+step
+p count
+quit
+r
+quit
+r
+quit
+r
+quit
+break tests/bitmap_text.c:576
+r
+step
+step
+next
+until 504
+step
+next
+step
+next
+p count
+next
+next
+step
+step
+next
+step
+next
+p count
+next
+p count
+next
+step
+step
+p count
+quit
+r
+quit
+r
+quit
+r
+bt
+f 1
+ p index
+p handle
+pool->relocation_table
+p pool->relocation_table
+p pool
+p *pool
+quit
+r
+quit
+quit
+r
+bt
+quit
+r
+quit
+r
+quit
+r
+bt
+quit
+r
+quit
+r
+bt
+quir
+quit
+r
+bt
+f 1
+p handle
+p pool
+f 2
+p pool
+f 3
+p pass_pool
+f 5
+f 4
+p pass_pool
+f 3
+p pass_pool
+p queue
+p *queue
+p queue->renderer
+p queue->renderer->render_pass_pool
+bt
+delete break
+clear
+ls
+info break
+break vulkan_render_queue.c:269
+r
+next
+display pass_pool
+next
+r
+next
+quit
+r
+quit
+r
+quit
+quit
+break tests/bitmap_text.c:576
+r
+step
+step
+next
+until 504
+step
+next
+p sub_buffer_count
+next
+p count
+next
+p count
+quit
+r
+quit
+r
+quit
+break tests/bitmap_text.c:576
+r
+step
+step
+next
+until 504
+step
+next
+p *host_buffer
+next
+registers
+info
+inf line
+info line
+info vector
+clear
+ls
+list
+step
+step
+next
+p count
+break
+c
+p count
+next
+p count
+info registers
+next
+step
+info registers
+step
+info registers
+p count
+quit
+break tests/bitmap_text.c:576
+r
+step
+step
+enxt
+next
+break vulkan_instance_buffer_commit
+c
+next
+p _count
+next
+p count
+next
+p _count
+p count
+quit
+r
+quit
+r
+auit
+y
+quit
+quit
+r
+quit
+r
+quit
+r
+quit
+break vulkan_bitmap_text_string_setH
+r
+next
+p *text_string
+until 498
+p data
+next
+quit
+r
+quit
+break vulkan_bitmap_text.c:498
+r
+c
+p ch
+display (char)ch
+c
+display data
+c
+p vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)
+p vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer
+p (glsl_glyph_render_data_t[2])(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+p (glsl_glyph_render_data_t[3])(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+p (glsl_glyph_render_data_t*[3])(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+p (glsl_glyph_render_data_t[3]*)(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+p (glsl_glyph_render_data_t[3])(*vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+p (glsl_glyph_render_data_t[3])(*(glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+quit
+break vulkan_bitmap_text.c:498
+r
+p (glsl_glyph_render_data_t[3])(*vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+p (glsl_glyph_render_data_t[3])(*(glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+quit
+break vulkan_bitmap_text.c:498
+r
+p (glsl_glyph_render_data_t[3])(*(glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+display ch
+delete 1
+info break
+break
+info break
+info display
+delete display 1
+info display
+info break
+
+c
+c
+p (glsl_glyph_render_data_t[59])(*(glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+p (glsl_glyph_render_data_t[51])(*(glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+next
+next
+p (glsl_glyph_render_data_t[51])(*(glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+p (glsl_glyph_render_data_t[52])(*(glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes)
+p strlen(string)
+p (void)(strlen(string))
+p (uint32_t)(strlen(string))
+p string
+p multi_buffer_sub_buffer_get_capacity(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 0)
+p multi_buffer_sub_buffer_get_capacity(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 1)
+p (glsl_glyph_render_data_t[52])(*((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes + 64)
+p (glsl_glyph_render_data_t[52])(*((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 64)
+p (glsl_glyph_render_data_t[52])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 64)_
+p (glsl_glyph_render_data_t[52])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 64))
+p (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 64))
+p (glsl_glyph_render_data_t[0])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 64))
+p (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 50))
+p (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 64))
+r
+next
+next
+p (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 0))
+p (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 32))
+c
+c
+p (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 32))
+display (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 32))
+c
+p multi_buffer_sub_buffer_get_capacity(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 1)
+p multi_buffer_sub_buffer_get_capacity(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 0)
+info display
+delete display 3
+display (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 64))
+p vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.element_count
+p vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.element_size
+p (glsl_glyph_render_data_t[96])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 0))
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break tests/bitmap_text.c:551
+r
+p buf_get_element_count(&buffer)
+p __buf_get_element_count(&buffer)
+p __buf_get_element_count(&buffer, NULL, NULL, NULL)
+p __buf_get_element_count(&buffer, 0, 0, 0)
+r
+p buffer.element_count
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break vulkan_bitmap_text.c:498
+r
+break multi_buffer_sub_buffer_push
+c
+quit
+break vulkan_bitmap_text.c:498
+r
+break multi_buffer_sub_buffer_push
+c
+next
+delete break
+break
+display (sub_buffer->ptr + sub_buffer->count)
+c
+p handle
+bt
+c
+bt
+c
+c
+bt
+quit
+break vulkan_bitmap_text.c:498
+r
+display (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 32))
+next
+c
+display (char)(ch)
+c
+display multi_buffer_sub_buffer_get_capacity(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 0)
+display multi_buffer_sub_buffer_get_capacity(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 1)
+p vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.capacity
+display vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.capacity
+display vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.element_count
+c
+c
+display multi_buffer_sub_buffer_get_count(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 0)
+display multi_buffer_sub_buffer_get_count(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 1)
+c
+c
+c
+c
+c
+c
+quit
+break vulkan_bitmap_text.c:499
+r
+display multi_buffer_sub_buffer_get_count(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 1)
+display multi_buffer_sub_buffer_get_count(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 0)
+display vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.element_count
+display vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.capacity
+display multi_buffer_sub_buffer_get_capacity(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 1)
+display multi_buffer_sub_buffer_get_capacity(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 0)
+display data
+display (char)(ch)
+c
+c
+delete display 7
+display (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 32))
+c
+display (glsl_glyph_render_data_t[1])(*(((glsl_glyph_render_data_t*)vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.bytes) + 64))
+display vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer)->buffer.element_size
+quit
+r
+quit
+break vulkan_bitmap_text.c:498
+r
+continue 50
+r
+continue 4
+continue 47
+quit
+break vulkan_bitmap_text.c:498
+r
+continue 46
+r
+continue 30
+r
+continue 28
+r
+continue 10
+display (char)(ch)
+continue 1
+c
+continue 5
+continue 5
+continue 5
+continue 2
+continue
+c
+step
+step
+step
+step
+next
+p *(glsl_glyph_render_data_t*)multi_buffer->buffer.bytes
+p *((*(glsl_glyph_render_data_t*)multi_buffer->buffer.bytes) + 32)
+p *(((glsl_glyph_render_data_t*)multi_buffer->buffer.bytes) + 32)
+next
+p *(((glsl_glyph_render_data_t*)multi_buffer->buffer.bytes) + 64)
+p *(((glsl_glyph_render_data_t*)multi_buffer->buffer.bytes) + 32)
+p sub_buffer->ptr
+p sub_buffer->count
+c
+quit
+break vulkan_bitmap_text.c:498
+r
+continue 15
+display (char)(ch)
+continue 5
+continue 
+continue 5
+continue 4
+continue
+step
+next
+step
+next
+next
+step
+next
+p num_shift_elements
+next
+p buffer->element_count
+next
+p buffer->capacity
+next
+p previous_capacity 
+next
+p *(glsl_glyph_render_data_t*)dst_ptr
+p *(((glsl_glyph_render_data_t*)dst_ptr) - 1)
+p *(((glsl_glyph_render_data_t*)dst_ptr) - 2)
+p *(((glsl_glyph_render_data_t*)dst_ptr) - 32)
+p *(((glsl_glyph_render_data_t*)dst_ptr) - 33)
+p *(((glsl_glyph_render_data_t*)dst_ptr) - 64)
+p *(((glsl_glyph_render_data_t*)dst_ptr) - 63)
+p *(((glsl_glyph_render_data_t*)dst_ptr) - 64)
+p *(((glsl_glyph_render_data_t*)dst_ptr) - 63)
+p *(((glsl_glyph_render_data_t*)buffer->bytes) + 32)
+quit
+r
+bt
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+bt
+p v
+p v1
+p v2
+quqit
+y
+quit
+r
+bt
+break tests/bitmap_text.c:test_hash_table
+r
+next
+display str
+next
+quit
+rbreak tests/bitmap_text.c:test_hash_table
+break tests/bitmap_text.c:test_hash_table
+delete break
+break tests/bitmap_text.c:test_hash_table
+r
+next
+step
+next
+p bucket_handle
+next
+p pair
+p *(char**)key
+step
+next
+step
+next
+bt
+f 1
+f 2
+p *(char**)ptr
+f 5
+f 3
+p *(char**)pair.second
+f 2
+p *(char**)ptr
+p *(char**)in_value
+f 4
+f 3
+quit
+r
+bt
+f 3
+p pair
+p *(const char**)pair.second
+f 2
+p *(char**)in_value
+p *(char**)ptr
+p ptr
+quit
+r
+f 1
+ f 0
+p (const char*)v1
+quit
+break tests/bitmap_text.c:73
+r
+p string_hash(&str)
+next
+p string_hash(&str)
+next
+p string_hash(&str)
+next
+p string_hash(&str)
+next
+p string_hash(&str)
+next
+quit
+break tests/bitmap_text.c:73
+r
+quit
+r
+quit
+break tests/bitmap_text.c:73
+r
+p string_hash(&str)
+next
+next
+p string_hash(&str)
+next
+p string_hash(&str)
+next
+p string_hash(&str)
+next
+p string_hash(&str)
+next
+quit
+r
+quit
+r
+bt
+quit
+r
+bt
+quit
+r
+bt
+quit
+r
+quit
+r
+bt
+quit
+r
+bt
+quit
+quit
+r
+bt
+f 1
+p *(char**)pair->second
+f 0
+p *(char**)v2
+f 4
+p &str
+p str
+f 1
+p (char*)lhs
+p (char**)lhs
+p *(char**)lhs
+quit
+break tests/bitmap_text.c:104
+r
+step
+next
+step
+next
+p *(char**)ptr
+p *(char**)(ptr + 8)
+p (uint8_t[3])*(uint8_t*)ptr
+p *(uint8_t[3]*)ptr
+p *(uint8_t[3]*)ptr
+p *(uint8_t[4]*)ptr
+p *(uint8_t*)ptr
+p *(uint8_t*)ptr
+p *(uint8_t[2]*)ptr
+p *(uint8_t*)ptr
+p (uint8_t[2])*(uint8_t*)ptr
+p (uint8_t[2])(uint8_t*)ptr
+
+p (uint8_t[10])*(uint8_t*)ptr
+p (uint8_t[20])*(uint8_t*)ptr
+r
+r
+delete break
+break tests/bitmap_text.c:102
+r
+break multi_buffer_sub_buffer_push
+c
+bt
+nex
+next
+p prev_capacity
+p new_count
+next
+p diff
+p multi_buffer->buffer.capacity
+p multi_buffer->buffer.element_count
+p multi_buffer->sub_buffers.element_count
+p *sub_buffer
+p (uint8_t[5])*(uint8_t*)multi_buffer->buffer.bytes
+next
+p (uint8_t[5])*(uint8_t*)multi_buffer->buffer.bytes
+p multi_buffer->buffer.element_count
+p multi_buffer->buffer.capacity
+p *(((uint8_t*)multi_buffer->buffer.bytes) + 1)
+r
+delete
+info break
+delete 3
+c
+break multi_buffer_sub_buffer_push
+c
+next
+Mp *(((uint8_t*)multi_buffer->buffer.bytes) + 0)
+p *(((uint8_t*)multi_buffer->buffer.bytes) + 0)
+p *(((uint8_t*)multi_buffer->buffer.bytes) + 1)
+next
+p *(((uint8_t*)multi_buffer->buffer.bytes) + 1)
+p *(((uint8_t*)multi_buffer->buffer.bytes) + 0)
+p sub_buffer->ptr
+p sub_buffer->count
+p diff
+delete 4
+info Hbreak
+c
+r
+break multi_buffer_sub_buffer_push
+c
+next
+p multi_buffer->buffer.element_size
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 8)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 0)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 1)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 1)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 0)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 1)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 2)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 3)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 4)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 5)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 6)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 5)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 7)
+next
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 0)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 1)
+next
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 2)
+next
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 0)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 1)
+p *(((uint64_t*)multi_buffer->buffer.bytes) + 2)
+quit
+break tests/bitmap_text.c:104
+r
+step
+next
+p bucket_handle
+quit
+r
+break tests/bitmap_tests.c:104
+break tests/bitmap_text.c:104
+r
+step
+next
+p bucket_handle
+next
+step
+next
+p *sub_buffer
+p (uint64_t[4])*(uint64_t*)multi_buffer->buffer.bytes
+next
+p get_master_index(sub_buffer, 0)
+next
+quit
+Mbreak tests/bitmap_text.c:96
+break tests/bitmap_text.c:96
+r
+step
+next
+break 
+info break
+delete break 1
+info break
+display bucket_handle
+c
+c
+c
+c
+c
+quit
+r
+bt
+clear
+claer
+quit
+r
+bt
+quit
+r
+bt
+quit
+r
+bt
+f 1
+p overwrite_prone_size
+p buffer->element_size
+p buffer->element_count
+quit
+r
+bt
+quit
+r
+bt
+f 1
+p overwrite_prone_size 
+p buffer->element_count
+quit
+quit
+r
+quit
+r
+uit
+y
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+quit
+r
+quit
+r
+quit
+r
+auit
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+set args SPOT_LIGHT_LOAD
+r
+set args TEXTURE_SAMPLING_ALPHA_CHANNEL
+r
+set args TID_43_CASE_4
+r
+set args TID_14_CASE_1
+r
+quit
+r
+quit
+r
+quit
