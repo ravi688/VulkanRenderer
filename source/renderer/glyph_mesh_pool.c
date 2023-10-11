@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: glyph_mesh_pool.c is a part of VulkanRenderer
@@ -20,94 +20,42 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <renderer/glyph_mesh_pool.h>
-#include <renderer/mesh3d.h>	// mesh3d_t
-#include <renderer/renderer.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/dictionary.h> // dictionary_t
-#include <renderer/assert.h> 	// assert
-#include <ctype.h> 				// isspace
-
-typedef	struct glyph_mesh_t
-{
-	mesh_t* mesh;
-	mesh3d_t* mesh3d;
-} glyph_mesh_t;
-
-typedef	struct glyph_mesh_pool_t
-{
-	renderer_t* renderer;
-	font_t* font;
-	dictionary_t /*(u16, glyph_mesh_t*)*/ glyph_meshes;
-} glyph_mesh_pool_t;
+#include <renderer/internal/vulkan/vulkan_glyph_mesh_pool.h>
+#include <renderer/renderer.h> // VULKAN_RENDERER(...)
 
 // constructors and destructors
 RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new(memory_allocator_t* allocator)
 {
-	glyph_mesh_pool_t* pool = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_GLYPH_MESH_POOL, glyph_mesh_pool_t);
-	memzero(pool, glyph_mesh_pool_t);
-	return pool;
+	return vulkan_glyph_mesh_pool_new(allocator);
 }
 
 RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font)
 {
-	_debug_assert__(font != NULL);
-	glyph_mesh_pool_t* pool = glyph_mesh_pool_new(renderer->allocator);
-	pool->glyph_meshes = dictionary_create(u16, glyph_mesh_t, 0, dictionary_key_comparer_u16);
-	pool->renderer = renderer;
-	pool->font = font;
-	return pool;
+	return vulkan_glyph_mesh_pool_create(VULKAN_RENDERER(renderer), font);
 }
 
 RENDERER_API void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool)
 {
-	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
-	{
-		glyph_mesh_t* ptr = dictionary_get_value_ptr_at(&pool->glyph_meshes, i);
-		mesh_destroy(ptr->mesh);
-		mesh3d_destroy(ptr->mesh3d);
-	}
+	vulkan_glyph_mesh_pool_destroy(pool);
 }
 
 RENDERER_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool)
 {
-	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
-	{
-		glyph_mesh_t* ptr = dictionary_get_value_ptr_at(&pool->glyph_meshes, i);
-		mesh_release_resources(ptr->mesh);
-	}
-	dictionary_clear(&pool->glyph_meshes);
-	memory_allocator_dealloc(pool->renderer->allocator, pool);
+	vulkan_glyph_mesh_pool_release_resources(pool);
 }
 
 // getters
 
 RENDERER_API font_t* glyph_mesh_pool_get_font(glyph_mesh_pool_t* pool)
 {
-	return pool->font;
+	return vulkan_glyph_mesh_pool_get_font(pool);
 }
 
 RENDERER_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph)
 {
-	if(isspace(glyph)) return NULL;
-
-	mesh_t* mesh;
-	if(!dictionary_contains(&pool->glyph_meshes, &glyph))
-	{
-		mesh3d_t* mesh3d = mesh3d_new(pool->renderer->allocator);
-		font_get_glyph_mesh(pool->font, glyph, FONT_GLYPH_MESH_QUALITY_LOW, mesh3d);
-		mesh = mesh_create(pool->renderer, mesh3d);
-		glyph_mesh_t glyph_mesh = { .mesh = mesh, .mesh3d = mesh3d };
-		dictionary_add(&pool->glyph_meshes, &glyph, &glyph_mesh);
-	}
-	else
-	{
-		glyph_mesh_t* glyph_mesh = dictionary_get_value_ptr(&pool->glyph_meshes, &glyph);
-		mesh = glyph_mesh->mesh;
-	}
-	return mesh;
+	return vulkan_glyph_mesh_pool_get_mesh(pool, glyph);
 }

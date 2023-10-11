@@ -41,6 +41,11 @@ RENDERER_API void bitmap_text_string_destroyH(bitmap_text_t* text, bitmap_text_s
 }
 
 /* setters */
+RENDERER_API void bitmap_text_set_material(bitmap_text_t* text, material_t* material)
+{
+	vulkan_bitmap_text_set_material(text, material);
+}
+
 RENDERER_API void bitmap_text_set_render_space_type(bitmap_text_t* text, bitmap_text_render_space_type_t space_type)
 {
 	vulkan_bitmap_text_render_space_type_t vk_space_type;

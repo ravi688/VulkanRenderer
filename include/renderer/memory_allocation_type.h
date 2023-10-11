@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: memory_allocation_type.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #pragma once
@@ -109,7 +109,7 @@ typedef enum memory_allocation_type_t
     MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE,
     MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION,
     MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_DESCRIPTOR_SET_LAYOUT_BINDING_ARRAY,
-    MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_DEVICE_QUEUE_CREATE_INFO_ARRAY, 
+    MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_DEVICE_QUEUE_CREATE_INFO_ARRAY,
 
     MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_CLEAR_VALUE_ARRAY,
     MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_FORMAT_ARRAY,
@@ -123,15 +123,12 @@ typedef enum memory_allocation_type_t
     MEMORY_ALLOCATION_TYPE_OBJ_SUBPASS_SHADER_LIST_ARRAY,
     MEMORY_ALLOCATION_TYPE_OBJ_BUFFER,
     MEMORY_ALLOCATION_TYPE_OBJ_FONT,
-    MEMORY_ALLOCATION_TYPE_OBJ_GLYPH_MESH_POOL,
-    MEMORY_ALLOCATION_TYPE_OBJ_BITMAP_GLYPH_POOL,
     MEMORY_ALLOCATION_TYPE_OBJ_BUFFER2D_VIEW,
     MEMORY_ALLOCATION_TYPE_OBJ_BUFFER2D,
     MEMORY_ALLOCATION_TYPE_OBJ_LIBRARY,
     MEMORY_ALLOCATION_TYPE_OBJ_MESH3D,
     MEMORY_ALLOCATION_TYPE_OBJ_RENDER_WINDOW,
     MEMORY_ALLOCATION_TYPE_OBJ_STRING_BUILDER,
-    MEMORY_ALLOCATION_TYPE_OBJ_TEXT_MESH,
 
     MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDERER,
     MEMORY_ALLOCATION_TYPE_OBJ_VK_ALLOCATOR,
@@ -160,6 +157,9 @@ typedef enum memory_allocation_type_t
     MEMORY_ALLOCATION_TYPE_OBJ_VK_CAMERA,
     MEMORY_ALLOCATION_TYPE_OBJ_VK_CAMERA_SYSTEM,
     MEMORY_ALLOCATION_TYPE_OBJ_VK_FRAMEBUFFER,
+
+    MEMORY_ALLOCATION_TYPE_OBJ_VK_TEXT_MESH,
+    MEMORY_ALLOCATION_TYPE_OBJ_VK_GLYPH_MESH_POOL,
 
     MEMORY_ALLOCATION_TYPE_OBJ_VK_BITMAP_TEXT,
     MEMORY_ALLOCATION_TYPE_OBJ_VK_GLYPH_ATLAS_TEXTURE,

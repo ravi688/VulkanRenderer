@@ -239,25 +239,6 @@ static void set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_te
 	}
 }
 
-RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material)
-{
-	text->material = material;
-
-	set_render_space_type(text, text->render_space_type);
-	set_render_surface_type(text, text->render_surface_type);
-
-	vulkan_material_set_texture(material, "bga", VULKAN_TEXTURE(text->texture));
-	AUTO tex_size = vulkan_bitmap_glyph_atlas_texture_get_size(text->texture);
-	vulkan_material_set_uvec2(material, "parameters.tex_size", (uvec2_t) { tex_size.width, tex_size.height });
-
-	vulkan_material_set_array_size(material, "GTCBuffer.texcoords", buf_get_element_count(vulkan_host_buffered_buffer_get_host_buffer(&text->glyph_texcoord_buffer)));
-	vulkan_material_set_array_size(material, "TSTBuffer.transforms", buf_get_element_count(vulkan_host_buffered_buffer_get_host_buffer(&text->text_string_transform_buffer)));
-
-	vulkan_material_set_buffer(material, "GTCBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->glyph_texcoord_buffer));
-	vulkan_material_set_buffer(material, "TSTBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->text_string_transform_buffer));
-
-}
-
 static glsl_mat4_t get_glsl_mat4_from_mat4(const mat4_t* const mat)
 {
 	return (glsl_mat4_t)
@@ -401,6 +382,25 @@ static u32 get_or_create_glyph_texture_coordinate(vulkan_bitmap_text_t* text, ut
 }
 
 /* setters */
+RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material)
+{
+	text->material = material;
+
+	set_render_space_type(text, text->render_space_type);
+	set_render_surface_type(text, text->render_surface_type);
+
+	vulkan_material_set_texture(material, "bga", VULKAN_TEXTURE(text->texture));
+	AUTO tex_size = vulkan_bitmap_glyph_atlas_texture_get_size(text->texture);
+	vulkan_material_set_uvec2(material, "parameters.tex_size", (uvec2_t) { tex_size.width, tex_size.height });
+
+	vulkan_material_set_array_size(material, "GTCBuffer.texcoords", buf_get_element_count(vulkan_host_buffered_buffer_get_host_buffer(&text->glyph_texcoord_buffer)));
+	vulkan_material_set_array_size(material, "TSTBuffer.transforms", buf_get_element_count(vulkan_host_buffered_buffer_get_host_buffer(&text->text_string_transform_buffer)));
+
+	vulkan_material_set_buffer(material, "GTCBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->glyph_texcoord_buffer));
+	vulkan_material_set_buffer(material, "TSTBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->text_string_transform_buffer));
+
+}
+
 RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type)
 {
 	if(text->render_space_type == space_type)
