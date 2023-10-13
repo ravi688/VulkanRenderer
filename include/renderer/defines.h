@@ -124,3 +124,17 @@ static INLINE_IF_RELEASE_MODE u32 min(u32 v1, u32 v2) { return (v1 < v2) ? v1 : 
 
 #define SIZEOF_ARRAY(array) (sizeof(array) / sizeof((array)[0]))
 #define DREF_VOID_PTR(ptr) CAST_TO(void*, DREF_TO(u8*, (void**)(ptr)))
+
+#define U32_TO_U64(src) _u32_to_u64(sizeof(src), src)
+static INLINE_IF_RELEASE_MODE u64 _u32_to_u64(u32 src_size, u32 src)
+{
+	IF_DEBUG_MODE(_debug_assert__(src_size == sizeof(u32)));
+	return CAST_TO(u64, src);
+}
+
+#define U64_TO_U32(src) _u64_to_u32(sizeof(src), src)
+static INLINE_IF_RELEASE_MODE u32 _u64_to_u32(u32 src_size, u64 src)
+{
+	IF_DEBUG_MODE(_debug_assert__(src_size == sizeof(u64)));
+	return CAST_TO(u32, src);
+}

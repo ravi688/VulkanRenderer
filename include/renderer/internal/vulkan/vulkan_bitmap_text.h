@@ -30,7 +30,7 @@ typedef enum vulkan_bitmap_text_render_surface_type_t
 } vulkan_bitmap_text_render_surface_type_t;
 
 /* element of Glyph Texture Coordinate (GTC) buffer */
-typedef struct glsl_glyph_texcoord_t
+typedef struct vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t
 {
 	/* per_instance [BTM_TXT_TLTC_BND, BTM_TXT_TLTC_LOC, BTM_TXT_TLTC_COMP] in vec2 tltc; */
 	glsl_vec2_t tltc;
@@ -40,12 +40,12 @@ typedef struct glsl_glyph_texcoord_t
 	glsl_vec2_t brtc;
 	/* per_instance [BTM_TXT_BLTC_BND, BTM_TXT_BLTC_LOC, BTM_TXT_BLTC_COMP] in vec2 bltc; */
 	glsl_vec2_t bltc;
-} glsl_glyph_texcoord_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
+} vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
 
-#define __glsl_sizeof_glsl_glyph_texcoord_t 		(4 * __glsl_sizeof_glsl_vec2_t)
+#define __glsl_sizeof_vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t 		(4 * __glsl_sizeof_glsl_vec2_t)
 
 /* element of Glyph Render Data (GRD) buffer */
-typedef struct glsl_glyph_render_data_t
+typedef struct vulkan_bitmap_text_glsl_glyph_render_data_t
 {
 	/* offset of this glyph instance from the very first glyph instance in the string */
 	/* per_instance [BTM_TXT_OFST_BND, BTM_TXT_OFST_LOC, BTM_TXT_OFST_COMP] in vec3 ofst; */
@@ -62,15 +62,12 @@ typedef struct glsl_glyph_render_data_t
 	/* scale of this glyph instance
 	 * per_instance [BTM_TXT_SCAL_BND, BTM_TXT_SCAL_LOC, BTM_TXT_SCAL_COMP] in vec3 scal; */
 	glsl_vec3_t scal;
-} glsl_glyph_render_data_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
+} vulkan_bitmap_text_glsl_glyph_render_data_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
 
-#define __glsl_sizeof_glsl_glyph_render_data_t 		(3 * __glsl_sizeof_glsl_vec4_t)
-
-/* element of Text String Transform (TST) buffer */
-typedef glsl_mat4_t text_string_transform_t;
+#define __glsl_sizeof_vulkan_bitmap_text_glsl_glyph_render_data_t 		(3 * __glsl_sizeof_glsl_vec4_t)
 
 /* character buffer to store the characters in a string */
-typedef buffer_t char_buffer_t;
+typedef buffer_t vulkan_bitmap_text_char_buffer_t;
 typedef buf_ucount_t vulkan_bitmap_text_string_handle_t;
 typedef dictionary_t vulkan_bitmap_glyph_sub_buffer_handle_table_t;
 
@@ -82,7 +79,7 @@ typedef struct vulkan_bitmap_text_string_t
 	vulkan_bitmap_text_string_handle_t handle;
 	sub_buffer_handle_t render_data_handle;
 	/* string */
-	char_buffer_t chars;
+	vulkan_bitmap_text_char_buffer_t chars;
 	/* a rectangle in a 3D space
 	 * holds the position and the extents of the text */
 	struct { offset3d_t offset; extent2d_t extent; } rect;

@@ -52,6 +52,8 @@ RENDERER_API void bitmap_text_create_no_alloc(renderer_t* renderer, bitmap_glyph
 RENDERER_API void bitmap_text_destroy(bitmap_text_t* text);
 RENDERER_API void bitmap_text_release_resources(bitmap_text_t* text);
 
+RENDERER_API void bitmap_text_draw(bitmap_text_t* text);
+
 RENDERER_API bitmap_text_string_handle_t bitmap_text_string_create(bitmap_text_t* text);
 RENDERER_API void bitmap_text_string_destroyH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 

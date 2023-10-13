@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: text_mesh.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -49,11 +49,10 @@ TEST_DATA(TEXT_MESH)
 
 	text_mesh_t* text_mesh;
 	text_mesh_string_handle_t string_handle;
+	text_mesh_string_handle_t another_string_handle;
 
 	render_object_t* render_object;
 	material_t* material;
-
-	int isScreenSpace; /* bools are not support currently in V3DShader (see: TID64)*/
 };
 
 
@@ -79,29 +78,32 @@ TEST_ON_INITIALIZE(TEXT_MESH)
 
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(this->camera, COLOR_GREEN, 1.0f);
+	camera_set_clear(this->camera, COLOR_BLACK, 1.0f);
 	camera_set_active(this->camera, true);
 	camera_set_transform(this->camera, mat4_mul(2, mat4_translation(-1.8f, 0.6f, 0), mat4_rotation(0, 0, -22 * DEG2RAD)));
 
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
 
-	this->material = material_library_getH(mlib, 
-							material_library_create_materialH(mlib, 
-							shader_library_load_shader(slib, 
-								"shaders/builtins/text_shader.sb"), "MyMaterial"));
-	this->isScreenSpace = 1;
-	material_set_int(this->material, "parameters.isScreenSpace", 1);
+	this->material = material_library_getH(mlib,
+							material_library_create_materialH(mlib,
+							shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH),
+							"TextMeshShader"));
 
 	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
+	font_set_char_size(this->font, 24);
 	this->glyph_pool = glyph_mesh_pool_create(renderer, this->font);
 	this->text_mesh = text_mesh_create(renderer, this->glyph_pool);
 	this->string_handle = text_mesh_string_create(this->text_mesh);
+	this->another_string_handle = text_mesh_string_create(this->text_mesh);
 	text_mesh_string_setH(this->text_mesh, this->string_handle, "Screen Space");
+	text_mesh_string_setH(this->text_mesh, this->another_string_handle, "Another String");
+
+	text_mesh_string_set_transformH(this->text_mesh, this->string_handle, mat4_translation(0.0f, 3.0f, -3.0f));
+	text_mesh_string_set_transformH(this->text_mesh, this->another_string_handle, mat4_translation(0.0f, 0.0f, -3.0f));
 
 	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->render_object, this->material);
 	render_object_attach(this->render_object, this->text_mesh);
-	render_object_set_transform(this->render_object, mat4_translation(0.0f, 0.0f, -3.0f));
 
 	render_scene_build_queues(this->scene);
 
@@ -122,25 +124,9 @@ TEST_ON_TERMINATE(TEXT_MESH)
 
 TEST_ON_UPDATE(TEXT_MESH)
 {
-	if(kbhit())
-	{
-		getch();
-		this->isScreenSpace = !this->isScreenSpace;
-		material_set_int(this->material, "parameters.isScreenSpace", this->isScreenSpace);
-		switch(this->isScreenSpace)
-		{
-			case 0:
-				text_mesh_string_setH(this->text_mesh, this->string_handle, "World Space");
-				break;
-			case 1:
-				text_mesh_string_setH(this->text_mesh, this->string_handle, "Screen Space");
-				break;
-		}
-	}
 }
 
 TEST_ON_RENDER(TEXT_MESH)
 {
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 }
-

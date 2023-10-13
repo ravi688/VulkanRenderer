@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: text_shader.v3dshader is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -35,6 +35,8 @@ Shader
         vertex [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
         {
             int isScreenSpace;
+			int space_type;
+			int surface_type;
         } parameters;
     }
     [NoParse]
@@ -45,7 +47,7 @@ Shader
         per_instance [5, 2] vec3 scale;
         per_instance [5, 3] vec3 rotation;
     }
-    
+
     RenderPass
     {
         SubPass
@@ -68,11 +70,11 @@ Shader
             GLSL
             {
                 #stage vertex
-        
+
                 #version 450
 
                 #include <v3d.h>
-                
+
                 layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
                 layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
                 layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
@@ -83,7 +85,7 @@ Shader
                 //Inputs
                 //per vertex
                 layout(location = POSITION_LOCATION) in vec3 local_position;
-                
+
                 //per instance
                 layout(location = 1) in vec3 offset;
                 layout(location = 2) in vec3 scale;
@@ -98,11 +100,11 @@ Shader
                     m[3][3] = w;
                     return m;
                 }
-                
+
                 void main()
                 {
                     vec3 pos = local_position + offset;//offset + local_position * scale;
-                    vec4 clipPos; 
+                    vec4 clipPos;
                     if(parameters.isScreenSpace == 1)
                     {
                         mat4 scale = mat4_diagonal(100, 100, 100, 1);
@@ -116,14 +118,14 @@ Shader
                     clipPos.y = -clipPos.y;
                     gl_Position = clipPos;
                 }
-                
-                
+
+
                 #stage fragment
-                
+
                 #version 450
-                
+
                 layout(location = 0) out vec3 color;
-                
+
                 void main()
                 {
                     color = vec3(1, 1, 1);

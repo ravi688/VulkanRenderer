@@ -30,6 +30,11 @@ RENDERER_API void bitmap_text_release_resources(bitmap_text_t* text)
 	vulkan_bitmap_text_release_resources(text);
 }
 
+RENDERER_API void bitmap_text_draw(bitmap_text_t* text)
+{
+	vulkan_bitmap_text_draw(text);
+}
+
 RENDERER_API bitmap_text_string_handle_t bitmap_text_string_create(bitmap_text_t* text)
 {
 	return vulkan_bitmap_text_string_create(text);

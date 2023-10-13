@@ -30,11 +30,6 @@ RENDERER_API void text_mesh_draw(text_mesh_t* text)
     vulkan_text_mesh_draw(text);
 }
 
-RENDERER_API void text_mesh_set_material(text_mesh_t* text, material_t* material)
-{
-    vulkan_text_mesh_set_material(text, material);
-}
-
 // constructors and destructors
 RENDERER_API text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh)
 {
@@ -48,24 +43,24 @@ RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_st
 
 
 // setters
+RENDERER_API void text_mesh_set_material(text_mesh_t* text, material_t* material)
+{
+    vulkan_text_mesh_set_material(text, material);
+}
+
+RENDERER_API void text_mesh_set_render_space_type(text_mesh_t* text, text_mesh_render_space_type_t space_type)
+{
+    vulkan_text_mesh_set_render_space_type(text, space_type);
+}
+
+RENDERER_API void text_mesh_set_render_surface_type(text_mesh_t* text, text_mesh_render_surface_type_t surface_type)
+{
+    vulkan_text_mesh_set_render_surface_type(text, surface_type);
+}
+
 RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* string)
 {
     vulkan_text_mesh_string_setH(text_mesh, handle, string);
-}
-
-RENDERER_API void text_mesh_string_set_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t scale)
-{
-    vulkan_text_mesh_string_set_scaleH(text_mesh, handle, scale);
-}
-
-RENDERER_API void text_mesh_string_set_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t position)
-{
-    vulkan_text_mesh_string_set_positionH(text_mesh, handle, position);
-}
-
-RENDERER_API void text_mesh_string_set_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, vec3_t rotation)
-{
-    vulkan_text_mesh_string_set_rotationH(text_mesh, handle, rotation);
 }
 
 RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t transform)
@@ -78,21 +73,6 @@ RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_m
 RENDERER_API const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
     return vulkan_text_mesh_string_getH(text_mesh, handle);
-}
-
-RENDERER_API vec3_t text_mesh_string_get_scaleH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
-{
-    return vulkan_text_mesh_string_get_scaleH(text_mesh, handle);
-}
-
-RENDERER_API vec3_t text_mesh_string_get_positionH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
-{
-    return vulkan_text_mesh_string_get_positionH(text_mesh, handle);
-}
-
-RENDERER_API vec3_t text_mesh_string_get_rotationH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
-{
-    return vulkan_text_mesh_string_get_rotationH(text_mesh, handle);
 }
 
 RENDERER_API mat4_t text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)

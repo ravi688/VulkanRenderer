@@ -55,7 +55,7 @@ static void update_bga_and_gtc_buffer(void* publisher, void* handler_data)
 			/* update the GTC at the index */
 			glyph_texcoord_t texcoord;
 			vulkan_bitmap_glyph_atlas_texture_get_texcoord(text->texture, ascii, &texcoord);
-			glsl_glyph_texcoord_t glsl_texcoord =
+			vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t glsl_texcoord =
 			{
 				.tltc = { texcoord.tltc.x, texcoord.tltc.y },
 				.trtc = { texcoord.trtc.x, texcoord.trtc.y },
@@ -101,18 +101,18 @@ RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer
 	/* create GRD buffer */
 	vulkan_instance_buffer_create_info_t grd_buffer_create_info =
 	{
-		.stride = glsl_sizeof(glsl_glyph_render_data_t),
+		.stride = glsl_sizeof(vulkan_bitmap_text_glsl_glyph_render_data_t),
 		/* initially we can store render information of upto 512 characters, so there will be no chance of buffer resize until 512 */
 		.capacity = 512
 	};
 	vulkan_instance_buffer_create(renderer, &grd_buffer_create_info, &text->glyph_render_data_buffer);
 
-	_debug_assert__(glsl_sizeof(glsl_glyph_texcoord_t) == sizeof(glsl_glyph_texcoord_t));
+	_debug_assert__(glsl_sizeof(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t) == sizeof(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t));
 
 	/* create GTC buffer to store texture coordinates for each unique glyph */
 	vulkan_host_buffered_buffer_create_info_t buffer_create_info =
 	{
-		.stride = glsl_sizeof(glsl_glyph_texcoord_t),
+		.stride = glsl_sizeof(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t),
 		/* initially we can store texcoord coordinates of upto 127 characters, so there will be no chance of buffer resize until 512 */
 		.capacity = 127,
 		/* this buffer will be indexed with glyph_render_data_t.indx */
@@ -282,9 +282,10 @@ RENDERER_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create
 	text_string->transform = mat4_identity();
 
 	/* add transform of this string to the TST buffer */
-	glsl_mat4_t transform = get_glsl_mat4_from_mat4(&text_string->transform);
+	mat4_t transform = mat4_transpose(text_string->transform); // though we don't need this transpose as the matrix will be identity here.
+	glsl_mat4_t glsl_transform = get_glsl_mat4_from_mat4(&transform);
 	_debug_assert__(sizeof(buf_ucount_t) == sizeof(handle));
-	buf_set_at(tst_buffer, handle, &transform);
+	buf_set_at(tst_buffer, handle, &glsl_transform);
 
 	/* update the device side buffer */
 
@@ -361,8 +362,8 @@ static u32 get_or_create_glyph_texture_coordinate(vulkan_bitmap_text_t* text, ut
 	glyph_texcoord_t texcoord;
 	vulkan_bitmap_glyph_atlas_texture_get_texcoord(text->texture, unicode, &texcoord);
 
-	/* convert the glyph_texcoord_t to glsl_glyph_texcoord_t */
-	glsl_glyph_texcoord_t glsl_texcoord =
+	/* convert the glyph_texcoord_t to vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t */
+	vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t glsl_texcoord =
 	{
 		.tltc = { texcoord.tltc.x, texcoord.tltc.y },
 		.trtc = { texcoord.trtc.x, texcoord.trtc.y },
@@ -398,7 +399,6 @@ RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vu
 
 	vulkan_material_set_buffer(material, "GTCBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->glyph_texcoord_buffer));
 	vulkan_material_set_buffer(material, "TSTBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->text_string_transform_buffer));
-
 }
 
 RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type)
@@ -430,20 +430,6 @@ RENDERER_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_
 static vulkan_bitmap_text_string_t* get_text_stringH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
 {
 	return buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, handle);
-}
-
-#define U32_TO_U64(src) _u32_to_u64(sizeof(src), src)
-static INLINE_IF_RELEASE_MODE u64 _u32_to_u64(u32 src_size, u32 src)
-{
-	IF_DEBUG_MODE(_debug_assert__(src_size == sizeof(u32)));
-	return CAST_TO(u64, src);
-}
-
-#define U64_TO_U32(src) _u64_to_u32(sizeof(src), src)
-static INLINE_IF_RELEASE_MODE u32 _u64_to_u32(u32 src_size, u64 src)
-{
-	IF_DEBUG_MODE(_debug_assert__(src_size == sizeof(u64)));
-	return CAST_TO(u32, src);
 }
 
 RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle, const char* string)
@@ -484,7 +470,7 @@ RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vu
 		}
 
 		// _debug_assert__(info.bitmap_top == info.bearing_y);
-		glsl_glyph_render_data_t data =
+		vulkan_bitmap_text_glsl_glyph_render_data_t data =
 		{
 			.ofst = { horizontal_pen + info.width * 0.5f + info.bearing_x/* - string_width * 0.5f*/, info.height * 0.5f + (info.bearing_y - info.height) - anchor_offset_y, 0 },
 			.indx = get_or_create_glyph_texture_coordinate(text, ch),
