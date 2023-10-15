@@ -707,7 +707,7 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 	if(kbhit())
 	{
 		char ch = getch();
-		if((ch != 'p') && (ch != 'q') && (ch != 'd') && (ch != 'u') && (ch != 'b'))
+		if((ch != 'p') && (ch != 'q') && (ch != 'd') && (ch != 'u'))
 		{
 			isScreenSpace = !isScreenSpace;
 			if(isScreenSpace)
@@ -738,24 +738,22 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 			bitmap_glyph_atlas_texture_dump_bb(this->texture, "bitmap_glyph_atlas_texture_bb.dump.bmp");
 			bitmap_glyph_atlas_texture_dump(this->texture, "bitmap_glyph_atlas_texture.dump.bmp");
 		}
-		else if(ch == 'u')
-		{
-			static int counter = 0;
-			counter++;
-			if(counter == 66000)
-			counter = 0;
-			char buffer[128] =  { };
-			sprintf(buffer, "%d", counter);
-			bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
-			sprintf(buffer, "%d", counter);
-			bitmap_text_string_setH(this->text, this->another_string_handle, buffer);
-		}
 		else if(ch == 'b')
 		{
 			static char ch = 33;
 			bitmap_glyph_atlas_texture_get_texcoord(this->texture, make_pair(utf32_t, u32) { ch++, 34 }, NULL);
 		}
 	}
+
+	static int counter = 0;
+	counter++;
+	if(counter == 66000)
+	counter = 0;
+	char buffer[128] =  { };
+	sprintf(buffer, "%d", counter);
+	bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
+	sprintf(buffer, "%d", counter);
+	bitmap_text_string_setH(this->text, this->another_string_handle, buffer);
 
 	bitmap_glyph_atlas_texture_commit(this->texture, NULL);
 }
