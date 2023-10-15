@@ -19,6 +19,8 @@ typedef struct buffer2d_view_t
 	iextent2d_t size;
 } buffer2d_view_t;
 
+typedef buffer2d_view_t* buffer2d_view_ptr_t;
+
 #define BUFFER2D_VIEW(ptr) DYNAMIC_CAST(buffer2d_view_t*, ptr)
 
 

@@ -85,6 +85,10 @@ typedef struct vulkan_bitmap_text_string_t
 	struct { offset3d_t offset; extent2d_t extent; } rect;
 	/* transform matrix applied to this string */
 	mat4_t transform;
+	/* point size for this text string at which the glyphs will be rasterized.
+	 * This 'point_size' value will be affected by vulkan_bitmap_text_set_point_size and
+	 * vulkan_bitmap_text_string_set_point_sizeH. */
+	u32 point_size;
 } vulkan_bitmap_text_string_t;
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_texture_t;
@@ -115,6 +119,12 @@ typedef struct vulkan_bitmap_text_t
 {
 	vulkan_renderer_t* renderer;
 	vulkan_material_t* material;
+
+	/* point size for this bitmap text, if a vulkan_bitmap_text_set_point_size is called then it will
+	 * affect all the text strings.
+	 * But if the client is calling vulkan_bitmap_text_string_set_point_sizeH with point size different
+	 * from this 'point size' then it will have value F32_MAX - which would indicate an invalid value. */
+	u32 point_size;
 
 	/* render space type of this text */
 	vulkan_bitmap_text_render_space_type_t render_space_type;
@@ -171,14 +181,18 @@ RENDERER_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create
 RENDERER_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 
 /* setters */
+RENDERER_API void vulkan_bitmap_text_set_point_size(vulkan_bitmap_text_t* text, u32 point_size);
 RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material);
 RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type);
 RENDERER_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_surface_type_t surface_type);
 RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char* string);
+RENDERER_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 point_size);
 RENDERER_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform);
 
 /* getters */
+RENDERER_API u32 vulkan_bitmap_text_get_point_size(vulkan_bitmap_text_t* text);
 RENDERER_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
+RENDERER_API u32 vulkan_bitmap_text_string_get_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 RENDERER_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 RENDERER_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text);
 

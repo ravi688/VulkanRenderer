@@ -58,14 +58,18 @@ RENDERER_API bitmap_text_string_handle_t bitmap_text_string_create(bitmap_text_t
 RENDERER_API void bitmap_text_string_destroyH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 
 /* setters */
+RENDERER_API void bitmap_text_set_point_size(bitmap_text_t* text, u32 point_size);
 RENDERER_API void bitmap_text_set_material(bitmap_text_t* text, material_t* material);
 RENDERER_API void bitmap_text_set_render_space_type(bitmap_text_t* text, bitmap_text_render_space_type_t space_type);
 RENDERER_API void bitmap_text_set_render_surface_type(bitmap_text_t* text, bitmap_text_render_surface_type_t surface_type);
 RENDERER_API void bitmap_text_string_setH(bitmap_text_t* text, bitmap_text_string_handle_t handle, const char* string);
+RENDERER_API void bitmap_text_string_set_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle, u32 point_size);
 RENDERER_API void bitmap_text_string_set_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle, mat4_t transform);
 
-/* setters */
+/* getters */
+RENDERER_API u32 bitmap_text_get_point_size(bitmap_text_t* text);
 RENDERER_API const char* bitmap_text_string_getH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
+RENDERER_API u32 bitmap_text_string_get_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 RENDERER_API mat4_t bitmap_text_string_get_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 
 END_CPP_COMPATIBLE

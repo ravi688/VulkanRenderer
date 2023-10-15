@@ -43,16 +43,17 @@ RENDERER_API void bitmap_glyph_atlas_texture_release_resources(bitmap_glyph_atla
 RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_atlas_texture_get_pool(bitmap_glyph_atlas_texture_t* texture);
 /* returns the font used by this BGA texture */
 RENDERER_API font_t* bitmap_glyph_atlas_texture_get_font(bitmap_glyph_atlas_texture_t* texture);
-/* flushes the host side font bitmap to the GPU side memory (it might also destroy and create VkDeviceMemory) 
+/* flushes the host side font bitmap to the GPU side memory (it might also destroy and create VkDeviceMemory)
  * is_resized: true if internal GPU and host memory has been resized
  * returns: true if internal API objects recreated or GPU side memory has been updated */
 RENDERER_API bool bitmap_glyph_atlas_texture_commit(bitmap_glyph_atlas_texture_t* texture, bool OUT is_resized);
-/* quality: quality of the rasterized glyph, ranges from 0 to 255 inclusive 
+/* quality: quality of the rasterized glyph, ranges from 0 to 255 inclusive
  * unicode: glyph's unicode value to rasterize
  * texcoords: the texture coordinates (list of 4 vec2(s)), filled by this function if the glyph has graphical representation
  * returns: true if the glyph has graphical representation and there are no errors */
-RENDERER_API bool bitmap_glyph_atlas_texture_get_texcoord(bitmap_glyph_atlas_texture_t* texture, utf32_t unicode, glyph_texcoord_t OUT texcoord);
+RENDERER_API bool bitmap_glyph_atlas_texture_get_texcoord(bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord);
 #ifdef GLOBAL_DEBUG
 RENDERER_API void bitmap_glyph_atlas_texture_dump(bitmap_glyph_atlas_texture_t* texture, const char* file_path);
+RENDERER_API void bitmap_glyph_atlas_texture_dump_bb(bitmap_glyph_atlas_texture_t* texture, const char* file_path);
 #endif /* GLOBAL_DEBUG */
 END_CPP_COMPATIBLE

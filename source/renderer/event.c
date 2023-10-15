@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: event.c is a part of VulkanRenderer
@@ -20,18 +20,21 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <renderer/event.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/string_builder.h>
+#ifdef GLOBAL_DEBUG
+#	include <string.h>
+#endif /* GLOBAL_DEBUG */
 
 typedef event_subscription_create_info_t invocation_data_t;
 
 /* structure to store source level debug information for the subscription */
-typedef struct debug_info_t 
-{ 
+typedef struct debug_info_t
+{
 	/* line number in the file */
 	u32 line;
 	/* name of the function in the file */
@@ -61,18 +64,19 @@ RENDERER_API event_t* event_new(memory_allocator_t* allocator)
 	return event;
 }
 
-RENDERER_API event_t* event_create(memory_allocator_t* allocator, void* publisher_data)
+RENDERER_API event_t* event_create(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name))
 {
 	AUTO event = event_new(allocator);
-	event_create_no_alloc(allocator, publisher_data, event);
+	event_create_no_alloc(allocator, publisher_data PARAM_IF_DEBUG(name), event);
 	return event;
 }
 
-RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data, event_t OUT event)
+RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event)
 {
 	memzero(event, event_t);
 	event->allocator = allocator;
 	event->string_builder = string_builder_create(allocator, 512);
+	IF_DEBUG(strcpy(event->name, name));
 	event->publisher_data = publisher_data;
 	event->signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_COUNT);
 	event->stage_signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_COUNT);
@@ -131,7 +135,9 @@ static void subscription_dump(memory_allocator_t* allocator, subscription_t* sub
 
 RENDERER_API void event_publish(event_t* event)
 {
-	/* create a copy of the signal table because it will modified during the invocations 
+	debug_log_info("***--event-publish-begin-%s--***", event->name);
+
+	/* create a copy of the signal table because it will modified during the invocations
 	 * also, signal table is used to determine how many subscribers/invocations can raise a particular signal */
 	memcopyv(event->stage_signal_table, event->signal_table, u32, SIGNAL_COUNT);
 
@@ -146,13 +152,13 @@ RENDERER_API void event_publish(event_t* event)
 	BUFFER* stage_buffer = &event->stage_subscribers;
 
 	/* debuggin purpose only */
-	if(event->is_dump_only)
+	// if(event->is_dump_only)
 	{
 		string_builder_clear(event->string_builder);
 		string_builder_append(event->string_builder, "\n");
 	}
 
-	do 
+	do
 	{
 		/* clear the swap buffer as this will be used to collect waiting handlers */
 		buf_clear(swap_buffer, NULL);
@@ -171,11 +177,11 @@ RENDERER_API void event_publish(event_t* event)
 			if(signal_waits_done(event, subscription->invocation_data.wait_for))
 			{
 				AUTO handler = GET_HANDLER(subscription->invocation_data);
-				
+
 				/* if is_dump_only is true then just dump the invocation order but don't make a call to the handlers */
 				if(!event->is_dump_only && (handler != NULL) && subscription->is_active)
 					handler(event->publisher_data, subscription->invocation_data.handler_data);
-				else if(event->is_dump_only)
+				// else if(event->is_dump_only)
 					subscription_dump(event->allocator, subscription, event->string_builder);
 
 				/* raise the signals which are requested to be raised by this invocation
@@ -204,12 +210,12 @@ RENDERER_API void event_publish(event_t* event)
 	} while((count = buf_get_element_count(stage_buffer)) > 0);
 
 	/* debugging purpose only */
-	if(event->is_dump_only)
+	//if(event->is_dump_only)
 	{
 		string_builder_append_null(event->string_builder);
 		debug_log_info(string_builder_get_str(event->string_builder));
 	}
-	debug_log_info("***--event-publish-end---***");
+	debug_log_info("***--event-publish-end--***");
 }
 
 RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file)
@@ -340,7 +346,7 @@ RENDERER_API void event_dump(event_t* event)
 {
 #ifdef GLOBAL_DEBUG
 	string_builder_t* builder = string_builder_create(event->allocator, 512);
-	
+
 	u32 count = buf_get_element_count(&event->subscribers);
 	if(count > 0)
 		string_builder_append(builder, "\n");

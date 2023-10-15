@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: texture_sampling.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -90,15 +90,15 @@ TEST_ON_INITIALIZE(BITMAP_GLYPH_ATLAS_TEXTURE)
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
 
-	this->material = material_library_getH(mlib, 
-							material_library_create_materialH(mlib, 
-							shader_library_load_shader(slib, 
+	this->material = material_library_getH(mlib,
+							material_library_create_materialH(mlib,
+							shader_library_load_shader(slib,
 								"shaders/builtins/alpha_sample.sb"), "MyMaterial"));
 
 	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
 	font_set_char_size(this->font, 20);
-	
-	bitmap_glyph_atlas_texture_create_info_t create_info = 
+
+	bitmap_glyph_atlas_texture_create_info_t create_info =
 	{
 		.width = 256,
 		.height = 256,
@@ -139,7 +139,7 @@ TEST_ON_UPDATE(BITMAP_GLYPH_ATLAS_TEXTURE)
 	if(kbhit())
 	{
 		getch();
-		bitmap_glyph_atlas_texture_get_texcoord(this->texture, ch, NULL);
+		bitmap_glyph_atlas_texture_get_texcoord(this->texture, make_pair(utf32_t, u32) { ch, font_get_char_size(this->font) }, NULL);
 		bool is_resized = false;
 		bitmap_glyph_atlas_texture_commit(this->texture, &is_resized);
 		bitmap_glyph_atlas_texture_dump(this->texture, "BITMAP_GLYPH_ATLAS_TEXTURE.bmp");
@@ -153,4 +153,3 @@ TEST_ON_RENDER(BITMAP_GLYPH_ATLAS_TEXTURE)
 {
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 }
-

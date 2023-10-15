@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: event.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #pragma once
@@ -59,7 +59,7 @@ typedef enum signal_bits_t
 	SIGNAL_ALL_BIT = BIT32(SIGNAL_ALL)
 } signal_bits_t;
 
-/* publisher_data: pointer to the data owned by the publisher of the event 
+/* publisher_data: pointer to the data owned by the publisher of the event
  * handler_data: pointer to the same data during the event subscription */
 typedef void (*__event_handler_t)(void* publisher_data, void* handler_data);
 
@@ -111,12 +111,14 @@ typedef struct event_t
 	memory_allocator_t* allocator;
 	/* pointer to the string builder (created internally) */
 	string_builder_t* string_builder;
-	/* pointer to the data of the publisher (which calls event_publish()), 
+	/* name of the event_t */
+	IF_DEBUG( char name[256]; )
+	/* pointer to the data of the publisher (which calls event_publish()),
 	 * passed as the first parameter in each handler invocation */
 	void* publisher_data;
 	/* pointer to the signal table (list of u32 of size SIGNAL_ALL), (created internally) */
 	u32* signal_table;;
-	/* pointer to the temporary signal table (list of u32 of size SIGNAL_ALL), (created internally) 
+	/* pointer to the temporary signal table (list of u32 of size SIGNAL_ALL), (created internally)
 	 * it is used during the call to event_publish() to execute the invocations in ordered manner based
 	 * on the waiting and signalling signals. */
 	u32* stage_signal_table;
@@ -142,8 +144,8 @@ BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
 RENDERER_API event_t* event_new(memory_allocator_t* allocator);
-RENDERER_API event_t* event_create(memory_allocator_t* allocator, void* publisher_data);
-RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data, event_t OUT event);
+RENDERER_API event_t* event_create(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name));
+RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event);
 RENDERER_API void event_destroy(event_t* event);
 RENDERER_API void event_release_resources(event_t* event);
 

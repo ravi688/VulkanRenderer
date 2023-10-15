@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: include_helper.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -51,6 +51,9 @@
 #	ifndef RENDERER_INCLUDE_DATA_STRUCTURES
 #		define RENDERER_INCLUDE_DATA_STRUCTURES
 #	endif
+#   ifndef RENDERER_INCLUDE_MATH
+#       define RENDERER_INCLUDE_MATH
+#   endif
 #	ifndef RENDERER_INCLUDE_CORE
 #		define RENDERER_INCLUDE_CORE
 #	endif
@@ -103,7 +106,7 @@
 #		define RENDERER_INCLUDE_MAT4
 #	endif
 #endif
-	
+
 #ifdef RENDERER_INCLUDE_AFFINE_TRANSFORMATION
 #	ifndef RENDERER_INCLUDE_VEC4
 #		define RENDERER_INCLUDE_VEC4
@@ -135,10 +138,9 @@
 
 #ifdef RENDERER_INCLUDE_LOW_LEVEL
 #	include <renderer/io.h>
-#	include <renderer/multi_buffer.h>
+#	include <renderer/system/display.h>
 #	include <renderer/type_system.h>
 #	include <renderer/garbage_collector.h>
-#	include <renderer/event_system.h>
 # 	include <renderer/struct_descriptor.h>
 #endif
 
@@ -164,6 +166,8 @@
 #		include <renderer/internal/vulkan/vulkan_shader_module.h>
 #		include <renderer/internal/vulkan/vulkan_swapchain.h>
 #		include <renderer/internal/vulkan/vulkan_texture.h>
+#		include <renderer/internal/vulkan/vulkan_bitmap_glyph_atlas_texture.h>
+#		include <renderer/internal/vulkan/vulkan_host_buffered_buffer.h>
 #		include <renderer/internal/vulkan/vulkan_render_texture.h>
 #		include <renderer/internal/vulkan/vulkan_to_string.h>
 #		include <renderer/internal/vulkan/vulkan_types.h>
@@ -173,6 +177,11 @@
 #ifdef RENDERER_INCLUDE_DATA_STRUCTURES
 #	include <renderer/dictionary.h>
 #	include <renderer/string.h>
+#	include <renderer/hash_table.h>
+#	include <renderer/buffer2d_view.h>
+#	include <renderer/buffer2d.h>
+# 	include <renderer/multi_buffer.h>
+#   include <renderer/string_builder.h>
 #  	include <bufferlib/buffer.h>
 #endif
 
@@ -210,7 +219,6 @@
 #endif
 
 #ifdef RENDERER_INCLUDE_3D_TEXT_RENDER_SYSTEM
-//TODO: <renderer/text_mesh3d.h>
 #	include <renderer/text_mesh.h>
 #	ifndef RENDERER_INCLUDE_CORE_TEXT_RENDER_SYSTEM
 #		define RENDERER_INCLUDE_CORE_TEXT_RENDER_SYSTEM
@@ -239,7 +247,7 @@
 #ifdef RENDERER_INCLUDE_2D_MESH_RENDER_SYSTEM
 #	include <renderer/mesh2d.h>
 #	ifndef RENDERER_INCLUDE_CORE_MESH_RENDER_SYSTEM
-#		define RENDERER_INCLUDE_CORE_MESH_RENDER_SYSTEM	
+#		define RENDERER_INCLUDE_CORE_MESH_RENDER_SYSTEM
 #	endif
 #endif
 
@@ -263,4 +271,3 @@
 #		include <renderer/internal/vulkan/vulkan_light.h>
 #	endif
 #endif
-

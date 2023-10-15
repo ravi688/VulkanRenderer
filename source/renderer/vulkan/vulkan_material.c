@@ -705,18 +705,18 @@ RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vul
 	return (vulkan_material_field_handle_t) { .index = 0xFFFF, .uniform_index = 0xFFFF, .field_handle = STRUCT_FIELD_INVALID_HANDLE };
 }
 
-typedef_pair_t(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*);
+typedef_pair_t(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t);
 
-static pair_t(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*) get_uniform_resource_descriptor(vulkan_material_t* material, const char* block_name)
+static pair_t(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) get_uniform_resource_descriptor(vulkan_material_t* material, const char* block_name)
 {
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
 	{
 		vulkan_uniform_resource_t* uniform = &material->uniform_resources[i];
 		vulkan_shader_resource_description_t* binding = &material->shader->material_set_bindings[uniform->index];
 		if(strcmp(binding->handle.name, block_name) == 0)
-			return make_pair(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*) { uniform, binding };
+			return make_pair(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) { uniform, binding };
 	}
-	return make_pair(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*) { NULL, NULL };
+	return make_pair(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) { NULL, NULL };
 }
 
 RENDERER_API void vulkan_material_set_array_size(vulkan_material_t* material, const char* name, u32 size)

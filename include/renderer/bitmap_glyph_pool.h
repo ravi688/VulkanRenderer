@@ -52,10 +52,10 @@ static INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_clear(bitmap_glyph_pool_t* 
 /* returns the font used by this bitmap glyph pool */
 static INLINE_IF_RELEASE_MODE font_t* bitmap_glyph_pool_get_font(bitmap_glyph_pool_t* pool) { return pool->font; }
 /* returns true if the glyph has graphical representation and no errors,
- * outputs the texture coordinates of the glyph represented by the unicode encoding 'unicode' */
-RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, utf32_t unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized);
-/* returns true if this pool has a rasterized graphical representation of a glyph represented by unicode encoding 'unicode'*/
-RENDERER_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, utf32_t unicode);
+ * outputs the texture coordinates of the glyph represented by the unicode encoding 'unicode' and with point size 'point_size' */
+RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized);
+/* returns true if this pool has a rasterized graphical representation of a glyph represented by unicode encoding 'unicode' and with point size 'point_size' */
+RENDERER_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode);
 
 #ifdef GLOBAL_DEBUG
 /* creates a file and dumps the colors values in the bitmap to the file (.bmp) */

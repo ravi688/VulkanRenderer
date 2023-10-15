@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_material.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -56,13 +56,15 @@ typedef struct vulkan_uniform_resource_t
 	u16 index;					// index of this resource in the list of resouce descriptors of this material
 } vulkan_uniform_resource_t;
 
+typedef vulkan_uniform_resource_t* vulkan_uniform_resource_ptr_t;
+
 typedef struct vulkan_material_t
-{ 
+{
 	vulkan_renderer_t* renderer;
 
 	vulkan_material_handle_t handle;
 
-	// ptr to the shader object from which this material has been derived	
+	// ptr to the shader object from which this material has been derived
 	vulkan_shader_t* shader;
 
 	// list of vulkan buffers for each uniform binding in the material set

@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: string.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -33,7 +33,7 @@
 RENDERER_API string_t string_create(memory_allocator_t* allocator, const char* str)
 {
 	u32 len = strlen(str);
-	string_t string = 
+	string_t string =
 	{
 		.data = CAST_TO(char*, memory_allocator_alloc(allocator, MEMORY_ALLOCATION_TYPE_IN_MEMORY_CHAR_BUFFER, sizeof(char) * (len + 1))),
 		.length = len,
@@ -50,4 +50,11 @@ RENDERER_API void string_destroy(string_t* str)
 	memory_allocator_dealloc(str->allocator, str->data);
 	str->data = NULL;
 	str->length = 0;
+}
+
+RENDERER_API u32 strlen_safe(const char* str)
+{
+	if(str == NULL)
+		return 0;
+	return strlen(str);
 }
