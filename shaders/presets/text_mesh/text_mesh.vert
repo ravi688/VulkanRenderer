@@ -54,13 +54,31 @@ mat4 mat4_identity()
     return mat4_diagonal(1.0, 1.0, 1.0, 1.0);
 }
 
+struct StringTransform
+{
+    mat4 matrix;
+    uint point_size;
+};
+
+StringTransform unpack_tst(mat4 tst)
+{
+    StringTransform trans;
+    trans.matrix = tst;
+    trans.matrix[3][3] = 1.0;
+    trans.point_size = floatBitsToUint(tst[3][3]);
+    return trans;
+}
+
 void main()
 {
     vec3 offset = ofst_stid.xyz;
     uint stid = floatBitsToUint(ofst_stid.w);
     vec3 pos = position + offset;
 
-    vec4 world = objectInfo.transform * tst_buffer[stid] * vec4(pos.x, pos.y, pos.z, 1.0);
+    StringTransform str_trans = unpack_tst(tst_buffer[stid]);
+
+    vec4 localPos = vec4(pos.x, pos.y, pos.z, 1.0);
+    mat4 world = objectInfo.transform * str_trans.matrix;
 
     vec4 clipPos;
     switch(parameters.space_type)
@@ -72,13 +90,13 @@ void main()
                 case TEXT_RENDER_SURFACE_TYPE_SCREEN:
                 {
                     mat4 scale = mat4_identity(); //mat4_diagonal(100, 100, 100, 1);
-                    clipPos = cameraInfo.screen * scale * world;
+                    clipPos = cameraInfo.screen * world * scale * localPos;
                     break;
                 }
                 case TEXT_RENDER_SURFACE_TYPE_CAMERA:
                 {
-                    mat4 scale = mat4_diagonal(24, 24, 24, 1);
-                    clipPos = displayInfo.matrix * scale * world;
+                    mat4 scale = mat4_diagonal(str_trans.point_size, str_trans.point_size, str_trans.point_size, 1);
+                    clipPos = displayInfo.matrix * world * scale * localPos;
                     break;
                 }
             }
@@ -91,13 +109,13 @@ void main()
                 case TEXT_RENDER_SURFACE_TYPE_SCREEN:
                 {
                     mat4 scale = mat4_diagonal(0.3, 0.3, 0.3, 1);
-                    clipPos = cameraInfo.projection * cameraInfo.view * scale * world;
+                    clipPos = cameraInfo.projection * cameraInfo.view * world * scale * localPos;
                 }
                     break;
                 case TEXT_RENDER_SURFACE_TYPE_CAMERA:
                 {
-                    mat4 scale = mat4_diagonal(100, 100, 100, 1);
-                    clipPos = displayInfo.matrix * scale * world;
+                    mat4 scale = mat4_diagonal(str_trans.point_size, str_trans.point_size, str_trans.point_size, 1);
+                    clipPos = displayInfo.matrix * world * scale * localPos;
                     break;
                 }
             }

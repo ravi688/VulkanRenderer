@@ -47,12 +47,12 @@ TEST_DATA(TEXT_MESH)
 	glyph_mesh_pool_t* glyph_pool;
 	font_t* font;
 
-	text_mesh_t* text_mesh;
-	text_mesh_string_handle_t string_handle;
+	text_mesh_t* text;
+	text_mesh_string_handle_t text_string_handle;
 	text_mesh_string_handle_t another_string_handle;
 
-	render_object_t* render_object;
-	material_t* material;
+	render_object_t* text_object;
+	material_t* text_material;
 };
 
 
@@ -84,35 +84,40 @@ TEST_ON_INITIALIZE(TEXT_MESH)
 
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
 
-	this->material = material_library_getH(mlib,
+	this->text_material = material_library_getH(mlib,
 							material_library_create_materialH(mlib,
 							shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH),
 							"TextMeshShader"));
 
 	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
 	font_set_char_size(this->font, 24);
+
+	/* glyph mesh pool */
 	this->glyph_pool = glyph_mesh_pool_create(renderer, this->font);
-	this->text_mesh = text_mesh_create(renderer, this->glyph_pool);
-	this->string_handle = text_mesh_string_create(this->text_mesh);
-	this->another_string_handle = text_mesh_string_create(this->text_mesh);
-	text_mesh_string_setH(this->text_mesh, this->string_handle, "Screen Space");
-	text_mesh_string_setH(this->text_mesh, this->another_string_handle, "Another String");
 
-	text_mesh_string_set_transformH(this->text_mesh, this->string_handle, mat4_translation(0.0f, 3.0f, -3.0f));
-	text_mesh_string_set_transformH(this->text_mesh, this->another_string_handle, mat4_translation(0.0f, 0.0f, -3.0f));
+	material_set_float(this->text_material, "parameters.color.r", 1.0f);
+	material_set_float(this->text_material, "parameters.color.g", 1.0f);
+	material_set_float(this->text_material, "parameters.color.b", 1.0f);
+	this->text = text_mesh_create(renderer, this->glyph_pool);
+	this->text_string_handle = text_mesh_string_create(this->text);
+	this->another_string_handle = text_mesh_string_create(this->text);
+	text_mesh_string_set_point_sizeH(this->text, this->another_string_handle, 24);
+	text_mesh_string_set_point_sizeH(this->text, this->text_string_handle, 35);
+	text_mesh_string_setH(this->text, this->another_string_handle, "Hardwork with dedication suffices to c");
+	text_mesh_string_setH(this->text, this->text_string_handle, "Hardwork with dedication suffices to c: 1234324");
 
-	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(this->render_object, this->material);
-	render_object_attach(this->render_object, this->text_mesh);
+	this->text_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->text_object, this->text_material);
+	render_object_attach(this->text_object, this->text);
+	text_mesh_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, -400.0f, -400.0f));
 
 	render_scene_build_queues(this->scene);
-
 }
 
 TEST_ON_TERMINATE(TEXT_MESH)
 {
-	text_mesh_destroy(this->text_mesh);
-	text_mesh_release_resources(this->text_mesh);
+	text_mesh_destroy(this->text);
+	text_mesh_release_resources(this->text);
 	font_destroy(this->font);
 	font_release_resources(this->font);
 	glyph_mesh_pool_destroy(this->glyph_pool);
@@ -124,6 +129,47 @@ TEST_ON_TERMINATE(TEXT_MESH)
 
 TEST_ON_UPDATE(TEXT_MESH)
 {
+	static bool isScreenSpace = true;
+	if(kbhit())
+	{
+		char ch = getch();
+		if((ch != 'p') && (ch != 'q'))
+		{
+			isScreenSpace = !isScreenSpace;
+			if(isScreenSpace)
+			{
+				text_mesh_set_render_space_type(this->text, TEXT_MESH_RENDER_SPACE_TYPE_2D);
+				debug_log_info("TEXT_MESH_RENDER_SPACE_TYPE_2D");
+				render_object_set_transform(this->text_object, mat4_identity());
+				text_mesh_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 400.0f, -400.0f));
+			}
+			else
+			{
+				text_mesh_set_render_space_type(this->text, TEXT_MESH_RENDER_SPACE_TYPE_3D);
+				debug_log_info("TEXT_MESH_RENDER_SPACE_TYPE_3D");
+				render_object_set_transform(this->text_object, mat4_mul(3, mat4_rotation_y(45 DEG), mat4_scale(0.005f, 0.005f, 0.005f), mat4_translation(0.0f, 0.0f, -0.5f)));
+				text_mesh_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 30.0f, 0.0f));
+			}
+		}
+		else if(ch == 'p')
+		{
+			text_mesh_string_set_point_sizeH(this->text, this->another_string_handle, text_mesh_string_get_point_sizeH(this->text, this->another_string_handle) * 2);
+		}
+		else if(ch == 'q')
+		{
+			text_mesh_string_set_point_sizeH(this->text, this->another_string_handle, text_mesh_string_get_point_sizeH(this->text, this->another_string_handle) / 2);
+		}
+	}
+
+	static int counter = 0;
+	counter++;
+	if(counter == 66000)
+	counter = 0;
+	char buffer[128] =  { };
+	sprintf(buffer, "%d", counter);
+	text_mesh_string_setH(this->text, this->text_string_handle, buffer);
+	sprintf(buffer, "%d", counter);
+	text_mesh_string_setH(this->text, this->another_string_handle, buffer);
 }
 
 TEST_ON_RENDER(TEXT_MESH)

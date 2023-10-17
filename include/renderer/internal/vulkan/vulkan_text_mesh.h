@@ -145,6 +145,7 @@ typedef struct vulkan_text_mesh_string_t
 	vulkan_text_mesh_glyph_render_data_sub_buffer_handle_list_t glyph_sub_buffer_handles;	//	dictionary of sub_buffer handles in the multi_buffer of glyphs
 	vulkan_text_mesh_string_char_buffer_t str; 															//	buffer of characters to store the supplied string
 	mat4_t transform;
+	u32 point_size;
 } vulkan_text_mesh_string_t;
 
 typedef struct vulkan_renderer_t vulkan_renderer_t;
@@ -152,7 +153,8 @@ typedef struct vulkan_material_t vulkan_material_t;
 typedef struct vulkan_glyph_mesh_pool_t vulkan_glyph_mesh_pool_t;
 typedef buffer_t /* vulkan_text_mesh_string_t */ vulkan_text_mesh_string_list_t;
 typedef dictionary_t /* u16, vulkan_host_multibuffered_buffer_t */ vulkan_text_mesh_glyph_render_data_buffer_map_t;
-typedef vulkan_host_buffered_buffer_t vulkan_text_mesh_string_transform_buffer_t;
+typedef vulkan_host_buffered_buffer_t /* glsl_mat4_t */ vulkan_text_mesh_string_transform_buffer_t;
+typedef struct font_t font_t;
 
 typedef struct vulkan_text_mesh_t
 {
@@ -160,6 +162,7 @@ typedef struct vulkan_text_mesh_t
 	vulkan_material_t* material;
 	vulkan_text_mesh_render_space_type_t render_space_type;
 	vulkan_text_mesh_render_surface_type_t render_surface_type;
+	u32 point_size;
 
 	/* CPU side */
 	vulkan_glyph_mesh_pool_t* pool;												// pool from which the mesh_t should be queried from for a particular glyph
@@ -183,21 +186,25 @@ RENDERER_API void vulkan_text_mesh_release_resources(vulkan_text_mesh_t* text);
 
 // logic functions
 RENDERER_API void vulkan_text_mesh_draw(vulkan_text_mesh_t* text);
-RENDERER_API void vulkan_text_mesh_set_material(vulkan_text_mesh_t* text, vulkan_material_t* material);
 
 // constructors and destructors
 RENDERER_API vulkan_text_mesh_string_handle_t vulkan_text_mesh_string_create(vulkan_text_mesh_t* text_mesh);
 RENDERER_API void vulkan_text_mesh_string_destroyH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle);
 
 // setters
+RENDERER_API void vulkan_text_mesh_set_point_size(vulkan_text_mesh_t* text_mesh, u32 point_size);
 RENDERER_API void vulkan_text_mesh_set_material(vulkan_text_mesh_t* text_mesh, vulkan_material_t* material);
 RENDERER_API void vulkan_text_mesh_set_render_space_type(vulkan_text_mesh_t* text, vulkan_text_mesh_render_space_type_t space_type);
 RENDERER_API void vulkan_text_mesh_set_render_surface_type(vulkan_text_mesh_t* text, vulkan_text_mesh_render_surface_type_t surface_type);
 RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, const char* string);
+RENDERER_API void vulkan_text_mesh_string_set_point_sizeH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, u32 point_size);
 RENDERER_API void vulkan_text_mesh_string_set_transformH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, mat4_t transform);
 
 // getters
+RENDERER_API u32 vulkan_text_mesh_get_point_size(vulkan_text_mesh_t* text);
 RENDERER_API const char* vulkan_text_mesh_string_getH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle);
+RENDERER_API u32 vulkan_text_mesh_string_get_point_sizeH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle);
 RENDERER_API mat4_t vulkan_text_mesh_string_get_transformH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle);
+RENDERER_API font_t* vulkan_text_mesh_get_font(vulkan_text_mesh_t* text_mesh);
 
 END_CPP_COMPATIBLE

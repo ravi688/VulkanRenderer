@@ -85,7 +85,7 @@ RENDERER_API vulkan_mesh_t* vulkan_glyph_mesh_pool_get_mesh(vulkan_glyph_mesh_po
 	if(!dictionary_contains(&pool->glyph_meshes, &glyph))
 	{
 		mesh3d_t* mesh3d = mesh3d_new(pool->renderer->allocator);
-		font_get_glyph_mesh(pool->font, glyph, FONT_GLYPH_MESH_QUALITY_LOW, mesh3d);
+		font_get_glyph_mesh(pool->font, glyph, FONT_GLYPH_MESH_QUALITY_HIGH, mesh3d);
 
 		mesh = vulkan_mesh_new(pool->renderer->allocator);
 		/* This might not work as intended because the API backend will be compiled separately in future

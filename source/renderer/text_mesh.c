@@ -43,6 +43,11 @@ RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_st
 
 
 // setters
+RENDERER_API void text_mesh_set_point_size(text_mesh_t* text, u32 point_size)
+{
+    vulkan_text_mesh_set_point_size(text, point_size);
+}
+
 RENDERER_API void text_mesh_set_material(text_mesh_t* text, material_t* material)
 {
     vulkan_text_mesh_set_material(text, material);
@@ -63,6 +68,11 @@ RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string
     vulkan_text_mesh_string_setH(text_mesh, handle, string);
 }
 
+RENDERER_API void text_mesh_string_set_point_sizeH(text_mesh_t* text, text_mesh_string_handle_t handle, u32 point_size)
+{
+    vulkan_text_mesh_string_set_point_sizeH(text, handle, point_size);
+}
+
 RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t transform)
 {
     vulkan_text_mesh_string_set_transformH(text_mesh, handle, transform);
@@ -70,9 +80,19 @@ RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_m
 
 
 // getters
+RENDERER_API u32 text_mesh_get_point_size(text_mesh_t* text)
+{
+    return vulkan_text_mesh_get_point_size(text);
+}
+
 RENDERER_API const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)
 {
     return vulkan_text_mesh_string_getH(text_mesh, handle);
+}
+
+RENDERER_API u32 text_mesh_string_get_point_sizeH(text_mesh_t* text, text_mesh_string_handle_t handle)
+{
+    return vulkan_text_mesh_string_get_point_sizeH(text, handle);
 }
 
 RENDERER_API mat4_t text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle)

@@ -70,6 +70,7 @@ RENDERER_API vulkan_text_mesh_t* vulkan_text_mesh_create(vulkan_renderer_t* rend
 	text_mesh->inuse_list = BUF_INVALID_INDEX; 		// inuse list
 	text_mesh->render_space_type = VULKAN_TEXT_MESH_RENDER_SPACE_TYPE_2D;
 	text_mesh->render_surface_type = VULKAN_TEXT_MESH_RENDER_SURFACE_TYPE_CAMERA;
+	text_mesh->point_size = font_get_char_size(vulkan_glyph_mesh_pool_get_font(pool));
 
 	_debug_assert__(glsl_sizeof(glsl_mat4_t) == sizeof(glsl_mat4_t));
 
@@ -142,6 +143,15 @@ static glsl_mat4_t get_glsl_mat4_from_mat4(const mat4_t* const mat)
 	};
 }
 
+static void update_host_side_tst_buffer_for_text_string(vulkan_text_mesh_t* text, vulkan_text_mesh_string_t* string)
+{
+	mat4_t transform = mat4_transpose(string->transform);
+	glsl_mat4_t glsl_transform = get_glsl_mat4_from_mat4(&transform);
+	/* the last row of 4x4 RTS matrix always remains unused - i.e it's not a perspective projection matrix where depth has to be taken care */
+	glsl_transform.m33 = DREF(REINTERPRET_CAST(glsl_float_t*, &string->point_size));
+	buf_set_at(vulkan_host_buffered_buffer_get_host_buffer(&text->text_string_transform_buffer), string->handle, &glsl_transform);
+}
+
 // constructors and destructors
 RENDERER_API vulkan_text_mesh_string_handle_t vulkan_text_mesh_string_create(vulkan_text_mesh_t* text_mesh)
 {
@@ -173,13 +183,16 @@ RENDERER_API vulkan_text_mesh_string_handle_t vulkan_text_mesh_string_create(vul
 		handle = buf_get_element_count(strings) - 1;
 	}
 
-	string->transform = mat4_identity();
+	// add in inuse list
+	string->next_handle = text_mesh->inuse_list;
+	text_mesh->inuse_list = handle;
 
-	/* add transform of this string to the TST buffer */
-	mat4_t transform = mat4_transpose(string->transform);
-	glsl_mat4_t glsl_transform = get_glsl_mat4_from_mat4(&transform);
-	_debug_assert__(sizeof(buf_ucount_t) == sizeof(handle));
-	buf_set_at(tst_buffer, handle, &glsl_transform);
+	string->handle = handle;
+	string->transform = mat4_identity();
+	string->point_size = text_mesh->point_size;
+
+	/* update transform of this string to the TST buffer */
+	update_host_side_tst_buffer_for_text_string(text_mesh, string);
 
 	bool is_resized = false;
 	bool is_updated = vulkan_host_buffered_buffer_commit(&text_mesh->text_string_transform_buffer, &is_resized);
@@ -195,11 +208,6 @@ RENDERER_API vulkan_text_mesh_string_handle_t vulkan_text_mesh_string_create(vul
 		if(is_resized)
 			vulkan_material_set_buffer(text_mesh->material, "TSTBuffer", tst_device_buffer);
 	}
-
-	// add in inuse list
-	string->next_handle = text_mesh->inuse_list;
-	text_mesh->inuse_list = handle;
-
 	return handle;
 }
 
@@ -266,6 +274,29 @@ static void set_render_surface_type(vulkan_text_mesh_t* text, vulkan_text_mesh_r
 }
 
 // setters
+static void commit_tst_buffer_expect_no_resize(vulkan_text_mesh_t* text_mesh)
+{
+	bool is_resized = false;
+	bool is_updated = vulkan_host_buffered_buffer_commit(&text_mesh->text_string_transform_buffer, &is_resized);
+	_debug_assert__((!is_resized) && is_updated);
+}
+
+RENDERER_API void vulkan_text_mesh_set_point_size(vulkan_text_mesh_t* text, u32 point_size)
+{
+	text->point_size = point_size;
+
+	u32 count = buf_get_element_count(&text->strings);
+	for(u32 i = 0; i < count; i++)
+	{
+		AUTO string = buf_get_ptr_at_typeof(&text->strings, vulkan_text_mesh_string_t, i);
+		string->point_size = text->point_size;
+		update_host_side_tst_buffer_for_text_string(text, string);
+	}
+
+	/* transfer the updated data to the gpu buffer */
+	commit_tst_buffer_expect_no_resize(text);
+}
+
 RENDERER_API void vulkan_text_mesh_set_material(vulkan_text_mesh_t* text, vulkan_material_t* material)
 {
 	text->material = material;
@@ -363,22 +394,56 @@ RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vu
 	}
 }
 
+RENDERER_API void vulkan_text_mesh_string_set_point_sizeH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, u32 point_size)
+{
+	AUTO string = get_text_stringH(text_mesh, handle);
+	string->point_size = point_size;
+
+	update_host_side_tst_buffer_for_text_string(text_mesh, string);
+
+	/* transfer the updated data to the GPU buffer */
+	commit_tst_buffer_expect_no_resize(text_mesh);
+
+	/* check if all the text strings have the same point size as 'point_size' */
+	bool is_same = true;
+	buf_ucount_t count = buf_get_element_count(&text_mesh->strings);
+	for(buf_ucount_t i = 0; i < count; i++)
+	{
+		if(buf_get_ptr_at_typeof(&text_mesh->strings, vulkan_text_mesh_string_t, i)->point_size != point_size)
+		{
+			is_same = false;
+			break;
+		}
+	}
+
+	/* if yes, then update the text_mesh's point size */
+	if(is_same)
+		text_mesh->point_size = point_size;
+}
+
 RENDERER_API void vulkan_text_mesh_string_set_transformH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, mat4_t transform)
 {
-	mat4_move(get_text_stringH(text_mesh, handle)->transform, transform);
-	mat4_move(transform, mat4_transpose(transform));
-	glsl_mat4_t glsl_transform = get_glsl_mat4_from_mat4(&transform);
-	buf_set_at(vulkan_host_buffered_buffer_get_host_buffer(&text_mesh->text_string_transform_buffer), handle, &glsl_transform);
-	bool is_resized = false;
-	vulkan_host_buffered_buffer_commit(&text_mesh->text_string_transform_buffer, &is_resized);
-	/* we are just updating the data, so no resize can be expected */
-	_debug_assert__(is_resized == false);
+	AUTO string = get_text_stringH(text_mesh, handle);
+	mat4_move(string->transform, transform);
+	update_host_side_tst_buffer_for_text_string(text_mesh, string);
+	/* transfer the updated data to the GPU buffer */
+	commit_tst_buffer_expect_no_resize(text_mesh);
 }
 
 // getters
+RENDERER_API u32 vulkan_text_mesh_get_point_size(vulkan_text_mesh_t* text_mesh)
+{
+	return text_mesh->point_size;
+}
+
 RENDERER_API const char* vulkan_text_mesh_string_getH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
 {
 	return CAST_TO(const char*, buf_get_ptr(&get_text_stringH(text_mesh, handle)->str));
+}
+
+RENDERER_API u32 vulkan_text_mesh_string_get_point_sizeH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
+{
+	return get_text_stringH(text_mesh, handle)->point_size;
 }
 
 RENDERER_API mat4_t vulkan_text_mesh_string_get_transformH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
@@ -416,4 +481,9 @@ static vulkan_instance_buffer_t* get_instance_buffer(vulkan_renderer_t* renderer
 		index = dictionary_get_count(buffers) - 1;
 	}
 	return dictionary_get_value_ptr_at(buffers, index);
+}
+
+RENDERER_API font_t* vulkan_text_mesh_get_font(vulkan_text_mesh_t* text_mesh)
+{
+	return vulkan_glyph_mesh_pool_get_font(text_mesh->pool);
 }
