@@ -24,7 +24,6 @@ struct Color
 
 layout(std430, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
-    uvec2 tex_size;
     Color color;
     int space_type;
     int surface_type;
@@ -38,6 +37,8 @@ layout(std430, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer
 layout(location = POSITION_LOCATION) in vec3 position;
 
 layout(location = 5) in vec4 ofst_stid;
+
+layout(location = 0) out vec3 out_color;
 
 mat4 mat4_diagonal(float x, float y, float z, float w)
 {
@@ -87,13 +88,13 @@ void main()
         {
             switch(parameters.surface_type)
             {
-                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
+                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
                 {
-                    mat4 scale = mat4_identity(); //mat4_diagonal(100, 100, 100, 1);
+                    mat4 scale = mat4_diagonal(str_trans.point_size, str_trans.point_size, str_trans.point_size, 1);
                     clipPos = cameraInfo.screen * world * scale * localPos;
                     break;
                 }
-                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
+                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
                 {
                     mat4 scale = mat4_diagonal(str_trans.point_size, str_trans.point_size, str_trans.point_size, 1);
                     clipPos = displayInfo.matrix * world * scale * localPos;
@@ -106,13 +107,13 @@ void main()
         {
             switch(parameters.surface_type)
             {
-                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
+                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
                 {
                     mat4 scale = mat4_diagonal(0.3, 0.3, 0.3, 1);
                     clipPos = cameraInfo.projection * cameraInfo.view * world * scale * localPos;
-                }
                     break;
-                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
+                }
+                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
                 {
                     mat4 scale = mat4_diagonal(str_trans.point_size, str_trans.point_size, str_trans.point_size, 1);
                     clipPos = displayInfo.matrix * world * scale * localPos;
@@ -123,4 +124,5 @@ void main()
         }
     }
     gl_Position = vec4(clipPos.x, -clipPos.y, clipPos.z, clipPos.w);
+    out_color = vec3(parameters.color.r, parameters.color.g, parameters.color.b);
 }
