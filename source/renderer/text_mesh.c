@@ -13,6 +13,11 @@ RENDERER_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool
     return vulkan_text_mesh_create(VULKAN_RENDERER(renderer), pool);
 }
 
+RENDERER_API void text_mesh_create_no_alloc(renderer_t* renderer, glyph_mesh_pool_t* pool, text_mesh_t OUT text)
+{
+    vulkan_text_mesh_create_no_alloc(VULKAN_RENDERER(renderer), pool, text);
+}
+
 RENDERER_API void text_mesh_destroy(text_mesh_t* text)
 {
     vulkan_text_mesh_destroy(text);

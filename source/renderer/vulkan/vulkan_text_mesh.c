@@ -60,17 +60,25 @@ RENDERER_API vulkan_text_mesh_t* vulkan_text_mesh_new(memory_allocator_t* alloca
 
 RENDERER_API vulkan_text_mesh_t* vulkan_text_mesh_create(vulkan_renderer_t* renderer, vulkan_glyph_mesh_pool_t* pool)
 {
+	vulkan_text_mesh_t* text = vulkan_text_mesh_new(renderer->allocator);
+	vulkan_text_mesh_create_no_alloc(renderer, pool, text);
+	return text;
+}
+
+RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_glyph_mesh_pool_t* pool, vulkan_text_mesh_t OUT text)
+{
 	_debug_assert__(pool != NULL);
-	vulkan_text_mesh_t* text_mesh = vulkan_text_mesh_new(renderer->allocator);
-	text_mesh->renderer = renderer;
-	text_mesh->glyph_render_data_buffers = dictionary_create(u16, vulkan_instance_buffer_t, 0, dictionary_key_comparer_u16);
-	text_mesh->strings = buf_create(sizeof(vulkan_text_mesh_string_t), 1, 0);
-	text_mesh->pool = pool;
-	text_mesh->free_list = BUF_INVALID_INDEX; 		// free list
-	text_mesh->inuse_list = BUF_INVALID_INDEX; 		// inuse list
-	text_mesh->render_space_type = VULKAN_TEXT_MESH_RENDER_SPACE_TYPE_2D;
-	text_mesh->render_surface_type = VULKAN_TEXT_MESH_RENDER_SURFACE_TYPE_CAMERA;
-	text_mesh->point_size = font_get_char_size(vulkan_glyph_mesh_pool_get_font(pool));
+	memzero(text, vulkan_text_mesh_t);
+	text->renderer = renderer;
+
+	text->glyph_render_data_buffers = dictionary_create(u16, vulkan_instance_buffer_t, 0, dictionary_key_comparer_u16);
+	text->strings = buf_create(sizeof(vulkan_text_mesh_string_t), 1, 0);
+	text->pool = pool;
+	text->free_list = BUF_INVALID_INDEX; 		// free list
+	text->inuse_list = BUF_INVALID_INDEX; 		// inuse list
+	text->render_space_type = VULKAN_TEXT_MESH_RENDER_SPACE_TYPE_2D;
+	text->render_surface_type = VULKAN_TEXT_MESH_RENDER_SURFACE_TYPE_CAMERA;
+	text->point_size = font_get_char_size(vulkan_glyph_mesh_pool_get_font(pool));
 
 	_debug_assert__(glsl_sizeof(glsl_mat4_t) == sizeof(glsl_mat4_t));
 
@@ -83,9 +91,7 @@ RENDERER_API vulkan_text_mesh_t* vulkan_text_mesh_create(vulkan_renderer_t* rend
 		/* this buffer will be indexed with glyph_render_data_t.stid */
 		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
 	};
-	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &text_mesh->text_string_transform_buffer);
-
-	return text_mesh;
+	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &text->text_string_transform_buffer);
 }
 
 RENDERER_API void vulkan_text_mesh_destroy(vulkan_text_mesh_t* text_mesh)
