@@ -135,7 +135,7 @@ static void subscription_dump(memory_allocator_t* allocator, subscription_t* sub
 
 RENDERER_API void event_publish(event_t* event)
 {
-	debug_log_info("***--event-publish-begin-%s--***", event->name);
+	DBG_EVENT_PUBLISH( debug_log_info("***--event-publish-begin-%s--***", event->name) );
 
 	/* create a copy of the signal table because it will modified during the invocations
 	 * also, signal table is used to determine how many subscribers/invocations can raise a particular signal */
@@ -152,7 +152,7 @@ RENDERER_API void event_publish(event_t* event)
 	BUFFER* stage_buffer = &event->stage_subscribers;
 
 	/* debuggin purpose only */
-	// if(event->is_dump_only)
+	NOT_DBG_EVENT_PUBLISH( if(event->is_dump_only) )
 	{
 		string_builder_clear(event->string_builder);
 		string_builder_append(event->string_builder, "\n");
@@ -181,7 +181,7 @@ RENDERER_API void event_publish(event_t* event)
 				/* if is_dump_only is true then just dump the invocation order but don't make a call to the handlers */
 				if(!event->is_dump_only && (handler != NULL) && subscription->is_active)
 					handler(event->publisher_data, subscription->invocation_data.handler_data);
-				// else if(event->is_dump_only)
+				NOT_DBG_EVENT_PUBLISH( else if(event->is_dump_only) )
 					subscription_dump(event->allocator, subscription, event->string_builder);
 
 				/* raise the signals which are requested to be raised by this invocation
@@ -210,12 +210,12 @@ RENDERER_API void event_publish(event_t* event)
 	} while((count = buf_get_element_count(stage_buffer)) > 0);
 
 	/* debugging purpose only */
-	//if(event->is_dump_only)
+	NOT_DBG_EVENT_PUBLISH( if(event->is_dump_only) )
 	{
 		string_builder_append_null(event->string_builder);
 		debug_log_info(string_builder_get_str(event->string_builder));
 	}
-	debug_log_info("***--event-publish-end--***");
+	DBG_EVENT_PUBLISH( debug_log_info("***--event-publish-end--***") );
 }
 
 RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file)
