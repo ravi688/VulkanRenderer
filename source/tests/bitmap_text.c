@@ -728,10 +728,12 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 		else if(ch == 'p')
 		{
 			bitmap_text_string_set_point_sizeH(this->text, this->another_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->another_string_handle) * 2);
+			bitmap_text_string_set_point_sizeH(this->text, this->text_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->text_string_handle) * 2);
 		}
 		else if(ch == 'q')
 		{
 			bitmap_text_string_set_point_sizeH(this->text, this->another_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->another_string_handle) / 2);
+			bitmap_text_string_set_point_sizeH(this->text, this->text_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->text_string_handle) / 2);
 		}
 		else if(ch == 'd')
 		{
@@ -751,9 +753,9 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 	counter = 0;
 	char buffer[128] =  { };
 	sprintf(buffer, "%d", counter);
-	bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
+	// bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
 	sprintf(buffer, "%d", counter);
-	bitmap_text_string_setH(this->text, this->another_string_handle, buffer);
+	// bitmap_text_string_setH(this->text, this->another_string_handle, buffer);
 
 	bitmap_glyph_atlas_texture_commit(this->texture, NULL);
 }

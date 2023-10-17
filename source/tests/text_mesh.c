@@ -104,12 +104,12 @@ TEST_ON_INITIALIZE(TEXT_MESH)
 	text_mesh_string_set_point_sizeH(this->text, this->another_string_handle, 24);
 	text_mesh_string_set_point_sizeH(this->text, this->text_string_handle, 35);
 	text_mesh_string_setH(this->text, this->another_string_handle, "Hardwork with dedication suffices to c");
-	text_mesh_string_setH(this->text, this->text_string_handle, "Hardwork with dedication suffices to c: 1234324");
+	text_mesh_string_setH(this->text, this->text_string_handle, "Hardwork with dedication suffices to c: e141234324");
 
 	this->text_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->text_object, this->text_material);
 	render_object_attach(this->text_object, this->text);
-	text_mesh_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, -400.0f, -400.0f));
+	text_mesh_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 400.0f, -400.0f));
 
 	render_scene_build_queues(this->scene);
 }
@@ -154,10 +154,12 @@ TEST_ON_UPDATE(TEXT_MESH)
 		else if(ch == 'p')
 		{
 			text_mesh_string_set_point_sizeH(this->text, this->another_string_handle, text_mesh_string_get_point_sizeH(this->text, this->another_string_handle) * 2);
+			text_mesh_string_set_point_sizeH(this->text, this->text_string_handle, text_mesh_string_get_point_sizeH(this->text, this->text_string_handle) * 2);
 		}
 		else if(ch == 'q')
 		{
 			text_mesh_string_set_point_sizeH(this->text, this->another_string_handle, text_mesh_string_get_point_sizeH(this->text, this->another_string_handle) / 2);
+			text_mesh_string_set_point_sizeH(this->text, this->text_string_handle, text_mesh_string_get_point_sizeH(this->text, this->text_string_handle) / 2);
 		}
 	}
 

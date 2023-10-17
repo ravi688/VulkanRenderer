@@ -361,6 +361,8 @@ RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vu
 		sub_buffer_clear(buffer, get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch));
 	}
 
+	AUTO font = vulkan_glyph_mesh_pool_get_font(text_mesh->pool);
+	f32 anchor_offset_y = font_get_ascender(font) / font_get_units_per_em(font);
 	// re-write on the sub buffers
 	float horizontal_pen = 0.0f;
 	for(u32 i = 0; i < len; i++)
@@ -379,7 +381,7 @@ RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vu
 
 		vulkan_text_mesh_glsl_glyph_render_data_t data =
 		{
-			.ofst = { 0.0f, 0.0f, horizontal_pen },
+			.ofst = { 0.0f, -anchor_offset_y, horizontal_pen },
 			.stid = U64_TO_U32(string->handle)
 		};
 		sub_buffer_push(buffer, handle, CAST_TO(void*, &data));
