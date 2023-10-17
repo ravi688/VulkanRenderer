@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_mesh.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -101,9 +101,11 @@ typedef struct vulkan_mesh_t
 
 	/* index buffer may be NULL also if not provided by the user */
 	vulkan_index_buffer_t index_buffer;
-	
-	u32 binding_index;  // INTERNAL 
+
+	u32 binding_index;  // INTERNAL
 } vulkan_mesh_t;
+
+#define VULKAN_MESH(ptr) CAST_TO(vulkan_mesh_t*, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -130,8 +132,8 @@ RENDERER_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_c
 
 RENDERER_API void vulkan_mesh_set_material(vulkan_mesh_t* mesh, vulkan_material_t* material);
 
-/* adds a vertex buffer to the mesh with binding as 'binding' 
- * NOTE: it's more efficient to pass 'binding' as consecutive integers (>= 0) 
+/* adds a vertex buffer to the mesh with binding as 'binding'
+ * NOTE: it's more efficient to pass 'binding' as consecutive integers (>= 0)
  * Because, this function internally groups consecutive bindings and binds the vertex buffers with consecutive bindings in one vkCmdBindVertexBuffers call */
 RENDERER_API void vulkan_mesh_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, u32 binding);
 RENDERER_API void vulkan_mesh_set_index_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, VkIndexType vo_type);

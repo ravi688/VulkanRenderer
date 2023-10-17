@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: string.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -55,3 +55,5 @@ static FORCE_INLINE string_t string_null() { return (string_t) { NULL, 0 }; }
 		nothing
  */
 RENDERER_API void string_destroy(string_t* str);
+
+RENDERER_API u32 strlen_safe(const char* str);

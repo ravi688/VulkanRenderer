@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: renderer.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -55,7 +55,7 @@
 	typedef directx_material_library_t material_library_t;
 	typedef directx_camera_system_t camera_system_t;
 #	define RENDERER(dx_ptr) ((dx_ptr)->renderer)
-#	define DIRECTX_RENDERER(ptr) ((ptr)->directx_handle)	
+#	define DIRECTX_RENDERER(ptr) ((ptr)->directx_handle)
 #elif RENDERER_METAL_DRIVER
 #	include <renderer/internal/metal/metal_renderer.h>
 	typedef metal_renderer_t driver_t;
@@ -89,8 +89,9 @@ typedef struct renderer_t
 		driver_t* handle;
 		driver_t* driver;
 	};
-	
+
 	memory_allocator_t* allocator;
+	IF_DEBUG(string_builder_t* debug_log_builder;)
 	FT_Library ft_library;
 	// shader_library_t* shader_library;
 	// material_library_t* material_library;

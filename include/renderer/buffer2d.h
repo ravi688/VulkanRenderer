@@ -70,9 +70,17 @@ typedef hash_table_t filled_rect_info_table_t;
 /* list of rect2d_info_t objects which can be looked up in constant time */
 typedef hash_table_t vacant_rect_info_table_t;
 
+typedef void (*packed_rect_relocate_callback_t)(const rect2d_info_t* before, const rect2d_info_t* after, void* user_data);
+
 typedef struct buffer2d_t
 {
 	memory_allocator_t* allocator;
+
+	#if DBG_ENABLED(BUFFER2D_RESIZE)
+		packed_rect_relocate_callback_t packed_rect_relocate_callback;
+		void* packed_rect_relocate_callback_handler_user_data;
+	#endif /* DBG_BUFFER2D_RESIZE */
+
 	/* linear buffer */
 	buffer_t* buffer;
 	/* 2d view of the linear buffer */
@@ -93,6 +101,7 @@ typedef struct buffer2d_t
 	u32 counter;
 } buffer2d_t;
 
+typedef buffer2d_t* buffer2d_ptr_t;
 
 BEGIN_CPP_COMPATIBLE
 
@@ -112,7 +121,7 @@ RENDERER_API void buffer2d_get_rect_data(buffer2d_t* buffer, filled_rect_info_t*
 #ifdef GLOBAL_DEBUG
 RENDERER_API bool buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height);
 #endif /* GLOBAL_DEBUG */
-/* creates a buffer2d element and adds a value with a key and size (width, height) 
+/* creates a buffer2d element and adds a value with a key and size (width, height)
  * returns true if the size has been resized, otherwise false */
 RENDERER_API bool buffer2d_push(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color));
 /* creates a buffer2d element and broadcasts a value of size 'size' to the entire rect with a key
@@ -128,5 +137,13 @@ RENDERER_API f32 buffer2d_get_packing_efficiency(buffer2d_t* buffer);
 #ifdef GLOBAL_DEBUG
 RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name);
 #endif /* GLOBAL_DEBUG */
+
+#if DBG_ENABLED(BUFFER2D_RESIZE)
+static INLINE_IF_RELEASE_MODE void buffer2d_set_packed_rect_relocate_callback_handler(buffer2d_t* buffer, packed_rect_relocate_callback_t handler, void* user_data)
+{
+	buffer->packed_rect_relocate_callback = handler;
+	buffer->packed_rect_relocate_callback_handler_user_data = user_data;
+}
+#endif /* DBG_BUFFER_RESIZE */
 
 END_CPP_COMPATIBLE

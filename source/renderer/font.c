@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: font.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -61,6 +61,7 @@ RENDERER_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 le
 	memzero(font, font_t);
 	font->renderer = renderer;
 	font->dpi = display_get_dpi();
+	font->loaded_point_size = 0;
 
 	/* save the font data */
 	font->ft_data = memory_allocator_alloc(renderer->allocator, MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, length);
@@ -91,7 +92,7 @@ RENDERER_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 le
 	else
 		font_set_char_size(font, 11);
 
-	font->glyph_info_table = hash_table_create(utf32_t, font_glyph_info_t, 128, utf32_equal_to, utf32_hash);
+	font->glyph_info_table = hash_table_create(pair_t(utf32_t, u32), font_glyph_info_t, 128, utf32_u32_equal_to, utf32_u32_hash);
 }
 
 RENDERER_API font_t* font_load_and_create(renderer_t* renderer, const char* file_name)
@@ -127,6 +128,8 @@ RENDERER_API void font_release_resources(font_t* font)
 
 RENDERER_API void font_set_char_size(font_t* font, u32 point_size)
 {
+	if(font->point_size == point_size) return;
+
 	if(font->ft_handle != NULL)
 		if(FT_Set_Char_Size(font->ft_handle, 0, point_size << 6, font->dpi.x, font->dpi.y) != 0)
 			debug_log_fetal_error("Failed to set char size");
@@ -138,6 +141,18 @@ RENDERER_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info
 	if(font->ft_handle != NULL)
 	{
 		AUTO glyph_index = FT_Get_Char_Index(font->ft_handle, unicode);
+
+		/* if a glyph with the same glyph index and the same point size is already loaded then we can skip */
+		if((glyph_index == font->ft_handle->glyph->glyph_index) && (font->loaded_point_size == font->point_size))
+		{
+			#if GLOBAL_DEBUG
+				/* NOTE: we can't use IF_DEBUG macro here, as the ',' will be treated as another parameter next */
+				AUTO key = make_pair(utf32_t, u32) { unicode, font->point_size };
+			#endif /* GLOBAL_DEBUG */
+			_debug_assert__(hash_table_contains(&font->glyph_info_table, &key));
+			return true;
+		}
+
 		AUTO error = FT_Load_Glyph(font->ft_handle, glyph_index, FT_LOAD_DEFAULT);
 		if(error != 0)
 		{
@@ -145,35 +160,39 @@ RENDERER_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info
 			return false;
 		}
 
+		font->loaded_point_size = font->point_size;
 
-		FT_GlyphSlot glyph_slot = font->ft_handle->glyph;
+		bool is_graph = isgraph(CAST_TO(s32, unicode)) != 0;
+		AUTO key = make_pair(utf32_t, u32) { unicode, font->point_size };
+		if(!hash_table_contains(&font->glyph_info_table, &key))
+		{
+			FT_GlyphSlot glyph_slot = font->ft_handle->glyph;
 
-		font_glyph_info_t info = { };
+			font_glyph_info_t info = { };
 
-		/* fill up the glyph information */
-		info.index = glyph_slot->glyph_index;
-		info.advance_width = CAST_TO(f32, glyph_slot->advance.x >> 6);
-		_debug_assert__(glyph_slot->advance.x == glyph_slot->metrics.horiAdvance);
-		info.width = CAST_TO(f32, glyph_slot->metrics.width >> 6);
-		info.height = CAST_TO(f32, glyph_slot->metrics.height >> 6);
-		info.bearing_x = CAST_TO(f32, glyph_slot->metrics.horiBearingX >> 6);
-		info.bearing_y = CAST_TO(f32, glyph_slot->metrics.horiBearingY >> 6);
-		info.bitmap_top = CAST_TO(f32, glyph_slot->bitmap_top >> 6);
-		info.bitmap_left = CAST_TO(f32, glyph_slot->bitmap_left >> 6);
-		info.right_side_bearing = info.advance_width - (info.left_side_bearing + info.width);
-		info.min_x = info.bearing_x;
-		info.min_y = info.bearing_y - info.height;
-		info.max_x = info.bearing_x + info.width;
-		info.max_y = info.bearing_y;
-		info.is_graph = isgraph(CAST_TO(s32, unicode)) != 0;
+			/* fill up the glyph information */
+			info.index = glyph_slot->glyph_index;
+			info.advance_width = CAST_TO(f32, glyph_slot->advance.x >> 6);
+			_debug_assert__(glyph_slot->advance.x == glyph_slot->metrics.horiAdvance);
+			info.width = CAST_TO(f32, glyph_slot->metrics.width >> 6);
+			info.height = CAST_TO(f32, glyph_slot->metrics.height >> 6);
+			info.bearing_x = CAST_TO(f32, glyph_slot->metrics.horiBearingX >> 6);
+			info.bearing_y = CAST_TO(f32, glyph_slot->metrics.horiBearingY >> 6);
+			info.bitmap_top = CAST_TO(f32, glyph_slot->bitmap_top >> 6);
+			info.bitmap_left = CAST_TO(f32, glyph_slot->bitmap_left >> 6);
+			info.right_side_bearing = info.advance_width - (info.left_side_bearing + info.width);
+			info.min_x = info.bearing_x;
+			info.min_y = info.bearing_y - info.height;
+			info.max_x = info.bearing_x + info.width;
+			info.max_y = info.bearing_y;
+			info.is_graph = is_graph;
 
-		if(!hash_table_contains(&font->glyph_info_table, &unicode))
-			hash_table_add(&font->glyph_info_table, &unicode, &info);
+			hash_table_add(&font->glyph_info_table, &key, &info);
 
-		if(glyph_info != NULL)
-			OUT glyph_info = info;
-
-		return info.is_graph;
+			if(glyph_info != NULL)
+				OUT glyph_info = info;
+		}
+		return is_graph;
 	}
 	IF_DEBUG (else { debug_log_fetal_error("Freetype font is NULL, couldn't load glyph %lu", unicode); return false; })
 	return false;
@@ -193,15 +212,15 @@ RENDERER_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bit
 			return false;
 		}
 
-		if(bitmap == NULL)
-			return true;
-
-		FT_Bitmap _bitmap = font->ft_handle->glyph->bitmap;
-		_debug_assert__(_bitmap.pixel_mode == 2);
-		bitmap->pixels = _bitmap.buffer;
-		bitmap->width = _bitmap.width;
-		bitmap->height = _bitmap.rows;
-		bitmap->channel_count = 1;
+		if(bitmap != NULL)
+		{
+			FT_Bitmap _bitmap = font->ft_handle->glyph->bitmap;
+			_debug_assert__(_bitmap.pixel_mode == 2);
+			bitmap->pixels = _bitmap.buffer;
+			bitmap->width = _bitmap.width;
+			bitmap->height = _bitmap.rows;
+			bitmap->channel_count = 1;
+		}
 	}
 	IF_DEBUG (else { debug_log_fetal_error("Freetype font is NULL, couldn't render glyph %lu", unicode); return false; })
 	return true;
@@ -270,14 +289,12 @@ RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_
 
 RENDERER_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info)
 {
-	void* ptr = hash_table_get_value(&font->glyph_info_table, &unicode);
+	AUTO key = make_pair(utf32_t, u32) { unicode, font->point_size };
+	void* ptr = hash_table_get_value(&font->glyph_info_table, &key);
 	if(ptr != NULL)
 		OUT info = DREF_TO(font_glyph_info_t, ptr);
 	else
-	{
 		font_load_glyph(font, unicode, info);
-		debug_log_warning("no glyph info found for the glyph %lu, calling font_load_glyph to get info", unicode);
-	}
 }
 
 RENDERER_API f32 font_get_ascender(font_t* font)

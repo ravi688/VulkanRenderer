@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: text_mesh.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -47,13 +47,12 @@ TEST_DATA(TEXT_MESH)
 	glyph_mesh_pool_t* glyph_pool;
 	font_t* font;
 
-	text_mesh_t* text_mesh;
-	text_mesh_string_handle_t string_handle;
+	text_mesh_t* text;
+	text_mesh_string_handle_t text_string_handle;
+	text_mesh_string_handle_t another_string_handle;
 
-	render_object_t* render_object;
-	material_t* material;
-
-	int isScreenSpace; /* bools are not support currently in V3DShader (see: TID64)*/
+	render_object_t* text_object;
+	material_t* text_material;
 };
 
 
@@ -79,38 +78,46 @@ TEST_ON_INITIALIZE(TEXT_MESH)
 
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(this->camera, COLOR_GREEN, 1.0f);
+	camera_set_clear(this->camera, COLOR_BLACK, 1.0f);
 	camera_set_active(this->camera, true);
 	camera_set_transform(this->camera, mat4_mul(2, mat4_translation(-1.8f, 0.6f, 0), mat4_rotation(0, 0, -22 * DEG2RAD)));
 
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
 
-	this->material = material_library_getH(mlib, 
-							material_library_create_materialH(mlib, 
-							shader_library_load_shader(slib, 
-								"shaders/builtins/text_shader.sb"), "MyMaterial"));
-	this->isScreenSpace = 1;
-	material_set_int(this->material, "parameters.isScreenSpace", 1);
+	this->text_material = material_library_getH(mlib,
+							material_library_create_materialH(mlib,
+							shader_library_create_shader_from_preset(slib, SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH),
+							"TextMeshShader"));
 
 	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
-	this->glyph_pool = glyph_mesh_pool_create(renderer, this->font);
-	this->text_mesh = text_mesh_create(renderer, this->glyph_pool);
-	this->string_handle = text_mesh_string_create(this->text_mesh);
-	text_mesh_string_setH(this->text_mesh, this->string_handle, "Screen Space");
+	font_set_char_size(this->font, 24);
 
-	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
-	render_object_set_material(this->render_object, this->material);
-	render_object_attach(this->render_object, this->text_mesh);
-	render_object_set_transform(this->render_object, mat4_translation(0.0f, 0.0f, -3.0f));
+	/* glyph mesh pool */
+	this->glyph_pool = glyph_mesh_pool_create(renderer, this->font);
+
+	material_set_float(this->text_material, "parameters.color.r", 1.0f);
+	material_set_float(this->text_material, "parameters.color.g", 1.0f);
+	material_set_float(this->text_material, "parameters.color.b", 1.0f);
+	this->text = text_mesh_create(renderer, this->glyph_pool);
+	this->text_string_handle = text_mesh_string_create(this->text);
+	this->another_string_handle = text_mesh_string_create(this->text);
+	text_mesh_string_set_point_sizeH(this->text, this->another_string_handle, 24);
+	text_mesh_string_set_point_sizeH(this->text, this->text_string_handle, 35);
+	text_mesh_string_setH(this->text, this->another_string_handle, "Hardwork with dedication suffices to c");
+	text_mesh_string_setH(this->text, this->text_string_handle, "Hardwork with dedication suffices to c: e141234324");
+
+	this->text_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->text_object, this->text_material);
+	render_object_attach(this->text_object, this->text);
+	text_mesh_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 400.0f, -400.0f));
 
 	render_scene_build_queues(this->scene);
-
 }
 
 TEST_ON_TERMINATE(TEXT_MESH)
 {
-	text_mesh_destroy(this->text_mesh);
-	text_mesh_release_resources(this->text_mesh);
+	text_mesh_destroy(this->text);
+	text_mesh_release_resources(this->text);
 	font_destroy(this->font);
 	font_release_resources(this->font);
 	glyph_mesh_pool_destroy(this->glyph_pool);
@@ -122,25 +129,52 @@ TEST_ON_TERMINATE(TEXT_MESH)
 
 TEST_ON_UPDATE(TEXT_MESH)
 {
+	static bool isScreenSpace = true;
 	if(kbhit())
 	{
-		getch();
-		this->isScreenSpace = !this->isScreenSpace;
-		material_set_int(this->material, "parameters.isScreenSpace", this->isScreenSpace);
-		switch(this->isScreenSpace)
+		char ch = getch();
+		if((ch != 'p') && (ch != 'q'))
 		{
-			case 0:
-				text_mesh_string_setH(this->text_mesh, this->string_handle, "World Space");
-				break;
-			case 1:
-				text_mesh_string_setH(this->text_mesh, this->string_handle, "Screen Space");
-				break;
+			isScreenSpace = !isScreenSpace;
+			if(isScreenSpace)
+			{
+				text_mesh_set_render_space_type(this->text, TEXT_MESH_RENDER_SPACE_TYPE_2D);
+				debug_log_info("TEXT_MESH_RENDER_SPACE_TYPE_2D");
+				render_object_set_transform(this->text_object, mat4_identity());
+				text_mesh_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 400.0f, -400.0f));
+			}
+			else
+			{
+				text_mesh_set_render_space_type(this->text, TEXT_MESH_RENDER_SPACE_TYPE_3D);
+				debug_log_info("TEXT_MESH_RENDER_SPACE_TYPE_3D");
+				render_object_set_transform(this->text_object, mat4_mul(3, mat4_rotation_y(45 DEG), mat4_scale(0.005f, 0.005f, 0.005f), mat4_translation(0.0f, 0.0f, -0.5f)));
+				text_mesh_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 30.0f, 0.0f));
+			}
+		}
+		else if(ch == 'p')
+		{
+			text_mesh_string_set_point_sizeH(this->text, this->another_string_handle, text_mesh_string_get_point_sizeH(this->text, this->another_string_handle) * 2);
+			text_mesh_string_set_point_sizeH(this->text, this->text_string_handle, text_mesh_string_get_point_sizeH(this->text, this->text_string_handle) * 2);
+		}
+		else if(ch == 'q')
+		{
+			text_mesh_string_set_point_sizeH(this->text, this->another_string_handle, text_mesh_string_get_point_sizeH(this->text, this->another_string_handle) / 2);
+			text_mesh_string_set_point_sizeH(this->text, this->text_string_handle, text_mesh_string_get_point_sizeH(this->text, this->text_string_handle) / 2);
 		}
 	}
+
+	static int counter = 0;
+	counter++;
+	if(counter == 66000)
+	counter = 0;
+	char buffer[128] =  { };
+	sprintf(buffer, "%d", counter);
+	text_mesh_string_setH(this->text, this->text_string_handle, buffer);
+	sprintf(buffer, "%d", counter);
+	text_mesh_string_setH(this->text, this->another_string_handle, buffer);
 }
 
 TEST_ON_RENDER(TEXT_MESH)
 {
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 }
-

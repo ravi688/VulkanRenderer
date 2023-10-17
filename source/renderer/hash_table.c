@@ -74,11 +74,11 @@ static void* __create_key_value_pair(hash_table_t* table, void* key, void* value
 	return buffer;
 }
 
-typedef_pair_t(hash_table_t*, void*);
+typedef_pair_t(hash_table_ptr_t, void_ptr_t);
 
 static bool is_equal(void* lhs, void* rhs)
 {
-	AUTO pair = CAST_TO(pair_t(hash_table_t*, void*)*, rhs);
+	AUTO pair = CAST_TO(pair_t(hash_table_ptr_t, void_ptr_t)*, rhs);
 	return pair->first->is_equal(CAST_TO(void*, DREF_TO(u8*, (void**)lhs)), pair->second);
 }
 
@@ -87,7 +87,7 @@ RENDERER_API void hash_table_add(hash_table_t* table, void* key, void* value)
 	sub_buffer_handle_t bucket_handle = get_bucket_handle(table, key);
 
 	/* if a key with the same hash already exists then don't add */
-	pair_t(hash_table_t*, void*) pair = { table, key };
+	pair_t(hash_table_ptr_t, void_ptr_t) pair = { table, key };
 	if(sub_buffer_find_index_of(&table->buffer, bucket_handle, &pair, is_equal) != BUF_INVALID_INDEX)
 	{
 		debug_log_warning("Failed to add key value pair as a key with the same hash already exists in the hash table");
@@ -103,7 +103,7 @@ RENDERER_API void hash_table_add(hash_table_t* table, void* key, void* value)
 static void** __hash_table_get_value(hash_table_t* table, void* key)
 {
 	AUTO bucket_handle = get_bucket_handle(table, key);
-	pair_t(hash_table_t*, void*) pair = { table, key };
+	pair_t(hash_table_ptr_t, void_ptr_t) pair = { table, key };
 	AUTO index = sub_buffer_find_index_of(&table->buffer, bucket_handle, &pair, is_equal);
 	/* if not found then return NULL */
 	if(index == BUF_INVALID_INDEX)
@@ -118,7 +118,7 @@ RENDERER_API bool hash_table_remove(hash_table_t* table, void* key)
 	void* _ptr = NULL;
 	if(ptr != NULL)
 		_ptr = DREF_VOID_PTR(ptr);
-	pair_t(hash_table_t*, void*) pair = { table, key };
+	pair_t(hash_table_ptr_t, void_ptr_t) pair = { table, key };
 	bool result = sub_buffer_remove(&table->buffer, get_bucket_handle(table, key), &pair, is_equal);
 	if(ptr != NULL)
 	{
@@ -129,7 +129,7 @@ RENDERER_API bool hash_table_remove(hash_table_t* table, void* key)
 
 RENDERER_API bool hash_table_contains(hash_table_t* table, void* key)
 {
-	pair_t(hash_table_t*, void*) pair = { table, key };
+	pair_t(hash_table_ptr_t, void_ptr_t) pair = { table, key };
 	return sub_buffer_find_index_of(&table->buffer, get_bucket_handle(table, key), &pair, is_equal) != BUF_INVALID_INDEX;
 }
 

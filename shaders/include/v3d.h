@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: v3d.h is a part of VulkanRenderer
@@ -20,8 +20,14 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+#define TEXT_RENDER_SPACE_TYPE_2D 0
+#define TEXT_RENDER_SPACE_TYPE_3D 1
+
+#define TEXT_RENDER_SURFACE_TYPE_CAMERA 0
+#define TEXT_RENDER_SURFACE_TYPE_SCREEN 1
 
 
 /* set constants */

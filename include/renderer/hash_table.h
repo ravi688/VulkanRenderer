@@ -25,6 +25,8 @@ typedef struct hash_table_t
 	bucket_handle_list_t bucket_handles;
 } hash_table_t;
 
+typedef hash_table_t* hash_table_ptr_t;
+
 BEGIN_CPP_COMPATIBLE
 
 /* constructor and destructors */

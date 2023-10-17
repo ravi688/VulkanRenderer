@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_shader_resource_description.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -47,7 +47,7 @@ typedef struct vulkan_shader_resource_description_t
 		u8 binding_number; 						// if this is a descriptor then what is the binding number ?
 		u8 vertex_attrib_location_number;		// if this is an attribute then what is the location number ?
 	};
-	union 
+	union
 	{
 		u8 set_number; 							// if this is a descriptor then what is the set number ?
 		u8 vertex_attrib_binding_number;		// if this is an attribute then what is the binding number ?
@@ -56,6 +56,8 @@ typedef struct vulkan_shader_resource_description_t
 	//NOTE: These bit descriptions are based on the vulkan_shader_stage_t and vulkan_shader_stage_t enums
 	u8 stage_flags; 	// BIT(0) = vertex shader, BIT(1) = fragment shader, BIT(2) = geometry shader, BIT(3) = tessellation shader
 } vulkan_shader_resource_description_t;
+
+typedef vulkan_shader_resource_description_t* vulkan_shader_resource_description_ptr_t;
 
 
 RENDERER_API void vulkan_shader_resource_description_add_opaque(vulkan_renderer_t* renderer,  vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 set_number, u32 binding_number);

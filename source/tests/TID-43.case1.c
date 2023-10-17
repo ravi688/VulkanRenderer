@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: TID-43.case1.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -80,20 +80,20 @@ TEST_ON_RENDERER_INITIALIZE(TID_43_CASE_1)
 
 TEST_ON_INITIALIZE(TID_43_CASE_1)
 {
-	memory_allocator_create_info_t create_info = 
+	memory_allocator_create_info_t create_info =
 	{
 
 	};
 	this->allocator = memory_allocator_create(&create_info);
 
-	this->event = event_create(this->allocator, this);
+	this->event = event_create(this->allocator, this PARAM_IF_DEBUG("Test event"));
 
 	/* 	[VULKAN_IMAGE_RECREATE_FINISH | VULKAN_IMAGE_VIEW_RECREATE_FINISH, NOTHING]
-		[VULKAN_IMAGE_RECREATE_FINISH, NOTHING] 
-		[NOTHING, VULKAN_IMAGE_RECREATE_FINISH] 
+		[VULKAN_IMAGE_RECREATE_FINISH, NOTHING]
+		[NOTHING, VULKAN_IMAGE_RECREATE_FINISH]
 	 */
 
-	event_subscription_create_info_t info4 = 
+	event_subscription_create_info_t info4 =
 	{
 		.handler = gfx_pipeline_recreate,
 		.handler_data = NULL,
@@ -103,7 +103,7 @@ TEST_ON_INITIALIZE(TID_43_CASE_1)
 
 	event_subscribe(this->event, &info4);
 
-	event_subscription_create_info_t info3 = 
+	event_subscription_create_info_t info3 =
 	{
 		.handler = framebuffer_recreate,
 		.handler_data = NULL,
@@ -113,7 +113,7 @@ TEST_ON_INITIALIZE(TID_43_CASE_1)
 
 	event_subscribe(this->event, &info3);
 
-	event_subscription_create_info_t info2 = 
+	event_subscription_create_info_t info2 =
 	{
 		.handler = image_view_recreate,
 		.handler_data = NULL,
@@ -123,7 +123,7 @@ TEST_ON_INITIALIZE(TID_43_CASE_1)
 
 	event_subscribe(this->event, &info2);
 
-	event_subscription_create_info_t info = 
+	event_subscription_create_info_t info =
 	{
 		.handler = image_recreate,
 		.handler_data = NULL,
@@ -133,7 +133,7 @@ TEST_ON_INITIALIZE(TID_43_CASE_1)
 
 	this->handle = event_subscribe(this->event, &info);
 
-	event_subscription_create_info_t info5 = 
+	event_subscription_create_info_t info5 =
 	{
 		.handler = swapchain_recreate,
 		.handler_data = NULL,

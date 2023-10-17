@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: font.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -35,6 +35,10 @@
 typedef u32 utf32_t;
 #define utf32_equal_to u32_equal_to
 #define utf32_hash u32_hash
+
+typedef_pair_t(utf32_t, u32);
+#define utf32_u32_equal_to u64_equal_to
+#define utf32_u32_hash u64_hash
 
 enum
 {
@@ -64,10 +68,10 @@ typedef struct font_glyph_info_t
 	/* advance */
 	f32 advance_width;
 
-	/* width of the glyph bounding box in point size (72 points equals to 1 inch) 
+	/* width of the glyph bounding box in point size (72 points equals to 1 inch)
 	 * it can be calculated as: max_x - max_y */
 	f32 width;
-	/* height of the glyph bounding box in point size (72 points equals to 1 inch) 
+	/* height of the glyph bounding box in point size (72 points equals to 1 inch)
 	 * it can be calculated as: max_y - min_y */
 	f32 height;
 
@@ -79,7 +83,7 @@ typedef struct font_glyph_info_t
 	};
 	/* vertical bearing (distance of the top most edge of the bouding box of the glyph from the baseline of the font */
 	f32 bearing_y;
-	/* right side bearing (distance of the right most edge of the bouding box of the glyph from the advance width 
+	/* right side bearing (distance of the right most edge of the bouding box of the glyph from the advance width
 	 * it can be calculated as: advance_width - left_side_bearing - width */
 	f32 right_side_bearing;
 
@@ -116,7 +120,8 @@ typedef struct font_t
 	};
 	/* display resolution in dpi */
 	iextent2d_t dpi;
-	f32 point_size;
+	u32 point_size;
+	u32 loaded_point_size;
 	/* cached glyph infos as we are not sure how does the FT_Load_Glyph works and how much expensive it is */
 	hash_table_t glyph_info_table;
 } font_t;
@@ -155,7 +160,7 @@ RENDERER_API f32 font_get_ascender(font_t* font);
 RENDERER_API f32 font_get_units_per_em(font_t* font);
 
 /* returns the point size of the characters in the font */
-static INLINE_IF_RELEASE_MODE f32 font_get_char_size(font_t* font) { return font->point_size; }
+static INLINE_IF_RELEASE_MODE u32 font_get_char_size(font_t* font) { return font->point_size; }
 
 static INLINE_IF_RELEASE_MODE f32 get_inches_from_point_size(u32 point_size)
 {

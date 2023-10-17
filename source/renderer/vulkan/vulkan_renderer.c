@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_renderer.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <renderer/internal/vulkan/vulkan_defines.h>
@@ -143,8 +143,8 @@ static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, re
 		return surface_capabilities->currentExtent;
 	u32 width, height;
 	render_window_get_framebuffer_extent(window, &width, &height);
-	return (VkExtent2D) 
-	{ 
+	return (VkExtent2D)
+	{
 		clamp_u32(width, surface_capabilities->minImageExtent.width, surface_capabilities->maxImageExtent.width),
 		clamp_u32(height, surface_capabilities->minImageExtent.height, surface_capabilities->maxImageExtent.height)
 	};
@@ -157,8 +157,8 @@ static void setup_global_set(vulkan_renderer_t* renderer);
 static VkSemaphore get_semaphore(vulkan_renderer_t* renderer)
 {
 	VkSemaphore semaphore;
-	VkSemaphoreCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO }; 
-	vkCall(vkCreateSemaphore(renderer->logical_device->vo_handle, &createInfo, VULKAN_ALLOCATION_CALLBACKS(renderer), &semaphore)); 
+	VkSemaphoreCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+	vkCall(vkCreateSemaphore(renderer->logical_device->vo_handle, &createInfo, VULKAN_ALLOCATION_CALLBACKS(renderer), &semaphore));
 	return semaphore;
 }
 static VkFence get_unsigned_fence(vulkan_renderer_t* renderer)
@@ -176,6 +176,7 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulk
 	renderer->renderer = _renderer;
 	renderer->allocator = _renderer->allocator;
 	renderer->vk_allocator = vulkan_allocator_create(_renderer->allocator);
+	IF_DEBUG( renderer->debug_log_builder = _renderer->debug_log_builder );
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[3] = { "VK_KHR_surface", "VK_KHR_win32_surface" };
@@ -184,7 +185,7 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulk
 	u32 physical_device_count = vulkan_instance_get_physical_device_count(renderer->instance);
 
 DEBUG_BLOCK
-(	
+(
 	BUFFER log_buffer = buf_create(sizeof(char), 0, 0);
 	vulkan_instance_to_string(renderer->instance, &log_buffer);
 	for(u32 i = 0; i < physical_device_count; i++)
@@ -192,14 +193,14 @@ DEBUG_BLOCK
 	buf_push_char(&log_buffer, 0);
 	log_msg(buf_get_ptr(&log_buffer));
 )
-	
+
 	vulkan_physical_device_t* physical_device = find_physical_device(physical_devices, physical_device_count, preferred_gpu_type);
 	renderer->physical_device = physical_device;
 
 
 	// create window
 	renderer->window = render_window_init(renderer->allocator, width, height, title, full_screen, resizable);
-	event_subscription_create_info_t subscription = 
+	event_subscription_create_info_t subscription =
 	{
 		.handler = EVENT_HANDLER(recreate_swapchain),
 		.handler_data = (void*)renderer,
@@ -238,7 +239,7 @@ DEBUG_BLOCK
 	log_msg(buf_get_ptr(&log_buffer));
 )
 	memory_allocator_dealloc(renderer->allocator, surface_formats);
-	
+
 	// setup the present mode
 	u32 present_mode_count;
 	VkPresentModeKHR* present_modes = vulkan_physical_device_get_present_modes(physical_device, renderer->vo_surface, &present_mode_count);
@@ -314,7 +315,7 @@ DEBUG_BLOCK
 
 	// setup command pool
 	renderer->vo_command_pool = vulkan_command_pool_create(renderer, queue_family_indices[0], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-	
+
 	// setup command buffers
 	renderer->vo_command_buffers = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CMD_BUFFER_ARRAY, VkCommandBuffer, image_count);
 	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, image_count, renderer->vo_command_buffers);
@@ -323,7 +324,7 @@ DEBUG_BLOCK
 	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, 1, &renderer->vo_aux_command_buffer);
 
 	//Set up graphics queue
-	vkGetDeviceQueue(renderer->logical_device->vo_handle, queue_family_indices[0], 0, &renderer->vo_graphics_queue); 
+	vkGetDeviceQueue(renderer->logical_device->vo_handle, queue_family_indices[0], 0, &renderer->vo_graphics_queue);
 
 	//Create Swapchain
 	vulkan_swapchain_create_info_t swapchain_info =
@@ -369,9 +370,9 @@ DEBUG_BLOCK
 	// create the shader and material library
 	renderer->shader_library = vulkan_shader_library_create(renderer);
 	renderer->material_library = vulkan_material_library_create(renderer, renderer->shader_library);
-	
+
 	// create render pass pool
-	renderer->render_pass_pool = vulkan_render_pass_pool_create(renderer);	
+	renderer->render_pass_pool = vulkan_render_pass_pool_create(renderer);
 
 	// create camera system
 	renderer->camera_system = vulkan_camera_system_create(renderer);
@@ -380,7 +381,7 @@ DEBUG_BLOCK
 
 static void setup_global_set(vulkan_renderer_t* renderer)
 {
-	vulkan_descriptor_set_create_info_t set_create_info = 
+	vulkan_descriptor_set_create_info_t set_create_info =
 	{
 		.vo_pool = renderer->vo_descriptor_pool,
 		.layout = &renderer->global_set_layout
@@ -391,7 +392,7 @@ static void setup_global_set(vulkan_renderer_t* renderer)
 
 static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t* renderer)
 {
-	VkDescriptorSetLayoutBinding binding = 
+	VkDescriptorSetLayoutBinding binding =
 	{
 		.binding = VULKAN_DESCRIPTOR_BINDING_TRANSFORM,
 		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -407,7 +408,7 @@ static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t
 
 static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t* renderer)
 {
-	VkDescriptorSetLayoutBinding binding = 
+	VkDescriptorSetLayoutBinding binding =
 	{
 		.binding = VULKAN_DESCRIPTOR_BINDING_CAMERA_PROPERTIES,
 		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -423,7 +424,7 @@ static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t
 
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer)
 {
-	VkDescriptorSetLayoutBinding bindings[3] = 
+	VkDescriptorSetLayoutBinding bindings[3] =
 	{
 		{
 			.binding = VULKAN_DESCRIPTOR_BINDING_CAMERA,
@@ -448,7 +449,7 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 	var (vulkan_descriptor_set_layout_t, layout);
 	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, 3, ptr (layout));
 	log_msg("Global descriptor set layout has been created successfully\n");
-	return val (layout);	
+	return val (layout);
 }
 
 
@@ -461,10 +462,10 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 
 	// WARNING: enabling command buffer reset and dragging the window results in a crash, not sure why?
 	// vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-	
+
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	
-	VkImageSubresourceRange subresource = 
+
+	VkImageSubresourceRange subresource =
 	{
 		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
 		.baseMipLevel = 0,
@@ -487,7 +488,7 @@ RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 	u32 current_index = renderer->swapchain->current_image_index;
 	VkCommandBuffer cb = renderer->vo_command_buffers[current_index];
 
-	VkImageSubresourceRange subresource = 
+	VkImageSubresourceRange subresource =
 	{
 		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
 		.baseMipLevel = 0,
@@ -519,8 +520,8 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 	vkCall(vkWaitForFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence, VK_TRUE, U64_MAX));
 	vkCall(vkResetFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence));
 
-	vulkan_queue_present(renderer->vo_graphics_queue, 
-						renderer->swapchain->vo_handle, 
+	vulkan_queue_present(renderer->vo_graphics_queue,
+						renderer->swapchain->vo_handle,
 						renderer->swapchain->current_image_index,
 						renderer->vo_render_finished_semaphore);
 	render_window_poll_events(renderer->window);
@@ -572,10 +573,10 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_swapchain_destroy(renderer->swapchain);
 	vulkan_swapchain_release_resources(renderer->swapchain);
 
-	// NOTE: VkSurfaceKHR must be destroyed after the swapchain	
+	// NOTE: VkSurfaceKHR must be destroyed after the swapchain
 	vkDestroySurfaceKHR(renderer->instance->handle, renderer->vo_surface, VULKAN_ALLOCATION_CALLBACKS(renderer));
 	render_window_destroy(renderer->window);
-	
+
 	// destroy semaphores
 	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_image_available_semaphore, VULKAN_ALLOCATION_CALLBACKS(renderer));
 	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_render_finished_semaphore, VULKAN_ALLOCATION_CALLBACKS(renderer));
@@ -584,19 +585,19 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vkDestroyFence(renderer->logical_device->vo_handle, renderer->vo_fence, VULKAN_ALLOCATION_CALLBACKS(renderer));
 
 	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vo_descriptor_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
-	
+
 	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, 1, &renderer->vo_aux_command_buffer);
 	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, renderer->swapchain->image_count, renderer->vo_command_buffers);
 	vkDestroyCommandPool(renderer->logical_device->vo_handle, renderer->vo_command_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
-	
+
 	// destroy logical device
 	vulkan_logical_device_destroy(renderer->logical_device);
 	vulkan_logical_device_release_resources(renderer->logical_device);
-	
+
 	// destroy instance
 	vulkan_instance_destroy(renderer->instance);
 	vulkan_instance_release_resources(renderer->instance);
-	
+
 	vulkan_allocator_destroy(renderer->vk_allocator);
 
 	memory_allocator_dealloc(renderer->allocator, renderer->vo_command_buffers);

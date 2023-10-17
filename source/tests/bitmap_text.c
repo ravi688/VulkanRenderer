@@ -5,6 +5,8 @@
 
 #include <renderer/tests/bitmap_text.h>
 
+#define RENDERER_INCLUDE_EVERYTHING_INTERNAL
+#define RENDERER_INCLUDE_DATA_STRUCTURES
 #define RENDERER_INCLUDE_MATH
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
@@ -544,7 +546,6 @@ static void test_glyph_packing(renderer_t* renderer)
 	/* create font */
 	font_t font;
 	font_load_and_create_no_alloc(renderer, "showcase/resource/fonts/arial.ttf", &font);
-	font_set_char_size(&font, 12);
 
 	/* create bitmap glyph pool */
 	bitmap_glyph_pool_create_info_t create_info =
@@ -558,7 +559,10 @@ static void test_glyph_packing(renderer_t* renderer)
 	for(char i = 32; i < 86; ++i)
 	{
 		glyph_texcoord_t texcoord;
-		bitmap_glyph_pool_get_texcoord(pool, i, &texcoord, NULL);
+		font_set_char_size(&font, i / 2);
+		bitmap_glyph_pool_get_texcoord(pool, make_pair(utf32_t, u32) { i, i / 2 }, &texcoord, NULL);
+		font_set_char_size(&font, i / 4);
+		bitmap_glyph_pool_get_texcoord(pool, make_pair(utf32_t, u32) { i, i / 4 }, &texcoord, NULL);
 	}
 
 	IF_DEBUG( bitmap_glyph_pool_dump(pool, "test_bitmap_glyph_pool_dump.bmp") );
@@ -583,6 +587,40 @@ static void test_bufferlib()
 	buf_traverse_elements(&buffer, 0, buf_get_element_count(&buffer) - 1, buf_u32_print, NULL); puts("");
 	buf_free(&buffer);
 }
+
+#if DBG_ENABLED(BUFFER2D_RESIZE)
+
+	static glyph_texcoord_t get_glyph_texcoord(irect2d_t rect, iextent2d_t tex_size)
+	{
+		iextent2d_t size = tex_size;
+		return (glyph_texcoord_t)
+		{
+			.tltc = { (f32)rect.offset.x / size.width, (f32)rect.offset.y / size.height },
+			.trtc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)rect.offset.y / size.height },
+			.brtc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height },
+			.bltc = { (f32)rect.offset.x / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height }
+		};
+	}
+
+	typedef bitmap_glyph_atlas_texture_t* bitmap_glyph_atlas_texture_ptr_t;
+	typedef string_builder_t* string_builder_ptr_t;
+	typedef_pair_t(bitmap_glyph_atlas_texture_ptr_t, string_builder_ptr_t);
+
+	static void packed_rect_relocate_handler(const rect2d_info_t* before, const rect2d_info_t* after, void* user_data)
+	{
+		AUTO pair = CAST_TO(pair_t(bitmap_glyph_atlas_texture_ptr_t, string_builder_ptr_t)*, user_data);
+		AUTO builder = pair->second;
+		iextent2d_t tex_size = buffer2d_view_get_size(pair->first->pool.pixels.view);
+		AUTO btc = get_glyph_texcoord(before->rect, iextent2d(tex_size.x >> 1, tex_size.y >> 1));
+		AUTO atc = get_glyph_texcoord(after->rect, tex_size);
+		string_builder_append(builder, "\n|(%.3f, %.3f), (%.3f, %.3f)|  -->  |(%.3f, %.3f) (%.3f, %.3f)|\n",
+										btc.tltc.x, btc.tltc.y, btc.trtc.x, btc.trtc.y,
+										atc.tltc.x, atc.tltc.y, atc.trtc.x, atc.trtc.y);
+		string_builder_append(builder, "|(%.3f, %.3f), (%.3f, %.3f)|  -->  |(%.3f, %.3f) (%.3f, %.3f)|\n",
+										btc.bltc.x, btc.bltc.y, btc.brtc.x, btc.brtc.y,
+										atc.bltc.x, atc.bltc.y, atc.brtc.x, atc.brtc.y);
+	}
+#endif /* DBG_BUFFER2D_RESIZE */
 
 TEST_ON_INITIALIZE(BITMAP_TEXT)
 {
@@ -609,14 +647,25 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 	/* bitmap text */
 	bitmap_glyph_atlas_texture_create_info_t texture_create_info = { 512, 512, this->font };
 	this->texture = bitmap_glyph_atlas_texture_create(renderer, &texture_create_info);
+
+	#if DBG_ENABLED(BUFFER2D_RESIZE)
+		/* setup the callback handler for debugging */
+		AUTO user_data = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, pair_t(bitmap_glyph_atlas_texture_ptr_t, string_builder_ptr_t));
+		user_data->first = this->texture;
+		user_data->second = renderer->debug_log_builder;
+		buffer2d_set_packed_rect_relocate_callback_handler(&this->texture->pool.pixels, packed_rect_relocate_handler, user_data);
+	#endif /* DBG_BUFFER2D_RESIZE */
+
 	material_set_float(this->text_material, "parameters.color.r", 1.0f);
 	material_set_float(this->text_material, "parameters.color.g", 1.0f);
 	material_set_float(this->text_material, "parameters.color.b", 1.0f);
 	this->text = bitmap_text_create(renderer, this->texture);
 	this->text_string_handle = bitmap_text_string_create(this->text);
 	this->another_string_handle = bitmap_text_string_create(this->text);
-	bitmap_text_string_setH(this->text, this->another_string_handle, "% Hello World");
-	bitmap_text_string_setH(this->text, this->text_string_handle, "Hardwork with dedication suffices to c");
+	bitmap_text_string_set_point_sizeH(this->text, this->another_string_handle, 24);
+	bitmap_text_string_set_point_sizeH(this->text, this->text_string_handle, 35);
+	bitmap_text_string_setH(this->text, this->another_string_handle, "Hardwork with dedication suffices to c");
+	bitmap_text_string_setH(this->text, this->text_string_handle, "Hardwork with dedication suffices to c: 1234324");
 
 	bitmap_glyph_atlas_texture_dump(this->texture, "bitmap_glyph_atlas_texture.dump.bmp");
 
@@ -657,33 +706,57 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 	static bool isScreenSpace = true;
 	if(kbhit())
 	{
-		getch();
-		isScreenSpace = !isScreenSpace;
-		if(isScreenSpace)
+		char ch = getch();
+		if((ch != 'p') && (ch != 'q') && (ch != 'd') && (ch != 'u'))
 		{
-			bitmap_text_set_render_space_type(this->text, BITMAP_TEXT_RENDER_SPACE_TYPE_2D);
-			debug_log_info("BITMAP_TEXT_RENDER_SPACE_TYPE_2D");
-			render_object_set_transform(this->text_object, mat4_identity());
-			bitmap_text_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 400.0f, -400.0f));
+			isScreenSpace = !isScreenSpace;
+			if(isScreenSpace)
+			{
+				bitmap_text_set_render_space_type(this->text, BITMAP_TEXT_RENDER_SPACE_TYPE_2D);
+				debug_log_info("BITMAP_TEXT_RENDER_SPACE_TYPE_2D");
+				render_object_set_transform(this->text_object, mat4_identity());
+				bitmap_text_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 400.0f, -400.0f));
+			}
+			else
+			{
+				bitmap_text_set_render_space_type(this->text, BITMAP_TEXT_RENDER_SPACE_TYPE_3D);
+				debug_log_info("BITMAP_TEXT_RENDER_SPACE_TYPE_3D");
+				render_object_set_transform(this->text_object, mat4_mul(3, mat4_rotation_y(45 DEG), mat4_scale(0.005f, 0.005f, 0.005f), mat4_translation(0.0f, 0.0f, -0.5f)));
+				bitmap_text_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 30.0f, 0.0f));
+			}
 		}
-		else
+		else if(ch == 'p')
 		{
-			bitmap_text_set_render_space_type(this->text, BITMAP_TEXT_RENDER_SPACE_TYPE_3D);
-			debug_log_info("BITMAP_TEXT_RENDER_SPACE_TYPE_3D");
-			render_object_set_transform(this->text_object, mat4_mul(3, mat4_rotation_y(45 DEG), mat4_scale(0.005f, 0.005f, 0.005f), mat4_translation(0.0f, 0.0f, -0.5f)));
-			bitmap_text_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 30.0f, 0.0f));
+			bitmap_text_string_set_point_sizeH(this->text, this->another_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->another_string_handle) * 2);
+			bitmap_text_string_set_point_sizeH(this->text, this->text_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->text_string_handle) * 2);
+		}
+		else if(ch == 'q')
+		{
+			bitmap_text_string_set_point_sizeH(this->text, this->another_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->another_string_handle) / 2);
+			bitmap_text_string_set_point_sizeH(this->text, this->text_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->text_string_handle) / 2);
+		}
+		else if(ch == 'd')
+		{
+			bitmap_glyph_atlas_texture_dump_bb(this->texture, "bitmap_glyph_atlas_texture_bb.dump.bmp");
+			bitmap_glyph_atlas_texture_dump(this->texture, "bitmap_glyph_atlas_texture.dump.bmp");
+		}
+		else if(ch == 'b')
+		{
+			static char ch = 33;
+			bitmap_glyph_atlas_texture_get_texcoord(this->texture, make_pair(utf32_t, u32) { ch++, 34 }, NULL);
 		}
 	}
 
 	static int counter = 0;
 	counter++;
 	if(counter == 66000)
-		counter = 0;
+	counter = 0;
 	char buffer[128] =  { };
-	sprintf(buffer, "Hardwork with dedication suffices to complete a project: %d", counter);
-	bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
-	sprintf(buffer, "Another string: %f", CAST_TO(float, counter) / 13434.0f);
-	bitmap_text_string_setH(this->text, this->another_string_handle, buffer);
+	sprintf(buffer, "%d", counter);
+	// bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
+	sprintf(buffer, "%d", counter);
+	// bitmap_text_string_setH(this->text, this->another_string_handle, buffer);
+
 	bitmap_glyph_atlas_texture_commit(this->texture, NULL);
 }
 

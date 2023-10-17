@@ -64,12 +64,12 @@ RENDERER_API bool vulkan_bitmap_glyph_atlas_texture_commit(vulkan_bitmap_glyph_a
  * unicode: glyph's unicode value to rasterize
  * texcoords: the texture coordinates (list of 4 vec2(s)), filled by this function if the glyph has graphical representation
  * returns: true if the glyph has graphical representation and there are no errors */
-static INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, utf32_t unicode, glyph_texcoord_t OUT texcoord)
+static INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord)
 {
 	vulkan_host_buffered_texture_set_dirty(BASE(texture), true);
 	return bitmap_glyph_pool_get_texcoord(&texture->pool, unicode, texcoord, NULL);
 }
-static INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_contains_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, utf32_t unicode)
+static INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_contains_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode)
 {
 	return bitmap_glyph_pool_contains_texcoord(&texture->pool, unicode);
 }
@@ -77,6 +77,10 @@ static INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_contains_te
 static INLINE_IF_RELEASE_MODE void vulkan_bitmap_glyph_atlas_texture_dump(vulkan_bitmap_glyph_atlas_texture_t* texture, const char* file_path)
 {
 	bitmap_glyph_pool_dump(&texture->pool, file_path);
+}
+static INLINE_IF_RELEASE_MODE void vulkan_bitmap_glyph_atlas_texture_dump_bb(vulkan_bitmap_glyph_atlas_texture_t* texture, const char* file_path)
+{
+	bitmap_glyph_pool_dump_bb(&texture->pool, file_path);
 }
 #endif /* GLOBAL_DEBUG */
 

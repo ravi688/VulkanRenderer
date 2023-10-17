@@ -78,27 +78,27 @@ void main()
 
     switch(parameters.space_type)
     {
-        case 0:
+        case TEXT_RENDER_SPACE_TYPE_2D:
         {
             switch(parameters.surface_type)
             {
-                case 1:
+                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
                     clipPos = cameraInfo.screen * world;
                     break;
-                case 0:
+                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
                     clipPos = displayInfo.matrix * world;
                     break;
             }
             break;
         }
-        case 1:
+        case TEXT_RENDER_SPACE_TYPE_3D:
         {
             switch(parameters.surface_type)
             {
-                case 1:
+                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
                     clipPos = cameraInfo.projection * cameraInfo.view * world;
                     break;
-                case 0:
+                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
                     clipPos = displayInfo.matrix * world;
                     break;
             }

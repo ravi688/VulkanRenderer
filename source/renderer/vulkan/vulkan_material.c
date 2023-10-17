@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_material.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <renderer/internal/vulkan/vulkan_material.h>
@@ -106,7 +106,7 @@ RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, v
 	material->shader = shader;
 
 	// create MATERIAL_SET
-	vulkan_descriptor_set_create_info_t create_info = 
+	vulkan_descriptor_set_create_info_t create_info =
 	{
 		.vo_pool = renderer->vo_descriptor_pool,
 		.layout = &shader->material_set_layout
@@ -119,7 +119,7 @@ RENDERER_API vulkan_material_t* vulkan_material_create(vulkan_renderer_t* render
 {
 	// allocate memory and intitalize
 	vulkan_material_t* material = vulkan_material_new(renderer->allocator);
-	
+
 	// create material
 	vulkan_material_create_no_alloc(renderer, shader, material);
 	return material;
@@ -148,10 +148,10 @@ static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags);
 
 static void set_push_constants(vulkan_material_t* material, vulkan_shader_resource_description_t* descriptor, vulkan_pipeline_layout_t* pipeline_layout)
 {
-	vulkan_pipeline_layout_push_constants(pipeline_layout, 
-											get_vulkan_shader_flags(descriptor->stage_flags), 
-											descriptor->push_constant_range_offset, 
-											struct_descriptor_sizeof(&descriptor->handle), 
+	vulkan_pipeline_layout_push_constants(pipeline_layout,
+											get_vulkan_shader_flags(descriptor->stage_flags),
+											descriptor->push_constant_range_offset,
+											struct_descriptor_sizeof(&descriptor->handle),
 											descriptor->handle.ptr);
 }
 
@@ -635,7 +635,8 @@ RENDERER_API vulkan_texture_t* vulkan_material_get_texture2d(vulkan_material_t* 
 	return vulkan_material_get_texture2dH(material, vulkan_material_get_field_handle(material, name));
 }
 
-static void get_record_and_field_name(const char* const full_name, char out_struct_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE], char out_field_name[STRUCT_FIELD_MAX_NAME_SIZE])
+/* returns true if 'name' has anything after '.', called field, otherwise returns false */
+static bool get_record_and_field_name(const char* const full_name, char out_struct_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE], char out_field_name[STRUCT_FIELD_MAX_NAME_SIZE])
 {
 	u32 len = strlen(full_name);
 	_debug_assert__(len != 0);
@@ -648,7 +649,7 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 		memcopyv(out_struct_name, full_name, u8, len);
 		if(out_field_name != NULL)
 			strcpy(out_field_name, "<UndefinedField>");
-		return;
+		return false;
 	}
 	u16 struct_name_len = (u16)(ptr - full_name);
 	u16 field_name_len = (u16)(len - struct_name_len - 1);
@@ -657,6 +658,7 @@ static void get_record_and_field_name(const char* const full_name, char out_stru
 	memcopyv(out_struct_name, full_name, u8, struct_name_len);
 	if(out_field_name != NULL)
 		memcopyv(out_field_name, ptr + 1, u8, field_name_len);
+	return true;
 }
 
 RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vulkan_material_t* material, const char* name)
@@ -668,7 +670,7 @@ RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vul
 
 	char struct_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE];
 	char field_name[STRUCT_FIELD_MAX_NAME_SIZE];
-	get_record_and_field_name(name, struct_name, field_name);
+	bool is_field_requested = get_record_and_field_name(name, struct_name, field_name);
 
 	u16 binding_count = material->shader->material_set_binding_count;
 	vulkan_shader_resource_description_t* bindings = material->shader->material_set_bindings;
@@ -686,29 +688,35 @@ RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vul
 			index = i;
 			uniform_index = j;
 			if(field_handle == STRUCT_FIELD_INVALID_HANDLE)
+			{
+				/* if a field is requested in an interface block, but the field handle is not found in the actual shader interface block
+				 * then throw an error. */
+				if(is_field_requested)
+					LOG_FETAL_ERR("Symbol \"%s\" isn't found in the shader resource bindings\n", name);
 				continue;
+			}
 			break;
 		}
 		j++;
 	}
 	if((index != 0xFFFF) && (uniform_index != 0xFFFF))
 		return (vulkan_material_field_handle_t) { .index = index, .uniform_index = uniform_index, .field_handle = field_handle };
-	LOG_FETAL_ERR("symbol \"%s\" isn't found in the shader resource bindings\n", name);
+	LOG_FETAL_ERR("Symbol \"%s\" isn't found in the shader resource bindings\n", name);
 	return (vulkan_material_field_handle_t) { .index = 0xFFFF, .uniform_index = 0xFFFF, .field_handle = STRUCT_FIELD_INVALID_HANDLE };
 }
 
-typedef_pair_t(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*);
+typedef_pair_t(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t);
 
-static pair_t(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*) get_uniform_resource_descriptor(vulkan_material_t* material, const char* block_name)
+static pair_t(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) get_uniform_resource_descriptor(vulkan_material_t* material, const char* block_name)
 {
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
 	{
 		vulkan_uniform_resource_t* uniform = &material->uniform_resources[i];
 		vulkan_shader_resource_description_t* binding = &material->shader->material_set_bindings[uniform->index];
 		if(strcmp(binding->handle.name, block_name) == 0)
-			return make_pair(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*) { uniform, binding };
+			return make_pair(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) { uniform, binding };
 	}
-	return make_pair(vulkan_uniform_resource_t*, vulkan_shader_resource_description_t*) { NULL, NULL };
+	return make_pair(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) { NULL, NULL };
 }
 
 RENDERER_API void vulkan_material_set_array_size(vulkan_material_t* material, const char* name, u32 size)
@@ -732,7 +740,7 @@ RENDERER_API void vulkan_material_set_array_size(vulkan_material_t* material, co
 RENDERER_API void vulkan_material_set_buffer(vulkan_material_t* material, const char* block_name, vulkan_buffer_t* buffer)
 {
 	AUTO resource_descriptor = get_uniform_resource_descriptor(material, block_name);
-	_debug_assert__(resource_descriptor.first != NULL);
+	release_assert__(resource_descriptor.first != NULL, "Unable to find block name \"%s\" in the material", block_name);
 
 	AUTO binding = resource_descriptor.second;
 

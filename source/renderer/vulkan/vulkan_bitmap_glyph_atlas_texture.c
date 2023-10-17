@@ -15,7 +15,7 @@ RENDERER_API vulkan_bitmap_glyph_atlas_texture_t* vulkan_bitmap_glyph_atlas_text
 {
 	 vulkan_bitmap_glyph_atlas_texture_t* texture = vulkan_bitmap_glyph_atlas_texture_new(renderer->allocator);
 	 vulkan_bitmap_glyph_atlas_texture_create_no_alloc(renderer, create_info, texture);
-	return texture; 
+	return texture;
 }
 
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_glyph_atlas_texture_create_info_t* create_info, vulkan_bitmap_glyph_atlas_texture_t OUT texture)
@@ -25,7 +25,7 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_rende
 	texture->renderer = renderer;
 
 	/* create host buffered texture */
-	vulkan_host_buffered_texture_create_info_t hbt_create_info = 
+	vulkan_host_buffered_texture_create_info_t hbt_create_info =
 	{
 		.width = create_info->width,
 		.height = create_info->height,
@@ -39,7 +39,7 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_rende
 	vulkan_texture_set_usage_stage(VULKAN_TEXTURE(texture), VULKAN_TEXTURE_USAGE_STAGE_FINAL);
 
 	/* create bitmap glyph pool */
-	bitmap_glyph_pool_create_info_t bgp_create_info = 
+	bitmap_glyph_pool_create_info_t bgp_create_info =
 	{
 		.size = { create_info->width, create_info->height },
 		.font = create_info->font,
@@ -48,7 +48,7 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_rende
 	};
 	bitmap_glyph_pool_create_no_alloc(RENDERER(renderer), &bgp_create_info, &texture->pool);
 
-	texture->on_resize_event = event_create(renderer->allocator, texture);
+	texture->on_resize_event = event_create(renderer->allocator, texture PARAM_IF_DEBUG("Vulkan-Glyph-Atlas-Texture-Resize"));
 }
 
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_destroy(vulkan_bitmap_glyph_atlas_texture_t* texture)

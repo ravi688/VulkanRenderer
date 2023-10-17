@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: glyph_mesh_pool.h is a part of VulkanRenderer
@@ -20,16 +20,37 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
 #pragma once
 
-#include <renderer/mesh.h>		// mesh_t
-#include <renderer/font.h>		// font_t
+#include <renderer/defines.h>
 
-typedef struct glyph_mesh_pool_t glyph_mesh_pool_t;
+#if   defined(RENDERER_VULKAN_DRIVER)
+	typedef struct vulkan_glyph_mesh_pool_t vulkan_glyph_mesh_pool_t;
+	typedef vulkan_glyph_mesh_pool_t glyph_mesh_pool_t;
+	typedef struct vulkan_mesh_t vulkan_mesh_t;
+	typedef vulkan_mesh_t mesh_t;
+#elif defined(RENDERER_OPENGL_DRIVER)
+	typedef struct opengl_glyph_mesh_pool_t opengl_glyph_mesh_pool_t;
+	typedef opengl_glyph_mesh_pool_t glyph_mesh_pool_t;
+	typedef struct opeongl_mesh_t opeongl_mesh_t;
+	typedef opeongl_mesh_t mesh_t;
+#elif defined(RENDERER_DIRECTX_DRIVER)
+	typedef struct directx_glyph_mesh_pool_t directx_glyph_mesh_pool_t;
+	typedef directx_glyph_mesh_pool_t glyph_mesh_pool_t;
+	typedef struct directx_mesh_t directx_mesh_t;
+	typedef directx_mesh_t mesh_t;
+#elif defined(RENDERER_METAL_DRIVER)
+	typedef struct metal_glyph_mesh_pool_t metal_glyph_mesh_pool_t;
+	typedef metal_glyph_mesh_pool_t glyph_mesh_pool_t;
+	typedef struct metal_mesh_t metal_mesh_t;
+	typedef metal_mesh_t mesh_t;
+#endif
+
+typedef struct font_t font_t;
 
 BEGIN_CPP_COMPATIBLE
 

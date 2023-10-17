@@ -1,6 +1,7 @@
 #include <renderer/bitmap_glyph_pool.h>
 #include <renderer/renderer.h>
 #include <renderer/bmp.h> // bmp_write
+#include <ctype.h> // isgraph
 
 RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_new(memory_allocator_t* allocator)
 {
@@ -21,15 +22,15 @@ RENDERER_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap
 	memzero(pool, bitmap_glyph_pool_t);
 	pool->renderer = renderer;
 	pool->font = create_info->font;
-	buffer2d_create_info_t _create_info = 
+	buffer2d_create_info_t _create_info =
 	{
 		.size = { create_info->size.x * sizeof(u8), create_info->size.y },
 		.buffer = create_info->buffer,
 		.view = create_info->view,
 		.resize_mode = BUFFER2D_RESIZE_MODE_ASPECT_RATIO_STRICT,
-		.key_size = sizeof(utf32_t),
-		.key_hash_function = utf32_hash,
-		.key_comparer = utf32_equal_to
+		.key_size = sizeof(pair_t(utf32_t, u32)),
+		.key_hash_function = utf32_u32_hash,
+		.key_comparer = utf32_u32_equal_to
 	};
 	buffer2d_create_no_alloc(renderer->allocator, &_create_info, &pool->pixels);
 	buffer2d_clear(&pool->pixels, NULL);
@@ -45,18 +46,48 @@ RENDERER_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool)
 	memory_allocator_dealloc(pool->allocator, pool);
 }
 
-RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, utf32_t unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized)
+RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized)
 {
 	AUTO info = buffer2d_get_rect(&pool->pixels, &unicode);
-
+	/* if no rect exists confiding/holding the rasterized glyph's pixels */
 	if(info == NULL)
 	{
-		/* rasterize the glyph */
-		if(!font_load_glyph(pool->font, unicode, NULL))
+		/* then rasterze it and put it into the pool */
+
+		/* set the point size */
+		u32 saved_char_size = U32_MAX;
+		if(unicode.second != font_get_char_size(pool->font))
+		{
+			saved_char_size = font_get_char_size(pool->font);
+			_debug_assert__(saved_char_size != U32_MAX);
+			font_set_char_size(pool->font, unicode.second);
+		}
+
+		/* load the glyph */
+		if(!font_load_glyph(pool->font, unicode.first, NULL))
+		{
+			if(isgraph(unicode.first))
+				debug_log_fetal_error("Unable to load the glyph: %u, point size %lu", unicode.first, unicode.second);
+			else
+				debug_log_warning("Unable to load a whitespace glyph: %u, point size %lu", unicode.first, unicode.second);
 			return false;
+		}
+
+		/* rasterize the glyph */
 		glyph_bitmap_t bitmap;
-		font_get_glyph_bitmap(pool->font, unicode, &bitmap);
-		
+		if(!font_get_glyph_bitmap(pool->font, unicode.first, &bitmap))
+		{
+			if(isgraph(unicode.first))
+				debug_log_fetal_error("Unable to rasterize the glyph with unicode %u and point size %u", unicode.first, unicode.second);
+			else
+				debug_log_warning("Unable to rasterize a whitespace glyph %u", unicode.first);
+			return false;
+		}
+
+		/* restore the point size */
+		if(saved_char_size != U32_MAX)
+			font_set_char_size(pool->font, saved_char_size);
+
 		/* currently we are only working with single channel font bitmaps */
 		_debug_assert__(bitmap.channel_count == 1);
 
@@ -86,7 +117,7 @@ RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, utf3
 	return true;
 }
 
-RENDERER_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, utf32_t unicode)
+RENDERER_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode)
 {
 	return buffer2d_get_rect(&pool->pixels, &unicode) != NULL;
 }

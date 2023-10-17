@@ -76,6 +76,7 @@ static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_
 	struct_descriptor_t* parameters;
 	switch(preset)
 	{
+		case SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH:
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
 			{
 				struct_descriptor_t* Color = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
@@ -85,25 +86,29 @@ static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_
 						struct_descriptor_add_field(Color, "b", GLSL_TYPE_FLOAT);
 					struct_descriptor_end(renderer->allocator, Color);
 				parameters = begin_uniform(renderer, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
-					struct_descriptor_add_field(parameters, "tex_size", GLSL_TYPE_UVEC2);
+					if(preset == SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT)
+						struct_descriptor_add_field(parameters, "tex_size", GLSL_TYPE_UVEC2);
 					struct_descriptor_add_field2(parameters, "color", Color);
 					struct_descriptor_add_field(parameters, "space_type", GLSL_TYPE_INT);
 					struct_descriptor_add_field(parameters, "surface_type", GLSL_TYPE_INT);
 				end_uniform(renderer, &bindings);
 			}
-			add_opaque(renderer, &bindings, "bga", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+			if(preset == SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT)
 			{
-				struct_descriptor_t* GTC = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
-					struct_descriptor_begin(renderer->allocator, GTC, "GTC", GLSL_TYPE_MAX_NON_OPAQUE);
-						struct_descriptor_add_field(GTC, "tltc", GLSL_TYPE_VEC2);
-						struct_descriptor_add_field(GTC, "trtc", GLSL_TYPE_VEC2);
-						struct_descriptor_add_field(GTC, "brtc", GLSL_TYPE_VEC2);
-						struct_descriptor_add_field(GTC, "bltc", GLSL_TYPE_VEC2);
-					struct_descriptor_end(renderer->allocator, GTC);
+				add_opaque(renderer, &bindings, "bga", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+				{
+					struct_descriptor_t* GTC = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
+						struct_descriptor_begin(renderer->allocator, GTC, "GTC", GLSL_TYPE_MAX_NON_OPAQUE);
+							struct_descriptor_add_field(GTC, "tltc", GLSL_TYPE_VEC2);
+							struct_descriptor_add_field(GTC, "trtc", GLSL_TYPE_VEC2);
+							struct_descriptor_add_field(GTC, "brtc", GLSL_TYPE_VEC2);
+							struct_descriptor_add_field(GTC, "bltc", GLSL_TYPE_VEC2);
+						struct_descriptor_end(renderer->allocator, GTC);
 
-				AUTO gtc_buffer = begin_uniform(renderer, &bindings, "GTCBuffer", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE1);
-					struct_descriptor_add_field_array2(gtc_buffer, "texcoords", GTC, U32_MAX);
-				end_uniform(renderer, &bindings);
+						AUTO gtc_buffer = begin_uniform(renderer, &bindings, "GTCBuffer", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE1);
+							struct_descriptor_add_field_array2(gtc_buffer, "texcoords", GTC, U32_MAX);
+						end_uniform(renderer, &bindings);
+				}
 			}
 			{
 				AUTO tst_buffer = begin_uniform(renderer, &bindings, "TSTBuffer", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE2);
@@ -167,15 +172,29 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(vulkan_rend
 	BUFFER attributes = buf_new(vulkan_vertex_buffer_layout_description_t);
 	switch(preset)
 	{
+		case SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH:
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
 			begin_vertex_binding(renderer, &attributes, 16, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
 				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
 			end_vertex_binding(renderer, &attributes);
-			begin_vertex_binding(renderer, &attributes, 48, VK_VERTEX_INPUT_RATE_INSTANCE, 5);
-				add_vertex_attribute(&attributes, 5, VK_FORMAT_R32G32B32A32_SFLOAT, 0);
-				add_vertex_attribute(&attributes, 6, VK_FORMAT_R32G32B32A32_SFLOAT, 16);
-				add_vertex_attribute(&attributes, 7, VK_FORMAT_R32G32B32_SFLOAT, 32);
-			end_vertex_binding(renderer, &attributes);
+			if(preset == SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT)
+			{
+				/* bindings 0, 1, 2, 3, and 4 are reserved for basic vertex data buffers (they are not interleaved), hence we must start from 5 */
+				begin_vertex_binding(renderer, &attributes, 48, VK_VERTEX_INPUT_RATE_INSTANCE, 5);
+					/* locations 0, 1, 2, 3, and 4 are reserved for basic vertex data, hence we must start from 5 */
+					add_vertex_attribute(&attributes, 5, VK_FORMAT_R32G32B32A32_SFLOAT, 0);
+					add_vertex_attribute(&attributes, 6, VK_FORMAT_R32G32B32A32_SFLOAT, 16);
+					add_vertex_attribute(&attributes, 7, VK_FORMAT_R32G32B32_SFLOAT, 32);
+				end_vertex_binding(renderer, &attributes);
+			}
+			else /* if preset == SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH */
+			{
+				/* bindings 0, 1, 2, 3, and 4 are reserved for basic vertex data buffers (they are not interleaved), hence we must start from 5 */
+				begin_vertex_binding(renderer, &attributes, 16, VK_VERTEX_INPUT_RATE_INSTANCE, 5);
+					/* locations 0, 1, 2, 3, and 4 are reserved for basic vertex data, hence we must start from 5 */
+					add_vertex_attribute(&attributes, 5, VK_FORMAT_R32G32B32A32_SFLOAT, 0);
+				end_vertex_binding(renderer, &attributes);
+			}
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
@@ -243,6 +262,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				end_subpass(renderer, &passes);
 			end_pass(renderer, &passes);
 		break;
+		case SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH:
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
@@ -472,12 +492,21 @@ static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulk
 	BUFFER pipelines = buf_new(vulkan_graphics_pipeline_description_t);
 	switch(preset)
 	{
+		case SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH:
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
 			begin_pipeline(renderer, &pipelines);
 				add_color_blend_state(&pipelines, VK_FALSE);
 				//get_rasterization(&pipelines)->polygonMode = VK_POLYGON_MODE_LINE;
-				add_shader(&pipelines, "shaders/presets/bitmap_text/bitmap_text.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/bitmap_text/bitmap_text.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+				if(preset == SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT)
+				{
+					add_shader(&pipelines, "shaders/presets/bitmap_text/bitmap_text.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+					add_shader(&pipelines, "shaders/presets/bitmap_text/bitmap_text.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+				}
+				else
+				{
+					add_shader(&pipelines, "shaders/presets/text_mesh/text_mesh.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+					add_shader(&pipelines, "shaders/presets/text_mesh/text_mesh.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+				}
 			end_pipeline(renderer, &pipelines);
 			break;
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:

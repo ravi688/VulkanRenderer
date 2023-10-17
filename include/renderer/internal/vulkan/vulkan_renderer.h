@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: vulkan_renderer.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -51,12 +51,15 @@ typedef enum vulkan_renderer_gpu_type_t
 
 typedef struct memory_allocator_t memory_allocator_t;
 typedef struct vulkan_allocator_t vulkan_allocator_t;
+IF_DEBUG( typedef struct string_builder_t string_builder_t; )
 
 typedef struct vulkan_renderer_t
 {
 	renderer_t* renderer;
 	memory_allocator_t* allocator;
 	vulkan_allocator_t* vk_allocator;
+
+	IF_DEBUG( string_builder_t* debug_log_builder; )
 
 	vulkan_instance_t* instance;
 	vulkan_logical_device_t* logical_device;
@@ -85,7 +88,7 @@ typedef struct vulkan_renderer_t
 	vulkan_descriptor_set_layout_t global_set_layout;
 	vulkan_descriptor_set_layout_t object_set_layout;
 	vulkan_descriptor_set_layout_t camera_set_layout;
-	
+
 	vulkan_descriptor_set_t global_set;
 
 /*
@@ -99,7 +102,7 @@ typedef struct vulkan_renderer_t
 	vulkan_camera_system_t* camera_system;
 
 	event_subscription_handle_t swapchain_recreate_handle;
-	
+
 } vulkan_renderer_t;
 
 BEGIN_CPP_COMPATIBLE

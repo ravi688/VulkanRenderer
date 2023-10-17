@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: render_window.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -76,7 +76,7 @@ RENDERER_API render_window_t* render_window_init(memory_allocator_t* allocator, 
 	render_window_t* window = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDER_WINDOW, render_window_t);
 	memzero(window, render_window_t);
 	window->allocator = allocator;
-	window->on_resize_event = event_create(allocator, (void*)window);
+	window->on_resize_event = event_create(allocator, (void*)window PARAM_IF_DEBUG("Render-Window-Resize"));
 	glfwInit();
 #if GLOBAL_DEBUG
 	glfwSetErrorCallback(glfwErrorCallback);
@@ -128,7 +128,7 @@ RENDERER_API void render_window_get_framebuffer_extent(render_window_t* window, 
 
 static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, vulkan_renderer_t* driver)
 {
-	VkSurfaceKHR surface; 
+	VkSurfaceKHR surface;
 	vkCall(glfwCreateWindowSurface(driver->instance->handle, window, VULKAN_ALLOCATION_CALLBACKS(driver), &surface));
 	log_msg("Vulkan surface created successfully\n");
 	return surface;
@@ -151,7 +151,7 @@ RENDERER_API void render_window_initialize_api_buffer(render_window_t* window, v
 		struct_descriptor_add_field_uvec2(&window->screen_info_struct, "size");
 		struct_descriptor_add_field_mat4(&window->screen_info_struct, "matrix");
 	struct_descriptor_end(window->allocator, &window->screen_info_struct);
-	
+
 	/* get the field handles, to later use them to modify the field values */
 	window->resolution_field = struct_descriptor_get_field_handle(&window->screen_info_struct, "resolution");
 	window->dpi_field = struct_descriptor_get_field_handle(&window->screen_info_struct, "dpi");
@@ -162,7 +162,7 @@ RENDERER_API void render_window_initialize_api_buffer(render_window_t* window, v
 	struct_descriptor_recalculate(&window->screen_info_struct);
 
 	/* create gpu buffer with the required size */
-	vulkan_buffer_create_info_t create_info = 
+	vulkan_buffer_create_info_t create_info =
 	{
 		.size = struct_descriptor_sizeof(&window->screen_info_struct),
 		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -189,4 +189,3 @@ RENDERER_API void render_window_initialize_api_buffer(render_window_t* window, v
 	/* set the screen matrix and window size */
 	update_screen_info(window);
 }
-

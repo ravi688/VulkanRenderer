@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: shader_library.h is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -47,6 +47,7 @@
 typedef enum shader_library_shader_preset_t
 {
 	SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT,
+	SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH,
 	SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI,
 	SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2,
 	SHADER_LIBRARY_SHADER_PRESET_UNLIT_VERTEX,
@@ -173,7 +174,7 @@ RENDERER_API const char* shader_library_get_nameH(shader_library_t* library, sha
 
 /*
 	description: returns the name of the shader slot with ptr to the shader_t as 'shader'
-	params:	
+	params:
 		library: ptr to the shader_library_t object
 		shader: ptr to the shader_t object
 	returns:

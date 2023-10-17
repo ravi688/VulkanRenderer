@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: renderer.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -31,6 +31,7 @@
 #include <renderer/shader_library.h>
 #include <renderer/material_library.h>
 #include <renderer/render_pass_pool.h>
+#include <renderer/string_builder.h>
 
 #include <FreeType/freetype.h>
 
@@ -38,9 +39,10 @@ RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_g
 {
 	renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDERER, renderer_t);
 	memzero(renderer, renderer_t);
-	
+
 	renderer->allocator = allocator;
-	
+	IF_DEBUG( renderer->debug_log_builder = string_builder_create(allocator, 2048) );
+
 	/* create and initialize the free type library */
 	AUTO error = FT_Init_FreeType(&renderer->ft_library);
 	if(error != 0)
@@ -56,10 +58,11 @@ RENDERER_API void renderer_terminate(renderer_t* renderer)
 {
 	// terminate the renderer
 	vulkan_renderer_terminate(renderer->vulkan_handle);
-	
+
 	/* destroy free type library context */
 	FT_Done_FreeType(renderer->ft_library);
 
+	IF_DEBUG( string_builder_destroy(renderer->debug_log_builder) );
 	memory_allocator_dealloc(renderer->allocator, renderer);
 }
 

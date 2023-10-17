@@ -30,6 +30,11 @@ RENDERER_API void bitmap_text_release_resources(bitmap_text_t* text)
 	vulkan_bitmap_text_release_resources(text);
 }
 
+RENDERER_API void bitmap_text_draw(bitmap_text_t* text)
+{
+	vulkan_bitmap_text_draw(text);
+}
+
 RENDERER_API bitmap_text_string_handle_t bitmap_text_string_create(bitmap_text_t* text)
 {
 	return vulkan_bitmap_text_string_create(text);
@@ -41,6 +46,16 @@ RENDERER_API void bitmap_text_string_destroyH(bitmap_text_t* text, bitmap_text_s
 }
 
 /* setters */
+RENDERER_API void bitmap_text_set_point_size(bitmap_text_t* text, u32 point_size)
+{
+	vulkan_bitmap_text_set_point_size(text, point_size);
+}
+
+RENDERER_API void bitmap_text_set_material(bitmap_text_t* text, material_t* material)
+{
+	vulkan_bitmap_text_set_material(text, material);
+}
+
 RENDERER_API void bitmap_text_set_render_space_type(bitmap_text_t* text, bitmap_text_render_space_type_t space_type)
 {
 	vulkan_bitmap_text_render_space_type_t vk_space_type;
@@ -82,15 +97,30 @@ RENDERER_API void bitmap_text_string_setH(bitmap_text_t* text, bitmap_text_strin
 	vulkan_bitmap_text_string_setH(text, handle, string);
 }
 
+RENDERER_API void bitmap_text_string_set_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle, u32 point_size)
+{
+	vulkan_bitmap_text_string_set_point_sizeH(text, handle, point_size);
+}
+
 RENDERER_API void bitmap_text_string_set_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle, mat4_t transform)
 {
 	vulkan_bitmap_text_string_set_transformH(text, handle, transform);
 }
 
 /* getters */
+RENDERER_API u32 bitmap_text_get_point_size(bitmap_text_t* text)
+{
+	return vulkan_bitmap_text_get_point_size(text);
+}
+
 RENDERER_API const char* bitmap_text_string_getH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
 {
 	return vulkan_bitmap_text_string_getH(text, handle);
+}
+
+RENDERER_API u32 bitmap_text_string_get_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
+{
+	return vulkan_bitmap_text_string_get_point_sizeH(text, handle);
 }
 
 RENDERER_API mat4_t bitmap_text_string_get_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle)

@@ -1,8 +1,8 @@
 /*
 	***This is computer generated notice - Do not modify it***
 
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
+	VulkanRenderer (inclusive of its dependencies and subprojects
+	such as toolchains written by the same author) is a software to render
 	2D & 3D geometries by writing C/C++ code and shaders.
 
 	File: TID-43.case2.c is a part of VulkanRenderer
@@ -20,7 +20,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -95,17 +95,17 @@ TEST_ON_RENDERER_INITIALIZE(TID_32_CASE_2)
 
 TEST_ON_INITIALIZE(TID_43_CASE_2)
 {
-	memory_allocator_create_info_t create_info = 
+	memory_allocator_create_info_t create_info =
 	{
 
 	};
 	this->allocator = memory_allocator_create(&create_info);
 
-	this->event = event_create(this->allocator, this);
+	this->event = event_create(this->allocator, this PARAM_IF_DEBUG("Test Event"));
 
 	/* 	[VULKAN_IMAGE_RECREATE_FINISH | VULKAN_IMAGE_VIEW_RECREATE_FINISH, NOTHING]
-		[VULKAN_IMAGE_RECREATE_FINISH, NOTHING] 
-		[NOTHING, VULKAN_IMAGE_RECREATE_FINISH] 
+		[VULKAN_IMAGE_RECREATE_FINISH, NOTHING]
+		[NOTHING, VULKAN_IMAGE_RECREATE_FINISH]
 	 */
 
 	event_subscription_create_info_t subscription = { };
@@ -119,7 +119,7 @@ TEST_ON_INITIALIZE(TID_43_CASE_2)
 	subscription.wait_for = SIGNAL_ALL_BIT;
 	subscription.signal = SIGNAL_NOTHING_BIT;
 	event_subscribe(this->event, &subscription);
-	
+
 	subscription.handler = EVENT_HANDLER(recreate_allocated_attachments);
 	subscription.wait_for = SIGNAL_NOTHING_BIT;
 	subscription.signal = SIGNAL_VULKAN_IMAGE_VIEW_RECREATE_FINISH_BIT;
@@ -159,7 +159,7 @@ TEST_ON_INITIALIZE(TID_43_CASE_2)
 	subscription.signal = SIGNAL_NOTHING_BIT;
 	event_subscribe(this->event, &subscription);
 
-	this->event->is_dump_only = true;	
+	this->event->is_dump_only = true;
 
 	event_dump(this->event);;
 }
