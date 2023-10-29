@@ -5,12 +5,12 @@
 #include <renderer/internal/vulkan/vulkan_host_buffered_buffer.h>
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
+#include <renderer/internal/vulkan/vulkan_text_types.h>
 #include <renderer/dictionary.h>
 #include <renderer/types.h>
 #include <renderer/event.h> // event_subscription_handle_t
 #include <renderer/rect.h> // rect2d_t
 #include <hpml/mat4.h> 	// mat4_t
-#include <hpml/vec3.h> 	// vec3_t
 #include <glslcommon/glsl_types.h>
 
 typedef enum vulkan_bitmap_text_render_space_type_t
@@ -115,6 +115,30 @@ typedef struct vulkan_material_t vulkan_material_t;
 
 typedef struct font_t font_t;
 
+/* <begin> typedefs facilitating text layout */
+
+typedef vulkan_text_glyph_layout_data_t vulkan_bitmap_text_glyph_layout_data_t;
+
+typedef vulkan_text_glyph_layout_data_buffer_t vulkan_bitmap_text_glyph_layout_data_buffer_t;
+
+typedef vulkan_text_glyph_info_t vulkan_bitmap_text_glyph_info_t;
+
+typedef vulkan_text_glyph_layout_handler_input_data_t vulkan_bitmap_text_glyph_layout_handler_input_data_t;
+
+typedef vulkan_text_glyph_layout_handler_t vulkan_bitmap_text_glyph_layout_handler_t;
+
+typedef vulkan_text_glyph_strikethrough_handler_t vulkan_bitmap_text_glyph_strikethrough_handler_t;
+
+typedef vulkan_text_glyph_strikethrough_handler_t vulkan_bitmap_text_glyph_strikethrough_handler_t;
+
+typedef vulkan_text_glyph_underline_handler_t vulkan_bitmap_text_glyph_underline_handler_t;
+
+typedef vulkan_text_glyph_layout_handler_void_ptr_pair_t vulkan_bitmap_text_glyph_layout_handler_void_ptr_pair_t;
+typedef vulkan_text_glyph_strikethrough_handler_void_ptr_pair_t vulkan_bitmap_text_glyph_strikethrough_handler_void_ptr_pair_t;
+typedef vulkan_text_glyph_underline_handler_void_ptr_pair_t vulkan_bitmap_text_glyph_underline_handler_void_ptr_pair_t;
+
+/* <end> typedefs facilitating text layout */
+
 typedef struct vulkan_bitmap_text_t
 {
 	vulkan_renderer_t* renderer;
@@ -130,6 +154,20 @@ typedef struct vulkan_bitmap_text_t
 	vulkan_bitmap_text_render_space_type_t render_space_type;
 	/* render surface type of this text */
 	vulkan_bitmap_text_render_surface_type_t render_surface_type;
+
+	/* <begin> fields facilitating text layout */
+
+		/* called whenever vulkan_bitmap_text_string_setH is called */
+		vulkan_bitmap_text_glyph_layout_handler_void_ptr_pair_t glyph_layout_handler;
+		/* called whenever vulkan_bitmap_text_glyph_layout_data_t::is_strikethrough is true */
+		vulkan_bitmap_text_glyph_strikethrough_handler_void_ptr_pair_t glyph_strikethrough_handler;
+		/* called whenever vulkan_bitmap_text_glyph_layout_data_t::is_underline is true */
+		vulkan_bitmap_text_glyph_underline_handler_void_ptr_pair_t glyph_underline_handler;
+
+		/* holds post processed info for each glyph */
+		vulkan_bitmap_text_glyph_layout_data_buffer_t glyph_layout_data_buffer;
+
+	/* <end> fields facilitating text layout */
 
 	/* CPU side */
 
@@ -181,10 +219,18 @@ RENDERER_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create
 RENDERER_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 
 /* setters */
+RENDERER_API void vulkan_bitmap_text_set_glyph_layout_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_layout_handler_t handler, void* user_data);
+RENDERER_API void vulkan_bitmap_text_set_glyph_strikethrough_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_strikethrough_handler_t handler, void* user_data);
+RENDERER_API void vulkan_bitmap_text_set_glyph_underline_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_underline_handler_t handler, void* user_data);
 RENDERER_API void vulkan_bitmap_text_set_point_size(vulkan_bitmap_text_t* text, u32 point_size);
 RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material);
 RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type);
 RENDERER_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_surface_type_t surface_type);
+/* TODO
+ * vulkan_bitmap_text_string_appendH()
+ * vulkan_bitmap_text_string_insertH()
+ * vulkan_bitmap_text_string_removeH()
+ */
 RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char* string);
 RENDERER_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 point_size);
 RENDERER_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform);

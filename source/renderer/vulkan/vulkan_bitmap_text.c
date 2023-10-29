@@ -75,12 +75,19 @@ static void update_bga_and_gtc_buffer(void* publisher, void* handler_data)
 	_debug_assert__(is_resized == false);
 }
 
+static bool default_glyph_layout_handler(vulkan_bitmap_text_glyph_layout_data_buffer_t* output, const vulkan_bitmap_text_glyph_layout_handler_input_data_t* input, void* user_data)
+{
+	return false;
+}
+
 RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info, vulkan_bitmap_text_t OUT text)
 {
 	memzero(text, vulkan_bitmap_text_t);
 	text->renderer = renderer;
 
 	text->text_strings = buf_new(vulkan_bitmap_text_string_t);
+	text->glyph_layout_data_buffer = buf_create(sizeof(vulkan_bitmap_text_glyph_layout_data_t), 128, 0);
+	text->glyph_layout_handler = (vulkan_bitmap_text_glyph_layout_handler_void_ptr_pair_t) { default_glyph_layout_handler, NULL };
 	/* one might wonder free text->free_list should be 0 at the beginning?
 	 * in this case no, because we don't even have the list of objects yet (whether in use or free) */
 	text->free_list = BUF_INVALID_INDEX;
@@ -184,6 +191,7 @@ RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer
 RENDERER_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 {
 	event_unsubscribe(text->texture->on_resize_event, text->bga_texture_update_handle);
+	buf_clear(&text->glyph_layout_data_buffer, NULL);
 	buf_clear(&text->text_strings, NULL);
 
 	/* destroy the GRD buffer */
@@ -202,6 +210,7 @@ RENDERER_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 
 RENDERER_API void vulkan_bitmap_text_release_resources(vulkan_bitmap_text_t* text)
 {
+	buf_free(&text->glyph_layout_data_buffer);
 	buf_free(&text->text_strings);
 	// vulkan_host_buffered_buffer_release_resources(&text->text_string_transform_buffer);
 	// vulkan_host_buffered_buffer_release_resources(&text->glyph_texcoord_buffer);
@@ -401,17 +410,14 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 	u32 saved_point_size = font_get_char_size(font);
 	font_set_char_size(font, text_string->point_size);
 
-	u32 len = strlen_safe(data);
-	u32 string_width = 0;
-	for(u32 i = 0; i < len; i++)
-	{
-		font_glyph_info_t info;
-		utf32_t ch = data[i];
-		font_get_glyph_info2(font, ch, &info);
-		string_width += info.advance_width;
-	}
+	/* build the precusor glyph layout data for each character requested */
+	/* offset added to y coordinate, to adjust the anchor of the text to the top-left corner */
+	f32 anchor_offset_y = get_pixels_from_point_size((font_get_ascender(font) / font_get_units_per_em(font)) * font_get_char_size(font), display_get_dpi().y);
 
-	/* rewrite on the sub buffers */
+	u32 len = strlen_safe(data);
+
+	vulkan_bitmap_text_glyph_info_t glyph_infos[len];
+	u32 texcoord_indices[len];
 
 	#if DBG_ENABLED(VULKAN_BITMAP_TEXT_STRING_SETH)
 		string_builder_t* builder = string_builder_create(text->renderer->allocator, 1024);
@@ -420,35 +426,49 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 		string_builder_increment_indentation(builder);
 	#endif /* DBG_VULKAN_BITMAP_TEXT_STRING_SETH */
 
-	float horizontal_pen = 0.0f;
-	/* offset added to y coordinate, to adjust the anchor of the text to the top-left corner */
-	f32 anchor_offset_y = get_pixels_from_point_size((font_get_ascender(font) / font_get_units_per_em(font)) * font_get_char_size(font), display_get_dpi().y);
+	f32 horizontal_pen = 0;
+	iextent2d_t tex_size = vulkan_bitmap_glyph_atlas_texture_get_size(text->texture);
 	for(u32 i = 0; i < len; i++)
 	{
-		utf32_t ch = data[i];
 		font_glyph_info_t info;
+		utf32_t ch = data[i];
 		font_get_glyph_info2(font, ch, &info);
 
-		if(!info.is_graph)
+		vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t texcoords;
+		if(info.is_graph)
 		{
-			horizontal_pen += info.advance_width;
-			continue;
+			texcoord_indices[i] = get_or_create_glyph_texture_coordinate(text, make_pair(utf32_t, u32) { ch, text_string->point_size });
+			buf_get_at_s(vulkan_host_buffered_buffer_get_host_buffer(&text->glyph_texcoord_buffer), texcoord_indices[i], &texcoords);
+		}
+		else
+		{
+			texcoord_indices[i] = U32_MAX;
+			f32 xcoord = info.width / tex_size.width; // get_pixels_from_point_size(info.width, display_get_dpi().x) / tex_size.width;
+			f32 ycoord = info.height / tex_size.height; // get_pixels_from_point_size(info.height, display_get_dpi().y) / tex_size.height;
+			texcoords = (vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t)
+			{
+				/* tltc */
+				{ 0.0f, 0.0f },
+				/* trtc */
+				{ xcoord, 0.0f },
+				/* brtc */
+				{ 0.0f, ycoord },
+				/* bltc */
+				{ xcoord, ycoord }
+			};
 		}
 
-		// _debug_assert__(info.bitmap_top == info.bearing_y);
-		vulkan_bitmap_text_glsl_glyph_render_data_t data =
+		glyph_infos[i] = (vulkan_bitmap_text_glyph_info_t)
 		{
-			.ofst = { horizontal_pen + info.width * 0.5f + info.bearing_x/* - string_width * 0.5f*/, info.height * 0.5f + (info.bearing_y - info.height) - anchor_offset_y, 0 },
-			.indx = get_or_create_glyph_texture_coordinate(text, make_pair(utf32_t, u32) { ch, text_string->point_size }),
-			/* TODO: Remove this as we don't need this level of flexibility */
-			.rotn = { ((i%3) == 0) ? 1 : 0, ((i%3) == 1) ? 1 : 0, ((i%3) == 2) ? 1 : 0 },
-			.stid = U64_TO_U32(text_string->handle),
-			/* TODO: Remove this as we don't need this level of flexibility */
-			.scal = { 1, 1, 1 }
+			.unicode = ch,
+			.rect = { offset3d(horizontal_pen + info.width * 0.5f + info.bearing_x,
+							   info.height * 0.5f + (info.bearing_y - info.height) - anchor_offset_y,
+							   0.0f),
+					  extent3d((texcoords.trtc.x - texcoords.tltc.x) * tex_size.width,
+					  		   (texcoords.bltc.y - texcoords.tltc.y) * tex_size.height,
+							   0.0f)
+					}
 		};
-
-		multi_buffer_sub_buffer_push(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), text_string->render_data_handle, (void*)&data);
-
 		horizontal_pen += info.advance_width;
 
 		#if DBG_ENABLED(VULKAN_BITMAP_TEXT_STRING_SETH)
@@ -475,6 +495,50 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 	/* restore the point size for this font */
 	font_set_char_size(font, saved_point_size);
 
+	/* call the layout handler */
+
+	_debug_assert__(text->glyph_layout_handler.first != NULL);
+	const vulkan_bitmap_text_glyph_layout_handler_input_data_t input_data =
+	{
+		.glyphs = glyph_infos,
+		.glyph_count = len, /* whitespaces are also included */
+		.anchor_pos = mat4_get_position(text_string->transform).xyz /* vec4 -> vec3 */
+	};
+	/* NOTE: no need to clear the glyph_layout_data_buffer as it is cleared after every set call */
+	bool is_changed = (text->glyph_layout_handler.first)(&text->glyph_layout_data_buffer, &input_data, text->glyph_layout_handler.second);
+
+
+	/* rewrite on the sub buffers */
+
+	/* final (post-processed) glyph counts */
+	u32 final_count = is_changed ? buf_get_element_count(&text->glyph_layout_data_buffer) : len;
+
+	for(u32 i = 0; i < final_count; i++)
+	{
+		/* skip the whitespaces (for which we don't have any physical texture coord information) */
+		if(texcoord_indices[i] == U32_MAX)
+			continue;
+
+		AUTO glyph_data = is_changed ? buf_get_ptr_at_typeof(&text->glyph_layout_data_buffer, vulkan_bitmap_text_glyph_layout_data_t, i) : NULL;
+		AUTO offset = vec3_add(2, glyph_infos[i].rect.offset, (is_changed ? glyph_data->offset : vec3_zero()));
+		// _debug_assert__(info.bitmap_top == info.bearing_y);
+		vulkan_bitmap_text_glsl_glyph_render_data_t data =
+		{
+			.ofst = { offset.x, offset.y, offset.z },
+			.indx = texcoord_indices[i],
+			/* TODO: Remove this as we don't need this level of flexibility */
+			.rotn = { ((i%3) == 0) ? 1 : 0, ((i%3) == 1) ? 1 : 0, ((i%3) == 2) ? 1 : 0 },
+			.stid = U64_TO_U32(text_string->handle),
+			/* TODO: Remove this as we don't need this level of flexibility */
+			.scal = { 1, 1, 1 }
+		};
+
+		multi_buffer_sub_buffer_push(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), text_string->render_data_handle, (void*)&data);
+	}
+
+	/* clear the glyph layout data buffer for the next set call */
+	buf_clear(&text->glyph_layout_data_buffer, NULL);
+
 	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
 
 	/* update the device side GTC buffer */
@@ -498,6 +562,21 @@ static void text_string_set_point_size(vulkan_bitmap_text_t* text, vulkan_bitmap
 {
 	text_string->point_size = point_size;
 	text_string_set(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
+}
+
+RENDERER_API void vulkan_bitmap_text_set_glyph_layout_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_layout_handler_t handler, void* user_data)
+{
+	text->glyph_layout_handler = (vulkan_bitmap_text_glyph_layout_handler_void_ptr_pair_t) { handler, user_data };
+}
+
+RENDERER_API void vulkan_bitmap_text_set_glyph_strikethrough_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_strikethrough_handler_t handler, void* user_data)
+{
+	text->glyph_strikethrough_handler = (vulkan_bitmap_text_glyph_strikethrough_handler_void_ptr_pair_t) { handler, user_data };
+}
+
+RENDERER_API void vulkan_bitmap_text_set_glyph_underline_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_underline_handler_t handler, void* user_data)
+{
+	text->glyph_underline_handler = (vulkan_bitmap_text_glyph_underline_handler_void_ptr_pair_t) { handler, user_data };
 }
 
 RENDERER_API void vulkan_bitmap_text_set_point_size(vulkan_bitmap_text_t* text, u32 point_size)
