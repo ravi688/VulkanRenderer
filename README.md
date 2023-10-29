@@ -138,6 +138,7 @@ There are only C and C++ interface headers for now.
 ### Multipass Rendering
 
 1. Render Pass Pool to avoid pass duplication
+2. Sorting Render Passes using Topological Sort to minimize multiple runs of the same render pass.
 
 ### Render Queues
 
