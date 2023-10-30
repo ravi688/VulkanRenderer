@@ -77,7 +77,23 @@ static void update_bga_and_gtc_buffer(void* publisher, void* handler_data)
 
 static bool default_glyph_layout_handler(vulkan_bitmap_text_glyph_layout_data_buffer_t* output, const vulkan_bitmap_text_glyph_layout_handler_input_data_t* input, void* user_data)
 {
-	return false;
+	u32 count = input->glyph_count;
+	for(u32 i = 0; i < count; i++)
+	{
+		vulkan_bitmap_text_glyph_layout_data_t data =
+		{
+			.unicode = input->glyphs[i].unicode,
+			.offset = { 0, 0, 0 },
+			.color = ICOLOR4_GREY,
+			.is_bold = false,
+			.is_italic = false,
+			.is_strikethrough = false,
+			.is_underline = false,
+			.idoc = NULL
+		};
+		buf_push(output, &data);
+	}
+	return true;
 }
 
 RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info, vulkan_bitmap_text_t OUT text)

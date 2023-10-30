@@ -272,6 +272,7 @@ RENDERER_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_qua
 RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_t* out_info)
 {
 	int index = ttf_find_glyph(font->ttf_handle, unicode);
+	out_info->is_graph = isgraph(CAST_TO(s32, unicode)) != 0;
 	if(index < 0)
 	{
 		LOG_FETAL_ERR("Font error: couldn't find glyph \"%c\"\n", unicode);

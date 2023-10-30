@@ -34,6 +34,7 @@
 #include <renderer/assert.h>
 #include <renderer/font.h>
 #include <renderer/memory_allocator.h>
+#include <renderer/system/display.h> 							// display_get_dpi()
 #include <string.h>												// strlen
 #include <ctype.h> 												// isspace
 
@@ -65,6 +66,27 @@ RENDERER_API vulkan_text_mesh_t* vulkan_text_mesh_create(vulkan_renderer_t* rend
 	return text;
 }
 
+static bool default_glyph_layout_handler(vulkan_text_mesh_glyph_layout_data_buffer_t* output, const vulkan_text_mesh_glyph_layout_handler_input_data_t* input, void* user_data)
+{
+	u32 count = input->glyph_count;
+	for(u32 i = 0; i < count; i++)
+	{
+		vulkan_text_mesh_glyph_layout_data_t data =
+		{
+			.unicode = input->glyphs[i].unicode,
+			.offset = { 0, 0, 0 },
+			.color = ICOLOR4_GREY,
+			.is_bold = false,
+			.is_italic = false,
+			.is_strikethrough = false,
+			.is_underline = false,
+			.idoc = NULL
+		};
+		buf_push(output, &data);
+	}
+	return true;
+}
+
 RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_glyph_mesh_pool_t* pool, vulkan_text_mesh_t OUT text)
 {
 	_debug_assert__(pool != NULL);
@@ -76,9 +98,11 @@ RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, 
 	text->pool = pool;
 	text->free_list = BUF_INVALID_INDEX; 		// free list
 	text->inuse_list = BUF_INVALID_INDEX; 		// inuse list
+	text->point_size = font_get_char_size(vulkan_glyph_mesh_pool_get_font(pool));
 	text->render_space_type = VULKAN_TEXT_MESH_RENDER_SPACE_TYPE_2D;
 	text->render_surface_type = VULKAN_TEXT_MESH_RENDER_SURFACE_TYPE_CAMERA;
-	text->point_size = font_get_char_size(vulkan_glyph_mesh_pool_get_font(pool));
+	text->glyph_layout_data_buffer = buf_create(sizeof(vulkan_text_mesh_glyph_layout_data_t), 128, 0);
+	text->glyph_layout_handler = (vulkan_text_mesh_glyph_layout_handler_void_ptr_pair_t) { default_glyph_layout_handler, NULL };
 
 	_debug_assert__(glsl_sizeof(glsl_mat4_t) == sizeof(glsl_mat4_t));
 
@@ -96,6 +120,7 @@ RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, 
 
 RENDERER_API void vulkan_text_mesh_destroy(vulkan_text_mesh_t* text_mesh)
 {
+	buf_clear(&text_mesh->glyph_layout_data_buffer, NULL);
 	dictionary_t* glyph_render_data_buffers = &text_mesh->glyph_render_data_buffers;
 	BUFFER* strings = &text_mesh->strings;
 	for(buf_ucount_t i = 0; i < dictionary_get_count(glyph_render_data_buffers); i++)
@@ -108,6 +133,7 @@ RENDERER_API void vulkan_text_mesh_destroy(vulkan_text_mesh_t* text_mesh)
 
 RENDERER_API void vulkan_text_mesh_release_resources(vulkan_text_mesh_t* text_mesh)
 {
+	buf_free(&text_mesh->glyph_layout_data_buffer);
 	dictionary_t* glyph_render_data_buffers = &text_mesh->glyph_render_data_buffers;
 	BUFFER* strings = &text_mesh->strings;
 	for(buf_ucount_t i = 0; i < dictionary_get_count(glyph_render_data_buffers); i++)
@@ -344,11 +370,15 @@ static vulkan_text_mesh_string_t* get_text_stringH(vulkan_text_mesh_t* text, vul
 	return buf_get_ptr_at_typeof(&text->strings, vulkan_text_mesh_string_t, handle);
 }
 
+static INLINE_IF_RELEASE_MODE f32 get_world_from_pixels(f32 pixels, f32 point_size, f32 dpi)
+{
+	return pixels / get_pixels_from_point_size(point_size, dpi);
+}
+
 RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, const char* str)
 {
 	// TODO: ensure handle isn't in the free-list, meaning it has been already destroyed, this check should be in debug mode only
 	vulkan_text_mesh_string_t* string = get_text_stringH(text_mesh, handle);
-	u32 len = strlen(str);
 	dictionary_t* glyph_render_data_buffers = &text_mesh->glyph_render_data_buffers;
 
 	// clear the sub buffers
@@ -361,34 +391,92 @@ RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vu
 		sub_buffer_clear(buffer, get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch));
 	}
 
+	/* calculate the anchor offset to shift the anchor to the top left */
 	AUTO font = vulkan_glyph_mesh_pool_get_font(text_mesh->pool);
 	f32 anchor_offset_y = font_get_ascender(font) / font_get_units_per_em(font);
-	// re-write on the sub buffers
-	float horizontal_pen = 0.0f;
+
+	u32 len = strlen(str);
+
+	/* prepare glyph infos to be fed into the layout handler */
+
+	vulkan_text_mesh_glyph_info_t glyph_infos[len];
+	u32 texcoord_indices[len];
+
+	f32 horizontal_pen = 0.0f;
 	for(u32 i = 0; i < len; i++)
 	{
 		u16 ch = str[i];
 		font_glyph_info_t info;
 		font_get_glyph_info(vulkan_glyph_mesh_pool_get_font(text_mesh->pool), ch, &info);
-		if(isspace(ch))
+		glyph_infos[i] = (vulkan_text_mesh_glyph_info_t)
 		{
-			horizontal_pen += info.advance_width;
-			continue;
-		}
-		vulkan_instance_buffer_t* instance_buffer = get_instance_buffer(text_mesh->renderer, glyph_render_data_buffers, ch);
-		multi_buffer_t* buffer = vulkan_instance_buffer_get_host_buffer(instance_buffer);
-		sub_buffer_handle_t handle = get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, ch);
+			.unicode = ch,
+			.rect = { offset3d(horizontal_pen, -anchor_offset_y, 0.0f), extent3d(info.max_x - info.min_x, info.max_y - info.min_y, 0.0f) }
+		};
+		horizontal_pen += info.advance_width;
+	}
 
+	/* call the layout handler */
+
+	_debug_assert__(text_mesh->glyph_layout_handler.first != NULL);
+	const vulkan_text_mesh_glyph_layout_handler_input_data_t input_data =
+	{
+		.glyphs = glyph_infos,
+		.glyph_count = len, /* whitespaces are also included */
+		.anchor_pos = mat4_get_position(string->transform).xyz /* vec4 -> vec3 */
+	};
+	/* NOTE: no need to clear the glyph_layout_data_buffer as it is cleared after every set call */
+	bool is_changed = (text_mesh->glyph_layout_handler.first)(&text_mesh->glyph_layout_data_buffer, &input_data, text_mesh->glyph_layout_handler.second);
+
+	/* rewrite on the sub buffers */
+
+	/* final (post-processed) glyph counts */
+	u32 final_count = is_changed ? buf_get_element_count(&text_mesh->glyph_layout_data_buffer) : len;
+
+	_debug_assert__((!is_changed) || (is_changed && (final_count == len)));
+
+	for(u32 i = 0; i < final_count; i++)
+	{
+		AUTO glyph_data = is_changed ? buf_get_ptr_at_typeof(&text_mesh->glyph_layout_data_buffer, vulkan_text_mesh_glyph_layout_data_t, i) : NULL;
+		utf32_t unicode = is_changed ? glyph_data->unicode : glyph_infos[i].unicode;
+		_debug_assert__(unicode != 0);
+		if(!isgraph(CAST_TO(s32, unicode)))
+			continue;
+
+		/* get the glyph render data buffer pointer */
+
+		vulkan_instance_buffer_t* instance_buffer = get_instance_buffer(text_mesh->renderer, glyph_render_data_buffers, unicode);
+		multi_buffer_t* buffer = vulkan_instance_buffer_get_host_buffer(instance_buffer);
+		sub_buffer_handle_t handle = get_sub_buffer_handle(buffer, &string->glyph_sub_buffer_handles, unicode);
+
+		/* if the space type is 2D, then convert from pixels to world */
+		AUTO _offset = vec3_zero();
+		if(is_changed)
+		{
+			_offset = glyph_data->offset;
+			if(text_mesh->render_space_type == VULKAN_TEXT_MESH_RENDER_SPACE_TYPE_2D)
+			{
+				AUTO dpi = display_get_dpi();
+				_offset = vec3(get_world_from_pixels(_offset.x, string->point_size, dpi.x), get_world_from_pixels(_offset.y, string->point_size, dpi.y), 0.0f);
+			}
+		}
+
+		/* calculate the final offset */
+		AUTO offset = vec3_add(2, glyph_infos[i].rect.offset, _offset);
+
+		/* add the glyph render data to the render buffer */
 		vulkan_text_mesh_glsl_glyph_render_data_t data =
 		{
-			.ofst = { 0.0f, -anchor_offset_y, horizontal_pen },
+			.ofst = { offset.z, offset.y, offset.x },
 			.stid = U64_TO_U32(string->handle)
 		};
 		sub_buffer_push(buffer, handle, CAST_TO(void*, &data));
-		horizontal_pen += info.advance_width;
 
 		vulkan_instance_buffer_commit(instance_buffer, NULL);
 	}
+
+	/* clear the glyph layout data buffer for the next set call */
+	buf_clear(&text_mesh->glyph_layout_data_buffer, NULL);
 
 	/* update the device side buffers if not updated in the above loop */
 
@@ -439,6 +527,21 @@ RENDERER_API void vulkan_text_mesh_string_set_transformH(vulkan_text_mesh_t* tex
 }
 
 // getters
+RENDERER_API void vulkan_text_mesh_set_glyph_layout_handler(vulkan_text_mesh_t* text, vulkan_text_mesh_glyph_layout_handler_t handler, void* user_data)
+{
+	text->glyph_layout_handler = (vulkan_text_mesh_glyph_layout_handler_void_ptr_pair_t) { handler, user_data };
+}
+
+RENDERER_API void vulkan_text_mesh_set_glyph_strikethrough_handler(vulkan_text_mesh_t* text, vulkan_text_mesh_glyph_strikethrough_handler_t handler, void* user_data)
+{
+	text->glyph_strikethrough_handler = (vulkan_text_mesh_glyph_strikethrough_handler_void_ptr_pair_t) { handler, user_data };
+}
+
+RENDERER_API void vulkan_text_mesh_set_glyph_underline_handler(vulkan_text_mesh_t* text, vulkan_text_mesh_glyph_underline_handler_t handler, void* user_data)
+{
+	text->glyph_underline_handler = (vulkan_text_mesh_glyph_underline_handler_void_ptr_pair_t) { handler, user_data };
+}
+
 RENDERER_API u32 vulkan_text_mesh_get_point_size(vulkan_text_mesh_t* text_mesh)
 {
 	return text_mesh->point_size;
