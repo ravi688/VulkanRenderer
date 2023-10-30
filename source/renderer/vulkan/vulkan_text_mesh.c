@@ -678,7 +678,7 @@ static bool default_glyph_layout_handler(vulkan_text_mesh_glyph_layout_data_buff
 	{
 		vulkan_text_mesh_glyph_layout_data_t data =
 		{
-			.unicode = input->glyphs[i].unicode,
+			.index = i,
 			.offset = { 0, 0, 0 },
 			.color = ICOLOR4_GREY,
 			.is_bold = false,
@@ -1005,7 +1005,6 @@ RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vu
 	/* prepare glyph infos to be fed into the layout handler */
 
 	vulkan_text_mesh_glyph_info_t glyph_infos[len];
-	u32 texcoord_indices[len];
 
 	f32 horizontal_pen = 0.0f;
 	for(u32 i = 0; i < len; i++)
@@ -1038,12 +1037,13 @@ RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vu
 	/* final (post-processed) glyph counts */
 	u32 final_count = is_changed ? buf_get_element_count(&text_mesh->glyph_layout_data_buffer) : len;
 
-	_debug_assert__((!is_changed) || (is_changed && (final_count == len)));
+	_debug_assert__(is_changed || ((!is_changed) && (final_count == len)));
 
 	for(u32 i = 0; i < final_count; i++)
 	{
 		AUTO glyph_data = is_changed ? buf_get_ptr_at_typeof(&text_mesh->glyph_layout_data_buffer, vulkan_text_mesh_glyph_layout_data_t, i) : NULL;
-		utf32_t unicode = is_changed ? glyph_data->unicode : glyph_infos[i].unicode;
+		u32 index = is_changed ? glyph_data->index : i;
+		utf32_t unicode = glyph_infos[index].unicode;
 		_debug_assert__(unicode != 0);
 		if(!isgraph(CAST_TO(s32, unicode)))
 			continue;
@@ -1067,7 +1067,7 @@ RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vu
 		}
 
 		/* calculate the final offset */
-		AUTO offset = vec3_add(2, glyph_infos[i].rect.offset, _offset);
+		AUTO offset = vec3_add(2, glyph_infos[index].rect.offset, _offset);
 
 		/* add the glyph render data to the render buffer */
 		vulkan_text_mesh_glsl_glyph_render_data_t data =
