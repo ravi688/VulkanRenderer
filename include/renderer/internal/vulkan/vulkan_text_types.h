@@ -11,9 +11,8 @@
 /* holds the post processed layout data for each glyph */
 typedef struct vulkan_text_glyph_layout_data_t
 {
-	/* unicode of the glyph,
-	 * note that not all glyphs may survive to the final post processed glyphs buffer (vulkan_text_mesh_glyph_layout_data_buffer_t)*/
-	utf32_t unicode;
+	/* index of the glyph in the string */
+	u32 index;
 	/* offset added to this glyph, in pixel coordinates if space is 2D, otherwise in world coordinates */
 	vec3_t offset;
 	/* color of this glyph (8 bit per component)*/
