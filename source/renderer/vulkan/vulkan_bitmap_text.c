@@ -77,7 +77,23 @@ static void update_bga_and_gtc_buffer(void* publisher, void* handler_data)
 
 static bool default_glyph_layout_handler(vulkan_bitmap_text_glyph_layout_data_buffer_t* output, const vulkan_bitmap_text_glyph_layout_handler_input_data_t* input, void* user_data)
 {
-	return false;
+	u32 count = input->glyph_count;
+	for(u32 i = 0; i < count; i++)
+	{
+		vulkan_bitmap_text_glyph_layout_data_t data =
+		{
+			.index = i,
+			.offset = { 0, 0, 0 },
+			.color = ICOLOR4_GREY,
+			.is_bold = false,
+			.is_italic = false,
+			.is_strikethrough = false,
+			.is_underline = false,
+			.idoc = NULL
+		};
+		buf_push(output, &data);
+	}
+	return true;
 }
 
 RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info, vulkan_bitmap_text_t OUT text)
@@ -515,17 +531,19 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 
 	for(u32 i = 0; i < final_count; i++)
 	{
+		AUTO glyph_data = is_changed ? buf_get_ptr_at_typeof(&text->glyph_layout_data_buffer, vulkan_bitmap_text_glyph_layout_data_t, i) : NULL;
+		u32 index = is_changed ? glyph_data->index : i;
+
 		/* skip the whitespaces (for which we don't have any physical texture coord information) */
-		if(texcoord_indices[i] == U32_MAX)
+		if(texcoord_indices[index] == U32_MAX)
 			continue;
 
-		AUTO glyph_data = is_changed ? buf_get_ptr_at_typeof(&text->glyph_layout_data_buffer, vulkan_bitmap_text_glyph_layout_data_t, i) : NULL;
-		AUTO offset = vec3_add(2, glyph_infos[i].rect.offset, (is_changed ? glyph_data->offset : vec3_zero()));
+		AUTO offset = vec3_add(2, glyph_infos[index].rect.offset, (is_changed ? glyph_data->offset : vec3_zero()));
 		// _debug_assert__(info.bitmap_top == info.bearing_y);
 		vulkan_bitmap_text_glsl_glyph_render_data_t data =
 		{
 			.ofst = { offset.x, offset.y, offset.z },
-			.indx = texcoord_indices[i],
+			.indx = texcoord_indices[index],
 			/* TODO: Remove this as we don't need this level of flexibility */
 			.rotn = { ((i%3) == 0) ? 1 : 0, ((i%3) == 1) ? 1 : 0, ((i%3) == 2) ? 1 : 0 },
 			.stid = U64_TO_U32(text_string->handle),

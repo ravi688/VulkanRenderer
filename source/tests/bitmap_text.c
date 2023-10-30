@@ -753,9 +753,9 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 	counter = 0;
 	char buffer[128] =  { };
 	sprintf(buffer, "%d", counter);
-	// bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
+	bitmap_text_string_setH(this->text, this->text_string_handle, buffer);
 	sprintf(buffer, "%d", counter);
-	// bitmap_text_string_setH(this->text, this->another_string_handle, buffer);
+	bitmap_text_string_setH(this->text, this->another_string_handle, buffer);
 
 	bitmap_glyph_atlas_texture_commit(this->texture, NULL);
 }
