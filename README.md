@@ -22,8 +22,9 @@ There are only C and C++ interface headers for now. <br>
 ### Requirements for building
 
 1. **[Msys2](https://www.msys2.org/)**
+2. **Vulkan SDK**
 
-2. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
+3. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
    
    ```
    gcc --version
@@ -41,7 +42,7 @@ There are only C and C++ interface headers for now. <br>
    pacman -S gcc
    ```
 
-3. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
+4. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
    
    ```
    make --version
@@ -53,7 +54,7 @@ There are only C and C++ interface headers for now. <br>
    pacman -S make
    ```
 
-4. **Git version 2.35.1**, git must be installed in your machine, you can check if it is already installed by running <br>
+5. **Git version 2.35.1**, git must be installed in your machine, you can check if it is already installed by running <br>
    
    ```
    git --version
@@ -65,7 +66,7 @@ There are only C and C++ interface headers for now. <br>
    pacman -S git
    ```
 
-5. **glslc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
+6. **glslc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
    
    ```
    pacman -S mingw-w64-x86_64-shaderc
@@ -206,6 +207,8 @@ There are only C and C++ interface headers for now. <br>
 3. Text Mesh batching
 
 ### Bitmap Text Rendering
+1. Glyph Bitmap Atlas to avoid glyph bitmap duplication
+2. Text Layout Callback to customize the placement of glyphs.
 
 ### Materials
 
