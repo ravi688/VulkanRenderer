@@ -154,14 +154,19 @@ There are only C and C++ interface headers for now. <br>
 4. General Purpose Render Queues
 
 ### Render Textures  (Hybrid render textures)
+A camera can render its depth and color output to a user supplied textures - both at the same time.
 
-1. Depth Render Texture
+1. **Depth Render Texture** <br>
+   One can redirect the depth render output of a camera to a depth render texture
 
-2. Color Render Texture
+2. **Color Render Texture** <br>
+   One can redirect the color render output of a camrea to a color render texture
 
-3. Depth Cube Render Texture (Shadow map for point lights)
+3. **Depth Cube Render Texture (Shadow map for point lights)** <br>
+   One can redirect the depth render output of 360 view (6 faces of a cube) to a cube depth render texture - which can further be used as a shadow map for point lights.
 
-4. Color Cube Render Texture (Environment map for reflection effects)
+4. **Color Cube Render Texture (Environment map for reflection effects)** <br>
+   One can redirect the color render output of 360 view (6 faces of a cube) to a cube color render texture - which can further be used as a environment reflection map.
 
 ### Textures and Cubemaps
 
