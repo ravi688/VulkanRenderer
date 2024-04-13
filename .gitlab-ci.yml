@@ -3,6 +3,7 @@ build-job:
         - Windows-AMD-Nvidia-GPU
     stage: build
     script:
+        - dir
         - echo "Hello, $GITLAB_USER_LOGIN!"
 
 test-job1:
