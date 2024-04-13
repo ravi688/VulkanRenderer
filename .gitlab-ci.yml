@@ -10,6 +10,7 @@ Windows-AMD-Nvidia-GPU:
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc'
+        - C:\msys64\usr\bin\bash -lc './ci-build.sh'
 
 Windows-AMD-GPU:
     tags:
