@@ -1,4 +1,4 @@
-build-job:
+Windows-AMD-Nvidia-GPU:
     tags: 
         - Windows-AMD-Nvidia-GPU
     stage: build
@@ -11,27 +11,19 @@ build-job:
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
 
-test-job1:
+Windows-AMD-GPU:
     tags:
-        - Windows-AMD-Nvidia-GPU
+        - Windows-AMD-GPU
     stage: test
     script:
         - echo "This job tests something"
 
-test-job2:
+Windows-Intel-GPU:
     tags:
-        - Windows-AMD-Nvidia-GPU
+        - Windows-Intel-GPU
     stage: test
     script:
         - echo "This job tests something, but takes more time than test-job1"
         - echo "After the echo commands complete, it runs the sleep command for 20 seconds"
         - echo "which simulates a test that runs 20 seconds longer than test-job1"
         - sleep 20
-
-deploy-prod:
-    tags:
-        - Windows-AMD-Nvidia-GPU
-    stage: deploy
-    script:
-        - echo "This job deploys something from the $CI_COMMIT_BRANCH branch."
-    environment: production
