@@ -3,7 +3,6 @@ Windows-AMD-Nvidia-GPU:
         - Windows-AMD-Nvidia-GPU
     stage: build
     script:
-        - dir
         - echo "Hello, $GITLAB_USER_LOGIN!"
         - $env:CHERE_INVOKING = 'yes'
         - $env:MSYSTEM = 'MINGW64' # https://www.msys2.org/docs/environments/
@@ -14,7 +13,7 @@ Windows-AMD-Nvidia-GPU:
 Windows-AMD-GPU:
     tags:
         - Windows-AMD-GPU
-    stage: test
+    stage: build
     script:
         - $env:CHERE_INVOKING = 'yes'
         - $env:MSYSTEM = 'MINGW64' # https://www.msys2.org/docs/environments/
@@ -25,7 +24,7 @@ Windows-AMD-GPU:
 Windows-Intel-GPU:
     tags:
         - Windows-Intel-GPU
-    stage: test
+    stage: build
     script:
         - $env:CHERE_INVOKING = 'yes'
         - $env:MSYSTEM = 'MINGW64' # https://www.msys2.org/docs/environments/
