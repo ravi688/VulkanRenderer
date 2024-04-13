@@ -16,14 +16,25 @@ Windows-AMD-GPU:
         - Windows-AMD-GPU
     stage: test
     script:
-        - echo "This job tests something"
+        - wget.exe -nv -O msys2.exe https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe
+        - ./msys2.exe -y -oC:\
+        - Remove-Item msys2.exe
+        - $env:CHERE_INVOKING = 'yes'
+        - $env:MSYSTEM = 'UCRT64' # https://www.msys2.org/docs/environments/
+        - C:\msys64\usr\bin\bash -lc ' '
+        - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
+        - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
 
 Windows-Intel-GPU:
     tags:
         - Windows-Intel-GPU
     stage: test
     script:
-        - echo "This job tests something, but takes more time than test-job1"
-        - echo "After the echo commands complete, it runs the sleep command for 20 seconds"
-        - echo "which simulates a test that runs 20 seconds longer than test-job1"
-        - sleep 20
+        - wget.exe -nv -O msys2.exe https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe
+        - ./msys2.exe -y -oC:\
+        - Remove-Item msys2.exe
+        - $env:CHERE_INVOKING = 'yes'
+        - $env:MSYSTEM = 'UCRT64' # https://www.msys2.org/docs/environments/
+        - C:\msys64\usr\bin\bash -lc ' '
+        - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
+        - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
