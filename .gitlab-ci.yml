@@ -12,6 +12,13 @@ Windows-AMD-Nvidia-GPU:
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc mingw-w64-x86_64-libpng'
         - C:\msys64\usr\bin\bash -lc './ci-build.sh'
 
+Linux-AMD-GPU:
+    tags:
+        - Linux-AMD-GPU
+    stage: build
+    script:
+        echo "Hello World"
+
 Windows-AMD-GPU:
     tags:
         - Windows-AMD-GPU
