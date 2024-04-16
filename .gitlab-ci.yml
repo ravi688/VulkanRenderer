@@ -19,6 +19,13 @@ Linux-AMD-GPU:
     script:
         echo "Hello World"
 
+Linux-Intel-GPU:
+    tags:
+        - Linux-Intel-GPU
+    stage: build
+    script:
+        echo "Hello World"
+
 Windows-AMD-GPU:
     tags:
         - Windows-AMD-GPU
