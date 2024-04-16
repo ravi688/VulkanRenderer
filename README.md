@@ -7,6 +7,10 @@
 
 [![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Windows-Intel-GPU&key_text=Win+Intel+GPU+(GitLab)&key_width=134)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
 
+[![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Linux-AMD-GPU&key_text=Linux+AMD+GPU+(GitLab)&key_width=134)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
+
+[![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Linux-Intel-GPU&key_text=Linux+Intel+GPU+(GitLab)&key_width=134)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
+
 [![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Windows-Intel-Nvidia-GPU&key_text=Win+AMD-NVD+GPU+(GitLab)&key_width=162)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
 ## Summary
 
