@@ -21,8 +21,7 @@ Linux-AMD-GPU:
     stage: build
     script:
         - echo "Hello World"
-        # wait for 5 seconds and then reboot to windows
-        - sleep 5
+        # reboot to windows
         - sudo chmod +x ./switch-to-windows.sh
         - ./switch-to-windows.sh
 
@@ -33,8 +32,7 @@ Linux-Intel-GPU:
     stage: build
     script:
         - echo "Hello World"
-        # wait for 5 seconds and then reboot to windows
-        - sleep 5
+        # reboot to windows
         - sudo chmod +x ./switch-to-windows.sh
         - ./switch-to-windows.sh
 
@@ -51,8 +49,8 @@ Windows-AMD-GPU:
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc mingw-w64-x86_64-libpng'
         - C:\msys64\usr\bin\bash -lc './ci-build.sh'
-        # turn of the runner server
-        - shutdown /s
+        # reboot to linux
+        - shutdown /r
 
 # Runs on Intel GPU machine with Windows 11 operating system (dual-booted with Linux Mint)
 Windows-Intel-GPU:
@@ -67,5 +65,5 @@ Windows-Intel-GPU:
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc mingw-w64-x86_64-libpng'
         - C:\msys64\usr\bin\bash -lc './ci-build.sh'
-        # turn of the runner server
-        - shutdown /s
+        # reboot to linux
+        - shutdown /r
