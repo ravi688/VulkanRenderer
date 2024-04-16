@@ -1,3 +1,5 @@
+
+# Runs on My Dev Machine only, no correspondoing linux dual boot
 Windows-AMD-Nvidia-GPU:
     tags: 
         - Windows-AMD-Nvidia-GPU
@@ -12,20 +14,31 @@ Windows-AMD-Nvidia-GPU:
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc mingw-w64-x86_64-libpng'
         - C:\msys64\usr\bin\bash -lc './ci-build.sh'
 
+# Runs on AMD GPU machine with Linux Mint operating system (dual-booted with Windows 11)
 Linux-AMD-GPU:
     tags:
         - Linux-AMD-GPU
     stage: build
     script:
-        echo "Hello World"
+        - echo "Hello World"
+        # wait for 5 seconds and then reboot to windows
+        - sleep 5
+        - sudo chmod +x ./switch-to-windows.sh
+        - ./switch-to-windows.sh
 
+# Runs on Intel GPU machine with Linux Mint operating system (dual-booted with Windows 11)
 Linux-Intel-GPU:
     tags:
         - Linux-Intel-GPU
     stage: build
     script:
-        echo "Hello World"
+        - echo "Hello World"
+        # wait for 5 seconds and then reboot to windows
+        - sleep 5
+        - sudo chmod +x ./switch-to-windows.sh
+        - ./switch-to-windows.sh
 
+# Runs on AMD GPU machine with Windows 11 operating system (dual-booted with Linux Mint)
 Windows-AMD-GPU:
     tags:
         - Windows-AMD-GPU
@@ -38,7 +51,10 @@ Windows-AMD-GPU:
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc mingw-w64-x86_64-libpng'
         - C:\msys64\usr\bin\bash -lc './ci-build.sh'
+        # turn of the runner server
+        - shutdown /s
 
+# Runs on Intel GPU machine with Windows 11 operating system (dual-booted with Linux Mint)
 Windows-Intel-GPU:
     tags:
         - Windows-Intel-GPU
@@ -51,3 +67,5 @@ Windows-Intel-GPU:
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syuu'
         - C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc mingw-w64-x86_64-libpng'
         - C:\msys64\usr\bin\bash -lc './ci-build.sh'
+        # turn of the runner server
+        - shutdown /s
