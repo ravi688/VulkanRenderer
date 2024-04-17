@@ -23,6 +23,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
+#define COMMON_PORTABLE_STDLIB
+#include <common/defines.h>
+
 #include <shader_compiler/compiler/codegen/header.h>
 #include <shader_compiler/utilities/string.h>
 #include <shader_compiler/debug.h>
