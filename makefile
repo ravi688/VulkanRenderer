@@ -47,7 +47,7 @@ PROJECT_NAME = VulkanRenderer
 STATIC_LIB_NAME = vulkanrenderer.a
 DYNAMIC_LIB_NAME = vulkanrenderer.dll
 EXECUTABLE_NAME = main
-EXTERNAL_LIBRARIES = -L./external-dependency-libs -lglfw3 -lgdi32 -lfreetype.dll
+EXTERNAL_LIBRARIES = -L./external-dependency-libs
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies -I./include/freeType
 DEPENDENCIES = ../toolchain/shader_compiler ECS MeshLib GLSLCommon Common MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
 DEPENDENCY_LIBS = ECS/lib/ecs.a MeshLib/lib/meshlib.a GLSLCommon/lib/glslcommon.a Common/lib/common.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
@@ -60,13 +60,13 @@ UNPACKED_OBJECTS_DIR = ./unpacked
 
 # Windows
 ifeq ($(PLATFORM),Windows)
-	EXTERNAL_LIBRARIES += -L${VK_SDK_PATH}/lib/ -lvulkan-1
+	EXTERNAL_LIBRARIES += -L${VK_SDK_PATH}/lib/ -lvulkan-1 -lgdi32  -L./external-dependency-libs/win -lglfw3 -lfreetype.dll
 	EXTERNAL_INCLUDES += -I${VK_SDK_PATH}/include/
 endif
 
 # Linux
 ifeq ($(PLATFORM),Linux)
-	EXTERNAL_LIBRARIES += -L${VULKAN_SDK}/lib/ -lvulkan
+	EXTERNAL_LIBRARIES += -L${VULKAN_SDK}/lib/ -lvulkan -L./external-dependency-libs/linux -lglfw3 -lfreetype -lz -lpng -lbrotlidec -lm
 	EXTERNAL_INCLUDES += -I${VULKAN_SDK}/include/
 endif
 
