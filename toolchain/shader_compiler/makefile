@@ -12,6 +12,22 @@
 #-------------------------------------------
 
 #-------------------------------------------
+#	Platform Detection
+#-------------------------------------------
+
+PLATFORM_DETECT := $(shell uname)
+
+# MINGW (Windows)
+ifneq (,$(findstring MINGW,$(PLATFORM_DETECT)))
+	PLATFORM := Windows
+endif
+
+# Linux
+ifneq (,$(findstring Linux,$(PLATFORM_DETECT)))
+	PLATFORM := Linux
+endif
+
+#-------------------------------------------
 #		Project Configuration
 #-------------------------------------------
 PROJECT_NAME = ShaderCompiler
@@ -26,6 +42,16 @@ DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = 
 SHARED_DEPENDENCY_LIBS = 
 SHARED_DEPENDENCIES_DIR = ./shared-dependencies
+
+# Windows
+ifeq ($(PLATFORM),Windows)
+	EXTERNAL_INCLUDES += -I${VK_SDK_PATH}/include/
+endif
+
+# Linux
+ifeq ($(PLATFORM),Linux)
+	EXTERNAL_INCLUDES += -I${VULKAN_SDK}/include/
+endif
 #-------------------------------------------
 
 #-------------------------------------------
