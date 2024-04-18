@@ -35,8 +35,8 @@
 #include <renderer/system/display.h>
 #include <renderer/renderer.h>
 
-#include <Freetype/freetype.h>
-#include <Freetype/ftimage.h>
+#include <freetype/freetype.h>
+#include <freetype/ftimage.h>
 
 #include <ctype.h> // isgraph
 

@@ -24,6 +24,21 @@
 #	11. run 							For building executable in debug mode and launching it
 #-------------------------------------------
 
+#-------------------------------------------
+#	Platform Detection
+#-------------------------------------------
+
+PLATFORM_DETECT := $(shell uname)
+
+# MINGW (Windows)
+ifneq (,$(findstring MINGW,$(PLATFORM_DETECT)))
+	PLATFORM := Windows
+endif
+
+# Linux
+ifndef (,$(findstring Linux,$(PLATFORM_DETECT)))
+	PLATFORM := Linux
+endif
 
 #-------------------------------------------
 #		Project Configuration
@@ -31,9 +46,9 @@
 PROJECT_NAME = VulkanRenderer
 STATIC_LIB_NAME = vulkanrenderer.a
 DYNAMIC_LIB_NAME = vulkanrenderer.dll
-EXECUTABLE_NAME = main.exe
-EXTERNAL_LIBRARIES = -L./external-dependency-libs -L${VK_SDK_PATH}/lib/ -lvulkan-1 -lglfw3 -lgdi32 -lfreetype.dll
-EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies -I./include/FreeType
+EXECUTABLE_NAME = main
+EXTERNAL_LIBRARIES = -L./external-dependency-libs -lglfw3 -lgdi32 -lfreetype.dll
+EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies -I./include/freeType
 DEPENDENCIES = ../toolchain/shader_compiler ECS MeshLib GLSLCommon Common MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
 DEPENDENCY_LIBS = ECS/lib/ecs.a MeshLib/lib/meshlib.a GLSLCommon/lib/glslcommon.a Common/lib/common.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
@@ -41,6 +56,20 @@ SHARED_DEPENDENCIES = BufferLib
 SHARED_DEPENDENCY_LIBS =  BufferLib/lib/bufferlib.a
 SHARED_DEPENDENCIES_DIR = ./shared-dependencies
 UNPACKED_OBJECTS_DIR = ./unpacked
+
+
+# Windows
+ifeq ($(PLATFORM),Windows)
+	EXTERNAL_LIBRARIES += -L${VK_SDK_PATH}/lib/ -lvulkan-1
+	EXTERNAL_INCLUDES += -I${VK_SDK_PATH}/include/
+endif
+
+# Linux
+ifndef ($(PLATFORM),Linux)
+	EXTERNAL_LIBRARIES += -L${VULKAN_SDK}/lib/ -lvulkan
+	EXTERNAL_INCLUDES += -I${VULKAN_SDK}/include/
+endif
+
 #-------------------------------------------
 
 #-------------------------------------------
@@ -50,7 +79,11 @@ __DEPENDENCIES = $(addprefix $(DEPENDENCIES_DIR)/, $(DEPENDENCIES))
 __DEPENDENCY_LIBS = $(addprefix $(DEPENDENCIES_DIR)/, $(DEPENDENCY_LIBS))
 __SHARED_DEPENDENCIES = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPENDENCIES))
 __SHARED_DEPENDENCY_LIBS = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPENDENCY_LIBS))
-__EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
+ifeq (Windows,$(PLATFORM))
+	__EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
+else
+	__EXECUTABLE_NAME = $(EXECUTABLE_NAME)
+endif
 __UNPACKED_DIRS = $(notdir $(basename $(DEPENDENCY_LIBS) $(SHARED_DEPENDENCY_LIBS)))
 .PHONY: all
 .PHONY: init
@@ -395,7 +428,7 @@ bin-clean:
 #-------------------------------------------
 SHADER_INCLUDES = -I$(wildcard shaders/include/)
 
-SHADER_COMPILER = ./toolchain/shader_compiler/vsc.exe
+SHADER_COMPILER = ./toolchain/shader_compiler/vsc
 SHADER_SOURCES = $(wildcard ./shaders/*/*.v3dshader ./shaders/*/*/*.v3dshader)
 SHADER_BINARIES = $(subst .v3dshader,.sb, $(SHADER_SOURCES))
 

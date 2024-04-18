@@ -50,7 +50,7 @@ SC_API const char* write_header(const char* start, const char* const end, codege
 		while(*start != '\n')
 		{
 			// skip the spaces and tabs but not the newline as it is a delimiter for a preprocessor line
-			start = skip(start, " \t", end);
+			start = skip(start, " \t\r", end);
 
 			// command is for shader binary generation
 			if(safe_strncmp(start, "sb", 2) == 0)

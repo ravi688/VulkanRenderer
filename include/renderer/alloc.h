@@ -44,6 +44,7 @@
 #endif
 
 #include <stdarg.h>
+#include <common/platform.h>
 
 #ifdef USE_SAFE_MEMORY
 #	if defined(GLOBAL_DEBUG) && !defined(SAFE_MEMORY_DEBUG)
