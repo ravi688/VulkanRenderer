@@ -36,7 +36,7 @@ ifneq (,$(findstring MINGW,$(PLATFORM_DETECT)))
 endif
 
 # Linux
-ifndef (,$(findstring Linux,$(PLATFORM_DETECT)))
+ifneq (,$(findstring Linux,$(PLATFORM_DETECT)))
 	PLATFORM := Linux
 endif
 
@@ -65,7 +65,7 @@ ifeq ($(PLATFORM),Windows)
 endif
 
 # Linux
-ifndef ($(PLATFORM),Linux)
+ifeq ($(PLATFORM),Linux)
 	EXTERNAL_LIBRARIES += -L${VULKAN_SDK}/lib/ -lvulkan
 	EXTERNAL_INCLUDES += -I${VULKAN_SDK}/include/
 endif
