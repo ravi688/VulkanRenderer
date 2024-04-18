@@ -48,7 +48,7 @@ STATIC_LIB_NAME = vulkanrenderer.a
 DYNAMIC_LIB_NAME = vulkanrenderer.dll
 EXECUTABLE_NAME = main
 EXTERNAL_LIBRARIES = -L./external-dependency-libs
-EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies -I./include/freeType
+EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies -I./include/freetype
 DEPENDENCIES = ../toolchain/shader_compiler ECS MeshLib GLSLCommon Common MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
 DEPENDENCY_LIBS = ECS/lib/ecs.a MeshLib/lib/meshlib.a GLSLCommon/lib/glslcommon.a Common/lib/common.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
@@ -383,7 +383,12 @@ UNPACK_LIBS: $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) | $(UNPACKED_OBJEC
 	cd $(UNPACKED_OBJECTS_DIR)/.temp & $(foreach var, $^, cd ../$(notdir $(basename $(var))) & $(ARCHIVER) $(ARCHIVER_UNPACK_FLAGS) ../../$(var) &)
 
 DELETE_UPACKED_OBJECTS:
+ifeq (Windows,$(PLATFORM))
 	$(RM) $(subst /,\ $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
+endif
+ifeq (Linux,$(PLATFORM))
+	$(RM) $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o)
+endif
 	$(RM_DIR) $(UNPACKED_OBJECTS_DIR)
 
 $(TARGET_DYNAMIC_PACKED_LIB) : PRINT_DYNAMIC_INFO  $(filter-out source/main.o, $(OBJECTS)) UNPACK_LIBS | $(TARGET_LIB_DIR)
@@ -403,6 +408,7 @@ $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB)
 	@echo [Log] $(PROJECT_NAME) built successfully!
 
 bin-clean:
+ifeq (Windows,$(PLATFORM))
 	$(RM) $(subst /,\, $(OBJECTS))
 	$(RM) $(__EXECUTABLE_NAME)
 	$(RM) $(subst /,\, $(TARGET_STATIC_LIB))
@@ -411,6 +417,17 @@ bin-clean:
 	$(RM_DIR) $(subst /,\, $(TARGET_LIB_DIR))
 	$(RM) $(subst /,\, $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
 	$(RM_DIR) $(subst /,\, $(UNPACKED_OBJECTS_DIR))
+endif
+ifeq (Linux,$(PLATFORM))
+	$(RM) $(OBJECTS)
+	$(RM) $(__EXECUTABLE_NAME)
+	$(RM) $(TARGET_STATIC_LIB)
+	$(RM) $(TARGET_DYNAMIC_LIB)
+	$(RM) $(TARGET_DYNAMIC_IMPORT_LIB)
+	$(RM_DIR) $(TARGET_LIB_DIR)
+	$(RM) $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o)
+	$(RM_DIR) $(UNPACKED_OBJECTS_DIR)
+endif
 	@echo [Log] Binaries cleaned successfully!
 	$(MAKE) --directory=./dependencies/ttf2mesh clean
 	$(MAKE) --directory=./dependencies/HPML clean
@@ -468,7 +485,12 @@ shader-release: $(SHADER_BINARIES)
 shader: shader-debug
 
 shader-clean:
+ifeq (Windows,$(PLATFORM))
 	$(RM) $(subst /,\, $(SHADER_BINARIES))
+endif
+ifeq (Linux,$(PLATFORM))
+	$(RM) $(SHADER_BINARIES)
+endif
 
 
 GLSL_SHADERS = $(wildcard shaders/*.frag shaders/*.vert shaders/*/*.frag shaders/*/*.vert shaders/*/*/*.frag shaders/*/*/*.vert shaders/*/*/*/*.frag shaders/*/*/*/*.vert)
@@ -488,7 +510,12 @@ SPIRV_COMPILER = glslc
 glsl-shader: $(SPIRV_SHADERS)
 
 glsl-shader-clean:
+ifeq (Windows,$(PLATFORM))
 	$(RM) $(subst /,\, $(SPIRV_SHADERS))
+endif
+ifeq (Linux,$(PLATFORM))
+	$(RM) $(SPIRV_SHADERS)
+endif
 
 #-------------------------------------------
 

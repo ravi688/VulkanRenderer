@@ -45,6 +45,7 @@
 
 #include <stdarg.h>
 #include <common/platform.h>
+#include <common/defines.h>
 
 #ifdef USE_SAFE_MEMORY
 #	if defined(GLOBAL_DEBUG) && !defined(SAFE_MEMORY_DEBUG)
@@ -102,6 +103,34 @@
 #elif defined(USE_STDLIB)
 #	include <stdlib.h>
 
+#ifdef PLATFORM_LINUX
+#	ifndef _aligned_malloc
+#		define _aligned_malloc(...) aligned_alloc(__VA_ARGS__)
+#	endif /* _aligned_malloc */
+#	ifndef _aligned_free
+#		define _aligned_free(...) free(__VA_ARGS__)
+#	endif /* _aligned_free */
+#	ifndef _aligned_realloc
+#		include <memory.h>  // memcpy
+#		include <malloc.h> // malloc_usable_size
+#		define _aligned_realloc(...) aligned_realloc(__VA_ARGS__)
+		static INLINE_IF_RELEASE_MODE bool is_aligned(void* ptr, size_t align) { return (CAST_TO(u64, ptr) % align) == 0; }
+		static void* aligned_realloc(void* old_ptr, size_t size, size_t align)
+		{
+			void* ptr = realloc(old_ptr, size);
+			if(!is_aligned(ptr, align))
+			{
+				size_t old_size = malloc_usable_size(old_ptr);
+				ptr = _aligned_malloc(size, align);
+				if(old_ptr != NULL)
+					memcpy(ptr, old_ptr, size < old_size ? size : old_size);
+				_aligned_free(old_ptr);
+			}
+			return ptr;
+		}
+#	endif
+#endif
+
 static INLINE_IF_RELEASE_MODE void* _debug_malloc(size_t size) { return malloc(size); }
 static INLINE_IF_RELEASE_MODE void* _debug_realloc(void* old_ptr, size_t size) { return realloc(old_ptr, size); }
 static INLINE_IF_RELEASE_MODE void _debug_free(void* ptr){ if(ptr == NULL) return; free(ptr); }
@@ -119,7 +148,7 @@ static INLINE_IF_RELEASE_MODE void _debug_aligned_free(void* ptr) { if(ptr == NU
 #	define stack_alloc(size) alloca(size)
 #	define stack_free(basePtr) 
 #	define heap_free(basePtr) _debug_free(basePtr)
-#   define heap_aligned_free(basePtr) _debug_aligned_free(basePtr)
+#   define heap_aligned_free(basePtr) _debug_aligned_free(basePtr)aligned_malloc
 #   define heap_silent_free(basePtr) _debug_free(basePtr)
 #   define heap_silent_aligned_free(basePtr) _debug_aligned_free(basePtr)
 #   define get_element(type, validPtr, index) (validPtr)[index]
