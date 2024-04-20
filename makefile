@@ -60,7 +60,7 @@ UNPACKED_OBJECTS_DIR = ./unpacked
 
 # Windows
 ifeq ($(PLATFORM),Windows)
-	EXTERNAL_LIBRARIES += -L${VK_SDK_PATH}/lib/ -lvulkan-1 -lgdi32  -L./external-dependency-libs/win -lglfw3 -lfreetype.dll
+	EXTERNAL_LIBRARIES += -L${VK_SDK_PATH}/lib/ -lvulkan-1  -L./external-dependency-libs/win -lglfw3 -lfreetype.dll -lgdi32
 	EXTERNAL_INCLUDES += -I${VK_SDK_PATH}/include/
 endif
 
