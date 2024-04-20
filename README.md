@@ -29,57 +29,120 @@ There are only C and C++ interface headers for now. <br>
 4. AMD Radeon(TM) Graphics 512 MB (VRAM) Integratred Mobile GPU + 8 GB of Main Memory (RAM)
 5. AMD Vega 8 Graphics 512 MB (VRAM) Integrated Mobile GPU  + 12 GB of Main Memory (RAM)
 
-### Requirements for building
+### Requirements for building on Windows
 
 1. **[Msys2](https://www.msys2.org/)**
 2. **Vulkan SDK**
 
-3. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
+3. **MINGW 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
    
    ```
-   gcc --version
+   $gcc --version
    ```
    
    OR
    
    ```
-   g++ --version
+   $g++ --version
    ```
    
    If this isn't already installed, run the following in MSYS2 MinGW shell
    
    ```
-   pacman -S gcc
+   $pacman -S gcc
    ```
 
 4. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
    
    ```
-   make --version
+   $make --version
    ```
    
    If this isn't already installed, run the following in MSYS2 MinGW shell
    
    ```
-   pacman -S make
+   $pacman -S make
    ```
 
 5. **Git version 2.35.1**, git must be installed in your machine, you can check if it is already installed by running <br>
    
    ```
-   git --version
+   $git --version
    ```
    
    If this isn't already installed, run the following in MSYS2 MinGW shell
    
    ```
-   pacman -S git
+   $pacman -S git
    ```
 
 6. **glslc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
    
    ```
-   pacman -S mingw-w64-x86_64-shaderc
+   $pacman -S mingw-w64-x86_64-shaderc
+   ```
+
+### Requirements for building on Linux (Debian)
+
+1. **Vulkan Tools**
+
+   ```
+   $sudo apt-get install vulkan-tools
+   ```
+
+2. **Vulkan SDK**
+
+   * Download vulkan sdk for linux (debian) from https://www.lunarg.com/vulkan-sdk/
+   * Extract the archive by `tar -xvf <archive name>`
+   * Change directoy into the extracted folder, usually name as version number `1.x.x.x`
+   * Export SDK environment variables, `source ./setup-env.sh`
+   * Or you may also just install vulkan-sdk via apt, `sudo apt-get install vulkan-sdk`
+
+3. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
+   
+   ```
+   $gcc --version
+   ```
+   
+   OR
+   
+   ```
+   $g++ --version
+   ```
+   
+   If this isn't already installed, run the following in the terminal
+   
+   ```
+   $sudo apt-get install gcc
+   ```
+   You might also need to install `build-essentials` in case you encounter any standar library header inclusion errors:
+   ```
+   $sudo apt-get update
+   $sudo apt-get install build-essentials
+   ```
+
+4. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
+   
+   ```
+   $make --version
+   ```
+   
+   If this isn't already installed, run the following in the terminal
+   
+   ```
+   $sudo apt-get install make
+   ```
+
+5. **Git version 2.35.1**, git must be installed in your machine, you can check if it is already installed by running <br>
+   
+   ```
+   $git --version
+   ```
+   
+   If this isn't already installed, run the following in the terminal
+   
+   ```
+   $sudo apt-get install git
    ```
 
 ### Runtime requirements
@@ -95,55 +158,99 @@ There are only C and C++ interface headers for now. <br>
 1. Clone the repository by running the following command <br>
    
    ```
-   git clone https://github.com/ravi688/VulkanRenderer.git
+   $git clone https://github.com/ravi688/VulkanRenderer.git
    ```
 
 2. Change the working directory to `VulkanRenderer` and setup all the dependency git submodules by running the following command
    
    ```
-   cd VulkanRenderer
-   make -s setup
-   make -s update
+   $cd VulkanRenderer
+   $make -s setup
    ```
 
 3. Start building by running the following command
    
    ```
-   make -s build
+   $make -s build
    ```
    
    OR
    
    ```
-   make -s build-debug
+   $make -s build-debug
    ```
    
    For release mode
    
    ```
-   make -s build-release
+   $make -s build-release
    ```
 
 ### Building executable manually (Optional)
 
-1. Change the working directory to `VulkanRenderer` and build the `main.exe` executable by running the following command
+1. Change the working directory to `VulkanRenderer` and build the `main` executable by running the following command
    
    ```
-   make -s debug
+   $make -s debug
    ```
 
-2. Now run the `main.exe` executable by running the following command
+2. Now run the `main` executable by running the following command
    
    ```
-   main.exe
+   $./main
    ```
+
+### Test Run (Optional)
+There are several tests which you can try running by just passing arguments:
+```
+$cd <build directory>
+$./main CUBE
+```
+The above set of commands would launch a window in which a white cube will be spinning.
+If you want to see all the possible test cases, you may launch the execution without any arguments and it would just print the list of possible test cases:
+```
+$./main
+supported tests:
+        DEPTH_RENDER_TEXTURE
+        DEPTH_RENDER_TEXTURE_LOAD
+        ENVIRONMENT_REFLECTIONS
+        ENVIRONMENT_REFLECTIONS_LOAD
+        DEPTH_CUBE_RENDER_TEXTURE
+        DEPTH_CUBE_RENDER_TEXTURE_LOAD
+        POINT_LIGHT_SHADOWS
+        POINT_LIGHT_SHADOWS_LOAD
+        SPOT_LIGHT
+        SPOT_LIGHT_LOAD
+        CUBE
+        TEXTURE_SAMPLING
+        TEXTURE_SAMPLING_ALPHA_CHANNEL
+        TEXT_MESH
+        BITMAP_TEXT
+        TID_14_CASE_1
+        TID_14_CASE_2
+        TID_14_CASE_3
+        TID_28_CASE_1
+        TID_28_CASE_2
+        TID_28_CASE_3
+        TID_28_CASE_4
+        TID_42_CASE_1
+        TID_43_CASE_1
+        TID_43_CASE_2
+        TID_43_CASE_3
+        TID_43_CASE_4
+        TID_48_CASE_1
+        TID_48_CASE_2
+        TID_48_CASE_3
+        TID_48_CASE_4
+        TID_48_CASE_5
+```
 
 ### Cleaning everything  (Optional)
 
 1. Change the working directory to `VulkanRenderer` and run the following command
    
    ```
-   make -s clean
+   $make -s clean
    ```
 
 ## Features
