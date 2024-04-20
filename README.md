@@ -1,7 +1,7 @@
 ![](VulkanRendererLogo.png)
 
-[![Windows](https://github.com/ravi688/VulkanRenderer/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/ravi688/VulkanRenderer/actions/workflows/c-cpp.yml)
 [![MSYS2](https://github.com/ravi688/VulkanRenderer/actions/workflows/msys2.yml/badge.svg)](https://github.com/ravi688/VulkanRenderer/actions/workflows/msys2.yml)
+[![Ubuntu](https://github.com/ravi688/VulkanRenderer/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/ravi688/VulkanRenderer/actions/workflows/ubuntu.yml)
 
 [![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Windows-AMD-GPU&key_text=Win+AMD+GPU+(GitLab)&key_width=134)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
 
