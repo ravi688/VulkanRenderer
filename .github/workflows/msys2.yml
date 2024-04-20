@@ -23,3 +23,21 @@ jobs:
         run: |
           echo 'Running in MSYS2!'
           ./ci-build.sh
+  ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Required Package Installs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y vulkan-tools
+          sudo apt-get install -y vulkan-sdk
+          sudo apt-get install -y build-essential
+          sudo apt-get install -y libz-dev
+          sudo apt-get install -y libpng-dev
+          sudo apt-get install -y libbrotli-dev
+      - name: CI-Build
+        run: |
+          sudo chmod +x ./ci-build.sh
+          echo "Building..."
+          ./ci-build.sh
