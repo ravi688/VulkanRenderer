@@ -21,6 +21,13 @@ Linux-AMD-GPU:
     stage: build
     script:
         - echo "Hello World"
+        - sudo apt-get update
+        - sudo apt-get install build-essentials
+        - sudo apt-get install -y libz-dev
+        - sudo apt-get install -y libpng-dev
+        - sudo apt-get install -y libbrotli-dev
+        - sudo chmod +x ./ci-build.sh
+        - ./ci-build.sh
         # reboot to windows
         - sudo chmod +x ./switch-to-windows.sh
         - ./switch-to-windows.sh
@@ -32,6 +39,13 @@ Linux-Intel-GPU:
     stage: build
     script:
         - echo "Hello World"
+        - sudo apt-get update
+        - sudo apt-get install build-essentials
+        - sudo apt-get install -y libz-dev
+        - sudo apt-get install -y libpng-dev
+        - sudo apt-get install -y libbrotli-dev
+        - sudo chmod +x ./ci-build.sh
+        - ./ci-build.sh
         # reboot to windows
         - sudo chmod +x ./switch-to-windows.sh
         - ./switch-to-windows.sh
