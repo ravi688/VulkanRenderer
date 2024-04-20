@@ -10,6 +10,7 @@
 
 # ignore archives
 *.a
+!external-dependency-libs/**/*.a
 
 # ignore vulkan 3d shader binaries
 *.sb
