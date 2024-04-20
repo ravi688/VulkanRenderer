@@ -55,31 +55,31 @@ There are only C and C++ interface headers for now. <br>
 4. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
    
    ```
-   $make --version
+   $ make --version
    ```
    
    If this isn't already installed, run the following in MSYS2 MinGW shell
    
    ```
-   $pacman -S make
+   $ pacman -S make
    ```
 
 5. **Git version 2.35.1**, git must be installed in your machine, you can check if it is already installed by running <br>
    
    ```
-   $git --version
+   $ git --version
    ```
    
    If this isn't already installed, run the following in MSYS2 MinGW shell
    
    ```
-   $pacman -S git
+   $ pacman -S git
    ```
 
 6. **glslc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
    
    ```
-   $pacman -S mingw-w64-x86_64-shaderc
+   $ pacman -S mingw-w64-x86_64-shaderc
    ```
 
 ### Requirements for building on Linux (Debian)
@@ -87,7 +87,7 @@ There are only C and C++ interface headers for now. <br>
 1. **Vulkan Tools**
 
    ```
-   $sudo apt-get install vulkan-tools
+   $ sudo apt-get install vulkan-tools
    ```
 
 2. **Vulkan SDK**
@@ -101,48 +101,54 @@ There are only C and C++ interface headers for now. <br>
 3. **GCC 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
    
    ```
-   $gcc --version
+   $ gcc --version
    ```
    
    OR
    
    ```
-   $g++ --version
+   $ g++ --version
    ```
    
    If this isn't already installed, run the following in the terminal
    
    ```
-   $sudo apt-get install gcc
+   $ sudo apt-get install gcc
    ```
    You might also need to install `build-essentials` in case you encounter any standar library header inclusion errors:
    ```
-   $sudo apt-get update
-   $sudo apt-get install build-essentials
+   $ sudo apt-get update
+   $ sudo apt-get install build-essentials
    ```
 
 4. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
    
    ```
-   $make --version
+   $ make --version
    ```
    
    If this isn't already installed, run the following in the terminal
    
    ```
-   $sudo apt-get install make
+   $ sudo apt-get install make
    ```
 
 5. **Git version 2.35.1**, git must be installed in your machine, you can check if it is already installed by running <br>
    
    ```
-   $git --version
+   $ git --version
    ```
    
    If this isn't already installed, run the following in the terminal
    
    ```
-   $sudo apt-get install git
+   $ sudo apt-get install git
+   ```
+6. You might also need to install the followings:
+   ```
+   $ sudo apt-get install libz-dev
+   $ sudo apt-get install libpng-dev
+   $ sudo apt-get install libbrotli-dev
    ```
 
 ### Runtime requirements
