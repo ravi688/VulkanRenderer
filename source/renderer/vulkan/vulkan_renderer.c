@@ -169,6 +169,12 @@ static VkFence get_unsigned_fence(vulkan_renderer_t* renderer)
 	return fence;
 }
 
+#ifdef PLATFORM_LINUX
+#	define PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION "VK_KHR_xcb_surface"
+#elif defined(PLATFORM_WINDOWS)
+#	define PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION "VK_KHR_win32_surface"
+#endif
+
 RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
 	vulkan_renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_renderer, vulkan_renderer_t);
@@ -179,7 +185,7 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulk
 	IF_DEBUG( renderer->debug_log_builder = _renderer->debug_log_builder );
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
-	const char* extensions[3] = { "VK_KHR_surface", "VK_KHR_win32_surface" };
+	const char* extensions[3] = { "VK_KHR_surface", PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION };
 	renderer->instance = vulkan_instance_create(renderer, extensions, 2);
 	vulkan_physical_device_t* physical_devices = vulkan_instance_get_physical_devices(renderer->instance);
 	u32 physical_device_count = vulkan_instance_get_physical_device_count(renderer->instance);
