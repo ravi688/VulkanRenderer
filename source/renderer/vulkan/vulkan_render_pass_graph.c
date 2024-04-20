@@ -161,17 +161,17 @@ static void render_pass_graph_dump(vulkan_render_pass_graph_t* graph, bool is_pr
         AUTO node = buf_get_ptr_at_typeof(&graph->nodes, vulkan_render_pass_graph_node_t, i);
         u32 next_pass_count = buf_get_element_count(&node->next_pass_node_handles);
         if(is_printable)
-            printf("\t%lu -> { ", i);
+            printf("\t%u -> { ", i);
         else
-            printf("\t%lu(%lu, %lu) -> { ", i, node->pass_handle, node->depth);
+            printf("\t%u(%lu, %u) -> { ", i, node->pass_handle, node->depth);
         for(u32 j = 0; j < next_pass_count; j++)
         {
             vulkan_render_pass_graph_node_handle_t node_handle = *buf_get_ptr_at_typeof(&node->next_pass_node_handles, vulkan_render_pass_graph_node_handle_t, j);
             vulkan_render_pass_handle_t pass_handle = buf_get_ptr_at_typeof(&graph->nodes, vulkan_render_pass_graph_node_t, node_handle)->pass_handle;
             if(is_printable)
-                printf("%lu ", node_handle);
+                printf("%u ", node_handle);
             else
-                printf("%lu(%lu) ", node_handle, pass_handle);
+                printf("%u(%lu) ", node_handle, pass_handle);
         }
         puts("}");
     }
@@ -268,7 +268,7 @@ RENDERER_API void vulkan_render_pass_graph_dump_optimized_path(vulkan_render_pas
         vulkan_render_pass_graph_node_handle_t node_handle;
         buf_get_at(&graph->optimized_render_path, i, &node_handle);
         AUTO node = buf_get_ptr_at_typeof(&graph->nodes, vulkan_render_pass_graph_node_t, node_handle);
-        printf("%lu(%lu) ", node_handle, node->pass_handle);
+        printf("%u(%lu) ", node_handle, node->pass_handle);
     }
     puts("");
 }

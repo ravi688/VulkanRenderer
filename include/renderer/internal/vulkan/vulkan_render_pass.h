@@ -35,7 +35,7 @@
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t
 #include <renderer/event.h>
 
-#define VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN (~0UL)
+#define VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN (~0U)
 
 typedef struct vulkan_subpass_create_info_t
 {

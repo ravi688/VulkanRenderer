@@ -193,7 +193,7 @@ static bool binding_less_than(void* lhs, void* rhs, void* user_data)
 
 static void print_binding(void* ptr, void* user_data)
 {
-	printf("%lu ", CAST_TO(vulkan_vertex_buffer_t*, ptr)->binding);
+	printf("%u ", CAST_TO(vulkan_vertex_buffer_t*, ptr)->binding);
 }
 
 RENDERER_API void vulkan_mesh_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, u32 binding)
