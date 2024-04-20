@@ -23,24 +23,3 @@ jobs:
         run: |
           echo 'Running in MSYS2!'
           ./ci-build.sh
-  ubuntu:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Required Package Installs
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y vulkan-tools
-          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
-          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
-          sudo apt-get update
-          sudo apt-get install -y vulkan-sdk
-          sudo apt-get install -y build-essential
-          sudo apt-get install -y libz-dev
-          sudo apt-get install -y libpng-dev
-          sudo apt-get install -y libbrotli-dev
-      - name: CI-Build
-        run: |
-          sudo chmod +x ./ci-build.sh
-          echo "Building..."
-          ./ci-build.sh
