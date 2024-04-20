@@ -34,7 +34,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <windows.h>
+
+#ifdef PLATFORM_WINDOWS
+#	include <windows.h> // GetCurrentDirectory
+#elif defined(PLATFORM_LINUX)
+#	include <unistd.h> // getcwd
+# 	include <linux/limits.h> // PATH_MAX
+#endif
 
 void display_help_and_exit(const char* application_name)
 {
@@ -70,6 +76,7 @@ static void __cmd_args_error(u32 line, const char* function, const char* file, c
 	display_help_and_exit("vsc");
 }
 
+#ifdef PLATFORM_WINDOWS
 /* 	returns the current working directory
 	NOTE: windows only
  */
@@ -82,6 +89,17 @@ static const char* get_cwd()
 	_assert(read_length == (length - 1));
 	return CAST_TO(const char*, buffer);
 }
+#elif defined(PLATFORM_LINUX)
+static const char* get_cwd()
+{
+	char* cwd = CAST_TO(char*, malloc(PATH_MAX));
+	if(getcwd(cwd, PATH_MAX) != NULL)
+		return CAST_TO(const char*, cwd);
+	else
+		DEBUG_LOG_ERROR("Failed to get current working directory");
+	return NULL;
+}
+#endif
 
 static cmd_args_parse_result_t* parse_cmd_args(const char* const* argv, int arg_count)
 {

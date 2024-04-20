@@ -31,7 +31,14 @@
 #include <renderer/renderer.h>
 #include <renderer/legal/legal.h>
 
-#include <conio.h>
+/* TODO: Write a cross platform input library { Keyboard, and Mouse } 
+ * For now, we can just bypass kbhit() and getch() function calls. */
+#ifdef PLATFORM_WINDOWS
+#	include <conio.h>
+#elif defined(PLATFORM_LINUX)
+#	define kbhit() false
+#	define getch() 0
+#endif
 #include <signal.h>
 
 static allocate_result_t allocate(u32 size, u32 align, void* user_data)
@@ -80,13 +87,17 @@ static memory_allocator_t* allocator;
 
 signal_handler(__SIGINT, memory_allocation_tree_dump(allocator, "__SIGINT.runtime.dump"))
 signal_handler(__SIGILL, memory_allocation_tree_dump(allocator, "__SIGILL.runtime.dump"))
-signal_handler(__SIGABRT_COMPAT, memory_allocation_tree_dump(allocator, "__SIGABRT_COMPAT.runtime.dump"))
 signal_handler(__SIGFPE, memory_allocation_tree_dump(allocator, "__SIGFPE.runtime.dump"))
 signal_handler(__SIGSEGV, memory_allocation_tree_dump(allocator, "__SIGSEGV.runtime.dump"))
 signal_handler(__SIGTERM, memory_allocation_tree_dump(allocator, "__SIGTERM.runtime.dump"))
-signal_handler(__SIGBREAK, memory_allocation_tree_dump(allocator, "__SIGBREAK.runtime.dump"))
 signal_handler(__SIGABRT, memory_allocation_tree_dump(allocator, "__SIGABRT.runtime.dump"))
+#ifdef PLATFORM_WINDOWS
+signal_handler(__SIGBREAK, memory_allocation_tree_dump(allocator, "__SIGBREAK.runtime.dump"))
+signal_handler(__SIGABRT_COMPAT, memory_allocation_tree_dump(allocator, "__SIGABRT_COMPAT.runtime.dump"))
 signal_handler(__SIGABRT2, memory_allocation_tree_dump(allocator, "__SIGABRT2.runtime.dump"))
+#elif defined(PLATFORM_LINUX)
+signal_handler(__SIGTRAP, memory_allocation_tree_dump(allocator, "__SIGTRAP.runtime.dump"))
+#endif
 
 /* TODO: there are extra things have to be done to get memory dump whenever the program crashes,
  * 1. all the assertions must use __builtin_trap() to raise SIGILL.
@@ -95,13 +106,17 @@ static void setup_signal_handlers()
 {
 	_debug_assert__(signal(SIGINT, __SIGINT_handler) != SIG_ERR);
 	_debug_assert__(signal(SIGILL, __SIGILL_handler) != SIG_ERR);
-	_debug_assert__(signal(SIGABRT_COMPAT, __SIGABRT_COMPAT_handler) != SIG_ERR);
 	_debug_assert__(signal(SIGFPE, __SIGFPE_handler) != SIG_ERR);
 	_debug_assert__(signal(SIGSEGV, __SIGSEGV_handler) != SIG_ERR);
 	_debug_assert__(signal(SIGTERM, __SIGTERM_handler) != SIG_ERR);
-	_debug_assert__(signal(SIGBREAK, __SIGBREAK_handler) != SIG_ERR);
 	_debug_assert__(signal(SIGABRT, __SIGABRT_handler) != SIG_ERR);
+	#ifdef PLATFORM_WINDOWS
+	_debug_assert__(signal(SIGBREAK, __SIGBREAK_handler) != SIG_ERR);
+	_debug_assert__(signal(SIGABRT_COMPAT, __SIGABRT_COMPAT_handler) != SIG_ERR);
 	_debug_assert__(signal(SIGABRT2, __SIGABRT2_handler) != SIG_ERR);
+	#elif defined(PLATFORM_LINUX)
+	_debug_assert__(signal(SIGTRAP, __SIGTRAP_handler) != SIG_ERR);
+	#endif
 }
 
 int main(int argc, const char** argv)

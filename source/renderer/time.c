@@ -27,10 +27,17 @@
 #include <renderer/time.h>
 
 
-#ifdef _USE_32BIT_TIME_T
+#include <common/platform.h>
+
+#ifdef PLATFORM_WINDOWS
+#	ifdef _USE_32BIT_TIME_T
 #		undef _USE_32BIT_TIME_T
+#	endif
+#	include <sys/time.h>
+#elif defined(PLATFORM_LINUX)
+#	include <time.h>
 #endif
-#include <sys/time.h>
+
 #include <stdio.h>
 
 RENDERER_API time_handle_t time_get_handle()

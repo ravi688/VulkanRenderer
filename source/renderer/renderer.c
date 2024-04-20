@@ -33,7 +33,7 @@
 #include <renderer/render_pass_pool.h>
 #include <renderer/string_builder.h>
 
-#include <FreeType/freetype.h>
+#include <freetype/freetype.h>
 
 RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
