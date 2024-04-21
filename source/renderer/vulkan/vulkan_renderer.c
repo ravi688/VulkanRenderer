@@ -79,7 +79,7 @@ static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t* 
 				discrete_gpu = &devices[i];
 				break;
 			default:
-				DEBUG_LOG_FETAL_ERROR("Unexpected VkPhysicalDeviceType: %u", properties->deviceType);
+				debug_log_warning("Unhandled VkPhysicalDeviceType: %u", properties->deviceType);
 				break;
 		}
 	}
