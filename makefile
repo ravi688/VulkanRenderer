@@ -272,7 +272,7 @@ ifeq ($(NOOPT),1)
 endif
 
 ifeq ($(WALL),1)
-	COMPILER_FLAGS += -Wall
+	COMPILER_FLAGS += -Wall -Wno-missing-braces
 endif
 
 DEBUG_COMPILER_FLAGS= -g #-fsanitize=integer-divide-by-zero // why it is not working on windows 64 bit?
