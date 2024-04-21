@@ -74,7 +74,7 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physic
 	for(u32 i = 0; i < queue_family_count; i++)
 	{
 		queue_create_infos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queue_create_infos[i].queueFamilyIndex = family_indices[i];
+		queue_create_infos[i].queueFamilyIndex = union_result[i];
 		// TODO: Make queue count configurable
 		queue_create_infos[i].queueCount = 1;
 		queue_create_infos[i].pQueuePriorities = &priority;
