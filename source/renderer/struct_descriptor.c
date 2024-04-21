@@ -443,6 +443,7 @@ static struct_field_t* prvt_add_field2(struct_descriptor_t* descriptor, const ch
 	field->size = struct_descriptor_sizeof(record);
 	field->alignment = struct_descriptor_alignof(record);
 	field->record = record;
+	return field;
 }
 
 RENDERER_API void struct_descriptor_add_field2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record)

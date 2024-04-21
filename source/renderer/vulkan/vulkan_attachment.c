@@ -167,7 +167,7 @@ static VkSampler create_sampler(vulkan_renderer_t* renderer)
 	return sampler;
 }
 
-static VkImageLayout get_layout_from_format(VkFormat format)
+UNUSED_FUNCTION static VkImageLayout get_layout_from_format(VkFormat format)
 {
 	switch(format)
 	{

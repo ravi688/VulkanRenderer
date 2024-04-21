@@ -125,6 +125,7 @@ RENDERER_API bool hash_table_remove(hash_table_t* table, void* key)
 		_release_assert__(result == true);
 		heap_free(_ptr);
 	}
+	return result;
 }
 
 RENDERER_API bool hash_table_contains(hash_table_t* table, void* key)

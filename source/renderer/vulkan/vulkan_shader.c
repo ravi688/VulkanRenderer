@@ -376,7 +376,7 @@ static bool is_next_subpass_writes_any(const vulkan_subpass_description_t* const
 	return false;
 }
 
-static bool is_renderpass_reads_any(const vulkan_render_pass_description_t* const pass, const u32* const attachments, u32 count)
+UNUSED_FUNCTION static bool is_renderpass_reads_any(const vulkan_render_pass_description_t* const pass, const u32* const attachments, u32 count)
 {
 	for(u32 i = 0; i < pass->input_attachment_count; i++)
 		if(u32_list_contains(attachments, count, pass->input_attachments[i]))
@@ -384,7 +384,7 @@ static bool is_renderpass_reads_any(const vulkan_render_pass_description_t* cons
 	return false;
 }
 
-static bool is_renderpass_writes_any(const vulkan_render_pass_description_t* const pass, const u32* const attachments, u32 count)
+UNUSED_FUNCTION static bool is_renderpass_writes_any(const vulkan_render_pass_description_t* const pass, const u32* const attachments, u32 count)
 {
 	/* currently not supported */
 	return false;

@@ -198,8 +198,8 @@ static irect2d_t _get_intersection(irect2d_t r1, irect2d_t r2, u32 _call_count)
 		return IRECT2D_NULL;
 
 	ioffset2d_t tl1 = r1.offset;
-	ioffset2d_t tr1 = { r1.offset.x + r1.extent.x, r1.offset.y };
-	ioffset2d_t bl1 = { r1.offset.x, r1.offset.y + r1.extent.y };
+	UNUSED_VARIABLE ioffset2d_t tr1 = { r1.offset.x + r1.extent.x, r1.offset.y };
+	UNUSED_VARIABLE ioffset2d_t bl1 = { r1.offset.x, r1.offset.y + r1.extent.y };
 	ioffset2d_t br1 = { r1.offset.x + r1.extent.x, r1.offset.y + r1.extent.y };
 	ioffset2d_t tl2 = r2.offset;
 	ioffset2d_t br2 = { r2.offset.x + r2.extent.x, r2.offset.y + r2.extent.y };

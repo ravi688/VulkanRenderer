@@ -1,6 +1,3 @@
-
-#pragma
-
 #include <renderer/defines.h>
 #include <renderer/rect.h>
 

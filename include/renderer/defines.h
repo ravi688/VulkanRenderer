@@ -57,7 +57,7 @@ typedef struct renderer_t renderer_t;
 typedef struct memory_allocator_t memory_allocator_t;
 
 #include <renderer/assert.h>
-#define NOT_IMPLEMENTED_FUNCTION() LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__);
+#define NOT_IMPLEMENTED_FUNCTION() do { LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__); UNREACHABLE(); } while(false)
 
 
 /* platform identification */

@@ -43,7 +43,7 @@
 #ifndef GLOBAL_DEBUG
 #	define check_pre_condition(text_mesh)
 #else
-	static void check_pre_condition(vulkan_text_mesh_t* text_mesh);
+	UNUSED_FUNCTION static void check_pre_condition(vulkan_text_mesh_t* text_mesh) { }
 #endif /*GLOBAL_DEBUG*/
 
 #define INSTANCE_BUFFER_STRIDE glsl_sizeof(vulkan_text_mesh_glsl_glyph_render_data_t)

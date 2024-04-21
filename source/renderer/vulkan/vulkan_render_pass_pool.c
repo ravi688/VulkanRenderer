@@ -144,7 +144,7 @@ static bool compare_attachment_usages(u32 count, vulkan_attachment_next_pass_usa
 	return true;
 }
 
-static bool compare_supplementary_attachments(u32 count, VkImageView* a1, VkImageView* a2)
+UNUSED_FUNCTION static bool compare_supplementary_attachments(u32 count, VkImageView* a1, VkImageView* a2)
 {
 	for(u32 i = 0; i < count; i++)
 	{

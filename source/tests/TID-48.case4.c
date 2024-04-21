@@ -190,7 +190,7 @@ TEST_ON_TERMINATE(TID_48_CASE_4)
 }
 
 
-static bool swap = false;
+UNUSED_VARIABLE static bool swap = false;
 static float angle = -90.0f;
 
 TEST_ON_UPDATE(TID_48_CASE_4)

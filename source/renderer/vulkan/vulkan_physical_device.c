@@ -180,7 +180,6 @@ RENDERER_API u32 vulkan_physical_device_find_queue_family_index(vulkan_physical_
 
 RENDERER_API u32 vulkan_physical_device_find_queue_family_index_for_surface(vulkan_physical_device_t* device, VkSurfaceKHR surface)
 {
-	VkQueueFamilyProperties* families = vulkan_physical_device_get_queue_family_properties(device);
 	u32 count = vulkan_physical_device_get_queue_family_count(device);
 	for(u32 i = 0; i < count; i++)
 	{

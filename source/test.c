@@ -78,7 +78,7 @@ RENDERER_API test_t* test_new(memory_allocator_t* allocator)
 	return test;
 }
 
-#define IF(NAME) if(strcmp(name, TEST_NAME(NAME)) == 0) NAME##_get_callbacks(test)
+#define IF(NAME) if(strcmp(name, TEST_NAME(NAME)) == 0) NAME##_setup_callbacks(test)
 #define ELSE_IF(NAME) else IF(NAME)
 
 RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name)

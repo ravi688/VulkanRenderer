@@ -85,7 +85,7 @@ END_CPP_COMPATIBLE
 #define TEST_NAME(NAME) NAME##_name
 #define TEST_DECLARE(NAME)\
 extern const char* NAME##_name;\
-RENDERER_API test_t* NAME##_get_callbacks(test_t* test)
+RENDERER_API void NAME##_setup_callbacks(test_t* test)
 
 #define SETUP_TEST(NAME) \
 TEST_DATA(NAME);\
@@ -95,7 +95,7 @@ static void initialize(renderer_t* renderer, TEST_DATA(NAME)* this);\
 static void terminate(renderer_t* renderer, TEST_DATA(NAME)* this);\
 static void update(renderer_t* renderer, float deltaTime, TEST_DATA(NAME)* this);\
 static void render(renderer_t* renderer, TEST_DATA(NAME)* this);\
-RENDERER_API test_t* NAME##_get_callbacks(test_t* test)\
+RENDERER_API void NAME##_setup_callbacks(test_t* test)\
 {\
 	test->renderer_initialize = (void*)renderer_initialize;\
 	test->initialize = (void*)initialize;\

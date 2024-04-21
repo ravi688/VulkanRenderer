@@ -59,8 +59,6 @@ RENDERER_API void vulkan_command_buffer_allocatev(vulkan_renderer_t* renderer, V
 		.commandPool = pool,
 		.commandBufferCount = count
 	};
-
-	VkCommandBuffer buffer;
 	vkCall(vkAllocateCommandBuffers(renderer->logical_device->vo_handle, &alloc_info, out_buffers));
 }
 

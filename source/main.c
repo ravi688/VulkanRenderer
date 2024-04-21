@@ -41,7 +41,7 @@
 #endif
 #include <signal.h>
 
-static allocate_result_t allocate(u32 size, u32 align, void* user_data)
+UNUSED_FUNCTION static allocate_result_t allocate(u32 size, u32 align, void* user_data)
 {
 	if((size == 0) || (align == 0))
 		return (allocate_result_t) { ALLOCATE_RESULT_INVALID_REQUEST, NULL };
@@ -67,7 +67,7 @@ static allocate_result_t allocate(u32 size, u32 align, void* user_data)
 // 		return new_ptr;
 // }
 
-static void deallocate(void* ptr, void* user_data)
+UNUSED_FUNCTION static void deallocate(void* ptr, void* user_data)
 {
 	heap_free(ptr);
 }

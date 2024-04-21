@@ -38,7 +38,7 @@ typedef struct MemoryObject2
 	MemoryObject3* obj3;
 } MemoryObject2;
 
-const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_2 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
+UNUSED_VARIABLE const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_2 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
 
 typedef struct MemoryObject1 MemoryObject1;
 typedef struct MemoryObject4
@@ -48,7 +48,7 @@ typedef struct MemoryObject4
 	MemoryObject1* obj1;
 } MemoryObject4;
 
-const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_4 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
+UNUSED_VARIABLE const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_4 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
 
 typedef struct MemoryObject3
 {
@@ -56,7 +56,7 @@ typedef struct MemoryObject3
 	MemoryObject4* obj4;
 } MemoryObject3;
 
-const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_3 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
+UNUSED_VARIABLE const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_3 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
 
 typedef struct MemoryObject1
 {
@@ -66,7 +66,7 @@ typedef struct MemoryObject1
 	MemoryObject1* self_reference;
 } MemoryObject1;
 
-const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_1 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
+UNUSED_VARIABLE const static u32 MEMORY_ALLOCATION_TYPE_OBJ_TEST_MEMORY_OBJECT_1 = (MEMORY_ALLOCATION_TYPE_MAX + __COUNTER__);
 
 /*GetDebugFooter(MemoryObject1, obj1, obj3);
 

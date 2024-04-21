@@ -128,6 +128,6 @@ RENDERER_API const char* vulkan_result_to_string_literal(VkResult result)
    		case VK_OPERATION_NOT_DEFERRED_KHR: return "VK_OPERATION_NOT_DEFERRED_KHR";
    		case VK_ERROR_NOT_PERMITTED_EXT: return "VK_ERROR_NOT_PERMITTED_EXT";
    		case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS_KHR: return "VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS_KHR";
+		default: return "Unkown VkResult";
 	}
-	return "Unkown VkResult";
 }

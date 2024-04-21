@@ -450,6 +450,10 @@ RENDERER_API void vk_format_to_string(const char* description, VkFormat format, 
         case VK_FORMAT_D32_SFLOAT_S8_UINT:
             buf_push_string(string_buffer, "VK_FORMAT_D32_SFLOAT_S8_UINT");
             break;
+        default:
+            debug_assert_wrn__(false,"Unhandled format");
+            buf_push_string(string_buffer, "<unhandled VkFormat>");
+            break;
     }
 }
 

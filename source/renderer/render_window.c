@@ -123,7 +123,10 @@ RENDERER_API void render_window_destroy(render_window_t* window)
 
 RENDERER_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height)
 {
-	glfwGetFramebufferSize(window->handle, out_width, out_height);
+	int height, width;
+	glfwGetFramebufferSize(window->handle, &width, &height);
+	*out_width = width;
+	*out_height = height;
 }
 
 static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, vulkan_renderer_t* driver)

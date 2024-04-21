@@ -59,7 +59,7 @@ RENDERER_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffe
 RENDERER_API multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer);
 RENDERER_API vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer);
 
-static bool vulkan_instance_buffer_has_device_buffer(vulkan_instance_buffer_t* instance_buffer)
+UNUSED_FUNCTION static bool vulkan_instance_buffer_has_device_buffer(vulkan_instance_buffer_t* instance_buffer)
 {
 	return vulkan_instance_buffer_get_device_buffer(instance_buffer) != NULL;
 }

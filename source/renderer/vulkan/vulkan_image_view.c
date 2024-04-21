@@ -211,20 +211,6 @@ RENDERER_API void vulkan_image_view_transition_layout_to(vulkan_image_view_t* vi
 	}
 	vulkan_renderer_t* renderer = view->renderer;
 	VkImageLayout old_layout = (flags == VULKAN_IMAGE_VIEW_DONT_CARE_OLD_LAYOUT) ? VK_IMAGE_LAYOUT_UNDEFINED : view->vo_layout;
-	VkImageMemoryBarrier barrier =
-	{
-		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-		.oldLayout = old_layout,
-		.newLayout = vo_layout,
-		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		.image = view->image->vo_handle,
-		.subresourceRange.aspectMask = view->vo_subresource_range.aspectMask,
-		.subresourceRange.baseMipLevel = view->vo_subresource_range.baseMipLevel,
-		.subresourceRange.levelCount = view->vo_subresource_range.levelCount,
-		.subresourceRange.baseArrayLayer = view->vo_subresource_range.baseArrayLayer,
-		.subresourceRange.layerCount = view->vo_subresource_range.layerCount
-	};
 	VkPipelineStageFlags src_pipeline_stage;
 	VkPipelineStageFlags dst_pipeline_stage;
 	VkAccessFlags src_access_mask;

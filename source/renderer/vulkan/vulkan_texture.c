@@ -49,7 +49,7 @@ RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer
 	return texture;
 }
 
-#define UNSUPPORTED_TEXTURE_TYPE(type) LOG_FETAL_ERR("Unsupported texture type: %u\n", type)
+#define UNSUPPORTED_TEXTURE_TYPE(type) do { LOG_FETAL_ERR("Unsupported texture type: %u\n", type); UNREACHABLE(); } while(false)
 
 static VkFlags get_flags_from_texture_type(vulkan_texture_type_t type)
 {
@@ -597,6 +597,9 @@ RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulk
 				case VULKAN_RENDER_TARGET_TECHNIQUE_COPY:
 					vulkan_image_view_transition_layout_to(&texture->image_view, 0, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 				break;
+				default:
+					DEBUG_LOG_ERROR("texture->technique : VULKAN_RENDER_TARGET_TECHNIQUE_UNDEFINED is not expected here");
+					break;
 			}
 		}
 		break;

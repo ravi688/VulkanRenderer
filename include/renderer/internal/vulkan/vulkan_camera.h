@@ -160,7 +160,7 @@ typedef enum vulkan_camera_render_target_status_t
 	VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_EXTERNAL_COLOR
 } vulkan_camera_render_target_status_t;
 
-static const char* vulkan_camera_render_target_status_str(vulkan_camera_render_target_status_t status)
+UNUSED_FUNCTION static const char* vulkan_camera_render_target_status_str(vulkan_camera_render_target_status_t status)
 {
 	switch(status)
 	{
@@ -172,8 +172,8 @@ static const char* vulkan_camera_render_target_status_str(vulkan_camera_render_t
 		case VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_EXTERNAL_DEPTH: return "VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_EXTERNAL_DEPTH";
 		case VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_SWAPCHAIN: return "VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_SWAPCHAIN";
 		case VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_EXTERNAL_COLOR: return "VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_EXTERNAL_COLOR";
+		default: return "<undefined>";
 	}
-	return "<undefined>";
 }
 
 typedef enum vulkan_camera_render_target_binding_type_t

@@ -73,7 +73,7 @@ RENDERER_API void renderer_update(renderer_t* renderer)
 
 RENDERER_API bool renderer_is_running(renderer_t* renderer)
 {
-	vulkan_renderer_is_running(renderer->vulkan_handle);
+	return vulkan_renderer_is_running(renderer->vulkan_handle);
 }
 
 

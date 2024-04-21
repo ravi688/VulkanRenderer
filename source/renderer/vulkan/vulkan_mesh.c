@@ -67,7 +67,7 @@ RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulka
 		{
 			vulkan_vertex_buffer_create_info_t* info = &create_info->vertex_buffer_infos[i];
 			if(vertex_count != info->count)
-				debug_log_fetal_error("Vertex buffer creation failed, all the per-vertex vertex buffers should have the same count");
+				DEBUG_LOG_FETAL_ERROR("Vertex buffer creation failed, all the per-vertex vertex buffers should have the same count");
 			vulkan_mesh_create_and_add_vertex_buffer(mesh, info);
 		}
 	}
@@ -191,7 +191,7 @@ static bool binding_less_than(void* lhs, void* rhs, void* user_data)
 	return CAST_TO(vulkan_vertex_buffer_t*, lhs)->binding < CAST_TO(vulkan_vertex_buffer_t*, rhs)->binding;
 }
 
-static void print_binding(void* ptr, void* user_data)
+UNUSED_FUNCTION static void print_binding(void* ptr, void* user_data)
 {
 	printf("%u ", CAST_TO(vulkan_vertex_buffer_t*, ptr)->binding);
 }
@@ -239,7 +239,7 @@ static u32 get_index_stride(VkIndexType index_type)
 		case VK_INDEX_TYPE_UINT16: return sizeof(u16);
 		case VK_INDEX_TYPE_UINT32: return sizeof(u32);
 		case VK_INDEX_TYPE_UINT8_EXT: return sizeof(u8);
-		case VK_INDEX_TYPE_NONE_KHR: debug_log_fetal_error("Index buffer creation failed, VK_INDEX_TYPE_NONE_KHR or VK_INDEX_TYPE_NONE_NV isn't supported");
-		default: debug_log_fetal_error("Index buffer creation failed, \"%u\" index type isn't defined", index_type);
+		case VK_INDEX_TYPE_NONE_KHR: DEBUG_LOG_FETAL_ERROR("Index buffer creation failed, VK_INDEX_TYPE_NONE_KHR or VK_INDEX_TYPE_NONE_NV isn't supported");
+		default: DEBUG_LOG_FETAL_ERROR("Index buffer creation failed, \"%u\" index type isn't defined", index_type); UNREACHABLE();
 	}
 }

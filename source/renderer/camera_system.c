@@ -53,7 +53,7 @@ RENDERER_API void camera_system_release_resources(camera_system_t* system)
 /* getters */
 RENDERER_API u32 camera_system_get_count(camera_system_t* system)
 {
-	return camera_system_get_count(system);
+	return vulkan_camera_system_get_count(system);
 }
 
 RENDERER_API camera_t* camera_system_get_at(camera_system_t* system, buf_ucount_t index)

@@ -31,7 +31,7 @@
 #include <renderer/assert.h>
 #include <renderer/alloc.h>
 
-static u32 get_vulkan_index_from_stride(u32 stride);
+static VkIndexType get_vulkan_index_from_stride(u32 stride);
 
 RENDERER_API mesh_t* mesh_new(memory_allocator_t* allocator)
 {
@@ -119,7 +119,11 @@ static VkIndexType get_vulkan_index_from_stride(u32 stride)
 		case sizeof(u16): return VK_INDEX_TYPE_UINT16;
 		case sizeof(u32): return VK_INDEX_TYPE_UINT32;
 		case sizeof(u8): return VK_INDEX_TYPE_UINT8_EXT;
-		default: LOG_FETAL_ERR("There is no Vulkan Index Type corresponding to the stride \"%u\"\n", stride);
+		default:
+		{
+			LOG_FETAL_ERR("There is no Vulkan Index Type corresponding to the stride \"%u\"\n", stride);
+			UNREACHABLE();
+		}
 	}
 }
 

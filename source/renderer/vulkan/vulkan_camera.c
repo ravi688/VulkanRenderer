@@ -303,7 +303,6 @@ static void rewrite_descriptors(void* window, void* user_data)
 {
 	vulkan_camera_t* camera = CAST_TO(vulkan_camera_t*, user_data);
 
-	vulkan_render_pass_pool_t* pass_pool = camera->renderer->render_pass_pool;
 	vulkan_render_pass_graph_t* pass_graph = &camera->renderer->render_pass_pool->pass_graph;
 	vulkan_render_pass_graph_node_handle_list_t* pass_node_handles = vulkan_render_pass_graph_get_or_build_optimized_path(pass_graph);
 	u32 pass_count = buf_get_element_count(pass_node_handles);
@@ -617,7 +616,7 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 	// heap_free(camera);
 }
 
-static void transition_target_layout_for_write(VkFormat format, vulkan_image_view_t* view)
+UNUSED_FUNCTION static void transition_target_layout_for_write(VkFormat format, vulkan_image_view_t* view)
 {
 	VkCommandBuffer cb = view->renderer->vo_command_buffers[view->renderer->swapchain->current_image_index];
 	switch(format)
@@ -737,7 +736,12 @@ RENDERER_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags
 						camera->swapchain_clear_pass->vo_clear_values = clear_buffer;
 					break;
 					}
+				default:
+				{
+					DEBUG_LOG_FETAL_ERROR("Unhandled vulkan_camera_render_target_status_t: %u", camera->render_target_status);
+					break;
 				}
+			}
 		}
 		break;
 	}
@@ -1132,9 +1136,7 @@ static void vulkan_camera_create_or_recreate_depth_framebuffers(vulkan_camera_t*
 	_debug_assert__(is_image_size_equal_to(&camera->current_depth_attachment->image, width, height));
 	_debug_assert__((camera->render_target_size.width == width) && (camera->render_target_size.height == height));
 
-	AUTO pass_handle = camera->depth_material->shader->render_passes[0].handle;
-
-	AUTO camera_pass = vulkan_camera_get_camera_render_pass_from_pass_handle(camera, pass_handle);
+	UNUSED_VARIABLE AUTO pass_handle = camera->depth_material->shader->render_passes[0].handle;
 
 	bool is_cube = is_attachment_cube(camera->current_depth_attachment);
 
@@ -1327,6 +1329,11 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 			else
 				vulkan_camera_set_depth_render_target_texture(camera, binding_type, texture);
 
+			break;
+		}
+		default:
+		{
+			DEBUG_LOG_FETAL_ERROR("Unexpected vulkan_camera_render_target_type_t: %u", target_type);
 			break;
 		}
 	}

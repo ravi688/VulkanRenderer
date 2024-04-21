@@ -148,7 +148,7 @@
 		05:
 		06:   // adjust exponent
 		07:   *i = 0x7F000000 - *i;
-		08:   //*i = 0x7EEEEEEE - *i;
+		08:	//  *i = 0x7EEEEEEE - *i;
 		09:
 		10:   return x;
 		11: }

@@ -47,7 +47,7 @@
 
 #include <stdio.h> 		// puts
 
-static void memory_allocator_dump(memory_allocator_t* allocator, const char* const file_path)
+UNUSED_FUNCTION static void memory_allocator_dump(memory_allocator_t* allocator, const char* const file_path)
 {
 	memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(allocator);
 	memory_allocation_tree_serialize_to_file(tree, file_path);
@@ -58,7 +58,7 @@ static void recreate_swapchain(void* _window, void* renderer);
 
 RENDERER_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer) { return renderer->window; }
 
-static vulkan_physical_device_t* get_lowest_score_device(vulkan_physical_device_t** devices, u32 count);
+UNUSED_FUNCTION static vulkan_physical_device_t* get_lowest_score_device(vulkan_physical_device_t** devices, u32 count) { /* TODO: */ return NULL; }
 
 static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t* devices, u32 count, vulkan_renderer_gpu_type_t type)
 {
@@ -69,7 +69,6 @@ static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t* 
 	vulkan_physical_device_t* discrete_gpu = NULL;
 	for(int i = 0; i < count; i++)
 	{
-		VkPhysicalDeviceFeatures* features = vulkan_physical_device_get_features(&devices[i]);
 		VkPhysicalDeviceProperties* properties = vulkan_physical_device_get_properties(&devices[i]);
 		switch(properties->deviceType)
 		{
@@ -78,6 +77,9 @@ static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t* 
 				break;
 			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
 				discrete_gpu = &devices[i];
+				break;
+			default:
+				DEBUG_LOG_FETAL_ERROR("Unexpected VkPhysicalDeviceType: %u", properties->deviceType);
 				break;
 		}
 	}
@@ -542,7 +544,6 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
 	event_unsubscribe(renderer->window->on_resize_event, renderer->swapchain_recreate_handle);
 
-	AUTO allocator = renderer->allocator;
 	// memory_allocator_dump(renderer->allocator, "memdump1.dump");
 
 	vulkan_queue_wait_idle(renderer->vo_graphics_queue);

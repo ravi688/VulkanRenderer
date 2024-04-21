@@ -161,9 +161,8 @@ static const char* preset_to_string(render_pass_pool_pass_preset_t preset)
 		case RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN: return "RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN";
 		case RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN_CLEAR: return "RENDER_PASS_POOL_PASS_PRESET_COLOR_SWAPCHAIN_CLEAR";
 		case RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP: return "RENDER_PASS_POOL_PASS_PRESET_SHADOW_MAP";
-		default: "UNKOWN PRESET";
+		default: return "<UNKOWN PRESET>";
 	}
-	return "UNKOWN PRESET";
 }
 
 RENDERER_API render_pass_handle_t render_pass_pool_create_pass_from_preset(render_pass_pool_t* pool, render_pass_pool_pass_preset_t preset)

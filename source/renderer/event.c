@@ -296,7 +296,7 @@ RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t 
 }
 
 
-static const char* signal_to_string(signal_t bit)
+static const char* signal_to_string(signal_bits_t bit)
 {
 	switch(bit)
 	{
@@ -306,8 +306,8 @@ static const char* signal_to_string(signal_t bit)
 		case SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT: return "SIGNAL_VULKAN_IMAGE_VIEW_TRANSFER_FINISH_BIT";
 		case SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH_BIT: return "SIGNAL_VULKAN_FRAMEBUFFER_RECREATE_FINISH_BIT";
 		case SIGNAL_ALL_BIT: return "SIGNAL_ALL_BIT";
+		default: return "<INVALID SIGNAL BIT>";
 	}
-	return "<UNDEFINED>";
 }
 
 static char* signal_bits_to_string(memory_allocator_t* allocator, signal_bits_t bits)

@@ -37,7 +37,6 @@ static void* VKAPI_CALL vulkan_allocation(void* user_data, size_t size, size_t a
 
 static void* VKAPI_CALL vulkan_reallocation(void* user_data, void* original, size_t size, size_t align, VkSystemAllocationScope allocation_scope)
 {
-	vulkan_allocator_t* vk_allocator = CAST_TO(vulkan_allocator_t*, user_data);
 	void* address = memory_allocator_aligned_realloc(vk_allocator->allocator, original, MEMORY_ALLOCATION_TYPE_VKAPI, size, align);
 	_debug_assert__((CAST_TO(u64, address) % align) == 0);
 	return address;

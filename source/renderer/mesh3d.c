@@ -1214,7 +1214,7 @@ RENDERER_API function_signature(void, mesh3d_triangles_foreach, mesh3d_t* mesh, 
 }
 
 /*[CurrentlyNotUsed]*/
-static void direction_visitor(vec3_t* v, mat4_t* m);
+UNUSED_FUNCTION static void direction_visitor(vec3_t* v, mat4_t* m);
 static void position_visitor(vec3_t* v, mat4_t* m);
 
 RENDERER_API function_signature(void, mesh3d_transform_set, mesh3d_t* mesh, mat4_t transform)
@@ -1372,22 +1372,22 @@ static void stl_vertex_position(float* position, mesh3d_t* mesh)
 }
 
 #ifdef GLOBAL_DEBUG
-static void print_normal(float* normal, void* ptr)
+UNUSED_FUNCTION static void print_normal(float* normal, void* ptr)
 {
 	printf("NORMAL -> (%f, %f, %f)\n", normal[0], normal[1], normal[2]);
 }
 
-static void print_position(float* position, void* ptr)
+UNUSED_FUNCTION static void print_position(float* position, void* ptr)
 {
 	printf("POSITION -> (%f, %f, %f)\n", position[0], position[1], position[2]);
 }
 
-static void print_texcoord(float* texcoord, void* ptr)
+UNUSED_FUNCTION static void print_texcoord(float* texcoord, void* ptr)
 {
 	printf("TEXCOORD -> (%f, %f)\n", texcoord[0], texcoord[1]);
 }
 
-static void print_facet(u32* facet, u32 attrib_count, u32 face_vertex_count, void* ptr)
+UNUSED_FUNCTION static void print_facet(u32* facet, u32 attrib_count, u32 face_vertex_count, void* ptr)
 {
 	printf("FACET -> ");
 	for(int i = 0; i < face_vertex_count; i++)
@@ -1491,7 +1491,7 @@ static function_signature(void, mesh3d_foreach, mesh3d_t* mesh, BUFFER* buffer, 
 }
 
 /*[CurrentlyNotUsed]*/
-static void direction_visitor(vec3_t* v, mat4_t* m)
+UNUSED_FUNCTION static void direction_visitor(vec3_t* v, mat4_t* m)
 {
 	//TODO: This should be like:
 	//		*v = mat4_mul_vec4(*m, v->x, v->y, v->z, 0).xyz;

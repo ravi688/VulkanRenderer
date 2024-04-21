@@ -66,7 +66,7 @@ static VkClearValue get_clear_value_from_format(VkFormat format)
 	return (VkClearValue) { };
 }
 
-static VkImageLayout get_attachment_layout(VkFormat format)
+UNUSED_FUNCTION static VkImageLayout get_attachment_layout(VkFormat format)
 {
 	switch(format)
 	{
