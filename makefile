@@ -450,6 +450,11 @@ endif
 SHADER_INCLUDES = -I$(wildcard shaders/include/)
 
 SHADER_COMPILER = ./toolchain/shader_compiler/vsc
+# toolchain/shader_compiler/makefile creates vsc.exe executable, while the targets 'shader-release' and 'shader-debug' check for 'vsc'
+# this leads to unconditionally compiling the .v3dshader files everytime 'make -s build' is triggered
+ifeq (Windows,$(PLATFORM))
+	SHADER_COMPILER := $(addsuffix .exe,$(SHADER_COMPILER))
+endif
 SHADER_SOURCES = $(wildcard ./shaders/*/*.v3dshader ./shaders/*/*/*.v3dshader)
 SHADER_BINARIES = $(subst .v3dshader,.sb, $(SHADER_SOURCES))
 
