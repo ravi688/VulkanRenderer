@@ -42,18 +42,7 @@
 #include <renderer/renderer.h>
 
 #include <renderer/bitmap_glyph_atlas_texture.h>
-
-#include <common/platform.h>
-
-
-/* TODO: Write a cross platform input library { Keyboard, and Mouse } 
- * For now, we can just bypass kbhit() and getch() function calls. */
-#ifdef PLATFORM_WINDOWS
-#	include <conio.h>
-#elif defined(PLATFORM_LINUX)
-#	define kbhit() false
-#	define getch() 0
-#endif
+#include <renderer/conio.h>
 
 TEST_DATA(BITMAP_GLYPH_ATLAS_TEXTURE)
 {

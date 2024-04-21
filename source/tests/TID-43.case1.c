@@ -29,15 +29,8 @@
 
 #include <renderer/memory_allocator.h>
 #include <renderer/event.h>
+#include <renderer/conio.h>
 
-/* TODO: Write a cross platform input library { Keyboard, and Mouse } 
- * For now, we can just bypass kbhit() and getch() function calls. */
-#ifdef PLATFORM_WINDOWS
-#	include <conio.h>
-#elif defined(PLATFORM_LINUX)
-#	define kbhit() false
-#	define getch() 0
-#endif
 
 TEST_DATA(TID_43_CASE_1)
 {

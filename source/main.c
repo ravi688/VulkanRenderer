@@ -30,15 +30,8 @@
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
 #include <renderer/legal/legal.h>
+#include <renderer/conio.h>
 
-/* TODO: Write a cross platform input library { Keyboard, and Mouse } 
- * For now, we can just bypass kbhit() and getch() function calls. */
-#ifdef PLATFORM_WINDOWS
-#	include <conio.h>
-#elif defined(PLATFORM_LINUX)
-#	define kbhit() false
-#	define getch() 0
-#endif
 #include <signal.h>
 
 UNUSED_FUNCTION static allocate_result_t allocate(u32 size, u32 align, void* user_data)

@@ -32,15 +32,7 @@
 #define RENDERER_INCLUDE_3D_LIGHT_SYSTEM
 #define RENDERER_INCLUDE_CORE
 #include <renderer/renderer.h>
-
-/* TODO: Write a cross platform input library { Keyboard, and Mouse } 
- * For now, we can just bypass kbhit() and getch() function calls. */
-#ifdef PLATFORM_WINDOWS
-#	include <conio.h>
-#elif defined(PLATFORM_LINUX)
-#	define kbhit() false
-#	define getch() 0
-#endif
+#include <renderer/conio.h>
 
 
 TEST_DATA(DEPTH_CUBE_RENDER_TEXTURE_LOAD)

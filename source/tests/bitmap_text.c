@@ -18,21 +18,13 @@
 #include <renderer/system/display.h>
 #include <renderer/bitmap_glyph_atlas_texture.h>
 #include <renderer/bitmap_text.h>
+#include <renderer/conio.h>
 
 #include <freetype/ft2build.h>
 #include <freetype/freetype/freetype.h>
 #include <freetype/freetype/ftimage.h>
 
 #include <disk_manager/file_reader.h>
-
-/* TODO: Write a cross platform input library { Keyboard, and Mouse } 
- * For now, we can just bypass kbhit() and getch() function calls. */
-#ifdef PLATFORM_WINDOWS
-#	include <conio.h>
-#elif defined(PLATFORM_LINUX)
-#	define kbhit() false
-#	define getch() 0
-#endif
 
 TEST_DATA(BITMAP_TEXT)
 {

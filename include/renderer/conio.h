@@ -31,21 +31,21 @@
 
 BEGIN_CPP_COMPATIBLE
 
-#if defined(RENDERER_PLATFORM_LINUX) || defined(RENDERER_PLATFORM_UNIX) || defined(RENDERER_PLATFORM_MACOS)
+#if defined(PLATFORM_LINUX)
 	// custom defined using ncurses
-	RENDERER_API char cio_getch();
-	RENDERER_API bool cio_kbhit();
+	static FORCE_INLINE char cio_getch() { /* TODO */ return 0; }
+	static FORCE_INLINE bool cio_kbhit() { /* TODO */ return false; }
 	#define getch cio_getch
 	#define kbhit cio_kbhit
-#elif defined(RENDERER_PLATFORM_WINDOWS)
-#	ifdef RENDERER_COMPILER_MINGW
+#elif defined(PLATFORM_WINDOWS)
+#	ifdef COMPILER_MINGW
 #		include <conio.h>
 		static FORCE_INLINE char cio_getch() { return getch(); }
 		static FORCE_INLINE bool cio_kbhit() { return kbhit(); }
 #	else
 		// custom defined using ncurses
-		RENDERER_API char cio_getch();
-		RENDERER_API bool cio_kbhit();
+		static FORCE_INLINE char cio_getch() { /* TODO */ return 0; }
+		static FORCE_INLINE bool cio_kbhit() { /* TODO */ return false; }
 		#define getch cio_getch
 		#define kbhit cio_kbhit
 #	endif // RENDERER_COMPILER_MINGW
