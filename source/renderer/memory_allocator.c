@@ -168,6 +168,7 @@ RENDERER_API void* __memory_allocator_realloc(memory_allocator_t* allocator, voi
 
 RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
 {
+	_debug_assert__(size != 0);
 	allocate_result_t result = allocator->allocate(size, align, allocator->user_data);
 	if(result.flags != ALLOCATE_RESULT_SUCCESS)
 		return NULL;
@@ -185,6 +186,7 @@ RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocato
 
 RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* allocator, void* old_ptr,  __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
 {
+	_debug_assert__(size != 0);
 	memory_allocation_t* old_alloc = NULL;
 	buf_ucount_t index = BUF_INVALID_INDEX;
 
@@ -222,7 +224,7 @@ RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* alloca
 
 RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr)
 {
-	if(ptr == NULL) return;
+	_debug_assert__(ptr != NULL);
 
 	buf_ucount_t index = dictionary_find_index_of(&allocator->allocation_map, &ptr);
 	if(index == BUF_INVALID_INDEX) return;
