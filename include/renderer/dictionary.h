@@ -57,6 +57,8 @@ RENDERER_API function_signature(void, dictionary_free, dictionary_t* dictionary)
 RENDERER_API function_signature(void, dictionary_get_at, dictionary_t* dictionary, buf_ucount_t index, void* out_key, void* out_value);
 #define dictionary_get_value(...) define_alias_function_macro(dictionary_get_value, __VA_ARGS__)
 RENDERER_API function_signature(void, dictionary_get_value, dictionary_t* dictionary, void* key, void* out_value);
+#define dictionary_try_get_value_ptr(...) define_alias_function_macro(dictionary_try_get_value_ptr, __VA_ARGS__)
+RENDERER_API function_signature(bool, dictionary_try_get_value_ptr, dictionary_t* dictionary, void* key, void** out_ptr);
 #define dictionary_try_get_value(...) define_alias_function_macro(dictionary_try_get_value, __VA_ARGS__)
 RENDERER_API function_signature(bool, dictionary_try_get_value, dictionary_t* dictionary, void* key, void* out_value);
 #define dictionary_get_key_at(...) define_alias_function_macro(dictionary_get_key_at, __VA_ARGS__)

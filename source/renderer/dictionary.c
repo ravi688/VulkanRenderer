@@ -78,7 +78,7 @@ RENDERER_API function_signature(void, dictionary_get_value, dictionary_t* dictio
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(bool, dictionary_try_get_value, dictionary_t* dictionary, void* key, void* out_value)
+RENDERER_API function_signature(bool, dictionary_try_get_value_ptr, dictionary_t* dictionary, void* key, void** out_ptr)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -87,7 +87,18 @@ RENDERER_API function_signature(bool, dictionary_try_get_value, dictionary_t* di
 	if(index == BUF_INVALID_INDEX)
 		CALLTRACE_RETURN(false);
 	void* ptr = buf_get_ptr_at(buffer, index);
-	memcopyv(out_value, ptr + dictionary->key_size, u8, dictionary->value_size);
+	void* value_ptr = ptr + dictionary->key_size;
+	memcopy_void(out_ptr, &value_ptr, sizeof(DREF_VOID_PTR(out_ptr)));
+	CALLTRACE_RETURN(true);
+}
+
+RENDERER_API function_signature(bool, dictionary_try_get_value, dictionary_t* dictionary, void* key, void* out_value)
+{
+	CALLTRACE_BEGIN();
+	void* value_ptr;
+	if(!dictionary_try_get_value_ptr(dictionary, key, &value_ptr))
+		return false;
+	memcopyv(out_value, value_ptr, u8, dictionary->value_size);
 	CALLTRACE_RETURN(true);	
 }
 
