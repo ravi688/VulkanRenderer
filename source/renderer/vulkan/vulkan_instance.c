@@ -45,7 +45,7 @@ RENDERER_API vulkan_instance_t* vulkan_instance_new(memory_allocator_t* allocato
 	return instance;
 }
 
-RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* renderer, const char* const* extensions, u32 extension_count)
+RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* renderer, const char* const* extensions, u32 extension_count, const char* const* layers, u32 layer_count)
 {
 	vulkan_instance_t* instance = vulkan_instance_new(renderer->allocator);
 	instance->renderer = renderer;
@@ -73,13 +73,26 @@ RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* render
 		.engineVersion = VK_MAKE_VERSION(1, 0, 0),
 		.apiVersion = VK_API_VERSION_1_0
 	};
+
+	// create a filtered list of layers which are supported only
+	bool* layer_filter = vulkan_instance_get_filter_for_supported_layers(renderer->allocator, layer_count, layers);
+	const char* supported_layers[layer_count];
+	u32 supported_layer_count = 0;
+	for(u32 i = 0; i < layer_count; i++)
+	{
+		if(layer_filter[i])
+			supported_layers[supported_layer_count++] = layers[i];
+		else
+			DEBUG_LOG_WARNING("Layer %s is not supported, ignored", layers[i]);
+	}
+	memory_allocator_dealloc(renderer->allocator, layer_filter);
 	
 	VkInstanceCreateInfo create_info = 
 	{
 		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
 		.pApplicationInfo = &app_info,
-		.enabledLayerCount = 0, 		// for now let it be 0
-		.ppEnabledLayerNames = NULL, 	// for now let it be NULL
+		.enabledLayerCount = supported_layer_count,
+		.ppEnabledLayerNames = supported_layers,
 		.enabledExtensionCount = supported_extension_count,
 		.ppEnabledExtensionNames = supported_extensions
 	};
@@ -171,6 +184,54 @@ RENDERER_API bool vulkan_instance_is_extension_supported(vulkan_instance_t* inst
 		if(strcmp(properties[i].extensionName, extension) == 0)
 			return true;
 	return false;
+}
+
+RENDERER_API bool* vulkan_instance_get_filter_for_supported_layers(memory_allocator_t* allocator, u32 layer_count, const char* const* layers)
+{
+	if(layer_count == 0)
+		return NULL;
+
+	// fetch list of VkLayerProperties
+
+	u32 property_count;
+	vkCall(vkEnumerateInstanceLayerProperties(&property_count, NULL));
+
+	VkLayerProperties* properties = NULL;
+	VkResult result = VK_INCOMPLETE;
+	while(result == VK_INCOMPLETE)
+	{
+		if(properties != NULL)
+			properties = memory_allocator_realloc_obj_array(allocator, properties, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_LAYER_PROPERTIES_ARRAY, VkLayerProperties, property_count);
+		else
+			properties = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_LAYER_PROPERTIES_ARRAY, VkLayerProperties, property_count);
+		result = vkEnumerateInstanceLayerProperties(&property_count, properties);
+	}
+	vulkan_result_assert_success(result);
+
+	// create a filter for which layers are supported and which are not supported
+	bool* filter = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BOOL_ARRAY, bool, layer_count);
+	for(u32 i = 0; i < layer_count; i++)
+		filter[i] = false;
+
+	u32 count = 0;
+	// check each requested layer for any match
+	for(u32 i = 0; i < property_count; i++)
+	{
+		for(u32 j = 0; j < layer_count; j++)
+		{
+			if(strcmp(properties[i].layerName, layers[j]) == 0)
+			{
+				filter[j] = true;
+				++count;
+			}
+		}
+		// do not proceed for more checks if all layers are supported
+		if(count == layer_count)
+			break;
+	}
+
+	memory_allocator_dealloc(instance->renderer->allocator, properties);
+	return filter;
 }
 
 // to string (s)

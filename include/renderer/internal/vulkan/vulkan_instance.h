@@ -50,7 +50,7 @@ BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
 RENDERER_API vulkan_instance_t* vulkan_instance_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* renderer, const char* const* extensions, u32 extension_count);
+RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* renderer, const char* const* extensions, u32 extension_count, const char* const* layers, u32 layer_count);
 RENDERER_API void vulkan_instance_destroy(vulkan_instance_t* instance);
 RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance);
 
@@ -62,6 +62,12 @@ RENDERER_API VkExtensionProperties* vulkan_instance_get_extension_properties(vul
 
 // returning bools
 RENDERER_API bool vulkan_instance_is_extension_supported(vulkan_instance_t* instance, const char* extension, const char* layer_name);
+
+/* 	vulkan_instance_get_filter_for_supported_layers: returns boolean filter array designating which layers are supported and which are not
+ *	layer_count: number of layers (const char*)
+ * 	layers: list of required layer names (const char* const*)
+ */
+RENDERER_API bool* vulkan_instance_get_filter_for_supported_layers(memory_allocator_t* allocator, u32 layer_count, const char* const* layers);
 
 // to string (s)
 RENDERER_API void vulkan_instance_to_string(vulkan_instance_t* instance, BUFFER* string_buffer);

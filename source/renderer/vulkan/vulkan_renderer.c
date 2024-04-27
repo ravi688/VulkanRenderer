@@ -188,7 +188,8 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulk
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[3] = { "VK_KHR_surface", PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION };
-	renderer->instance = vulkan_instance_create(renderer, extensions, 2);
+	const char* layers[] = { "VK_LAYER_KHRONOS_validation", "VK_LAYER_KHRONOS_synchronization2" };
+	renderer->instance = vulkan_instance_create(renderer, extensions, 2, layers, SIZEOF_ARRAY(layers));
 	vulkan_physical_device_t* physical_devices = vulkan_instance_get_physical_devices(renderer->instance);
 	u32 physical_device_count = vulkan_instance_get_physical_device_count(renderer->instance);
 
@@ -292,8 +293,6 @@ DEBUG_BLOCK
 	log_u32(queue_family_indices[1]);
 
 	extensions[0] = "VK_KHR_swapchain";
-	extensions[1] = "VK_KHR_driver_properties";
-	extensions[2] = "VK_KHR_get_physical_device_properties2";
 
 	vulkan_logical_device_create_info_t logical_device_create_info =
 	{
