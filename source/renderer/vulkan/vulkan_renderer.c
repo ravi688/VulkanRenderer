@@ -532,6 +532,8 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 	vkCall(vkWaitForFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence, VK_TRUE, U64_MAX));
 	vkCall(vkResetFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence));
 
+	// NOTE: if this returns 'false', that means we need to recreate our swapchain and its images,
+	// however, we can ignore the return value here, because the swapchain will be recreated automatically whenever window is resized
 	vulkan_queue_present(renderer->vo_graphics_queue,
 						renderer->swapchain->vo_handle,
 						renderer->swapchain->current_image_index,

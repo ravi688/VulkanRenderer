@@ -25,12 +25,12 @@
 
 #include <renderer/internal/vulkan/vulkan_queue.h>
 
-RENDERER_API void vulkan_queue_present(VkQueue queue, VkSwapchainKHR swapchain, u32 image_index, VkSemaphore wait)
+RENDERER_API bool vulkan_queue_present(VkQueue queue, VkSwapchainKHR swapchain, u32 image_index, VkSemaphore wait)
 {
-	vulkan_queue_presentv(queue, 1, &swapchain, &image_index, wait);
+	return vulkan_queue_presentv(queue, 1, &swapchain, &image_index, wait);
 }
 
-RENDERER_API void vulkan_queue_presentv(VkQueue queue, u32 swapchain_count, VkSwapchainKHR* swapchains, u32* image_indices, VkSemaphore wait)
+RENDERER_API bool vulkan_queue_presentv(VkQueue queue, u32 swapchain_count, VkSwapchainKHR* swapchains, u32* image_indices, VkSemaphore wait)
 {
 	VkPresentInfoKHR present_info =
 	{
@@ -42,7 +42,11 @@ RENDERER_API void vulkan_queue_presentv(VkQueue queue, u32 swapchain_count, VkSw
 		.pImageIndices = image_indices
 	};
 
-	vkCall(vkQueuePresentKHR(queue, &present_info));
+	VkResult result = vkQueuePresentKHR(queue, &present_info);
+	if((result == VK_ERROR_OUT_OF_DATE_KHR) || (result == VK_SUBOPTIMAL_KHR))
+		return false;
+	vulkan_result_assert_success(result);
+	return true;
 }
 
 RENDERER_API void vulkan_queue_submit(VkQueue queue, VkCommandBuffer buffer, VkSemaphore wait, VkPipelineStageFlags wait_dst_stage, VkSemaphore signal, VkFence fence)
