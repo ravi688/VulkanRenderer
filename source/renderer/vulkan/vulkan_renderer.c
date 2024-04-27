@@ -271,7 +271,8 @@ DEBUG_BLOCK
 	VkExtent2D image_extent = find_extent(&surface_capabilities, renderer->window);
 
 	// setup image count
-	u32 image_count = clamp_u32(surface_capabilities.minImageCount + 1, surface_capabilities.minImageCount, surface_capabilities.maxImageCount);
+	// NOTE: if VkSurfaceCapabilitiesKHR::maxImageCount equals 0, then there is no maximum limit for image count
+	u32 image_count = clamp_u32(3, surface_capabilities.minImageCount, (surface_capabilities.maxImageCount == 0) ? U32_MAX : surface_capabilities.maxImageCount);
 
 	// create logical device
 	VkPhysicalDeviceFeatures* minimum_required_features = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PHYSICAL_DEVICE_FEATURES, VkPhysicalDeviceFeatures);
@@ -320,18 +321,15 @@ DEBUG_BLOCK
 	renderer->vo_render_finished_semaphore = get_semaphore(renderer);
 	renderer->vo_fence = get_unsigned_fence(renderer);
 
+	//Set up graphics queue
+	vkGetDeviceQueue(renderer->logical_device->vo_handle, queue_family_indices[0], 0, &renderer->vo_graphics_queue);
+
 	// setup command pool
 	renderer->vo_command_pool = vulkan_command_pool_create(renderer, queue_family_indices[0], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
-	// setup command buffers
-	renderer->vo_command_buffers = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CMD_BUFFER_ARRAY, VkCommandBuffer, image_count);
-	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, image_count, renderer->vo_command_buffers);
-	log_msg("Command Buffers has been allocated successfully\n");
-
+	// auxiliary command buffer will be used by vulkan_swapchain_create for transitioning its images to presentatble initially
+	// so, it must be created before any call to vulkan_swapchain_create or functions alike.
 	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, 1, &renderer->vo_aux_command_buffer);
-
-	//Set up graphics queue
-	vkGetDeviceQueue(renderer->logical_device->vo_handle, queue_family_indices[0], 0, &renderer->vo_graphics_queue);
 
 	//Create Swapchain
 	vulkan_swapchain_create_info_t swapchain_info =
@@ -346,6 +344,13 @@ DEBUG_BLOCK
 	};
 	memcopy(&renderer->swapchain_create_info, &swapchain_info, vulkan_swapchain_create_info_t);
 	renderer->swapchain = vulkan_swapchain_create(renderer, &swapchain_info);
+
+	// setup command buffers
+	// update the image_count variable as the actual number of images allocated for the swapchain might be greater than what had been requested
+	image_count = renderer->swapchain->image_count;
+	renderer->vo_command_buffers = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CMD_BUFFER_ARRAY, VkCommandBuffer, image_count);
+	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, image_count, renderer->vo_command_buffers);
+	log_msg("Command Buffers has been allocated successfully\n");
 
 
 	//Create descripter pool
