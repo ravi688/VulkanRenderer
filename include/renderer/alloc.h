@@ -187,6 +187,7 @@ static INLINE_IF_RELEASE_MODE void __memcopy(void* const dst, const void* const 
     _debug_memcpy(dst, src, requested_size * count);
 }
 
+#define memcopy_void(dst, src, size) _debug_memcpy(dst, src, size)
 #define memcopy(dst, src, type) __memcopy(dst, src, sizeof(*(src)), sizeof(*(dst)), sizeof(type), 1, __LINE__, __FUNCTION__, __FILE__)
 #define memcopyv(dst, src, type, count) __memcopy(dst, src, sizeof(*(src)), sizeof(*(dst)), sizeof(type), count, __LINE__, __FUNCTION__, __FILE__)
 

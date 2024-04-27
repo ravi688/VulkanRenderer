@@ -161,6 +161,11 @@ RENDERER_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __mem
 	return __memory_allocator_aligned_alloc(allocator, debug_info, size, ALLOCATION_FLAG_NO_ALIGN_RESTRICTION);
 }
 
+RENDERER_API void* __memory_allocator_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size)
+{
+	return __memory_allocator_aligned_realloc(allocator, old_ptr, debug_info, size, ALLOCATION_FLAG_NO_ALIGN_RESTRICTION);
+}
+
 RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
 {
 	allocate_result_t result = allocator->allocate(size, align, allocator->user_data);

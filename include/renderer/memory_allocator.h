@@ -183,14 +183,19 @@ RENDERER_API void memory_allocator_destroy(memory_allocator_t* allocator);
 /* allocates memory chunk and attaches appropriate debug information to that chunk */
 #define memory_allocator_alloc_obj_array(allocator, allocation_type, type, count) CAST_TO(type*, memory_allocator_alloc(allocator, allocation_type, sizeof(type) * (count)))
 #define memory_allocator_alloc_obj(allocator, allocation_type, type) CAST_TO(type*, memory_allocator_alloc(allocator, allocation_type, sizeof(type)))
+#define memory_allocator_realloc_obj(allocator, old_ptr, allocation_type, type) CAST_TO(type*, memory_allocator_realloc(allocator, old_ptr, allocation_type, sizeof(type)))
+#define memory_allocator_realloc_obj_array(allocator, old_ptr, allocation_type, type, count)  CAST_TO(type*, memory_allocator_realloc(allocator, old_ptr, allocation_type, sizeof(type) * (count)))
 
 #ifdef MEMORY_METRICS
 #   define memory_allocator_alloc(allocator, allocation_type, size) __memory_allocator_alloc(allocator, __memory_allocation_debug_info(allocation_type), size)
+#	define memory_allocator_realloc(allocator, old_ptr, allocation_type, size) __memory_allocator_realloc(allocator, __memory_allocation_debug_info(allocation_type), size)
 #else
 #   define memory_allocator_alloc(allocator, allocation_type, size) heap_alloc(size)
+#	define memory_allocator_realloc(allocator, old_ptr, allocation_type, size) heap_realloc(old_ptr, size)
 #endif
 
 RENDERER_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size);
+RENDERER_API void* __memory_allocator_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size);
 /* allocates memory chunk with alignment, and attaches appropriate debug information to that chunk */
 #define memory_allocator_aligned_alloc(allocator, allocation_type, size, align) __memory_allocator_aligned_alloc(allocator, __memory_allocation_debug_info(allocation_type), size, align)
 RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size, u32 align);
