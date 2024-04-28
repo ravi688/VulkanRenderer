@@ -195,8 +195,17 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulk
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[3] = { "VK_KHR_surface", PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION };
+	#ifdef ENABLE_VULKAN_VALIDATION_LAYERS
 	const char* layers[] = { "VK_LAYER_KHRONOS_validation", "VK_LAYER_KHRONOS_synchronization2" };
-	renderer->instance = vulkan_instance_create(renderer, extensions, 2, layers, SIZEOF_ARRAY(layers));
+	#endif /* ENABLE_VULKAN_VALIDATION_LAYERS */
+	renderer->instance = vulkan_instance_create(renderer, extensions, 2
+	#ifdef ENABLE_VULKAN_VALIDATION_LAYERS
+		, layers, SIZEOF_ARRAY(layers)
+	#else
+		, NULL, 0
+	#endif /* ENABLE_VULKAN_VALIDATION_LAYERS */
+		);
+
 	vulkan_physical_device_t* physical_devices = vulkan_instance_get_physical_devices(renderer->instance);
 	u32 physical_device_count = vulkan_instance_get_physical_device_count(renderer->instance);
 
