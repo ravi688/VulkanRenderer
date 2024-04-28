@@ -175,7 +175,8 @@
 
 	/* alloca */
 	#ifdef GLOBAL_DEBUG
-		static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void* _std_alloca(size_t size) { _debug_assert__(size != 0); return alloca(size); }
+		static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void* __std_alloca_forward(void* ptr, size_t size) { _debug_assert__(size != 0); return ptr; }
+		#define _std_alloca(size) __std_alloca_forward(alloca(size), size)
 	#else /* GLOBAL_RELEASE */
 	#	define _std_alloca(size) alloca(size)
 	#endif /* GLOBAL_DEBUG */

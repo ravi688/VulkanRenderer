@@ -299,6 +299,9 @@ static bool is_cyclic_reference(memory_allocation_debug_node_t* node, memory_all
 static memory_allocation_debug_node_t* resolve_references(memory_allocation_map_t* allocation_map)
 {
 	u32 count = dictionary_get_count(allocation_map);
+	/* no allocations were made */
+	if(count == 0)
+		return NULL;
 	memory_allocation_debug_node_t* nodes = heap_newv(memory_allocation_debug_node_t, count);
 	safe_memzerov(nodes, memory_allocation_debug_node_t, count);
 

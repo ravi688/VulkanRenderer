@@ -144,6 +144,18 @@ static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(mem
 
 static vulkan_push_constant_t create_vulkan_push_constant(memory_allocator_t* allocator, vulkan_shader_resource_description_t* material_set_bindings, u32 material_set_binding_count)
 {
+	// if there are no bindings in the material set then it is guaranteed that there won't be any push constant bindings
+	if(material_set_binding_count == 0)
+	{
+		return (vulkan_push_constant_t)
+		{
+			.ranges = NULL,
+			.range_count = 0,
+			.buffer = NULL,
+			.buffer_size = 0
+		};
+	}
+	
 	// holds the indices of the material set binding descriptors which are push constants
 	u32* descriptor_indices = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, material_set_binding_count);
 
@@ -277,6 +289,9 @@ static void destroy_vulkan_vertex_infos(memory_allocator_t* allocator, vulkan_ve
 
 static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_descriptors(memory_allocator_t* allocator, vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
 {
+	/* if we try to allocate any object of size 0 with memory_allocator_alloc_*, then it may lead to assertion failures */
+	if(descriptor_count == 0)
+		return NULL;
 	vulkan_shader_resource_description_t* copy_descriptors = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, descriptor_count);
 	for(u32 i = 0; i < descriptor_count; i++)
 	{
@@ -1273,10 +1288,14 @@ static u32 create_add_pipeline_description(memory_allocator_t* allocator, binary
 	description->settings = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_SETTINGS, vulkan_graphics_pipeline_settings_t);
 	memcopy(description->settings, pipeline, vulkan_graphics_pipeline_settings_t);
 
-	VkPipelineColorBlendAttachmentState* attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PIPELINE_COLOR_BLEND_ATTACHMENT_STATE_ARRAY, VkPipelineColorBlendAttachmentState, description->settings->colorblend.attachmentCount);
-	u32 attachments_size = sizeof(VkPipelineColorBlendAttachmentState) * description->settings->colorblend.attachmentCount;
-	memcopyv(attachments, __binary_reader_read(reader, attachments_size), u8, attachments_size);
-	description->settings->colorblend.pAttachments = attachments;
+	// allocating anything with zero size causes assertion failure, so always check for positive value
+	if(description->settings->colorblend.attachmentCount > 0)
+	{
+		VkPipelineColorBlendAttachmentState* attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PIPELINE_COLOR_BLEND_ATTACHMENT_STATE_ARRAY, VkPipelineColorBlendAttachmentState, description->settings->colorblend.attachmentCount);
+		u32 attachments_size = sizeof(VkPipelineColorBlendAttachmentState) * description->settings->colorblend.attachmentCount;
+		memcopyv(attachments, __binary_reader_read(reader, attachments_size), u8, attachments_size);
+		description->settings->colorblend.pAttachments = attachments;
+	}
 
 	VkRect2D* scissors = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_RECT2D_ARRAY, VkRect2D, description->settings->viewport.scissorCount);
 	u32 scissors_size = sizeof(VkRect2D) * description->settings->viewport.scissorCount;
