@@ -292,6 +292,11 @@ RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotati
 			struct_descriptor_set_vec3(&light->struct_definition, _light->direction_handle, CAST_TO(float*, &dir));
 		}
 		break;
+		case VULKAN_LIGHT_TYPE_POINT:
+		{
+			debug_log_warning("You're tyring to set rotation of a point light, for a point light direction or rotation is not defined in V3D");
+			break;
+		}
 		default:
 		{
 			DEBUG_LOG_FETAL_ERROR("Unexpected vulkan_light_type_t : %u, this type of light is still not supported", light->type);
