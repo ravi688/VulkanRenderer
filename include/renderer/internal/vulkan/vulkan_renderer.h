@@ -46,7 +46,8 @@ typedef enum vulkan_renderer_gpu_type_t
 {
 	VULKAN_RENDERER_GPU_TYPE_AUTO = 0,				// automatically selects the best GPU
 	VULKAN_RENDERER_GPU_TYPE_INTEGRATED,			// selects integrated gpu if present, otherwise fallbacks to discrete
-	VULKAN_RENDERER_GPU_TYPE_DISCRETE				// selects discrete gpu if present, otherwise fallbacks to integrated
+	VULKAN_RENDERER_GPU_TYPE_DISCRETE,				// selects discrete gpu if present, otherwise fallbacks to integrated
+	VULKAN_RENDERER_GPU_TYPE_CPU					// selects cpu based software implementation of vulkan, otherwise fallbacks to integrated or discrete device
 } vulkan_renderer_gpu_type_t;
 
 typedef struct memory_allocator_t memory_allocator_t;

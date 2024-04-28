@@ -67,6 +67,7 @@ static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t* 
 
 	vulkan_physical_device_t* integrated_gpu = NULL;
 	vulkan_physical_device_t* discrete_gpu = NULL;
+	vulkan_physical_device_t* cpu_gpu = NULL;
 	for(int i = 0; i < count; i++)
 	{
 		VkPhysicalDeviceProperties* properties = vulkan_physical_device_get_properties(&devices[i]);
@@ -78,13 +79,16 @@ static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t* 
 			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
 				discrete_gpu = &devices[i];
 				break;
+			case VK_PHYSICAL_DEVICE_TYPE_CPU:
+				cpu_gpu = &devices[i];
+				break;
 			default:
 				debug_log_warning("Unhandled VkPhysicalDeviceType: %u", properties->deviceType);
 				break;
 		}
 	}
-	if((integrated_gpu == NULL) && (discrete_gpu == NULL))
-		LOG_FETAL_ERR("No integrated or discrete vulkan gpu found!\n");
+	if((integrated_gpu == NULL) && (discrete_gpu == NULL) && (cpu_gpu == NULL))
+		LOG_FETAL_ERR("No integrated, discrete or cpu based vulkan device found!\n");
 
 	void* gpu = NULL;
 	switch(type)
@@ -94,6 +98,9 @@ static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t* 
 			break;
 		case VULKAN_RENDERER_GPU_TYPE_DISCRETE:
 			gpu = (discrete_gpu == NULL) ? integrated_gpu : discrete_gpu;
+			break;
+		case VULKAN_RENDERER_GPU_TYPE_CPU:
+			gpu = (cpu_gpu == NULL) ? ((integrated_gpu != NULL) ? integrated_gpu : discrete_gpu) : cpu_gpu;
 			break;
 		default:
 			gpu = (discrete_gpu == NULL) ? integrated_gpu : discrete_gpu;
