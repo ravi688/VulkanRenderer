@@ -798,10 +798,15 @@ static INLINE_IF_RELEASE_MODE bool is_texture_cube(vulkan_texture_t* texture)
 	return (texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE;
 }
 
-static INLINE_IF_RELEASE_MODE bool is_attachment_cube(vulkan_attachment_t* attachment)
+static INLINE_IF_RELEASE_MODE bool is_attachment_cube(vulkan_camera_t* camera, vulkan_attachment_t* attachment)
 {
+	_debug_assert__(attachment != NULL);
 	/* TODO: there should be DYNAMIC_CAST(vulkan_texture_t*, attachment) */
-	return is_texture_cube(CAST_TO(vulkan_texture_t*, attachment));
+	// NOTE: calling is_attachment_cube casts the vulkan_attachment_t object to vulkan_texture_t internally (here), it results in invalid memory access
+	// so, before calling is_attachment_cube, make sure the camera->current_depth_attachment is really of type vulkan_texture_t, i.e. set by the external client/user
+	// INFO: if camera->default_depth_attachment holds non null value, then it points to a vulkan_attachment_t object
+	//		 if camera->depth_render_target holds non null value, then it points to a vulkan_texture_t object
+	return (attachment == CAST_TO(vulkan_attachment_t*, camera->depth_render_target)) && is_texture_cube(CAST_TO(vulkan_texture_t*, attachment));
 }
 
 
@@ -864,10 +869,7 @@ static void update_image_views_for_camera_pass(vulkan_camera_t* camera, vulkan_c
 
 		/* if this pass has it's own depth attachment then use this one */
 		if(private_depth_atachment != NULL)
-		{
-			_debug_assert__(!is_attachment_cube(private_depth_atachment));
 			depth_attachment = private_depth_atachment;
-		}
 		/* otherwise use provided by the camera (external depth texture or default depth attachment) */
 		else
 		{
@@ -875,7 +877,9 @@ static void update_image_views_for_camera_pass(vulkan_camera_t* camera, vulkan_c
 			depth_attachment = camera->current_depth_attachment;
 		}
 
-		if((image_index == U32_MAX) && is_attachment_cube(depth_attachment))
+		_debug_assert__(depth_attachment != NULL);
+
+		if((image_index == U32_MAX) && is_attachment_cube(camera, depth_attachment))
 		{
 			_debug_assert__(is_depth_render_target(camera) == true);
 			pass->vo_image_views[counter++] = CAST_TO(vulkan_texture_t*, depth_attachment)->image_views[cube_face_index].vo_handle;
@@ -973,7 +977,7 @@ static void update_image_views_and_recreate_framebuffers(vulkan_camera_t* camera
 	{
 		_debug_assert__(is_image_size_equal_to(&camera->current_depth_attachment->image, camera->color_render_target->width, camera->color_render_target->height));
 		
-		if((camera->current_depth_attachment != NULL) && (is_attachment_cube(camera->current_depth_attachment) && !is_texture_cube(camera->color_render_target)))
+		if((camera->current_depth_attachment != NULL) && is_attachment_cube(camera, camera->current_depth_attachment) && (!is_texture_cube(camera->color_render_target)))
 			debug_log_warning("Depth attachment is of type CUBE while color is 2D, imagine how the camera could ever render on these types of targets?");
 	}
 
@@ -1129,6 +1133,7 @@ static void vulkan_camera_set_depth_render_target_screen(vulkan_camera_t* camera
 
 static void vulkan_camera_create_or_recreate_depth_framebuffers(vulkan_camera_t* camera, u32 width, u32 height)
 {
+	_debug_assert__(camera->current_depth_attachment != NULL);
 	_debug_assert__(camera->depth_material != NULL);
 	_debug_assert__(camera->depth_write_pass != NULL);
 	_debug_assert__(camera->depth_clear_pass != NULL);
@@ -1138,7 +1143,7 @@ static void vulkan_camera_create_or_recreate_depth_framebuffers(vulkan_camera_t*
 
 	UNUSED_VARIABLE AUTO pass_handle = camera->depth_material->shader->render_passes[0].handle;
 
-	bool is_cube = is_attachment_cube(camera->current_depth_attachment);
+	bool is_cube = is_attachment_cube(camera, camera->current_depth_attachment);
 
 	/* create framebuffer to hold the depth attachment */
 	vulkan_framebuffer_create_info_t create_info = 
