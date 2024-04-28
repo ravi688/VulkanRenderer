@@ -215,7 +215,7 @@ RENDERER_API function_signature(void, dictionary_remove, dictionary_t* dictionar
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
-	bool result = buf_remove(&dictionary->buffer, key, dictionary->key_comparer);
+	CAN_BE_UNUSED_VARIABLE bool result = buf_remove(&dictionary->buffer, key, dictionary->key_comparer);
 	_debug_assert__(result == true);
 	CALLTRACE_END();
 }

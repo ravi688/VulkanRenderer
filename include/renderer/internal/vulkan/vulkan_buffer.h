@@ -159,13 +159,13 @@ RENDERER_API void* vulkan_buffer_map(vulkan_buffer_t* buffer);
  */
 RENDERER_API void vulkan_buffer_unmap(vulkan_buffer_t* buffer);
 
-static INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_size(vulkan_buffer_t* buffer)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_size(vulkan_buffer_t* buffer)
 {
 	return buffer->size;
 }
 
 /* NOTE: this may not return a valid result as 'count' is not always defined */
-static INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_count(vulkan_buffer_t* buffer)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_count(vulkan_buffer_t* buffer)
 {
 	return buffer->count;
 }

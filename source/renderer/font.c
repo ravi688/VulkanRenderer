@@ -243,7 +243,7 @@ RENDERER_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_qua
 		case FONT_GLYPH_MESH_QUALITY_HIGH: quality = TTF_QUALITY_HIGH; break;
 		default: LOG_FETAL_ERR("Invalid font mesh quality: %u\n", mesh_quality);
 	}
-	int result = ttf_glyph2mesh(&font->ttf_handle->glyphs[info.index], &mesh, quality, TTF_FEATURES_DFLT);
+	CAN_BE_UNUSED_VARIABLE int result = ttf_glyph2mesh(&font->ttf_handle->glyphs[info.index], &mesh, quality, TTF_FEATURES_DFLT);
 	_debug_assert__(result == TTF_DONE);
 
 	float max_y = 0, min_y = 0, max_x = 0, min_x = 0;

@@ -154,7 +154,7 @@ static vulkan_render_pass_create_info_t* build_swapchain_color_render_pass_creat
 	return create_info;
 }
 
-static const char* preset_to_string(render_pass_pool_pass_preset_t preset)
+CAN_BE_UNUSED_FUNCTION static const char* preset_to_string(render_pass_pool_pass_preset_t preset)
 {
 	switch(preset)
 	{

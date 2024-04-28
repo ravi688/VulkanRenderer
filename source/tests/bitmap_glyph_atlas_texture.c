@@ -141,7 +141,9 @@ TEST_ON_UPDATE(BITMAP_GLYPH_ATLAS_TEXTURE)
 		bitmap_glyph_atlas_texture_get_texcoord(this->texture, make_pair(utf32_t, u32) { ch, font_get_char_size(this->font) }, NULL);
 		bool is_resized = false;
 		bitmap_glyph_atlas_texture_commit(this->texture, &is_resized);
+		#ifdef GLOBAL_DEBUG
 		bitmap_glyph_atlas_texture_dump(this->texture, "BITMAP_GLYPH_ATLAS_TEXTURE.bmp");
+		#endif
 		if(is_resized)
 			material_set_texture(this->material, "albedo", TEXTURE(this->texture));
 		ch++;

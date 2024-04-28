@@ -309,7 +309,7 @@ static void set_render_surface_type(vulkan_text_mesh_t* text, vulkan_text_mesh_r
 static void commit_tst_buffer_expect_no_resize(vulkan_text_mesh_t* text_mesh)
 {
 	bool is_resized = false;
-	bool is_updated = vulkan_host_buffered_buffer_commit(&text_mesh->text_string_transform_buffer, &is_resized);
+	CAN_BE_UNUSED_VARIABLE bool is_updated = vulkan_host_buffered_buffer_commit(&text_mesh->text_string_transform_buffer, &is_resized);
 	_debug_assert__((!is_resized) && is_updated);
 }
 
@@ -370,7 +370,7 @@ static vulkan_text_mesh_string_t* get_text_stringH(vulkan_text_mesh_t* text, vul
 	return buf_get_ptr_at_typeof(&text->strings, vulkan_text_mesh_string_t, handle);
 }
 
-static INLINE_IF_RELEASE_MODE f32 get_world_from_pixels(f32 pixels, f32 point_size, f32 dpi)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE f32 get_world_from_pixels(f32 pixels, f32 point_size, f32 dpi)
 {
 	return pixels / get_pixels_from_point_size(point_size, dpi);
 }

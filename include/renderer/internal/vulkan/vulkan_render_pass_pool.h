@@ -95,7 +95,7 @@ static FORCE_INLINE vulkan_render_pass_t* vulkan_render_pass_pool_get_at(vulkan_
 {
 	return vulkan_render_pass_pool_get_slot_at(pool, index)->render_pass;
 }
-static INLINE_IF_RELEASE_MODE vulkan_render_pass_handle_t vulkan_render_pass_pool_get_prev_pass_handle(vulkan_render_pass_pool_t* pool)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_render_pass_handle_t vulkan_render_pass_pool_get_prev_pass_handle(vulkan_render_pass_pool_t* pool)
 {
 	return pool->prev_pass_handle;
 }

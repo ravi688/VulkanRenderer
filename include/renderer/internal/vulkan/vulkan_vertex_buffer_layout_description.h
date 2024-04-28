@@ -338,17 +338,17 @@ RENDERER_API void vulkan_vertex_buffer_layout_description_begin(vulkan_renderer_
 RENDERER_API void vulkan_vertex_buffer_layout_description_add_attribute(vulkan_vertex_buffer_layout_description_t* description, u32 location, VkFormat format, u32 offset);
 RENDERER_API void vulkan_vertex_buffer_layout_description_end(vulkan_renderer_t* renderer, vulkan_vertex_buffer_layout_description_t* description);
 
-static INLINE_IF_RELEASE_MODE void begin_vertex_binding(vulkan_renderer_t* renderer, BUFFER* list, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void begin_vertex_binding(vulkan_renderer_t* renderer, BUFFER* list, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
 {
     vulkan_vertex_buffer_layout_description_begin(renderer, buf_create_element(list), stride, input_rate, binding_number);
 }
 
-static INLINE_IF_RELEASE_MODE void add_vertex_attribute(BUFFER* list, u16 location, VkFormat format, u32 offset)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void add_vertex_attribute(BUFFER* list, u16 location, VkFormat format, u32 offset)
 {
     vulkan_vertex_buffer_layout_description_add_attribute(buf_peek_ptr(list), location, format, offset);
 }
 
-static INLINE_IF_RELEASE_MODE void end_vertex_binding(vulkan_renderer_t* renderer, BUFFER* list)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void end_vertex_binding(vulkan_renderer_t* renderer, BUFFER* list)
 {
     vulkan_vertex_buffer_layout_description_end(renderer, buf_peek_ptr(list));
 }

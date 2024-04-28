@@ -139,7 +139,7 @@ RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name);
 #endif /* GLOBAL_DEBUG */
 
 #if DBG_ENABLED(BUFFER2D_RESIZE)
-static INLINE_IF_RELEASE_MODE void buffer2d_set_packed_rect_relocate_callback_handler(buffer2d_t* buffer, packed_rect_relocate_callback_t handler, void* user_data)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_set_packed_rect_relocate_callback_handler(buffer2d_t* buffer, packed_rect_relocate_callback_t handler, void* user_data)
 {
 	buffer->packed_rect_relocate_callback = handler;
 	buffer->packed_rect_relocate_callback_handler_user_data = user_data;

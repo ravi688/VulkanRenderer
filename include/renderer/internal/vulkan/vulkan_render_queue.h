@@ -116,7 +116,7 @@ typedef enum vulkan_render_queue_type_t
 	VULKAN_RENDER_QUEUE_TYPE_MIN = VULKAN_RENDER_QUEUE_TYPE_UNDEFINED, 	// minimum invalid value
 } vulkan_render_queue_type_t;
 
-static INLINE_IF_RELEASE_MODE const char* vulkan_render_queue_type_str(const vulkan_render_queue_type_t type)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const char* vulkan_render_queue_type_str(const vulkan_render_queue_type_t type)
 {
 	switch(type)
 	{

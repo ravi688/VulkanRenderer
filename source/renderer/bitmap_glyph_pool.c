@@ -92,7 +92,7 @@ RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair
 		_debug_assert__(bitmap.channel_count == 1);
 
 		/* pack the glyph pixels into the font bitmap  */
-		bool _is_resized = IF_DEBUG( buffer2d_push_debug(&pool->pixels, &unicode, bitmap.pixels, bitmap.width, bitmap.height) );
+		bool _is_resized = IF_DEBUG( buffer2d_push_debug(&pool->pixels, &unicode, bitmap.pixels, bitmap.width, bitmap.height) )
 						   ELSE( buffer2d_push(&pool->pixels, &unicode, bitmap.pixels, bitmap.width, bitmap.height) );
 		if(is_resized != NULL)
 			OUT is_resized = _is_resized;
@@ -128,7 +128,9 @@ RENDERER_API void bitmap_glyph_pool_dump(bitmap_glyph_pool_t* pool, const char* 
 	bmp_write(ptr, pool->pixels.view->size.x / sizeof(u8), pool->pixels.view->size.y, 1, file_path);
 }
 
+#ifdef GLOBAL_DEBUG
 RENDERER_API void bitmap_glyph_pool_dump_bb(bitmap_glyph_pool_t* pool, const char* file_path)
 {
 	buffer2d_dump(&pool->pixels, file_path);
 }
+#endif

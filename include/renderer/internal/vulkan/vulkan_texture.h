@@ -181,15 +181,15 @@ RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulk
 /* uploads the data to the GPU local memory */
 RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data_count, vulkan_texture_data_t* data);
 
-static INLINE_IF_RELEASE_MODE vulkan_image_view_t* vulkan_texture_get_image_views(vulkan_texture_t* texture)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_image_view_t* vulkan_texture_get_image_views(vulkan_texture_t* texture)
 {
 	return ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == 0) ? &texture->image_view : texture->image_views;
 }
 
-static INLINE_IF_RELEASE_MODE u32 vulkan_texture_get_image_view_count(vulkan_texture_t* texture)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 vulkan_texture_get_image_view_count(vulkan_texture_t* texture)
 {
 	return ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == 0) ? 1 : texture->image_view_count;
 }
-static INLINE_IF_RELEASE_MODE vulkan_texture_usage_stage_t vulkan_texture_get_usage_stage(vulkan_texture_t* texture) { return texture->current_stage; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_texture_usage_stage_t vulkan_texture_get_usage_stage(vulkan_texture_t* texture) { return texture->current_stage; }
 
 END_CPP_COMPATIBLE

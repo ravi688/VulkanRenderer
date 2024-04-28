@@ -160,15 +160,15 @@ RENDERER_API f32 font_get_ascender(font_t* font);
 RENDERER_API f32 font_get_units_per_em(font_t* font);
 
 /* returns the point size of the characters in the font */
-static INLINE_IF_RELEASE_MODE u32 font_get_char_size(font_t* font) { return font->point_size; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 font_get_char_size(font_t* font) { return font->point_size; }
 
-static INLINE_IF_RELEASE_MODE f32 get_inches_from_point_size(u32 point_size)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE f32 get_inches_from_point_size(u32 point_size)
 {
 	/* 72 points make 1 inch */
 	return point_size * 1.0 / 72;
 }
 
-static INLINE_IF_RELEASE_MODE u32 get_pixels_from_point_size(u32 point_size, u32 dpi)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 get_pixels_from_point_size(u32 point_size, u32 dpi)
 {
 	/* convert inches to pixels by multiplying with 'dots per inch' */
 	return CAST_TO(u32, (get_inches_from_point_size(point_size) * dpi));

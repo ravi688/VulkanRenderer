@@ -42,19 +42,19 @@ RENDERER_API void vulkan_host_buffered_texture_destroy(vulkan_host_buffered_text
 RENDERER_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buffered_texture_t* texture);
 
 /* returns pointer to the 2d view object used over the host side linear buffer */
-static INLINE_IF_RELEASE_MODE buffer2d_view_t* vulkan_host_buffered_texture_get_view(vulkan_host_buffered_texture_t* texture)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer2d_view_t* vulkan_host_buffered_texture_get_view(vulkan_host_buffered_texture_t* texture)
 { 
 	texture->is_dirty = true;	
 	return &texture->view; 
 }
 /* returns pointer to the host side linear buffer object */
-static INLINE_IF_RELEASE_MODE buffer_t* vulkan_host_buffered_texture_get_host_buffer(vulkan_host_buffered_texture_t* texture) 
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* vulkan_host_buffered_texture_get_host_buffer(vulkan_host_buffered_texture_t* texture) 
 { 
 	texture->is_dirty = true;
 	return vulkan_host_buffered_buffer_get_host_buffer(&texture->buffer);
 }
 
-static INLINE_IF_RELEASE_MODE void vulkan_host_buffered_texture_set_dirty(vulkan_host_buffered_texture_t* texture, bool is_dirty)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_host_buffered_texture_set_dirty(vulkan_host_buffered_texture_t* texture, bool is_dirty)
 {
 	texture->is_dirty = is_dirty;
 }

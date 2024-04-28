@@ -39,7 +39,7 @@ RENDERER_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buff
 RENDERER_API buffer_t* vulkan_host_buffered_buffer_get_host_buffer(vulkan_host_buffered_buffer_t* buffer);
 RENDERER_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulkan_host_buffered_buffer_t* buffer);
 
-static INLINE_IF_RELEASE_MODE void vulkan_host_buffered_buffer_set_dirty(vulkan_host_buffered_buffer_t* buffer, bool is_dirty)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_host_buffered_buffer_set_dirty(vulkan_host_buffered_buffer_t* buffer, bool is_dirty)
 {
 	buffer->is_dirty = is_dirty;
 }

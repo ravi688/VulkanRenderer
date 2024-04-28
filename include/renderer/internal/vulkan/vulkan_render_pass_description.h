@@ -120,41 +120,41 @@ RENDERER_API void vulkan_render_pass_description_end_subpass(vulkan_renderer_t* 
 RENDERER_API void vulkan_render_pass_description_add_subpass_dependency(vulkan_render_pass_description_t* description, VkSubpassDependency* dependency);
 RENDERER_API void vulkan_render_pass_description_end(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* description);
 
-static INLINE_IF_RELEASE_MODE void begin_pass(vulkan_renderer_t* renderer, BUFFER* list, vulkan_render_pass_type_t type)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void begin_pass(vulkan_renderer_t* renderer, BUFFER* list, vulkan_render_pass_type_t type)
 {
 	vulkan_render_pass_description_begin(renderer, buf_create_element(list), type);
 }
 
-static INLINE_IF_RELEASE_MODE void add_input(vulkan_renderer_t* renderer, BUFFER* list, u32 index, u32 binding)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void add_input(vulkan_renderer_t* renderer, BUFFER* list, u32 index, u32 binding)
 {
 	vulkan_render_pass_description_add_input(renderer, buf_peek_ptr(list), GLSL_TYPE_SAMPLER_2D, index, binding);
 }
 
-static INLINE_IF_RELEASE_MODE void add_attachment(BUFFER* list, vulkan_attachment_type_t type)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void add_attachment(BUFFER* list, vulkan_attachment_type_t type)
 {
 	vulkan_render_pass_description_add_attachment(buf_peek_ptr(list), type);
 }
 
-static INLINE_IF_RELEASE_MODE void add_dependency(BUFFER* list, VkSubpassDependency* dependency)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void add_dependency(BUFFER* list, VkSubpassDependency* dependency)
 {
 	vulkan_render_pass_description_add_subpass_dependency(buf_peek_ptr(list), dependency);
 }
 
-static INLINE_IF_RELEASE_MODE void begin_subpass(vulkan_renderer_t* renderer, BUFFER* list, u32 pipeline_index)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void begin_subpass(vulkan_renderer_t* renderer, BUFFER* list, u32 pipeline_index)
 {
 	vulkan_render_pass_description_begin_subpass(renderer, buf_peek_ptr(list), pipeline_index);
 }
-static INLINE_IF_RELEASE_MODE void add_attachment_reference(vulkan_renderer_t* renderer, BUFFER* list, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void add_attachment_reference(vulkan_renderer_t* renderer, BUFFER* list, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
 {
 	vulkan_render_pass_description_add_attachment_reference(renderer, buf_peek_ptr(list), type, reference, binding);
 }
 
-static INLINE_IF_RELEASE_MODE void end_subpass(vulkan_renderer_t* renderer, BUFFER* list)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void end_subpass(vulkan_renderer_t* renderer, BUFFER* list)
 {
 	vulkan_render_pass_description_end_subpass(renderer, buf_peek_ptr(list));
 }
 
-static INLINE_IF_RELEASE_MODE void end_pass(vulkan_renderer_t* renderer, BUFFER* list)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void end_pass(vulkan_renderer_t* renderer, BUFFER* list)
 {
 	vulkan_render_pass_description_end(renderer, buf_peek_ptr(list));
 }

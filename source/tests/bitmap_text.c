@@ -203,7 +203,7 @@ typedef struct input_t
 	u32 height;
 } input_t;
 
-static icolor3_t colors[] =
+CAN_BE_UNUSED_VARIABLE static icolor3_t colors[] =
 {
 	{ 255, 255, 255 },
 	{ 0, 0, 0 },
@@ -666,7 +666,9 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 	bitmap_text_string_setH(this->text, this->another_string_handle, "Hardwork with dedication suffices to c");
 	bitmap_text_string_setH(this->text, this->text_string_handle, "Hardwork with dedication suffices to c: 1234324");
 
+	#ifdef GLOBAL_DEBUG
 	bitmap_glyph_atlas_texture_dump(this->texture, "bitmap_glyph_atlas_texture.dump.bmp");
+	#endif
 
 	this->text_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_TEXT, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->text_object, this->text_material);
@@ -736,8 +738,10 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 		}
 		else if(ch == 'd')
 		{
+			#ifdef GLOBAL_DEBUG
 			bitmap_glyph_atlas_texture_dump_bb(this->texture, "bitmap_glyph_atlas_texture_bb.dump.bmp");
 			bitmap_glyph_atlas_texture_dump(this->texture, "bitmap_glyph_atlas_texture.dump.bmp");
+			#endif
 		}
 		else if(ch == 'b')
 		{

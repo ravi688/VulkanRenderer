@@ -1036,7 +1036,7 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 		if(is_block)
 		{
 			// ignore the block name
-			const char* name = binary_reader_str(reader);
+			CAN_BE_UNUSED_VARIABLE const char* name = binary_reader_str(reader);
 			_debug_assert__(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
 		}
 

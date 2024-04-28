@@ -39,21 +39,21 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_destroy(vulkan_bitmap_glyph_
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_release_resources(vulkan_bitmap_glyph_atlas_texture_t* texture);
 
 
-static INLINE_IF_RELEASE_MODE event_t* vulkan_bitmap_glyph_atlas_texture_get_on_resize_event(vulkan_bitmap_glyph_atlas_texture_t*  texture)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE event_t* vulkan_bitmap_glyph_atlas_texture_get_on_resize_event(vulkan_bitmap_glyph_atlas_texture_t*  texture)
 {
 	return texture->on_resize_event;
 }
-static INLINE_IF_RELEASE_MODE iextent2d_t vulkan_bitmap_glyph_atlas_texture_get_size(vulkan_bitmap_glyph_atlas_texture_t* texture)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE iextent2d_t vulkan_bitmap_glyph_atlas_texture_get_size(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
 	return buffer2d_view_get_size(vulkan_host_buffered_texture_get_view(BASE(texture)));
 }
 /* returns pointer to the bitmap_glyph_pool_t object */
-static INLINE_IF_RELEASE_MODE bitmap_glyph_pool_t* vulkan_bitmap_glyph_atlas_texture_get_pool(vulkan_bitmap_glyph_atlas_texture_t* texture)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bitmap_glyph_pool_t* vulkan_bitmap_glyph_atlas_texture_get_pool(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
 	return &texture->pool;
 }
 /* returns the font used by this BGA texture */
-static INLINE_IF_RELEASE_MODE font_t* vulkan_bitmap_glyph_atlas_texture_get_font(vulkan_bitmap_glyph_atlas_texture_t* texture)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE font_t* vulkan_bitmap_glyph_atlas_texture_get_font(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
 	return bitmap_glyph_pool_get_font(&texture->pool);
 }
@@ -64,21 +64,21 @@ RENDERER_API bool vulkan_bitmap_glyph_atlas_texture_commit(vulkan_bitmap_glyph_a
  * unicode: glyph's unicode value to rasterize
  * texcoords: the texture coordinates (list of 4 vec2(s)), filled by this function if the glyph has graphical representation
  * returns: true if the glyph has graphical representation and there are no errors */
-static INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord)
 {
 	vulkan_host_buffered_texture_set_dirty(BASE(texture), true);
 	return bitmap_glyph_pool_get_texcoord(&texture->pool, unicode, texcoord, NULL);
 }
-static INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_contains_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_contains_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode)
 {
 	return bitmap_glyph_pool_contains_texcoord(&texture->pool, unicode);
 }
 #ifdef GLOBAL_DEBUG
-static INLINE_IF_RELEASE_MODE void vulkan_bitmap_glyph_atlas_texture_dump(vulkan_bitmap_glyph_atlas_texture_t* texture, const char* file_path)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_bitmap_glyph_atlas_texture_dump(vulkan_bitmap_glyph_atlas_texture_t* texture, const char* file_path)
 {
 	bitmap_glyph_pool_dump(&texture->pool, file_path);
 }
-static INLINE_IF_RELEASE_MODE void vulkan_bitmap_glyph_atlas_texture_dump_bb(vulkan_bitmap_glyph_atlas_texture_t* texture, const char* file_path)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_bitmap_glyph_atlas_texture_dump_bb(vulkan_bitmap_glyph_atlas_texture_t* texture, const char* file_path)
 {
 	bitmap_glyph_pool_dump_bb(&texture->pool, file_path);
 }

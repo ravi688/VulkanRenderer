@@ -157,7 +157,7 @@ static void recalculate_transform(vulkan_camera_t* camera)
 		mat4_rotation(camera->rotation.x, camera->rotation.y, camera->rotation.z)));
 }
 
-static INLINE_IF_RELEASE_MODE bool vulkan_camera_is_render_area_absolute(vulkan_camera_t* camera)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_camera_is_render_area_absolute(vulkan_camera_t* camera)
 {
 	return (!camera->is_render_area_relative) && (!camera->is_render_area_full);
 }
@@ -190,7 +190,7 @@ static void recalculate_render_target_size(void* _window, void* user_data)
 	set_render_target_size(CAST_TO(vulkan_camera_t*, user_data), window->width, window->height);
 }
 
-static bool is_default_depth_attachment(vulkan_camera_t* camera)
+CAN_BE_UNUSED_FUNCTION static bool is_default_depth_attachment(vulkan_camera_t* camera)
 {
 	return (camera->default_depth_attachment != NULL) && (camera->default_depth_attachment == camera->current_depth_attachment);
 }
@@ -793,12 +793,12 @@ static void invalid_operation(invalid_operation_type_t type)
 	}
 }
 
-static INLINE_IF_RELEASE_MODE bool is_texture_cube(vulkan_texture_t* texture)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool is_texture_cube(vulkan_texture_t* texture)
 {
 	return (texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE;
 }
 
-static INLINE_IF_RELEASE_MODE bool is_attachment_cube(vulkan_camera_t* camera, vulkan_attachment_t* attachment)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool is_attachment_cube(vulkan_camera_t* camera, vulkan_attachment_t* attachment)
 {
 	_debug_assert__(attachment != NULL);
 	/* TODO: there should be DYNAMIC_CAST(vulkan_texture_t*, attachment) */
@@ -1376,7 +1376,7 @@ static void dump_registered_render_pass_handles(vulkan_camera_t* camera)
 #	define dump_registered_render_pass_handles(...)
 #endif /* GLOBAL_DEBUG */
 
-static INLINE_IF_RELEASE_MODE bool is_depth_render_only(vulkan_camera_t* camera)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool is_depth_render_only(vulkan_camera_t* camera)
 {
 	return (camera->render_target_status == VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_DEPTH)
 		|| (camera->render_target_status == VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_EXTERNAL_DEPTH);

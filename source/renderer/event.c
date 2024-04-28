@@ -276,7 +276,7 @@ RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t 
 	if(index != BUF_INVALID_INDEX)
 	{
 		subscription_t subscription;
-		bool result = buf_remove_at(&event->subscribers, index, &subscription);
+		CAN_BE_UNUSED_VARIABLE bool result = buf_remove_at(&event->subscribers, index, &subscription);
 		_debug_assert__(result == true);
 		buf_push(&event->unsubscribed_handles, &handle);
 		for(u32 i = SIGNAL_NOTHING + 1; i < SIGNAL_MAX; i++)
@@ -310,7 +310,7 @@ static const char* signal_to_string(signal_bits_t bit)
 	}
 }
 
-static char* signal_bits_to_string(memory_allocator_t* allocator, signal_bits_t bits)
+CAN_BE_UNUSED_FUNCTION static char* signal_bits_to_string(memory_allocator_t* allocator, signal_bits_t bits)
 {
 	string_builder_t* builder = string_builder_create(allocator, 128);
 

@@ -77,7 +77,7 @@ RENDERER_API void string_builder_append(string_builder_t* builder, const char* c
 
 	/* format the string and put that into the buffer */
 	va_start(args, format);
-	u32 written_size = vsnprintf(CAST_TO(char*, ptr + indentation_level), required_size + 1, format, args);
+	CAN_BE_UNUSED_FUNCTION u32 written_size = vsnprintf(CAST_TO(char*, ptr + indentation_level), required_size + 1, format, args);
 	_debug_assert__(written_size == required_size);
 	va_end(args);
 

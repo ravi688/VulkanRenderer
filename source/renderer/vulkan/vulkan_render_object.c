@@ -160,7 +160,7 @@ RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* obj,
 	if((obj->queue != NULL) && (obj->handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID))
 		vulkan_render_queue_removeH(obj->queue, obj->handle);
 	obj->material = material;
-	vulkan_render_object_handle_t handle = vulkan_render_queue_add(obj->queue, obj);
+	CAN_BE_UNUSED_VARIABLE vulkan_render_object_handle_t handle = vulkan_render_queue_add(obj->queue, obj);
 	_debug_assert__(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
 	
 	if(obj->user_data != NULL)

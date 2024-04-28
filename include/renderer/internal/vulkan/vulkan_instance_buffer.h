@@ -63,7 +63,7 @@ UNUSED_FUNCTION static bool vulkan_instance_buffer_has_device_buffer(vulkan_inst
 {
 	return vulkan_instance_buffer_get_device_buffer(instance_buffer) != NULL;
 }
-static INLINE_IF_RELEASE_MODE void vulkan_instance_buffer_set_dirty(vulkan_instance_buffer_t* instance_buffer, bool is_dirty)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_instance_buffer_set_dirty(vulkan_instance_buffer_t* instance_buffer, bool is_dirty)
 {
 	instance_buffer->is_dirty = is_dirty;
 }

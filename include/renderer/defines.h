@@ -27,9 +27,7 @@
 #pragma once
 
 #include <common/defines.h>
-#if GLOBAL_DEBUG
-#	include <renderer/debug_switches.h>
-#endif
+#include <renderer/debug_switches.h>
 
 #define INTERNAL
 
@@ -60,26 +58,27 @@ typedef struct memory_allocator_t memory_allocator_t;
 #define NOT_IMPLEMENTED_FUNCTION() do { LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__); UNREACHABLE(); } while(false)
 
 #ifdef GLOBAL_DEBUG
-#	define INLINE_IF_RELEASE_MODE INLINE
+#	define INLINE_IF_RELEASE_MODE /* no inline in debug mode */
 #	define IF_DEBUG_MODE(x) x
 #	define ELSE(x)
+#	define PARAM_IF_DEBUG(x) , x
 #	define debug_if(x) if(x)
 #	define debug_else 	else
 #	define debug_else_if(x) else debug_if(x)
 #else
-#	define INLINE_IF_RELEASE_MODE /* no inline */
+#	define INLINE_IF_RELEASE_MODE INLINE
 #	define IF_DEBUG_MODE(x)
 #	define ELSE(x) x
+#	define PARAM_IF_DEBUG(x)
 #	define debug_if(x)
 #	define debug_else
 #	define debug_else_if(x)
 #endif /* GLOBAL_DEBUG */
 
 #define IF_DEBUG(x) IF_DEBUG_MODE(x)
-#define PARAM_IF_DEBUG(x) , x
 
-static INLINE_IF_RELEASE_MODE u32 max(u32 v1, u32 v2) { return (v1 > v2) ? v1 : v2; }
-static INLINE_IF_RELEASE_MODE u32 min(u32 v1, u32 v2) { return (v1 < v2) ? v1 : v2; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 max(u32 v1, u32 v2) { return (v1 > v2) ? v1 : v2; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 min(u32 v1, u32 v2) { return (v1 < v2) ? v1 : v2; }
 
 
 #define DYNAMIC_CAST(target_type, ptr) CAST_TO(target_type, ptr)
@@ -100,14 +99,14 @@ static INLINE_IF_RELEASE_MODE u32 min(u32 v1, u32 v2) { return (v1 < v2) ? v1 : 
 #define DREF_VOID_PTR(ptr) CAST_TO(void*, DREF_TO(u8*, (void**)(ptr)))
 
 #define U32_TO_U64(src) _u32_to_u64(sizeof(src), src)
-static INLINE_IF_RELEASE_MODE u64 _u32_to_u64(u32 src_size, u32 src)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u64 _u32_to_u64(u32 src_size, u32 src)
 {
 	IF_DEBUG_MODE(_debug_assert__(src_size == sizeof(u32)));
 	return CAST_TO(u64, src);
 }
 
 #define U64_TO_U32(src) _u64_to_u32(sizeof(src), src)
-static INLINE_IF_RELEASE_MODE u32 _u64_to_u32(u32 src_size, u64 src)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 _u64_to_u32(u32 src_size, u64 src)
 {
 	IF_DEBUG_MODE(_debug_assert__(src_size == sizeof(u64)));
 	return CAST_TO(u32, src);

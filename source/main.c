@@ -76,7 +76,7 @@ static void memory_allocation_tree_dump(memory_allocator_t* allocator, const cha
 
 static memory_allocator_t* allocator;
 
-#define signal_handler(signal, handler) static void signal##_handler(int signal) { handler; }
+#define signal_handler(signal, handler) CAN_BE_UNUSED_FUNCTION static void signal##_handler(int signal) { handler; }
 
 signal_handler(__SIGINT, memory_allocation_tree_dump(allocator, "__SIGINT.runtime.dump"))
 signal_handler(__SIGILL, memory_allocation_tree_dump(allocator, "__SIGILL.runtime.dump"))

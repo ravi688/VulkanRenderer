@@ -249,7 +249,7 @@ RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
 {
 	debug_log_info("Building optimized render path ...");
 	vulkan_render_pass_graph_dump(&queue->pass_graph);
-	vulkan_render_pass_graph_node_handle_list_t* pass_node_handles = vulkan_render_pass_graph_get_or_build_optimized_path(&queue->pass_graph);
+	CAN_BE_UNUSED_VARIABLE vulkan_render_pass_graph_node_handle_list_t* pass_node_handles = vulkan_render_pass_graph_get_or_build_optimized_path(&queue->pass_graph);
 DEBUG_BLOCK
 (
 	printf("Optimized Render Path: ");

@@ -38,17 +38,17 @@ RENDERER_API void buffer2d_view_resize(buffer2d_view_t* view, u32 width, u32 hei
 RENDERER_API void buffer2d_view_clear(buffer2d_view_t* view, void* clear_value);
 
 /* getters */
-static INLINE_IF_RELEASE_MODE buffer_t* buffer2d_view_get_backed_buffer(buffer2d_view_t* view) { return view->backed_buffer; }
-static INLINE_IF_RELEASE_MODE iextent2d_t buffer2d_view_get_size(buffer2d_view_t* view) { return view->size; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* buffer2d_view_get_backed_buffer(buffer2d_view_t* view) { return view->backed_buffer; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE iextent2d_t buffer2d_view_get_size(buffer2d_view_t* view) { return view->size; }
 RENDERER_API void buffer2d_view_get_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* out_data);
-static INLINE_IF_RELEASE_MODE void buffer2d_view_get_rect(buffer2d_view_t* view, irect2d_t rect, void* out_data)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_get_rect(buffer2d_view_t* view, irect2d_t rect, void* out_data)
 {
 	buffer2d_view_get_at(view, rect.offset.x, rect.offset.y, rect.extent.x, rect.extent.y, out_data);
 }
 
 /* setters */
 RENDERER_API void buffer2d_view_set_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* in_data);
-static INLINE_IF_RELEASE_MODE void buffer2d_view_set_rect(buffer2d_view_t* view, irect2d_t rect, void* in_data)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_set_rect(buffer2d_view_t* view, irect2d_t rect, void* in_data)
 {
 	buffer2d_view_set_at(view, rect.offset.x, rect.offset.y, rect.extent.x, rect.extent.y, in_data);
 }

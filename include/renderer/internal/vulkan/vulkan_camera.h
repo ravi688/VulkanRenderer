@@ -406,7 +406,7 @@ RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vu
 RENDERER_API vulkan_camera_render_pass_t* vulkan_camera_get_camera_render_pass_from_pass_handle(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle);
 
 /* getters */
-static INLINE_IF_RELEASE_MODE bool vulkan_camera_is_depth_render_only(vulkan_camera_t* camera)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_camera_is_depth_render_only(vulkan_camera_t* camera)
 {
 	return (camera->depth_render_target != NULL) && (camera->color_render_target == NULL) && (camera->depth_material != NULL);	
 }

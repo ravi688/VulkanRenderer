@@ -48,9 +48,9 @@ RENDERER_API void bitmap_glyph_pool_destroy(bitmap_glyph_pool_t* pool);
 RENDERER_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool);
 
 /* clears the pool for reuse */
-static INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_clear(bitmap_glyph_pool_t* pool) { buffer2d_clear(&pool->pixels, NULL); }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_clear(bitmap_glyph_pool_t* pool) { buffer2d_clear(&pool->pixels, NULL); }
 /* returns the font used by this bitmap glyph pool */
-static INLINE_IF_RELEASE_MODE font_t* bitmap_glyph_pool_get_font(bitmap_glyph_pool_t* pool) { return pool->font; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE font_t* bitmap_glyph_pool_get_font(bitmap_glyph_pool_t* pool) { return pool->font; }
 /* returns true if the glyph has graphical representation and no errors,
  * outputs the texture coordinates of the glyph represented by the unicode encoding 'unicode' and with point size 'point_size' */
 RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized);
