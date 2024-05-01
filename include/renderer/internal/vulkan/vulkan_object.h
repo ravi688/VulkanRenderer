@@ -16,6 +16,9 @@ typedef enum vulkan_object_type_t
 {
 	VULKAN_OBJECT_TYPE_UNDEFINED = 0,
 	VULKAN_OBJECT_TYPE_BUFFER,
+	VULKAN_OBJECT_TYPE_SHADER_MODULE,
+	VULKAN_OBJECT_TYPE_INSTANCE_BUFFER,
+	VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER,
 	VULKAN_OBJECT_TYPE_MAX
 } vulkan_object_type_t;
 
@@ -72,6 +75,31 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_object_set_nati
 	static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_object_type_t vulkan_object_get_type(const vulkan_object_t* obj) { return obj->type; }
 	static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_object_set_type(vulkan_object_t* obj, vulkan_object_type_t type) { obj->type = type; }
 #endif /* GLOBAL_DEBUG */
+
+#ifdef GLOBAL_DEBUG
+#	define VULKAN_OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) REINTERPRET_CAST(dst_ptr_type, VULKAN_OBJECT_TYPE_CHECK_FORWARD(src_typed_ptr, vulkan_object_type))
+#	define VULKAN_OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) REINTERPRET_CONST_CAST(dst_ptr_type, VULKAN_OBJECT_TYPE_CHECK_CONST_FORWARD(src_typed_ptr, vulkan_object_type))
+#	define VULKAN_OBJECT_TYPE_CHECK(type_ptr, vulkan_object_type) vulkan_object_type_check(type_ptr, vulkan_object_type)
+	static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_object_type_check(const vulkan_object_t* obj, vulkan_object_type_t type)
+	{
+		debug_assert__(obj->type == type, "Vulkan Object type mismatched");
+	}
+#	define VULKAN_OBJECT_TYPE_CHECK_FORWARD(typed_ptr, vulkan_object_type) vulkan_object_type_check_forward(VULKAN_OBJECT_CONST(typed_ptr), vulkan_object_type)
+	static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void* vulkan_object_type_check_forward(const vulkan_object_t* obj, vulkan_object_type_t type)
+	{
+		vulkan_object_type_check(obj, type);
+		return CAST_TO(void*, obj);
+	}
+#	define VULKAN_OBJECT_TYPE_CHECK_CONST_FORWARD(typed_ptr, vulkan_object_type) vulkan_object_type_check_const_forward(VULKAN_OBJECT_CONST(typed_ptr), vulkan_object_type)
+	static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const void* vulkan_object_type_check_const_forward(const vulkan_object_t* obj, vulkan_object_type_t type)
+	{
+		vulkan_object_type_check(obj, type);
+		return CAST_TO(const void*, obj);
+	}
+#else /* GLOBAL_DEBUG */
+#	define VULKAN_OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) REINTERPRET_CAST(dst_ptr_type, src_typed_ptr)
+#	define VULKAN_OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) REINTERPRET_CONST_CAST(dst_ptr_type, src_typed_ptr)
+#endif /* GLOBAL_RELEASE */
 
 /* no verification of vulkan objects can be done in release mode */
 #ifdef GLOBAL_DEBUG
