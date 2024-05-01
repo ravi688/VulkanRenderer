@@ -39,7 +39,7 @@ typedef struct vulkan_object_t
 #define VULKAN_OBJECT_INIT(typed_ptr, type, nationality) vulkan_object_init(VULKAN_OBJECT(typed_ptr), type, nationality)
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_object_init(vulkan_object_t* obj, vulkan_object_type_t type, bool nationality)
 {
-	obj->type = type;
+	IF_DEBUG(obj->type = type);
 	obj->nationality = nationality;
 }
 #define VULKAN_OBJECT_MEMZERO(typed_ptr, type) vulkan_object_memzero(CAST_TO(void*, VULKAN_OBJECT_VERIFY_FORWARD(typed_ptr)), sizeof(typed_ptr[0]))
