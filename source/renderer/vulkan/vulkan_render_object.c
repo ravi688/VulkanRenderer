@@ -76,6 +76,7 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
 	_debug_assert__(create_info.size == (64 * 2));
+	VULKAN_OBJECT_INIT(&object->buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_buffer_create_no_alloc(object->renderer, &create_info, &object->buffer);
 	struct_descriptor_map(&object->struct_definition, vulkan_buffer_map(&object->buffer));
 	vulkan_descriptor_set_write_uniform_buffer(&object->object_set, VULKAN_DESCRIPTOR_BINDING_TRANSFORM, &object->buffer);

@@ -64,6 +64,7 @@ static void* create_buffer_and_map(vulkan_camera_t* camera, vulkan_buffer_t OUT 
 		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
 	_debug_assert__(create_info.size == (64 * 4));
+	VULKAN_OBJECT_INIT(buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_buffer_create_no_alloc(camera->renderer, &create_info, buffer);
 
 	vulkan_descriptor_set_create_info_t set_create_info = 

@@ -654,6 +654,7 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 			.vo_sharing_mode = texture->renderer->vo_sharing_mode,
 			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		};
+		VULKAN_OBJECT_INIT(&staging_buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_buffer_create_no_alloc(texture->renderer, &create_info, &staging_buffer);
 
 		for(u32 i = 0; i < data_count; i++)
@@ -662,6 +663,7 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 		vulkan_image_view_copy_from_buffer(&texture->image_view, &staging_buffer);
 
 		vulkan_buffer_destroy(&staging_buffer);
+		vulkan_buffer_release_resources(&staging_buffer);
 	}
 	else
 	{
@@ -682,11 +684,13 @@ RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data
 					.vo_sharing_mode = texture->renderer->vo_sharing_mode,
 					.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 				};
+				VULKAN_OBJECT_INIT(&staging_buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 				vulkan_buffer_create_no_alloc(texture->renderer, &create_info, &staging_buffer);
 
 				vulkan_image_view_copy_from_buffer(&texture->image_view, &staging_buffer);
 
 				vulkan_buffer_destroy(&staging_buffer);
+				vulkan_buffer_release_resources(&staging_buffer);
 			}
 			break;
 			default:

@@ -41,6 +41,7 @@ RENDERER_API vulkan_buffer_t* vulkan_buffer_new(memory_allocator_t* allocator)
 {
 	vulkan_buffer_t* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_BUFFER, vulkan_buffer_t);
 	memzero(buffer, vulkan_buffer_t);
+	VULKAN_OBJECT_INIT(buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return buffer;
 }
 
@@ -54,9 +55,9 @@ RENDERER_API vulkan_buffer_t* vulkan_buffer_create(vulkan_renderer_t* renderer, 
 
 RENDERER_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer)
 {
-	assert(((create_info->stride != 0) && (create_info->count != 0)) || (create_info->size != 0));
+	_debug_assert__(((create_info->stride != 0) && (create_info->count != 0)) || (create_info->size != 0));
 
-	memzero(buffer, vulkan_buffer_t);
+	VULKAN_OBJECT_MEMZERO(buffer, vulkan_buffer_t);
 	buffer->renderer = renderer;
 	u32 buffer_size = (create_info->size == 0) ? (create_info->stride * create_info->count) : create_info->size;
 	
@@ -99,8 +100,8 @@ RENDERER_API void vulkan_buffer_destroy(vulkan_buffer_t* buffer)
 
 RENDERER_API void vulkan_buffer_release_resources(vulkan_buffer_t* buffer)
 {
-	// TODO:
-	// heap_free(buffer);
+	if(VULKAN_OBJECT_IS_INTERNAL(buffer))
+		memory_allocator_dealloc(buffer->renderer->allocator, buffer);
 }
 
 RENDERER_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* data, u32 data_size)

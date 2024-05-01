@@ -101,7 +101,7 @@ static void setup_gpu_resources(vulkan_light_t* light)
 		.vo_sharing_mode = light->renderer->vo_sharing_mode,
 		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
-
+	VULKAN_OBJECT_INIT(&light->buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_buffer_create_no_alloc(light->renderer, &create_info, &light->buffer);
 	struct_descriptor_map(&light->struct_definition, vulkan_buffer_map(&light->buffer));
 	vulkan_descriptor_set_write_uniform_buffer(&light->renderer->global_set, VULKAN_DESCRIPTOR_BINDING_LIGHT, &light->buffer);

@@ -28,6 +28,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>		// u32
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_buffer_create_info_t
 {
@@ -48,6 +49,7 @@ typedef struct vulkan_buffer_create_info_t
 
 typedef struct vulkan_buffer_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;				// pointer to the vulkan_renderer_t object
 	VkBuffer vo_handle;
 	VkDeviceMemory vo_memory;

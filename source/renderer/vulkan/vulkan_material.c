@@ -85,6 +85,7 @@ static void setup_material_resources(vulkan_material_t* material)
 					.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 				};
+				VULKAN_OBJECT_INIT(&resource->buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 				vulkan_buffer_create_no_alloc(material->renderer, &create_info, &resource->buffer);
 				vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, &resource->buffer);
 			}
