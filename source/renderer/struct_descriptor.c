@@ -465,6 +465,21 @@ RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descri
 	field->array_size = array_size;	
 }
 
+static void* _malloc(buf_ucount_t size, void* user_data)
+{
+	return memory_allocator_alloc(CAST_TO(memory_allocator_t*, user_data), MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, size);
+}
+
+static void _free(void* ptr, void* user_data)
+{
+	memory_allocator_dealloc(CAST_TO(memory_allocator_t*, user_data), ptr);
+}
+
+static void* _realloc(void* old_ptr, buf_ucount_t size, void* user_data)
+{
+	return memory_allocator_realloc(CAST_TO(memory_allocator_t*, user_data), old_ptr, MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, size);
+}
+
 RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type)
 {
 	memzero(descriptor, struct_descriptor_t);
@@ -473,7 +488,7 @@ RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_
 	descriptor->type = type;
 
 	BUFFER* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
-	BUFFER _buffer = buf_create(sizeof(struct_field_t), 1, 0);
+	BUFFER _buffer = buf_create_a(sizeof(struct_field_t), 1, 0, _malloc, _free, _realloc, CAST_TO(void*, allocator));
 	memcopy(buffer, &_buffer, BUFFER);
 	descriptor->fields = CAST_TO(struct_field_t*, buffer);
 }
@@ -485,6 +500,21 @@ RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_de
 	descriptor->field_count = buf_get_element_count(buffer);
 	memory_allocator_dealloc(allocator, buffer);
 	struct_descriptor_recalculate(descriptor);
+}
+
+RENDERER_API void struct_descriptor_free(memory_allocator_t* allocator, struct_descriptor_t* descriptor)
+{
+	_debug_assert__((descriptor->field_count != 0) || (descriptor->fields == NULL));
+	if(descriptor->field_count > 0)
+	{
+		for(u32 i = 0; i < descriptor->field_count; i++)
+		{
+			struct_field_t field = descriptor->fields[i];
+			if(field.record != NULL)
+				struct_descriptor_free(allocator, field.record);
+		}
+		memory_allocator_dealloc(allocator, descriptor->fields);
+	}
 }
 
 
