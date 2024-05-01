@@ -37,7 +37,9 @@
 #include <renderer/internal/vulkan/vulkan_queue.h>
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 #include <renderer/internal/vulkan/vulkan_allocator.h>
+#include <hpml/affine_transformation.h>
 #include <renderer/render_window.h>
+#include <renderer/system/display.h>
 #include <renderer/debug.h>
 #include <renderer/assert.h>
 #include <renderer/defines.h>
@@ -55,6 +57,7 @@ UNUSED_FUNCTION static void memory_allocator_dump(memory_allocator_t* allocator,
 }
 
 static void recreate_swapchain(void* _window, void* renderer);
+static void update_screen_info(void* _window, void* renderer);
 
 RENDERER_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer) { return renderer->window; }
 
@@ -183,6 +186,24 @@ static VkFence get_unsigned_fence(vulkan_renderer_t* renderer)
 #elif defined(PLATFORM_WINDOWS)
 #	define PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION "VK_KHR_win32_surface"
 #endif
+
+static struct_descriptor_t create_screen_info_struct(memory_allocator_t* allocator)
+{
+	struct_descriptor_t screen_info_struct;
+	/* definition of the 'screen info' struct */
+	struct_descriptor_begin(allocator, &screen_info_struct, "screen_info", 0);
+		struct_descriptor_add_field_uvec2(&screen_info_struct, "resolution");
+		struct_descriptor_add_field_uvec2(&screen_info_struct, "dpi");
+		struct_descriptor_add_field_uvec2(&screen_info_struct, "size");
+		struct_descriptor_add_field_mat4(&screen_info_struct, "matrix");
+	struct_descriptor_end(allocator, &screen_info_struct);
+	return screen_info_struct;
+}
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void destroy_screen_info_struct(memory_allocator_t* allocator, struct_descriptor_t* screen_info)
+{
+	struct_descriptor_free(allocator, screen_info);
+}
 
 RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
@@ -393,7 +414,46 @@ DEBUG_BLOCK
 	setup_global_set(renderer);
 
 	/* create GPU buffer (till now the logical device has been created) to store window details to be made available to shaders */
-	render_window_initialize_api_buffer(renderer->window, renderer);
+	renderer->screen_info.struct_def = create_screen_info_struct(renderer->allocator);
+	/* calculate the size of the struct and offsets of the fields inside it */
+	struct_descriptor_recalculate(&renderer->screen_info.struct_def);
+	/* get the field handles, to later use them to modify the field values */
+	renderer->screen_info.resolution_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "resolution");
+	renderer->screen_info.dpi_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "dpi");
+	renderer->screen_info.size_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "size");
+	renderer->screen_info.matrix_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "matrix");
+	/* create gpu buffer with the required size */
+	vulkan_buffer_create_info_t buffer_create_info =
+	{
+		.size = struct_descriptor_sizeof(&renderer->screen_info.struct_def),
+		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+	};
+	renderer->screen_info.buffer = vulkan_buffer_create(renderer, &buffer_create_info);
+
+	/* write to the descriptor with binding VULKAN_DESCRIPTOR_BINDING_SCREEN */
+	vulkan_descriptor_set_write_uniform_buffer(&renderer->global_set, VULKAN_DESCRIPTOR_BINDING_SCREEN, renderer->screen_info.buffer);
+
+	/* map the gpu buffer to the host memory */
+	struct_descriptor_map(&renderer->screen_info.struct_def, vulkan_buffer_map(renderer->screen_info.buffer));
+
+	/* set the display resolution value */
+	AUTO resolution = display_get_resolution();
+	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.size_field, CAST_TO(uint*, &resolution));
+
+	/* set the display dpi value */
+	AUTO dpi = display_get_dpi();
+	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.dpi_field, CAST_TO(uint*, &dpi));
+
+	subscription = (event_subscription_create_info_t)
+	{
+		.handler = EVENT_HANDLER(update_screen_info),
+		.handler_data = (void*)renderer,
+		.wait_for = SIGNAL_NOTHING_BIT,
+		.signal = SIGNAL_NOTHING_BIT
+	};
+	renderer->screen_info.update_handle = event_subscribe(renderer->window->on_resize_event, &subscription);
 
 	// create the shader and material library
 	renderer->shader_library = vulkan_shader_library_create(renderer);
@@ -564,6 +624,7 @@ RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
 
 RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
+	event_unsubscribe(renderer->window->on_resize_event, renderer->screen_info.update_handle);
 	event_unsubscribe(renderer->window->on_resize_event, renderer->swapchain_recreate_handle);
 
 	// memory_allocator_dump(renderer->allocator, "memdump1.dump");
@@ -574,17 +635,24 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_camera_system_destroy(renderer->camera_system);
 	vulkan_camera_system_release_resources(renderer->camera_system);
 
-	// destroy the shader library
-	vulkan_shader_library_destroy(renderer->shader_library);
-	vulkan_shader_library_release_resources(renderer->shader_library);
+	// destroy the render pass pool
+	vulkan_render_pass_pool_destroy(renderer->render_pass_pool);
+	vulkan_render_pass_pool_release_resources(renderer->render_pass_pool);
 
 	// destroy the material library
 	vulkan_material_library_destroy(renderer->material_library);
 	vulkan_material_library_release_resources(renderer->material_library);
 
-	// destroy the render pass pool
-	vulkan_render_pass_pool_destroy(renderer->render_pass_pool);
-	vulkan_render_pass_pool_release_resources(renderer->render_pass_pool);
+	// destroy the shader library
+	vulkan_shader_library_destroy(renderer->shader_library);
+	vulkan_shader_library_release_resources(renderer->shader_library);
+
+	/* unmap the gpu buffer's data before destroying it */
+	vulkan_buffer_unmap(renderer->screen_info.buffer);
+	vulkan_buffer_destroy(renderer->screen_info.buffer);
+
+	// release resources for screen info struct definition and its fields
+	struct_descriptor_free(renderer->allocator, &renderer->screen_info.struct_def);
 
 	// destroy global set
 	vulkan_descriptor_set_destroy(&renderer->global_set);
@@ -598,39 +666,39 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_descriptor_set_layout_destroy(&renderer->global_set_layout);
 	vulkan_descriptor_set_layout_release_resources(&renderer->global_set_layout);
 
+	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vo_descriptor_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
+	
+	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, renderer->swapchain->image_count, renderer->vo_command_buffers);
+	memory_allocator_dealloc(renderer->allocator, renderer->vo_command_buffers);
+
 	// destroy swapchain
 	vulkan_swapchain_destroy(renderer->swapchain);
 	vulkan_swapchain_release_resources(renderer->swapchain);
 
-	// NOTE: VkSurfaceKHR must be destroyed after the swapchain
-	vkDestroySurfaceKHR(renderer->instance->handle, renderer->vo_surface, VULKAN_ALLOCATION_CALLBACKS(renderer));
-	render_window_destroy(renderer->window);
+	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, 1, &renderer->vo_aux_command_buffer);
+
+	vkDestroyCommandPool(renderer->logical_device->vo_handle, renderer->vo_command_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
+
+	// destroy fences
+	vkDestroyFence(renderer->logical_device->vo_handle, renderer->vo_fence, VULKAN_ALLOCATION_CALLBACKS(renderer));
 
 	// destroy semaphores
 	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_image_available_semaphore, VULKAN_ALLOCATION_CALLBACKS(renderer));
 	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_render_finished_semaphore, VULKAN_ALLOCATION_CALLBACKS(renderer));
 
-	// destroy fences
-	vkDestroyFence(renderer->logical_device->vo_handle, renderer->vo_fence, VULKAN_ALLOCATION_CALLBACKS(renderer));
-
-	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vo_descriptor_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
-
-	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, 1, &renderer->vo_aux_command_buffer);
-	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, renderer->swapchain->image_count, renderer->vo_command_buffers);
-	vkDestroyCommandPool(renderer->logical_device->vo_handle, renderer->vo_command_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
-
 	// destroy logical device
 	vulkan_logical_device_destroy(renderer->logical_device);
 	vulkan_logical_device_release_resources(renderer->logical_device);
+
+	// NOTE: VkSurfaceKHR must be destroyed after the swapchain
+	vkDestroySurfaceKHR(renderer->instance->handle, renderer->vo_surface, VULKAN_ALLOCATION_CALLBACKS(renderer));
+	render_window_destroy(renderer->window);
 
 	// destroy instance
 	vulkan_instance_destroy(renderer->instance);
 	vulkan_instance_release_resources(renderer->instance);
 
 	vulkan_allocator_destroy(renderer->vk_allocator);
-
-	memory_allocator_dealloc(renderer->allocator, renderer->vo_command_buffers);
-
 	memory_allocator_dealloc(renderer->allocator, renderer);
 	LOG_MSG("Renderer exited successfully\n");
 }
@@ -644,3 +712,19 @@ static void recreate_swapchain(void* _window, void* _renderer)
 	vulkan_swapchain_refresh(renderer->swapchain, &renderer->swapchain_create_info);
 	debug_log_info("Swapchain recreate success");
 }
+
+static void update_screen_info(void* _window, void* _renderer)
+{
+	AUTO window = CAST_TO(render_window_t*, _window);
+	vulkan_renderer_t* renderer = _renderer;
+
+	/* set the window size value */
+	AUTO size = iextent2d(window->width, window->height);
+	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.size_field, CAST_TO(uint*, &size));
+
+	/* set the screen matrix */
+	AUTO matrix = mat4_ortho_projection(-0.04f, 100, size.height, (f32)size.width / (f32)size.height);
+	mat4_move(matrix, mat4_transpose(matrix));
+	struct_descriptor_set_mat4(&renderer->screen_info.struct_def, renderer->screen_info.matrix_field, CAST_TO(f32*, &matrix));
+}
+

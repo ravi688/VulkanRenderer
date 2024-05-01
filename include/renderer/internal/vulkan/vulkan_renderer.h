@@ -36,11 +36,14 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 
+#include <renderer/struct_descriptor.h>
+
 typedef struct render_window_t render_window_t;
 typedef struct vulkan_shader_library_t vulkan_shader_library_t;
 typedef struct vulkan_material_library_t vulkan_material_library_t;
 typedef struct vulkan_render_pass_pool_t vulkan_render_pass_pool_t;
 typedef struct vulkan_camera_system_t vulkan_camera_system_t;
+typedef struct vulkan_buffer_t vulkan_buffer_t;
 
 typedef enum vulkan_renderer_gpu_type_t
 {
@@ -75,6 +78,24 @@ typedef struct vulkan_renderer_t
 	VkSemaphore vo_image_available_semaphore;
 	VkSemaphore vo_render_finished_semaphore;
 	VkFence vo_fence;
+
+	/* global_set::screen_info
+	 * {
+	 * 		uvec2 resolution;  	// resolution of the display (in pixels)
+	 * 		uvec2 dpi; 			// dpi of the display (in pixels per inch)
+	 * 		uvec2 size; 		// window size (in pixels)
+	 * 		mat4 matrix; 		// matrix to project onto the window/screen
+	 * } */
+	struct
+	{
+		struct_descriptor_t 	struct_def;
+		struct_field_handle_t 	resolution_field;
+		struct_field_handle_t 	dpi_field;
+		struct_field_handle_t	size_field;
+		struct_field_handle_t 	matrix_field;
+		vulkan_buffer_t* buffer;
+		event_subscription_handle_t update_handle;
+	} screen_info;
 
 	render_window_t* window;
 	vulkan_swapchain_create_info_t swapchain_create_info;		// for recreating the swapchain
