@@ -102,7 +102,7 @@ RENDERER_API void vulkan_mesh_destroy(vulkan_mesh_t* mesh)
 	{
 		AUTO vertex_buffer = CAST_TO(vulkan_vertex_buffer_t*, buf_get_ptr_at(&mesh->vertex_buffers, i));
 		vulkan_buffer_destroy(vertex_buffer->buffer);
-		// vulkan_buffer_release_resources(vertex_buffer->buffer);
+		vulkan_buffer_release_resources(vertex_buffer->buffer);
 	}
 	buf_clear(&mesh->vertex_buffers, NULL);
 

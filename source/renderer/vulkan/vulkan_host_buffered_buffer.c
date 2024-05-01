@@ -6,6 +6,7 @@ RENDERER_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_new(memo
 {
 	vulkan_host_buffered_buffer_t* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_HOST_BUFFERED_BUFFER, vulkan_host_buffered_buffer_t);
 	memzero(buffer, vulkan_host_buffered_buffer_t);
+	VULKAN_OBJECT_INIT(buffer, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	return buffer;
 }
 
@@ -18,7 +19,7 @@ RENDERER_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_create(v
 
 RENDERER_API void vulkan_host_buffered_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_host_buffered_buffer_create_info_t* create_info, vulkan_host_buffered_buffer_t OUT buffer)
 {
-	memzero(buffer, vulkan_host_buffered_buffer_t);
+	VULKAN_OBJECT_MEMZERO(buffer, vulkan_host_buffered_buffer_t);
 	buffer->renderer = renderer;
 	/* if capacity is non zero (> 0) then create a GPU side buffer */
 	if(create_info->capacity > 0)
@@ -31,6 +32,7 @@ RENDERER_API void vulkan_host_buffered_buffer_create_no_alloc(vulkan_renderer_t*
 			.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
 			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		};
+		VULKAN_OBJECT_INIT(&buffer->device_buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_buffer_create_no_alloc(renderer, &buffer_create_info, &buffer->device_buffer);
 		buffer->has_device_buffer = true;
 	}
@@ -53,7 +55,8 @@ RENDERER_API void vulkan_host_buffered_buffer_destroy(vulkan_host_buffered_buffe
 RENDERER_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buffered_buffer_t* buffer)
 {
 	buf_free(&buffer->host_buffer);
-	memory_allocator_dealloc(buffer->allocator, buffer);
+	if(VULKAN_OBJECT_IS_INTERNAL(buffer))
+		memory_allocator_dealloc(buffer->allocator, buffer);
 }
 
 
@@ -94,6 +97,7 @@ RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer
 		{
 			_debug_assert__(vulkan_buffer_get_size(device_buffer) != 0);
 			vulkan_buffer_destroy(device_buffer);
+			vulkan_buffer_release_resources(device_buffer);
 		}
 
 		/* create a new vulkan buffer object */
@@ -104,6 +108,7 @@ RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer
 			.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
 			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT	
 		};
+		VULKAN_OBJECT_INIT(device_buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_buffer_create_no_alloc(buffer->renderer, &create_info, device_buffer);
 		buffer->has_device_buffer = true;
 		if(is_resized != NULL)

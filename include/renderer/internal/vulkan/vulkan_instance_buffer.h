@@ -27,6 +27,7 @@
 #pragma once
 
 #include <renderer/internal/vulkan/vulkan_buffer.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/multi_buffer.h>
 
 typedef struct vulkan_renderer_t vulkan_renderer_t;
@@ -39,6 +40,7 @@ typedef struct vulkan_instance_buffer_create_info_t
 
 typedef struct vulkan_instance_buffer_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	vulkan_buffer_t device_buffer;			// buffer in the device memory
 	multi_buffer_t host_buffer;				// buffer in the host memory
@@ -46,7 +48,8 @@ typedef struct vulkan_instance_buffer_t
 	bool is_dirty;
 } vulkan_instance_buffer_t;
 
-#define VULKAN_INSTANCE_BUFFER(ptr) CAST_TO(vulkan_instance_buffer_t*, ptr)
+#define VULKAN_INSTANCE_BUFFER(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_instance_t*, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, ptr)
+#define VULKAN_INSTANCE_BUFFER_CONST(ptr) VULKAN_OBJECT_TYPE_CONST_CAST(const vulkan_instance_t*, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

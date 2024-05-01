@@ -27,12 +27,14 @@
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h>
 #include <renderer/assert.h>
 #include <renderer/alloc.h> 			// memcopyv
+#include <renderer/memory_allocator.h>
 
 // constructors and destructors
 RENDERER_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)
 {
 	_debug_assert__(out_instance_buffer != NULL);
 	_debug_assert__(create_info->stride != 0);
+	VULKAN_OBJECT_MEMZERO(out_instance_buffer, vulkan_instance_buffer_t);
 	multi_buffer_create(create_info->stride, create_info->capacity, &out_instance_buffer->host_buffer);
 	vulkan_buffer_init(&out_instance_buffer->device_buffer);
 	out_instance_buffer->renderer = renderer;
@@ -47,6 +49,7 @@ RENDERER_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vul
 			.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
 			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		};
+		VULKAN_OBJECT_INIT(&out_instance_buffer->device_buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_buffer_create_no_alloc(renderer, &_create_info, &out_instance_buffer->device_buffer);
 		out_instance_buffer->has_device_buffer = true;
 	}
@@ -61,10 +64,11 @@ RENDERER_API void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* insta
 
 RENDERER_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer)
 {
-	// not need to call _release_resources for instance_buffer->device_buffer because it is already inlined inside vulkan_instance_buffer_t object
-	// if(instance_buffer->has_device_buffer)
-	// 	vulkan_buffer_release_resources(&instance_buffer->device_buffer);
+	if(instance_buffer->has_device_buffer)
+		vulkan_buffer_release_resources(&instance_buffer->device_buffer);
 	multi_buffer_free(&instance_buffer->host_buffer);
+	if(VULKAN_OBJECT_IS_INTERNAL(instance_buffer))
+		memory_allocator_dealloc(instance_buffer->renderer->allocator, instance_buffer);
 }
 
 // getters
@@ -105,7 +109,10 @@ RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instan
 	if(count > device_buffer->count)
 	{
 		if(instance_buffer->has_device_buffer)
+		{
 			vulkan_buffer_destroy(device_buffer);
+			vulkan_buffer_release_resources(device_buffer);
+		}
 		vulkan_buffer_create_info_t create_info =
 		{
 			.stride = buf_get_element_size(&host_buffer->buffer),
@@ -114,6 +121,7 @@ RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instan
 			.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
 			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		};
+		VULKAN_OBJECT_INIT(device_buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_buffer_create_no_alloc(instance_buffer->renderer, &create_info, device_buffer);
 		instance_buffer->has_device_buffer = true;
 		_is_resized = true;

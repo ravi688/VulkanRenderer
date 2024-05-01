@@ -134,6 +134,7 @@ RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer
 		/* initially we can store render information of upto 512 characters, so there will be no chance of buffer resize until 512 */
 		.capacity = 512
 	};
+	VULKAN_OBJECT_INIT(&text->glyph_render_data_buffer, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_instance_buffer_create(renderer, &grd_buffer_create_info, &text->glyph_render_data_buffer);
 
 	_debug_assert__(glsl_sizeof(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t) == sizeof(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t));
@@ -147,6 +148,7 @@ RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer
 		/* this buffer will be indexed with glyph_render_data_t.indx */
 		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
 	};
+	VULKAN_OBJECT_INIT(&text->glyph_texcoord_buffer, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &text->glyph_texcoord_buffer);
 
 	_debug_assert__(glsl_sizeof(glsl_mat4_t) == sizeof(glsl_mat4_t));
@@ -160,6 +162,7 @@ RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer
 		/* this buffer will be indexed with glyph_render_data_t.stid */
 		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
 	};
+	VULKAN_OBJECT_INIT(&text->text_string_transform_buffer, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &text->text_string_transform_buffer);
 
 	text->glyph_texcoord_index_table = dictionary_create(pair_t(utf32_t, u32), u32, 127, utf32_u32_equal_to);
@@ -228,8 +231,9 @@ RENDERER_API void vulkan_bitmap_text_release_resources(vulkan_bitmap_text_t* tex
 {
 	buf_free(&text->glyph_layout_data_buffer);
 	buf_free(&text->text_strings);
-	// vulkan_host_buffered_buffer_release_resources(&text->text_string_transform_buffer);
-	// vulkan_host_buffered_buffer_release_resources(&text->glyph_texcoord_buffer);
+	vulkan_instance_buffer_release_resources(&text->glyph_render_data_buffer);
+	vulkan_host_buffered_buffer_release_resources(&text->text_string_transform_buffer);
+	vulkan_host_buffered_buffer_release_resources(&text->glyph_texcoord_buffer);
 }
 
 RENDERER_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text)

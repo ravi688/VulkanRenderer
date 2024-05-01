@@ -548,6 +548,7 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 		vulkan_descriptor_set_destroy(&camera->sets[i]);
 		vulkan_buffer_unmap(&camera->buffers[i]);
 		vulkan_buffer_destroy(&camera->buffers[i]);
+		vulkan_buffer_release_resources(&camera->buffers[i]);
 	}
 	buf_ucount_t pass_count = buf_get_element_count(&camera->render_passes);
 	for(buf_ucount_t i = 0; i < pass_count; i++)

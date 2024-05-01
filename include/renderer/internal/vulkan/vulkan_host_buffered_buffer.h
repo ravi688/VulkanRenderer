@@ -3,6 +3,7 @@
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_host_buffered_buffer_create_info_t
 {
@@ -19,6 +20,7 @@ typedef BUFFER buffer_t;
 /* a GPU buffer having a coherent copy on the host side */
 typedef struct vulkan_host_buffered_buffer_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	vulkan_buffer_t device_buffer;
 	buffer_t host_buffer;
@@ -26,6 +28,9 @@ typedef struct vulkan_host_buffered_buffer_t
 	bool has_device_buffer;
 	bool is_dirty;
 } vulkan_host_buffered_buffer_t;
+
+#define VULKAN_HOST_BUFFERED_BUFFER(typed_ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_host_buffered_buffer_t*, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, typed_ptr)
+#define VULKAN_HOST_BUFFERED_BUFFER_CONST(typed_ptr) VULKAN_OBJECT_TYPE_CONST_CAST(const vulkan_host_buffered_buffer_t*, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, typed_ptr)
 
 
 BEGIN_CPP_COMPATIBLE

@@ -650,6 +650,7 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	/* unmap the gpu buffer's data before destroying it */
 	vulkan_buffer_unmap(renderer->screen_info.buffer);
 	vulkan_buffer_destroy(renderer->screen_info.buffer);
+	vulkan_buffer_release_resources(renderer->screen_info.buffer);
 
 	// release resources for screen info struct definition and its fields
 	struct_descriptor_free(renderer->allocator, &renderer->screen_info.struct_def);

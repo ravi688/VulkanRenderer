@@ -41,6 +41,7 @@ RENDERER_API vulkan_shader_module_t* vulkan_shader_module_new(memory_allocator_t
 {
 	vulkan_shader_module_t* shader = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_MODULE, vulkan_shader_module_t);
 	memzero(shader, vulkan_shader_module_t);
+	VULKAN_OBJECT_INIT(shader, VULKAN_OBJECT_TYPE_SHADER_MODULE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return shader;
 }
 
@@ -53,7 +54,7 @@ RENDERER_API vulkan_shader_module_t* vulkan_shader_module_create(vulkan_renderer
 
 RENDERER_API void vulkan_shader_module_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info, vulkan_shader_module_t* shader)
 {
-	memzero(shader, vulkan_shader_module_t);
+	VULKAN_OBJECT_MEMZERO(shader, vulkan_shader_module_t);
 
 	shader->renderer = renderer;
 	shader->vo_module = get_shader_module(renderer, create_info->spirv, create_info->length);
@@ -62,6 +63,8 @@ RENDERER_API void vulkan_shader_module_create_no_alloc(vulkan_renderer_t* render
 
 RENDERER_API void vulkan_shader_module_load_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_load_info_t* load_info, vulkan_shader_module_t OUT shader)
 {
+	VULKAN_OBJECT_MEMZERO(shader, vulkan_shader_module_t);
+	shader->renderer = renderer;
 	BUFFER* shader_bytes = load_binary_from_file(load_info->file_path);
 	shader->vo_module = get_shader_module(renderer, shader_bytes->bytes, shader_bytes->element_count);
 	shader->vo_stage = get_pipeline_shader_stage_create_info(shader->vo_module, load_info->type, "main");
@@ -82,7 +85,8 @@ RENDERER_API void vulkan_shader_module_destroy(vulkan_shader_module_t* shader)
 
 RENDERER_API void vulkan_shader_module_release_resources(vulkan_shader_module_t* shader)
 {
-	memory_allocator_dealloc(shader->renderer->allocator, shader);
+	if(VULKAN_OBJECT_IS_INTERNAL(shader))
+		memory_allocator_dealloc(shader->renderer->allocator, shader);
 }
 
  static VkShaderModule get_shader_module(vulkan_renderer_t* renderer, void* spirv, u32 length)

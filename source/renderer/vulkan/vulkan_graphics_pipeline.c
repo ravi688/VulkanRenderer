@@ -67,6 +67,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 	for(u32 i = 0; i < pipeline->shader_module_count; i++)
 	{
 		vulkan_shader_module_create_info_t module_create_info = REINTERPRET_TO(vulkan_shader_module_create_info_t, create_info->spirv_codes[i]);
+		VULKAN_OBJECT_INIT(&pipeline->shader_modules[i], VULKAN_OBJECT_TYPE_SHADER_MODULE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_shader_module_create_no_alloc(renderer, &module_create_info, &pipeline->shader_modules[i]);
 		pipeline->vo_shader_stages[i] = pipeline->shader_modules[i].vo_stage;
 	}
@@ -343,10 +344,18 @@ RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* p
 {
 	vkDestroyPipeline(pipeline->renderer->logical_device->vo_handle, pipeline->vo_handle, VULKAN_ALLOCATION_CALLBACKS(pipeline->renderer));
 	pipeline->vo_handle = VK_NULL_HANDLE;
+
+	/* destroy shader modules */
+	for(u32 i = 0; i < pipeline->shader_module_count; i++)
+		vulkan_shader_module_destroy(&pipeline->shader_modules[i]);
 }
 
 RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)
 {
+	/* destroy shader modules */
+	for(u32 i = 0; i < pipeline->shader_module_count; i++)
+		vulkan_shader_module_release_resources(&pipeline->shader_modules[i]);
+
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->shader_modules);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_shader_stages);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_binding_descriptions);

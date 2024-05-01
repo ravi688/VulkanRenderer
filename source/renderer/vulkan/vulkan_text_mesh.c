@@ -115,6 +115,7 @@ RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, 
 		/* this buffer will be indexed with glyph_render_data_t.stid */
 		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
 	};
+	VULKAN_OBJECT_INIT(&text->text_string_transform_buffer, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &text->text_string_transform_buffer);
 }
 
@@ -142,6 +143,7 @@ RENDERER_API void vulkan_text_mesh_release_resources(vulkan_text_mesh_t* text_me
 		dictionary_free(&((vulkan_text_mesh_string_t*)buf_get_ptr_at(strings, i))->glyph_sub_buffer_handles);
 	buf_free(strings);
 	dictionary_free(glyph_render_data_buffers);
+	vulkan_host_buffered_buffer_release_resources(&text_mesh->text_string_transform_buffer);
 	memory_allocator_dealloc(text_mesh->renderer->allocator, text_mesh);
 }
 
@@ -587,6 +589,7 @@ static vulkan_instance_buffer_t* get_instance_buffer(vulkan_renderer_t* renderer
 			.stride = INSTANCE_BUFFER_STRIDE,
 			.capacity = 10,
 		};
+		VULKAN_OBJECT_INIT(&buffer, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_instance_buffer_create(renderer, &create_info, &buffer);
 		dictionary_add(buffers, &key, &buffer);
 		index = dictionary_get_count(buffers) - 1;

@@ -29,6 +29,7 @@
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
 #include <renderer/internal/vulkan/vulkan_types.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_shader_module_create_info_t
 {
@@ -53,10 +54,14 @@ typedef struct vulkan_shader_module_load_info_t
 /* vulkan_stage_shader_t renamed to vulkan_shader_module_t */
 typedef struct vulkan_shader_module_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkShaderModule vo_module;
 	VkPipelineShaderStageCreateInfo vo_stage;
 } vulkan_shader_module_t;
+
+#define VULKAN_SHADER_MODULE(typed_ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_shader_module_t*, VULKAN_OBJECT_TYPE_SHADER_MODULE, typed_ptr)
+#define VULKAN_SHADER_MODULE_CONST(typed_ptr) VULKAN_OBJECT_TYPE_CONST_CAST(const vulkan_shader_module_t*, VULKAN_OBJECT_TYPE_SHADER_MODULE, typed_ptr)
 
 BEGIN_CPP_COMPATIBLE
 
