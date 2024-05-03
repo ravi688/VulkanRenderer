@@ -42,6 +42,7 @@ RENDERER_API vulkan_mesh_t* vulkan_mesh_new(memory_allocator_t* allocator)
 {
 	vulkan_mesh_t* mesh = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MESH, vulkan_mesh_t);
 	memzero(mesh, vulkan_mesh_t);
+	VULKAN_OBJECT_INIT(mesh, VULKAN_OBJECT_TYPE_MESH, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return mesh;
 }
 
@@ -54,7 +55,7 @@ RENDERER_API vulkan_mesh_t* vulkan_mesh_create(vulkan_renderer_t* renderer, vulk
 
 RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
 {
-	memzero(mesh, vulkan_mesh_t);
+	VULKAN_OBJECT_MEMZERO(mesh, vulkan_mesh_t);
 	mesh->renderer = renderer;
 
 	mesh->vertex_buffers = buf_new(vulkan_vertex_buffer_t);
@@ -118,6 +119,8 @@ RENDERER_API void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 	buf_free(&mesh->vertex_buffers);
 	if(mesh->index_buffer.buffer != NULL)
 		vulkan_buffer_release_resources(mesh->index_buffer.buffer);
+	if(VULKAN_OBJECT_IS_INTERNAL(mesh))
+		memory_allocator_dealloc(mesh->renderer->allocator, mesh);
 }
 
 RENDERER_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh)

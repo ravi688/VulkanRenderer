@@ -82,6 +82,12 @@ RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data
 	stack_free(vertex_buffer_infos);
 }
 
+RENDERER_API void mesh_create_no_alloc_ext(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
+{
+	RDR_OBJECT_INIT(mesh, RDR_OBJECT_TYPE_MESH, RDR_OBJECT_NATIONALITY_EXTERNAL);
+	mesh_create_no_alloc(renderer, mesh_data, mesh);
+}
+
 RENDERER_API void mesh_destroy(mesh_t* mesh)
 {
 	vulkan_mesh_destroy(mesh);

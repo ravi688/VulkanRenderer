@@ -48,8 +48,8 @@ typedef struct vulkan_instance_buffer_t
 	bool is_dirty;
 } vulkan_instance_buffer_t;
 
-#define VULKAN_INSTANCE_BUFFER(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_instance_t*, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, ptr)
-#define VULKAN_INSTANCE_BUFFER_CONST(ptr) VULKAN_OBJECT_TYPE_CONST_CAST(const vulkan_instance_t*, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, ptr)
+#define VULKAN_INSTANCE_BUFFER(ptr) VULKAN_OBJECT_UP_CAST(vulkan_instance_t*, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, ptr)
+#define VULKAN_INSTANCE_BUFFER_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_instance_t*, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

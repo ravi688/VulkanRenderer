@@ -35,6 +35,7 @@ RENDERER_API vulkan_image_t* vulkan_image_new(memory_allocator_t* allocator)
 {
 	vulkan_image_t* image = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE, vulkan_image_t);
 	memzero(image, vulkan_image_t);
+	VULKAN_OBJECT_INIT(image, VULKAN_OBJECT_TYPE_IMAGE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return image;
 }
 
@@ -43,7 +44,7 @@ RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulk
 	assert(!((create_info->vo_type == VK_IMAGE_TYPE_2D) && (create_info->depth > 1)));
 	_debug_assert__(create_info->depth != 0);
 
-	memzero(image, vulkan_image_t);
+	VULKAN_OBJECT_MEMZERO(image, vulkan_image_t);
 
 	image->renderer = renderer;
 	VkImageCreateInfo image_info =
@@ -105,6 +106,6 @@ RENDERER_API void vulkan_image_destroy(vulkan_image_t* image)
 
 RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image)
 {
-	// TODO
-	// heap_free(image);
+	if(VULKAN_OBJECT_IS_INTERNAL(image))
+		memory_allocator_dealloc(image->renderer->allocator, image);
 }

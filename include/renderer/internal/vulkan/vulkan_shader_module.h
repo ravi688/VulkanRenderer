@@ -60,8 +60,8 @@ typedef struct vulkan_shader_module_t
 	VkPipelineShaderStageCreateInfo vo_stage;
 } vulkan_shader_module_t;
 
-#define VULKAN_SHADER_MODULE(typed_ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_shader_module_t*, VULKAN_OBJECT_TYPE_SHADER_MODULE, typed_ptr)
-#define VULKAN_SHADER_MODULE_CONST(typed_ptr) VULKAN_OBJECT_TYPE_CONST_CAST(const vulkan_shader_module_t*, VULKAN_OBJECT_TYPE_SHADER_MODULE, typed_ptr)
+#define VULKAN_SHADER_MODULE(typed_ptr) VULKAN_OBJECT_UP_CAST(vulkan_shader_module_t*, VULKAN_OBJECT_TYPE_SHADER_MODULE, typed_ptr)
+#define VULKAN_SHADER_MODULE_CONST(typed_ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_shader_module_t*, VULKAN_OBJECT_TYPE_SHADER_MODULE, typed_ptr)
 
 BEGIN_CPP_COMPATIBLE
 

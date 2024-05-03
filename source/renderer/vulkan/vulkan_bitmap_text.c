@@ -13,6 +13,7 @@ RENDERER_API vulkan_bitmap_text_t* vulkan_bitmap_text_new(memory_allocator_t* al
 {
 	vulkan_bitmap_text_t* text = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_BITMAP_TEXT, vulkan_bitmap_text_t);
 	memzero(text, vulkan_bitmap_text_t);
+	VULKAN_OBJECT_INIT(text, VULKAN_OBJECT_TYPE_BITMAP_TEXT, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return text;
 }
 
@@ -98,7 +99,7 @@ static bool default_glyph_layout_handler(vulkan_bitmap_text_glyph_layout_data_bu
 
 RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info, vulkan_bitmap_text_t OUT text)
 {
-	memzero(text, vulkan_bitmap_text_t);
+	VULKAN_OBJECT_MEMZERO(text, vulkan_bitmap_text_t);
 	text->renderer = renderer;
 
 	text->text_strings = buf_new(vulkan_bitmap_text_string_t);
@@ -201,6 +202,7 @@ RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer
 		.vertex_buffer_info_count = 1,
 		.index_buffer_info = { .data = quad_indices, .count = SIZEOF_ARRAY(quad_indices), .index_type = VK_INDEX_TYPE_UINT16 }
 	};
+	VULKAN_OBJECT_INIT(&text->quad_mesh, VULKAN_OBJECT_TYPE_MESH, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_mesh_create_no_alloc(renderer, &quad_create_info, &text->quad_mesh);
 
 	/* add per-instance vertex buffer */
@@ -222,18 +224,22 @@ RENDERER_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 	/* destroy the GTC buffer */
 	vulkan_host_buffered_buffer_destroy(&text->glyph_texcoord_buffer);
 
-	dictionary_free(&text->glyph_texcoord_index_table);
+	dictionary_clear(&text->glyph_texcoord_index_table);
 
 	vulkan_mesh_destroy(&text->quad_mesh);
 }
 
 RENDERER_API void vulkan_bitmap_text_release_resources(vulkan_bitmap_text_t* text)
 {
+	dictionary_free(&text->glyph_texcoord_index_table);
+	vulkan_mesh_release_resources(&text->quad_mesh);
 	buf_free(&text->glyph_layout_data_buffer);
 	buf_free(&text->text_strings);
 	vulkan_instance_buffer_release_resources(&text->glyph_render_data_buffer);
 	vulkan_host_buffered_buffer_release_resources(&text->text_string_transform_buffer);
 	vulkan_host_buffered_buffer_release_resources(&text->glyph_texcoord_buffer);
+	if(VULKAN_OBJECT_IS_INTERNAL(text))
+		memory_allocator_dealloc(text->renderer->allocator, text);
 }
 
 RENDERER_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text)

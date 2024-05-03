@@ -27,6 +27,7 @@
 #pragma once
 
 #include <bufferlib/buffer.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 // TODO: need to be refactored
 enum
@@ -93,6 +94,7 @@ typedef struct vulkan_material_t vulkan_material_t;
 
 typedef struct vulkan_mesh_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	vulkan_material_t* material;
 
@@ -105,7 +107,8 @@ typedef struct vulkan_mesh_t
 	u32 binding_index;  // INTERNAL
 } vulkan_mesh_t;
 
-#define VULKAN_MESH(ptr) CAST_TO(vulkan_mesh_t*, ptr)
+#define VULKAN_MESH(ptr) VULKAN_OBJECT_UP_CAST(vulkan_mesh_t*, VULKAN_OBJECT_TYPE_MESH, ptr)
+#define VULKAN_MESH_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_mesh_t*, VULKAN_OBJECT_TYPE_MESH, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

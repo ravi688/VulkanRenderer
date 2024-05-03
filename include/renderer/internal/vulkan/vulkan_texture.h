@@ -32,6 +32,7 @@
 #include <renderer/internal/vulkan/vulkan_image.h>			 // vulkan_image_t
 #include <renderer/internal/vulkan/vulkan_image_view.h> 	 // vulkan_image_view_t
 #include <renderer/internal/vulkan/vulkan_types.h> 			 // vulkan_render_target_technique_t
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef enum vulkan_texture_type_t
 {
@@ -105,6 +106,7 @@ typedef struct vulkan_texture_recreate_info_t
 
 typedef struct vulkan_texture_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer; 							// pointer to the vulkan_renderer_t object
 	vulkan_image_t image;									// vulkan image object
 
@@ -135,7 +137,8 @@ typedef struct vulkan_texture_t
 	vulkan_texture_usage_stage_t current_stage;
 } vulkan_texture_t;
 
-#define VULKAN_TEXTURE(ptr) DYNAMIC_CAST(vulkan_texture_t*, ptr)
+#define VULKAN_TEXTURE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_texture_t*, VULKAN_OBJECT_TYPE_TEXTURE, ptr)
+#define VULKAN_TEXTURE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_texture_t*, VULKAN_OBJECT_TYPE_TEXTURE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

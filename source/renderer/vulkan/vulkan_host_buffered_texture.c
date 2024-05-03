@@ -6,6 +6,7 @@ RENDERER_API vulkan_host_buffered_texture_t* vulkan_host_buffered_texture_new(me
 {
 	vulkan_host_buffered_texture_t* texture = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_HOST_BUFFERED_TEXTURE, vulkan_host_buffered_texture_t);
 	memzero(texture, vulkan_host_buffered_texture_t);
+	VULKAN_OBJECT_INIT(texture, VULKAN_OBJECT_TYPE_HOST_BUFFERED_TEXTURE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return texture;
 }
 
@@ -18,7 +19,8 @@ RENDERER_API vulkan_host_buffered_texture_t* vulkan_host_buffered_texture_create
 
 RENDERER_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_host_buffered_texture_create_info_t* create_info, vulkan_host_buffered_texture_t OUT texture)
 {
-	memzero(texture, vulkan_host_buffered_texture_t);
+	VULKAN_OBJECT_SET_BASE(texture, true);
+	VULKAN_OBJECT_MEMZERO(texture, vulkan_host_buffered_texture_t);
 	texture->renderer = renderer;
 
 	/* currently host buffered cube textures are not supported */
@@ -36,6 +38,7 @@ RENDERER_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t
 		.usage = create_info->usage,
 		.final_usage = create_info->final_usage
 	};
+	VULKAN_OBJECT_INIT(BASE(texture), VULKAN_OBJECT_TYPE_TEXTURE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_texture_create_no_alloc(renderer, &_create_info, BASE(texture));
 
 	/* create the host buffered buffer */
@@ -45,6 +48,7 @@ RENDERER_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t
 		.capacity = create_info->width * create_info->height,
 		.vo_usage_flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT
 	};
+	VULKAN_OBJECT_INIT(&texture->buffer, VULKAN_OBJECT_TYPE_HOST_BUFFERED_TEXTURE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &texture->buffer);
 
 	/* create 2d view for the above linear buffer */
@@ -65,7 +69,9 @@ RENDERER_API void vulkan_host_buffered_texture_destroy(vulkan_host_buffered_text
 
 RENDERER_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buffered_texture_t* texture)
 {
-	memory_allocator_dealloc(texture->renderer->allocator, texture);
+	vulkan_texture_release_resources(BASE(texture));
+	if(VULKAN_OBJECT_IS_INTERNAL(texture))
+		memory_allocator_dealloc(texture->renderer->allocator, texture);
 }
 
 

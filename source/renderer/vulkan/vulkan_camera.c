@@ -956,7 +956,7 @@ static void create_or_recreate_framebuffers_for_camera_pass(vulkan_camera_t* cam
 			update_image_views_for_camera_pass(camera, pass, update_mask, j, U32_MAX);
 
 			create_info.id = j;
-			vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, k));
+			vulkan_framebuffer_create_no_alloc_ext(camera->renderer, &create_info, buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, k));
 		}
 	}
 
@@ -1163,9 +1163,9 @@ static void vulkan_camera_create_or_recreate_depth_framebuffers(vulkan_camera_t*
 		if(is_cube)
 			create_info.attachments = &DYNAMIC_CAST(vulkan_texture_t*, camera->current_depth_attachment)->image_views[i].vo_handle;
 		create_info.render_pass = camera->depth_write_pass;
-		vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, &camera->depth_write_framebuffers[i]);
+		vulkan_framebuffer_create_no_alloc_ext(camera->renderer, &create_info, &camera->depth_write_framebuffers[i]);
 		create_info.render_pass = camera->depth_clear_pass;
-		vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, &camera->depth_clear_framebuffers[i]);
+		vulkan_framebuffer_create_no_alloc_ext(camera->renderer, &create_info, &camera->depth_clear_framebuffers[i]);
 	}
 
 	/* recreate framebuffers objects which were created ealier to match the width and height with newly created framebuffer objects */
@@ -1175,9 +1175,9 @@ static void vulkan_camera_create_or_recreate_depth_framebuffers(vulkan_camera_t*
 		if(is_cube)
 			create_info.attachments = &DYNAMIC_CAST(vulkan_texture_t*, camera->current_depth_attachment)->image_views[i].vo_handle;
 		create_info.render_pass = camera->depth_write_pass;
-		vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, &camera->depth_write_framebuffers[i]);
+		vulkan_framebuffer_create_no_alloc_ext(camera->renderer, &create_info, &camera->depth_write_framebuffers[i]);
 		create_info.render_pass = camera->depth_clear_pass;
-		vulkan_framebuffer_create_no_alloc(camera->renderer, &create_info, &camera->depth_clear_framebuffers[i]);
+		vulkan_framebuffer_create_no_alloc_ext(camera->renderer, &create_info, &camera->depth_clear_framebuffers[i]);
 	}
 
 	/* update the depth framebuffer count (increase it if max shot count has increased but not decrease it in anyway) */
@@ -1201,7 +1201,7 @@ static void vulkan_camera_set_depth_render_target_texture(vulkan_camera_t* camer
 	
 	/* update depth render target, current depth attachment and render target size */
 	camera->depth_render_target = texture;
-	camera->current_depth_attachment = DYNAMIC_CAST(vulkan_attachment_t*, camera->depth_render_target);
+	camera->current_depth_attachment = REINTERPRET_CAST(vulkan_attachment_t*, camera->depth_render_target);
 	set_render_target_size(camera, texture->width, texture->height);
 
 	if(binding_type == VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED)

@@ -39,6 +39,7 @@ RENDERER_API vulkan_attachment_t* vulkan_attachment_new(memory_allocator_t* allo
 {
 	vulkan_attachment_t* attachment = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT, vulkan_attachment_t);
 	memzero(attachment, vulkan_attachment_t);
+	VULKAN_OBJECT_INIT(attachment, VULKAN_OBJECT_TYPE_ATTACHMENT, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return attachment;
 }
 
@@ -183,7 +184,7 @@ UNUSED_FUNCTION static VkImageLayout get_layout_from_format(VkFormat format)
 
 RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment)
 {
-	memzero(attachment, vulkan_attachment_t);
+	VULKAN_OBJECT_MEMZERO(attachment, vulkan_attachment_t);
 	attachment->renderer = renderer;
 
 	// create image for this attachment
@@ -201,6 +202,7 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 		.vo_memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		.vo_aspect_mask = create_info->format ? get_image_aspect_from_format(create_info->format) : get_image_aspect_from_attachment_type(create_info->type)
 	};
+	VULKAN_OBJECT_INIT(&attachment->image, VULKAN_OBJECT_TYPE_IMAGE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_image_create_no_alloc(renderer, &image_create_info, &attachment->image);
 
 	// create image view for this attachment
@@ -214,6 +216,7 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 		.base_array_layer = 0,
 		.layer_count = 1
 	};
+	VULKAN_OBJECT_INIT(&attachment->image_view, VULKAN_OBJECT_TYPE_IMAGE_VIEW, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_image_view_create_no_alloc(renderer, &view_create_info, &attachment->image_view);
 
 	// NOTE: in case of VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT we don't need any sampler
@@ -249,10 +252,12 @@ RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)
 
 RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment)
 {
+	vulkan_image_release_resources(&attachment->image);
+	vulkan_image_view_release_resources(&attachment->image_view);
 	memory_allocator_dealloc(attachment->renderer->allocator, attachment->image_create_info);
 	memory_allocator_dealloc(attachment->renderer->allocator, attachment->view_create_info);
-	// TODO
-	// heap_free(attachment);
+	if(VULKAN_OBJECT_IS_INTERNAL(attachment))
+		memory_allocator_dealloc(attachment->renderer->allocator, attachment);
 }
 
 RENDERER_API void vulkan_attachment_recreate(vulkan_attachment_t* attachment, vulkan_attachment_recreate_info_t* info)
@@ -260,12 +265,16 @@ RENDERER_API void vulkan_attachment_recreate(vulkan_attachment_t* attachment, vu
 	/* recreate VkImage object */
 	/* we can't just call vulkan_attachment_destroy as we need to persist the sampler object (recreating that is a redundant thing) */
 	vulkan_image_destroy(&attachment->image);
+	vulkan_image_release_resources(&attachment->image);
 	attachment->image_create_info->width = info->width;
 	attachment->image_create_info->height = info->height;
+	VULKAN_OBJECT_INIT(&attachment->image, VULKAN_OBJECT_TYPE_IMAGE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_image_create_no_alloc(attachment->renderer, attachment->image_create_info, &attachment->image);
 	
 	/* recreate VkImageView object */
 	vulkan_image_view_destroy(&attachment->image_view);
+	vulkan_image_view_release_resources(&attachment->image_view);
+	VULKAN_OBJECT_INIT(&attachment->image_view, VULKAN_OBJECT_TYPE_IMAGE_VIEW, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_image_view_create_no_alloc(attachment->renderer, attachment->view_create_info, &attachment->image_view);
 }
 

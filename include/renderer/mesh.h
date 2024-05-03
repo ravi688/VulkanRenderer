@@ -27,21 +27,26 @@
 #pragma once
 
 #include <renderer/defines.h>
+#include <renderer/rdr_object.h>
 
 typedef struct mesh3d_t mesh3d_t;
 
 #ifdef RENDERER_VULKAN_DRIVER
-	typedef struct vulkan_mesh_t vulkan_mesh_t;
+	#include <renderer/internal/vulkan/vulkan_mesh.h>
 	typedef vulkan_mesh_t mesh_t;
+	#define MESH(ptr) VULKAN_MESH(ptr)
 #elif RENDERER_OPENGL_DRIVER
-	typedef struct opengl_mesh_t opengl_mesh_t;
+	#include <renderer/internal/opengl/opengl_mesh.h>
 	typedef opengl_mesh_t mesh_t;
+	#define MESH(ptr) OPENGL_MESH(ptr)
 #elif RENDERER_DIRECTX_DRIVER
-	typedef struct directx_mesh_t directx_mesh_t;
+	#include <renderer/internal/directx/directx_mesh.h>
 	typedef directx_mesh_t mesh_t;
+	#define MESH(ptr) DIRECTX_MESH(ptr)
 #elif RENDERER_METAL_DRIVER
-	typedef struct metal_mesh_t metal_mesh_t;
+	#include <renderer/internal/metal/metal_mesh.h>
 	typedef metal_mesh_t mesh_t;
+	#define MESH(ptr) METAL_MESH(ptr)
 #endif
 
 
@@ -51,6 +56,7 @@ BEGIN_CPP_COMPATIBLE
 RENDERER_API mesh_t* mesh_new(memory_allocator_t* allocator);
 RENDERER_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data);
 RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
+RENDERER_API void mesh_create_no_alloc_ext(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
 RENDERER_API void mesh_destroy(mesh_t* mesh);
 RENDERER_API void mesh_release_resources(mesh_t* mesh);
 

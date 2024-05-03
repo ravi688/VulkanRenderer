@@ -6,15 +6,23 @@
 #if   defined(RENDERER_VULKAN_DRIVER)
 	typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_texture_t;
 	typedef vulkan_bitmap_glyph_atlas_texture_t bitmap_glyph_atlas_texture_t;
+	typedef struct vulkan_texture_t vulkan_texture_t;
+	typedef vulkan_texture_t texture_t;
 #elif defined(RENDERER_OPENGL_DRIVER)
 	typedef struct opengl_bitmap_glyph_atlas_texture_t opengl_bitmap_glyph_atlas_texture_t;
 	typedef opengl_bitmap_glyph_atlas_texture_t bitmap_glyph_atlas_texture_t;
+	typedef struct opengl_texture_t opengl_texture_t;
+	typedef opengl_texture_t texture_t;
 #elif defined(RENDERER_DIRECTX_DRIVER)
 	typedef struct directx_bitmap_glyph_atlas_texture_t directx_bitmap_glyph_atlas_texture_t;
 	typedef directx_bitmap_glyph_atlas_texture_t bitmap_glyph_atlas_texture_t;
+	typedef struct directx_texture_t directx_texture_t;
+	typedef directx_texture_t texture_t;
 #elif defined(RENDERER_METAL_DRIVER)
 	typedef struct metal_bitmap_glyph_atlas_texture_t metal_bitmap_glyph_atlas_texture_t;
 	typedef metal_bitmap_glyph_atlas_texture_t bitmap_glyph_atlas_texture_t;
+	typedef struct metal_texture_t metal_texture_t;
+	typedef metal_texture_t texture_t;
 #endif
 
 #include <renderer/font.h> // font_t and utf32_t
@@ -43,6 +51,8 @@ RENDERER_API void bitmap_glyph_atlas_texture_release_resources(bitmap_glyph_atla
 RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_atlas_texture_get_pool(bitmap_glyph_atlas_texture_t* texture);
 /* returns the font used by this BGA texture */
 RENDERER_API font_t* bitmap_glyph_atlas_texture_get_font(bitmap_glyph_atlas_texture_t* texture);
+/* retursn a pointer to the underlying texture_t object */
+RENDERER_API texture_t* bitmap_glyph_atlas_texture_get_texture(vulkan_bitmap_glyph_atlas_texture_t* texture);
 /* flushes the host side font bitmap to the GPU side memory (it might also destroy and create VkDeviceMemory)
  * is_resized: true if internal GPU and host memory has been resized
  * returns: true if internal API objects recreated or GPU side memory has been updated */

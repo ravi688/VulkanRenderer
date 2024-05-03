@@ -29,8 +29,8 @@ typedef struct vulkan_host_buffered_buffer_t
 	bool is_dirty;
 } vulkan_host_buffered_buffer_t;
 
-#define VULKAN_HOST_BUFFERED_BUFFER(typed_ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_host_buffered_buffer_t*, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, typed_ptr)
-#define VULKAN_HOST_BUFFERED_BUFFER_CONST(typed_ptr) VULKAN_OBJECT_TYPE_CONST_CAST(const vulkan_host_buffered_buffer_t*, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, typed_ptr)
+#define VULKAN_HOST_BUFFERED_BUFFER(typed_ptr) VULKAN_OBJECT_UP_CAST(vulkan_host_buffered_buffer_t*, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, typed_ptr)
+#define VULKAN_HOST_BUFFERED_BUFFER_CONST(typed_ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_host_buffered_buffer_t*, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, typed_ptr)
 
 
 BEGIN_CPP_COMPATIBLE

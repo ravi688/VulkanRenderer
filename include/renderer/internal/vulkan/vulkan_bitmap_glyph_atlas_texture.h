@@ -3,6 +3,7 @@
 
 #include <renderer/defines.h>
 #include <renderer/internal/vulkan/vulkan_host_buffered_texture.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/bitmap_glyph_pool.h>
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_create_info_t
@@ -19,6 +20,7 @@ typedef struct event_t event_t;
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_t
 {
+	__VULKAN_OBJECT__;
 	/* holds the actual host side pixel buffer and device side pixel buffer (VkImage) */
 	DERIVE_FROM(vulkan_host_buffered_texture_t);
 	vulkan_renderer_t* renderer;
@@ -27,7 +29,8 @@ typedef struct vulkan_bitmap_glyph_atlas_texture_t
 	event_t* on_resize_event;
 } vulkan_bitmap_glyph_atlas_texture_t;
 
-#define VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE(ptr) DYNAMIC_CAST(vulkan_bitmap_glyph_atlas_texture_t*, ptr)
+#define VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_bitmap_glyph_atlas_texture_t*, VULKAN_OBJECT_TYPE_BITMAP_GLYPH_ATLAS_TEXTURE, ptr)
+#define VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_bitmap_glyph_atlas_texture_t*, VULKAN_OBJECT_TYPE_BITMAP_GLYPH_ATLAS_TEXTURE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -56,6 +59,11 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bitmap_glyph_pool_t* vulkan
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE font_t* vulkan_bitmap_glyph_atlas_texture_get_font(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
 	return bitmap_glyph_pool_get_font(&texture->pool);
+}
+/* returns a pointer to the underlying vulkan_texture_t object */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_texture_t* vulkan_bitmap_glyph_atlas_texture_get_texture(vulkan_bitmap_glyph_atlas_texture_t* texture)
+{
+	return vulkan_host_buffered_texture_get_texture(BASE(texture));
 }
 /* flushes the host side font bitmap to the GPU side memory (it might also destroy and create VkDeviceMemory)
  * returns true if either the internal buffers, images and image views has been updated or recreated */

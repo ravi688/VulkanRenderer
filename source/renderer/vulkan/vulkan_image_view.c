@@ -44,6 +44,7 @@ RENDERER_API vulkan_image_view_t* vulkan_image_view_new(memory_allocator_t* allo
 {
 	vulkan_image_view_t* view = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE_VIEW, vulkan_image_view_t);
 	memzero(view, vulkan_image_view_t);
+	VULKAN_OBJECT_INIT(view, VULKAN_OBJECT_TYPE_IMAGE_VIEW, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return view;
 }
 
@@ -56,7 +57,7 @@ RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* re
 
 RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info, vulkan_image_view_t OUT view)
 {
-	memzero(view, vulkan_image_view_t);
+	VULKAN_OBJECT_MEMZERO(view, vulkan_image_view_t);
 
 	view->renderer = renderer;
 	view->type = create_info->view_type;
@@ -104,8 +105,8 @@ RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
 
 RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)
 {
-	// TODO
-	// heap_free(view);
+	if(VULKAN_OBJECT_IS_INTERNAL(view))
+		memory_allocator_dealloc(view->renderer->allocator, view);
 }
 
 

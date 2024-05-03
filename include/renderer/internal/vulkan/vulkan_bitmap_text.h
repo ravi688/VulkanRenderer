@@ -6,6 +6,7 @@
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
 #include <renderer/internal/vulkan/vulkan_text_types.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/dictionary.h>
 #include <renderer/types.h>
 #include <renderer/event.h> // event_subscription_handle_t
@@ -141,6 +142,7 @@ typedef vulkan_text_glyph_underline_handler_void_ptr_pair_t vulkan_bitmap_text_g
 
 typedef struct vulkan_bitmap_text_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	vulkan_material_t* material;
 
@@ -201,7 +203,8 @@ typedef struct vulkan_bitmap_text_t
 
 } vulkan_bitmap_text_t;
 
-#define VULKAN_BITMAP_TEXT(ptr) CAST_TO(vulkan_bitmap_text_t*, ptr)
+#define VULKAN_BITMAP_TEXT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_bitmap_text_t*, VULKAN_OBJECT_TYPE_BITMAP_TEXT, ptr)
+#define VULKAN_BITMAP_TEXT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const bitmap_text_t*, VULKAN_OBJECT_TYPE_BITMAP_TEXT, ptr)
 
 
 BEGIN_CPP_COMPATIBLE

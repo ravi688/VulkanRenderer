@@ -27,6 +27,7 @@
 #pragma once
 
 #include <renderer/defines.h>
+#include <renderer/internal/vulkan/vulkan_texture.h>
 
 typedef struct vulkan_renderer_t vulkan_renderer_t;
 
@@ -51,8 +52,10 @@ typedef struct vulkan_render_texture_create_info_t
 	vulkan_render_texture_type_t type; 	/* type of the render texture */
 } vulkan_render_texture_create_info_t;
 
-typedef struct vulkan_texture_t vulkan_texture_t;
 typedef vulkan_texture_t vulkan_render_texture_t;
+
+#define VULKAN_RENDER_TEXTURE(ptr) VULKAN_TEXTURE(ptr)
+#define VULKAN_RENDER_TEXTURE_CONST(ptr) VULKAN_TEXTURE_CONST(Ptr)
 
 BEGIN_CPP_COMPATIBLE
 

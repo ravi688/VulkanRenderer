@@ -29,6 +29,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_renderer_t vulkan_renderer_t;
 typedef struct vulkan_image_t vulkan_image_t;
@@ -65,6 +66,7 @@ typedef struct vulkan_image_view_create_info_t
 
 typedef struct vulkan_image_view_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkImageView vo_handle;
 	vulkan_image_t* image;
@@ -72,6 +74,9 @@ typedef struct vulkan_image_view_t
 	VkImageSubresourceRange vo_subresource_range;
 	VkImageLayout vo_layout;
 } vulkan_image_view_t;
+
+#define VULKAN_IMAGE_VIEW(ptr) VULKAN_OBJECT_UP_CAST(vulkan_image_view_t*, VULKAN_OBJECT_TYPE_IMAGE_VIEW, ptr)
+#define VULKAN_IMAGE_VIEW_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_image_view_t*, VULKAN_OBJECT_TYPE_IMAGE_VIEW, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

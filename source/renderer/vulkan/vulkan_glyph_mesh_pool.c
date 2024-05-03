@@ -93,7 +93,8 @@ RENDERER_API vulkan_mesh_t* vulkan_glyph_mesh_pool_get_mesh(vulkan_glyph_mesh_po
 		 * So, if the renderer interface chooses an opengl implementation of this function then calling
 		 * this function from the vulkan API backend will result in data corruption.
 		 * However, to get the intended results one needs to link compatible API backend with the rendering interface. */
-		mesh_create_no_alloc(pool->renderer->renderer, mesh3d, STATIC_CAST(vulkan_mesh_t*, mesh));
+		RDR_OBJECT_INIT(mesh, RDR_OBJECT_TYPE_MESH, RDR_OBJECT_NATIONALITY_EXTERNAL);
+		mesh_create_no_alloc(pool->renderer->renderer, mesh3d, MESH(mesh));
 
 
 		vulkan_glyph_mesh_t glyph_mesh = { .mesh = mesh, .mesh3d = mesh3d };

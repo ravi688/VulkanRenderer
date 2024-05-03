@@ -4,6 +4,7 @@
 #include <renderer/defines.h>
 #include <renderer/internal/vulkan/vulkan_texture.h>
 #include <renderer/internal/vulkan/vulkan_host_buffered_buffer.h> // vulkan_host_buffered_buffer_t
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/buffer2d_view.h> // buffer2d_view_t
 #include <bufferlib/buffer.h> // buffer_t
 
@@ -21,6 +22,7 @@ typedef struct vulkan_host_buffered_texture_create_info_t
 
 typedef struct vulkan_host_buffered_texture_t
 {
+	__VULKAN_OBJECT__;
 	DERIVE_FROM(vulkan_texture_t);
 	vulkan_renderer_t* renderer;
 	/* linear buffer to store store pixel values on the host side and stage on the device (gpu) side */
@@ -30,7 +32,8 @@ typedef struct vulkan_host_buffered_texture_t
 	bool is_dirty;
 } vulkan_host_buffered_texture_t;
 
-#define VULKAN_HOST_BUFFERED_TEXTURE(ptr) DYNAMIC_CAST(vulkan_host_buffered_texture_t*, ptr)
+#define VULKAN_HOST_BUFFERED_TEXTURE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_host_buffered_texture_t*, VULKAN_OBJECT_TYPE_HOST_BUFFERED_TEXTURE, ptr)
+#define VULKAN_HOST_BUFFERED_TEXTURE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_host_buffered_texture_t*, VULKAN_OBJECT_TYPE_HOST_BUFFERED_TEXTURE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -52,6 +55,11 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* vulkan_host_buffe
 { 
 	texture->is_dirty = true;
 	return vulkan_host_buffered_buffer_get_host_buffer(&texture->buffer);
+}
+/* returns pointer to the underlying vulkan_texture_t object */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_texture_t* vulkan_host_buffered_texture_get_texture(vulkan_host_buffered_texture_t* texture)
+{
+	return BASE(texture);
 }
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_host_buffered_texture_set_dirty(vulkan_host_buffered_texture_t* texture, bool is_dirty)

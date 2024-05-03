@@ -29,20 +29,23 @@
 typedef struct renderer_t renderer_t;
 
 #if   defined(RENDERER_VULKAN_DRIVER)
-	typedef struct vulkan_texture_t vulkan_texture_t;
+#	include <renderer/internal/vulkan/vulkan_texture.h>
 	typedef vulkan_texture_t texture_t;
+#	define TEXTURE(ptr) VULKAN_TEXTURE(ptr)
 #elif defined(RENDERER_OPENGL_DRIVER)
-	typedef struct opengl_texture_t opengl_texture_t;
+#	include <renderer/internal/opengl/opengl_texture.h>
 	typedef opengl_texture_t texture_t;
+#	define TEXTURE(ptr) OPENGL_TEXTURE(ptr)
 #elif defined(RENDERER_DIRECTX_DRIVER)
-	typedef struct directx_texture_t directx_texture_t;
+#	include <renderer/internal/directx/directx_texture.h>
 	typedef directx_texture_t texture_t;
+#	define TEXTURE(ptr) DIRECTX_TEXTURE(ptr)
 #elif defined(RENDERER_METAL_DRIVER)
-	typedef struct metal_texture_t metal_texture_t;
+#	include <renderer/internal/metal/metal_texture.h>
 	typedef metal_texture_t texture_t;
+#	define TEXTURE(ptr) METAL_TEXTURE(ptr)
 #endif
 
-#define TEXTURE(ptr) CAST_TO(texture_t*, ptr)
 
 #include <renderer/defines.h>
 #include <stdarg.h>

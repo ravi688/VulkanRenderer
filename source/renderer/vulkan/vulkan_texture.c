@@ -39,6 +39,7 @@ RENDERER_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator)
 {
 	vulkan_texture_t* texture = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_TEXTURE, vulkan_texture_t);
 	memzero(texture, vulkan_texture_t);
+	VULKAN_OBJECT_INIT(texture, VULKAN_OBJECT_TYPE_TEXTURE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return texture;
 }
 
@@ -360,6 +361,7 @@ static vulkan_image_view_t* create_write_image_views(vulkan_texture_t* texture, 
 			.base_array_layer = i,
 			.layer_count = 1
 		};
+		VULKAN_OBJECT_INIT(&views[i], VULKAN_OBJECT_TYPE_IMAGE_VIEW, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_image_view_create_no_alloc(texture->renderer, &create_info, &views[i]);
 	}
 	return views;
@@ -367,7 +369,7 @@ static vulkan_image_view_t* create_write_image_views(vulkan_texture_t* texture, 
 
 RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info, vulkan_texture_t OUT texture)
 {
-	memzero(texture, vulkan_texture_t);
+	VULKAN_OBJECT_MEMZERO(texture, vulkan_texture_t);
 
 	texture->renderer = renderer;
 	texture->vo_descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -399,6 +401,7 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 		.vo_memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		.vo_aspect_mask = get_aspect(texture->type)
 	};
+	VULKAN_OBJECT_INIT(&texture->image, VULKAN_OBJECT_TYPE_IMAGE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_image_create_no_alloc(texture->renderer, &image_info, &texture->image);
 
 	vulkan_image_view_create_info_t view_create_info = 
@@ -411,6 +414,7 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 		.base_array_layer = 0,
 		.layer_count = image_info.layer_count
 	};
+	VULKAN_OBJECT_INIT(&texture->image_view, VULKAN_OBJECT_TYPE_IMAGE_VIEW, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
  	vulkan_image_view_create_no_alloc(texture->renderer, &view_create_info, &texture->image_view);
 
  	texture->image_views = create_write_image_views(texture, &texture->image_view_count);
@@ -434,13 +438,18 @@ RENDERER_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_text
 	/* destroy images and image views */
 
 	vulkan_image_view_destroy(&texture->image_view);
+	vulkan_image_view_release_resources(&texture->image_view);
 	vulkan_image_destroy(&texture->image);
+	vulkan_image_release_resources(&texture->image);
 
 	if(texture->image_views != NULL)
 	{
 		_debug_assert__(texture->image_view_count != 0);
 		for(u32 i = 0; i < texture->image_view_count; i++)
+		{
 			vulkan_image_view_destroy(&texture->image_views[i]);
+			vulkan_image_view_release_resources(&texture->image_views[i]);
+		}
 	}
 
 	/* recreate images and image views */
@@ -467,6 +476,7 @@ RENDERER_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_text
 		.vo_memory_properties_mask = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		.vo_aspect_mask = get_aspect(texture->type)
 	};
+	VULKAN_OBJECT_INIT(&texture->image, VULKAN_OBJECT_TYPE_IMAGE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_image_create_no_alloc(texture->renderer, &image_info, &texture->image);
 
 	vulkan_image_view_create_info_t view_create_info = 
@@ -479,6 +489,7 @@ RENDERER_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_text
 		.base_array_layer = 0,
 		.layer_count = image_info.layer_count
 	};
+	VULKAN_OBJECT_INIT(&texture->image_view, VULKAN_OBJECT_TYPE_IMAGE_VIEW, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
  	vulkan_image_view_create_no_alloc(texture->renderer, &view_create_info, &texture->image_view);
 
  	texture->image_views = create_write_image_views(texture, &texture->image_view_count);
@@ -511,8 +522,8 @@ RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
 	
 	if(texture->image_views != NULL)
 		memory_allocator_dealloc(texture->renderer->allocator, texture->image_views);
-	// TODO
-	// heap_free(texture);
+	if(VULKAN_OBJECT_IS_INTERNAL(texture))
+		memory_allocator_dealloc(texture->renderer->allocator, texture);
 }
 
 static vulkan_texture_usage_t get_usage_from_stage(vulkan_texture_t* texture, vulkan_texture_usage_stage_t stage)

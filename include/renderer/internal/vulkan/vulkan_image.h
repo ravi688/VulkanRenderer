@@ -28,6 +28,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_renderer_t vulkan_renderer_t;
 typedef struct vulkan_buffer_t vulkan_buffer_t;
@@ -61,6 +62,9 @@ typedef struct vulkan_image_t
 	u32 depth;
 	u32 layer_count;
 } vulkan_image_t;
+
+#define VULKAN_IMAGE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_image_t*, VULKAN_OBJECT_TYPE_IMAGE, ptr)
+#define VULKAN_IMAGE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_image_t*, VULKAN_OBJECT_TYPE_IMAGE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

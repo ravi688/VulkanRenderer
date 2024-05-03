@@ -49,6 +49,11 @@ RENDERER_API font_t* bitmap_glyph_atlas_texture_get_font(bitmap_glyph_atlas_text
 	return vulkan_bitmap_glyph_atlas_texture_get_font(texture);
 }
 
+RENDERER_API texture_t* bitmap_glyph_atlas_texture_get_texture(vulkan_bitmap_glyph_atlas_texture_t* texture)
+{
+	return vulkan_bitmap_glyph_atlas_texture_get_texture(texture);
+}
+
 RENDERER_API bool bitmap_glyph_atlas_texture_commit(bitmap_glyph_atlas_texture_t* texture, bool OUT is_resized)
 {
 	return vulkan_bitmap_glyph_atlas_texture_commit(texture, is_resized);

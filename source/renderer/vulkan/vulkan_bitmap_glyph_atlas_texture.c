@@ -8,6 +8,7 @@ RENDERER_API vulkan_bitmap_glyph_atlas_texture_t* vulkan_bitmap_glyph_atlas_text
 {
 	vulkan_bitmap_glyph_atlas_texture_t* texture = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GLYPH_ATLAS_TEXTURE, vulkan_bitmap_glyph_atlas_texture_t);
 	memzero(texture, vulkan_bitmap_glyph_atlas_texture_t);
+	VULKAN_OBJECT_INIT(texture, VULKAN_OBJECT_TYPE_BITMAP_GLYPH_ATLAS_TEXTURE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return texture;
 }
 
@@ -20,7 +21,8 @@ RENDERER_API vulkan_bitmap_glyph_atlas_texture_t* vulkan_bitmap_glyph_atlas_text
 
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_glyph_atlas_texture_create_info_t* create_info, vulkan_bitmap_glyph_atlas_texture_t OUT texture)
 {
-	memzero(texture, vulkan_bitmap_glyph_atlas_texture_t);
+	VULKAN_OBJECT_SET_BASE(texture, true);
+	VULKAN_OBJECT_MEMZERO(texture, vulkan_bitmap_glyph_atlas_texture_t);
 
 	texture->renderer = renderer;
 
@@ -35,6 +37,7 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_rende
 		.usage = VULKAN_TEXTURE_USAGE_SAMPLED,
 		.final_usage = VULKAN_TEXTURE_USAGE_SAMPLED
 	};
+	VULKAN_OBJECT_INIT(BASE(texture), VULKAN_OBJECT_TYPE_HOST_BUFFERED_TEXTURE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_host_buffered_texture_create_no_alloc(renderer, &hbt_create_info, BASE(texture));
 	vulkan_texture_set_usage_stage(VULKAN_TEXTURE(texture), VULKAN_TEXTURE_USAGE_STAGE_FINAL);
 
@@ -61,7 +64,9 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_destroy(vulkan_bitmap_glyph_
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_release_resources(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
 	event_destroy(texture->on_resize_event);
-	memory_allocator_dealloc(texture->renderer->allocator, texture);
+	vulkan_host_buffered_texture_release_resources(BASE(texture));
+	if(VULKAN_OBJECT_IS_INTERNAL(texture))
+		memory_allocator_dealloc(texture->renderer->allocator, texture);
 }
 
 RENDERER_API bool vulkan_bitmap_glyph_atlas_texture_commit(vulkan_bitmap_glyph_atlas_texture_t* texture, bool OUT is_resized)

@@ -59,7 +59,8 @@ typedef struct vulkan_buffer_t
 } vulkan_buffer_t;
 
 typedef vulkan_buffer_t* vulkan_buffer_ptr_t;
-#define VULKAN_BUFFER(ptr) CAST_TO(vulkan_buffer_ptr_t, ptr)
+#define VULKAN_BUFFER(ptr) VULKAN_OBJECT_UP_CAST(vulkan_buffer_t*, VULKAN_OBJECT_TYPE_BUFFER, ptr)
+#define VULKAN_BUFFER_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_buffer_t*, VULKAN_OBJECT_TYPE_BUFFER, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

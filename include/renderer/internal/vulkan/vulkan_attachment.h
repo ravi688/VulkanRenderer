@@ -31,6 +31,7 @@
 
 #include <renderer/internal/vulkan/vulkan_image.h>
 #include <renderer/internal/vulkan/vulkan_image_view.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef enum vulkan_attachment_next_pass_usage_t
 {
@@ -71,6 +72,7 @@ typedef struct vulkan_attachment_create_info_t
 /* NOTE: this should be in sync with vulkan_texture_t */
 typedef struct vulkan_attachment_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	/* image for this attachment */
 	vulkan_image_t image;
@@ -88,6 +90,9 @@ typedef struct vulkan_attachment_t
 	/* copy of the vulkan image view create info structure passed while calling vulkan_attachment_create or vulkan_attachment_create_no_alloc */
 	vulkan_image_view_create_info_t* view_create_info;
 } vulkan_attachment_t;
+
+#define VULKAN_ATTACHMENT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_attachment_t*, VULKAN_OBJECT_TYPE_ATTACHMENT, ptr)
+#define VULKAN_ATTACHMENT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_attachment_t*, VULKAN_OBJECT_TYPE_ATTACHMENT, ptr)
 
 
 BEGIN_CPP_COMPATIBLE
