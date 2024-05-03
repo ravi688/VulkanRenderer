@@ -146,6 +146,9 @@ TEST_ON_INITIALIZE(TID_48_CASE_5)
 
 
 	render_scene_build_queues(this->scene);
+
+			render_object_set_material(this->quadObject, this->depthPresentMaterial);
+			camera_set_render_target(this->offscreen_camera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->depth_texture);
 }
 
 TEST_ON_TERMINATE(TID_48_CASE_5)

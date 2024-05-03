@@ -556,7 +556,11 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 		AUTO pass = buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i);
 		u32 framebuffer_count = buf_get_element_count(&pass->framebuffers);
 		for(buf_ucount_t j = 0; j < framebuffer_count; j++)
-			vulkan_framebuffer_destroy(buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, j));
+		{
+			AUTO framebuffer = buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, j);
+			vulkan_framebuffer_destroy(framebuffer);
+			vulkan_framebuffer_release_resources(framebuffer);
+		}
 		buf_clear(&pass->framebuffers, NULL);
 		for(buf_ucount_t j = 0; j < pass->allocated_attachment_count; j++)
 		{
@@ -568,6 +572,13 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 
 	if(camera->default_depth_attachment != NULL)
 		vulkan_attachment_destroy(camera->default_depth_attachment);
+
+	/* destroy depth write and clear framebuffers */
+	for(u32 i = 0; i < camera->depth_framebuffer_count; i++)
+	{
+		vulkan_framebuffer_destroy(&camera->depth_write_framebuffers[i]);
+		vulkan_framebuffer_release_resources(&camera->depth_write_framebuffers[i]);
+	}
 	
 	/* destroy the render sets */
 	u32 count = dictionary_get_count(&camera->render_pass_descriptor_sets);
@@ -906,7 +917,11 @@ static void create_or_recreate_framebuffers_for_camera_pass(vulkan_camera_t* cam
 	/* destroy all the valid framebuffers (which were created ealier and can be destroyed) */
 	_debug_assert__(pass->valid_framebuffer_count <= buf_get_element_count(&pass->framebuffers));
 	for(u32 i = 0; i < pass->valid_framebuffer_count; i++)
-		vulkan_framebuffer_destroy(buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, i));
+	{
+		AUTO framebuffer = buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, i);
+		vulkan_framebuffer_destroy(framebuffer);
+		vulkan_framebuffer_release_resources(framebuffer);
+	}
 
 	/* recreate the just destroyed framebuffers and create the framebuffers which were invalid (never created earlier) */
 
@@ -1161,7 +1176,8 @@ static void vulkan_camera_create_or_recreate_depth_framebuffers(vulkan_camera_t*
 	for(u32 i = camera->depth_framebuffer_count; i < camera->max_shot_count; i++)
 	{
 		if(is_cube)
-			create_info.attachments = &DYNAMIC_CAST(vulkan_texture_t*, camera->current_depth_attachment)->image_views[i].vo_handle;
+			/* we can use VULKAN_TEXTURE() cast here, as if the attachment is cube, then it is guaranteed to be a vulkan_texture_t object */
+			create_info.attachments = &VULKAN_TEXTURE(camera->current_depth_attachment)->image_views[i].vo_handle;
 		create_info.render_pass = camera->depth_write_pass;
 		vulkan_framebuffer_create_no_alloc_ext(camera->renderer, &create_info, &camera->depth_write_framebuffers[i]);
 		create_info.render_pass = camera->depth_clear_pass;
@@ -1172,8 +1188,14 @@ static void vulkan_camera_create_or_recreate_depth_framebuffers(vulkan_camera_t*
 	for(u32 i = 0; i < camera->depth_framebuffer_count; i++)
 	{
 		vulkan_framebuffer_destroy(&camera->depth_write_framebuffers[i]);
+		vulkan_framebuffer_release_resources(&camera->depth_write_framebuffers[i]);
+		/* WARNING: the following 2 lines have been added without understanding the full context, you may need to delete them if things do not work as intended */
+		vulkan_framebuffer_destroy(&camera->depth_clear_framebuffers[i]);
+		vulkan_framebuffer_release_resources(&camera->depth_clear_framebuffers[i]);
+
 		if(is_cube)
-			create_info.attachments = &DYNAMIC_CAST(vulkan_texture_t*, camera->current_depth_attachment)->image_views[i].vo_handle;
+			/* we can use VULKAN_TEXTURE() cast here, as if the attachment is cube, then it is guaranteed to be a vulkan_texture_t object */
+			create_info.attachments = &VULKAN_TEXTURE(camera->current_depth_attachment)->image_views[i].vo_handle;
 		create_info.render_pass = camera->depth_write_pass;
 		vulkan_framebuffer_create_no_alloc_ext(camera->renderer, &create_info, &camera->depth_write_framebuffers[i]);
 		create_info.render_pass = camera->depth_clear_pass;
@@ -1201,6 +1223,8 @@ static void vulkan_camera_set_depth_render_target_texture(vulkan_camera_t* camer
 	
 	/* update depth render target, current depth attachment and render target size */
 	camera->depth_render_target = texture;
+	/* use REINTERPRET_CAST here as we are sure that vulkan_attachment_t is a subset of vulkan_texture_t 
+	 * TODO: merge vulkan_attachment_t and vulkan_texture_t into one or some organized types */
 	camera->current_depth_attachment = REINTERPRET_CAST(vulkan_attachment_t*, camera->depth_render_target);
 	set_render_target_size(camera, texture->width, texture->height);
 
