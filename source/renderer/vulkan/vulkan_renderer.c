@@ -207,7 +207,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void destroy_screen_info_st
 
 RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
-	vulkan_renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_renderer, vulkan_renderer_t);
+	vulkan_renderer_t* renderer = memory_allocator_alloc_obj(_renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDERER, vulkan_renderer_t);
 	memzero(renderer, vulkan_renderer_t);
 	renderer->renderer = _renderer;
 	renderer->allocator = _renderer->allocator;

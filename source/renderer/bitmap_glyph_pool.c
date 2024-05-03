@@ -43,7 +43,7 @@ RENDERER_API void bitmap_glyph_pool_destroy(bitmap_glyph_pool_t* pool)
 
 RENDERER_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool)
 {
-	memory_allocator_dealloc(pool->allocator, pool);
+	memory_allocator_dealloc(pool->renderer->allocator, pool);
 }
 
 RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized)

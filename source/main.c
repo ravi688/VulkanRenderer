@@ -154,7 +154,7 @@ int main(int argc, const char** argv)
 	}
 
 	/* REASON: Takes too much time for complex allocation trees! */
-	// memory_allocation_tree_dump(allocator, "terminate.dump");
+	memory_allocation_tree_dump(allocator, "terminate.dump");
 	test->terminate(driver, test->user_data);
 	test_destroy(test);
 

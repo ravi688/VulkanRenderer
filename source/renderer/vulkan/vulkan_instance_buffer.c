@@ -25,6 +25,7 @@
 
 #include <renderer/internal/vulkan/vulkan_defines.h>
 #include <renderer/internal/vulkan/vulkan_instance_buffer.h>
+#include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/assert.h>
 #include <renderer/alloc.h> 			// memcopyv
 #include <renderer/memory_allocator.h>

@@ -147,7 +147,7 @@
 
 	/* free */
 	#ifdef GLOBAL_DEBUG
-		static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void _std_free(void* ptr){ if(ptr == NULL) return; free(ptr); }
+		static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void _std_free(void* ptr){ _debug_assert__(ptr != NULL); free(ptr); }
 	#else /* GLOBAL_RELEASE */
 	#	define _std_free(ptr) free(ptr)
 	#endif /* GLOBAL_DEBUG */

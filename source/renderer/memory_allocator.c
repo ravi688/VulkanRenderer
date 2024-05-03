@@ -396,7 +396,8 @@ RENDERER_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(me
 
 RENDERER_API void memory_allocation_tree_destroy(memory_allocation_tree_t* tree)
 {
-	heap_free(tree->nodes);
+	if(tree->nodes != NULL)
+		heap_free(tree->nodes);
 	heap_free(tree->root);
 	heap_free(tree);
 }

@@ -188,7 +188,7 @@ RENDERER_API void memory_allocator_destroy(memory_allocator_t* allocator);
 
 #ifdef MEMORY_METRICS
 #   define memory_allocator_alloc(allocator, allocation_type, size) __memory_allocator_alloc(allocator, __memory_allocation_debug_info(allocation_type), size)
-#	define memory_allocator_realloc(allocator, old_ptr, allocation_type, size) __memory_allocator_realloc(allocator, __memory_allocation_debug_info(allocation_type), size)
+#	define memory_allocator_realloc(allocator, old_ptr, allocation_type, size) __memory_allocator_realloc(allocator, old_ptr, __memory_allocation_debug_info(allocation_type), size)
 #else
 #   define memory_allocator_alloc(allocator, allocation_type, size) heap_alloc(size)
 #	define memory_allocator_realloc(allocator, old_ptr, allocation_type, size) heap_realloc(old_ptr, size)

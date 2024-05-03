@@ -315,7 +315,8 @@ static void destroy_vulkan_shader_resource_descriptions(memory_allocator_t* allo
 		if(descriptors[i].handle.fields != NULL)
 			memory_allocator_dealloc(allocator, descriptors[i].handle.fields);
 	}
-	memory_allocator_dealloc(allocator, descriptors);
+	if(descriptor_count > 0)
+		memory_allocator_dealloc(allocator, descriptors);
 }
 
 typedef struct vulkan_pipeline_common_data_t

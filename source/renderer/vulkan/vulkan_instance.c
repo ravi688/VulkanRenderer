@@ -230,7 +230,7 @@ RENDERER_API bool* vulkan_instance_get_filter_for_supported_layers(memory_alloca
 			break;
 	}
 
-	memory_allocator_dealloc(instance->renderer->allocator, properties);
+	memory_allocator_dealloc(allocator, properties);
 	return filter;
 }
 

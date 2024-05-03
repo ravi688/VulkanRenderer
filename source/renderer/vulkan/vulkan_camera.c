@@ -343,17 +343,18 @@ typedef struct vulkan_supplementary_attachments_copy_info_t
 	u32 supplementary_attachment_bucket_depth;
 } vulkan_supplementary_attachments_copy_info_t;
 
-RENDERER_API void camera_render_pass_recopy_supplementary_attachments(vulkan_camera_render_pass_t* render_pass, vulkan_supplementary_attachments_copy_info_t* info)
+RENDERER_API void camera_render_pass_recopy_supplementary_attachments(memory_allocator_t* allocator, vulkan_camera_render_pass_t* render_pass, vulkan_supplementary_attachments_copy_info_t* info)
 {
 	if((info->supplementary_attachment_bucket_count != render_pass->supplementary_attachment_bucket_count)
 		|| (info->supplementary_attachment_bucket_depth != render_pass->supplementary_attachment_bucket_depth))
 	{
-		memory_allocator_dealloc(render_pass->renderer->allocator, render_pass->vo_supplementary_attachments);
+		if(render_pass->supplementary_attachment_count > 0)
+			memory_allocator_dealloc(allocator, render_pass->vo_supplementary_attachments);
 		render_pass->supplementary_attachment_bucket_count = info->supplementary_attachment_bucket_count;
 		render_pass->supplementary_attachment_bucket_depth = info->supplementary_attachment_bucket_depth;
 		render_pass->supplementary_attachment_count = info->supplementary_attachment_count;
 		_debug_assert__((render_pass->supplementary_attachment_bucket_count * render_pass->supplementary_attachment_bucket_depth) == render_pass->supplementary_attachment_count);
-		render_pass->vo_supplementary_attachments = memory_allocator_alloc_obj_array(render_pass->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, render_pass->supplementary_attachment_count);
+		render_pass->vo_supplementary_attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, render_pass->supplementary_attachment_count);
 	}
 	_debug_assert__((render_pass->supplementary_attachment_bucket_count * render_pass->supplementary_attachment_bucket_depth) == render_pass->supplementary_attachment_count);
 	memcopyv(render_pass->vo_supplementary_attachments, info->vo_supplementary_attachments, VkImageView, render_pass->supplementary_attachment_count);
@@ -375,7 +376,7 @@ static void recopy_supplementary_attachments(void* _window, void* user_data)
 	/* for each camera render pass */
 	u32 pass_count = buf_get_element_count(&camera->render_passes);
 	for(u32 i = 0; i < pass_count; i++)
-		camera_render_pass_recopy_supplementary_attachments(CAST_TO(vulkan_camera_render_pass_t*, user_data), &copy_info);
+		camera_render_pass_recopy_supplementary_attachments(camera->renderer->allocator, CAST_TO(vulkan_camera_render_pass_t*, user_data), &copy_info);
 
 	debug_log_info("Supplementary attachments copy success");
 }
@@ -611,8 +612,10 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 			if(attachment != NULL)
 				vulkan_attachment_release_resources(attachment);
 		}
-		memory_allocator_dealloc(camera->renderer->allocator, pass->allocated_attachments);
-		memory_allocator_dealloc(camera->renderer->allocator, pass->vo_supplementary_attachments);
+		if(pass->allocated_attachment_count > 0)
+			memory_allocator_dealloc(camera->renderer->allocator, pass->allocated_attachments);
+		if(pass->supplementary_attachment_count > 0)
+			memory_allocator_dealloc(camera->renderer->allocator, pass->vo_supplementary_attachments);
 		memory_allocator_dealloc(camera->renderer->allocator, pass->vo_image_views);
 	}
 

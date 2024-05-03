@@ -56,7 +56,7 @@ RENDERER_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buff
 {
 	buf_free(&buffer->host_buffer);
 	if(VULKAN_OBJECT_IS_INTERNAL(buffer))
-		memory_allocator_dealloc(buffer->allocator, buffer);
+		memory_allocator_dealloc(buffer->renderer->allocator, buffer);
 }
 
 
