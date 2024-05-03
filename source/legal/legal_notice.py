@@ -4,7 +4,8 @@ import os
 # notice customization
 
 # for which year the notice should be issued
-current_year = 2023
+year_started = 2021
+year_current = 2024
 # who has written this software
 author = 'Ravi Prakash Singh'
 # name of your software
@@ -54,7 +55,7 @@ def get_legal_notice(file):
 
 \tFile: %s is a part of %s
 
-\tCopyright (C) %d  Author: %s
+\tCopyright (C) %d - %d  Author: %s
 
 \tThis program is free software: you can redistribute it and/or modify
 \tit under the terms of the GNU General Public License as published by
@@ -68,7 +69,7 @@ def get_legal_notice(file):
 
 \tYou should have received a copy of the GNU General Public License
 \talong with this program.  If not, see <https://www.gnu.org/licenses/>. 
-*/'''%(description, file, software, current_year, author)
+*/'''%(description, file, software, year_started, year_current, author)
 
 def embed_legal_notice(file_path):
 	file = open(file_path, 'r')

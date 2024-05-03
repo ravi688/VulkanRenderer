@@ -5,9 +5,9 @@
 	such as toolchains written by the same author) is a software to render 
 	2D & 3D geometries by writing C/C++ code and shaders.
 
-	File: texture_sampling.h is a part of VulkanRenderer
+	File: bitmap_glyph_atlas_texture.h is a part of VulkanRenderer
 
-	Copyright (C) 2023  Author: Ravi Prakash Singh
+	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
