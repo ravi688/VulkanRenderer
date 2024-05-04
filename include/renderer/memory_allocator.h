@@ -64,7 +64,10 @@ typedef enum memory_allocation_bit_flags_t
 /* stores allocation data and patterns (useful for saving in the disk for the first time and later preallocating) */
 typedef struct memory_allocation_footprint_t
 {
-
+	/* usage at the time of allocation footprint capture */
+	u64 curr_usage;
+	/* peek usage over the lifetime of the program */
+	u64 peek_usage;
 } memory_allocation_footprint_t;
 
 /* stores the memory allocation informatin including pointer to the memory chunk */
@@ -171,6 +174,8 @@ typedef struct memory_allocator_t
     allocate_result_t (*reallocate)(void* old_ptr, u32 old_size, u32 old_align, u32 size, u32 align, void* user_data);
     /* user provided free function, used to deallocate memory chunks from the host memory */ 
     void (*deallocate)(void* ptr, bool was_aligned, void* user_data);
+    memory_allocation_footprint_t footprint;
+    IF_DEBUG(u64 alloc_counter;)
 } memory_allocator_t;
 
 
@@ -219,6 +224,9 @@ RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void
 #else
 #   define memory_allocator_aligned_deallocate(allocator, ptr) heap_aligned_free(ptr)
 #endif
+
+/* serializes current memory allocation tree and current memory footprint into one file */
+RENDERER_API void memory_allocator_serialize_to_file(memory_allocator_t* allocator, const char* const file_path);
 
 /* builds a memory allocation tree, usually it is used for debug logging purpose */
 RENDERER_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(memory_allocator_t* allocator);

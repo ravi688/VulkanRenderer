@@ -32,6 +32,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #define ALLOCATION_FLAG_NO_ALIGN_RESTRICTION U32_MAX
 #define _1_MEGA_BYTES (1048576)
@@ -136,7 +137,10 @@ static allocate_result_t stdlib_realloc(void* old_ptr, u32 old_size, u32 old_ali
 
 static void stdlib_free(void* ptr, bool was_aligned, void* user_data)
 {
-	// __free(ptr);
+	if(was_aligned)
+		heap_aligned_free(ptr);
+	else
+		heap_free(ptr);
 }
 
 RENDERER_API memory_allocator_t* memory_allocator_create(const memory_allocator_create_info_t* create_info)
@@ -147,6 +151,12 @@ RENDERER_API memory_allocator_t* memory_allocator_create(const memory_allocator_
 	allocator->allocate = (create_info->allocate == NULL) ? stdlib_malloc : create_info->allocate;
 	allocator->reallocate = (create_info->reallocate == NULL) ? stdlib_realloc : create_info->reallocate;
 	allocator->deallocate = (create_info->deallocate == NULL) ? stdlib_free : create_info->deallocate;
+	if(create_info->prev_footprint != NULL)
+	{
+		allocator->footprint.curr_usage = create_info->prev_footprint->curr_usage;
+		allocator->footprint.peek_usage = create_info->prev_footprint->peek_usage;
+	}
+	allocator->footprint.curr_usage = heap_sizeof(memory_allocator_t);
 	return allocator;
 }
 
@@ -166,12 +176,22 @@ RENDERER_API void* __memory_allocator_realloc(memory_allocator_t* allocator, voi
 	return __memory_allocator_aligned_realloc(allocator, old_ptr, debug_info, size, ALLOCATION_FLAG_NO_ALIGN_RESTRICTION);
 }
 
+static void update_peek_usage_if_more(memory_allocator_t* allocator)
+{
+	/* we need to measure peek (maximum) usage at a particular time, so update the peek_usage if notice more usage */
+	if(allocator->footprint.peek_usage < allocator->footprint.curr_usage)
+		allocator->footprint.peek_usage = allocator->footprint.curr_usage;
+}
+
 RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
 {
 	_debug_assert__(size != 0);
 	allocate_result_t result = allocator->allocate(size, align, allocator->user_data);
 	if(result.flags != ALLOCATE_RESULT_SUCCESS)
+	{
+		debug_log_warning("Failed to allocate for size: "PRIu32", and align: "PRIu32, size, align);
 		return NULL;
+	}
 
 	memory_allocation_t allocation =
 	{
@@ -181,6 +201,11 @@ RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocato
 		.ptr = result.ptr
 	};
 	dictionary_add(&allocator->allocation_map, &result.ptr, &allocation);
+	allocator->footprint.curr_usage += size;
+
+	update_peek_usage_if_more(allocator);
+
+	IF_DEBUG(allocator->alloc_counter++);
 	return result.ptr;
 }
 
@@ -188,21 +213,46 @@ RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* alloca
 {
 	_debug_assert__(size != 0);
 	memory_allocation_t* old_alloc = NULL;
-	buf_ucount_t index = BUF_INVALID_INDEX;
 
 	/* if old_ptr is not NULL and old allocation exists then find the previous allocation */
-	if((old_ptr != NULL) && ((index = dictionary_find_index_of(&allocator->allocation_map, &old_ptr)) != BUF_INVALID_INDEX))
+	if(old_ptr != NULL)
+	{
+		buf_ucount_t index = dictionary_find_index_of(&allocator->allocation_map, &old_ptr);
+		debug_assert__(index != BUF_INVALID_INDEX, "You're trying to realloc a memory block not been allocated with memory_allocator");
 		old_alloc = CAST_TO(memory_allocation_t*, dictionary_get_value_ptr_at(&allocator->allocation_map, index));
+	}
 
 	allocate_result_t result = allocator->reallocate(old_ptr, 
 													(old_alloc == NULL) ? 0 : old_alloc->size, 
 													(old_alloc == NULL) ? 0 : old_alloc->align, size, align, allocator->user_data);
 
 	if(result.flags != ALLOCATE_RESULT_SUCCESS)
-		return NULL;
-
-	if((old_ptr == NULL) || (old_alloc == NULL))
 	{
+		debug_log_warning("Failed to reallocate for size: "PRIu32", and align: "PRIu32, size, align);
+		return NULL;
+	}
+
+	if(old_alloc != NULL)
+	{
+		/* NOTE: we're dealing with unsigned integer, so we can't just subtract old_size from new_size, that's because negative number can't be represented
+	 	* using unsigned integer */
+		_debug_assert__(allocator->footprint.curr_usage >= old_alloc->size);
+		allocator->footprint.curr_usage -= old_alloc->size;
+	}
+
+	if((old_alloc != NULL) && (old_ptr == result.ptr))
+	{
+		old_alloc->debug_info = debug_info;
+		old_alloc->size = size;
+		old_alloc->align = align;
+	}
+	else /* the new pointer is not equal to the old pointer, meaning the memory block has been shifted to increase or decrease its size */
+	{
+		/* remove the old allocation if exists */
+		if(old_alloc != NULL)
+			dictionary_remove(&allocator->allocation_map, &old_ptr);
+
+		/* add the new memory block with new address */
 		memory_allocation_t allocation = 
 		{
 			.debug_info = debug_info,
@@ -212,13 +262,10 @@ RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* alloca
 		};
 		dictionary_add(&allocator->allocation_map, &result.ptr, &allocation);
 	}
-	else
-	{
-		old_alloc->debug_info = debug_info;
-		old_alloc->size = size;
-		old_alloc->align = align;
-		old_alloc->ptr = result.ptr;
-	}	
+
+	allocator->footprint.curr_usage += size;
+	update_peek_usage_if_more(allocator);
+
 	return result.ptr;
 }
 
@@ -227,11 +274,16 @@ RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void
 	_debug_assert__(ptr != NULL);
 
 	buf_ucount_t index = dictionary_find_index_of(&allocator->allocation_map, &ptr);
-	if(index == BUF_INVALID_INDEX) return;
+	debug_assert__(index != BUF_INVALID_INDEX, "You're trying to free an invalid pointer, no allocation info exist for %p", ptr);
 
+	AUTO allocation = CAST_TO(memory_allocation_t*, dictionary_get_value_ptr_at(&allocator->allocation_map, index));
+	allocator->footprint.curr_usage -= allocation->size;
 	/* let the NULL ptr handled by the deallocate function pointer (user might have an implementation for it) */
-	allocator->deallocate(ptr, CAST_TO(memory_allocation_t*, dictionary_get_value_ptr_at(&allocator->allocation_map, index))->align, allocator->user_data);
+	bool was_aligned = allocation->align != ALLOCATION_FLAG_NO_ALIGN_RESTRICTION;
+	allocator->deallocate(ptr, was_aligned, allocator->user_data);
 	dictionary_remove(&allocator->allocation_map, &ptr);
+
+	IF_DEBUG(allocator->alloc_counter--);
 }
 
 enum
@@ -384,6 +436,25 @@ static memory_allocation_tree_t* build_tree(memory_allocation_debug_node_t* node
 	return tree;;
 }
 
+static void memory_allocation_footprint_to_string(const memory_allocation_footprint_t* footprint, string_builder_t* builder);
+static void memory_allocation_tree_to_string(memory_allocation_tree_t* tree, string_builder_t* builder);
+
+static void string_builder_write_to_file_and_destroy(string_builder_t* builder, const char* const file_path);
+
+RENDERER_API void memory_allocator_serialize_to_file(memory_allocator_t* allocator, const char* const file_path)
+{
+	string_builder_t* builder = string_builder_create(NULL, 512);
+	IF_DEBUG( string_builder_append(builder, "LEAKED MEMORY BLOCK COUNT: %"PRIu64"\n", allocator->alloc_counter) );
+	/* serialize the memory footprint */
+	const memory_allocation_footprint_t* footprint = memory_allocator_get_footprint(allocator);
+	memory_allocation_footprint_to_string(footprint, builder);
+	/* serialize the memory allocation tree */
+	memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(allocator);
+	memory_allocation_tree_to_string(tree, builder);
+	/* write the string to a file */
+	string_builder_write_to_file_and_destroy(builder, file_path);
+}
+
 static INLINE memory_allocation_tree_t* build_allocation_tree(memory_allocation_map_t* allocation_map)
 {
 	return build_tree(resolve_references(allocation_map), dictionary_get_count(allocation_map));
@@ -430,7 +501,10 @@ static void memory_allocation_debug_node_to_string(const memory_allocation_debug
 		string_builder_append(builder, "function: %s\n", node->allocation->debug_info.function_str);
 		string_builder_append(builder, "file: %s\n", node->allocation->debug_info.file_str);
 		string_builder_append(builder, "size: %u\n", node->allocation->size);
-		string_builder_append(builder, "align: %u\n", node->allocation->align);
+		if(node->allocation->align != ALLOCATION_FLAG_NO_ALIGN_RESTRICTION)
+			string_builder_append(builder, "align: %u\n", node->allocation->align);
+		else
+			string_builder_append(builder, "align: ALLOCATION_FLAG_NO_ALIGN_RESTRICTION\n");
 		string_builder_append(builder, "address: %p\n", node->allocation->ptr);
 	}
 	else
@@ -461,28 +535,43 @@ static void memory_allocation_debug_node_to_string(const memory_allocation_debug
 	string_builder_append(builder, "}\n");
 }
 
-RENDERER_API void memory_allocation_tree_serialize_to_file(memory_allocation_tree_t* tree, const char* const file_path)
+static void memory_allocation_tree_to_string(memory_allocation_tree_t* tree, string_builder_t* builder)
 {
-	string_builder_t* builder = string_builder_create(NULL, 512);
-
 	u32 size = memory_allocation_tree_calculate_size(tree->root);
 
 	string_builder_append(builder, "TOTAL BYTES ALLOCATED: %u (%.1f KB)\n", size, CAST_TO(float, size) / 1024);
 	string_builder_append(builder, "ALLOCATION TREE:\n\n");
 	memory_allocation_debug_node_to_string(tree->root, builder);
+}
 
-	string_builder_append_null(builder);
+static void string_builder_write_to_file_and_destroy(string_builder_t* builder, const char* const file_path)
+{
 	write_text_to_file(file_path, string_builder_get_str(builder));
-
+	string_builder_append_null(builder);
 	string_builder_destroy(builder);
+}
+
+RENDERER_API void memory_allocation_tree_serialize_to_file(memory_allocation_tree_t* tree, const char* const file_path)
+{
+	string_builder_t* builder = string_builder_create(NULL, 512);
+	memory_allocation_tree_to_string(tree, builder);
+	string_builder_write_to_file_and_destroy(builder, file_path);
 }
 
 RENDERER_API memory_allocation_footprint_t* memory_allocator_get_footprint(memory_allocator_t* allocator)
 {
-	return NULL;
+	return &allocator->footprint;
+}
+
+static void memory_allocation_footprint_to_string(const memory_allocation_footprint_t* footprint, string_builder_t* builder)
+{
+	string_builder_append(builder, "CURR MEMORY USAGE: %"PRIu32" (%.1f KB)\n", footprint->curr_usage, CAST_TO(f32, footprint->curr_usage) / 1024);
+	string_builder_append(builder, "PEEK MEMORY USAGE: %"PRIu32" (%.1f KB)\n", footprint->peek_usage, CAST_TO(f32, footprint->peek_usage) / 1024);
 }
 
 RENDERER_API void memory_allocation_footprint_serialize_to_file(const memory_allocation_footprint_t* footprint, const char* const file_path)
 {
-
+	string_builder_t* builder = string_builder_create(NULL, 128);
+	memory_allocation_footprint_to_string(footprint, builder);
+	string_builder_write_to_file_and_destroy(builder, file_path);
 }

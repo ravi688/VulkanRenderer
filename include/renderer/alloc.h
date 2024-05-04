@@ -67,6 +67,7 @@
 #   define heap_aligned_free(basePtr) checked_aligned_free(basePtr)
 #   define heap_silent_free(basePtr) checked_silent_free(basePtr)
 #   define heap_silent_aligned_free(basePtr) checked_silent_free(basePtr)
+#	define heap_sizeof(type) sizeof(type)
 #	define get_element(type, validPtr, index) checked_ref(type, validPtr, index)
 #   define get_element_ptr(type, validPtr, index) checked_refp(type, validPtr, index)
 #   define MEM_CHECK(ptr) get_element_ptr(u8, ptr, 0)
@@ -94,6 +95,7 @@
 #   define heap_aligned_free(basePtr)
 #   define heap_silent_free(basePtr)
 #   define heap_slient_aligned_free(basePtr)
+#	define heap_sizeof(type) sizeof(type)
 #   define get_element(type, validPtr, index) (validPtr)[index]
 #   define get_element_ptr(type, validPtr, index) (&(validPtr)[index])
 #   define MEM_CHECK(ptr)
@@ -194,6 +196,7 @@
 #   define heap_aligned_free(basePtr) _std_aligned_free(basePtr)
 #   define heap_silent_free(basePtr) _std_free(basePtr)
 #   define heap_silent_aligned_free(basePtr) _std_aligned_free(basePtr)
+#	define heap_sizeof(type) sizeof(type)
 #   define get_element(type, validPtr, index) (validPtr)[index]
 #   define get_element_ptr(type, validPtr, index) (&(validPtr)[index])
 #   define MEM_CHECK(ptr)

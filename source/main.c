@@ -68,9 +68,7 @@ UNUSED_FUNCTION static void deallocate(void* ptr, void* user_data)
 static void memory_allocation_tree_dump(memory_allocator_t* allocator, const char* file_path)
 {
 	debug_log_info("Building memory allocation tree...");
-	memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(allocator);
-	memory_allocation_tree_serialize_to_file(tree, file_path);
-	memory_allocation_tree_destroy(tree);
+	memory_allocator_serialize_to_file(allocator, file_path);
 	debug_log_info("Memory allocation tree built successfully");
 }
 
