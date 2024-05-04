@@ -317,6 +317,7 @@ typedef struct struct_field_t
 
 typedef struct struct_descriptor_t
 {
+	memory_allocator_t* allocator;
 	char name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE];
 	u8 type;
 	u16 field_count;
@@ -331,6 +332,8 @@ typedef struct struct_descriptor_t
 typedef u64 struct_field_handle_t;
 
 BEGIN_CPP_COMPATIBLE
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u8 struct_descriptor_get_type(const struct_descriptor_t* descriptor) { return descriptor->type; }
 
 RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type);
 RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
