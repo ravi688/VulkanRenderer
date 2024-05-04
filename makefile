@@ -271,6 +271,15 @@ ifeq ($(NOOPT),1)
 	LINKER_FLAGS += -O0
 endif
 
+ifeq ($(O3),1)
+	COMPILER_FLAGS += -O3
+	LINKER_FLAGS += -O3
+endif
+
+ifeq ($(LTO),1)
+	LINKER_FLAGS += -flto
+endif
+
 ifeq ($(WALL),1)
 	COMPILER_FLAGS += -Wall -Wno-missing-braces
 endif
