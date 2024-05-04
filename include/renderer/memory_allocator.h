@@ -240,4 +240,19 @@ RENDERER_API memory_allocation_footprint_t* memory_allocator_get_footprint(memor
 /* serializes the memory_allocation_footprint_t object into a file (binary file) */
 RENDERER_API void memory_allocation_footprint_serialize_to_file(const memory_allocation_footprint_t* footprint, const char* const file_path);
 
+
+/* calls memory_allocator_alloc */
+void* memory_allocator_call_malloc(buf_ucount_t size, void* user_data);
+/* calls memory_allocator_free */
+void memory_allocator_call_free(void* ptr, void* user_data);
+/* calls memory_allocator_realloc */
+void* memory_allocator_call_realloc(void* old_ptr, buf_ucount_t size, void* user_data);
+
+#define memory_allocator_buf_create(memory_allocator, element_size, capacity, offset) 	\
+	buf_create_a(element_size, capacity, offset, memory_allocator_call_malloc, 			\
+												memory_allocator_call_free, 			\
+												memory_allocator_call_realloc,			\
+												CAST_TO(void*, memory_allocator))
+#define memory_allocator_buf_new(memory_allocator, type) memory_allocator_buf_create(memory_allocator, sizeof(type), 0, 0)
+
 END_CPP_COMPATIBLE

@@ -575,3 +575,19 @@ RENDERER_API void memory_allocation_footprint_serialize_to_file(const memory_all
 	memory_allocation_footprint_to_string(footprint, builder);
 	string_builder_write_to_file_and_destroy(builder, file_path);
 }
+
+
+void* memory_allocator_call_malloc(buf_ucount_t size, void* user_data)
+{
+	return memory_allocator_alloc(CAST_TO(memory_allocator_t*, user_data), MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, size);
+}
+
+void memory_allocator_call_free(void* ptr, void* user_data)
+{
+	memory_allocator_dealloc(CAST_TO(memory_allocator_t*, user_data), ptr);
+}
+
+void* memory_allocator_call_realloc(void* old_ptr, buf_ucount_t size, void* user_data)
+{
+	return memory_allocator_realloc(CAST_TO(memory_allocator_t*, user_data), old_ptr, MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, size);
+}
