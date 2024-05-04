@@ -51,6 +51,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_new(memory_allocator_t* allocator)
 {
 	vulkan_shader_t* shader = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER, vulkan_shader_t);
 	memzero(shader, vulkan_shader_t);
+	VULKAN_OBJECT_INIT(shader, VULKAN_OBJECT_TYPE_SHADER, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return shader;
 }
 
@@ -1698,8 +1699,8 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 	destroy_vulkan_push_constant(shader->renderer->allocator, &shader->push_constant);
 	destroy_vulkan_vertex_infos(shader->renderer->allocator, shader->vertex_infos, shader->vertex_info_count);
 	destroy_vulkan_shader_resource_descriptions(shader->renderer->allocator, shader->material_set_bindings, shader->material_set_binding_count);
-	// TODO
-	// heap_free(shader);
+	if(VULKAN_OBJECT_IS_INTERNAL(shader))
+		memory_allocator_dealloc(shader->renderer->allocator, shader);
 }
 
 RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index)

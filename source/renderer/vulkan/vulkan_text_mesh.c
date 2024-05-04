@@ -56,6 +56,7 @@ RENDERER_API vulkan_text_mesh_t* vulkan_text_mesh_new(memory_allocator_t* alloca
 {
 	vulkan_text_mesh_t* mesh = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_TEXT_MESH, vulkan_text_mesh_t);
 	memzero(mesh, vulkan_text_mesh_t);
+	VULKAN_OBJECT_INIT(mesh, VULKAN_OBJECT_TYPE_TEXT_MESH, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return mesh;
 }
 
@@ -90,7 +91,7 @@ static bool default_glyph_layout_handler(vulkan_text_mesh_glyph_layout_data_buff
 RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_glyph_mesh_pool_t* pool, vulkan_text_mesh_t OUT text)
 {
 	_debug_assert__(pool != NULL);
-	memzero(text, vulkan_text_mesh_t);
+	VULKAN_OBJECT_MEMZERO(text, vulkan_text_mesh_t);
 	text->renderer = renderer;
 
 	text->glyph_render_data_buffers = dictionary_create(u16, vulkan_instance_buffer_t, 0, dictionary_key_comparer_u16);
@@ -144,7 +145,8 @@ RENDERER_API void vulkan_text_mesh_release_resources(vulkan_text_mesh_t* text_me
 	buf_free(strings);
 	dictionary_free(glyph_render_data_buffers);
 	vulkan_host_buffered_buffer_release_resources(&text_mesh->text_string_transform_buffer);
-	memory_allocator_dealloc(text_mesh->renderer->allocator, text_mesh);
+	if(VULKAN_OBJECT_IS_INTERNAL(text_mesh))
+		memory_allocator_dealloc(text_mesh->renderer->allocator, text_mesh);
 }
 
 // logic functions

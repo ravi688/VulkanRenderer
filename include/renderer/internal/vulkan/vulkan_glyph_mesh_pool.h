@@ -27,6 +27,7 @@
 
 #include <renderer/defines.h>
 #include <renderer/dictionary.h> // dictionary_t
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct mesh3d_t mesh3d_t;
 typedef struct font_t font_t;
@@ -40,10 +41,14 @@ typedef	struct vulkan_glyph_mesh_t
 
 typedef	struct vulkan_glyph_mesh_pool_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	font_t* font;
 	dictionary_t /*(u16, vulkan_glyph_mesh_t*)*/ glyph_meshes;
 } vulkan_glyph_mesh_pool_t;
+
+#define VULKAN_GLYPH_MESH_POOL(ptr) VULKAN_OBJECT_UP_CAST(vulkan_glyph_mesh_pool_t*, VULKAN_OBJECT_TYPE_GLYPH_MESH_POOL, ptr)
+#define VULKAN_GLYPH_MESH_POOL_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_glyph_mesh_pool_t*, VULKAN_OBJECT_TYPE_GLYPH_MESH_POOL, ptr)
 
 
 BEGIN_CPP_COMPATIBLE

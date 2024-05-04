@@ -36,12 +36,13 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new(memory_allocat
 {
 	vulkan_pipeline_layout_t* layout = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_PIPELINE_LAYOUT, vulkan_pipeline_layout_t);
 	memzero(layout, vulkan_pipeline_layout_t);
+	VULKAN_OBJECT_INIT(layout, VULKAN_OBJECT_TYPE_PIPELINE_LAYOUT, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return layout;
 }
 
 RENDERER_API void vulkan_pipeline_layout_create_no_alloc(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info, vulkan_pipeline_layout_t* layout)
 {
-	memzero(layout, vulkan_pipeline_layout_t);
+	VULKAN_OBJECT_MEMZERO(layout, vulkan_pipeline_layout_t);
 
 	layout->renderer = renderer;
 	VkPipelineLayoutCreateInfo pipeline_layout_info =
@@ -70,7 +71,8 @@ RENDERER_API void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* layou
 
 RENDERER_API void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* layout)
 {
-	memory_allocator_dealloc(layout->renderer->allocator, layout);
+	if(VULKAN_OBJECT_IS_INTERNAL(layout))
+		memory_allocator_dealloc(layout->renderer->allocator, layout);
 }
 
 

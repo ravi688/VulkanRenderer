@@ -48,6 +48,7 @@ RENDERER_API vulkan_render_object_t* vulkan_render_object_new(memory_allocator_t
 {
 	vulkan_render_object_t* obj = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_OBJECT, vulkan_render_object_t);
 	memzero(obj, vulkan_render_object_t);
+	VULKAN_OBJECT_INIT(obj, VULKAN_OBJECT_TYPE_RENDER_OBJECT, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return obj;
 }
 
@@ -93,7 +94,7 @@ RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer
 }
 RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object)
 {
-	memzero(object, vulkan_render_object_t);
+	VULKAN_OBJECT_MEMZERO(object, vulkan_render_object_t);
 
 	object->renderer = renderer;
 	object->handle = VULKAN_RENDER_OBJECT_HANDLE_INVALID;
@@ -139,8 +140,8 @@ RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t*
 {
 	vulkan_descriptor_set_release_resources(&obj->object_set);
 	vulkan_buffer_release_resources(&obj->buffer);
-	// TODO
-	// heap_free(obj);
+	if(VULKAN_OBJECT_IS_INTERNAL(obj))
+		memory_allocator_dealloc(obj->renderer->allocator, obj);
 }
 
 RENDERER_API void vulkan_render_object_attach(vulkan_render_object_t* obj, void* user_data)

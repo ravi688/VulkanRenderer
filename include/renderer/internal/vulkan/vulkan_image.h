@@ -51,6 +51,7 @@ typedef struct vulkan_image_create_info_t
 
 typedef struct vulkan_image_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkImage vo_handle;
 	VkDeviceMemory vo_memory;

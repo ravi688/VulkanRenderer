@@ -28,6 +28,7 @@
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 #include <renderer/internal/vulkan/vulkan_handles.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 /* stores references to a node in the vulkan render pass graph */
 typedef u32 vulkan_render_pass_graph_node_handle_t;
@@ -56,6 +57,7 @@ typedef struct vulkan_renderer_t vulkan_renderer_t;
 /* stores graph data structure */
 typedef struct vulkan_render_pass_graph_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	/* list of nodes in this graph */
 	vulkan_render_pass_graph_node_list_t nodes;
@@ -77,6 +79,8 @@ typedef struct vulkan_render_pass_graph_t
 	bool is_outdated;
 } vulkan_render_pass_graph_t;
 
+#define VULKAN_RENDER_PASS_GRAPH(ptr) VULKAN_OBJECT_UP_CAST(vulkan_render_pass_graph_t*, VULKAN_OBJECT_TYPE_RENDER_PASS_GRAPH, ptr)
+#define VULKAN_RENDER_PASS_GRAPH_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_render_pass_graph_t*, VULKAN_OBJECT_TYPE_RENDER_PASS_GRAPH, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

@@ -30,6 +30,7 @@
 #include <renderer/defines.h>
 #include <renderer/internal/vulkan/vulkan_types.h>
 #include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_pipeline_layout_t vulkan_pipeline_layout_t;
 typedef struct vulkan_shader_module_t vulkan_shader_module_t;
@@ -62,6 +63,7 @@ typedef struct vulkan_graphics_pipeline_create_info_t
 
 typedef struct vulkan_graphics_pipeline_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkPipeline vo_handle;
 
@@ -120,6 +122,9 @@ typedef struct vulkan_graphics_pipeline_t
 	u32 dynamic_state_count;
 
 } vulkan_graphics_pipeline_t;
+
+#define VULKAN_GRAPHICS_PIPELINE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_graphics_pipeline_t*, VULKAN_OBJECT_TYPE_GRAPHICS_PIPELINE, ptr)
+#define VULKAN_GRAPHICS_PIPELINE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_graphics_pipeline_t*, VULKAN_OBJECT_TYPE_GRAPHICS_PIPELINE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

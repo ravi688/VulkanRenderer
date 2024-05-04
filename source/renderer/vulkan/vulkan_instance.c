@@ -39,6 +39,7 @@ RENDERER_API vulkan_instance_t* vulkan_instance_new(memory_allocator_t* allocato
 {
 	vulkan_instance_t* instance = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_INSTANCE, vulkan_instance_t);
 	memzero(instance, vulkan_instance_t);
+	VULKAN_OBJECT_INIT(instance, VULKAN_OBJECT_TYPE_INSTANCE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	instance->handle = VK_NULL_HANDLE;			// invalid
 	instance->extension_count = U32_MAX; 		// invalid
 	instance->physical_device_count = U32_MAX; 	// invalid
@@ -124,7 +125,8 @@ RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
 			vulkan_physical_device_release_resources(&instance->physical_devices[i]);
 		memory_allocator_dealloc(instance->renderer->allocator, instance->physical_devices);
 	}
-	memory_allocator_dealloc(instance->renderer->allocator, instance);
+	if(VULKAN_OBJECT_IS_INTERNAL(instance))
+		memory_allocator_dealloc(instance->renderer->allocator, instance);
 }
 
 RENDERER_API u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* instance)
@@ -157,7 +159,10 @@ RENDERER_API vulkan_physical_device_t* vulkan_instance_get_physical_devices(vulk
 	VkPhysicalDevice* vk_devices = memory_allocator_alloc_obj_array(instance->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PHYSICAL_DEVICE_ARRAY, VkPhysicalDevice, physical_device_count);
 	vkCall(vkEnumeratePhysicalDevices(instance->handle, &physical_device_count, vk_devices));
 	for(u32 i = 0; i < physical_device_count; i++)
+	{
+		VULKAN_OBJECT_INIT(&instance->physical_devices[i], VULKAN_OBJECT_TYPE_PHYSICAL_DEVICE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_physical_device_create_no_alloc(instance->renderer, vk_devices[i], &instance->physical_devices[i]);
+	}
 	memory_allocator_dealloc(instance->renderer->allocator, vk_devices);
 	return instance->physical_devices;
 }

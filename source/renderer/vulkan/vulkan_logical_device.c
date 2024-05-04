@@ -37,6 +37,7 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_new(memory_allocator
 {
 	vulkan_logical_device_t* device = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_LOGICAL_DEVICE, vulkan_logical_device_t);
 	memzero(device, vulkan_logical_device_t);
+	VULKAN_OBJECT_INIT(device, VULKAN_OBJECT_TYPE_LOGICAL_DEVICE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return device;	
 }
 
@@ -120,7 +121,8 @@ RENDERER_API void vulkan_logical_device_destroy(vulkan_logical_device_t* device)
 
 RENDERER_API void vulkan_logical_device_release_resources(vulkan_logical_device_t* device)
 {
-	memory_allocator_dealloc(device->renderer->allocator, device);
+	if(VULKAN_OBJECT_IS_INTERNAL(device))
+		memory_allocator_dealloc(device->renderer->allocator, device);
 }
 
 RENDERER_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index)

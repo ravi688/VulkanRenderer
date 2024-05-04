@@ -40,6 +40,7 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_all
 {
 	vulkan_graphics_pipeline_t* pipeline = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE, vulkan_graphics_pipeline_t);
 	memzero(pipeline, vulkan_graphics_pipeline_t);
+	VULKAN_OBJECT_INIT(pipeline, VULKAN_OBJECT_TYPE_GRAPHICS_PIPELINE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return pipeline;
 }
 
@@ -55,7 +56,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 {
 	_debug_assert__(create_info->spirv_code_count > 0);
 
-	memzero(pipeline, vulkan_graphics_pipeline_t);
+	VULKAN_OBJECT_MEMZERO(pipeline, vulkan_graphics_pipeline_t);
 
 	pipeline->renderer = renderer;
 
@@ -364,5 +365,6 @@ RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pip
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_viewports);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_scissors);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_scissors);
-	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline);
+	if(VULKAN_OBJECT_IS_INTERNAL(pipeline))
+		memory_allocator_dealloc(pipeline->renderer->allocator, pipeline);
 }

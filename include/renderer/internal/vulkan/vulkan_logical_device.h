@@ -28,6 +28,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_physical_device_t vulkan_physical_device_t;
 
@@ -49,9 +50,13 @@ typedef struct vulkan_logical_device_create_info_t
  
 typedef struct vulkan_logical_device_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkDevice vo_handle;
 } vulkan_logical_device_t;
+
+#define VULKAN_LOGICAL_DEVICE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_logical_device_t*, VULKAN_OBJECT_TYPE_LOGICAL_DEVICE, ptr)
+#define VULKAN_LOGICAL_DEVICE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_logical_device_t*, VULKAN_OBJECT_TYPE_LOGICAL_DEVICE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

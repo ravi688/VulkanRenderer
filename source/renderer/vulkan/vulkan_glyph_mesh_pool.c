@@ -38,6 +38,7 @@ RENDERER_API vulkan_glyph_mesh_pool_t* vulkan_glyph_mesh_pool_new(memory_allocat
 {
 	vulkan_glyph_mesh_pool_t* pool = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GLYPH_MESH_POOL, vulkan_glyph_mesh_pool_t);
 	memzero(pool, vulkan_glyph_mesh_pool_t);
+	VULKAN_OBJECT_INIT(pool, VULKAN_OBJECT_TYPE_GLYPH_MESH_POOL, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return pool;
 }
 
@@ -67,7 +68,8 @@ RENDERER_API void vulkan_glyph_mesh_pool_release_resources(vulkan_glyph_mesh_poo
 		vulkan_mesh_release_resources(CAST_TO(vulkan_glyph_mesh_t*, dictionary_get_value_ptr_at(&pool->glyph_meshes, i))->mesh);
 
 	dictionary_clear(&pool->glyph_meshes);
-	memory_allocator_dealloc(pool->renderer->allocator, pool);
+	if(VULKAN_OBJECT_IS_INTERNAL(pool))
+		memory_allocator_dealloc(pool->renderer->allocator, pool);
 }
 
 // getters

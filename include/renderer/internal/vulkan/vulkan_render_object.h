@@ -32,6 +32,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h> 	// for vulkan_descriptor_set_t
 #include <renderer/internal/vulkan/vulkan_buffer.h> 			// for vulkan_buffer_t
 #include <renderer/internal/vulkan/vulkan_handles.h> 			// for vulkan_render_object_handle_t
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/struct_descriptor.h> 						// for struct_descriptor_t
 
 
@@ -67,6 +68,7 @@ typedef struct vulkan_render_queue_t vulkan_render_queue_t;
 
 typedef struct vulkan_render_object_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 
 	vulkan_render_queue_t* queue;			 // ptr to the queue in which this object is
@@ -86,6 +88,9 @@ typedef struct vulkan_render_object_t
 	struct_field_handle_t transform_handle;
 	struct_field_handle_t normal_handle;
 } vulkan_render_object_t;
+
+#define VULKAN_RENDER_OBJECT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_render_object_t*, VULKAN_OBJECT_TYPE_RENDER_OBJECT, ptr)
+#define VULKAN_RENDER_OBJECT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_render_object_t*, VULKAN_OBJECT_TYPE_RENDER_OBJECT, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

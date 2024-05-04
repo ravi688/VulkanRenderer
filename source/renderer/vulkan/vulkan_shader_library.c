@@ -154,6 +154,7 @@ RENDERER_API bool vulkan_shader_library_destroy_shader(vulkan_shader_library_t* 
 	if(shader == NULL)
 		return false;
 	vulkan_shader_destroy(shader);
+	vulkan_shader_release_resources(shader);
 	return vulkan_shader_library_remove(library, vulkan_shader_name);
 }
 
@@ -163,6 +164,7 @@ RENDERER_API bool vulkan_shader_library_destroy_shaderH(vulkan_shader_library_t*
 	if(shader == NULL)
 		return false;
 	vulkan_shader_destroy(shader);
+	vulkan_shader_release_resources(shader);
 	return vulkan_shader_library_removeH(library, handle);
 }
 

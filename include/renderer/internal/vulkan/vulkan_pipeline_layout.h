@@ -28,6 +28,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_pipeline_layout_create_info_t
 {
@@ -42,9 +43,13 @@ typedef struct vulkan_pipeline_layout_create_info_t
 
 typedef struct vulkan_pipeline_layout_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkPipelineLayout vo_handle;
 } vulkan_pipeline_layout_t;
+
+#define VULKAN_PIPELINE_LAYOUT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_pipeline_layout_t*, VULKAN_OBJECT_TYPE_PIPELINE_LAYOUT, ptr)
+#define VULKAN_PIPELINE_LAYOUT_CONST(ptr) VULKAN_OBJECT_UP_CAST(const vulkan_pipeline_layout_t*, VULKAN_OBJECT_TYPE_PIPELINE_LAYOUT, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

@@ -31,9 +31,11 @@
 #include <vulkan/vulkan.h>
 
 #include <renderer/internal/vulkan/vulkan_logical_device.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_physical_device_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkPhysicalDevice vo_handle;
 	VkPhysicalDeviceProperties vo_properties;			// cached properties
@@ -44,6 +46,9 @@ typedef struct vulkan_physical_device_t
 	u32 extension_count;
 	//BUFFER /* vulkan_logical_device_t* */ logical_devices; 			// all the logical devices created with this physical device
 } vulkan_physical_device_t;
+
+#define VULKAN_PHYSICAL_DEVICE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_physical_device_t*, VUKLAN_OBJECT_TYPE_PHYSICAL_DEVICE, ptr)
+#define VULKAN_PHYSICAL_DEVICE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_physical_device_t*, VUKLAN_OBJECT_TYPE_PHYSICAL_DEVICE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

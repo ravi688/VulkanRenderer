@@ -35,6 +35,7 @@ RENDERER_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_new(memory_all
 {
     vulkan_render_pass_graph_t* graph = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_GRAPH, vulkan_render_pass_graph_t);
     memzero(graph, vulkan_render_pass_graph_t);
+    VULKAN_OBJECT_INIT(graph, VULKAN_OBJECT_TYPE_RENDER_PASS_GRAPH, VULKAN_OBJECT_NATIONALITY_INTERNAL);
     return graph;
 }
 
@@ -47,11 +48,12 @@ RENDERER_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_create(vulkan_
 
 RENDERER_API void vulkan_render_pass_graph_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_graph_t OUT graph)
 {
+    VULKAN_OBJECT_MEMZERO(graph, vulkan_render_pass_graph_t);
     graph->renderer = renderer;
-    graph->nodes = buf_new(vulkan_render_pass_graph_node_t);
+    graph->nodes = memory_allocator_buf_new(renderer->allocator, vulkan_render_pass_graph_node_t);
     graph->prev_pass_node_handle = VULKAN_RENDER_PASS_GRAPH_NODE_HANDLE_INVALID;
-    graph->optimized_render_path = buf_new(vulkan_render_pass_graph_node_handle_t);
-    graph->staging_list = buf_new(vulkan_render_pass_graph_node_handle_t);
+    graph->optimized_render_path = memory_allocator_buf_new(renderer->allocator, vulkan_render_pass_graph_node_handle_t);
+    graph->staging_list = memory_allocator_buf_new(renderer->allocator, vulkan_render_pass_graph_node_handle_t);
 }
 
 RENDERER_API void vulkan_render_pass_graph_destroy(vulkan_render_pass_graph_t* graph)
@@ -64,6 +66,8 @@ RENDERER_API void vulkan_render_pass_graph_release_resources(vulkan_render_pass_
 {
     buf_free(&graph->nodes);
     buf_free(&graph->optimized_render_path);
+    if(VULKAN_OBJECT_IS_INTERNAL(graph))
+        memory_allocator_dealloc(graph->renderer->allocator, graph);
 }
 
 

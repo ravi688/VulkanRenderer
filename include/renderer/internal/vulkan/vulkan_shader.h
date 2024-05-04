@@ -30,6 +30,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h> // vulkan_descriptor_set_layout_t
 #include <renderer/internal/vulkan/vulkan_attachment.h> 		// vulkan_attachment_type_t
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t, vulkan_shader_handle_t
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/event.h>
 #include <glslcommon/glsl_types.h>
 #define VERTEX_ATTRIB(value, index) ((value) << ((index) * 5))
@@ -165,6 +166,7 @@ typedef struct vulkan_push_constant_t
 
 typedef struct vulkan_shader_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 
 	vulkan_shader_handle_t handle;
@@ -209,6 +211,9 @@ typedef struct vulkan_shader_t
 	u32 subpass_counter;
 
 } vulkan_shader_t;
+
+#define VULKAN_SHADER(ptr) VULKAN_OBJECT_UP_CAST(vulkan_shader_t*, VULKAN_OBJECT_TYPE_SHADER, ptr)
+#define VULKAN_SHADER_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_shader_t*, VULKAN_OBJECT_TYPE_SHADER, ptr)
 
 /*
 	u32 vertex_info_count;

@@ -29,11 +29,13 @@
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 #include <vulkan/vulkan.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_physical_device_t vulkan_physical_device_t;
 
 typedef struct vulkan_instance_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkInstance handle;
 
@@ -45,6 +47,9 @@ typedef struct vulkan_instance_t
 	VkExtensionProperties* extension_properties;
 	u32 extension_count;
 } vulkan_instance_t;
+
+#define VULKAN_INSTANCE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_instance_t*, VULKAN_OBJECT_TYPE_INSTANCE, ptr)
+#define VULKAN_INSTANCE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_instance_t*, VULKAN_OBJECT_TYPE_INSTANCE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

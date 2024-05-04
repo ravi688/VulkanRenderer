@@ -71,6 +71,7 @@ RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* rendere
 	_debug_assert__(sizeof(vulkan_shader_handle_t) == sizeof(buf_ucount_t));
 	queue->shader_handles = dictionary_create(vulkan_shader_handle_t, material_and_render_object_list_map_t, 1, dictionary_key_comparer_buf_ucount_t);
 	queue->is_ready = false;
+	VULKAN_OBJECT_INIT(&queue->pass_graph, VULKAN_OBJECT_TYPE_RENDER_PASS_GRAPH, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_render_pass_graph_create_no_alloc(renderer, &queue->pass_graph);
 }
 

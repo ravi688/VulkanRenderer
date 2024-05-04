@@ -149,6 +149,7 @@ RENDERER_API bool vulkan_material_library_destroy_material(vulkan_material_libra
 	if(material == NULL)
 		return false;
 	vulkan_material_destroy(material);
+	vulkan_material_release_resources(material);
 	return vulkan_material_library_remove(library, material_name);
 }
 
@@ -158,6 +159,7 @@ RENDERER_API bool vulkan_material_library_destroy_materialH(vulkan_material_libr
 	if(material == NULL)
 		return false;
 	vulkan_material_destroy(material);
+	vulkan_material_release_resources(material);
 	return vulkan_material_library_removeH(library, handle);
 }
 

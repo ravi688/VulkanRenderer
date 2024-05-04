@@ -107,6 +107,7 @@
 #include <renderer/dictionary.h>
 #include <renderer/internal/vulkan/vulkan_host_buffered_buffer.h>
 #include <renderer/internal/vulkan/vulkan_text_types.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <glslcommon/glsl_types.h>
 
 typedef struct vulkan_text_mesh_glsl_glyph_render_data_t
@@ -183,6 +184,7 @@ typedef struct font_t font_t;
 
 typedef struct vulkan_text_mesh_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	vulkan_material_t* material;
 	u32 point_size;
@@ -213,6 +215,9 @@ typedef struct vulkan_text_mesh_t
 	vulkan_text_mesh_glyph_render_data_buffer_map_t glyph_render_data_buffers;		// array of instance_buffer mapped to each unique glyph considering all the strings
 	vulkan_text_mesh_string_transform_buffer_t text_string_transform_buffer;
 } vulkan_text_mesh_t;
+
+#define VULKAN_TEXT_MESH(ptr) VULKAN_OBJECT_UP_CAST(vulkan_text_mesh_t*, VULKAN_OBJECT_TYPE_TEXT_MESH, ptr)
+#define VULKAN_TEXT_MESH_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_text_mesh_t*, VULKAN_OBJECT_TYPE_TEXT_MESH, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

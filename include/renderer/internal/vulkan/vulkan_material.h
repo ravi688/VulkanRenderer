@@ -32,6 +32,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_handles.h> 	// vulkan_material_handle_t
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/struct_descriptor.h>
 #include <hpml/vec2.h>
 #include <hpml/vec3.h>
@@ -60,6 +61,7 @@ typedef vulkan_uniform_resource_t* vulkan_uniform_resource_ptr_t;
 
 typedef struct vulkan_material_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 
 	vulkan_material_handle_t handle;
@@ -75,6 +77,9 @@ typedef struct vulkan_material_t
 	vulkan_descriptor_set_t material_set;
 
 } vulkan_material_t;
+
+#define VULKAN_MATERIAL(ptr) VULKAN_OBJECT_UP_CAST(vulkan_material_t*, VULKAN_OBJECT_TYPE_MATERIAL, ptr)
+#define VULKAN_MATERIAL_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_material_t*, VULKAN_OBJECT_TYPE_MATERIAL, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

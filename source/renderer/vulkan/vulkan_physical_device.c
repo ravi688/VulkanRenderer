@@ -38,12 +38,13 @@ RENDERER_API vulkan_physical_device_t* vulkan_physical_device_new(memory_allocat
 {
 	vulkan_physical_device_t* device = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_PHYSICAL_DEVICE, vulkan_physical_device_t);
 	memzero(device, vulkan_physical_device_t);
+	VULKAN_OBJECT_INIT(device, VULKAN_OBJECT_TYPE_PHYSICAL_DEVICE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return device;
 }
 
 RENDERER_API void vulkan_physical_device_create_no_alloc(vulkan_renderer_t* renderer, VkPhysicalDevice vk_device, vulkan_physical_device_t OUT device)
 {
-	memzero(device, vulkan_physical_device_t);
+	VULKAN_OBJECT_MEMZERO(device, vulkan_physical_device_t);
 	device->renderer = renderer;
 
 	device->vo_handle = vk_device;
@@ -93,8 +94,8 @@ RENDERER_API void vulkan_physical_device_release_resources(vulkan_physical_devic
 	memory_allocator_dealloc(device->renderer->allocator, device->vo_queue_family_properties);
 	memory_allocator_dealloc(device->renderer->allocator, device->vo_extension_properties);
 
-	// TODO:
-	// heap_free(device);
+	if(VULKAN_OBJECT_IS_INTERNAL(device))
+		memory_allocator_dealloc(device->renderer->allocator, device);
 }
 
 

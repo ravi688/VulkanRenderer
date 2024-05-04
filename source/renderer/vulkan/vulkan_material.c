@@ -38,6 +38,7 @@ RENDERER_API vulkan_material_t* vulkan_material_new(memory_allocator_t* allocato
 {
 	vulkan_material_t* material = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MATERIAL, vulkan_material_t);
 	memzero(material, vulkan_material_t);
+	VULKAN_OBJECT_INIT(material, VULKAN_OBJECT_TYPE_MATERIAL, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return material;
 }
 
@@ -100,7 +101,7 @@ static void setup_material_resources(vulkan_material_t* material)
 
 RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_t* shader, vulkan_material_t* material)
 {
-	memzero(material, vulkan_material_t);
+	VULKAN_OBJECT_MEMZERO(material, vulkan_material_t);
 
 	material->renderer = renderer;
 	material->handle = VULKAN_MATERIAL_HANDLE_INVALID;
@@ -142,8 +143,8 @@ RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 			vulkan_buffer_release_resources(&material->uniform_resources[i].buffer);
 	if(material->uniform_resource_count != 0)
 		memory_allocator_dealloc(material->renderer->allocator, material->uniform_resources);
-	// TODO
-	// heap_free(material);
+	if(VULKAN_OBJECT_IS_INTERNAL(material))
+		memory_allocator_dealloc(material->renderer->allocator, material);
 }
 
 static VkShaderStageFlagBits get_vulkan_shader_flags(u8 _flags);
