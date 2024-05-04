@@ -403,6 +403,17 @@ RENDERER_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, st
 
 static struct_field_t* create_field(struct_descriptor_t* descriptor)
 {
+	/* lazily allocate buffer for storing the fields, 
+	 * that's because, we use struct_descriptor_t even for representing non-block single opaque variables in GLSL 
+	 * so, it is good to not to allocate any memory unless needed */
+	if(descriptor->fields == NULL)
+	{
+		BUFFER* buffer = memory_allocator_alloc_obj(descriptor->allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
+		BUFFER _buffer = memory_allocator_buf_create(descriptor->allocator, sizeof(struct_field_t), 1, 0);
+		memcopy(buffer, &_buffer, BUFFER);
+		descriptor->fields = CAST_TO(struct_field_t*, buffer);
+	}
+
 	BUFFER* fields = CAST_TO(BUFFER*, descriptor->fields);
 	buf_push_pseudo(fields, 1);
 	return buf_peek_ptr(fields);
@@ -465,46 +476,31 @@ RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descri
 	field->array_size = array_size;	
 }
 
-static void* _malloc(buf_ucount_t size, void* user_data)
-{
-	return memory_allocator_alloc(CAST_TO(memory_allocator_t*, user_data), MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, size);
-}
-
-static void _free(void* ptr, void* user_data)
-{
-	memory_allocator_dealloc(CAST_TO(memory_allocator_t*, user_data), ptr);
-}
-
-static void* _realloc(void* old_ptr, buf_ucount_t size, void* user_data)
-{
-	return memory_allocator_realloc(CAST_TO(memory_allocator_t*, user_data), old_ptr, MEMORY_ALLOCATION_TYPE_IN_MEMORY_BUFFER, size);
-}
-
 RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type)
 {
 	memzero(descriptor, struct_descriptor_t);
-	
+	descriptor->allocator = allocator;
 	prvt_strncpy(descriptor->name, name);
 	descriptor->type = type;
-
-	BUFFER* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
-	BUFFER _buffer = buf_create_a(sizeof(struct_field_t), 1, 0, _malloc, _free, _realloc, CAST_TO(void*, allocator));
-	memcopy(buffer, &_buffer, BUFFER);
-	descriptor->fields = CAST_TO(struct_field_t*, buffer);
+	descriptor->fields = NULL;
 }
 
 RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor)
 {
+	/* NOTE: check for buffer if it is NULL is needed, as it is lazily created */
 	BUFFER* buffer = CAST_TO(BUFFER*, descriptor->fields);
-	descriptor->fields = buf_get_ptr(buffer);
-	descriptor->field_count = buf_get_element_count(buffer);
-	memory_allocator_dealloc(allocator, buffer);
+	descriptor->fields = (buffer == NULL) ? NULL : buf_get_ptr(buffer);
+	descriptor->field_count = (buffer == NULL) ? 0U : buf_get_element_count(buffer);
+	if(buffer != NULL)
+		memory_allocator_dealloc(allocator, buffer);
 	struct_descriptor_recalculate(descriptor);
 }
 
 RENDERER_API void struct_descriptor_free(memory_allocator_t* allocator, struct_descriptor_t* descriptor)
 {
-	_debug_assert__((descriptor->field_count != 0) || (descriptor->fields == NULL));
+	/* NOTE: it is allowed to call struct_descriptor_free even if it doesn't have any fields in it.
+	 * that's because, we use struct_descriptor to even represent a single opaque variable in GLSL, 
+	 * so, such struct_descriptor_t instances may not have non-zero field counts. */
 	if(descriptor->field_count > 0)
 	{
 		for(u32 i = 0; i < descriptor->field_count; i++)
