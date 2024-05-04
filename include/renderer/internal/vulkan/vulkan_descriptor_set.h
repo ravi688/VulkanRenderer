@@ -27,6 +27,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 // NOTE: This must be in sync with v3d.h
 enum
@@ -91,10 +92,14 @@ typedef struct vulkan_descriptor_set_create_info_t
 
 typedef struct vulkan_descriptor_set_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkDescriptorSet vo_handle;
 	VkDescriptorPool vo_pool; //the pool from it has been allocated
 } vulkan_descriptor_set_t;
+
+#define VULKAN_DESCRIPTOR_SET(ptr) VULKAN_OBJECT_UP_CAST(vulkan_descriptor_set_t*, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET, ptr)
+#define VULKAN_DESCRIPTOR_SET_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_descriptor_set_t*, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -133,6 +138,7 @@ RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(vulkan_render
 		nothing
  */
 RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set);
+RENDERER_API void vulkan_descriptor_set_create_no_alloc_ext(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set);
 
 /*
 	description:

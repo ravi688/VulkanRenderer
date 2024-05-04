@@ -73,7 +73,7 @@ static void* create_buffer_and_map(vulkan_camera_t* camera, vulkan_buffer_t OUT 
 		.vo_pool = camera->renderer->vo_descriptor_pool,
 		.layout = &camera->renderer->camera_set_layout
 	};
-	vulkan_descriptor_set_create_no_alloc(camera->renderer, &set_create_info, set);
+	vulkan_descriptor_set_create_no_alloc_ext(camera->renderer, &set_create_info, set);
 	vulkan_descriptor_set_write_uniform_buffer(set, VULKAN_DESCRIPTOR_BINDING_CAMERA_PROPERTIES, buffer);
 
 	return vulkan_buffer_map(buffer);
@@ -594,9 +594,16 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 	{
 		AUTO sets = CAST_TO(vulkan_render_pass_descriptor_sets_t*, dictionary_get_value_ptr_at(&camera->render_pass_descriptor_sets, i));
 		vulkan_descriptor_set_destroy(&sets->render_set);
+		vulkan_descriptor_set_release_resources(&sets->render_set);
 		for(u32 j = 0; j < sets->sub_render_set_count; j++)
+		{
 			vulkan_descriptor_set_destroy(&sets->sub_render_sets[j]);
+			vulkan_descriptor_set_release_resources(&sets->sub_render_sets[j]);
+		}
+
+		memory_allocator_dealloc(camera->renderer->allocator, sets->sub_render_sets);
 	}
+	dictionary_clear(&camera->render_pass_descriptor_sets);
 
 	log_msg("Vulkan Camera has been destroyed successfully\n");
 }
@@ -631,11 +638,6 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 	if(camera->default_depth_attachment != NULL)
 		vulkan_attachment_release_resources(camera->default_depth_attachment);
 
-	count = dictionary_get_count(&camera->render_pass_descriptor_sets);
-	for(u32 i = 0; i < count; i++)
-		memory_allocator_dealloc(camera->renderer->allocator, 
-								CAST_TO(vulkan_render_pass_descriptor_sets_t*, 
-								dictionary_get_value_ptr_at(&camera->render_pass_descriptor_sets, i))->sub_render_sets);
 	dictionary_free(&camera->render_pass_descriptor_sets);
 
 	_debug_assert__(camera->swapchain_depth_clear_pass != NULL);
@@ -1480,7 +1482,7 @@ RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vu
 		.vo_pool = renderer->vo_descriptor_pool,
 		.layout = &render_pass->render_set_layout
 	};
-	vulkan_descriptor_set_create_no_alloc(camera->renderer, &set_create_info, &descriptor_sets.render_set);
+	vulkan_descriptor_set_create_no_alloc_ext(camera->renderer, &set_create_info, &descriptor_sets.render_set);
 
 	/* create sub render sets for each subpass */
 	descriptor_sets.sub_render_set_count = render_pass->subpass_count;
@@ -1492,7 +1494,7 @@ RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vu
 			.vo_pool = renderer->vo_descriptor_pool,
 			.layout = &render_pass->sub_render_set_layouts[i]
 		};
-		vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &descriptor_sets.sub_render_sets[i]);
+		vulkan_descriptor_set_create_no_alloc_ext(renderer, &set_create_info, &descriptor_sets.sub_render_sets[i]);
 	}
 
 	dictionary_add(&camera->render_pass_descriptor_sets, &handle_pair, &descriptor_sets);

@@ -474,7 +474,7 @@ static void setup_global_set(vulkan_renderer_t* renderer)
 		.vo_pool = renderer->vo_descriptor_pool,
 		.layout = &renderer->global_set_layout
 	};
-	vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &renderer->global_set);
+	vulkan_descriptor_set_create_no_alloc_ext(renderer, &set_create_info, &renderer->global_set);
 	log_msg("Global descriptor set has been created successfully\n");
 }
 

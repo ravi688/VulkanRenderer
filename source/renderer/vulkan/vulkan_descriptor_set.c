@@ -37,13 +37,14 @@ RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new(memory_allocator
 {
 	vulkan_descriptor_set_t* set = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_DESCRIPTOR_SET, vulkan_descriptor_set_t);
 	memzero(set, vulkan_descriptor_set_t);
+	VULKAN_OBJECT_INIT(set, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	set->vo_handle = VK_NULL_HANDLE;
 	return set;
 }
 
 RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
 {
-	memzero(set, vulkan_descriptor_set_t);
+	VULKAN_OBJECT_MEMZERO(set, vulkan_descriptor_set_t);
 	set->renderer = renderer;
 	set->vo_pool = create_info->vo_pool;
 	if(create_info->layout->vo_handle == VK_NULL_HANDLE)
@@ -59,6 +60,12 @@ RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* rende
 		.pSetLayouts = &create_info->layout->vo_handle
 	};
 	vkCall(vkAllocateDescriptorSets(set->renderer->logical_device->vo_handle, &alloc_info, &set->vo_handle));
+}
+
+RENDERER_API void vulkan_descriptor_set_create_no_alloc_ext(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
+{
+	VULKAN_OBJECT_INIT(set, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
+	vulkan_descriptor_set_create_no_alloc(renderer, create_info, set);
 }
 
 RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(vulkan_renderer_t* renderer, vulkan_descriptor_set_create_info_t* create_info)
@@ -77,8 +84,8 @@ RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set)
 
 RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_t* set)
 {
-	// TODO:
-	// heap_free(set);
+	if(VULKAN_OBJECT_IS_INTERNAL(set))
+		memory_allocator_dealloc(set->renderer->allocator, set);
 }
 
 RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, u32 set_number, vulkan_pipeline_layout_t* pipeline_layout)

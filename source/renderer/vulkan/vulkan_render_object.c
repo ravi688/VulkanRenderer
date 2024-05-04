@@ -59,7 +59,7 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 		.vo_pool = object->renderer->vo_descriptor_pool,
 		.layout = &object->renderer->object_set_layout
 	};
-	vulkan_descriptor_set_create_no_alloc(object->renderer, &set_create_info, &object->object_set);
+	vulkan_descriptor_set_create_no_alloc_ext(object->renderer, &set_create_info, &object->object_set);
 
 	// setup object struct definiton
 	struct_descriptor_begin(object->renderer->allocator, &object->struct_definition, "objectInfo", GLSL_TYPE_UNIFORM_BUFFER);

@@ -112,7 +112,7 @@ RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, v
 		.vo_pool = renderer->vo_descriptor_pool,
 		.layout = &shader->material_set_layout
 	};
-	vulkan_descriptor_set_create_no_alloc(renderer, &create_info, &material->material_set);
+	vulkan_descriptor_set_create_no_alloc_ext(renderer, &create_info, &material->material_set);
 	setup_material_resources(material);
 }
 
@@ -136,6 +136,7 @@ RENDERER_API void vulkan_material_destroy(vulkan_material_t* material)
 
 RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
 {
+	vulkan_descriptor_set_release_resources(&material->material_set);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
 		if(material->uniform_resources[i].index != 0xFFFF)
 			vulkan_buffer_release_resources(&material->uniform_resources[i].buffer);
