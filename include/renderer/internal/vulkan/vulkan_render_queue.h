@@ -90,6 +90,7 @@
 
 #include <renderer/internal/vulkan/vulkan_handles.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_graph.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_render_object_t vulkan_render_object_t;
 typedef struct vulkan_camera_t vulkan_camera_t;
@@ -142,6 +143,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const char* vulkan_render_q
 
 typedef struct vulkan_render_queue_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 
 	vulkan_render_queue_handle_t handle;  // handle to this queue in the vulkan render scene
@@ -160,6 +162,9 @@ typedef struct vulkan_render_queue_t
 	vulkan_render_pass_graph_t pass_graph;
 
 } vulkan_render_queue_t;
+
+#define VULKAN_RENDER_QUEUE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_render_queue_t*, VULKAN_OBJECT_TYPE_RENDER_QUEUE, ptr)
+#define VULKAN_RENDER_QUEUE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_render_queue_t*, VULKAN_OBJECT_TYPE_RENDER_QUEUE, ptr)
 
 
 BEGIN_CPP_COMPATIBLE

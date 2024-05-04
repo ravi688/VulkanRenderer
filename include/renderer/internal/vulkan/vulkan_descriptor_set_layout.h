@@ -28,15 +28,20 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 
 typedef struct vulkan_shader_resource_description_t vulkan_shader_resource_description_t;
 
 typedef struct vulkan_descriptor_set_layout_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkDescriptorSetLayout vo_handle;
 } vulkan_descriptor_set_layout_t;
+
+#define VULKAN_DESCRIPTOR_SET_LAYOUT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_descriptor_set_layout_t*, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, ptr)
+#define VULKAN_DESCRIPTOR_SET_LAYOUT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_descriptor_set_layout_t*, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -44,6 +49,7 @@ BEGIN_CPP_COMPATIBLE
 RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_new(memory_allocator_t* allocator);
 RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_create(vulkan_renderer_t* renderer, VkDescriptorSetLayoutBinding* bindings, u32 binding_count);
 RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc(vulkan_renderer_t* renderer, VkDescriptorSetLayoutBinding* bindings, u32 binding_count, vulkan_descriptor_set_layout_t OUT layout);
+RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc_ext(vulkan_renderer_t* renderer, VkDescriptorSetLayoutBinding* bindings, u32 binding_count, vulkan_descriptor_set_layout_t OUT layout);
 RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_create_from_resource_descriptors(vulkan_renderer_t* renderer, vulkan_shader_resource_description_t* bindings, u32 binding_count);
 RENDERER_API void vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_resource_description_t* bindings, u32 binding_count, vulkan_descriptor_set_layout_t OUT layout);
 RENDERER_API void vulkan_descriptor_set_layout_destroy(vulkan_descriptor_set_layout_t* layout);

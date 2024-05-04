@@ -48,6 +48,7 @@
 #include <renderer/internal/vulkan/vulkan_types.h> 		// vulkan_render_target_render_technique_t
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h> 	// vulkan_descriptor_set_t
 #include <renderer/internal/vulkan/vulkan_framebuffer.h> 		// vulkan_framebuffer_t
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/event.h>
 #include <renderer/dictionary.h>
 
@@ -186,6 +187,7 @@ typedef enum vulkan_camera_render_target_binding_type_t
 
 typedef struct vulkan_camera_t
 {
+	__VULKAN_OBJECT__;
 	/* pointer to the vulkan api context */
 	vulkan_renderer_t* renderer;
 
@@ -379,6 +381,9 @@ typedef struct vulkan_camera_t
 	event_subscription_handle_t framebuffers_recreate_handle;
 
 } vulkan_camera_t;
+
+#define VULKAN_CAMERA(ptr) VULKAN_OBJECT_UP_CAST(vulkan_camera_t*, VULKAN_OBJECT_TYPE_CAMERA, ptr)
+#define VULKAN_CAMERA_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_camera_t*, VULKAN_OBJECT_TYPE_CAMERA, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

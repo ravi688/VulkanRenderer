@@ -142,10 +142,20 @@ static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(mem
 	return vertex_infos;
 }
 
+/* determines if the list of material set bindings contains push constant binding */
+static bool is_contains_push_constant(vulkan_shader_resource_description_t* material_set_bindings, u32 material_set_binding_count)
+{
+	for(u32 i = 0; i < material_set_binding_count; i++)
+		if(material_set_bindings[i].is_push_constant)
+			return true;
+	return false;
+}
+
 static vulkan_push_constant_t create_vulkan_push_constant(memory_allocator_t* allocator, vulkan_shader_resource_description_t* material_set_bindings, u32 material_set_binding_count)
 {
 	// if there are no bindings in the material set then it is guaranteed that there won't be any push constant bindings
-	if(material_set_binding_count == 0)
+	// or it might also be possible that the list doesn't contain push constant bindings, so return empty in that case also
+	if(!is_contains_push_constant(material_set_bindings, material_set_binding_count))
 	{
 		return (vulkan_push_constant_t)
 		{
@@ -171,7 +181,7 @@ static vulkan_push_constant_t create_vulkan_push_constant(memory_allocator_t* al
 		if(!descriptor->is_push_constant) continue;
 
 		// sanity check
-		_debug_assert__(descriptor->handle.type == GLSL_TYPE_PUSH_CONSTANT);
+		_debug_assert__(struct_descriptor_get_type(&descriptor->handle) == GLSL_TYPE_PUSH_CONSTANT);
 		
 		VkShaderStageFlagBits stage_flags = 0;
 		if(descriptor->stage_flags & VULKAN_SHADER_STAGE_VERTEX_BIT)
@@ -194,18 +204,6 @@ static vulkan_push_constant_t create_vulkan_push_constant(memory_allocator_t* al
 
 		descriptor_indices[range_count] = i;
 		++range_count;
-	}
-
-	// if there are no push constants then return NULL & zeros
-	if(range_count == 0)
-	{
-		return (vulkan_push_constant_t)
-		{
-			.ranges = NULL,
-			.range_count = 0,
-			.buffer = NULL,
-			.buffer_size = 0
-		};
 	}
 
 	buf_fit(&ranges);
@@ -311,10 +309,7 @@ static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_des
 static void destroy_vulkan_shader_resource_descriptions(memory_allocator_t* allocator, vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
 {
 	for(u32 i = 0; i < descriptor_count; i++)
-	{
-		if(descriptors[i].handle.fields != NULL)
-			memory_allocator_dealloc(allocator, descriptors[i].handle.fields);
-	}
+		struct_descriptor_free(allocator, &descriptors[i].handle);
 	if(descriptor_count > 0)
 		memory_allocator_dealloc(allocator, descriptors);
 }
@@ -468,7 +463,7 @@ static u32 get_most_recent_subpass_index_writing_to_depth(const vulkan_render_pa
 
 static VkSubpassDependency* create_and_resolve_subpass_dependencies(vulkan_renderer_t* renderer, const vulkan_render_pass_description_t* pass, const vulkan_render_pass_description_t* next_pass, u32 OUT dependency_count)
 {
-	BUFFER dependencies = buf_new(VkSubpassDependency);
+	BUFFER dependencies = memory_allocator_buf_new(renderer->allocator, VkSubpassDependency);
 	
 	for(u32 i = 0; i < pass->subpass_count; i++)
 	{
@@ -787,10 +782,43 @@ static vulkan_render_pass_create_info_t* convert_render_pass_description_to_crea
 		create_info->subpasses[i].preserve_attachment_count = 0;
 	}
 
-	create_info->subpass_dependencies = pass->subpass_dependencies;
-	create_info->subpass_dependency_count = pass->subpass_dependency_count;
-
+	if(pass->subpass_dependency_count > 0)
+	{
+		create_info->subpass_dependencies = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SUBPASS_DEPENDENCY_ARRAY, VkSubpassDependency, pass->subpass_dependency_count);
+		memcopyv(create_info->subpass_dependencies, pass->subpass_dependencies, VkSubpassDependency, pass->subpass_dependency_count);
+		create_info->subpass_dependency_count = pass->subpass_dependency_count;
+	}
+	else
+	{
+		/* setting subpass_dependencies to NULL and subpass_dependency_count to 0 is redundant here, 
+		 * as we are already zeroing out the create_info */
+		create_info->subpass_dependencies = NULL;
+		create_info->subpass_dependency_count = 0;
+	}
 	return create_info;
+}
+
+static void destroy_vulkan_render_pass_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
+{
+	for(u32 i = 0; i < create_info->subpass_count; i++)
+	{
+		if(create_info->subpasses[i].color_attachment_count > 0)
+			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].color_attachments);
+		if(create_info->subpasses[i].depth_stencil_attachment != NULL)
+			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].depth_stencil_attachment);
+	}
+	if(create_info->subpass_dependency_count > 0)
+		memory_allocator_dealloc(renderer->allocator, create_info->subpass_dependencies);
+	if(create_info->subpass_count > 0)
+		memory_allocator_dealloc(renderer->allocator, create_info->subpasses);
+	if(create_info->framebuffer_layout_description.attachment_count > 0)
+	{
+		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachments);
+		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachment_usages);
+	}
+	if(create_info->framebuffer_layout_description.supplementary_attachment_count > 0)
+		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.vo_supplementary_attachments);
+	memory_allocator_dealloc(renderer->allocator, create_info);
 }
 
 static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* descriptions, u32 description_count, vulkan_pipeline_common_data_t* common_data)
@@ -835,7 +863,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 		/* create render pass for this shader */
 		passes[i].handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, create_info, &input);
 
-		memory_allocator_dealloc(renderer->allocator, create_info);
+		destroy_vulkan_render_pass_create_info(renderer, create_info);
 
 
 		// create deep copy of render set bindings, sub render set bindings and input attachment references to be used for rewriting vulkan descriptors when the window resizes
@@ -921,7 +949,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
  */
 static VkSubpassDependency* merge_subpass_dependencies(vulkan_renderer_t* renderer, VkSubpassDependency* dependencies, u32 OUT dependency_count)
 {
-	BUFFER new_dependencies = buf_new(VkSubpassDependency);
+	BUFFER new_dependencies = memory_allocator_buf_new(renderer->allocator, VkSubpassDependency);
 
 	u32 count = *dependency_count;
 	for(u32 i = 0; i < count; i++)
@@ -963,6 +991,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	shader->push_constant = create_vulkan_push_constant(renderer->allocator, create_info->material_set_bindings, create_info->material_set_binding_count);
 	shader->vertex_infos = create_deep_copy_of_vulkan_vertex_infos(renderer->allocator, create_info->vertex_infos, create_info->vertex_info_count);
 	shader->vertex_info_count = create_info->vertex_info_count;
+	VULKAN_OBJECT_INIT(&shader->material_set_layout, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, create_info->material_set_bindings, create_info->material_set_binding_count, &shader->material_set_layout);
 	shader->material_set_bindings = create_deep_copy_of_set_binding_descriptors(renderer->allocator, create_info->material_set_bindings, create_info->material_set_binding_count);
 	shader->material_set_binding_count = create_info->material_set_binding_count;
@@ -1041,13 +1070,14 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 		descriptor->is_uniform = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_UNIFORM_BUFFER_BIT & bits;
 		descriptor->is_per_vertex_attribute = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_PER_VERTEX_ATTRIB_BIT & bits;
 		descriptor->is_per_instance_attribute = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_PER_INSTANCE_ATTRIB_BIT & bits;
-		descriptor->handle.type = VULKAN_GLSL_TYPE_BITS(descriptor_info);
+		struct_descriptor_t* struct_def = &descriptor->handle;
 
 		descriptor->stage_flags = CAST_TO(u8, VULKAN_SHADER_STAGE_BITS(descriptor_info));
 		
-		bool is_block = (descriptor->handle.type == GLSL_TYPE_UNIFORM_BUFFER)
-			|| (descriptors->handle.type == GLSL_TYPE_STORAGE_BUFFER)
-			|| (descriptors->handle.type == GLSL_TYPE_PUSH_CONSTANT);
+		u8 descriptor_type = VULKAN_GLSL_TYPE_BITS(descriptor_info);
+		bool is_block = (descriptor_type == GLSL_TYPE_UNIFORM_BUFFER)
+			|| (descriptor_type == GLSL_TYPE_STORAGE_BUFFER)
+			|| (descriptor_type == GLSL_TYPE_PUSH_CONSTANT);
 
 		if(is_block)
 		{
@@ -1059,7 +1089,7 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 		// get the name of the descriptor
 		const char* name = binary_reader_str(reader);
 		_debug_assert__(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
-		strcpy(descriptor->handle.name, name);
+		struct_descriptor_begin(allocator, struct_def, name, descriptor_type);
 
 		log_msg("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
 			i, descriptor->set_number, descriptor->binding_number, descriptor->stage_flags,
@@ -1070,12 +1100,10 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 		if(is_block)
 		{
 			// get the number of fields in this uniform block
-			descriptor->handle.field_count = binary_reader_u16(reader);
-			log_msg("Field Count: %u\n", descriptor->handle.field_count);
+			u32 field_count = binary_reader_u16(reader);
+			log_msg("Field Count: %u\n", field_count);
 
-			struct_field_t* fields = (descriptor->handle.field_count > 0) ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, descriptor->handle.field_count) : NULL;
-			
-			for(u16 j = 0; j < descriptor->handle.field_count; j++)
+			for(u16 j = 0; j < field_count; j++)
 			{
 				// get the field info
 				u32 field_info = binary_reader_u32(reader);
@@ -1083,19 +1111,14 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 				// get the type of the fields
 				u8 type = field_info & 0xFFUL;
 				
-				// create a field object
-				fields[j] = (struct_field_t) { .type = type, .size = sizeof_glsl_type(type), .alignment = alignof_glsl_type(type) };
-				
 				// get the name of this field
 				const char* name = binary_reader_str(reader);
 				_debug_assert__(strlen(name) < STRUCT_FIELD_MAX_NAME_SIZE);
-				strcpy(fields[j].name, name);
-
-				log_msg("Field[%u]: type = %u, size = %u, align = %u, name = %s\n", j, fields[j].type, fields[j].size, fields[j].alignment, fields[j].name);
+				struct_descriptor_add_field(struct_def, name, type);
 			}
-			descriptor->handle.fields = fields;
-			struct_descriptor_recalculate(&descriptor->handle);
 		}
+		struct_descriptor_end(allocator, struct_def);
+		struct_descriptor_recalculate(struct_def);
 		binary_reader_pop(reader);
 	}
 	return descriptors;
@@ -1275,6 +1298,12 @@ static vulkan_spirv_code_t* load_spirv_codes(memory_allocator_t* allocator, bina
 	return codes;
 }
 
+static void destroy_spirv_code(memory_allocator_t* allocator, vulkan_spirv_code_t* spirv_code)
+{
+	_debug_assert__(spirv_code->length > 0);
+	memory_allocator_dealloc(allocator, spirv_code->spirv);
+}
+
 static u32 create_add_pipeline_description(memory_allocator_t* allocator, binary_reader_t* reader, BUFFER* pipeline_descriptions)
 {
 	buf_push_pseudo(pipeline_descriptions, 1);
@@ -1313,6 +1342,28 @@ static u32 create_add_pipeline_description(memory_allocator_t* allocator, binary
 
 	binary_reader_pop(reader);
 	return buf_get_element_count(pipeline_descriptions) - 1;
+}
+
+static void destroy_pipeline_descriptions(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* descriptions, u32 description_count)
+{
+	for(u32 i = 0; i < description_count; i++)
+	{
+		AUTO description = &descriptions[i];
+		_debug_assert__(description->settings != NULL);
+		memory_allocator_dealloc(allocator, description->settings);
+		if(description->settings->colorblend.attachmentCount > 0)
+			memory_allocator_dealloc(allocator, CAST_TO(VkPipelineColorBlendAttachmentState*, description->settings->colorblend.pAttachments));
+		if(description->settings->viewport.scissorCount > 0)
+			memory_allocator_dealloc(allocator, CAST_TO(VkRect2D*, description->settings->viewport.pScissors));
+		if(description->settings->viewport.viewportCount > 0)
+			memory_allocator_dealloc(allocator, CAST_TO(VkViewport*, description->settings->viewport.pViewports));
+		for(u32 i = 0; i < description->spirv_code_count; i++)
+			destroy_spirv_code(allocator, &description->spirv_codes[i]);
+		if(description->spirv_code_count > 0)
+			memory_allocator_dealloc(allocator, description->spirv_codes);
+	}
+	if(description_count > 0)
+		memory_allocator_dealloc(allocator, descriptions);
 }
 
 static vulkan_subpass_description_t* create_subpass_descriptions(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
@@ -1363,6 +1414,22 @@ static vulkan_subpass_description_t* create_subpass_descriptions(memory_allocato
 	}
 
 	return descriptions;
+}
+
+static void destroy_subpass_descriptions(memory_allocator_t* allocator, vulkan_subpass_description_t* descriptions, u32 description_count)
+{
+	for(u32 i = 0; i < description_count; i++)
+	{
+		AUTO description = &descriptions[i];
+		if(description->input_attachment_count > 0)
+			memory_allocator_dealloc(allocator, description->input_attachments);
+		if(description->color_attachment_count > 0)
+			memory_allocator_dealloc(allocator, description->color_attachments);
+		if(description->preserve_attachment_count > 0)
+			memory_allocator_dealloc(allocator, description->preserve_attachments);
+	}
+	if(description_count > 0)
+		memory_allocator_dealloc(allocator, descriptions);
 }
 
 static vulkan_render_pass_description_t* create_render_pass_descriptions(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
@@ -1417,6 +1484,24 @@ static vulkan_render_pass_description_t* create_render_pass_descriptions(memory_
 	}
 
 	return descriptions;
+}
+
+static void destroy_render_pass_descriptions(memory_allocator_t* allocator, vulkan_render_pass_description_t* descriptions, u32 description_count)
+{
+	for(u32 i = 0; i < description_count; i++)
+	{
+		AUTO description = &descriptions[i];
+		if(description->input_attachment_count > 0)
+			memory_allocator_dealloc(allocator, description->input_attachments);
+		if(description->attachment_count > 0)
+			memory_allocator_dealloc(allocator, description->attachments);
+		if(description->subpass_dependency_count > 0)
+			memory_allocator_dealloc(allocator, description->subpass_dependencies);
+		destroy_vulkan_shader_resource_descriptions(allocator, description->render_set_bindings, description->render_set_binding_count);
+		destroy_subpass_descriptions(allocator, description->subpass_descriptions, description->subpass_description_count);
+	}
+	if(description_count > 0)
+		memory_allocator_dealloc(allocator, descriptions);
 }
 
 /*static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(binary_reader_t* reader, u32 OUT count)
@@ -1496,7 +1581,10 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(memory_allo
 {
 	binary_reader_t* reader = binary_reader_create(load_info->data, load_info->data_size);
 
-	read_header(allocator, reader);
+	CAN_BE_UNUSED_VARIABLE AUTO header = read_header(allocator, reader);
+	/* use header to determine binary spec version and choose the loader appropriatly, 
+	 * but for now, we don't maintain such versioning - everything changes for now */
+	memory_allocator_dealloc(allocator, header);
 
 	// load resource descriptors for material
 	u32 descriptor_count;
@@ -1514,7 +1602,7 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(memory_allo
 		vertex_info_count = load_info->per_vertex_attribute_binding_count + load_info->per_instance_attribute_binding_count;
 
 	// create an empty list of graphics pipeline descriptions
-	BUFFER pipeline_descriptions = buf_new(vulkan_graphics_pipeline_description_t);
+	BUFFER pipeline_descriptions = memory_allocator_buf_new(allocator, vulkan_graphics_pipeline_description_t);
 
 	// create render pass descriptions
 	u32 render_pass_description_count;
@@ -1535,6 +1623,7 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(memory_allo
 		.render_pass_descriptions = render_pass_descriptions,
 		.render_pass_description_count = render_pass_description_count,
 
+		.pipeline_description_count = buf_get_element_count(&pipeline_descriptions),
 		.pipeline_descriptions = CAST_TO(vulkan_graphics_pipeline_description_t*, buf_get_ptr(&pipeline_descriptions))
 	};
 
@@ -1545,6 +1634,19 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(memory_allo
 	binary_reader_release_resources(reader);
 
 	return create_info;
+}
+
+static void destroy_vulkan_shader_create_info(memory_allocator_t* allocator, vulkan_shader_create_info_t* create_info)
+{
+	destroy_vulkan_shader_resource_descriptions(allocator, create_info->material_set_bindings, create_info->material_set_binding_count);
+	if(create_info->vertex_info_count > 0)
+		memory_allocator_dealloc(allocator, create_info->vertex_infos);
+	/* pipeline descriptions may be NULL, i.e. no subpasses in any of the render passes, or no render passes at all. 
+	 * if such cases exists, then we may remove this assertion in future. */
+	_debug_assert__(create_info->pipeline_descriptions != NULL);
+	destroy_pipeline_descriptions(allocator, create_info->pipeline_descriptions, create_info->pipeline_description_count);
+	destroy_render_pass_descriptions(allocator, create_info->render_pass_descriptions, create_info->render_pass_description_count);
+	memory_allocator_dealloc(allocator, create_info);
 }
 
 RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* load_info)
@@ -1566,7 +1668,9 @@ RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vu
 	}
 	else 
 		LOG_FETAL_ERR("Unable to get the shader file data neither by a memory pointer nor by a file path\n");
-	return vulkan_shader_create(renderer, create_info);
+	AUTO shader = vulkan_shader_create(renderer, create_info);
+	destroy_vulkan_shader_create_info(renderer->allocator, create_info);
+	return shader;
 }
 
 RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)

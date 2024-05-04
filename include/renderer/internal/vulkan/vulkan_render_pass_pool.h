@@ -29,6 +29,7 @@
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_graph.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_subpass_input_info_t
 {
@@ -60,12 +61,16 @@ typedef struct vulkan_render_pass_pool_slot_t
 
 typedef struct vulkan_render_pass_pool_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	BUFFER relocation_table; 				// relocation table
 	BUFFER slots; 							// list of vulkan_render_pass_pool_slot_t
 	vulkan_render_pass_graph_t pass_graph;
 	vulkan_render_pass_handle_t prev_pass_handle;
 } vulkan_render_pass_pool_t;
+
+#define VULKAN_RENDER_PASS_POOL(ptr) VULKAN_OBJECT_UP_CAST(vulkan_render_pass_pool_t*, VULKAN_OBJECT_TYPE_RENDER_PASS_POOL, ptr)
+#define VULKAN_RENDER_PASS_POOL_CONST(ptr) VULKAN_OBJECT_UP_CAST(const vulkan_render_pass_pool_t*, VULKAN_OBJECT_TYPE_RENDER_PASS_POOL, ptr)
 
 
 BEGIN_CPP_COMPATIBLE

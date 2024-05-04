@@ -42,6 +42,7 @@ RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* 
 {
 	vulkan_render_scene_t* scene = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_SCENE, vulkan_render_scene_t);
 	memzero(scene, vulkan_render_scene_t);
+	VULKAN_OBJECT_INIT(scene, VULKAN_OBJECT_TYPE_RENDER_SCENE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return scene;
 }
 
@@ -54,6 +55,7 @@ RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create(vulkan_renderer_t
 
 RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info, vulkan_render_scene_t OUT scene)
 {
+	VULKAN_OBJECT_MEMZERO(scene, vulkan_render_scene_t);
 	_debug_assert__(sizeof(vulkan_render_queue_type_t) == sizeof(s32));
 	scene->renderer = renderer;
 	scene->queues = dictionary_create(vulkan_render_queue_type_t, vulkan_render_queue_t, 1, dictionary_key_comparer_s32);
@@ -62,6 +64,7 @@ RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* rendere
 	for(u32 i = 0; i < create_info->required_queue_count; i++)
 	{
 		vulkan_render_queue_t queue;
+		VULKAN_OBJECT_INIT(&queue, VULKAN_OBJECT_TYPE_RENDER_QUEUE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_render_queue_create_no_alloc(renderer, create_info->required_queues[i], &queue);
 		dictionary_add(&scene->queues, &create_info->required_queues[i], &queue);
 	}
@@ -140,8 +143,8 @@ RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* s
 	// for(u32 i = 0; i < count; i++)
 	// 	vulkan_render_queue_release_resources(buf_get_ptr_at(&scene->queues, i));
 	dictionary_free(&scene->queues);
-	// TODO
-	// heap_free(scene);
+	if(VULKAN_OBJECT_IS_INTERNAL(scene))
+		memory_allocator_dealloc(scene->renderer->allocator, scene);
 }
 
 
@@ -155,6 +158,7 @@ RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vu
 		return;
 	}
 	vulkan_render_queue_t queue;
+	VULKAN_OBJECT_INIT(&queue, VULKAN_OBJECT_TYPE_RENDER_QUEUE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_render_queue_create_no_alloc(scene->renderer, queue_type, &queue);
 	dictionary_add(&scene->queues, &queue_type, &queue);
 }

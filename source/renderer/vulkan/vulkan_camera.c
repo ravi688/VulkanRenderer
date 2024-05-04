@@ -50,6 +50,7 @@ RENDERER_API vulkan_camera_t* vulkan_camera_new(memory_allocator_t* allocator)
 {
 	vulkan_camera_t* camera = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CAMERA, vulkan_camera_t);
 	memzero(camera, vulkan_camera_t);
+	VULKAN_OBJECT_INIT(camera, VULKAN_OBJECT_TYPE_CAMERA, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return camera;
 }
 
@@ -411,7 +412,7 @@ static bool render_pass_handle_pair_comparer(void* value, void* cursor)
 
 RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info, vulkan_camera_t OUT camera)
 {
-	memzero(camera, vulkan_camera_t);
+	VULKAN_OBJECT_MEMZERO(camera, vulkan_camera_t);
 
 	camera->renderer = renderer;
 	camera->swapchain_depth_clear_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, create_info->swapchain_depth_clear_pass);
@@ -596,6 +597,8 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 
 RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 {
+	struct_descriptor_free(camera->renderer->allocator, &camera->struct_definition);
+
 	for(u32 i = 0; i < camera->buffer_count; i++)
 	{
 		vulkan_descriptor_set_release_resources(&camera->sets[i]);
@@ -628,8 +631,13 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 								CAST_TO(vulkan_render_pass_descriptor_sets_t*, 
 								dictionary_get_value_ptr_at(&camera->render_pass_descriptor_sets, i))->sub_render_sets);
 	dictionary_free(&camera->render_pass_descriptor_sets);
-	// TODO
-	// heap_free(camera);
+
+	_debug_assert__(camera->swapchain_depth_clear_pass != NULL);
+	if(camera->swapchain_depth_clear_pass->attachment_count > 0)
+		memory_allocator_dealloc(camera->renderer->allocator, camera->clear_buffer);
+
+	if(VULKAN_OBJECT_IS_INTERNAL(camera))
+		memory_allocator_dealloc(camera->renderer->allocator, camera);
 }
 
 UNUSED_FUNCTION static void transition_target_layout_for_write(VkFormat format, vulkan_image_view_t* view)

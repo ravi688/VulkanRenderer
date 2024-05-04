@@ -28,6 +28,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer/defines.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_swapchain_create_info_t
 {
@@ -42,6 +43,7 @@ typedef struct vulkan_swapchain_create_info_t
 
 typedef struct vulkan_swapchain_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkSwapchainKHR vo_handle;
 	VkImage* vo_images;
@@ -51,6 +53,9 @@ typedef struct vulkan_swapchain_t
 	u32 image_count;
 	u32 current_image_index;
 } vulkan_swapchain_t;
+
+#define VULKAN_SWAPCHAIN(ptr) VULKAN_OBJECT_UP_CAST(vulkan_swapchain_t*, VULKAN_OBJECT_TYPE_SWAPCHAIN, ptr)
+#define VULKAN_SWAPCHAIN_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_swapchain_t*, VULKAN_OBJECT_TYPE_SWAPCHAIN, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

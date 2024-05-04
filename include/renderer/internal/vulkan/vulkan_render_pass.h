@@ -33,6 +33,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/event.h>
 
 #define VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN (~0U)
@@ -120,6 +121,7 @@ typedef struct vulkan_camera_t vulkan_camera_t;
 
 typedef struct vulkan_render_pass_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 
 	vulkan_render_pass_handle_t handle;
@@ -158,6 +160,9 @@ typedef struct vulkan_render_pass_t
 	VkRect2D vo_current_render_area;
 
 } vulkan_render_pass_t;
+
+#define VULKAN_RENDER_PASS(ptr) VULKAN_OBJECT_UP_CAST(vulkan_render_pass_t*, VULKAN_OBJECT_TYPE_VULKAN_RENDER_PASS, ptr)
+#define VULKAN_RENDER_PASS_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_render_pass_t*, VULKAN_OBJECT_TYPE_VULKAN_RENDER_PASS, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

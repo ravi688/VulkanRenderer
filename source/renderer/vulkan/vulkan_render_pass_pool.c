@@ -42,11 +42,12 @@ RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new(memory_alloc
 {
 	vulkan_render_pass_pool_t* pool = memory_allocator_alloc_obj(allocator, MEMORy_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_POOL, vulkan_render_pass_pool_t);
 	memzero(pool, vulkan_render_pass_pool_t);
+	VULKAN_OBJECT_INIT(pool, VULKAN_OBJECT_TYPE_RENDER_PASS_POOL, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return pool;
 }
 RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_pool_t OUT pool)
 {
-	memzero(pool, vulkan_render_pass_pool_t);
+	VULKAN_OBJECT_MEMZERO(pool, vulkan_render_pass_pool_t);
 
 	pool->renderer = renderer;
 	pool->relocation_table = buf_create(sizeof(vulkan_render_pass_handle_t), 1, 0);
@@ -71,9 +72,35 @@ RENDERER_API void vulkan_render_pass_pool_destroy(vulkan_render_pass_pool_t* poo
 	log_msg("Vulkan render pass pool has been destroyed successfully\n");
 }
 
-static void vulkan_render_pass_create_info_deep_free(vulkan_render_pass_create_info_t* create_info)
+/* TODO: remove this and create a new class vulkan_render_pass_create_info_t 
+ * duplicate of this already exists in vulkan_camera_system.c */
+static void destroy_vulkan_render_pass_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
 {
-	// TODO:
+	for(u32 i = 0; i < create_info->subpass_count; i++)
+	{
+		if(create_info->subpasses[i].color_attachment_count > 0)
+			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].color_attachments);
+		if(create_info->subpasses[i].depth_stencil_attachment != NULL)
+			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].depth_stencil_attachment);
+	}
+	if(create_info->subpass_dependency_count > 0)
+		memory_allocator_dealloc(renderer->allocator, create_info->subpass_dependencies);
+	if(create_info->subpass_count > 0)
+		memory_allocator_dealloc(renderer->allocator, create_info->subpasses);
+	if(create_info->framebuffer_layout_description.attachment_count > 0)
+	{
+		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachments);
+		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachment_usages);
+	}
+	if(create_info->framebuffer_layout_description.supplementary_attachment_count > 0)
+		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.vo_supplementary_attachments);
+	memory_allocator_dealloc(renderer->allocator, create_info);
+}
+
+/* TODO: remove this and create a new class vulkan_render_pass_create_info_t */
+static void vulkan_render_pass_create_info_deep_free(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
+{
+	destroy_vulkan_render_pass_create_info(renderer, create_info);
 }
 
 RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_pool_t* pool)
@@ -83,13 +110,22 @@ RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_p
 	{
 		vulkan_render_pass_pool_slot_t* slot = buf_get_ptr_at(&pool->slots, i);
 		vulkan_render_pass_release_resources(slot->render_pass);
-		vulkan_render_pass_create_info_deep_free(slot->create_info);
+		vulkan_render_pass_create_info_deep_free(pool->renderer, slot->create_info);
+		if(slot->create_info->subpass_count > 0)
+		{
+			for(u32 i = 0; i < slot->create_info->subpass_count; i++)
+				if(slot->input.subpass_inputs[i].input_attachment_count > 0)
+					memory_allocator_dealloc(pool->renderer->allocator, slot->input.subpass_inputs[i].input_attachments);
+			memory_allocator_dealloc(pool->renderer->allocator, slot->input.subpass_inputs);
+		}
+		if(slot->input.input_attachment_count > 0)
+			memory_allocator_dealloc(pool->renderer->allocator, slot->input.input_attachments);
 	}
 	buf_free(&pool->relocation_table);
 	buf_free(&pool->slots);
 	vulkan_render_pass_graph_release_resources(&pool->pass_graph);
-	// TODO
-	// heap_free(pool);
+	if(VULKAN_OBJECT_IS_INTERNAL(pool))
+		memory_allocator_dealloc(pool->renderer->allocator, pool);
 }
 
 /* logic functions */
@@ -234,6 +270,9 @@ static void vulkan_subpass_create_info_deep_copy(memory_allocator_t* allocator, 
 	memcopyv(dst->color_attachments, src->color_attachments, VkAttachmentReference, src->color_attachment_count);
 	dst->input_attachments = src->input_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, src->input_attachment_count) : NULL;
 	memcopyv(dst->input_attachments, src->input_attachments, VkAttachmentReference, src->input_attachment_count);
+	dst->depth_stencil_attachment = (src->depth_stencil_attachment != NULL) ? memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE, VkAttachmentReference) : NULL;
+	if(dst->depth_stencil_attachment != NULL)
+		memcopy(dst->depth_stencil_attachment, src->depth_stencil_attachment, VkAttachmentReference);
 	dst->preserve_attachments = src->preserve_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, src->preserve_attachment_count) : NULL;
 	memcopyv(dst->preserve_attachments, src->preserve_attachments, u32, src->preserve_attachment_count);
 			

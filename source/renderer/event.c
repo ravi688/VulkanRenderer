@@ -60,6 +60,7 @@ RENDERER_API event_t* event_new(memory_allocator_t* allocator)
 {
 	AUTO event = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_EVENT, event_t);
 	memzero(event, event_t);
+	OBJECT_INIT(event, OBJECT_TYPE_EVENT, OBJECT_NATIONALITY_INTERNAL);
 	event->allocator = allocator;
 	return event;
 }
@@ -73,7 +74,7 @@ RENDERER_API event_t* event_create(memory_allocator_t* allocator, void* publishe
 
 RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event)
 {
-	memzero(event, event_t);
+	OBJECT_MEMZERO(event, event_t);
 	event->allocator = allocator;
 	event->string_builder = string_builder_create(allocator, 512);
 	IF_DEBUG(strcpy(event->name, name));
@@ -91,6 +92,12 @@ RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* pub
 		event->signal_table[i] = U32_MAX;
 	/* but the nothing signal would always be up */
 	event->signal_table[SIGNAL_NOTHING] = 0;
+}
+
+RENDERER_API void event_create_no_alloc_ext(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event)
+{
+	OBJECT_INIT(event, OBJECT_TYPE_EVENT, OBJECT_NATIONALITY_EXTERNAL);
+	event_create_no_alloc(allocator, publisher_data PARAM_IF_DEBUG(name), event);
 }
 
 RENDERER_API void event_destroy(event_t* event)
@@ -113,6 +120,8 @@ RENDERER_API void event_release_resources(event_t* event)
 	buf_free(&event->stage_subscribers_swap);
 	buf_free(&event->subscribers);
 	buf_free(&event->unsubscribed_handles);
+	if(OBJECT_IS_INTERNAL(event))
+		memory_allocator_dealloc(event->allocator, event);
 }
 
 /* checks if all the wait signals have been raised or not, if yes returns true, otherwise false */

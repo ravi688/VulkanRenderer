@@ -40,6 +40,7 @@ RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new(memory_allocator_t* alloca
 {
 	vulkan_swapchain_t* swapchain = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SWAPCHAIN, vulkan_swapchain_t);
 	memzero(swapchain, vulkan_swapchain_t);
+	VULKAN_OBJECT_INIT(swapchain, VULKAN_OBJECT_TYPE_SWAPCHAIN, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return swapchain;
 }
 
@@ -53,7 +54,7 @@ RENDERER_API vulkan_swapchain_t* vulkan_swapchain_create(vulkan_renderer_t* rend
 
 RENDERER_API void vulkan_swapchain_create_no_alloc(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info, vulkan_swapchain_t OUT swapchain)
 {
-	memzero(swapchain, vulkan_swapchain_t);
+	VULKAN_OBJECT_MEMZERO(swapchain, vulkan_swapchain_t);
 
 	swapchain->renderer = renderer;
 	// create swapchain, it allocates some memory for the first time
@@ -79,8 +80,8 @@ RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapcha
 {
 	memory_allocator_dealloc(swapchain->renderer->allocator, swapchain->vo_image_views);
 	memory_allocator_dealloc(swapchain->renderer->allocator, swapchain->vo_images);
-	// TODO
-	// heap_free(swapchain);
+	if(VULKAN_OBJECT_IS_INTERNAL(swapchain))
+		memory_allocator_dealloc(swapchain->renderer->allocator, swapchain);
 }
 
 RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain)

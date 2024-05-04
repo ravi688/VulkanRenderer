@@ -107,6 +107,7 @@ typedef struct vulkan_shader_create_info_t
 
 	/* PIPELINES */
 	vulkan_graphics_pipeline_description_t* pipeline_descriptions;
+	u32 pipeline_description_count;
 
 } vulkan_shader_create_info_t;
 

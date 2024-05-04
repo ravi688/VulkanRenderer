@@ -489,7 +489,7 @@ static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t
 	};
 
 	var (vulkan_descriptor_set_layout_t, layout);
-	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, ptr (layout));
+	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, &binding, 1, ptr (layout));
 	log_msg("Object descriptor set layout has been created successfully\n");
 	return val (layout);
 }
@@ -505,7 +505,7 @@ static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t
 	};
 
 	var (vulkan_descriptor_set_layout_t, layout);
-	vulkan_descriptor_set_layout_create_no_alloc(renderer, &binding, 1, ptr (layout));
+	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, &binding, 1, ptr (layout));
 	log_msg("Camera descriptor set layout has been created successfully\n");
 	return val (layout);
 }
@@ -535,7 +535,7 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 	};
 
 	var (vulkan_descriptor_set_layout_t, layout);
-	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, 3, ptr (layout));
+	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, bindings, 3, ptr (layout));
 	log_msg("Global descriptor set layout has been created successfully\n");
 	return val (layout);
 }

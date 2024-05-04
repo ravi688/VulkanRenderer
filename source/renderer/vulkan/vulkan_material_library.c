@@ -36,12 +36,13 @@ RENDERER_API vulkan_material_library_t* vulkan_material_library_new(memory_alloc
 {
 	vulkan_material_library_t* library = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MATERIAL_LIBRARY, vulkan_material_library_t);
 	memzero(library, vulkan_material_library_t);
+	VULKAN_OBJECT_INIT(library, VULKAN_OBJECT_TYPE_MATERIAL_LIBRARY, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return library;
 }
 
 RENDERER_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library, vulkan_material_library_t OUT library)
 {
-	memzero(library, vulkan_material_library_t);
+	VULKAN_OBJECT_MEMZERO(library, vulkan_material_library_t);
 
 	library->renderer = renderer;
 	library->shader_library = shader_library;
@@ -77,8 +78,8 @@ RENDERER_API void vulkan_material_library_release_resources(vulkan_material_libr
 		vulkan_material_library_slot_t* slot = buf_get_ptr_at(&library->materials, i);
 		vulkan_material_release_resources(slot->material);
 	}
-	// TODO
-	// heap_free(library);
+	if(VULKAN_OBJECT_IS_INTERNAL(library))
+		memory_allocator_dealloc(library->renderer->allocator, library);
 }
 
 

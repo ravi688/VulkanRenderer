@@ -38,6 +38,7 @@ RENDERER_API vulkan_camera_system_t* vulkan_camera_system_new(memory_allocator_t
 {
 	vulkan_camera_system_t* system = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CAMERA_SYSTEM, vulkan_camera_system_t);
 	memzero(system, vulkan_camera_system_t);
+	VULKAN_OBJECT_INIT(system, VULKAN_OBJECT_TYPE_CAMERA_SYSTEM, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return system;
 }
 
@@ -64,7 +65,8 @@ RENDERER_API void vulkan_camera_system_destroy(vulkan_camera_system_t* system)
 RENDERER_API void vulkan_camera_system_release_resources(vulkan_camera_system_t* system)
 {
 	library_release_resources(&system->lib);
-	// heap_free(system);
+	if(VULKAN_OBJECT_IS_INTERNAL(system))
+		memory_allocator_dealloc(system->renderer->allocator, system);
 }
 
 
@@ -114,27 +116,29 @@ static vulkan_render_pass_create_info_t* build_swapchain_depth_clear_pass_create
 	create_info->framebuffer_layout_description.attachment_usages[0] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
 	create_info->framebuffer_layout_description.attachment_usages[1] = VULKAN_ATTACHMENT_NEXT_PASS_USAGE_NONE;
 
-	VkAttachmentReference* attachment_refs = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, 2);
-	attachment_refs[0] = (VkAttachmentReference)
+	VkAttachmentReference* color_attachment_ref = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE, VkAttachmentReference);
+	color_attachment_ref[0] = (VkAttachmentReference)
 	{
 		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		.attachment = 0
 	};
+	VkAttachmentReference* depth_attachment_ref = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE, VkAttachmentReference);
 	/* NOTE: we can't allocate VkAttachmentReference object for depth stencil attachment on the stack
 	 * as we are passing on the create info struct outside of this function! */
-	attachment_refs[1] = (VkAttachmentReference)
+	depth_attachment_ref[0] = (VkAttachmentReference)
 	{
 		.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 		.attachment = 1
 	};
 	create_info->subpass_count = 1;
 	create_info->subpasses = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO, vulkan_subpass_create_info_t);
+	memzero(create_info->subpasses, vulkan_subpass_create_info_t);
 	create_info->subpasses[0] = (vulkan_subpass_create_info_t)
 	{
 		.pipeline_bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
-		.color_attachments = attachment_refs,
+		.color_attachments = color_attachment_ref,
 		.color_attachment_count = 1,
-		.depth_stencil_attachment = attachment_refs + 1
+		.depth_stencil_attachment = depth_attachment_ref
 	};
 
 	create_info->subpass_dependency_count = 2;
@@ -298,22 +302,56 @@ static vulkan_render_pass_create_info_t* build_swapchain_clear_pass_create_info(
 	return create_info;
 }
 
+static void destroy_vulkan_render_pass_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
+{
+	for(u32 i = 0; i < create_info->subpass_count; i++)
+	{
+		if(create_info->subpasses[i].color_attachment_count > 0)
+			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].color_attachments);
+		if(create_info->subpasses[i].depth_stencil_attachment != NULL)
+			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].depth_stencil_attachment);
+	}
+	if(create_info->subpass_dependency_count > 0)
+		memory_allocator_dealloc(renderer->allocator, create_info->subpass_dependencies);
+	if(create_info->subpass_count > 0)
+		memory_allocator_dealloc(renderer->allocator, create_info->subpasses);
+	if(create_info->framebuffer_layout_description.attachment_count > 0)
+	{
+		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachments);
+		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachment_usages);
+	}
+	/* NOTE: find a robust way to create and destroy vulkan_render_pass_create_info_t objects as there are three duplicates of 
+	 * destroy_vulkan_render_pass_create_info() function in the codebase */
+	// if(create_info->framebuffer_layout_description.supplementary_attachment_count > 0)
+		// memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.vo_supplementary_attachments);
+	memory_allocator_dealloc(renderer->allocator, create_info);
+}
+
 static vulkan_render_pass_handle_t create_swapchain_depth_clear_pass(vulkan_renderer_t* renderer, vulkan_render_pass_input_info_t* input)
 {
 	vulkan_render_pass_pool_create_path(renderer->render_pass_pool);
-	return vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, build_swapchain_depth_clear_pass_create_info(renderer), input);
+	AUTO create_info = build_swapchain_depth_clear_pass_create_info(renderer);
+	AUTO handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, create_info, input);
+	destroy_vulkan_render_pass_create_info(renderer, create_info);
+	return handle;
 }
 
 static vulkan_render_pass_handle_t create_depth_clear_pass(vulkan_renderer_t* renderer, vulkan_render_pass_input_info_t* input)
 {
 	vulkan_render_pass_pool_create_path(renderer->render_pass_pool);
-	return vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, build_depth_clear_pass_create_info(renderer), input);
+	AUTO create_info = build_depth_clear_pass_create_info(renderer);
+	AUTO handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, create_info, input);
+	destroy_vulkan_render_pass_create_info(renderer, create_info);
+	return handle;
 }
 
 static vulkan_render_pass_handle_t create_swapchain_clear_pass(vulkan_renderer_t* renderer, vulkan_render_pass_input_info_t* input)
 {
 	vulkan_render_pass_pool_create_path(renderer->render_pass_pool);
- 	return vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, build_swapchain_clear_pass_create_info(renderer), input);
+	AUTO create_info = build_swapchain_clear_pass_create_info(renderer);
+ 	AUTO handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, create_info, input);
+	destroy_vulkan_render_pass_create_info(renderer, create_info);
+ 	return handle;
 }
 
 RENDERER_API vulkan_camera_handle_t vulkan_camera_system_create_camera(vulkan_camera_system_t* system, vulkan_camera_projection_type_t projection_type)
@@ -336,7 +374,9 @@ RENDERER_API vulkan_camera_handle_t vulkan_camera_system_create_camera(vulkan_ca
 		.depth_clear_pass = create_depth_clear_pass(system->renderer, &input),
 		.swapchain_clear_pass = create_swapchain_clear_pass(system->renderer, &input)
 	};
-	return library_create_slot(&system->lib, vulkan_camera_create(system->renderer, &create_info));
+	AUTO handle = library_create_slot(&system->lib, vulkan_camera_create(system->renderer, &create_info));
+	memory_allocator_dealloc(system->renderer->allocator, input.subpass_inputs);
+	return handle;
 }
 
 RENDERER_API vulkan_camera_t* vulkan_camera_system_getH(vulkan_camera_system_t* system, vulkan_camera_handle_t handle)

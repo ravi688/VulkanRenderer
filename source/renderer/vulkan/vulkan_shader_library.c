@@ -37,12 +37,13 @@ RENDERER_API vulkan_shader_library_t* vulkan_shader_library_new(memory_allocator
 {
 	vulkan_shader_library_t* library = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_LIBRARY, vulkan_shader_library_t);
 	memzero(library, vulkan_shader_library_t);
+	VULKAN_OBJECT_INIT(library, VULKAN_OBJECT_TYPE_SHADER_LIBRARY, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return library;
 }
 
 RENDERER_API void vulkan_shader_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t OUT library)
 {
-	memzero(library, vulkan_shader_library_t);
+	VULKAN_OBJECT_MEMZERO(library, vulkan_shader_library_t);
 
 	library->renderer = renderer;
 	library->relocation_table = buf_create(sizeof(buf_ucount_t), 1, 0);
@@ -100,8 +101,8 @@ RENDERER_API void vulkan_shader_library_release_resources(vulkan_shader_library_
 		vulkan_shader_release_resources(slot->shader);
 	}
 	buf_free(&library->shaders);
-	// TODO
-	// heap_free(library);
+	if(VULKAN_OBJECT_IS_INTERNAL(library))
+		memory_allocator_dealloc(library->renderer->allocator, library);
 }
 
 

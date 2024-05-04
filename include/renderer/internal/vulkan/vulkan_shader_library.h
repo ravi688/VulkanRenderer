@@ -30,6 +30,7 @@
 #include <renderer/string.h>
 #include <bufferlib/buffer.h>
 
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/internal/vulkan/vulkan_handles.h> 		// vulkan_shader_handle_t
 
 typedef struct vulkan_shader_t vulkan_shader_t;
@@ -45,11 +46,14 @@ typedef struct vulkan_shader_library_slot_t
 
 typedef struct vulkan_shader_library_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	BUFFER relocation_table; 	// list of buf_ucount_t
 	BUFFER shaders; 			// list of vulkan_shader_library_slot_t
 } vulkan_shader_library_t;
 
+#define VULKAN_SHADER_LIBRARY(ptr) VULKAN_OBJECT_UP_CAST(vulkan_shader_library_t*, VULKAN_OBJECT_TYPE_SHADER_LIBRARY, ptr)
+#define VULKAN_SHADER_LIBRARY_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_shader_library_t*, VULKAN_OBJECT_TYPE_SHADER_LIBRARY, ptr)
 
 /* constructors & destructors */
 RENDERER_API vulkan_shader_library_t* vulkan_shader_library_new(memory_allocator_t* allocator);

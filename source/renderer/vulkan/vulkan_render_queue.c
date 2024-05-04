@@ -44,6 +44,7 @@ RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* 
 {
 	vulkan_render_queue_t* queue = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_QUEUE, vulkan_render_queue_t);
 	memzero(queue, vulkan_render_queue_t);
+	VULKAN_OBJECT_INIT(queue, VULKAN_OBJECT_TYPE_RENDER_QUEUE, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return queue;
 }
 
@@ -60,7 +61,7 @@ typedef dictionary_t material_and_render_object_list_map_t;
 
 RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type, vulkan_render_queue_t OUT queue)
 {
-	memzero(queue, vulkan_render_queue_t);
+	VULKAN_OBJECT_MEMZERO(queue, vulkan_render_queue_t);
 
 	queue->handle = VULKAN_RENDER_QUEUE_HANDLE_INVALID;
 	queue->type = type;
@@ -140,7 +141,8 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 
 	vulkan_render_pass_graph_release_resources(&queue->pass_graph);
 
-	memory_allocator_dealloc(queue->renderer->allocator, queue);
+	if(VULKAN_OBJECT_IS_INTERNAL(queue))
+		memory_allocator_dealloc(queue->renderer->allocator, queue);
 }
 
 RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue)

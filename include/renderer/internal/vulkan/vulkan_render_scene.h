@@ -31,6 +31,7 @@
 #include <renderer/internal/vulkan/vulkan_render_queue.h>	 		// for vulkan_render_queue_type_t
 #include <renderer/internal/vulkan/vulkan_render_object.h> 			// for vulkan_render_object_type_t
 #include <renderer/internal/vulkan/vulkan_handles.h> 				// for vulkan_render_scene_handle_t
+#include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/dictionary.h>
 
 typedef enum vulkan_render_scene_preset_type_t
@@ -50,9 +51,13 @@ typedef struct vulkan_render_scene_create_info_t
 
 typedef struct vulkan_render_scene_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	dictionary_t queues;
 } vulkan_render_scene_t;
+
+#define VULKAN_RENDER_SCENE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
+#define VULKAN_RENDER_SCENE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
 
 /* constructors & destructors */
 RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator);

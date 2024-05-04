@@ -42,6 +42,7 @@ RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new(memory_allocator_t* al
 {
 	vulkan_render_pass_t* render_pass = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS, vulkan_render_pass_t);
 	memzero(render_pass, vulkan_render_pass_t);
+	VULKAN_OBJECT_INIT(render_pass, VULKAN_OBJECT_TYPE_RENDER_PASS, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	return render_pass;
 }
 
@@ -82,7 +83,7 @@ UNUSED_FUNCTION static VkImageLayout get_attachment_layout(VkFormat format)
 
 RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_t OUT render_pass)
 {
-	memzero(render_pass, vulkan_render_pass_t);
+	VULKAN_OBJECT_MEMZERO(render_pass, vulkan_render_pass_t);
 
 	render_pass->renderer = renderer;
 	render_pass->subpass_count = create_info->subpass_count;
@@ -139,12 +140,16 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	}
 
 	/* create render set layout */
+	VULKAN_OBJECT_INIT(&render_pass->render_set_layout, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, create_info->render_set_bindings, create_info->render_set_binding_count, &render_pass->render_set_layout);
 
 	// create sub render set layouts
 	render_pass->sub_render_set_layouts = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_DESCRIPTOR_SET_LAYOUT_ARRAY, vulkan_descriptor_set_layout_t, create_info->subpass_count);
 	for(int i = 0; i < create_info->subpass_count; i++)
+	{
+		VULKAN_OBJECT_INIT(&render_pass->sub_render_set_layouts[i], VULKAN_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 		vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, create_info->subpasses[i].sub_render_set_bindings, create_info->subpasses[i].sub_render_set_binding_count, &render_pass->sub_render_set_layouts[i]);
+	}
 }
 
 RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
@@ -165,10 +170,17 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 
 RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass)
 {
+	for(u32 i = 0; i < render_pass->subpass_count; i++)
+		vulkan_descriptor_set_layout_release_resources(&render_pass->sub_render_set_layouts[i]);
+	if(render_pass->subpass_count > 0)
+		memory_allocator_dealloc(render_pass->renderer->allocator, render_pass->sub_render_set_layouts);
+
+	vulkan_descriptor_set_layout_release_resources(&render_pass->render_set_layout);
+
 	memory_allocator_dealloc(render_pass->renderer->allocator, render_pass->vo_clear_values);
 	memory_allocator_dealloc(render_pass->renderer->allocator, render_pass->vo_formats);
-	// TODO
-	// heap_free(render_pass);
+	if(VULKAN_OBJECT_IS_INTERNAL(render_pass))
+		memory_allocator_dealloc(render_pass->renderer->allocator, render_pass);
 }
 
 RENDERER_API void vulkan_render_pass_set_clear_indirect(vulkan_render_pass_t* render_pass, color_t color, float depth, VkClearValue* indirect_buffer)

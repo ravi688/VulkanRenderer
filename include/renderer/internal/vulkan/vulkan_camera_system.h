@@ -31,13 +31,17 @@
 #include <renderer/internal/vulkan/vulkan_handles.h>
 #include <renderer/internal/vulkan/vulkan_camera.h>
 #include <renderer/internal/vulkan/vulkan_attachment.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_camera_system_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	library_t lib;
 } vulkan_camera_system_t;
 
+#define VULKAN_CAMERA_SYSTEM(ptr) VULKAN_OBJECT_UP_CAST(vulkan_camera_system_t*, VULKAN_OBJECT_TYPE_CAMERA_SYSTEM, ptr)
+#define VULKAN_CAMERA_SYSTEM_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_camera_system_t*, VULKAN_OBJECT_TYPE_CAMERA_SYSTEM, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

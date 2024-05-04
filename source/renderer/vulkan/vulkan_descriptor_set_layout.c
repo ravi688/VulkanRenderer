@@ -50,6 +50,7 @@ RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_new(me
 {
 	vulkan_descriptor_set_layout_t* layout = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_DESCRIPTOR_SET_LAYOUT, vulkan_descriptor_set_layout_t);
 	memzero(layout, vulkan_descriptor_set_layout_t);
+	VULKAN_OBJECT_INIT(layout, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 	layout->vo_handle = VK_NULL_HANDLE;
 	return layout;
 }
@@ -129,7 +130,7 @@ RENDERER_API vulkan_descriptor_set_layout_t* vulkan_descriptor_set_layout_create
 
 RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc(vulkan_renderer_t* renderer, VkDescriptorSetLayoutBinding* bindings, u32 binding_count, vulkan_descriptor_set_layout_t OUT layout)
 {
-	memzero(layout, vulkan_descriptor_set_layout_t);
+	VULKAN_OBJECT_MEMZERO(layout, vulkan_descriptor_set_layout_t);
 	
 	VkDescriptorSetLayoutCreateInfo layout_create_info =
 	{
@@ -144,6 +145,12 @@ RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc(vulkan_renderer_t
 	layout->vo_handle = set_layout;
 }
 
+RENDERER_API void vulkan_descriptor_set_layout_create_no_alloc_ext(vulkan_renderer_t* renderer, VkDescriptorSetLayoutBinding* bindings, u32 binding_count, vulkan_descriptor_set_layout_t OUT layout)
+{
+	VULKAN_OBJECT_INIT(layout, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
+	vulkan_descriptor_set_layout_create_no_alloc(renderer, bindings, binding_count, layout);
+}
+
 RENDERER_API void vulkan_descriptor_set_layout_destroy(vulkan_descriptor_set_layout_t* layout)
 {
 	if(layout->vo_handle != VK_NULL_HANDLE)
@@ -155,7 +162,7 @@ RENDERER_API void vulkan_descriptor_set_layout_destroy(vulkan_descriptor_set_lay
 
 RENDERER_API void vulkan_descriptor_set_layout_release_resources(vulkan_descriptor_set_layout_t* layout)
 {
-	// TODO
-	// heap_free(layout);
+	if(VULKAN_OBJECT_IS_INTERNAL(layout))
+		memory_allocator_dealloc(layout->renderer->allocator, layout);
 }
 

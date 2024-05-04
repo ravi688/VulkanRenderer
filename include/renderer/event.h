@@ -27,6 +27,7 @@
 
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
+#include <renderer/object.h>
 
 /* upon calling event_publish() function, the event iterates through all the handlers subscribed
  * and calls one-by-one.
@@ -107,6 +108,7 @@ typedef struct string_builder_t string_builder_t;
 
 typedef struct event_t
 {
+	__OBJECT__;
 	/* pointer to the memory allocator */
 	memory_allocator_t* allocator;
 	/* pointer to the string builder (created internally) */
@@ -140,12 +142,16 @@ typedef struct event_t
 	bool is_dump_only;
 } event_t;
 
+#define EVENT(ptr) OBJECT_UP_CAST(event_t*, OBJECT_TYPE_EVENT, ptr)
+#define EVENT_CONST(ptr) OBJECT_UP_CAST(const event_t*, OBJECT_TYPE_EVENT, ptr)
+
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
 RENDERER_API event_t* event_new(memory_allocator_t* allocator);
 RENDERER_API event_t* event_create(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name));
 RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event);
+RENDERER_API void event_create_no_alloc_ext(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event);
 RENDERER_API void event_destroy(event_t* event);
 RENDERER_API void event_release_resources(event_t* event);
 

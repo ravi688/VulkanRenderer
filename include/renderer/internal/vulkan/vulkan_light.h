@@ -29,6 +29,7 @@
 #include <renderer/defines.h>
 #include <renderer/struct_descriptor.h>
 #include <renderer/internal/vulkan/vulkan_buffer.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 #include <hpml/vec3.h>
 #include <hpml/mat4.h>
@@ -48,6 +49,7 @@ typedef enum vulkan_light_type_t
 
 typedef struct vulkan_light_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	vulkan_buffer_t buffer;
 	struct_descriptor_t struct_definition;
@@ -72,24 +74,36 @@ typedef struct vulkan_light_t
 
 } vulkan_light_t;
 
+#define VULKAN_LIGHT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_light_t*, VULKAN_OBJECT_TYPE_LIGHT, ptr)
+#define VULKAN_LIGHT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_light_t*, VULKAN_OBJECT_TYPE_LIGHT, ptr)
+
 typedef vulkan_light_t vulkan_ambient_light_t;
 
 typedef struct vulkan_directional_light_t
 {
-	vulkan_light_t base;
+	__VULKAN_OBJECT__;
+	DERIVE_FROM(vulkan_light_t);
 	struct_field_handle_t direction_handle;
 	vec3_t direction;
 } vulkan_directional_light_t;
 
+#define VULKAN_DIRECTIONAL_LIGHT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_directional_light_t*, VULKAN_OBJECT_TYPE_DIRECTIONAL_LIGHT, ptr)
+#define VULKAN_DIRECTIONAL_LIGHT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_directional_light_t*, VULKAN_OBJECT_TYPE_DIRECTIONAL_LIGHT, ptr)
+
 typedef struct vulkan_point_light_t
 {
-	vulkan_light_t base;
+	__VULKAN_OBJECT__;
+	DERIVE_FROM(vulkan_light_t);
 	struct_field_handle_t position_handle;
 } vulkan_point_light_t;
 
+#define VULKAN_POINT_LIGHT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_point_light_t*, VULKAN_OBJECT_TYPE_POINT_LIGHT, ptr)
+#define VULKAN_POINT_LIGHT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_point_light_t*, VULKAN_OBJECT_TYPE_POINT_LIGHT, ptr)
+
 typedef struct vulkan_spot_light_t
 {
-	vulkan_light_t base;
+	__VULKAN_OBJECT__;
+	DERIVE_FROM(vulkan_light_t);
 	struct_field_handle_t angle_handle;
 	struct_field_handle_t direction_handle;
 	struct_field_handle_t position_handle;
@@ -97,6 +111,8 @@ typedef struct vulkan_spot_light_t
 	vec3_t direction;
 } vulkan_spot_light_t;
 
+#define VULKAN_SPOT_LIGHT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_spot_light_t*, VULKAN_OBJECT_TYPE_SPOT_LIGHT, ptr)
+#define VULKAN_SPOT_LIGHT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_spot_light_t*, VULKAN_OBJECT_TYPE_SPOT_LIGHT, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
