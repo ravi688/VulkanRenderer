@@ -281,8 +281,11 @@ static void write_render_pass_descriptors(vulkan_camera_t* camera, vulkan_render
 		u32 count = slot->create_info->render_set_binding_count;
 		vulkan_shader_resource_description_t* render_set_bindings = slot->create_info->render_set_bindings;
 		for(u32 i = 0; i < count; i++)
+		{
+			_debug_assert__(slot->input.input_attachments[i] >= prev_camera_pass->supplementary_attachment_bucket_count);
 			vulkan_descriptor_set_write_texture(&descriptor_sets->render_set, render_set_bindings[i].binding_number,
 				CAST_TO(vulkan_texture_t*, prev_camera_pass->allocated_attachments[slot->input.input_attachments[i] - prev_camera_pass->supplementary_attachment_bucket_count]));
+		}
 	}
 
 	// write subpass descriptions
@@ -296,8 +299,11 @@ static void write_render_pass_descriptors(vulkan_camera_t* camera, vulkan_render
 		u32 binding_count = slot->create_info->subpasses[i].sub_render_set_binding_count;
 		vulkan_shader_resource_description_t* sub_render_set_bindings = slot->create_info->subpasses[i].sub_render_set_bindings;
 		for(u32 j = 0; j < binding_count; j++)
+		{
+			_debug_assert__(slot->input.subpass_inputs[i].input_attachments[j] >= camera_pass->supplementary_attachment_bucket_count);
 			vulkan_descriptor_set_write_texture(&descriptor_sets->sub_render_sets[i], sub_render_set_bindings[j].binding_number,
 				CAST_TO(vulkan_texture_t*, camera_pass->allocated_attachments[slot->input.subpass_inputs[i].input_attachments[j] - camera_pass->supplementary_attachment_bucket_count]));
+		}
 	}
 }
 
@@ -377,7 +383,7 @@ static void recopy_supplementary_attachments(void* _window, void* user_data)
 	/* for each camera render pass */
 	u32 pass_count = buf_get_element_count(&camera->render_passes);
 	for(u32 i = 0; i < pass_count; i++)
-		camera_render_pass_recopy_supplementary_attachments(camera->renderer->allocator, CAST_TO(vulkan_camera_render_pass_t*, user_data), &copy_info);
+		camera_render_pass_recopy_supplementary_attachments(camera->renderer->allocator, buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i), &copy_info);
 
 	debug_log_info("Supplementary attachments copy success");
 }

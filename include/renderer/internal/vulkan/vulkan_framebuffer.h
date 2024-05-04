@@ -49,6 +49,7 @@ typedef struct vulkan_framebuffer_create_info_t
 
 typedef struct vulkan_framebuffer_t
 {
+	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	VkFramebuffer vo_handle;
 
