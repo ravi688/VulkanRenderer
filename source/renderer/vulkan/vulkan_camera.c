@@ -586,6 +586,8 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 	{
 		vulkan_framebuffer_destroy(&camera->depth_write_framebuffers[i]);
 		vulkan_framebuffer_release_resources(&camera->depth_write_framebuffers[i]);
+		vulkan_framebuffer_destroy(&camera->depth_clear_framebuffers[i]);
+		vulkan_framebuffer_release_resources(&camera->depth_clear_framebuffers[i]);
 	}
 	
 	/* destroy the render sets */
