@@ -150,8 +150,8 @@ typedef struct object_t
 	bool is_next;
 } object_t;
 
-#define OBJECT(typed_ptr) REINTERPRET_CAST(object_t*, typed_ptr)
-#define OBJECT_CONST(typed_ptr) REINTERPRET_CONST_CAST(const object_t*, typed_ptr)
+#define OBJECT(typed_ptr) OBJECT_VOID(typed_ptr)
+#define OBJECT_CONST(typed_ptr) OBJECT_CONST_VOID(typed_ptr)
 #define OBJECT_VOID(void_ptr) CAST_TO(object_t*, void_ptr)
 #define OBJECT_CONST_VOID(void_ptr) CAST_TO(const object_t*, void_ptr)
 

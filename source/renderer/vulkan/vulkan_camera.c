@@ -189,7 +189,7 @@ static void set_render_target_size(vulkan_camera_t* camera, u32 width, u32 heigh
 static void recalculate_render_target_size(void* _window, void* user_data)
 {
 	AUTO window = CAST_TO(render_window_t*, _window);
-	set_render_target_size(CAST_TO(vulkan_camera_t*, user_data), window->width, window->height);
+	set_render_target_size(VULKAN_CAMERA(user_data), window->width, window->height);
 }
 
 CAN_BE_UNUSED_FUNCTION static bool is_default_depth_attachment(vulkan_camera_t* camera)
@@ -199,7 +199,7 @@ CAN_BE_UNUSED_FUNCTION static bool is_default_depth_attachment(vulkan_camera_t* 
 
 static bool is_depth_render_target(vulkan_camera_t* camera)
 {
-	return (camera->depth_render_target != NULL) && (CAST_TO(vulkan_attachment_t*, camera->depth_render_target) == camera->current_depth_attachment);
+	return (camera->depth_render_target != NULL) && IS_PTR_EQUAL(VULKAN_TEXTURE(camera->depth_render_target), camera->current_depth_attachment);
 }
 
 static bool is_image_size_equal_to(vulkan_image_t* image, u32 width, u32 height)
@@ -257,7 +257,7 @@ static void resize_default_depth_attachment(vulkan_camera_t* camera, u32 width, 
 
 static void recreate_attachments(void* window, void* user_data)
 {
-	AUTO camera = CAST_TO(vulkan_camera_t*, user_data);
+	AUTO camera = VULKAN_CAMERA(user_data);
 
 	/* recreate the allocated attachments*/
 	recreate_allocated_attachments(camera);
@@ -309,7 +309,7 @@ static void write_render_pass_descriptors(vulkan_camera_t* camera, vulkan_render
 
 static void rewrite_descriptors(void* window, void* user_data)
 {
-	vulkan_camera_t* camera = CAST_TO(vulkan_camera_t*, user_data);
+	vulkan_camera_t* camera = VULKAN_CAMERA(user_data);
 
 	vulkan_render_pass_graph_t* pass_graph = &camera->renderer->render_pass_pool->pass_graph;
 	vulkan_render_pass_graph_node_handle_list_t* pass_node_handles = vulkan_render_pass_graph_get_or_build_optimized_path(pass_graph);
@@ -369,7 +369,7 @@ RENDERER_API void camera_render_pass_recopy_supplementary_attachments(memory_all
 
 static void recopy_supplementary_attachments(void* _window, void* user_data)
 {
-	AUTO camera = CAST_TO(vulkan_camera_t*, user_data);
+	AUTO camera = VULKAN_CAMERA(user_data);
 
 	/* copy information */
 	vulkan_supplementary_attachments_copy_info_t copy_info = 
@@ -392,7 +392,7 @@ static void create_or_recreate_framebuffers_for_camera_pass(vulkan_camera_t* cam
 
 static void recreate_framebuffers(void* _window, void* user_data)
 {
-	AUTO camera = CAST_TO(vulkan_camera_t*, user_data);
+	AUTO camera = VULKAN_CAMERA(user_data);
 
 	/* for each pass */
 	u32 pass_count = buf_get_element_count(&camera->render_passes);
