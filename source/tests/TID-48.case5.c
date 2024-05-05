@@ -155,6 +155,12 @@ TEST_ON_TERMINATE(TID_48_CASE_5)
 {
 	mesh_destroy(this->mesh);
 	mesh_release_resources(this->mesh);
+	mesh_destroy(this->quadMesh);
+	mesh_release_resources(this->quadMesh);
+	render_texture_destroy(this->depth_texture);
+	render_texture_release_resources(this->depth_texture);
+	render_texture_destroy(this->color_texture);
+	render_texture_release_resources(this->color_texture);
 	light_destroy(this->light);
 	light_release_resources(this->light);
 	render_scene_destroy(this->scene);
