@@ -1351,7 +1351,6 @@ static void destroy_pipeline_descriptions(memory_allocator_t* allocator, vulkan_
 	{
 		AUTO description = &descriptions[i];
 		_debug_assert__(description->settings != NULL);
-		memory_allocator_dealloc(allocator, description->settings);
 		if(description->settings->colorblend.attachmentCount > 0)
 			memory_allocator_dealloc(allocator, CAST_TO(VkPipelineColorBlendAttachmentState*, description->settings->colorblend.pAttachments));
 		if(description->settings->viewport.scissorCount > 0)
@@ -1362,6 +1361,7 @@ static void destroy_pipeline_descriptions(memory_allocator_t* allocator, vulkan_
 			destroy_spirv_code(allocator, &description->spirv_codes[i]);
 		if(description->spirv_code_count > 0)
 			memory_allocator_dealloc(allocator, description->spirv_codes);
+		memory_allocator_dealloc(allocator, description->settings);
 	}
 	if(description_count > 0)
 		memory_allocator_dealloc(allocator, descriptions);
