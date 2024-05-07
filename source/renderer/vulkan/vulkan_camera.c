@@ -364,7 +364,8 @@ RENDERER_API void camera_render_pass_recopy_supplementary_attachments(memory_all
 		render_pass->vo_supplementary_attachments = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, render_pass->supplementary_attachment_count);
 	}
 	_debug_assert__((render_pass->supplementary_attachment_bucket_count * render_pass->supplementary_attachment_bucket_depth) == render_pass->supplementary_attachment_count);
-	memcopyv(render_pass->vo_supplementary_attachments, info->vo_supplementary_attachments, VkImageView, render_pass->supplementary_attachment_count);
+	if(render_pass->supplementary_attachment_count > 0)
+		memcopyv(render_pass->vo_supplementary_attachments, info->vo_supplementary_attachments, VkImageView, render_pass->supplementary_attachment_count);
 }
 
 static void recopy_supplementary_attachments(void* _window, void* user_data)
@@ -383,7 +384,13 @@ static void recopy_supplementary_attachments(void* _window, void* user_data)
 	/* for each camera render pass */
 	u32 pass_count = buf_get_element_count(&camera->render_passes);
 	for(u32 i = 0; i < pass_count; i++)
-		camera_render_pass_recopy_supplementary_attachments(camera->renderer->allocator, buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i), &copy_info);
+	{
+		AUTO pass = buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i);
+		/* only update the swapchain images for render passes which write to them, 
+		 * if they don't, meaning no swapchain index, then don't update/add.*/
+		if(pass->swapchain_attachment_index != U32_MAX)
+			camera_render_pass_recopy_supplementary_attachments(camera->renderer->allocator, pass, &copy_info);
+	}
 
 	debug_log_info("Supplementary attachments copy success");
 }
@@ -1551,6 +1558,8 @@ RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vu
 		{
 			/* if this attachment is a depth attachment (format = VK_FORMAT_D32_SFLOAT) */
 			case VK_FORMAT_D32_SFLOAT:
+			{
+				attachment_create_info.type = VULKAN_ATTACHMENT_TYPE_DEPTH;
 				pass->depth_attachment_index = i + ((pass->swapchain_attachment_index != U32_MAX) ? 1 : 0);
 				if(attachment_create_info.next_pass_usage != VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED)
 				{
@@ -1572,12 +1581,18 @@ RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vu
 					pass->allocated_attachments[i] = NULL;
 					break;
 				}
-				/* otherwise fall through to create separate attachment */
+				/* otherwise create separate depth attachment */
+				pass->allocated_attachments[i] = vulkan_attachment_create(renderer, &attachment_create_info);
+				break;
+			}
 
 			/* otherwise proceed as usual */
 			default: 
+			{
+				attachment_create_info.type = VULKAN_ATTACHMENT_TYPE_COLOR;
 				pass->allocated_attachments[i] = vulkan_attachment_create(renderer, &attachment_create_info);
 				break;
+			}
 		}
 	}
 
