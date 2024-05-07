@@ -111,7 +111,6 @@ RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_p
 	{
 		vulkan_render_pass_pool_slot_t* slot = buf_get_ptr_at(&pool->slots, i);
 		vulkan_render_pass_release_resources(slot->render_pass);
-		vulkan_render_pass_create_info_deep_free(pool->renderer, slot->create_info);
 		if(slot->create_info->subpass_count > 0)
 		{
 			for(u32 i = 0; i < slot->create_info->subpass_count; i++)
@@ -121,6 +120,7 @@ RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_p
 		}
 		if(slot->input.input_attachment_count > 0)
 			memory_allocator_dealloc(pool->renderer->allocator, slot->input.input_attachments);
+		vulkan_render_pass_create_info_deep_free(pool->renderer, slot->create_info);
 	}
 	buf_free(&pool->relocation_table);
 	buf_free(&pool->slots);
