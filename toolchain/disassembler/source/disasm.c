@@ -40,7 +40,7 @@ INLINE static u32 min(u32 v1, u32 v2)
 	return (v1 < v2) ? v1 : v2;
 }
 
-static int safe_strncmp(const char* str1, const char* const str2, u32 len)
+CAN_BE_UNUSED_FUNCTION static int safe_strncmp(const char* str1, const char* const str2, u32 len)
 {
 	int result = strncmp(str1, str2, min(strlen(str2), len));
 	return result;
@@ -327,7 +327,7 @@ static void disasm_pipeline(binary_reader_t* reader, BUFFER* str)
 		print the human-readable output to stdout.
 	 */
 	const gfx_pipeline_t* pipeline = binary_reader_read(reader, gfx_pipeline_t);	
-	const void* satellite_data = __binary_reader_read(reader, gfx_pipeline_get_satelite_size(pipeline));
+	CAN_BE_UNUSED_VARIABLE const void* satellite_data = __binary_reader_read(reader, gfx_pipeline_get_satelite_size(pipeline));
 }
 
 static void disasm_pipeline_description(binary_reader_t* reader, BUFFER* str)
@@ -412,7 +412,7 @@ static void disasm_renderpasses(binary_reader_t* reader, BUFFER* str)
 	u32 count = binary_reader_u32(reader);
 	_printf(str, "count: %lu\n", count);
 	attachment_type_t* prev_attachments = NULL;
-	u32 prev_attachment_count = U32_MAX;
+	CAN_BE_UNUSED_VARIABLE u32 prev_attachment_count = U32_MAX;
 	for(u32 i = 0; i < count; i++)
 	{
 		_printf(str, "-----Begin Render Pass %lu-------\n", i);
