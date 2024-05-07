@@ -67,6 +67,8 @@ RENDERER_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer
 
 	memzero(buffer, buffer2d_t);
 
+	buffer->allocator = allocator;
+	
 	buffer->is_backed_buffer_owner = false,
 	buffer->resize_mode = create_info->resize_mode,
 	buffer->filled_rects = __hash_table_create(create_info->key_size,
@@ -340,10 +342,7 @@ RENDERER_API bool buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value
 {
 	static u32 counter = 0;
 	static u32 colors_size = SIZEOF_ARRAY(filled_colors);
-	if(counter >= colors_size)
-		counter = 0;
-	else
-		++counter;
+	counter = (1U + counter) % colors_size;
 	return buffer2d_push(buffer, key, value, width, height, filled_colors[counter]);
 }
 

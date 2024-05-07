@@ -88,12 +88,16 @@ static void setup_material_resources(vulkan_material_t* material)
 				};
 				VULKAN_OBJECT_INIT(&resource->buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 				vulkan_buffer_create_no_alloc(material->renderer, &create_info, &resource->buffer);
+				resource->has_buffer = true;
 				vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, &resource->buffer);
 			}
 			/* otherwise don't create vulkan uniform buffer for it */
 		}
 		else
+		{
+			resource->has_buffer = false;
 			resource->index = 0xFFFF;
+		}
 	}
 	material->uniform_resources = uniform_resources;
 	material->uniform_resource_count = count;
@@ -131,7 +135,7 @@ RENDERER_API void vulkan_material_destroy(vulkan_material_t* material)
 {
 	vulkan_descriptor_set_destroy(&material->material_set);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
-		if(material->uniform_resources[i].index != 0xFFFF)
+		if(material->uniform_resources[i].has_buffer)
 			vulkan_buffer_destroy(&material->uniform_resources[i].buffer);
 }
 
@@ -759,6 +763,7 @@ RENDERER_API void vulkan_material_set_buffer(vulkan_material_t* material, const 
 		};
 		vulkan_buffer_create_no_alloc(material->renderer, &create_info, &uniform->buffer);
 		buffer = &uniform->buffer;
+		uniform->has_buffer = true;
 	}
 
 	/* write the descriptor */

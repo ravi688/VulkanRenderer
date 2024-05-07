@@ -86,6 +86,7 @@ RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor)
 RENDERER_API u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor)
 {
 	_debug_assert__(descriptor != NULL);
+	_debug_assert__(!struct_descriptor_is_variable_sized(descriptor));
 	return descriptor->size;
 }
 

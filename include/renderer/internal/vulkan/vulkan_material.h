@@ -53,6 +53,7 @@ typedef struct vulkan_material_field_handle_t
 
 typedef struct vulkan_uniform_resource_t
 {
+	bool has_buffer;
 	vulkan_buffer_t buffer;
 	u16 index;					// index of this resource in the list of resouce descriptors of this material
 } vulkan_uniform_resource_t;
