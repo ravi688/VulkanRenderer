@@ -79,6 +79,9 @@ typedef struct vulkan_vertex_buffer_t
 {
 	vulkan_buffer_ptr_t buffer;
 	u32 binding;
+	/* holds true if this vulkan buffer has been created internally by calling vulkan_buffer_destroy, 
+	 * this extra information is needed for graceful vulkan object deallocation */
+	bool is_internal;
 } vulkan_vertex_buffer_t;
 
 /* list of vulkan_vertex_buffer_t */
@@ -88,6 +91,9 @@ typedef struct vulkan_index_buffer_t
 {
 	vulkan_buffer_ptr_t buffer;
 	VkIndexType index_type;
+	/* holds true if this vulkan buffer has been created internally, otherwise false, i.e.
+	 * if the vulkan buffer has been set using vulkan_mesh_set_index_buffer */
+	bool is_internal;
 } vulkan_index_buffer_t;
 
 typedef struct vulkan_material_t vulkan_material_t;
