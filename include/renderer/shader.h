@@ -35,24 +35,32 @@
 	typedef vulkan_shader_create_info_t shader_create_info_t;
 	typedef vulkan_shader_handle_t shader_handle_t;
 	#define SHADER_HANDLE_INVALID VULKAN_SHADER_HANDLE_INVALID
+	#define SHADER(ptr) VULKAN_SHADER(ptr)
+	#define SHADER_CONST(ptr) VULKAN_SHADER_CONST(ptr)
 #elif RENDERER_OPENGL_DRIVER
 	#include <renderer/internal/opengl/opengl_shader.h>
 	typedef opengl_shader_t shader_t;
 	typedef opengl_shader_create_info_t shader_create_info_t;
 	typedef opengl_shader_handle_t shader_handle_t;
 	#define SHADER_HANDLE_INVALID OPENGL_SHADER_HANDLE_INVALID
+	#define SHADER(ptr) OPENGL_SHADER(ptr)
+	#define SHADER_CONST(ptr) OPENGL_SHADER_CONST(ptr)
 #elif RENDERER_DIRECTX_DRIVER
 	#include <renderer/internal/directx/directx_shader.h>
 	typedef directx_shader_t shader_t;
 	typedef directx_shader_create_info_t shader_create_info_t;
 	typedef directx_shader_handle_t shader_handle_t;
 	#define SHADER_HANDLE_INVALID DIRECTX_SHADER_HANDLE_INVALID
+	#define SHADER(ptr) DIRECTX_SHADER(ptr)
+	#define SHADER_CONST(ptr) DIRECTX_SHADER_CONST(ptr)
 #elif RENDERER_METAL_DRIVER
 	#include <renderer/internal/metal/metal_shader.h>
 	typedef metal_shader_t shader_t;
 	typedef metal_shader_create_info_t shader_create_info_t;
 	typedef metal_shader_handle_t shader_handle_t;
 	#define SHADER_HANDLE_INVALID METAL_SHADER_HANDLE_INVALID
+	#define SHADER(ptr) METAL_SHADER(ptr)
+	#define SHADER_CONST(ptr) METAL_SHADER_CONST(ptr)
 #endif
 
 BEGIN_CPP_COMPATIBLE
