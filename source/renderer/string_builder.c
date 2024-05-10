@@ -34,8 +34,8 @@ RENDERER_API string_builder_t* string_builder_create(memory_allocator_t* allocat
 {
 	string_builder_t* builder = (allocator == NULL) ? heap_new(string_builder_t) : memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRING_BUILDER, string_builder_t);
 	builder->allocator = allocator;
-	builder->string_buffer = buf_create(sizeof(char), capacity, 0);
-	builder->indentation_buffer = buf_create(sizeof(char), 1, 0);
+	builder->string_buffer = (allocator != NULL) ? memory_allocator_buf_create(allocator, sizeof(char), capacity, 0) : buf_create(sizeof(char), capacity, 0);
+	builder->indentation_buffer = (allocator != NULL) ? memory_allocator_buf_create(allocator, sizeof(char), 1, 0) : buf_create(sizeof(char), 1, 0);
 	return builder;
 }
 
@@ -77,7 +77,7 @@ RENDERER_API void string_builder_append(string_builder_t* builder, const char* c
 
 	/* format the string and put that into the buffer */
 	va_start(args, format);
-	CAN_BE_UNUSED_FUNCTION u32 written_size = vsnprintf(CAST_TO(char*, ptr + indentation_level), required_size + 1, format, args);
+	CAN_BE_UNUSED_VARIABLE u32 written_size = vsnprintf(CAST_TO(char*, ptr + indentation_level), required_size + 1, format, args);
 	_debug_assert__(written_size == required_size);
 	va_end(args);
 
@@ -88,6 +88,11 @@ RENDERER_API void string_builder_append(string_builder_t* builder, const char* c
 RENDERER_API void string_builder_append_null(string_builder_t* builder)
 {
 	buf_push_null(&builder->string_buffer);
+}
+
+RENDERER_API void string_builder_append_newline(string_builder_t* builder)
+{
+	buf_push_char(&builder->indentation_buffer, '\n');
 }
 
 RENDERER_API void string_builder_increment_indentation(string_builder_t* builder)

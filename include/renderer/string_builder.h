@@ -45,19 +45,30 @@ BEGIN_CPP_COMPATIBLE
 RENDERER_API string_builder_t* string_builder_create(memory_allocator_t* allocator, u32 capacity);
 RENDERER_API void string_builder_destroy(string_builder_t* builder);
 
+/* returns the internal string buffer */
+RENDERER_API char* string_builder_get_str(string_builder_t* builder);
+
 /* appends the formatted string to the internal character buffer */
 RENDERER_API void string_builder_append(string_builder_t* builder, const char* const format, ...);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void string_builder_append_builder(string_builder_t* builder, string_builder_t* _builder)
+{
+	string_builder_append(builder, string_builder_get_str(_builder));
+}
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void string_builder_append_builder_destroy(string_builder_t* builder, string_builder_t* _builder)
+{
+	string_builder_append_builder(builder, _builder);
+	string_builder_destroy(_builder);
+}
 
 /* appends null termination character, sometimes we don't need to append that so lets keep it explicit  not default */
 RENDERER_API void string_builder_append_null(string_builder_t* builder);
+RENDERER_API void string_builder_append_newline(string_builder_t* builder);
 
 /* increments the indentation for the subsequent calls to string_builder_append() */
 RENDERER_API void string_builder_increment_indentation(string_builder_t* builder);
 /* decrements the indentiation for the subsequent calls to the string_builder_append() */
 RENDERER_API void string_builder_decrement_indentation(string_builder_t* builder);
 
-/* returns the internal string buffer */
-RENDERER_API char* string_builder_get_str(string_builder_t* builder);
 
 /* clears the string buffer and indentation buffer */
 RENDERER_API void string_builder_clear(string_builder_t* builder);
