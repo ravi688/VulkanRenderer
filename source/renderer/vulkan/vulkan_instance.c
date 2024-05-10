@@ -86,7 +86,11 @@ RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* render
 		else
 			DEBUG_LOG_WARNING("Layer %s is not supported, ignored", layers[i]);
 	}
-	memory_allocator_dealloc(renderer->allocator, layer_filter);
+	if(layer_count > 0)
+	{
+		_debug_assert__(layer_filter != NULL);
+		memory_allocator_dealloc(renderer->allocator, layer_filter);
+	}
 	
 	VkInstanceCreateInfo create_info = 
 	{
