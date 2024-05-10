@@ -5,7 +5,7 @@
 	such as toolchains written by the same author) is a software to render 
 	2D & 3D geometries by writing C/C++ code and shaders.
 
-	File: vulkan_object.h is a part of VulkanRenderer
+	File: object.h is a part of VulkanRenderer
 
 	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh
 
