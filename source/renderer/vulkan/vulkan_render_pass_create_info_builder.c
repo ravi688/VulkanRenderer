@@ -150,7 +150,10 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_supplementary_attac
 		build_info->is_supplementary_attachments_internal = false;
 	}
 	if(create_info->framebuffer_layout_description.supplementary_attachment_count > 0)
+	{
 		build_info->vo_supplementary_attachments = memory_allocator_alloc_obj_array(builder->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_IMAGE_VIEW_ARRAY, VkImageView, create_info->framebuffer_layout_description.supplementary_attachment_count);
+		build_info->is_supplementary_attachments_internal = true;
+	}
 	else
 		build_info->vo_supplementary_attachments = NULL;
 }
