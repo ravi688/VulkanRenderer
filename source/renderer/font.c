@@ -92,7 +92,7 @@ RENDERER_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 le
 	else
 		font_set_char_size(font, 11);
 
-	font->glyph_info_table = hash_table_create(pair_t(utf32_t, u32), font_glyph_info_t, 128, utf32_u32_equal_to, utf32_u32_hash);
+	font->glyph_info_table = hash_table_create(renderer->allocator, pair_t(utf32_t, u32), font_glyph_info_t, 128, utf32_u32_equal_to, utf32_u32_hash);
 }
 
 RENDERER_API font_t* font_load_and_create(renderer_t* renderer, const char* file_name)

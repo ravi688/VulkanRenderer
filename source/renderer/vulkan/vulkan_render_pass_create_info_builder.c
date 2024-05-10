@@ -29,6 +29,10 @@ RENDERER_API void vulkan_render_pass_create_info_builder_destroy(vulkan_render_p
 		buf_free(&build_info->attachment_usages);
 		if(build_info->is_supplementary_attachments_internal)
 			memory_allocator_dealloc(builder->allocator, build_info->vo_supplementary_attachments);
+		if((build_info->render_set_bindings_builder != NULL) && build_info->is_destroy_render_set_bindings_builder)
+			vulkan_shader_resource_description_builder_destroy(build_info->render_set_bindings_builder);
+		if((build_info->subpasses_builder != NULL) && build_info->is_destroy_subpasses_builder)
+			vulkan_subpass_create_info_builder_destroy(build_info->subpasses_builder);
 	}
 	buf_free(&builder->build_info_array);
 	memory_allocator_dealloc(builder->allocator, builder);
@@ -180,10 +184,11 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings
 	build_info->is_use_render_set_bindings_builder = false;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder)
+RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->render_set_bindings_builder = srd_builder;
+	build_info->is_destroy_render_set_bindings_builder = is_destroy;
 	build_info->is_use_render_set_bindings_builder = true;
 }
 
@@ -196,10 +201,11 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses(vulkan_re
 	build_info->is_use_subpasses_builder = false;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_builder_t* sci_builder)
+RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_builder_t* sci_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->subpasses_builder = sci_builder;
+	build_info->is_destroy_subpasses_builder = is_destroy;
 	build_info->is_use_subpasses_builder = true;
 }
 

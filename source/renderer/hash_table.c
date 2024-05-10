@@ -26,7 +26,7 @@
 #include <renderer/hash_table.h>
 #include <renderer/memory_allocator.h> // stack_alloc
 
-RENDERER_API hash_table_t __hash_table_create(u32 key_size, u32 value_size, u32 capacity, comparer_t key_comparer, hash_function_t key_hash_function)
+RENDERER_API hash_table_t __hash_table_create(memory_allocator_t* allocator, u32 key_size, u32 value_size, u32 capacity, comparer_t key_comparer, hash_function_t key_hash_function)
 {
 	hash_table_t table =
 	{
@@ -35,7 +35,7 @@ RENDERER_API hash_table_t __hash_table_create(u32 key_size, u32 value_size, u32 
 		.capacity = capacity,
 		.get_hash = key_hash_function,
 		.is_equal = key_comparer,
-		.bucket_handles = buf_create(sizeof(sub_buffer_handle_t), capacity, 0)
+		.bucket_handles = (allocator != NULL) ? memory_allocator_buf_create(allocator, sizeof(sub_buffer_handle_t), capacity, 0) : buf_create(sizeof(sub_buffer_handle_t), capacity, 0)
 	};
 
 	/* create buffer to store hash table entries */

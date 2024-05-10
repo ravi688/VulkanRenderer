@@ -88,7 +88,7 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_destroy(vulkan_bitmap_glyph_
 
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_release_resources(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
-	event_destroy(texture->on_resize_event);
+	event_release_resources(texture->on_resize_event);
 	vulkan_host_buffered_texture_release_resources(BASE(texture));
 	if(VULKAN_OBJECT_IS_INTERNAL(texture))
 		memory_allocator_dealloc(texture->renderer->allocator, texture);

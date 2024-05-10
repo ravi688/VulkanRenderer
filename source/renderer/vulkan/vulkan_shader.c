@@ -736,7 +736,7 @@ static vulkan_render_pass_create_info_builder_t* convert_render_pass_description
 
 	_debug_assert__(pass->subpass_description_count > 0);
 	vulkan_subpass_create_info_builder_t* subpass_builder = vulkan_subpass_create_info_builder_create(renderer->allocator);
-	vulkan_render_pass_create_info_builder_set_subpasses_builder(builder, subpass_builder);
+	vulkan_render_pass_create_info_builder_set_subpasses_builder(builder, subpass_builder, true);
 	for(u32 i = 0; i < pass->subpass_count; i++)
 	{
 		vulkan_subpass_create_info_builder_add(subpass_builder, 1);

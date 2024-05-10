@@ -71,12 +71,12 @@ RENDERER_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer
 	
 	buffer->is_backed_buffer_owner = false,
 	buffer->resize_mode = create_info->resize_mode,
-	buffer->filled_rects = __hash_table_create(create_info->key_size,
+	buffer->filled_rects = __hash_table_create(allocator, create_info->key_size,
 									sizeof(filled_rect_info_t),
 									128,
 									create_info->key_comparer,
 									create_info->key_hash_function),
-	buffer->vacant_rects = hash_table_create(rect2d_info_key_t, rect2d_info_t, 512, u32_equal_to, u32_hash),
+	buffer->vacant_rects = hash_table_create(allocator, rect2d_info_key_t, rect2d_info_t, 512, u32_equal_to, u32_hash),
 	buffer->counter = 0;
 
 	/* create 2d view if not supplied by the user */
@@ -418,7 +418,7 @@ RENDERER_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_colu
 		.buffer = &old_backed_buffer
 	};
 	buffer2d_view_t old_view;
-	buffer2d_view_create_no_alloc(buffer->allocator, &view_create_info, &old_view);
+	buffer2d_view_create_no_alloc_ext(buffer->allocator, &view_create_info, &old_view);
 
 	/* resize the backed buffer (it will invalid the exisiting written data and vacant rects ) */
 	buffer2d_view_resize(view, num_rows, num_columns);
@@ -439,6 +439,7 @@ RENDERER_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_colu
 
 	/* destroy the old data */
 	buffer2d_view_destroy(&old_view);
+	buffer2d_view_release_resources(&old_view);
 	buf_free(&old_backed_buffer);
 }
 
@@ -500,7 +501,7 @@ RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name)
 	AUTO size = buffer->view->size;
 
 	/* allocate pixel data buffer */
-	buffer_t pixel_data = buf_create(sizeof(icolor3_t), IEXTENT2D_AREA(size), 0);
+	buffer_t pixel_data = memory_allocator_buf_create(buffer->allocator, sizeof(icolor3_t), IEXTENT2D_AREA(size), 0);
 
 	/* fill the pixel data buffer with WHITE color (as a background color) */
 	icolor3_t default_color = ICOLOR3_GREY;
@@ -518,7 +519,7 @@ RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name)
 		.buffer = &pixel_data
 	};
 	buffer2d_view_t view;
-	buffer2d_view_create_no_alloc(buffer->allocator, &view_create_info, &view);
+	buffer2d_view_create_no_alloc_ext(buffer->allocator, &view_create_info, &view);
 
 	/* write colors to the pixel data buffer */
 
@@ -533,6 +534,7 @@ RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name)
 
 	/* destroy pixel data */
 	buffer2d_view_destroy(&view);
+	buffer2d_view_release_resources(&view);
 	buf_free(&pixel_data);
 }
 #endif /* GLOBAL_DEBUG */

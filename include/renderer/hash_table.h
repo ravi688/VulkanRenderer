@@ -30,6 +30,7 @@
 #include <renderer/hash_function.h> // hash_function_t
 #include <renderer/multi_buffer.h> 	// multi_buffer_t
 
+typedef struct memory_allocator_t memory_allocator_t;
 typedef buffer_t /* sub_buffer_handle_t */ bucket_handle_list_t;
 
 typedef struct hash_table_t
@@ -55,8 +56,8 @@ typedef hash_table_t* hash_table_ptr_t;
 BEGIN_CPP_COMPATIBLE
 
 /* constructor and destructors */
-#define hash_table_create(Tkey, Tvalue, capacity, key_comparer, key_hash_function) __hash_table_create(sizeof(Tkey), sizeof(Tvalue), capacity, key_comparer, key_hash_function)
-RENDERER_API hash_table_t __hash_table_create(u32 key_size, u32 value_size, u32 capacity, comparer_t key_comparer, hash_function_t key_hash_function);
+#define hash_table_create(allocator, Tkey, Tvalue, capacity, key_comparer, key_hash_function) __hash_table_create(allocator, sizeof(Tkey), sizeof(Tvalue), capacity, key_comparer, key_hash_function)
+RENDERER_API hash_table_t __hash_table_create(memory_allocator_t* allocator, u32 key_size, u32 value_size, u32 capacity, comparer_t key_comparer, hash_function_t key_hash_function);
 RENDERER_API void hash_table_free(hash_table_t* table);
 
 /* clears the hash table and ready to be used again */

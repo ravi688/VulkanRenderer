@@ -30,6 +30,7 @@ RENDERER_API buffer2d_view_t* buffer2d_view_new(memory_allocator_t* allocator)
 {
 	buffer2d_view_t* view = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER2D_VIEW, buffer2d_view_t);
 	memzero(view, buffer2d_view_t);
+	OBJECT_INIT(view, OBJECT_TYPE_BUFFER2D_VIEW, OBJECT_NATIONALITY_INTERNAL);
 	return view;
 }
 
@@ -42,7 +43,7 @@ RENDERER_API buffer2d_view_t* buffer2d_view_create(memory_allocator_t* allocator
 
 RENDERER_API void buffer2d_view_create_no_alloc(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info, buffer2d_view_t OUT view)
 {
-	memzero(view, buffer2d_view_t);
+	OBJECT_MEMZERO(view, buffer2d_view_t);
 	view->allocator = allocator;
 	view->size = create_info->size;
 
@@ -57,7 +58,8 @@ RENDERER_API void buffer2d_view_destroy(buffer2d_view_t* view)
 
 RENDERER_API void buffer2d_view_release_resources(buffer2d_view_t* view)
 {
-	memory_allocator_dealloc(view->allocator, view);
+	if(OBJECT_IS_INTERNAL(view))
+		memory_allocator_dealloc(view->allocator, view);
 }
 
 RENDERER_API void buffer2d_view_set_buffer(buffer2d_view_t* view, buffer_t* buffer)

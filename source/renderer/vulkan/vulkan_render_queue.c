@@ -162,7 +162,11 @@ RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t*
 			// 	vulkan_render_object_destroy(DEREF_TO(vulkan_render_object_t*, buf_get_ptr_at(list, k)));
 
 			for(u32 k = 0; k < count2; k++)
-				vulkan_render_object_destroy(DEREF_TO(vulkan_render_object_t*, buf_peek_ptr(list)));
+			{
+				AUTO obj = DEREF_TO(vulkan_render_object_t*, buf_peek_ptr(list));
+				vulkan_render_object_destroy(obj);
+				vulkan_render_object_release_resources(obj);
+			}
 			buf_clear(list, NULL);
 		}
 	}

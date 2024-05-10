@@ -17,10 +17,13 @@ typedef struct vulkan_render_pass_create_info_build_info_t
 	buffer_t attachment_usages;
 	/* non-null if set by vulkan_render_pass_create_info_builder_add_render_set_bindings_builder() */
 	vulkan_shader_resource_description_builder_t* render_set_bindings_builder;
+	bool is_destroy_render_set_bindings_builder;
 	/* non-null if allocated by vulkan_render_pass_create_info_builder_set_supplementary_attachment_bucket() */
 	VkImageView* vo_supplementary_attachments;
 	/* non-null if set by vulkan_render_pass_create_info_builder_set_subpasses_builder*/
 	vulkan_subpass_create_info_builder_t* subpasses_builder;
+	bool is_destroy_subpasses_builder;
+
 	bool is_use_render_set_bindings_builder;
 	bool is_use_subpasses_builder;
 	bool is_supplementary_attachments_internal;
@@ -59,9 +62,9 @@ RENDERER_API void vulkan_render_pass_create_info_builder_add_attachment_descript
 RENDERER_API void vulkan_render_pass_create_info_builder_add_attachment_usages(vulkan_render_pass_create_info_builder_t* builder, vulkan_attachment_next_pass_usage_t* usages, u32 usage_count);
 
 RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_t* bindings, u32 binding_count);
-RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder);
+RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy);
 RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_t* infos, u32 info_count);
-RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_builder_t* sci_builder);
+RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_builder_t* sci_builder, bool is_destroy);
 RENDERER_API void vulkan_render_pass_create_info_builder_set_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count);
 
 

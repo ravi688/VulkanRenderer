@@ -14,7 +14,7 @@ RENDERER_API vulkan_subpass_create_info_builder_t* vulkan_subpass_create_info_bu
 	return builder;
 }
 
-RENDERER_API void vulkan_subpass_create_info_destroy(vulkan_subpass_create_info_builder_t* builder)
+RENDERER_API void vulkan_subpass_create_info_builder_destroy(vulkan_subpass_create_info_builder_t* builder)
 {
 	buf_free(&builder->create_info_array);
 	u32 build_info_count = buf_get_element_count(&builder->build_info_array);
@@ -24,6 +24,8 @@ RENDERER_API void vulkan_subpass_create_info_destroy(vulkan_subpass_create_info_
 		buf_free(&build_info->color_attachments);
 		buf_free(&build_info->input_attachments);
 		buf_free(&build_info->preserve_attachments);
+		if((build_info->render_set_bindings_builder != NULL) && build_info->is_destroy_render_set_bindings_builder)
+			vulkan_shader_resource_description_builder_destroy(build_info->render_set_bindings_builder);
 	}
 	buf_free(&builder->build_info_array);
 	memory_allocator_dealloc(builder->allocator, builder);
@@ -133,10 +135,11 @@ RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings(vul
 	build_info->is_use_render_set_bindings_builder = false;
 }
 
-RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings_builder(vulkan_subpass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder)
+RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings_builder(vulkan_subpass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->render_set_bindings_builder = srd_builder;
+	build_info->is_destroy_render_set_bindings_builder = is_destroy;
 	build_info->is_render_set_bindings_internal = false;
 	build_info->is_use_render_set_bindings_builder = true;
 }

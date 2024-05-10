@@ -82,7 +82,7 @@ RENDERER_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t
 		.size = { create_info->width, create_info->height },
 		.buffer = vulkan_host_buffered_buffer_get_host_buffer(&texture->buffer),
 	};
-	buffer2d_view_create_no_alloc(renderer->allocator, &view_create_info, &texture->view);
+	buffer2d_view_create_no_alloc_ext(renderer->allocator, &view_create_info, &texture->view);
 }
 
 RENDERER_API void vulkan_host_buffered_texture_destroy(vulkan_host_buffered_texture_t* texture)
@@ -94,6 +94,7 @@ RENDERER_API void vulkan_host_buffered_texture_destroy(vulkan_host_buffered_text
 
 RENDERER_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buffered_texture_t* texture)
 {
+	buffer2d_view_release_resources(&texture->view);
 	vulkan_texture_release_resources(BASE(texture));
 	if(VULKAN_OBJECT_IS_INTERNAL(texture))
 		memory_allocator_dealloc(texture->renderer->allocator, texture);

@@ -28,6 +28,7 @@
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 #include <renderer/rect.h> // iextent2d_t
+#include <renderer/object.h>
 
 typedef struct buffer2d_view_create_info_t
 {
@@ -39,6 +40,7 @@ typedef struct buffer2d_view_create_info_t
 
 typedef struct buffer2d_view_t
 {
+	__OBJECT__;
 	memory_allocator_t* allocator;
 	buffer_t* backed_buffer;
 	iextent2d_t size;
@@ -46,7 +48,8 @@ typedef struct buffer2d_view_t
 
 typedef buffer2d_view_t* buffer2d_view_ptr_t;
 
-#define BUFFER2D_VIEW(ptr) DYNAMIC_CAST(buffer2d_view_t*, ptr)
+#define BUFFER2D_VIEW(ptr) OBJECT_UP_CAST(buffer2d_view_t*, ptr)
+#define BUFFER2D_VIEW_CONST(ptr) OBJECT_UP_CAST_CONST(const buffer2d_view_t*, ptr)
 
 
 BEGIN_CPP_COMPATIBLE
@@ -55,6 +58,11 @@ BEGIN_CPP_COMPATIBLE
 RENDERER_API buffer2d_view_t* buffer2d_view_new(memory_allocator_t* allocator);
 RENDERER_API buffer2d_view_t* buffer2d_view_create(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info);
 RENDERER_API void buffer2d_view_create_no_alloc(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info, buffer2d_view_t OUT view);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_create_no_alloc_ext(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info, buffer2d_view_t OUT view)
+{
+	OBJECT_INIT(view, OBJECT_TYPE_BUFFER2D_VIEW, OBJECT_NATIONALITY_EXTERNAL);
+	buffer2d_view_create_no_alloc(allocator, create_info, view);
+}
 RENDERER_API void buffer2d_view_destroy(buffer2d_view_t* view);
 RENDERER_API void buffer2d_view_release_resources(buffer2d_view_t* view);
 

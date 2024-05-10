@@ -319,7 +319,7 @@ static const char* signal_to_string(signal_bits_t bit)
 	}
 }
 
-CAN_BE_UNUSED_FUNCTION static char* signal_bits_to_string(memory_allocator_t* allocator, signal_bits_t bits)
+CAN_BE_UNUSED_FUNCTION static string_builder_t* signal_bits_to_string(memory_allocator_t* allocator, signal_bits_t bits)
 {
 	string_builder_t* builder = string_builder_create(allocator, 128);
 
@@ -332,7 +332,7 @@ CAN_BE_UNUSED_FUNCTION static char* signal_bits_to_string(memory_allocator_t* al
 				string_builder_append(builder, " | ");
 		}
 	}
-	return string_builder_get_str(builder);
+	return builder;
 }
 
 static void subscription_dump(memory_allocator_t* allocator, subscription_t* subscription, string_builder_t* builder)
@@ -343,8 +343,12 @@ static void subscription_dump(memory_allocator_t* allocator, subscription_t* sub
 		string_builder_append(builder, ".location = { %lu, %s, %s }\n", subscription->debug_info.line, subscription->debug_info.function_str, subscription->debug_info.file_str);
 		string_builder_append(builder, ".handler = %s (%p)\n", subscription->invocation_data.handler.handler_str, subscription->invocation_data.handler.handler);
 		string_builder_append(builder, ".handler_data = %p\n", subscription->invocation_data.handler_data);
-		string_builder_append(builder, ".wait_bits = %s\n", signal_bits_to_string(allocator, subscription->invocation_data.wait_bits));
-		string_builder_append(builder, ".signal_bits = %s\n", signal_bits_to_string(allocator, subscription->invocation_data.signal_bits));
+		string_builder_append(builder, ".wait_bits = ");
+		string_builder_append_builder_destroy(builder, signal_bits_to_string(allocator, subscription->invocation_data.wait_bits));
+		string_builder_append_newline(builder);
+		string_builder_append(builder, ".signal_bits = ");
+		string_builder_append_builder_destroy(builder, signal_bits_to_string(allocator, subscription->invocation_data.signal_bits));
+		string_builder_append_newline(builder);
 		string_builder_append(builder, ".handle = %llu\n", subscription->handle);
 	string_builder_decrement_indentation(builder);
 	string_builder_append(builder, "}\n");

@@ -99,7 +99,7 @@ static void test_hash_table()
 {
 	/* hash table test */
 
-	hash_table_t _table = hash_table_create(u64, u32, 5, u64_equal_to, u64_hash);
+	hash_table_t _table = hash_table_create(NULL, u64, u32, 5, u64_equal_to, u64_hash);
 	u64 key = 40;
 	u32 _value = 500;
 	hash_table_add(&_table, &key, &_value);
@@ -116,7 +116,7 @@ static void test_hash_table()
 	hash_table_foreach(&_table, print_key_value_pair_i, NULL);
 	hash_table_free(&_table);
 
-	hash_table_t table = hash_table_create(const char*, u32, 5, string_equal_to, string_hash);
+	hash_table_t table = hash_table_create(NULL, const char*, u32, 5, string_equal_to, string_hash);
 	const char* str = "Hello World";
 	u32 value = 100;
 	hash_table_add(&table, &str, &value); value = 200;
@@ -197,7 +197,7 @@ static void test_buffer2d_view(renderer_t* renderer)
 		.buffer = &pixels
 	};
 	buffer2d_view_t view;
-	buffer2d_view_create_no_alloc(renderer->allocator, &view_create_info, &view);
+	buffer2d_view_create_no_alloc_ext(renderer->allocator, &view_create_info, &view);
 
 	icolor3_t colors[IEXTENT2D_AREA(size)];
 	for(u32 i = 0; i < IEXTENT2D_AREA(size); i++)
@@ -218,6 +218,7 @@ static void test_buffer2d_view(renderer_t* renderer)
 	bmp_write(buf_get_ptr(&pixels), size.x, size.y, 3, "buffer2d_view.bmp");
 
 	buffer2d_view_destroy(&view);
+	buffer2d_view_release_resources(&view);
 	buf_free(&pixels);
 }
 

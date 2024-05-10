@@ -19,6 +19,7 @@ typedef struct vulkan_subpass_create_info_build_info_t
 	VkAttachmentReference depth_stencil_attachment;
 	/* non-null if set by vulkan_subpass_create_info_builder_set_render_set_bindings_builder() */
 	vulkan_shader_resource_description_builder_t* render_set_bindings_builder;
+	bool is_destroy_render_set_bindings_builder;
 	/* sub_render_set_bindings_internal */
 	bool is_render_set_bindings_internal;
 	bool is_color_attachments_internal;
@@ -44,7 +45,7 @@ typedef struct vulkan_subpass_create_info_builder_t
 BEGIN_CPP_COMPATIBLE
 
 RENDERER_API vulkan_subpass_create_info_builder_t* vulkan_subpass_create_info_builder_create(memory_allocator_t* allocator);
-RENDERER_API void vulkan_subpass_create_info_destroy(vulkan_subpass_create_info_builder_t* builder);
+RENDERER_API void vulkan_subpass_create_info_builder_destroy(vulkan_subpass_create_info_builder_t* builder);
 
 RENDERER_API void vulkan_subpass_create_info_builder_add(vulkan_subpass_create_info_builder_t* builder, u32 count);
 RENDERER_API void vulkan_subpass_create_info_builder_bind(vulkan_subpass_create_info_builder_t* builder, u32 index);
@@ -54,7 +55,7 @@ RENDERER_API u32 vulkan_subpass_create_info_builder_get_count(vulkan_subpass_cre
 
 
 RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings(vulkan_subpass_create_info_builder_t* builder, vulkan_shader_resource_description_t* bindings, u32 binding_count);
-RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings_builder(vulkan_subpass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder);
+RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings_builder(vulkan_subpass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy);
 RENDERER_API void vulkan_subpass_create_info_builder_set_bind_point(vulkan_subpass_create_info_builder_t* builder, VkPipelineBindPoint bind_point);
 RENDERER_API void vulkan_subpass_create_info_builder_add_color_attachments(vulkan_subpass_create_info_builder_t* builder, VkAttachmentReference* attachments, u32 attachment_count);
 RENDERER_API void vulkan_subpass_create_info_builder_add_input_attachments(vulkan_subpass_create_info_builder_t* builder, VkAttachmentReference* attachments, u32 attachment_count);
