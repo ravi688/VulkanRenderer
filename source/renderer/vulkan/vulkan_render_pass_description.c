@@ -61,7 +61,7 @@ RENDERER_API void vulkan_render_pass_description_begin(vulkan_renderer_t* render
 RENDERER_API void vulkan_render_pass_description_add_input(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* description, glsl_type_t type, u32 index, u32 binding)
 {
 	buf_push_auto(CAST_TO(BUFFER*, description->input_attachments), index);
-	vulkan_shader_resource_description_add_opaque(renderer, create_element(CAST_TO(BUFFER*, description->render_set_bindings)), "internal", type, VULKAN_DESCRIPTOR_SET_RENDER, binding);
+	vulkan_shader_resource_description_create_opaque(renderer->allocator, create_element(CAST_TO(BUFFER*, description->render_set_bindings)), "internal", type, VULKAN_DESCRIPTOR_SET_RENDER, binding);
 }
 
 RENDERER_API void vulkan_render_pass_description_add_attachment(vulkan_render_pass_description_t* description, vulkan_attachment_type_t type)
@@ -91,7 +91,7 @@ RENDERER_API void vulkan_render_pass_description_add_attachment_reference(vulkan
 			break;
 		case VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT:
 			buf_push_auto(CAST_TO(BUFFER*, subpass->input_attachments), reference);
-			vulkan_shader_resource_description_add_opaque(renderer, create_element(CAST_TO(BUFFER*, subpass->sub_render_set_bindings)), "internal", GLSL_TYPE_SUBPASS_INPUT, VULKAN_DESCRIPTOR_SET_SUB_RENDER, binding);
+			vulkan_shader_resource_description_create_opaque(renderer->allocator, create_element(CAST_TO(BUFFER*, subpass->sub_render_set_bindings)), "internal", GLSL_TYPE_SUBPASS_INPUT, VULKAN_DESCRIPTOR_SET_SUB_RENDER, binding);
 			break;
 		case VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL:
 			subpass->depth_stencil_attachment = reference;

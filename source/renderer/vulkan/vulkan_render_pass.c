@@ -38,6 +38,13 @@
 #include <renderer/alloc.h>
 #include <renderer/debug.h>
 
+vulkan_render_pass_create_info_t* vulkan_render_pass_create_info_new(memory_allocator_t* allocator)
+{
+	vulkan_render_pass_create_info_t* create_info = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO, vulkan_render_pass_create_info_t);
+	memzero(create_info, vulkan_render_pass_create_info_t);
+	return create_info;
+}
+
 RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new(memory_allocator_t* allocator)
 {
 	vulkan_render_pass_t* render_pass = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS, vulkan_render_pass_t);

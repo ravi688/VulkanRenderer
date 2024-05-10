@@ -60,25 +60,25 @@ typedef struct vulkan_shader_resource_description_t
 typedef vulkan_shader_resource_description_t* vulkan_shader_resource_description_ptr_t;
 
 
-RENDERER_API void vulkan_shader_resource_description_add_opaque(vulkan_renderer_t* renderer,  vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 set_number, u32 binding_number);
+RENDERER_API void vulkan_shader_resource_description_create_opaque(memory_allocator_t* allocator,  vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 set_number, u32 binding_number);
 
-RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_begin_uniform(vulkan_renderer_t* renderer, vulkan_shader_resource_description_t* description, const char* name, u32 set_number, u32 binding_number);
+RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_create_uniform(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description, const char* name, u32 set_number, u32 binding_number);
 
-RENDERER_API void vulkan_shader_resource_description_end_uniform(vulkan_renderer_t* renderer, vulkan_shader_resource_description_t* description);
+RENDERER_API void vulkan_shader_resource_description_end_uniform(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description);
 
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void add_opaque(vulkan_renderer_t* renderer, BUFFER* list, const char* name, u32 type, u32 set_number, u32 binding_number)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void create_opaque(memory_allocator_t* allocator, BUFFER* list, const char* name, u32 type, u32 set_number, u32 binding_number)
 {
-	vulkan_shader_resource_description_add_opaque(renderer, buf_create_element(list), name, type, set_number, binding_number);
+	vulkan_shader_resource_description_create_opaque(allocator, buf_create_element(list), name, type, set_number, binding_number);
 }
 
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE struct_descriptor_t* begin_uniform(vulkan_renderer_t* renderer, BUFFER* list, const char* name, u32 set_number, u32 binding_number)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE struct_descriptor_t* create_uniform(memory_allocator_t* allocator, BUFFER* list, const char* name, u32 set_number, u32 binding_number)
 {
-	return vulkan_shader_resource_description_begin_uniform(renderer, buf_create_element(list), name, set_number, binding_number);
+	return vulkan_shader_resource_description_create_uniform(allocator, buf_create_element(list), name, set_number, binding_number);
 }
 
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void end_uniform(vulkan_renderer_t* renderer, BUFFER* list)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void end_uniform(memory_allocator_t* allocator, BUFFER* list)
 {
-	vulkan_shader_resource_description_end_uniform(renderer, buf_peek_ptr(list));
+	vulkan_shader_resource_description_end_uniform(allocator, buf_peek_ptr(list));
 }
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_shader_resource_description_is_attribute(vulkan_shader_resource_description_t* description)
