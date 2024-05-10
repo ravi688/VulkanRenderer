@@ -91,7 +91,7 @@ RENDERER_API vulkan_subpass_create_info_t* vulkan_subpass_create_info_builder_ge
 		else
 			create_info->color_attachments = NULL;
 		/* input attachments */
-		create_info->input_attachment_count = buf_get_element_count(&build_info->color_attachments);
+		create_info->input_attachment_count = buf_get_element_count(&build_info->input_attachments);
 		if(create_info->input_attachment_count > 0)
 			create_info->input_attachments = CAST_TO(VkAttachmentReference*, buf_get_ptr(&build_info->input_attachments));
 		else
