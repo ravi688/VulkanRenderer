@@ -30,6 +30,7 @@
 static void* VKAPI_CALL vulkan_allocation(void* user_data, size_t size, size_t align, VkSystemAllocationScope allocation_scope)
 {
 	vulkan_allocator_t* vk_allocator = CAST_TO(vulkan_allocator_t*, user_data);
+	size = size + (align - (size % align)) % align;
 	void* address = memory_allocator_aligned_alloc(vk_allocator->allocator, MEMORY_ALLOCATION_TYPE_VKAPI, size, align);
 	_debug_assert__((CAST_TO(u64, address) % align) == 0);
 	return address;
@@ -45,8 +46,9 @@ static void* VKAPI_CALL vulkan_reallocation(void* user_data, void* original, siz
 
 static void VKAPI_CALL vulkan_free(void* user_data, void* memory)
 {
-	heap_silent_aligned_free(memory);
-	// memory_allocator_dealloc(CAST_TO(vulkan_allocator_t*, user_data)->allocator, memory);
+	if(memory == NULL)
+		return;
+	memory_allocator_dealloc(CAST_TO(vulkan_allocator_t*, user_data)->allocator, memory);
 }
 
 static void VKAPI_CALL vulkan_internal_allocation_notification(void* user_data, size_t size, VkInternalAllocationType allocation_type, VkSystemAllocationScope allocation_scope)

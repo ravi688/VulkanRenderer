@@ -107,7 +107,8 @@
 
 #	ifdef PLATFORM_LINUX
 #		ifndef _aligned_malloc
-#			define _aligned_malloc(...) aligned_alloc(__VA_ARGS__)
+			/* NOTE: size and alignment are swapped with each other on the right */
+#			define _aligned_malloc(size, alignment) aligned_alloc(alignment, size)
 #		endif /* _aligned_malloc */
 #		ifndef _aligned_free
 #			define _aligned_free(...) free(__VA_ARGS__)
