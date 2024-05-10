@@ -288,6 +288,10 @@ ifeq ($(METRICS),1)
 	DEFINES += -DMEMORY_METRICS
 endif
 
+ifeq ($(VULKAN_ALLOCATOR),1)
+	DEFINES += -DUSE_VULKAN_ALLOCATOR
+endif
+
 DEBUG_COMPILER_FLAGS= -g #-fsanitize=integer-divide-by-zero // why it is not working on windows 64 bit?
 DEBUG_LINKER_FLAGS= -g #-fsanitize=integer-divide-by-zero  // why it is not working on windows 64 bit?
 
