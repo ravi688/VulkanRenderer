@@ -31,6 +31,7 @@
 #include <renderer/hash_table.h> // hash_table_t, comparer_t, hash_function_t
 #include <renderer/buffer2d_view.h> // buffer2d_view_t, isize2d_t, ioffset2d_t
 #include <renderer/rect.h> 			// irect2d_t
+#include <renderer/object.h>
 
 #ifdef GLOBAL_DEBUG
 #	include <renderer/color.h> // color3_t
@@ -99,6 +100,7 @@ typedef void (*packed_rect_relocate_callback_t)(const rect2d_info_t* before, con
 
 typedef struct buffer2d_t
 {
+	__OBJECT__;
 	memory_allocator_t* allocator;
 
 	#if DBG_ENABLED(BUFFER2D_RESIZE)
@@ -128,12 +130,20 @@ typedef struct buffer2d_t
 
 typedef buffer2d_t* buffer2d_ptr_t;
 
+#define BUFFER2D(ptr) OBJECT_UP_CAST(buffer2d_t*, OBJECT_TYPE_BUFFER2D, ptr)
+#define BUFFER2D_CONST(ptr) OBJECT_UP_CAST_CONST(const buffer2d_t*, OBJECT_TYPE_BUFFER2D, ptr)
+
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructurs */
 RENDERER_API buffer2d_t* buffer2d_new(memory_allocator_t* allocator);
 RENDERER_API buffer2d_t* buffer2d_create(memory_allocator_t* allocator, buffer2d_create_info_t* create_info);
 RENDERER_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer2d_create_info_t* create_info, buffer2d_t OUT buffer);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_create_no_alloc_ext(memory_allocator_t* allocator, buffer2d_create_info_t* create_info, buffer2d_t OUT buffer)
+{
+	OBJECT_INIT(buffer, OBJECT_TYPE_BUFFER2D, OBJECT_NATIONALITY_EXTERNAL);
+	buffer2d_create_no_alloc(allocator, create_info, buffer);
+}
 RENDERER_API void buffer2d_destroy(buffer2d_t* buffer);
 RENDERER_API void buffer2d_release_resources(buffer2d_t* buffer);
 

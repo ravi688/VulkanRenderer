@@ -28,6 +28,7 @@
 #include <renderer/defines.h>
 #include <renderer/font.h> 	  // font_t, utf32_t
 #include <renderer/buffer2d.h> 	// buffer2d_t
+#include <renderer/object.h>
 #include <hpml/vec2.h>
 
 /* stores texture coordinates of a glyph */
@@ -57,10 +58,14 @@ typedef struct bitmap_glyph_pool_create_info_t
 
 typedef struct bitmap_glyph_pool_t
 {
+	__OBJECT__;
 	renderer_t* renderer;
 	font_t* font;
 	buffer2d_t pixels;
 } bitmap_glyph_pool_t;
+
+#define BITMAP_GLYPH_POOL(ptr) OBJECT_UP_CAST(bitmap_glyph_pool_t*, OBJECT_TYPE_BITMAP_GLYPH_POOL, ptr)
+#define BITMAP_GLYPH_POOL_CONST(ptr) OBJECT_UP_CAST_CONST(const bitmap_glyph_pool_t*, OBJECT_TYPE_BITMAP_GLYPH_POOL, ptr)
 
 
 BEGIN_CPP_COMPATIBLE
@@ -69,6 +74,12 @@ BEGIN_CPP_COMPATIBLE
 RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_new(memory_allocator_t* allocator);
 RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_create(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info);
 RENDERER_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info, bitmap_glyph_pool_t OUT pool);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_create_no_alloc_ext(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info, bitmap_glyph_pool_t OUT pool)
+{
+	OBJECT_INIT(pool, OBJECT_TYPE_BITMAP_GLYPH_POOL, OBJECT_NATIONALITY_EXTERNAL);
+	bitmap_glyph_pool_create_no_alloc(renderer, create_info, pool);
+}
+
 RENDERER_API void bitmap_glyph_pool_destroy(bitmap_glyph_pool_t* pool);
 RENDERER_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool);
 

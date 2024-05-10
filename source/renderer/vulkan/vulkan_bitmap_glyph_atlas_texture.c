@@ -74,7 +74,7 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_rende
 		.buffer = vulkan_host_buffered_texture_get_host_buffer(BASE(texture)),
 		.view = vulkan_host_buffered_texture_get_view(BASE(texture))
 	};
-	bitmap_glyph_pool_create_no_alloc(RENDERER(renderer), &bgp_create_info, &texture->pool);
+	bitmap_glyph_pool_create_no_alloc_ext(RENDERER(renderer), &bgp_create_info, &texture->pool);
 
 	texture->on_resize_event = event_create(renderer->allocator, texture PARAM_IF_DEBUG("Vulkan-Glyph-Atlas-Texture-Resize"));
 }
@@ -89,6 +89,7 @@ RENDERER_API void vulkan_bitmap_glyph_atlas_texture_destroy(vulkan_bitmap_glyph_
 RENDERER_API void vulkan_bitmap_glyph_atlas_texture_release_resources(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
 	event_release_resources(texture->on_resize_event);
+	bitmap_glyph_pool_release_resources(&texture->pool);
 	vulkan_host_buffered_texture_release_resources(BASE(texture));
 	if(VULKAN_OBJECT_IS_INTERNAL(texture))
 		memory_allocator_dealloc(texture->renderer->allocator, texture);

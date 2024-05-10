@@ -65,7 +65,7 @@ RENDERER_API void vulkan_glyph_mesh_pool_destroy(vulkan_glyph_mesh_pool_t* pool)
 RENDERER_API void vulkan_glyph_mesh_pool_release_resources(vulkan_glyph_mesh_pool_t* pool)
 {
 	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
-		vulkan_mesh_release_resources(CAST_TO(vulkan_glyph_mesh_t*, dictionary_get_value_ptr_at(&pool->glyph_meshes, i))->mesh);
+		vulkan_mesh_release_resources(VULKAN_MESH(CAST_TO(vulkan_glyph_mesh_t*, dictionary_get_value_ptr_at(&pool->glyph_meshes, i))->mesh));
 
 	dictionary_clear(&pool->glyph_meshes);
 	if(VULKAN_OBJECT_IS_INTERNAL(pool))
@@ -95,7 +95,6 @@ RENDERER_API vulkan_mesh_t* vulkan_glyph_mesh_pool_get_mesh(vulkan_glyph_mesh_po
 		 * So, if the renderer interface chooses an opengl implementation of this function then calling
 		 * this function from the vulkan API backend will result in data corruption.
 		 * However, to get the intended results one needs to link compatible API backend with the rendering interface. */
-		RDR_OBJECT_INIT(mesh, RDR_OBJECT_TYPE_MESH, RDR_OBJECT_NATIONALITY_EXTERNAL);
 		mesh_create_no_alloc(pool->renderer->renderer, mesh3d, MESH(mesh));
 
 

@@ -466,7 +466,7 @@ static void test_buffer2d(renderer_t* renderer)
 		.key_hash_function = u32_hash
 	};
 	buffer2d_t buffer;
-	buffer2d_create_no_alloc(renderer->allocator, &create_info, &buffer);
+	buffer2d_create_no_alloc_ext(renderer->allocator, &create_info, &buffer);
 
 	u32 input_count = SIZEOF_ARRAY(inputs);
 	for(u32 i = 0; i < input_count; i++)
@@ -480,6 +480,7 @@ static void test_buffer2d(renderer_t* renderer)
 	debug_log_info("Packing Efficientcy: %f", buffer2d_get_packing_efficiency(&buffer));
 
 	buffer2d_destroy(&buffer);
+	buffer2d_release_resources(&buffer);
 }
 
 static void test_glyph_rasterization(renderer_t* renderer)
@@ -549,7 +550,7 @@ static void test_buffer2d_backed_buffer_dump(renderer_t* renderer)
 		.key_hash_function = u32_hash
 	};
 	buffer2d_t bitmap;
-	buffer2d_create_no_alloc(renderer->allocator, &create_info, &bitmap);
+	buffer2d_create_no_alloc_ext(renderer->allocator, &create_info, &bitmap);
 	u8 default_color = 255;
 	buffer2d_clear(&bitmap, (void*)&default_color);
 
@@ -564,6 +565,7 @@ static void test_buffer2d_backed_buffer_dump(renderer_t* renderer)
 	bmp_write(ptr, bitmap.view->size.x / sizeof(icolor3_t), bitmap.view->size.y, 3, "test_buffer2d_backed_buffer_dump.bmp");
 
 	buffer2d_destroy(&bitmap);
+	buffer2d_release_resources(&bitmap);
 }
 
 static void test_glyph_packing(renderer_t* renderer)

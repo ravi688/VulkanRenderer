@@ -51,6 +51,7 @@ RENDERER_API buffer2d_t* buffer2d_new(memory_allocator_t* allocator)
 {
 	buffer2d_t* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER2D, buffer2d_t);
 	memzero(buffer, buffer2d_t);
+	OBJECT_INIT(buffer, OBJECT_TYPE_BUFFER2D, OBJECT_NATIONALITY_INTERNAL);
 	return buffer;
 }
 
@@ -65,7 +66,7 @@ RENDERER_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer
 {
 	debug_assert__(create_info->resize_mode == BUFFER2D_RESIZE_MODE_ASPECT_RATIO_STRICT, "For now we will only support BUFFER2D_RESIZE_MODE_ASPECT_RATIO_STRICT");
 
-	memzero(buffer, buffer2d_t);
+	OBJECT_MEMZERO(buffer, buffer2d_t);
 
 	buffer->allocator = allocator;
 	
@@ -127,7 +128,8 @@ RENDERER_API void buffer2d_release_resources(buffer2d_t* buffer)
 {
 	if(buffer->is_view_owner)
 		buffer2d_view_release_resources(buffer->view);
-	memory_allocator_dealloc(buffer->allocator, buffer);
+	if(OBJECT_IS_INTERNAL(buffer))
+		memory_allocator_dealloc(buffer->allocator, buffer);
 }
 
 RENDERER_API buffer_t* buffer2d_get_backed_buffer(buffer2d_t* buffer)
@@ -469,7 +471,7 @@ static void dump_filled_rect(void* key, void* value, void* user_data)
 
 	AUTO _rect = irect2d(ioffset2d(rect->rect_info.rect.offset.x * sizeof(icolor3_t), rect->rect_info.rect.offset.y),
 						 iextent2d(rect->rect_info.rect.extent.x * sizeof(icolor3_t), rect->rect_info.rect.extent.y));
-	buffer2d_view_broadcast_rect(CAST_TO(buffer2d_view_t*, user_data), _rect, &rect->color, sizeof(icolor3_t));
+	buffer2d_view_broadcast_rect(BUFFER2D_VIEW(user_data), _rect, &rect->color, sizeof(icolor3_t));
 }
 
 static icolor3_t vacant_colors[] =
@@ -492,7 +494,7 @@ static void dump_vacant_rect(void* key, void* value, void* user_data)
 	static u32 counter = 0;
 	++counter;
 
-	buffer2d_view_broadcast_rect(CAST_TO(buffer2d_view_t*, user_data), _rect, &vacant_colors[counter % SIZEOF_ARRAY(vacant_colors)], sizeof(icolor3_t));
+	buffer2d_view_broadcast_rect(BUFFER2D_VIEW(user_data), _rect, &vacant_colors[counter % SIZEOF_ARRAY(vacant_colors)], sizeof(icolor3_t));
 }
 
 RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name)

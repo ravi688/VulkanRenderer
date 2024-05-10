@@ -32,6 +32,7 @@ RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_new(memory_allocator_t* allo
 {
 	bitmap_glyph_pool_t* pool = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BITMAP_GLYPH_POOL, bitmap_glyph_pool_t);
 	memzero(pool, bitmap_glyph_pool_t);
+	OBJECT_INIT(pool, OBJECT_TYPE_BITMAP_GLYPH_POOL, OBJECT_NATIONALITY_INTERNAL);
 	return pool;
 }
 
@@ -44,7 +45,7 @@ RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_create(renderer_t* renderer,
 
 RENDERER_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info, bitmap_glyph_pool_t OUT pool)
 {
-	memzero(pool, bitmap_glyph_pool_t);
+	OBJECT_MEMZERO(pool, bitmap_glyph_pool_t);
 	pool->renderer = renderer;
 	pool->font = create_info->font;
 	buffer2d_create_info_t _create_info =
@@ -57,7 +58,7 @@ RENDERER_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap
 		.key_hash_function = utf32_u32_hash,
 		.key_comparer = utf32_u32_equal_to
 	};
-	buffer2d_create_no_alloc(renderer->allocator, &_create_info, &pool->pixels);
+	buffer2d_create_no_alloc_ext(renderer->allocator, &_create_info, &pool->pixels);
 	buffer2d_clear(&pool->pixels, NULL);
 }
 
@@ -68,7 +69,8 @@ RENDERER_API void bitmap_glyph_pool_destroy(bitmap_glyph_pool_t* pool)
 
 RENDERER_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool)
 {
-	memory_allocator_dealloc(pool->renderer->allocator, pool);
+	if(OBJECT_IS_INTERNAL(pool))
+		memory_allocator_dealloc(pool->renderer->allocator, pool);
 }
 
 RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized)

@@ -48,8 +48,8 @@ typedef struct buffer2d_view_t
 
 typedef buffer2d_view_t* buffer2d_view_ptr_t;
 
-#define BUFFER2D_VIEW(ptr) OBJECT_UP_CAST(buffer2d_view_t*, ptr)
-#define BUFFER2D_VIEW_CONST(ptr) OBJECT_UP_CAST_CONST(const buffer2d_view_t*, ptr)
+#define BUFFER2D_VIEW(ptr) OBJECT_UP_CAST(buffer2d_view_t*, OBJECT_TYPE_BUFFER2D_VIEW, ptr)
+#define BUFFER2D_VIEW_CONST(ptr) OBJECT_UP_CAST_CONST(const buffer2d_view_t*, OBJECT_TYPE_BUFFER2D_VIEW, ptr)
 
 
 BEGIN_CPP_COMPATIBLE

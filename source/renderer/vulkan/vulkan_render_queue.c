@@ -83,8 +83,8 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 		subpass_shader_list_t* lists = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr_at(&queue->render_pass_handles, i));
 		u32 subpass_count = vulkan_render_pass_pool_getH(queue->renderer->render_pass_pool, DEREF_TO(vulkan_render_pass_handle_t, dictionary_get_key_ptr_at(&queue->render_pass_handles, i)))->subpass_count;
 		for(u32 j = 0; j < subpass_count; j++)
-			buf_clear(&lists[j], NULL);
-		// heap_free(list);
+			buf_free(&lists[i]);
+		memory_allocator_dealloc(queue->renderer->allocator, lists);
 	}
 	dictionary_clear(&queue->render_pass_handles);
 
@@ -104,9 +104,9 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 				obj->queue = NULL;
 				obj->handle = VULKAN_RENDER_OBJECT_HANDLE_INVALID;
 			}
-			buf_clear(list, NULL);
+			buf_free(list);
 		}
-		dictionary_clear(map);
+		dictionary_free(map);
 	}
 	dictionary_clear(&queue->shader_handles);
 
@@ -118,26 +118,7 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 
 RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue)
 {
-	buf_ucount_t count = dictionary_get_count(&queue->render_pass_handles);
-	for(buf_ucount_t i = 0; i < count; i++)
-	{
-		subpass_shader_list_t* list = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr_at(&queue->render_pass_handles, i));
-		u32 subpass_count = vulkan_render_pass_pool_getH(queue->renderer->render_pass_pool, DEREF_TO(vulkan_render_pass_handle_t, dictionary_get_key_ptr_at(&queue->render_pass_handles, i)))->subpass_count;
-		for(u32 j = 0; j < subpass_count; j++)
-			buf_free(&list[i]);
-		memory_allocator_dealloc(queue->renderer->allocator, list);
-	}
 	dictionary_free(&queue->render_pass_handles);
-
-	count = dictionary_get_count(&queue->shader_handles);
-	for(buf_ucount_t i = 0; i < count; i++)
-	{
-		material_and_render_object_list_map_t* map = dictionary_get_value_ptr_at(&queue->shader_handles, i);
-		buf_ucount_t count1 = dictionary_get_count(map);
-		for(buf_ucount_t j = 0; j < count1; j++)
-			buf_free(dictionary_get_value_ptr_at(map, i));
-		dictionary_free(map);
-	}
 	dictionary_free(&queue->shader_handles);
 
 	vulkan_render_pass_graph_release_resources(&queue->pass_graph);
