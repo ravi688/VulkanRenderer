@@ -83,7 +83,7 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 		subpass_shader_list_t* lists = DEREF_TO(subpass_shader_list_t*, dictionary_get_value_ptr_at(&queue->render_pass_handles, i));
 		u32 subpass_count = vulkan_render_pass_pool_getH(queue->renderer->render_pass_pool, DEREF_TO(vulkan_render_pass_handle_t, dictionary_get_key_ptr_at(&queue->render_pass_handles, i)))->subpass_count;
 		for(u32 j = 0; j < subpass_count; j++)
-			buf_free(&lists[i]);
+			buf_free(&lists[j]);
 		memory_allocator_dealloc(queue->renderer->allocator, lists);
 	}
 	dictionary_clear(&queue->render_pass_handles);
