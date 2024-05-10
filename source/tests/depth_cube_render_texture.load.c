@@ -144,6 +144,7 @@ TEST_ON_INITIALIZE(DEPTH_CUBE_RENDER_TEXTURE_LOAD)
 	mesh3d_transform_set(torusMeshData, mat4_rotation(0, 0, 30 DEG));
 
 	this->mesh = mesh_create(renderer, torusMeshData);
+	mesh3d_destroy(torusMeshData);
 	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
 	render_object_set_material(this->render_object, this->material);
 	render_object_attach(this->render_object, this->mesh);	
@@ -156,6 +157,7 @@ TEST_ON_INITIALIZE(DEPTH_CUBE_RENDER_TEXTURE_LOAD)
 
 	mesh3d_flip_triangles(cubeMeshData);
 	this->skyboxMesh = mesh_create(renderer, cubeMeshData);
+	mesh3d_destroy(cubeMeshData);
 	this->skyboxObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_BACKGROUND));
 	render_object_set_material(this->skyboxObject, this->skyboxMaterial);
 	render_object_attach(this->skyboxObject, this->skyboxMesh);
