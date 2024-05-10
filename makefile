@@ -292,6 +292,11 @@ ifeq ($(VULKAN_ALLOCATOR),1)
 	DEFINES += -DUSE_VULKAN_ALLOCATOR
 endif
 
+ifeq ($(GCC_G),1)
+	COMPILER_FLAGS += -g
+	LINKER_FLAGS += -g
+endif
+
 DEBUG_COMPILER_FLAGS= -g #-fsanitize=integer-divide-by-zero // why it is not working on windows 64 bit?
 DEBUG_LINKER_FLAGS= -g #-fsanitize=integer-divide-by-zero  // why it is not working on windows 64 bit?
 
