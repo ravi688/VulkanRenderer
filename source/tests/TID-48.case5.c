@@ -121,12 +121,16 @@ TEST_ON_INITIALIZE(TID_48_CASE_5)
 								"shaders/builtins/color_present.sb"), "ColorPresentMaterial"));
 	material_set_vec4(this->colorPresentMaterial, "parameters.color", vec4(1.0, 1.0, 1.0, 1.0));
 
-	this->mesh = mesh_create(renderer, mesh3d_cube(renderer->allocator, 1));
+	AUTO cube_mesh_3d = mesh3d_cube(renderer->allocator, 1);
+	this->mesh = mesh_create(renderer, cube_mesh_3d);
+	mesh3d_destroy(cube_mesh_3d);
 	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->render_object, this->material);
 	render_object_attach(this->render_object, this->mesh);
 
-	this->quadMesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 1));
+	AUTO plane_mesh_3d = mesh3d_plane(renderer->allocator, 1);
+	this->quadMesh = mesh_create(renderer, plane_mesh_3d);
+	mesh3d_destroy(plane_mesh_3d);
 	this->quadObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY_LAST));
 	render_object_set_material(this->quadObject, this->depthPresentMaterial);
 	render_object_attach(this->quadObject, this->quadMesh);
