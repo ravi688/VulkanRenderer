@@ -29,6 +29,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set.h>
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
+#include <renderer/internal/vulkan/vulkan_shader_resource_description_builder.h>
 #include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
 #include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description_builder.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_description.h>
@@ -71,103 +72,148 @@ RENDERER_API void shader_library_release_resources(shader_library_t* library)
 
 /* logic functions */
 
+static void shr_res_build_create(vulkan_shader_resource_description_builder_t* builder, u32* bind_counter)
+{
+	vulkan_shader_resource_description_builder_add(builder, 1);
+	vulkan_shader_resource_description_builder_bind(builder, *bind_counter);
+	(*bind_counter)++;
+}
+
+static CAN_BE_UNUSED_FUNCTION void shr_res_build_create_vertex_attribute(vulkan_shader_resource_description_builder_t* builder, u32* bind_counter, const char* name, glsl_type_t type, u32 location_number, u32 binding_number)
+{
+	shr_res_build_create(builder, bind_counter);
+	vulkan_shader_resource_description_builder_create_vertex_attribute(builder, name, type, location_number, binding_number);
+}
+static void shr_res_build_create_opaque(vulkan_shader_resource_description_builder_t* builder, u32* bind_counter, const char* name, glsl_type_t type, u32 set_number, u32 binding_number)
+{
+	shr_res_build_create(builder, bind_counter);
+	vulkan_shader_resource_description_builder_create_opaque(builder, name, type, set_number, binding_number);
+}
+static struct_descriptor_t* shr_res_build_create_uniform(vulkan_shader_resource_description_builder_t* builder, u32* bind_counter, const char* name, u32 set_number, u32 binding_number)
+{
+	shr_res_build_create(builder, bind_counter);
+	return vulkan_shader_resource_description_builder_create_uniform(builder, name, set_number, binding_number);
+}
+static INLINE_IF_RELEASE_MODE void shr_res_build_end_uniform(vulkan_shader_resource_description_builder_t* builder)
+{
+	vulkan_shader_resource_description_builder_end_uniform(builder);
+}
+
+
 #define UNSUPPORTED_PRESET(preset) LOG_FETAL_ERR("Unsupported shader preset type %u\n", preset)
 
-static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset, u32 OUT binding_count)
+static vulkan_shader_resource_description_builder_t* create_material_set_binding(memory_allocator_t* allocator, shader_library_shader_preset_t preset)
 {
-	BUFFER bindings = buf_new(vulkan_shader_resource_description_t);
+	vulkan_shader_resource_description_builder_t* builder = vulkan_shader_resource_description_builder_create(allocator);
 	struct_descriptor_t* parameters;
+	u32 bind_counter = 0;
 	switch(preset)
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH:
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
+		{
 			{
-				struct_descriptor_t* Color = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
-					struct_descriptor_begin(renderer->allocator, Color, "Color", GLSL_TYPE_MAX_NON_OPAQUE);
+				struct_descriptor_t* Color = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
+					struct_descriptor_begin(allocator, Color, "Color", GLSL_TYPE_MAX_NON_OPAQUE);
 						struct_descriptor_add_field(Color, "r", GLSL_TYPE_FLOAT);
 						struct_descriptor_add_field(Color, "g", GLSL_TYPE_FLOAT);
 						struct_descriptor_add_field(Color, "b", GLSL_TYPE_FLOAT);
-					struct_descriptor_end(renderer->allocator, Color);
-				parameters = create_uniform(renderer->allocator, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
+					struct_descriptor_end(allocator, Color);
+				parameters = shr_res_build_create_uniform(builder, &bind_counter, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 					if(preset == SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT)
 						struct_descriptor_add_field(parameters, "tex_size", GLSL_TYPE_UVEC2);
 					struct_descriptor_add_field2(parameters, "color", Color);
 					struct_descriptor_add_field(parameters, "space_type", GLSL_TYPE_INT);
 					struct_descriptor_add_field(parameters, "surface_type", GLSL_TYPE_INT);
-				end_uniform(renderer->allocator, &bindings);
+				shr_res_build_end_uniform(builder);
 			}
 			if(preset == SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT)
 			{
-				create_opaque(renderer->allocator, &bindings, "bga", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+				shr_res_build_create_opaque(builder, &bind_counter, "bga", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 				{
-					struct_descriptor_t* GTC = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
-						struct_descriptor_begin(renderer->allocator, GTC, "GTC", GLSL_TYPE_MAX_NON_OPAQUE);
+					struct_descriptor_t* GTC = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
+						struct_descriptor_begin(allocator, GTC, "GTC", GLSL_TYPE_MAX_NON_OPAQUE);
 							struct_descriptor_add_field(GTC, "tltc", GLSL_TYPE_VEC2);
 							struct_descriptor_add_field(GTC, "trtc", GLSL_TYPE_VEC2);
 							struct_descriptor_add_field(GTC, "brtc", GLSL_TYPE_VEC2);
 							struct_descriptor_add_field(GTC, "bltc", GLSL_TYPE_VEC2);
-						struct_descriptor_end(renderer->allocator, GTC);
+						struct_descriptor_end(allocator, GTC);
 
-						AUTO gtc_buffer = create_uniform(renderer->allocator, &bindings, "GTCBuffer", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE1);
+						AUTO gtc_buffer = shr_res_build_create_uniform(builder, &bind_counter, "GTCBuffer", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE1);
 							struct_descriptor_add_field_array2(gtc_buffer, "texcoords", GTC, U32_MAX);
-						end_uniform(renderer->allocator, &bindings);
+						shr_res_build_end_uniform(builder);
 				}
 			}
 			{
-				AUTO tst_buffer = create_uniform(renderer->allocator, &bindings, "TSTBuffer", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE2);
+				AUTO tst_buffer = shr_res_build_create_uniform(builder, &bind_counter, "TSTBuffer", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE2);
 					struct_descriptor_add_field_array(tst_buffer, "transforms", GLSL_TYPE_MAT4, U32_MAX);
-				end_uniform(renderer->allocator, &bindings);
+				shr_res_build_end_uniform(builder);
 			}
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
-			parameters = create_uniform(renderer->allocator, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
+		{
+			parameters = shr_res_build_create_uniform(builder, &bind_counter, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
-			end_uniform(renderer->allocator, &bindings);
+			shr_res_build_end_uniform(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
-			parameters = create_uniform(renderer->allocator, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
+		{
+			parameters = shr_res_build_create_uniform(builder, &bind_counter, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
-			end_uniform(renderer->allocator, &bindings);
-			create_opaque(renderer->allocator, &bindings, "albedo", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+			shr_res_build_end_uniform(builder);
+			shr_res_build_create_opaque(builder, &bind_counter, "albedo", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT:
-			parameters = create_uniform(renderer->allocator, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
+		{
+			parameters = shr_res_build_create_uniform(builder, &bind_counter, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
-			end_uniform(renderer->allocator, &bindings);
-			create_opaque(renderer->allocator, &bindings, "shadowMap", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+			shr_res_build_end_uniform(builder);
+			shr_res_build_create_opaque(builder, &bind_counter, "shadowMap", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR:
-			parameters = create_uniform(renderer->allocator, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
+		{
+			parameters = shr_res_build_create_uniform(builder, &bind_counter, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
-			end_uniform(renderer->allocator, &bindings);
+			shr_res_build_end_uniform(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
-			create_opaque(renderer->allocator, &bindings, "albedo", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+		{
+			shr_res_build_create_opaque(builder, &bind_counter, "albedo", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION:
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH:
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH_POINT:
-			parameters = create_uniform(renderer->allocator, &bindings, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
+		{
+			parameters = shr_res_build_create_uniform(builder, &bind_counter, "parameters", VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_MATERIAL_PROPERTIES);
 				struct_descriptor_add_field(parameters, "color", GLSL_TYPE_VEC4);
 				struct_descriptor_add_field(parameters, "reflectance", GLSL_TYPE_FLOAT);
-			end_uniform(renderer->allocator, &bindings);
-			create_opaque(renderer->allocator, &bindings, "reflectionMap", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+			shr_res_build_end_uniform(builder);
+			shr_res_build_create_opaque(builder, &bind_counter, "reflectionMap", GLSL_TYPE_SAMPLER_CUBE, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP:
-		break;
+		{
+			break;
+		}
 		default:
+		{
 			UNSUPPORTED_PRESET(preset);
+			break;
+		}
 	};
 
-	OUT binding_count = buf_get_element_count(&bindings);
-	if((OUT binding_count) != 0)
-		buf_fit(&bindings);
-	return buf_get_ptr(&bindings);
+	return builder;
 }
 
 static INLINE_IF_RELEASE_MODE void vbl_build_begin(vulkan_vertex_buffer_layout_description_builder_t* builder, u32* bind_counter, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
@@ -798,7 +844,11 @@ static vulkan_graphics_pipeline_description_builder_t* create_pipeline_descripti
 static vulkan_shader_create_info_t* get_create_info_from_preset(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset)
 {
 	vulkan_shader_create_info_t* create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_CREATE_INFO, vulkan_shader_create_info_t);
-	create_info->material_set_bindings = create_material_set_binding(renderer, preset, &create_info->material_set_binding_count);
+	
+	/* create material set bindings */
+	AUTO msb_builder = create_material_set_binding(renderer->allocator, preset);
+	create_info->material_set_binding_count = vulkan_shader_resource_description_builder_get_count(msb_builder);
+	create_info->material_set_bindings = vulkan_shader_resource_description_builder_get(msb_builder);
 
 	/* create vertex buffer layout descriptions */
 	AUTO vbld_builder = create_vertex_info(renderer->allocator, preset);
