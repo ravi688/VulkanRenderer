@@ -50,6 +50,8 @@ RENDERER_API void vulkan_render_pass_create_info_builder_destroy(vulkan_render_p
 		AUTO build_info = buf_get_ptr_at_typeof(&builder->build_info_array, vulkan_render_pass_create_info_build_info_t, i);
 		_debug_assert__(build_info->is_attachment_descriptions_internal);
 		_debug_assert__(build_info->is_attachment_usages_internal);
+		if(build_info->is_supbass_dependencies_internal)
+			buf_free(&build_info->subpass_dependencies);
 		buf_free(&build_info->attachment_descriptions);
 		buf_free(&build_info->attachment_usages);
 		if(build_info->is_supplementary_attachments_internal)
@@ -135,6 +137,15 @@ RENDERER_API vulkan_render_pass_create_info_t* vulkan_render_pass_create_info_bu
 				create_info->subpasses = vulkan_subpass_create_info_builder_get(build_info->subpasses_builder);
 			else
 				create_info->subpasses = NULL;
+		}
+		/* subpass dependencies */
+		if(build_info->is_supbass_dependencies_internal)
+		{
+			create_info->subpass_dependency_count = buf_get_element_count(&build_info->subpass_dependencies);
+			if(create_info->subpass_dependency_count > 0)
+				create_info->subpass_dependencies = CAST_TO(VkSubpassDependency*, buf_get_ptr(&build_info->subpass_dependencies));
+			else
+				create_info->subpass_dependencies = NULL;
 		}
 		/* render set bindings */
 		if(build_info->is_use_render_set_bindings_builder)
@@ -237,11 +248,24 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses_builder(v
 	build_info->is_use_subpasses_builder = true;
 }
 
+RENDERER_API void vulkan_render_pass_create_info_builder_add_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count)
+{
+	AUTO build_info = get_bound_build_info(builder);
+	if(!build_info->is_supbass_dependencies_internal)
+		build_info->subpass_dependencies = memory_allocator_buf_new(builder->allocator, VkSubpassDependency);
+	buf_pushv(&build_info->subpass_dependencies, dependencies, dependency_count);
+	build_info->is_supbass_dependencies_internal = true;
+}
+
 RENDERER_API void vulkan_render_pass_create_info_builder_set_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count)
 {
 	AUTO create_info = get_bound_create_info(builder);
 	AUTO build_info = get_bound_build_info(builder);
 	create_info->subpass_dependencies = dependencies;
 	create_info->subpass_dependency_count = dependency_count;
-	build_info->is_supbass_dependencies_internal = false;
+	if(build_info->is_supbass_dependencies_internal)
+	{
+		buf_free(&build_info->subpass_dependencies);
+		build_info->is_supbass_dependencies_internal = false;
+	}
 }

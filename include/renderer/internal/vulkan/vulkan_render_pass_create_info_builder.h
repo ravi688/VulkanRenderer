@@ -36,6 +36,8 @@ typedef struct vulkan_shader_resource_description_builder_t vulkan_shader_resour
 
 typedef struct vulkan_render_pass_create_info_build_info_t
 {
+	/* list of VkSubpassDependency objects */
+	buffer_t subpass_dependencies;
 	/* list of VkAttachmentDescription objects */
 	buffer_t attachment_descriptions;
 	/* list of vulkan_attachment_next_pass_usage_t objects */
@@ -90,6 +92,7 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings
 RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy);
 RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_t* infos, u32 info_count);
 RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_builder_t* sci_builder, bool is_destroy);
+RENDERER_API void vulkan_render_pass_create_info_builder_add_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count);
 RENDERER_API void vulkan_render_pass_create_info_builder_set_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count);
 
 
