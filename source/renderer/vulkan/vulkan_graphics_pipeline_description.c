@@ -183,7 +183,13 @@ RENDERER_API void vulkan_graphics_pipeline_description_end(memory_allocator_t* a
 
 RENDERER_API void vulkan_graphics_pipeline_description_destroy_allocations(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
 {
+	_debug_assert__(description->settings != NULL);
 	debug_assert__(description->is_official == true, "You're trying to destroy an unofficial vulkan_graphics_pipeline_description_t object which is not created by official functions defined in vulkan_graphics_pipeline_description.h");
+	AUTO viewport_state = &description->settings->viewport;
+	if(viewport_state->viewportCount > 0)
+		memory_allocator_dealloc(allocator, CAST_TO(void*, viewport_state->pViewports));
+	if(viewport_state->scissorCount > 0)
+		memory_allocator_dealloc(allocator, CAST_TO(void*, viewport_state->pScissors));
 	VkPipelineColorBlendStateCreateInfo* info = &description->settings->colorblend;
 	if(info->attachmentCount > 0)
 		memory_allocator_dealloc(allocator, CAST_TO(void*, info->pAttachments));
