@@ -183,6 +183,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_end(memory_allocator_t* a
 
 RENDERER_API void vulkan_graphics_pipeline_description_destroy_allocations(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
 {
+	debug_assert__(description->is_official == true, "You're trying to destroy an unofficial vulkan_graphics_pipeline_description_t object which is not created by official functions defined in vulkan_graphics_pipeline_description.h");
 	VkPipelineColorBlendStateCreateInfo* info = &description->settings->colorblend;
 	if(info->attachmentCount > 0)
 		memory_allocator_dealloc(allocator, CAST_TO(void*, info->pAttachments));
