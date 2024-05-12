@@ -32,6 +32,7 @@
 #include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_description.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
+#include <renderer/internal/vulkan/vulkan_graphics_pipeline_description_builder.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
 #include <renderer/alloc.h>
@@ -487,173 +488,233 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 	return buf_get_ptr(&passes);
 }
 
-static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset)
+static void gfx_pipe_build_begin_pipeline(vulkan_graphics_pipeline_description_builder_t* builder, u32 bind_index)
 {
-	BUFFER pipelines = buf_new(vulkan_graphics_pipeline_description_t);
+	vulkan_graphics_pipeline_description_builder_add(builder, 1);
+	vulkan_graphics_pipeline_description_builder_bind(builder, bind_index);
+	vulkan_graphics_pipeline_description_builder_begin_pipeline(builder);
+}
+
+static INLINE_IF_RELEASE_MODE void gfx_pipe_build_add_color_blend_state(vulkan_graphics_pipeline_description_builder_t* builder, VkBool32 is_blend_enable)
+{
+	vulkan_graphics_pipeline_description_builder_add_color_blend_state(builder, is_blend_enable);
+}
+
+static INLINE_IF_RELEASE_MODE void gfx_pipe_build_add_shader(vulkan_graphics_pipeline_description_builder_t* builder, const char* file_path, vulkan_shader_type_t shader_type)
+{
+	vulkan_graphics_pipeline_description_builder_add_shader(builder, file_path, shader_type);
+}
+
+static INLINE_IF_RELEASE_MODE void gfx_pipe_build_set_depth_stencil(vulkan_graphics_pipeline_description_builder_t* builder, VkBool32 is_depth_write, VkBool32 is_depth_test)
+{
+	vulkan_graphics_pipeline_description_builder_set_depth_stencil(builder, is_depth_write, is_depth_test);
+}
+
+static INLINE_IF_RELEASE_MODE void gfx_pipe_build_end_pipeline(vulkan_graphics_pipeline_description_builder_t* builder)
+{
+	vulkan_graphics_pipeline_description_builder_end_pipeline(builder);
+}
+
+static vulkan_graphics_pipeline_description_builder_t* create_pipeline_descriptions(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset)
+{
+	vulkan_graphics_pipeline_description_builder_t* builder = vulkan_graphics_pipeline_description_builder_create(renderer->allocator);
 	switch(preset)
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH:
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
 				//get_rasterization(&pipelines)->polygonMode = VK_POLYGON_MODE_LINE;
 				if(preset == SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT)
 				{
-					add_shader(&pipelines, "shaders/presets/bitmap_text/bitmap_text.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-					add_shader(&pipelines, "shaders/presets/bitmap_text/bitmap_text.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+					gfx_pipe_build_add_shader(builder, "shaders/presets/bitmap_text/bitmap_text.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+					gfx_pipe_build_add_shader(builder, "shaders/presets/bitmap_text/bitmap_text.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
 				}
 				else
 				{
-					add_shader(&pipelines, "shaders/presets/text_mesh/text_mesh.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-					add_shader(&pipelines, "shaders/presets/text_mesh/text_mesh.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+					gfx_pipe_build_add_shader(builder, "shaders/presets/text_mesh/text_mesh.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+					gfx_pipe_build_add_shader(builder, "shaders/presets/text_mesh/text_mesh.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
 				}
-			end_pipeline(renderer, &pipelines);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				add_shader(&pipelines, "shaders/presets/unlit/ui/ui.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/unlit/ui/ui.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/unlit/ui/ui.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/unlit/ui/ui.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				add_shader(&pipelines, "shaders/presets/unlit/ui/ui2.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/unlit/ui/ui2.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/unlit/ui/ui2.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/unlit/ui/ui2.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/unlit/color/color.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/unlit/color/color.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/unlit/color/color.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/unlit/color/color.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/skybox/skybox.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/skybox/skybox.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/skybox/skybox.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/skybox/skybox.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/color.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/color.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/color.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/color.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/reflection.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/reflection.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/reflection.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/reflection.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/reflection.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/reflection.depth.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/reflection.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/reflection.depth.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH_POINT:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/reflection.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/reflection.depth.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
-		break;
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/reflection.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/reflection.depth.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
+			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR:
-			begin_pipeline(renderer, &pipelines);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/shadow.pass.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/shadow.pass.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/color.pass.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/color.pass.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/shadow.pass.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/shadow.pass.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
+			gfx_pipe_build_begin_pipeline(builder, 1);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/color.pass.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/color.pass.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
-			begin_pipeline(renderer, &pipelines);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/shadow.pass.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/shadow.pass.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/diffuse/overlay.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/diffuse/overlay.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/shadow.pass.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/shadow.pass.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
+			gfx_pipe_build_begin_pipeline(builder, 1);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/diffuse.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/diffuse.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
+			gfx_pipe_build_begin_pipeline(builder, 2);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/overlay.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/overlay.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
-			begin_pipeline(renderer, &pipelines);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/diffuse/shadow.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/diffuse/shadow.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/diffuse/diffuse.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/diffuse/overlay.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/diffuse/overlay.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/shadow.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/shadow.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
+			gfx_pipe_build_begin_pipeline(builder, 1);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/diffuse.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/diffuse.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
+			gfx_pipe_build_begin_pipeline(builder, 2);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/overlay.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/overlay.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT:
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
-			begin_pipeline(renderer, &pipelines);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/shadow.spot.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/shadow.spot.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
-			begin_pipeline(renderer, &pipelines);
-				add_color_blend_state(&pipelines, VK_FALSE);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/spot.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/lit/color/spot.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/shadow.spot.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/shadow.spot.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
+			gfx_pipe_build_begin_pipeline(builder, 1);
+				gfx_pipe_build_add_color_blend_state(builder, VK_FALSE);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/spot.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/spot.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP:
-			begin_pipeline(renderer, &pipelines);
-				set_depth_stencil(&pipelines, VK_TRUE, VK_TRUE);
-				add_shader(&pipelines, "shaders/presets/lit/color/shadow.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
-				add_shader(&pipelines, "shaders/presets/diffuse/shadow.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
-			end_pipeline(renderer, &pipelines);
-		break;
+		{
+			gfx_pipe_build_begin_pipeline(builder, 0);
+				gfx_pipe_build_set_depth_stencil(builder, VK_TRUE, VK_TRUE);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/lit/color/shadow.point.vert.spv", VULKAN_SHADER_TYPE_VERTEX);
+				gfx_pipe_build_add_shader(builder, "shaders/presets/diffuse/shadow.point.frag.spv", VULKAN_SHADER_TYPE_FRAGMENT);
+			gfx_pipe_build_end_pipeline(builder);
+			break;
+		}
 		default:
+		{
 			UNSUPPORTED_PRESET(preset);
+			break;
+		}
 	}
-	return buf_get_ptr(&pipelines);
+	return builder;
 }
 
 static vulkan_shader_create_info_t* get_create_info_from_preset(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset)
@@ -662,14 +723,16 @@ static vulkan_shader_create_info_t* get_create_info_from_preset(vulkan_renderer_
 	create_info->material_set_bindings = create_material_set_binding(renderer, preset, &create_info->material_set_binding_count);
 	create_info->vertex_infos = create_vertex_info(renderer, preset, &create_info->vertex_info_count);
 	create_info->render_pass_descriptions = create_render_pass_description(renderer, preset, &create_info->render_pass_description_count);
-	create_info->pipeline_descriptions = create_pipeline_descriptions(renderer, preset);
+	create_info->pipeline_descriptions = vulkan_graphics_pipeline_description_builder_get(create_pipeline_descriptions(renderer, preset));
 	return create_info;
 }
 
 RENDERER_API shader_handle_t shader_library_create_shader_from_preset(shader_library_t* library, shader_library_shader_preset_t preset)
 {
 	vulkan_shader_create_info_t* create_info = get_create_info_from_preset(library->renderer, preset);
-	return vulkan_shader_library_create_shader(library, create_info, "Built-In");
+	AUTO handle = vulkan_shader_library_create_shader(library, create_info, "Built-In");
+	/* TODO: destroy create_info here */
+	return handle;
 }
 
 RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* library, shader_create_info_t* create_info, const char* shader_name)

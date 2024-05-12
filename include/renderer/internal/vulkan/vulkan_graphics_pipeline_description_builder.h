@@ -1,0 +1,37 @@
+#pragma once
+
+#include <renderer/defines.h>
+#include <vulkan/vulkan.h> // VkBool32
+#include <renderer/internal/vulkan/vulkan_types.h> // vulkan_shader_type_t
+#include <bufferlib/buffer.h>  // buffer_t
+
+typedef struct vulkan_graphics_pipeline_description_t vulkan_graphics_pipeline_description_t;
+
+typedef struct vulkan_graphics_pipeline_description_builder_t
+{
+	memory_allocator_t* allocator;
+	/* array of vulkan_graphics_pipeline_description_t objects */
+	buffer_t description_array;
+	u32 bind_index;
+} vulkan_graphics_pipeline_description_builder_t;
+
+BEGIN_CPP_COMPATIBLE
+
+/* constructors and destructors */
+RENDERER_API vulkan_graphics_pipeline_description_builder_t* vulkan_graphics_pipeline_description_builder_create(memory_allocator_t* allocator);
+RENDERER_API vulkan_graphics_pipeline_description_builder_t* vulkan_graphics_pipeline_description_builder_create_inverse(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* descriptions, u32 description_count);
+RENDERER_API void vulkan_graphics_pipeline_description_builder_destroy(vulkan_graphics_pipeline_description_builder_t* builder);
+
+RENDERER_API void vulkan_graphics_pipeline_description_builder_add(vulkan_graphics_pipeline_description_builder_t* builder, u32 count);
+RENDERER_API void vulkan_graphics_pipeline_description_builder_bind(vulkan_graphics_pipeline_description_builder_t* builder, u32 index);
+
+RENDERER_API vulkan_graphics_pipeline_description_t* vulkan_graphics_pipeline_description_builder_get(vulkan_graphics_pipeline_description_builder_t* builder);
+RENDERER_API u32 vulkan_graphics_pipeline_description_builder_get_count(vulkan_graphics_pipeline_description_builder_t* builder);
+
+RENDERER_API void vulkan_graphics_pipeline_description_builder_begin_pipeline(vulkan_graphics_pipeline_description_builder_t* builder);
+RENDERER_API void vulkan_graphics_pipeline_description_builder_add_color_blend_state(vulkan_graphics_pipeline_description_builder_t* builder, VkBool32 is_blend_enable);
+RENDERER_API void vulkan_graphics_pipeline_description_builder_add_shader(vulkan_graphics_pipeline_description_builder_t* builder, const char* file_path, vulkan_shader_type_t shader_type);
+RENDERER_API void vulkan_graphics_pipeline_description_builder_set_depth_stencil(vulkan_graphics_pipeline_description_builder_t* builder, VkBool32 is_depth_write, VkBool32 is_depth_test);
+RENDERER_API void vulkan_graphics_pipeline_description_builder_end_pipeline(vulkan_graphics_pipeline_description_builder_t* builder);
+
+END_CPP_COMPATIBLE

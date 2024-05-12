@@ -57,6 +57,14 @@ typedef struct vulkan_graphics_pipeline_settings_t
 
 typedef struct vulkan_graphics_pipeline_description_t
 {
+	/* true if this vulkan_graphics_pipeline_description_t object has been created with only the functions exposed in this file
+	 * any modifications from outside (directly) might lead to heap corruption.
+	 * So, either handle everything explicitly (like memory allocation and deallocations),
+	 * or, only use the set of functions provided here. 
+	 * NOTE: always call vulkan_graphics_pipeline_description_destroy_allocations() once you're done with the object
+	 * 		 also, vulkan_graphics_pipeline_description_destroy_allocations() would work correctly only if you've used
+	 * 		 the functions provided here. */
+	IF_DEBUG( bool is_official; )
 	/* fixed function settings for this graphics pipeline */
 	vulkan_graphics_pipeline_settings_t* settings;
 
@@ -68,12 +76,13 @@ typedef struct vulkan_graphics_pipeline_description_t
 
 #define VULKAN_GRAPHICS_PIPELINE_DESCRIPTION(ptr) CAST_TO(vulkan_graphics_pipeline_description_t*, ptr)
 
-RENDERER_API void vulkan_graphics_pipeline_description_begin(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_description_t* description);
+RENDERER_API void vulkan_graphics_pipeline_description_begin(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description);
 RENDERER_API void vulkan_graphics_pipeline_description_add_color_blend_state(vulkan_graphics_pipeline_description_t* description, VkBool32 blendEnable);
 RENDERER_API void vulkan_graphics_pipeline_description_set_depth_stencil(vulkan_graphics_pipeline_description_t* description, VkBool32 depthWrite, VkBool32 depthTest);
 RENDERER_API void vulkan_graphics_pipeline_description_set_depth_bias(vulkan_graphics_pipeline_description_t* description, float factor, float clamp, float slope_factor);
 RENDERER_API void vulkan_graphics_pipeline_description_add_shader(vulkan_graphics_pipeline_description_t* description, const char* file_path, vulkan_shader_type_t type);
-RENDERER_API void vulkan_graphics_pipeline_description_end(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_description_t* description);
+RENDERER_API void vulkan_graphics_pipeline_description_end(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description);
+RENDERER_API void vulkan_graphics_pipeline_description_destroy_allocations(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description);
 
 RENDERER_API VkPipelineRasterizationStateCreateInfo* vulkan_graphics_pipeline_description_get_rasterization(vulkan_graphics_pipeline_description_t* description);
 
@@ -82,9 +91,9 @@ UNUSED_FUNCTION static VkPipelineRasterizationStateCreateInfo* get_rasterization
 	return vulkan_graphics_pipeline_description_get_rasterization(VULKAN_GRAPHICS_PIPELINE_DESCRIPTION(buf_peek_ptr(list)));
 }
 
-UNUSED_FUNCTION static void begin_pipeline(vulkan_renderer_t* renderer, BUFFER* list)
+UNUSED_FUNCTION static void begin_pipeline(memory_allocator_t* allocator, BUFFER* list)
 {
-	vulkan_graphics_pipeline_description_begin(renderer, buf_create_element(list));
+	vulkan_graphics_pipeline_description_begin(allocator, buf_create_element(list));
 }
 
 UNUSED_FUNCTION static void add_color_blend_state(BUFFER* list, VkBool32 blendEnable)
@@ -107,7 +116,7 @@ UNUSED_FUNCTION static void add_shader(BUFFER* list, const char* file_path, vulk
 	vulkan_graphics_pipeline_description_add_shader(buf_peek_ptr(list), file_path, type);
 }
 
-UNUSED_FUNCTION static void end_pipeline(vulkan_renderer_t* renderer, BUFFER* list)
+UNUSED_FUNCTION static void end_pipeline(memory_allocator_t* allocator, BUFFER* list)
 {
-	vulkan_graphics_pipeline_description_end(renderer, buf_peek_ptr(list));
+	vulkan_graphics_pipeline_description_end(allocator, buf_peek_ptr(list));
 }
