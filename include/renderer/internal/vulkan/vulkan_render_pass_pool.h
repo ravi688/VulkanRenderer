@@ -46,6 +46,7 @@ typedef struct vulkan_render_pass_input_info_t
 
 typedef struct vulkan_render_pass_t vulkan_render_pass_t;
 typedef struct vulkan_render_pass_create_info_t vulkan_render_pass_create_info_t;
+typedef struct vulkan_render_pass_create_info_builder_t vulkan_render_pass_create_info_builder_t;
 
 typedef struct vulkan_render_pass_pool_slot_t
 {
@@ -53,6 +54,7 @@ typedef struct vulkan_render_pass_pool_slot_t
 	vulkan_render_pass_t* render_pass;
 	/* for comparison */
 	vulkan_render_pass_create_info_t* create_info;
+	vulkan_render_pass_create_info_builder_t* create_info_builder;
 	/* holds attachments input information from the previous pass */
 	vulkan_render_pass_input_info_t input;
 	/* handle to this slot in the pool/library */

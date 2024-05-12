@@ -24,6 +24,7 @@
 */
 
 #include <renderer/internal/vulkan/vulkan_shader_resource_description_builder.h>
+#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
@@ -34,6 +35,46 @@ RENDERER_API vulkan_shader_resource_description_builder_t* vulkan_shader_resourc
 	builder->allocator = allocator;
 	builder->description_array = memory_allocator_buf_new(allocator, vulkan_shader_resource_description_t);
 	builder->bind_index = U32_MAX;
+	return builder;
+}
+
+RENDERER_API vulkan_shader_resource_description_builder_t* vulkan_shader_resource_description_builder_create_inverse(memory_allocator_t* allocator, vulkan_shader_resource_description_t* descriptions, u32 description_count)
+{
+	vulkan_shader_resource_description_builder_t* builder = vulkan_shader_resource_description_builder_create(allocator);
+	vulkan_shader_resource_description_builder_add(builder, description_count);
+	for(u32 i = 0; i < description_count; i++)
+	{
+		vulkan_shader_resource_description_builder_bind(builder, i);
+		vulkan_shader_resource_description_t* description = &descriptions[i];
+		glsl_type_t glsl_type = CAST_TO(glsl_type_t, struct_descriptor_get_type(&description->handle));
+		debug_assert__(glsl_type != GLSL_TYPE_PUSH_CONSTANT, "We haven't tested push constants, so it might not work");
+		debug_assert__(glsl_type != GLSL_TYPE_STORAGE_BUFFER, "We haven't tested storaged buffers, so it might not work");
+		switch(glsl_type)
+		{
+			case GLSL_TYPE_UNIFORM_BUFFER:
+			{
+				vulkan_shader_resource_description_builder_create_uniform(builder, struct_descriptor_get_name(&description->handle), description->set_number, description->binding_number);
+				break;
+			}
+			case GLSL_TYPE_SAMPLER_CUBE:
+			case GLSL_TYPE_SAMPLER_2D:
+			case GLSL_TYPE_SUBPASS_INPUT:
+			{
+				vulkan_shader_resource_description_builder_create_opaque(builder, struct_descriptor_get_name(&description->handle), struct_descriptor_get_type(&description->handle), description->set_number, description->binding_number);
+				break;
+			}
+			default:
+			{
+				if(vulkan_shader_resource_description_is_attribute(description))
+				{
+					vulkan_shader_resource_description_builder_create_vertex_attribute(builder, struct_descriptor_get_name(&description->handle), struct_descriptor_get_type(&description->handle), description->vertex_attrib_location_number, description->vertex_attrib_binding_number);
+					break;
+				}
+				DEBUG_LOG_FETAL_ERROR("Untested and perhaps unsupported glsl_type_t: %u", glsl_type);
+				break;
+			}
+		}
+	}
 	return builder;
 }
 
@@ -85,6 +126,11 @@ static vulkan_shader_resource_description_t* get_description(vulkan_shader_resou
 static INLINE_IF_RELEASE_MODE vulkan_shader_resource_description_t* get_bound_description(vulkan_shader_resource_description_builder_t* builder)
 {
 	return get_description(builder, builder->bind_index);
+}
+
+RENDERER_API void vulkan_shader_resource_description_builder_create_vertex_attribute(vulkan_shader_resource_description_builder_t* builder, const char* name, glsl_type_t type, u32 location_number, u32 binding_number)
+{
+	vulkan_shader_resource_description_create_opaque(builder->allocator, get_bound_description(builder), name, type, location_number, binding_number);
 }
 
 RENDERER_API void vulkan_shader_resource_description_builder_create_opaque(vulkan_shader_resource_description_builder_t* builder, const char* name, glsl_type_t type, u32 set_number, u32 binding_number)

@@ -28,6 +28,17 @@
 #include <renderer/internal/vulkan/vulkan_types.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 
+RENDERER_API void vulkan_shader_resource_description_create_vertex_attribute(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 location_number, u32 binding_number)
+{
+	description->vertex_attrib_location_number = location_number;
+	description->vertex_attrib_binding_number = binding_number;
+	// NOTE: shader stage must be FRAGMENT for subpassInput
+	description->stage_flags = (1 << VULKAN_SHADER_TYPE_FRAGMENT); //| (1 << VULKAN_SHADER_TYPE_VERTEX);
+
+	struct_descriptor_begin(allocator, &description->handle, name, type);
+	struct_descriptor_end(allocator, &description->handle);
+}
+
 RENDERER_API void vulkan_shader_resource_description_create_opaque(memory_allocator_t* allocator,  vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 set_number, u32 binding_number)
 {
 	description->is_opaque = true;

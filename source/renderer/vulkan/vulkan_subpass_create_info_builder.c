@@ -59,15 +59,19 @@ RENDERER_API void vulkan_subpass_create_info_builder_destroy(vulkan_subpass_crea
 
 RENDERER_API void vulkan_subpass_create_info_builder_add(vulkan_subpass_create_info_builder_t* builder, u32 count)
 {
+	u32 index = buf_get_element_count(&builder->build_info_array);
 	buf_push_pseudo(&builder->create_info_array, count);
 	buf_push_pseudo(&builder->build_info_array, count);
-	AUTO build_info = CAST_TO(vulkan_subpass_create_info_build_info_t*, buf_peek_ptr(&builder->build_info_array));
-	build_info->color_attachments = memory_allocator_buf_new(builder->allocator, VkAttachmentReference);
-	build_info->is_color_attachments_internal = true;
-	build_info->input_attachments = memory_allocator_buf_new(builder->allocator, VkAttachmentReference);
-	build_info->is_input_attachments_internal = true;
-	build_info->preserve_attachments = memory_allocator_buf_new(builder->allocator, u32);
-	build_info->is_preserve_attachments_internal = true;
+	for(u32 i = index; i < (index + count); i++)
+	{
+		AUTO build_info = CAST_TO(vulkan_subpass_create_info_build_info_t*, buf_get_ptr_at(&builder->build_info_array, i));
+		build_info->color_attachments = memory_allocator_buf_new(builder->allocator, VkAttachmentReference);
+		build_info->is_color_attachments_internal = true;
+		build_info->input_attachments = memory_allocator_buf_new(builder->allocator, VkAttachmentReference);
+		build_info->is_input_attachments_internal = true;
+		build_info->preserve_attachments = memory_allocator_buf_new(builder->allocator, u32);
+		build_info->is_preserve_attachments_internal = true;
+	}
 }
 
 RENDERER_API void vulkan_subpass_create_info_builder_bind(vulkan_subpass_create_info_builder_t* builder, u32 index)
@@ -188,7 +192,7 @@ RENDERER_API void vulkan_subpass_create_info_builder_add_input_attachments(vulka
 	buf_pushv(&build_info->input_attachments, attachments, attachment_count);
 }
 
-RENDERER_API void vulkan_subpass_create_info_builder_add_preserve_attachments(vulkan_subpass_create_info_builder_t* builder, VkAttachmentReference* attachments, u32 attachment_count)
+RENDERER_API void vulkan_subpass_create_info_builder_add_preserve_attachments(vulkan_subpass_create_info_builder_t* builder, u32* attachments, u32 attachment_count)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	buf_pushv(&build_info->preserve_attachments, attachments, attachment_count);

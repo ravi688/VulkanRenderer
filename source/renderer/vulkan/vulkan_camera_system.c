@@ -252,11 +252,7 @@ static vulkan_render_pass_create_info_builder_t* build_swapchain_clear_pass_crea
 		.attachment = 0
 	};
 	vulkan_subpass_create_info_builder_add_color_attachments(subpass_builder, &color_attachment_reference, 1);
-	vulkan_subpass_create_info_builder_set_depth_stencil_attachment(subpass_builder, (VkAttachmentReference)
-																					{
-																						.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-																						.attachment = 1
-																					});
+
 	vulkan_render_pass_create_info_builder_set_subpasses_builder(builder, subpass_builder, true);
 	VkSubpassDependency dependencies[2] = 
 	{

@@ -59,12 +59,18 @@ typedef struct vulkan_shader_resource_description_t
 
 typedef vulkan_shader_resource_description_t* vulkan_shader_resource_description_ptr_t;
 
+RENDERER_API void vulkan_shader_resource_description_create_vertex_attribute(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 location_number, u32 binding_binding);
 
 RENDERER_API void vulkan_shader_resource_description_create_opaque(memory_allocator_t* allocator,  vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 set_number, u32 binding_number);
 
 RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_create_uniform(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description, const char* name, u32 set_number, u32 binding_number);
 
 RENDERER_API void vulkan_shader_resource_description_end_uniform(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description);
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void create_vertex_attribute(memory_allocator_t* allocator, BUFFER* list, const char* name, glsl_type_t type, u32 location_number, u32 binding_number)
+{
+	vulkan_shader_resource_description_create_vertex_attribute(allocator, buf_create_element(list), name, type, location_number, binding_number);
+}
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void create_opaque(memory_allocator_t* allocator, BUFFER* list, const char* name, u32 type, u32 set_number, u32 binding_number)
 {

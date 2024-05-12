@@ -31,6 +31,9 @@
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_camera_system.h>
+#include <renderer/internal/vulkan/vulkan_render_pass_create_info_builder.h>
+#include <renderer/internal/vulkan/vulkan_subpass_create_info_builder.h>
+#include <renderer/internal/vulkan/vulkan_shader_resource_description_builder.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
@@ -120,7 +123,7 @@ RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_p
 		}
 		if(slot->input.input_attachment_count > 0)
 			memory_allocator_dealloc(pool->renderer->allocator, slot->input.input_attachments);
-		vulkan_render_pass_create_info_deep_free(pool->renderer, slot->create_info);
+		vulkan_render_pass_create_info_builder_destroy(slot->create_info_builder);
 	}
 	buf_free(&pool->relocation_table);
 	buf_free(&pool->slots);
@@ -282,36 +285,65 @@ static void vulkan_subpass_create_info_deep_copy(memory_allocator_t* allocator, 
 		vulkan_resource_descriptor_deep_copy(allocator, &dst->sub_render_set_bindings[j], &src->sub_render_set_bindings[j]);	
 }
 
-static void vulkan_render_pass_create_info_deep_copy(memory_allocator_t* allocator, vulkan_render_pass_create_info_t* dst, vulkan_render_pass_create_info_t* src)
+static vulkan_render_pass_create_info_builder_t* vulkan_render_pass_create_info_deep_copy(memory_allocator_t* allocator, vulkan_render_pass_create_info_t* src)
 {
-	memcopy(dst, src, vulkan_render_pass_create_info_t);
+	vulkan_render_pass_create_info_builder_t* builder = vulkan_render_pass_create_info_builder_create(allocator);
+	vulkan_render_pass_create_info_builder_add(builder, 1);
+	vulkan_render_pass_create_info_builder_bind(builder, 0);
 
 	/* clone vulkan_framebuffer_attachments_layout_description_t */
-	dst->framebuffer_layout_description.vo_supplementary_attachments = src->framebuffer_layout_description.supplementary_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkImageView, src->framebuffer_layout_description.supplementary_attachment_count) : NULL;
-	memcopyv(dst->framebuffer_layout_description.vo_supplementary_attachments, src->framebuffer_layout_description.vo_supplementary_attachments, VkImageView, src->framebuffer_layout_description.supplementary_attachment_count);
-	dst->framebuffer_layout_description.attachment_descriptions = src->framebuffer_layout_description.attachment_description_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, VkAttachmentDescription, src->framebuffer_layout_description.attachment_description_count) : NULL;
-	memcopyv(dst->framebuffer_layout_description.attachment_descriptions, src->framebuffer_layout_description.attachment_descriptions, VkAttachmentDescription, src->framebuffer_layout_description.attachment_description_count);
-	dst->framebuffer_layout_description.attachment_usages = src->framebuffer_layout_description.attachment_description_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_DESCRIPTION_ARRAY, vulkan_attachment_next_pass_usage_t, src->framebuffer_layout_description.attachment_description_count) : NULL;
-	memcopyv(dst->framebuffer_layout_description.attachment_usages, src->framebuffer_layout_description.attachment_usages, vulkan_attachment_next_pass_usage_t, src->framebuffer_layout_description.attachment_description_count);
+	vulkan_render_pass_create_info_builder_set_framebuffer_count(builder, src->framebuffer_count);
+	vulkan_render_pass_create_info_builder_set_supplementary_attachment_bucket(builder, src->framebuffer_layout_description.supplementary_attachment_bucket_count, src->framebuffer_layout_description.supplementary_attachment_bucket_depth);
+	if(src->framebuffer_layout_description.supplementary_attachment_count > 0)
+		vulkan_render_pass_create_info_builder_set_supplementary_attachments(builder, 0, src->framebuffer_layout_description.vo_supplementary_attachments, src->framebuffer_layout_description.supplementary_attachment_count);
+	if(src->framebuffer_layout_description.attachment_description_count > 0)
+	{
+		vulkan_render_pass_create_info_builder_add_attachment_descriptions(builder, src->framebuffer_layout_description.attachment_descriptions, src->framebuffer_layout_description.attachment_description_count);
+		_debug_assert__(src->framebuffer_layout_description.attachment_usages != NULL);
+		vulkan_render_pass_create_info_builder_add_attachment_usages(builder, src->framebuffer_layout_description.attachment_usages, src->framebuffer_layout_description.attachment_description_count);
+	}
 
 	/* clone subpass create infos */
 	_debug_assert__(src->subpass_count > 0);
-	dst->subpasses = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO_ARRAY, vulkan_subpass_create_info_t, src->subpass_count);
-	memcopyv(dst->subpasses, src->subpasses, vulkan_subpass_create_info_t, src->subpass_count);
-	for(u32 i = 0; i < src->subpass_count; i++)
-		vulkan_subpass_create_info_deep_copy(allocator, &dst->subpasses[i], &src->subpasses[i]);
+	if(src->subpass_count > 0)
+	{
+		vulkan_subpass_create_info_builder_t* subpass_builder = vulkan_subpass_create_info_builder_create(allocator);
+		vulkan_subpass_create_info_builder_add(subpass_builder, src->subpass_count);
+		for(u32 i = 0; i < src->subpass_count; i++)
+		{
+			AUTO subpass = &src->subpasses[i];
+			vulkan_subpass_create_info_builder_bind(subpass_builder, i);
+			vulkan_subpass_create_info_builder_set_bind_point(subpass_builder, subpass->pipeline_bind_point);
+			if(subpass->color_attachment_count > 0)
+				vulkan_subpass_create_info_builder_add_color_attachments(subpass_builder, subpass->color_attachments, subpass->color_attachment_count);
+			if(subpass->input_attachment_count > 0)
+				vulkan_subpass_create_info_builder_add_input_attachments(subpass_builder, subpass->input_attachments, subpass->input_attachment_count);
+			if(subpass->depth_stencil_attachment != NULL)
+				vulkan_subpass_create_info_builder_set_depth_stencil_attachment(subpass_builder, *subpass->depth_stencil_attachment);
+			if(subpass->preserve_attachment_count > 0)
+				vulkan_subpass_create_info_builder_add_preserve_attachments(subpass_builder, subpass->preserve_attachments, subpass->preserve_attachment_count);
+			if(subpass->sub_render_set_binding_count > 0)
+			{
+				vulkan_shader_resource_description_builder_t* srd_builder = vulkan_shader_resource_description_builder_create_inverse(allocator, subpass->sub_render_set_bindings, subpass->sub_render_set_binding_count);
+				vulkan_subpass_create_info_builder_set_render_set_bindings_builder(subpass_builder, srd_builder, true);
+			}
+		}
+
+		vulkan_render_pass_create_info_builder_set_subpasses_builder(builder, subpass_builder, true);
+	}
 
 	/* clone subpass dependencies */
 	if(src->subpass_dependency_count > 0)
-	{
-		dst->subpass_dependencies = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SUBPASS_DEPENDENCY_ARRAY, VkSubpassDependency, src->subpass_dependency_count);
-		memcopyv(dst->subpass_dependencies, src->subpass_dependencies, VkSubpassDependency, src->subpass_dependency_count);
-	}
+		vulkan_render_pass_create_info_builder_add_dependencies(builder, src->subpass_dependencies, src->subpass_dependency_count);
 
 	/* clone render set bindings */
-	dst->render_set_bindings = src->render_set_binding_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, src->render_set_binding_count) : NULL;
-	for(u32 i = 0; i < src->render_set_binding_count; i++)
-		vulkan_resource_descriptor_deep_copy(allocator, &dst->render_set_bindings[i], &src->render_set_bindings[i]);
+	if(src->render_set_binding_count > 0)
+	{
+		vulkan_shader_resource_description_builder_t* srd_builder = vulkan_shader_resource_description_builder_create_inverse(allocator, src->render_set_bindings, src->render_set_binding_count);
+		vulkan_render_pass_create_info_builder_set_render_set_bindings_builder(builder, srd_builder, true);
+	}
+
+	return builder;
 }
 
 static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_input_info_t* input)
@@ -327,13 +359,13 @@ static vulkan_render_pass_handle_t vulkan_render_pass_pool_create_slot(vulkan_re
 		debug_log_info("Creating new Render pass (handle: %llu)", handle);
 
 		memory_allocator_t* allocator = pool->renderer->allocator;
-		vulkan_render_pass_create_info_t* copy_create_info = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO, vulkan_render_pass_create_info_t);
-		vulkan_render_pass_create_info_deep_copy(allocator, copy_create_info, create_info);
+		vulkan_render_pass_create_info_builder_t* copy_create_info_builder = vulkan_render_pass_create_info_deep_copy(allocator, create_info);
 
 		vulkan_render_pass_pool_slot_t slot = 
 		{
 			.handle = handle,
-			.create_info = copy_create_info,
+			.create_info = vulkan_render_pass_create_info_builder_get(copy_create_info_builder),
+			.create_info_builder = copy_create_info_builder,
 			.render_pass = NULL
 		};
 

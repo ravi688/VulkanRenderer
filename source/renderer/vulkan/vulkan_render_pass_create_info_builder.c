@@ -68,13 +68,17 @@ RENDERER_API void vulkan_render_pass_create_info_builder_destroy(vulkan_render_p
 
 RENDERER_API void vulkan_render_pass_create_info_builder_add(vulkan_render_pass_create_info_builder_t* builder, u32 count)
 {
+	u32 index = buf_get_element_count(&builder->build_info_array);
 	buf_push_pseudo(&builder->create_info_array, count);
 	buf_push_pseudo(&builder->build_info_array, count);
-	AUTO build_info = CAST_TO(vulkan_render_pass_create_info_build_info_t*, buf_peek_ptr(&builder->build_info_array));
-	build_info->attachment_descriptions = memory_allocator_buf_new(builder->allocator, VkAttachmentDescription);
-	build_info->is_attachment_descriptions_internal = true;
-	build_info->attachment_usages = memory_allocator_buf_new(builder->allocator, vulkan_attachment_next_pass_usage_t);
-	build_info->is_attachment_usages_internal = true;
+	for(u32 i = index; i < (index + count); i++)
+	{
+		AUTO build_info = CAST_TO(vulkan_render_pass_create_info_build_info_t*, buf_get_ptr_at(&builder->build_info_array, i));
+		build_info->attachment_descriptions = memory_allocator_buf_new(builder->allocator, VkAttachmentDescription);
+		build_info->is_attachment_descriptions_internal = true;
+		build_info->attachment_usages = memory_allocator_buf_new(builder->allocator, vulkan_attachment_next_pass_usage_t);
+		build_info->is_attachment_usages_internal = true;
+	}
 }
 RENDERER_API void vulkan_render_pass_create_info_builder_bind(vulkan_render_pass_create_info_builder_t* builder, u32 index)
 {
