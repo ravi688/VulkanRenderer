@@ -30,7 +30,7 @@
 
 RENDERER_API vulkan_vertex_buffer_layout_description_builder_t* vulkan_vertex_buffer_layout_description_builder_create(memory_allocator_t* allocator)
 {
-	vulkan_vertex_buffer_layout_description_builder_t* builder = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_DESCRIPTION_BUILDER, vulkan_vertex_buffer_layout_description_builder_t);
+	vulkan_vertex_buffer_layout_description_builder_t* builder = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_BUILDER, vulkan_vertex_buffer_layout_description_builder_t);
 	memzero(builder, vulkan_vertex_buffer_layout_description_builder_t);
 	builder->allocator = allocator;
 	builder->description_array = memory_allocator_buf_new(allocator, vulkan_vertex_buffer_layout_description_t);

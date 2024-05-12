@@ -36,6 +36,7 @@
 #include <renderer/internal/vulkan/vulkan_render_pass_description_builder.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description_builder.h>
+#include <renderer/internal/vulkan/vulkan_shader_create_info_builder.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
 #include <renderer/alloc.h>
@@ -841,37 +842,43 @@ static vulkan_graphics_pipeline_description_builder_t* create_pipeline_descripti
 	return builder;
 }
 
-static vulkan_shader_create_info_t* get_create_info_from_preset(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset)
+static vulkan_shader_create_info_builder_t* get_create_info_from_preset(memory_allocator_t* allocator, shader_library_shader_preset_t preset)
 {
-	vulkan_shader_create_info_t* create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_CREATE_INFO, vulkan_shader_create_info_t);
+	vulkan_shader_create_info_builder_t* builder = vulkan_shader_create_info_builder_create(allocator);
+	vulkan_shader_create_info_builder_add(builder, 1);
+	vulkan_shader_create_info_builder_bind(builder, 0);
 	
 	/* create material set bindings */
-	AUTO msb_builder = create_material_set_binding(renderer->allocator, preset);
-	create_info->material_set_binding_count = vulkan_shader_resource_description_builder_get_count(msb_builder);
-	create_info->material_set_bindings = vulkan_shader_resource_description_builder_get(msb_builder);
+	AUTO msb_builder = create_material_set_binding(allocator, preset);
+	vulkan_shader_create_info_builder_set_material_set_bindings_builder(builder, msb_builder, true);
+	// create_info->material_set_binding_count = vulkan_shader_resource_description_builder_get_count(msb_builder);
+	// create_info->material_set_bindings = vulkan_shader_resource_description_builder_get(msb_builder);
 
 	/* create vertex buffer layout descriptions */
-	AUTO vbld_builder = create_vertex_info(renderer->allocator, preset);
-	create_info->vertex_info_count = vulkan_vertex_buffer_layout_description_builder_get_count(vbld_builder);
-	create_info->vertex_infos = vulkan_vertex_buffer_layout_description_builder_get(vbld_builder);
+	AUTO vbld_builder = create_vertex_info(allocator, preset);
+	vulkan_shader_create_info_builder_set_vertex_buffer_layout_descriptions_builder(builder, vbld_builder, true);
+	// create_info->vertex_info_count = vulkan_vertex_buffer_layout_description_builder_get_count(vbld_builder);
+	// create_info->vertex_infos = vulkan_vertex_buffer_layout_description_builder_get(vbld_builder);
 
 	/* create render pass descriptions */
-	AUTO rpds_builder = create_render_pass_description(renderer->allocator, preset);
-	create_info->render_pass_description_count = vulkan_render_pass_description_builder_get_count(rpds_builder);
-	create_info->render_pass_descriptions = vulkan_render_pass_description_builder_get(rpds_builder);
+	AUTO rpds_builder = create_render_pass_description(allocator, preset);
+	vulkan_shader_create_info_builder_set_render_pass_descriptions_builder(builder, rpds_builder, true);
+	// create_info->render_pass_description_count = vulkan_render_pass_description_builder_get_count(rpds_builder);
+	// create_info->render_pass_descriptions = vulkan_render_pass_description_builder_get(rpds_builder);
 	
 	/* create graphics pipeline descriptions */
-	AUTO gfx_pipes_builder = create_pipeline_descriptions(renderer->allocator, preset);
-	create_info->pipeline_description_count = vulkan_graphics_pipeline_description_builder_get_count(gfx_pipes_builder);
-	create_info->pipeline_descriptions = vulkan_graphics_pipeline_description_builder_get(gfx_pipes_builder);
-	return create_info;
+	AUTO gfx_pipes_builder = create_pipeline_descriptions(allocator, preset);
+	vulkan_shader_create_info_builder_set_graphics_pipeline_descriptions_builder(builder, gfx_pipes_builder, true);
+	// create_info->pipeline_description_count = vulkan_graphics_pipeline_description_builder_get_count(gfx_pipes_builder);
+	// create_info->pipeline_descriptions = vulkan_graphics_pipeline_description_builder_get(gfx_pipes_builder);
+	return builder;
 }
 
 RENDERER_API shader_handle_t shader_library_create_shader_from_preset(shader_library_t* library, shader_library_shader_preset_t preset)
 {
-	vulkan_shader_create_info_t* create_info = get_create_info_from_preset(library->renderer, preset);
-	AUTO handle = vulkan_shader_library_create_shader(library, create_info, "Built-In");
-	/* TODO: destroy create_info here */
+	vulkan_shader_create_info_builder_t* builder = get_create_info_from_preset(library->renderer->allocator, preset);
+	AUTO handle = vulkan_shader_library_create_shader(library, vulkan_shader_create_info_builder_get(builder), "Built-In");
+	// vulkan_shader_create_info_builder_destroy(builder);
 	return handle;
 }
 
