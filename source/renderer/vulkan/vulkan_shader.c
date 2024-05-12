@@ -925,9 +925,6 @@ static VkSubpassDependency* merge_subpass_dependencies(vulkan_renderer_t* render
 
 	OUT dependency_count = count = buf_get_element_count(&new_dependencies);
 
-	if(dependencies != NULL)
-		free(dependencies);
-
 	return (count == 0) ? NULL : buf_get_ptr(&new_dependencies);
 }
 

@@ -31,6 +31,7 @@
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_description.h>
+#include <renderer/internal/vulkan/vulkan_render_pass_description_builder.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description_builder.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
@@ -247,33 +248,72 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(vulkan_rend
 	return buf_get_ptr(&attributes);
 }
 
-static vulkan_render_pass_description_t* create_render_pass_description(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset, u32 OUT pass_count)
+static INLINE_IF_RELEASE_MODE void rpd_build_begin_pass(vulkan_render_pass_description_builder_t* builder, u32 bind_index, vulkan_render_pass_type_t type)
 {
-	BUFFER passes = buf_create(sizeof(vulkan_render_pass_description_t), 1, 0);
+	vulkan_render_pass_description_builder_add(builder, 1);
+	vulkan_render_pass_description_builder_bind(builder, bind_index);
+	vulkan_render_pass_description_builder_begin_pass(builder, type);
+}
+static INLINE_IF_RELEASE_MODE void rpd_build_add_input_sampler2d(vulkan_render_pass_description_builder_t* builder, u32 index, u32 binding)
+{
+	vulkan_render_pass_description_builder_add_input(builder, GLSL_TYPE_SAMPLER_2D, index, binding);
+}
+static INLINE_IF_RELEASE_MODE void rpd_build_add_attachment(vulkan_render_pass_description_builder_t* builder, vulkan_attachment_type_t type)
+{
+	vulkan_render_pass_description_builder_add_attachment(builder, type);
+}
+static INLINE_IF_RELEASE_MODE void rpd_build_begin_subpass(vulkan_render_pass_description_builder_t* builder, u32 pipeline_index)
+{
+	vulkan_render_pass_description_builder_begin_subpass(builder, pipeline_index);
+}
+static INLINE_IF_RELEASE_MODE void rpd_build_add_attachment_reference(vulkan_render_pass_description_builder_t* builder, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
+{
+	vulkan_render_pass_description_builder_add_attachment_reference(builder, type, reference, binding);
+}
+static INLINE_IF_RELEASE_MODE void rpd_build_end_subpass(vulkan_render_pass_description_builder_t* builder)
+{
+	vulkan_render_pass_description_builder_end_subpass(builder);
+}
+static INLINE_IF_RELEASE_MODE void rpd_build_add_subpass_dependency(vulkan_render_pass_description_builder_t* builder, VkSubpassDependency* dependency)
+{
+	vulkan_render_pass_description_builder_add_subpass_dependency(builder, dependency);
+}
+static INLINE_IF_RELEASE_MODE void rpd_build_end_pass(vulkan_render_pass_description_builder_t* builder)
+{
+	vulkan_render_pass_description_builder_end_pass(builder);
+}
+
+
+static vulkan_render_pass_description_builder_t* create_render_pass_description(memory_allocator_t* allocator, shader_library_shader_preset_t preset)
+{
+	vulkan_render_pass_description_builder_t* builder = vulkan_render_pass_description_builder_create(allocator);
 
 	VkSubpassDependency dependency = { .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT };
 	switch(preset)
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
-			begin_pass(renderer, &passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR);
-				begin_subpass(renderer, &passes, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
-				end_subpass(renderer, &passes);
-			end_pass(renderer, &passes);
-		break;
+		{
+			rpd_build_begin_pass(builder, 0, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_COLOR);
+				rpd_build_begin_subpass(builder, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+				rpd_build_end_subpass(builder);
+			rpd_build_end_pass(builder);
+			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH:
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
-			begin_pass(renderer, &passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
-				begin_subpass(renderer, &passes, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
-				end_subpass(renderer, &passes);
+		{
+			rpd_build_begin_pass(builder, 0, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_COLOR);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_DEPTH);
+				rpd_build_begin_subpass(builder, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
+				rpd_build_end_subpass(builder);
 
 				// let the clear happen first
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -282,7 +322,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 				dependency.srcAccessMask = 0;
 				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
 				// let the layout transition happen
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -291,31 +331,35 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = 0;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
-			end_pass(renderer, &passes);
+			rpd_build_end_pass(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION:
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH:
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH_POINT:
 		case SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT:
-			begin_pass(renderer, &passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
-				begin_subpass(renderer, &passes, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
-				end_subpass(renderer, &passes);
-			end_pass(renderer, &passes);
+		{
+			rpd_build_begin_pass(builder, 0, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_COLOR);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_DEPTH);
+				rpd_build_begin_subpass(builder, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
+				rpd_build_end_subpass(builder);
+			rpd_build_end_pass(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR:
-			begin_pass(renderer, &passes, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
-				begin_subpass(renderer, &passes, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
-				end_subpass(renderer, &passes);
+		{
+			rpd_build_begin_pass(builder, 0, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_DEPTH);
+				rpd_build_begin_subpass(builder, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
+				rpd_build_end_subpass(builder);
 				// let the clear happen first
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 				dependency.dstSubpass = 0;
@@ -323,7 +367,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
 				// let the layout transition happen
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -332,7 +376,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = 0;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
 				// let the write happen first and then allow read
 				dependency.srcSubpass = 0;
@@ -341,24 +385,26 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-				add_dependency(&passes, &dependency);
-			end_pass(renderer, &passes);
-			begin_pass(renderer, &passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
-				add_input(renderer, &passes, 0, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
-				begin_subpass(renderer, &passes, 1);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
-				end_subpass(renderer, &passes);
-			end_pass(renderer, &passes);
+				rpd_build_add_subpass_dependency(builder, &dependency);
+			rpd_build_end_pass(builder);
+			rpd_build_begin_pass(builder, 1, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
+				rpd_build_add_input_sampler2d(builder, 0, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_COLOR);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_DEPTH);
+				rpd_build_begin_subpass(builder, 1);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
+				rpd_build_end_subpass(builder);
+			rpd_build_end_pass(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP:
-			begin_pass(renderer, &passes, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
-				begin_subpass(renderer, &passes, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
-				end_subpass(renderer, &passes);
+		{
+			rpd_build_begin_pass(builder, 0, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_DEPTH);
+				rpd_build_begin_subpass(builder, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
+				rpd_build_end_subpass(builder);
 
 				// let the clear happen first
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -367,7 +413,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
 				// let the layout transition happen
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -376,7 +422,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = 0;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
 				// let the write happen first and then allow read
 				dependency.srcSubpass = 0;
@@ -385,17 +431,19 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
-			end_pass(renderer, &passes);
+			rpd_build_end_pass(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
-			begin_pass(renderer, &passes, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
-				begin_subpass(renderer, &passes, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
-				end_subpass(renderer, &passes);
+		{
+			rpd_build_begin_pass(builder, 0, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_DEPTH);
+				rpd_build_begin_subpass(builder, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
+				rpd_build_end_subpass(builder);
 
 				// let the clear happen first
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -404,7 +452,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
 				// let the layout transition happen
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -413,7 +461,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = 0;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
 				// let the write happen first and then allow read
 				dependency.srcSubpass = 0;
@@ -422,18 +470,18 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
-			end_pass(renderer, &passes);
-			begin_pass(renderer, &passes, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
-				add_input(renderer, &passes, 0, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 1 target [swapchain image]
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 0 target
-				add_attachment(&passes, VULKAN_ATTACHMENT_TYPE_DEPTH);
-				begin_subpass(renderer, &passes, 1);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 1, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
-				end_subpass(renderer, &passes);
+			rpd_build_end_pass(builder);
+			rpd_build_begin_pass(builder, 1, VULKAN_RENDER_PASS_TYPE_SWAPCHAIN_TARGET);
+				rpd_build_add_input_sampler2d(builder, 0, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 1 target [swapchain image]
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_COLOR); 	// subpass 0 target
+				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_DEPTH);
+				rpd_build_begin_subpass(builder, 1);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 1, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
+				rpd_build_end_subpass(builder);
 
 				// let the clear happen first for the depth stencil attachment
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -442,7 +490,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
 				// let the clear happen first for the color attachment
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -451,7 +499,7 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 				dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
 
 				// let the layout transition happen
@@ -461,13 +509,13 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = 0;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
-				begin_subpass(renderer, &passes, 2);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT, 1, VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
-					add_attachment_reference(renderer, &passes, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
-				end_subpass(renderer, &passes);
+				rpd_build_begin_subpass(builder, 2);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_INPUT, 1, VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
+					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 2, 0);
+				rpd_build_end_subpass(builder);
 
 				dependency.srcSubpass = 0;
 				dependency.dstSubpass = 1;
@@ -475,17 +523,18 @@ static vulkan_render_pass_description_t* create_render_pass_description(vulkan_r
 				dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 				dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 				dependency.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-				add_dependency(&passes, &dependency);
+				rpd_build_add_subpass_dependency(builder, &dependency);
 
-			end_pass(renderer, &passes);
+			rpd_build_end_pass(builder);
 			break;
+		}
 		default:
+		{
 			UNSUPPORTED_PRESET(preset);
+			break;
+		}
 	};
-
-	OUT pass_count = buf_get_element_count(&passes);
-	buf_fit(&passes);
-	return buf_get_ptr(&passes);
+	return builder;
 }
 
 static void gfx_pipe_build_begin_pipeline(vulkan_graphics_pipeline_description_builder_t* builder, u32 bind_index)
@@ -515,9 +564,9 @@ static INLINE_IF_RELEASE_MODE void gfx_pipe_build_end_pipeline(vulkan_graphics_p
 	vulkan_graphics_pipeline_description_builder_end_pipeline(builder);
 }
 
-static vulkan_graphics_pipeline_description_builder_t* create_pipeline_descriptions(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset)
+static vulkan_graphics_pipeline_description_builder_t* create_pipeline_descriptions(memory_allocator_t* allocator, shader_library_shader_preset_t preset)
 {
-	vulkan_graphics_pipeline_description_builder_t* builder = vulkan_graphics_pipeline_description_builder_create(renderer->allocator);
+	vulkan_graphics_pipeline_description_builder_t* builder = vulkan_graphics_pipeline_description_builder_create(allocator);
 	switch(preset)
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH:
@@ -721,9 +770,18 @@ static vulkan_shader_create_info_t* get_create_info_from_preset(vulkan_renderer_
 {
 	vulkan_shader_create_info_t* create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_CREATE_INFO, vulkan_shader_create_info_t);
 	create_info->material_set_bindings = create_material_set_binding(renderer, preset, &create_info->material_set_binding_count);
+
 	create_info->vertex_infos = create_vertex_info(renderer, preset, &create_info->vertex_info_count);
-	create_info->render_pass_descriptions = create_render_pass_description(renderer, preset, &create_info->render_pass_description_count);
-	create_info->pipeline_descriptions = vulkan_graphics_pipeline_description_builder_get(create_pipeline_descriptions(renderer, preset));
+
+	/* create render pass descriptions */
+	AUTO rpds_builder = create_render_pass_description(renderer->allocator, preset);
+	create_info->render_pass_description_count = vulkan_render_pass_description_builder_get_count(rpds_builder);
+	create_info->render_pass_descriptions = vulkan_render_pass_description_builder_get(rpds_builder);
+	
+	/* create graphics pipeline descriptions */
+	AUTO gfx_pipes_builder = create_pipeline_descriptions(renderer->allocator, preset);
+	create_info->pipeline_description_count = vulkan_graphics_pipeline_description_builder_get_count(gfx_pipes_builder);
+	create_info->pipeline_descriptions = vulkan_graphics_pipeline_description_builder_get(gfx_pipes_builder);
 	return create_info;
 }
 
