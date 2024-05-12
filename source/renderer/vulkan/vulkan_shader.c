@@ -789,29 +789,6 @@ static vulkan_render_pass_create_info_builder_t* convert_render_pass_description
 	return builder;
 }
 
-static void destroy_vulkan_render_pass_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
-{
-	for(u32 i = 0; i < create_info->subpass_count; i++)
-	{
-		if(create_info->subpasses[i].color_attachment_count > 0)
-			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].color_attachments);
-		if(create_info->subpasses[i].depth_stencil_attachment != NULL)
-			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].depth_stencil_attachment);
-	}
-	if(create_info->subpass_dependency_count > 0)
-		memory_allocator_dealloc(renderer->allocator, create_info->subpass_dependencies);
-	if(create_info->subpass_count > 0)
-		memory_allocator_dealloc(renderer->allocator, create_info->subpasses);
-	if(create_info->framebuffer_layout_description.attachment_count > 0)
-	{
-		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachments);
-		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachment_usages);
-	}
-	if(create_info->framebuffer_layout_description.supplementary_attachment_count > 0)
-		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.vo_supplementary_attachments);
-	memory_allocator_dealloc(renderer->allocator, create_info);
-}
-
 static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* descriptions, u32 description_count, vulkan_pipeline_common_data_t* common_data)
 {
 	// allocate memory
