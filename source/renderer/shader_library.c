@@ -30,6 +30,7 @@
 #include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
+#include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description_builder.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_description.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_description_builder.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
@@ -169,51 +170,74 @@ static vulkan_shader_resource_description_t* create_material_set_binding(vulkan_
 	return buf_get_ptr(&bindings);
 }
 
-static vulkan_vertex_buffer_layout_description_t* create_vertex_info(vulkan_renderer_t* renderer, shader_library_shader_preset_t preset, u32 OUT vertex_info_count)
+static INLINE_IF_RELEASE_MODE void vbl_build_begin(vulkan_vertex_buffer_layout_description_builder_t* builder, u32* bind_counter, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
 {
-	BUFFER attributes = buf_new(vulkan_vertex_buffer_layout_description_t);
+	vulkan_vertex_buffer_layout_description_builder_add(builder, 1);
+	vulkan_vertex_buffer_layout_description_builder_bind(builder, *bind_counter);
+	vulkan_vertex_buffer_layout_description_builder_begin(builder, stride, input_rate, binding_number);
+	(*bind_counter)++;
+}
+static INLINE_IF_RELEASE_MODE void vbl_build_add_attribute(vulkan_vertex_buffer_layout_description_builder_t* builder, u32 location, VkFormat format, u32 offset)
+{
+	vulkan_vertex_buffer_layout_description_builder_add_attribute(builder, location, format, offset);
+}
+static INLINE_IF_RELEASE_MODE void vbl_build_end(vulkan_vertex_buffer_layout_description_builder_t* builder)
+{
+	vulkan_vertex_buffer_layout_description_builder_end(builder);
+}
+
+static vulkan_vertex_buffer_layout_description_builder_t* create_vertex_info(memory_allocator_t* allocator, shader_library_shader_preset_t preset)
+{
+	vulkan_vertex_buffer_layout_description_builder_t* builder = vulkan_vertex_buffer_layout_description_builder_create(allocator);
+	u32 bind_counter = 0;
 	switch(preset)
 	{
 		case SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH:
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
-			begin_vertex_binding(renderer, &attributes, 16, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
-			end_vertex_binding(renderer, &attributes);
+		{
+			vbl_build_begin(builder, &bind_counter, 16, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+				vbl_build_add_attribute(builder, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			vbl_build_end(builder);
 			if(preset == SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT)
 			{
 				/* bindings 0, 1, 2, 3, and 4 are reserved for basic vertex data buffers (they are not interleaved), hence we must start from 5 */
-				begin_vertex_binding(renderer, &attributes, 48, VK_VERTEX_INPUT_RATE_INSTANCE, 5);
+				vbl_build_begin(builder, &bind_counter, 48, VK_VERTEX_INPUT_RATE_INSTANCE, 5);
 					/* locations 0, 1, 2, 3, and 4 are reserved for basic vertex data, hence we must start from 5 */
-					add_vertex_attribute(&attributes, 5, VK_FORMAT_R32G32B32A32_SFLOAT, 0);
-					add_vertex_attribute(&attributes, 6, VK_FORMAT_R32G32B32A32_SFLOAT, 16);
-					add_vertex_attribute(&attributes, 7, VK_FORMAT_R32G32B32_SFLOAT, 32);
-				end_vertex_binding(renderer, &attributes);
+					vbl_build_add_attribute(builder, 5, VK_FORMAT_R32G32B32A32_SFLOAT, 0);
+					vbl_build_add_attribute(builder, 6, VK_FORMAT_R32G32B32A32_SFLOAT, 16);
+					vbl_build_add_attribute(builder, 7, VK_FORMAT_R32G32B32_SFLOAT, 32);
+				vbl_build_end(builder);
 			}
 			else /* if preset == SHADER_LIBRARY_SHADER_PRESET_TEXT_MESH */
 			{
 				/* bindings 0, 1, 2, 3, and 4 are reserved for basic vertex data buffers (they are not interleaved), hence we must start from 5 */
-				begin_vertex_binding(renderer, &attributes, 16, VK_VERTEX_INPUT_RATE_INSTANCE, 5);
+				vbl_build_begin(builder, &bind_counter, 16, VK_VERTEX_INPUT_RATE_INSTANCE, 5);
 					/* locations 0, 1, 2, 3, and 4 are reserved for basic vertex data, hence we must start from 5 */
-					add_vertex_attribute(&attributes, 5, VK_FORMAT_R32G32B32A32_SFLOAT, 0);
-				end_vertex_binding(renderer, &attributes);
+					vbl_build_add_attribute(builder, 5, VK_FORMAT_R32G32B32A32_SFLOAT, 0);
+				vbl_build_end(builder);
 			}
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_SKYBOX:
 		case SHADER_LIBRARY_SHADER_PRESET_SHADOW_MAP:
-			begin_vertex_binding(renderer, &attributes, 16, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
-			end_vertex_binding(renderer, &attributes);
+		{
+			vbl_build_begin(builder, &bind_counter, 16, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+				vbl_build_add_attribute(builder, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			vbl_build_end(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI:
 		case SHADER_LIBRARY_SHADER_PRESET_UNLIT_UI2:
-			begin_vertex_binding(renderer, &attributes, 16, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
-			end_vertex_binding(renderer, &attributes);
-			begin_vertex_binding(renderer, &attributes, 8, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_LOCATION, VK_FORMAT_R32G32_SFLOAT, 0);
-			end_vertex_binding(renderer, &attributes);
-		break;
+		{
+			vbl_build_begin(builder, &bind_counter, 16, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+				vbl_build_add_attribute(builder, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			vbl_build_end(builder);
+			vbl_build_begin(builder, &bind_counter, 8, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_BINDING);
+				vbl_build_add_attribute(builder, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_LOCATION, VK_FORMAT_R32G32_SFLOAT, 0);
+			vbl_build_end(builder);
+			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_COLOR:
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION:
 		case SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH:
@@ -221,31 +245,36 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_info(vulkan_rend
 		case SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT:
 		case SHADER_LIBRARY_SHADER_PRESET_SPOT_LIGHT:
 		case SHADER_LIBRARY_SHADER_PRESET_LIT_SHADOW_COLOR:
-			begin_vertex_binding(renderer, &attributes, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
-			end_vertex_binding(renderer, &attributes);
-			begin_vertex_binding(renderer, &attributes, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
-			end_vertex_binding(renderer, &attributes);
+		{
+			vbl_build_begin(builder, &bind_counter, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+				vbl_build_add_attribute(builder, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			vbl_build_end(builder);
+			vbl_build_begin(builder, &bind_counter, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
+				vbl_build_add_attribute(builder, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			vbl_build_end(builder);
 			break;
+		}
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_TEST:
 		case SHADER_LIBRARY_SHADER_PRESET_DIFFUSE_POINT:
-			begin_vertex_binding(renderer, &attributes, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
-			end_vertex_binding(renderer, &attributes);
-			begin_vertex_binding(renderer, &attributes, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
-			end_vertex_binding(renderer, &attributes);
-			begin_vertex_binding(renderer, &attributes, 8, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_BINDING);
-				add_vertex_attribute(&attributes, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_LOCATION, VK_FORMAT_R32G32_SFLOAT, 0);
-			end_vertex_binding(renderer, &attributes);
+		{
+			vbl_build_begin(builder, &bind_counter, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+				vbl_build_add_attribute(builder, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			vbl_build_end(builder);
+			vbl_build_begin(builder, &bind_counter, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_BINDING);
+				vbl_build_add_attribute(builder, VULKAN_MESH_VERTEX_ATTRIBUTE_NORMAL_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			vbl_build_end(builder);
+			vbl_build_begin(builder, &bind_counter, 8, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_BINDING);
+				vbl_build_add_attribute(builder, VULKAN_MESH_VERTEX_ATTRIBUTE_TEXCOORD_LOCATION, VK_FORMAT_R32G32_SFLOAT, 0);
+			vbl_build_end(builder);
 			break;
+		}
 		default:
+		{
 			UNSUPPORTED_PRESET(preset);
+			break;
+		}
 	}
-	OUT vertex_info_count = buf_get_element_count(&attributes);
-	buf_fit(&attributes);
-	return buf_get_ptr(&attributes);
+	return builder;
 }
 
 static INLINE_IF_RELEASE_MODE void rpd_build_begin_pass(vulkan_render_pass_description_builder_t* builder, u32 bind_index, vulkan_render_pass_type_t type)
@@ -771,7 +800,10 @@ static vulkan_shader_create_info_t* get_create_info_from_preset(vulkan_renderer_
 	vulkan_shader_create_info_t* create_info = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_CREATE_INFO, vulkan_shader_create_info_t);
 	create_info->material_set_bindings = create_material_set_binding(renderer, preset, &create_info->material_set_binding_count);
 
-	create_info->vertex_infos = create_vertex_info(renderer, preset, &create_info->vertex_info_count);
+	/* create vertex buffer layout descriptions */
+	AUTO vbld_builder = create_vertex_info(renderer->allocator, preset);
+	create_info->vertex_info_count = vulkan_vertex_buffer_layout_description_builder_get_count(vbld_builder);
+	create_info->vertex_infos = vulkan_vertex_buffer_layout_description_builder_get(vbld_builder);
 
 	/* create render pass descriptions */
 	AUTO rpds_builder = create_render_pass_description(renderer->allocator, preset);

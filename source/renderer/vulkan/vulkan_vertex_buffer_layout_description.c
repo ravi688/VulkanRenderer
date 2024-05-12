@@ -41,15 +41,15 @@ static BUFFER* __create_buffer(memory_allocator_t* allocator,  u32 size)
 	return buffer;
 }
 
-RENDERER_API void vulkan_vertex_buffer_layout_description_begin(vulkan_renderer_t* renderer,  vulkan_vertex_buffer_layout_description_t* description, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
+RENDERER_API void vulkan_vertex_buffer_layout_description_begin(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
 {
 	description->binding = binding_number;
 	description->input_rate = input_rate;
 	description->size = stride;
 
-	description->attribute_locations = CAST_TO(u32*, create_buffer(renderer->allocator, u32));
-	description->attribute_formats = CAST_TO(VkFormat*, create_buffer(renderer->allocator, VkFormat));
-	description->attribute_offsets = CAST_TO(u32*, create_buffer(renderer->allocator, u32));
+	description->attribute_locations = CAST_TO(u32*, create_buffer(allocator, u32));
+	description->attribute_formats = CAST_TO(VkFormat*, create_buffer(allocator, VkFormat));
+	description->attribute_offsets = CAST_TO(u32*, create_buffer(allocator, u32));
 }
 
 RENDERER_API void vulkan_vertex_buffer_layout_description_add_attribute(vulkan_vertex_buffer_layout_description_t* description, u32 location, VkFormat format, u32 offset)
@@ -59,16 +59,29 @@ RENDERER_API void vulkan_vertex_buffer_layout_description_add_attribute(vulkan_v
 	buf_push_auto(CAST_TO(BUFFER*, description->attribute_offsets), offset);
 }
 
-RENDERER_API void vulkan_vertex_buffer_layout_description_end(vulkan_renderer_t* renderer,  vulkan_vertex_buffer_layout_description_t* description)
+RENDERER_API void vulkan_vertex_buffer_layout_description_end(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description)
 {
 	BUFFER* buffer = CAST_TO(BUFFER*, description->attribute_locations);
 	description->attribute_count = buf_get_element_count(buffer);
 	description->attribute_locations = buf_get_ptr(buffer);
-	memory_allocator_dealloc(renderer->allocator, buffer);
+	memory_allocator_dealloc(allocator, buffer);
 	buffer = CAST_TO(BUFFER*, description->attribute_formats);
 	description->attribute_formats = buf_get_ptr(buffer);
-	memory_allocator_dealloc(renderer->allocator, buffer);
+	memory_allocator_dealloc(allocator, buffer);
 	buffer = CAST_TO(BUFFER*, description->attribute_offsets);
 	description->attribute_offsets = buf_get_ptr(buffer);
-	memory_allocator_dealloc(renderer->allocator, buffer);
+	memory_allocator_dealloc(allocator, buffer);
+}
+
+RENDERER_API void vulkan_vertex_buffer_layout_description_destroy_allocations(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description)
+{
+	if(description->attribute_count > 0)
+	{
+		_debug_assert__(description->attribute_locations != NULL);
+		memory_allocator_dealloc(allocator, description->attribute_locations);
+		_debug_assert__(description->attribute_formats != NULL);
+		memory_allocator_dealloc(allocator, description->attribute_formats);
+		_debug_assert__(description->attribute_offsets != NULL);
+		memory_allocator_dealloc(allocator, description->attribute_offsets);
+	}
 }
