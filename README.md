@@ -38,19 +38,19 @@ There are only C and C++ interface headers for now. <br>
 3. **MINGW 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
    
    ```
-   $gcc --version
+   $ gcc --version
    ```
    
    OR
    
    ```
-   $g++ --version
+   $ g++ --version
    ```
    
    If this isn't already installed, run the following in MSYS2 MinGW shell
    
    ```
-   $pacman -S gcc
+   $ pacman -S gcc
    ```
 
 4. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
@@ -165,32 +165,32 @@ There are only C and C++ interface headers for now. <br>
 1. Clone the repository by running the following command <br>
    
    ```
-   $git clone https://github.com/ravi688/VulkanRenderer.git
+   $ git clone https://github.com/ravi688/VulkanRenderer.git
    ```
 
 2. Change the working directory to `VulkanRenderer` and setup all the dependency git submodules by running the following command
    
    ```
-   $cd VulkanRenderer
-   $make -s setup
+   $ cd VulkanRenderer
+   $ make -s setup
    ```
 
 3. Start building by running the following command
    
    ```
-   $make -s build
+   $ make -s build
    ```
    
    OR
    
    ```
-   $make -s build-debug
+   $ make -s build-debug
    ```
    
    For release mode
    
    ```
-   $make -s build-release
+   $ make -s build-release
    ```
 
 ### Building executable manually (Optional)
@@ -198,25 +198,25 @@ There are only C and C++ interface headers for now. <br>
 1. Change the working directory to `VulkanRenderer` and build the `main` executable by running the following command
    
    ```
-   $make -s debug
+   $ make -s debug
    ```
 
 2. Now run the `main` executable by running the following command
    
    ```
-   $./main
+   $ ./main
    ```
 
 ### Test Run (Optional)
 There are several tests which you can try running by just passing arguments:
 ```
-$cd <build directory>
-$./main CUBE
+$ cd <build directory>
+$ ./main CUBE
 ```
 The above set of commands would launch a window in which a white cube will be spinning.
 If you want to see all the possible test cases, you may launch the execution without any arguments and it would just print the list of possible test cases:
 ```
-$./main
+$ ./main
 supported tests:
         DEPTH_RENDER_TEXTURE
         DEPTH_RENDER_TEXTURE_LOAD
@@ -257,7 +257,7 @@ supported tests:
 1. Change the working directory to `VulkanRenderer` and run the following command
    
    ```
-   $make -s clean
+   $ make -s clean
    ```
 
 ## Features
