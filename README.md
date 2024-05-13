@@ -1,27 +1,108 @@
-![](VulkanRendererLogo.png)
-
 [![MSYS2](https://github.com/ravi688/VulkanRenderer/actions/workflows/msys2.yml/badge.svg)](https://github.com/ravi688/VulkanRenderer/actions/workflows/msys2.yml)
 [![Ubuntu](https://github.com/ravi688/VulkanRenderer/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/ravi688/VulkanRenderer/actions/workflows/ubuntu.yml)
 
-[![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Windows-AMD-GPU&key_text=Win+AMD+GPU+(GitLab)&key_width=134)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
+![Spectrum-VulkanRenderer-Small](https://github.com/ravi688/VulkanRenderer/assets/67525292/5ec8fd4e-97e7-48aa-ab8d-cc808917e6ad)
 
-[![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Windows-Intel-GPU&key_text=Win+Intel+GPU+(GitLab)&key_width=134)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
 
-[![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Linux-AMD-GPU&key_text=Linux+AMD+GPU+(GitLab)&key_width=134)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
+# Spectrum Graphics Engine
 
-[![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Linux-Intel-GPU&key_text=Linux+Intel+GPU+(GitLab)&key_width=134)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
-
-[![GitLab-CI](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/badges/main/pipeline.svg?job=Windows-Intel-Nvidia-GPU&key_text=Win+AMD-NVD+GPU+(GitLab)&key_width=162)](http://192.168.1.15/gitlab/frameworks-and-libraries/VulkanRenderer/.gitlab-ci.yml)
-## Summary
-
-**Vulkan 3D renderer** is built on Vulkan API
-
-But there will be more graphics backend such as OpenGL and DirectX 12 <br>
-There are only C and C++ interface headers for now. <br>
+**SGE** (formerly Vulkan Renderer) is a cross platform 2D and 3D graphics engine primarly designed for high quality text rendering, and 2D/3D geometry rendering.
+For now it is based on Vulkan API, and in future, more API backends will be implemented, such as DirectX 12.
 
 <a href="https://www.buymeacoffee.com/raviprakashsingh" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 
-### Tested on
+## Features
+
+### Multipass Rendering
+
+1. Render Pass Pool to avoid pass duplication
+2. Sorting Render Passes using Topological Sort to minimize multiple runs of the same render pass.
+
+### Render Queues
+
+1. Background Render Queue
+
+2. Geometry Render Queue
+
+3. Overlay Render Queue
+
+4. General Purpose Render Queues
+
+### Render Textures  (Hybrid render textures)
+A camera can render its depth and color output to a user supplied textures - both at the same time.
+
+1. **Depth Render Texture** <br>
+   One can redirect the depth render output of a camera to a depth render texture
+
+2. **Color Render Texture** <br>
+   One can redirect the color render output of a camrea to a color render texture
+
+3. **Depth Cube Render Texture (Shadow map for point lights)** <br>
+   One can redirect the depth render output of 360 view (6 faces of a cube) to a cube depth render texture - which can further be used as a shadow map for point lights.
+
+4. **Color Cube Render Texture (Environment map for reflection effects)** <br>
+   One can redirect the color render output of 360 view (6 faces of a cube) to a cube color render texture - which can further be used as a environment reflection map.
+
+### Textures and Cubemaps
+
+1. Normal Map
+
+2. Albedo Map
+
+3. Skybox &  Reflection cubemap
+
+### Camera System
+
+1. Multiple Cameras
+
+2. Render Target switching
+
+3. Orthographic and Perspective Projection
+4. Split rendering
+
+### Lights
+
+1. Directional lights
+
+2. Point lights
+
+3. Spot lights
+
+### Meshes
+
+1. Support for ASCII STL, BINARY STL
+
+2. Support for ASCII OBJ
+
+3. Mesh Trangulation and Quadrangulation
+
+4. Tangent Vector Generation
+
+### Text Mesh Rendering
+
+1. Glyph pool to avoid glyph mesh duplication
+
+2. High performance internal data structure to frequently update the text data
+
+3. Text Mesh batching
+
+### Bitmap Text Rendering
+1. Glyph Bitmap Atlas to avoid glyph bitmap duplication
+2. Text Layout Callback to customize the placement of glyphs.
+
+### Materials
+
+1. String to fast integer handles for constant lookup
+
+### Shaders
+
+1. Multiple Render passes and Subpasses (fully control over the input and output attachments)
+
+2. Custom attachments configuration
+
+3. Fixed Function pipeline configuration for each pass
+
+## Tested on
 
 1. Windows 11 64 bit
 2. Windows 10 64 bit
@@ -29,6 +110,8 @@ There are only C and C++ interface headers for now. <br>
 4. Nvidia GeForce GTX 1650 4 GB (VRAM) Discrete Mobile GPU + 8 GB of Main Memory (RAM)
 5. AMD Radeon(TM) Graphics 512 MB (VRAM) Integratred Mobile GPU + 8 GB of Main Memory (RAM)
 6. AMD Vega 8 Graphics 512 MB (VRAM) Integrated Mobile GPU  + 12 GB of Main Memory (RAM)
+
+## Getting Started
 
 ### Requirements for building on Windows
 
@@ -259,98 +342,6 @@ supported tests:
    ```
    $ make -s clean
    ```
-
-## Features
-
-### Multipass Rendering
-
-1. Render Pass Pool to avoid pass duplication
-2. Sorting Render Passes using Topological Sort to minimize multiple runs of the same render pass.
-
-### Render Queues
-
-1. Background Render Queue
-
-2. Geometry Render Queue
-
-3. Overlay Render Queue
-
-4. General Purpose Render Queues
-
-### Render Textures  (Hybrid render textures)
-A camera can render its depth and color output to a user supplied textures - both at the same time.
-
-1. **Depth Render Texture** <br>
-   One can redirect the depth render output of a camera to a depth render texture
-
-2. **Color Render Texture** <br>
-   One can redirect the color render output of a camrea to a color render texture
-
-3. **Depth Cube Render Texture (Shadow map for point lights)** <br>
-   One can redirect the depth render output of 360 view (6 faces of a cube) to a cube depth render texture - which can further be used as a shadow map for point lights.
-
-4. **Color Cube Render Texture (Environment map for reflection effects)** <br>
-   One can redirect the color render output of 360 view (6 faces of a cube) to a cube color render texture - which can further be used as a environment reflection map.
-
-### Textures and Cubemaps
-
-1. Normal Map
-
-2. Albedo Map
-
-3. Skybox &  Reflection cubemap
-
-### Camera System
-
-1. Multiple Cameras
-
-2. Render Target switching
-
-3. Orthographic and Perspective Projection
-4. Split rendering
-
-### Lights
-
-1. Directional lights
-
-2. Point lights
-
-3. Spot lights
-
-### Meshes
-
-1. Support for ASCII STL, BINARY STL
-
-2. Support for ASCII OBJ
-
-3. Mesh Trangulation and Quadrangulation
-
-4. Tangent Vector Generation
-
-### Text Mesh Rendering
-
-1. Glyph pool to avoid glyph mesh duplication
-
-2. High performance internal data structure to frequently update the text data
-
-3. Text Mesh batching
-
-### Bitmap Text Rendering
-1. Glyph Bitmap Atlas to avoid glyph bitmap duplication
-2. Text Layout Callback to customize the placement of glyphs.
-
-### Materials
-
-1. String to fast integer handles for constant lookup
-
-### Shaders
-
-1. Multiple Render passes and Subpasses (fully control over the input and output attachments)
-
-2. Custom attachments configuration
-
-3. Fixed Function pipeline configuration for each pass
-
 
 ## Documentation
 The full documentation will be available very soon, however, for now you can have a look at the [Wiki](https://github.com/ravi688/VulkanRenderer/wiki).
