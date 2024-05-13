@@ -111,6 +111,8 @@ A camera can render its depth and color output to a user supplied textures - bot
 5. AMD Radeon(TM) Graphics 512 MB (VRAM) Integratred Mobile GPU + 8 GB of Main Memory (RAM)
 6. AMD Vega 8 Graphics 512 MB (VRAM) Integrated Mobile GPU  + 12 GB of Main Memory (RAM)
 
+## Getting Started
+
 ### Requirements for building on Windows
 
 1. **[Msys2](https://www.msys2.org/)**
