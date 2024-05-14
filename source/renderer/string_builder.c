@@ -85,6 +85,35 @@ RENDERER_API void string_builder_append(string_builder_t* builder, const char* c
 	buf_pop_pseudo(&builder->string_buffer, 1);
 }
 
+RENDERER_API void string_builder_stitch(string_builder_t* builder, const char* const format, ...)
+{
+	MEM_CHECK(builder);
+
+	va_list args;
+
+	/* get the required size of the format string */
+	va_start(args, format);
+	u32 required_size = vsnprintf(NULL, 0, format, args);
+	va_end(args);
+
+	/* if nothing to write, return */
+	if(required_size == 0)
+		return;
+
+	AUTO index = buf_get_element_count(&builder->string_buffer);
+	buf_push_pseudo(&builder->string_buffer, required_size + 1);
+	void* ptr = buf_get_ptr_at(&builder->string_buffer, index);
+
+	/* format the string and put that into the buffer */
+	va_start(args, format);
+	CAN_BE_UNUSED_VARIABLE u32 written_size = vsnprintf(CAST_TO(char*, ptr), required_size + 1, format, args);
+	_debug_assert__(written_size == required_size);
+	va_end(args);
+
+	/* pop out the null character */
+	buf_pop_pseudo(&builder->string_buffer, 1);
+}
+
 RENDERER_API void string_builder_append_null(string_builder_t* builder)
 {
 	buf_push_null(&builder->string_buffer);
@@ -93,6 +122,11 @@ RENDERER_API void string_builder_append_null(string_builder_t* builder)
 RENDERER_API void string_builder_append_newline(string_builder_t* builder)
 {
 	buf_push_char(&builder->indentation_buffer, '\n');
+}
+
+RENDERER_API void string_builder_stitch_newline(string_builder_t* builder)
+{
+	buf_push_char(&builder->string_buffer, '\n');
 }
 
 RENDERER_API void string_builder_increment_indentation(string_builder_t* builder)
@@ -107,6 +141,19 @@ RENDERER_API void string_builder_decrement_indentation(string_builder_t* builder
 
 RENDERER_API char* string_builder_get_str(string_builder_t* builder)
 {
+	if(buf_get_element_count(&builder->string_buffer) == 0)
+		return "";
+	return CAST_TO(char*, buf_get_ptr(&builder->string_buffer));
+}
+
+RENDERER_API char* string_builder_get_str_null(string_builder_t* builder)
+{
+	if(buf_get_element_count(&builder->string_buffer) == 0)
+		return "";
+	char ch;
+	buf_peek(&builder->string_buffer, &ch);
+	if(ch != 0)
+		buf_push_char(&builder->string_buffer, 0);
 	return CAST_TO(char*, buf_get_ptr(&builder->string_buffer));
 }
 
