@@ -28,13 +28,18 @@
 #include <renderer/defines.h>
 #include <vulkan/vulkan.h>
 #include <renderer/memory_allocation_type.h>
+#include <renderer/internal/vulkan/vulkan_object.h>
 
 typedef struct vulkan_allocator_t
 {
+	__VULKAN_OBJECT__;
 	memory_allocator_t* allocator;
 	VkAllocationCallbacks vo_callbacks;
 	memory_allocation_type_t current_allocation_type;
 } vulkan_allocator_t;
+
+#define VULKAN_ALLOCATOR(ptr) VULKAN_OBJECT_UP_CAST(vulkan_allocator_t*, VULKAN_OBJECT_TYPE_ALLOCATOR, ptr)
+#define VULKAN_ALLOCATOR_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_allocator_t*, VULKAN_OBJECT_TYPE_ALLOCATOR, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
