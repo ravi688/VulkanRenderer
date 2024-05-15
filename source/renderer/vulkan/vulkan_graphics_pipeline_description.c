@@ -43,7 +43,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_begin(memory_allocator_t*
 {
 	vulkan_graphics_pipeline_settings_t* settings = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_SETTINGS, vulkan_graphics_pipeline_settings_t);
 	memzero(settings, vulkan_graphics_pipeline_settings_t);
-	description->is_official = true;
+	IF_DEBUG( description->is_official = true );
 	description->settings = settings;
 
 	description->spirv_codes = CAST_TO(vulkan_spirv_code_t*, create_buffer(allocator, vulkan_spirv_code_t));
