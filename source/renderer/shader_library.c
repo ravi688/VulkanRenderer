@@ -878,7 +878,7 @@ RENDERER_API shader_handle_t shader_library_create_shader_from_preset(shader_lib
 {
 	vulkan_shader_create_info_builder_t* builder = get_create_info_from_preset(library->renderer->allocator, preset);
 	AUTO handle = vulkan_shader_library_create_shader(library, vulkan_shader_create_info_builder_get(builder), "Built-In");
-	// vulkan_shader_create_info_builder_destroy(builder);
+	vulkan_shader_create_info_builder_destroy(builder);
 	return handle;
 }
 
