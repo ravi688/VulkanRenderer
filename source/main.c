@@ -127,7 +127,16 @@ int main(int argc, const char** argv)
 
 	test_t* test = test_create(allocator, (argc > 1) ? argv[1] : "");
 	renderer_initialization_data_t data = test->renderer_initialize();
-	AUTO driver = renderer_init(allocator, data.gpu_type, data.window_width, data.window_height, data.window_name, data.is_fullscreen, data.is_resizable);
+	renderer_gpu_type_t gpu_type = data.gpu_type;
+	for(int i = 1; i < argc; i++)
+	{
+		if(strncmp(argv[i], "gpu_type=", strlen("gpu_type=")) == 0)
+		{
+			gpu_type = CAST_TO(renderer_gpu_type_t, atoi(argv[i] + strlen("gpu_type=")));
+			break;
+		}
+	}
+	AUTO driver = renderer_init(allocator, gpu_type, data.window_width, data.window_height, data.window_name, data.is_fullscreen, data.is_resizable);
 
 	test->initialize(driver, test->user_data);
 
