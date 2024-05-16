@@ -76,37 +76,6 @@ RENDERER_API void vulkan_render_pass_pool_destroy(vulkan_render_pass_pool_t* poo
 	log_msg("Vulkan render pass pool has been destroyed successfully\n");
 }
 
-/* TODO: remove this and create a new class vulkan_render_pass_create_info_t 
- * duplicate of this already exists in vulkan_camera_system.c */
-static void destroy_vulkan_render_pass_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
-{
-	for(u32 i = 0; i < create_info->subpass_count; i++)
-	{
-		if(create_info->subpasses[i].color_attachment_count > 0)
-			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].color_attachments);
-		if(create_info->subpasses[i].depth_stencil_attachment != NULL)
-			memory_allocator_dealloc(renderer->allocator, create_info->subpasses[i].depth_stencil_attachment);
-	}
-	if(create_info->subpass_dependency_count > 0)
-		memory_allocator_dealloc(renderer->allocator, create_info->subpass_dependencies);
-	if(create_info->subpass_count > 0)
-		memory_allocator_dealloc(renderer->allocator, create_info->subpasses);
-	if(create_info->framebuffer_layout_description.attachment_count > 0)
-	{
-		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachments);
-		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.attachment_usages);
-	}
-	if(create_info->framebuffer_layout_description.supplementary_attachment_count > 0)
-		memory_allocator_dealloc(renderer->allocator, create_info->framebuffer_layout_description.vo_supplementary_attachments);
-	memory_allocator_dealloc(renderer->allocator, create_info);
-}
-
-/* TODO: remove this and create a new class vulkan_render_pass_create_info_t */
-static void vulkan_render_pass_create_info_deep_free(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
-{
-	destroy_vulkan_render_pass_create_info(renderer, create_info);
-}
-
 RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_pool_t* pool)
 {
 	buf_ucount_t count = buf_get_element_count(&pool->slots);
@@ -255,34 +224,6 @@ static bool render_pass_create_info_compare(void* create_info, void* ref)
 	bool b6 = b5 && (c1->render_set_binding_count == c2->render_set_binding_count)
 			&& compare_resource_descriptors(c1->render_set_binding_count, c1->render_set_bindings, c2->render_set_bindings);
 	return b6;
-}
-
-static void vulkan_resource_descriptor_deep_copy(memory_allocator_t* allocator, vulkan_shader_resource_description_t* dst, vulkan_shader_resource_description_t* src)
-{
-	memcopy(dst, src, vulkan_shader_resource_description_t);
-	if(src->handle.field_count > 0)
-	{
-		dst->handle.fields = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, src->handle.field_count);
-		memcopyv(dst->handle.fields, src->handle.fields, struct_field_t, src->handle.field_count);
-	}
-}
-
-static void vulkan_subpass_create_info_deep_copy(memory_allocator_t* allocator, vulkan_subpass_create_info_t* dst, vulkan_subpass_create_info_t* src)
-{
-	memcopy(dst, src, vulkan_subpass_create_info_t);
-	dst->color_attachments = src->color_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, src->color_attachment_count) : NULL;
-	memcopyv(dst->color_attachments, src->color_attachments, VkAttachmentReference, src->color_attachment_count);
-	dst->input_attachments = src->input_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE_ARRAY, VkAttachmentReference, src->input_attachment_count) : NULL;
-	memcopyv(dst->input_attachments, src->input_attachments, VkAttachmentReference, src->input_attachment_count);
-	dst->depth_stencil_attachment = (src->depth_stencil_attachment != NULL) ? memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_ATTACHMENT_REFERENCE, VkAttachmentReference) : NULL;
-	if(dst->depth_stencil_attachment != NULL)
-		memcopy(dst->depth_stencil_attachment, src->depth_stencil_attachment, VkAttachmentReference);
-	dst->preserve_attachments = src->preserve_attachment_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, src->preserve_attachment_count) : NULL;
-	memcopyv(dst->preserve_attachments, src->preserve_attachments, u32, src->preserve_attachment_count);
-			
-	dst->sub_render_set_bindings = src->sub_render_set_binding_count ? memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, src->sub_render_set_binding_count) : NULL;
-	for(u32 j = 0; j < src->sub_render_set_binding_count; j++)
-		vulkan_resource_descriptor_deep_copy(allocator, &dst->sub_render_set_bindings[j], &src->sub_render_set_bindings[j]);	
 }
 
 static vulkan_render_pass_create_info_builder_t* vulkan_render_pass_create_info_deep_copy(memory_allocator_t* allocator, vulkan_render_pass_create_info_t* src)

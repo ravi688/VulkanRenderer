@@ -187,12 +187,6 @@ typedef struct vulkan_shader_t
 	/* for creating MATERIAL_SET for each of the materials deriving from this shader */
 	vulkan_descriptor_set_layout_t material_set_layout;
 
-
-	/* VERTEX ATTRIBUTE DESCRIPTIONS */
-	/* For recreating the graphics pipelines on render window resize */
-	vulkan_vertex_buffer_layout_description_t* vertex_infos;
-	u32 vertex_info_count;
-
 	/* PUSH CONSTANTS */
 	vulkan_push_constant_t push_constant;
 

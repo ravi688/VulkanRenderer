@@ -255,39 +255,6 @@ static void destroy_vulkan_push_constant(memory_allocator_t* allocator, vulkan_p
 	memory_allocator_dealloc(allocator, push_constant->buffer);
 }
 
-static vulkan_vertex_buffer_layout_description_t* create_deep_copy_of_vulkan_vertex_infos(memory_allocator_t* allocator, vulkan_vertex_buffer_layout_description_t* vertex_infos, u32 vertex_info_count)
-{
-	if((vertex_infos == NULL) || (vertex_info_count == 0))
-		return NULL;
-	vulkan_vertex_buffer_layout_description_t* copy_infos = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_ARRAY, vulkan_vertex_buffer_layout_description_t, vertex_info_count);
-	for(u32 i = 0; i < vertex_info_count; i++)
-	{
-		copy_infos[i] = vertex_infos[i];
-
-		u32 attribute_count = vertex_infos[i].attribute_count;
-
-		copy_infos[i].attribute_formats = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_FORMAT_ARRAY, VkFormat, attribute_count);
-		copy_infos[i].attribute_offsets = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, attribute_count);
-		copy_infos[i].attribute_locations = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, attribute_count);
-
-		memcopyv(copy_infos[i].attribute_formats, vertex_infos[i].attribute_formats, VkFormat, attribute_count);
-		memcopyv(copy_infos[i].attribute_offsets, vertex_infos[i].attribute_offsets, u32, attribute_count);
-		memcopyv(copy_infos[i].attribute_locations, vertex_infos[i].attribute_locations, u32, attribute_count);
-	}
-	return copy_infos;
-}
-
-static void destroy_vulkan_vertex_infos(memory_allocator_t* allocator, vulkan_vertex_buffer_layout_description_t* vertex_infos, u32 vertex_info_count)
-{
-	for(u32 i = 0; i < vertex_info_count; i++)
-	{
-		memory_allocator_dealloc(allocator, vertex_infos[i].attribute_formats);
-		memory_allocator_dealloc(allocator, vertex_infos[i].attribute_offsets);
-		memory_allocator_dealloc(allocator, vertex_infos[i].attribute_locations);
-	}
-	memory_allocator_dealloc(allocator, vertex_infos);
-}
-
 static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_descriptors(memory_allocator_t* allocator, vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
 {
 	/* if we try to allocate any object of size 0 with memory_allocator_alloc_*, then it may lead to assertion failures */
@@ -912,6 +879,16 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	return passes;
 }
 
+static void destroy_shader_render_passes(memory_allocator_t* allocator, vulkan_shader_render_pass_t* passes, u32 pass_count)
+{
+	for(u32 i = 0; i < pass_count; i++)
+	{
+
+	}
+	if(pass_count > 0)
+		memory_allocator_dealloc(allocator, passes);
+}
+
 /*	merges the subpass depedencies which targets the same subpass pair,
 	and removes duplicate subpass dependencies.
  */
@@ -954,16 +931,14 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 
 	shader->handle = VULKAN_SHADER_HANDLE_INVALID;
 	shader->push_constant = create_vulkan_push_constant(renderer->allocator, create_info->material_set_bindings, create_info->material_set_binding_count);
-	shader->vertex_infos = create_deep_copy_of_vulkan_vertex_infos(renderer->allocator, create_info->vertex_infos, create_info->vertex_info_count);
-	shader->vertex_info_count = create_info->vertex_info_count;
 	VULKAN_OBJECT_INIT(&shader->material_set_layout, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_descriptor_set_layout_create_from_resource_descriptors_no_alloc(renderer, create_info->material_set_bindings, create_info->material_set_binding_count, &shader->material_set_layout);
 	shader->material_set_bindings = create_deep_copy_of_set_binding_descriptors(renderer->allocator, create_info->material_set_bindings, create_info->material_set_binding_count);
 	shader->material_set_binding_count = create_info->material_set_binding_count;
 	vulkan_pipeline_common_data_t common_data = 
 	{
-		.vertex_attribute_bindings = shader->vertex_infos,
-		.vertex_attribute_binding_count = shader->vertex_info_count,
+		.vertex_attribute_bindings = create_info->vertex_infos,
+		.vertex_attribute_binding_count = create_info->vertex_info_count,
 		.push_constant_ranges = shader->push_constant.ranges,
 		.push_constant_range_count = shader->push_constant.range_count,
 		.material_set_layout = shader->material_set_layout,
@@ -1656,12 +1631,12 @@ RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 		}
 		// vulkan_render_pass_instance_destroy(&shader->render_passes[i].instance);
 	}
+	destroy_shader_render_passes(shader->renderer->allocator, shader->render_passes, shader->render_pass_count);
 }
 
 RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 {
 	destroy_vulkan_push_constant(shader->renderer->allocator, &shader->push_constant);
-	destroy_vulkan_vertex_infos(shader->renderer->allocator, shader->vertex_infos, shader->vertex_info_count);
 	destroy_vulkan_shader_resource_descriptions(shader->renderer->allocator, shader->material_set_bindings, shader->material_set_binding_count);
 	if(VULKAN_OBJECT_IS_INTERNAL(shader))
 		memory_allocator_dealloc(shader->renderer->allocator, shader);
