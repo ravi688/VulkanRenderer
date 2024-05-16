@@ -761,7 +761,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	// allocate memory
 	vulkan_shader_render_pass_t* passes = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RENDER_PASS_ARRAY, vulkan_shader_render_pass_t, description_count);
 
-	BUFFER set_layouts = buf_create(sizeof(VkDescriptorSetLayout), 1, 0);
+	BUFFER set_layouts = memory_allocator_buf_create(renderer->allocator, sizeof(VkDescriptorSetLayout), 1, 0);
 
 	// push camera set layout, at CAMERA_SET = 0
 	buf_push(&set_layouts, &renderer->camera_set_layout.vo_handle);
@@ -797,6 +797,17 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 		
 		/* create render pass for this shader */
 		passes[i].handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, vulkan_render_pass_create_info_builder_get(create_info_builder), &input);
+
+		/* destroy allocations made in vulkan_render_pass_input_info_t */
+		if(input.input_attachment_count > 0)
+			memory_allocator_dealloc(renderer->allocator, input.input_attachments);
+		if(subpass_count > 0)
+		{
+			for(u32 j = 0; j < subpass_count; j++)
+				if(input.subpass_inputs[j].input_attachment_count > 0)
+					memory_allocator_dealloc(renderer->allocator, input.subpass_inputs[j].input_attachments);
+			memory_allocator_dealloc(renderer->allocator, input.subpass_inputs);
+		}
 
 		vulkan_render_pass_create_info_builder_destroy(create_info_builder);
 
