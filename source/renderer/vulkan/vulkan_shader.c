@@ -252,8 +252,7 @@ static void destroy_vulkan_push_constant(memory_allocator_t* allocator, vulkan_p
 {
 	if((push_constant->ranges == NULL) || (push_constant->buffer == NULL))
 		return;
-	/* NOTE: this hasn't been allocated with heap_*, instead malloc internally by BUFFER */
-	free(push_constant->ranges);
+	memory_allocator_dealloc(allocator, push_constant->ranges);
 	memory_allocator_dealloc(allocator, push_constant->buffer);
 }
 

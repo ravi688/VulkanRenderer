@@ -713,6 +713,10 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 	test_buffer2d_backed_buffer_dump(renderer);
 	test_glyph_packing(renderer);
 	test_bufferlib();
+
+	#if DBG_ENABLED(BUFFER2D_RESIZE)
+		memory_allocator_dealloc(renderer->allocator, user_data);
+	#endif
 }
 
 TEST_ON_TERMINATE(BITMAP_TEXT)
