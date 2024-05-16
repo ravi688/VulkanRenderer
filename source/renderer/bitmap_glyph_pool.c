@@ -69,6 +69,7 @@ RENDERER_API void bitmap_glyph_pool_destroy(bitmap_glyph_pool_t* pool)
 
 RENDERER_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool)
 {
+	buffer2d_release_resources(&pool->pixels);
 	if(OBJECT_IS_INTERNAL(pool))
 		memory_allocator_dealloc(pool->renderer->allocator, pool);
 }

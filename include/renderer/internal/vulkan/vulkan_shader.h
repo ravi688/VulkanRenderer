@@ -121,10 +121,6 @@ typedef struct vulkan_shader_subpass_t
 	vulkan_pipeline_layout_t* pipeline_layout;
 	/* ptr to the graphics pipeline object for this subpass  */
 	vulkan_graphics_pipeline_t* pipeline;
-	/* deep copy of sub render set bindings passed with the subpass description */
-	vulkan_shader_resource_description_t* sub_render_set_bindings;
-	/* number of sub render set bindings */
-	u32 sub_render_set_binding_count;
 } vulkan_shader_subpass_t;
 
 typedef struct vulkan_shader_render_pass_t

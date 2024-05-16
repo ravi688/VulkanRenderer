@@ -619,6 +619,8 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 
 RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 {
+	if(camera->shot_rotations != NULL)
+		memory_allocator_dealloc(camera->renderer->allocator, camera->shot_rotations);
 	struct_descriptor_free(camera->renderer->allocator, &camera->struct_definition);
 
 	for(u32 i = 0; i < camera->buffer_count; i++)

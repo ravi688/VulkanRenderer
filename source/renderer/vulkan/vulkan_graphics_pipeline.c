@@ -365,6 +365,7 @@ RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pip
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_viewports);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_scissors);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_scissors);
+	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->settings);
 	if(VULKAN_OBJECT_IS_INTERNAL(pipeline))
 		memory_allocator_dealloc(pipeline->renderer->allocator, pipeline);
 }

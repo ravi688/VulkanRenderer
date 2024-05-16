@@ -804,19 +804,9 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 
 		vulkan_render_pass_create_info_builder_destroy(create_info_builder);
 
-		// meaning when the images are recreated.
-		passes[i].subpasses = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_SUBPASS_ARRAY, vulkan_shader_subpass_t, subpass_count);
-		for(u32 j = 0; j < subpass_count; j++)
-		{
-			vulkan_subpass_description_t* subpass_description = &descriptions[i].subpass_descriptions[j];
-			passes[i].subpasses[j].sub_render_set_binding_count = descriptions[i].subpass_descriptions[j].sub_render_set_binding_count;
-			passes[i].subpasses[j].sub_render_set_bindings = create_deep_copy_of_set_binding_descriptors(renderer->allocator, 
-																												subpass_description->sub_render_set_bindings, 
-																												subpass_description->sub_render_set_binding_count);
-		}
-
-
 		/* create pipeline layout and graphics pipelines */
+
+		passes[i].subpasses = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_SUBPASS_ARRAY, vulkan_shader_subpass_t, subpass_count);
 
 		vulkan_render_pass_t* render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, passes[i].handle);
 
@@ -883,7 +873,17 @@ static void destroy_shader_render_passes(memory_allocator_t* allocator, vulkan_s
 {
 	for(u32 i = 0; i < pass_count; i++)
 	{
-
+		if(passes[i].subpass_count > 0)
+		{
+			for(u32 j = 0; j < passes[i].subpass_count; j++)
+			{
+				vulkan_pipeline_layout_destroy(passes[i].subpasses[j].pipeline_layout);
+				vulkan_pipeline_layout_release_resources(passes[i].subpasses[j].pipeline_layout);
+				vulkan_graphics_pipeline_destroy(passes[i].subpasses[j].pipeline);
+				vulkan_graphics_pipeline_release_resources(passes[i].subpasses[j].pipeline);
+			}
+			memory_allocator_dealloc(allocator, passes[i].subpasses);
+		}
 	}
 	if(pass_count > 0)
 		memory_allocator_dealloc(allocator, passes);
@@ -1616,21 +1616,9 @@ RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vu
 RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 {
 	event_unsubscribe(shader->renderer->window->on_resize_event, shader->pipeline_recreate_handle);
-	// event_unsubscribe(shader->renderer->window->on_resize_event, shader->render_pass_refresh_handle);
-	// event_unsubscribe(shader->renderer->window->on_resize_event, shader->rewrite_descriptors_handle);
 
 	shader->handle = VULKAN_SHADER_HANDLE_INVALID;
 	vulkan_descriptor_set_layout_destroy(&shader->material_set_layout);
-	u32 count = shader->render_pass_count;
-	for(u32 i = 0; i < count; i++)
-	{
-		for(u32 j = 0; j < shader->render_passes[i].subpass_count; j++)
-		{
-			vulkan_pipeline_layout_destroy(shader->render_passes[i].subpasses[j].pipeline_layout);
-			vulkan_graphics_pipeline_destroy(shader->render_passes[i].subpasses[j].pipeline);
-		}
-		// vulkan_render_pass_instance_destroy(&shader->render_passes[i].instance);
-	}
 	destroy_shader_render_passes(shader->renderer->allocator, shader->render_passes, shader->render_pass_count);
 }
 
