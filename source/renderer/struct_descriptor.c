@@ -514,6 +514,26 @@ RENDERER_API void struct_descriptor_free(memory_allocator_t* allocator, struct_d
 	}
 }
 
+RENDERER_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descriptor)
+{
+	struct_descriptor_t clone;
+	memcopy(&clone, descriptor, struct_descriptor_t);
+	if(descriptor->field_count > 0)
+	{
+		clone.fields = memory_allocator_alloc_obj_array(descriptor->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, descriptor->field_count);
+		for(u16 i = 0; i < descriptor->field_count; i++)
+		{
+			memcopy(&clone.fields[i], &descriptor->fields[i], struct_field_t);
+			if(descriptor->fields[i].record != NULL)
+			{
+				clone.fields[i].record = memory_allocator_alloc_obj(descriptor->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
+				*(clone.fields[i].record) = struct_descriptor_clone(descriptor->fields[i].record);
+			}
+		}
+	}
+	return clone;
+}
+
 
 #ifdef GLOBAL_DEBUG
 static void check_precondition(struct_descriptor_t* descriptor, struct_field_handle_t handle)

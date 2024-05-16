@@ -125,25 +125,11 @@ typedef struct vulkan_shader_subpass_t
 	vulkan_shader_resource_description_t* sub_render_set_bindings;
 	/* number of sub render set bindings */
 	u32 sub_render_set_binding_count;
-	// /* deep copy of input attachment references passed with the subpass description */
-	// u32* input_attachments;
-	// /* number of input attachments */
-	// u32 input_attachment_count;
 } vulkan_shader_subpass_t;
 
 typedef struct vulkan_shader_render_pass_t
 {
 	vulkan_render_pass_handle_t handle;
-	/* deep copy of render set bindings passed with the render pass description 
-	 * dimensions: [render_set_binding_count] */
-	vulkan_shader_resource_description_t* render_set_bindings;
-	/* number of render set bindings */
-	u32 render_set_binding_count;
-	// /* deep copy of input attachment references passed with the subpass description */
-	// u32* input_attachments;
-	// /* number of input attachments */
-	// u32 input_attachment_count;
-
 	/* pointer to the list of vulkan shader subpasses */	
 	vulkan_shader_subpass_t* subpasses;
 	/* number of subpasses in this render pass */

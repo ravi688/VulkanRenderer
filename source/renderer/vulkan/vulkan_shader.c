@@ -263,15 +263,8 @@ static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_des
 	vulkan_shader_resource_description_t* copy_descriptors = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RESOURCE_DESCRIPTION_ARRAY, vulkan_shader_resource_description_t, descriptor_count);
 	for(u32 i = 0; i < descriptor_count; i++)
 	{
-		copy_descriptors[i] = descriptors[i];
-		if(descriptors[i].handle.field_count != 0)
-		{
-			copy_descriptors[i].handle.fields = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, descriptors[i].handle.field_count);
-			memcopyv(copy_descriptors[i].handle.fields, descriptors[i].handle.fields, struct_field_t, descriptors[i].handle.field_count);
-			struct_descriptor_recalculate(&copy_descriptors[i].handle);
-		}
-		else
-			copy_descriptors[i].handle.fields = NULL;
+		memcopy(&copy_descriptors[i], &descriptors[i], vulkan_shader_resource_description_t);
+		copy_descriptors[i].handle = struct_descriptor_clone(&descriptors[i].handle);
 	}
 	return copy_descriptors;
 }
@@ -811,11 +804,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 
 		vulkan_render_pass_create_info_builder_destroy(create_info_builder);
 
-
-		// create deep copy of render set bindings, sub render set bindings and input attachment references to be used for rewriting vulkan descriptors when the window resizes
 		// meaning when the images are recreated.
-		passes[i].render_set_bindings = create_deep_copy_of_set_binding_descriptors(renderer->allocator, descriptions[i].render_set_bindings, descriptions[i].render_set_binding_count);
-		passes[i].render_set_binding_count = descriptions[i].render_set_binding_count;
 		passes[i].subpasses = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_SUBPASS_ARRAY, vulkan_shader_subpass_t, subpass_count);
 		for(u32 j = 0; j < subpass_count; j++)
 		{

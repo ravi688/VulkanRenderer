@@ -344,6 +344,7 @@ RENDERER_API void struct_descriptor_add_field2(struct_descriptor_t* descriptor, 
 RENDERER_API void struct_descriptor_add_field_array(struct_descriptor_t* descriptor, const char* name, u8 type, u32 array_size);
 RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record, u32 array_size);
 RENDERER_API void struct_descriptor_free(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
+RENDERER_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descriptor);
 
 RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr);
 RENDERER_API void* struct_descriptor_get_mapped(struct_descriptor_t* descriptor);
