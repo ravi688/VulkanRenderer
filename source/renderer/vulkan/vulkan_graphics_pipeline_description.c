@@ -193,6 +193,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_destroy_allocations(memor
 	VkPipelineColorBlendStateCreateInfo* info = &description->settings->colorblend;
 	if(info->attachmentCount > 0)
 		memory_allocator_dealloc(allocator, CAST_TO(void*, info->pAttachments));
+	memory_allocator_dealloc(allocator, description->settings);
 	if(description->spirv_code_count > 0)
 		memory_allocator_dealloc(allocator, description->spirv_codes);
 }
