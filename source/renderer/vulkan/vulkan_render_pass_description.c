@@ -180,7 +180,7 @@ RENDERER_API void vulkan_render_pass_description_destroy_allocations(memory_allo
 			if(subpass->sub_render_set_binding_count > 0)
 			{
 				for(u32 i = 0; i < subpass->sub_render_set_binding_count; i++)
-					struct_descriptor_free(allocator, &subpass->sub_render_set_bindings[i].handle);
+					struct_descriptor_destroy(allocator, &subpass->sub_render_set_bindings[i].handle);
 				memory_allocator_dealloc(allocator, subpass->sub_render_set_bindings);
 			}
 		}

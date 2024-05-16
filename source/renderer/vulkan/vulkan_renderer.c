@@ -190,6 +190,7 @@ static VkFence get_unsigned_fence(vulkan_renderer_t* renderer)
 static struct_descriptor_t create_screen_info_struct(memory_allocator_t* allocator)
 {
 	struct_descriptor_t screen_info_struct;
+	OBJECT_INIT(&screen_info_struct, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 	/* definition of the 'screen info' struct */
 	struct_descriptor_begin(allocator, &screen_info_struct, "screen_info", 0);
 		struct_descriptor_add_field_uvec2(&screen_info_struct, "resolution");
@@ -202,7 +203,7 @@ static struct_descriptor_t create_screen_info_struct(memory_allocator_t* allocat
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void destroy_screen_info_struct(memory_allocator_t* allocator, struct_descriptor_t* screen_info)
 {
-	struct_descriptor_free(allocator, screen_info);
+	struct_descriptor_destroy(allocator, screen_info);
 }
 
 RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
@@ -653,7 +654,7 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vulkan_buffer_release_resources(renderer->screen_info.buffer);
 
 	// release resources for screen info struct definition and its fields
-	struct_descriptor_free(renderer->allocator, &renderer->screen_info.struct_def);
+	struct_descriptor_destroy(renderer->allocator, &renderer->screen_info.struct_def);
 
 	// destroy global set
 	vulkan_descriptor_set_destroy(&renderer->global_set);

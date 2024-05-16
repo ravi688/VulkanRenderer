@@ -46,6 +46,15 @@
         		= (offset + (align - 1)) & -align
  */
 
+RENDERER_API struct_descriptor_t* struct_descriptor_create(memory_allocator_t* allocator)
+{
+	struct_descriptor_t* descriptor = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
+	memzero(descriptor, struct_descriptor_t);
+	OBJECT_INIT(descriptor, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_INTERNAL);
+	descriptor->allocator = allocator;
+	return descriptor;
+}
+
 RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 {
 	_debug_assert__(descriptor != NULL);
@@ -479,7 +488,7 @@ RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descri
 
 RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type)
 {
-	memzero(descriptor, struct_descriptor_t);
+	OBJECT_MEMZERO(descriptor, struct_descriptor_t);
 	descriptor->allocator = allocator;
 	prvt_strncpy(descriptor->name, name);
 	descriptor->type = type;
@@ -497,9 +506,9 @@ RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_de
 	struct_descriptor_recalculate(descriptor);
 }
 
-RENDERER_API void struct_descriptor_free(memory_allocator_t* allocator, struct_descriptor_t* descriptor)
+RENDERER_API void struct_descriptor_destroy(memory_allocator_t* allocator, struct_descriptor_t* descriptor)
 {
-	/* NOTE: it is allowed to call struct_descriptor_free even if it doesn't have any fields in it.
+	/* NOTE: it is allowed to call struct_descriptor_destroy even if it doesn't have any fields in it.
 	 * that's because, we use struct_descriptor to even represent a single opaque variable in GLSL, 
 	 * so, such struct_descriptor_t instances may not have non-zero field counts. */
 	if(descriptor->field_count > 0)
@@ -508,16 +517,19 @@ RENDERER_API void struct_descriptor_free(memory_allocator_t* allocator, struct_d
 		{
 			struct_field_t field = descriptor->fields[i];
 			if(field.record != NULL)
-				struct_descriptor_free(allocator, field.record);
+				struct_descriptor_destroy(allocator, field.record);
 		}
 		memory_allocator_dealloc(allocator, descriptor->fields);
 	}
+	if(OBJECT_IS_INTERNAL(descriptor))
+		memory_allocator_dealloc(allocator, descriptor);
 }
 
 RENDERER_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descriptor)
 {
 	struct_descriptor_t clone;
 	memcopy(&clone, descriptor, struct_descriptor_t);
+	OBJECT_INIT(&clone, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 	if(descriptor->field_count > 0)
 	{
 		clone.fields = memory_allocator_alloc_obj_array(descriptor->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, descriptor->field_count);
@@ -528,6 +540,9 @@ RENDERER_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* de
 			{
 				clone.fields[i].record = memory_allocator_alloc_obj(descriptor->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
 				*(clone.fields[i].record) = struct_descriptor_clone(descriptor->fields[i].record);
+				/* the struct descriptor object we are cloning from, might not be of OBJECT_NATIONALITY_INTERNAL, so explicitly state this
+				 * for the new allocated struct_descriptor_t object to be able to free it later */
+				OBJECT_INIT(clone.fields[i].record, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_INTERNAL);
 			}
 		}
 	}

@@ -84,7 +84,7 @@ RENDERER_API void vulkan_shader_resource_description_builder_destroy(vulkan_shad
 	for(u32 i = 0; i < description_count; i++)
 	{
 		AUTO description = buf_get_ptr_at_typeof(&builder->description_array, vulkan_shader_resource_description_t, i);
-		struct_descriptor_free(builder->allocator, &description->handle);
+		struct_descriptor_destroy(builder->allocator, &description->handle);
 	}
 	buf_free(&builder->description_array);
 	memory_allocator_dealloc(builder->allocator, builder);

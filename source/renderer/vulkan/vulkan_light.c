@@ -81,6 +81,7 @@ static void setup_gpu_resources(vulkan_light_t* super)
 {
 	vulkan_light_t* light = VULKAN_LIGHT(super);
 	// setup light struct definition
+	OBJECT_INIT(&light->struct_definition, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 	struct_descriptor_begin(light->renderer->allocator, &light->struct_definition, "lightInfo", GLSL_TYPE_UNIFORM_BUFFER);
 		struct_descriptor_add_field(&light->struct_definition, "projection", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&light->struct_definition, "view", GLSL_TYPE_MAT4);
@@ -265,7 +266,7 @@ RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light)
 {
 	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(light);
-	struct_descriptor_free(light->renderer->allocator, &light->struct_definition);
+	struct_descriptor_destroy(light->renderer->allocator, &light->struct_definition);
 	vulkan_buffer_release_resources(&light->buffer);
 	if(VULKAN_OBJECT_IS_INTERNAL(super))
 		memory_allocator_dealloc(light->renderer->allocator, super);

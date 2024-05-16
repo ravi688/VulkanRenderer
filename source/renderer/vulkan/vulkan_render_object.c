@@ -63,6 +63,7 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 	vulkan_descriptor_set_create_no_alloc_ext(object->renderer, &set_create_info, &object->object_set);
 
 	// setup object struct definiton
+	OBJECT_INIT(&object->struct_definition, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 	struct_descriptor_begin(object->renderer->allocator, &object->struct_definition, "objectInfo", GLSL_TYPE_UNIFORM_BUFFER);
 		struct_descriptor_add_field(&object->struct_definition, "transform", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&object->struct_definition, "normal", GLSL_TYPE_MAT4);

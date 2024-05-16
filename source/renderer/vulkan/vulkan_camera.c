@@ -82,6 +82,7 @@ static void* create_buffer_and_map(vulkan_camera_t* camera, vulkan_buffer_t OUT 
 static void setup_camera_info_uniform_buffer(vulkan_camera_t* camera)
 {
 	// setup camera struct definiton
+	OBJECT_INIT(&camera->struct_definition, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 	struct_descriptor_begin(camera->renderer->allocator, &camera->struct_definition, "cameraInfo", GLSL_TYPE_UNIFORM_BUFFER);
 		struct_descriptor_add_field(&camera->struct_definition, "transform", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "projection", GLSL_TYPE_MAT4);
@@ -621,7 +622,7 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 {
 	if(camera->shot_rotations != NULL)
 		memory_allocator_dealloc(camera->renderer->allocator, camera->shot_rotations);
-	struct_descriptor_free(camera->renderer->allocator, &camera->struct_definition);
+	struct_descriptor_destroy(camera->renderer->allocator, &camera->struct_definition);
 
 	for(u32 i = 0; i < camera->buffer_count; i++)
 	{

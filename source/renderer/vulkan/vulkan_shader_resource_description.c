@@ -35,6 +35,7 @@ RENDERER_API void vulkan_shader_resource_description_create_vertex_attribute(mem
 	// NOTE: shader stage must be FRAGMENT for subpassInput
 	description->stage_flags = (1 << VULKAN_SHADER_TYPE_FRAGMENT); //| (1 << VULKAN_SHADER_TYPE_VERTEX);
 
+	OBJECT_INIT(&description->handle, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 	struct_descriptor_begin(allocator, &description->handle, name, type);
 	struct_descriptor_end(allocator, &description->handle);
 }
@@ -47,6 +48,7 @@ RENDERER_API void vulkan_shader_resource_description_create_opaque(memory_alloca
 	// NOTE: shader stage must be FRAGMENT for subpassInput
 	description->stage_flags = (1 << VULKAN_SHADER_TYPE_FRAGMENT); //| (1 << VULKAN_SHADER_TYPE_VERTEX);
 
+	OBJECT_INIT(&description->handle, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 	struct_descriptor_begin(allocator, &description->handle, name, type);
 	struct_descriptor_end(allocator, &description->handle);
 }
@@ -58,6 +60,7 @@ RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_create_unif
 	description->binding_number = binding_number;
 	description->stage_flags = (1 << VULKAN_SHADER_TYPE_VERTEX) | (1 << VULKAN_SHADER_TYPE_FRAGMENT);
 
+	OBJECT_INIT(&description->handle, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 	struct_descriptor_begin(allocator, &description->handle, name, GLSL_TYPE_UNIFORM_BUFFER);
 	return &description->handle;
 }

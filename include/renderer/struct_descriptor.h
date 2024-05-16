@@ -293,6 +293,8 @@
 #pragma once
 
 #include <renderer/defines.h>
+#include <renderer/object.h>
+
 #define STRUCT_FIELD_MAX_NAME_SIZE 128
 #define STRUCT_DESCRIPTOR_MAX_NAME_SIZE 128
 #define STRUCT_MAX_NAME_SIZE 128
@@ -317,6 +319,7 @@ typedef struct struct_field_t
 
 typedef struct struct_descriptor_t
 {
+	__OBJECT__;
 	memory_allocator_t* allocator;
 	char name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE];
 	/* TODO: make it bigger in size, as it might not hold types needing more than 8 bits */
@@ -329,10 +332,17 @@ typedef struct struct_descriptor_t
 	INTERNAL u32 align;
 } struct_descriptor_t;
 
+#define STRUCT_DESCRIPTOR(ptr) OBJECT_UP_CAST(struct_descriptor_t*, OBJECT_TYPE_STRUCT_DESCRIPTOR, ptr)
+#define STRUCT_DESCRIPTOR_CONST(ptr) OBJECT_UP_CAST_CONST(const struct_descriptor_t*, OBJECT_TYPE_STRUCT_DESCRIPTOR, ptr)
+
 /* u32: offset, u32: size */
 typedef u64 struct_field_handle_t;
 
 BEGIN_CPP_COMPATIBLE
+
+/* constructors and destructors */
+RENDERER_API struct_descriptor_t* struct_descriptor_create(memory_allocator_t* allocator);
+RENDERER_API void struct_descriptor_destroy(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u8 struct_descriptor_get_type(const struct_descriptor_t* descriptor) { return descriptor->type; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const char* struct_descriptor_get_name(const struct_descriptor_t* descriptor) { return descriptor->name; }
@@ -343,7 +353,6 @@ RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, c
 RENDERER_API void struct_descriptor_add_field2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record);
 RENDERER_API void struct_descriptor_add_field_array(struct_descriptor_t* descriptor, const char* name, u8 type, u32 array_size);
 RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record, u32 array_size);
-RENDERER_API void struct_descriptor_free(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
 RENDERER_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descriptor);
 
 RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr);

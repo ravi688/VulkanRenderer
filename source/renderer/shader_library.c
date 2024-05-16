@@ -114,7 +114,7 @@ static vulkan_shader_resource_description_builder_t* create_material_set_binding
 		case SHADER_LIBRARY_SHADER_PRESET_BITMAP_TEXT:
 		{
 			{
-				struct_descriptor_t* Color = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
+				struct_descriptor_t* Color = struct_descriptor_create(allocator);
 					struct_descriptor_begin(allocator, Color, "Color", GLSL_TYPE_MAX_NON_OPAQUE);
 						struct_descriptor_add_field(Color, "r", GLSL_TYPE_FLOAT);
 						struct_descriptor_add_field(Color, "g", GLSL_TYPE_FLOAT);
@@ -132,7 +132,7 @@ static vulkan_shader_resource_description_builder_t* create_material_set_binding
 			{
 				shr_res_build_create_opaque(builder, &bind_counter, "bga", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 				{
-					struct_descriptor_t* GTC = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
+					struct_descriptor_t* GTC = struct_descriptor_create(allocator);
 						struct_descriptor_begin(allocator, GTC, "GTC", GLSL_TYPE_MAX_NON_OPAQUE);
 							struct_descriptor_add_field(GTC, "tltc", GLSL_TYPE_VEC2);
 							struct_descriptor_add_field(GTC, "trtc", GLSL_TYPE_VEC2);

@@ -272,7 +272,7 @@ static vulkan_shader_resource_description_t* create_deep_copy_of_set_binding_des
 static void destroy_vulkan_shader_resource_descriptions(memory_allocator_t* allocator, vulkan_shader_resource_description_t* descriptors, u32 descriptor_count)
 {
 	for(u32 i = 0; i < descriptor_count; i++)
-		struct_descriptor_free(allocator, &descriptors[i].handle);
+		struct_descriptor_destroy(allocator, &descriptors[i].handle);
 	if(descriptor_count > 0)
 		memory_allocator_dealloc(allocator, descriptors);
 }
@@ -1011,6 +1011,7 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 		descriptor->is_per_vertex_attribute = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_PER_VERTEX_ATTRIB_BIT & bits;
 		descriptor->is_per_instance_attribute = VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_PER_INSTANCE_ATTRIB_BIT & bits;
 		struct_descriptor_t* struct_def = &descriptor->handle;
+		OBJECT_INIT(struct_def, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 
 		descriptor->stage_flags = CAST_TO(u8, VULKAN_SHADER_STAGE_BITS(descriptor_info));
 		
