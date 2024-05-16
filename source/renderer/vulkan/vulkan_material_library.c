@@ -46,8 +46,8 @@ RENDERER_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* ren
 
 	library->renderer = renderer;
 	library->shader_library = shader_library;
-	library->relocation_table = buf_create(sizeof(vulkan_material_handle_t), 1, 0);
-	library->materials = buf_create(sizeof(vulkan_material_library_slot_t), 1, 0);
+	library->relocation_table = memory_allocator_buf_create(renderer->allocator, sizeof(vulkan_material_handle_t), 1, 0);
+	library->materials = memory_allocator_buf_create(renderer->allocator, sizeof(vulkan_material_library_slot_t), 1, 0);
 	log_msg("Vulkan material library has been created successfully\n");
 }
 

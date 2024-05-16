@@ -72,7 +72,7 @@ RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* rendere
 
 RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_preset(vulkan_renderer_t* renderer, vulkan_render_scene_preset_type_t type)
 {
-	BUFFER queue_types = buf_new(vulkan_render_queue_type_t);
+	BUFFER queue_types = memory_allocator_buf_new(renderer->allocator, vulkan_render_queue_type_t);
 	switch(type)
 	{
 		case VULKAN_RENDER_SCENE_PRESET_TYPE_DEFAULT:
@@ -111,7 +111,7 @@ RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_preset(vulka
 
 RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_mask(vulkan_renderer_t* renderer, u64 mask)
 {
-	BUFFER queue_types = buf_new(vulkan_render_queue_type_t);
+	BUFFER queue_types = memory_allocator_buf_new(renderer->allocator, vulkan_render_queue_type_t);
 	for(int i = VULKAN_RENDER_QUEUE_TYPE_MIN + 1; i < VULKAN_RENDER_QUEUE_TYPE_MAX; i++)
 		if(mask & BIT64(i))
 			buf_push_auto(&queue_types, i);

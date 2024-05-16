@@ -95,14 +95,14 @@ RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, 
 	text->renderer = renderer;
 
 	text->glyph_render_data_buffers = dictionary_create(u16, vulkan_instance_buffer_t, 0, dictionary_key_comparer_u16);
-	text->strings = buf_create(sizeof(vulkan_text_mesh_string_t), 1, 0);
+	text->strings = memory_allocator_buf_create(renderer->allocator, sizeof(vulkan_text_mesh_string_t), 1, 0);
 	text->pool = pool;
 	text->free_list = BUF_INVALID_INDEX; 		// free list
 	text->inuse_list = BUF_INVALID_INDEX; 		// inuse list
 	text->point_size = font_get_char_size(vulkan_glyph_mesh_pool_get_font(pool));
 	text->render_space_type = VULKAN_TEXT_MESH_RENDER_SPACE_TYPE_2D;
 	text->render_surface_type = VULKAN_TEXT_MESH_RENDER_SURFACE_TYPE_CAMERA;
-	text->glyph_layout_data_buffer = buf_create(sizeof(vulkan_text_mesh_glyph_layout_data_t), 128, 0);
+	text->glyph_layout_data_buffer = memory_allocator_buf_create(renderer->allocator, sizeof(vulkan_text_mesh_glyph_layout_data_t), 128, 0);
 	text->glyph_layout_handler = (vulkan_text_mesh_glyph_layout_handler_void_ptr_pair_t) { default_glyph_layout_handler, NULL };
 
 	_debug_assert__(glsl_sizeof(glsl_mat4_t) == sizeof(glsl_mat4_t));
@@ -212,7 +212,7 @@ RENDERER_API vulkan_text_mesh_string_handle_t vulkan_text_mesh_string_create(vul
 		buf_push(strings, &_string);
 		string = buf_peek_ptr(strings);
 		string->glyph_sub_buffer_handles = dictionary_create(u16, buf_ucount_t, 0, dictionary_key_comparer_u16);
-		string->str = buf_create(sizeof(char), 0, 0);
+		string->str = memory_allocator_buf_create(text_mesh->renderer->allocator, sizeof(char), 0, 0);
 
 		buf_push_pseudo(tst_buffer, 1);
 

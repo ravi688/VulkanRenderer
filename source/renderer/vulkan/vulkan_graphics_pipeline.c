@@ -168,7 +168,7 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 		.pScissors = pipeline->vo_scissors
 	};
 
-	BUFFER dynamic_states = buf_new(VkDynamicState);
+	BUFFER dynamic_states = memory_allocator_buf_new(renderer->allocator, VkDynamicState);
 	if(!pipeline->is_user_defined_viewport)
 		buf_push_auto(&dynamic_states, VK_DYNAMIC_STATE_VIEWPORT);
 	if(!pipeline->is_user_defined_scissor)

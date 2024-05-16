@@ -173,7 +173,7 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 	material_and_render_object_list_map_t* map = dictionary_get_value_ptr(&queue->shader_handles, &obj->material->shader->handle);
 	if(!dictionary_contains(map, &obj->material->handle))
 	{
-		render_object_list_t list = buf_create(sizeof(vulkan_render_object_t*), 1, 0);
+		render_object_list_t list = memory_allocator_buf_create(queue->renderer->allocator, sizeof(vulkan_render_object_t*), 1, 0);
 		dictionary_add(map, &obj->material->handle, &list);
 	}
 
@@ -196,7 +196,7 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 		{
 			lists = memory_allocator_alloc_obj_array(queue->renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_SUBPASS_SHADER_LIST_ARRAY, subpass_shader_list_t, subpass_count);
 			for(u32 j = 0; j < subpass_count; j++)
-				lists[j] = buf_create(sizeof(vulkan_shader_handle_t), 1, 0);
+				lists[j] = memory_allocator_buf_create(queue->renderer->allocator, sizeof(vulkan_shader_handle_t), 1, 0);
 			dictionary_add(&queue->render_pass_handles, &passes[i].handle, &lists);
 			vulkan_render_pass_graph_add(&queue->pass_graph, passes[i].handle);
 		}

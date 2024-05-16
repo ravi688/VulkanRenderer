@@ -1323,9 +1323,9 @@ RENDERER_API function_signature(mesh3d_t*, mesh3d_load, memory_allocator_t* allo
 			BUFFER texcoord_buffer;		// temporary buffer to store texture coordinates
 		} user_data;
 		user_data.mesh = mesh;
-		user_data.normal_buffer = buf_create(MESH3D_VERTEX_ATTRIB_NORMAL_SIZE, 0, 0);
-		user_data.position_buffer = buf_create(MESH3D_VERTEX_ATTRIB_POSITION_SIZE, 0, 0);
-		user_data.texcoord_buffer = buf_create(MESH3D_VERTEX_ATTRIB_UV_SIZE, 0, 0);
+		user_data.normal_buffer = memory_allocator_buf_create(allocator, MESH3D_VERTEX_ATTRIB_NORMAL_SIZE, 0, 0);
+		user_data.position_buffer = memory_allocator_buf_create(allocator, MESH3D_VERTEX_ATTRIB_POSITION_SIZE, 0, 0);
+		user_data.texcoord_buffer = memory_allocator_buf_create(allocator, MESH3D_VERTEX_ATTRIB_UV_SIZE, 0, 0);
 		obj_parse_callbacks_t parse_callbacks =
 		{
 			.user_data = &user_data,

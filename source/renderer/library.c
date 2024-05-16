@@ -45,8 +45,8 @@ RENDERER_API library_t* library_create(memory_allocator_t* allocator)
 RENDERER_API void library_create_no_alloc(memory_allocator_t* allocator, library_t OUT lib)
 {
 	memzero(lib, library_t);
-	lib->slots = buf_create(sizeof(library_slot_t), 1, 0);
-	lib->relocation_table = buf_create(sizeof(library_slot_handle_t), 1, 0);
+	lib->slots = memory_allocator_buf_create(allocator, sizeof(library_slot_t), 1, 0);
+	lib->relocation_table = memory_allocator_buf_create(allocator, sizeof(library_slot_handle_t), 1, 0);
 	lib->allocator = allocator;
 }
 

@@ -434,7 +434,7 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	camera->swapchain_clear_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, create_info->swapchain_clear_pass);
 	camera->projection_type = create_info->projection_type;
 	camera->is_active = true;
-	camera->render_passes = buf_new(vulkan_camera_render_pass_t);
+	camera->render_passes = memory_allocator_buf_new(renderer->allocator, vulkan_camera_render_pass_t);
 	camera->render_pass_descriptor_sets = dictionary_create(vulkan_render_pass_handle_pair_t, vulkan_render_pass_descriptor_sets_t, 1, render_pass_handle_pair_comparer);
 	camera->shot_taken = 0;
 	camera->current_shot_index = 0;
@@ -1622,7 +1622,7 @@ RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vu
 
 	/* setup framebuffers for this render pass */
 	pass->framebuffer_count_in_one_face = render_pass->required_framebuffer_count;
-	pass->framebuffers = buf_new(vulkan_framebuffer_t);
+	pass->framebuffers = memory_allocator_buf_new(camera->renderer->allocator, vulkan_framebuffer_t);
 	pass->valid_framebuffer_count = 0;
 
 	/* pass->framebuffers would automatically resize inside this function based on the value of max_shot_count */

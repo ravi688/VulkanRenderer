@@ -63,7 +63,7 @@ RENDERER_API void vulkan_host_buffered_buffer_create_no_alloc(vulkan_renderer_t*
 	}
 	buffer->vo_usage_flags = create_info->vo_usage_flags;
 	/* create a host side buffer */
-	buffer->host_buffer = buf_create(create_info->stride, create_info->capacity, 0);
+	buffer->host_buffer = memory_allocator_buf_create(renderer->allocator, create_info->stride, create_info->capacity, 0);
 }
 
 RENDERER_API void vulkan_host_buffered_buffer_destroy(vulkan_host_buffered_buffer_t* buffer)

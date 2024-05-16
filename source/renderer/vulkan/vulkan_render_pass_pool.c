@@ -53,8 +53,8 @@ RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* ren
 	VULKAN_OBJECT_MEMZERO(pool, vulkan_render_pass_pool_t);
 
 	pool->renderer = renderer;
-	pool->relocation_table = buf_create(sizeof(vulkan_render_pass_handle_t), 1, 0);
-	pool->slots = buf_create(sizeof(vulkan_render_pass_pool_slot_t), 1, 0);
+	pool->relocation_table = memory_allocator_buf_create(renderer->allocator, sizeof(vulkan_render_pass_handle_t), 1, 0);
+	pool->slots = memory_allocator_buf_create(renderer->allocator, sizeof(vulkan_render_pass_pool_slot_t), 1, 0);
 	VULKAN_OBJECT_INIT(&pool->pass_graph, VULKAN_OBJECT_TYPE_RENDER_PASS_GRAPH, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_render_pass_graph_create_no_alloc(renderer, &pool->pass_graph);
 	log_msg("Vulkan render pass pool has been created successfully\n");

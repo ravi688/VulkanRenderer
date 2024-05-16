@@ -81,10 +81,10 @@ RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* pub
 	event->publisher_data = publisher_data;
 	event->signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_COUNT);
 	event->stage_signal_table = memory_allocator_alloc_obj_array(event->allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, SIGNAL_COUNT);
-	event->subscribers = buf_new(subscription_t);
-	event->stage_subscribers = buf_new(u32);
-	event->stage_subscribers_swap = buf_new(u32);
-	event->unsubscribed_handles = buf_new(event_subscription_handle_t);
+	event->subscribers = memory_allocator_buf_new(allocator, subscription_t);
+	event->stage_subscribers = memory_allocator_buf_new(allocator, u32);
+	event->stage_subscribers_swap = memory_allocator_buf_new(allocator, u32);
+	event->unsubscribed_handles = memory_allocator_buf_new(allocator, event_subscription_handle_t);
 	event->is_dump_only = false;
 
 	/* initially all the signals would be down */

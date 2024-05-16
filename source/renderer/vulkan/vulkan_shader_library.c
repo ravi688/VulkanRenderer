@@ -46,8 +46,8 @@ RENDERER_API void vulkan_shader_library_create_no_alloc(vulkan_renderer_t* rende
 	VULKAN_OBJECT_MEMZERO(library, vulkan_shader_library_t);
 
 	library->renderer = renderer;
-	library->relocation_table = buf_create(sizeof(buf_ucount_t), 1, 0);
-	library->shaders = buf_create(sizeof(vulkan_shader_library_slot_t), 1, 0);
+	library->relocation_table = memory_allocator_buf_create(renderer->allocator, sizeof(buf_ucount_t), 1, 0);
+	library->shaders = memory_allocator_buf_create(renderer->allocator, sizeof(vulkan_shader_library_slot_t), 1, 0);
 	log_msg("Vulkan shader library has been created successfully\n");
 }
 

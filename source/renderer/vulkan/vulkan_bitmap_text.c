@@ -127,8 +127,8 @@ RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer
 	VULKAN_OBJECT_MEMZERO(text, vulkan_bitmap_text_t);
 	text->renderer = renderer;
 
-	text->text_strings = buf_new(vulkan_bitmap_text_string_t);
-	text->glyph_layout_data_buffer = buf_create(sizeof(vulkan_bitmap_text_glyph_layout_data_t), 128, 0);
+	text->text_strings = memory_allocator_buf_new(renderer->allocator, vulkan_bitmap_text_string_t);
+	text->glyph_layout_data_buffer = memory_allocator_buf_create(renderer->allocator, sizeof(vulkan_bitmap_text_glyph_layout_data_t), 128, 0);
 	text->glyph_layout_handler = (vulkan_bitmap_text_glyph_layout_handler_void_ptr_pair_t) { default_glyph_layout_handler, NULL };
 	/* one might wonder free text->free_list should be 0 at the beginning?
 	 * in this case no, because we don't even have the list of objects yet (whether in use or free) */
@@ -335,7 +335,7 @@ RENDERER_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create
 		handle = buf_get_element_count(&text->text_strings);
 		buf_push_pseudo(&text->text_strings, 1);
 		text_string = buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, handle);
-		text_string->chars = buf_new(s8);
+		text_string->chars = memory_allocator_buf_new(text->renderer->allocator, s8);
 		buf_push_pseudo(tst_buffer, 1);
 	}
 

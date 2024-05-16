@@ -58,7 +58,7 @@ RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulka
 	VULKAN_OBJECT_MEMZERO(mesh, vulkan_mesh_t);
 	mesh->renderer = renderer;
 
-	mesh->vertex_buffers = buf_new(vulkan_vertex_buffer_t);
+	mesh->vertex_buffers = memory_allocator_buf_new(renderer->allocator, vulkan_vertex_buffer_t);
 
 	/* create vertex buffers */
 	if((create_info->vertex_buffer_info_count != 0) && (create_info->vertex_buffer_infos != NULL))

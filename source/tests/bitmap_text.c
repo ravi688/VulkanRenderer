@@ -185,7 +185,7 @@ void test_bitmap()
 static void test_buffer2d_view(renderer_t* renderer)
 {
 	iextent2d_t size = { 512, 512 };
-	buffer_t pixels = buf_create(sizeof(icolor3_t), IEXTENT2D_AREA(size), 0);
+	buffer_t pixels = memory_allocator_buf_create(renderer->allocator, sizeof(icolor3_t), IEXTENT2D_AREA(size), 0);
 	AUTO default_color = ICOLOR3_WHITE;
 	buf_clear_buffer(&pixels, &default_color);
 	buf_set_element_size(&pixels, 1); // as buffer2d_view only works with element_size = 1 buffers

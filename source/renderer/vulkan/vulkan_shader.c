@@ -57,14 +57,16 @@ RENDERER_API vulkan_shader_t* vulkan_shader_new(memory_allocator_t* allocator)
 	return shader;
 }
 
-static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(u64 packed, u16 location_offset, VkVertexInputRate input_rate)
+static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(memory_allocator_t* allocator, u64 packed, u16 location_offset, VkVertexInputRate input_rate)
 {
 	u32 bits_per_type = ceil(log2((double)GLSL_TYPE_MAX_NON_OPAQUE));
 	assert(((2UL << bits_per_type) >= GLSL_TYPE_MAX_NON_OPAQUE));
 
 	u64 bits_mask = BIT_MASK32(bits_per_type);
 
-	BUFFER formats = buf_new(VkFormat), offsets = buf_new(u32), locations = buf_new(u16);
+	BUFFER formats = memory_allocator_buf_new(allocator, VkFormat);
+	BUFFER offsets = memory_allocator_buf_new(allocator, u32);
+	BUFFER locations = memory_allocator_buf_new(allocator, u16);
 
 	u32 offset = 0;
 	while(packed != 0)
@@ -106,9 +108,9 @@ static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(u64 p
 	info.input_rate = input_rate;
 	info.attribute_count = buf_get_element_count(&formats);
 	info.size = offset;
-	info.attribute_formats = buf_get_ptr(&formats);
-	info.attribute_offsets = buf_get_ptr(&offsets);
-	info.attribute_locations = buf_get_ptr(&locations);
+	info.attribute_formats = (info.attribute_count > 0) ? buf_get_ptr(&formats) : NULL;
+	info.attribute_offsets = (info.attribute_count > 0) ? buf_get_ptr(&offsets) : NULL;
+	info.attribute_locations = (info.attribute_count > 0) ? buf_get_ptr(&locations) : NULL;
 
 	return info;
 }
@@ -131,14 +133,14 @@ static vulkan_vertex_buffer_layout_description_t* decode_vulkan_vertex_infos(mem
 	// decode each 64 bit number for per vertex vertex bindings
 	for(; binding_number < per_vertex_attribute_binding_count; binding_number++)
 	{
-		vertex_infos[binding_number] = decode_vulkan_vertex_info(per_vertex_attribute_bindings[binding_number], location_number_offset, VK_VERTEX_INPUT_RATE_VERTEX);
+		vertex_infos[binding_number] = decode_vulkan_vertex_info(allocator, per_vertex_attribute_bindings[binding_number], location_number_offset, VK_VERTEX_INPUT_RATE_VERTEX);
 		vertex_infos[binding_number].binding = binding_number;
 		location_number_offset += vertex_infos[binding_number].attribute_count;
 	}
 	// decode each 64 bit number for per instance vertex bindings
 	for(; binding_number < binding_count; binding_number++)
 	{
-		vertex_infos[binding_number] = decode_vulkan_vertex_info(per_instance_attribute_bindings[binding_number], location_number_offset, VK_VERTEX_INPUT_RATE_INSTANCE);
+		vertex_infos[binding_number] = decode_vulkan_vertex_info(allocator, per_instance_attribute_bindings[binding_number], location_number_offset, VK_VERTEX_INPUT_RATE_INSTANCE);
 		vertex_infos[binding_number].binding = binding_number;
 		location_number_offset += vertex_infos[binding_number].attribute_count;
 	}
@@ -173,7 +175,7 @@ static vulkan_push_constant_t create_vulkan_push_constant(memory_allocator_t* al
 	u32* descriptor_indices = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_U32_ARRAY, u32, material_set_binding_count);
 
 	// TODO: add an extra parameter is_zero, if true then each block allocated in the buffer would be first zeroed-out otherwise uninitialized
-	BUFFER ranges = buf_new(VkPushConstantRange);
+	BUFFER ranges = memory_allocator_buf_new(allocator, VkPushConstantRange);
 
 	u32 range_count = 0;
 	for(u32 i = 0; i < material_set_binding_count; i++)

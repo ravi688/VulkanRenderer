@@ -233,7 +233,7 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulk
 
 DEBUG_BLOCK
 (
-	BUFFER log_buffer = buf_create(sizeof(char), 0, 0);
+	BUFFER log_buffer = memory_allocator_buf_create(renderer->allocator, sizeof(char), 0, 0);
 	vulkan_instance_to_string(renderer->instance, &log_buffer);
 	for(u32 i = 0; i < physical_device_count; i++)
 		vulkan_physical_device_to_string(&physical_devices[i], &log_buffer);

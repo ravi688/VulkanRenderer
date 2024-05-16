@@ -132,7 +132,7 @@ RENDERER_API void vulkan_render_pass_graph_add(vulkan_render_pass_graph_t* graph
         buf_push_pseudo(&graph->nodes, 1);
         node = CAST_TO(vulkan_render_pass_graph_node_t*, buf_peek_ptr(&graph->nodes));
         node->pass_handle = pass_handle;
-        node->next_pass_node_handles = buf_new(vulkan_render_pass_graph_node_handle_t);
+        node->next_pass_node_handles = memory_allocator_buf_new(graph->renderer->allocator, vulkan_render_pass_graph_node_handle_t);
         node->prev_pass_count = 0;
         node->depth = 0;
         node_index = buf_get_element_count(&graph->nodes) - 1;
