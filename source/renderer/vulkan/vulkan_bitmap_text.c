@@ -238,6 +238,11 @@ RENDERER_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 {
 	event_unsubscribe(text->texture->on_resize_event, text->bga_texture_update_handle);
 	buf_clear(&text->glyph_layout_data_buffer, NULL);
+
+	/* destroy text strings */
+	u32 text_string_count = buf_get_element_count(&text->text_strings);
+	for(u32 i = 0; i < text_string_count; i++)
+		buf_free(&buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, i)->chars);
 	buf_clear(&text->text_strings, NULL);
 
 	/* destroy the GRD buffer */

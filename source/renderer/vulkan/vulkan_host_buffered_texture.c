@@ -96,6 +96,7 @@ RENDERER_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buf
 {
 	buffer2d_view_release_resources(&texture->view);
 	vulkan_texture_release_resources(BASE(texture));
+	vulkan_host_buffered_buffer_release_resources(&texture->buffer);
 	if(VULKAN_OBJECT_IS_INTERNAL(texture))
 		memory_allocator_dealloc(texture->renderer->allocator, texture);
 }

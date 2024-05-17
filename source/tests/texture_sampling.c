@@ -94,7 +94,9 @@ TEST_ON_INITIALIZE(TEXTURE_SAMPLING)
 
 	material_set_texture(this->material, "albedo", this->texture);
 
-	this->mesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 1));
+	AUTO planeMeshData = mesh3d_plane(renderer->allocator, 1);
+	this->mesh = mesh_create(renderer, planeMeshData);
+	mesh3d_destroy(planeMeshData);
 	this->render_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->render_object, this->material);
 	render_object_attach(this->render_object, this->mesh);

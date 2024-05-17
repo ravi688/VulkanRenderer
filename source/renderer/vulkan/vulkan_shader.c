@@ -567,7 +567,13 @@ static VkSubpassDependency* create_and_resolve_subpass_dependencies(vulkan_rende
 
 }
 
-static vulkan_render_pass_create_info_builder_t* convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_t* next_pass)
+typedef struct vulkan_render_pass_description_substitutions_t
+{
+	u32 subpass_dependency_count;
+	VkSubpassDependency* subpass_dependencies;
+} vulkan_render_pass_description_substitutions_t;
+
+static vulkan_render_pass_create_info_builder_t* convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_substitutions_t* subst, vulkan_render_pass_description_t* next_pass)
 {
 	vulkan_render_pass_create_info_builder_t* builder = vulkan_render_pass_create_info_builder_create(renderer->allocator);
 	vulkan_render_pass_create_info_builder_add(builder, 1);
@@ -744,13 +750,22 @@ static vulkan_render_pass_create_info_builder_t* convert_render_pass_description
 		// for now we won't be using preserve attachments
 	}
 
-	if(pass->subpass_dependency_count > 0)
-		vulkan_render_pass_create_info_builder_set_dependencies(builder, pass->subpass_dependencies, pass->subpass_dependency_count);
+	/* apply substitutions if any */
+	VkSubpassDependency* subpass_dependencies = pass->subpass_dependencies;
+	u32 subpass_dependency_count = pass->subpass_dependency_count;
+	if(subst->subpass_dependency_count > 0)
+	{
+		subpass_dependency_count = subst->subpass_dependency_count;
+		subpass_dependencies = subst->subpass_dependencies;
+	}
+
+	if(subpass_dependency_count > 0)
+		vulkan_render_pass_create_info_builder_set_dependencies(builder, subpass_dependencies, subpass_dependency_count);
 	
 	return builder;
 }
 
-static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* descriptions, u32 description_count, vulkan_pipeline_common_data_t* common_data)
+static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* descriptions, vulkan_render_pass_description_substitutions_t* substs, u32 description_count, vulkan_pipeline_common_data_t* common_data)
 {
 	// allocate memory
 	vulkan_shader_render_pass_t* passes = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RENDER_PASS_ARRAY, vulkan_shader_render_pass_t, description_count);
@@ -768,7 +783,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	for(u32 i = 0; i < description_count; i++)
 	{
 		// create a render pass object in the pool, no duplicate render pass would be created
-		vulkan_render_pass_create_info_builder_t* create_info_builder = convert_render_pass_description_to_create_info(renderer, &descriptions[i], (i < (description_count - 1)) ? &descriptions[i + 1] : NULL);
+		vulkan_render_pass_create_info_builder_t* create_info_builder = convert_render_pass_description_to_create_info(renderer, &descriptions[i], &substs[i], (i < (description_count - 1)) ? &descriptions[i + 1] : NULL);
 		
 		/* prepare render pass and submit input objects */
 		u32 subpass_count = passes[i].subpass_count = descriptions[i].subpass_count;
@@ -946,19 +961,25 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 		.pipeline_descriptions = create_info->pipeline_descriptions
 	};
 
+	vulkan_render_pass_description_substitutions_t* substs = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_DESCRIPTION_SUBSTITUIONS_ARRAY, vulkan_render_pass_description_substitutions_t, create_info->render_pass_description_count);
+	memzerov(substs, vulkan_render_pass_description_substitutions_t, create_info->render_pass_description_count);
 	for(u32 i = 0; i < create_info->render_pass_description_count; i++)
 	{
 		vulkan_render_pass_description_t* pass = &create_info->render_pass_descriptions[i];
 		vulkan_render_pass_description_t* next_pass = (i < (create_info->render_pass_description_count - 1)) ? (pass + 1) : NULL;
 		/* if there is no explicit subpass dependency provided by the description then create and resolve internally */
 		if(pass->subpass_dependency_count == 0)
-			pass->subpass_dependencies = create_and_resolve_subpass_dependencies(renderer, pass, next_pass, &pass->subpass_dependency_count);
+			substs[i].subpass_dependencies = create_and_resolve_subpass_dependencies(renderer, pass, next_pass, &substs[i].subpass_dependency_count);
 		/* otherwise merge the subpass dependencies as much as possible */
 		else
-			pass->subpass_dependencies = merge_subpass_dependencies(renderer, pass->subpass_dependencies, &pass->subpass_dependency_count);
+			substs[i].subpass_dependencies = merge_subpass_dependencies(renderer, pass->subpass_dependencies, &substs[i].subpass_dependency_count);
 	}
-	shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, create_info->render_pass_description_count, &common_data);
+	shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, substs, create_info->render_pass_description_count, &common_data);
 	shader->render_pass_count = create_info->render_pass_description_count;
+	for(u32 i = 0; i < create_info->render_pass_description_count; i++)
+		if(substs[i].subpass_dependency_count > 0)
+			memory_allocator_dealloc(renderer->allocator, substs[i].subpass_dependencies);
+	memory_allocator_dealloc(renderer->allocator, substs);
 	shader->pass_counter = 0;
 	shader->subpass_counter = 0;
 
@@ -1079,14 +1100,14 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 	}
 
 	// allocate memory
-	vulkan_vertex_buffer_layout_description_t* vertex_infos = memory_allocator_alloc_obj_array(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_VERTEX_BUFFER_LAYOUT_DESCRIPTION_ARRAY, vulkan_vertex_buffer_layout_description_t, descriptor_count);
-	safe_memzerov(vertex_infos, vulkan_vertex_buffer_layout_description_t, descriptor_count);
+	/* list of vulkan_vertex_buffer_layout_description_t objects */
+	buffer_t vertex_infos = memory_allocator_buf_new(allocator, vulkan_vertex_buffer_layout_description_t);
 
 	typedef struct attribute_info_t { BUFFER locations, formats, offsets; u32 largest_element_size; } attribute_info_t;
 	dictionary_t bindings = dictionary_create(u32, attribute_info_t, 1, dictionary_key_comparer_u32);
 
 	// iterate through each vertex attribute across all the vertex bindings
-	for(u32 i = 0, index = 0; i < descriptor_count; i++)
+	for(u32 i = 0; i < descriptor_count; i++)
 	{
 		// this must be an attribute
 		_debug_assert__(vulkan_shader_resource_description_is_attribute(&descriptors[i]));
@@ -1098,9 +1119,9 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 		{
 			attribute_info_t info = 
 			{ 
-				.locations = buf_create(sizeof(u32), 1, 0), 
-				.formats = buf_create(sizeof(VkFormat), 1, 0), 
-				.offsets = buf_create(sizeof(u32), 1, 0),
+				.locations = memory_allocator_buf_create(allocator, sizeof(u32), 0, 0), 
+				.formats = memory_allocator_buf_create(allocator, sizeof(VkFormat), 0, 0), 
+				.offsets = memory_allocator_buf_create(allocator, sizeof(u32), 0, 0),
 				.largest_element_size = 0
 			};
 			dictionary_push(&bindings, &key, &info);
@@ -1111,7 +1132,8 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 			buf_push(&attribute_info->offsets, &offset);
 
 			// create vertex info object for the binding 'key'
-			vertex_infos[index++] = (vulkan_vertex_buffer_layout_description_t)
+			AUTO vertex_info = CAST_TO(vulkan_vertex_buffer_layout_description_t*, buf_create_element(&vertex_infos));
+			*vertex_info = (vulkan_vertex_buffer_layout_description_t)
 			{
 				.binding = key,
 				.input_rate = descriptors[i].is_per_vertex_attribute ? VK_VERTEX_INPUT_RATE_VERTEX : VK_VERTEX_INPUT_RATE_INSTANCE
@@ -1154,9 +1176,10 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 	}
 
 	u32 binding_count = dictionary_get_count(&bindings);
+	_debug_assert__(buf_get_element_count(&vertex_infos) == binding_count);
 	for(u32 i = 0; i < binding_count; i++)
 	{
-		vulkan_vertex_buffer_layout_description_t* vinfo = &vertex_infos[i];
+		vulkan_vertex_buffer_layout_description_t* vinfo = buf_get_ptr_at_typeof(&vertex_infos, vulkan_vertex_buffer_layout_description_t, i);
 		attribute_info_t* ainfo = dictionary_get_value_ptr_at(&bindings, i);
 
 		// the final stride would be the last saved offset
@@ -1180,7 +1203,24 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 	destroy_vulkan_shader_resource_descriptions(allocator, descriptors, descriptor_count);
 
 	// return pointer to the final vulkan vertex info objects
-	return vertex_infos;
+	return (binding_count == 0) ? NULL : buf_get_ptr(&vertex_infos);
+}
+
+static void destroy_vertex_infos(memory_allocator_t* allocator, vulkan_vertex_buffer_layout_description_t* vertex_infos, u32 vertex_info_count)
+{
+	if(vertex_info_count == 0)
+		return;
+	for(u32 i = 0; i < vertex_info_count; i++)
+	{
+		vulkan_vertex_buffer_layout_description_t* vinfo = &vertex_infos[i];
+		if(vinfo->attribute_count > 0)
+		{
+			memory_allocator_dealloc(allocator, vinfo->attribute_locations);
+			memory_allocator_dealloc(allocator, vinfo->attribute_formats);
+			memory_allocator_dealloc(allocator, vinfo->attribute_offsets);
+		}
+	}
+	memory_allocator_dealloc(allocator, vertex_infos);
 }
 
 static vulkan_spirv_code_t* load_spirv_codes(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count)
@@ -1582,8 +1622,7 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(memory_allo
 static void destroy_vulkan_shader_create_info(memory_allocator_t* allocator, vulkan_shader_create_info_t* create_info)
 {
 	destroy_vulkan_shader_resource_descriptions(allocator, create_info->material_set_bindings, create_info->material_set_binding_count);
-	if(create_info->vertex_info_count > 0)
-		memory_allocator_dealloc(allocator, create_info->vertex_infos);
+	destroy_vertex_infos(allocator, create_info->vertex_infos, create_info->vertex_info_count);
 	/* pipeline descriptions may be NULL, i.e. no subpasses in any of the render passes, or no render passes at all. 
 	 * if such cases exists, then we may remove this assertion in future. */
 	_debug_assert__(create_info->pipeline_descriptions != NULL);

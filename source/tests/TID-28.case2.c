@@ -134,6 +134,7 @@ TEST_ON_INITIALIZE(TID_28_CASE_2)
 
 	AUTO sphereMeshData = mesh3d_load(renderer->allocator, "models/Monkey.obj");
 	mesh3d_make_centroid_origin(sphereMeshData);
+	mesh3d_destroy(sphereMeshData);
 
 	this->mesh = mesh_create(renderer, sphereMeshData);
 	this->renderObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
@@ -150,6 +151,7 @@ TEST_ON_INITIALIZE(TID_28_CASE_2)
 
 	mesh3d_transform_set(cubeMeshData, mat4_scale(-1, -1, -1));
 	this->wallMesh = mesh_create(renderer, cubeMeshData);
+	mesh3d_destroy(cubeMeshData);
 	this->wallObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->wallObject, this->material);
 	render_object_attach(this->wallObject, this->wallMesh);
