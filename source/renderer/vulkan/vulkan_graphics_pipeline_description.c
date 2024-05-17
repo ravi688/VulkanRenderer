@@ -35,7 +35,7 @@
 static BUFFER* __create_buffer(memory_allocator_t* allocator, u32 size)
 {
 	BUFFER* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
-	*buffer = memory_allocator_buf_create(allocator, size, 1, 0);
+	*buffer = memory_allocator_buf_create(allocator, size, 0, 0);
 	return buffer;
 }
 
@@ -166,6 +166,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_add_shader(vulkan_graphic
 		.length = data->element_count
 	};
 	buf_push(CAST_TO(BUFFER*, description->spirv_codes), &code);
+	free(data);
 }
 
 RENDERER_API void vulkan_graphics_pipeline_description_end(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
@@ -195,7 +196,16 @@ RENDERER_API void vulkan_graphics_pipeline_description_destroy_allocations(memor
 		memory_allocator_dealloc(allocator, CAST_TO(void*, info->pAttachments));
 	memory_allocator_dealloc(allocator, description->settings);
 	if(description->spirv_code_count > 0)
+	{
+		for(u32 i = 0; i < description->spirv_code_count; i++)
+		{
+			_debug_assert__(description->spirv_codes[i].length > 0);
+			/* TODO: see load_binary_from_file, it uses standard malloc functions 
+			 * create an another variant of load_binary_from_file with user supplied allocators */
+			free(description->spirv_codes[i].spirv);
+		}
 		memory_allocator_dealloc(allocator, description->spirv_codes);
+	}
 }
 
 RENDERER_API VkPipelineRasterizationStateCreateInfo* vulkan_graphics_pipeline_description_get_rasterization(vulkan_graphics_pipeline_description_t* description)

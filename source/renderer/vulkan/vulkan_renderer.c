@@ -352,6 +352,7 @@ DEBUG_BLOCK
 	buf_push_newline(&log_buffer);
 	buf_push_null(&log_buffer);
 	log_msg(buf_get_ptr(&log_buffer));
+	buf_free(&log_buffer);
 )
 
 	// create semaphores

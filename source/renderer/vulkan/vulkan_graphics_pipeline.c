@@ -357,6 +357,10 @@ RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pip
 	for(u32 i = 0; i < pipeline->shader_module_count; i++)
 		vulkan_shader_module_release_resources(&pipeline->shader_modules[i]);
 
+	/* destroy dynamic state objects */
+	if(pipeline->dynamic_state_count > 0)
+		memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_dynamic_states);
+
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->shader_modules);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_shader_stages);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_binding_descriptions);

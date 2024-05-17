@@ -67,6 +67,7 @@ RENDERER_API void vulkan_material_library_destroy(vulkan_material_library_t* lib
 		string_destroy(&slot->name);
 		vulkan_material_destroy(slot->material);
 	}
+	buf_clear(&library->relocation_table, NULL);
 	log_msg("Vulkan material library has been destroyed successfully\n");
 }
 
@@ -78,6 +79,8 @@ RENDERER_API void vulkan_material_library_release_resources(vulkan_material_libr
 		vulkan_material_library_slot_t* slot = buf_get_ptr_at(&library->materials, i);
 		vulkan_material_release_resources(slot->material);
 	}
+	buf_free(&library->relocation_table);
+	buf_free(&library->materials);
 	if(VULKAN_OBJECT_IS_INTERNAL(library))
 		memory_allocator_dealloc(library->renderer->allocator, library);
 }

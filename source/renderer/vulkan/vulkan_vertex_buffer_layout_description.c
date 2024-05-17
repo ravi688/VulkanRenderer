@@ -37,7 +37,7 @@
 static BUFFER* __create_buffer(memory_allocator_t* allocator,  u32 size)
 {
 	BUFFER* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BUFFER, BUFFER);
-	*buffer = memory_allocator_buf_create(allocator, size, 1, 0);
+	*buffer = memory_allocator_buf_create(allocator, size, 0, 0);
 	return buffer;
 }
 

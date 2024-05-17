@@ -58,6 +58,12 @@ RENDERER_API void vulkan_render_pass_graph_create_no_alloc(vulkan_renderer_t* re
 
 RENDERER_API void vulkan_render_pass_graph_destroy(vulkan_render_pass_graph_t* graph)
 {
+    u32 node_count = buf_get_element_count(&graph->nodes);
+    for(u32 i = 0; i < node_count; i++)
+    {
+        AUTO node = buf_get_ptr_at_typeof(&graph->nodes, vulkan_render_pass_graph_node_t, i);
+        buf_free(&node->next_pass_node_handles);
+    }
     buf_clear(&graph->nodes, NULL);
     buf_clear(&graph->optimized_render_path, NULL);
 }
@@ -66,6 +72,7 @@ RENDERER_API void vulkan_render_pass_graph_release_resources(vulkan_render_pass_
 {
     buf_free(&graph->nodes);
     buf_free(&graph->optimized_render_path);
+    buf_free(&graph->staging_list);
     if(VULKAN_OBJECT_IS_INTERNAL(graph))
         memory_allocator_dealloc(graph->renderer->allocator, graph);
 }

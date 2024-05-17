@@ -139,6 +139,7 @@ RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* obj)
 
 RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t* obj)
 {
+	struct_descriptor_destroy(obj->renderer->allocator, &obj->struct_definition);
 	vulkan_descriptor_set_release_resources(&obj->object_set);
 	vulkan_buffer_release_resources(&obj->buffer);
 	if(VULKAN_OBJECT_IS_INTERNAL(obj))

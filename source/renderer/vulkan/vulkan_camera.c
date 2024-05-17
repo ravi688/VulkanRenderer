@@ -650,6 +650,8 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 	if(camera->default_depth_attachment != NULL)
 		vulkan_attachment_release_resources(camera->default_depth_attachment);
 
+	buf_free(&camera->render_passes);
+
 	dictionary_free(&camera->render_pass_descriptor_sets);
 
 	_debug_assert__(camera->swapchain_depth_clear_pass != NULL);

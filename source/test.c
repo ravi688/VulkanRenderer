@@ -162,5 +162,6 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 
 RENDERER_API void test_destroy(test_t* test)
 {
+	heap_free(test->user_data);
 	memory_allocator_dealloc(test->allocator, test);
 }

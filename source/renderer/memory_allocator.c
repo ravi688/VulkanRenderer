@@ -250,7 +250,10 @@ RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* alloca
 	{
 		/* remove the old allocation if exists */
 		if(old_alloc != NULL)
+		{
 			dictionary_remove(&allocator->allocation_map, &old_ptr);
+			IF_DEBUG(allocator->alloc_counter--);
+		}
 
 		/* add the new memory block with new address */
 		memory_allocation_t allocation = 
@@ -261,6 +264,7 @@ RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* alloca
 			.ptr = result.ptr
 		};
 		dictionary_add(&allocator->allocation_map, &result.ptr, &allocation);
+		IF_DEBUG(allocator->alloc_counter++);
 	}
 
 	allocator->footprint.curr_usage += size;
@@ -277,6 +281,7 @@ RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void
 	debug_assert__(index != BUF_INVALID_INDEX, "You're trying to free an invalid pointer, no allocation info exist for %p", ptr);
 
 	AUTO allocation = CAST_TO(memory_allocation_t*, dictionary_get_value_ptr_at(&allocator->allocation_map, index));
+	_debug_assert__(allocator->footprint.curr_usage >= allocation->size);
 	allocator->footprint.curr_usage -= allocation->size;
 	/* let the NULL ptr handled by the deallocate function pointer (user might have an implementation for it) */
 	bool was_aligned = allocation->align != ALLOCATION_FLAG_NO_ALIGN_RESTRICTION;
@@ -427,7 +432,7 @@ static memory_allocation_tree_t* build_tree(memory_allocation_debug_node_t* node
 	memzero(root, memory_allocation_debug_node_t);
 
 	root->child_count = buf_get_element_count(&unref_nodes);
-	root->children = CAST_TO(memory_allocation_debug_node_t**, buf_get_ptr(&unref_nodes));
+	root->children = (root->child_count > 0) ? CAST_TO(memory_allocation_debug_node_t**, buf_get_ptr(&unref_nodes)) : NULL;
 	root->parents = buf_new(memory_allocation_debug_node_t*);
 
 	memory_allocation_tree_t* tree = heap_new(memory_allocation_tree_t);
@@ -451,6 +456,7 @@ RENDERER_API void memory_allocator_serialize_to_file(memory_allocator_t* allocat
 	/* serialize the memory allocation tree */
 	memory_allocation_tree_t* tree = memory_allocator_build_allocation_tree(allocator);
 	memory_allocation_tree_to_string(tree, builder);
+	memory_allocation_tree_destroy(tree);
 	/* write the string to a file */
 	string_builder_write_to_file_and_destroy(builder, file_path);
 }
@@ -467,6 +473,8 @@ RENDERER_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(me
 
 RENDERER_API void memory_allocation_tree_destroy(memory_allocation_tree_t* tree)
 {
+	if(tree->root->child_count > 0)
+		free(tree->root->children);
 	if(tree->nodes != NULL)
 		heap_free(tree->nodes);
 	heap_free(tree->root);
