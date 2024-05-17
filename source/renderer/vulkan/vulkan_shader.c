@@ -1369,6 +1369,7 @@ static void destroy_subpass_descriptions(memory_allocator_t* allocator, vulkan_s
 			memory_allocator_dealloc(allocator, description->color_attachments);
 		if(description->preserve_attachment_count > 0)
 			memory_allocator_dealloc(allocator, description->preserve_attachments);
+		destroy_vulkan_shader_resource_descriptions(allocator, description->sub_render_set_bindings, description->sub_render_set_binding_count);
 	}
 	if(description_count > 0)
 		memory_allocator_dealloc(allocator, descriptions);

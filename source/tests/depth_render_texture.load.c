@@ -137,6 +137,7 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
 	this->skyboxGeometry = mesh3d_cube(renderer->allocator, 5.0f);
 	mesh3d_flip_triangles(this->skyboxGeometry);
 	this->skyboxMesh = mesh_create(renderer, this->skyboxGeometry);
+	mesh3d_destroy(this->skyboxGeometry);
 	this->skyboxShaderH = shader_library_load_shader(this->slib, "shaders/presets/skybox.sb");
 	this->skyboxMaterial = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->skyboxShaderH, "SkyboxMaterial"));
 	material_set_texture(this->skyboxMaterial, "albedo", this->skyboxTexture);
@@ -146,8 +147,12 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
 	this->shader = shader_library_getH(this->slib, this->shaderH);
 	this->blueMaterial = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->shaderH, "BlueColorMaterial"));
 	this->greenMaterial = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->shaderH, "GreenColorMaterial"));
-	this->mesh = mesh_create(renderer, mesh3d_cube(renderer->allocator, 1.0f));
-	this->planeMesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 2.0f));
+	AUTO cubeMeshData = mesh3d_cube(renderer->allocator, 1.0f);
+	this->mesh = mesh_create(renderer, cubeMeshData);
+	mesh3d_destroy(cubeMeshData);
+	AUTO planeMeshData = mesh3d_plane(renderer->allocator, 2.0f);
+	this->planeMesh = mesh_create(renderer, planeMeshData);
+	mesh3d_destroy(planeMeshData);
 
 	material_set_texture(this->blueMaterial, "albedo", this->texture);
 	material_set_texture(this->greenMaterial, "albedo", this->texture);
@@ -179,7 +184,9 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
 	this->uiMaterial2 = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->uiShaderH2, "UIMaterial2"));
 
 	render_scene_add_queue(this->scene, RENDER_QUEUE_TYPE_QUEUE0);
-	this->quadMesh = mesh_create(renderer, mesh3d_plane(renderer->allocator, 400));
+	AUTO planeMeshData2 = mesh3d_plane(renderer->allocator, 400);
+	this->quadMesh = mesh_create(renderer, planeMeshData2);
+	mesh3d_destroy(planeMeshData2);
 	this->obj5 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_QUEUE0));
 	render_object_set_material(this->obj5, this->uiMaterial);
 	render_object_attach(this->obj5, this->quadMesh);
