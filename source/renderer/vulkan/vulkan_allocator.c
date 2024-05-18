@@ -29,7 +29,7 @@
 
 static void* VKAPI_CALL vulkan_allocation(void* user_data, size_t size, size_t align, VkSystemAllocationScope allocation_scope)
 {
-	vulkan_allocator_t* vk_allocator = VULKAN_ALLOCATOR(user_data);
+	CAN_BE_UNUSED_VARIABLE vulkan_allocator_t* vk_allocator = VULKAN_ALLOCATOR(user_data);
 	size = size + (align - (size % align)) % align;
 	void* address = memory_allocator_aligned_alloc(vk_allocator->allocator, MEMORY_ALLOCATION_TYPE_VKAPI, size, align);
 	_debug_assert__((CAST_TO(u64, address) % align) == 0);
@@ -53,7 +53,7 @@ static void VKAPI_CALL vulkan_free(void* user_data, void* memory)
 {
 	if(memory == NULL)
 		return;
-	AUTO allocator = VULKAN_ALLOCATOR(user_data)->allocator;
+	CAN_BE_UNUSED_VARIABLE AUTO allocator = VULKAN_ALLOCATOR(user_data)->allocator;
 #ifdef MEMORY_METRICS
 	if(!memory_allocator_is_allocation_exists(allocator, memory))
 	{
