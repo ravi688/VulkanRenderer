@@ -68,6 +68,8 @@
 #   define heap_silent_free(basePtr) checked_silent_free(basePtr)
 #   define heap_silent_aligned_free(basePtr) checked_silent_free(basePtr)
 #	define heap_sizeof(type) sizeof(type)
+#	define heap_usable_size(basePtr) 0
+#	warning "heap_usable_size won't work with USE_SAFE_MEMORY, extra work is needed"
 #	define get_element(type, validPtr, index) checked_ref(type, validPtr, index)
 #   define get_element_ptr(type, validPtr, index) checked_refp(type, validPtr, index)
 #   define MEM_CHECK(ptr) get_element_ptr(u8, ptr, 0)
@@ -96,6 +98,8 @@
 #   define heap_silent_free(basePtr)
 #   define heap_slient_aligned_free(basePtr)
 #	define heap_sizeof(type) sizeof(type)
+#	define heap_usable_size(basePtr) 0
+#	warning "heap_usable_size won't work with USE_GARBAGE_COLLECTOR, extra work is needed"
 #   define get_element(type, validPtr, index) (validPtr)[index]
 #   define get_element_ptr(type, validPtr, index) (&(validPtr)[index])
 #   define MEM_CHECK(ptr)
@@ -104,6 +108,13 @@
 #   define ptr(id) &id
 #elif defined(USE_STDLIB)
 #	include <stdlib.h>
+#	include <malloc.h> // malloc_usable_size for linux, and _msize for windows
+
+#	ifdef PLATFORM_WINDOWS
+#		ifndef malloc_usable_size
+#			define malloc_usable_size(ptr) _msize(ptr)
+#		endif /* if not defined malloc_usable_size */
+#	endif /* PLATFORM_WINDOWS */
 
 #	ifdef PLATFORM_LINUX
 #		ifndef _aligned_malloc
@@ -115,7 +126,6 @@
 #		endif /* _aligned_free */
 #		ifndef _aligned_realloc
 #			include <memory.h>  // memcpy
-#			include <malloc.h> // malloc_usable_size
 #			define _aligned_realloc(...) aligned_realloc(__VA_ARGS__)
 			static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool is_aligned(void* ptr, size_t align) { return (CAST_TO(u64, ptr) % align) == 0; }
 			static CAN_BE_UNUSED_FUNCTION void* aligned_realloc(void* old_ptr, size_t size, size_t align)
@@ -184,6 +194,12 @@
 	#	define _std_alloca(size) alloca(size)
 	#endif /* GLOBAL_DEBUG */
 
+	#ifdef GLOBAL_DEBUG
+		static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 _std_malloc_usable_size(void* ptr) { _debug_assert__(ptr != NULL); return malloc_usable_size(ptr); }
+	#else /* GLOBAL_RELEASE */
+	#	define _std_malloc_usable_size(ptr) CAST_TO(u32, malloc_usable_size(ptr))
+	#endif /* GLOBAL_DEBUG */
+
 #	define alloc_init(x)
 #	define alloc_terminate()
 #   define add_alloc(basePtr, size) basePtr
@@ -198,6 +214,7 @@
 #   define heap_silent_free(basePtr) _std_free(basePtr)
 #   define heap_silent_aligned_free(basePtr) _std_aligned_free(basePtr)
 #	define heap_sizeof(type) sizeof(type)
+#	define heap_usable_size(basePtr) _std_malloc_usable_size(basePtr)
 #   define get_element(type, validPtr, index) (validPtr)[index]
 #   define get_element_ptr(type, validPtr, index) (&(validPtr)[index])
 #   define MEM_CHECK(ptr)

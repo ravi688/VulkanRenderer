@@ -57,7 +57,7 @@ static void VKAPI_CALL vulkan_free(void* user_data, void* memory)
 #ifdef MEMORY_METRICS
 	if(!memory_allocator_is_allocation_exists(allocator, memory))
 	{
-		debug_log_warning("Vulkan Allocator: Unable to free memory block at %p, usable size: %u bytes, no such allocation was made by vulkan_allocator_t", memory, malloc_usable_size(memory));
+		debug_log_warning("Vulkan Allocator: Unable to free memory block at %p, usable size: %u bytes, no such allocation was made by vulkan_allocator_t", memory, heap_usable_size(memory));
 		return;
 	}
 #endif
