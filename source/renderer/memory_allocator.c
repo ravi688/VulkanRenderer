@@ -273,14 +273,26 @@ RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* alloca
 	return result.ptr;
 }
 
+static memory_allocation_t* memory_allocator_try_get_allocation(memory_allocator_t* allocator, void* ptr)
+{
+	memory_allocation_t* allocation;
+	if(dictionary_try_get_value_ptr(&allocator->allocation_map, &ptr, CAST_TO(void**, &allocation)))
+		return allocation;
+	return NULL;
+}
+
+RENDERER_API bool memory_allocator_is_allocation_exists(memory_allocator_t* allocator, void* ptr)
+{
+	return dictionary_find_index_of(&allocator->allocation_map, &ptr) != BUF_INVALID_INDEX;
+}
+
 RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr)
 {
 	_debug_assert__(ptr != NULL);
 
-	buf_ucount_t index = dictionary_find_index_of(&allocator->allocation_map, &ptr);
-	debug_assert__(index != BUF_INVALID_INDEX, "You're trying to free an invalid pointer, no allocation info exist for %p", ptr);
+	AUTO allocation = memory_allocator_try_get_allocation(allocator, ptr);
+	debug_assert__(allocation != NULL, "You're trying to free an invalid pointer, no allocation info exist for %p", ptr);
 
-	AUTO allocation = CAST_TO(memory_allocation_t*, dictionary_get_value_ptr_at(&allocator->allocation_map, index));
 	_debug_assert__(allocator->footprint.curr_usage >= allocation->size);
 	allocator->footprint.curr_usage -= allocation->size;
 	/* let the NULL ptr handled by the deallocate function pointer (user might have an implementation for it) */

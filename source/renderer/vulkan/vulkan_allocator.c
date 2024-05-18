@@ -53,7 +53,15 @@ static void VKAPI_CALL vulkan_free(void* user_data, void* memory)
 {
 	if(memory == NULL)
 		return;
-	memory_allocator_dealloc(VULKAN_ALLOCATOR(user_data)->allocator, memory);
+	AUTO allocator = VULKAN_ALLOCATOR(user_data)->allocator;
+#ifdef MEMORY_METRICS
+	if(!memory_allocator_is_allocation_exists(allocator, memory))
+	{
+		debug_log_warning("Vulkan Allocator: Unable to free memory block at %p, usable size: %u bytes, no such allocation was made by vulkan_allocator_t", memory, malloc_usable_size(memory));
+		return;
+	}
+#endif
+	memory_allocator_dealloc(allocator, memory);
 }
 
 static void VKAPI_CALL vulkan_internal_allocation_notification(void* user_data, size_t size, VkInternalAllocationType allocation_type, VkSystemAllocationScope allocation_scope)

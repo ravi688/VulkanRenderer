@@ -202,7 +202,11 @@ RENDERER_API void memory_allocator_destroy(memory_allocator_t* allocator);
 RENDERER_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size);
 RENDERER_API void* __memory_allocator_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size);
 /* allocates memory chunk with alignment, and attaches appropriate debug information to that chunk */
-#define memory_allocator_aligned_alloc(allocator, allocation_type, size, align) __memory_allocator_aligned_alloc(allocator, __memory_allocation_debug_info(allocation_type), size, align)
+#ifdef MEMORY_METRICS
+#	define memory_allocator_aligned_alloc(allocator, allocation_type, size, align) __memory_allocator_aligned_alloc(allocator, __memory_allocation_debug_info(allocation_type), size, align)
+#else
+#	define memory_allocator_aligned_alloc(allocator, allocation_type, size, align) heap_aligned_alloc(size, align)
+#endif
 RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size, u32 align);
 /* rellocates memory chunk with alignment, and attaches or overwrites appropriate debug information to that chunk */
 #ifdef MEMORY_METRICS
@@ -224,6 +228,8 @@ RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void
 #else
 #   define memory_allocator_aligned_deallocate(allocator, ptr) heap_aligned_free(ptr)
 #endif
+
+RENDERER_API bool memory_allocator_is_allocation_exists(memory_allocator_t* allocator, void* ptr);
 
 /* serializes current memory allocation tree and current memory footprint into one file */
 RENDERER_API void memory_allocator_serialize_to_file(memory_allocator_t* allocator, const char* const file_path);
