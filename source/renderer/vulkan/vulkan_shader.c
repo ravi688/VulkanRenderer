@@ -1487,29 +1487,6 @@ static void destroy_render_pass_descriptions(memory_allocator_t* allocator, vulk
 		memory_allocator_dealloc(allocator, descriptions);
 }
 
-/*static vulkan_graphics_pipeline_description_t* create_pipeline_descriptions(binary_reader_t* reader, u32 OUT count)
-{
-	u16 description_count = binary_reader_u16(reader);
-	OUT count = description_count;
-	if(description_count == 0)
-		return NULL;
-
-	vulkan_graphics_pipeline_description_t* descriptions = heap_newv(vulkan_graphics_pipeline_description_t, description_count);
-	for(u16 i = 0; i < description_count; i++)
-	{
-		vulkan_graphics_pipeline_description_t* description = &descriptions[i];
-
-		// read vulkan_graphics_pipeline_description_t
-		description->settings = heap_new(vulkan_graphics_pipeline_settings_t);
-		memcopy(description->settings, binary_reader_read(reader, vulkan_graphics_pipeline_description_t), vulkan_graphics_pipeline_description_t);
-
-		// read the spirv code array
-		description->spirv_codes = load_spirv_codes(reader, &description->spirv_code_count);
-	}
-
-	return descriptions;
-}*/
-
 typedef struct header_t
 {
 	u32 sb_version;
@@ -1609,9 +1586,6 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(memory_allo
 		.pipeline_description_count = buf_get_element_count(&pipeline_descriptions),
 		.pipeline_descriptions = CAST_TO(vulkan_graphics_pipeline_description_t*, buf_get_ptr(&pipeline_descriptions))
 	};
-
-	// TODO:
-	// free up the allocated memories in the main memory because vulkan shader creates a deep copy internally
 
 	binary_reader_destroy(reader);
 	binary_reader_release_resources(reader);

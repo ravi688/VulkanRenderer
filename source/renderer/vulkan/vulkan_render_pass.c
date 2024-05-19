@@ -116,8 +116,6 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	}
 
 	_debug_assert__(create_info->framebuffer_layout_description.attachment_description_count > 0);
-	// VkAttachmentDescription* attachment_descriptions = heap_newv(VkAttachmentDescription, create_info->framebuffer_layout_description.attachment_description_count);
-	// memcopyv(attachment_descriptions, create_info->attachment_descriptions, VkAttachmentDescription, create_info->framebuffer_layout_description.attachment_description_count);
 	
 	VkRenderPassCreateInfo render_pass_create_info = 
 	{
@@ -131,7 +129,6 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	};
 	vkCall(vkCreateRenderPass(renderer->logical_device->vo_handle, &render_pass_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &render_pass->vo_handle));
 	log_ptr(render_pass->vo_handle);
-	// heap_free(attachment_descriptions);
 	memory_allocator_dealloc(renderer->allocator, subpasses);
 
 	render_pass->attachment_count = create_info->framebuffer_layout_description.attachment_description_count;
