@@ -49,7 +49,6 @@ TEST_DATA(POINT_LIGHT_SHADOWS)
 	/* materials */
 	material_t* material;
 	material_t* shadowMapMaterial;
-	material_t* depthReflectionMaterial;
 
 	/* meshes */
 	mesh_t* mesh;
@@ -111,14 +110,8 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 							material_library_create_materialH(mlib, 
 							shader_library_create_shader_from_preset(slib, 
 								SHADER_LIBRARY_SHADER_PRESET_POINT_LIGHT), "PointLightMaterial"));
-	this->depthReflectionMaterial = material_library_getH(mlib, 
-							material_library_create_materialH(mlib, 
-							shader_library_create_shader_from_preset(slib, 
-								SHADER_LIBRARY_SHADER_PRESET_REFLECTION_DEPTH_POINT), "DepthRefectionMaterial"));
 
 	material_set_vec4(this->material, "parameters.color", vec4(1, 1, 1, 1));
-	material_set_vec4(this->depthReflectionMaterial, "parameters.color", vec4(1, 1, 1, 1));
-	material_set_float(this->depthReflectionMaterial, "parameters.reflectance", 1.0f);
 
 	vulkan_texture_create_info_t create_info = 
 	{
@@ -134,7 +127,6 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	};	
 	this->shadowMap = vulkan_texture_create(renderer->vulkan_handle, &create_info);
 	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->shadowMap);
-	material_set_texture(this->depthReflectionMaterial, "reflectionMap", this->shadowMap);
 	material_set_texture(this->material, "shadowMap", this->shadowMap);
 
 	AUTO sphereMeshData = mesh3d_load(renderer->allocator, "models/Monkey.obj");
