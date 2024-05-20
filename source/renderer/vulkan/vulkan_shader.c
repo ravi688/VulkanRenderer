@@ -573,7 +573,7 @@ typedef struct vulkan_render_pass_description_substitutions_t
 	VkSubpassDependency* subpass_dependencies;
 } vulkan_render_pass_description_substitutions_t;
 
-static vulkan_render_pass_create_info_builder_t* convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_substitutions_t* subst, vulkan_render_pass_description_t* next_pass)
+static vulkan_render_pass_create_info_builder_t* convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_substitutions_t* subst, vulkan_render_pass_description_t* next_passes, u32 next_pass_count)
 {
 	vulkan_render_pass_create_info_builder_t* builder = vulkan_render_pass_create_info_builder_create(renderer->allocator);
 	vulkan_render_pass_create_info_builder_add(builder, 1);
@@ -652,27 +652,49 @@ static vulkan_render_pass_create_info_builder_t* convert_render_pass_description
 			usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_PRESENT;
 		}
 
+		/* check if any subsequent subpasses read this attachment as subpassInput */
+		bool is_outer_break = false;
 		for(u32 j = 0; j < pass->subpass_description_count; j++)
 		{
 			u32 sub_input_count = pass->subpass_descriptions[j].input_attachment_count;
 			for(u32 k = 0; k < sub_input_count; k++)
 			{
 				if(i == pass->subpass_descriptions[j].input_attachments[k])
+				{
+					/* if yes, then the usage mask should contain subpassInput */
 					usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT;
+					is_outer_break = true;
+					break;
+				}
 			}
+			if(is_outer_break)
+				break;
 		}
 
-		u32 input_count = (next_pass == NULL) ? 0 : next_pass->input_attachment_count;
-		for(u32 j = 0; j < input_count; j++)
+		/* check if any subsequent passes sample this attachment or not */
+		is_outer_break = false;
+		for(u32 j = 0; j < next_pass_count; j++)
 		{
-			if(next_pass->input_attachments[j] == i)
+			vulkan_render_pass_description_t* next_pass = &next_passes[j];
+			u32 input_count = next_pass->input_attachment_count;
+			for(u32 k = 0; k < input_count; k++)
 			{
-				store_op = VK_ATTACHMENT_STORE_OP_STORE;
-				final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ?
-								VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL :
-								VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-				usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED;
+				if(next_pass->input_attachments[k] == i)
+				{
+					/* if yes, then this attachment should be preserved at the end of this pass */
+					store_op = VK_ATTACHMENT_STORE_OP_STORE;
+					/* and the final layout must be read only */
+					final_layout = (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_COLOR) ?
+									VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL :
+									VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+					/* and the usage should be set as next pass sampled */
+					usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED;
+					is_outer_break = true;
+					break;
+				}
 			}
+			if(is_outer_break)
+				break;
 		}
 
 		if(((usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) == VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED)
@@ -783,7 +805,10 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	for(u32 i = 0; i < description_count; i++)
 	{
 		// create a render pass object in the pool, no duplicate render pass would be created
-		vulkan_render_pass_create_info_builder_t* create_info_builder = convert_render_pass_description_to_create_info(renderer, &descriptions[i], &substs[i], (i < (description_count - 1)) ? &descriptions[i + 1] : NULL);
+
+		/* number of subsequent render passes after this render pass */
+		u32 next_count = description_count - i - 1;
+		vulkan_render_pass_create_info_builder_t* create_info_builder = convert_render_pass_description_to_create_info(renderer, &descriptions[i], &substs[i], (next_count > 0) ? &descriptions[i + 1] : NULL, next_count);
 		
 		/* prepare render pass and submit input objects */
 		u32 subpass_count = passes[i].subpass_count = descriptions[i].subpass_count;
