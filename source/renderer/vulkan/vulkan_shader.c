@@ -661,6 +661,11 @@ static vulkan_render_pass_create_info_builder_t* convert_render_pass_description
 			{
 				if(i == pass->subpass_descriptions[j].input_attachments[k])
 				{
+					/* NOTE: it is possible to read the swapchain'images in a subpass as subpassInput,
+					 * one might argue that how can a subpass read and write to the same attachment? 
+					 * it is not possible, but a subpass can definitly read the swapchain'image as subpassInput
+					 * while writing to a depth only attachment. this way the two attachments would be different. */
+
 					/* if yes, then the usage mask should contain subpassInput */
 					usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_INPUT;
 					is_outer_break = true;
@@ -689,21 +694,53 @@ static vulkan_render_pass_create_info_builder_t* convert_render_pass_description
 									VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 					/* and the usage should be set as next pass sampled */
 					usage |= VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED;
+
+					/* if this is a depth attachment and, as in the current context, is read by any of the subsequent render passes */
+					if(pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_DEPTH)
+					{
+						/* then that means this render pass is supposed to be the first user as a writer on the depth attachment 
+						 * and the subsequent render passes will be the second users as a reader of the depth attachment 
+						 * however, a smart guy can notice that this won't work if two render passes write to the same depth attachment
+						 * i.e.
+						 * RenderPass
+						 * {
+						 *		Subpass
+						 *		{
+						 * 			depth write is enabled
+						 * 			depth test is enabled
+						 * 		}
+						 * }
+						 * RenderPass
+						 * {	
+						 *		Subpass
+						 *		{
+						 *			depth write is enabled
+						 * 			depth test is enabled
+						 *		}
+						 * }
+						 * [Read(depth, set = ..., binding = ...)]
+						 * RenderPass
+						 * {
+						 * 		Subpass
+						 * 		{
+						 *			depth write is enabled
+						 * 			depth test is enabled
+						 *		}
+						 * }
+						 * 
+						 * the above shader code is a nonsense with our current implementation
+						 * we can't even disambiguate if the first two RenderPass(s) would use the same global depth buffer (created by the camera)
+						 * or they'll have a common, but separate from the global depth buffer, depth buffer attachment.
+						 */
+						initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+						load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
+					}
 					is_outer_break = true;
 					break;
 				}
 			}
 			if(is_outer_break)
 				break;
-		}
-
-		if(((usage & VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED) == VULKAN_ATTACHMENT_NEXT_PASS_USAGE_SAMPLED)
-			&& (pass->attachments[i] == VULKAN_ATTACHMENT_TYPE_DEPTH))
-		{
-			initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-			load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			_debug_assert__(final_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
-			_debug_assert__(store_op == VK_ATTACHMENT_STORE_OP_STORE);
 		}
 
 		VkAttachmentDescription attachment_description =
