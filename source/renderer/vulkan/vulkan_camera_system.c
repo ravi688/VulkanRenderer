@@ -134,29 +134,47 @@ static vulkan_render_pass_create_info_builder_t* build_swapchain_depth_clear_pas
 																						.attachment = 1
 																					});
 	vulkan_render_pass_create_info_builder_set_subpasses_builder(builder, subpass_builder, true);
-	VkSubpassDependency dependencies[2] = 
+	VkSubpassDependency dependencies[] = 
 	{
 		{
 			.srcSubpass = VK_SUBPASS_EXTERNAL,
+			.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+			.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
 			.dstSubpass = 0,
-			.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.srcAccessMask = 0,
 			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 		},
 		{
+			.srcSubpass = VK_SUBPASS_EXTERNAL,
+			.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+			.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+			.dstSubpass = 0,
+			.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+			.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+		},
+		{
 			.srcSubpass = 0,
-			.dstSubpass = VK_SUBPASS_EXTERNAL,
 			.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT,
+			.dstSubpass = VK_SUBPASS_EXTERNAL,
+			.dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+		},
+		{
+			.srcSubpass = 0,
+			.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+			.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			.dstSubpass = VK_SUBPASS_EXTERNAL,
+			.dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
 			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 		}
 	};
 
-	vulkan_render_pass_create_info_builder_add_dependencies(builder, dependencies, 2);
+	vulkan_render_pass_create_info_builder_add_dependencies(builder, dependencies, SIZEOF_ARRAY(dependencies));
 
 	return builder;
 }
@@ -198,17 +216,28 @@ static vulkan_render_pass_create_info_builder_t* build_depth_clear_pass_create_i
 																						.attachment = 0
 																					});
 	vulkan_render_pass_create_info_builder_set_subpasses_builder(builder, subpass_builder, true);
-	VkSubpassDependency dependency =
+	VkSubpassDependency dependencies[] =
 	{
-		.srcSubpass = VK_SUBPASS_EXTERNAL,
-		.dstSubpass = 0,
-		.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-		.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
-		.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-		.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+		{
+			.srcSubpass = VK_SUBPASS_EXTERNAL,
+			.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+			.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+			.dstSubpass = 0,
+			.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+			.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+		},
+		{
+			.srcSubpass = 0,
+			.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+			.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			.dstSubpass = VK_SUBPASS_EXTERNAL,
+			.dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+		}
 	};
-	vulkan_render_pass_create_info_builder_add_dependencies(builder, &dependency, 1);
+	vulkan_render_pass_create_info_builder_add_dependencies(builder, dependencies, SIZEOF_ARRAY(dependencies));
 
 	return builder;
 }
@@ -232,7 +261,7 @@ static vulkan_render_pass_create_info_builder_t* build_swapchain_clear_pass_crea
 		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
 		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 	};
 	vulkan_render_pass_create_info_builder_add_attachment_descriptions(builder, &swapchain_color_attachment, 1);
@@ -254,29 +283,29 @@ static vulkan_render_pass_create_info_builder_t* build_swapchain_clear_pass_crea
 	vulkan_subpass_create_info_builder_add_color_attachments(subpass_builder, &color_attachment_reference, 1);
 
 	vulkan_render_pass_create_info_builder_set_subpasses_builder(builder, subpass_builder, true);
-	VkSubpassDependency dependencies[2] = 
+	VkSubpassDependency dependencies[] = 
 	{
 		{
 			.srcSubpass = VK_SUBPASS_EXTERNAL,
+			.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+			.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
 			.dstSubpass = 0,
-			.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.srcAccessMask = 0,
 			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 		},
 		{
 			.srcSubpass = 0,
-			.dstSubpass = VK_SUBPASS_EXTERNAL,
 			.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT,
+			.dstSubpass = VK_SUBPASS_EXTERNAL,
+			.dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
 			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 		}
 	};
 
-	vulkan_render_pass_create_info_builder_add_dependencies(builder, dependencies, 2);
+	vulkan_render_pass_create_info_builder_add_dependencies(builder, dependencies, SIZEOF_ARRAY(dependencies));
 
 	return builder;
 }
