@@ -425,6 +425,38 @@ static vulkan_render_pass_description_builder_t* create_render_pass_description(
 					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_COLOR, 0, 0);
 					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 1, 0);
 				rpd_build_end_subpass(builder);
+
+				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				dependency.dstSubpass = 0;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+				dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				rpd_build_add_subpass_dependency(builder, &dependency);
+				
+				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				dependency.dstSubpass = 0;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				rpd_build_add_subpass_dependency(builder, &dependency);
+				
+				dependency.srcSubpass = 0;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+				dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				dependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				dependency.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+
+				dependency.srcSubpass = 0;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				dependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				dependency.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				rpd_build_add_subpass_dependency(builder, &dependency);
+
 			rpd_build_end_pass(builder);
 			break;
 		}
@@ -482,31 +514,20 @@ static vulkan_render_pass_description_builder_t* create_render_pass_description(
 					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
 				rpd_build_end_subpass(builder);
 
-				// let the clear happen first
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-				dependency.dstSubpass = 0;
-				dependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+				dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 				dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				dependency.dstSubpass = 0;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 				dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				rpd_build_add_subpass_dependency(builder, &dependency);
 
-				// let the layout transition happen
-				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-				dependency.dstSubpass = 0;
-				dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-				dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-				dependency.dstAccessMask = 0;
-				rpd_build_add_subpass_dependency(builder, &dependency);
-
-				// let the write happen first and then allow read
 				dependency.srcSubpass = 0;
-				dependency.dstSubpass = VK_SUBPASS_EXTERNAL;
 				dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-				dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 				dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-				dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				dependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+				dependency.dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				dependency.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 				rpd_build_add_subpass_dependency(builder, &dependency);
 
 			rpd_build_end_pass(builder);
