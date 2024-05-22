@@ -65,6 +65,6 @@ RENDERER_API void vulkan_swapchain_create_no_alloc(vulkan_renderer_t* renderer, 
 RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain);
 RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain);
 RENDERER_API void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info);
-RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain);
+RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, VkSemaphore signal_semaphore);
 
 END_CPP_COMPATIBLE

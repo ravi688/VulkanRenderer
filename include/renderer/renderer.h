@@ -129,6 +129,8 @@ RENDERER_API void renderer_begin_frame(renderer_t* renderer);
  */
 RENDERER_API void renderer_end_frame(renderer_t* renderer);
 
+RENDERER_API void renderer_wait_idle(renderer_t* renderer);
+
 /* getters */
 RENDERER_API render_window_t* renderer_get_window(renderer_t* renderer);
 RENDERER_API shader_library_t* renderer_get_shader_library(renderer_t* renderer);

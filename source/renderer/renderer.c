@@ -87,6 +87,11 @@ RENDERER_API void renderer_end_frame(renderer_t* renderer)
 	vulkan_renderer_end_frame(renderer->vulkan_handle);
 }
 
+RENDERER_API void renderer_wait_idle(renderer_t* renderer)
+{
+	vulkan_renderer_wait_idle(renderer->vulkan_handle);
+}
+
 /* getters */
 RENDERER_API render_window_t* renderer_get_window(renderer_t* renderer)
 {

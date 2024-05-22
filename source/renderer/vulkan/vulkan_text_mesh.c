@@ -163,7 +163,7 @@ RENDERER_API void vulkan_text_mesh_draw(vulkan_text_mesh_t* text_mesh)
 		vulkan_mesh_t* mesh = vulkan_glyph_mesh_pool_get_mesh(text_mesh->pool, glyph);
 		vulkan_mesh_bind_all_vertex_buffers(mesh);
 		u32 binding = 5;
-		vulkan_command_bind_vertex_buffers(text_mesh->renderer->vo_command_buffers[text_mesh->renderer->swapchain->current_image_index], &binding, &instance_buffer->device_buffer.vo_handle, 1);
+		vulkan_command_bind_vertex_buffers(text_mesh->renderer->vo_command_buffers[text_mesh->renderer->current_frame_index], &binding, &instance_buffer->device_buffer.vo_handle, 1);
 		vulkan_mesh_draw_indexed_instanced_only(mesh, instance_buffer->device_buffer.count);
 	}
 }

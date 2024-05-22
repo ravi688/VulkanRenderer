@@ -241,14 +241,14 @@ RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u3
 		.clearValueCount = render_pass->clear_value_count,
 		.pClearValues = render_pass->vo_clear_values
 	};
-	vkCmdBeginRenderPass(render_pass->renderer->vo_command_buffers[render_pass->renderer->swapchain->current_image_index], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(render_pass->renderer->vo_command_buffers[render_pass->renderer->current_frame_index], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 	render_pass->current_subpass_index = 0;
 }
 
 RENDERER_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass)
 {
-	vkCmdEndRenderPass(render_pass->renderer->vo_command_buffers[render_pass->renderer->swapchain->current_image_index]);
+	vkCmdEndRenderPass(render_pass->renderer->vo_command_buffers[render_pass->renderer->current_frame_index]);
 }
 
 RENDERER_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass)
@@ -258,6 +258,6 @@ RENDERER_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass)
 		log_wrn("There are only %u subpasses but you're trying to exceed it\n", render_pass->subpass_count);
 		return;
 	}
-	vkCmdNextSubpass(render_pass->renderer->vo_command_buffers[render_pass->renderer->swapchain->current_image_index], VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdNextSubpass(render_pass->renderer->vo_command_buffers[render_pass->renderer->current_frame_index], VK_SUBPASS_CONTENTS_INLINE);
 	++(render_pass->current_subpass_index);
 }

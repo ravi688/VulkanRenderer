@@ -75,9 +75,21 @@ typedef struct vulkan_renderer_t
 	VkCommandPool vo_command_pool;
 	VkDescriptorPool vo_descriptor_pool;
 
-	VkSemaphore vo_image_available_semaphore;
-	VkSemaphore vo_render_finished_semaphore;
-	VkFence vo_fence;
+	/* index of the current frame, it ranges from 0 (inclusive) to swapchain->image_count (exclusive) */
+	u32 current_frame_index;
+
+	struct
+	{
+		/* number of VkSemaphore or VkFence objects in vo_image_available_semaphores and vo_render_finished_semaphores, or vo_fences */
+		u32 primitive_count;
+		/* semaphores for max number of frames in flight to indicate presentation has finished for them */
+		VkSemaphore* vo_image_available_semaphores;
+		/* semaphores for max number of frames in flight to indicate rendering has finished on them */
+		VkSemaphore* vo_render_finished_semaphores;
+		/* fences */
+		VkFence* vo_fences;
+	} render_present_sync_primitives;
+
 
 	/* global_set::screen_info
 	 * {
@@ -141,6 +153,8 @@ RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer);
 RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer);
 /* ends the command buffer recording */
 RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer);
+
+RENDERER_API void vulkan_renderer_wait_idle(vulkan_renderer_t* renderer);
 
 RENDERER_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer);
 

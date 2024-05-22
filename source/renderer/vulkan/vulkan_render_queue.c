@@ -393,7 +393,7 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 		vulkan_render_pass_t* pass = vulkan_render_pass_pool_getH(pass_pool, pass_handle);
 
 		// begin the render pass
-		vulkan_render_pass_begin(pass, queue->renderer->swapchain->current_image_index, camera);
+		vulkan_render_pass_begin(pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN, camera);
 
 		// get the number of sub passes that this render pass has
 		u32 sub_pass_count = pass->subpass_count;

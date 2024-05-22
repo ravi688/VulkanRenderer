@@ -166,19 +166,45 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t* renderer);
 static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t* renderer);
 static void setup_global_set(vulkan_renderer_t* renderer);
-static VkSemaphore get_semaphore(vulkan_renderer_t* renderer)
+static VkSemaphore create_semaphore(vulkan_renderer_t* renderer)
 {
 	VkSemaphore semaphore;
 	VkSemaphoreCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
 	vkCall(vkCreateSemaphore(renderer->logical_device->vo_handle, &createInfo, VULKAN_ALLOCATION_CALLBACKS(renderer), &semaphore));
 	return semaphore;
 }
-static VkFence get_unsigned_fence(vulkan_renderer_t* renderer)
+static VkSemaphore* create_semaphores(vulkan_renderer_t* renderer, u32 count)
+{
+	VkSemaphore* semaphores = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_SEMAPHORE_ARRAY, VkSemaphore, count);
+	for(u32 i = 0; i < count; i++)
+		semaphores[i] = create_semaphore(renderer);
+	return semaphores;
+}
+static INLINE_IF_RELEASE_MODE void destroy_semaphores(vulkan_renderer_t* renderer, VkSemaphore* semaphores, u32 count)
+{
+	for(u32 i = 0; i < count; i++)
+		vkDestroySemaphore(renderer->logical_device->vo_handle, semaphores[i], VULKAN_ALLOCATION_CALLBACKS(renderer));
+	memory_allocator_dealloc(renderer->allocator, semaphores);
+}
+static VkFence create_signaled_fence(vulkan_renderer_t* renderer)
 {
 	VkFence fence;
-	VkFenceCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+	VkFenceCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = VK_FENCE_CREATE_SIGNALED_BIT };
 	vkCall(vkCreateFence(renderer->logical_device->vo_handle, &createInfo, VULKAN_ALLOCATION_CALLBACKS(renderer), &fence));
 	return fence;
+}
+static INLINE_IF_RELEASE_MODE VkFence* create_signaled_fences(vulkan_renderer_t* renderer, u32 count)
+{
+	VkFence* fences = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_FENCE_ARRAY, VkFence, count);
+	for(u32 i = 0; i < count; i++)
+		fences[i] = create_signaled_fence(renderer);
+	return fences;
+}
+static void destroy_fences(vulkan_renderer_t* renderer, VkFence* fences, u32 count)
+{
+	for(u32 i = 0; i < count; i++)
+		vkDestroyFence(renderer->logical_device->vo_handle, fences[i], VULKAN_ALLOCATION_CALLBACKS(renderer));
+	memory_allocator_dealloc(renderer->allocator, fences);
 }
 
 #ifdef PLATFORM_LINUX
@@ -312,6 +338,8 @@ DEBUG_BLOCK
 	// NOTE: if VkSurfaceCapabilitiesKHR::maxImageCount equals 0, then there is no maximum limit for image count
 	u32 image_count = clamp_u32(3, surface_capabilities.minImageCount, (surface_capabilities.maxImageCount == 0) ? U32_MAX : surface_capabilities.maxImageCount);
 
+	debug_log_info("Image count: %" PRIu32, image_count);
+
 	// create logical device
 	VkPhysicalDeviceFeatures* minimum_required_features = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PHYSICAL_DEVICE_FEATURES, VkPhysicalDeviceFeatures);
 	memzero(minimum_required_features, VkPhysicalDeviceFeatures);
@@ -356,9 +384,10 @@ DEBUG_BLOCK
 )
 
 	// create semaphores
-	renderer->vo_image_available_semaphore = get_semaphore(renderer);
-	renderer->vo_render_finished_semaphore = get_semaphore(renderer);
-	renderer->vo_fence = get_unsigned_fence(renderer);
+	renderer->render_present_sync_primitives.primitive_count = image_count;
+	renderer->render_present_sync_primitives.vo_image_available_semaphores = create_semaphores(renderer, renderer->render_present_sync_primitives.primitive_count);
+	renderer->render_present_sync_primitives.vo_render_finished_semaphores = create_semaphores(renderer, renderer->render_present_sync_primitives.primitive_count);
+	renderer->render_present_sync_primitives.vo_fences = create_signaled_fences(renderer, renderer->render_present_sync_primitives.primitive_count);
 
 	//Set up graphics queue
 	vkGetDeviceQueue(renderer->logical_device->vo_handle, queue_family_indices[0], 0, &renderer->vo_graphics_queue);
@@ -545,13 +574,19 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 
 RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 {
-	vulkan_swapchain_acquire_next_image(renderer->swapchain);
+	u32 current_frame_index = renderer->current_frame_index;
+	
+	/* wait for the rendering for the frame with index 'current_frame_index' to finish before we can use its resources like 
+	 * command buffers, and swapchain images etc. */
+	vkCall(vkWaitForFences(renderer->logical_device->vo_handle, 1, &renderer->render_present_sync_primitives.vo_fences[current_frame_index], VK_TRUE, U64_MAX));
+	vkCall(vkResetFences(renderer->logical_device->vo_handle, 1, &renderer->render_present_sync_primitives.vo_fences[current_frame_index]));
 
-	u32 current_index = renderer->swapchain->current_image_index;
-	VkCommandBuffer cb = renderer->vo_command_buffers[current_index];
+	vulkan_swapchain_acquire_next_image(renderer->swapchain, renderer->render_present_sync_primitives.vo_image_available_semaphores[current_frame_index]);
+
+	VkCommandBuffer cb = renderer->vo_command_buffers[current_frame_index];
 
 	// WARNING: enabling command buffer reset and dragging the window results in a crash, not sure why?
-	// vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->swapchain->current_image_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+	// vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->current_frame_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -563,20 +598,20 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 		.baseArrayLayer = 0,
 		.layerCount = 1
 	};
-	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[current_index],
+	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[renderer->swapchain->current_image_index],
 		&subresource,
-		/* oldLayout: */ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		/* oldLayout: */ VK_IMAGE_LAYOUT_UNDEFINED,
 		/* newLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		/* srcAccess: */ VK_ACCESS_MEMORY_READ_BIT,
 		/* dstAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		/* srcStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		/* srcStage: */ VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 		/* dstStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 }
 
 RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 {
-	u32 current_index = renderer->swapchain->current_image_index;
-	VkCommandBuffer cb = renderer->vo_command_buffers[current_index];
+	u32 current_frame_index = renderer->current_frame_index;
+	VkCommandBuffer cb = renderer->vo_command_buffers[current_frame_index];
 
 	VkImageSubresourceRange subresource =
 	{
@@ -586,37 +621,37 @@ RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 		.baseArrayLayer = 0,
 		.layerCount = 1
 	};
-	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[current_index],
+	vulkan_command_image_layout_transition(cb, renderer->swapchain->vo_images[renderer->swapchain->current_image_index],
 		&subresource,
 		/* oldLayout: */ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		/* newLayout: */ VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		/* srcAccess: */ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		/* dstAccess: */ VK_ACCESS_MEMORY_READ_BIT,
 		/* srcStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		/* dstStage: */ VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+		/* dstStage: */ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
 
-	vulkan_command_buffer_end(renderer->vo_command_buffers[current_index]);
+	vulkan_command_buffer_end(renderer->vo_command_buffers[current_frame_index]);
 }
 
 RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 {
-	VkCommandBuffer cb = renderer->vo_command_buffers[renderer->swapchain->current_image_index];
+	u32 current_frame_index = renderer->current_frame_index;
+	VkCommandBuffer cb = renderer->vo_command_buffers[current_frame_index];
 	vulkan_queue_submit(renderer->vo_graphics_queue,
 								cb,
-								renderer->vo_image_available_semaphore,
+								renderer->render_present_sync_primitives.vo_image_available_semaphores[current_frame_index],
 								VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-								renderer->vo_render_finished_semaphore,
-								renderer->vo_fence);
-	vkCall(vkWaitForFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence, VK_TRUE, U64_MAX));
-	vkCall(vkResetFences(renderer->logical_device->vo_handle, 1, &renderer->vo_fence));
+								renderer->render_present_sync_primitives.vo_render_finished_semaphores[current_frame_index],
+								renderer->render_present_sync_primitives.vo_fences[current_frame_index]);
 
 	// NOTE: if this returns 'false', that means we need to recreate our swapchain and its images,
 	// however, we can ignore the return value here, because the swapchain will be recreated automatically whenever window is resized
 	vulkan_queue_present(renderer->vo_graphics_queue,
 						renderer->swapchain->vo_handle,
 						renderer->swapchain->current_image_index,
-						renderer->vo_render_finished_semaphore);
+						renderer->render_present_sync_primitives.vo_render_finished_semaphores[current_frame_index]);
 	render_window_poll_events(renderer->window);
+	renderer->current_frame_index = (1u + renderer->current_frame_index) % renderer->swapchain->image_count;
 }
 
 RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
@@ -624,14 +659,17 @@ RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
 	return !render_window_should_close(renderer->window);
 }
 
+RENDERER_API void vulkan_renderer_wait_idle(vulkan_renderer_t* renderer)
+{
+	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
+}
+
 RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 {
+	vulkan_renderer_wait_idle(renderer);
+
 	event_unsubscribe(renderer->window->on_resize_event, renderer->screen_info.update_handle);
 	event_unsubscribe(renderer->window->on_resize_event, renderer->swapchain_recreate_handle);
-
-	// memory_allocator_dump(renderer->allocator, "memdump1.dump");
-
-	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 
 	// destroy camera system
 	vulkan_camera_system_destroy(renderer->camera_system);
@@ -683,11 +721,11 @@ RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
 	vkDestroyCommandPool(renderer->logical_device->vo_handle, renderer->vo_command_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
 
 	// destroy fences
-	vkDestroyFence(renderer->logical_device->vo_handle, renderer->vo_fence, VULKAN_ALLOCATION_CALLBACKS(renderer));
+	destroy_fences(renderer, renderer->render_present_sync_primitives.vo_fences, renderer->render_present_sync_primitives.primitive_count);
 
 	// destroy semaphores
-	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_image_available_semaphore, VULKAN_ALLOCATION_CALLBACKS(renderer));
-	vkDestroySemaphore(renderer->logical_device->vo_handle, renderer->vo_render_finished_semaphore, VULKAN_ALLOCATION_CALLBACKS(renderer));
+	destroy_semaphores(renderer, renderer->render_present_sync_primitives.vo_image_available_semaphores, renderer->render_present_sync_primitives.primitive_count);
+	destroy_semaphores(renderer, renderer->render_present_sync_primitives.vo_render_finished_semaphores, renderer->render_present_sync_primitives.primitive_count);
 
 	// destroy logical device
 	vulkan_logical_device_destroy(renderer->logical_device);

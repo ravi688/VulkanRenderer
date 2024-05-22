@@ -84,9 +84,9 @@ RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapcha
 		memory_allocator_dealloc(swapchain->renderer->allocator, swapchain);
 }
 
-RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain)
+RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, VkSemaphore signal_semaphore)
 {
-	vkCall(vkAcquireNextImageKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, UINT64_MAX, swapchain->renderer->vo_image_available_semaphore, VK_NULL_HANDLE, &(swapchain->current_image_index)));
+	vkCall(vkAcquireNextImageKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, UINT64_MAX, signal_semaphore, VK_NULL_HANDLE, &(swapchain->current_image_index)));
 	return swapchain->current_image_index;
 }
 

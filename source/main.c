@@ -160,7 +160,9 @@ int main(int argc, const char** argv)
 		test->update(driver, deltaTime, test->user_data);
 	}
 
-	/* REASON: Takes too much time for complex allocation trees! */
+	/* we need to wait for the device to finish any pending tasks, so that all the resources/objects will be unreferenced
+	 * , as test->terminate() destroys the test related objects etc. */
+	renderer_wait_idle(driver);
 	test->terminate(driver, test->user_data);
 	test_destroy(test);
 

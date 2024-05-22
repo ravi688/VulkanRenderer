@@ -664,7 +664,7 @@ RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 
 UNUSED_FUNCTION static void transition_target_layout_for_write(VkFormat format, vulkan_image_view_t* view)
 {
-	VkCommandBuffer cb = view->renderer->vo_command_buffers[view->renderer->swapchain->current_image_index];
+	VkCommandBuffer cb = view->renderer->vo_command_buffers[view->renderer->current_frame_index];
 	switch(format)
 	{
 		case VK_FORMAT_B8G8R8A8_SRGB:
@@ -696,7 +696,7 @@ UNUSED_FUNCTION static void transition_target_layout_for_write(VkFormat format, 
 
 static void transition_target_layout_for_sample(VkFormat format, vulkan_image_view_t* view)
 {
-	VkCommandBuffer cb = view->renderer->vo_command_buffers[view->renderer->swapchain->current_image_index];
+	VkCommandBuffer cb = view->renderer->vo_command_buffers[view->renderer->current_frame_index];
 	switch(format)
 	{
 		case VK_FORMAT_B8G8R8A8_SRGB:

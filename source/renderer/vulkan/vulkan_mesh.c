@@ -143,7 +143,7 @@ RENDERER_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u
 	_debug_assert__(mesh->index_buffer.buffer != NULL);
 	_debug_assert__(mesh->index_buffer.index_type != VK_INDEX_TYPE_MAX_ENUM);
 	
-	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
+	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->current_frame_index];
 	vkCmdBindIndexBuffer(vo_command_buffer, mesh->index_buffer.buffer->vo_handle, 0, mesh->index_buffer.index_type);
 	vkCmdDrawIndexed(vo_command_buffer, mesh->index_buffer.buffer->count, instance_count, 0, 0, 0);
 	
@@ -165,7 +165,7 @@ RENDERER_API void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh)
 
 	if(count > 0)
 	{
-		VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
+		VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->current_frame_index];
 		vulkan_command_bind_vertex_buffers(vo_command_buffer, bindings, buffers, count);
 	}
 }
@@ -182,7 +182,7 @@ RENDERER_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 in
 RENDERER_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_count)
 {
 	vulkan_mesh_bind_all_vertex_buffers(mesh);
-	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->swapchain->current_image_index];
+	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->current_frame_index];
 	vkCmdDraw(vo_command_buffer, CAST_TO(vulkan_vertex_buffer_t*, buf_get_ptr_at(&mesh->vertex_buffers, 0))->buffer->count, instance_count, 0, 0);
 	
 	// set the binding index to zero, for the next frame

@@ -223,7 +223,7 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_
 
 RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline)
 {
-	AUTO command_buffer = pipeline->renderer->vo_command_buffers[pipeline->renderer->swapchain->current_image_index];
+	AUTO command_buffer = pipeline->renderer->vo_command_buffers[pipeline->renderer->current_frame_index];
 	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vo_handle);
 
 	debug_assert__(!pipeline->is_user_defined_viewport, "For now let's focus on full render area of the render target\n");

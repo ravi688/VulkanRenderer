@@ -90,7 +90,7 @@ RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_
 
 RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, u32 set_number, vulkan_pipeline_layout_t* pipeline_layout)
 {
-	u32 image_index = set->renderer->swapchain->current_image_index;
+	u32 image_index = set->renderer->current_frame_index;
 	vkCmdBindDescriptorSets(set->renderer->vo_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->vo_handle, set_number, 1, &set->vo_handle, 0, NULL);
 }
 

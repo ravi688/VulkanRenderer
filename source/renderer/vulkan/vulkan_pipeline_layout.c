@@ -78,6 +78,6 @@ RENDERER_API void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layou
 
 RENDERER_API void vulkan_pipeline_layout_push_constants(vulkan_pipeline_layout_t* layout, VkShaderStageFlagBits stage_flags, u32 offset, u32 size, void* bytes)
 {
-	VkCommandBuffer command_buffer = layout->renderer->vo_command_buffers[layout->renderer->swapchain->current_image_index];
+	VkCommandBuffer command_buffer = layout->renderer->vo_command_buffers[layout->renderer->current_frame_index];
 	vkCmdPushConstants(command_buffer, layout->vo_handle, stage_flags, offset, size, bytes);
 }
