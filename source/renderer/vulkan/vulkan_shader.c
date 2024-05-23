@@ -326,27 +326,26 @@ static bool u32_list_contains(const u32* const list, const u32 count, const u32 
 	return false;
 }
 
-#define is_next_subpass_reads_any_color(pass, prev_pass) is_next_subpass_reads_any((pass), (prev_pass)->color_attachments, (prev_pass)->color_attachment_count)
-#define is_next_subpass_reads_depth(pass, prev_pass) is_next_subpass_reads_any((pass), &(prev_pass)->depth_stencil_attachment, ((prev_pass)->depth_stencil_attachment == U32_MAX) ? 0 : 1)
-#define is_next_subpass_writes_any_color(pass, prev_pass) is_next_subpass_writes_any((pass), (prev_pass)->color_attachments, (prev_pass)->color_attachment_count)
-#define is_next_subpass_writes_depth(pass, prev_pass) is_next_subpass_writes_any((pass), &(prev_pass)->depth_stencil_attachment, ((prev_pass)->depth_stencil_attachment == U32_MAX) ? 0 : 1)
-
-static bool is_next_subpass_reads_any(const vulkan_subpass_description_t* const pass, const u32* const attachments, u32 count)
+static bool u32_list_contains_any(const u32* const list1, u32 count1, const u32* const list2, u32 count2)
 {
-	if(attachments == NULL) return false;
-	for(u32 i = 0; i < pass->input_attachment_count; i++)
-		if(u32_list_contains(attachments, count, pass->input_attachments[i]))
+	for(u32 i = 0; i < count2; i++)
+		if(u32_list_contains(list1, count1, list2[i]))
 			return true;
 	return false;
 }
 
-static bool is_next_subpass_writes_any(const vulkan_subpass_description_t* const pass, const u32* const attachments, u32 count)
+static bool VkAttachmentReference_list_contains(const VkAttachmentReference* const list, const u32 count, const u32 value)
 {
-	for(u32 i = 0; i < pass->color_attachment_count; i++)
-		if(u32_list_contains(attachments, count, pass->color_attachments[i]))
+	for(u32 i = 0; i < count; i++)
+		if(list[i].attachment == value)
 			return true;
-	if(pass->depth_stencil_attachment != U32_MAX)
-		if(u32_list_contains(attachments, count, pass->depth_stencil_attachment))
+	return false;
+}
+
+static bool VkAttachmentReference_list_contains_any(const VkAttachmentReference* const list1, u32 count1, const VkAttachmentReference* const list2, u32 count2)
+{
+	for(u32 i = 0; i < count2; i++)
+		if(VkAttachmentReference_list_contains(list1, count1, list2[i].attachment))
 			return true;
 	return false;
 }
@@ -385,6 +384,7 @@ static bool is_renderpass_reads_depth(const vulkan_render_pass_description_t* co
 
 static void try_add_dependency(BUFFER* dependencies, const VkSubpassDependency* const in_dependency)
 {
+	/* check if a subpass dependency containing the same bits as in 'in_dependency' exists*/
 	u32 count = buf_get_element_count(dependencies);
 	VkSubpassDependency* best_match = NULL;
 	for(u32 i = 0; i < count; i++)
@@ -393,18 +393,23 @@ static void try_add_dependency(BUFFER* dependencies, const VkSubpassDependency* 
 		if((dependency->srcSubpass == in_dependency->srcSubpass) && (dependency->dstSubpass == in_dependency->dstSubpass))
 		{
 			best_match = dependency;
+			/* if yes */
 			if(((dependency->srcStageMask & in_dependency->srcStageMask) == in_dependency->srcStageMask)
 				&& ((dependency->dstStageMask & in_dependency->dstStageMask) == in_dependency->dstStageMask)
 				&& ((dependency->srcAccessMask & in_dependency->srcAccessMask) == in_dependency->srcAccessMask)
 				&& ((dependency->dstAccessMask & in_dependency->dstAccessMask) == in_dependency->dstAccessMask))
+				/* then no need to add any thing */
 				return;
 		}
 	}
 
+	/* if no subpass dependency exists with the same srcSubpass and dstSubpass as in 'in_dependency' */
 	if(best_match == NULL)
+		/* then add this new dependency */
 		buf_push(dependencies, (VkSubpassDependency*)in_dependency);
 	else
 	{
+		/* otherwise, merge the dependency with the best matched existing one */
 		best_match->srcStageMask |= in_dependency->srcStageMask;
 		best_match->dstStageMask |= in_dependency->dstStageMask;
 		best_match->srcAccessMask |= in_dependency->srcAccessMask;
@@ -425,159 +430,405 @@ static u32 get_most_recent_subpass_index_writing_to_depth(const vulkan_render_pa
 	return index;
 }
 
-static VkSubpassDependency* create_and_resolve_subpass_dependencies(vulkan_renderer_t* renderer, const vulkan_render_pass_description_t* pass, const vulkan_render_pass_description_t* next_pass, u32 OUT dependency_count)
+typedef struct attachment_read_write_info_t
 {
-	BUFFER dependencies = memory_allocator_buf_new(renderer->allocator, VkSubpassDependency);
-	
+	bool is_color_attachment_read;
+	bool is_color_attachment_write;
+	bool is_depth_attachment_read;
+	bool is_depth_attachment_write;
+} attachment_read_write_info_t;
+
+static attachment_read_write_info_t get_attachment_read_write_info_between_subpass(vulkan_subpass_create_info_t* subpass, vulkan_subpass_create_info_t* next_subpass)
+{
+	attachment_read_write_info_t info = { };
+	info.is_color_attachment_read = VkAttachmentReference_list_contains_any(next_subpass->input_attachments, next_subpass->input_attachment_count, subpass->color_attachments, subpass->color_attachment_count);
+	info.is_color_attachment_write = VkAttachmentReference_list_contains_any(next_subpass->color_attachments, next_subpass->color_attachment_count, subpass->color_attachments, subpass->color_attachment_count);
+	if(subpass->depth_stencil_attachment != NULL)
+	{
+		info.is_depth_attachment_read = VkAttachmentReference_list_contains(next_subpass->input_attachments, next_subpass->input_attachment_count, subpass->depth_stencil_attachment->attachment);
+		if(next_subpass->depth_stencil_attachment != NULL)
+			info.is_depth_attachment_write = next_subpass->depth_stencil_attachment->attachment == subpass->depth_stencil_attachment->attachment;
+	}
+	return info;
+}
+
+static bool is_subpass_depends_on_any(buffer_t* dependencies, u32 subpass_index)
+{
+	u32 dep_count = buf_get_element_count(dependencies);
+	for(u32 i = 0; i < dep_count; i++)
+	{
+		VkSubpassDependency* dep = buf_get_ptr_at_typeof(dependencies, VkSubpassDependency, i);
+		if(dep->dstSubpass == subpass_index)
+			return true;
+	}
+	return false;
+}
+
+static bool is_subpass_dominates_on_any(buffer_t* dependencies, u32 subpass_index)
+{
+	u32 dep_count = buf_get_element_count(dependencies);
+	for(u32 i = 0; i < dep_count; i++)
+	{
+		VkSubpassDependency* dep = buf_get_ptr_at_typeof(dependencies, VkSubpassDependency, i);
+		if(dep->srcSubpass == subpass_index)
+			return true;
+	}
+	return false;
+}
+
+static attachment_read_write_info_t get_attachment_read_write_info(vulkan_subpass_create_info_t* subpass, VkAttachmentDescription* attachments, u32 attachment_count)
+{
+	attachment_read_write_info_t info = { };
+	for(u32 i = 0; i < attachment_count; i++)
+	{
+		switch(attachments[i].format)
+		{
+			case VK_FORMAT_B8G8R8A8_SRGB:
+			{
+				if(!info.is_color_attachment_read && VkAttachmentReference_list_contains(subpass->input_attachments, subpass->input_attachment_count, i))
+					info.is_color_attachment_read = true;
+				if(!info.is_color_attachment_write && VkAttachmentReference_list_contains(subpass->color_attachments, subpass->color_attachment_count, i))
+					info.is_color_attachment_write = true;
+				break;
+			}
+			case VK_FORMAT_D32_SFLOAT:
+			{
+				if(!info.is_depth_attachment_read && VkAttachmentReference_list_contains(subpass->input_attachments, subpass->input_attachment_count, i))
+					info.is_depth_attachment_read = true;
+				if(!info.is_depth_attachment_write && (subpass->depth_stencil_attachment != NULL) && (subpass->depth_stencil_attachment->attachment == i))
+					info.is_depth_attachment_write = true;
+				break;
+			}
+			default:
+			{
+				DEBUG_LOG_FETAL_ERROR("VkFormat: %u is not expected here!", attachments[i].format);
+				break;
+			}
+		}
+	}
+	return info;
+}
+
+static bool get_is_implicit_color_read(vulkan_subpass_create_info_t* subpass, VkAttachmentDescription* attachments, u32 attachment_count)
+{
+	for(u32 i = 0; i < subpass->color_attachment_count; i++)
+	{
+		if(attachments[subpass->color_attachments[i].attachment].loadOp == VK_ATTACHMENT_LOAD_OP_LOAD)
+			return true;
+	}
+	return false;
+}
+
+static bool get_is_implicit_depth_read(vulkan_subpass_create_info_t* subpass, VkAttachmentDescription* attachments, u32 attachment_count)
+{
+	if(subpass->depth_stencil_attachment == NULL)
+		return false;
+	return attachments[subpass->depth_stencil_attachment->attachment].loadOp == VK_ATTACHMENT_LOAD_OP_LOAD;
+}
+
+static bool get_is_implicit_color_write(vulkan_subpass_create_info_t* subpass, VkAttachmentDescription* attachments, u32 attachment_count)
+{
+	for(u32 i = 0; i < subpass->color_attachment_count; i++)
+	{
+		AUTO ref = subpass->color_attachments[i];
+		AUTO attachment = attachments[ref.attachment];
+		if(attachment.loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR)
+			return true;
+		if(ref.layout != attachment.initialLayout)
+			return true;
+	}
+	return false;
+}
+
+static bool get_is_implicit_depth_write(vulkan_subpass_create_info_t* subpass, VkAttachmentDescription* attachments, u32 attachment_count)
+{
+	AUTO ref = subpass->depth_stencil_attachment;
+	if(ref == NULL)
+		return false;
+	if(attachments[ref->attachment].loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR)
+		return true;
+	if(ref->layout != attachments[ref->attachment].initialLayout)
+		return true;
+	return false;
+}
+
+static bool get_is_implicit_store_color_write(vulkan_subpass_create_info_t* subpass, VkAttachmentDescription* attachments, u32 attachment_count)
+{
+	for(u32 i = 0; i < subpass->color_attachment_count; i++)
+	{
+		AUTO ref = subpass->color_attachments[i];
+		AUTO attachment = attachments[ref.attachment];
+		if((attachment.storeOp == VK_ATTACHMENT_STORE_OP_STORE) || (attachment.storeOp == VK_ATTACHMENT_STORE_OP_DONT_CARE))
+			return true;
+		if(ref.layout != attachment.finalLayout)
+			return true;
+	}
+	return false;
+}
+
+static bool get_is_implicit_store_depth_write(vulkan_subpass_create_info_t* subpass, VkAttachmentDescription* attachments, u32 attachment_count)
+{
+	AUTO ref = subpass->depth_stencil_attachment;
+	if(ref == NULL)
+		return false;
+	AUTO attachment = attachments[ref->attachment];
+	if((attachment.storeOp == VK_ATTACHMENT_STORE_OP_STORE) || (attachment.storeOp == VK_ATTACHMENT_STORE_OP_DONT_CARE))
+		return true;
+	if(ref->layout != attachment.finalLayout)
+		return true;
+	return false;
+}
+
+static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_render_pass_create_info_t* pass, const vulkan_render_pass_create_info_t* next_passes, u32 next_pass_count)
+{	
 	for(u32 i = 0; i < pass->subpass_count; i++)
 	{
-		vulkan_subpass_description_t* subpass = &pass->subpass_descriptions[i];
-		vulkan_subpass_description_t* next_subpass = (i < (pass->subpass_count - 1)) ? (subpass + 1) : NULL;
-
-		if(subpass->depth_stencil_attachment != U32_MAX)
+		vulkan_subpass_create_info_t* subpass = &pass->subpasses[i];
+		for(u32 j = i + 1; j < pass->subpass_count; j++)
 		{
-			/* 	let the image load operation (clear) happen first
-				NOTE: VK_ATTACHMENT_LOAD_OP_CLEAR is a write operation 
-			 */
-			VkSubpassDependency dependency = 
-			{ 
-				.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
-				.srcSubpass = VK_SUBPASS_EXTERNAL,
-				.dstSubpass = i,
-				.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-				.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
-				.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-				.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
-			};
-
-			try_add_dependency(&dependencies, &dependency);
-
-			/* 	let the image layout transition happen first
-				NOTE: VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL is a write operation) 
-			 */
-			dependency = (VkSubpassDependency)
+			vulkan_subpass_create_info_t* next_subpass = &pass->subpasses[j];
+			AUTO info = get_attachment_read_write_info_between_subpass(subpass, next_subpass);
+			if(info.is_color_attachment_read)
 			{
-				.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
-				.srcSubpass = VK_SUBPASS_EXTERNAL,
-				.dstSubpass = i,
-				.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-				.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-				.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-				.dstAccessMask = 0
-			};
-
-			try_add_dependency(&dependencies, &dependency);
-		}
-
-		if(subpass->color_attachment_count > 0)
-		{
-			/* 	let the image layout transition happen first
-				NOTE: VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL is a write operation 
-			*/
-			VkSubpassDependency dependency = 
-			{
-				.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
-				.srcSubpass = VK_SUBPASS_EXTERNAL,
-				.dstSubpass = i,
-				.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-				.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-				.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
-				.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-			};
-
-			try_add_dependency(&dependencies, &dependency);
-		}
-
-		if(next_subpass != NULL)
-		{
-			if(is_next_subpass_writes_any_color(next_subpass, subpass))
-			{
-				/* let the write from this subpass to complete then allow write in the next pass */
-				VkSubpassDependency dependency =
+				/* color attachment write-after-read or read-after-write dependency */
+				VkSubpassDependency dependency = 
 				{
-					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
 					.srcSubpass = i,
-					.dstSubpass = i + 1,
 					.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 					.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-					.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-					.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-				};
-
-				try_add_dependency(&dependencies, &dependency);
-			}
-
-			if(is_next_subpass_reads_any_color(next_subpass, subpass))
-			{
-				/* let color write complete and then allow read in the next pass */
-				VkSubpassDependency dependency =
-				{
-					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
-					.srcSubpass = i,
-					.dstSubpass = i + 1,
-					.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-					.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+					.dstSubpass = j,
 					.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-					.dstAccessMask = VK_ACCESS_SHADER_READ_BIT
+					.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 				};
-
-				try_add_dependency(&dependencies, &dependency);
+				try_add_dependency(dependencies, &dependency);
 			}
+			else if(info.is_color_attachment_write)
+			{
+				/* color attachment write-after-write dependency */
+				VkSubpassDependency dependency =
+				{
+					.srcSubpass = i,
+					.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+					.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+					.dstSubpass = j,
+					.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+					.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+				};
+				try_add_dependency(dependencies, &dependency);
+			}
+			if(info.is_depth_attachment_read)
+			{
+				/* depth attachment write-after-read or read-after-write dependency */
+				VkSubpassDependency dependency =
+				{
+					.srcSubpass = i,
+					.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+					.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+					.dstSubpass = j,
+					.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+					.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+				};
+				try_add_dependency(dependencies, &dependency);
+			}
+			else if(info.is_depth_attachment_write)
+			{
+				/* depth attachment write-after-write dependency */
+				VkSubpassDependency dependency = 
+				{
+					.srcSubpass = i,
+					.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+					.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+					.dstSubpass = j,
+					.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+					.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+				};
+				try_add_dependency(dependencies, &dependency);
+			}
+		}
+	}
 
-			/* 	if the next subpass writes to the same depth stencil attachment this subpass writes to, 
-				add another subpass dependency to let this subpass write first and then the next subpass
-			 */
-			if(is_next_subpass_writes_depth(next_subpass, subpass))
+	for(u32 i = 0; i < pass->subpass_count; i++)
+	{
+		if(!is_subpass_depends_on_any(dependencies, i))
+		{
+			AUTO subpass = &pass->subpasses[i];
+			bool is_color_read = get_is_implicit_color_read(subpass, pass->framebuffer_layout_description.attachments, pass->framebuffer_layout_description.attachment_count);
+			bool is_color_write = get_is_implicit_color_write(subpass, pass->framebuffer_layout_description.attachments, pass->framebuffer_layout_description.attachment_count);
+			bool is_depth_read = get_is_implicit_depth_read(subpass, pass->framebuffer_layout_description.attachments, pass->framebuffer_layout_description.attachment_count);
+			bool is_depth_write = get_is_implicit_depth_write(subpass, pass->framebuffer_layout_description.attachments, pass->framebuffer_layout_description.attachment_count);
+			AUTO info = get_attachment_read_write_info(subpass, pass->framebuffer_layout_description.attachments, pass->framebuffer_layout_description.attachment_count);
+
+			if(is_color_read && info.is_color_attachment_write)
 			{
 				VkSubpassDependency dependency = 
 				{
-					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
-					.srcSubpass = i,
-					.dstSubpass = i + 1,
-					.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-					.dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-					.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
-					.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT
+					.srcSubpass = VK_SUBPASS_EXTERNAL,
+					.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+					.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+					.dstSubpass = i,
+					.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+					.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 				};
+				try_add_dependency(dependencies, &dependency);
+			}
+			else if(is_color_write)
+			{
+				if(info.is_color_attachment_write)
+				{
+					VkSubpassDependency dependency = 
+					{
+						.srcSubpass = VK_SUBPASS_EXTERNAL,
+						.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+						.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
+						.dstSubpass = i,
+						.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+						.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+					};
+					try_add_dependency(dependencies, &dependency);
+				}
+				else if(info.is_color_attachment_read)
+				{
+					VkSubpassDependency dependency = 
+					{
+						.srcSubpass = VK_SUBPASS_EXTERNAL,
+						.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+						.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
+						.dstSubpass = i,
+						.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+						.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+					};
+					try_add_dependency(dependencies, &dependency);
+				}
+			}
+			if(is_depth_read && info.is_depth_attachment_write)
+			{
+				VkSubpassDependency dependency = 
+				{
+					.srcSubpass = VK_SUBPASS_EXTERNAL,
+					.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+					.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+					.dstSubpass = i,
+					.dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+					.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+				};
+				try_add_dependency(dependencies, &dependency);
+			}
+			else if(is_depth_write)
+			{
+				if(info.is_depth_attachment_write)
+				{
+					VkSubpassDependency dependency = 
+					{
+						.srcSubpass = VK_SUBPASS_EXTERNAL,
+						.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+						.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+						.dstSubpass = i,
+						.dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+						.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+					};
+					try_add_dependency(dependencies, &dependency);
+				}
+				else if(info.is_depth_attachment_read)
+				{
+					VkSubpassDependency dependency = 
+					{
+						.srcSubpass = VK_SUBPASS_EXTERNAL,
+						.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+						.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+						.dstSubpass = i,
+						.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+						.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+					};
+					try_add_dependency(dependencies, &dependency);
+				}
+			}
+		}
 
-				try_add_dependency(&dependencies, &dependency);
+		if(!is_subpass_dominates_on_any(dependencies, i))
+		{
+			AUTO subpass = &pass->subpasses[i];
+			bool is_color_write = get_is_implicit_store_color_write(subpass, pass->framebuffer_layout_description.attachments, pass->framebuffer_layout_description.attachment_count);
+			bool is_depth_write = get_is_implicit_store_depth_write(subpass, pass->framebuffer_layout_description.attachments, pass->framebuffer_layout_description.attachment_count);
+			AUTO info = get_attachment_read_write_info(subpass, pass->framebuffer_layout_description.attachments, pass->framebuffer_layout_description.attachment_count);
+			if(is_color_write)
+			{
+				if(info.is_color_attachment_write)
+				{
+					VkSubpassDependency dependency = 
+					{
+						.srcSubpass = i,
+						.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+						.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+						.dstSubpass = VK_SUBPASS_EXTERNAL,
+						.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+						.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+					};
+					try_add_dependency(dependencies, &dependency);
+				}
+				else if(info.is_color_attachment_read)
+				{
+					VkSubpassDependency dependency = 
+					{
+						.srcSubpass = i,
+						.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+						.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+						.dstSubpass = VK_SUBPASS_EXTERNAL,
+						.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+						.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+					};
+					try_add_dependency(dependencies, &dependency);
+				}
+			}
+			if(is_depth_write)
+			{
+				if(info.is_depth_attachment_write)
+				{
+					VkSubpassDependency dependency = 
+					{
+						.srcSubpass = i,
+						.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+						.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+						.dstSubpass = VK_SUBPASS_EXTERNAL,
+						.dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+						.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+					};
+					try_add_dependency(dependencies, &dependency);
+				}
+				else if(info.is_depth_attachment_read)
+				{
+					VkSubpassDependency dependency = 
+					{
+						.srcSubpass = i,
+						.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+						.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+						.dstSubpass = VK_SUBPASS_EXTERNAL,
+						.dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+						.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+					};
+					try_add_dependency(dependencies, &dependency);
+				}
 			}
 		}
 	}
-
-	if((next_pass != NULL) && is_renderpass_reads_depth(next_pass, pass))
-	{
-		/* let the write complete and then allow read in the next pass */
-		VkSubpassDependency dependency = 
-		{
-			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
-			.srcSubpass = get_most_recent_subpass_index_writing_to_depth(pass),
-			.dstSubpass = VK_SUBPASS_EXTERNAL,
-			.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-			.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			.dstAccessMask = VK_ACCESS_SHADER_READ_BIT
-		};
-
-		try_add_dependency(&dependencies, &dependency);
-	}
-	
-	OUT dependency_count = CAST_TO(u32, buf_get_element_count(&dependencies));
-	return CAST_TO(VkSubpassDependency*, buf_get_ptr(&dependencies));
-
 }
 
-typedef struct vulkan_render_pass_description_substitutions_t
+static void convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_builder_t* builder, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_t* next_passes, u32 next_pass_count)
 {
-	u32 subpass_dependency_count;
-	VkSubpassDependency* subpass_dependencies;
-} vulkan_render_pass_description_substitutions_t;
-
-static vulkan_render_pass_create_info_builder_t* convert_render_pass_description_to_create_info(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* pass, vulkan_render_pass_description_substitutions_t* subst, vulkan_render_pass_description_t* next_passes, u32 next_pass_count)
-{
-	vulkan_render_pass_create_info_builder_t* builder = vulkan_render_pass_create_info_builder_create(renderer->allocator);
-	vulkan_render_pass_create_info_builder_add(builder, 1);
-	vulkan_render_pass_create_info_builder_bind(builder, 0);
+	vulkan_render_pass_create_info_builder_add_next(builder);
 
 	// number of frame buffers to create
 	u32 framebuffer_count = get_framebuffer_count_from_render_pass_type(pass->type, renderer->swapchain->image_count);
@@ -809,22 +1060,61 @@ static vulkan_render_pass_create_info_builder_t* convert_render_pass_description
 		// for now we won't be using preserve attachments
 	}
 
-	/* apply substitutions if any */
-	VkSubpassDependency* subpass_dependencies = pass->subpass_dependencies;
-	u32 subpass_dependency_count = pass->subpass_dependency_count;
-	if(subst->subpass_dependency_count > 0)
+	if(pass->subpass_dependency_count > 0)
+		vulkan_render_pass_create_info_builder_add_dependencies(builder, pass->subpass_dependencies, pass->subpass_dependency_count);
+}
+
+/*	merges the subpass depedencies which targets the same subpass pair,
+	and removes duplicate subpass dependencies.
+ */
+static VkSubpassDependency* merge_subpass_dependencies(memory_allocator_t* allocator, VkSubpassDependency* dependencies, u32 dependency_count, u32 OUT merged_dep_count)
+{
+	buffer_t new_dependencies = memory_allocator_buf_new(allocator, VkSubpassDependency);
+
+	for(u32 i = 0; i < dependency_count; i++)
+		try_add_dependency(&new_dependencies, &dependencies[i]);
+
+	OUT merged_dep_count = buf_get_element_count(&new_dependencies);
+
+	return ((*merged_dep_count) == 0) ? NULL : buf_get_ptr(&new_dependencies);
+}
+
+static vulkan_render_pass_create_info_builder_t* convert_render_pass_descriptions_to_create_infos(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* descriptions, u32 description_count)
+{
+	vulkan_render_pass_create_info_builder_t* builder = vulkan_render_pass_create_info_builder_create(renderer->allocator);
+	vulkan_render_pass_create_info_builder_add(builder, description_count);
+
+	for(u32 i = 0; i < description_count; i++)
 	{
-		subpass_dependency_count = subst->subpass_dependency_count;
-		subpass_dependencies = subst->subpass_dependencies;
+		/* number of subsequent render passes after this render pass */
+		u32 next_count = description_count - i - 1;
+		convert_render_pass_description_to_create_info(renderer, builder, &descriptions[i], (next_count > 0) ? &descriptions[i + 1] : NULL, next_count);
 	}
 
-	if(subpass_dependency_count > 0)
-		vulkan_render_pass_create_info_builder_set_dependencies(builder, subpass_dependencies, subpass_dependency_count);
-	
+	vulkan_render_pass_create_info_t* create_infos = vulkan_render_pass_create_info_builder_get(builder);
+	for(u32 i = 0; i < description_count; i++)
+	{
+		vulkan_render_pass_create_info_builder_bind(builder, i);
+		buffer_t* dependencies = vulkan_render_pass_create_info_builder_get_dependencies_buffer(builder);
+		vulkan_render_pass_create_info_t* pass = &create_infos[i];
+		/* number of subsequent render passes after this render pass */
+		u32 next_count = description_count - i - 1;
+		/* if there is no explicit subpass dependency provided by the description then create and resolve internally */
+		if(pass->subpass_dependency_count == 0)
+			create_subpass_dependencies(dependencies, pass, (next_count > 0) ? &create_infos[i + 1] : NULL, next_count);
+		/* otherwise merge the subpass dependencies as much as possible */
+		else
+		{
+			u32 merged_dep_count;
+			VkSubpassDependency* merged_deps = merge_subpass_dependencies(renderer->allocator, pass->subpass_dependencies, pass->subpass_dependency_count, &merged_dep_count);
+			buf_pushv(dependencies, merged_deps, merged_dep_count);
+			memory_allocator_dealloc(renderer->allocator, merged_deps);
+		}
+	}
 	return builder;
 }
 
-static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* descriptions, vulkan_render_pass_description_substitutions_t* substs, u32 description_count, vulkan_pipeline_common_data_t* common_data)
+static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_t* renderer, vulkan_render_pass_description_t* descriptions, u32 description_count, vulkan_pipeline_common_data_t* common_data)
 {
 	// allocate memory
 	vulkan_shader_render_pass_t* passes = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_RENDER_PASS_ARRAY, vulkan_shader_render_pass_t, description_count);
@@ -838,14 +1128,13 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	buf_push(&set_layouts, &renderer->global_set_layout.vo_handle);
 
 	vulkan_render_pass_pool_create_path(renderer->render_pass_pool);
+	
+	vulkan_render_pass_create_info_builder_t* create_info_builder = convert_render_pass_descriptions_to_create_infos(renderer, descriptions, description_count);
+	vulkan_render_pass_create_info_t* create_infos = vulkan_render_pass_create_info_builder_get(create_info_builder);
 
 	for(u32 i = 0; i < description_count; i++)
 	{
 		// create a render pass object in the pool, no duplicate render pass would be created
-
-		/* number of subsequent render passes after this render pass */
-		u32 next_count = description_count - i - 1;
-		vulkan_render_pass_create_info_builder_t* create_info_builder = convert_render_pass_description_to_create_info(renderer, &descriptions[i], &substs[i], (next_count > 0) ? &descriptions[i + 1] : NULL, next_count);
 		
 		/* prepare render pass and submit input objects */
 		u32 subpass_count = passes[i].subpass_count = descriptions[i].subpass_count;
@@ -867,7 +1156,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 		}
 		
 		/* create render pass for this shader */
-		passes[i].handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, vulkan_render_pass_create_info_builder_get(create_info_builder), &input);
+		passes[i].handle = vulkan_render_pass_pool_create_pass(renderer->render_pass_pool, &create_infos[i], &input);
 
 		/* destroy allocations made in vulkan_render_pass_input_info_t */
 		if(input.input_attachment_count > 0)
@@ -879,8 +1168,6 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 					memory_allocator_dealloc(renderer->allocator, input.subpass_inputs[j].input_attachments);
 			memory_allocator_dealloc(renderer->allocator, input.subpass_inputs);
 		}
-
-		vulkan_render_pass_create_info_builder_destroy(create_info_builder);
 
 		/* create pipeline layout and graphics pipelines */
 
@@ -936,6 +1223,8 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 		buf_pop(&set_layouts, NULL);
 	}
 
+	vulkan_render_pass_create_info_builder_destroy(create_info_builder);
+
 	// pop out the GLOBAL_SET layout
 	buf_pop(&set_layouts, NULL);
 
@@ -965,22 +1254,6 @@ static void destroy_shader_render_passes(memory_allocator_t* allocator, vulkan_s
 	}
 	if(pass_count > 0)
 		memory_allocator_dealloc(allocator, passes);
-}
-
-/*	merges the subpass depedencies which targets the same subpass pair,
-	and removes duplicate subpass dependencies.
- */
-static VkSubpassDependency* merge_subpass_dependencies(vulkan_renderer_t* renderer, VkSubpassDependency* dependencies, u32 OUT dependency_count)
-{
-	BUFFER new_dependencies = memory_allocator_buf_new(renderer->allocator, VkSubpassDependency);
-
-	u32 count = *dependency_count;
-	for(u32 i = 0; i < count; i++)
-		try_add_dependency(&new_dependencies, &dependencies[i]);
-
-	OUT dependency_count = count = buf_get_element_count(&new_dependencies);
-
-	return (count == 0) ? NULL : buf_get_ptr(&new_dependencies);
 }
 
 static void recreate_graphics_pipelines(void* publisher_data, void* handler_data)
@@ -1022,26 +1295,8 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 		.material_set_layout = shader->material_set_layout,
 		.pipeline_descriptions = create_info->pipeline_descriptions
 	};
-
-	vulkan_render_pass_description_substitutions_t* substs = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_DESCRIPTION_SUBSTITUIONS_ARRAY, vulkan_render_pass_description_substitutions_t, create_info->render_pass_description_count);
-	memzerov(substs, vulkan_render_pass_description_substitutions_t, create_info->render_pass_description_count);
-	for(u32 i = 0; i < create_info->render_pass_description_count; i++)
-	{
-		vulkan_render_pass_description_t* pass = &create_info->render_pass_descriptions[i];
-		vulkan_render_pass_description_t* next_pass = (i < (create_info->render_pass_description_count - 1)) ? (pass + 1) : NULL;
-		/* if there is no explicit subpass dependency provided by the description then create and resolve internally */
-		if(pass->subpass_dependency_count == 0)
-			substs[i].subpass_dependencies = create_and_resolve_subpass_dependencies(renderer, pass, next_pass, &substs[i].subpass_dependency_count);
-		/* otherwise merge the subpass dependencies as much as possible */
-		else
-			substs[i].subpass_dependencies = merge_subpass_dependencies(renderer, pass->subpass_dependencies, &substs[i].subpass_dependency_count);
-	}
-	shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, substs, create_info->render_pass_description_count, &common_data);
+	shader->render_passes = create_shader_render_passes(renderer, create_info->render_pass_descriptions, create_info->render_pass_description_count, &common_data);
 	shader->render_pass_count = create_info->render_pass_description_count;
-	for(u32 i = 0; i < create_info->render_pass_description_count; i++)
-		if(substs[i].subpass_dependency_count > 0)
-			memory_allocator_dealloc(renderer->allocator, substs[i].subpass_dependencies);
-	memory_allocator_dealloc(renderer->allocator, substs);
 	shader->pass_counter = 0;
 	shader->subpass_counter = 0;
 

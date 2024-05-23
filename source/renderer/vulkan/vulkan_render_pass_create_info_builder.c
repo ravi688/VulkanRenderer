@@ -85,6 +85,11 @@ RENDERER_API void vulkan_render_pass_create_info_builder_bind(vulkan_render_pass
 	_debug_assert__(index < buf_get_element_count(&builder->build_info_array));
 	builder->bind_index = index;
 }
+RENDERER_API void vulkan_render_pass_create_info_builder_add_next(vulkan_render_pass_create_info_builder_t* builder)
+{
+	vulkan_render_pass_create_info_builder_add(builder, 1);
+	vulkan_render_pass_create_info_builder_bind(builder, CAST_TO(u32, buf_get_element_count(&builder->build_info_array) - 1u));
+}
 
 static vulkan_render_pass_create_info_build_info_t* get_build_info(vulkan_render_pass_create_info_builder_t* builder, u32 index)
 {
@@ -259,6 +264,15 @@ RENDERER_API void vulkan_render_pass_create_info_builder_add_dependencies(vulkan
 		build_info->subpass_dependencies = memory_allocator_buf_new(builder->allocator, VkSubpassDependency);
 	buf_pushv(&build_info->subpass_dependencies, dependencies, dependency_count);
 	build_info->is_supbass_dependencies_internal = true;
+}
+
+RENDERER_API buffer_t* vulkan_render_pass_create_info_builder_get_dependencies_buffer(vulkan_render_pass_create_info_builder_t* builder)
+{
+	AUTO build_info = get_bound_build_info(builder);
+	if(!build_info->is_supbass_dependencies_internal)
+		build_info->subpass_dependencies = memory_allocator_buf_new(builder->allocator, VkSubpassDependency);
+	build_info->is_supbass_dependencies_internal = true;
+	return &build_info->subpass_dependencies;
 }
 
 RENDERER_API void vulkan_render_pass_create_info_builder_set_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count)
