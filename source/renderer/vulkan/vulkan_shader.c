@@ -447,7 +447,7 @@ static attachment_read_write_info_t get_attachment_read_write_info_between_subpa
 	{
 		info.is_depth_attachment_read = VkAttachmentReference_list_contains(next_subpass->input_attachments, next_subpass->input_attachment_count, subpass->depth_stencil_attachment->attachment);
 		if(next_subpass->depth_stencil_attachment != NULL)
-			info.is_depth_attachment_write = next_subpass->depth_stencil_attachment->attachment == subpass->depth_stencil_attachment->attachment;
+			info.is_depth_attachment_write = (next_subpass->depth_stencil_attachment->attachment == subpass->depth_stencil_attachment->attachment);
 	}
 	return info;
 }
@@ -644,7 +644,7 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 					.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 					.dstSubpass = j,
 					.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-					.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+					.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
 					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 				};
 				try_add_dependency(dependencies, &dependency);
@@ -674,7 +674,7 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 					.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 					.dstSubpass = j,
 					.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-					.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+					.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
 					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 				};
 				try_add_dependency(dependencies, &dependency);
@@ -747,7 +747,7 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 						.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
 						.dstSubpass = i,
 						.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-						.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+						.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
 						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 					};
 					try_add_dependency(dependencies, &dependency);
@@ -792,7 +792,7 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 						.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 						.dstSubpass = i,
 						.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-						.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+						.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
 						.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 					};
 					try_add_dependency(dependencies, &dependency);
@@ -828,7 +828,7 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 					{
 						.srcSubpass = i,
 						.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-						.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+						.srcAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
 						.dstSubpass = VK_SUBPASS_EXTERNAL,
 						.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 						.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -859,7 +859,7 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 					{
 						.srcSubpass = i,
 						.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-						.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+						.srcAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
 						.dstSubpass = VK_SUBPASS_EXTERNAL,
 						.dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
 						.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
@@ -886,7 +886,7 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 			{
 				.srcSubpass = i,
 				.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+				.srcAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
 				.dstSubpass = VK_SUBPASS_EXTERNAL,
 				.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 				.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -905,7 +905,7 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 					.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 					.dstSubpass = VK_SUBPASS_EXTERNAL,
 					.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-					.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+					.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
 					.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 				};
 				try_add_dependency(dependencies, &dependency);
@@ -931,7 +931,7 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 			{
 				.srcSubpass = i,
 				.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+				.srcAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
 				.dstSubpass = VK_SUBPASS_EXTERNAL,
 				.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
 				.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
