@@ -684,10 +684,10 @@ UNUSED_FUNCTION static void transition_target_layout_for_write(VkFormat format, 
 				/* VK_IMAGE_LAYOUT_UNDEFINED: we don't care about the previous results because the results would be overwritten anyway */
 				/* oldLayout: */ VK_IMAGE_LAYOUT_UNDEFINED,
 				/* newLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-				/* srcAccess: */ VK_ACCESS_SHADER_READ_BIT,
+				/* srcAccess: */ VK_ACCESS_MEMORY_READ_BIT,
 				/* dstAccess: */ VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-				/* srcStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				/* dstStage: */ VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+				/* srcStage: */ VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+				/* dstStage: */ VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
 			break;
 		default:
 			LOG_FETAL_ERR("Unsupported format %u for any possible render target layout\n", format);
@@ -716,7 +716,7 @@ static void transition_target_layout_for_sample(VkFormat format, vulkan_image_vi
 				/* newLayout: */ VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
 				/* srcAccess: */ VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 				/* dstAccess: */ VK_ACCESS_SHADER_READ_BIT,
-				/* srcStage: */ VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+				/* srcStage: */ VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
 				/* dstStage: */ VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 			break;
 		default:
