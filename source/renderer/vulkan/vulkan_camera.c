@@ -729,6 +729,10 @@ RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera)
 {
 	camera->current_shot_index = 0;
 	camera->shot_taken = 0;
+
+	/* if current depth render target is the default one, then transnition it from UNDEFINED TO DEPTH_STENCIL_OPTIMAL */
+	if(is_default_depth_attachment(camera))
+		transition_target_layout_for_write(camera->current_depth_attachment->image.vo_format, &camera->current_depth_attachment->image_view);
 }
 
 RENDERER_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags)
