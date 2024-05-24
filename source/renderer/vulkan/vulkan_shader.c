@@ -871,7 +871,8 @@ static void create_subpass_dependencies(buffer_t* dependencies, const vulkan_ren
 		}
 	}
 
-	attachment_read_write_flag_t flags[pass->framebuffer_layout_description.attachment_count] = { };
+	attachment_read_write_flag_t flags[pass->framebuffer_layout_description.attachment_count];
+	memzerov(flags, attachment_read_write_flag_t, pass->framebuffer_layout_description.attachment_count);
 
 	get_attachment_read_write_flags(flags, pass, next_passes, next_pass_count);
 
