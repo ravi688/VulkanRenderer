@@ -202,7 +202,10 @@ TEST_ON_UPDATE(TID_48_CASE_1)
 	angle += deltaTime;
 	float _angle = (0.5f * sin(angle) + 0.5f) * 180.0f - 180.0f;
 	vec3_t pos = vec3(0.8f * sin(_angle DEG), 0, 0.8f * cos(_angle DEG));
-	vulkan_camera_set_position_cube(this->offscreenCamera, pos);
+	if(swap)
+		vulkan_camera_set_position(this->offscreenCamera, pos);
+	else
+		vulkan_camera_set_position_cube(this->offscreenCamera, pos);
 	light_set_position(this->pointLight, pos);
 	light_set_color(this->pointLight, vec3(pos.x * 0.5f + 0.5f, pos.y * 0.5f + 0.5f, pos.z * 0.5f + 0.5f));
 	render_object_set_transform(this->cubeObject, mat4_mul(2, mat4_translation(pos.x, pos.y, pos.z),
