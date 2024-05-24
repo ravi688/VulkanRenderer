@@ -586,7 +586,7 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 	VkCommandBuffer cb = renderer->vo_command_buffers[current_frame_index];
 
 	// WARNING: enabling command buffer reset and dragging the window results in a crash, not sure why?
-	// vulkan_command_buffer_reset(renderer->vo_command_buffers[renderer->current_frame_index], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+	vulkan_command_buffer_reset(cb, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
 	vulkan_command_buffer_begin(cb, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
