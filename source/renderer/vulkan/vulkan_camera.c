@@ -1370,6 +1370,11 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 	else
 		camera->max_shot_count = 1;
 
+	/* setting to a different render targets might also destroy existing framebuffer objects 
+	 * , as per vulkan spec, VkFramebuffer object can only be destroyed if nothing is use it, 
+	 * therefore, make sure all of the command buffers have finished their execution and no one is referencing the VkFramebuffer objects */
+	vulkan_renderer_wait_idle(camera->renderer);
+
 	switch(target_type)
 	{
 		case VULKAN_CAMERA_RENDER_TARGET_TYPE_COLOR:
