@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
-make -s setup
 git submodule update -r
+make -s setup
 make -s build-debug WALL=1
 make -s shader-clean
 make -s clean
