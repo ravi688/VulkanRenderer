@@ -68,7 +68,7 @@ enum
 };
 
 /* attributes */
-static const char* attribute_keywords[] = 
+CAN_BE_UNUSED_VARIABLE static const char* attribute_keywords[] = 
 {
 	"Name",
 	"NoParse",

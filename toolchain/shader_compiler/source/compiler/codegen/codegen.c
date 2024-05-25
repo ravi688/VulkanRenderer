@@ -266,7 +266,7 @@ static u32 parse_set(const char* str, u32 len)
 	return U32_MAX;
 }
 
-static s32 signed_sub(u32 op1, u32 op2)
+CAN_BE_UNUSED_FUNCTION static s32 signed_sub(u32 op1, u32 op2)
 {
 	return (CAST_TO(s32, op1) - CAST_TO(s32, op2));
 }
@@ -346,7 +346,7 @@ static void run_sub_pass_analysis(v3d_generic_node_t* subpass, compiler_ctx_t* c
 	/* now analyse the attributes on the subpass */
 
 	/* for each attribute on this subpass */
-	s32 color_input_count = 0;
+	CAN_BE_UNUSED_VARIABLE s32 color_input_count = 0;
 	for(u32 j = 0; j < subpass->attribute_count; j++)
 	{
 		v3d_generic_attribute_t* attrib = &subpass->attributes[j];
@@ -575,7 +575,7 @@ static void reorder_attachments_phase2(render_pass_analysis_t* renderpass)
 	if(present_index == U32_MAX)
 		return;
 
-	u32 color_attachment = renderpass->attachments[present_index];
+	CAN_BE_UNUSED_VARIABLE u32 color_attachment = renderpass->attachments[present_index];
 	for(u32 i = present_index; i > 0; i--)
 		renderpass->attachments[i] = renderpass->attachments[i - 1];
 

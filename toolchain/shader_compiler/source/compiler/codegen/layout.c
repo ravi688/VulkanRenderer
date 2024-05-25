@@ -113,7 +113,7 @@ static const char* write_description(const char* start, const char* end, u32 bit
 	while(isspace(*start)) start++;
 	u32 count = get_word_length(start, 0);
 	bool found = true;
-	buf_ucount_t identifier_name_index;
+	CAN_BE_UNUSED_VARIABLE buf_ucount_t identifier_name_index;
 	if(strncmp(start, "sampler2D", count) == 0)
 	{ 
 		bits |= GLSL_TYPE_SAMPLER_2D; 
@@ -206,7 +206,7 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		u16 num_elements = 0;
 		while(*start != '}')
 		{
-			u16 info;
+			CAN_BE_UNUSED_VARIABLE u16 info;
 			start = write_description(start, end, 0, writer);
 			while(isspace(*start)) start++;
 			num_elements++;
@@ -447,7 +447,7 @@ PARSE_NUMBER:
 	}
 	if(!found)
 	{
-		u32 len = get_word_length(start, 0);
+		CAN_BE_UNUSED_VARIABLE u32 len = get_word_length(start, 0);
 		DEBUG_LOG_ERROR("[Codegen] [Legacy] Expected open square bracket '[' before \"%.*s\"\n", count, start);
 	}
 	if(count < required)

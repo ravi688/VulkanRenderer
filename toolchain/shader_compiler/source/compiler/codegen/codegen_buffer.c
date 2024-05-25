@@ -112,7 +112,7 @@ SC_API void codegen_buffer_release_resources(codegen_buffer_t* buffer)
 SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 {
 	u32 main_size = buf_get_element_count(CAST_TO(BUFFER*, buffer->main->user_data));
-	BUFFER* mark_table = &buffer->main->mark_table;
+	CAN_BE_UNUSED_VARIABLE BUFFER* mark_table = &buffer->main->mark_table;
 
 	struct
 	{

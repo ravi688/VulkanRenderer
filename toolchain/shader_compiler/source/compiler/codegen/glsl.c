@@ -78,15 +78,16 @@ static const char* stage_to_string(shader_stage_t stage)
 			return "geometry";
 		case SHADER_STAGE_TESSELLATION:
 			return "tessellation";
+		default:
+			return "Invalid-stage";
 	}
-	return "Invalid-stage";
 }
 
 static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_buffer_t* writer, compiler_ctx_t* ctx);
 
 SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* writer, compiler_ctx_t* ctx)
 {
-	const char* _start = start;
+	CAN_BE_UNUSED_VARIABLE const char* _start = start;
 	
 	shader_source_t* sources = CAST_TO(shader_source_t*, malloc(sizeof(shader_source_t) * SHADER_TYPE_MAX));
 	memset(sources, 0, sizeof(shader_source_t) * SHADER_TYPE_MAX);

@@ -119,7 +119,6 @@ static void attribute(const char* name, u32 length, const char* value, u32 value
 static void field(const char* name, u32 length, const char* value, u32 value_length, void* user_data);
 static dictionary_t* create_tree(UserData* data);
 static void destroy_tree(dictionary_t* tree);
-static dictionary_t setup_category_templates();
 static void link(UserData* data);
 static void setup_default_values(UserData* data);
 
@@ -518,7 +517,7 @@ static void destroy_tree(dictionary_t* tree)
 
 
 #define duplicate(ptr, type) (type*)__duplicate((void*)(ptr), sizeof(type))
-static void* __duplicate(void* ptr, u32 size)
+CAN_BE_UNUSED_FUNCTION static void* __duplicate(void* ptr, u32 size)
 {
 	void* _ptr = malloc(size);
 	memcpy(_ptr, ptr, size);
@@ -588,7 +587,7 @@ static void link(UserData* data)
 
 static void write_bool(const char* str, void* output);
 
-static Category create_graphicspipeline_category(UserData* data)
+CAN_BE_UNUSED_FUNCTION static Category create_graphicspipeline_category(UserData* data)
 {
 	dictionary_t* categories = create_category_dictionary();
 	Category category = create_inputassembly_category(data);
@@ -1252,7 +1251,7 @@ static void write_VkColorComponentFlags(const char* str, void* output)
 	memcpy(output, &value, sizeof(value));	
 }
 
-static void write_bool(const char* str, void* output)
+CAN_BE_UNUSED_FUNCTION static void write_bool(const char* str, void* output)
 {
 	assert(sizeof(bool) == 1);
 	bool value;

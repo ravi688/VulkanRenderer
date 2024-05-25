@@ -35,7 +35,7 @@ typedef struct arg_t
 	u32 size;
 } arg_t;
 
-static arg_t arg_create(void* ptr, u32 size)
+CAN_BE_UNUSED_FUNCTION static arg_t arg_create(void* ptr, u32 size)
 {
 	arg_t arg;
 	arg.ptr = malloc(size);
@@ -84,7 +84,7 @@ SC_API void diagnostic_push_string(diagnostic_t* diagnostic, const char* value)
 	diagnostic_push(diagnostic, value, strlen(value) + 1);
 }
 
-SC_API void diagnostic_push(diagnostic_t* diagnostic, const u8 const* ptr, u32 size)
+SC_API void diagnostic_push(diagnostic_t* diagnostic, const void* const ptr, u32 size)
 {
 	assert(buf_get_element_size(&diagnostic->args) == sizeof(u8));
 	// buf_push(&diagnostic->args, (void*)ptr, size);
