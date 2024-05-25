@@ -294,7 +294,10 @@ debug: $(TARGET)
 	$(MAKE) --directory=$(subst lib/, ,$(dir $@)) $(CHILD_MAKE_FORWARD_FLAGS) $(__STATIC_LIB_COMMAND)
 	@echo [Log] $@ built successfully!
 
-$(TARGET_LIB_DIR):
+$(DEPENDENCIES_DIR):
+	mkdir $@
+
+$(TARGET_LIB_DIR): $(DEPENDENCIES_DIR)
 	mkdir $@
 
 PRINT_STATIC_INFO:
