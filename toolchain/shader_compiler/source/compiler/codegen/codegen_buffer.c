@@ -29,7 +29,7 @@
 #include <stdlib.h>
 
 
-static u64 get_possible_value(const void* bytes, u32 size)
+CAN_BE_UNUSED_FUNCTION static u64 get_possible_value(const void* bytes, u32 size)
 {
 	if((bytes == NULL) || (size == 0))
 		return U64_MAX;

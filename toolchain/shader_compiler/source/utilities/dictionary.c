@@ -205,7 +205,7 @@ SC_API function_signature(void, dictionary_remove, dictionary_t* dictionary, voi
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
-	bool result = buf_remove(&dictionary->buffer, key, dictionary->key_comparer);
+	CAN_BE_UNUSED_VARIABLE bool result = buf_remove(&dictionary->buffer, key, dictionary->key_comparer);
 	assert(result == true);
 	CALLTRACE_END();
 }

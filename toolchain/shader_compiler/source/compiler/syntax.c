@@ -152,7 +152,7 @@ SC_API void syntax(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 			u32 symbol = look_ahead_symbols[i];
 			if(safe_strncmp(str, keywords[symbol], len) == 0)
 			{
-				bool result = syntax_check_node(node, ctx->src,
+				CAN_BE_UNUSED_VARIABLE bool result = syntax_check_node(node, ctx->src,
 							ctx->sqt[symbol].ptr, ctx->sqt[symbol].size,
 							ctx->sat[symbol].ptr, ctx->sat[symbol].size,
 							keywords[symbol], false);
