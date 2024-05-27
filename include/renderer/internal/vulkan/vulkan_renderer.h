@@ -71,6 +71,14 @@ typedef struct vulkan_renderer_create_info_t
 	bool full_screen;
 	/* set it to true to make the window resizable; ignored if full_screen is true */
 	bool resizable;
+
+	/* number of swapchain images to create; however, the actual number of swapchain images might be different 
+	 * it is automatically clamped to the max number of swapchain images possible if greater than that
+	 * if zero, then it will use the minimum number of swapchain images */
+	u32 swapchain_image_count;
+	/* number of max allowed frames in flight, it is automatically clamped to the number of swapchain images if greater than that 
+	 * if it is zero, then the renderer will be created with max frames in flight as 1 */
+	u32 max_frames_in_flight;
 } vulkan_renderer_create_info_t;
 
 typedef struct vulkan_renderer_t
@@ -84,8 +92,6 @@ typedef struct vulkan_renderer_t
 	vulkan_instance_t* instance;
 	vulkan_logical_device_t* logical_device;
 	vulkan_physical_device_t* physical_device;
-	// vulkan_render_pass_t* render_pass; 							// render pass for rendering the final image
-	// vulkan_render_pass_t* shadow_map_render_pass; 				// render pass for rendering the shadow map
 	VkSurfaceKHR vo_surface;
 	VkQueue vo_graphics_queue;
 	VkCommandPool vo_command_pool;
@@ -152,6 +158,8 @@ typedef struct vulkan_renderer_t
 	vulkan_camera_system_t* camera_system;
 
 	event_subscription_handle_t swapchain_recreate_handle;
+
+	u32 max_frames_in_flight;
 
 } vulkan_renderer_t;
 

@@ -344,9 +344,12 @@ DEBUG_BLOCK
 
 	// setup image count
 	// NOTE: if VkSurfaceCapabilitiesKHR::maxImageCount equals 0, then there is no maximum limit for image count
-	u32 image_count = clamp_u32(3, surface_capabilities.minImageCount, (surface_capabilities.maxImageCount == 0) ? U32_MAX : surface_capabilities.maxImageCount);
-
+	u32 image_count = clamp_u32(create_info->swapchain_image_count, surface_capabilities.minImageCount, (surface_capabilities.maxImageCount == 0) ? U32_MAX : surface_capabilities.maxImageCount);
 	debug_log_info("Image count: %" PRIu32, image_count);
+	
+	renderer->max_frames_in_flight = clamp_u32(create_info->max_frames_in_flight, 1u, image_count);
+	if(create_info->max_frames_in_flight != renderer->max_frames_in_flight)
+		DEBUG_LOG_WARNING("Requested max number of in flight frames %" PRIu32 " can't be allowed, it is now set to: %" PRIu32, create_info->max_frames_in_flight, renderer->max_frames_in_flight);
 
 	// create logical device
 	VkPhysicalDeviceFeatures* minimum_required_features = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PHYSICAL_DEVICE_FEATURES, VkPhysicalDeviceFeatures);
@@ -659,7 +662,7 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 						renderer->swapchain->current_image_index,
 						renderer->render_present_sync_primitives.vo_render_finished_semaphores[current_frame_index]);
 	render_window_poll_events(renderer->window);
-	renderer->current_frame_index = (1u + renderer->current_frame_index) % renderer->swapchain->image_count;
+	renderer->current_frame_index = (1u + renderer->current_frame_index) % renderer->max_frames_in_flight;
 }
 
 RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
