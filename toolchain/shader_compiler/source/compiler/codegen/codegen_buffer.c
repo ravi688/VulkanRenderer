@@ -79,18 +79,19 @@ static u32 writer_pos(void* user_data)
 	return CAST_TO(u32, buf_get_element_count(user_data));
 }
 
-SC_API codegen_buffer_t* codegen_buffer_new()
+SC_API codegen_buffer_t* codegen_buffer_new(sc_allocation_callbacks_t* callbacks)
 {
-	codegen_buffer_t* buffer = CAST_TO(codegen_buffer_t*, malloc(sizeof(codegen_buffer_t)));
+	codegen_buffer_t* buffer = CAST_TO(codegen_buffer_t*, sc_call_allocate(callbacks, sizeof(codegen_buffer_t)));
 	memset(buffer, 0, sizeof(codegen_buffer_t));
+	buffer->callbacks = callbacks;
 	return buffer;
 }
 
-SC_API codegen_buffer_t* codegen_buffer_create()
+SC_API codegen_buffer_t* codegen_buffer_create(sc_allocation_callbacks_t* callbacks)
 {
-	codegen_buffer_t* buffer = codegen_buffer_new();
- 	buffer->main = binary_writer_create((void*)BUFcreate(NULL, sizeof(u8), 0, 0), writer_push, writer_insert, writer_ptr, writer_pos);
-	buffer->data = binary_writer_create((void*)BUFcreate(NULL, sizeof(u8), 0, 0), writer_push, writer_insert, writer_ptr, writer_pos);
+	codegen_buffer_t* buffer = codegen_buffer_new(callbacks);
+ 	buffer->main = binary_writer_create((void*)BUFcreate_with_callbacks(callbacks, NULL, sizeof(u8), 0, 0), writer_push, writer_insert, writer_ptr, writer_pos);
+	buffer->data = binary_writer_create((void*)BUFcreate_with_callbacks(callbacks, NULL, sizeof(u8), 0, 0), writer_push, writer_insert, writer_ptr, writer_pos);
 	return buffer;
 }
 
@@ -106,7 +107,7 @@ SC_API void codegen_buffer_release_resources(codegen_buffer_t* buffer)
 	buf_free(CAST_TO(BUFFER*, buffer->main->user_data));
 	buf_free(CAST_TO(BUFFER*, buffer->data->user_data));
 	buf_free(buffer->flat);
-	free(buffer);
+	sc_call_deallocate(buffer->callbacks, buffer);
 }
 
 SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
@@ -155,7 +156,7 @@ SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 	u32 data_size = buf_get_element_count(CAST_TO(BUFFER*, buffer->data->user_data));
 	u32 flat_size = main_size + data_size;
 	if(buffer->flat == NULL)
-		buffer->flat = BUFcreate_new(NULL, sizeof(u8), flat_size, 0);
+		buffer->flat = BUFcreate_with_callbacks(buffer->callbacks, NULL, sizeof(u8), flat_size, 0);
 
 	buf_clear(buffer->flat, NULL);
 	buf_push_pseudo(buffer->flat, flat_size);

@@ -27,7 +27,7 @@
 
 #include <shader_compiler/defines.h>
 #include <shader_compiler/compiler/codegen/codegen_buffer.h>
-#include <shader_compiler/compiler/compiler_ctx.h>
+#include <shader_compiler/compiler/compiler.h>
 
 BEGIN_CPP_COMPATIBLE
 
@@ -49,6 +49,6 @@ BEGIN_CPP_COMPATIBLE
 	-------------------------
 	see: //Documents/V3D/V3DShaderLangSpec.docx
  */
-SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* writer, compiler_ctx_t* ctx);
+SC_API void write_glsl(const char* start, const char* end, compiler_ctx_t* ctx);
 
 END_CPP_COMPATIBLE

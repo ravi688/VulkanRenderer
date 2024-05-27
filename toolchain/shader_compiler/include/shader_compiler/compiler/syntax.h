@@ -26,7 +26,7 @@
 #pragma once
 
 #include <shader_compiler/defines.h>
-#include <shader_compiler/compiler/compiler_ctx.h>
+#include <shader_compiler/compiler/compiler.h>
 #include <phymac_parser/v3d_generic.h>
 
 BEGIN_CPP_COMPATIBLE

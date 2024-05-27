@@ -85,7 +85,7 @@ static const char* stage_to_string(shader_stage_t stage)
 
 static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_buffer_t* writer, compiler_ctx_t* ctx);
 
-SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* writer, compiler_ctx_t* ctx)
+SC_API void write_glsl(const char* start, const char* end, compiler_ctx_t* ctx)
 {
 	CAN_BE_UNUSED_VARIABLE const char* _start = start;
 	
@@ -134,7 +134,7 @@ SC_API void write_glsl(const char* start, const char* end, codegen_buffer_t* wri
 	for(u32 i = 0; i < SHADER_STAGE_MAX; i++)
 		shader_count += min(1, sources[i].count);
 
-	serialize_shader(sources, shader_count, writer, ctx);
+	serialize_shader(sources, shader_count, ctx->codegen_buffer, ctx);
 }
 
 static char* resolve_relative_file_path(const char* src_path, u32 src_index, const char* cwd, BUFFER* buffer)
@@ -194,19 +194,17 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 			if(strchr(requested_source, ':') != NULL)
 				file_path = CAST_TO(char*, requested_source);
 			else
-				file_path = resolve_relative_file_path(requested_source, U32_MAX, ctx->cwd, &buffer);
+				file_path = resolve_relative_file_path(requested_source, U32_MAX, ctx->input->cwd, &buffer);
 			data = load_text_from_file(file_path);
 		}
 		break;
 		
 		case shaderc_include_type_standard:
 		{
-			BUFFER* dirs = &ctx->include_paths;
-			u32 dir_count = buf_get_element_count(dirs);
-			for(u32 i = 0; i < dir_count; i++)
+			for(u32 i = 0; i < ctx->input->include_path_count; i++)
 			{
-				const char* dir = CAST_TO(char**, buf_get_ptr_at(dirs, i))[0];
-				file_path = resolve_relative_file_path(merge_dir_and_file(dir, requested_source, &buffer), 0, ctx->cwd, &buffer);
+				const char* dir = ctx->input->include_paths[i];
+				file_path = resolve_relative_file_path(merge_dir_and_file(dir, requested_source, &buffer), 0, ctx->input->cwd, &buffer);
 				BUFFER* _data = load_text_from_file_s(file_path);
 				debug_log_info("[Codegen] [Legacy] Resolved include file: %s", file_path);
 				if(_data == NULL)

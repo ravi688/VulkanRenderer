@@ -200,26 +200,30 @@ int main(int arg_count, const char* const* argv)
 	}
 
 	/* create compiler context */
-	compiler_ctx_t* ctx = compiler_ctx_create();
-	ctx->src = buf_get_ptr(src);
-	ctx->src_len = buf_get_element_count(src);
-	ctx->src_path = src_path;
-	ctx->exe_path = result->exe_path;
-	ctx->cwd = result->cwd;
-	memcpy(&ctx->include_paths, &result->include_paths, sizeof(BUFFER));
+	sc_compiler_input_t input = 
+	{
+		.src = buf_get_ptr(src),
+		.src_len = buf_get_element_count(src),
+		.src_path = src_path,
+		.exe_path = result->exe_path,
+		.cwd = result->cwd,
+		.include_paths = CAST_TO(const char**, buf_get_ptr(&result->include_paths)),
+		.include_path_count = CAST_TO(u32, buf_get_element_count(&result->include_paths))
+	};
 	
 	/* kick the compilation  */	
-	BUFFER* sb = sc_compile(ctx);
-
-	u64 size = buf_get_element_count(sb);
-	DEBUG_LOG_INFO("Compiled shader binary info: { size = %llu bytes (%.1f KB) }", size, CAST_TO(float, size) / 1024);
-
-	/* write the result into disk */
-	write_binary_to_file(sb_path, buf_get_ptr(sb), buf_get_element_count(sb));
+	sc_compiler_output_t output = sc_compile(&input, NULL);
+	if(output.is_success)
+	{
+		debug_log_info("Compiled shader binary info: { size = %llu bytes (%.1f KB) }", output.sb_byte_count, CAST_TO(float, output.sb_byte_count) / 1024);
+		/* write the result into disk */
+		write_binary_to_file(sb_path, output.sb_bytes, output.sb_byte_count);
+	}
+	else DEBUG_LOG_ERROR("Failed to compile %s, Reason: %s", src_path, output.log);
+	
+	sc_compiler_output_destroy(&output, NULL);
 
 	/* release allocated memory */
-	compiler_ctx_destroy(ctx);
 	buf_free(src);
-	buf_free(sb);
 	destroy_cmd_args_parse_result(result);
 }
