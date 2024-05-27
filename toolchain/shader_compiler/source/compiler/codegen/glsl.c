@@ -223,7 +223,7 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 
 	if(data == NULL)
 	{
-		result->source_name = "";
+		result->source_name = NULL;
 		result->source_name_length = 0;
 		result->content = "Include Error";
 		result->content_length = strlen(result->content);
@@ -242,6 +242,8 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 
 static void release_include(void* user_data, shaderc_include_result* include_result)
 {
+	if((include_result->content != NULL) && (strcmp(include_result->content, "Include Error") != 0))
+		free(CAST_TO(void*, include_result->content));
 	free(include_result);
 }
 

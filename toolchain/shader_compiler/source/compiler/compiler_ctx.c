@@ -100,5 +100,9 @@ SC_API compiler_ctx_t* compiler_ctx_create(const char* src, const char* src_path
 
 SC_API void compiler_ctx_destroy(compiler_ctx_t* ctx)
 {
-	// TODO	
+	buf_free(&ctx->string_buffer);
+	free(ctx->lat);
+	free(ctx->sat);
+	free(ctx->sqt);
+	free(ctx);
 }

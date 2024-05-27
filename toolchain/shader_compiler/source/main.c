@@ -146,6 +146,14 @@ static cmd_args_parse_result_t* parse_cmd_args(const char* const* argv, int arg_
 	return result;
 }
 
+static void destroy_cmd_args_parse_result(cmd_args_parse_result_t* result)
+{
+	free(CAST_TO(void*, result->cwd));
+	buf_free(&result->include_paths);
+	buf_free(&result->paths);
+	free(result);
+}
+
 int main(int arg_count, const char* const* argv)
 {
 	cmd_args_parse_result_t* result = parse_cmd_args(argv, arg_count);
@@ -184,6 +192,13 @@ int main(int arg_count, const char* const* argv)
 	/* load the source file into memory */
 	BUFFER* src = load_text_from_file(src_path);
 
+	if(src == NULL)
+	{
+		DEBUG_LOG_ERROR("Failed to open the file %s or it is empty", src_path);
+		destroy_cmd_args_parse_result(result);
+		return 0;
+	}
+
 	/* create compiler context */
 	compiler_ctx_t* ctx = compiler_ctx_create();
 	ctx->src = buf_get_ptr(src);
@@ -205,5 +220,6 @@ int main(int arg_count, const char* const* argv)
 	/* release allocated memory */
 	compiler_ctx_destroy(ctx);
 	buf_free(src);
-	buf_free(sb);;
+	buf_free(sb);
+	destroy_cmd_args_parse_result(result);
 }
