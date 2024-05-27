@@ -232,8 +232,16 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void destroy_screen_info_st
 	struct_descriptor_destroy(allocator, screen_info);
 }
 
-RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* _renderer, vulkan_renderer_gpu_type_t preferred_gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
+RENDERER_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t* create_info)
 {
+	renderer_t* _renderer = create_info->renderer; 
+	vulkan_renderer_gpu_type_t prefered_gpu_type = create_info->prefered_gpu_type;
+	u32 width = create_info->width;
+	u32 height = create_info->height;
+	const char* title = create_info->title; 	
+	bool full_screen = create_info->full_screen;
+	bool resizable = create_info->resizable;
+
 	vulkan_renderer_t* renderer = memory_allocator_alloc_obj(_renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDERER, vulkan_renderer_t);
 	memzero(renderer, vulkan_renderer_t);
 	renderer->renderer = _renderer;
@@ -267,7 +275,7 @@ DEBUG_BLOCK
 	log_msg(buf_get_ptr(&log_buffer));
 )
 
-	vulkan_physical_device_t* physical_device = find_physical_device(physical_devices, physical_device_count, preferred_gpu_type);
+	vulkan_physical_device_t* physical_device = find_physical_device(physical_devices, physical_device_count, prefered_gpu_type);
 	renderer->physical_device = physical_device;
 
 
@@ -664,7 +672,7 @@ RENDERER_API void vulkan_renderer_wait_idle(vulkan_renderer_t* renderer)
 	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 }
 
-RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer)
+RENDERER_API void vulkan_renderer_destroy(vulkan_renderer_t* renderer)
 {
 	vulkan_renderer_wait_idle(renderer);
 

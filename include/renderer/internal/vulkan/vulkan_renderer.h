@@ -57,6 +57,22 @@ typedef struct memory_allocator_t memory_allocator_t;
 typedef struct vulkan_allocator_t vulkan_allocator_t;
 IF_DEBUG( typedef struct string_builder_t string_builder_t; )
 
+typedef struct vulkan_renderer_create_info_t
+{
+	renderer_t* renderer;
+	vulkan_renderer_gpu_type_t prefered_gpu_type;
+	/* width of the window's content area in screen pixels */
+	u32 width;
+	/* height of the window's content area in screen pixels */
+	u32 height;
+	/* string to be displayed in the title bar of the window */
+	const char* title;
+	/* set it to true to render onto the entire screen */
+	bool full_screen;
+	/* set it to true to make the window resizable; ignored if full_screen is true */
+	bool resizable;
+} vulkan_renderer_create_info_t;
+
 typedef struct vulkan_renderer_t
 {
 	renderer_t* renderer;
@@ -141,8 +157,8 @@ typedef struct vulkan_renderer_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API vulkan_renderer_t* vulkan_renderer_init(renderer_t* renderer, vulkan_renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable);
-RENDERER_API void vulkan_renderer_terminate(vulkan_renderer_t* renderer);
+RENDERER_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t* create_info);
+RENDERER_API void vulkan_renderer_destroy(vulkan_renderer_t* renderer);
 
 /* submits the recorded command buffer to the graphics queue and performs presentation */
 RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer);
