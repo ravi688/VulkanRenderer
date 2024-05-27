@@ -347,10 +347,6 @@ DEBUG_BLOCK
 	u32 image_count = clamp_u32(create_info->swapchain_image_count, surface_capabilities.minImageCount, (surface_capabilities.maxImageCount == 0) ? U32_MAX : surface_capabilities.maxImageCount);
 	debug_log_info("Image count: %" PRIu32, image_count);
 	
-	renderer->max_frames_in_flight = clamp_u32(create_info->max_frames_in_flight, 1u, image_count);
-	if(create_info->max_frames_in_flight != renderer->max_frames_in_flight)
-		DEBUG_LOG_WARNING("Requested max number of in flight frames %" PRIu32 " can't be allowed, it is now set to: %" PRIu32, create_info->max_frames_in_flight, renderer->max_frames_in_flight);
-
 	// create logical device
 	VkPhysicalDeviceFeatures* minimum_required_features = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PHYSICAL_DEVICE_FEATURES, VkPhysicalDeviceFeatures);
 	memzero(minimum_required_features, VkPhysicalDeviceFeatures);
@@ -394,12 +390,6 @@ DEBUG_BLOCK
 	buf_free(&log_buffer);
 )
 
-	// create semaphores
-	renderer->render_present_sync_primitives.primitive_count = image_count;
-	renderer->render_present_sync_primitives.vo_image_available_semaphores = create_semaphores(renderer, renderer->render_present_sync_primitives.primitive_count);
-	renderer->render_present_sync_primitives.vo_render_finished_semaphores = create_semaphores(renderer, renderer->render_present_sync_primitives.primitive_count);
-	renderer->render_present_sync_primitives.vo_fences = create_signaled_fences(renderer, renderer->render_present_sync_primitives.primitive_count);
-
 	//Set up graphics queue
 	vkGetDeviceQueue(renderer->logical_device->vo_handle, queue_family_indices[0], 0, &renderer->vo_graphics_queue);
 
@@ -424,13 +414,22 @@ DEBUG_BLOCK
 	memcopy(&renderer->swapchain_create_info, &swapchain_info, vulkan_swapchain_create_info_t);
 	renderer->swapchain = vulkan_swapchain_create(renderer, &swapchain_info);
 
+	image_count = renderer->swapchain->image_count;
+	renderer->max_frames_in_flight = clamp_u32(create_info->max_frames_in_flight, 1u, image_count);
+	if(create_info->max_frames_in_flight != renderer->max_frames_in_flight)
+		DEBUG_LOG_WARNING("Requested max number of in flight frames %" PRIu32 " can't be allowed, it is now set to: %" PRIu32, create_info->max_frames_in_flight, renderer->max_frames_in_flight);
+
+	// create semaphores
+	renderer->render_present_sync_primitives.primitive_count = renderer->max_frames_in_flight;
+	renderer->render_present_sync_primitives.vo_image_available_semaphores = create_semaphores(renderer, renderer->render_present_sync_primitives.primitive_count);
+	renderer->render_present_sync_primitives.vo_render_finished_semaphores = create_semaphores(renderer, renderer->render_present_sync_primitives.primitive_count);
+	renderer->render_present_sync_primitives.vo_fences = create_signaled_fences(renderer, renderer->render_present_sync_primitives.primitive_count);
+
 	// setup command buffers
 	// update the image_count variable as the actual number of images allocated for the swapchain might be greater than what had been requested
-	image_count = renderer->swapchain->image_count;
-	renderer->vo_command_buffers = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CMD_BUFFER_ARRAY, VkCommandBuffer, image_count);
-	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, image_count, renderer->vo_command_buffers);
+	renderer->vo_command_buffers = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CMD_BUFFER_ARRAY, VkCommandBuffer, renderer->max_frames_in_flight);
+	vulkan_command_buffer_allocatev(renderer, VK_COMMAND_BUFFER_LEVEL_PRIMARY, renderer->vo_command_pool, renderer->max_frames_in_flight, renderer->vo_command_buffers);
 	log_msg("Command Buffers has been allocated successfully\n");
-
 
 	//Create descripter pool
 	VkDescriptorPoolSize sizes[3] =
@@ -720,7 +719,7 @@ RENDERER_API void vulkan_renderer_destroy(vulkan_renderer_t* renderer)
 
 	vkDestroyDescriptorPool(renderer->logical_device->vo_handle, renderer->vo_descriptor_pool, VULKAN_ALLOCATION_CALLBACKS(renderer));
 	
-	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, renderer->swapchain->image_count, renderer->vo_command_buffers);
+	vkFreeCommandBuffers(renderer->logical_device->vo_handle, renderer->vo_command_pool, renderer->max_frames_in_flight, renderer->vo_command_buffers);
 	memory_allocator_dealloc(renderer->allocator, renderer->vo_command_buffers);
 
 	// destroy swapchain
