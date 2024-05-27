@@ -90,8 +90,6 @@ SC_API void remove_comments(char* start, const char* const end)
 		/* //...EOF */
 		if(cmt_end == NULL)
 			cmt_end = end;
-		/* //...\n */
-		else cmt_end += 1;
 		memset((void*)cmt_start, (int)(' '), cmt_end - cmt_start);
 		cmt_start = cmt_end;
 	}

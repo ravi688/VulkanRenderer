@@ -1,0 +1,97 @@
+#sl version 2022 // shader language version
+#sb version 2022 // shader binary version, i.e. in which binary encoding to compile to
+
+Shader
+{
+	[NoParse] // mandatory for legacy reasons
+	Properties
+	{
+		vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+		{
+			vec4 color;
+		} parameters;
+
+		// for sampling a 2D texture, you may add the following line
+		// fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform Sampler2D myTexture;
+	}
+
+	[NoParse] // mandatory for legacy reasons
+	Layout // this where we can define vertex buffer layouts
+	{
+		per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+		per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
+	}
+
+	RenderPass
+	{
+		SubPass
+		{
+			[NoParse] // mandatory for legacy reasons
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					// the pipeline for this subpass requires a color attachment, so mention it here
+					attachment { }
+				}
+
+				// the pipeline for this subpass requires interaction with depth buffers, so mention it here too
+				depthStencil
+				{
+					depthWriteEnable = true,
+					depthTestEnable = true
+				}
+			}
+
+			[NoParse] // mandatory for legacy reasons
+			GLSL // this is where actual GLSL shader will be written in
+			{
+				// vertex shader
+				#stage vertex
+
+				#version 450
+				#include <v3d.h>
+				
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				layout(location = NORMAL_LOCATION) in vec3 normal;
+				
+				layout(location = 0) out vec3 _normal;
+				
+				void main()
+				{
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+					_normal = normalize((objectInfo.normal * vec4(normal, 0)).xyz);
+				}
+
+				// fragment shader
+				#stage fragment
+
+				#version 450
+				#include <v3d.h>
+				
+				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight lightInfo;
+				
+				layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+				{
+					vec4 color;
+				} parameters;
+				
+				layout(location = 0) in vec3 _normal;
+				
+				layout(location = 0) out vec4 color;
+				
+				void main()
+				{
+					float dp = 0.5 * dot(-_normal, lightInfo.direction) + 0.5;
+					color = parameters.color * dp * vec4(lightInfo.color, 1);
+				}
+			}
+		}
+	}
+}
