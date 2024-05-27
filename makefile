@@ -106,6 +106,15 @@ $(UNPACKED_OBJECTS_DIR):
 
 init: $(PROJECT_NAME).gv $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR)
 	@echo [Log] $(PROJECT_NAME) init successfully!
+	$(MAKE) --directory=./dependencies/ttf2mesh init
+	$(MAKE) --directory=./dependencies/HPML init
+	$(MAKE) --directory=./dependencies/ECS init
+	$(MAKE) --directory=./dependencies/SafeMemory init
+	$(MAKE) --directory=./dependencies/MeshLib init
+	$(MAKE) --directory=./dependencies/GLSLCommon init
+	$(MAKE) --directory=./dependencies/Common init
+	$(MAKE) --directory=./shared-dependencies/BufferLib init
+	$(MAKE) --directory=./toolchain/shader_compiler init
 
 setup:
 	git submodule update --init
