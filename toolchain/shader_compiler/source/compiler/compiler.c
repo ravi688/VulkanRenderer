@@ -117,13 +117,13 @@ SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks
 SC_API void compiler_ctx_destroy(compiler_ctx_t* ctx)
 {
 	for(u32 i = 0; i < KEYWORD_MAX; i++)
-		if(PTR_U32_IS_NULL(&ctx->sqt[i]))
+		if(!PTR_U32_IS_NULL(&ctx->sqt[i]))
 			com_call_deallocate(&ctx->callbacks, ctx->sqt[i].ptr);
 	for(u32 i = 0; i < KEYWORD_MAX; i++)
-		if(PTR_U32_IS_NULL(&ctx->sat[i]))
+		if(!PTR_U32_IS_NULL(&ctx->sat[i]))
 			com_call_deallocate(&ctx->callbacks, ctx->sat[i].ptr);
 	for(u32 i = 0; i < KEYWORD_MAX; i++)
-		if(PTR_U32_IS_NULL(&ctx->lat[i]))
+		if(!PTR_U32_IS_NULL(&ctx->lat[i]))
 			com_call_deallocate(&ctx->callbacks, ctx->lat[i].ptr);
 	codegen_buffer_destroy(ctx->codegen_buffer);
 	codegen_buffer_release_resources(ctx->codegen_buffer);
