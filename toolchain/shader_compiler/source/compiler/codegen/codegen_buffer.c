@@ -79,15 +79,15 @@ static u32 writer_pos(void* user_data)
 	return CAST_TO(u32, buf_get_element_count(user_data));
 }
 
-SC_API codegen_buffer_t* codegen_buffer_new(sc_allocation_callbacks_t* callbacks)
+SC_API codegen_buffer_t* codegen_buffer_new(com_allocation_callbacks_t* callbacks)
 {
-	codegen_buffer_t* buffer = CAST_TO(codegen_buffer_t*, sc_call_allocate(callbacks, sizeof(codegen_buffer_t)));
+	codegen_buffer_t* buffer = CAST_TO(codegen_buffer_t*, com_call_allocate(callbacks, sizeof(codegen_buffer_t)));
 	memset(buffer, 0, sizeof(codegen_buffer_t));
 	buffer->callbacks = callbacks;
 	return buffer;
 }
 
-SC_API codegen_buffer_t* codegen_buffer_create(sc_allocation_callbacks_t* callbacks)
+SC_API codegen_buffer_t* codegen_buffer_create(com_allocation_callbacks_t* callbacks)
 {
 	codegen_buffer_t* buffer = codegen_buffer_new(callbacks);
  	buffer->main = binary_writer_create((void*)BUFcreate_with_callbacks(callbacks, NULL, sizeof(u8), 0, 0), writer_push, writer_insert, writer_ptr, writer_pos);
@@ -109,7 +109,7 @@ SC_API void codegen_buffer_release_resources(codegen_buffer_t* buffer)
 	buf_free(CAST_TO(BUFFER*, buffer->data->user_data));
 	binary_writer_release_resources(buffer->main);
 	binary_writer_release_resources(buffer->data);
-	sc_call_deallocate(buffer->callbacks, buffer);
+	com_call_deallocate(buffer->callbacks, buffer);
 }
 
 SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)

@@ -310,7 +310,7 @@ static void run_sub_pass_analysis(v3d_generic_node_t* subpass, compiler_ctx_t* c
 
 	/* parse the unparsed gfx pipeline to get more detail about the pipeline configuration */
 	u32_pair_t unparsed = unparsed_gfx_pipeline->unparsed;
-	AUTO result = ppsr_v3d_generic_parse(unparsed.start + ctx->src, U32_PAIR_DIFF(unparsed));
+	AUTO result = ppsr_v3d_generic_parse(&ctx->callbacks, unparsed.start + ctx->src, U32_PAIR_DIFF(unparsed));
 	_ASSERT(result.result == PPSR_SUCCESS);
 
 	v3d_generic_node_t* gfx_pipeline = result.root;
@@ -335,13 +335,13 @@ static void run_sub_pass_analysis(v3d_generic_node_t* subpass, compiler_ctx_t* c
 	}
 
 	/* list of color reads, i.e [Read(color = ...)] attribute on a subpass */
-	BUFFER color_reads = buf_new(u32);
+	BUFFER color_reads = buf_new_with_callbacks(&ctx->callbacks, u32);
 	/* list of binding infos, i.e [Read(color = ..., set = <set_number>, binding = <binding_number>)] attribute on a subpass */
-	BUFFER color_binds = buf_new(bind_info_t);
+	BUFFER color_binds = buf_new_with_callbacks(&ctx->callbacks, bind_info_t);
 	/* list of color writes, i.e. [Write(color = ...)] attribute on a subpass */
-	BUFFER color_writes = buf_new(u32);
+	BUFFER color_writes = buf_new_with_callbacks(&ctx->callbacks, u32);
 	/* list of color locations, i.e. [Write(color = ..., location = ...)] attribute on a subpass */
-	BUFFER color_locations = buf_new(color_location_t);
+	BUFFER color_locations = buf_new_with_callbacks(&ctx->callbacks, color_location_t);
 
 	/* now analyse the attributes on the subpass */
 
@@ -499,6 +499,7 @@ static void run_sub_pass_analysis(v3d_generic_node_t* subpass, compiler_ctx_t* c
 	analysis->color_locations = buf_get_ptr(&color_locations);
 	analysis->color_writes = buf_get_ptr(&color_writes);
 	analysis->color_write_count = buf_get_element_count(&color_writes);
+	ppsr_v3d_generic_parse_result_destroy(&ctx->callbacks, result);
 	debug_log_info("[Subpass analysis] end");
 }
 
@@ -624,10 +625,10 @@ static void run_render_pass_analysis(v3d_generic_node_t* renderpass, compiler_ct
 	analysis->depth_attachment_index = U32_MAX;
 
 	/* list of analysises of the subpasses in this renderpass */
-	BUFFER subpasses = buf_new(subpass_analysis_t);
+	BUFFER subpasses = buf_new_with_callbacks(&ctx->callbacks, subpass_analysis_t);
 
 	/* list of unique attachments that has to be created after loading the shader  */
-	BUFFER attachments = buf_new(attachment_type_t);
+	BUFFER attachments = buf_new_with_callbacks(&ctx->callbacks, attachment_type_t);
 	
 	/* stores the index of the previous subpass been analysed */
 	u32 prev_index = U32_MAX;
@@ -760,7 +761,7 @@ static bool has_color_attachment(render_pass_analysis_t* analysis)
 static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data)
 {
 	render_pass_user_data_t* data = CAST_TO(render_pass_user_data_t*, user_data);
-	render_pass_analysis_t* analysis = new(render_pass_analysis_t);
+	render_pass_analysis_t* analysis = com_allocate_obj_init(&ctx->callbacks, render_pass_analysis_t);
 	run_render_pass_analysis(node, ctx, data->prev_analysis, analysis);
 	data->prev_analysis = analysis;
 

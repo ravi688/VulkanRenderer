@@ -91,7 +91,7 @@ typedef buffer_t category_stack_t;
 
 typedef struct UserData
 {
-	sc_allocation_callbacks_t* callbacks;
+	com_allocation_callbacks_t* callbacks;
 	category_stack_t categoryStack; 			// stack of Category*
 	category_map_t* tree;				// tree of root catagories
 	dictionary_t categoryTemplates; // list of category templates to be instantiated at the runtime of the parsing algorithm
@@ -126,7 +126,7 @@ static void end_category(void* user_data);
 static void attribute(const char* name, u32 length, const char* value, u32 value_length, void* user_data);
 static void field(const char* name, u32 length, const char* value, u32 value_length, void* user_data);
 static dictionary_t* create_tree(UserData* data);
-static void destroy_tree(dictionary_t* tree, sc_allocation_callbacks_t* callbacks);
+static void destroy_tree(dictionary_t* tree, com_allocation_callbacks_t* callbacks);
 static void link(UserData* data);
 static void setup_default_values(UserData* data);
 
@@ -171,15 +171,15 @@ SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen
 }
 
 
-static inline dictionary_t* create_category_dictionary(sc_allocation_callbacks_t* callbacks)
+static inline dictionary_t* create_category_dictionary(com_allocation_callbacks_t* callbacks)
 {
-	dictionary_t* categories = sc_call_allocate(callbacks, sizeof(dictionary_t));
+	dictionary_t* categories = com_call_allocate(callbacks, sizeof(dictionary_t));
 	*categories = dictionary_create(char*, Category, 1, dictionary_key_comparer_string);
 	return categories;
 }
-static inline dictionary_t* create_field_dictionary(sc_allocation_callbacks_t* callbacks)
+static inline dictionary_t* create_field_dictionary(com_allocation_callbacks_t* callbacks)
 {
-	dictionary_t* categories = sc_call_allocate(callbacks, sizeof(dictionary_t));
+	dictionary_t* categories = com_call_allocate(callbacks, sizeof(dictionary_t));
 	*categories = dictionary_create(char*, Field, 1, dictionary_key_comparer_string);
 	return categories;
 }
@@ -230,7 +230,6 @@ static void begin_category(const char* name, u32 length, void* user_data)
 		index = dictionary_find_index_of(&data->categoryTemplates, &string);
 		if(index == DICTIONARY_INVALID_INDEX)
 			DEBUG_LOG_ERROR("Unrecognized category \"%s\"\n", string);
-		buf_free(&str_buffer);
 		CategoryTemplate* template = dictionary_get_value_ptr_at(&data->categoryTemplates, index);
 
 		// if categoryArrays is null then create new dictionary for it
@@ -250,6 +249,7 @@ static void begin_category(const char* name, u32 length, void* user_data)
 		// set the index to point the last element (just added)
 		index = dictionary_get_count(categories) - 1;
 	}
+	buf_free(&str_buffer);
 	category = dictionary_get_value_ptr_at(categories, index);
 
 	// push the found category with name 'string' on top of the stack
@@ -528,7 +528,7 @@ static category_map_t* create_tree(UserData* data)
 	return categories;
 }
 
-static void destroy_tree(category_map_t* tree, sc_allocation_callbacks_t* callbacks)
+static void destroy_tree(category_map_t* tree, com_allocation_callbacks_t* callbacks)
 {
 	u32 cat_count = dictionary_get_count(tree);
 	for(u32 i = 0; i < cat_count; i++)
@@ -537,7 +537,7 @@ static void destroy_tree(category_map_t* tree, sc_allocation_callbacks_t* callba
 		if(category->fields != NULL)
 		{
 			dictionary_free(category->fields);
-			sc_call_deallocate(callbacks, category->fields);
+			com_call_deallocate(callbacks, category->fields);
 		}
 		if(category->categories != NULL)
 			destroy_tree(category->categories, callbacks);
@@ -545,7 +545,7 @@ static void destroy_tree(category_map_t* tree, sc_allocation_callbacks_t* callba
 			destroy_tree(category->categoryArrays, callbacks);
 	}
 	dictionary_free(tree);
-	sc_call_deallocate(callbacks, tree);
+	com_call_deallocate(callbacks, tree);
 }
 
 

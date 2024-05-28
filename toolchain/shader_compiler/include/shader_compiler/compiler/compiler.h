@@ -26,7 +26,7 @@
 #pragma once
 
 #include <shader_compiler/defines.h>
-#include <shader_compiler/allocation_callbacks.h>
+#include <common/allocation_callbacks.h>
 #include <bufferlib/buffer.h>
 
 /* enclosure structure to hold src string and include paths */
@@ -63,13 +63,13 @@ typedef struct sc_compiler_output_t
 	bool is_success;
 } sc_compiler_output_t;
 
-CAN_BE_UNUSED_FUNCTION static void sc_compiler_output_destroy(sc_compiler_output_t* output, sc_allocation_callbacks_t* callbacks)
+CAN_BE_UNUSED_FUNCTION static void sc_compiler_output_destroy(sc_compiler_output_t* output, com_allocation_callbacks_t* callbacks)
 {
-	AUTO _callbacks = (callbacks == NULL) ? sc_allocation_callbacks_get_std() : *callbacks;
+	AUTO _callbacks = (callbacks == NULL) ? com_allocation_callbacks_get_std() : *callbacks;
 	if(output->sb_bytes != NULL)
-		sc_call_deallocate(&_callbacks, output->sb_bytes);
+		com_call_deallocate(&_callbacks, output->sb_bytes);
 	if(output->log != NULL)
-		sc_call_deallocate(&_callbacks, CAST_TO(void*, output->log));
+		com_call_deallocate(&_callbacks, CAST_TO(void*, output->log));
 }
 
 /* pair of a pointer and u32; usually used for storing pointer to a list of elements and the number of elements in that list */
@@ -89,7 +89,7 @@ typedef struct compiler_ctx_t
 {
 	/* private/internal properties */
 
-	sc_allocation_callbacks_t callbacks;
+	com_allocation_callbacks_t callbacks;
 
 	/* binary buffer to write code generation data (final output) */
 	codegen_buffer_t* codegen_buffer;
@@ -131,7 +131,7 @@ typedef struct compiler_ctx_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-SC_API compiler_ctx_t* compiler_ctx_create(sc_allocation_callbacks_t* callbacks);
+SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks);
 SC_API void compiler_ctx_destroy(compiler_ctx_t* ctx);
 
 /*
@@ -141,6 +141,6 @@ SC_API void compiler_ctx_destroy(compiler_ctx_t* ctx);
 
 	see: Documents/V3D/V3DShaderBinarySpec.docx for format of the compiled binary output.
  */
-SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, sc_allocation_callbacks_t* callbacks);
+SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, com_allocation_callbacks_t* callbacks);
 
 END_CPP_COMPATIBLE

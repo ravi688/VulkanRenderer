@@ -26,7 +26,7 @@
 #pragma once
 
 #include <shader_compiler/defines.h>
-#include <shader_compiler/allocation_callbacks.h>
+#include <common/allocation_callbacks.h>
 #include <common/binary_writer.h>
 #include <bufferlib/buffer.h>
 
@@ -839,7 +839,7 @@ enum
 typedef struct codegen_buffer_t
 {
 	/* allocation callbacks */
-	sc_allocation_callbacks_t* callbacks;
+	com_allocation_callbacks_t* callbacks;
 	/* main section writer is used to write the descriptions to the data section */
 	binary_writer_t* main;
 	/* data section writer is used to write in the data section, such as gfx pipeline descriptions */
@@ -849,8 +849,8 @@ typedef struct codegen_buffer_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-SC_API codegen_buffer_t* codegen_buffer_new(sc_allocation_callbacks_t* callbacks);
-SC_API codegen_buffer_t* codegen_buffer_create(sc_allocation_callbacks_t* callbacks);
+SC_API codegen_buffer_t* codegen_buffer_new(com_allocation_callbacks_t* callbacks);
+SC_API codegen_buffer_t* codegen_buffer_create(com_allocation_callbacks_t* callbacks);
 SC_API void codegen_buffer_destroy(codegen_buffer_t* buffer);
 SC_API void codegen_buffer_release_resources(codegen_buffer_t* buffer);
 

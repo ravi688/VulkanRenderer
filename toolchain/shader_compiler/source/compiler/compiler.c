@@ -38,9 +38,9 @@
 
 typedef ptr_u32_pair_t list_t;
 
-static list_t new_u32_list(sc_allocation_callbacks_t* callbacks, u32 count, ...)
+static list_t new_u32_list(com_allocation_callbacks_t* callbacks, u32 count, ...)
 {
-	u32* ptr = CAST_TO(u32*, sc_call_allocate(callbacks, count * sizeof(u32)));
+	u32* ptr = CAST_TO(u32*, com_call_allocate(callbacks, count * sizeof(u32)));
 	va_list args;
 	va_start(args, count);
 	for(u32 i = 0; i < count; i++)
@@ -48,12 +48,12 @@ static list_t new_u32_list(sc_allocation_callbacks_t* callbacks, u32 count, ...)
 	return (list_t) { ptr, count };
 }
 
-SC_API compiler_ctx_t* compiler_ctx_create(sc_allocation_callbacks_t* callbacks)
+SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks)
 {
 	/* if the callbacks supplied by the user is NULL, then use standard library malloc, realloc and free functions */
-	AUTO _callbacks = (callbacks == NULL) ? sc_allocation_callbacks_get_std() : *callbacks;
+	AUTO _callbacks = (callbacks == NULL) ? com_allocation_callbacks_get_std() : *callbacks;
 
-	compiler_ctx_t* ctx = CAST_TO(compiler_ctx_t*, sc_call_allocate(&_callbacks, sizeof(compiler_ctx_t)));
+	compiler_ctx_t* ctx = CAST_TO(compiler_ctx_t*, com_call_allocate(&_callbacks, sizeof(compiler_ctx_t)));
 	memset(ctx, 0, sizeof(compiler_ctx_t));
 
 	/* cache pointers to the allocator functions */
@@ -63,7 +63,7 @@ SC_API compiler_ctx_t* compiler_ctx_create(sc_allocation_callbacks_t* callbacks)
 
 	/* prepare the look ahead table */
 	ctx->lat_size = KEYWORD_MAX;
-	ctx->lat = CAST_TO(ptr_u32_pair_t*, sc_call_allocate(&ctx->callbacks, sizeof(ptr_u32_pair_t) * KEYWORD_MAX));
+	ctx->lat = CAST_TO(ptr_u32_pair_t*, com_call_allocate(&ctx->callbacks, sizeof(ptr_u32_pair_t) * KEYWORD_MAX));
 	ctx->lat[KEYWORD_UNDEFINED] = new_u32_list(&ctx->callbacks, 1, KEYWORD_SHADER);
 	ctx->lat[KEYWORD_TRUE] = PTR_U32_NULL;
 	ctx->lat[KEYWORD_FALSE] = PTR_U32_NULL;
@@ -77,7 +77,7 @@ SC_API compiler_ctx_t* compiler_ctx_create(sc_allocation_callbacks_t* callbacks)
 
 	/* prepare the symbol qualifiers table */
 	ctx->sqt_size = KEYWORD_MAX;
-	ctx->sqt = CAST_TO(ptr_u32_pair_t*, sc_call_allocate(&ctx->callbacks, sizeof(ptr_u32_pair_t) * KEYWORD_MAX));
+	ctx->sqt = CAST_TO(ptr_u32_pair_t*, com_call_allocate(&ctx->callbacks, sizeof(ptr_u32_pair_t) * KEYWORD_MAX));
 	ctx->sqt[KEYWORD_UNDEFINED] = PTR_U32_NULL;
 	ctx->sqt[KEYWORD_TRUE] = PTR_U32_NULL;
 	ctx->sqt[KEYWORD_FALSE] = PTR_U32_NULL;
@@ -91,7 +91,7 @@ SC_API compiler_ctx_t* compiler_ctx_create(sc_allocation_callbacks_t* callbacks)
 
 	/* prepare the symbol atributes table */
 	ctx->sat_size = KEYWORD_MAX;
-	ctx->sat = CAST_TO(ptr_u32_pair_t*, sc_call_allocate(&ctx->callbacks, sizeof(ptr_u32_pair_t) * KEYWORD_MAX));
+	ctx->sat = CAST_TO(ptr_u32_pair_t*, com_call_allocate(&ctx->callbacks, sizeof(ptr_u32_pair_t) * KEYWORD_MAX));
 	ctx->sat[KEYWORD_UNDEFINED] = PTR_U32_NULL;
 	ctx->sat[KEYWORD_TRUE] = PTR_U32_NULL;
 	ctx->sat[KEYWORD_FALSE] = PTR_U32_NULL;
@@ -118,22 +118,22 @@ SC_API void compiler_ctx_destroy(compiler_ctx_t* ctx)
 {
 	for(u32 i = 0; i < KEYWORD_MAX; i++)
 		if(PTR_U32_IS_NULL(&ctx->sqt[i]))
-			sc_call_deallocate(&ctx->callbacks, ctx->sqt[i].ptr);
+			com_call_deallocate(&ctx->callbacks, ctx->sqt[i].ptr);
 	for(u32 i = 0; i < KEYWORD_MAX; i++)
 		if(PTR_U32_IS_NULL(&ctx->sat[i]))
-			sc_call_deallocate(&ctx->callbacks, ctx->sat[i].ptr);
+			com_call_deallocate(&ctx->callbacks, ctx->sat[i].ptr);
 	for(u32 i = 0; i < KEYWORD_MAX; i++)
 		if(PTR_U32_IS_NULL(&ctx->lat[i]))
-			sc_call_deallocate(&ctx->callbacks, ctx->lat[i].ptr);
+			com_call_deallocate(&ctx->callbacks, ctx->lat[i].ptr);
 	codegen_buffer_destroy(ctx->codegen_buffer);
 	codegen_buffer_release_resources(ctx->codegen_buffer);
-	sc_call_deallocate(&ctx->callbacks, ctx->lat);
-	sc_call_deallocate(&ctx->callbacks, ctx->sat);
-	sc_call_deallocate(&ctx->callbacks, ctx->sqt);
-	sc_call_deallocate(&ctx->callbacks, ctx);
+	com_call_deallocate(&ctx->callbacks, ctx->lat);
+	com_call_deallocate(&ctx->callbacks, ctx->sat);
+	com_call_deallocate(&ctx->callbacks, ctx->sqt);
+	com_call_deallocate(&ctx->callbacks, ctx);
 }
 
-SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, sc_allocation_callbacks_t* callbacks)
+SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, com_allocation_callbacks_t* callbacks)
 {
 	compiler_ctx_t* ctx = compiler_ctx_create(callbacks);
 	ctx->input = input;
@@ -146,7 +146,7 @@ SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, sc_allo
 	ctx->src = start = write_header(start, end, ctx->codegen_buffer);
 
 	// parse the source code (perhaps partially)
-	ppsr_v3d_generic_parse_result_t result = ppsr_v3d_generic_parse(start, CAST_TO(u32, end - start));
+	ppsr_v3d_generic_parse_result_t result = ppsr_v3d_generic_parse(callbacks, start, CAST_TO(u32, end - start));
 	switch(result.result)
 	{
 		case PPSR_SUCCESS:
@@ -181,6 +181,8 @@ SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, sc_allo
 	syntax(result.root->childs[0], ctx);
 	/* generate code */
 	codegen(result.root->childs[0], ctx);
+
+	ppsr_v3d_generic_parse_result_destroy(callbacks, result);
 
 	BUFFER* f_buffer = codegen_buffer_flatten(ctx->codegen_buffer);
 	sc_compiler_output_t output = 
