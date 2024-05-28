@@ -58,7 +58,6 @@ typedef struct memory_allocator_t memory_allocator_t;
 #define NOT_IMPLEMENTED_FUNCTION() do { LOG_FETAL_ERR("You're trying to call \"%s\" which isn't implemented yet!\n", __FUNCTION__); UNREACHABLE(); } while(false)
 
 #ifdef GLOBAL_DEBUG
-#	define INLINE_IF_RELEASE_MODE /* no inline in debug mode */
 #	define IF_DEBUG_MODE(x) x
 #	define ELSE(x)
 #	define PARAM_IF_DEBUG(x) , x
@@ -66,7 +65,6 @@ typedef struct memory_allocator_t memory_allocator_t;
 #	define debug_else 	else
 #	define debug_else_if(x) else debug_if(x)
 #else
-#	define INLINE_IF_RELEASE_MODE INLINE
 #	define IF_DEBUG_MODE(x)
 #	define ELSE(x) x
 #	define PARAM_IF_DEBUG(x)
