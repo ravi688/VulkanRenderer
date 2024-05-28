@@ -115,8 +115,8 @@ typedef struct compiler_ctx_t
 
 	s32 current_pipeline_index;
 
-	/* internal string buffer */
-	BUFFER string_buffer;
+	/* this is used in glsl.c file in the resolve_include function, it is used to determine if the allocation need to be freed */
+	bool is_include_path_allocated;
 
 	/* ptr to the source string, it will be changed internally while compiling */
 	const char* src;
@@ -126,6 +126,7 @@ typedef struct compiler_ctx_t
 } compiler_ctx_t;
 
 #define PTR_U32_NULL (ptr_u32_pair_t) { }
+#define PTR_U32_IS_NULL(pair) (((pair)->ptr == NULL) && ((pair)->size == 0))
 
 BEGIN_CPP_COMPATIBLE
 

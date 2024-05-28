@@ -54,13 +54,12 @@ SC_API compiler_ctx_t* compiler_ctx_create(sc_allocation_callbacks_t* callbacks)
 	AUTO _callbacks = (callbacks == NULL) ? sc_allocation_callbacks_get_std() : *callbacks;
 
 	compiler_ctx_t* ctx = CAST_TO(compiler_ctx_t*, sc_call_allocate(&_callbacks, sizeof(compiler_ctx_t)));
+	memset(ctx, 0, sizeof(compiler_ctx_t));
 
 	/* cache pointers to the allocator functions */
 	ctx->callbacks.allocate = _callbacks.allocate;
 	ctx->callbacks.reallocate = _callbacks.reallocate;
 	ctx->callbacks.deallocate = _callbacks.deallocate;
-
-	ctx->string_buffer = buf_create_with_callbacks(&ctx->callbacks, sizeof(char), 512, 0);
 
 	/* prepare the look ahead table */
 	ctx->lat_size = KEYWORD_MAX;
@@ -117,9 +116,17 @@ SC_API compiler_ctx_t* compiler_ctx_create(sc_allocation_callbacks_t* callbacks)
 
 SC_API void compiler_ctx_destroy(compiler_ctx_t* ctx)
 {
+	for(u32 i = 0; i < KEYWORD_MAX; i++)
+		if(PTR_U32_IS_NULL(&ctx->sqt[i]))
+			sc_call_deallocate(&ctx->callbacks, ctx->sqt[i].ptr);
+	for(u32 i = 0; i < KEYWORD_MAX; i++)
+		if(PTR_U32_IS_NULL(&ctx->sat[i]))
+			sc_call_deallocate(&ctx->callbacks, ctx->sat[i].ptr);
+	for(u32 i = 0; i < KEYWORD_MAX; i++)
+		if(PTR_U32_IS_NULL(&ctx->lat[i]))
+			sc_call_deallocate(&ctx->callbacks, ctx->lat[i].ptr);
 	codegen_buffer_destroy(ctx->codegen_buffer);
 	codegen_buffer_release_resources(ctx->codegen_buffer);
-	buf_free(&ctx->string_buffer);
 	sc_call_deallocate(&ctx->callbacks, ctx->lat);
 	sc_call_deallocate(&ctx->callbacks, ctx->sat);
 	sc_call_deallocate(&ctx->callbacks, ctx->sqt);
@@ -183,5 +190,7 @@ SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, sc_allo
 		.is_success = true
 	};
 	buf_free_except_data(f_buffer);
+
+	compiler_ctx_destroy(ctx);
 	return output;
 }

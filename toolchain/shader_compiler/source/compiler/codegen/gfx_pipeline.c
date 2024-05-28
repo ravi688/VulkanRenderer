@@ -73,20 +73,28 @@ typedef struct Field
 	ValueWriter write;					// pointer to a writer function corresponding to this field
 } Field;
 
+/* key = string, value = Field */
+typedef dictionary_t field_map_t;
+/* key = string, value = Category */
+typedef dictionary_t category_map_t;
+
 typedef struct Category
 {
-	dictionary_t* fields; // key = string, value = Field
-	dictionary_t* categories; // key = string, value = Category
+	field_map_t* fields;
+	category_map_t* categories;
 	dictionary_t* categoryArrays;
-	bool isTemplate; 				// true if this Category is an instance of a template category
+	/* true if this Category is an instance of a template category */
+	bool isTemplate;
 } Category;
+
+typedef buffer_t category_stack_t;
 
 typedef struct UserData
 {
-	BUFFER categoryStack; 			// stack of Category*
-	dictionary_t* tree;				// tree of root catagories
+	sc_allocation_callbacks_t* callbacks;
+	category_stack_t categoryStack; 			// stack of Category*
+	category_map_t* tree;				// tree of root catagories
 	dictionary_t categoryTemplates; // list of category templates to be instantiated at the runtime of the parsing algorithm
-	BUFFER stringBuffer;			// temporary buffer for string processing at the runtime of the parsing algorithm
 	BUFFER* literalBuffer;
 
 	buf_ucount_t mainBaseOffset; 	// offset of the main branch of the output buffer
@@ -118,20 +126,20 @@ static void end_category(void* user_data);
 static void attribute(const char* name, u32 length, const char* value, u32 value_length, void* user_data);
 static void field(const char* name, u32 length, const char* value, u32 value_length, void* user_data);
 static dictionary_t* create_tree(UserData* data);
-static void destroy_tree(dictionary_t* tree);
+static void destroy_tree(dictionary_t* tree, sc_allocation_callbacks_t* callbacks);
 static void link(UserData* data);
 static void setup_default_values(UserData* data);
 
 SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen_buffer_t* buffer)
 {
-	BUFFER stringLiteralBuffer = buf_create(sizeof(char*), 1024, 0);	 // 8 KB
+	BUFFER stringLiteralBuffer = buf_create_with_callbacks(buffer->callbacks, sizeof(char*), 1024, 0);	 // 8 KB
 	UserData data = {};
+	data.callbacks = buffer->callbacks;
 	data.categoryStack = buf_create(sizeof(Category*), 1, 0);
 	data.mainBaseOffset = buf_get_element_count(CAST_TO(BUFFER*, buffer->data->user_data));
 	data.mainOutput = CAST_TO(BUFFER*, buffer->data->user_data);
 	data.baseOffset = data.mainBaseOffset;
 	data.output = data.mainOutput;
-	data.stringBuffer = buf_create(sizeof(char), 1, 0);
 	data.literalBuffer = &stringLiteralBuffer;
 	data.categoryTemplates = dictionary_create(char*, CategoryTemplate, 1, dictionary_key_comparer_string);
 	data.tree = create_tree(&data);
@@ -149,9 +157,6 @@ SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen
 		.user_data = &data
 	};
 	
-	// append null character
-	buf_push_null(&data.stringBuffer);
-	
 	// parse the string
 	parse(start, end - start, &callbacks, 0);
 
@@ -159,23 +164,22 @@ SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen
 	link(&data);
 
 	// release heap allocated resources
-	destroy_tree(data.tree);
+	destroy_tree(data.tree, data.callbacks);
 	dictionary_free(&data.categoryTemplates);
-	buf_free(&data.stringBuffer);
 	buf_free(&data.categoryStack);
 	buf_free(&stringLiteralBuffer);
 }
 
 
-static inline dictionary_t* create_category_dictionary()
+static inline dictionary_t* create_category_dictionary(sc_allocation_callbacks_t* callbacks)
 {
-	dictionary_t* categories = malloc(sizeof(dictionary_t));
+	dictionary_t* categories = sc_call_allocate(callbacks, sizeof(dictionary_t));
 	*categories = dictionary_create(char*, Category, 1, dictionary_key_comparer_string);
 	return categories;
 }
-static inline dictionary_t* create_field_dictionary()
+static inline dictionary_t* create_field_dictionary(sc_allocation_callbacks_t* callbacks)
 {
-	dictionary_t* categories = malloc(sizeof(dictionary_t));
+	dictionary_t* categories = sc_call_allocate(callbacks, sizeof(dictionary_t));
 	*categories = dictionary_create(char*, Field, 1, dictionary_key_comparer_string);
 	return categories;
 }
@@ -183,26 +187,27 @@ static inline dictionary_t* create_field_dictionary()
 static void begin_category(const char* name, u32 length, void* user_data)
 {
 	UserData* data = user_data;
-	BUFFER* stringBuffer = &data->stringBuffer;
+
+	buffer_t str_buffer = buf_create_with_callbacks(data->callbacks, sizeof(char), 64, 0);
 
 	// clear the string buffer
-	buf_clear(stringBuffer, NULL);
+	buf_clear(&str_buffer, NULL);
 	// append the category name and priod character
 	while(length > 0)
 	{
 		char ch = *name;
 		if((ch != '-') && (ch != '_') && (ch != ' '))
-			buf_push_char(stringBuffer, tolower(ch));
+			buf_push_char(&str_buffer, tolower(ch));
 		name++;
 		--length;
 	}
 	// add the null character again to complete the string
-	buf_push_null(stringBuffer);
+	buf_push_null(&str_buffer);
 
 	Category* category;
 	dictionary_t* categories;
 
-	const char* string = buf_get_ptr(stringBuffer);
+	const char* string = buf_get_ptr(&str_buffer);
 
 	// if starting from root
 	if(buf_get_element_count(&data->categoryStack) == 0)
@@ -225,11 +230,12 @@ static void begin_category(const char* name, u32 length, void* user_data)
 		index = dictionary_find_index_of(&data->categoryTemplates, &string);
 		if(index == DICTIONARY_INVALID_INDEX)
 			DEBUG_LOG_ERROR("Unrecognized category \"%s\"\n", string);
+		buf_free(&str_buffer);
 		CategoryTemplate* template = dictionary_get_value_ptr_at(&data->categoryTemplates, index);
 
 		// if categoryArrays is null then create new dictionary for it
 		if(category->categoryArrays == NULL)
-			category->categoryArrays = create_category_dictionary();
+			category->categoryArrays = create_category_dictionary(data->callbacks);
 
 		// switch the output to template->instances
 		data->output = &template->instances;
@@ -279,10 +285,11 @@ static void field(const char* name, u32 length, const char* value, u32 value_len
 	if(value_length == 0) return;
 	
 	UserData* data = user_data;
-	BUFFER* stringBuffer = &data->stringBuffer;
+	
+	buffer_t str_buffer = buf_create_with_callbacks(data->callbacks, sizeof(char), 64, 0);
 
 	// clear the string buffer
-	buf_clear(stringBuffer, NULL);
+	buf_clear(&str_buffer, NULL);
 	u32 _length = 0;
 	// append the field name
 	while(length > 0)
@@ -290,14 +297,14 @@ static void field(const char* name, u32 length, const char* value, u32 value_len
 		char ch = *name;
 		if((ch != '-') && (ch != '_') && (ch != ' '))
 		{
-			buf_push_char(stringBuffer, tolower(ch));
+			buf_push_char(&str_buffer, tolower(ch));
 			++_length;
 		}
 		name++;
 		--length;
 	}
 	// add the null character again to complete the string
-	buf_push_null(stringBuffer);
+	buf_push_null(&str_buffer);
 	
 	char value_string[value_length + 1];
 	memcpy(value_string, value, value_length);
@@ -308,12 +315,13 @@ static void field(const char* name, u32 length, const char* value, u32 value_len
 	buf_peek(&data->categoryStack, &currentCategory);
 	assert(currentCategory->fields != NULL);
 
-	const char* string = buf_get_ptr(stringBuffer);
+	const char* string = buf_get_ptr(&str_buffer);
 
 	// find the field with name 'string' in the current category
 	u64 index = dictionary_find_index_of(currentCategory->fields, &string);
 	if(index == DICTIONARY_INVALID_INDEX)
 		DEBUG_LOG_ERROR("Unrecognized field \"%s\"\n", string);
+	buf_free(&str_buffer);
 	Field* field = dictionary_get_value_ptr_at(currentCategory->fields, index);
 	
 	// finally write the field's value to the output buffer
@@ -345,17 +353,20 @@ static const char* parse(const char* str, u32 length, callbacks_t* callbacks, u3
 	{
 		// start of an attribute
 		case '[':
-		break;
-
+		{
+			break;
+		}
 		// start of a category
 		case '{':
+		{
 			if(callbacks->begin_category != NULL)
 				callbacks->begin_category(name, len, callbacks->user_data);
 			categoryRank++;
-		break;
-
+			break;
+		}
 		// end of a category
 		case '}':
+		{
 			if((categoryRank > 0) && (len != 0))
 			{
 				if(callbacks->field != NULL)
@@ -370,10 +381,11 @@ static const char* parse(const char* str, u32 length, callbacks_t* callbacks, u3
 			}
 			else
 				DEBUG_LOG_ERROR("Unexpected '}', closing brace '}' must match with opening branch '{'\n");			
-		break;
-
+			break;
+		}
 		// assignment to a field
 		case '=':
+		{
 			const char* field_name = name;
 			++str;
 			str = skip_whitespaces(str, end);
@@ -386,25 +398,31 @@ static const char* parse(const char* str, u32 length, callbacks_t* callbacks, u3
 			// field
 			else if(callbacks->field != NULL)
 				callbacks->field(field_name, len, str - _len, _len, callbacks->user_data);
-		break;
-
+			break;
+		}
 		// declaration of a field but not assignment
 		case ',':
+		{
 			if(callbacks->field  != NULL)
 				callbacks->field(name, len, NULL, 0, callbacks->user_data);
-		break;
-
+			break;
+		}
 		case ']':
+		{
 			if(callbacks->attribute != NULL)
 				callbacks->attribute(name, len, NULL, 0, callbacks->user_data);
-		break;
-
+			break;
+		}
 		case 0:
+		{
 			DEBUG_LOG_ERROR("Unexpected end of file\n");
-		break;
-
+			break;
+		}
 		default:
+		{
 			DEBUG_LOG_ERROR("Expected '{', '=' or ',' before \"%.*s\"\n", len, str);
+			break;
+		}
 	}
 	++str;
 	return parse(str, length - (str - origin), callbacks, categoryRank);
@@ -452,9 +470,9 @@ static void setup_default_values(UserData* data)
 	};
 }
 
-static dictionary_t* create_tree(UserData* data)
+static category_map_t* create_tree(UserData* data)
 {
-	dictionary_t* categories = create_category_dictionary();
+	category_map_t* categories = create_category_dictionary(data->callbacks);
 	Category category = create_inputassembly_category(data);
 	dictionary_push(categories, createStringLiteral("inputassembly"), &category);
 	category = create_tessellation_category(data);
@@ -510,9 +528,24 @@ static dictionary_t* create_tree(UserData* data)
 	return categories;
 }
 
-static void destroy_tree(dictionary_t* tree)
+static void destroy_tree(category_map_t* tree, sc_allocation_callbacks_t* callbacks)
 {
-
+	u32 cat_count = dictionary_get_count(tree);
+	for(u32 i = 0; i < cat_count; i++)
+	{
+		AUTO category = CAST_TO(Category*, dictionary_get_value_ptr_at(tree, i));
+		if(category->fields != NULL)
+		{
+			dictionary_free(category->fields);
+			sc_call_deallocate(callbacks, category->fields);
+		}
+		if(category->categories != NULL)
+			destroy_tree(category->categories, callbacks);
+		if(category->categoryArrays != NULL)
+			destroy_tree(category->categoryArrays, callbacks);
+	}
+	dictionary_free(tree);
+	sc_call_deallocate(callbacks, tree);
 }
 
 
@@ -589,7 +622,7 @@ static void write_bool(const char* str, void* output);
 
 CAN_BE_UNUSED_FUNCTION static Category create_graphicspipeline_category(UserData* data)
 {
-	dictionary_t* categories = create_category_dictionary();
+	dictionary_t* categories = create_category_dictionary(data->callbacks);
 	Category category = create_inputassembly_category(data);
 	dictionary_push(categories, createStringLiteral("inputassembly"), &category);
 	category = create_tessellation_category(data);
@@ -627,7 +660,7 @@ static void write_VkColorComponentFlags(const char* str, void* output);
 
 static Category create_inputassembly_category(UserData* data)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
 	Field field = { offsetof(gfx_pipeline_t, inputassembly.topology), write_VkPrimitiveTopology };
 	dictionary_push(fields, createStringLiteral("topology"), &field);
 	field = (Field) { offsetof(gfx_pipeline_t, inputassembly.primitiveRestartEnable), write_VkBool32 };
@@ -637,29 +670,29 @@ static Category create_inputassembly_category(UserData* data)
 
 static Category create_tessellation_category(UserData* data)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
 	Field field = { offsetof(gfx_pipeline_t, tessellation.patchControlPoints), write_uint32_t };
 	dictionary_push(fields, createStringLiteral("patchcontrolpoints"), &field);
 	return (Category) { .fields = fields, .categories = NULL };
 }
 
-static Category create_offset2d_category(BUFFER* literalBuffer, u32 offset)
+static Category create_offset2d_category(UserData* data, u32 offset)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
     Field field = { offset + offsetof(VkOffset2D, x), write_int32_t };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "x"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "x"), &field);
     field = (Field) { offset + offsetof(VkOffset2D, y), write_int32_t };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "y"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "y"), &field);
 	return (Category) { .fields = fields, .categories = NULL };	
 }
 
-static Category create_extent2d_category(BUFFER* literalBuffer, u32 offset)
+static Category create_extent2d_category(UserData* data, u32 offset)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
     Field field = { offset + offsetof(VkExtent2D, width), write_int32_t };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "width"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "width"), &field);
     field = (Field) { offset + offsetof(VkExtent2D, height), write_int32_t };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "height"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "height"), &field);
 	return (Category) { .fields = fields, .categories = NULL };	
 }
 
@@ -670,10 +703,10 @@ static Category create_scissor_category(UserData* data)
 	buf_ucount_t _offset = buf_get_element_count(data->output);
 	buf_push_pseudo(data->output, sizeof(VkRect2D));
 	memcpy(buf_get_ptr_at(data->output, _offset), &data->defaultScissor, sizeof(VkRect2D));
-	dictionary_t* categories = create_category_dictionary();
-	Category category = create_offset2d_category(data->literalBuffer, offset);
+	dictionary_t* categories = create_category_dictionary(data->callbacks);
+	Category category = create_offset2d_category(data, offset);
 	dictionary_push(categories, createStringLiteral("offset"), &category);
-	category = create_extent2d_category(data->literalBuffer, offset + offsetof(VkRect2D, extent));
+	category = create_extent2d_category(data, offset + offsetof(VkRect2D, extent));
 	dictionary_push(categories, createStringLiteral("extent"), &category);
 	return (Category) { .fields = NULL, .categories = categories };
 }
@@ -685,7 +718,7 @@ static Category create_viewport_category(UserData* data)
 	buf_ucount_t _offset = buf_get_element_count(data->output);
 	buf_push_pseudo(data->output, sizeof(VkViewport));
 	memcpy(buf_get_ptr_at(data->output, _offset), &data->defaultViewport, sizeof(VkViewport));
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
     Field field = { offset + offsetof(VkViewport, x), write_float };
     dictionary_push(fields, createStringLiteral("x"), &field);
     field = (Field) { offset + offsetof(VkViewport, y), write_float };
@@ -703,7 +736,7 @@ static Category create_viewport_category(UserData* data)
 
 static Category create_viewport_state_category(UserData* data)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
 	Field field = { offsetof(gfx_pipeline_t, viewport.viewportCount), write_uint32_t };
 	dictionary_push(fields, createStringLiteral("viewportcount"), &field);
 	field = (Field) { offsetof(gfx_pipeline_t, viewport.scissorCount), write_uint32_t };
@@ -728,7 +761,7 @@ static Category create_viewport_state_category(UserData* data)
 
 static Category create_rasterization_category(UserData* data)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
     Field field = { offsetof(gfx_pipeline_t, rasterization.depthClampEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("depthclampenable"), &field);
     field = (Field) { offsetof(gfx_pipeline_t, rasterization.rasterizerDiscardEnable), write_VkBool32 };
@@ -754,7 +787,7 @@ static Category create_rasterization_category(UserData* data)
 
 static Category create_multisample_category(UserData* data)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
     Field field = { offsetof(gfx_pipeline_t, multisample.rasterizationSamples), write_VkSampleCountFlagBits };
     dictionary_push(fields, createStringLiteral("rasterizationsamples"), &field);
     field = (Field) { offsetof(gfx_pipeline_t, multisample.sampleShadingEnable), write_VkBool32 };
@@ -768,11 +801,11 @@ static Category create_multisample_category(UserData* data)
 	return (Category) { .fields = fields, .categories = NULL };
 }
 
-static Category create_stencil_op_category(BUFFER* literalBuffer, u32 offset);
+static Category create_stencil_op_category(UserData* data, u32 offset);
 
 static Category create_depthstencil_category(UserData* data)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
     Field field = { offsetof(gfx_pipeline_t, depthstencil.depthTestEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("depthtestenable"), &field);
     field = (Field) { offsetof(gfx_pipeline_t, depthstencil.depthWriteEnable), write_VkBool32 };
@@ -788,31 +821,31 @@ static Category create_depthstencil_category(UserData* data)
     field = (Field) { offsetof(gfx_pipeline_t, depthstencil.maxDepthBounds), write_float };
     dictionary_push(fields, createStringLiteral("maxdepthbounds"), &field);
 
-    dictionary_t* categories = create_category_dictionary();
-    Category category = create_stencil_op_category(data->literalBuffer, offsetof(gfx_pipeline_t, depthstencil.front));
+    dictionary_t* categories = create_category_dictionary(data->callbacks);
+    Category category = create_stencil_op_category(data, offsetof(gfx_pipeline_t, depthstencil.front));
     dictionary_push(categories, createStringLiteral("front"), &category);
-    category = create_stencil_op_category(data->literalBuffer, offsetof(gfx_pipeline_t, depthstencil.back));
+    category = create_stencil_op_category(data, offsetof(gfx_pipeline_t, depthstencil.back));
     dictionary_push(categories, createStringLiteral("back"), &category);
 	return (Category) { .fields = fields, .categories = categories };
 }
 
-static Category create_stencil_op_category(BUFFER* literalBuffer, u32 offset)
+static Category create_stencil_op_category(UserData* data, u32 offset)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
     Field field = { offset + offsetof(VkStencilOpState, failOp), write_VkStencilOp };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "failop"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "failop"), &field);
     field = (Field) { offset + offsetof(VkStencilOpState, passOp), write_VkStencilOp };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "passop"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "passop"), &field);
     field = (Field) { offset + offsetof(VkStencilOpState, depthFailOp), write_VkStencilOp };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "depthfailop"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "depthfailop"), &field);
     field = (Field) { offset + offsetof(VkStencilOpState, compareOp), write_VkCompareOp };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "compareop"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "compareop"), &field);
     field = (Field) { offset + offsetof(VkStencilOpState, compareMask), write_uint32_t };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "comparemask"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "comparemask"), &field);
     field = (Field) { offset + offsetof(VkStencilOpState, writeMask), write_uint32_t };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "writemask"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "writemask"), &field);
     field = (Field) { offset + offsetof(VkStencilOpState, reference), write_uint32_t };
-    dictionary_push(fields, __createStringLiteral(literalBuffer, "reference"), &field);
+    dictionary_push(fields, __createStringLiteral(data->literalBuffer, "reference"), &field);
 	return (Category) { .fields = fields, .categories = NULL };
 }
 
@@ -821,7 +854,7 @@ static Category create_blendconstants_category(UserData* data);
 
 static Category create_colorblend_category(UserData* data)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
     Field field = { offsetof(gfx_pipeline_t, colorblend.logicOpEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("logicopenable"), &field);
     field = (Field) { offsetof(gfx_pipeline_t, colorblend.logicOp), write_VkLogicOp };
@@ -836,7 +869,7 @@ static Category create_colorblend_category(UserData* data)
     };
     dictionary_push(&data->categoryTemplates, createStringLiteral("attachment"), &colorAttachmentTemplate);
 
-    dictionary_t* categories = create_category_dictionary();
+    dictionary_t* categories = create_category_dictionary(data->callbacks);
     Category category = create_blendconstants_category(data);
     dictionary_push(categories, createStringLiteral("blendconstants"), &category);
 	return (Category) { .fields = fields, .categories = categories };
@@ -844,7 +877,7 @@ static Category create_colorblend_category(UserData* data)
 
 static Category create_blendconstants_category(UserData* data)
 {
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
 	Field field = { offsetof(gfx_pipeline_t, colorblend.blendConstants[0]), write_float };
 	dictionary_push(fields, createStringLiteral("r"), &field);
 	field = (Field) { offsetof(gfx_pipeline_t, colorblend.blendConstants[1]), write_float };
@@ -862,7 +895,7 @@ static Category create_colorattachment_category(UserData* data)
 	buf_ucount_t _offset = buf_get_element_count(data->output);
 	buf_push_pseudo(data->output, sizeof(VkPipelineColorBlendAttachmentState));
 	memcpy(buf_get_ptr_at(data->output, _offset), &data->defaultColorBlendAttachmentState, sizeof(VkPipelineColorBlendAttachmentState));
-	dictionary_t* fields = create_field_dictionary();
+	dictionary_t* fields = create_field_dictionary(data->callbacks);
     Field field = { offset + offsetof(VkPipelineColorBlendAttachmentState, blendEnable), write_VkBool32 };
     dictionary_push(fields, createStringLiteral("blendenable"), &field);
     field = (Field) { offset + offsetof(VkPipelineColorBlendAttachmentState, srcColorBlendFactor), write_VkBlendFactor };

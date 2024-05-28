@@ -89,7 +89,7 @@ SC_API void write_glsl(const char* start, const char* end, compiler_ctx_t* ctx)
 {
 	CAN_BE_UNUSED_VARIABLE const char* _start = start;
 	
-	shader_source_t* sources = CAST_TO(shader_source_t*, malloc(sizeof(shader_source_t) * SHADER_TYPE_MAX));
+	shader_source_t* sources = CAST_TO(shader_source_t*, sc_call_allocate(&ctx->callbacks, sizeof(shader_source_t) * SHADER_TYPE_MAX));
 	memset(sources, 0, sizeof(shader_source_t) * SHADER_TYPE_MAX);
 	
 	const char* temp = NULL;
@@ -137,22 +137,16 @@ SC_API void write_glsl(const char* start, const char* end, compiler_ctx_t* ctx)
 	serialize_shader(sources, shader_count, ctx->codegen_buffer, ctx);
 }
 
-static char* resolve_relative_file_path(const char* src_path, u32 src_index, const char* cwd, BUFFER* buffer)
+static char* resolve_relative_file_path(const char* src_path, const char* cwd, sc_allocation_callbacks_t* callbacks)
 {
-	if(src_index != U32_MAX)
-		src_path = buf_get_ptr_at(buffer, src_index);
 	u32 src_len = strlen(src_path);
 	u32 cwd_len = strlen(cwd);
 
 	/* buf_push_pseudo_get_ptr() */
-	u32 index = buf_get_element_count(buffer);
-	buf_push_pseudo(buffer, cwd_len + src_len + 1);
-	char* file_path = CAST_TO(char*, buf_get_ptr_at(buffer, index));
+	buffer_t buffer = buf_create_with_callbacks(callbacks, sizeof(char), 128, 0);
+	buf_push_pseudo(&buffer, cwd_len + src_len + 1);
+	char* file_path = CAST_TO(char*, buf_get_ptr(&buffer));
 
-	/* update src_path as the buffer has been resized (the internall memory buffer address has been) */
-	if(src_index != U32_MAX)
-		src_path = buf_get_ptr_at(buffer, src_index);
-	
 	memcpy(CAST_TO(void*, file_path), cwd,  cwd_len);
 	file_path[cwd_len] = '/';
 	memcpy(CAST_TO(void*, file_path + cwd_len + 1), src_path, src_len);
@@ -160,22 +154,23 @@ static char* resolve_relative_file_path(const char* src_path, u32 src_index, con
 	return file_path;
 }
 
-static char* merge_dir_and_file(const char* dir, const char* file, BUFFER* buffer)
+static char* merge_dir_and_file(const char* dir, const char* file, sc_allocation_callbacks_t* callbacks)
 {
-	buf_clear(buffer, NULL);
-	buf_push_string(buffer, dir);
-	char* ptr = buf_peek_ptr(buffer);
+	buffer_t buffer = buf_create_with_callbacks(callbacks, sizeof(char), 128, 0);
+	buf_push_string(&buffer, dir);
+	char* ptr = buf_peek_ptr(&buffer);
 	if((*ptr != '/') || (*ptr != '\\'))
-		buf_push_char(buffer, '/');
-	buf_push_string(buffer, file);
-	buf_push_null(buffer);
-	return buf_get_ptr(buffer);
+		buf_push_char(&buffer, '/');
+	buf_push_string(&buffer, file);
+	buf_push_null(&buffer);
+	buf_fit(&buffer);
+	return buf_get_ptr(&buffer);
 }
 
 static shaderc_include_result* resolve_include(void* user_data, const char* requested_source, int type, const char* requesting_source, size_t include_depth)
 {
 	compiler_ctx_t* ctx = CAST_TO(compiler_ctx_t*, user_data);
-	shaderc_include_result* result = CAST_TO(shaderc_include_result*, malloc(sizeof(shaderc_include_result)));
+	shaderc_include_result* result = CAST_TO(shaderc_include_result*, sc_call_allocate(&ctx->callbacks, sizeof(shaderc_include_result)));
 
 	_assert((type >= shaderc_include_type_relative) && (type <= shaderc_include_type_standard));
 	
@@ -184,7 +179,6 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 	char* file_path = NULL;
 
 	BUFFER* data = NULL;
-	BUFFER buffer = buf_new(char);
 
 	switch(type)
 	{
@@ -194,7 +188,10 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 			if(strchr(requested_source, ':') != NULL)
 				file_path = CAST_TO(char*, requested_source);
 			else
-				file_path = resolve_relative_file_path(requested_source, U32_MAX, ctx->input->cwd, &buffer);
+			{
+				file_path = resolve_relative_file_path(requested_source, ctx->input->cwd, &ctx->callbacks);
+				ctx->is_include_path_allocated = true;
+			}
 			data = load_text_from_file(file_path);
 		}
 		break;
@@ -204,7 +201,10 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 			for(u32 i = 0; i < ctx->input->include_path_count; i++)
 			{
 				const char* dir = ctx->input->include_paths[i];
-				file_path = resolve_relative_file_path(merge_dir_and_file(dir, requested_source, &buffer), 0, ctx->input->cwd, &buffer);
+				char* merged_path = merge_dir_and_file(dir, requested_source, &ctx->callbacks);
+				file_path = resolve_relative_file_path(merged_path, ctx->input->cwd, &ctx->callbacks);
+				sc_call_deallocate(&ctx->callbacks, merged_path);
+				ctx->is_include_path_allocated = true;
 				BUFFER* _data = load_text_from_file_s(file_path);
 				debug_log_info("[Codegen] [Legacy] Resolved include file: %s", file_path);
 				if(_data == NULL)
@@ -240,9 +240,15 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 
 static void release_include(void* user_data, shaderc_include_result* include_result)
 {
+	AUTO ctx = CAST_TO(compiler_ctx_t*, user_data);
+	if(ctx->is_include_path_allocated)
+	{
+		sc_call_deallocate(&ctx->callbacks, CAST_TO(void*, include_result->source_name));
+		ctx->is_include_path_allocated = false;
+	}
 	if((include_result->content != NULL) && (strcmp(include_result->content, "Include Error") != 0))
 		free(CAST_TO(void*, include_result->content));
-	free(include_result);
+	sc_call_deallocate(&ctx->callbacks, include_result);
 }
 
 static shaderc_compile_options_t get_compile_options(compiler_ctx_t* ctx)

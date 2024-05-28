@@ -99,14 +99,16 @@ SC_API void codegen_buffer_destroy(codegen_buffer_t* buffer)
 {
 	buf_clear(CAST_TO(BUFFER*, buffer->main->user_data), NULL);
 	buf_clear(CAST_TO(BUFFER*, buffer->data->user_data), NULL);
-	buf_clear(buffer->flat, NULL);
+	binary_writer_destroy(buffer->main);
+	binary_writer_destroy(buffer->data);
 }
 
 SC_API void codegen_buffer_release_resources(codegen_buffer_t* buffer)
 {
 	buf_free(CAST_TO(BUFFER*, buffer->main->user_data));
 	buf_free(CAST_TO(BUFFER*, buffer->data->user_data));
-	buf_free(buffer->flat);
+	binary_writer_release_resources(buffer->main);
+	binary_writer_release_resources(buffer->data);
 	sc_call_deallocate(buffer->callbacks, buffer);
 }
 
@@ -155,18 +157,18 @@ SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 
 	u32 data_size = buf_get_element_count(CAST_TO(BUFFER*, buffer->data->user_data));
 	u32 flat_size = main_size + data_size;
-	if(buffer->flat == NULL)
-		buffer->flat = BUFcreate_with_callbacks(buffer->callbacks, NULL, sizeof(u8), flat_size, 0);
+	
+	buffer_t* flat_buffer = BUFcreate_with_callbacks(buffer->callbacks, NULL, sizeof(u8), flat_size, 0);
 
-	buf_clear(buffer->flat, NULL);
-	buf_push_pseudo(buffer->flat, flat_size);
+	buf_clear(flat_buffer, NULL);
+	buf_push_pseudo(flat_buffer, flat_size);
 
-	void* ptr = buf_get_ptr(buffer->flat);
+	void* ptr = buf_get_ptr(flat_buffer);
 	memcpy(ptr, buf_get_ptr(CAST_TO(BUFFER*, buffer->main->user_data)), main_size);
 	memcpy(ptr + main_size, buf_get_ptr(CAST_TO(BUFFER*, buffer->data->user_data)), data_size);
 
 	debug_log_info("[Codegen Buffer] data section size: %lu", data_size);
 	debug_log_info("[Codegen Buffer] main section size: %lu", main_size);
 
-	return buffer->flat;
+	return flat_buffer;
 }

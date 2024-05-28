@@ -844,8 +844,6 @@ typedef struct codegen_buffer_t
 	binary_writer_t* main;
 	/* data section writer is used to write in the data section, such as gfx pipeline descriptions */
 	binary_writer_t* data;
-	/* lazily allocated flat buffer, it will point to a valid flat buffer after calling codegen_buffer_flatten() */
-	BUFFER* flat;
 } codegen_buffer_t;
 
 BEGIN_CPP_COMPATIBLE

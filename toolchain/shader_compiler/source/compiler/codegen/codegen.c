@@ -715,12 +715,13 @@ typedef enum render_pass_type_t
 /* immediate version of 'write_layout' function */
 static void write_layout2(compiler_ctx_t* ctx, const char* format, ...)
 {
-	buf_clear(&ctx->string_buffer, NULL);
+	buffer_t string_buffer = buf_create_with_callbacks(&ctx->callbacks, sizeof(char), 64, 0);
 	va_list args;
 	va_start(args, format);
- 	buf_vprintf(&ctx->string_buffer, NULL, format, args);
+ 	buf_vprintf(&string_buffer, NULL, format, args);
  	va_end(args);
-	write_layout(buf_get_ptr(&ctx->string_buffer), buf_peek_ptr(&ctx->string_buffer), ctx->codegen_buffer, false);
+	write_layout(buf_get_ptr(&string_buffer), buf_peek_ptr(&string_buffer), ctx->codegen_buffer, false);
+	buf_free(&string_buffer);
 }
 
 static void codegen_render_set_binding_descriptions(render_pass_analysis_t* analysis, compiler_ctx_t* ctx, u32 index)
