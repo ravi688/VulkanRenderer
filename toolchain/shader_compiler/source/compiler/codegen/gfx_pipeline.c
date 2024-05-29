@@ -135,7 +135,7 @@ SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen
 	BUFFER stringLiteralBuffer = buf_create_with_callbacks(buffer->callbacks, sizeof(char*), 1024, 0);	 // 8 KB
 	UserData data = {};
 	data.callbacks = buffer->callbacks;
-	data.categoryStack = buf_create(sizeof(Category*), 1, 0);
+	data.categoryStack = buf_create_with_callbacks(data.callbacks, sizeof(Category*), 1, 0);
 	data.mainBaseOffset = buf_get_element_count(CAST_TO(BUFFER*, buffer->data->user_data));
 	data.mainOutput = CAST_TO(BUFFER*, buffer->data->user_data);
 	data.baseOffset = data.mainBaseOffset;
@@ -165,7 +165,14 @@ SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen
 
 	// release heap allocated resources
 	destroy_tree(data.tree, data.callbacks);
+	u32 template_count = dictionary_get_count(&data.categoryTemplates);
+	for(u32 i = 0; i < template_count; i++)
+	{
+		AUTO template = CAST_TO(CategoryTemplate*, dictionary_get_value_ptr_at(&data.categoryTemplates, i));
+		buf_free(&template->instances);
+	}
 	dictionary_free(&data.categoryTemplates);
+	_com_assert(buf_get_element_count(&data.categoryStack) == 0);
 	buf_free(&data.categoryStack);
 	buf_free(&stringLiteralBuffer);
 }
@@ -745,14 +752,14 @@ static Category create_viewport_state_category(UserData* data)
     CategoryTemplate viewportTemplate = 
     {
     	.instantiate = create_viewport_category,
-    	.instances = buf_create(sizeof(char), 0, 0)
+    	.instances = buf_new_with_callbacks(data->callbacks, char)
     };
     dictionary_push(&data->categoryTemplates, createStringLiteral("viewport"), &viewportTemplate);
     
     CategoryTemplate scissorTemplate = 
     {
     	.instantiate = create_scissor_category,
-    	.instances = buf_create(sizeof(char), 0, 0)
+    	.instances = buf_new_with_callbacks(data->callbacks, char)
     };
     dictionary_push(&data->categoryTemplates, createStringLiteral("scissor"), &scissorTemplate);
 	
@@ -865,7 +872,7 @@ static Category create_colorblend_category(UserData* data)
     CategoryTemplate colorAttachmentTemplate = 
     {
     	.instantiate = create_colorattachment_category,
-    	.instances = buf_create(sizeof(char), 0, 0)
+    	.instances = buf_new_with_callbacks(data->callbacks, char)
     };
     dictionary_push(&data->categoryTemplates, createStringLiteral("attachment"), &colorAttachmentTemplate);
 

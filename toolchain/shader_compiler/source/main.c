@@ -220,6 +220,9 @@ int main(int arg_count, const char* const* argv)
 		write_binary_to_file(sb_path, output.sb_bytes, output.sb_byte_count);
 	}
 	else DEBUG_LOG_ERROR("Failed to compile %s, Reason: %s", src_path, output.log);
+
+	if(path_count <= 1)
+		free(sb_path);
 	
 	sc_compiler_output_destroy(&output, NULL);
 

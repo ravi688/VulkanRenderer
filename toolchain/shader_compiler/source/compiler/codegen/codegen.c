@@ -178,6 +178,35 @@ typedef struct render_pass_analysis_t
 	bind_info_t depth_bind;
 } render_pass_analysis_t;
 
+static void subpass_analysis_destroy(com_allocation_callbacks_t* callbacks, subpass_analysis_t* analysis)
+{
+	if(analysis->color_write_count > 0)
+	{
+		com_deallocate(callbacks, analysis->color_writes);
+		com_deallocate(callbacks, analysis->color_locations);
+	}
+	if(analysis->color_read_count > 0)
+	{
+		com_deallocate(callbacks, analysis->color_reads);
+		com_deallocate(callbacks, analysis->color_binds);
+	}
+}
+
+static void render_pass_analysis_destroy(com_allocation_callbacks_t* callbacks, render_pass_analysis_t* analysis)
+{
+	if(analysis->attachment_count > 0)
+		com_deallocate(callbacks, analysis->attachments);
+	for(u32 i = 0; i < analysis->subpass_count; i++)
+		subpass_analysis_destroy(callbacks, &analysis->subpasses[i]);
+	if(analysis->subpass_count > 0)
+		com_deallocate(callbacks, analysis->subpasses);
+	if(analysis->color_read_count > 0)
+	{
+		com_deallocate(callbacks, analysis->color_reads);
+		com_deallocate(callbacks, analysis->color_binds);
+	}
+}
+
 typedef struct render_pass_user_data_t
 {
 	u32 render_pass_count;
@@ -763,7 +792,14 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, u3
 	render_pass_user_data_t* data = CAST_TO(render_pass_user_data_t*, user_data);
 	render_pass_analysis_t* analysis = com_allocate_obj_init(&ctx->callbacks, render_pass_analysis_t);
 	run_render_pass_analysis(node, ctx, data->prev_analysis, analysis);
-	data->prev_analysis = analysis;
+	if(data->prev_analysis != NULL)
+	{
+		render_pass_analysis_destroy(&ctx->callbacks, data->prev_analysis);
+		com_deallocate(&ctx->callbacks, data->prev_analysis);
+	}
+	/* we will be destroying this render pass analysis if this is the last one at the end of this function, therefore set the previous analysis
+	 * to NULL to avoid other code using it further or at least easily detect the use of NULL pointer, if any.  */
+	data->prev_analysis = (iteration == data->render_pass_count) ? NULL : analysis;
 
 	_ASSERT(analysis->attachment_count != 0);
 
@@ -791,6 +827,13 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, u3
 
 	for(u32 i = 0; i < analysis->subpass_count; i++)
 		codegen_subpass(node->childs[i], &analysis->subpasses[i], ctx, iteration, i);
+
+	/* destroy and deallocate this render pass analysis object if this is the last one */
+	if(iteration == data->render_pass_count)
+	{
+		render_pass_analysis_destroy(&ctx->callbacks, analysis);
+		com_deallocate(&ctx->callbacks, analysis);
+	}
 }
 
 static void codegen_sub_render_set_binding_descriptions(subpass_analysis_t* analysis, compiler_ctx_t* ctx, u32 rpindex, u32 spindex)
