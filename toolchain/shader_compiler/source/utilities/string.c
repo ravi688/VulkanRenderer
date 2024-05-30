@@ -27,6 +27,8 @@
 #include <shader_compiler/utilities/string.h>
 #include <shader_compiler/utilities/misc.h>
 #include <common/debug.h>
+#include <bufferlib/buffer.h>
+#include <stdarg.h>
 
 SC_API const char* skip_whitespaces(const char* str, const char* const end)
 {
@@ -70,21 +72,73 @@ SC_API bool is_empty(const char* start, const char* const end)
 	return empty;
 }
 
-SC_API void remove_comments(char* start, const char* const end)
+/* begin points to the beginning of the string, end points to the null character in the string */
+static u32 get_line_no(const char* begin, const char* end)
+{
+	if((begin >= end) || ((begin != NULL) && (*begin == 0))) return 0;
+
+	u32 line_no = 0;
+	do
+	{
+		++line_no;
+		begin = strchr(begin, '\n');
+		if(begin == NULL)
+			break;
+		begin += 1;
+	} while(begin <= end);
+	return line_no;
+}
+
+SC_API char* stringf(com_allocation_callbacks_t* callbacks, const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	buffer_t buffer = buf_new_with_callbacks(callbacks, char);
+	buf_vprintf(&buffer, NULL, format, args);
+	va_end(args);
+	return CAST_TO(char*, buf_get_ptr(&buffer));
+}
+
+static bool is_in_same_line(const char* start, const char* end)
+{
+	while(start < end)
+	{
+		if(*start == '\n')
+			return false;
+		++start;
+	}
+	return true;
+}
+
+SC_API char* remove_comments(com_allocation_callbacks_t* callbacks, char* start, const char* const end)
 {
 	const char* cmt_start = start;
-	while(((end - cmt_start) >= 4) && ((cmt_start = strstr(cmt_start, "/*")) != NULL))
+	const char* prev_cmt_start = start;
+	while((cmt_start = strstr(cmt_start, "/*")) != NULL)
 	{
+		const char* sl_cmt_start = strstr(prev_cmt_start, "//");
+		if(sl_cmt_start != NULL && (sl_cmt_start < cmt_start) && is_in_same_line(sl_cmt_start, cmt_start + 2))
+		{
+			const char* new_line = strchr(sl_cmt_start, '\n');
+			cmt_start = (new_line == NULL) ? end : (new_line + 1);
+			continue;
+		}
 		const char* cmt_end = strstr(cmt_start + 2, "*/");
 		if(cmt_end == NULL)
-			DEBUG_LOG_FETAL_ERROR("[Parse error]: Multiline comment is not closed");
+			return stringf(callbacks, "[Parse error] Multiline comment started at line no %" PRIu32 " is not closed, expeced '*/' at line no %" PRIu32, get_line_no(start, cmt_start), get_line_no(start, end));
 		else cmt_end += 2;
-		memset((void*)cmt_start, (int)(' '), cmt_end - cmt_start);
+		const char* new_line = NULL;
+		while((new_line < cmt_end) && ((new_line = strchr(cmt_start, '\n')) != NULL))
+		{
+			memset((void*)cmt_start, (int)(' '), CAST_TO(const char*, min_ptr(new_line, cmt_end)) - cmt_start);
+			cmt_start = new_line + 1;
+		}
 		cmt_start = cmt_end;
+		prev_cmt_start = cmt_start;
 	}
 
 	cmt_start = start;
-	while(((end - cmt_start) >= 2) && ((cmt_start = strstr(cmt_start, "//")) != NULL))
+	while((cmt_start = strstr(cmt_start, "//")) != NULL)
 	{
 		const char* cmt_end = strchr(cmt_start + 2, '\n');
 		/* //...EOF */
@@ -93,4 +147,7 @@ SC_API void remove_comments(char* start, const char* const end)
 		memset((void*)cmt_start, (int)(' '), cmt_end - cmt_start);
 		cmt_start = cmt_end;
 	}
+
+	/* sucess */
+	return NULL;
 }

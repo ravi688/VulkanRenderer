@@ -203,7 +203,7 @@ int main(int arg_count, const char* const* argv)
 	sc_compiler_input_t input = 
 	{
 		.src = buf_get_ptr(src),
-		.src_len = buf_get_element_count(src),
+		.src_len = buf_get_element_count(src) - 1,
 		.src_path = src_path,
 		.exe_path = result->exe_path,
 		.cwd = result->cwd,
@@ -219,7 +219,8 @@ int main(int arg_count, const char* const* argv)
 		/* write the result into disk */
 		write_binary_to_file(sb_path, output.sb_bytes, output.sb_byte_count);
 	}
-	else DEBUG_LOG_ERROR("Failed to compile %s, Reason: %s", src_path, output.log);
+	else
+		DEBUG_LOG_ERROR("Failed to compile %s, Reason: %s", src_path, output.log);
 
 	if(path_count <= 1)
 		free(sb_path);

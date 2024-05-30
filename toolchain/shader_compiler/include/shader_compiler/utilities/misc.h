@@ -29,3 +29,4 @@
 #include <shader_compiler/defines.h>
 
 static inline u32 min(u32 v1, u32 v2) { return (v1 > v2) ? v2 : v1; }
+static inline const void* min_ptr(const void* ptr1, const void* ptr2) { return (ptr1 > ptr2) ? ptr2 : ptr1; }

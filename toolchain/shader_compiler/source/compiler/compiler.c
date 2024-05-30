@@ -140,7 +140,16 @@ SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, com_all
 	const char* start = input->src;
 	// end should point to null character
 	const char* end = start + input->src_len;
-	remove_comments((char*)start, end);
+	char* result_log = remove_comments(callbacks, (char*)start, end);
+	if(result_log != NULL)
+	{
+		sc_compiler_output_t output = 
+		{
+			.is_success = false,
+			.log = result_log
+		};
+		return output;
+	}
 
 	// write the file header
 	ctx->src = start = write_header(start, end, ctx->codegen_buffer);
