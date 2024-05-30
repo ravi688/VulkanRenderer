@@ -116,6 +116,9 @@ SC_API char* remove_comments(com_allocation_callbacks_t* callbacks, char* start,
 	const char* prev_cmt_start = start;
 	while((cmt_start = strstr(cmt_start, "/*")) != NULL)
 	{
+		/* this checks for the following type of comment combinations:
+		 * ` // /* `
+		 */
 		const char* sl_cmt_start = strstr(prev_cmt_start, "//");
 		if(sl_cmt_start != NULL && (sl_cmt_start < cmt_start) && is_in_same_line(sl_cmt_start, cmt_start + 2))
 		{
@@ -123,6 +126,7 @@ SC_API char* remove_comments(com_allocation_callbacks_t* callbacks, char* start,
 			cmt_start = (new_line == NULL) ? end : (new_line + 1);
 			continue;
 		}
+
 		const char* cmt_end = strstr(cmt_start + 2, "*/");
 		if(cmt_end == NULL)
 			return stringf(callbacks, "[Parse error] Multiline comment started at line no %" PRIu32 " is not closed, expeced '*/' at line no %" PRIu32, get_line_no(start, cmt_start), get_line_no(start, end));
