@@ -1,0 +1,299 @@
+/*
+	***This is computer generated notice - Do not modify it***
+
+	VulkanRenderer (inclusive of its dependencies and subprojects 
+	such as toolchains written by the same author) is a software to render 
+	2D & 3D geometries by writing C/C++ code and shaders.
+
+	File: diffuse_test.v3dshader is a part of VulkanRenderer
+
+	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+*/
+
+// 
+
+#sb version 2022
+#sl version 2022
+
+[Name("DiffuseTestShader")]
+Shader
+{
+	Properties
+	{
+		struct Color
+		{
+			float r;
+			float g;
+			float b;
+		};
+
+		struct GTC
+		{
+			vec2 tltc;
+			vec2 trtc;
+			vec2 brtc;
+			vec2 bltc;
+		};
+
+		[Stage(fragment, vertex)]
+		[Set(set = material, binding = material_properties)]
+		uniform Parameters
+		{
+			vec4 color;
+			Color color_rgb;
+			GTC[] gtc_buffer;
+		} parameters;
+
+		[Stage(fragment, vertex)]
+		[Set(set = material, binding = texture0)]
+		uniform sampler2D albedo; 
+	}
+
+	Layout
+	{
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(position)]
+		// [Attribute(binding=1, location=1)]
+		vec3 position;
+		
+		[Rate(per_vertex)] 
+		[MeshLayout(sge_optional)]
+		[Attribute(normal)]
+		// [Attribute(binding=2, location=2)]
+		vec3 normal;
+		
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(texcoord)]
+		// [Attribute(binding=3, location=3)]
+		vec2 texcoord;
+	}
+
+	[Name("ShadowPass")]
+	RenderPass
+	{
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				// no color attachment
+				colorBlend { }
+
+				// depth attachment
+				depthStencil
+				{
+					depthTestEnable = true,
+					depthWriteEnable = true
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				
+				
+				void main()
+				{
+					vec4 clipPos = light.projection * light.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+				}
+
+				#stage fragment
+				#version 450
+				
+				void main()
+				{
+				
+				}
+			}
+		}
+	}
+
+	[Name("PostFXPass")]
+	[Read("ShadowPass", attach_id=depth, set=render_pass, binding=texture0)]
+	RenderPass
+	{
+
+		[Name("First-Pass")]
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					// [Name("Gaussion")]
+					attachment { }			// color = 0
+					// [Name("MotionVectors")]
+					attachment { }			// color = 1
+				}
+
+				depthStencil
+				{
+					depthTestEnable = true,
+					depthWriteEnable = true
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				layout(location = NORMAL_LOCATION) in vec3 normal;
+				layout(location = TEXCOORD_LOCATION) in vec2 texcoord;
+				
+				layout(location = 0) out vec3 _normal;
+				layout(location = 1) out vec2 _texcoord;
+				
+				layout(location = 2) out vec4 _lightClipPos;
+				
+				void main()
+				{
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+					_normal = normalize((objectInfo.normal * vec4(normal, 1)).xyz);
+					_texcoord = texcoord;
+				
+					_lightClipPos = light.projection * light.view * objectInfo.transform * vec4(position, 1);
+				}
+
+				#stage fragment
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
+				layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+				{
+					vec4 color;
+				} parameters;
+				layout(set = MATERIAL_SET, binding = TEXTURE_BINDING0) uniform sampler2D albedo;
+				layout(set = RENDER_SET, binding = TEXTURE_BINDING0) uniform sampler2D shadowMap;
+				
+				layout(location = 0) in vec3 normal;
+				layout(location = 1) in vec2 texcoord;
+				layout(location = 2) in vec4 lightClipPos;
+				
+				layout(location = 0) out vec4 color;
+				
+				const float shadowBias = 0.0006f;
+				const float minShadow = 0.001f;
+				const float ambient = 0.02f;
+				
+				void main()
+				{
+				
+					vec2 shadowMapCoord = vec2(lightClipPos.x / lightClipPos.w, -lightClipPos.y / lightClipPos.w);
+					shadowMapCoord = shadowMapCoord * 0.5 + 0.5;
+					float depth = texture(shadowMap, shadowMapCoord).r;
+					float shadowedDepth = lightClipPos.z / lightClipPos.w;
+				
+					float shadow = 1.0f;
+					if(shadowedDepth > (depth + shadowBias))
+				 		shadow = minShadow;
+				
+					float dp = dot(normal, -light				.direction);				
+					float litAmount = max(0, dp);				
+					color = max(shadow * litAmount, ambient) * vec4(light.color, 1) * parameters.color * texture(albedo, 				texcoord);
+				}
+			}
+		}
+
+		[Name("Second-Subpass")]
+		[Read("First-Subpass", attach_id = "MotionVectors", input_index = 0, set = subpass, binding = texture0)]
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					attachment { }
+				}
+
+				depthStencil
+				{
+					depthTestEnable = true,
+					depthWriteEnable = true
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+				#version 450
+				
+				#include <v3d.h>
+				
+				
+				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				layout(location = POSITION_LOCATION) in vec3 position;
+				
+				void main()
+				{
+					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+				}
+
+				#stage fragment
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(
+					input_attachment_index = INPUT_ATTACHMENT_BINDING0, 
+					set = SUB_RENDER_SET, 
+					binding = TEXTURE_BINDING0
+					) uniform subpassInput previousColor;
+				
+				layout(location = 0) out vec4 color;
+				
+				void main()
+				{
+					// 0.2126 R + 0.7152 G + 0.0722 B
+					float luminosity = dot(subpassLoad(previousColor).rgba, vec4(0.2126, 0.7152, 0.0722, 0));
+					color = vec4(luminosity, luminosity, luminosity, 1);
+				}
+			}
+		}
+	}
+}
