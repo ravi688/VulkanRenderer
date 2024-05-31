@@ -337,55 +337,55 @@ static const char* parse_square_brackets(const char* start, const char* end, u32
 
 static u32 parse_set(const char* str, u32 len)
 {
-	if(safe_strncmp(str, "CAMERA_SET", len) == 0) return 0;
-	else if(safe_strncmp(str, "GLOBAL_SET", len) == 0) return 1;
-	else if(safe_strncmp(str, "RENDER_SET", len) == 0) return 2;
-	else if(safe_strncmp(str, "SUB_RENDER_SET", len) == 0) return 3;
-	else if(safe_strncmp(str, "MATERIAL_SET", len) == 0) return 4;
-	else if(safe_strncmp(str, "OBJECT_SET", len) == 0) return 5;
+	if(safe_strncmp_any_va(str, len, 2, "CAMERA_SET", "camera_set") == 0) return 0;
+	else if(safe_strncmp_any_va(str, len, 2, "GLOBAL_SET", "global_set") == 0) return 1;
+	else if(safe_strncmp_any_va(str, len, 2, "RENDER_SET", "render_set") == 0) return 2;
+	else if(safe_strncmp_any_va(str, len, 2, "SUB_RENDER_SET", "sub_render_set") == 0) return 3;
+	else if(safe_strncmp_any_va(str, len, 2, "MATERIAL_SET", "material_set") == 0) return 4;
+	else if(safe_strncmp_any_va(str, len, 2, "OBJECT_SET", "object_set") == 0) return 5;
 	return U32_MAX;
 }
 
 static u32 parse_location(const char* str, u32 len)
 {
-	if(safe_strncmp(str, "POSITION_LOCATION", len) == 0) return  0;
-	else if(safe_strncmp(str, "NORMAL_LOCATION", len) == 0) return 1;
-	else if(safe_strncmp(str, "COLOR_LOCATION", len) == 0) return 2;
-	else if(safe_strncmp(str, "TEXCOORD_LOCATION", len) == 0) return 3;
-	else if(safe_strncmp(str, "TANGENT_LOCATION", len) == 0) return 4;
+	if(safe_strncmp_any_va(str, len, 3, "POSITION_LOCATION", "position_loc", "position_location")) return  0;
+	else if(safe_strncmp_any_va(str, len, 3, "NORMAL_LOCATION", "normal_loc", "normal_location")) return 1;
+	else if(safe_strncmp_any_va(str, len, 3, "COLOR_LOCATION", "color", "color_loc", "color_location")) return 2;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXCOORD_LOCATION", "texcoord", "texcoord_loc", "texcoord_location")) return 3;
+	else if(safe_strncmp_any_va(str, len, 3, "TANGENT_LOCATION", "tangent", "tangent_loc", "tangent_location")) return 4;
 	return U32_MAX;
 }
 
 static u32 parse_binding(const char* str, u32 len)
 {
-	if(safe_strncmp(str, "CAMERA_PROPERTIES_BINDING", len) == 0) return 0;
-	else if(safe_strncmp(str, "CAMERA_BINDING", len) == 0) return 0;
-	else if(safe_strncmp(str, "LIGHT_BINDING", len) == 0) return 1;
-	else if(safe_strncmp(str, "INPUT_ATTACHMENT_BINDING0", len) == 0) return 0;
-	else if(safe_strncmp(str, "INPUT_ATTACHMENT_BINDING1", len) == 0) return 1;
-	else if(safe_strncmp(str, "INPUT_ATTACHMENT_BINDING2", len) == 0) return 2;
-	else if(safe_strncmp(str, "MATERIAL_PROPERTIES_BINDING", len) == 0) return 0;
-	else if(safe_strncmp(str, "TEXTURE_BINDING0", len) == 0) return 1;
-	else if(safe_strncmp(str, "TEXTURE_BINDING1", len) == 0) return 2;
-	else if(safe_strncmp(str, "TEXTURE_BINDING2", len) == 0) return 3;
-	else if(safe_strncmp(str, "TEXTURE_BINDING3", len) == 0) return 4;
-	else if(safe_strncmp(str, "TEXTURE_BINDING4", len) == 0) return 5;
-	else if(safe_strncmp(str, "TEXTURE_BINDING5", len) == 0) return 6;
-	else if(safe_strncmp(str, "TEXTURE_BINDING6", len) == 0) return 7;
-	else if(safe_strncmp(str, "TEXTURE_BINDING7", len) == 0) return 8;
-	else if(safe_strncmp(str, "TEXTURE_BINDING8", len) == 0) return 9;
-	else if(safe_strncmp(str, "TRANSFORM_BINDING", len) == 0) return 0;
+	if(safe_strncmp_any_va(str, len, 2, "CAMERA_PROPERTIES_BINDING", "camera_properties_binding")) return 0;
+	else if(safe_strncmp_any_va(str, len, 2, "CAMERA_BINDING", "camera_binding")) return 0;
+	else if(safe_strncmp_any_va(str, len, 2, "LIGHT_BINDING", "light_binding")) return 1;
+	else if(safe_strncmp_any_va(str, len, 3, "INPUT_ATTACHMENT_BINDING0", "input_attachment0", "input_attachment_binding0")) return 0;
+	else if(safe_strncmp_any_va(str, len, 3, "INPUT_ATTACHMENT_BINDING1", "input_attachment1", "input_attachment_binding1")) return 1;
+	else if(safe_strncmp_any_va(str, len, 3, "INPUT_ATTACHMENT_BINDING2", "input_attachment2", "input_attachment_binding2")) return 2;
+	else if(safe_strncmp_any_va(str, len, 3, "MATERIAL_PROPERTIES_BINDING", "material_properties", "material_properties_binding")) return 0;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXTURE_BINDING0", "texture0", "texture_binding0")) return 1;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXTURE_BINDING1", "texture1", "texture_binding1")) return 2;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXTURE_BINDING2", "texture2", "texture_binding2")) return 3;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXTURE_BINDING3", "texture3", "texture_binding3")) return 4;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXTURE_BINDING4", "texture4", "texture_binding4")) return 5;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXTURE_BINDING5", "texture5", "texture_binding5")) return 6;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXTURE_BINDING6", "texture6", "texture_binding6")) return 7;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXTURE_BINDING7", "texture7", "texture_binding7")) return 8;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXTURE_BINDING8", "texture8", "texture_binding8")) return 9;
+	else if(safe_strncmp_any_va(str, len, 3, "TRANSFORM_BINDING", "transform", "transform_binding")) return 0;
 
-	else if(safe_strncmp(str, "POSITION_BINDING", len) == 0) return  0;
-	else if(safe_strncmp(str, "NORMAL_BINDING", len) == 0) return 1;
-	else if(safe_strncmp(str, "COLOR_BINDING", len) == 0) return  2;
-	else if(safe_strncmp(str, "TEXCOORD_BINDING", len) == 0) return 3;
-	else if(safe_strncmp(str, "TANGENT_BINDING", len) == 0) return 4;
+	else if(safe_strncmp_any_va(str, len, 3, "POSITION_BINDING", "position_bin", "position_binding")) return  0;
+	else if(safe_strncmp_any_va(str, len, 3, "NORMAL_BINDING", "normal_bin", "normal_binding")) return 1;
+	else if(safe_strncmp_any_va(str, len, 3, "COLOR_BINDING", "color_bin", "color_binding")) return  2;
+	else if(safe_strncmp_any_va(str, len, 3, "TEXCOORD_BINDING", "texcoord_bin", "texcoord_binding")) return 3;
+	else if(safe_strncmp_any_va(str, len, 3, "TANGENT_BINDING", "tangent_bin", "tangent_binding")) return 4;
 
 	return U32_MAX;
 }
 
-static u32 try_parse_to_u32(const char* str)
+SC_API u32 try_parse_to_u32(const char* str)
 {
 	u32 len = strlen(str);
 	u32 value;

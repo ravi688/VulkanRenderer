@@ -36,7 +36,10 @@ static const char* keywords[] =
 	"RenderPass",
 	"SubPass",
 	"GLSL",
-	"GraphicsPipeline"
+	"GraphicsPipeline",
+	"vec4",
+	"vec3",
+	"vec2"
 };
 
 /* keyword enumerations */
@@ -52,6 +55,9 @@ enum
 	KEYWORD_SUBPASS,
 	KEYWORD_GLSL,
 	KEYWORD_GFXPIPELINE,
+	KEYWORD_VEC4,
+	KEYWORD_VEC3,
+	KEYWORD_VEC2,
 	KEYWORD_MAX
 };
 
@@ -64,7 +70,10 @@ enum
 	QUALIFIER_RENDERPASS = KEYWORD_RENDERPASS,
 	QUALIFIER_SUBPASS = KEYWORD_SUBPASS,
 	QUALIFIER_GLSL = KEYWORD_GLSL,
-	QUALIFIER_GFXPIPELINE = KEYWORD_GFXPIPELINE
+	QUALIFIER_GFXPIPELINE = KEYWORD_GFXPIPELINE,
+	QUALIFIER_VEC4 = KEYWORD_VEC4,
+	QUALIFIER_VEC3 = KEYWORD_VEC3,
+	QUALIFIER_VEC2 = KEYWORD_VEC2
 };
 
 /* attributes */
@@ -73,7 +82,10 @@ CAN_BE_UNUSED_VARIABLE static const char* attribute_keywords[] =
 	"Name",
 	"NoParse",
 	"Read",
-	"Write"
+	"Write",
+	"Attribute",
+	"Rate",
+	"MeshLayout"
 };
 
 /* attribute enumerations */
@@ -82,5 +94,9 @@ enum
 	ATTRIBUTE_NAME,
 	ATTRIBUTE_NOPARSE,
 	ATTRIBUTE_READ,
-	ATTRIBUTE_WRITE
+	ATTRIBUTE_WRITE,
+	ATTRIBUTE_ATTRIBUTE, /* vertex attribute */
+	ATTRIBUTE_RATE,
+	ATTRIBUTE_MESH_LAYOUT,
+	ATTRIBUTE_MAX
 };

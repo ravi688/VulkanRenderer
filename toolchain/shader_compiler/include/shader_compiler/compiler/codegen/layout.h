@@ -66,4 +66,7 @@ BEGIN_CPP_COMPATIBLE
  */
 SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* writer, bool is_write_count);
 
+
+SC_API u32 try_parse_to_u32(const char* str);
+
 END_CPP_COMPATIBLE

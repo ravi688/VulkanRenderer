@@ -30,8 +30,11 @@
 #include <shader_compiler/compiler/codegen/layout.h>
 #include <shader_compiler/compiler/grammar.h>
 #include <shader_compiler/utilities/string.h>
+#include <glslcommon/glsl_types.h>
 #include <shader_compiler/debug.h>
 #include <shader_compiler/assert.h>
+
+#include <shader_compiler/sb.h>
 
 /* 	finds a child node in the parent node 'node' if matches name 'name'.
 	node: parent node
@@ -220,6 +223,9 @@ static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analys
 static void codegen_pipeline(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 count, void* user_data);
 static void codegen_glsl(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 count, void* user_data);
 
+static void codegen_vertex_buffer_layout(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data);
+static void codegen_buffer_layouts_and_samplers(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data);
+
 static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 {
 	/* as per the v3d binary spec, the property descriptions come first */
@@ -229,7 +235,7 @@ static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 		binary_writer_u16(ctx->codegen_buffer->main, 0);
 	}
 	/* the layout descriptions come after the property descriptions */
-	if(!foreach_child_node_if_name(node, keywords[KEYWORD_LAYOUT], codegen_descriptions, NULL, ctx))
+	if(!foreach_child_node_if_name(node, keywords[KEYWORD_LAYOUT], (ctx->sl_version == SL_VERSION_2023) ? codegen_vertex_buffer_layout : codegen_descriptions, NULL, ctx))
 	{
 		/* if there is no layout block then just write the number of layout descriptions to be zero */
 		binary_writer_u16(ctx->codegen_buffer->main, 0);
@@ -244,6 +250,304 @@ static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 		/* if there is no RenderPass block then just write the number of RenderPasses to be zero */
 		binary_writer_u32(ctx->codegen_buffer->main, 0);
 	}
+}
+
+const char* u32_pair_get_str(compiler_ctx_t* ctx, u32_pair_t pair)
+{
+	if(U32_PAIR_IS_INVALID(pair))
+		return "";
+	else
+		return ctx->src + pair.start;
+}
+
+static u32 try_parse_u32_pair_str_to_u32(compiler_ctx_t* ctx, u32_pair_t pair)
+{
+	return try_parse_to_u32(u32_pair_get_str(ctx, pair));
+}
+
+
+#define __ATTRIBUTE_HANDLER_PARAMS__ compiler_ctx_t* ctx, v3d_generic_attribute_t* attribute, v3d_generic_attribute_t* attributes, u32 attribute_count
+typedef void (*attribute_callback_handler_t)(__ATTRIBUTE_HANDLER_PARAMS__);
+
+static const char* g_vertex_attribute_bind_names[] = 
+{
+	"position",
+	"normal",
+	"tangent",
+	"texcoord",
+	"color"
+};
+
+static const char* g_mesh_layouts[] = 
+{
+	"sge_optimal",
+	"sge_separate",
+	"sge_interleaved"
+};
+
+static u32 g_mesh_layout_emit_values[][SIZEOF_ARRAY(g_vertex_attribute_bind_names)][2] = 
+{
+	/* sge_optimal */
+	{
+		/* position */
+		{ SGE_POSITION_BINDING_OPTIMAL, SGE_POSITION_LOCATION_OPTIMAL }, 
+		/* normal */
+		{ SGE_NORMAL_BINDING_OPTIMAL, SGE_NORMAL_LOCATION_OPTIMAL },
+		/* tangent */
+		{ SGE_TANGENT_BINDING_OPTIMAL, SGE_TANGENT_LOCATION_OPTIMAL },
+		/* texcoord */
+		{ SGE_TEXCOORD_BINDING_OPTIMAL, SGE_TEXCOORD_LOCATION_OPTIMAL },
+		/* color */
+		{ SGE_COLOR_BINDING_OPTIMAL, SGE_COLOR_LOCATION_OPTIMAL }
+	},
+	/* sge_separate */
+	{
+		/* position */
+		{ SGE_POSITION_BINDING_SEPARATE, SGE_POSITION_LOCATION_SEPARATE }, 
+		/* normal */
+		{ SGE_NORMAL_BINDING_SEPARATE, SGE_NORMAL_LOCATION_SEPARATE },
+		/* tangent */
+		{ SGE_TANGENT_BINDING_SEPARATE, SGE_TANGENT_LOCATION_SEPARATE },
+		/* texcoord */
+		{ SGE_TEXCOORD_BINDING_SEPARATE, SGE_TEXCOORD_LOCATION_SEPARATE },
+		/* color */
+		{ SGE_COLOR_BINDING_SEPARATE, SGE_COLOR_LOCATION_SEPARATE }
+	},
+	/* sge_interleaved */
+	{
+		/* position */
+		{ SGE_POSITION_BINDING_INTERLEAVED, SGE_POSITION_LOCATION_INTERLEAVED }, 
+		/* normal */
+		{ SGE_NORMAL_BINDING_INTERLEAVED, SGE_NORMAL_LOCATION_INTERLEAVED },
+		/* tangent */
+		{ SGE_TANGENT_BINDING_INTERLEAVED, SGE_TANGENT_LOCATION_INTERLEAVED },
+		/* texcoord */
+		{ SGE_TEXCOORD_BINDING_INTERLEAVED, SGE_TEXCOORD_LOCATION_INTERLEAVED },
+		/* color */
+		{ SGE_COLOR_BINDING_INTERLEAVED, SGE_COLOR_LOCATION_INTERLEAVED }
+	}
+};
+
+static int safe_stru32pncmp(compiler_ctx_t* ctx, u32_pair_t pair, const char* str)
+{
+	return safe_strncmp(u32_pair_get_str(ctx, pair), str, U32_PAIR_DIFF(pair));
+}
+
+static u32 strs_find_u32_pair(compiler_ctx_t* ctx, const char* const* strs, u32 str_count, u32_pair_t pair)
+{
+	for(u32 i = 0; i < str_count; i++)
+		if(safe_stru32pncmp(ctx, pair, strs[i]) == 0)
+			return i;
+	return U32_MAX;
+}
+
+static u32_pair_t u32_pairs_find_any_str(compiler_ctx_t* ctx, u32_pair_t* pairs, u32 pair_count, const char* const* strs, u32 str_count)
+{
+	for(u32 i = 0; i < pair_count; i++)
+	{
+		u32 index = strs_find_u32_pair(ctx, strs, str_count, pairs[i]);
+		if(index != U32_MAX)
+			return (u32_pair_t) { i, index };
+	}
+	return U32_PAIR_INVALID;
+}
+
+static u32 find_mesh_layout_index(compiler_ctx_t* ctx, v3d_generic_attribute_t* attributes, u32 attribute_count)
+{
+	for(u32 i = 0; i < attribute_count; i++)
+	{
+		AUTO attribute = &attributes[i];
+		if(safe_stru32pncmp(ctx, attribute->name, "MeshLayout") == 0)
+		{
+			if(attribute->argument_count == 1)
+			{
+				u32 index = strs_find_u32_pair(ctx, g_mesh_layouts, SIZEOF_ARRAY(g_mesh_layouts), attribute->arguments[0]);
+				if(index != U32_MAX)
+					return index;
+				else DEBUG_LOG_FETAL_ERROR("MeshLayout() has been passed an incorrect argument \"%.*s\"", u32_pair_get_str(ctx, attribute->arguments[0]), U32_PAIR_DIFF(attribute->arguments[0]));
+			}
+			else DEBUG_LOG_FETAL_ERROR("MeshLayout() has been passed incorrect number of arguments, it doesn't accept %" PRIu32 " arguments", attribute->argument_count);
+		}
+	}
+	return U32_MAX;
+}
+
+/* [Attribute(...)] handler*/
+static void attribute_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
+{
+	/* data[0] is the vertex buffer bind index, data[1] is the vertex attribute index (or so called vertex location) */
+	u32 data[2] = { };
+	/* parameter index occupation map */
+	bool map[2] = { false, false };
+	if(attribute->parameter_count == 2)
+	{
+		for(u32 i = 0; i < attribute->parameter_count; i++)
+		{
+			if(safe_stru32pncmp(ctx, attribute->parameters[i], "binding") == 0)
+			{
+				map[i] = true;
+				data[0] = try_parse_u32_pair_str_to_u32(ctx, attribute->arguments[i]);
+			}
+			else if(safe_stru32pncmp(ctx, attribute->parameters[i], "location") == 0)
+			{
+				map[i] = true;
+				data[1] = try_parse_u32_pair_str_to_u32(ctx, attribute->arguments[i]);
+			}
+			else
+			{
+				if(!map[i])
+					DEBUG_LOG_FETAL_ERROR("Attribute() is incorrectly called, argument \"%.*s\" can't find its place", u32_pair_get_str(ctx, attribute->arguments[i]), U32_PAIR_DIFF(attribute->arguments[i]));
+				data[i] = try_parse_u32_pair_str_to_u32(ctx, attribute->arguments[i]);
+			}
+		}
+	}
+	else if(attribute->parameter_count == 1)
+	{
+		/* find index in { "position", "normal", etc. }, i.e. g_vertex_attribute_bind_names */
+		u32 bind_name_index = strs_find_u32_pair(ctx, g_vertex_attribute_bind_names, SIZEOF_ARRAY(g_vertex_attribute_bind_names), attribute->arguments[0]);
+		if(bind_name_index != U32_MAX)
+		{
+			u32 mesh_layout_index = find_mesh_layout_index(ctx, attributes, attribute_count);
+			if(mesh_layout_index != U32_MAX)
+			{
+				data[0] = g_mesh_layout_emit_values[mesh_layout_index][bind_name_index][0];
+				data[1] = g_mesh_layout_emit_values[mesh_layout_index][bind_name_index][1];
+			}
+		}
+		else DEBUG_LOG_FETAL_ERROR("Attribute() is passed incorrect argument \"%.%s\", no such vertex attribute bind name exists", u32_pair_get_str(ctx, attribute->arguments[0]), U32_PAIR_DIFF(attribute->arguments[0]));
+	}
+	else DEBUG_LOG_FETAL_ERROR("Attribute() is passed incorrect number of arguments, it doesn't accept %" PRIu32 " arguments", attribute->parameter_count);
+
+	sb_emitter_emit_vertex_bind_and_location(ctx->codegen_buffer, data[0], data[1]);
+}
+
+static const char* g_vertex_input_rates[] = 
+{
+	"per_vertex",
+	"per_instance"
+};
+
+typedef enum vertex_input_rate_t
+{
+	VERTEX_INPUT_RATE_VERTEX = 1,
+	VERTEX_INPUT_RATE_INSTANCE = 2
+} vertex_input_rate_t;
+
+static vertex_input_rate_t g_vertex_input_rate_emit_values[] = 
+{
+	VERTEX_INPUT_RATE_VERTEX,
+	VERTEX_INPUT_RATE_INSTANCE
+};
+
+/* [Rate(...)] attribute handler */
+static void rate_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
+{
+	if(attribute->argument_count == 1)
+	{
+		u32 index = strs_find_u32_pair(ctx, g_vertex_input_rates, SIZEOF_ARRAY(g_vertex_input_rates), attribute->arguments[0]);
+		if(index == U32_MAX)
+			sb_emitter_emit_vertex_input_rate(ctx->codegen_buffer, g_vertex_input_rate_emit_values[index]);
+		else DEBUG_LOG_FETAL_ERROR("Rate() is passed incorrect argument \"%.*s\", no such input rate exists", u32_pair_get_str(ctx, attribute->arguments[0]), U32_PAIR_DIFF(attribute->arguments[0]));
+	}
+	else DEBUG_LOG_FETAL_ERROR("Rate() is passed incorrect number of arguments, it doesn't accept %" PRIu32 " arguments", attribute->parameter_count);
+}
+
+/* [MeshLayout(...)] attribute handler */
+static void mesh_layout_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__) { }
+
+static const char* g_vertex_attribute_names[] =
+{
+	"Rate",
+	"MeshLayout",
+	"Attribute"
+};
+
+static attribute_callback_handler_t g_vertex_attribute_handlers[] = 
+{
+	rate_attribute_handler,
+	mesh_layout_attribute_handler,
+	attribute_attribute_handler
+};
+
+static const char* g_vertex_attribute_types[] = 
+{
+	"vec2",
+	"vec3",
+	"vec4"
+};
+
+static glsl_type_t g_vertex_attribute_type_emit_values[] = 
+{
+	GLSL_TYPE_VEC2,
+	GLSL_TYPE_VEC3,
+	GLSL_TYPE_VEC4
+};
+
+static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
+{
+	/*
+		** NODE 0 **
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(position)]
+		// [Attribute(binding=1, location=1)]
+		vec3 position;
+		
+		** NODE 1 **
+		[Rate(per_vertex)] 
+		[MeshLayout(sge_optional)]
+		[Attribute(normal)]
+		// [Attribute(binding=2, location=2)]
+		vec3 normal;
+		
+		** NODE 2 **
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(texcoord)]
+		// [Attribute(binding=3, location=3)]
+		vec2 texcoord;
+	*/
+
+	for(u32 i = 0; i < node_count; i++)
+	{
+		AUTO node = nodes[i];
+
+		/* iterate through each attribute applied to this vertex attribute definition */
+		for(u32 j = 0; j < node->attribute_count; j++)
+		{
+			AUTO attribute = &node->attributes[j];
+			u32 index = strs_find_u32_pair(ctx, g_vertex_attribute_names, SIZEOF_ARRAY(g_vertex_attribute_names), attribute->name);
+			if(index != U32_MAX)
+			{
+				AUTO fnptr = g_vertex_attribute_handlers[index];
+				fnptr(ctx, attribute, node->attributes, node->attribute_count);
+			}
+		}
+
+		/* index in { "vec2", "vec3", "vec4", ... } -- vertex attribute types */
+		u32_pair_t pair = u32_pairs_find_any_str(ctx, node->qualifiers, node->qualifier_count, g_vertex_attribute_types, SIZEOF_ARRAY(g_vertex_attribute_types));
+		if(!U32_PAIR_IS_INVALID(pair))
+		{
+			sb_emitter_emit_vertex_attribute_type(ctx->codegen_buffer, g_vertex_attribute_type_emit_values[pair.end]);
+			sb_emitter_emit_vertex_attribute_name(ctx->codegen_buffer, u32_pair_get_str(ctx, node->qualifiers[pair.start]), U32_PAIR_DIFF(node->qualifiers[pair.start]));
+		}
+		else DEBUG_LOG_FETAL_ERROR("Vertex Attribute type is incorrect");
+	}
+}
+
+static void codegen_vertex_buffer_layout(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data)
+{
+	write_vertex_buffer_layout(node->childs, node->child_count, ctx, user_data);
+}
+
+static void write_buffer_layouts_and_samplers(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
+{
+
+}
+
+static void codegen_buffer_layouts_and_samplers(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data)
+{
+	write_buffer_layouts_and_samplers(node->childs, node->child_count, ctx, user_data);
 }
 
 static void codegen_descriptions(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data)

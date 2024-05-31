@@ -31,36 +31,55 @@
 [Name("DiffuseTestShader")]
 Shader
 {
+	// Properties
+	// {
+	// 	struct Color
+	// 	{
+	// 		float r;
+	// 		float g;
+	// 		float b;
+	// 	};
+
+	// 	struct GTC
+	// 	{
+	// 		vec2 tltc;
+	// 		vec2 trtc;
+	// 		vec2 brtc;
+	// 		vec2 bltc;
+	// 	};
+
+	// 	[Stage(fragment, vertex)]
+	// 	[Set(set = material, binding = material_properties)]
+	// 	uniform Parameters
+	// 	{
+	// 		vec4 color;
+	// 		Color color_rgb;
+	// 		GTC[] gtc_buffer;
+	// 	} parameters;
+
+	// 	[Stage(fragment, vertex)]
+	// 	[Set(set = material, binding = texture0)]
+	// 	uniform sampler2D albedo; 
+	// }
+
+	[NoParse]
 	Properties
 	{
-		struct Color
-		{
-			float r;
-			float g;
-			float b;
-		};
-
-		struct GTC
-		{
-			vec2 tltc;
-			vec2 trtc;
-			vec2 brtc;
-			vec2 bltc;
-		};
-
-		[Stage(fragment, vertex)]
-		[Set(set = material, binding = material_properties)]
-		uniform Parameters
+		vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
 		{
 			vec4 color;
-			Color color_rgb;
-			GTC[] gtc_buffer;
 		} parameters;
 
-		[Stage(fragment, vertex)]
-		[Set(set = material, binding = texture0)]
-		uniform sampler2D albedo; 
+		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
 	}
+
+	// [NoParse]
+	// Layout
+	// {
+	// 	per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+	// 	per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
+	// 	per_vertex [TEXCOORD_BINDING, TEXCOORD_LOCATION] vec2 texcoord;
+	// }
 
 	Layout
 	{
@@ -135,7 +154,8 @@ Shader
 	}
 
 	[Name("PostFXPass")]
-	[Read("ShadowPass", attach_id=depth, set=render_pass, binding=texture0)]
+	// [Read("ShadowPass", attach_id=depth, set=render_pass, binding=texture0)]
+	[Read(depth, set = RENDER_SET, binding = TEXTURE_BINDING0)]
 	RenderPass
 	{
 
@@ -234,8 +254,9 @@ Shader
 			}
 		}
 
-		[Name("Second-Subpass")]
-		[Read("First-Subpass", attach_id = "MotionVectors", input_index = 0, set = subpass, binding = texture0)]
+		//[Name("Second-Subpass")]
+		//[Read("First-Subpass", attach_id = "MotionVectors", input_index = 0, set = subpass, binding = texture0)]
+		[Read(color = 0, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
 		SubPass
 		{
 			[NoParse]

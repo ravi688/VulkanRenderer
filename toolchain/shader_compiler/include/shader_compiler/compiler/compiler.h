@@ -118,6 +118,11 @@ typedef struct compiler_ctx_t
 	/* this is used in glsl.c file in the resolve_include function, it is used to determine if the allocation need to be freed */
 	bool is_include_path_allocated;
 
+	/* shader language version, assigned during header parsing, and later checked in parsing, etc. stages to adapt the compilation with 'sl_version' */
+	u32 sl_version;
+	/* shader binary version, assigned during header parsing, and later checked in code generation stage to make the binary compatible with 'sb_version' */
+	u32 sb_version;
+
 	/* ptr to the source string, it will be changed internally while compiling */
 	const char* src;
 

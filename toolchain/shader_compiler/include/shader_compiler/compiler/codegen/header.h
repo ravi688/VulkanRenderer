@@ -26,7 +26,7 @@
 #pragma once
 
 #include <shader_compiler/defines.h>
-#include <shader_compiler/compiler/codegen/codegen_buffer.h>
+#include <shader_compiler/compiler/compiler.h>
 
 #define SB_HDR_STR "V3D Shader Binary"
 
@@ -55,7 +55,8 @@ typedef enum sb_version_t
 typedef enum sl_version_t
 {
 	SL_VERSION_2021 = 2021UL,
-	SL_VERSION_2022
+	SL_VERSION_2022 = 2022UL,
+	SL_VERSION_2023 = 2023UL
 } sl_version_t;
 
 /*	parses the string pointed by 'start', ends at 'end', and writes the file header to the codegen buffer 'writer'
@@ -71,4 +72,4 @@ typedef enum sl_version_t
 	the above string must appear before the "Shader" block
 	see: //Documents/V3D/V3DShaderLangSpec.docx
  */
-SC_API const char* write_header(const char* start, const char* const end, codegen_buffer_t* writer);
+SC_API const char* write_header(compiler_ctx_t* ctx, const char* start, const char* const end);

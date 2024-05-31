@@ -57,6 +57,23 @@ SC_API int safe_strncmp(const char* str1, const char* const str2, u32 len)
 	return result;
 }
 
+SC_API bool safe_strncmp_any_va(const char* str1, u32 len, u32 cmp_str_count, ...)
+{
+	va_list args;
+	va_start(args, cmp_str_count);
+	for(u32 i = 0; i < cmp_str_count; i++)
+	{
+		AUTO str = va_arg(args, const char*);
+		if(safe_strncmp(str1, str, len) != 0)
+		{
+			va_end(args);
+			return false;
+		}
+	}
+	va_end(args);
+	return true;
+}
+
 SC_API bool is_empty(const char* start, const char* const end)
 {
 	bool empty = true;

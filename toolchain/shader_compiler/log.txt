@@ -1,0 +1,54 @@
+File Header: V3D Shader Binary
+Language Version: 2022
+Binary Version: 2022
+material property descriptions: count: 2
+[4, 0] VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_UNIFORM_BUFFER(u32: 2) VULKAN_SHADER_STAGE_VERTEX(u32: 0) VULKAN_SHADER_STAGE_FRAGMENT(u32: 1) GLSL_TYPE_UNIFORM_BUFFER(u32: 25)  Parameters,  parameters
+field count: 1
+GLSL_TYPE_VEC4(u32: 13)  color
+[4, 1] VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_OPAQUE(u32: 1) VULKAN_SHADER_STAGE_FRAGMENT(u32: 1) GLSL_TYPE_SAMPLER_2D(u32: 28)  albedo
+layout descriptions: count: 0
+render passes: count: 2
+-----Begin Render Pass 0-------
+type: RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER
+read count: 0
+attachment count: 1 ATTACHMENT_TYPE_DEPTH(u32: 2)
+subpass dependency count: 0
+render set bindings: count: 0
+subpasses: count: 1
+-----Begin Sub Pass 0---------
+read count: 0
+color count: 0
+preserve count: 0
+depth stencil: ATTACHMENT_TYPE_DEPTH(id: 0)
+shader_mask: 3 VULKAN_SHADER_STAGE_VERTEX VULKAN_SHADER_STAGE_FRAGMENT
+sub render set bindings: count: 0
+-----End Sub Pass 0-----------
+-----End Render Pass 0---------
+-----Begin Render Pass 1-------
+type: RENDER_PASS_TYPE_SWAPCHAIN_TARGET
+read count: 1 ATTACHMENT_TYPE_DEPTH
+attachment count: 4 ATTACHMENT_TYPE_COLOR(u32: 0) ATTACHMENT_TYPE_COLOR(u32: 0) ATTACHMENT_TYPE_COLOR(u32: 0) ATTACHMENT_TYPE_DEPTH(u32: 2)
+subpass dependency count: 0
+render set bindings: count: 1
+[2, 1] VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_OPAQUE(u32: 1) VULKAN_SHADER_STAGE_FRAGMENT(u32: 1) GLSL_TYPE_SAMPLER_2D(u32: 28)  rp2depth
+subpasses: count: 2
+-----Begin Sub Pass 0---------
+read count: 0
+color count: 2 ATTACHMENT_TYPE_COLOR(id: 1) ATTACHMENT_TYPE_COLOR(id: 2)
+preserve count: 0
+depth stencil: ATTACHMENT_TYPE_DEPTH(id: 3)
+shader_mask: 3 VULKAN_SHADER_STAGE_VERTEX VULKAN_SHADER_STAGE_FRAGMENT
+sub render set bindings: count: 0
+-----End Sub Pass 0-----------
+-----Begin Sub Pass 1---------
+read count: 1 ATTACHMENT_TYPE_COLOR(id: 1)
+color count: 1 ATTACHMENT_TYPE_COLOR(id: 0)
+preserve count: 0
+depth stencil: ATTACHMENT_TYPE_DEPTH(id: 3)
+shader_mask: 3 VULKAN_SHADER_STAGE_VERTEX VULKAN_SHADER_STAGE_FRAGMENT
+sub render set bindings: count: 1
+[3, 0] VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_OPAQUE(u32: 1) VULKAN_SHADER_STAGE_FRAGMENT(u32: 1) GLSL_TYPE_SUBPASS_INPUT(u32: 31)  sb2rp1color0
+-----End Sub Pass 1-----------
+-----End Render Pass 1---------
+
+[Info] disassembly success | 68, main, source/main.c

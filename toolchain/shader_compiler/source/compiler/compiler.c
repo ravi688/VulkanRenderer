@@ -74,6 +74,9 @@ SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks
 	ctx->lat[KEYWORD_SUBPASS] = new_u32_list(&ctx->callbacks, 2, KEYWORD_GFXPIPELINE, KEYWORD_GLSL);
 	ctx->lat[KEYWORD_GLSL] = PTR_U32_NULL;
 	ctx->lat[KEYWORD_GFXPIPELINE] = PTR_U32_NULL;
+	ctx->lat[KEYWORD_VEC4] = PTR_U32_NULL;
+	ctx->lat[KEYWORD_VEC3] = PTR_U32_NULL;
+	ctx->lat[KEYWORD_VEC2] = PTR_U32_NULL;
 
 	/* prepare the symbol qualifiers table */
 	ctx->sqt_size = KEYWORD_MAX;
@@ -88,6 +91,9 @@ SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks
 	ctx->sqt[KEYWORD_SUBPASS] = new_u32_list(&ctx->callbacks, 1, QUALIFIER_SUBPASS);
 	ctx->sqt[KEYWORD_GLSL] = new_u32_list(&ctx->callbacks, 1, QUALIFIER_GLSL);
 	ctx->sqt[KEYWORD_GFXPIPELINE] = new_u32_list(&ctx->callbacks, 1, QUALIFIER_GFXPIPELINE);
+	ctx->sqt[KEYWORD_VEC4] = new_u32_list(&ctx->callbacks, 1, QUALIFIER_VEC4);
+	ctx->sqt[KEYWORD_VEC3] = new_u32_list(&ctx->callbacks, 1, QUALIFIER_VEC3);
+	ctx->sqt[KEYWORD_VEC2] = new_u32_list(&ctx->callbacks, 1, QUALIFIER_VEC2);
 
 	/* prepare the symbol atributes table */
 	ctx->sat_size = KEYWORD_MAX;
@@ -97,11 +103,14 @@ SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks
 	ctx->sat[KEYWORD_FALSE] = PTR_U32_NULL;
 	ctx->sat[KEYWORD_SHADER] = new_u32_list(&ctx->callbacks, 1, ATTRIBUTE_NAME);
 	ctx->sat[KEYWORD_PROPERTIES] = new_u32_list(&ctx->callbacks, 1, ATTRIBUTE_NOPARSE);
-	ctx->sat[KEYWORD_LAYOUT] = new_u32_list(&ctx->callbacks, 1, ATTRIBUTE_NOPARSE);
+	ctx->sat[KEYWORD_LAYOUT] = PTR_U32_NULL;
 	ctx->sat[KEYWORD_RENDERPASS] = new_u32_list(&ctx->callbacks, 2, ATTRIBUTE_READ, ATTRIBUTE_WRITE);
 	ctx->sat[KEYWORD_SUBPASS] = new_u32_list(&ctx->callbacks, 2, ATTRIBUTE_READ, ATTRIBUTE_WRITE);
 	ctx->sat[KEYWORD_GLSL] = new_u32_list(&ctx->callbacks, 1, ATTRIBUTE_NOPARSE);
 	ctx->sat[KEYWORD_GFXPIPELINE] = new_u32_list(&ctx->callbacks, 1, ATTRIBUTE_NOPARSE);
+	ctx->sat[KEYWORD_VEC4] = new_u32_list(&ctx->callbacks, 3, ATTRIBUTE_MESH_LAYOUT, ATTRIBUTE_RATE, ATTRIBUTE_ATTRIBUTE);
+	ctx->sat[KEYWORD_VEC3] = new_u32_list(&ctx->callbacks, 3, ATTRIBUTE_MESH_LAYOUT, ATTRIBUTE_RATE, ATTRIBUTE_ATTRIBUTE);
+	ctx->sat[KEYWORD_VEC2] = new_u32_list(&ctx->callbacks, 3, ATTRIBUTE_MESH_LAYOUT, ATTRIBUTE_RATE, ATTRIBUTE_ATTRIBUTE);
 
 	ctx->keywords_size = sizeof(keywords) / sizeof(const char*);
 	ctx->keywords = CAST_TO(char**, keywords);
@@ -152,7 +161,7 @@ SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, com_all
 	}
 
 	// write the file header
-	ctx->src = start = write_header(start, end, ctx->codegen_buffer);
+	ctx->src = start = write_header(ctx, start, end);
 
 	// parse the source code (perhaps partially)
 	ppsr_v3d_generic_parse_result_t result = ppsr_v3d_generic_parse(callbacks, start, CAST_TO(u32, end - start));
