@@ -18,7 +18,7 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          install: git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc mingw-w64-x86_64-vulkan-headers
+          install: git mingw-w64-x86_64-gcc make mingw-w64-x86_64-shaderc mingw-w64-x86_64-vulkan-headers mingw-w64-x86_64-vulkan-loader mingw-w64-x86_64-vulkan-validation-layers
       - name: CI-Build
         run: |
           echo 'Running in MSYS2!'
