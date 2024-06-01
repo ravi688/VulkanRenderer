@@ -7,7 +7,7 @@
 # Spectrum Graphics Engine
 
 **SGE** (formerly Vulkan Renderer) is a cross platform 2D and 3D graphics engine primarly designed for high quality text rendering, and 2D/3D geometry rendering.
-For now it is based on Vulkan API, and in future, more API backends will be implemented, such as DirectX 12.
+For now it is based on Vulkan API, and in future, more API backends will be implemented, such as DirectX 12. Currently it works on Debian based Linux Distros and Windows 64-bit.
 
 <a href="https://www.buymeacoffee.com/raviprakashsingh" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 
