@@ -28,6 +28,7 @@
 #include <shader_compiler/defines.h>
 #include <common/allocation_callbacks.h>
 #include <bufferlib/buffer.h>
+#include <shader_compiler/sb_emitter.h>
 
 /* enclosure structure to hold src string and include paths */
 typedef struct sc_compiler_input_t
@@ -84,6 +85,7 @@ typedef ptr_u32_pair_t* symbol_qualifiers_table_t;
 typedef ptr_u32_pair_t* symbol_attributes_table_t;
 
 typedef struct codegen_buffer_t codegen_buffer_t;
+typedef struct sb_emitter_t sb_emitter_t;
 
 typedef struct compiler_ctx_t
 {
@@ -93,6 +95,9 @@ typedef struct compiler_ctx_t
 
 	/* binary buffer to write code generation data (final output) */
 	codegen_buffer_t* codegen_buffer;
+
+	/* shader binary emitter, which is used in shader binary generation for 2023 version */
+	sb_emitter_t* emitter;
 
 	/* table for looking the expected symbols after the current symbol */
 	look_ahead_table_t lat;

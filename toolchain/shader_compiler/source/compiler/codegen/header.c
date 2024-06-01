@@ -26,6 +26,7 @@
 #define COMMON_PORTABLE_STDLIB
 #include <common/defines.h>
 
+#include <shader_compiler/compiler/compiler.h>
 #include <shader_compiler/compiler/codegen/header.h>
 #include <shader_compiler/compiler/codegen/codegen_buffer.h>
 #include <shader_compiler/utilities/string.h>

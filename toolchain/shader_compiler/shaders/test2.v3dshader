@@ -26,7 +26,7 @@
 // 
 
 #sb version 2022
-#sl version 2022
+#sl version 2023
 
 [Name("DiffuseTestShader")]
 Shader
@@ -65,38 +65,38 @@ Shader
 	[NoParse]
 	Properties
 	{
-		vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+		fragment vertex [4, 0] uniform Parameters
 		{
 			vec4 color;
 		} parameters;
 
-		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
+		fragment [4, 1] uniform sampler2D albedo; 
 	}
 
 	// [NoParse]
 	// Layout
 	// {
-	// 	per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
-	// 	per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
-	// 	per_vertex [TEXCOORD_BINDING, TEXCOORD_LOCATION] vec2 texcoord;
+	// 	per_vertex [0, 0] vec3 position;
+	// 	per_vertex [1, 1] vec3 normal;
+	// 	per_vertex [3, 3] vec2 texcoord;
 	// }
 
 	Layout
 	{
 		[Rate(per_vertex)]
-		[MeshLayout(sge_optimal)]
+		[MeshLayout(sge_separate)]
 		[Attribute(position)]
 		// [Attribute(binding=1, location=1)]
 		vec3 position;
 		
 		[Rate(per_vertex)] 
-		[MeshLayout(sge_optional)]
+		[MeshLayout(sge_separate)]
 		[Attribute(normal)]
 		// [Attribute(binding=2, location=2)]
 		vec3 normal;
 		
 		[Rate(per_vertex)]
-		[MeshLayout(sge_optimal)]
+		[MeshLayout(sge_separate)]
 		[Attribute(texcoord)]
 		// [Attribute(binding=3, location=3)]
 		vec2 texcoord;

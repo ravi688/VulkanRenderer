@@ -237,8 +237,11 @@ static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 	/* the layout descriptions come after the property descriptions */
 	if(!foreach_child_node_if_name(node, keywords[KEYWORD_LAYOUT], (ctx->sl_version == SL_VERSION_2023) ? codegen_vertex_buffer_layout : codegen_descriptions, NULL, ctx))
 	{
-		/* if there is no layout block then just write the number of layout descriptions to be zero */
-		binary_writer_u16(ctx->codegen_buffer->main, 0);
+		if(ctx->sl_version != SL_VERSION_2023)
+		{
+			/* if there is no layout block then just write the number of layout descriptions to be zero */
+			binary_writer_u16(ctx->codegen_buffer->main, 0);
+		}
 	}
 
 	u32 render_pass_count = count_child_node_if_name(node, keywords[KEYWORD_RENDERPASS], ctx->src);
@@ -349,7 +352,7 @@ static u32_pair_t u32_pairs_find_any_str(compiler_ctx_t* ctx, u32_pair_t* pairs,
 		if(index != U32_MAX)
 			return (u32_pair_t) { i, index };
 	}
-	return U32_PAIR_INVALID;
+	return (u32_pair_t) { U32_MAX, U32_MAX };
 }
 
 static u32 find_mesh_layout_index(compiler_ctx_t* ctx, v3d_generic_attribute_t* attributes, u32 attribute_count)
@@ -364,7 +367,7 @@ static u32 find_mesh_layout_index(compiler_ctx_t* ctx, v3d_generic_attribute_t* 
 				u32 index = strs_find_u32_pair(ctx, g_mesh_layouts, SIZEOF_ARRAY(g_mesh_layouts), attribute->arguments[0]);
 				if(index != U32_MAX)
 					return index;
-				else DEBUG_LOG_FETAL_ERROR("MeshLayout() has been passed an incorrect argument \"%.*s\"", u32_pair_get_str(ctx, attribute->arguments[0]), U32_PAIR_DIFF(attribute->arguments[0]));
+				else DEBUG_LOG_FETAL_ERROR("MeshLayout() has been passed an incorrect argument \"%.*s\"", U32_PAIR_DIFF(attribute->arguments[0]), u32_pair_get_str(ctx, attribute->arguments[0]));
 			}
 			else DEBUG_LOG_FETAL_ERROR("MeshLayout() has been passed incorrect number of arguments, it doesn't accept %" PRIu32 " arguments", attribute->argument_count);
 		}
@@ -396,7 +399,7 @@ static void attribute_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
 			else
 			{
 				if(!map[i])
-					DEBUG_LOG_FETAL_ERROR("Attribute() is incorrectly called, argument \"%.*s\" can't find its place", u32_pair_get_str(ctx, attribute->arguments[i]), U32_PAIR_DIFF(attribute->arguments[i]));
+					DEBUG_LOG_FETAL_ERROR("Attribute() is incorrectly called, argument \"%.*s\" can't find its place", U32_PAIR_DIFF(attribute->arguments[i]), u32_pair_get_str(ctx, attribute->arguments[i]));
 				data[i] = try_parse_u32_pair_str_to_u32(ctx, attribute->arguments[i]);
 			}
 		}
@@ -418,7 +421,7 @@ static void attribute_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
 	}
 	else DEBUG_LOG_FETAL_ERROR("Attribute() is passed incorrect number of arguments, it doesn't accept %" PRIu32 " arguments", attribute->parameter_count);
 
-	sb_emitter_emit_vertex_bind_and_location(ctx->codegen_buffer, data[0], data[1]);
+	sb_emitter_emit_vertex_bind_and_location(ctx->emitter, data[0], data[1]);
 }
 
 static const char* g_vertex_input_rates[] = 
@@ -426,12 +429,6 @@ static const char* g_vertex_input_rates[] =
 	"per_vertex",
 	"per_instance"
 };
-
-typedef enum vertex_input_rate_t
-{
-	VERTEX_INPUT_RATE_VERTEX = 1,
-	VERTEX_INPUT_RATE_INSTANCE = 2
-} vertex_input_rate_t;
 
 static vertex_input_rate_t g_vertex_input_rate_emit_values[] = 
 {
@@ -445,9 +442,9 @@ static void rate_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
 	if(attribute->argument_count == 1)
 	{
 		u32 index = strs_find_u32_pair(ctx, g_vertex_input_rates, SIZEOF_ARRAY(g_vertex_input_rates), attribute->arguments[0]);
-		if(index == U32_MAX)
-			sb_emitter_emit_vertex_input_rate(ctx->codegen_buffer, g_vertex_input_rate_emit_values[index]);
-		else DEBUG_LOG_FETAL_ERROR("Rate() is passed incorrect argument \"%.*s\", no such input rate exists", u32_pair_get_str(ctx, attribute->arguments[0]), U32_PAIR_DIFF(attribute->arguments[0]));
+		if(index != U32_MAX)
+			sb_emitter_emit_vertex_input_rate(ctx->emitter, g_vertex_input_rate_emit_values[index]);
+		else DEBUG_LOG_FETAL_ERROR("Rate() is passed incorrect argument \"%.*s\", no such input rate exists", U32_PAIR_DIFF(attribute->arguments[0]), u32_pair_get_str(ctx, attribute->arguments[0]));
 	}
 	else DEBUG_LOG_FETAL_ERROR("Rate() is passed incorrect number of arguments, it doesn't accept %" PRIu32 " arguments", attribute->parameter_count);
 }
@@ -485,6 +482,7 @@ static glsl_type_t g_vertex_attribute_type_emit_values[] =
 
 static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
 {
+	sb_emitter_initialize(ctx->emitter);
 	/*
 		** NODE 0 **
 		[Rate(per_vertex)]
@@ -512,6 +510,23 @@ static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_coun
 	{
 		AUTO node = nodes[i];
 
+		/* index in { "vec2", "vec3", "vec4", ... } -- vertex attribute types */
+		u32_pair_t pair = u32_pairs_find_any_str(ctx, node->qualifiers, node->qualifier_count, g_vertex_attribute_types, SIZEOF_ARRAY(g_vertex_attribute_types));
+		if((pair.start == U32_MAX) || (pair.end == U32_MAX))
+			DEBUG_LOG_FETAL_ERROR("Vertex Attribute type is incorrect");
+		
+		sb_emitter_open_vertex_attribute(ctx->emitter);
+		sb_emitter_emit_vertex_attribute_type(ctx->emitter, g_vertex_attribute_type_emit_values[pair.end]);
+		sb_emitter_emit_vertex_attribute_name(ctx->emitter, u32_pair_get_str(ctx, node->qualifiers[pair.start]), U32_PAIR_DIFF(node->qualifiers[pair.start]));
+
+		bool is_found_mask[SIZEOF_ARRAY(g_vertex_attribute_names)] = { };
+		u32 is_required_mask[] = 
+		{ 
+			/* Rate is required (at index 0 in g_vertex_attribute_names) */
+		 	0, 
+		 	/* Attribute is required (at index 2 in g_vertex_attribute_names) */
+			2 
+		};
 		/* iterate through each attribute applied to this vertex attribute definition */
 		for(u32 j = 0; j < node->attribute_count; j++)
 		{
@@ -519,19 +534,15 @@ static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_coun
 			u32 index = strs_find_u32_pair(ctx, g_vertex_attribute_names, SIZEOF_ARRAY(g_vertex_attribute_names), attribute->name);
 			if(index != U32_MAX)
 			{
+				is_found_mask[index] = true;
 				AUTO fnptr = g_vertex_attribute_handlers[index];
 				fnptr(ctx, attribute, node->attributes, node->attribute_count);
 			}
 		}
-
-		/* index in { "vec2", "vec3", "vec4", ... } -- vertex attribute types */
-		u32_pair_t pair = u32_pairs_find_any_str(ctx, node->qualifiers, node->qualifier_count, g_vertex_attribute_types, SIZEOF_ARRAY(g_vertex_attribute_types));
-		if(!U32_PAIR_IS_INVALID(pair))
-		{
-			sb_emitter_emit_vertex_attribute_type(ctx->codegen_buffer, g_vertex_attribute_type_emit_values[pair.end]);
-			sb_emitter_emit_vertex_attribute_name(ctx->codegen_buffer, u32_pair_get_str(ctx, node->qualifiers[pair.start]), U32_PAIR_DIFF(node->qualifiers[pair.start]));
-		}
-		else DEBUG_LOG_FETAL_ERROR("Vertex Attribute type is incorrect");
+		for(u32 i = 0; i < SIZEOF_ARRAY(is_required_mask); i++)
+			if(!is_found_mask[is_required_mask[i]])
+				DEBUG_LOG_FETAL_ERROR("Attribute \"%s\" is required to correctly define a vertex attribute's format, binding and location", g_vertex_attribute_names[is_required_mask[i]]);
+		sb_emitter_close_vertex_attribute(ctx->emitter);
 	}
 }
 

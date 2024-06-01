@@ -32,6 +32,7 @@
 #include <shader_compiler/compiler/codegen/header.h>
 #include <shader_compiler/compiler/syntax.h>
 #include <shader_compiler/compiler/codegen/codegen.h>
+#include <shader_compiler/sb_emitter.h>
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -103,7 +104,7 @@ SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks
 	ctx->sat[KEYWORD_FALSE] = PTR_U32_NULL;
 	ctx->sat[KEYWORD_SHADER] = new_u32_list(&ctx->callbacks, 1, ATTRIBUTE_NAME);
 	ctx->sat[KEYWORD_PROPERTIES] = new_u32_list(&ctx->callbacks, 1, ATTRIBUTE_NOPARSE);
-	ctx->sat[KEYWORD_LAYOUT] = PTR_U32_NULL;
+	ctx->sat[KEYWORD_LAYOUT] = new_u32_list(&ctx->callbacks, 1, ATTRIBUTE_NOPARSE);
 	ctx->sat[KEYWORD_RENDERPASS] = new_u32_list(&ctx->callbacks, 2, ATTRIBUTE_READ, ATTRIBUTE_WRITE);
 	ctx->sat[KEYWORD_SUBPASS] = new_u32_list(&ctx->callbacks, 2, ATTRIBUTE_READ, ATTRIBUTE_WRITE);
 	ctx->sat[KEYWORD_GLSL] = new_u32_list(&ctx->callbacks, 1, ATTRIBUTE_NOPARSE);
@@ -119,6 +120,7 @@ SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks
 	ctx->current_pipeline_index = -1;
 
 	ctx->codegen_buffer = codegen_buffer_create(&ctx->callbacks);
+	ctx->emitter = sb_emitter_create(&ctx->callbacks, ctx->codegen_buffer, ctx->sb_version);
 
 	return ctx;
 }
@@ -134,6 +136,7 @@ SC_API void compiler_ctx_destroy(compiler_ctx_t* ctx)
 	for(u32 i = 0; i < KEYWORD_MAX; i++)
 		if(!PTR_U32_IS_NULL(&ctx->lat[i]))
 			com_call_deallocate(&ctx->callbacks, ctx->lat[i].ptr);
+	sb_emitter_destroy(ctx->emitter);
 	codegen_buffer_destroy(ctx->codegen_buffer);
 	codegen_buffer_release_resources(ctx->codegen_buffer);
 	com_call_deallocate(&ctx->callbacks, ctx->lat);
@@ -202,6 +205,8 @@ SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, com_all
 
 	ppsr_v3d_generic_parse_result_destroy(callbacks, result);
 
+	if(ctx->sl_version == SL_VERSION_2023)
+		sb_emitter_flush(ctx->emitter);
 	BUFFER* f_buffer = codegen_buffer_flatten(ctx->codegen_buffer);
 	sc_compiler_output_t output = 
 	{

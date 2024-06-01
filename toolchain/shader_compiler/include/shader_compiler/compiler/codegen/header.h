@@ -26,7 +26,6 @@
 #pragma once
 
 #include <shader_compiler/defines.h>
-#include <shader_compiler/compiler/compiler.h>
 
 #define SB_HDR_STR "V3D Shader Binary"
 
@@ -58,6 +57,8 @@ typedef enum sl_version_t
 	SL_VERSION_2022 = 2022UL,
 	SL_VERSION_2023 = 2023UL
 } sl_version_t;
+
+typedef struct compiler_ctx_t compiler_ctx_t;
 
 /*	parses the string pointed by 'start', ends at 'end', and writes the file header to the codegen buffer 'writer'
 	start: pointer to the stsart of the string

@@ -115,7 +115,6 @@ SC_API void codegen_buffer_release_resources(codegen_buffer_t* buffer)
 SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 {
 	u32 main_size = buf_get_element_count(CAST_TO(BUFFER*, buffer->main->user_data));
-	CAN_BE_UNUSED_VARIABLE BUFFER* mark_table = &buffer->main->mark_table;
 
 	struct
 	{
@@ -125,7 +124,7 @@ SC_API BUFFER* codegen_buffer_flatten(codegen_buffer_t* buffer)
 
 	for(u32 j = 0; j < 2; j++)
 	{
-		/* increment all the pointers/offsets, to data section, by main_size */
+		/* increment all the pointers/offsets, in the data section, by main_size as the data section will be appended at the end of the main section */
 		for(u32 i = MARK_ID_OFFSET; i < MARK_ID_OFFSET_MAX; i++)
 		{
 			buf_ucount_t index = buf_find_index_of(update_list[j].mark_table, &i, mark_id_comparer);
