@@ -24,7 +24,7 @@
 */
 
 
-#sl version 2022
+#sl version 2023
 #sb version 2022
 
 Shader
@@ -40,12 +40,25 @@ Shader
 		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
 	}
 
-	[NoParse]
 	Layout
 	{
-		per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
-		per_vertex [TEXCOORD_BINDING, TEXCOORD_LOCATION] vec2 texcoord;
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(position)]
+		vec3 position;
+
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(texcoord)]
+		vec2 texcoord;
 	}
+	
+	// [NoParse]
+	// Layout
+	// {
+	// 	per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+	// 	per_vertex [TEXCOORD_BINDING, TEXCOORD_LOCATION] vec2 texcoord;
+	// }
 
 	RenderPass
 	{

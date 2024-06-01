@@ -25,7 +25,7 @@
 
 
 #sb version 2022
-#sl version 2022
+#sl version 2023
 
 Shader
 {
@@ -39,14 +39,35 @@ Shader
 			int surface_type;
         } parameters;
     }
-    [NoParse]
+
     Layout
     {
-        per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 local_position;
-        per_instance [5, 1] vec3 offset;
-        per_instance [5, 2] vec3 scale;
-        per_instance [5, 3] vec3 rotation;
+        [Rate(per_vertex)]
+        [MeshLayout(sge_optimal)]
+        [Attribute(position)]
+        vec3 position;
+
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=1)]
+        vec3 offset;
+
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=2)]
+        vec3 scale;
+
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=3)]
+        vec3 rotation;
     }
+
+    // [NoParse]
+    // Layout
+    // {
+    //     per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 local_position;
+    //     per_instance [5, 1] vec3 offset;
+    //     per_instance [5, 2] vec3 scale;
+    //     per_instance [5, 3] vec3 rotation;
+    // }
 
     RenderPass
     {

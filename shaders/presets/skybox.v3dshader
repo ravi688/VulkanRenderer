@@ -24,7 +24,7 @@
 */
 
 
-#sl version 2022
+#sl version 2023
 #sb version 2022
 
 Shader
@@ -35,11 +35,19 @@ Shader
 		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform samplerCube albedo;
 	}
 
-	[NoParse]
 	Layout
 	{
-		per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(position)]
+		vec3 position;
 	}
+
+	// [NoParse]
+	// Layout
+	// {
+	// 	per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+	// }
 
 	RenderPass
 	{

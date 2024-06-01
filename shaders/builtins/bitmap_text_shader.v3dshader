@@ -25,8 +25,9 @@
 
 
 #sb version 2022
-#sl version 2022
+#sl version 2023
 
+[Name("BitmapTextShader")]
 Shader /* load("text_shader.v3dshader") */
 {
     [NoParse]
@@ -40,23 +41,44 @@ Shader /* load("text_shader.v3dshader") */
         fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D bga;
 
     }
-    [NoParse]
+
     Layout
     {
-        /* position of the vertex in model space */
-        per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
-        
-        /* Glyph Render Data */
+        [Rate(per_vertex)]
+        [MeshLayout(sge_optimal)]
+        [Attribute(position)]
+        vec3 position;
 
-        /* per_instance [5, 5] vec3 ofst;
-         * per_instance [5, 5] uint indx; */
-        per_instance [5, 5] vec4 ofst_indx;
-        /* per_instance [5, 6] vec3 rotn;
-         * per_instance [5, 6] uint stid; */
-        per_instance [5, 6] vec4 rotn_stid;
-        /* per_instance [5, 7] vec3 scal; */
-        per_instance [5, 7] vec3 scal;
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=5)]
+        vec4 ofst_indx;
+
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=6)]
+        vec4 rotn_stid;
+
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=7)]
+        vec4 rotn_stid;
     }
+
+    // [NoParse]
+    // Layout
+    // {
+    //     /* position of the vertex in model space */
+    //     per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+        
+    //     /* Glyph Render Data */
+
+    //     /* per_instance [5, 5] vec3 ofst;
+    //      * per_instance [5, 5] uint indx; */
+    //     per_instance [5, 5] vec4 ofst_indx;
+    //     /* per_instance [5, 6] vec3 rotn;
+    //      * per_instance [5, 6] uint stid; */
+    //     per_instance [5, 6] vec4 rotn_stid;
+    //     /* per_instance [5, 7] vec3 scal; */
+    //     per_instance [5, 7] vec3 scal;
+    // }
     
     RenderPass
     {
