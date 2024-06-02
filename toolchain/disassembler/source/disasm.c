@@ -26,6 +26,7 @@
 #include <disassembler/disasm.h>
 #include <common/binary_reader.h>
 #include <glslcommon/glsl_types.h>
+#include <common/allocation_callbacks.h>
 
 #include <disassembler/debug.h>
 #include <disassembler/assert.h>
@@ -55,8 +56,15 @@ static void _printf(BUFFER* str, const char* format, ...)
 	buf_pop_pseudo(str, 1);
 }
 
-static void disasm_header(binary_reader_t* reader, BUFFER* str)
+typedef struct disassembler_t
 {
+	binary_reader_t* reader;
+	u32 sb_version;
+} disassembler_t;
+
+static void disasm_header(disassembler_t* disasm, BUFFER* str)
+{
+	binary_reader_t* reader = disasm->reader;
 	if(strncmp(binary_reader_str(reader), "V3D Shader Binary", strlen("V3D Shader Binary")) != 0)
 		DEBUG_LOG_FETAL_ERROR("Invalid file header, file is broken");
 
@@ -75,7 +83,8 @@ static void disasm_header(binary_reader_t* reader, BUFFER* str)
 			case 1:
 			{
 				/* version of the sb */
-				if((bversion = binary_reader_u32(reader)) != 2022)
+				bversion = binary_reader_u32(reader);
+				if((bversion != 2022) && (bversion != 2023))
 					DEBUG_LOG_FETAL_ERROR("Invalid shader binary version, this disassembler only supports version 2022");
 				break;
 			}
@@ -97,6 +106,8 @@ static void disasm_header(binary_reader_t* reader, BUFFER* str)
 			break;
 		--count;
 	}
+
+	disasm->sb_version = bversion;
 
 	_printf(str, "Language Version: %lu\n", lversion);
 	_printf(str, "Binary Version: %lu\n", bversion);
@@ -208,8 +219,9 @@ INLINE static const char* descriptor_type_to_string(u32 stage)
 	}
 }
 
-static void disasm_descriptor_info(binary_reader_t* reader, BUFFER* str)
+static void disasm_descriptor_info(disassembler_t* disasm, BUFFER* str)
 {
+	binary_reader_t* reader = disasm->reader;
 	u32 info = binary_reader_u32(reader);
 
 	u32 descriptor_type_bits = (info & 0xFF0000) >> 16;
@@ -241,12 +253,13 @@ static void disasm_descriptor_info(binary_reader_t* reader, BUFFER* str)
 		u16 field_count = binary_reader_u16(reader);
 		_printf(str, "field count: %u\n", field_count);
 		for(u16 i = 0; i < field_count; i++)
-			disasm_descriptor_info(reader, str);
+			disasm_descriptor_info(disasm, str);
 	}
 }
 
-static void disasm_descriptions(binary_reader_t* reader, BUFFER* str)
+static void disasm_descriptions(disassembler_t* disasm, BUFFER* str)
 {
+	binary_reader_t* reader = disasm->reader;
 	/* material property descriptions */
 	u32 count = binary_reader_u16(reader);
 	_printf(str, "count: %lu\n", count);
@@ -259,7 +272,7 @@ static void disasm_descriptions(binary_reader_t* reader, BUFFER* str)
 		u32 set_number = binary_reader_u8(reader);
 		u32 binding_number = binary_reader_u8(reader);
 		_printf(str, "[%lu, %lu] ", set_number, binding_number);
-		disasm_descriptor_info(reader, str);
+		disasm_descriptor_info(disasm, str);
 		binary_reader_pop(reader);
 	}
 }
@@ -319,8 +332,9 @@ static u32 gfx_pipeline_get_satelite_size(const gfx_pipeline_t* pipeline)
 	return size;
 }
 
-static void disasm_pipeline(binary_reader_t* reader, BUFFER* str)
+static void disasm_pipeline(disassembler_t* disasm, BUFFER* str)
 {
+	AUTO reader = disasm->reader;
 	/* 	TODO: write a deserializer to deserialize aggregate data types such as
 		arrays and structs.
 		here we can use that deserializer to deserialize gfx_pipeline_t object and
@@ -330,12 +344,13 @@ static void disasm_pipeline(binary_reader_t* reader, BUFFER* str)
 	CAN_BE_UNUSED_VARIABLE const void* satellite_data = __binary_reader_read(reader, gfx_pipeline_get_satelite_size(pipeline));
 }
 
-static void disasm_pipeline_description(binary_reader_t* reader, BUFFER* str)
+static void disasm_pipeline_description(disassembler_t* disasm, BUFFER* str)
 {
+	AUTO reader = disasm->reader;
 	u32 offset = binary_reader_u32(reader);
 	binary_reader_push(reader);
 	binary_reader_jump(reader, offset);
-	disasm_pipeline(reader, str);
+	disasm_pipeline(disasm, str);
 	u8 shader_mask = binary_reader_u8(reader);
 	_printf(str, "shader_mask: %u", shader_mask);
 	for(u32 i = 0; i < VULKAN_SHADER_STAGE_MAX; i++)
@@ -367,13 +382,16 @@ static void disasm_pipeline_description(binary_reader_t* reader, BUFFER* str)
 	binary_reader_pop(reader);
 }
 
-static void disasm_subpasses(binary_reader_t* reader, BUFFER* str, u32 attachment_count, attachment_type_t* attachments)
+static void disasm_subpasses(disassembler_t* disasm, BUFFER* str, u32 attachment_count, attachment_type_t* attachments)
 {
+	AUTO reader = disasm->reader;
 	u32 count = binary_reader_u32(reader);
 	_printf(str, "count: %lu\n", count);
 	for(u32 i = 0; i < count; i++)
 	{
 		_printf(str, "-----Begin Sub Pass %lu---------\n", i);
+		if(disasm->sb_version >= 2023)
+			disasm_descriptions(disasm, str);
 		u32 read_count = binary_reader_u32(reader);
 		_printf(str, "read count: %lu", read_count);
 		for(u32 j = 0; j < read_count; j++)
@@ -400,15 +418,16 @@ static void disasm_subpasses(binary_reader_t* reader, BUFFER* str, u32 attachmen
 			_printf(str, "\ndepth stencil: U32_MAX\n");
 		else
 			_printf(str, "\ndepth stencil: %s(id: %lu)\n", attachment_type_to_string(attachments[depth_stencil]), depth_stencil);
-		disasm_pipeline_description(reader, str);
+		disasm_pipeline_description(disasm, str);
 		_printf(str, "sub render set bindings: ");
-		disasm_descriptions(reader, str);
+		disasm_descriptions(disasm, str);
 		_printf(str, "-----End Sub Pass %lu-----------\n", i);
 	}
 }
 
-static void disasm_renderpasses(binary_reader_t* reader, BUFFER* str)
+static void disasm_renderpasses(disassembler_t* disasm, BUFFER* str)
 {
+	binary_reader_t* reader = disasm->reader;
 	u32 count = binary_reader_u32(reader);
 	_printf(str, "count: %lu\n", count);
 	attachment_type_t* prev_attachments = NULL;
@@ -434,9 +453,9 @@ static void disasm_renderpasses(binary_reader_t* reader, BUFFER* str)
 		u32 subpass_dependency_count = binary_reader_u32(reader);
 		_printf(str, "\nsubpass dependency count: %lu\n", subpass_dependency_count);
 		_printf(str, "render set bindings: ");
-		disasm_descriptions(reader, str);
+		disasm_descriptions(disasm, str);
 		_printf(str, "subpasses: ");
-		disasm_subpasses(reader, str, attachment_count, attachments);
+		disasm_subpasses(disasm, str, attachment_count, attachments);
 		_printf(str, "-----End Render Pass %lu---------\n", i);
 	}
 }
@@ -447,17 +466,22 @@ DISASM_API BUFFER* disassemble(const void* bytes, u32 size)
 
 	binary_reader_t* reader = binary_reader_create(bytes, size);
 
-	disasm_header(reader, str);
+	disassembler_t* disasm = com_allocate_obj_init(NULL, disassembler_t);
+	disasm->reader = reader;
+
+	disasm_header(disasm, str);
 
 	_printf(str, "material property descriptions: ");
-	disasm_descriptions(reader, str);
+	disasm_descriptions(disasm, str);
 	_printf(str, "layout descriptions: ");
-	disasm_descriptions(reader, str);
+	disasm_descriptions(disasm, str);
 	_printf(str, "render passes: ");
-	disasm_renderpasses(reader, str);
+	disasm_renderpasses(disasm, str);
 	
 	binary_reader_destroy(reader);
 	binary_reader_release_resources(reader);
 	buf_push_null(str);
+
+	com_deallocate(NULL, disasm);
 	return str;
 }

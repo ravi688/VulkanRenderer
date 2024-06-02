@@ -45,7 +45,8 @@ typedef enum cmplr_cmd_cat_t
 typedef enum sb_version_t
 {
 	SB_VERSION_2021 = 2021UL,
-	SB_VERSION_2022
+	SB_VERSION_2022 = 2022UL,
+	SB_VERSION_2023 = 2023UL
 } sb_version_t;
 
 /* shader language version

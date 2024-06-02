@@ -205,8 +205,6 @@ SC_API sc_compiler_output_t sc_compile(const sc_compiler_input_t* input, com_all
 
 	ppsr_v3d_generic_parse_result_destroy(callbacks, result);
 
-	if(ctx->sl_version == SL_VERSION_2023)
-		sb_emitter_flush(ctx->emitter);
 	BUFFER* f_buffer = codegen_buffer_flatten(ctx->codegen_buffer);
 	sc_compiler_output_t output = 
 	{
