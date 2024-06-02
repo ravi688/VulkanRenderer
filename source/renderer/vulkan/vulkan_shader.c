@@ -1358,8 +1358,8 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 				.settings = pipeline_description->settings,
 				.spirv_codes = pipeline_description->spirv_codes,
 				.spirv_code_count = pipeline_description->spirv_code_count,
-				.vertex_attribute_bindings = common_data->vertex_attribute_bindings,
-				.vertex_attribute_binding_count = common_data->vertex_attribute_binding_count,
+				.vertex_attribute_bindings = (descriptions[i].subpass_descriptions[j].vertex_info_count > 0) ? descriptions[i].subpass_descriptions[j].vertex_infos : common_data->vertex_attribute_bindings,
+				.vertex_attribute_binding_count = (descriptions[i].subpass_descriptions[j].vertex_info_count > 0) ? descriptions[i].subpass_descriptions[j].vertex_info_count : common_data->vertex_attribute_binding_count,
 				.render_pass = render_pass,
 				.subpass_index = j
 			};
@@ -1460,8 +1460,16 @@ RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, 
 	return shader;
 }
 
-static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT descriptor_count)
+typedef struct shader_binary_read_context_t
 {
+	binary_reader_t* reader;
+	/* shader binary version */
+	u32 sb_version;
+} shader_binary_read_context_t;
+
+static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t* allocator, shader_binary_read_context_t* ctx, u32 OUT descriptor_count)
+{
+	binary_reader_t* reader = ctx->reader;
 	// read the number of descriptors
 	u16 count = binary_reader_u16(reader);
 
@@ -1551,10 +1559,10 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 	return descriptors;
 }
 
-static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count)
+static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_allocator_t* allocator, shader_binary_read_context_t* ctx, u32 OUT count)
 {
 	u32 descriptor_count;
-	vulkan_shader_resource_description_t* descriptors = load_descriptors(allocator, reader, &descriptor_count);
+	vulkan_shader_resource_description_t* descriptors = load_descriptors(allocator, ctx, &descriptor_count);
 
 	if(descriptor_count == 0)
 	{
@@ -1687,8 +1695,9 @@ static void destroy_vertex_infos(memory_allocator_t* allocator, vulkan_vertex_bu
 	memory_allocator_dealloc(allocator, vertex_infos);
 }
 
-static vulkan_spirv_code_t* load_spirv_codes(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count)
+static vulkan_spirv_code_t* load_spirv_codes(memory_allocator_t* allocator, shader_binary_read_context_t* ctx, u32 OUT count)
 {
+	binary_reader_t* reader = ctx->reader;
 	// calculate the number of shader stages (vertex, geometry, fragment, etc) present in the shader binary
 	u32 shader_mask = binary_reader_u8(reader);
 	u32 code_count = 0; 
@@ -1750,8 +1759,10 @@ static void destroy_spirv_code(memory_allocator_t* allocator, vulkan_spirv_code_
 	memory_allocator_dealloc(allocator, spirv_code->spirv);
 }
 
-static u32 create_add_pipeline_description(memory_allocator_t* allocator, binary_reader_t* reader, BUFFER* pipeline_descriptions)
+static u32 create_add_pipeline_description(memory_allocator_t* allocator, shader_binary_read_context_t* ctx, BUFFER* pipeline_descriptions)
 {
+	binary_reader_t* reader = ctx->reader;
+
 	buf_push_pseudo(pipeline_descriptions, 1);
 	vulkan_graphics_pipeline_description_t* description = buf_peek_ptr(pipeline_descriptions);
 
@@ -1784,7 +1795,7 @@ static u32 create_add_pipeline_description(memory_allocator_t* allocator, binary
 	description->settings->viewport.pViewports = viewports;
 
 	// read the spirv code array
-	description->spirv_codes = load_spirv_codes(allocator, reader, &description->spirv_code_count);
+	description->spirv_codes = load_spirv_codes(allocator, ctx, &description->spirv_code_count);
 
 	binary_reader_pop(reader);
 	return buf_get_element_count(pipeline_descriptions) - 1;
@@ -1812,8 +1823,10 @@ static void destroy_pipeline_descriptions(memory_allocator_t* allocator, vulkan_
 		memory_allocator_dealloc(allocator, descriptions);
 }
 
-static vulkan_subpass_description_t* create_subpass_descriptions(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
+static vulkan_subpass_description_t* create_subpass_descriptions(memory_allocator_t* allocator, shader_binary_read_context_t* ctx, u32 OUT count, BUFFER* pipeline_descriptions)
 {
+	binary_reader_t* reader = ctx->reader;
+
 	u32 description_count = binary_reader_u32(reader);
 	OUT count = description_count;
 	if(description_count == 0)
@@ -1825,6 +1838,9 @@ static vulkan_subpass_description_t* create_subpass_descriptions(memory_allocato
 	for(u32 i = 0; i < description_count; i++)
 	{
 		vulkan_subpass_description_t* description = &descriptions[i];
+
+		if(ctx->sb_version >= 2023)
+			description->vertex_infos = create_vertex_infos(allocator, ctx, &description->vertex_info_count);
 
 		// read the input attachment array
 		description->input_attachment_count = binary_reader_u32(reader);
@@ -1854,9 +1870,9 @@ static vulkan_subpass_description_t* create_subpass_descriptions(memory_allocato
 		}	
 
 		description->depth_stencil_attachment = binary_reader_u32(reader);
-		description->pipeline_description_index = create_add_pipeline_description(allocator, reader, pipeline_descriptions);
+		description->pipeline_description_index = create_add_pipeline_description(allocator, ctx, pipeline_descriptions);
 		
-		description->sub_render_set_bindings = load_descriptors(allocator, reader, &description->sub_render_set_binding_count);	
+		description->sub_render_set_bindings = load_descriptors(allocator, ctx, &description->sub_render_set_binding_count);	
 	}
 
 	return descriptions;
@@ -1867,6 +1883,7 @@ static void destroy_subpass_descriptions(memory_allocator_t* allocator, vulkan_s
 	for(u32 i = 0; i < description_count; i++)
 	{
 		AUTO description = &descriptions[i];
+		destroy_vertex_infos(allocator, description->vertex_infos, description->vertex_info_count);
 		if(description->input_attachment_count > 0)
 			memory_allocator_dealloc(allocator, description->input_attachments);
 		if(description->color_attachment_count > 0)
@@ -1879,8 +1896,10 @@ static void destroy_subpass_descriptions(memory_allocator_t* allocator, vulkan_s
 		memory_allocator_dealloc(allocator, descriptions);
 }
 
-static vulkan_render_pass_description_t* create_render_pass_descriptions(memory_allocator_t* allocator, binary_reader_t* reader, u32 OUT count, BUFFER* pipeline_descriptions)
+static vulkan_render_pass_description_t* create_render_pass_descriptions(memory_allocator_t* allocator, shader_binary_read_context_t* ctx, u32 OUT count, BUFFER* pipeline_descriptions)
 {
+	binary_reader_t* reader = ctx->reader;
+
 	u32 description_count = binary_reader_u32(reader);
 	OUT count = description_count;
 	if(description_count == 0)
@@ -1924,10 +1943,10 @@ static vulkan_render_pass_description_t* create_render_pass_descriptions(memory_
 		}
 		
 		// read the render set binding
-		description->render_set_bindings = load_descriptors(allocator, reader, &description->render_set_binding_count);
+		description->render_set_bindings = load_descriptors(allocator, ctx, &description->render_set_binding_count);
 
 		// read the subpass descriptions array
-		description->subpass_descriptions = create_subpass_descriptions(allocator, reader, &description->subpass_count, pipeline_descriptions);
+		description->subpass_descriptions = create_subpass_descriptions(allocator, ctx, &description->subpass_count, pipeline_descriptions);
 	}
 
 	return descriptions;
@@ -1957,8 +1976,10 @@ typedef struct header_t
 	u32 sl_version;
 } header_t;
 
-static header_t* read_header(memory_allocator_t* allocator,  binary_reader_t* reader)
+static header_t* read_header(memory_allocator_t* allocator, shader_binary_read_context_t* ctx)
 {
+	binary_reader_t* reader = ctx->reader;
+
 	if(strncmp(binary_reader_str(reader), "V3D Shader Binary", strlen("V3D Shader Binary")) != 0)
 		LOG_FETAL_ERR("[Shader Loader] Invalid file header, file is broken");
 
@@ -1976,7 +1997,8 @@ static header_t* read_header(memory_allocator_t* allocator,  binary_reader_t* re
 			case 1:
 			{
 				/* version of the sb */
-				if((header->sb_version = binary_reader_u32(reader)) != 2022)
+				header->sb_version = binary_reader_u32(reader);
+				if((header->sb_version != 2022) && (header->sb_version != 2023))
 					LOG_FETAL_ERR("[Shader Loader] Invalid shader binary version, renderer-1.0 only supports version 2022");
 				break;
 			}
@@ -1998,6 +2020,9 @@ static header_t* read_header(memory_allocator_t* allocator,  binary_reader_t* re
 			break;
 		--count;
 	}
+
+	ctx->sb_version = header->sb_version;
+
 	return header;
 }
 
@@ -2005,19 +2030,21 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(memory_allo
 {
 	binary_reader_t* reader = binary_reader_create(load_info->data, load_info->data_size);
 
-	CAN_BE_UNUSED_VARIABLE AUTO header = read_header(allocator, reader);
+	shader_binary_read_context_t ctx = { .reader = reader };
+
+	CAN_BE_UNUSED_VARIABLE AUTO header = read_header(allocator, &ctx);
 	/* use header to determine binary spec version and choose the loader appropriatly, 
 	 * but for now, we don't maintain such versioning - everything changes for now */
 	memory_allocator_dealloc(allocator, header);
 
 	// load resource descriptors for material
 	u32 descriptor_count;
-	vulkan_shader_resource_description_t* descriptors = load_descriptors(allocator, reader, &descriptor_count);
+	vulkan_shader_resource_description_t* descriptors = load_descriptors(allocator, &ctx, &descriptor_count);
 
 	// load the next resource descriptors meant for vertex attributes and create vertex buffer layout descriptions
 	u32 vertex_info_count;
 	vulkan_vertex_buffer_layout_description_t* vertex_infos = load_info->is_vertex_attrib_from_file ? 
-										create_vertex_infos(allocator, reader, &vertex_info_count) :
+										create_vertex_infos(allocator, &ctx, &vertex_info_count) :
 										decode_vulkan_vertex_infos(allocator, load_info->per_vertex_attribute_bindings,
 																   load_info->per_vertex_attribute_binding_count,
 																   load_info->per_instance_attribute_bindings,
@@ -2030,7 +2057,7 @@ static vulkan_shader_create_info_t* convert_load_info_to_create_info(memory_allo
 
 	// create render pass descriptions
 	u32 render_pass_description_count;
-	vulkan_render_pass_description_t* render_pass_descriptions = create_render_pass_descriptions(allocator, reader, &render_pass_description_count, &pipeline_descriptions);
+	vulkan_render_pass_description_t* render_pass_descriptions = create_render_pass_descriptions(allocator, &ctx, &render_pass_description_count, &pipeline_descriptions);
 
 	buf_fit(&pipeline_descriptions);
 
