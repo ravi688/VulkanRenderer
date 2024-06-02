@@ -34,10 +34,15 @@
 #include <renderer/internal/vulkan/vulkan_attachment.h> // vulkan_attachment_type_t
 
 typedef struct vulkan_shader_resource_description_t vulkan_shader_resource_description_t;
+typedef struct vulkan_vertex_buffer_layout_description_t vulkan_vertex_buffer_layout_description_t;
 
 /* NOTE: sub_render_set_binding_count is always equal to input_attachment_count */
 typedef struct vulkan_subpass_description_t
 {
+	/* VERTEX ATTRIBUTE DESCRIPTIONS */
+	vulkan_vertex_buffer_layout_description_t* vertex_infos;
+	u32 vertex_info_count;
+
 	/* SUB RENDER SET BINDING DESCRIPTIONS */
 	vulkan_shader_resource_description_t* sub_render_set_bindings;
 	u32 sub_render_set_binding_count; 	// must be equal to input_attachment_count
