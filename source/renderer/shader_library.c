@@ -485,7 +485,15 @@ static vulkan_render_pass_description_builder_t* create_render_pass_description(
 			rpd_build_begin_pass(builder, 0, VULKAN_RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
 				rpd_build_add_attachment(builder, VULKAN_ATTACHMENT_TYPE_DEPTH); // local depth buffer
 				rpd_build_begin_subpass(builder, 0);
+				{
+					vulkan_vertex_buffer_layout_description_builder_t* vbld_builder = vulkan_vertex_buffer_layout_description_builder_create(allocator);
+					u32 bind_counter = 0;
+					vbl_build_begin(vbld_builder, &bind_counter, 16 /* 12 + 1 padding */, VK_VERTEX_INPUT_RATE_VERTEX, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_BINDING);
+						vbl_build_add_attribute(vbld_builder, VULKAN_MESH_VERTEX_ATTRIBUTE_POSITION_LOCATION, VK_FORMAT_R32G32B32_SFLOAT, 0);
+					vbl_build_end(vbld_builder);
+					rpd_build_add_vertex_infos_builder(builder, vbld_builder, true);
 					rpd_build_add_attachment_reference(builder, VULKAN_ATTACHMENT_REFERENCE_TYPE_DEPTH_STENCIL, 0, 0);
+				}
 				rpd_build_end_subpass(builder);
 
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
