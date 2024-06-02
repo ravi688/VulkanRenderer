@@ -34,6 +34,7 @@ typedef struct sb_emitter_t
 	sb_version_t version;
 	codegen_buffer_t* buffer;
 	vertex_attribute_info_list_t vtx_attr_infos;
+	bool is_initialized;
 } sb_emitter_t;
 
 SC_API sb_emitter_t* sb_emitter_create(com_allocation_callbacks_t* callbacks, codegen_buffer_t* buffer, sb_version_t version);

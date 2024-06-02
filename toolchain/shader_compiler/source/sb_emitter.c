@@ -24,10 +24,17 @@ SC_API void sb_emitter_destroy(sb_emitter_t* emitter)
 SC_API void sb_emitter_initialize(sb_emitter_t* emitter)
 {
 	binary_writer_u16_mark(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT);
+	emitter->is_initialized = true;
 }
 
 SC_API void sb_emitter_flush(sb_emitter_t* emitter)
 {
+	if(!emitter->is_initialized)
+	{
+		debug_log_info("sb_emitter_t hasn't been initialized, so skipping call to sb_emitter_flush");
+		return;
+	}
+
 	u32 vtx_attr_count = buf_get_element_count(&emitter->vtx_attr_infos);
 	binary_writer_u16_set(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT, CAST_TO(u16, vtx_attr_count));
 	_ASSERT(vtx_attr_count < MARK_ID_VTX_ATTR_DSC_OFFSET_MAX);
