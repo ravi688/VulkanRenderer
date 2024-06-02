@@ -237,11 +237,8 @@ static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 	/* the layout descriptions come after the property descriptions */
 	if(!foreach_child_node_if_name(node, keywords[KEYWORD_LAYOUT], (ctx->sl_version == SL_VERSION_2023) ? codegen_vertex_buffer_layout : codegen_descriptions, NULL, ctx))
 	{
-		if(ctx->sl_version != SL_VERSION_2023)
-		{
-			/* if there is no layout block then just write the number of layout descriptions to be zero */
-			binary_writer_u16(ctx->codegen_buffer->main, 0);
-		}
+		/* if there is no layout block then just write the number of layout descriptions to be zero */
+		binary_writer_u16(ctx->codegen_buffer->main, 0);
 	}
 
 	u32 render_pass_count = count_child_node_if_name(node, keywords[KEYWORD_RENDERPASS], ctx->src);
@@ -482,7 +479,7 @@ static glsl_type_t g_vertex_attribute_type_emit_values[] =
 
 static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
 {
-	sb_emitter_initialize(ctx->emitter);
+	sb_emitter_open_vertex_attribute_array(ctx->emitter);
 	/*
 		** NODE 0 **
 		[Rate(per_vertex)]
@@ -544,6 +541,8 @@ static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_coun
 				DEBUG_LOG_FETAL_ERROR("Attribute \"%s\" is required to correctly define a vertex attribute's format, binding and location", g_vertex_attribute_names[is_required_mask[i]]);
 		sb_emitter_close_vertex_attribute(ctx->emitter);
 	}
+
+	sb_emitter_close_vertex_attribute_array(ctx->emitter);
 }
 
 static void codegen_vertex_buffer_layout(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data)
@@ -1188,6 +1187,16 @@ static void codegen_sub_render_set_binding_descriptions(subpass_analysis_t* anal
 
 static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analysis, compiler_ctx_t* ctx, u32 rpindex, u32 spindex)
 {
+	if(ctx->sb_version == SB_VERSION_2023)
+	{
+		/* vertex buffer layout descriptions  */
+		if(!foreach_child_node_if_name(node, keywords[KEYWORD_LAYOUT], (ctx->sl_version == SL_VERSION_2023) ? codegen_vertex_buffer_layout : codegen_descriptions, NULL, ctx))
+		{
+			/* if there is no layout block then just write the number of layout descriptions to be zero */
+			binary_writer_u16(ctx->codegen_buffer->main, 0);
+		}
+	}
+
 	/* write input attachment list */
 	u32 input_count = analysis->color_read_count + ((analysis->depth_read != U32_MAX) ? 1 : 0);
 	binary_writer_u32(ctx->codegen_buffer->main, input_count);
