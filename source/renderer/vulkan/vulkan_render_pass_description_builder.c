@@ -181,7 +181,7 @@ RENDERER_API void vulkan_render_pass_description_builder_begin_subpass(vulkan_re
 	buf_push_pseudo(&build_info->vbld_builders, 1);
 }
 
-RENDERER_API void vulkan_render_pass_description_builder_add_vertex_infos_builder(vulkan_render_pass_description_builder_t* builder, vulkan_vertex_buffer_layout_description_builder_t* vbld_builder, bool is_destroy)
+RENDERER_API void vulkan_render_pass_description_builder_set_vertex_infos_builder(vulkan_render_pass_description_builder_t* builder, vulkan_vertex_buffer_layout_description_builder_t* vbld_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	AUTO traits = CAST_TO(vulkan_vertex_buffer_layout_description_builder_traits_t*, buf_peek_ptr(&build_info->vbld_builders));
