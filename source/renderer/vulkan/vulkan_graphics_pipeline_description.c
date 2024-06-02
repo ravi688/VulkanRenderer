@@ -41,6 +41,7 @@ static BUFFER* __create_buffer(memory_allocator_t* allocator, u32 size)
 
 RENDERER_API void vulkan_graphics_pipeline_description_begin(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
 {
+	memzero(description, vulkan_graphics_pipeline_description_t);
 	vulkan_graphics_pipeline_settings_t* settings = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_SETTINGS, vulkan_graphics_pipeline_settings_t);
 	memzero(settings, vulkan_graphics_pipeline_settings_t);
 	IF_DEBUG( description->is_official = true );
