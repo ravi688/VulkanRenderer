@@ -50,6 +50,7 @@ static BUFFER* __create_buffer(memory_allocator_t* allocator, u32 size)
 
 RENDERER_API void vulkan_render_pass_description_begin(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, vulkan_render_pass_type_t type)
 {
+	memzero(description, vulkan_render_pass_description_t);
 	description->type = type;
 	description->attachments = CAST_TO(vulkan_attachment_type_t*, create_buffer(allocator, vulkan_attachment_type_t));
 	description->input_attachments = CAST_TO(u32*, create_buffer(allocator, u32));

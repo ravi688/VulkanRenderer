@@ -43,6 +43,7 @@ static BUFFER* __create_buffer(memory_allocator_t* allocator,  u32 size)
 
 RENDERER_API void vulkan_vertex_buffer_layout_description_begin(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
 {
+	memzero(description, vulkan_vertex_buffer_layout_description_t);
 	description->binding = binding_number;
 	description->input_rate = input_rate;
 	description->size = stride;
