@@ -548,7 +548,15 @@ static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_coun
 
 static void codegen_vertex_buffer_layout(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data)
 {
-	write_vertex_buffer_layout(node->childs, node->child_count, ctx, user_data);
+	/* if unparsed content is empty, then assume SL2023 variant of Layout block */
+	if(node->unparsed.start == node->unparsed.end)
+		write_vertex_buffer_layout(node->childs, node->child_count, ctx, user_data);
+	/* otherwise, try with SL2022 variant of Layout block */
+	else
+	{
+		debug_log_warning("SL2022 Layout block has been used in SL2023 version, trying SL2022 semantics...");
+		codegen_descriptions(node, ctx, iteration, user_data);
+	}
 }
 
 static void write_buffer_layouts_and_samplers(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
