@@ -4,11 +4,29 @@
 #include <bufferlib/buffer.h>  // buffer_t
 #include <renderer/internal/vulkan/vulkan_render_pass_description.h> // vulkan_attachment_reference_type_t
 
+typedef struct vulkan_vertex_buffer_layout_description_builder_t vulkan_vertex_buffer_layout_description_builder_t;
+
+typedef struct vulkan_vertex_buffer_layout_description_builder_traits_t
+{
+	vulkan_vertex_buffer_layout_description_builder_t* builder;
+	/* should the above builder be destroyed when vulkan_render_pass_description_builder_destroy() */
+	bool is_destroy;
+} vulkan_vertex_buffer_layout_description_builder_traits_t;
+
+typedef buffer_t /* vulkan_vertex_buffer_layout_description_builder_traits_t* */ vulkan_vertex_buffer_layout_description_builder_list_t;
+
+typedef struct vulkan_render_pass_description_build_info_t
+{
+	vulkan_vertex_buffer_layout_description_builder_list_t vbld_builders;
+} vulkan_render_pass_description_build_info_t;
+
 typedef struct vulkan_render_pass_description_builder_t
 {
 	memory_allocator_t* allocator;
 	/* array of vulkan_render_pass_description_t objects */
 	buffer_t description_array;
+	/* array of vulkan_render_pass_description_build_info_t objects */
+	buffer_t build_info_array;
 	u32 bind_index;
 } vulkan_render_pass_description_builder_t;
 
@@ -31,6 +49,7 @@ RENDERER_API void vulkan_render_pass_description_builder_add_input(vulkan_render
 RENDERER_API void vulkan_render_pass_description_builder_add_attachment(vulkan_render_pass_description_builder_t* builder, vulkan_attachment_type_t type);
 
 RENDERER_API void vulkan_render_pass_description_builder_begin_subpass(vulkan_render_pass_description_builder_t* builder, u32 pipeline_index);
+RENDERER_API void vulkan_render_pass_description_builder_add_vertex_infos_builder(vulkan_render_pass_description_builder_t* builder, vulkan_vertex_buffer_layout_description_builder_t* vbld_builder, bool is_destroy);
 RENDERER_API void vulkan_render_pass_description_builder_add_attachment_reference(vulkan_render_pass_description_builder_t* builder, vulkan_attachment_reference_type_t type, u32 reference, u32 binding);
 RENDERER_API void vulkan_render_pass_description_builder_end_subpass(vulkan_render_pass_description_builder_t* builder);
 
