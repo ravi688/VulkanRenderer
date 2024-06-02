@@ -134,9 +134,9 @@ TEST_ON_INITIALIZE(TID_28_CASE_2)
 
 	AUTO sphereMeshData = mesh3d_load(renderer->allocator, "models/Monkey.obj");
 	mesh3d_make_centroid_origin(sphereMeshData);
-	mesh3d_destroy(sphereMeshData);
 
 	this->mesh = mesh_create(renderer, sphereMeshData);
+	mesh3d_destroy(sphereMeshData);
 	this->renderObject = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->renderObject, this->material);
 	render_object_attach(this->renderObject, this->mesh);
