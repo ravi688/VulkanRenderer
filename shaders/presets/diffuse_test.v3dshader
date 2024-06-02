@@ -25,7 +25,7 @@
 
 
 #sl version 2023
-#sb version 2022
+#sb version 2023
 
 Shader
 {
@@ -70,6 +70,14 @@ Shader
 	{
 		SubPass
 		{
+			Layout
+			{
+				[Rate(per_vertex)]
+				[MeshLayout(sge_optimal)]
+				[Attribute(position)]
+				vec3 position;
+			}
+
 			[NoParse]
 			GraphicsPipeline
 			{
@@ -215,6 +223,14 @@ Shader
 		[Read(color = 0, set = SUB_RENDER_SET, binding = INPUT_ATTACHMENT_BINDING0)]
 		SubPass
 		{
+			Layout
+			{
+				[Rate(per_vertex)]
+				[MeshLayout(sge_optimal)]
+				[Attribute(position)]
+				vec3 position;
+			}
+
 			[NoParse]
 			GraphicsPipeline
 			{

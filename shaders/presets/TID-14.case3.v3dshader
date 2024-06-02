@@ -25,7 +25,7 @@
 
 
 #sl version 2023
-#sb version 2022
+#sb version 2023
 
 Shader
 {
@@ -137,6 +137,14 @@ Shader
 	{
 		SubPass
 		{
+			Layout
+			{
+				[Rate(per_vertex)]
+				[MeshLayout(sge_optimal)]
+				[Attribute(position)]
+				vec3 position;
+			}
+
 			[NoParse]
 			GraphicsPipeline
 			{
