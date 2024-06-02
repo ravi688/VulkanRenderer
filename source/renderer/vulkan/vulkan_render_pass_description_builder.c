@@ -25,6 +25,7 @@
 
 #include <renderer/internal/vulkan/vulkan_render_pass_description_builder.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_description.h>
+#include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description_builder.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
@@ -34,6 +35,7 @@ RENDERER_API vulkan_render_pass_description_builder_t* vulkan_render_pass_descri
 	memzero(builder, vulkan_render_pass_description_builder_t);
 	builder->allocator = allocator;
 	builder->description_array = memory_allocator_buf_new(allocator, vulkan_render_pass_description_t);
+	builder->build_info_array = memory_allocator_buf_new(allocator, vulkan_render_pass_description_build_info_t);
 	builder->bind_index = U32_MAX;
 	return builder;
 }
@@ -59,6 +61,23 @@ RENDERER_API void vulkan_render_pass_description_builder_destroy(vulkan_render_p
 		vulkan_render_pass_description_destroy_allocations(builder->allocator, description);
 	}
 	buf_free(&builder->description_array);
+	_debug_assert__(count == buf_get_element_count(&builder->build_info_array));
+	for(u32 i = 0; i < count; i++)
+	{
+		AUTO vbld_builders = &buf_get_ptr_at_typeof(&builder->build_info_array, vulkan_render_pass_description_build_info_t, i)->vbld_builders;
+		u32 build_count = buf_get_element_count(vbld_builders);
+		for(u32 j = 0; j < build_count; j++)
+		{
+			AUTO traits = buf_get_ptr_at_typeof(vbld_builders, vulkan_vertex_buffer_layout_description_builder_traits_t, j);
+			if(traits->builder == NULL)
+				/* no vertex info has been assigned to this subpass */
+				continue;
+			if(traits->is_destroy)
+				vulkan_vertex_buffer_layout_description_builder_destroy(traits->builder);
+		}
+		buf_free(vbld_builders);
+	}
+	buf_free(&builder->build_info_array);
 	memory_allocator_dealloc(builder->allocator, builder);
 }
 
@@ -66,6 +85,7 @@ RENDERER_API void vulkan_render_pass_description_builder_destroy(vulkan_render_p
 RENDERER_API void vulkan_render_pass_description_builder_add(vulkan_render_pass_description_builder_t* builder, u32 count)
 {
 	buf_push_pseudo(&builder->description_array, count);
+	buf_push_pseudo(&builder->build_info_array, count);
 }
 
 RENDERER_API void vulkan_render_pass_description_builder_bind(vulkan_render_pass_description_builder_t* builder, u32 index)
@@ -79,7 +99,27 @@ RENDERER_API vulkan_render_pass_description_t* vulkan_render_pass_description_bu
 {
 	if(buf_get_element_count(&builder->description_array) == 0)
 		return NULL;
-	return CAST_TO(vulkan_render_pass_description_t*, buf_get_ptr(&builder->description_array));
+	_debug_assert__(buf_get_element_count(&builder->description_array) == buf_get_element_count(&builder->build_info_array));
+	AUTO render_passes = CAST_TO(vulkan_render_pass_description_t*, buf_get_ptr(&builder->description_array));
+	AUTO count = vulkan_render_pass_description_builder_get_count(builder);
+	for(u32 i = 0; i < count; i++)
+	{
+		AUTO vbld_builders = &buf_get_ptr_at_typeof(&builder->build_info_array, vulkan_render_pass_description_build_info_t, i)->vbld_builders;
+		u32 build_count = buf_get_element_count(vbld_builders);
+		AUTO render_pass = &render_passes[i];
+		_debug_assert__(build_count == render_pass->subpass_count);
+		for(u32 j = 0; j < build_count; j++)
+		{
+			AUTO traits = buf_get_ptr_at_typeof(vbld_builders, vulkan_vertex_buffer_layout_description_builder_traits_t, j);
+			if(traits->builder == NULL)
+				/* no vertex info has been assigned to this subpass */
+				continue;
+			render_pass->subpass_descriptions[j].vertex_info_count = vulkan_vertex_buffer_layout_description_builder_get_count(traits->builder);
+			if(render_pass->subpass_descriptions[j].vertex_info_count > 0)
+				render_pass->subpass_descriptions[j].vertex_infos = vulkan_vertex_buffer_layout_description_builder_get(traits->builder);
+		}
+	}
+	return render_passes;
 }
 
 RENDERER_API u32 vulkan_render_pass_description_builder_get_count(vulkan_render_pass_description_builder_t* builder)
@@ -87,6 +127,17 @@ RENDERER_API u32 vulkan_render_pass_description_builder_get_count(vulkan_render_
 	return CAST_TO(u32, buf_get_element_count(&builder->description_array));
 }
 
+static vulkan_render_pass_description_build_info_t* get_build_info(vulkan_render_pass_description_builder_t* builder, u32 index)
+{
+	_debug_assert__(index != U32_MAX);
+	_debug_assert__(index < buf_get_element_count(&builder->build_info_array));
+	return buf_get_ptr_at_typeof(&builder->build_info_array, vulkan_render_pass_description_build_info_t, index);
+}
+
+static INLINE_IF_RELEASE_MODE vulkan_render_pass_description_build_info_t* get_bound_build_info(vulkan_render_pass_description_builder_t* builder)
+{
+	return get_build_info(builder, builder->bind_index);
+}
 
 static vulkan_render_pass_description_t* get_description(vulkan_render_pass_description_builder_t* builder, u32 index)
 {
@@ -105,6 +156,8 @@ RENDERER_API void vulkan_render_pass_description_builder_begin_pass(vulkan_rende
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_begin(builder->allocator, description, type);
+	AUTO build_info = get_bound_build_info(builder);
+	build_info->vbld_builders = memory_allocator_buf_new(builder->allocator, vulkan_vertex_buffer_layout_description_builder_traits_t);
 }
 
 RENDERER_API void vulkan_render_pass_description_builder_add_input(vulkan_render_pass_description_builder_t* builder, glsl_type_t type, u32 index, u32 binding)
@@ -124,6 +177,16 @@ RENDERER_API void vulkan_render_pass_description_builder_begin_subpass(vulkan_re
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_begin_subpass(builder->allocator, description, pipeline_index);
+	AUTO build_info = get_bound_build_info(builder);
+	buf_push_pseudo(&build_info->vbld_builders, 1);
+}
+
+RENDERER_API void vulkan_render_pass_description_builder_add_vertex_infos_builder(vulkan_render_pass_description_builder_t* builder, vulkan_vertex_buffer_layout_description_builder_t* vbld_builder, bool is_destroy)
+{
+	AUTO build_info = get_bound_build_info(builder);
+	AUTO traits = CAST_TO(vulkan_vertex_buffer_layout_description_builder_traits_t*, buf_peek_ptr(&build_info->vbld_builders));
+	traits->builder = vbld_builder;
+	traits->is_destroy = is_destroy;
 }
 
 RENDERER_API void vulkan_render_pass_description_builder_add_attachment_reference(vulkan_render_pass_description_builder_t* builder, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
