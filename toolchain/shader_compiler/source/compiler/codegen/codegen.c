@@ -266,7 +266,7 @@ static u32 try_parse_u32_pair_str_to_u32(compiler_ctx_t* ctx, u32_pair_t pair)
 }
 
 
-#define __ATTRIBUTE_HANDLER_PARAMS__ compiler_ctx_t* ctx, v3d_generic_attribute_t* attribute, v3d_generic_attribute_t* attributes, u32 attribute_count
+#define __ATTRIBUTE_HANDLER_PARAMS__ compiler_ctx_t* ctx, v3d_generic_attribute_t* attribute, v3d_generic_attribute_t* attributes, u32 attribute_count, void* user_data
 typedef void (*attribute_callback_handler_t)(__ATTRIBUTE_HANDLER_PARAMS__);
 
 static const char* g_vertex_attribute_bind_names[] = 
@@ -407,7 +407,7 @@ static void attribute_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
 		u32 bind_name_index = strs_find_u32_pair(ctx, g_vertex_attribute_bind_names, SIZEOF_ARRAY(g_vertex_attribute_bind_names), attribute->arguments[0]);
 		if(bind_name_index != U32_MAX)
 		{
-			u32 mesh_layout_index = find_mesh_layout_index(ctx, attributes, attribute_count);
+			u32 mesh_layout_index = find_mesh_layout_index(ctx, node->attributes, node->attribute_count);
 			if(mesh_layout_index != U32_MAX)
 			{
 				data[0] = g_mesh_layout_emit_values[mesh_layout_index][bind_name_index][0];
@@ -463,57 +463,94 @@ static attribute_callback_handler_t g_vertex_attribute_handlers[] =
 	attribute_attribute_handler
 };
 
+#define NON_OPAQUE_TYPE_STRS	\
+	"vec2", \
+	"vec3", \
+	"vec4", \
+	"ivec2", \
+	"ivec3", \
+	"ivec4", \
+	"uvec2", \
+	"uvec3", \
+	"uvec4", \
+	"dvec2", \
+	"dvec3", \
+	"dvec4", \
+	"float", \
+	"double", \
+	"int", \
+	"uint", \
+	"mat2", \
+	"mat3", \
+	"mat4", \
+	"dmat2", \
+	"dmat3", \
+	"dmat4"
+
 static const char* g_vertex_attribute_types[] = 
 {
-	"vec2",
-	"vec3",
-	"vec4",
-	"ivec2",
-	"ivec3",
-	"ivec4",
-	"uvec2",
-	"uvec3",
-	"uvec4",
-	"dvec2",
-	"dvec3",
-	"dvec4",
-	"float",
-	"double",
-	"int",
-	"uint",
-	"mat2",
-	"mat3",
-	"mat4",
-	"dmat2",
-	"dmat3",
-	"dmat4"
+	NON_OPAQUE_TYPE_STRS
 };
+
+#define NON_OPAQUE_TYPE_EMIT_VALUES \
+	GLSL_TYPE_VEC2, \
+	GLSL_TYPE_VEC3, \
+	GLSL_TYPE_VEC4, \
+	GLSL_TYPE_IVEC2, \
+	GLSL_TYPE_IVEC3, \
+	GLSL_TYPE_IVEC4, \
+	GLSL_TYPE_UVEC2, \
+	GLSL_TYPE_UVEC3, \
+	GLSL_TYPE_UVEC4, \
+	GLSL_TYPE_DVEC2, \
+	GLSL_TYPE_DVEC3, \
+	GLSL_TYPE_DVEC4, \
+	GLSL_TYPE_FLOAT, \
+	GLSL_TYPE_DOUBLE, \
+	GLSL_TYPE_INT, \
+	GLSL_TYPE_UINT, \
+	GLSL_TYPE_MAT2, \
+	GLSL_TYPE_MAT3, \
+	GLSL_TYPE_MAT4, \
+	GLSL_TYPE_DMAT2, \
+	GLSL_TYPE_DMAT3, \
+	GLSL_TYPE_DMAT4
 
 static glsl_type_t g_vertex_attribute_type_emit_values[] = 
 {
-	GLSL_TYPE_VEC2,
-	GLSL_TYPE_VEC3,
-	GLSL_TYPE_VEC4,
-	GLSL_TYPE_IVEC2,
-	GLSL_TYPE_IVEC3,
-	GLSL_TYPE_IVEC4,
-	GLSL_TYPE_UVEC2,
-	GLSL_TYPE_UVEC3,
-	GLSL_TYPE_UVEC4,
-	GLSL_TYPE_DVEC2,
-	GLSL_TYPE_DVEC3,
-	GLSL_TYPE_DVEC4,
-	GLSL_TYPE_FLOAT,
-	GLSL_TYPE_DOUBLE,
-	GLSL_TYPE_INT,
-	GLSL_TYPE_UINT,
-	GLSL_TYPE_MAT2,
-	GLSL_TYPE_MAT3,
-	GLSL_TYPE_MAT4,
-	GLSL_TYPE_DMAT2,
-	GLSL_TYPE_DMAT3,
-	GLSL_TYPE_DMAT4
+	NON_OPAQUE_TYPE_EMIT_VALUES
 };
+
+static u32 node_call_attribute_handlers(v3d_generic_node_t* node, compiler_ctx_t* ctx, const char* const strs, u32 str_count, attribute_callback_handler_t* const handlers, void* user_data, const u32* const requirements, u32 requirement_count)
+{
+	bool is_found_mask[str_count];
+
+	/* initialy no attribute is found */
+	for(u32 i = 0; i < str_count; i++)
+		is_found_mask[i] = false;
+
+	/* iterate through each attribute applied to this vertex attribute definition */
+	for(u32 j = 0; j < node->attribute_count; j++)
+	{
+		AUTO attribute = &node->attributes[j];
+		u32 index = strs_find_u32_pair(ctx, strs, str_count, attribute->name);
+		if(index != U32_MAX)
+		{
+			/* if found then invoke the handler at the corresponding index */
+			is_found_mask[index] = true;
+			AUTO fnptr = handlers[index];
+			fnptr(ctx, attribute, node, user_data);
+		}
+	}
+
+	/* check if all the required attribute has been found */
+	for(u32 i = 0; i < requirement_count; i++)
+		if(!is_found_mask[requirements[i]])
+			/* requirement at i isn't satified */
+			return i;
+
+	return U32_MAX;
+}
 
 static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
 {
@@ -552,31 +589,20 @@ static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_coun
 		
 		sb_emitter_open_vertex_attribute(ctx->emitter);
 		sb_emitter_emit_vertex_attribute_type(ctx->emitter, g_vertex_attribute_type_emit_values[pair.end]);
-		sb_emitter_emit_vertex_attribute_name(ctx->emitter, u32_pair_get_str(ctx, node->qualifiers[pair.start]), U32_PAIR_DIFF(node->qualifiers[pair.start]));
+		AUTO last = node_get_last_qualifier(node);
+		sb_emitter_emit_vertex_attribute_name(ctx->emitter, u32_pair_get_str(ctx, last), U32_PAIR_DIFF(last));
 
-		bool is_found_mask[SIZEOF_ARRAY(g_vertex_attribute_names)] = { };
-		u32 is_required_mask[] = 
+		u32 required_attributes[] = 
 		{ 
 			/* Rate is required (at index 0 in g_vertex_attribute_names) */
 		 	0, 
 		 	/* Attribute is required (at index 2 in g_vertex_attribute_names) */
 			2 
 		};
-		/* iterate through each attribute applied to this vertex attribute definition */
-		for(u32 j = 0; j < node->attribute_count; j++)
-		{
-			AUTO attribute = &node->attributes[j];
-			u32 index = strs_find_u32_pair(ctx, g_vertex_attribute_names, SIZEOF_ARRAY(g_vertex_attribute_names), attribute->name);
-			if(index != U32_MAX)
-			{
-				is_found_mask[index] = true;
-				AUTO fnptr = g_vertex_attribute_handlers[index];
-				fnptr(ctx, attribute, node->attributes, node->attribute_count);
-			}
-		}
-		for(u32 i = 0; i < SIZEOF_ARRAY(is_required_mask); i++)
-			if(!is_found_mask[is_required_mask[i]])
-				DEBUG_LOG_FETAL_ERROR("Attribute \"%s\" is required to correctly define a vertex attribute's format, binding and location", g_vertex_attribute_names[is_required_mask[i]]);
+		u32 result = node_call_attribute_handlers(node, ctx, g_vertex_attribute_names, SIZEOF_ARRAY(g_vertex_attribute_names), g_vertex_attribute_handlers, required_attributes, SIZEOF_ARRAY(required_attributes), NULL);
+		if(result != U32)
+			DEBUG_LOG_FETAL_ERROR("Attribute \"%s\" is required to correctly define a vertex attribute's format, binding and location", g_vertex_attribute_names[required_attributes[result]]);
+
 		sb_emitter_close_vertex_attribute(ctx->emitter);
 	}
 
@@ -596,14 +622,327 @@ static void codegen_vertex_buffer_layout(v3d_generic_node_t* node, compiler_ctx_
 	}
 }
 
+static const char* g_shader_stages[] =
+{
+	"vertex",
+	"tessellation",
+	"geometry",
+	"fragment"
+};
+
+static shader_stage_bits_t g_shader_stage_emit_values[SIZEOF_ARRAY(g_shader_stages)] =
+{
+	SHADER_STAGE_BIT_VERTEX,
+	SHADER_STAGE_BIT_TESSELLATION,
+	SHADER_STAGE_BIT_GEOMETRY,
+	SHADER_STAGE_BIT_FRAGMENT,
+};
+
+/* callback, index --> the matched index in strs */
+static bool u32_pairs_do_if_find_any_str(compiler_ctx_t* ctx, u32_pair_t* pairs, u32 pair_count, const char* const* strs, u32 str_count, void (*callback)(u32 index, void* user_data), void* user_data)
+{
+	bool is_any_found = false;
+	for(u32 i = 0; i < pair_count; i++)
+	{
+		u32 index = strs_find_u32_pair(ctx, strs, str_count, pairs[i]);
+		if(index != U32_MAX)
+		{
+			callback(index, user_data);
+			is_any_found = true;
+		}
+	}
+	return is_any_found;
+}
+
+static void accumulate_stage_bits(u32 index, void* user_data)
+{
+	_com_assert(index < SIZEOF_ARRAY(g_shader_stage_emit_values));
+	DREF_TO(u32, user_data) |= g_shader_stage_emit_values[index];
+}
+
+static u32_pair_t node_get_last_qualifier(v3d_generic_node_t* node)
+{
+	if(node->qualifier_count > 0)
+		return node->qualifiers[node->qualifier_count - 1];
+	return (u32_pair_t) { 0u, 0u };
+}
+
+static void stage_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
+{
+	u32 stage_bits = 0;
+	/* index in { "vertex", "tessellation", "geometry", ... } -- shader stages */
+	bool result = u32_pairs_do_if_find_any_str(ctx, attribute->arguments, attribute->argument_count, g_shader_stages, SIZEOF_ARRAY(g_shader_stages), accumulate_stage_bits, &stage_bits);
+	if(!result)
+	{
+		AUTO last = node_get_last_qualifier(node);
+		DEBUG_LOG_FETAL_ERROR("No shader stage is specified for the shader property \"%.*s\"", u32_pair_get_str(ctx, last), U32_PAIR_DIFF(last));
+	}
+
+	sb_emitter_emit_shader_property_stage(ctx->emitter, stage_bits);
+}
+
+static u32 attribute_foreach_arg_parse_to_u32(v3d_generic_attribute_t* attribute, compiler_ctx_t* ctx, const char* const* ordered_params, u32 ordered_param_count, u32* const outputs, u32 output_count)
+{
+	/* parameter index occupation map */
+	bool map[ordered_param_count];
+	for(u32 i = 0; i < ordered_param_count; i++)
+		map[i] = false;
+
+	AUTO param_count = min(attribute->parameter_count, ordered_param_count);
+	for(u32 i = 0; i < param_count; i++)
+	{
+		AUTO u32_param = attribute->parameters[i];
+		if(u32_param.start != u32_param.end)
+		{
+			u32 index = strs_find_u32_pair(ctx, ordered_params, ordered_param_count, u32_param);
+			if(index != U32_MAX)
+			{
+				map[index] = true;
+				data[index] = try_parse_u32_pair_str_to_u32(ctx, attribute->arguments[i]);
+				continue;
+			}
+		}
+		if(!map[i])
+			return i;
+		data[i] = try_parse_u32_pair_str_to_u32(ctx, attribute->arguments[i]);
+	}
+
+	return U32_MAX;
+}
+
+static const char* g_set_attribute_params[] = 
+{
+	"set",
+	"binding"
+};
+
+static const char* g_shader_property_bind_names[] = 
+{
+	"material_properties",
+	"texture0",
+	"texture1",
+	"texture2",
+	"texture3",
+	"texture4",
+	"texture5",
+	"texture6",
+	"texture7",
+	"texture8"
+};
+
+static u32 g_shader_property_bind_name_emit_values[][SIZEOF_ARRAY(g_set_attribute_params)] = 
+{
+	{ SGE_SHADER_PROPERTY_MATERIAL_PROPERTIES_SET, SGE_SHADER_PROPERTY_MATERIAL_PROPERTIES_BINDING },
+	{ SGE_SHADER_PROPERTY_TEXTURE0_SET, SGE_SHADER_PROPERTY_TEXTURE0_BINDING },
+	{ SGE_SHADER_PROPERTY_TEXTURE1_SET, SGE_SHADER_PROPERTY_TEXTURE1_BINDING },
+	{ SGE_SHADER_PROPERTY_TEXTURE2_SET, SGE_SHADER_PROPERTY_TEXTURE2_BINDING },
+	{ SGE_SHADER_PROPERTY_TEXTURE3_SET, SGE_SHADER_PROPERTY_TEXTURE3_BINDING },
+	{ SGE_SHADER_PROPERTY_TEXTURE4_SET, SGE_SHADER_PROPERTY_TEXTURE4_BINDING },
+	{ SGE_SHADER_PROPERTY_TEXTURE5_SET, SGE_SHADER_PROPERTY_TEXTURE5_BINDING },
+	{ SGE_SHADER_PROPERTY_TEXTURE6_SET, SGE_SHADER_PROPERTY_TEXTURE6_BINDING },
+	{ SGE_SHADER_PROPERTY_TEXTURE7_SET, SGE_SHADER_PROPERTY_TEXTURE7_BINDING },
+	{ SGE_SHADER_PROPERTY_TEXTURE8_SET, SGE_SHADER_PROPERTY_TEXTURE8_BINDING }
+}
+
+static void set_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
+{
+	/* output[0] is the shader property's set number, output[1] is the shader property's binding number */
+	u32 output[2] = { };
+
+	if(attribute->parameter_count == 2)
+	{
+		u32 result = attribute_foreach_arg_parse_to_u32(attribute, ctx, g_set_attribute_params, output, SIZEOF_ARRAY(output));
+		if(result != U32_MAX)
+			DEBUG_LOG_FETAL_ERROR("Set() is incorrectly called, argument \"%.*s\" can't find its place", U32_PAIR_DIFF(attribute->arguments[i]), u32_pair_get_str(ctx, attribute->arguments[i]));
+	}
+	else if(attribute->parameter_count == 1)
+	{
+		/* find index in { "material_properties", "texture0", etc. }, i.e. g_shader_property_bind_names */
+		u32 bind_name_index = strs_find_u32_pair(ctx, g_shader_property_bind_names, SIZEOF_ARRAY(g_shader_property_bind_names), attribute->arguments[0]);
+		if(bind_name_index != U32_MAX)
+		{
+			output[0] = g_shader_property_bind_name_emit_values[bind_name_index][0];
+			output[1] = g_shader_property_bind_name_emit_values[bind_name_index][1];
+		}
+		else DEBUG_LOG_FETAL_ERROR("Set() is passed incorrect argument \"%.%s\", no such shader property bind name exists", u32_pair_get_str(ctx, attribute->arguments[0]), U32_PAIR_DIFF(attribute->arguments[0]));
+	}
+	else DEBUG_LOG_FETAL_ERROR("Set() is passed incorrect number of arguments, it doesn't accept %" PRIu32 " arguments", attribute->parameter_count);
+
+	sb_emitter_emit_shader_property_set_and_binding(ctx->emitter, output[0], output[1]);
+}
+
+static const char* g_shader_property_attributes[] = 
+{
+	"Stage",
+	"Set"
+};
+
+static attribute_callback_handler_t g_shader_property_attribute_handlers[SIZEOF_ARRAY(g_shader_property_attributes)] = 
+{
+	stage_attribute_handler,
+	set_attribute_handler
+};
+
+static const char* g_shader_property_storage_class_types[] = 
+{
+	"uniform",
+	"buffer"
+};
+
+static glsl_type_t g_shader_property_storage_class_emit_values[SIZEOF_ARRAY(g_shader_property_storage_class_types)] = 
+{
+	GLSL_TYPE_UNIFORM_BUFFER,
+	GLSL_TYPE_STORAGE_BUFFER
+};
+
+static const char* g_shader_property_opaque_types[] = 
+{
+	"sampler2D",
+	"sampler3D",
+	"samplerCube"
+};
+
+static glsl_type_t g_shader_property_opaque_type_emit_values[SIZEOF_ARRAY(g_shader_property_opaque_types)] =
+{
+	GLSL_TYPE_SAMPLER_2D,
+	GLSL_TYPE_SAMPLER_3D,
+	GLSL_TYPE_SAMPLER_CUBE
+};
+
+static bool foreach_child_node(v3d_generic_node_t* node, void (*visitor)(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 count, void* user_data), void* user_data, compiler_ctx_t* ctx)
+{
+	u32 count = 0;
+	for(u32 i = 0; i < node->child_count; i++)
+	{
+		count++;
+		visitor(node->childs[i], ctx, count, user_data);
+	}
+	return count != 0;
+}
+
+static const char* g_shader_property_field_types[] =
+{
+	NON_OPAQUE_TYPE_STRS
+};
+
+static glsl_type_t g_shader_property_field_type_emit_values[] = 
+{
+	NON_OPAQUE_TYPE_EMIT_VALUES
+};
+
+static void emit_shader_property_field(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 count, void* user_data)
+{
+	/* index in { "vec2", "vec3", "vec4", ... } -- shader property field types */
+	u32_pair_t pair = u32_pairs_find_any_str(ctx, node->qualifiers, node->qualifier_count, g_shader_property_field_types, SIZEOF_ARRAY(g_shader_property_field_types));
+	if((pair.start == U32_MAX) || (pair.end == U32_MAX))
+		DEBUG_LOG_FETAL_ERROR("Shader Property field type is incorrect");
+		
+	sb_emitter_open_shader_property_field(ctx->emitter);
+	sb_emitter_emit_shader_property_field_type(ctx->emitter, g_shader_property_field_type_emit_values[pair.end]);
+	sb_emitter_emit_shader_property_field_name(ctx->emitter, u32_pair_get_str(ctx, node->qualifiers[pair.start]), U32_PAIR_DIFF(node->qualifiers[pair.start]));
+	sb_emitter_close_shader_property_field(ctx->emitter);
+}
+
 static void write_buffer_layouts_and_samplers(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
 {
+	sb_emitter_open_shader_property_array(ctx->emitter);
+	/*
+		Properties
+		{
+			** NODE 0 **
+			[Stage(fragment, vertex)]
+			[Set(set = material, binding = material_properties)]
+			uniform Parameters
+			{
+				vec4 color;
+			} parameters;
 
+			** NODE 1 **
+			[Stage(fragment, vertex)]
+			[Set(set = material, binding = texture0)]
+			uniform sampler2D albedo; 
+		}
+	*/
+	for(u32 i = 0; i < node_count; i++)
+	{
+		AUTO node = nodes[i];
+
+		sb_emitter_open_shader_property(ctx->emitter);
+
+		/* index in { "uniform", "buffer" } -- storage class types */
+		u32_pair_t pair = u32_pairs_find_any_str(ctx, node->qualifiers, node->qualifier_count, g_shader_property_storage_class_types, SIZEOF_ARRAY(g_shader_property_storage_class_types));
+		if((pair.start == U32_MAX) || (pair.end == U32_MAX))
+			DEBUG_LOG_FETAL_ERROR("Storage Class is incorrect");
+		AUTO storage_class = g_shader_property_storage_class_emit_values[pair.end];
+		sb_emitter_emit_shader_property_storage_class(ctx->emitter, storage_class);
+
+		if(storage_class != GLSL_TYPE_STORAGE_BUFFER)
+		{
+			/* index in { "sampler2D", "sampler3D", etc. } -- opaque types */
+			u32_pair_t pair = u32_pairs_find_any_str(ctx, node->qualifiers + pair.start, node->qualifier_count - pair.start, g_shader_property_opaque_types, SIZEOF_ARRAY(g_shader_property_opaque_types));
+			if((pair.start == U32_MAX) || (pair.end == U32_MAX))
+			{
+				/* if this shader property doesn't have any opaque types nor it is a uniform block */
+				if(!node->is_block)
+					DEBUG_LOG_FETAL_ERROR("An Opaque type is expected such as sampler2D, sampler3D etc; but no expected opaque type is found");
+				else
+					sb_emitter_emit_shader_property_type(ctx->emitter, GLSL_TYPE_BLOCK);
+			}
+			else /* if this shader property is an opaque type */
+			{
+				if(node->is_block)
+					DEBUG_LOG_FETAL_ERROR("Opaque types can't be defined as blocks");
+				AUTO opaque_type = g_shader_property_opaque_type_emit_values[pair.end];
+				sb_emitter_emit_shader_property_type(ctx->emitter, opaque_type);
+			}
+		}
+		else 
+		{
+			if(!node->is_block)
+				DEBUG_LOG_FETAL_ERROR("Shader Property has been specified storage class as \"buffer\", but is not a block");
+			sb_emitter_emit_shader_property_type(ctx->emitter, GLSL_TYPE_BLOCK);
+		}
+
+		AUTO shr_property_name = node_get_last_qualifier(node);
+		sb_emitter_emit_shader_property_name(ctx->emitter, u32_pair_get_str(ctx, shr_property_name), U32_PAIR_DIFF(shr_property_name));
+
+		if(node->child_count > 0)
+		{
+			_com_assert(node->is_block);
+			sb_emitter_open_shader_property_field_array(ctx->emitter):
+			if(!foreach_child_node(node, emit_shader_property_field, NULL, ctx))
+				DEBUG_LOG_WARNING("An interface block has no elements in it");
+			sb_emitter_close_shader_property_field_array(ctx->emitter);
+		}
+
+		u32 required_attributes[] = 
+		{ 
+			/* Stage is required (at index 0 in g_shader_property_attributes) */
+		 	0, 
+		 	/* Set is required (at index 1 in g_shader_property_attributes) */
+			1 
+		};
+		u32 result = node_call_attribute_handlers(node, ctx, g_shader_property_attributes, SIZEOF_ARRAY(g_shader_property_attributes), g_shader_property_attribute_handlers, required_attributes, SIZEOF_ARRAY(required_attributes), NULL);
+		if(result != U32)
+			DEBUG_LOG_FETAL_ERROR("Attribute \"%s\" is required to correctly define a shader property", g_shader_property_attributes[required_attributes[result]]);
+
+		sb_emitter_close_shader_property(ctx->emitter);
+	}
+
+	sb_emitter_close_shader_property_array(ctx->emitter);
 }
 
 static void codegen_buffer_layouts_and_samplers(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data)
 {
-	write_buffer_layouts_and_samplers(node->childs, node->child_count, ctx, user_data);
+	/* if unparsed content is empty, then assume SL2023 variant of Properties block */
+	if(node->unparsed.start == node->unparsed.end)
+		write_buffer_layouts_and_samplers(node->childs, node->child_count, ctx, user_data);
+	/* otherwise, try with SL2022 variant of Properties block */
+	else
+	{
+		debug_log_warning("SL2022 Properties block has been used in SL2023 version, trying SL2022 semantics...");
+		write_buffer_layouts_and_samplers(node->childs, node->child_count, ctx, user_data);
+	}
 }
 
 static void codegen_descriptions(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data)
