@@ -467,14 +467,52 @@ static const char* g_vertex_attribute_types[] =
 {
 	"vec2",
 	"vec3",
-	"vec4"
+	"vec4",
+	"ivec2",
+	"ivec3",
+	"ivec4",
+	"uvec2",
+	"uvec3",
+	"uvec4",
+	"dvec2",
+	"dvec3",
+	"dvec4",
+	"float",
+	"double",
+	"int",
+	"uint",
+	"mat2",
+	"mat3",
+	"mat4",
+	"dmat2",
+	"dmat3",
+	"dmat4"
 };
 
 static glsl_type_t g_vertex_attribute_type_emit_values[] = 
 {
 	GLSL_TYPE_VEC2,
 	GLSL_TYPE_VEC3,
-	GLSL_TYPE_VEC4
+	GLSL_TYPE_VEC4,
+	GLSL_TYPE_IVEC2,
+	GLSL_TYPE_IVEC3,
+	GLSL_TYPE_IVEC4,
+	GLSL_TYPE_UVEC2,
+	GLSL_TYPE_UVEC3,
+	GLSL_TYPE_UVEC4,
+	GLSL_TYPE_DVEC2,
+	GLSL_TYPE_DVEC3,
+	GLSL_TYPE_DVEC4,
+	GLSL_TYPE_FLOAT,
+	GLSL_TYPE_DOUBLE,
+	GLSL_TYPE_INT,
+	GLSL_TYPE_UINT,
+	GLSL_TYPE_MAT2,
+	GLSL_TYPE_MAT3,
+	GLSL_TYPE_MAT4,
+	GLSL_TYPE_DMAT2,
+	GLSL_TYPE_DMAT3,
+	GLSL_TYPE_DMAT4
 };
 
 static void write_vertex_buffer_layout(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
