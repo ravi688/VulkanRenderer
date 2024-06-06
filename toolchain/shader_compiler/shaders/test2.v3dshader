@@ -62,30 +62,37 @@ Shader
 	// 	uniform sampler2D albedo; 
 	// }
 
-	// Properties
-	// {
-	// 	[Stage(fragment, vertex)]
-	// 	[Set(4, 0)]
-	// 	uniform Parameters
-	// 	{
-	// 		vec4 color;
-	// 	} parameters;
-
-	// 	[Stage(fragment)]
-	// 	[Set(4, 1)]
-	// 	uniform sampler2D albedo; 
-	// }
-
-	[NoParse]
 	Properties
 	{
-		fragment vertex [4, 0] uniform Parameters
+		[Stage(fragment, vertex)]
+		[Set(material_set, material_properties)]
+		uniform Parameters
 		{
 			vec4 color;
 		} parameters;
 
-		fragment [4, 1] uniform sampler2D albedo; 
+		// [Stage(fragment, vertex)]
+		// [PushConst(0)]
+		// uniform PushParameters
+		// {
+
+		// } pushParameters;
+
+		[Stage(fragment)]
+		[Set(material_set, texture0)]
+		uniform sampler2D albedo; 
 	}
+
+	// [NoParse]
+	// Properties
+	// {
+	// 	fragment vertex [4, 0] uniform Parameters
+	// 	{
+	// 		vec4 color;
+	// 	} parameters;
+
+	// 	fragment [4, 1] uniform sampler2D albedo; 
+	// }
 
 	// [NoParse]
 	// Layout
