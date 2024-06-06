@@ -19,12 +19,14 @@ SC_API void sb_emitter_destroy(sb_emitter_t* emitter)
 
 SC_API void sb_emitter_open_vertex_attribute_array(sb_emitter_t* emitter)
 {
+	_com_assert(emitter->depth == 0);
 	binary_writer_u16_mark(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT);
 	emitter->depth += 1;
 }
 
 SC_API void sb_emitter_close_vertex_attribute_array(sb_emitter_t* emitter)
 {
+	_com_assert(emitter->depth == 1);
 	binary_writer_u16_set(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT, CAST_TO(u16, emitter->vtx_attr_count));
 	_ASSERT(emitter->vtx_attr_count < MARK_ID_VTX_ATTR_DSC_OFFSET_MAX);
 
@@ -36,6 +38,7 @@ SC_API void sb_emitter_close_vertex_attribute_array(sb_emitter_t* emitter)
 
 SC_API void sb_emitter_open_vertex_attribute(sb_emitter_t* emitter)
 {
+	_com_assert(emitter->depth == 1);
 	memset(&emitter->vtx_attr, 0, sizeof(vertex_attribute_info_t));
 	emitter->depth += 1;
 }
@@ -86,3 +89,200 @@ SC_API void sb_emitter_close_vertex_attribute(sb_emitter_t* emitter)
 	emitter->vtx_attr_counter += 1;
 	emitter->depth -= 1;
 }
+
+
+SC_API void sb_emitter_open_shader_property_array(sb_emitter_t* emitter)
+{
+	_com_assert(emitter->depth == 0);
+	binary_writer_u16_mark(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_COUNT);
+	emitter->depth += 1;
+}
+
+/* creates a new shader_property_info_t object into the vtx_attr_infos list */
+SC_API void sb_emitter_open_shader_property(sb_emitter_t* emitter)
+{
+	_com_assert(emitter->depth == 1);
+	memset(&emitter->shr_prop, 0, sizeof(shader_property_info_t));
+	emitter->shr_prop.fields = buf_new_with_callbacks(emitter->callbacks, shader_property_info_t);
+	emitter->depth += 1;
+}
+
+SC_API void sb_emitter_emit_shader_property_set_push_constant_offset(sb_emitter_t* emitter, u32 offset)
+{
+	emitter->shr_prop.offset = offset;
+}
+
+SC_API void sb_emitter_emit_shader_property_set_and_binding(sb_emitter_t* emitter, u32 set, u32 binding)
+{
+	emitter->shr_prop.set = set;
+	emitter->shr_prop.binding = binding;
+}
+
+SC_API void sb_emitter_emit_shader_property_stage(sb_emitter_t* emitter, shader_stage_bits_t stages)
+{
+	emitter->shr_prop.stages |= stages;
+}
+
+SC_API void sb_emitter_emit_shader_property_storage_class(sb_emitter_t* emitter, storage_class_t storage)
+{
+	emitter->shr_prop.storage = storage;
+}
+
+SC_API void sb_emitter_emit_shader_property_type(sb_emitter_t* emitter, glsl_type_t type)
+{
+	emitter->shr_prop.type = type;
+}
+
+SC_API void sb_emitter_emit_shader_property_name(sb_emitter_t* emitter, const char* name, u32 name_length)
+{
+	if(name_length > SHADER_PROPERTY_NAME_MAX_SIZE)
+		DEBUG_LOG_FETAL_ERROR("Shader Property name \"%.*s\" is greater than SHADER_PROPERTY_NAME_MAX_SIZE(%u)" PRIu32, name_length, name, SHADER_PROPERTY_NAME_MAX_SIZE);
+	memcpy(emitter->shr_prop.name, name, name_length);
+	emitter->shr_prop.name_length = name_length;
+}
+
+SC_API void sb_emitter_emit_shader_property_block_name(sb_emitter_t* emitter, const char* block_name, u32 block_name_length)
+{
+	if(block_name_length > SHADER_PROPERTY_NAME_MAX_SIZE)
+		DEBUG_LOG_FETAL_ERROR("Shader Property Block name \"%.*s\" is greater than SHADER_PROPERTY_NAME_MAX_SIZE(%u)" PRIu32, block_name_length, block_name, SHADER_PROPERTY_NAME_MAX_SIZE);
+	memcpy(emitter->shr_prop.block_name, block_name, block_name_length);
+	emitter->shr_prop.block_name_length = block_name_length;
+}
+
+SC_API void sb_emitter_open_shader_property_field_array(sb_emitter_t* emitter)
+{
+	_com_assert(emitter->depth == 2);
+	emitter->depth += 1;
+}
+SC_API void sb_emitter_open_shader_property_field(sb_emitter_t* emitter)
+{
+	_com_assert(emitter->depth == 3);
+	emitter->depth += 1;	
+	buf_push_pseudo(&emitter->shr_prop.fields, 1);
+}
+#define GET_SHR_PROP_FIELD(emitter) CAST_TO(shader_property_info_t*, buf_peek_ptr(&(emitter)->shr_prop.fields))
+SC_API void sb_emitter_emit_shader_property_field_type(sb_emitter_t* emitter, glsl_type_t type)
+{
+	_com_assert(emitter->depth == 4);
+	GET_SHR_PROP_FIELD(emitter)->type = type;
+}
+SC_API void sb_emitter_emit_shader_property_field_name(sb_emitter_t* emitter, const char* name, u32 name_length)
+{
+	if(name_length > SHADER_PROPERTY_NAME_MAX_SIZE)
+		DEBUG_LOG_FETAL_ERROR("Shader Property Field name \"%.*s\" is greater than SHADER_PROPERTY_NAME_MAX_SIZE(%u)" PRIu32, name_length, name, SHADER_PROPERTY_NAME_MAX_SIZE);
+	AUTO field = GET_SHR_PROP_FIELD(emitter);
+	memcpy(field->name, name, name_length);
+	field->name_length = name_length;
+}
+SC_API void sb_emitter_emit_shader_property_field_array_size(sb_emitter_t* emitter, u32 array_size)
+{
+	_com_assert(array_size != 0);
+	AUTO field = GET_SHR_PROP_FIELD(emitter);
+	field->array_size = array_size;
+}
+SC_API void sb_emitter_close_shader_property_field(sb_emitter_t* emitter)
+{
+	_com_assert(emitter->depth == 4);
+	emitter->depth -= 1;
+}
+SC_API void sb_emitter_close_shader_property_field_array(sb_emitter_t* emitter)
+{
+	_com_assert(emitter->depth == 3);
+	emitter->depth -= 1;
+}
+
+static u32 get_encoded_type_info(shader_property_info_t* info)
+{
+	u32 bits = 0;
+	if(HAS_FLAG(info->stages, SHADER_STAGE_BIT_VERTEX))
+		bits |= VERTEX_BIT;
+	if(HAS_FLAG(info->stages, SHADER_STAGE_BIT_TESSELLATION))
+		bits |= TESSELLATION_BIT;
+	if(HAS_FLAG(info->stages, SHADER_STAGE_BIT_GEOMETRY))
+		bits |= GEOMETRY_BIT;
+	if(HAS_FLAG(info->stages, SHADER_STAGE_BIT_FRAGMENT))
+		bits |= FRAGMENT_BIT;
+	if(info->storage == STORAGE_CLASS_BUFFER)
+	{
+		_com_assert(info->type );
+		bits |= STORAGE_BUFFER_BIT;
+	}
+	else if(info->storage == STORAGE_CLASS_UNIFORM)
+	{
+		if(info->type == GLSL_TYPE_PUSH_CONSTANT)
+			bits |= PUSH_CONSTANT_BIT;
+		else if(info->type == GLSL_TYPE_UNIFORM_BUFFER) 
+			bits |= UNIFORM_BUFFER_BIT;
+	}
+	bits |= info->type;
+	switch(info->type)
+	{
+		case GLSL_TYPE_SAMPLER_2D:
+		case GLSL_TYPE_SAMPLER_3D:
+		case GLSL_TYPE_SAMPLER_CUBE:
+		case GLSL_TYPE_SUBPASS_INPUT:
+		{
+			bits |= OPAQUE_BIT;
+			break;
+		}
+		default: { break; }
+	}
+	return bits;
+}
+
+#define IS_SHR_PROP_BLOCK(shr_prop_ptr) (((shr_prop_ptr)->type == GLSL_TYPE_STORAGE_BUFFER) || ((shr_prop_ptr)->type == GLSL_TYPE_UNIFORM_BUFFER) || ((shr_prop_ptr)->type == GLSL_TYPE_PUSH_CONSTANT))
+
+/* does some post processing on the created shader_property_info_t object */
+SC_API void sb_emitter_close_shader_property(sb_emitter_t* emitter)
+{
+	_com_assert(emitter->depth == 2);
+
+	binary_writer_u32_mark(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_OFFSET + emitter->shr_prop_counter);
+	binary_writer_u32_set(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_OFFSET + emitter->shr_prop_counter, binary_writer_pos(emitter->buffer->data));
+
+	if(emitter->shr_prop.type == GLSL_TYPE_PUSH_CONSTANT)
+		binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->shr_prop.offset));
+	else
+	{
+		binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->shr_prop.set));
+		binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->shr_prop.binding));
+	}
+	u32 bits = get_encoded_type_info(&emitter->shr_prop);
+	binary_writer_u32(emitter->buffer->data, bits);
+	if(IS_SHR_PROP_BLOCK(&emitter->shr_prop))
+		binary_writer_stringn(emitter->buffer->data, emitter->shr_prop.block_name, emitter->shr_prop.block_name_length);
+	binary_writer_stringn(emitter->buffer->data, emitter->shr_prop.name, emitter->shr_prop.name_length);
+
+	if(IS_SHR_PROP_BLOCK(&emitter->shr_prop))
+	{
+		u32 field_count = buf_get_element_count(&emitter->shr_prop.fields);
+		binary_writer_u16(emitter->buffer->data, field_count);
+		for(u32 i = 0; i < field_count; i++)
+		{
+			AUTO field = buf_get_ptr_at_typeof(&emitter->shr_prop.fields, shader_property_info_t, i);
+			u32 bits = get_encoded_type_info(field);
+			binary_writer_u32(emitter->buffer->data, bits);
+			binary_writer_stringn(emitter->buffer->data, field->name, field->name_length);
+		}
+	}
+
+	buf_free(&emitter->shr_prop.fields);
+
+	emitter->shr_prop_count += 1;
+	emitter->shr_prop_counter += 1;
+	emitter->depth -= 1;
+}
+
+SC_API void sb_emitter_close_shader_property_array(sb_emitter_t* emitter)
+{
+	_com_assert(emitter->depth == 1);
+	binary_writer_u16_set(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_COUNT, CAST_TO(u16, emitter->shr_prop_count));
+	_ASSERT(emitter->shr_prop_count < MARK_ID_SHR_PROP_DSC_OFFSET_MAX);
+
+	binary_writer_unmark(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_COUNT);
+
+	emitter->shr_prop_count = 0;
+	emitter->depth -= 1;
+}
+
+/* SHADER PROPERTIES <end> */

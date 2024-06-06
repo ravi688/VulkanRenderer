@@ -423,8 +423,8 @@ PARSE_NUMBER:
 		arr_len = try_parse_to_u32(sub_str);
 
 
-		// first iteration: write descriptor set number/index or binding number in case of vertex attribute, 1 BYTE
-		// second iteration: write descriptor binding number/index or layout number in case of vertex attribute, 1 BYTE
+		// first iteration: write descriptor set number/index or binding number in case of vertex attribute or offset in the push constant buffer, 1 BYTE
+		// second iteration (only possible if this is not a push constant): write descriptor binding number/index or layout number in case of vertex attribute, 1 BYTE
 		binary_writer_u8(writer, (u8)arr_len);
 		
 		count++;
