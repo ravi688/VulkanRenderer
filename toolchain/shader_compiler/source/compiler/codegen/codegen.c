@@ -866,6 +866,15 @@ static void emit_shader_property_field(v3d_generic_node_t* node, compiler_ctx_t*
 	sb_emitter_close_shader_property_field(ctx->emitter);
 }
 
+static bool node_is_name_only(v3d_generic_node_t* node)
+{
+	if(node->qualifier_count != 1)
+		return false;
+	if(node->attribute_count != 0)
+		return false;
+	return true;
+}
+
 static void write_buffer_layouts_and_samplers(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
 {
 	sb_emitter_open_shader_property_array(ctx->emitter);
@@ -939,9 +948,9 @@ static void write_buffer_layouts_and_samplers(v3d_generic_node_t** nodes, u32 no
 			else
 				sb_emitter_emit_shader_property_block_name(ctx->emitter, u32_pair_get_str(ctx, shr_property_name), U32_PAIR_DIFF(shr_property_name));
 			/* if this block has an identifier name (the next node will represent the identifier name) */
-			if((i + 1) < node_count)
+			if(((i + 1) < node_count) && node_is_name_only(nodes[i + 1]))
 			{
-				shr_property_name = node_get_last_qualifier(nodes[i + 1]);
+				shr_property_name = nodes[i + 1]->qualifiers[0];
 				sb_emitter_emit_shader_property_name(ctx->emitter, u32_pair_get_str(ctx, shr_property_name), U32_PAIR_DIFF(shr_property_name));
 				++i;
 			}
