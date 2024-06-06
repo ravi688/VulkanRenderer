@@ -29,16 +29,30 @@
 
 Shader
 {
-	[NoParse]
 	Properties
 	{
-		vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+		[Stage(fragment, vertex)]
+		[Set(material_set, material_properties)]
+		uniform Parameters
 		{
 			vec4 color;
 		} parameters;
 
-		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
+		[Stage(fragment)]
+		[Set(material_set, texture0)]
+		uniform sampler2D abledo;
 	}
+
+	// [NoParse]
+	// Properties
+	// {
+	// 	vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+	// 	{
+	// 		vec4 color;
+	// 	} parameters;
+
+	// 	fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
+	// }
 
 	Layout
 	{

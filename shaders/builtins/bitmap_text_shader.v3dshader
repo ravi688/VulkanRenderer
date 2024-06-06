@@ -30,17 +30,31 @@
 [Name("BitmapTextShader")]
 Shader /* load("text_shader.v3dshader") */
 {
-    [NoParse]
     Properties
     {
-        vertex [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+        [Stage(vertex)]
+        [Set(material_set, material_properties)]
+        uniform Parameters
         {
-            int isScreenSpace /* = 0 */;
+            int isScreenSpace;
         } parameters;
 
-        fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D bga;
-
+        [Stage(fragment)]
+        [Set(material_set, material_properties)]
+        uniform sampler2D bga;
     }
+
+    // [NoParse]
+    // Properties
+    // {
+    //     vertex [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+    //     {
+    //         int isScreenSpace /* = 0 */;
+    //     } parameters;
+
+    //     fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D bga;
+
+    // }
 
     Layout
     {

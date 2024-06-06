@@ -29,14 +29,24 @@
 
 Shader
 {
-	[NoParse]
 	Properties
 	{
-		vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+		[Stage(fragment, vertex)]
+		[Set(material_set, material_properties)]
+		uniform Parameters
 		{
 			vec4 color;
 		} parameters;
 	}
+	
+	// [NoParse]
+	// Properties
+	// {
+	// 	vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+	// 	{
+	// 		vec4 color;
+	// 	} parameters;
+	// }
 
 	Layout
 	{
