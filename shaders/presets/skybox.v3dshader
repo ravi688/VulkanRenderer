@@ -29,11 +29,18 @@
 
 Shader
 {
-	[NoParse]
 	Properties
 	{
-		fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform samplerCube albedo;
+		[Stage(fragment)]
+		[Set(material_set, texture0)]
+		uniform samplerCube albedo;
 	}
+
+	// [NoParse]
+	// Properties
+	// {
+	// 	fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform samplerCube albedo;
+	// }
 
 	Layout
 	{

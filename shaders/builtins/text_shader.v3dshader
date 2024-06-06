@@ -29,16 +29,28 @@
 
 Shader
 {
-    [NoParse]
     Properties
     {
-        vertex [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+        [Stage(vertex)]
+        [Set(material_set, material_properties)]
+        uniform Parameters
         {
             int isScreenSpace;
-			int space_type;
-			int surface_type;
+            int space_type;
+            int surface_type;
         } parameters;
     }
+
+    // [NoParse]
+    // Properties
+    // {
+    //     vertex [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+    //     {
+    //         int isScreenSpace;
+	// 		int space_type;
+	// 		int surface_type;
+    //     } parameters;
+    // }
 
     Layout
     {
