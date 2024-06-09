@@ -33,9 +33,9 @@
 
 static const char* parse_qualifers(const char* start, const char* end, u32 OUT bits);
 static const char* parse_square_brackets(const char* start, const char* end, u32 OUT bits);
-static const char* write_set_and_binding_numbers(const char* start, const char* end, u8 required, binary_writer_t* writer);
+static const char* write_set_and_binding_numbers(const char* start, const char* end, u8 required, codegen_buffer_t* writer);
 static const char* parse_storage_qualifiers(const char* start, const char* end, u32 OUT bits);
-static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer);
+static const char* write_description(const char* start, const char* end, u32 bits, codegen_buffer_t* writer);
 
 SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* writer, bool is_write_count)
 {
@@ -43,7 +43,7 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 	{
 		debug_log_info("[Codegen] [Legacy] Properties or Layout is empty, skipping");
 		if(is_write_count)
-			binary_writer_u16(writer->main, (u16)0);
+			codegen_buffer_write_u8(writer, ".main", (u16)0);
 		return;
 	}
 
@@ -51,11 +51,13 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 	static s32 cnt2 = -1;
 	cnt2++;
 
+	codegen_buffer_address_t descriptor_count_addr;
 	if(is_write_count)
 	{
 		cnt++;
 		_ASSERT((MARK_ID_DESCRIPTOR_COUNT + cnt) < MARK_ID_DESCRIPTOR_COUNT_MAX);
-		binary_writer_u16_mark(writer->main, MARK_ID_DESCRIPTOR_COUNT + cnt);
+		descriptor_count_addr = codegen_buffer_alloc_u16(writer, ".main");
+		// binary_writer_u16_mark(writer->main, MARK_ID_DESCRIPTOR_COUNT + cnt);
 	}
 
 	u16 descriptor_count = 0;
@@ -67,8 +69,12 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 		cnt2++;
 		_ASSERT((MARK_ID_DESCRIPTOR_OFFSET + cnt2) < MARK_ID_DESCRIPTOR_OFFSET_MAX);
 		
-		binary_writer_u32_mark(writer->main, MARK_ID_DESCRIPTOR_OFFSET + cnt2);
-		binary_writer_u32_set(writer->main, MARK_ID_DESCRIPTOR_OFFSET + cnt2, binary_writer_pos(writer->data));
+		codegen_buffer_address_t address = codegen_buffer_get_end_address(writer, ".data");
+		codegen_buffer_address_t ptr_addr = codegen_buffer_alloc_pointer(writer, ".main");
+		codegen_buffer_set_pointer(writer, ptr_addr, address);
+
+		// binary_writer_u32_mark(writer->main, offset_info.location);
+		// binary_writer_u32_set(writer->main, MARK_ID_DESCRIPTOR_OFFSET + cnt2, binary_writer_pos(writer->data));
 
 		u32 bits = 0;				// description info bits
 
@@ -78,13 +84,13 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 		start = parse_square_brackets(start, end, &bits);
 		// parse the second pair of square backets, it shall contain list of numbers only
 		// if push_constant found then look for offset (a number)
-		start = write_set_and_binding_numbers(start, end, (bits & PUSH_CONSTANT_BIT) ? 1 : 2, writer->data);
+		start = write_set_and_binding_numbers(start, end, (bits & PUSH_CONSTANT_BIT) ? 1 : 2, writer);
 
 		// look for storage qualifiers only if there is a shader stage qualifier
 		if(!((bits & PER_VERTEX_ATTRIB_BIT) || (bits & PER_INSTANCE_ATTRIB_BIT)))
 			start = parse_storage_qualifiers(start, end, &bits);
 
-		start = write_description(start, end, bits, writer->data);
+		start = write_description(start, end, bits, writer);
 
 		descriptor_count++;
 	}
@@ -92,7 +98,8 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 	if(is_write_count)
 	{
 		//Write number of descriptor count, 2 BYTES
-		binary_writer_u16_set(writer->main, MARK_ID_DESCRIPTOR_COUNT + cnt, descriptor_count);
+		codegen_buffer_set_u16(writer, descriptor_count_addr, descriptor_count);
+		// binary_writer_u16_set(writer->main, MARK_ID_DESCRIPTOR_COUNT + cnt, descriptor_count);
 	}
 }
 
@@ -105,7 +112,7 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 	    float light_intensity;
 	} scene_data;
  */
-static const char* write_description(const char* start, const char* end, u32 bits, binary_writer_t* writer)
+static const char* write_description(const char* start, const char* end, u32 bits, codegen_buffer_t* writer)
 {
 	static long int cnt = -1;
 	cnt++;
@@ -113,7 +120,7 @@ static const char* write_description(const char* start, const char* end, u32 bit
 	while(isspace(*start)) start++;
 	u32 count = get_word_length(start, 0);
 	bool found = true;
-	CAN_BE_UNUSED_VARIABLE buf_ucount_t identifier_name_index;
+	codegen_buffer_address_t identifier_name_addr = CODEGEN_BUFFER_ADDRESS_NULL;
 	if(strncmp(start, "sampler2D", count) == 0)
 	{ 
 		bits |= GLSL_TYPE_SAMPLER_2D; 
@@ -190,18 +197,22 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		}
 
 		// write type info to the buffer, 4 BYTES
-		binary_writer_u32(writer, bits);
+		codegen_buffer_write_u32(writer, ".data", bits);
+		// binary_writer_u32(writer, bits);
 
 		// write block name to the buffer, count + 1 BYTES
-		binary_writer_stringn(writer, block_name, count);
+		codegen_buffer_write_stringn(writer, ".data", block_name, count);
+		// binary_writer_stringn(writer, block_name, count);
 
-		_ASSERT((MARK_ID_IDENTIFIER_NAME + _cnt) < MARK_ID_IDENTIFIER_NAME_MAX);
+		// _ASSERT((MARK_ID_IDENTIFIER_NAME + _cnt) < MARK_ID_IDENTIFIER_NAME_MAX);
 
-		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + _cnt);
+		identifier_name_addr = codegen_buffer_alloc_unsized(writer, ".data");
+		// binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + _cnt);
 
-		_ASSERT((MARK_ID_FIELD_COUNT + _cnt) < MARK_ID_FIELD_COUNT_MAX);
+		// _ASSERT((MARK_ID_FIELD_COUNT + _cnt) < MARK_ID_FIELD_COUNT_MAX);
 
-		binary_writer_u16_mark(writer, MARK_ID_FIELD_COUNT + _cnt);
+		AUTO field_count_addr = codegen_buffer_alloc_u16(writer, ".data");
+		// binary_writer_u16_mark(writer, MARK_ID_FIELD_COUNT + _cnt);
 
 		u16 num_elements = 0;
 		while(*start != '}')
@@ -216,7 +227,8 @@ static const char* write_description(const char* start, const char* end, u32 bit
 			debug_log_warning("[Codegen] [Legacy] Block \"%.*s\" has zero elements", count, block_name);
 
 		// write number of elements to the buffer, 2 BYTES
-		binary_writer_u16_set(writer, MARK_ID_FIELD_COUNT + _cnt, num_elements);
+		codegen_buffer_set_u16(writer, field_count_addr, num_elements);
+		// binary_writer_u16_set(writer, MARK_ID_FIELD_COUNT + _cnt, num_elements);
 
 		start++;
 	}
@@ -224,11 +236,12 @@ static const char* write_description(const char* start, const char* end, u32 bit
 	if(found)
 	{
 		// write type info to the buffer, 4 BYTES
-		binary_writer_u32(writer, bits);
+		codegen_buffer_write_u32(writer, ".data", bits);
 		
 		_ASSERT((MARK_ID_IDENTIFIER_NAME + _cnt) < MARK_ID_IDENTIFIER_NAME_MAX);
 
-		binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + _cnt);
+		identifier_name_addr = codegen_buffer_alloc_unsized(writer, ".data");
+		// binary_writer_mark(writer, MARK_ID_IDENTIFIER_NAME + _cnt);
 		start += count;
 	}
 
@@ -239,8 +252,10 @@ static const char* write_description(const char* start, const char* end, u32 bit
 
 	// write identifier name to the buffer, count + 1 BYTES
 	char null_char = 0;
-	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + _cnt, &null_char, 1);
-	binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + _cnt, start, count);
+	codegen_buffer_insert(writer, identifier_name_addr, &null_char, 1);
+	codegen_buffer_insert(writer, identifier_name_addr, start, count);
+	// binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + _cnt, &null_char, 1);
+	// binary_writer_insert(writer, MARK_ID_IDENTIFIER_NAME + _cnt, start, count);
 
 	start += count;
 	while(*start != ';')
@@ -399,7 +414,7 @@ SC_API u32 try_parse_to_u32(const char* str)
 		return strtoul(str, NULL, 0);
 }
 
-static const char* write_set_and_binding_numbers(const char* start, const char* end, u8 required, binary_writer_t* writer)
+static const char* write_set_and_binding_numbers(const char* start, const char* end, u8 required, codegen_buffer_t* writer)
 {
 	while(isspace(*start)) start++;
 	u8 count = 0;
@@ -425,7 +440,8 @@ PARSE_NUMBER:
 
 		// first iteration: write descriptor set number/index or binding number in case of vertex attribute or offset in the push constant buffer, 1 BYTE
 		// second iteration (only possible if this is not a push constant): write descriptor binding number/index or layout number in case of vertex attribute, 1 BYTE
-		binary_writer_u8(writer, (u8)arr_len);
+		codegen_buffer_write_u8(writer, ".data", (u8)arr_len);
+		// binary_writer_u8(writer, (u8)arr_len);
 		
 		count++;
 		

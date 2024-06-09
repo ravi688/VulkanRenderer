@@ -266,22 +266,27 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 {
 	/* calculate the shader mask */
 	_ASSERT((MARK_ID_SHADER_MASK + ctx->current_pipeline_index) < MARK_ID_SHADER_MASK_MAX);
-	binary_writer_u8_mark(writer->data, MARK_ID_SHADER_MASK + ctx->current_pipeline_index);
+	AUTO shader_mask_addr = codegen_buffer_alloc_u8(writer, ".data");
+	// binary_writer_u8_mark(writer->data, MARK_ID_SHADER_MASK + ctx->current_pipeline_index);
 	u8 shader_mask = 0;
+	codegen_buffer_address_t length_offset_addrs[SHADER_STAGE_MAX * 2];
 	for(u8 i = 0, j = 0; i < SHADER_STAGE_MAX; i++)
 	{
 		shader_source_t source = sources[i];
 		if(source.length == 0) continue;
 		shader_mask |= (1 << source.stage);
-		_ASSERT((MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_LENGTH_MAX);
-		_ASSERT((MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_OFFSET_MAX);
-		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2);
-		binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2);
+		length_offset_addrs[j * 2 + 0] = codegen_buffer_alloc_u32(writer, ".data");
+		length_offset_addrs[j * 2 + 1] = codegen_buffer_alloc_pointer(writer, ".data");
+		// _ASSERT((MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_LENGTH_MAX);
+		// _ASSERT((MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2) < MARK_ID_SPIRV_OFFSET_MAX);
+		// binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2);
+		// binary_writer_u32_mark(writer->data, MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2);
 		j++;
 	}
 
 	/* write the shader mask */
-	binary_writer_u8_set(writer->data, MARK_ID_SHADER_MASK + ctx->current_pipeline_index, shader_mask);
+	codegen_buffer_set_u8(writer, shader_mask_addr, shader_mask);
+	// binary_writer_u8_set(writer->data, MARK_ID_SHADER_MASK + ctx->current_pipeline_index, shader_mask);
 
 	shaderc_compiler_t compiler = shaderc_compiler_initialize();
 	shaderc_compile_options_t options = get_compile_options(ctx);
@@ -314,11 +319,15 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 		_ASSERT(length > 0);
 
 		/* write length */
-		binary_writer_u32_set(writer->data, MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2, length);
+		codegen_buffer_set_u32(writer, length_offset_addrs[j * 2 + 0], length);
+		// binary_writer_u32_set(writer->data, MARK_ID_SPIRV_LENGTH + j + ctx->current_pipeline_index * 2, length);
 		/* write offset */
-		binary_writer_u32_set(writer->data, MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2, binary_writer_pos(writer->data));
+		AUTO addr = codegen_buffer_get_end_address(writer, ".data");
+		codegen_buffer_set_pointer(writer, length_offset_addrs[j * 2 + 1], addr);
+		// binary_writer_u32_set(writer->data, MARK_ID_SPIRV_OFFSET + j + ctx->current_pipeline_index * 2, binary_writer_pos(writer->data));
 		/* write the SPIR-V code */
-		binary_writer_write(writer->data, bytes, length);
+		codegen_buffer_write(writer, ".data", bytes, length);
+		// binary_writer_write(writer->data, bytes, length);
 
 		shaderc_result_release(result);
 		j++;

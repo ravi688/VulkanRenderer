@@ -136,8 +136,9 @@ SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen
 	UserData data = {};
 	data.callbacks = buffer->callbacks;
 	data.categoryStack = buf_create_with_callbacks(data.callbacks, sizeof(Category*), 1, 0);
-	data.mainBaseOffset = buf_get_element_count(CAST_TO(BUFFER*, buffer->data->user_data));
-	data.mainOutput = CAST_TO(BUFFER*, buffer->data->user_data);
+	AUTO data_writer = codegen_buffer_get_section(buffer, ".data");
+	data.mainBaseOffset = buf_get_element_count(CAST_TO(BUFFER*, data_writer->user_data));
+	data.mainOutput = CAST_TO(BUFFER*, data_writer->user_data);
 	data.baseOffset = data.mainBaseOffset;
 	data.output = data.mainOutput;
 	data.literalBuffer = &stringLiteralBuffer;
