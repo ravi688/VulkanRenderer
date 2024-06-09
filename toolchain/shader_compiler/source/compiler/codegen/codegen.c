@@ -1650,8 +1650,6 @@ static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analys
 	ctx->current_pipeline_index++;
 	_ASSERT((MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index) < MARK_ID_PIPELINE_OFFSET_MAX);
 	codegen_buffer_write_pointer(ctx->codegen_buffer, ".main", codegen_buffer_get_end_address(ctx->codegen_buffer, ".data"));
-	// binary_writer_u32_mark(ctx->codegen_buffer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index);
-	// binary_writer_u32_set(ctx->codegen_buffer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index, binary_writer_pos(ctx->codegen_buffer->data));
 
 	/* WRITE PIPELINE DESCRIPTION INTO THE DATA SECTION */
 
