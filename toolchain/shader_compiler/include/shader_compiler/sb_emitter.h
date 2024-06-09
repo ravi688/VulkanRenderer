@@ -80,6 +80,11 @@ typedef struct sb_emitter_t
 		/* number of shader properties in the current Properties { } block, it will be reset to zero upon calling sb_emitter_close_shader_property_array() function */
 		u32 shr_prop_count;
 	};
+	union
+	{
+		codegen_buffer_address_t vtx_attr_dsc_cnt_addr;
+		codegen_buffer_address_t shr_prop_dsc_cnt_addr;
+	};
 	/* just a counter (increments upon call to sb_emitter_close_vertex_attribute), to generate unique mark ids for vertex attribute offsets */
 	u32 vtx_attr_counter;
 	/* just a counter (increments upon call to sb_emitter_close_shader_property), to generate unique mark ids for shader property offsets */

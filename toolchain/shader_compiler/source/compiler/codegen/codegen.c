@@ -233,23 +233,23 @@ static void codegen_shader(v3d_generic_node_t* node, compiler_ctx_t* ctx)
 	if(!foreach_child_node_if_name(node, keywords[KEYWORD_PROPERTIES], (ctx->sl_version == SL_VERSION_2023) ? codegen_buffer_layouts_and_samplers : codegen_descriptions, NULL, ctx))
 	{
 		/* if there is no properties block then just write the number of material properties to be zero */
-		binary_writer_u16(ctx->codegen_buffer->main, 0);
+		codegen_buffer_write_u16(ctx->codegen_buffer, ".main", 0);
 	}
 	/* the layout descriptions come after the property descriptions */
 	if(!foreach_child_node_if_name(node, keywords[KEYWORD_LAYOUT], (ctx->sl_version == SL_VERSION_2023) ? codegen_vertex_buffer_layout : codegen_descriptions, NULL, ctx))
 	{
 		/* if there is no layout block then just write the number of layout descriptions to be zero */
-		binary_writer_u16(ctx->codegen_buffer->main, 0);
+		codegen_buffer_write_u16(ctx->codegen_buffer, ".main", 0);
 	}
 
 	u32 render_pass_count = count_child_node_if_name(node, keywords[KEYWORD_RENDERPASS], ctx->src);
-	binary_writer_u32(ctx->codegen_buffer->main, render_pass_count);
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", render_pass_count);
 	
 	render_pass_user_data_t data = { render_pass_count, NULL };
 	if(!foreach_child_node_if_name(node, keywords[KEYWORD_RENDERPASS], codegen_renderpass, &data, ctx))
 	{
 		/* if there is no RenderPass block then just write the number of RenderPasses to be zero */
-		binary_writer_u32(ctx->codegen_buffer->main, 0);
+		codegen_buffer_write_u32(ctx->codegen_buffer, ".main", 0);
 	}
 }
 
@@ -1512,7 +1512,7 @@ static void write_layout2(compiler_ctx_t* ctx, const char* format, ...)
 static void codegen_render_set_binding_descriptions(render_pass_analysis_t* analysis, compiler_ctx_t* ctx, u32 index)
 {
 	/* write the number of input descriptions */
-	binary_writer_u16(ctx->codegen_buffer->main, analysis->color_bind_count + ((analysis->depth_read == U32_MAX) ? 0 : 1));
+	codegen_buffer_write_u16(ctx->codegen_buffer, ".main", analysis->color_bind_count + ((analysis->depth_read == U32_MAX) ? 0 : 1));
 
 	/* write the color input descriptions */
 	for(u32 i = 0; i < analysis->color_bind_count; i++)
@@ -1559,26 +1559,26 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, u3
 	_ASSERT(analysis->attachment_count != 0);
 
 	/* write the type of the render pass, if this is the last pass then it must be type of SWAPCHAIN_TARGET */
-	binary_writer_u32(ctx->codegen_buffer->main, ((iteration == data->render_pass_count) && has_color_attachment(analysis)) ? RENDER_PASS_TYPE_SWAPCHAIN_TARGET : RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", ((iteration == data->render_pass_count) && has_color_attachment(analysis)) ? RENDER_PASS_TYPE_SWAPCHAIN_TARGET : RENDER_PASS_TYPE_SINGLE_FRAMEBUFFER);
 
 	/* write the list of input attachments */
 	u32 input_count = analysis->color_read_count + ((analysis->depth_read == U32_MAX) ? 0 : 1);
-	binary_writer_u32(ctx->codegen_buffer->main, input_count);
-	binary_writer_write(ctx->codegen_buffer->main, (void*)analysis->color_reads, analysis->color_read_count * sizeof(u32));
-	binary_writer_write(ctx->codegen_buffer->main, &analysis->depth_read, (input_count - analysis->color_read_count) * sizeof(u32));
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", input_count);
+	codegen_buffer_write(ctx->codegen_buffer, ".main", (void*)analysis->color_reads, analysis->color_read_count * sizeof(u32));
+	codegen_buffer_write(ctx->codegen_buffer, ".main", &analysis->depth_read, (input_count - analysis->color_read_count) * sizeof(u32));
 
 	/* write the list of attachments */
-	binary_writer_u32(ctx->codegen_buffer->main, analysis->attachment_count);
-	binary_writer_write(ctx->codegen_buffer->main, (void*)analysis->attachments, analysis->attachment_count * sizeof(u32));
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", analysis->attachment_count);
+	codegen_buffer_write(ctx->codegen_buffer, ".main", (void*)analysis->attachments, analysis->attachment_count * sizeof(u32));
 
 	/* let's keep the subpass dependencies out of the picture for now */
-	binary_writer_u32(ctx->codegen_buffer->main, 0);
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", 0);
 
 	/* write the render set binding descriptions */
 	codegen_render_set_binding_descriptions(analysis, ctx, iteration);
 
 	/* write the list of subpass descriptions */
-	binary_writer_u32(ctx->codegen_buffer->main, analysis->subpass_count);
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", analysis->subpass_count);
 
 	for(u32 i = 0; i < analysis->subpass_count; i++)
 		codegen_subpass(node->childs[i], &analysis->subpasses[i], ctx, iteration, i);
@@ -1594,7 +1594,7 @@ static void codegen_renderpass(v3d_generic_node_t* node, compiler_ctx_t* ctx, u3
 static void codegen_sub_render_set_binding_descriptions(subpass_analysis_t* analysis, compiler_ctx_t* ctx, u32 rpindex, u32 spindex)
 {
 	/* write the number of input descriptions */
-	binary_writer_u16(ctx->codegen_buffer->main, analysis->color_bind_count + ((analysis->depth_read == U32_MAX) ? 0 : 1));
+	codegen_buffer_write_u16(ctx->codegen_buffer, ".main", analysis->color_bind_count + ((analysis->depth_read == U32_MAX) ? 0 : 1));
 
 	/* write the color input descriptions */
 	for(u32 i = 0; i < analysis->color_bind_count; i++)
@@ -1626,31 +1626,32 @@ static void codegen_subpass(v3d_generic_node_t* node, subpass_analysis_t* analys
 		if(!foreach_child_node_if_name(node, keywords[KEYWORD_LAYOUT], (ctx->sl_version == SL_VERSION_2023) ? codegen_vertex_buffer_layout : codegen_descriptions, NULL, ctx))
 		{
 			/* if there is no layout block then just write the number of layout descriptions to be zero */
-			binary_writer_u16(ctx->codegen_buffer->main, 0);
+			codegen_buffer_write_u16(ctx->codegen_buffer, ".main", 0);
 		}
 	}
 
 	/* write input attachment list */
 	u32 input_count = analysis->color_read_count + ((analysis->depth_read != U32_MAX) ? 1 : 0);
-	binary_writer_u32(ctx->codegen_buffer->main, input_count);
-	binary_writer_write(ctx->codegen_buffer->main, (void*)analysis->color_reads, analysis->color_read_count * sizeof(u32));
-	binary_writer_write(ctx->codegen_buffer->main, &analysis->depth_read, (input_count - analysis->color_read_count) * sizeof(u32));
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", input_count);
+	codegen_buffer_write(ctx->codegen_buffer, ".main", (void*)analysis->color_reads, analysis->color_read_count * sizeof(u32));
+	codegen_buffer_write(ctx->codegen_buffer, ".main", &analysis->depth_read, (input_count - analysis->color_read_count) * sizeof(u32));
 
 	/* write color attachment list */
-	binary_writer_u32(ctx->codegen_buffer->main, analysis->color_write_count);
-	binary_writer_write(ctx->codegen_buffer->main, (void*)analysis->color_writes, analysis->color_write_count * sizeof(u32));
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", analysis->color_write_count);
+	codegen_buffer_write(ctx->codegen_buffer, ".main", (void*)analysis->color_writes, analysis->color_write_count * sizeof(u32));
 
 	/* let's keep the preserve attachment list zero for now */
-	binary_writer_u32(ctx->codegen_buffer->main, 0);
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", 0);
 
 	/* write the depth attachment index */
-	binary_writer_u32(ctx->codegen_buffer->main, analysis->depth_write);
+	codegen_buffer_write_u32(ctx->codegen_buffer, ".main", analysis->depth_write);
 
 	/* write the pipeline offset */
 	ctx->current_pipeline_index++;
 	_ASSERT((MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index) < MARK_ID_PIPELINE_OFFSET_MAX);
-	binary_writer_u32_mark(ctx->codegen_buffer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index);
-	binary_writer_u32_set(ctx->codegen_buffer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index, binary_writer_pos(ctx->codegen_buffer->data));
+	codegen_buffer_write_pointer(ctx->codegen_buffer, ".main", codegen_buffer_get_end_address(ctx->codegen_buffer, ".data"));
+	// binary_writer_u32_mark(ctx->codegen_buffer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index);
+	// binary_writer_u32_set(ctx->codegen_buffer->main, MARK_ID_PIPELINE_OFFSET + ctx->current_pipeline_index, binary_writer_pos(ctx->codegen_buffer->data));
 
 	/* WRITE PIPELINE DESCRIPTION INTO THE DATA SECTION */
 

@@ -120,6 +120,10 @@ SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks
 	ctx->current_pipeline_index = -1;
 
 	ctx->codegen_buffer = codegen_buffer_create(&ctx->callbacks);
+	/* main section contains the references to other sections */
+	codegen_buffer_create_or_get_section(ctx->codegen_buffer, ".main");
+	/* data section contains gfx pipelines, shader resource descriptions, SPIR-V bitcode etc. */
+	codegen_buffer_create_or_get_section(ctx->codegen_buffer, ".data");
 	ctx->emitter = sb_emitter_create(&ctx->callbacks, ctx->codegen_buffer, ctx->sb_version);
 
 	return ctx;

@@ -23,7 +23,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#define COMMON_PORTABLE_STDLIB
+#define COMMON_PORTABLE_STDLIB /* for portable _strtoui64 */
 #include <common/defines.h>
 
 #include <shader_compiler/compiler/compiler.h>
@@ -41,9 +41,10 @@ SC_API const char* write_header(compiler_ctx_t* ctx, const char* start, const ch
 {
 	codegen_buffer_t* writer = ctx->codegen_buffer;
 
-	binary_writer_string(writer->main, SB_HDR_STR);
+	codegen_buffer_write_string(writer, ".main", SB_HDR_STR);
 
-	binary_writer_u32_mark(writer->main, MARK_ID_COMPILER_CMD_COUNT);
+	AUTO compiler_cmd_cnt_addr = codegen_buffer_alloc_u32(writer, ".main");
+	// binary_writer_u32_mark(writer->main, MARK_ID_COMPILER_CMD_COUNT);
 
 	bool is_sl = false;
 
@@ -61,7 +62,7 @@ SC_API const char* write_header(compiler_ctx_t* ctx, const char* start, const ch
 			// command is for shader binary generation
 			if(safe_strncmp(start, "sb", 2) == 0)
 			{
-				binary_writer_u32(writer->main, (u32)CMPLR_CMD_CAT_SB);
+				codegen_buffer_write_u32(writer, ".main", (u32)CMPLR_CMD_CAT_SB);
 				start += 2;
 				count++;
 				is_sl = false;
@@ -69,7 +70,7 @@ SC_API const char* write_header(compiler_ctx_t* ctx, const char* start, const ch
 			// command is for shader language compilation
 			else if(safe_strncmp(start, "sl", 2) == 0)
 			{
-				binary_writer_u32(writer->main, (u32)CMPLR_CMD_CAT_SL);
+				codegen_buffer_write_u32(writer, ".main", (u32)CMPLR_CMD_CAT_SL);
 				start += 2;
 				count++;
 				is_sl = true;
@@ -81,7 +82,7 @@ SC_API const char* write_header(compiler_ctx_t* ctx, const char* start, const ch
 				u32 ver = _strtoui64(start, (char**)&start, 10);
 				if(ver == 0)
 					DEBUG_LOG_FETAL_ERROR("Invalid shader binary or language version");
-				binary_writer_u32(writer->main, ver);
+				codegen_buffer_write_u32(writer, ".main", ver);
 				if(is_sl)
 					ctx->sl_version = ver;
 				else
@@ -92,7 +93,8 @@ SC_API const char* write_header(compiler_ctx_t* ctx, const char* start, const ch
 		start++;
 	}
 
-	binary_writer_u32_set(writer->main, MARK_ID_COMPILER_CMD_COUNT, count);
+	codegen_buffer_set_u32(writer, compiler_cmd_cnt_addr, count);
+	// binary_writer_u32_set(writer->main, MARK_ID_COMPILER_CMD_COUNT, count);
 
 	return start;
 }

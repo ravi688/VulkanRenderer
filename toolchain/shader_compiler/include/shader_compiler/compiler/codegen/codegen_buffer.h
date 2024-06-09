@@ -884,15 +884,20 @@ enum
 	MARK_ID_FIELD_COUNT = MARK_ID_FIELD_COUNT_0
 };
 
+#include <shader_compiler/utilities/dictionary.h> /* dictionary_t */
+#include <common/static_string.h> /* static_string_64_t */
+
+/* TODO: replace this typedef with a real hash_table_t implementation in the SGE project */
+typedef dictionary_t hash_table_t;
+
+typedef hash_table_t  /* key: static_string_64_t (section name), value: binary_writer_t* (section writer) */section_writer_map_t;
+
 /* abstract buffer used to store the compiled shader binary */
 typedef struct codegen_buffer_t
 {
 	/* allocation callbacks */
 	com_allocation_callbacks_t* callbacks;
-	/* main section writer is used to write the descriptions to the data section */
-	binary_writer_t* main;
-	/* data section writer is used to write in the data section, such as gfx pipeline descriptions */
-	binary_writer_t* data;
+	section_writer_map_t map;
 } codegen_buffer_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -902,6 +907,61 @@ SC_API codegen_buffer_t* codegen_buffer_new(com_allocation_callbacks_t* callback
 SC_API codegen_buffer_t* codegen_buffer_create(com_allocation_callbacks_t* callbacks);
 SC_API void codegen_buffer_destroy(codegen_buffer_t* buffer);
 SC_API void codegen_buffer_release_resources(codegen_buffer_t* buffer);
+
+SC_API binary_writer_t* codegen_buffer_get_section(codegen_buffer_t* buffer, const char* section_name);
+SC_API binary_writer_t* codegen_buffer_create_or_get_section(codegen_buffer_t* buffer, const char* section_name);
+
+typedef struct codegen_buffer_address_t
+{
+	/* index in the section list of codegen_buffer_t object */
+	u32 section_id;
+	/* indirect address (offset within the section) */
+	u32 mark;
+} codegen_buffer_address_t;
+#define CODEGEN_BUFFER_ADDRESS_NULL (codegen_buffer_address_t) { U32_MAX, U32_MAX }
+#define CODEGEN_BUFFER_ADDRESS_IS_NULL(address) ((address->section_id == U32_MAX) && (address->mark == U32_MAX))
+#define CODEGEN_BUFFER_SECTION_END U32_MAX
+
+/* unsized */
+SC_API codegen_buffer_address_t codegen_buffer_alloc_unsized(codegen_buffer_t* buffer, const char* section_name);
+SC_API void codegen_buffer_insert(codegen_buffer_t* buffer, codegen_buffer_address_t addr, const void* bytes, u32 num_bytes);
+
+/* offset - can be passed CODEGEN_BUFFER_SECTION_END, in which case, binary_writer_get_pos(get_section(section_name)) will be evaluated */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE codegen_buffer_address_t codegen_buffer_get_end_address(codegen_buffer_t* buffer, const char* section_name)
+{
+	return codegen_buffer_alloc_unsized(buffer, section_name);
+}
+
+/* writes 'num_bytes' number of bytes to the section with name 'section_name' */
+SC_API void codegen_buffer_write(codegen_buffer_t* buffer, const char* section_name, void* bytes, u32 num_bytes);
+
+/* u32 */
+SC_API void codegen_buffer_write_u32(codegen_buffer_t* buffer, const char* section_name, u32 value);
+SC_API codegen_buffer_address_t codegen_buffer_alloc_u32(codegen_buffer_t* buffer, const char* section_name);
+SC_API void codegen_buffer_set_u32(codegen_buffer_t* buffer, codegen_buffer_address_t addr, u32 value);
+
+/* pointer */
+SC_API void codegen_buffer_write_pointer(codegen_buffer_t* buffer, const char* section_name, codegen_buffer_address_t address);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE codegen_buffer_address_t codegen_buffer_alloc_pointer(codegen_buffer_t* buffer, const char* section_name)
+{
+	return codegen_buffer_alloc_u32(buffer, section_name);
+}
+SC_API void codegen_buffer_set_pointer(codegen_buffer_t* buffer, codegen_buffer_address_t addr, codegen_buffer_address_t address);
+
+/* u16 */
+SC_API void codegen_buffer_write_u16(codegen_buffer_t* buffer, const char* section_name, u32 value);
+SC_API codegen_buffer_address_t codegen_buffer_alloc_u16(codegen_buffer_t* buffer, const char* section_name);
+SC_API void codegen_buffer_set_u16(codegen_buffer_t* buffer, codegen_buffer_address_t addr, u16 value);
+
+/* u8 */
+SC_API void codegen_buffer_write_u8(codegen_buffer_t* buffer, const char* section_name, u32 value);
+SC_API codegen_buffer_address_t codegen_buffer_alloc_u8(codegen_buffer_t* buffer, const char* section_name);
+SC_API void codegen_buffer_set_u8(codegen_buffer_t* buffer, codegen_buffer_address_t addr, u8 value);
+
+/* writes null terminated string including the null character */
+SC_API void codegen_buffer_write_string(codegen_buffer_t* buffer, const char* section_name, const char* str);
+/* string having n characters, it will automatically be null terminated in the buffer */
+SC_API void codegen_buffer_write_stringn(codegen_buffer_t* buffer, const char* section_name, const char* str, u32 len);
 
 /* 	flattens the codegen buffer and returns pointer to the BUFFER instance 
 	buffer: the codegen_buffer_t object to be flattened

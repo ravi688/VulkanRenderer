@@ -20,17 +20,19 @@ SC_API void sb_emitter_destroy(sb_emitter_t* emitter)
 SC_API void sb_emitter_open_vertex_attribute_array(sb_emitter_t* emitter)
 {
 	_com_assert(emitter->depth == 0);
-	binary_writer_u16_mark(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT);
+	emitter->vtx_attr_dsc_cnt_addr = codegen_buffer_alloc_u16(emitter->buffer, ".main");
+	// binary_writer_u16_mark(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT);
 	emitter->depth += 1;
 }
 
 SC_API void sb_emitter_close_vertex_attribute_array(sb_emitter_t* emitter)
 {
 	_com_assert(emitter->depth == 1);
-	binary_writer_u16_set(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT, CAST_TO(u16, emitter->vtx_attr_count));
+	codegen_buffer_set_u16(emitter->buffer, emitter->vtx_attr_dsc_cnt_addr, CAST_TO(u16, emitter->vtx_attr_count));
+	// binary_writer_u16_set(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT, CAST_TO(u16, emitter->vtx_attr_count));
 	_ASSERT(emitter->vtx_attr_count < MARK_ID_VTX_ATTR_DSC_OFFSET_MAX);
 
-	binary_writer_unmark(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT);
+	// binary_writer_unmark(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_COUNT);
 
 	emitter->vtx_attr_count = 0;
 	emitter->depth -= 1;
@@ -77,13 +79,21 @@ SC_API void sb_emitter_close_vertex_attribute(sb_emitter_t* emitter)
 	bits |= (emitter->vtx_attr.rate == VERTEX_INPUT_RATE_VERTEX) ? PER_VERTEX_ATTRIB_BIT : PER_INSTANCE_ATTRIB_BIT;
 	bits |= emitter->vtx_attr.type;
 
-	binary_writer_u32_mark(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_OFFSET + emitter->vtx_attr_counter);
-	binary_writer_u32_set(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_OFFSET + emitter->vtx_attr_counter, binary_writer_pos(emitter->buffer->data));
+	AUTO addr = codegen_buffer_get_end_address(emitter->buffer, ".data");
+	codegen_buffer_write_pointer(emitter->buffer, ".main", addr);
 
-	binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->vtx_attr.binding));
-	binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->vtx_attr.location));
-	binary_writer_u32(emitter->buffer->data, bits);
-	binary_writer_stringn(emitter->buffer->data, emitter->vtx_attr.name, emitter->vtx_attr.name_length);
+	// binary_writer_u32_mark(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_OFFSET + emitter->vtx_attr_counter);
+	// binary_writer_u32_set(emitter->buffer->main, MARK_ID_VTX_ATTR_DSC_OFFSET + emitter->vtx_attr_counter, binary_writer_pos(emitter->buffer->data));
+
+	codegen_buffer_write_u8(emitter->buffer, ".data", CAST_TO(u8, emitter->vtx_attr.binding));
+	codegen_buffer_write_u8(emitter->buffer, ".data", CAST_TO(u8, emitter->vtx_attr.location));
+	codegen_buffer_write_u32(emitter->buffer, ".data", bits);
+	codegen_buffer_write_stringn(emitter->buffer, ".data", emitter->vtx_attr.name, emitter->vtx_attr.name_length);
+
+	// binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->vtx_attr.binding));
+	// binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->vtx_attr.location));
+	// binary_writer_u32(emitter->buffer->data, bits);
+	// binary_writer_stringn(emitter->buffer->data, emitter->vtx_attr.name, emitter->vtx_attr.name_length);
 
 	emitter->vtx_attr_count += 1;
 	emitter->vtx_attr_counter += 1;
@@ -94,7 +104,8 @@ SC_API void sb_emitter_close_vertex_attribute(sb_emitter_t* emitter)
 SC_API void sb_emitter_open_shader_property_array(sb_emitter_t* emitter)
 {
 	_com_assert(emitter->depth == 0);
-	binary_writer_u16_mark(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_COUNT);
+	emitter->shr_prop_dsc_cnt_addr = codegen_buffer_alloc_u16(emitter->buffer, ".main");
+	// binary_writer_u16_mark(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_COUNT);
 	emitter->depth += 1;
 }
 
@@ -237,32 +248,35 @@ SC_API void sb_emitter_close_shader_property(sb_emitter_t* emitter)
 {
 	_com_assert(emitter->depth == 2);
 
-	binary_writer_u32_mark(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_OFFSET + emitter->shr_prop_counter);
-	binary_writer_u32_set(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_OFFSET + emitter->shr_prop_counter, binary_writer_pos(emitter->buffer->data));
+	AUTO addr = codegen_buffer_get_end_address(emitter->buffer, ".data");
+	codegen_buffer_write_pointer(emitter->buffer, ".main", addr);
+
+	// binary_writer_u32_mark(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_OFFSET + emitter->shr_prop_counter);
+	// binary_writer_u32_set(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_OFFSET + emitter->shr_prop_counter, binary_writer_pos(emitter->buffer->data));
 
 	if(emitter->shr_prop.type == GLSL_TYPE_PUSH_CONSTANT)
-		binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->shr_prop.offset));
+		codegen_buffer_write_u8(emitter->buffer, ".data", CAST_TO(u8, emitter->shr_prop.offset));
 	else
 	{
-		binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->shr_prop.set));
-		binary_writer_u8(emitter->buffer->data, CAST_TO(u8, emitter->shr_prop.binding));
+		codegen_buffer_write_u8(emitter->buffer, ".data", CAST_TO(u8, emitter->shr_prop.set));
+		codegen_buffer_write_u8(emitter->buffer, ".data", CAST_TO(u8, emitter->shr_prop.binding));
 	}
 	u32 bits = get_encoded_type_info(&emitter->shr_prop);
-	binary_writer_u32(emitter->buffer->data, bits);
+	codegen_buffer_write_u32(emitter->buffer, ".data", bits);
 	if(IS_SHR_PROP_BLOCK(&emitter->shr_prop))
-		binary_writer_stringn(emitter->buffer->data, emitter->shr_prop.block_name, emitter->shr_prop.block_name_length);
-	binary_writer_stringn(emitter->buffer->data, emitter->shr_prop.name, emitter->shr_prop.name_length);
+		codegen_buffer_write_stringn(emitter->buffer, ".data", emitter->shr_prop.block_name, emitter->shr_prop.block_name_length);
+	codegen_buffer_write_stringn(emitter->buffer, ".data", emitter->shr_prop.name, emitter->shr_prop.name_length);
 
 	if(IS_SHR_PROP_BLOCK(&emitter->shr_prop))
 	{
 		u32 field_count = buf_get_element_count(&emitter->shr_prop.fields);
-		binary_writer_u16(emitter->buffer->data, field_count);
+		codegen_buffer_write_u16(emitter->buffer, ".data", field_count);
 		for(u32 i = 0; i < field_count; i++)
 		{
 			AUTO field = buf_get_ptr_at_typeof(&emitter->shr_prop.fields, shader_property_info_t, i);
 			u32 bits = get_encoded_type_info(field);
-			binary_writer_u32(emitter->buffer->data, bits);
-			binary_writer_stringn(emitter->buffer->data, field->name, field->name_length);
+			codegen_buffer_write_u32(emitter->buffer, ".data", bits);
+			codegen_buffer_write_stringn(emitter->buffer, ".data", field->name, field->name_length);
 		}
 	}
 
@@ -276,10 +290,11 @@ SC_API void sb_emitter_close_shader_property(sb_emitter_t* emitter)
 SC_API void sb_emitter_close_shader_property_array(sb_emitter_t* emitter)
 {
 	_com_assert(emitter->depth == 1);
-	binary_writer_u16_set(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_COUNT, CAST_TO(u16, emitter->shr_prop_count));
+	codegen_buffer_set_u16(emitter->buffer, emitter->shr_prop_dsc_cnt_addr, CAST_TO(u16, emitter->shr_prop_count));
+	// binary_writer_u16_set(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_COUNT, CAST_TO(u16, emitter->shr_prop_count));
 	_ASSERT(emitter->shr_prop_count < MARK_ID_SHR_PROP_DSC_OFFSET_MAX);
 
-	binary_writer_unmark(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_COUNT);
+	// binary_writer_unmark(emitter->buffer->main, MARK_ID_SHR_PROP_DSC_COUNT);
 
 	emitter->shr_prop_count = 0;
 	emitter->depth -= 1;
