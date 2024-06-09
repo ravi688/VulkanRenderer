@@ -389,7 +389,7 @@ Shader
 				vec3 position;
 			}
 
-			[NoParse]
+			[NoParse] // mandatory for now
 			GraphicsPipeline
 			{
 				depthStencil
@@ -399,7 +399,7 @@ Shader
 				}
 			}
 
-			[NoParse]
+			[NoParse] // mandatory for now
 			GLSL
 			{
 				#stage vertex
@@ -450,7 +450,7 @@ Shader
 		{
 			// use the fallback Vertex Buffer Layout, hence, no separate Layout block is required here.
 
-			[NoParse]
+			[NoParse] // mandatory for now
 			GraphicsPipeline
 			{
 				colorBlend
@@ -465,7 +465,7 @@ Shader
 				}
 			}
 
-			[NoParse]
+			[NoParse] // mandatory for now
 			GLSL
 			{
 				#stage vertex
