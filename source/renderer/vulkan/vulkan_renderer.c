@@ -418,6 +418,7 @@ DEBUG_BLOCK
 	renderer->max_frames_in_flight = clamp_u32(create_info->max_frames_in_flight, 1u, image_count);
 	if(create_info->max_frames_in_flight != renderer->max_frames_in_flight)
 		DEBUG_LOG_WARNING("Requested max number of in flight frames %" PRIu32 " can't be allowed, it is now set to: %" PRIu32, create_info->max_frames_in_flight, renderer->max_frames_in_flight);
+	else debug_log_info("Max number of in flight frames: %" PRIu32, renderer->max_frames_in_flight);
 
 	// create semaphores
 	renderer->render_present_sync_primitives.primitive_count = renderer->max_frames_in_flight;

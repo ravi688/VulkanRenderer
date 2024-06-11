@@ -1467,6 +1467,50 @@ typedef struct shader_binary_read_context_t
 	u32 sb_version;
 } shader_binary_read_context_t;
 
+
+#define UDAT_BIT BIT32(31)
+static struct_descriptor_t* get_udat(memory_allocator_t* allocator, binary_reader_t* reader)
+{
+	/* save the current state and jump to where the udat definition is located in the shader binary */
+	AUTO udat_offset = binary_reader_u32(reader);
+	binary_reader_push(reader);
+	binary_reader_jump(reader, udat_offset);
+
+	struct_descriptor_t* udat = struct_descriptor_create(allocator);
+	/* read the name of this udat */
+	const char* udat_name = binary_reader_str(reader);
+	struct_descriptor_begin(allocator, udat, udat_name, GLSL_TYPE_MAX_NON_OPAQUE);
+	/* read number of fields in this udat */
+	AUTO num_fields = binary_reader_u16(reader);
+	log_msg("Field Count: %u\n", num_fields);
+	while(num_fields--)
+	{
+		/* read the information about this field type */
+		u32 field_info = binary_reader_u32(reader);
+		/* if this is an udat */
+		if(HAS_FLAG(field_info, UDAT_BIT))
+		{
+			/* then recursively read and build another struct_descriptor_t representing that udat */
+			struct_descriptor_t* udat_field = get_udat(allocator, reader);
+			/* next read the identifier name of the udat we just read above */
+			const char* ident_name = binary_reader_str(reader);
+			struct_descriptor_add_field2(udat, ident_name, udat_field);
+		}
+		else /* otherwise this is a primitive type (non-udat) */
+		{
+			/* read the identifier name */
+			const char* ident_name = binary_reader_str(reader);
+			/* get the type of the fields */
+			u8 type = field_info & 0xFFUL;
+			struct_descriptor_add_field(udat, ident_name, type);
+		}
+	}
+	struct_descriptor_end(allocator, udat);
+	/* restore the reader state */
+	binary_reader_pop(reader);
+	return udat;
+}
+
 static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t* allocator, shader_binary_read_context_t* ctx, u32 OUT descriptor_count)
 {
 	binary_reader_t* reader = ctx->reader;
@@ -1514,44 +1558,58 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 			|| (descriptor_type == GLSL_TYPE_STORAGE_BUFFER)
 			|| (descriptor_type == GLSL_TYPE_PUSH_CONSTANT);
 
+		struct_descriptor_begin(allocator, struct_def, "", descriptor_type);
+		/* if the descriptor is a block then iterate through its fields */
 		if(is_block)
 		{
-			// ignore the block name
+			/* save the current state and jump to where the udat definition is located in the shader binary */
+			AUTO udat_offset = binary_reader_u32(reader);
+			binary_reader_push(reader);
+			binary_reader_jump(reader, udat_offset);
+
+			/* ignore the block name */
 			CAN_BE_UNUSED_VARIABLE const char* name = binary_reader_str(reader);
 			_debug_assert__(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
+
+			/* get the number of fields in this uniform block */
+			u16 field_count = binary_reader_u16(reader);
+			log_msg("Field Count: %u\n", field_count);
+
+			while(field_count--)
+			{
+				/* get the field info */
+				u32 field_info = binary_reader_u32(reader);
+				
+				/* get the type of the fields */
+				if(HAS_FLAG(field_info, UDAT_BIT))
+				{
+					struct_descriptor_t* udat_field = get_udat(allocator, reader);
+					const char* name = binary_reader_str(reader);
+					struct_descriptor_add_field2(struct_def, name, udat_field);
+				}
+				else
+				{
+					u8 type = field_info & 0xFFUL;
+				
+					/* get the name of this field */
+					const char* name = binary_reader_str(reader);
+					_debug_assert__(strlen(name) < STRUCT_FIELD_MAX_NAME_SIZE);
+					struct_descriptor_add_field(struct_def, name, type);
+				}
+			}
+			binary_reader_pop(reader);
 		}
 
-		// get the name of the descriptor
+		/* get the name of the descriptor */
 		const char* name = binary_reader_str(reader);
 		_debug_assert__(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
-		struct_descriptor_begin(allocator, struct_def, name, descriptor_type);
+		struct_descriptor_set_name(struct_def, name);
 
 		log_msg("Descriptor[%u]: (set = %u, binding = %u), stage_flags = %u, is_push_constant = %s, is_uniform = %s, is_opaque = %s, is_block = %s, name = %s\n", 
 			i, descriptor->set_number, descriptor->binding_number, descriptor->stage_flags,
 			descriptor->is_push_constant ? "true" : "false", descriptor->is_uniform ? "true" : "false", descriptor->is_opaque ? "true" : "false", is_block ? "true" : "false",
 			descriptor->handle.name);
 
-		// if the descriptor is a block then iterate through its fields
-		if(is_block)
-		{
-			// get the number of fields in this uniform block
-			u32 field_count = binary_reader_u16(reader);
-			log_msg("Field Count: %u\n", field_count);
-
-			for(u16 j = 0; j < field_count; j++)
-			{
-				// get the field info
-				u32 field_info = binary_reader_u32(reader);
-				
-				// get the type of the fields
-				u8 type = field_info & 0xFFUL;
-				
-				// get the name of this field
-				const char* name = binary_reader_str(reader);
-				_debug_assert__(strlen(name) < STRUCT_FIELD_MAX_NAME_SIZE);
-				struct_descriptor_add_field(struct_def, name, type);
-			}
-		}
 		struct_descriptor_end(allocator, struct_def);
 		struct_descriptor_recalculate(struct_def);
 		binary_reader_pop(reader);
@@ -1983,6 +2041,9 @@ static header_t* read_header(memory_allocator_t* allocator, shader_binary_read_c
 	if(strncmp(binary_reader_str(reader), "V3D Shader Binary", strlen("V3D Shader Binary")) != 0)
 		LOG_FETAL_ERR("[Shader Loader] Invalid file header, file is broken");
 
+	/* udat section offset */
+ 	CAN_BE_UNUSED_VARIABLE u32 udat_offset = binary_reader_u32(reader);
+
 	header_t* header = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_HEADER, header_t);
 	u32 cmd;
 	header->sb_version = U32_MAX;
@@ -1998,8 +2059,12 @@ static header_t* read_header(memory_allocator_t* allocator, shader_binary_read_c
 			{
 				/* version of the sb */
 				header->sb_version = binary_reader_u32(reader);
-				if((header->sb_version != 2022) && (header->sb_version != 2023))
-					LOG_FETAL_ERR("[Shader Loader] Invalid shader binary version, renderer-1.0 only supports version 2022");
+				if(header->sb_version != 2023)
+				{
+					if(header->sb_version == 2022)
+						LOG_FETAL_ERR("[Shader Loader] Shader binary version SB2022 has been deprecated and no longer supported");
+					else LOG_FETAL_ERR("[Shader Loader] Invalid shader binary version, renderer-1.0 only supports version 2023");
+				}
 				break;
 			}
 
