@@ -20,6 +20,7 @@ typedef enum storage_class_t
 
 #define VERTEX_ATTRIBUTE_NAME_MAX_SIZE 64
 #define SHADER_PROPERTY_NAME_MAX_SIZE 64
+#define AGGREGATE_NAME_MAX_SIZE 64
 
 /* vertex attribute information */
 typedef struct vertex_attribute_info_t
@@ -41,17 +42,11 @@ typedef enum shader_stage_bits_t
 	SHADER_STAGE_BIT_FRAGMENT = BIT32(3)
 } shader_stage_bits_t;
 
-typedef struct shader_property_info_t shader_property_info_t;
-
-typedef buffer_t /* shader_property_info_t */shader_property_info_list_t;
-
 typedef struct shader_property_info_t
 {
 	/* it is not null terminated */
 	char name[SHADER_PROPERTY_NAME_MAX_SIZE];
-	char block_name[SHADER_PROPERTY_NAME_MAX_SIZE];
 	u32 name_length;
-	u32 block_name_length;
 	shader_stage_bits_t stages;
 	union
 	{
@@ -61,9 +56,9 @@ typedef struct shader_property_info_t
 	};
 	u32 binding;
 	glsl_type_t type;
+	/* if this shader property is a user defined type, then it is never equal to CODEGEN_BUFFER_ADDRESS_NULL */
+	codegen_buffer_address_t udat_address;
 	storage_class_t storage;
-	/* is this shader propery push constant? */
-	shader_property_info_list_t fields;
 	/* number of instances of this shader property */
 	u32 array_size;
 } shader_property_info_t;
@@ -140,17 +135,8 @@ SC_API void sb_emitter_emit_shader_property_stage(sb_emitter_t* emitter, shader_
 SC_API void sb_emitter_emit_shader_property_storage_class(sb_emitter_t* emitter, storage_class_t storage);
 
 SC_API void sb_emitter_emit_shader_property_type(sb_emitter_t* emitter, glsl_type_t type);
-
+SC_API void sb_emitter_emit_shader_property_udat_address(sb_emitter_t* emitter, codegen_buffer_address_t udat_address);
 SC_API void sb_emitter_emit_shader_property_name(sb_emitter_t* emitter, const char* name, u32 name_length);
-SC_API void sb_emitter_emit_shader_property_block_name(sb_emitter_t* emitter, const char* block_name, u32 block_name_length);
-
-SC_API void sb_emitter_open_shader_property_field_array(sb_emitter_t* emitter);
-SC_API void sb_emitter_open_shader_property_field(sb_emitter_t* emitter);
-SC_API void sb_emitter_emit_shader_property_field_type(sb_emitter_t* emitter, glsl_type_t type);
-SC_API void sb_emitter_emit_shader_property_field_name(sb_emitter_t* emitter, const char* name, u32 name_length);
-SC_API void sb_emitter_emit_shader_property_field_array_size(sb_emitter_t* emitter, u32 array_size);
-SC_API void sb_emitter_close_shader_property_field(sb_emitter_t* emitter);
-SC_API void sb_emitter_close_shader_property_field_array(sb_emitter_t* emitter);
 
 /* does some post processing on the created shader_property_info_t object */
 SC_API void sb_emitter_close_shader_property(sb_emitter_t* emitter);

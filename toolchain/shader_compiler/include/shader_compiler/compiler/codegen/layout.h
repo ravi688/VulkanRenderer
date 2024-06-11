@@ -42,6 +42,9 @@
 #define PER_VERTEX_ATTRIB_BIT 							BIT32(16 + 4)
 #define PER_INSTANCE_ATTRIB_BIT 						BIT32(16 + 5)
 
+/* hints */
+#define UDAT_BIT   	   									BIT32(31)
+
 BEGIN_CPP_COMPATIBLE
 
 /*	parses the string pointed by 'start', ends at 'end', and writes "Properties" or "Layout" block to the codegen buffer 'writer'.

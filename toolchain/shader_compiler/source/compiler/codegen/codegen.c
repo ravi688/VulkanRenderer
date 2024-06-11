@@ -342,6 +342,14 @@ static u32 strs_find_u32_pair(compiler_ctx_t* ctx, const char* const* strs, u32 
 	return U32_MAX;
 }
 
+static u32 u32_pairs_find_str(compiler_ctx_t* ctx, u32_pair_t* pairs, u32 pair_count, const char* str)
+{
+	for(u32 i = 0; i < pair_count; i++)
+		if(safe_stru32pncmp(ctx, pairs[i], str) == 0)
+			return i;
+	return U32_MAX;
+}
+
 static u32_pair_t u32_pairs_find_any_str(compiler_ctx_t* ctx, u32_pair_t* pairs, u32 pair_count, const char* const* strs, u32 str_count)
 {
 	for(u32 i = 0; i < pair_count; i++)
@@ -850,20 +858,115 @@ static glsl_type_t g_shader_property_field_type_emit_values[] =
 	NON_OPAQUE_TYPE_EMIT_VALUES
 };
 
-static void emit_shader_property_field(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 count, void* user_data)
+typedef dictionary_t /* key: static_string_64_t, value: codegen_buffer_address_t */ udat_name_address_map_t;
+typedef udat_name_address_map_t udat_map_t;
+
+static INLINE_IF_RELEASE_MODE static_string_64_t get_static_string_64_from_u32_pair(compiler_ctx_t* ctx, u32_pair_t pair)
+{ 
+	return static_string_64_n(u32_pair_get_str(ctx, pair), U32_PAIR_DIFF(pair)); 
+}
+
+static bool ss64_comparer(void* compare_key, void* key)
 {
-	/* index in { "vec2", "vec3", "vec4", ... } -- shader property field types */
-	u32_pair_t pair = u32_pairs_find_any_str(ctx, node->qualifiers, node->qualifier_count, g_shader_property_field_types, SIZEOF_ARRAY(g_shader_property_field_types));
-	if((pair.start == U32_MAX) || (pair.end == U32_MAX))
-		DEBUG_LOG_FETAL_ERROR("Shader Property field type is incorrect");
-		
-	sb_emitter_open_shader_property_field(ctx->emitter);
-	sb_emitter_emit_shader_property_field_type(ctx->emitter, g_shader_property_field_type_emit_values[pair.end]);
-	AUTO identifier_name = node_get_last_qualifier(node);
-	sb_emitter_emit_shader_property_field_name(ctx->emitter, u32_pair_get_str(ctx, identifier_name), U32_PAIR_DIFF(identifier_name));
-	if(node->indexer_count > 0)
-		sb_emitter_emit_shader_property_field_array_size(ctx->emitter, try_parse_u32_pair_str_to_u32(ctx, node->indexers[0]));
-	sb_emitter_close_shader_property_field(ctx->emitter);
+	return static_string_64_cmp(CAST_TO(static_string_64_t*, compare_key), CAST_TO(static_string_64_t*, key)) == 0;
+}
+
+static INLINE_IF_RELEASE_MODE codegen_buffer_address_t udat_map_get_address(udat_map_t* map, static_string_64_t* str)
+{
+	codegen_buffer_address_t addr;
+	if(dictionary_try_get_value(map, str, &addr))
+		return addr;
+	return CODEGEN_BUFFER_ADDRESS_NULL;
+}
+
+static codegen_buffer_address_t get_first_udat_address(compiler_ctx_t* ctx, u32_pair_t* qualifiers, u32 qualifier_count, udat_map_t* map)
+{
+	for(u32 i = 0; i < qualifier_count; i++)
+	{
+		static_string_64_t str = get_static_string_64_from_u32_pair(ctx, qualifiers[i]);
+		AUTO addr = udat_map_get_address(map, &str);
+		if(!CODEGEN_BUFFER_ADDRESS_IS_NULL(addr))
+			return addr;
+	}
+	return CODEGEN_BUFFER_ADDRESS_NULL;
+}
+
+static bool is_struct_def(compiler_ctx_t* ctx, v3d_generic_node_t* node)
+{
+	return (u32_pairs_find_str(ctx, node->qualifiers, node->qualifier_count, "struct") != BUF_INVALID_INDEX)
+	|| (node->is_block && ((u32_pairs_find_str(ctx, node->qualifiers, node->qualifier_count, "uniform") != BUF_INVALID_INDEX) 
+						|| (u32_pairs_find_str(ctx, node->qualifiers, node->qualifier_count, "buffer") != BUF_INVALID_INDEX)));
+}
+
+static udat_map_t build_udat_map(compiler_ctx_t* ctx, v3d_generic_node_t** nodes, u32 node_count)
+{
+	/* psuedo code
+	 *		write_udats(nodes):
+	 * 			for each node in nodes:
+	 * 				write_udat(node)
+	 *		write_udat(node):
+	 * 			if node starts with 'struct':
+	 * 				codegen_buffer_write(name)
+	 *				codegen_buffer_write_u16(node.childs.size())
+	 * 				for each child in node.childs:
+	 *						if child.qualifiers contain either of { "vec2", "vec3", ... }:
+	 * 							bits = emit_values[matched_index]
+	 * 							codegen_buffer_write_u32(bits)
+	 * 						else if map contains any qualifier in child.qualifiers:
+	 * 							bits = udat bit
+	 * 							codegen_buffer_write_u32(bits)
+	 * 							addr = map.get_address(of that qualifier)
+	 * 							codegen_buffer_write_pointer(addr)
+	 * 						else throw error
+	 * 						ident_name = get_last_qualifier(child)
+	 * 						codegen_buffer_write_string(ident_name)
+	 **/
+	udat_name_address_map_t map = dictionary_create(static_string_64_t, codegen_buffer_address_t, 1, ss64_comparer);
+	AUTO udat_cnt_addr = codegen_buffer_alloc_u16(ctx->codegen_buffer, ".udat");
+	for(u32 i = 0; i < node_count; i++)
+	{
+		AUTO node = nodes[i];
+		if(node->is_block && is_struct_def(ctx, node))
+		{
+			AUTO udat_addr = codegen_buffer_get_end_address(ctx->codegen_buffer, ".udat");
+			u32_pair_t aggregate_name = node_get_last_qualifier(node);
+			AUTO ss64 = get_static_string_64_from_u32_pair(ctx, aggregate_name);
+			dictionary_push(&map, &ss64, &udat_addr);
+
+			codegen_buffer_write_string(ctx->codegen_buffer, ".udat", ss64.data);
+			codegen_buffer_write_u16(ctx->codegen_buffer, ".udat", node->child_count);
+			for(u32 j = 0; j < node->child_count; j++)
+			{
+				AUTO child = node->childs[j];
+				/* index in { "vec2", "vec3", "vec4", ... } -- non opaque types */
+				u32_pair_t pair = u32_pairs_find_any_str(ctx, child->qualifiers, child->qualifier_count, g_shader_property_field_types, SIZEOF_ARRAY(g_shader_property_field_types));
+				if((pair.start != U32_MAX) || (pair.end != U32_MAX))
+					codegen_buffer_write_u32(ctx->codegen_buffer, ".udat", g_shader_property_field_type_emit_values[pair.end]);
+				else
+				{
+					/* find the first qualifier which matches with any of the user defined aggregate type in udat_map_t */
+					AUTO addr = get_first_udat_address(ctx, child->qualifiers, child->qualifier_count, &map);
+					if(!CODEGEN_BUFFER_ADDRESS_IS_NULL(addr))
+					{
+						codegen_buffer_write_u32(ctx->codegen_buffer, ".udat", UDAT_BIT);
+						codegen_buffer_write_pointer(ctx->codegen_buffer, ".udat", addr);
+					}
+					else DEBUG_LOG_FETAL_ERROR("Shader Property field type is incorrect, it doesn't even match any user defined types");
+				}
+				AUTO identifier_name = node_get_last_qualifier(child);
+				codegen_buffer_write_stringn(ctx->codegen_buffer, ".udat", u32_pair_get_str(ctx, identifier_name), U32_PAIR_DIFF(identifier_name));
+				if(child->indexer_count > 0)
+					codegen_buffer_write_u16(ctx->codegen_buffer, ".udat", try_parse_u32_pair_str_to_u32(ctx, child->indexers[0]));
+			}
+		}
+	}
+	codegen_buffer_set_u16(ctx->codegen_buffer, udat_cnt_addr, CAST_TO(u16, dictionary_get_count(&map)));
+	return map;
+}
+
+static INLINE_IF_RELEASE_MODE void destroy_udat_map(udat_map_t* map)
+{
+	dictionary_free(map);
 }
 
 static bool node_is_name_only(v3d_generic_node_t* node)
@@ -877,6 +980,7 @@ static bool node_is_name_only(v3d_generic_node_t* node)
 
 static void write_buffer_layouts_and_samplers(v3d_generic_node_t** nodes, u32 node_count, compiler_ctx_t* ctx, void* user_data)
 {
+	udat_map_t udat_map = build_udat_map(ctx, nodes, node_count);
 	sb_emitter_open_shader_property_array(ctx->emitter);
 	/*
 		Properties
@@ -899,12 +1003,13 @@ static void write_buffer_layouts_and_samplers(v3d_generic_node_t** nodes, u32 no
 	{
 		AUTO node = nodes[i];
 
-		sb_emitter_open_shader_property(ctx->emitter);
-
 		/* index in { "uniform", "buffer" } -- storage class types */
 		u32_pair_t pair = u32_pairs_find_any_str(ctx, node->qualifiers, node->qualifier_count, g_shader_property_storage_class_types, SIZEOF_ARRAY(g_shader_property_storage_class_types));
 		if((pair.start == U32_MAX) || (pair.end == U32_MAX))
-			DEBUG_LOG_FETAL_ERROR("Storage Class is incorrect");
+			continue;
+		
+		sb_emitter_open_shader_property(ctx->emitter);
+
 		AUTO storage_class = g_shader_property_storage_class_emit_values[pair.end];
 		sb_emitter_emit_shader_property_storage_class(ctx->emitter, storage_class);
 
@@ -938,40 +1043,31 @@ static void write_buffer_layouts_and_samplers(v3d_generic_node_t** nodes, u32 no
 			sb_emitter_emit_shader_property_type(ctx->emitter, GLSL_TYPE_STORAGE_BUFFER);
 		}
 
-		AUTO shr_property_name = node_get_last_qualifier(node);
 		if(node->is_block)
 		{
-			/* if no block name is specified */
-			if(node->qualifier_count == 1)
-				/* then only add a null character as a block name */
-				sb_emitter_emit_shader_property_block_name(ctx->emitter, "", 0u);
-			else
-				sb_emitter_emit_shader_property_block_name(ctx->emitter, u32_pair_get_str(ctx, shr_property_name), U32_PAIR_DIFF(shr_property_name));
 			/* if this block has an identifier name (the next node will represent the identifier name) */
 			if(((i + 1) < node_count) && node_is_name_only(nodes[i + 1]))
 			{
-				shr_property_name = nodes[i + 1]->qualifiers[0];
+				AUTO shr_property_name = nodes[i + 1]->qualifiers[0];
 				sb_emitter_emit_shader_property_name(ctx->emitter, u32_pair_get_str(ctx, shr_property_name), U32_PAIR_DIFF(shr_property_name));
 				++i;
 			}
 			else
 				DEBUG_LOG_FETAL_ERROR("Shader Property doesn't have any identifier name);");
+
+			AUTO addr = get_first_udat_address(ctx, node->qualifiers, node->qualifier_count, &udat_map);
+			_COM_ASSERT(!CODEGEN_BUFFER_ADDRESS_IS_NULL(addr));
+			sb_emitter_emit_shader_property_udat_address(ctx->emitter, addr);
 		}
 		/* if this shader property, which is not a block, has identifier name */
-		else if(node->qualifier_count != 1)
+		else if(node->qualifier_count > 1)
+		{
+			AUTO shr_property_name = node_get_last_qualifier(node);
 			/* then add it */
 			sb_emitter_emit_shader_property_name(ctx->emitter, u32_pair_get_str(ctx, shr_property_name), U32_PAIR_DIFF(shr_property_name));
+		}	
 		else /* otherwise, throw an error */
 			DEBUG_LOG_FETAL_ERROR("Shader Property doesn't have any identifier name");
-
-		if(node->child_count > 0)
-		{
-			_com_assert(node->is_block);
-			sb_emitter_open_shader_property_field_array(ctx->emitter);
-			if(!foreach_child_node(node, emit_shader_property_field, NULL, ctx))
-				DEBUG_LOG_WARNING("An interface block has no elements in it");
-			sb_emitter_close_shader_property_field_array(ctx->emitter);
-		}
 
 		u32 required_attributes[] = 
 		{ 
@@ -984,8 +1080,8 @@ static void write_buffer_layouts_and_samplers(v3d_generic_node_t** nodes, u32 no
 
 		sb_emitter_close_shader_property(ctx->emitter);
 	}
-
 	sb_emitter_close_shader_property_array(ctx->emitter);
+	destroy_udat_map(&udat_map);
 }
 
 static void codegen_buffer_layouts_and_samplers(v3d_generic_node_t* node, compiler_ctx_t* ctx, u32 iteration, void* user_data)
