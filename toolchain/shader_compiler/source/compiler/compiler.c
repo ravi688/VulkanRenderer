@@ -124,6 +124,8 @@ SC_API compiler_ctx_t* compiler_ctx_create(com_allocation_callbacks_t* callbacks
 	codegen_buffer_create_or_get_section(ctx->codegen_buffer, ".main");
 	/* data section contains gfx pipelines, shader resource descriptions, SPIR-V bitcode etc. */
 	codegen_buffer_create_or_get_section(ctx->codegen_buffer, ".data");
+	/* udat section contains user defined aggregate types created in the SL2023 Properties Block */
+	codegen_buffer_create_or_get_section(ctx->codegen_buffer, ".udat");
 	ctx->emitter = sb_emitter_create(&ctx->callbacks, ctx->codegen_buffer, ctx->sb_version);
 
 	return ctx;

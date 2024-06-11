@@ -919,7 +919,11 @@ typedef struct codegen_buffer_address_t
 	u32 mark;
 } codegen_buffer_address_t;
 #define CODEGEN_BUFFER_ADDRESS_NULL (codegen_buffer_address_t) { U32_MAX, U32_MAX }
-#define CODEGEN_BUFFER_ADDRESS_IS_NULL(address) ((address->section_id == U32_MAX) && (address->mark == U32_MAX))
+#define CODEGEN_BUFFER_ADDRESS_IS_NULL(address) __codegen_buffer_address_is_null(address)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool __codegen_buffer_address_is_null(codegen_buffer_address_t address)
+{
+	return ((address.section_id == U32_MAX) && (address.mark == U32_MAX));
+}
 #define CODEGEN_BUFFER_SECTION_END U32_MAX
 
 /* unsized */

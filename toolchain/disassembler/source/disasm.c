@@ -62,13 +62,15 @@ typedef struct disassembler_t
 	u32 sb_version;
 } disassembler_t;
 
-static void disasm_header(disassembler_t* disasm, BUFFER* str)
+static void disasm_header(disassembler_t* disasm, BUFFER* str,  u32* const udat_offset)
 {
 	binary_reader_t* reader = disasm->reader;
 	if(strncmp(binary_reader_str(reader), "V3D Shader Binary", strlen("V3D Shader Binary")) != 0)
 		DEBUG_LOG_FETAL_ERROR("Invalid file header, file is broken");
 
 	_printf(str, "File Header: %s\n", "V3D Shader Binary");
+
+	*udat_offset = binary_reader_u32(reader);
 
 	u32 cmd;
 	u32 bversion = U32_MAX;
@@ -219,11 +221,8 @@ INLINE static const char* descriptor_type_to_string(u32 stage)
 	}
 }
 
-static void disasm_descriptor_info(disassembler_t* disasm, BUFFER* str)
+static void descriptor_info_stringify(u32 info, BUFFER* str)
 {
-	binary_reader_t* reader = disasm->reader;
-	u32 info = binary_reader_u32(reader);
-
 	u32 descriptor_type_bits = (info & 0xFF0000) >> 16;
 	for(u32 i = 0; i < VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_MAX; i++)
 	{
@@ -237,24 +236,27 @@ static void disasm_descriptor_info(disassembler_t* disasm, BUFFER* str)
 		if((shader_bits & BIT32(i)) != 0)
 			_printf(str, "%s(u32: %lu) ", shader_stage_to_string(i), i);
 	}
-	_printf(str, "%s(u32: %lu) ", glsl_type_to_string((u8)(info & 0xFF)), (u32)(info & 0xFF));
+	_printf(str, "%s(u32: %lu) ", glsl_type_to_string((u8)(info & 0xFF)), (u32)(info & 0xFF));	
+}
 
+static void disasm_udat(disassembler_t* disasm, BUFFER* str, u32 offset);
+
+static void disasm_descriptor_info(disassembler_t* disasm, BUFFER* str)
+{
+	binary_reader_t* reader = disasm->reader;
+	u32 info = binary_reader_u32(reader);
+	
+	descriptor_info_stringify(info, str);
+
+	u32 descriptor_type_bits = (info & 0xFF0000) >> 16;
 	bool is_block = (descriptor_type_bits & VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_PUSH_CONSTANT_BIT) ||
 		(descriptor_type_bits & VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_STORAGE_BUFFER_BIT) || 
 		(descriptor_type_bits & VULKAN_SHADER_RESOURCE_DESCRIPTOR_TYPE_UNIFORM_BUFFER_BIT);
 
 	if(is_block)
-		_printf(str, " %s, ", binary_reader_str(reader));
+		disasm_udat(disasm, str, binary_reader_u32(reader));
 
 	_printf(str, " %s\n", binary_reader_str(reader));
-
-	if(is_block)
-	{
-		u16 field_count = binary_reader_u16(reader);
-		_printf(str, "field count: %u\n", field_count);
-		for(u16 i = 0; i < field_count; i++)
-			disasm_descriptor_info(disasm, str);
-	}
 }
 
 static void disasm_descriptions(disassembler_t* disasm, BUFFER* str)
@@ -460,6 +462,70 @@ static void disasm_renderpasses(disassembler_t* disasm, BUFFER* str)
 	}
 }
 
+#define UDAT_BIT BIT32(31)
+
+static void disasm_udat(disassembler_t* disasm, BUFFER* str, u32 offset)
+{
+	binary_reader_t* reader = disasm->reader;
+	if(binary_reader_end(reader) <= offset)
+	{
+		_printf(str, "No UDAT exists");
+		return;
+	}
+	binary_reader_push(reader);
+	binary_reader_jump(reader, offset);
+	_printf(str, "\nUDAT block_name: %s\n", binary_reader_str(reader));
+	u16 num_fields = binary_reader_u16(reader);
+	for(u32 i = 0; i < num_fields; i++)
+	{
+		u32 field_info = binary_reader_u32(reader);
+		if(HAS_FLAG(field_info, UDAT_BIT))
+		{
+			u32 ofst = binary_reader_u32(reader);
+			disasm_udat(disasm, str, ofst);
+		}
+		else descriptor_info_stringify(field_info, str);
+		const char* field_name = binary_reader_str(reader);
+		_printf(str, " %s\n", field_name);
+	}
+	binary_reader_pop(reader);
+}
+
+static void disasm_udat2(disassembler_t* disasm, BUFFER* str)
+{
+	binary_reader_t* reader = disasm->reader;
+	_printf(str, "\nUDAT block_name: %s\n", binary_reader_str(reader));
+	u16 num_fields = binary_reader_u16(reader);
+	for(u32 i = 0; i < num_fields; i++)
+	{
+		u32 field_info = binary_reader_u32(reader);
+		if(HAS_FLAG(field_info, UDAT_BIT))
+		{
+			u32 ofst = binary_reader_u32(reader);
+			disasm_udat(disasm, str, ofst);
+		}
+		else descriptor_info_stringify(field_info, str);
+		const char* field_name = binary_reader_str(reader);
+		_printf(str, " %s\n", field_name);
+	}
+}
+
+static void disasm_udat_section(disassembler_t* disasm, BUFFER* str, u32 udat_offset)
+{
+	AUTO reader = disasm->reader;
+	if(udat_offset >= binary_reader_pos(reader))
+	{
+		_printf(str, "\n.udat section is empty");
+		return;
+	}
+	binary_reader_push(reader);
+	binary_reader_jump(reader, udat_offset);
+	u16 udat_count = binary_reader_u16(reader);
+	while(udat_count--)
+		disasm_udat2(disasm, str);
+	binary_reader_pop(reader);
+}
+
 DISASM_API BUFFER* disassemble(const void* bytes, u32 size)
 {
 	BUFFER* str = BUFcreate(NULL, sizeof(char), 1024, 0);
@@ -469,7 +535,9 @@ DISASM_API BUFFER* disassemble(const void* bytes, u32 size)
 	disassembler_t* disasm = com_allocate_obj_init(NULL, disassembler_t);
 	disasm->reader = reader;
 
-	disasm_header(disasm, str);
+	/* offset of .udat section */
+	u32 udat_offset;
+	disasm_header(disasm, str, &udat_offset);
 
 	_printf(str, "material property descriptions: ");
 	disasm_descriptions(disasm, str);
@@ -477,6 +545,8 @@ DISASM_API BUFFER* disassemble(const void* bytes, u32 size)
 	disasm_descriptions(disasm, str);
 	_printf(str, "render passes: ");
 	disasm_renderpasses(disasm, str);
+	_printf(str, "user defined aggregate types (.udat section): ");
+	disasm_udat_section(disasm, str, udat_offset);
 	
 	binary_reader_destroy(reader);
 	binary_reader_release_resources(reader);

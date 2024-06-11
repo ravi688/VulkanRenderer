@@ -23,29 +23,56 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#sb version 2022
-#sl version 2022
 
-[Name("PointLightShader")]
+#sl version 2023
+#sb version 2023
+
 Shader
 {
-	[NoParse]
 	Properties
 	{
-		fragment vertex [4, 0] uniform Parameters
+		[Stage(fragment, vertex)]
+		[Set(material_set, material_properties)]
+		uniform Parameters
 		{
 			vec4 color;
 		} parameters;
 
-		fragment [4, 1] uniform samplerCube shadowMap;
+		[Stage(fragment)]
+		[Set(material_set, texture0)]
+		uniform sampler2D shadowMap;
 	}
 
-	[NoParse]
+	// [NoParse]
+	// Properties
+	// {
+	// 	vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
+	// 	{
+	// 		vec4 color;
+	// 	} parameters;
+
+	// 	fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D shadowMap;
+	// }
+
 	Layout
 	{
-		per_vertex [0, 0] vec3 position;
-		per_vertex [1, 1] vec3 normal;
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(position)]
+		vec3 position;
+
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(normal)]
+		vec3 normal;
 	}
+
+	// [NoParse]
+	// Layout
+	// {
+	// 	per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
+	// 	per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
+	// }
 
 	RenderPass
 	{
@@ -61,8 +88,8 @@ Shader
 
 				depthStencil
 				{
-					depthTestEnable = true,
-					depthWriteEnable = true
+					depthWriteEnable = true,
+					depthTestEnable = true
 				}
 			}
 
@@ -70,10 +97,11 @@ Shader
 			GLSL
 			{
 				#stage vertex
+
 				#version 450
-					
+				
 				#include <v3d.h>
-					
+				
 				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
 				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight light;
 				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
@@ -96,6 +124,7 @@ Shader
 
 
 				#stage fragment
+
 				#version 450
 				
 				#include <v3d.h>
@@ -149,6 +178,7 @@ Shader
 					vec4 _color = receivedShadow * litAmount * castedShadow * vec4(light.color, 1) * parameters.color;
 					color = vec4(_color.r, _color.g, _color.b, 1);
 				}
+
 			}
 		}
 	}

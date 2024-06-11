@@ -389,7 +389,10 @@ static buffer_t* merge_buffers_into_one(codegen_buffer_t* buffer)
 	for(u32 i = 0; i < count; i++)
 	{
 		AUTO writer_buffer = CAST_TO(buffer_t*, get_writer_from_index(buffer, i)->user_data);
-		debug_log_info("[Codegen Buffer] %s section size: %lu", dictionary_get_key_ptr_at(&buffer->map, i), buf_get_element_count(writer_buffer));
+		debug_log_info("[Codegen Buffer] %s section size: %lu, offset: %lu", 
+							dictionary_get_key_ptr_at(&buffer->map, i), 
+							buf_get_element_count(writer_buffer),
+							buf_get_element_count(flat_buffer));
 		buf_pushv(flat_buffer, buf_get_ptr(writer_buffer), buf_get_element_count(writer_buffer));
 	}
 	return flat_buffer;

@@ -43,8 +43,11 @@ SC_API const char* write_header(compiler_ctx_t* ctx, const char* start, const ch
 
 	codegen_buffer_write_string(writer, ".main", SB_HDR_STR);
 
+	/* write offset of .udat section in the .main section so the dissembler can read udats */
+	AUTO udat_addr = codegen_buffer_get_end_address(writer, ".udat");
+	codegen_buffer_write_pointer(writer, ".main", udat_addr);
+
 	AUTO compiler_cmd_cnt_addr = codegen_buffer_alloc_u32(writer, ".main");
-	// binary_writer_u32_mark(writer->main, MARK_ID_COMPILER_CMD_COUNT);
 
 	bool is_sl = false;
 
@@ -94,7 +97,6 @@ SC_API const char* write_header(compiler_ctx_t* ctx, const char* start, const ch
 	}
 
 	codegen_buffer_set_u32(writer, compiler_cmd_cnt_addr, count);
-	// binary_writer_u32_set(writer->main, MARK_ID_COMPILER_CMD_COUNT, count);
 
 	return start;
 }
