@@ -349,6 +349,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const char* struct_descript
 
 RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type);
 RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
+RENDERER_API void struct_descriptor_set_name(struct_descriptor_t* descriptor, const char* name);
 RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type);
 RENDERER_API void struct_descriptor_add_field2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record);
 RENDERER_API void struct_descriptor_add_field_array(struct_descriptor_t* descriptor, const char* name, u8 type, u32 array_size);

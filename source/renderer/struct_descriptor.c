@@ -506,6 +506,11 @@ RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_de
 	struct_descriptor_recalculate(descriptor);
 }
 
+RENDERER_API void struct_descriptor_set_name(struct_descriptor_t* descriptor, const char* name)
+{
+	prvt_strncpy(descriptor->name, name);
+}
+
 RENDERER_API void struct_descriptor_destroy(memory_allocator_t* allocator, struct_descriptor_t* descriptor)
 {
 	/* NOTE: it is allowed to call struct_descriptor_destroy even if it doesn't have any fields in it.
