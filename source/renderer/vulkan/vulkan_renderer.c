@@ -186,18 +186,18 @@ static INLINE_IF_RELEASE_MODE void destroy_semaphores(vulkan_renderer_t* rendere
 		vkDestroySemaphore(renderer->logical_device->vo_handle, semaphores[i], VULKAN_ALLOCATION_CALLBACKS(renderer));
 	memory_allocator_dealloc(renderer->allocator, semaphores);
 }
-static VkFence create_signaled_fence(vulkan_renderer_t* renderer)
+static VkFence create_fence(vulkan_renderer_t* renderer, VkFenceCreateFlagBits flags)
 {
 	VkFence fence;
-	VkFenceCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = VK_FENCE_CREATE_SIGNALED_BIT };
+	VkFenceCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = flags };
 	vkCall(vkCreateFence(renderer->logical_device->vo_handle, &createInfo, VULKAN_ALLOCATION_CALLBACKS(renderer), &fence));
 	return fence;
 }
-static INLINE_IF_RELEASE_MODE VkFence* create_signaled_fences(vulkan_renderer_t* renderer, u32 count)
+static INLINE_IF_RELEASE_MODE VkFence* create_fences(vulkan_renderer_t* renderer, u32 count, VkFenceCreateFlagBits flags)
 {
 	VkFence* fences = memory_allocator_alloc_obj_array(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_FENCE_ARRAY, VkFence, count);
 	for(u32 i = 0; i < count; i++)
-		fences[i] = create_signaled_fence(renderer);
+		fences[i] = create_fence(renderer, flags);
 	return fences;
 }
 static void destroy_fences(vulkan_renderer_t* renderer, VkFence* fences, u32 count)
@@ -248,6 +248,7 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_in
 	renderer->allocator = _renderer->allocator;
 	renderer->vk_allocator = vulkan_allocator_create(_renderer->allocator);
 	IF_DEBUG( renderer->debug_log_builder = _renderer->debug_log_builder );
+	renderer->is_pipeline_frame = create_info->frame_pipelining;
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[3] = { "VK_KHR_surface", PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION };
@@ -424,7 +425,8 @@ DEBUG_BLOCK
 	renderer->render_present_sync_primitives.primitive_count = renderer->max_frames_in_flight;
 	renderer->render_present_sync_primitives.vo_image_available_semaphores = create_semaphores(renderer, renderer->render_present_sync_primitives.primitive_count);
 	renderer->render_present_sync_primitives.vo_render_finished_semaphores = create_semaphores(renderer, renderer->render_present_sync_primitives.primitive_count);
-	renderer->render_present_sync_primitives.vo_fences = create_signaled_fences(renderer, renderer->render_present_sync_primitives.primitive_count);
+	renderer->render_present_sync_primitives.vo_fences = create_fences(renderer, renderer->render_present_sync_primitives.primitive_count, 
+														renderer->is_pipeline_frame ? VK_FENCE_CREATE_SIGNALED_BIT : 0);
 
 	// setup command buffers
 	// update the image_count variable as the actual number of images allocated for the swapchain might be greater than what had been requested
@@ -582,8 +584,7 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 	return val (layout);
 }
 
-
-RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
+static void vulkan_wait_current_frame_commands_to_finish(vulkan_renderer_t* renderer)
 {
 	u32 current_frame_index = renderer->current_frame_index;
 	
@@ -591,6 +592,16 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 	 * command buffers, and swapchain images etc. */
 	vkCall(vkWaitForFences(renderer->logical_device->vo_handle, 1, &renderer->render_present_sync_primitives.vo_fences[current_frame_index], VK_TRUE, U64_MAX));
 	vkCall(vkResetFences(renderer->logical_device->vo_handle, 1, &renderer->render_present_sync_primitives.vo_fences[current_frame_index]));
+}
+
+RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
+{
+	u32 current_frame_index = renderer->current_frame_index;
+	
+	/* if frame pipelining is enabled, then wait for the execution of commands to finish for this frame
+	 * we do not have to wait if frame pipelining is disabled as it is already done in vulkan_render_end_frame() */
+	if(renderer->is_pipeline_frame)
+		vulkan_wait_current_frame_commands_to_finish(renderer);
 
 	vulkan_swapchain_acquire_next_image(renderer->swapchain, renderer->render_present_sync_primitives.vo_image_available_semaphores[current_frame_index]);
 
@@ -654,6 +665,9 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 								VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 								renderer->render_present_sync_primitives.vo_render_finished_semaphores[current_frame_index],
 								renderer->render_present_sync_primitives.vo_fences[current_frame_index]);
+	/* if frame pipelining is not enabled, then wait for the execution of commands to finish for this frame */
+	if(!renderer->is_pipeline_frame)
+		vulkan_wait_current_frame_commands_to_finish(renderer);
 
 	// NOTE: if this returns 'false', that means we need to recreate our swapchain and its images,
 	// however, we can ignore the return value here, because the swapchain will be recreated automatically whenever window is resized
