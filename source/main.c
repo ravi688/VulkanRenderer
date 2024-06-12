@@ -153,14 +153,18 @@ int main(int argc, const char** argv)
 			}
 		}
 		
-		/* do computations and generate data for rendering */
+		/* do computations and generate data for rendering the next frame */
 		float deltaTime = time_get_delta_time(&tHandle);
 		test->update(driver, deltaTime, test->user_data);
 
-		/* render data */
+		/* record command buffers for this frame */
 		renderer_begin_frame(driver);
 		test->render(driver, test->user_data);
 		renderer_end_frame(driver);
+
+		/* dispatch command buffers for this frame for execution 
+		 * NOTE: if frame pipelining is disabled while creating the driver then call to renderer_update will block the execution
+		 * on host until rendering commands for this frame finish their execution */
 		renderer_update(driver);
 	}
 
