@@ -938,17 +938,18 @@ static udat_map_t build_udat_map(compiler_ctx_t* ctx, v3d_generic_node_t** nodes
 			for(u32 j = 0; j < node->child_count; j++)
 			{
 				AUTO child = node->childs[j];
+				u32 array_bit = (child->indexer_count > 0) ? ARRAY_BIT : 0;
 				/* index in { "vec2", "vec3", "vec4", ... } -- non opaque types */
 				u32_pair_t pair = u32_pairs_find_any_str(ctx, child->qualifiers, child->qualifier_count, g_shader_property_field_types, SIZEOF_ARRAY(g_shader_property_field_types));
 				if((pair.start != U32_MAX) || (pair.end != U32_MAX))
-					codegen_buffer_write_u32(ctx->codegen_buffer, ".udat", g_shader_property_field_type_emit_values[pair.end]);
+					codegen_buffer_write_u32(ctx->codegen_buffer, ".udat", g_shader_property_field_type_emit_values[pair.end] | array_bit);
 				else
 				{
 					/* find the first qualifier which matches with any of the user defined aggregate type in udat_map_t */
 					AUTO addr = get_first_udat_address(ctx, child->qualifiers, child->qualifier_count, &map);
 					if(!CODEGEN_BUFFER_ADDRESS_IS_NULL(addr))
 					{
-						codegen_buffer_write_u32(ctx->codegen_buffer, ".udat", UDAT_BIT);
+						codegen_buffer_write_u32(ctx->codegen_buffer, ".udat", UDAT_BIT | array_bit);
 						codegen_buffer_write_pointer(ctx->codegen_buffer, ".udat", addr);
 					}
 					else DEBUG_LOG_FETAL_ERROR("Shader Property field type is incorrect, it doesn't even match any user defined types");
@@ -956,7 +957,12 @@ static udat_map_t build_udat_map(compiler_ctx_t* ctx, v3d_generic_node_t** nodes
 				AUTO identifier_name = node_get_last_qualifier(child);
 				codegen_buffer_write_stringn(ctx->codegen_buffer, ".udat", u32_pair_get_str(ctx, identifier_name), U32_PAIR_DIFF(identifier_name));
 				if(child->indexer_count > 0)
-					codegen_buffer_write_u16(ctx->codegen_buffer, ".udat", try_parse_u32_pair_str_to_u32(ctx, child->indexers[0]));
+				{
+					AUTO pair = child->indexers[0];
+					/* if U32_PAIR_DIFF(pair) is zero, that means this is a variable sized array */
+					u16 array_size = (U32_PAIR_DIFF(pair) == 0) ? U16_MAX : CAST_TO(u16, try_parse_u32_pair_str_to_u32(ctx, pair));
+					codegen_buffer_write_u16(ctx->codegen_buffer, ".udat", array_size);
+				}
 			}
 		}
 	}
