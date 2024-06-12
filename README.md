@@ -256,6 +256,7 @@ A camera can render its depth and color output to a user supplied textures - bot
    ```
    $ cd VulkanRenderer
    $ make -s setup
+   $ make -s init
    ```
 
 3. Start building by running the following command
