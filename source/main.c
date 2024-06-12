@@ -152,12 +152,16 @@ int main(int argc, const char** argv)
 				memory_allocation_tree_dump(allocator, "runtime.dump");
 			}
 		}
+		
+		/* do computations and generate data for rendering */
 		float deltaTime = time_get_delta_time(&tHandle);
+		test->update(driver, deltaTime, test->user_data);
+
+		/* render data */
 		renderer_begin_frame(driver);
 		test->render(driver, test->user_data);
 		renderer_end_frame(driver);
 		renderer_update(driver);
-		test->update(driver, deltaTime, test->user_data);
 	}
 
 	/* we need to wait for the device to finish any pending tasks, so that all the resources/objects will be unreferenced

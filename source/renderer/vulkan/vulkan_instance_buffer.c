@@ -128,6 +128,7 @@ RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instan
 		_is_resized = true;
 	}
 
+	/* this case will be true when the host buffer doesn't contain any characters, and the device buffer hasn't ever created since the creation of this vulkan_instance_buffer_t object */
 	if(!instance_buffer->has_device_buffer) return false;
 
 	device_buffer->count = count;
