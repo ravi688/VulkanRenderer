@@ -44,6 +44,7 @@
 
 /* hints */
 #define UDAT_BIT   	   									BIT32(31)
+#define ARRAY_BIT										BIT32(30)
 
 BEGIN_CPP_COMPATIBLE
 

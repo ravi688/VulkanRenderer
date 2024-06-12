@@ -463,6 +463,7 @@ static void disasm_renderpasses(disassembler_t* disasm, BUFFER* str)
 }
 
 #define UDAT_BIT BIT32(31)
+#define ARRAY_BIT BIT32(30)
 
 static void disasm_udat(disassembler_t* disasm, BUFFER* str, u32 offset)
 {
@@ -487,6 +488,13 @@ static void disasm_udat(disassembler_t* disasm, BUFFER* str, u32 offset)
 		else descriptor_info_stringify(field_info, str);
 		const char* field_name = binary_reader_str(reader);
 		_printf(str, " %s\n", field_name);
+		if(HAS_FLAG(field_info, ARRAY_BIT))
+		{
+			AUTO array_size = binary_reader_u16(reader);
+			if(array_size == U16_MAX)
+				_printf(str, "[U16_MAX]");
+			else _printf(str, "[%" PRIu16 "]", array_size);
+		}
 	}
 	binary_reader_pop(reader);
 }
@@ -507,6 +515,13 @@ static void disasm_udat2(disassembler_t* disasm, BUFFER* str)
 		else descriptor_info_stringify(field_info, str);
 		const char* field_name = binary_reader_str(reader);
 		_printf(str, " %s\n", field_name);
+		if(HAS_FLAG(field_info, ARRAY_BIT))
+		{
+			AUTO array_size = binary_reader_u16(reader);
+			if(array_size == U16_MAX)
+				_printf(str, "[U16_MAX]");
+			else _printf(str, "[%" PRIu16 "]", array_size);
+		}
 	}
 }
 

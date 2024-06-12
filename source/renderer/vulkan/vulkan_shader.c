@@ -1469,6 +1469,7 @@ typedef struct shader_binary_read_context_t
 
 
 #define UDAT_BIT BIT32(31)
+#define ARRAY_BIT BIT32(30)
 static struct_descriptor_t* get_udat(memory_allocator_t* allocator, binary_reader_t* reader)
 {
 	/* save the current state and jump to where the udat definition is located in the shader binary */
@@ -1494,7 +1495,12 @@ static struct_descriptor_t* get_udat(memory_allocator_t* allocator, binary_reade
 			struct_descriptor_t* udat_field = get_udat(allocator, reader);
 			/* next read the identifier name of the udat we just read above */
 			const char* ident_name = binary_reader_str(reader);
-			struct_descriptor_add_field2(udat, ident_name, udat_field);
+			if(HAS_FLAG(field_info, ARRAY_BIT))
+			{
+				u16 array_size = binary_reader_u16(reader);
+				struct_descriptor_add_field_array2(udat, ident_name, udat_field, (array_size == U16_MAX) ? U32_MAX : CAST_TO(u32, array_size));
+			}
+			else struct_descriptor_add_field2(udat, ident_name, udat_field);
 		}
 		else /* otherwise this is a primitive type (non-udat) */
 		{
@@ -1502,7 +1508,12 @@ static struct_descriptor_t* get_udat(memory_allocator_t* allocator, binary_reade
 			const char* ident_name = binary_reader_str(reader);
 			/* get the type of the fields */
 			u8 type = field_info & 0xFFUL;
-			struct_descriptor_add_field(udat, ident_name, type);
+			if(HAS_FLAG(field_info, ARRAY_BIT))
+			{
+				u16 array_size = binary_reader_u16(reader);
+				struct_descriptor_add_field_array(udat, ident_name, type, (array_size == U16_MAX) ? U32_MAX : CAST_TO(u32, array_size));
+			}
+			else struct_descriptor_add_field(udat, ident_name, type);
 		}
 	}
 	struct_descriptor_end(allocator, udat);
@@ -1585,7 +1596,12 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 				{
 					struct_descriptor_t* udat_field = get_udat(allocator, reader);
 					const char* name = binary_reader_str(reader);
-					struct_descriptor_add_field2(struct_def, name, udat_field);
+					if(HAS_FLAG(field_info, ARRAY_BIT))
+					{
+						u16 array_size = binary_reader_u16(reader);
+						struct_descriptor_add_field_array2(struct_def, name, udat_field, (array_size == U16_MAX) ? U32_MAX : CAST_TO(u32, array_size));
+					}
+					else struct_descriptor_add_field2(struct_def, name, udat_field);
 				}
 				else
 				{
@@ -1594,7 +1610,12 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 					/* get the name of this field */
 					const char* name = binary_reader_str(reader);
 					_debug_assert__(strlen(name) < STRUCT_FIELD_MAX_NAME_SIZE);
-					struct_descriptor_add_field(struct_def, name, type);
+					if(HAS_FLAG(field_info, ARRAY_BIT))
+					{
+						u16 array_size = binary_reader_u16(reader);
+						struct_descriptor_add_field_array(struct_def, name, type, (array_size == U16_MAX) ? U32_MAX : CAST_TO(u32, array_size));
+					}
+					else struct_descriptor_add_field(struct_def, name, type);
 				}
 			}
 			binary_reader_pop(reader);

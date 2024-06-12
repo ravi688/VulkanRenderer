@@ -64,35 +64,36 @@ Shader
 
 	Properties
 	{
-		// struct PackedFloat
-		// {
-		// 	int mantissa;
-		// 	int exponent;
-		// }
+		struct PackedFloat
+		{
+			int mantissa;
+			int exponent;
+		}
 
-		// struct FloatPair
-		// {
-		// 	PackedFloat first;
-		// 	PackedFloat second;
-		// }
+		struct FloatPair
+		{
+			PackedFloat first;
+			PackedFloat second;
+		}
 
-		// struct Color
-		// {
-		// 	FloatPair r;
-		// 	FloatPair g;
-		// 	FloatPair b;
-		// 	FloatPair a;
-		// 	float _r;
-		// 	float _g;
-		// 	float _g;
-		// 	float _a;
-		// };
+		struct Color
+		{
+			FloatPair r;
+			FloatPair g;
+			FloatPair b;
+			FloatPair a;
+			float _r;
+			float _g;
+			float _g;
+			float _a;
+		};
 
 		[Stage(fragment, vertex)]
 		[Set(material_set, material_properties)]
 		uniform Parameters
 		{
 			vec4 color;
+			Color speculars[];
 			// This Won't work for now
 			// struct Color
 			// {
