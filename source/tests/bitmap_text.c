@@ -147,7 +147,7 @@ static void test_hash_table()
 	hash_table_free(&table);
 }
 
-void test_bitmap()
+static void test_bitmap()
 {
 	/*f32 half_diag = sqrt(2) * 256;
 	s32 wave_number = 1;*/
@@ -244,7 +244,7 @@ CAN_BE_UNUSED_VARIABLE static icolor3_t colors[] =
 
 #define KEY __COUNTER__
 
-input_t inputs[] =
+static input_t inputs[] =
 {
 	{ KEY, 32, 32 },
 	{ KEY, 32, 32 },
