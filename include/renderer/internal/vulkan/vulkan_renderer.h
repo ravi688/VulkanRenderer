@@ -79,6 +79,9 @@ typedef struct vulkan_renderer_create_info_t
 	/* number of max allowed frames in flight, it is automatically clamped to the number of swapchain images if greater than that 
 	 * if it is zero, then the renderer will be created with max frames in flight as 1 */
 	u32 max_frames_in_flight;
+	/* when enabled, call to vulkan_renderer_update() will block execution on the host until rendering commands finish on device for the current frame
+	 * NOTE: if frame_pipelining is disabled, then it is of no use keeping max_frames_in_flight more than 1 */
+	bool frame_pipelining;
 } vulkan_renderer_create_info_t;
 
 typedef struct vulkan_renderer_t
@@ -160,6 +163,8 @@ typedef struct vulkan_renderer_t
 	event_subscription_handle_t swapchain_recreate_handle;
 
 	u32 max_frames_in_flight;
+	/* cache of create_info->frame_pipelining */
+	bool is_pipeline_frame;
 
 } vulkan_renderer_t;
 
