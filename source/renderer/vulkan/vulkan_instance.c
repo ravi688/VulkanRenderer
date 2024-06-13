@@ -72,7 +72,7 @@ RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* render
 		.applicationVersion = VK_MAKE_VERSION(1, 0, 0),
 		.pEngineName = "Default Engine",
 		.engineVersion = VK_MAKE_VERSION(1, 0, 0),
-		.apiVersion = VK_API_VERSION_1_0
+		.apiVersion = VK_API_VERSION_1_2
 	};
 
 	// create a filtered list of layers which are supported only
