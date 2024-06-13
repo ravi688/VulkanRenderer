@@ -158,7 +158,7 @@ RENDERER_API void vulkan_text_mesh_draw(vulkan_text_mesh_t* text_mesh)
 	{
 		u16 glyph = *(u16*)dictionary_get_key_ptr_at(glyph_render_data_buffers, i);
 		vulkan_instance_buffer_t* instance_buffer = dictionary_get_value_ptr_at(glyph_render_data_buffers, i);
-		if(!vulkan_instance_buffer_has_device_buffer(instance_buffer))
+		if((!vulkan_instance_buffer_has_device_buffer(instance_buffer)) || (instance_buffer->device_buffer.count == 0))
 			continue;
 		vulkan_mesh_t* mesh = vulkan_glyph_mesh_pool_get_mesh(text_mesh->pool, glyph);
 		vulkan_mesh_bind_all_vertex_buffers(mesh);

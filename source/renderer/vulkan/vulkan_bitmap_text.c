@@ -274,8 +274,9 @@ RENDERER_API void vulkan_bitmap_text_release_resources(vulkan_bitmap_text_t* tex
 
 RENDERER_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text)
 {
-	vulkan_mesh_draw_indexed_instanced(&text->quad_mesh,
-		vulkan_buffer_get_count(vulkan_instance_buffer_get_device_buffer(&text->glyph_render_data_buffer)));
+	AUTO count = vulkan_buffer_get_count(vulkan_instance_buffer_get_device_buffer(&text->glyph_render_data_buffer));
+	if(count > 0)
+		vulkan_mesh_draw_indexed_instanced(&text->quad_mesh, count);
 }
 
 static void set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type)
