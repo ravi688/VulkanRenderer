@@ -144,15 +144,6 @@ int main(int argc, const char** argv)
 
 	while(renderer_is_running(driver))
 	{
-		if(kbhit())
-		{
-			if(getch() == 'd')
-			{
-				/* this should be pushed into another thread to not to halt the main thread! */
-				memory_allocation_tree_dump(allocator, "runtime.dump");
-			}
-		}
-		
 		/* do computations and generate data for rendering the next frame */
 		float deltaTime = time_get_delta_time(&tHandle);
 		test->update(driver, deltaTime, test->user_data);
