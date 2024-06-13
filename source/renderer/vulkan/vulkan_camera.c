@@ -465,10 +465,9 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 
 	render_window_t* window = vulkan_renderer_get_window(renderer);
 	set_render_target_size(camera, window->width, window->height);
+	/* TODO: I think allocated_attachment_size is redudant, and can be removed; use pre_render_target_size instead wherever allocated_attachment_size used? */
 	camera->allocated_attachment_size.width = camera->render_target_size.width;
 	camera->allocated_attachment_size.height = camera->render_target_size.height;
-	camera->prev_render_target_size.width = camera->render_target_size.width;
-	camera->prev_render_target_size.height = camera->render_target_size.height;
 
 	camera->render_target_status = VULKAN_CAMERA_RENDER_TARGET_STATUS_DUPLEX_SWAPCHAIN_DEPTH;
 	camera->color_binding_type = VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED;
