@@ -23,6 +23,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
+#define SGE_UNIFORM_BUFFER_LAYOUT std140
+#define SGE_STORAGE_BUFFER_LAYOUT std430
+
 #define TEXT_RENDER_SPACE_TYPE_2D 0
 #define TEXT_RENDER_SPACE_TYPE_3D 1
 

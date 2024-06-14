@@ -27,6 +27,7 @@
 #include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
 #include <renderer/internal/vulkan/vulkan_types.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/glsl_memory_layout.h>
 
 RENDERER_API void vulkan_shader_resource_description_create_vertex_attribute(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 location_number, u32 binding_number)
 {
@@ -36,7 +37,7 @@ RENDERER_API void vulkan_shader_resource_description_create_vertex_attribute(mem
 	description->stage_flags = (1 << VULKAN_SHADER_TYPE_FRAGMENT); //| (1 << VULKAN_SHADER_TYPE_VERTEX);
 
 	OBJECT_INIT(&description->handle, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
-	struct_descriptor_begin(allocator, &description->handle, name, type);
+	struct_descriptor_begin(allocator, &description->handle, name, type, GLSL_MEMORY_LAYOUT_CALLBACKS);
 	struct_descriptor_end(allocator, &description->handle);
 }
 
@@ -49,7 +50,7 @@ RENDERER_API void vulkan_shader_resource_description_create_opaque(memory_alloca
 	description->stage_flags = (1 << VULKAN_SHADER_TYPE_FRAGMENT); //| (1 << VULKAN_SHADER_TYPE_VERTEX);
 
 	OBJECT_INIT(&description->handle, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
-	struct_descriptor_begin(allocator, &description->handle, name, type);
+	struct_descriptor_begin(allocator, &description->handle, name, type, GLSL_MEMORY_LAYOUT_CALLBACKS);
 	struct_descriptor_end(allocator, &description->handle);
 }
 
@@ -61,7 +62,7 @@ RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_create_unif
 	description->stage_flags = (1 << VULKAN_SHADER_TYPE_VERTEX) | (1 << VULKAN_SHADER_TYPE_FRAGMENT);
 
 	OBJECT_INIT(&description->handle, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
-	struct_descriptor_begin(allocator, &description->handle, name, GLSL_TYPE_UNIFORM_BUFFER);
+	struct_descriptor_begin(allocator, &description->handle, name, GLSL_TYPE_UNIFORM_BUFFER, GLSL_MEMORY_LAYOUT_CALLBACKS);
 	return &description->handle;
 }
 

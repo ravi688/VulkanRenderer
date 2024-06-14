@@ -26,6 +26,8 @@
 
 #include <renderer/internal/vulkan/vulkan_light.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/glsl_memory_layout.h>
+#include <glslcommon/glsl_types.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
@@ -82,7 +84,7 @@ static void setup_gpu_resources(vulkan_light_t* super)
 	vulkan_light_t* light = VULKAN_LIGHT(super);
 	// setup light struct definition
 	OBJECT_INIT(&light->struct_definition, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
-	struct_descriptor_begin(light->renderer->allocator, &light->struct_definition, "lightInfo", GLSL_TYPE_UNIFORM_BUFFER);
+	struct_descriptor_begin(light->renderer->allocator, &light->struct_definition, "lightInfo", GLSL_TYPE_UNIFORM_BUFFER, GLSL_MEMORY_LAYOUT_CALLBACKS);
 		struct_descriptor_add_field(&light->struct_definition, "projection", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&light->struct_definition, "view", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&light->struct_definition, "color", GLSL_TYPE_VEC3);

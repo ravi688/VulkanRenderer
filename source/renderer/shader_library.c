@@ -39,6 +39,7 @@
 #include <renderer/internal/vulkan/vulkan_shader_create_info_builder.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_mesh.h>
+#include <renderer/glsl_memory_layout.h>
 #include <renderer/alloc.h>
 
 #include <disk_manager/file_reader.h>
@@ -115,7 +116,7 @@ static vulkan_shader_resource_description_builder_t* create_material_set_binding
 		{
 			{
 				struct_descriptor_t* Color = struct_descriptor_create(allocator);
-					struct_descriptor_begin(allocator, Color, "Color", GLSL_TYPE_MAX_NON_OPAQUE);
+					struct_descriptor_begin(allocator, Color, "Color", GLSL_TYPE_MAX_NON_OPAQUE, GLSL_MEMORY_LAYOUT_CALLBACKS);
 						struct_descriptor_add_field(Color, "r", GLSL_TYPE_FLOAT);
 						struct_descriptor_add_field(Color, "g", GLSL_TYPE_FLOAT);
 						struct_descriptor_add_field(Color, "b", GLSL_TYPE_FLOAT);
@@ -133,7 +134,7 @@ static vulkan_shader_resource_description_builder_t* create_material_set_binding
 				shr_res_build_create_opaque(builder, &bind_counter, "bga", GLSL_TYPE_SAMPLER_2D, VULKAN_DESCRIPTOR_SET_MATERIAL, VULKAN_DESCRIPTOR_BINDING_TEXTURE0);
 				{
 					struct_descriptor_t* GTC = struct_descriptor_create(allocator);
-						struct_descriptor_begin(allocator, GTC, "GTC", GLSL_TYPE_MAX_NON_OPAQUE);
+						struct_descriptor_begin(allocator, GTC, "GTC", GLSL_TYPE_MAX_NON_OPAQUE, GLSL_MEMORY_LAYOUT_CALLBACKS);
 							struct_descriptor_add_field(GTC, "tltc", GLSL_TYPE_VEC2);
 							struct_descriptor_add_field(GTC, "trtc", GLSL_TYPE_VEC2);
 							struct_descriptor_add_field(GTC, "brtc", GLSL_TYPE_VEC2);
