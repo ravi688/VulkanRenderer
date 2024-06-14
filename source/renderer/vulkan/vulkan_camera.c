@@ -37,6 +37,7 @@
 #include <renderer/internal/vulkan/vulkan_shader_library.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/internal/vulkan/vulkan_material.h>
+#include <renderer/glsl_memory_layout.h>
 #include <renderer/render_window.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
@@ -83,7 +84,7 @@ static void setup_camera_info_uniform_buffer(vulkan_camera_t* camera)
 {
 	// setup camera struct definiton
 	OBJECT_INIT(&camera->struct_definition, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
-	struct_descriptor_begin(camera->renderer->allocator, &camera->struct_definition, "cameraInfo", GLSL_TYPE_UNIFORM_BUFFER);
+	struct_descriptor_begin(camera->renderer->allocator, &camera->struct_definition, "cameraInfo", GLSL_TYPE_UNIFORM_BUFFER, GLSL_MEMORY_LAYOUT_CALLBACKS);
 		struct_descriptor_add_field(&camera->struct_definition, "transform", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "projection", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&camera->struct_definition, "view", GLSL_TYPE_MAT4);

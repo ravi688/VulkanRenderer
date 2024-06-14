@@ -38,6 +38,8 @@
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 #include <renderer/internal/vulkan/vulkan_allocator.h>
 #include <hpml/affine_transformation.h>
+#include <renderer/glsl_memory_layout.h>
+#include <glslcommon/glsl_types.h>
 #include <renderer/render_window.h>
 #include <renderer/system/display.h>
 #include <renderer/debug.h>
@@ -218,11 +220,11 @@ static struct_descriptor_t create_screen_info_struct(memory_allocator_t* allocat
 	struct_descriptor_t screen_info_struct;
 	OBJECT_INIT(&screen_info_struct, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
 	/* definition of the 'screen info' struct */
-	struct_descriptor_begin(allocator, &screen_info_struct, "screen_info", 0);
-		struct_descriptor_add_field_uvec2(&screen_info_struct, "resolution");
-		struct_descriptor_add_field_uvec2(&screen_info_struct, "dpi");
-		struct_descriptor_add_field_uvec2(&screen_info_struct, "size");
-		struct_descriptor_add_field_mat4(&screen_info_struct, "matrix");
+	struct_descriptor_begin(allocator, &screen_info_struct, "screen_info", 0, GLSL_MEMORY_LAYOUT_CALLBACKS);
+		struct_descriptor_add_field(&screen_info_struct, "resolution", GLSL_TYPE_UVEC2);
+		struct_descriptor_add_field(&screen_info_struct, "dpi", GLSL_TYPE_UVEC2);
+		struct_descriptor_add_field(&screen_info_struct, "size", GLSL_TYPE_UVEC2);
+		struct_descriptor_add_field(&screen_info_struct, "matrix", GLSL_TYPE_MAT4);
 	struct_descriptor_end(allocator, &screen_info_struct);
 	return screen_info_struct;
 }

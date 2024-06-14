@@ -27,6 +27,8 @@
 #include <renderer/internal/vulkan/vulkan_render_object.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
+#include <renderer/glsl_memory_layout.h>
+#include <glslcommon/glsl_types.h>
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
@@ -64,7 +66,7 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 
 	// setup object struct definiton
 	OBJECT_INIT(&object->struct_definition, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
-	struct_descriptor_begin(object->renderer->allocator, &object->struct_definition, "objectInfo", GLSL_TYPE_UNIFORM_BUFFER);
+	struct_descriptor_begin(object->renderer->allocator, &object->struct_definition, "objectInfo", GLSL_TYPE_UNIFORM_BUFFER, GLSL_MEMORY_LAYOUT_CALLBACKS);
 		struct_descriptor_add_field(&object->struct_definition, "transform", GLSL_TYPE_MAT4);
 		struct_descriptor_add_field(&object->struct_definition, "normal", GLSL_TYPE_MAT4);
 	struct_descriptor_end(object->renderer->allocator, &object->struct_definition);

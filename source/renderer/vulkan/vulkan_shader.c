@@ -37,6 +37,8 @@
 #include <renderer/internal/vulkan/vulkan_shader_loader.h>
 #include <renderer/internal/vulkan/vulkan_render_pass_create_info_builder.h>
 #include <renderer/internal/vulkan/vulkan_subpass_create_info_builder.h>
+#include <renderer/glsl_memory_layout.h>
+#include <glslcommon/glsl_types.h>
 #include <disk_manager/file_reader.h>
 #include <common/binary_reader.h>
 #include <renderer/assert.h>
@@ -77,7 +79,7 @@ static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(memor
 			continue;
 
 		VkFormat vulkan_format = vkformatof_glsl_type(type);
-		u32 align = alignof_glsl_type(type);
+		u32 align = alignof_glsl_type(type, GLSL_STD140);
 		u32 field_offset = ((align - (offset % align)) % align) + offset;
 		switch(type)
 		{
@@ -95,7 +97,7 @@ static vulkan_vertex_buffer_layout_description_t decode_vulkan_vertex_info(memor
 			break;
 		}
 		packed >>= bits_per_type;
-		offset = field_offset + sizeof_glsl_type(type);
+		offset = field_offset + sizeof_glsl_type(type, GLSL_STD140);
 		location_offset++;
 		buf_push(&locations, &location_offset);
 	}
@@ -1480,7 +1482,7 @@ static struct_descriptor_t* get_udat(memory_allocator_t* allocator, binary_reade
 	struct_descriptor_t* udat = struct_descriptor_create(allocator);
 	/* read the name of this udat */
 	const char* udat_name = binary_reader_str(reader);
-	struct_descriptor_begin(allocator, udat, udat_name, GLSL_TYPE_MAX_NON_OPAQUE);
+	struct_descriptor_begin(allocator, udat, udat_name, GLSL_TYPE_MAX_NON_OPAQUE, GLSL_MEMORY_LAYOUT_CALLBACKS);
 	/* read number of fields in this udat */
 	AUTO num_fields = binary_reader_u16(reader);
 	log_msg("Field Count: %u\n", num_fields);
@@ -1569,7 +1571,7 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 			|| (descriptor_type == GLSL_TYPE_STORAGE_BUFFER)
 			|| (descriptor_type == GLSL_TYPE_PUSH_CONSTANT);
 
-		struct_descriptor_begin(allocator, struct_def, "", descriptor_type);
+		struct_descriptor_begin(allocator, struct_def, "", descriptor_type, GLSL_MEMORY_LAYOUT_CALLBACKS);
 		/* if the descriptor is a block then iterate through its fields */
 		if(is_block)
 		{
@@ -1713,12 +1715,12 @@ static vulkan_vertex_buffer_layout_description_t* create_vertex_infos(memory_all
 		// pop the previous offset
 		buf_pop(&attribute_info->offsets, &offset);
 		// snap the offset to the correct alignment for this field/attribute
-		u32 alignment = alignof_glsl_type(glsl_type);
+		u32 alignment = alignof_glsl_type(glsl_type, GLSL_STD140);
 		offset += (alignment - (offset % alignment)) % alignment;
 		// add the offset
 		buf_push(&attribute_info->offsets, &offset);
 		// increment the offset by the size of this field/attribute
-		u32 size = sizeof_glsl_type(glsl_type);
+		u32 size = sizeof_glsl_type(glsl_type, GLSL_STD140);
 		if(max(alignment, size) > attribute_info->largest_element_size)
 			attribute_info->largest_element_size = max(alignment, size);
 		offset += size;

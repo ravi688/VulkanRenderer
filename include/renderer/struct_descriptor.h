@@ -300,6 +300,27 @@
 #define STRUCT_MAX_NAME_SIZE 128
 #define STRUCT_FIELD_INVALID_HANDLE U64_MAX
 
+typedef struct field_type_align_t
+{
+	u8 type;
+	bool is_array;
+	u32 align;
+	u32 size;
+} field_type_align_t;
+
+typedef field_type_align_t (*struct_field_type_getter_t)(void* user_data, u32 index);
+
+typedef u32 (*type_align_provider_fptr_t)(u8 type, bool is_array);
+typedef u32 (*type_size_provider_fptr_t)(u8 type);
+typedef u32 (*struct_align_provider_fptr_t)(struct_field_type_getter_t getter, void* user_data, u32 field_count, bool is_array);
+
+typedef struct memory_layout_provider_callbacks_t
+{
+	type_align_provider_fptr_t get_type_align;
+	type_size_provider_fptr_t get_type_size;
+	struct_align_provider_fptr_t get_struct_align;
+} memory_layout_provider_callbacks_t;
+
 typedef struct struct_descriptor_t struct_descriptor_t;
 
 typedef struct struct_field_t
@@ -321,6 +342,7 @@ typedef struct struct_descriptor_t
 {
 	__OBJECT__;
 	memory_allocator_t* allocator;
+	memory_layout_provider_callbacks_t layout_callbacks;
 	char name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE];
 	/* TODO: make it bigger in size, as it might not hold types needing more than 8 bits */
 	u8 type;
@@ -347,7 +369,7 @@ RENDERER_API void struct_descriptor_destroy(memory_allocator_t* allocator, struc
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u8 struct_descriptor_get_type(const struct_descriptor_t* descriptor) { return descriptor->type; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const char* struct_descriptor_get_name(const struct_descriptor_t* descriptor) { return descriptor->name; }
 
-RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type);
+RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type, memory_layout_provider_callbacks_t layout_callbacks);
 RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
 RENDERER_API void struct_descriptor_set_name(struct_descriptor_t* descriptor, const char* name);
 RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type);
@@ -399,22 +421,5 @@ RENDERER_API void struct_descriptor_get_uvec2(struct_descriptor_t* descriptor, s
 RENDERER_API void struct_descriptor_get_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
 RENDERER_API void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
 RENDERER_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
-
-#include <glslcommon/glsl_types.h>
-#define struct_descriptor_add_field_float(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_FLOAT)
-#define struct_descriptor_add_field_int(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_INT)
-#define struct_descriptor_add_field_uint(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_UINT)
-#define struct_descriptor_add_field_vec4(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_VEC4)
-#define struct_descriptor_add_field_vec3(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_VEC3)
-#define struct_descriptor_add_field_vec2(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_VEC2)
-#define struct_descriptor_add_field_ivec4(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_IVEC4)
-#define struct_descriptor_add_field_ivec3(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_IVEC3)
-#define struct_descriptor_add_field_ivec2(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_IVEC2)
-#define struct_descriptor_add_field_uvec4(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_UVEC4)
-#define struct_descriptor_add_field_uvec3(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_UVEC3)
-#define struct_descriptor_add_field_uvec2(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_UVEC2)
-#define struct_descriptor_add_field_mat4(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_MAT4)
-#define struct_descriptor_add_field_mat3(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_MAT3)
-#define struct_descriptor_add_field_mat2(descriptor, name) struct_descriptor_add_field(descriptor, name, GLSL_TYPE_MAT2)
 
 END_CPP_COMPATIBLE
