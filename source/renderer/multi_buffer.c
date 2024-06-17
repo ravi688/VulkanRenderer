@@ -128,6 +128,11 @@ RENDERER_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* multi_buffer, 
 // logic functions
 RENDERER_API void multi_buffer_sub_buffer_push(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value)
 {
+	multi_buffer_sub_buffer_push_n(multi_buffer, handle, in_value, multi_buffer->buffer.element_size);
+}
+
+RENDERER_API void multi_buffer_sub_buffer_push_n(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, u32 max_size)
+{
 	check_pre_condition(multi_buffer);
 	BUFFER* sub_buffers = &multi_buffer->sub_buffers;
 	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
@@ -148,7 +153,7 @@ RENDERER_API void multi_buffer_sub_buffer_push(multi_buffer_t* multi_buffer, sub
 	}
 
 	// push the value
-	buf_set_at(&multi_buffer->buffer, sub_buffer->ptr + sub_buffer->count, in_value);
+	buf_set_at_n(&multi_buffer->buffer, sub_buffer->ptr + sub_buffer->count, in_value, max_size);
 	sub_buffer->count++;
 }
 

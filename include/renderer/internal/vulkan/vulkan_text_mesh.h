@@ -113,12 +113,13 @@
 typedef struct vulkan_text_mesh_glsl_glyph_render_data_t
 {
 	/* offset of the glyph instance */
-	glsl_vec3_t ofst;
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t ofst;
 	/* string id of this glyph instance */
-	glsl_uint_t stid;
-} vulkan_text_mesh_glsl_glyph_render_data_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
+	ALIGN_AS(GLSL_STD140_UINT_ALIGN) u32 stid;
+} vulkan_text_mesh_glsl_glyph_render_data_t ALIGN_AS(U32_MAX_OF(GLSL_STD140_VEC4_ALIGN, GLSL_STD140_UINT_ALIGN));
 
-#define __glsl_sizeof_vulkan_text_mesh_glsl_glyph_render_data_t __glsl_sizeof_glsl_vec4_t
+#define SIZEOF_VULKAN_TEXT_MESH_GLSL_GLYPH_RENDER_DATA_T 16
+#define STRIDE_VULKAN_TEXT_MESH_GLSL_GLYPH_RENDER_DATA_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_VULKAN_TEXT_MESH_GLSL_GLYPH_RENDER_DATA_T, ALIGN_OF(vulkan_text_mesh_glsl_glyph_render_data_t))
 
 typedef enum vulkan_text_mesh_render_space_type_t
 {

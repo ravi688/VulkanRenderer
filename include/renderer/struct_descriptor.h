@@ -378,14 +378,16 @@ RENDERER_API void struct_descriptor_add_field_array(struct_descriptor_t* descrip
 RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record, u32 array_size);
 RENDERER_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descriptor);
 
+RENDERER_API u32 struct_descriptor_sizeof(const struct_descriptor_t* descriptor);
+RENDERER_API u32 struct_descriptor_alignof(const struct_descriptor_t* descriptor);
+RENDERER_API u32 struct_descriptor_offsetof(const struct_descriptor_t* descriptor, const char* name);
+RENDERER_API bool struct_descriptor_is_variable_sized(const struct_descriptor_t* descriptor);
+RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(const struct_descriptor_t* descriptor, const char* field_name);
+
 RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr);
 RENDERER_API void* struct_descriptor_get_mapped(struct_descriptor_t* descriptor);
 RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor);
 RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor);
-RENDERER_API u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor);
-RENDERER_API u32 struct_descriptor_alignof(struct_descriptor_t* descriptor);
-RENDERER_API bool struct_descriptor_is_variable_sized(struct_descriptor_t* descriptor);
-RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* field_name);
 RENDERER_API void struct_descriptor_set_array_size(struct_descriptor_t* descriptor, const char* name, u32 size);
 
 RENDERER_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in);

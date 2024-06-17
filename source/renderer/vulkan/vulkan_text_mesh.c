@@ -46,8 +46,6 @@
 	UNUSED_FUNCTION static void check_pre_condition(vulkan_text_mesh_t* text_mesh) { }
 #endif /*GLOBAL_DEBUG*/
 
-#define INSTANCE_BUFFER_STRIDE glsl_sizeof(vulkan_text_mesh_glsl_glyph_render_data_t)
-
 static sub_buffer_handle_t get_sub_buffer_handle(multi_buffer_t* multi_buffer, dictionary_t* handles, u16 key);
 static vulkan_instance_buffer_t* get_instance_buffer(vulkan_renderer_t* renderer, dictionary_t* buffers, u16 key);
 
@@ -105,12 +103,12 @@ RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, 
 	text->glyph_layout_data_buffer = memory_allocator_buf_create(renderer->allocator, sizeof(vulkan_text_mesh_glyph_layout_data_t), 128, 0);
 	text->glyph_layout_handler = (vulkan_text_mesh_glyph_layout_handler_void_ptr_pair_t) { default_glyph_layout_handler, NULL };
 
-	_debug_assert__(glsl_sizeof(glsl_mat4_t) == sizeof(glsl_mat4_t));
+	// _debug_assert__(glsl_sizeof(_mat4_t) == sizeof(_mat4_t));
 
 	/* create TST buffer to store string transform matrices */
 	vulkan_host_buffered_buffer_create_info_t buffer_create_info =
 	{
-		.stride = glsl_sizeof(glsl_mat4_t),
+		.stride = sizeof(_mat4_t),
 		/* initially we can have upto 2 string transform matrices without buffer resize */
 		.capacity = 2,
 		/* this buffer will be indexed with glyph_render_data_t.stid */
@@ -168,23 +166,23 @@ RENDERER_API void vulkan_text_mesh_draw(vulkan_text_mesh_t* text_mesh)
 	}
 }
 
-static glsl_mat4_t get_glsl_mat4_from_mat4(const mat4_t* const mat)
+static _mat4_t get_glsl_mat4_from_mat4(const mat4_t* const mat)
 {
-	return (glsl_mat4_t)
+	return (_mat4_t)
 	{
-		.r0 = { mat->r1[0], mat->r1[1], mat->r1[2], mat->r1[3] },
-		.r1 = { mat->r2[0], mat->r2[1], mat->r2[2], mat->r2[3] },
-		.r2 = { mat->r3[0], mat->r3[1], mat->r3[2], mat->r3[3] },
-		.r3 = { mat->r4[0], mat->r4[1], mat->r4[2], mat->r4[3] }
+		.r1 = { mat->r1[0], mat->r1[1], mat->r1[2], mat->r1[3] },
+		.r2 = { mat->r2[0], mat->r2[1], mat->r2[2], mat->r2[3] },
+		.r3 = { mat->r3[0], mat->r3[1], mat->r3[2], mat->r3[3] },
+		.r4 = { mat->r4[0], mat->r4[1], mat->r4[2], mat->r4[3] }
 	};
 }
 
 static void update_host_side_tst_buffer_for_text_string(vulkan_text_mesh_t* text, vulkan_text_mesh_string_t* string)
 {
 	mat4_t transform = mat4_transpose(string->transform);
-	glsl_mat4_t glsl_transform = get_glsl_mat4_from_mat4(&transform);
+	_mat4_t glsl_transform = get_glsl_mat4_from_mat4(&transform);
 	/* the last row of 4x4 RTS matrix always remains unused - i.e it's not a perspective projection matrix where depth has to be taken care */
-	glsl_transform.m33 = DREF(REINTERPRET_CAST(glsl_float_t*, &string->point_size));
+	glsl_transform.m33 = DREF(REINTERPRET_CAST(float*, &string->point_size));
 	buf_set_at(vulkan_host_buffered_buffer_get_host_buffer(&text->text_string_transform_buffer), string->handle, &glsl_transform);
 }
 
@@ -474,7 +472,7 @@ RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vu
 			.ofst = { offset.z, offset.y, offset.x },
 			.stid = U64_TO_U32(string->handle)
 		};
-		sub_buffer_push(buffer, handle, CAST_TO(void*, &data));
+		sub_buffer_push_n(buffer, handle, CAST_TO(void*, &data), SIZEOF_VULKAN_TEXT_MESH_GLSL_GLYPH_RENDER_DATA_T);
 
 		vulkan_instance_buffer_commit(instance_buffer, NULL);
 	}
@@ -588,7 +586,7 @@ static vulkan_instance_buffer_t* get_instance_buffer(vulkan_renderer_t* renderer
 		vulkan_instance_buffer_t buffer;
 		vulkan_instance_buffer_create_info_t create_info =
 		{
-			.stride = INSTANCE_BUFFER_STRIDE,
+			.stride = STRIDE_VULKAN_TEXT_MESH_GLSL_GLYPH_RENDER_DATA_T_ARRAY,
 			.capacity = 10,
 		};
 		VULKAN_OBJECT_INIT(&buffer, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);

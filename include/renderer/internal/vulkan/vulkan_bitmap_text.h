@@ -37,6 +37,8 @@
 #include <renderer/event.h> // event_subscription_handle_t
 #include <renderer/rect.h> // rect2d_t
 #include <hpml/mat4.h> 	// mat4_t
+#include <hpml/vec3.h> /* vec3_t */
+#include <hpml/vec2.h> /* vec2_t */
 #include <glslcommon/glsl_types.h>
 
 typedef enum vulkan_bitmap_text_render_space_type_t
@@ -59,38 +61,44 @@ typedef enum vulkan_bitmap_text_render_surface_type_t
 typedef struct vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t
 {
 	/* per_instance [BTM_TXT_TLTC_BND, BTM_TXT_TLTC_LOC, BTM_TXT_TLTC_COMP] in vec2 tltc; */
-	glsl_vec2_t tltc;
+	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t tltc;
 	/* per_instance [BTM_TXT_TRTC_BND, BTM_TXT_TRTC_LOC, BTM_TXT_TRTC_COMP] in vec2 trtc; */
-	glsl_vec2_t trtc;
+	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t trtc;
 	/* per_instance [BTM_TXT_BRTC_BND, BTM_TXT_BRTC_LOC, BTM_TXT_BRTC_COMP] in vec2 brtc; */
-	glsl_vec2_t brtc;
+	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t brtc;
 	/* per_instance [BTM_TXT_BLTC_BND, BTM_TXT_BLTC_LOC, BTM_TXT_BLTC_COMP] in vec2 bltc; */
-	glsl_vec2_t bltc;
-} vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
+	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t bltc;
+} vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t ALIGN_AS(U32_NEXT_MULTIPLE(GLSL_STD140_VEC2_ALIGN, 16));
 
-#define __glsl_sizeof_vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t 		(4 * __glsl_sizeof_glsl_vec2_t)
+/* deterministic and minimum (portable) size of vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t
+ * the C compiler may add extra padding resulting in non-portable code or undefined behaviour */
+#define SIZEOF_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T (4 * COM_GET_STRIDE_IN_ARRAY(8, GLSL_STD140_VEC2_ALIGN))
+/* deterministic (portable) size of vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t in a homogeneous array, i.e. stride to the next element.
+ * same as reason as above */
+#define STRIDE_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T, ALIGN_OF(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t))
 
 /* element of Glyph Render Data (GRD) buffer */
 typedef struct vulkan_bitmap_text_glsl_glyph_render_data_t
 {
 	/* offset of this glyph instance from the very first glyph instance in the string */
 	/* per_instance [BTM_TXT_OFST_BND, BTM_TXT_OFST_LOC, BTM_TXT_OFST_COMP] in vec3 ofst; */
-	glsl_vec3_t ofst;
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t ofst;
 	/* index of the texture coordinates of this glyph instance into the GTC buffer */
 	/* per_instance [BTM_TXT_INDX_BND, BTM_TXT_INDX_LOC, BTM_TXT_INDX_COMP] in uint indx; */
-	glsl_uint_t indx;
+	ALIGN_AS(GLSL_STD140_UINT_ALIGN) u32 indx;
 	/* rotation of this glyph instance */
 	/* per_instance [BTM_TXT_ROTN_BND, BTM_TXT_ROTN_LOC, BTM_TXT_ROTN_COMP] in vec3 rotn; */
-	glsl_vec3_t rotn;
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t rotn;
 	/* index of the string's transform to which this glyph instance belongs into the String Transform Buffer (ST Buffer) */
 	/* per_instance [BTM_TXT_STID_BND, BTM_TXT_STID_LOC, BTM_TXT_STID_COMP] in uint stid; */
-	glsl_uint_t stid;
+	ALIGN_AS(GLSL_STD140_UINT_ALIGN) u32 stid;
 	/* scale of this glyph instance
 	 * per_instance [BTM_TXT_SCAL_BND, BTM_TXT_SCAL_LOC, BTM_TXT_SCAL_COMP] in vec3 scal; */
-	glsl_vec3_t scal;
-} vulkan_bitmap_text_glsl_glyph_render_data_t ALIGN_AS(GLSL_TYPE_VEC4_ALIGN);
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t scal;
+} vulkan_bitmap_text_glsl_glyph_render_data_t ALIGN_AS(U32_MAX_OF(GLSL_STD140_UINT_ALIGN, GLSL_STD140_VEC3_ALIGN));
 
-#define __glsl_sizeof_vulkan_bitmap_text_glsl_glyph_render_data_t 		(3 * __glsl_sizeof_glsl_vec4_t)
+#define SIZEOF_VULKAN_BITMAP_TEXT_GLSL_GLYPH_RENDER_DATA_T (16 * 3)
+#define STRIDE_VULKAN_BITMAP_TEXT_GLSL_GLYPH_RENDER_DATA_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_VULKAN_BITMAP_TEXT_GLSL_GLYPH_RENDER_DATA_T, ALIGN_OF(vulkan_bitmap_text_glsl_glyph_render_data_t))
 
 /* character buffer to store the characters in a string */
 typedef buffer_t vulkan_bitmap_text_char_buffer_t;

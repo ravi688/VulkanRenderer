@@ -736,6 +736,8 @@ RENDERER_API void vulkan_material_set_array_size(vulkan_material_t* material, co
 
 	AUTO resource_descriptor = get_uniform_resource_descriptor(material, block_name);
 
+	_debug_assert__(resource_descriptor.second != NULL);
+
 	/* get the interface block descriptor and set the array size */
 	struct_descriptor_t* descriptor = &resource_descriptor.second->handle;
 	release_assert__(descriptor != NULL, "Unable to find block name \"%s\" in the material", block_name);
@@ -768,4 +770,11 @@ RENDERER_API void vulkan_material_set_buffer(vulkan_material_t* material, const 
 
 	/* write the descriptor */
 	vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, buffer);
+}
+
+RENDERER_API const struct_descriptor_t* vulkan_material_get_interface(vulkan_material_t* material, const char* block_name)
+{
+	AUTO resource_descriptor = get_uniform_resource_descriptor(material, block_name);
+	_debug_assert__(resource_descriptor.second != NULL);
+	return &resource_descriptor.second->handle;
 }
