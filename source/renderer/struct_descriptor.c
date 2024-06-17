@@ -66,8 +66,8 @@ static field_type_align_t field_type_align_getter(void* user_data, u32 index)
 		{
 			.type = 0,
 			.is_array = field->is_array,
-			.align = struct_descriptor_alignof(descriptor),
-			.size = struct_descriptor_is_variable_sized(descriptor) ? 0 : struct_descriptor_sizeof(descriptor)
+			.align = struct_descriptor_alignof(field->record),
+			.size = struct_descriptor_is_variable_sized(field->record) ? 0 : struct_descriptor_sizeof(field->record)
 		};
 	}
 	return (field_type_align_t)
@@ -97,8 +97,8 @@ RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 		fields[i].offset = ((field_align - (offset % field_align)) % field_align) + offset;
 		offset = fields[i].offset + (fields[i].is_array ? get_array_size(&fields[i]) : fields[i].size);
 	}
-	descriptor->size = offset;
 	descriptor->align = descriptor->layout_callbacks.get_struct_align(field_type_align_getter, descriptor, descriptor->field_count, false);
+	descriptor->size = COM_GET_STRIDE_IN_ARRAY(offset, descriptor->align);
 }
 
 RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr)
@@ -118,20 +118,26 @@ RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor)
 	descriptor->ptr = NULL;
 }
 
-RENDERER_API u32 struct_descriptor_sizeof(struct_descriptor_t* descriptor)
+RENDERER_API u32 struct_descriptor_sizeof(const struct_descriptor_t* descriptor)
 {
 	_debug_assert__(descriptor != NULL);
 	_debug_assert__(!struct_descriptor_is_variable_sized(descriptor));
 	return descriptor->size;
 }
 
-RENDERER_API u32 struct_descriptor_alignof(struct_descriptor_t* descriptor)
+RENDERER_API u32 struct_descriptor_alignof(const struct_descriptor_t* descriptor)
 {
 	_debug_assert__(descriptor != NULL);
 	return descriptor->align;
 }
 
-RENDERER_API bool struct_descriptor_is_variable_sized(struct_descriptor_t* descriptor)
+RENDERER_API u32 struct_descriptor_offsetof(const struct_descriptor_t* descriptor, const char* name)
+{
+	AUTO handle = struct_descriptor_get_field_handle(descriptor, name);
+	return BIT64_UNPACK32(handle, 1);
+}
+
+RENDERER_API bool struct_descriptor_is_variable_sized(const struct_descriptor_t* descriptor)
 {
 	for(u32 i = 0; i < descriptor->field_count; i++)
 	{
@@ -164,14 +170,14 @@ static struct_field_t* get_field(struct_descriptor_t* descriptor, const char* na
 	return &descriptor->fields[index];
 }
 
-RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(struct_descriptor_t* descriptor, const char* name)
+RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(const struct_descriptor_t* descriptor, const char* name)
 {
 	_debug_assert__(descriptor != NULL);
 	_debug_assert__(descriptor->field_count < 0xFFFF);
 	_debug_assert__(name != NULL);
 
 	const char* ptr = strchr(name, '.');
-	AUTO field = get_field(descriptor, name, (ptr == NULL) ? strlen(name) : (ptr - name));
+	AUTO field = get_field(CAST_TO(struct_descriptor_t*, descriptor), name, (ptr == NULL) ? strlen(name) : (ptr - name));
 
 	if(field == NULL)
 	{

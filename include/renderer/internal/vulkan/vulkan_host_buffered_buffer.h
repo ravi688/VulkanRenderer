@@ -32,7 +32,9 @@
 
 typedef struct vulkan_host_buffered_buffer_create_info_t
 {
-	/* element size */
+	/* element size,
+	 * for-example: if we have an element of type vec3 and it has alignment of 16,
+	 * then array of such an elements will have stride = sizeof(vec3) + (alignof(vec3) - sizeof(vec3) % alignof(vec3)) % (alignof(vec3)) */
 	u32 stride;
 	/* number of elements that can be stored initially */
 	u32 capacity;

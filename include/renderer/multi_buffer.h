@@ -71,11 +71,13 @@ RENDERER_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* buffer, sub_bu
 
 // logic functions
 RENDERER_API void multi_buffer_sub_buffer_push(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value);
+RENDERER_API void multi_buffer_sub_buffer_push_n(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value, u32 max_size);
 RENDERER_API void multi_buffer_sub_buffer_push_back(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value);
 RENDERER_API void multi_buffer_sub_buffer_clear(multi_buffer_t* buffer, sub_buffer_handle_t handle);
 RENDERER_API buf_ucount_t multi_buffer_sub_buffer_find_index_of(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal);
 RENDERER_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal);
 #define sub_buffer_push multi_buffer_sub_buffer_push
+#define sub_buffer_push_n multi_buffer_sub_buffer_push_n
 #define sub_buffer_push_back multi_buffer_sub_buffer_push_back
 #define sub_buffer_clear multi_buffer_sub_buffer_clear
 #define sub_buffer_find_index_of multi_buffer_sub_buffer_find_index_of

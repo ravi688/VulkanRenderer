@@ -197,4 +197,6 @@ RENDERER_API void vulkan_material_set_texture(vulkan_material_t* material, const
 RENDERER_API void vulkan_material_set_array_size(vulkan_material_t* material, const char* name, u32 size);
 RENDERER_API void vulkan_material_set_buffer(vulkan_material_t* material, const char* block_name, vulkan_buffer_t* buffer);
 
+RENDERER_API const struct_descriptor_t* vulkan_material_get_interface(vulkan_material_t* material, const char* block_name);
+
 END_CPP_COMPATIBLE

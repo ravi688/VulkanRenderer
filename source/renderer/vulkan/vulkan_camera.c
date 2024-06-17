@@ -152,6 +152,10 @@ static void recalculate_projection_matrices(vulkan_camera_t* camera)
 	/* recalculate screen projection matrix */
 	set_screen_projection(camera, 
 		mat4_ortho_projection(-0.04f, 100, camera->render_area.extent.height, (float)camera->render_area.extent.width / (float)camera->render_area.extent.height));
+	debug_log_info("Projection Matrix: ");
+	mat4_print(camera->projection);
+	debug_log_info("Screen Matrix: ");
+	mat4_print(camera->screen);
 }
 
 static void recalculate_transform(vulkan_camera_t* camera)
