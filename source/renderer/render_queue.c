@@ -27,6 +27,7 @@
 #include <renderer/render_queue.h>
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
+#include <renderer/internal/vulkan/vulkan_render_object.h> /* VULKAN_RENDER_OBJECT() casting */
 
 RENDERER_API render_queue_t* render_queue_new(memory_allocator_t* allocator)
 {
@@ -55,14 +56,14 @@ RENDERER_API void render_queue_release_resources(render_queue_t* queue)
 
 
 /* logic functions */
-RENDERER_API render_object_handle_t render_queue_add(render_queue_t* queue, render_object_t* obj)
+RENDERER_API void render_queue_add(render_queue_t* queue, render_object_t* obj)
 {
-	return vulkan_render_queue_add(queue, obj);
+	return vulkan_render_queue_add(queue, VULKAN_RENDER_OBJECT(obj));
 }
 
-RENDERER_API void render_queue_removeH(render_queue_t* queue, render_object_handle_t handle)
+RENDERER_API void render_queue_removeH(render_queue_t* queue, render_object_t* obj)
 {
-	vulkan_render_queue_removeH(queue, handle);
+	vulkan_render_queue_removeH(queue, VULKAN_RENDER_OBJECT(obj));
 }
 
 RENDERER_API void render_queue_build(render_queue_t* queue)
