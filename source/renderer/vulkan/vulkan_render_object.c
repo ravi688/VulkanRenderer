@@ -162,16 +162,18 @@ RENDERER_API void vulkan_render_object_draw(vulkan_render_object_t* obj)
 RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* obj, vulkan_material_t* material)
 {
 	if(obj->material == material) return;
+	/* cache the queue as vulkan_render_queue_removeH internally sets the obj->queue to NULL */
+	AUTO queue = obj->queue;
 	/* remove the outdated data from the render queue if this object had been added earlier and material was non-null
 	 * because, if material was null but still the user tried to add this render object into a queue, then the queue would have 
 	 * ignored the addition request because the object was not-renderable */
-	if((obj->queue != NULL) && (obj->material != NULL))
+	if((queue != NULL) && (obj->material != NULL))
 		vulkan_render_queue_removeH(obj->queue, obj);
 	/* update the material of this object */
 	obj->material = material;
 	/* now add the object again into the render queue with the updated data (material) */
-	if(obj->queue != NULL)
-		vulkan_render_queue_add(obj->queue, obj);
+	if(queue != NULL)
+		vulkan_render_queue_add(queue, obj);
 	
 	if(obj->user_data != NULL)
 		obj->set_material(obj->user_data, material);
