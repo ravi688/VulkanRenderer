@@ -492,6 +492,11 @@ DEBUG_BLOCK
 	AUTO dpi = display_get_dpi();
 	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.dpi_field, CAST_TO(uint*, &dpi));
 
+	/* set the screen size and screen matrix
+	 * NOTE: this function is called whenever the window is resized, but we are calling it here for the first time to populate
+	 * window size and screen projection matrix, otherwise the values for the 'matrix' and 'window_size' fields in 'displayInfo' UBO will be garbage */
+	update_screen_info(renderer->window, renderer);
+
 	subscription = (event_subscription_create_info_t)
 	{
 		.handler = EVENT_HANDLER(update_screen_info),
