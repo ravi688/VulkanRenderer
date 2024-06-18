@@ -88,9 +88,14 @@ RENDERER_API void render_scene_release_resources(render_scene_t* scene)
 
 /* logic functions */
 
-RENDERER_API void render_scene_add_queue(render_scene_t* scene, render_queue_type_t queue_type)
+RENDERER_API void render_scene_create_queue(render_scene_t* scene, render_queue_type_t queue_type)
 {
-	vulkan_render_scene_add_queue(scene, REINTERPRET_TO(vulkan_render_queue_type_t, queue_type));
+	vulkan_render_scene_create_queue(scene, REINTERPRET_TO(vulkan_render_queue_type_t, queue_type));
+}
+
+RENDERER_API void render_scene_add_queue(render_scene_t* scene, render_queue_t* queue)
+{
+	vulkan_render_scene_add_queue(scene, VULKAN_RENDER_QUEUE(queue));
 }
 
 RENDERER_API void render_scene_render(render_scene_t* scene, u64 queue_mask, u32 flags)

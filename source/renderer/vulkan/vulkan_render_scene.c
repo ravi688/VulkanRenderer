@@ -58,14 +58,12 @@ RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* rendere
 	VULKAN_OBJECT_MEMZERO(scene, vulkan_render_scene_t);
 	_debug_assert__(sizeof(vulkan_render_queue_type_t) == sizeof(s32));
 	scene->renderer = renderer;
-	scene->queues = dictionary_create(vulkan_render_queue_type_t, vulkan_render_queue_t, 1, dictionary_key_comparer_s32);
+	scene->queues = dictionary_create(vulkan_render_queue_type_t, vulkan_render_queue_t*, 1, dictionary_key_comparer_s32);
 	if((create_info == NULL) || (create_info->required_queue_count == 0))
 		return;
 	for(u32 i = 0; i < create_info->required_queue_count; i++)
 	{
-		vulkan_render_queue_t queue;
-		VULKAN_OBJECT_INIT(&queue, VULKAN_OBJECT_TYPE_RENDER_QUEUE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
-		vulkan_render_queue_create_no_alloc(renderer, create_info->required_queues[i], &queue);
+		AUTO queue = vulkan_render_queue_create(renderer, create_info->required_queues[i]);
 		dictionary_add(&scene->queues, &create_info->required_queues[i], &queue);
 	}
 }
@@ -125,12 +123,19 @@ RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_mask(vulkan_
 	return scene;
 }
 
+static vulkan_render_queue_t* get_queue_at(vulkan_render_scene_t* scene, u32 index)
+{
+	vulkan_render_queue_t* queue;
+	dictionary_get_value_at(&scene->queues, index, &queue);
+	return VULKAN_RENDER_QUEUE(queue);
+}
+
 RENDERER_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene)
 {
 	u32 count = dictionary_get_count(&scene->queues);
 	for(u32 i = 0; i < count; i++)
 	{
-		vulkan_render_queue_t* queue = VULKAN_RENDER_QUEUE(dictionary_get_value_ptr_at(&scene->queues, i));
+		vulkan_render_queue_t* queue = get_queue_at(scene, i);
 		vulkan_render_queue_destroy_all_objects(queue);
 		vulkan_render_queue_destroy(queue);
 	}
@@ -140,7 +145,7 @@ RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* s
 {
 	u32 count = dictionary_get_count(&scene->queues);
 	for(u32 i = 0; i < count; i++)
-		vulkan_render_queue_release_resources(VULKAN_RENDER_QUEUE(dictionary_get_value_ptr_at(&scene->queues, i)));
+		vulkan_render_queue_release_resources(get_queue_at(scene, i));
 	dictionary_free(&scene->queues);
 	if(VULKAN_OBJECT_IS_INTERNAL(scene))
 		memory_allocator_dealloc(scene->renderer->allocator, scene);
@@ -149,17 +154,21 @@ RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* s
 
 /* logic functions */
 
-RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type)
+RENDERER_API void vulkan_render_scene_create_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type)
 {
 	if(dictionary_contains(&scene->queues, &queue_type))
 	{
 		log_wrn("vulkan render scene already has render queue of type %u, but you are still trying to add it\n", queue_type);
 		return;
 	}
-	vulkan_render_queue_t queue;
-	VULKAN_OBJECT_INIT(&queue, VULKAN_OBJECT_TYPE_RENDER_QUEUE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
-	vulkan_render_queue_create_no_alloc(scene->renderer, queue_type, &queue);
-	dictionary_add(&scene->queues, &queue_type, &queue);
+	AUTO queue = vulkan_render_queue_create(scene->renderer, queue_type);
+	vulkan_render_scene_add_queue(scene, queue);
+}
+
+RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_t* queue)
+{
+	dictionary_add(&scene->queues, &queue->type, &queue);
+	queue->scene = scene;
 }
 
 RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 flags)
@@ -194,7 +203,7 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 			{
 				AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, i));
 				if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
-					vulkan_render_queue_dispatch(VULKAN_RENDER_QUEUE(dictionary_get_value_ptr_at(&scene->queues, i)), camera);
+					vulkan_render_queue_dispatch(get_queue_at(scene, i), camera);
 			}
 		}
 		
@@ -204,7 +213,7 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 
 RENDERER_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle)
 {
-	return handle.object_handle;
+	return handle.object;
 }
 
 RENDERER_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_object(vulkan_render_scene_t* scene, vulkan_render_object_type_t object_type, vulkan_render_queue_type_t queue_type)
@@ -214,24 +223,19 @@ RENDERER_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_obje
 	buf_ucount_t queue_index = dictionary_find_index_of(&scene->queues, &REINTERPRET_TO(vulkan_render_queue_type_t, queue_type));
 	if(queue_index == DICTIONARY_INVALID_INDEX)
 		LOG_FETAL_ERR("render scene doesn't contain the requested queue type %u\n", queue_type);
-	vulkan_render_queue_t* queue = VULKAN_RENDER_QUEUE(dictionary_get_value_ptr_at(&scene->queues, queue_index));
-	_debug_assert__(sizeof(buf_ucount_t) == sizeof(vulkan_render_queue_handle_t));
-	vulkan_render_object_handle_t handle = vulkan_render_queue_add(queue, object);
-	
-	/* the handel must be invalid as there is no material attached to the render object (it is just newly created!) */
-	_debug_assert__(handle == VULKAN_RENDER_OBJECT_HANDLE_INVALID);
-
+	vulkan_render_queue_t* queue = get_queue_at(scene, queue_index);
+	vulkan_render_queue_add(queue, object);
+	_debug_assert__(object->material == NULL);
 	return (vulkan_render_scene_object_handle_t) 
 	{ 
-		(handle == VULKAN_RENDER_OBJECT_HANDLE_INVALID) ? object : handle, 
-		queue_index 
+		object, 
+		queue 
 	};
 }
 
 RENDERER_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle)
 {
-	vulkan_render_queue_t* queue = VULKAN_RENDER_QUEUE(dictionary_get_value_ptr_at(&scene->queues, handle.queue_handle));
-	vulkan_render_queue_removeH(queue, handle.object_handle);
+	vulkan_render_queue_removeH(handle.queue, handle.object);
 }
 
 RENDERER_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene)
@@ -240,7 +244,7 @@ RENDERER_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene)
 	u32 count = dictionary_get_count(&scene->queues);
 	for(u32 i = 0; i < count; i++)
 	{
-		AUTO queue = VULKAN_RENDER_QUEUE(dictionary_get_value_ptr_at(&scene->queues, i));
+		AUTO queue = get_queue_at(scene, i);
 		debug_log_info("Queue type: %s", vulkan_render_queue_type_str(queue->type));
 		vulkan_render_queue_build(queue);
 	}

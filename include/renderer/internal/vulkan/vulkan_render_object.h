@@ -65,14 +65,17 @@ typedef struct vulkan_render_object_create_info_t
 } vulkan_render_object_create_info_t;
 
 typedef struct vulkan_render_queue_t vulkan_render_queue_t;
+typedef struct vulkan_render_scene_t vulkan_render_scene_t;
 
 typedef struct vulkan_render_object_t
 {
 	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 
-	vulkan_render_queue_t* queue;			 // ptr to the queue in which this object is
-	vulkan_render_object_handle_t handle;	 // handle to this object in the render queue
+	/* pointer to the queue in which this resides, it may be NULL if not added in any queue 
+	 * it will be assigned non-null value whenever you call vulkan_render_queue_add or vulkan_render_scene_create_object 
+	 * no writes are performed in this class (vuklan render object) */
+	vulkan_render_queue_t* queue;
 
 	vulkan_material_t* material;
 	void* user_data;

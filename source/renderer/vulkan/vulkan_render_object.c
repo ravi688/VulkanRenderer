@@ -100,7 +100,6 @@ RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* render
 	VULKAN_OBJECT_MEMZERO(object, vulkan_render_object_t);
 
 	object->renderer = renderer;
-	object->handle = VULKAN_RENDER_OBJECT_HANDLE_INVALID;
 	object->material = create_info->material;
 	object->user_data = create_info->user_data;
 
@@ -131,8 +130,8 @@ RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* render
 
 RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* obj)
 {
-	if((obj->queue != NULL) && (obj->handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID))
-		vulkan_render_queue_removeH(obj->queue, obj->handle);
+	if(obj->queue != NULL)
+		vulkan_render_queue_removeH(obj->queue, obj);
 	vulkan_descriptor_set_destroy(&obj->object_set);
 	struct_descriptor_unmap(&obj->struct_definition);
 	vulkan_buffer_unmap(&obj->buffer);
@@ -163,11 +162,16 @@ RENDERER_API void vulkan_render_object_draw(vulkan_render_object_t* obj)
 RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* obj, vulkan_material_t* material)
 {
 	if(obj->material == material) return;
-	if((obj->queue != NULL) && (obj->handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID))
-		vulkan_render_queue_removeH(obj->queue, obj->handle);
+	/* remove the outdated data from the render queue if this object had been added earlier and material was non-null
+	 * because, if material was null but still the user tried to add this render object into a queue, then the queue would have 
+	 * ignored the addition request because the object was not-renderable */
+	if((obj->queue != NULL) && (obj->material != NULL))
+		vulkan_render_queue_removeH(obj->queue, obj);
+	/* update the material of this object */
 	obj->material = material;
-	CAN_BE_UNUSED_VARIABLE vulkan_render_object_handle_t handle = vulkan_render_queue_add(obj->queue, obj);
-	_debug_assert__(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
+	/* now add the object again into the render queue with the updated data (material) */
+	if(obj->queue != NULL)
+		vulkan_render_queue_add(obj->queue, obj);
 	
 	if(obj->user_data != NULL)
 		obj->set_material(obj->user_data, material);
