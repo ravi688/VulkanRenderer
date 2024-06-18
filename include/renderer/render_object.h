@@ -33,7 +33,6 @@
 	typedef struct vulkan_render_object_t vulkan_render_object_t;
 	typedef vulkan_render_object_t render_object_t;
 	#include <renderer/internal/vulkan/vulkan_handles.h>
-	typedef vulkan_render_object_handle_t render_object_handle_t;
 	#define RENDER_OBJECT_HANDLE_INVALID VULKAN_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct vulkan_material_t vulkan_material_t;
 	typedef vulkan_material_t material_t;
@@ -41,7 +40,6 @@
 	typedef struct opengl_render_object_t opengl_render_object_t;
 	typedef opengl_render_object_t render_object_t;
 	#include <renderer/internal/opengl/opengl_handles.h>
-	typedef opengl_render_object_handle_t render_object_handle_t;
 	#define RENDER_OBJECT_HANDLE_INVALID OPENGL_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct opengl_material_t opengl_material_t;
 	typedef opengl_material_t material_t;
@@ -49,7 +47,6 @@
 	typedef struct directx_render_object_t directx_render_object_t;
 	typedef directx_render_object_t render_object_t;
 	#include <renderer/internal/directx/directx_handles.h>
-	typedef directx_render_object_handle_t render_object_handle_t;
 	#define RENDER_OBJECT_HANDLE_INVALID DIRECTX_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct directx_material_t directx_material_t;
 	typedef directx_material_t material_t;
@@ -57,7 +54,6 @@
 	typedef struct metal_render_object_t metal_render_object_t;
 	typedef metal_render_object_t metal_render_object_t;
 	#include <renderer/internal/metal/metal_handles.h>
-	typedef metal_render_object_handle_t render_object_handle_t;
 	#define RENDER_OBJECT_HANDLE_INVALID METAL_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct metal_material_t metal_material_t;
 	typedef metal_material_t material_t;

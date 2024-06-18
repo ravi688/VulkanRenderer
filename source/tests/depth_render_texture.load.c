@@ -183,7 +183,7 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
 	this->uiMaterial = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->uiShaderH, "UIMaterial"));
 	this->uiMaterial2 = material_library_getH(this->mlib, material_library_create_materialH(this->mlib, this->uiShaderH2, "UIMaterial2"));
 
-	render_scene_add_queue(this->scene, RENDER_QUEUE_TYPE_QUEUE0);
+	render_scene_create_queue(this->scene, RENDER_QUEUE_TYPE_QUEUE0);
 	AUTO planeMeshData2 = mesh3d_plane(renderer->allocator, 400);
 	this->quadMesh = mesh_create(renderer, planeMeshData2);
 	mesh3d_destroy(planeMeshData2);

@@ -30,7 +30,7 @@
 #include <renderer/defines.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>	 		// for vulkan_render_queue_type_t
 #include <renderer/internal/vulkan/vulkan_render_object.h> 			// for vulkan_render_object_type_t
-#include <renderer/internal/vulkan/vulkan_handles.h> 				// for vulkan_render_scene_handle_t
+#include <renderer/internal/vulkan/vulkan_handles.h> 				// for vulkan_render_scene_handle_t, vulkan_render_queue_handle_t
 #include <renderer/internal/vulkan/vulkan_object.h>
 #include <renderer/dictionary.h>
 
@@ -53,7 +53,7 @@ typedef struct vulkan_render_scene_t
 {
 	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
-	dictionary_t queues;
+	dictionary_t /* key: vulkan_render_queue_type_t, value: vulkan_render_queue_t* */ queues;
 } vulkan_render_scene_t;
 
 #define VULKAN_RENDER_SCENE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
@@ -70,7 +70,9 @@ RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* s
 
 /* logic functions */
 
-RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type);
+RENDERER_API void vulkan_render_scene_create_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type);
+typedef struct vulkan_render_queue_t vulkan_render_queue_t;
+RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_t* queue);
 #define VULKAN_RENDER_SCENE_ALL_QUEUES (~0ULL)
 #define VULKAN_RENDER_SCENE_DONT_CARE 1UL
 #define VULKAN_RENDER_SCENE_CLEAR 0UL

@@ -141,12 +141,17 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const char* vulkan_render_q
 	return "<undefined>";
 }
 
+typedef struct vulkan_render_scene_t vulkan_render_scene_t;
+
 typedef struct vulkan_render_queue_t
 {
 	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 
-	vulkan_render_queue_handle_t handle;  // handle to this queue in the vulkan render scene
+	/* pointer to the scene object in which this queue resides 
+	 * it will be assigned non-null value whenever you call vulkan_render_scene_add_queue or vulkan_render_scene_create_queue 
+	 * no writes will be performed in this class (vulkan render queue) */
+	vulkan_render_scene_t* scene;
 
 	/* type of this queue */
 	vulkan_render_queue_type_t type;
@@ -225,7 +230,7 @@ RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t*
 		you would still need to call render_queue_build()
 		Adding render object into the queue sets is_ready to false
  */
-RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
+RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
 
 /*
 	description: Removes a render object from the render queue
@@ -238,7 +243,7 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 		you would still need to call render_queue_build()
 		Removing render object from the queue sets is_ready to false
  */
-RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_handle_t handle);
+RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
 
 /*
 	description: Builds and Orders the render objects according to the render pass handles

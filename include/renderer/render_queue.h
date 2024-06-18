@@ -36,10 +36,6 @@
 	typedef struct vulkan_render_object_t vulkan_render_object_t;
 	typedef vulkan_render_object_t render_object_t;
 	#include <renderer/internal/vulkan/vulkan_handles.h>
-	typedef vulkan_render_object_handle_t render_object_handle_t;
-	#define RENDER_OBJECT_HANDLE_INVALID VULKAN_RENDER_OBJECT_HANDLE_INVALID
-	typedef vulkan_render_queue_handle_t render_queue_handle_t;
-	#define RENDER_QUEUE_HANDLE_INVALID VULKAN_RENDER_QUEUE_HANDLE_INVALID
 
 	typedef struct vulkan_camera_t vulkan_camera_t;
 	typedef vulkan_camera_t camera_t;
@@ -50,10 +46,6 @@
 	typedef struct opengl_render_object_t opengl_render_object_t;
 	typedef opengl_render_object_t render_object_t;
 	#include <renderer/internal/opengl/opengl_handles.h>
-	typedef opengl_render_object_handle_t render_object_handle_t;
-	#define RENDER_OBJECT_HANDLE_INVALID OPENGL_RENDER_OBJECT_HANDLE_INVALID
-	typedef opengl_render_queue_handle_t render_queue_handle_t;
-	#define RENDER_QUEUE_HANDLE_INVALID OPENGL_RENDER_QUEUE_HANDLE_INVALID
 
 	typedef struct opengl_camera_t opengl_camera_t;
 	typedef opengl_camera_t camera_t;
@@ -64,10 +56,6 @@
 	typedef struct directx_render_object_t directx_render_object_t;
 	typedef directx_render_object_t render_object_t;
 	#include <renderer/internal/directx/directx_handles.h>
-	typedef directx_render_object_handle_t render_object_handle_t;
-	#define RENDER_OBJECT_HANDLE_INVALID DIRECTX_RENDER_OBJECT_HANDLE_INVALID
-	typedef directx_render_queue_handle_t render_queue_handle_t;
-	#define RENDER_QUEUE_HANDLE_INVALID DIRECTX_RENDER_QUEUE_HANDLE_INVALID
 
 	typedef struct directx_camera_t directx_camera_t;
 	typedef directx_camera_t camera_t;
@@ -78,10 +66,6 @@
 	typedef struct metal_render_object_t metal_render_object_t;
 	typedef metal_render_object_t render_object_t;
 	#include <renderer/internal/metal/metal_handles.h>
-	typedef metal_render_object_handle_t render_object_handle_t;
-	#define RENDER_OBJECT_HANDLE_INVALID METAL_RENDER_OBJECT_HANDLE_INVALID
-	typedef metal_render_queue_handle_t render_queue_handle_t;
-	#define RENDER_QUEUE_HANDLE_INVALID METAL_RENDER_QUEUE_HANDLE_INVALID
 
 	typedef struct metal_camera_t metal_camera_t;
 	typedef metal_camera_t camera_t;
@@ -161,7 +145,7 @@ RENDERER_API void render_queue_release_resources(render_queue_t* queue);
 		you would still need to call render_queue_build()
 		Adding render object into the queue sets is_ready to false
  */
-RENDERER_API render_object_handle_t render_queue_add(render_queue_t* queue, render_object_t* obj);
+RENDERER_API void render_queue_add(render_queue_t* queue, render_object_t* obj);
 
 /*
 	description: Removes a render object from the render queue
@@ -174,7 +158,7 @@ RENDERER_API render_object_handle_t render_queue_add(render_queue_t* queue, rend
 		you would still need to call render_queue_build()
 		Removing render object from the queue sets is_ready to false
  */
-RENDERER_API void render_queue_removeH(render_queue_t* queue, render_object_handle_t handle);
+RENDERER_API void render_queue_removeH(render_queue_t* queue, render_object_t* obj);
 
 /*
 	description: Builds and Orders the render objects according to the render pass handles

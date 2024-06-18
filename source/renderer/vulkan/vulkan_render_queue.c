@@ -63,7 +63,6 @@ RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* rendere
 {
 	VULKAN_OBJECT_MEMZERO(queue, vulkan_render_queue_t);
 
-	queue->handle = VULKAN_RENDER_QUEUE_HANDLE_INVALID;
 	queue->type = type;
 	queue->renderer = renderer;
 	_debug_assert__(sizeof(vulkan_render_pass_handle_t) == sizeof(buf_ucount_t));
@@ -77,6 +76,9 @@ RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* rendere
 
 RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 {
+	/* TODO:
+	 * if(queue->scene != NULL)
+	 * 		vulkan_render_scene_remove_queue(queue->scene, queue) */
 	buf_ucount_t count = dictionary_get_count(&queue->render_pass_handles);
 	for(buf_ucount_t i = 0; i < count; i++)
 	{
@@ -102,7 +104,6 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 				vulkan_render_object_t* obj;
 				buf_get_at(list, k, &obj);
 				obj->queue = NULL;
-				obj->handle = VULKAN_RENDER_OBJECT_HANDLE_INVALID;
 			}
 			buf_free(list);
 		}
@@ -153,14 +154,19 @@ RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t*
 	}
 }
 
-RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj)
+RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj)
 {
+	/* we need to preserve reference to the queue whether the object has material or not,
+	 * as it might be possible the user want to add the render object first
+	 * and then set material to the object. */
 	obj->queue = queue;
-	obj->handle = VULKAN_RENDER_OBJECT_HANDLE_INVALID;
-
+	
 	/* if no material is attached then this object is not renderable (not visible at all, so no need to add it into the render queue */
 	if(obj->material == NULL)
-		return VULKAN_RENDER_OBJECT_HANDLE_INVALID;
+	{
+		debug_log_warning("No Material has been assigned to the render object but you're still trying to add it to a render queue, ignored");
+		return;
+	}
 
 	/* if this shader doesn't exists then add it */
 	if(!dictionary_contains(&queue->shader_handles, &obj->material->shader->handle))
@@ -210,8 +216,6 @@ RENDERER_API vulkan_render_object_handle_t vulkan_render_queue_add(vulkan_render
 				buf_push(&lists[j], &obj->material->shader->handle);
 		}
 	}
-	obj->handle = obj;
-	return obj;
 }
 
 // TODO
@@ -219,18 +223,15 @@ RENDERER_API void vulkan_render_queue_remove_materialH();
 RENDERER_API void vulkan_render_queue_remove_render_passH();
 RENDERER_API void vulkan_render_queue_remove_shaderH();
 
-RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_handle_t handle)
+RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_t* object)
 {
-	_debug_assert__(handle != VULKAN_RENDER_OBJECT_HANDLE_INVALID);
-	vulkan_render_object_t* object = handle;
 	material_and_render_object_list_map_t* map = dictionary_get_value_ptr(&queue->shader_handles, &object->material->shader->handle);
 	render_object_list_t* list = dictionary_get_value_ptr(map, &object->material->handle);
 	buf_ucount_t index = buf_find_index_of(list, &object, buf_ptr_comparer);
 	if(index == BUF_INVALID_INDEX)
 		LOG_WRN("remove failed, render object isn't found in the queue\n");
 	buf_remove_at(list, index, NULL);
-	// object->queue = NULL;
-	object->handle = VULKAN_RENDER_OBJECT_HANDLE_INVALID;
+	object->queue = NULL;
 }
 
 RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
