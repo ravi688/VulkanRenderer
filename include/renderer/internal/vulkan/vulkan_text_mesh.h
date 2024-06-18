@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /*
 	***This is computer generated notice - Do not modify it***
 
