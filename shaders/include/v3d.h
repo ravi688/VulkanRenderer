@@ -214,10 +214,10 @@ CameraInfo\
 
 
 
-#define CAMERA layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo
-#define LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform Light
-#define DIRECTIONAL_LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight
-#define POINT_LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight
-#define SPOT_LIGHT layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight
-#define MATERIAL_PROPERTIES layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Properties
-#define OBJECT layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo
+#define CAMERA layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo
+#define LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform Light
+#define DIRECTIONAL_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight
+#define POINT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight
+#define SPOT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight
+#define MATERIAL_PROPERTIES layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Properties
+#define OBJECT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo

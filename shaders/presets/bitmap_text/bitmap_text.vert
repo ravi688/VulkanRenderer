@@ -29,7 +29,7 @@
 
 #include <v3d.h>
 
-layout(set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
 {
     uvec2 resolution;
     uvec2 dpi;
@@ -47,7 +47,7 @@ struct Color
     float b;
 };
 
-layout(std430, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
     uvec2 tex_size;
     Color color;
@@ -63,12 +63,12 @@ struct GlyphTexCoord
     vec2 bltc;
 };
 
-layout(std430, set = MATERIAL_SET, binding = TEXTURE_BINDING1) uniform GTCBuffer
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = TEXTURE_BINDING1) uniform GTCBuffer
 {
     GlyphTexCoord[512] gtc_buffer;
 };
 
-layout(std430, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer
 {
     mat4[128] tst_buffer;
 };
