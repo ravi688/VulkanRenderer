@@ -25,11 +25,9 @@
 
 #version 450
 
-#extension GL_EXT_scalar_block_layout : enable
-
 #include <v3d.h>
 
-layout(set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
 {
     uvec2 resolution;
     uvec2 dpi;
@@ -37,8 +35,8 @@ layout(set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
     mat4 matrix;
 } displayInfo;
 
-layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
-layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
 struct Color
 {
@@ -47,14 +45,14 @@ struct Color
     float b;
 };
 
-layout(std430, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
     Color color;
     int space_type;
     int surface_type;
 } parameters;
 
-layout(std430, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer
 {
     mat4[128] tst_buffer;
 };
