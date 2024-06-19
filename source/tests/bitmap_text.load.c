@@ -651,6 +651,15 @@ static void test_bufferlib()
 
 TEST_ON_INITIALIZE(BITMAP_TEXT_LOAD)
 {
+	test_hash_table();
+	test_bitmap();
+	test_buffer2d_view(renderer);
+	test_buffer2d(renderer);
+	test_glyph_rasterization(renderer);
+	test_buffer2d_backed_buffer_dump(renderer);
+	test_glyph_packing(renderer);
+	test_bufferlib();
+
 	AUTO camera_system = renderer_get_camera_system(renderer);
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
@@ -689,10 +698,16 @@ TEST_ON_INITIALIZE(BITMAP_TEXT_LOAD)
 	this->text = bitmap_text_create(renderer, this->texture);
 	this->text_string_handle = bitmap_text_string_create(this->text);
 	this->another_string_handle = bitmap_text_string_create(this->text);
-	bitmap_text_string_set_point_sizeH(this->text, this->another_string_handle, 24);
+	bitmap_text_string_set_point_sizeH(this->text, this->another_string_handle, 20);
 	bitmap_text_string_set_point_sizeH(this->text, this->text_string_handle, 35);
-	bitmap_text_string_setH(this->text, this->another_string_handle, "Hardwork with dedication suffices to c");
-	bitmap_text_string_setH(this->text, this->text_string_handle, "Hardwork with dedication suffices to c: 1234324");
+	bitmap_text_string_setH(this->text, this->another_string_handle, "abcdefgh");
+	bitmap_text_string_setH(this->text, this->text_string_handle, "ABCDEFGH1234567890ABCDEFGH1234567890aj0w3e9r723908423740hjdslfakjsdhv;xczkjvnxz;lfkdjferwq90re873094");
+
+	AUTO str = bitmap_text_string_create(this->text);
+	bitmap_text_string_set_point_sizeH(this->text, str, 35);
+	bitmap_text_string_setH(this->text, str, "How are you?@@@$#$$%^^&&^%$#%#$");
+
+	bitmap_text_string_set_transformH(this->text, str, mat4_translation(0.0f, 300.0f, -400.0f));
 
 	#ifdef GLOBAL_DEBUG
 	bitmap_glyph_atlas_texture_dump(this->texture, "bitmap_glyph_atlas_texture.dump.bmp");
@@ -704,15 +719,6 @@ TEST_ON_INITIALIZE(BITMAP_TEXT_LOAD)
 	bitmap_text_string_set_transformH(this->text, this->text_string_handle, mat4_translation(0.0f, 400.0f, -400.0f));
 
 	render_scene_build_queues(this->scene);
-
-	test_hash_table();
-	test_bitmap();
-	test_buffer2d_view(renderer);
-	test_buffer2d(renderer);
-	test_glyph_rasterization(renderer);
-	test_buffer2d_backed_buffer_dump(renderer);
-	test_glyph_packing(renderer);
-	test_bufferlib();
 
 	#if DBG_ENABLED(BUFFER2D_RESIZE)
 		memory_allocator_dealloc(renderer->allocator, user_data);
