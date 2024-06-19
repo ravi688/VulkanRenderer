@@ -80,8 +80,7 @@ static field_type_align_t field_type_align_getter(void* user_data, u32 index)
 static u32 get_array_size(struct_field_t* field)
 {
 	_debug_assert__(field->is_array);
-	u32 stride = field->size + field->alignment % field->size;
-	return stride * field->array_size;
+	return com_get_stride_in_array(field->size, field->alignment) * field->array_size;
 }
 
 RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
