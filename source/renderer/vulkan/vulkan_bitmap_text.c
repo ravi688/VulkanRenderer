@@ -622,7 +622,8 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 static void text_string_set_point_size(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, u32 point_size)
 {
 	text_string->point_size = point_size;
-	text_string_set(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
+	if(buf_get_element_count(&text_string->chars) > 0)
+		text_string_set(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
 }
 
 RENDERER_API void vulkan_bitmap_text_set_glyph_layout_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_layout_handler_t handler, void* user_data)
