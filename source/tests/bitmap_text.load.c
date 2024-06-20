@@ -5,7 +5,7 @@
 	such as toolchains written by the same author) is a software to render 
 	2D & 3D geometries by writing C/C++ code and shaders.
 
-	File: bitmap_text.c is a part of VulkanRenderer
+	File: bitmap_text.load.c is a part of VulkanRenderer
 
 	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh
 
