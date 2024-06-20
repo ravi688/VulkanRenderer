@@ -70,12 +70,14 @@ Shader
 			int exponent;
 		}
 
+		[MemLayout(std430)]
 		struct FloatPair
 		{
 			PackedFloat first;
 			PackedFloat second;
 		}
 
+		[MemLayout(scalar)]
 		struct Color
 		{
 			FloatPair r;
@@ -88,9 +90,10 @@ Shader
 			float _a;
 		};
 
+		[MemLayout(std430)]
 		[Stage(fragment, vertex)]
 		[Set(material_set, material_properties)]
-		uniform Parameters
+		buffer Parameters
 		{
 			vec4 color;
 			Color speculars[];

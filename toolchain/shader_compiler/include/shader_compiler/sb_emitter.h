@@ -3,7 +3,7 @@
 #include <shader_compiler/defines.h>
 #include <shader_compiler/compiler/codegen/codegen_buffer.h> /* codegen_buffer_t */
 #include <shader_compiler/compiler/codegen/header.h> /* sb_version_t */
-#include <glslcommon/glsl_types.h> /* glsl_type_t */
+#include <glslcommon/glsl_types.h> /* glsl_type_t, glsl_memory_layout_t */
 #include <bufferlib/buffer.h> /* buffer_t */
 
 typedef enum vertex_input_rate_t
@@ -17,6 +17,25 @@ typedef enum storage_class_t
 	STORAGE_CLASS_UNIFORM,
 	STORAGE_CLASS_BUFFER
 } storage_class_t;
+
+/* user defined aggregate layout */
+typedef enum udat_layout_t
+{
+	SCALAR_LAYOUT,
+	STD430_LAYOUT,
+	STD140_LAYOUT
+} udat_layout_t;
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE udat_layout_t get_udat_layout_from_glsl_memory_layout(const glsl_memory_layout_t layout)
+{
+	switch(layout)
+	{
+		case GLSL_SCALAR: return SCALAR_LAYOUT;
+		case GLSL_STD430: return STD430_LAYOUT;
+		case GLSL_STD140: return STD140_LAYOUT;
+		default: _assert(false); return SCALAR_LAYOUT;
+	}
+}
 
 #define VERTEX_ATTRIBUTE_NAME_MAX_SIZE 64
 #define SHADER_PROPERTY_NAME_MAX_SIZE 64

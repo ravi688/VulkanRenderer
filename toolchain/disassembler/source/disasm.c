@@ -465,6 +465,35 @@ static void disasm_renderpasses(disassembler_t* disasm, BUFFER* str)
 #define UDAT_BIT BIT32(31)
 #define ARRAY_BIT BIT32(30)
 
+/* see the SB2023.2 spec */
+typedef enum mem_layout_t
+{
+	SCALAR = 0,
+	STD430 = 1,
+	STD140 = 2
+} mem_layout_t;
+
+#define UDAT_LAYOUT_FORCE_BIT BIT8(7)
+
+static const char* mem_layout_to_string(mem_layout_t mem_layout)
+{
+	switch(mem_layout)
+	{
+		CASE_RETURN_STR(SCALAR);
+		CASE_RETURN_STR(STD430);
+		CASE_RETURN_STR(STD140);
+		default: return "<invalid mem_layout>";
+	};
+}
+
+static void decode_mem_layout(disassembler_t* disasm, BUFFER* str)
+{
+	binary_reader_t* reader = disasm->reader;
+	u8 bits = binary_reader_u8(reader);
+	u8 mem_layout = bits & 0x7fu;
+	_printf(str, "\tmem_layout: %s, forced: %s\n", mem_layout_to_string(mem_layout), HAS_FLAG(bits, UDAT_LAYOUT_FORCE_BIT) ? "true" : "false");
+}
+
 static void disasm_udat(disassembler_t* disasm, BUFFER* str, u32 offset)
 {
 	binary_reader_t* reader = disasm->reader;
@@ -476,6 +505,7 @@ static void disasm_udat(disassembler_t* disasm, BUFFER* str, u32 offset)
 	binary_reader_push(reader);
 	binary_reader_jump(reader, offset);
 	_printf(str, "\nUDAT block_name: %s\n", binary_reader_str(reader));
+	decode_mem_layout(disasm, str);
 	u16 num_fields = binary_reader_u16(reader);
 	for(u32 i = 0; i < num_fields; i++)
 	{
@@ -503,6 +533,7 @@ static void disasm_udat2(disassembler_t* disasm, BUFFER* str)
 {
 	binary_reader_t* reader = disasm->reader;
 	_printf(str, "\nUDAT block_name: %s\n", binary_reader_str(reader));
+	decode_mem_layout(disasm, str);
 	u16 num_fields = binary_reader_u16(reader);
 	for(u32 i = 0; i < num_fields; i++)
 	{
