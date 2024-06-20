@@ -159,7 +159,7 @@ static u32 get_encoded_type_info(shader_property_info_t* info)
 		bits |= FRAGMENT_BIT;
 	if(info->storage == STORAGE_CLASS_BUFFER)
 	{
-		_com_assert(info->type );
+		_com_assert(info->type == GLSL_TYPE_STORAGE_BUFFER);
 		bits |= STORAGE_BUFFER_BIT;
 	}
 	else if(info->storage == STORAGE_CLASS_UNIFORM)

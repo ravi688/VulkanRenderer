@@ -1472,7 +1472,29 @@ typedef struct shader_binary_read_context_t
 
 #define UDAT_BIT BIT32(31)
 #define ARRAY_BIT BIT32(30)
-static struct_descriptor_t* get_udat(memory_allocator_t* allocator, binary_reader_t* reader)
+#define LAYOUT_FORCE_BIT BIT8(7)
+
+/* see the SB2023.2 spec */
+typedef enum udat_layout_t
+{
+	SCALAR = 0,
+	STD430 = 1,
+	STD140 = 2
+} udat_layout_t;
+
+static memory_layout_provider_callbacks_t get_glsl_memory_layout_callbacks_from_udat_layout(u8 udat_layout)
+{
+	switch(udat_layout & 0x7fu)
+	{
+		case SCALAR: return glsl_scalar_memory_layout_callbacks();
+		case STD430: return glsl_std430_memory_layout_callbacks();
+		case STD140: return glsl_std140_memory_layout_callbacks();
+		default: DEBUG_LOG_FETAL_ERROR("Unrecognized udat layout: %u", udat_layout);
+	}
+	return glsl_scalar_memory_layout_callbacks();
+}
+
+static struct_descriptor_t* get_udat(memory_allocator_t* allocator, binary_reader_t* reader, u8 parent_udat_layout)
 {
 	/* save the current state and jump to where the udat definition is located in the shader binary */
 	AUTO udat_offset = binary_reader_u32(reader);
@@ -1482,7 +1504,13 @@ static struct_descriptor_t* get_udat(memory_allocator_t* allocator, binary_reade
 	struct_descriptor_t* udat = struct_descriptor_create(allocator);
 	/* read the name of this udat */
 	const char* udat_name = binary_reader_str(reader);
-	struct_descriptor_begin(allocator, udat, udat_name, GLSL_TYPE_MAX_NON_OPAQUE, GLSL_MEMORY_LAYOUT_CALLBACKS);
+	
+	/* read the layout */
+	u8 udat_layout = binary_reader_u8(reader);
+	/* if there is no LAYOUT_FORCE_BIT flag set for this udat, then use the parent's udat layout,
+	 * otherwise enforce its own udat_layout */
+	struct_descriptor_begin(allocator, udat, udat_name, GLSL_TYPE_MAX_NON_OPAQUE, get_glsl_memory_layout_callbacks_from_udat_layout(HAS_FLAG(udat_layout, LAYOUT_FORCE_BIT) ? udat_layout : parent_udat_layout));
+	
 	/* read number of fields in this udat */
 	AUTO num_fields = binary_reader_u16(reader);
 	log_msg("Field Count: %u\n", num_fields);
@@ -1494,7 +1522,7 @@ static struct_descriptor_t* get_udat(memory_allocator_t* allocator, binary_reade
 		if(HAS_FLAG(field_info, UDAT_BIT))
 		{
 			/* then recursively read and build another struct_descriptor_t representing that udat */
-			struct_descriptor_t* udat_field = get_udat(allocator, reader);
+			struct_descriptor_t* udat_field = get_udat(allocator, reader, udat_layout);
 			/* next read the identifier name of the udat we just read above */
 			const char* ident_name = binary_reader_str(reader);
 			if(HAS_FLAG(field_info, ARRAY_BIT))
@@ -1571,7 +1599,6 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 			|| (descriptor_type == GLSL_TYPE_STORAGE_BUFFER)
 			|| (descriptor_type == GLSL_TYPE_PUSH_CONSTANT);
 
-		struct_descriptor_begin(allocator, struct_def, "", descriptor_type, GLSL_MEMORY_LAYOUT_CALLBACKS);
 		/* if the descriptor is a block then iterate through its fields */
 		if(is_block)
 		{
@@ -1583,6 +1610,9 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 			/* ignore the block name */
 			CAN_BE_UNUSED_VARIABLE const char* name = binary_reader_str(reader);
 			_debug_assert__(strlen(name) < STRUCT_DESCRIPTOR_MAX_NAME_SIZE);
+
+			u8 udat_layout = binary_reader_u8(reader);
+			struct_descriptor_begin(allocator, struct_def, "", descriptor_type, get_glsl_memory_layout_callbacks_from_udat_layout(udat_layout));
 
 			/* get the number of fields in this uniform block */
 			u16 field_count = binary_reader_u16(reader);
@@ -1596,7 +1626,7 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 				/* get the type of the fields */
 				if(HAS_FLAG(field_info, UDAT_BIT))
 				{
-					struct_descriptor_t* udat_field = get_udat(allocator, reader);
+					struct_descriptor_t* udat_field = get_udat(allocator, reader, udat_layout);
 					const char* name = binary_reader_str(reader);
 					if(HAS_FLAG(field_info, ARRAY_BIT))
 					{
@@ -1622,6 +1652,7 @@ static vulkan_shader_resource_description_t* load_descriptors(memory_allocator_t
 			}
 			binary_reader_pop(reader);
 		}
+		else struct_descriptor_begin(allocator, struct_def, "", descriptor_type, GLSL_MEMORY_LAYOUT_CALLBACKS);
 
 		/* get the name of the descriptor */
 		const char* name = binary_reader_str(reader);

@@ -753,6 +753,10 @@ static u32 g_shader_property_bind_name_emit_values[][SIZEOF_ARRAY(g_set_attribut
 	{ SGE_SHADER_PROPERTY_TEXTURE8_SET, SGE_SHADER_PROPERTY_TEXTURE8_BINDING }
 };
 
+/* [Set(set=..., binding=...)]
+ * or [Set(material_set, material_properties_binding)]
+ * or [Set(set = material_set, binding = 0)] 
+ * etc. */
 static void set_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
 {
 	/* output[0] is the shader property's set number, output[1] is the shader property's binding number */
@@ -780,6 +784,8 @@ static void set_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
 	sb_emitter_emit_shader_property_set_and_binding(ctx->emitter, output[0], output[1]);
 }
 
+/* [PushConst(offset = 0)]
+ * or [PushConst(0)] */
 static void pushconst_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
 {
 	/* offset in the push constant buffer */
@@ -891,11 +897,102 @@ static codegen_buffer_address_t get_first_udat_address(compiler_ctx_t* ctx, u32_
 	return CODEGEN_BUFFER_ADDRESS_NULL;
 }
 
-static bool is_struct_def(compiler_ctx_t* ctx, v3d_generic_node_t* node)
+typedef enum block_type_t
 {
-	return (u32_pairs_find_str(ctx, node->qualifiers, node->qualifier_count, "struct") != BUF_INVALID_INDEX)
-	|| (node->is_block && ((u32_pairs_find_str(ctx, node->qualifiers, node->qualifier_count, "uniform") != BUF_INVALID_INDEX) 
-						|| (u32_pairs_find_str(ctx, node->qualifiers, node->qualifier_count, "buffer") != BUF_INVALID_INDEX)));
+	BLOCK_TYPE_INVALID,
+	BLOCK_TYPE_STRUCT,
+	BLOCK_TYPE_UNIFORM,
+	BLOCK_TYPE_BUFFER,
+	BLOCK_TYPE_MAX
+} block_type_t;
+
+static block_type_t get_block_type(compiler_ctx_t* ctx, v3d_generic_node_t* node)
+{
+	_assert(node->is_block);
+	if(u32_pairs_find_str(ctx, node->qualifiers, node->qualifier_count, "uniform") != U32_MAX)
+		return BLOCK_TYPE_UNIFORM;
+	else if(u32_pairs_find_str(ctx, node->qualifiers, node->qualifier_count, "buffer") != U32_MAX)
+		return BLOCK_TYPE_BUFFER;
+	else if(u32_pairs_find_str(ctx, node->qualifiers, node->qualifier_count, "struct") != U32_MAX)
+		return BLOCK_TYPE_STRUCT;
+	/* not a block */
+	return BLOCK_TYPE_INVALID;
+}
+
+static bool is_struct_def(compiler_ctx_t* ctx, v3d_generic_node_t* node, block_type_t* const out_block_type)
+{
+	if(!node->is_block)
+		return false;
+	AUTO block_type = get_block_type(ctx, node);
+	*out_block_type = block_type;
+	return block_type != BLOCK_TYPE_INVALID;
+}
+
+static const char* g_memlayouts[] = 
+{
+	"scalar",
+	"std140",
+	"std430"
+};
+
+static glsl_memory_layout_t g_memlayout_emit_values[SIZEOF_ARRAY(g_memlayouts)] = 
+{
+	GLSL_SCALAR,
+	GLSL_STD140,
+	GLSL_STD430
+};
+
+#define UDAT_LAYOUT_FORCE_BIT BIT8(7)
+
+/* [MemLayout(std140)]
+ * or [MemLayout(std430)] 
+ * or [MemLayout(scalar)]*/
+static void memlayout_attribute_handler(__ATTRIBUTE_HANDLER_PARAMS__)
+{
+	if(!node->is_block)
+		DEBUG_LOG_FETAL_ERROR("MemLayout attribute can only be applied to structs and interface blocks");
+
+	/* MemLayout attribute only accepts a single argument */
+	if(attribute->parameter_count != 1)
+		DEBUG_LOG_FETAL_ERROR("MemLayout is passed incorrect number of arguments, it doesn't accept %" PRIu32 " arguments", attribute->parameter_count);
+
+	/* index in { "scalar", "std140", "std430" } */
+	u32_pair_t result = u32_pairs_find_any_str(ctx, attribute->arguments, attribute->argument_count, g_memlayouts, SIZEOF_ARRAY(g_memlayouts));
+
+	/* if no match found, then throw error */
+	if((result.start == U32_MAX) || (result.end == U32_MAX))
+		DEBUG_LOG_FETAL_ERROR("Unrecognized memory layout %.*s", U32_PAIR_DIFF(attribute->arguments[0]), u32_pair_get_str(ctx, attribute->arguments[0]));
+
+	_assert(result.end < SIZEOF_ARRAY(g_memlayouts));
+
+	/* output the memory layout information, the layout is written into the codegen buffer in build_udat
+	 * NOTE: we are here converting glsl_memory_layout_t to udat_layout_t, that's because we need to compress the layout information in only 8 bits
+	 * and glsl_memory_layout_t's enumerations might span beyond 8 bit values, and since we only care about 3 values { scalar, std143, std140 }, 
+	 * we created another enumeration udat_layout_t, and map its enumerations to the ones in glsl_memory_layout_t enum, which is now guaranteed to be fit in 8 bits. */
+	*CAST_TO(u8*, user_data) = CAST_TO(u8, get_udat_layout_from_glsl_memory_layout(g_memlayout_emit_values[result.end])) | UDAT_LAYOUT_FORCE_BIT;
+}
+
+static const char* g_udat_attributes[] =
+{
+	"MemLayout"
+};
+
+static attribute_callback_handler_t g_udat_attribute_handlers[SIZEOF_ARRAY(g_udat_attributes)] = 
+{
+	memlayout_attribute_handler
+};
+
+static u8 get_udat_layout_from_block_type(block_type_t type)
+{
+	_assert((type != BLOCK_TYPE_INVALID) && (type < BLOCK_TYPE_MAX));
+	switch(type)
+	{
+		case BLOCK_TYPE_STRUCT: return SCALAR_LAYOUT;
+		case BLOCK_TYPE_UNIFORM: return STD140_LAYOUT;
+		case BLOCK_TYPE_BUFFER: return STD430_LAYOUT;
+		default: { _assert(false); break; }
+	}
+	return SCALAR_LAYOUT;
 }
 
 static udat_map_t build_udat_map(compiler_ctx_t* ctx, v3d_generic_node_t** nodes, u32 node_count)
@@ -926,15 +1023,30 @@ static udat_map_t build_udat_map(compiler_ctx_t* ctx, v3d_generic_node_t** nodes
 	for(u32 i = 0; i < node_count; i++)
 	{
 		AUTO node = nodes[i];
-		if(node->is_block && is_struct_def(ctx, node))
+		block_type_t block_type;
+		if(is_struct_def(ctx, node, &block_type))
 		{
 			AUTO udat_addr = codegen_buffer_get_end_address(ctx->codegen_buffer, ".udat");
 			u32_pair_t aggregate_name = node_get_last_qualifier(node);
 			AUTO ss64 = get_static_string_64_from_u32_pair(ctx, aggregate_name);
 			dictionary_push(&map, &ss64, &udat_addr);
 
+			/* write the name of the block */
 			codegen_buffer_write_string(ctx->codegen_buffer, ".udat", ss64.data);
+			
+			/* iterate over all the attributes on this udat (struct or uniform/buffer block)  
+			 * however, for now, we have only one attribute called "MemLayout" for structs */
+			u8 layout = get_udat_layout_from_block_type(block_type);
+			u32 result = node_call_attribute_handlers(node, ctx, g_udat_attributes, SIZEOF_ARRAY(g_udat_attributes), g_udat_attribute_handlers, &layout, NULL, 0);
+			_assert(result == U32_MAX);
+
+			/* write layout */
+			codegen_buffer_write_u8(ctx->codegen_buffer, ".udat", layout);
+
+			/* write number of fields in this block */
 			codegen_buffer_write_u16(ctx->codegen_buffer, ".udat", node->child_count);
+
+			/* emit bytes for each of the child nodes */
 			for(u32 j = 0; j < node->child_count; j++)
 			{
 				AUTO child = node->childs[j];
