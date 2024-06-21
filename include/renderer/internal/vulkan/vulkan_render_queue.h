@@ -94,6 +94,7 @@
 
 typedef struct vulkan_render_object_t vulkan_render_object_t;
 typedef struct vulkan_camera_t vulkan_camera_t;
+typedef struct vulkan_material_t vulkan_material_t;
 
 typedef enum vulkan_render_queue_type_t
 {
@@ -259,10 +260,21 @@ RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue);
 	description: Builds the actual API specific command buffers
 	params:
 		queue: this render queue
+		camera: the camera for which to render
 	returns:
 		nothing
-	NOTE: if this render queue isn't ready (is_ready = false), then it first calls render_queue_build()
  */
 RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera);
+
+/*
+	description: Builds the actual API specific command buffers, but using a single material for all the objects in the queue
+	params:
+		queue: this render queue
+		material: the material to be used by all the objects
+		camera: the camera for which to render
+	returns:
+		nothing
+ */
+RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera);
 
 END_CPP_COMPATIBLE

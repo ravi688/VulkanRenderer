@@ -251,98 +251,99 @@ DEBUG_BLOCK
 	queue->is_ready = true;
 }
 
+RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera)
+{
+	vulkan_shader_t* shader = material->shader;
+	vulkan_shader_render_pass_counter_reset(shader);
+	u32 pass_count = shader->render_pass_count;
+	for(u32 i = 0; i < pass_count; i++)
+	{
+		vulkan_render_pass_handle_t pass_handle = shader->render_passes[i].handle;
+		vulkan_render_pass_t* pass = vulkan_render_pass_pool_getH(queue->renderer->render_pass_pool, pass_handle);
+		_debug_assert__(shader->render_passes[i].subpass_count == pass->subpass_count);
+
+		vulkan_render_pass_begin(pass, 0, camera);
+
+		u32 subpass_count = pass->subpass_count;
+		for(u32 j = 0; j < subpass_count;)
+		{
+			vulkan_render_pass_handle_t prev_pass_handle = vulkan_shader_get_prev_pass_handle(shader);
+
+			if(!vulkan_shader_render_pass_is_next(shader, pass_handle))
+			{
+				debug_log_warning("builtins/depth_shader.v3dshader must be a compatible shader for depth rendering");
+				continue;
+			}
+
+			vulkan_graphics_pipeline_t* pipeline = vulkan_shader_get_pipeline(shader, pass_handle, j);
+
+			_debug_assert__((pipeline != NULL) && pipeline->render_pass == pass);
+			_debug_assert__(pipeline->render_pass->handle == pass->handle);
+
+			vulkan_pipeline_layout_t* layout = vulkan_shader_get_pipeline_layout(shader, pass_handle, j);
+
+			vulkan_graphics_pipeline_bind(pipeline);
+
+			/* bind CAMERA_SET */
+			vulkan_descriptor_set_bind(&camera->sets[camera->current_shot_index], VULKAN_DESCRIPTOR_SET_CAMERA, layout);
+			/* bind GLOBAL_SET */
+			vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, layout);
+
+			vulkan_render_pass_descriptor_sets_t* render_pass_descriptor_sets = vulkan_camera_get_descriptor_sets(camera, prev_pass_handle, pass_handle);
+			/* bind RENDER_SET */
+			vulkan_descriptor_set_bind(&render_pass_descriptor_sets->render_set, VULKAN_DESCRIPTOR_SET_RENDER, layout);
+			/* bind SUB_RENDER_SET */
+			_debug_assert__(j < render_pass_descriptor_sets->sub_render_set_count);
+			vulkan_descriptor_set_bind(&render_pass_descriptor_sets->sub_render_sets[j], VULKAN_DESCRIPTOR_SET_SUB_RENDER, layout);
+
+			/* bind MATERIAL_SET */
+			vulkan_descriptor_set_bind(&material->material_set, VULKAN_DESCRIPTOR_SET_MATERIAL, layout);
+
+			/* push constants from CPU memory to the GPU memory */
+			vulkan_material_push_constants(material, layout);
+
+			/* draw all the objects */
+
+			u32 shader_count = dictionary_get_count(&queue->shader_handles);
+
+			for(u32 k = 0; k < shader_count; k++)
+			{
+				material_and_render_object_list_map_t* map = dictionary_get_value_ptr_at(&queue->shader_handles, k);
+				u32 material_count = dictionary_get_count(map);
+				for(u32 l = 0; l < material_count; l++)
+				{
+					render_object_list_t* objects = dictionary_get_value_ptr_at(map, l);
+					u32 object_count = buf_get_element_count(objects);
+					for(u32 m = 0; m < object_count; m++)
+					{
+						vulkan_render_object_t* object = DEREF_TO(vulkan_render_object_t*, buf_get_ptr_at(objects, m));
+						/* bind OBJECT_SET */
+						vulkan_descriptor_set_bind(&object->object_set, VULKAN_DESCRIPTOR_SET_OBJECT, layout);
+						/* draw the object */
+						vulkan_render_object_draw(object);
+					}
+				}
+			}
+
+			j++;
+
+			if(j < subpass_count)
+				vulkan_render_pass_next(pass);
+		}
+		vulkan_render_pass_end(pass);
+	}
+}
+
 RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera)
 {
 	debug_assert_wrn__(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it");
 
-	vulkan_render_pass_pool_t* pass_pool = queue->renderer->render_pass_pool;
 
 	/* if the camera is rendering only depth values then use the builtin depth shader and depth render pass */
 	if(vulkan_camera_is_depth_render_only(camera))
 	{
 		_debug_assert__(camera->depth_material != NULL);
-
-		vulkan_material_t* material = camera->depth_material;
-		vulkan_shader_t* shader = material->shader;
-		vulkan_shader_render_pass_counter_reset(shader);
-		u32 pass_count = shader->render_pass_count;
-		for(u32 i = 0; i < pass_count; i++)
-		{
-			vulkan_render_pass_handle_t pass_handle = shader->render_passes[i].handle;
-			vulkan_render_pass_t* pass = vulkan_render_pass_pool_getH(pass_pool, pass_handle);
-			_debug_assert__(shader->render_passes[i].subpass_count == pass->subpass_count);
-
-			vulkan_render_pass_begin(pass, 0, camera);
-
-			u32 subpass_count = pass->subpass_count;
-			for(u32 j = 0; j < subpass_count;)
-			{
-				vulkan_render_pass_handle_t prev_pass_handle = vulkan_shader_get_prev_pass_handle(shader);
-
-				if(!vulkan_shader_render_pass_is_next(shader, pass_handle))
-				{
-					debug_log_warning("builtins/depth_shader.v3dshader must be a compatible shader for depth rendering");
-					continue;
-				}
-
-				vulkan_graphics_pipeline_t* pipeline = vulkan_shader_get_pipeline(shader, pass_handle, j);
-
-				_debug_assert__((pipeline != NULL) && pipeline->render_pass == pass);
-				_debug_assert__(pipeline->render_pass->handle == pass->handle);
-
-				vulkan_pipeline_layout_t* layout = vulkan_shader_get_pipeline_layout(shader, pass_handle, j);
-
-				vulkan_graphics_pipeline_bind(pipeline);
-
-				/* bind CAMERA_SET */
-				vulkan_descriptor_set_bind(&camera->sets[camera->current_shot_index], VULKAN_DESCRIPTOR_SET_CAMERA, layout);
-				/* bind GLOBAL_SET */
-				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, layout);
-
-				vulkan_render_pass_descriptor_sets_t* render_pass_descriptor_sets = vulkan_camera_get_descriptor_sets(camera, prev_pass_handle, pass_handle);
-				/* bind RENDER_SET */
-				vulkan_descriptor_set_bind(&render_pass_descriptor_sets->render_set, VULKAN_DESCRIPTOR_SET_RENDER, layout);
-				/* bind SUB_RENDER_SET */
-				_debug_assert__(j < render_pass_descriptor_sets->sub_render_set_count);
-				vulkan_descriptor_set_bind(&render_pass_descriptor_sets->sub_render_sets[j], VULKAN_DESCRIPTOR_SET_SUB_RENDER, layout);
-
-				/* bind MATERIAL_SET */
-				vulkan_descriptor_set_bind(&material->material_set, VULKAN_DESCRIPTOR_SET_MATERIAL, layout);
-
-				/* push constants from CPU memory to the GPU memory */
-				vulkan_material_push_constants(material, layout);
-
-				/* draw all the objects */
-
-				u32 shader_count = dictionary_get_count(&queue->shader_handles);
-
-				for(u32 k = 0; k < shader_count; k++)
-				{
-					material_and_render_object_list_map_t* map = dictionary_get_value_ptr_at(&queue->shader_handles, k);
-					u32 material_count = dictionary_get_count(map);
-					for(u32 l = 0; l < material_count; l++)
-					{
-						render_object_list_t* objects = dictionary_get_value_ptr_at(map, l);
-						u32 object_count = buf_get_element_count(objects);
-						for(u32 m = 0; m < object_count; m++)
-						{
-							vulkan_render_object_t* object = DEREF_TO(vulkan_render_object_t*, buf_get_ptr_at(objects, m));
-							/* bind OBJECT_SET */
-							vulkan_descriptor_set_bind(&object->object_set, VULKAN_DESCRIPTOR_SET_OBJECT, layout);
-							/* draw the object */
-							vulkan_render_object_draw(object);
-						}
-					}
-				}
-
-				j++;
-
-				if(j < subpass_count)
-					vulkan_render_pass_next(pass);
-			}
-			vulkan_render_pass_end(pass);
-		}
-
+		vulkan_render_queue_dispatch_single_material(queue, camera->depth_material, camera);
 		return;
 	}
 
@@ -351,6 +352,8 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 	vulkan_shader_library_t* shader_library = queue->renderer->shader_library;
 	vulkan_material_library_t* material_library = queue->renderer->material_library;
 	vulkan_render_pass_graph_node_handle_list_t* pass_node_handles = vulkan_render_pass_graph_get_or_build_optimized_path(&queue->pass_graph);
+
+	vulkan_render_pass_pool_t* pass_pool = queue->renderer->render_pass_pool;
 
 	/* get the number of pass runs for this render queue */
 	u32 pass_count = buf_get_element_count(pass_node_handles);
