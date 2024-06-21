@@ -59,6 +59,7 @@ RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* rendere
 	_debug_assert__(sizeof(vulkan_render_queue_type_t) == sizeof(s32));
 	scene->renderer = renderer;
 	scene->queues = dictionary_create(vulkan_render_queue_type_t, vulkan_render_queue_t*, 1, dictionary_key_comparer_s32);
+	scene->cameras = memory_allocator_buf_new(renderer->allocator, vulkan_camera_t*);
 	if((create_info == NULL) || (create_info->required_queue_count == 0))
 		return;
 	for(u32 i = 0; i < create_info->required_queue_count; i++)
@@ -139,6 +140,7 @@ RENDERER_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene)
 		vulkan_render_queue_destroy_all_objects(queue);
 		vulkan_render_queue_destroy(queue);
 	}
+	buf_clear(&scene->cameras, NULL);
 }
 
 RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* scene)
@@ -147,6 +149,7 @@ RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* s
 	for(u32 i = 0; i < count; i++)
 		vulkan_render_queue_release_resources(get_queue_at(scene, i));
 	dictionary_free(&scene->queues);
+	buf_free(&scene->cameras);
 	if(VULKAN_OBJECT_IS_INTERNAL(scene))
 		memory_allocator_dealloc(scene->renderer->allocator, scene);
 }
@@ -173,13 +176,13 @@ RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vu
 
 RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 flags)
 {
-	vulkan_camera_system_t* camera_system = scene->renderer->camera_system;
-
-	buf_ucount_t camera_count = vulkan_camera_system_get_count(camera_system);
+	buf_ucount_t camera_count = buf_get_element_count(&scene->cameras);
 
 	for(buf_ucount_t h = 0; h < camera_count; h++)
 	{
-		vulkan_camera_t* camera = vulkan_camera_system_get_at(camera_system, h);
+		vulkan_camera_t* camera;
+		buf_get_at_s(&scene->cameras, h, &camera);
+		
 		if(!vulkan_camera_is_active(camera))
 			continue;
 

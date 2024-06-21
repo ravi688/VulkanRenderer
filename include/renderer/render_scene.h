@@ -32,6 +32,8 @@
 #if 	defined(RENDERER_VULKAN_DRIVER)
 	typedef struct vulkan_render_scene_t vulkan_render_scene_t;
 	typedef vulkan_render_scene_t render_scene_t;
+	typedef struct vulkan_camera_t vulkan_camera_t;
+	typedef vulkan_camera_t camera_t;
 	#include <renderer/internal/vulkan/vulkan_handles.h>
 	typedef vulkan_render_scene_object_handle_t render_scene_object_handle_t;
 	#define RENDER_SCENE_OBJECT_HANDLE_INVALID VULKAN_RENDER_SCENE_OBJECT_HANDLE_INVALID
@@ -44,6 +46,8 @@
 #elif 	defined(RENDERER_OPENGL_DRIVER)
 	typedef struct opengl_render_scene_t opengl_render_scene_t;
 	typedef opengl_render_scene_t render_scene_t;
+	typedef struct opengl_camera_t opengl_camera_t;
+	typedef opengl_camera_t camera_t;
 	#include <renderer/internal/opengl/opengl_handles.h>
 	typedef opengl_render_scene_object_handle_t render_scene_object_handle_t;
 	#define RENDER_SCENE_OBJECT_HANDLE_INVALID OPENGL_RENDER_SCENE_OBJECT_HANDLE_INVALID
@@ -56,6 +60,8 @@
 #elif  	defined(RENDERER_DIRECTX_DRIVER)
 	typedef struct directx_render_scene_t directx_render_scene_t;
 	typedef directx_render_scene_t render_scene_t;
+	typedef struct directx_camera_t directx_camera_t;
+	typedef directx_camera_t camera_t;
 	#include <renderer/internal/directx/directx_handles.h>
 	typedef directx_render_scene_object_handle_t render_scene_object_handle_t;
 	#define RENDER_SCENE_OBJECT_HANDLE_INVALID DIRECTX_RENDER_SCENE_OBJECT_HANDLE_INVALID
@@ -68,6 +74,8 @@
 #elif  	defined(RENDERER_METAL_DRIVER)
 	typedef struct metal_render_scene_t metal_render_scene_t;
 	typedef metal_render_scene_t render_scene_t;
+	typedef struct metal_camera_t metal_camera_t;
+	typedef metal_camera_t camera_t;
 	#include <renderer/internal/metal/metal_handles.h>
 	typedef metal_render_scene_object_handle_t render_scene_object_handle_t;
 	#define RENDER_SCENE_OBJECT_HANDLE_INVALID METAL_RENDER_SCENE_OBJECT_HANDLE_INVALID
@@ -114,3 +122,5 @@ RENDERER_API render_object_t* render_scene_getH(render_scene_t* scene, render_sc
 RENDERER_API render_scene_object_handle_t render_scene_create_object(render_scene_t* scene, render_object_type_t object_type, render_queue_type_t queue_type);
 RENDERER_API void render_scene_destroy_objectH(render_scene_t* scene, render_scene_object_handle_t handle);
 RENDERER_API void render_scene_build_queues(render_scene_t* scene);
+RENDERER_API void render_scene_add_camera(render_scene_t* scene, camera_t* camera);
+RENDERER_API void render_scene_remove_camera(render_scene_t* scene, camera_t* camera);

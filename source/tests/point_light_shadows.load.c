@@ -85,6 +85,7 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS_LOAD)
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
 
+	/* create cameras */
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_clear(this->camera, COLOR_WHITE, 1.0f);
@@ -98,7 +99,13 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS_LOAD)
 	camera_set_field_of_view(this->offscreenCamera, 90 DEG);
 	camera_set_active(this->offscreenCamera, false);
 
+	/* create a scene */
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY) | BIT64(RENDER_QUEUE_TYPE_QUEUE0));
+
+	/* add cameras to the scene which we created earlier */
+	render_scene_add_camera(this->scene, this->camera);
+	render_scene_add_camera(this->scene, this->offscreenCamera);
+
 	this->pointLight = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_position(this->pointLight, vec3_zero());
 	light_set_intensity(this->pointLight, 0.5f);

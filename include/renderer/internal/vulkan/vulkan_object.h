@@ -110,16 +110,13 @@ typedef enum vulkan_object_type_t
 #define VULKAN_OBJECT_UP_CAST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) OBJECT_UP_CAST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) 
 #define VULKAN_OBJECT_UP_CAST_CONST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) OBJECT_UP_CAST_CONST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr)
 
-#ifdef GLOBAL_DEBUG
-#	define VULKAN_OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
-#	define VULKAN_OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
-#	define VULKAN_OBJECT_TYPE_CHECK(type_ptr, vulkan_object_type) OBJECT_TYPE_CHECK(type_ptr, vulkan_object_type)
-#	define VULKAN_OBJECT_TYPE_CHECK_FORWARD(typed_ptr, vulkan_object_type) OBJECT_TYPE_CHECK_FORWARD(typed_ptr, vulkan_object_type)
-#	define VULKAN_OBJECT_TYPE_CHECK_CONST_FORWARD(typed_ptr, vulkan_object_type) OBJECT_TYPE_CHECK_CONST_FORWARD(typed_ptr, vulkan_object_type)
-#else /* GLOBAL_DEBUG */
-#	define VULKAN_OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
-#	define VULKAN_OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
-#endif /* GLOBAL_RELEASE */
+#define VULKAN_OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
+#define VULKAN_OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
+#define VULKAN_OBJECT_TYPE_CHECK(type_ptr, vulkan_object_type) OBJECT_TYPE_CHECK(type_ptr, vulkan_object_type)
+#define VULKAN_OBJECT_TYPE_CHECK_FORWARD(typed_ptr, vulkan_object_type) OBJECT_TYPE_CHECK_FORWARD(typed_ptr, vulkan_object_type)
+#define VULKAN_OBJECT_TYPE_CHECK_CONST_FORWARD(typed_ptr, vulkan_object_type) OBJECT_TYPE_CHECK_CONST_FORWARD(typed_ptr, vulkan_object_type)
+
+#define VULKAN_OBJECT_TYPE_CAST_CONST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
 
 #define VULKAN_OBJECT_VERIFY(typed_ptr) OBJECT_VERIFY(typed_ptr)
 #define VULKAN_OBJECT_VERIFY_FORWARD(typed_ptr) OBJECT_VERIFY_FORWARD(typed_ptr)

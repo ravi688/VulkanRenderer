@@ -103,8 +103,7 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
 {
 	this->camera_system = renderer_get_camera_system(renderer);
 
-	// TODO: every scene will have their own camera system ( Camera sets )
-	// create a camera
+	/* create a cameras */
 	this->camera = camera_system_getH(this->camera_system,
 							camera_system_create_camera(this->camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_clear(this->camera, COLOR_WHITE, 1.0f);
@@ -117,12 +116,15 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE_LOAD)
 	camera_set_position(this->camera3, vec3(0, 0.6, -3.0f));
 	camera_set_rotation(this->camera3, vec3(10 DEG, -90 DEG, 0));
 
+	/* create a render scene */
+	this->scene = render_scene_create_from_preset(renderer, RENDER_SCENE_PRESET_TYPE_DEFAULT);
+	/* add the cameras which just created to the scene */
+	render_scene_add_camera(this->scene, this->camera);
+	render_scene_add_camera(this->scene, this->camera3);
+
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
 	light_set_rotation(this->light, vec3(10 DEG, -120 DEG, 0));
 	light_set_position(this->light, vec3(1, 0.6f, -3.0f));
-
-	// create a render scene
-	this->scene = render_scene_create_from_preset(renderer, RENDER_SCENE_PRESET_TYPE_DEFAULT);
 
 	this->slib = renderer_get_shader_library(renderer);
 	this->mlib = renderer_get_material_library(renderer);

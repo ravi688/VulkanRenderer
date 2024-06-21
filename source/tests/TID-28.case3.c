@@ -80,6 +80,7 @@ TEST_ON_INITIALIZE(TID_28_CASE_3)
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
 
+	/* create cameras */
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_clear(this->camera, COLOR_WHITE, 1.0f);
@@ -92,7 +93,12 @@ TEST_ON_INITIALIZE(TID_28_CASE_3)
 	camera_set_rotation(this->offscreenCamera, vec3(0, 0, 0));
 	camera_set_field_of_view(this->offscreenCamera, 90 DEG);
 
+	/* create render scene */
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY) | BIT64(RENDER_QUEUE_TYPE_BACKGROUND) | BIT64(RENDER_QUEUE_TYPE_QUEUE0));
+	/* add the cameras into the render scene */
+	render_scene_add_camera(this->scene, this->camera);
+	render_scene_add_camera(this->scene, this->offscreenCamera);
+
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
 
 	this->skyboxMaterial = material_library_getH(mlib, 

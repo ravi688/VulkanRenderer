@@ -382,8 +382,13 @@ typedef struct vulkan_camera_t
 
 } vulkan_camera_t;
 
+/* performs dynamic casting (expensive), use only when you don't know the source type */
 #define VULKAN_CAMERA(ptr) VULKAN_OBJECT_UP_CAST(vulkan_camera_t*, VULKAN_OBJECT_TYPE_CAMERA, ptr)
 #define VULKAN_CAMERA_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_camera_t*, VULKAN_OBJECT_TYPE_CAMERA, ptr)
+/* otherwise (if you are sure that the type is VULKAN_OBJECT_TYPE_CAMERA) use the following,
+ * this macro expands to just a C-style cast in release mode so it is very efficient as compared to the dynamic casting above */
+#define VULKAN_CAMERA_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_camera_t*, VULKAN_OBJECT_TYPE_CAMERA, ptr)
+#define VULKAN_CAMERA_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_camera_t*, VULKAN_OBJECT_TYPE_CAMERA, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

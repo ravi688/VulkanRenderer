@@ -655,13 +655,17 @@ TEST_ON_INITIALIZE(BITMAP_TEXT)
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
 
+	/* create camera */
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_clear(this->camera, COLOR_BLACK, 1.0f);
 	camera_set_active(this->camera, true);
 	camera_set_transform(this->camera, mat4_mul(2, mat4_translation(-1.8f, 0.6f, 0), mat4_rotation(0, 0, -22 * DEG2RAD)));
 
+	/* create scene */
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
+	/* add the camera to the scene */
+	render_scene_add_camera(this->scene, this->camera);
 
 	this->text_material = material_library_getH(mlib,
 						 	material_library_create_materialH(mlib,
