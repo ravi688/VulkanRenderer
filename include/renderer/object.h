@@ -251,8 +251,8 @@ static CAN_BE_UNUSED_FUNCTION const void* object_up_cast_const(const object_t* o
 }
 
 #ifdef GLOBAL_DEBUG
-#	define OBJECT_TYPE_CAST(dst_ptr_type, object_type, src_typed_ptr) REINTERPRET_CAST(dst_ptr_type, OBJECT_TYPE_CHECK_FORWARD(src_typed_ptr, object_type))
-#	define OBJECT_TYPE_CONST_CAST(dst_ptr_type, object_type, src_typed_ptr) REINTERPRET_CONST_CAST(dst_ptr_type, OBJECT_TYPE_CHECK_CONST_FORWARD(src_typed_ptr, object_type))
+#	define OBJECT_TYPE_CAST(dst_ptr_type, object_type, src_typed_ptr) _REINTERPRET_CAST(dst_ptr_type, OBJECT_TYPE_CHECK_FORWARD(src_typed_ptr, object_type), sizeof(DREF(src_typed_ptr)))
+#	define OBJECT_TYPE_CONST_CAST(dst_ptr_type, object_type, src_typed_ptr) _REINTERPRET_CONST_CAST(dst_ptr_type, OBJECT_TYPE_CHECK_CONST_FORWARD(src_typed_ptr, object_type), sizeof(DREF(src_typed_ptr)))
 #	define OBJECT_TYPE_CHECK(type_ptr, object_type) object_type_check(type_ptr, object_type)
 	static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_type_check(const object_t* obj, object_type_t type)
 	{

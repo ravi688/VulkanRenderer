@@ -65,13 +65,18 @@ TEST_ON_INITIALIZE(TID_48_CASE_2)
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
 
+	/* create cameras */
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_clear(this->camera, COLOR_GREEN, 1.0f);
 	camera_set_active(this->camera, true);
 	camera_set_render_area_relative(this->camera, 0, 0, 50, 100);
 
+	/* create a render scene */
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
+	/* add the camera into the render scene */
+	render_scene_add_camera(this->scene, this->camera);
+
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
 
 	this->material = material_library_getH(mlib, 

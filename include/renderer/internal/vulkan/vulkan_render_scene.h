@@ -49,15 +49,24 @@ typedef struct vulkan_render_scene_create_info_t
 	u32 required_queue_count;
 } vulkan_render_scene_create_info_t;
 
+typedef buffer_t /* element_type: vulkan_camera_t* */ vulkan_camera_ptr_list_t;
+
 typedef struct vulkan_render_scene_t
 {
 	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	dictionary_t /* key: vulkan_render_queue_type_t, value: vulkan_render_queue_t* */ queues;
+	/* list of cameras in this render scene */
+	vulkan_camera_ptr_list_t cameras;
 } vulkan_render_scene_t;
 
+/* performs dynamic casting (expensive), use only when you don't know the source type */
 #define VULKAN_RENDER_SCENE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
 #define VULKAN_RENDER_SCENE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
+/* otherwise (if you are sure that the type is VULKAN_OBJECT_TYPE_RENDER_SCENE) use the following,
+ * this macro expands to just a C-style cast in release mode so it is very efficient as compared to the dynamic casting above */
+#define VULKAN_RENDER_SCENE_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
+#define VULKAN_RENDER_SCENE_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
 
 /* constructors & destructors */
 RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator);
@@ -81,3 +90,11 @@ RENDERER_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scen
 RENDERER_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_object(vulkan_render_scene_t* scene, vulkan_render_object_type_t object_type, vulkan_render_queue_type_t queue_type);
 RENDERER_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle);
 RENDERER_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene);
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_add_camera(vulkan_render_scene_t* scene, vulkan_camera_t* camera) { buf_push(&scene->cameras, &camera); }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_remove_camera(vulkan_render_scene_t* scene, vulkan_camera_t* camera)
+{ 
+	bool result = buf_remove(&scene->cameras, &camera, buf_ptr_comparer);
+	if(!result)
+		DEBUG_LOG_WARNING("You're trying to remove vulkan_camera_t from vulkan_render_scene_t which doesn't exists in it"); 
+}

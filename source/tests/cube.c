@@ -65,12 +65,17 @@ TEST_ON_INITIALIZE(CUBE)
 	AUTO slib = renderer_get_shader_library(renderer);
 	AUTO mlib = renderer_get_material_library(renderer);
 
+	/* create camera */
 	this->camera = camera_system_getH(camera_system,
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_clear(this->camera, COLOR_GREEN, 1.0f);
 	camera_set_active(this->camera, true);
 
+	/* create scene */
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
+	/* add the camera to the scene */
+	render_scene_add_camera(this->scene, this->camera);
+
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
 
 	this->material = material_library_getH(mlib, 

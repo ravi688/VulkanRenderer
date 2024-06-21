@@ -29,6 +29,7 @@
 #include <renderer/internal/vulkan/vulkan_render_scene.h>
 #include <renderer/internal/vulkan/vulkan_render_object.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
+#include <renderer/internal/vulkan/vulkan_camera.h> /* for VULKAN_CAMERA_CAST */
 
 /* constructors & destructors */
 RENDERER_API render_scene_t* render_scene_new(memory_allocator_t* allocator)
@@ -121,4 +122,14 @@ RENDERER_API void render_scene_destroy_objectH(render_scene_t* scene, render_sce
 RENDERER_API void render_scene_build_queues(render_scene_t* scene)
 {
 	vulkan_render_scene_build_queues(scene);
+}
+
+RENDERER_API void render_scene_add_camera(render_scene_t* scene, camera_t* camera)
+{
+	vulkan_render_scene_add_camera(VULKAN_RENDER_SCENE_CAST(scene), VULKAN_CAMERA_CAST(camera));
+}
+
+RENDERER_API void render_scene_remove_camera(render_scene_t* scene, camera_t* camera)
+{
+	vulkan_render_scene_remove_camera(VULKAN_RENDER_SCENE_CAST(scene), VULKAN_CAMERA_CAST(camera));
 }
