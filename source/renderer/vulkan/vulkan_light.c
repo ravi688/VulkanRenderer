@@ -26,6 +26,11 @@
 
 #include <renderer/internal/vulkan/vulkan_light.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <renderer/internal/vulkan/vulkan_render_texture.h>
+#include <renderer/internal/vulkan/vulkan_shader.h>
+#include <renderer/internal/vulkan/vulkan_shader_library.h>
+#include <renderer/internal/vulkan/vulkan_material_library.h>
+#include <renderer/internal/vulkan/vulkan_camera_system.h>
 #include <renderer/glsl_memory_layout.h>
 #include <glslcommon/glsl_types.h>
 #include <renderer/memory_allocator.h>
@@ -72,8 +77,7 @@ RENDERER_API vulkan_light_t* vulkan_light_new(memory_allocator_t* allocator, vul
 			memzero(light, vulkan_ambient_light_t);
 			VULKAN_OBJECT_INIT(light, VULKAN_OBJECT_TYPE_AMBIENT_LIGHT, VULKAN_OBJECT_NATIONALITY_INTERNAL);
 			return CAST_TO(vulkan_light_t*, light);
-		}
-		default:
+		}		default:
 			UNSUPPORTED_LIGHT_TYPE(type);
 	};
 	return NULL;
@@ -262,6 +266,15 @@ RENDERER_API void vulkan_light_destroy(vulkan_light_t* light)
 	struct_descriptor_unmap(&light->struct_definition);
 	vulkan_buffer_unmap(&light->buffer);
 	vulkan_buffer_destroy(&light->buffer);
+	if(light->is_cast_shadow)
+	{
+		_debug_assert__(light->shadow_camera != NULL);
+		_debug_assert__(light->shadow_shader != NULL);
+		_debug_assert__(light->shadow_material != NULL);
+		_debug_assert__(light->shadow_map != NULL);
+		vulkan_render_texture_destroy(light->shadow_map);
+		vulkan_render_texture_release_resources(light->shadow_map);
+	}
 }
 
 RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light)
@@ -383,6 +396,89 @@ RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotati
 	}
 }
 
+static const char* get_shadow_shader_path(vulkan_light_type_t type)
+{
+	switch(type)
+	{
+		case VULKAN_LIGHT_TYPE_SPOT: return "shaders/presets/lights/spot_light.shadowmap.sb";
+		case VULKAN_LIGHT_TYPE_POINT: return "shaders/presets/lights/point_light.shadowmap.sb";
+		case VULKAN_LIGHT_TYPE_DIRECTIONAL: return "shaders/presets/lights/directional_light.shadowmap.sb";
+		default:
+			DEBUG_LOG_FETAL_ERROR("This vulkan_light_type_t(%u) doesn't support shadow casting", type);
+			break;
+	};
+	return "";
+}
+
+static vulkan_render_texture_type_t get_render_texture_type(vulkan_light_type_t type)
+{
+	switch(type)
+	{
+		case VULKAN_LIGHT_TYPE_SPOT: return VULKAN_RENDER_TEXTURE_TYPE_DEPTH;
+		case VULKAN_LIGHT_TYPE_POINT: return VULKAN_RENDER_TEXTURE_TYPE_DEPTH_CUBE;
+		case VULKAN_LIGHT_TYPE_DIRECTIONAL: return VULKAN_RENDER_TEXTURE_TYPE_DEPTH;
+		default:
+			DEBUG_LOG_FETAL_ERROR("This vulkan_light_type_t(%u) doesn't support shadow casting", type);
+			break;
+	}
+	return VULKAN_RENDER_TEXTURE_TYPE_UNDEFINED;
+}
+
+static vulkan_camera_projection_type_t  get_camera_projection_type(vulkan_light_type_t type)
+{
+	switch(type)
+	{
+		case VULKAN_LIGHT_TYPE_SPOT: return VULKAN_CAMERA_PROJECTION_TYPE_PERSPECTIVE;
+		case VULKAN_LIGHT_TYPE_POINT: return VULKAN_CAMERA_PROJECTION_TYPE_PERSPECTIVE;
+		case VULKAN_LIGHT_TYPE_DIRECTIONAL: return VULKAN_CAMERA_PROJECTION_TYPE_ORTHOGRAPHIC;
+		default:
+			DEBUG_LOG_FETAL_ERROR("This vulkan_light_type_t(%u) doesn't support shadow casting", type);
+			break;
+	}
+	return VULKAN_CAMERA_PROJECTION_TYPE_UNDEFINED;
+}
+
+RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow)
+{
+	light->is_cast_shadow = is_cast_shadow;
+	if(is_cast_shadow && (light->shadow_shader == NULL))
+	{
+		AUTO slib = light->renderer->shader_library;
+		AUTO mlib = light->renderer->material_library;
+		AUTO csys = light->renderer->camera_system;
+
+		/* create render texture */
+		vulkan_render_texture_create_info_t create_info = 
+		{
+			/* TODO: the width, and height should be functions of the area span illuminated by this light and the quality of shadow rendering */
+			.width = 512,
+			.height = 512,
+			.depth = 1,
+			.channel_count = 4,
+			.type = get_render_texture_type(light->type)
+		};
+		light->shadow_map = vulkan_render_texture_create(light->renderer, &create_info);
+
+		/* create camera to render onto the shadow map render texture */
+		light->shadow_camera = vulkan_camera_system_getH(csys, vulkan_camera_system_create_camera(csys, get_camera_projection_type(light->type)));
+		/* and set the shadow map render texture as render target for this camera */
+		vulkan_camera_set_render_target(light->shadow_camera, VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH, VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, light->shadow_map);
+
+		/* load the shadow map shader */
+		vulkan_shader_load_info_t load_info =
+		{
+			.path = get_shadow_shader_path(light->type),
+			.is_vertex_attrib_from_file = true
+		};
+		AUTO shader_handle = vulkan_shader_library_load_shader(slib, &load_info, "BuiltIn:Light:ShadowMapShader");
+		light->shadow_shader = vulkan_shader_library_getH(slib, shader_handle);
+		
+		/* create material for it */
+		light->shadow_material = vulkan_material_library_getH(mlib, 
+									vulkan_material_library_create_materialH(mlib, shader_handle, "BuiltIn:Light:ShadowMapShader"));
+	}
+}
+
 RENDERER_API void vulkan_light_set_intensity(vulkan_light_t* light, float intensity)
 {
 	light = VULKAN_LIGHT(light);
@@ -395,4 +491,23 @@ RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color)
 	light = VULKAN_LIGHT(light);
 	light->color = color;
 	struct_descriptor_set_vec3(&light->struct_definition, light->color_handle, CAST_TO(float*, &light->color));
+}
+
+RENDERER_API void vulkan_light_begin(vulkan_light_t* light)
+{
+	if(light->is_cast_shadow)
+		vulkan_camera_begin(light->shadow_camera);
+}
+
+RENDERER_API bool vulkan_light_irradiate(vulkan_light_t* light)
+{
+	if(light->is_cast_shadow)
+		return vulkan_camera_capture(light->shadow_camera, VULKAN_CAMERA_CLEAR_FLAG_CLEAR);
+	return false;
+}
+
+RENDERER_API void vulkan_light_end(vulkan_light_t* light)
+{
+	if(light->is_cast_shadow)
+		vulkan_camera_end(light->shadow_camera);
 }

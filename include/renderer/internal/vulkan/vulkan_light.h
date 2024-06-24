@@ -47,11 +47,37 @@ typedef enum vulkan_light_type_t
 	VULKAN_LIGHT_TYPE_AMBIENT = 7
 } vulkan_light_type_t;
 
+typedef struct vulkan_texture_t vulkan_texture_t;
+typedef vulkan_texture_t vulkan_render_texture_t;
+typedef struct vulkan_shader_t vulkan_shader_t;
+typedef struct vulkan_material_t vulkan_material_t;
+typedef struct vulkan_camera_t vulkan_camera_t;
+
 typedef struct vulkan_light_t
 {
 	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
 	vulkan_buffer_t buffer;
+
+	/* the reason we can't have only single shadow camera, shader or material
+	 * is that, we need separate depth buffers for each light as they have different positions and configurations in space,
+	 * and VkFramebuffer objects constructed with specific VkImageView(VkImage)[or called attachment] objects and they can't be modified after that,
+	 * so we need separate VkFramebuffer objects for each shadow map (VkImage/VkImageView).
+	 * And since each light can have different ways of rendering the depth values (programmable), we need separate shaders for them, hence shaders.
+	 * shadow_map <-- shadow_shader <-- shadow_material <-- shadow_camera */
+	/* shadow map render target (it will be used as a depth buffer attachment for render passes) */
+	vulkan_render_texture_t* shadow_map;
+	/* shader to generate shadow map (render depth values to the shadow map render target) */
+	vulkan_shader_t* shadow_shader;
+	/* material create out of the above 'shadow_shader', it will be used over all the objects in the scene which are affected 
+	 * by this light */
+	vulkan_material_t* shadow_material;
+	/* camera to hold framebuffers for the shadowmap, and record command buffers for rendering the shadow map */
+	vulkan_camera_t* shadow_camera;
+
+	/* true means it this light generates shadow map, false means it doesn't */
+	bool is_cast_shadow;
+
 	struct_descriptor_t struct_definition;
 
 	/* internal use only, however can be used externally also! */
@@ -124,11 +150,16 @@ RENDERER_API void vulkan_light_destroy(vulkan_light_t* light);
 RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light);
 
 /* setters */
+RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow);
 RENDERER_API void vulkan_light_set_intensity(vulkan_light_t* light, float intensity);
 RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color);
 RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t position);
 RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation);
 RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle);
 
+
+RENDERER_API void vulkan_light_begin(vulkan_light_t* light);
+RENDERER_API bool vulkan_light_irradiate(vulkan_light_t* light);
+RENDERER_API void vulkan_light_end(vulkan_light_t* light);
 
 END_CPP_COMPATIBLE

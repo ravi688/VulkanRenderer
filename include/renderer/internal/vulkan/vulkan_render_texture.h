@@ -34,6 +34,7 @@ typedef struct vulkan_renderer_t vulkan_renderer_t;
 /* type of the render texture */
 typedef enum vulkan_render_texture_type_t
 {
+	VULKAN_RENDER_TEXTURE_TYPE_UNDEFINED = 0,
 	VULKAN_RENDER_TEXTURE_TYPE_ALBEDO,		/* for rendering sRGB colors to the render texture */
 	VULKAN_RENDER_TEXTURE_TYPE_COLOR,		/* for rendering linear color values to the render texture */
 	VULKAN_RENDER_TEXTURE_TYPE_DEPTH,		/* for rendering depth values to the render texture */
