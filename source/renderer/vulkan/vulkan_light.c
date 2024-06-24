@@ -217,6 +217,8 @@ RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulk
 	light = VULKAN_LIGHT(light);
 
 	light->renderer = renderer;
+	/* initially the light will be active */
+	light->is_active = true;
 	light->position = vec3_zero();
 	light->euler_rotation = vec3_zero();
 	light->rotation = mat4_identity();
@@ -436,6 +438,14 @@ static vulkan_camera_projection_type_t  get_camera_projection_type(vulkan_light_
 			break;
 	}
 	return VULKAN_CAMERA_PROJECTION_TYPE_UNDEFINED;
+}
+
+RENDERER_API void vulkan_light_set_active(vulkan_light_t* light, bool is_active)
+{
+	light->is_active = is_active;
+	/* TODO: clear the shadow map render texture with 0.0 depth values so that object will be rendered black if only this light existed 
+	 * NOTE: it might be possible that we are clearing the render texture while it is still being used in the previous frame, 
+	 * in that case we may wait for the previous frame to complete. */
 }
 
 RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow)
