@@ -29,6 +29,7 @@
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
 #include <renderer/internal/vulkan/vulkan_render_pass.h>
 #include <renderer/internal/vulkan/vulkan_camera_system.h>
+#include <renderer/internal/vulkan/vulkan_light.h>
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 
 #include <renderer/renderer.h>
@@ -176,6 +177,39 @@ RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vu
 
 RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 flags)
 {
+	/* if this render scene uses lights then render the shadow maps */
+	if(vulkan_render_scene_is_use_lights(scene))
+	{
+		/* render to shadow maps first */
+		buf_ucount_t light_count = buf_get_element_count(&scene->lights);
+		for(buf_ucount_t i = 0; i < light_count; i++)
+		{
+			/* get the light */
+			vulkan_light_t* light;
+			buf_get_at_s(&scene->cameras, i, &light);
+	
+			/* if this light is not active then do not generate any shadow maps (i.e. do not render to the shadow depth buffer) */
+			if(!vulkan_light_is_active(light))
+				continue;
+	
+			vulkan_light_begin(light);
+			while(vulkan_light_irradiate(light))
+			{
+				buf_ucount_t count = dictionary_get_count(&scene->queues);
+				for(buf_ucount_t i = 0; i < count; i++)
+				{
+					AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, i));
+					if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
+					vulkan_render_queue_dispatch_single_material(get_queue_at(scene, i), 
+									vulkan_light_get_shadow_material(light),
+									vulkan_light_get_shadow_camera(light));
+				}
+			}
+			vulkan_light_end(light);
+		}
+	}
+
+	/* then sample the above rendered shadow maps and render a lit scene */
 	buf_ucount_t camera_count = buf_get_element_count(&scene->cameras);
 
 	for(buf_ucount_t h = 0; h < camera_count; h++)

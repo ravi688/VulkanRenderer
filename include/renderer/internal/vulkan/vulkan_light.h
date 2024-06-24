@@ -77,6 +77,12 @@ typedef struct vulkan_light_t
 
 	/* true means it this light generates shadow map, false means it doesn't */
 	bool is_cast_shadow;
+	/* true means this light illumates the scene and may or may not cast shadows (since casting shadows also depends on is_cast_shadow),
+	 * false means, it doesn't illumate the scene. 
+	 * NOTE: if the value of 'is_active' is false then it has two cases
+	 * 			1. The scene will be completely black if the scene uses lights 
+	 * 			2. The scene will be rendered based on the base colors if the scene doesn't use lights */
+	bool is_active;
 
 	struct_descriptor_t struct_definition;
 
@@ -150,6 +156,7 @@ RENDERER_API void vulkan_light_destroy(vulkan_light_t* light);
 RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light);
 
 /* setters */
+RENDERER_API void vulkan_light_set_active(vulkan_light_t* light, bool is_active);
 RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow);
 RENDERER_API void vulkan_light_set_intensity(vulkan_light_t* light, float intensity);
 RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color);
@@ -157,6 +164,11 @@ RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t positi
 RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation);
 RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle);
 
+/* getters */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_material_t* vulkan_light_get_shadow_material(vulkan_light_t* light) { return light->shadow_material; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_camera_t* vulkan_light_get_shadow_camera(vulkan_light_t* light) { return light->shadow_camera; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_light_is_active(vulkan_light_t* light) { return light->is_active; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_light_is_cast_shadow(vulkan_light_t* light) { return light->is_cast_shadow; }
 
 RENDERER_API void vulkan_light_begin(vulkan_light_t* light);
 RENDERER_API bool vulkan_light_irradiate(vulkan_light_t* light);
