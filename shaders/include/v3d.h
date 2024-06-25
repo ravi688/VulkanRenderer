@@ -34,8 +34,8 @@
 
 
 /* set constants */
-#define CAMERA_SET 0 			// bound for each Camera
-#define SCENE_SET 1 			// bound once [ Camera and Lights ]
+#define SCENE_SET 0 			// bound once [ Camera and Lights ]
+#define CAMERA_SET 1 			// bound for each Camera
 #define RENDER_SET 2 			// bound for each render pass
 #define SUB_RENDER_SET 3 		// bound for each sub pass
 #define MATERIAL_SET 4 			// bound for each material [ textures, material properties ]
@@ -47,9 +47,11 @@
 #define CAMERA_PROPERTIES_BINDING 0 // binding for current camera properties
 
 // should be used with SCENE_SET
-#define CAMERA_BINDING 0 		// binding for camera properties
-#define LIGHT_BINDING 1 		// binding for light properties
-#define SCREEN_BINDING 2
+#define SCREEN_BINDING 0  		// binding for render window information
+#define LIGHT_BINDING 1
+#define POINT_LIGHT_BINDING 1 	// binding for point lights
+#define SPOT_LIGHT_BINDING 2 	// binding for spot lights
+#define FAR_LIGHT_BINDING 3   	// binding for far lights
 
 // should be used with SUB_RENDER_SET
 #define INPUT_ATTACHMENT_BINDING0 0

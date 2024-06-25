@@ -25,8 +25,6 @@
 
 #version 450
 
-#extension GL_EXT_scalar_block_layout : enable
-
 #include <v3d.h>
 
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = SCREEN_BINDING) uniform DisplayInfo
@@ -37,8 +35,8 @@ layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = SCREEN_BINDING) uni
     mat4 matrix;
 } displayInfo;
 
-layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
-layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
 struct Color
 {
