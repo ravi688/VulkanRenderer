@@ -9,7 +9,7 @@ Shader
     Properties
     {
         // Internal & Built-in sets are as follows:
-        // GLOBAL_SET
+        // SCENE_SET
         // RENDER_SET
         // SUB_RENDER_SET
         // OBJECT_SET
@@ -75,7 +75,7 @@ Shader
                 #version 450    
                 #include <v3d.h>
     
-                layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform LightInfo lightInfo;
+                layout(set = SCENE_SET, binding = LIGHT_BINDING) uniform LightInfo lightInfo;
                 layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
     
                 layout(location = POSITION_LOCATION) in vec3 position;
@@ -115,7 +115,7 @@ Shader
                 #version 450
                 #include <v3d.h>
 
-                layout(set = GLOBAL_SET, binding = CAMERA_BINDING) uniform CameraInfo cameraInfo;
+                layout(set = SCENE_SET, binding = CAMERA_BINDING) uniform CameraInfo cameraInfo;
                 layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
                 layout(location = POSITION_LOCATION) in vec3 position;
@@ -145,7 +145,7 @@ Shader
                 #version 450
                 #include <v3d.h>
 
-                layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform LightInfo lightInfo;
+                layout(set = SCENE_SET, binding = LIGHT_BINDING) uniform LightInfo lightInfo;
 
                 layout(set = RENDER_SET, binding = TEXTURE_BINDING0) uniform sampler2D shadowMap;
 
@@ -206,7 +206,7 @@ Shader
                 #version 450
                 #include <v3d.h>
 
-                layout(set = GLOBAL_SET, binding = CAMERA_BINDING) uniform CameraInfo cameraInfo;
+                layout(set = SCENE_SET, binding = CAMERA_BINDING) uniform CameraInfo cameraInfo;
                 layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
                 layout(location = POSITION_LOCATION) in vec3 position;

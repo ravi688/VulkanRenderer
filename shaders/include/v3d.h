@@ -35,7 +35,7 @@
 
 /* set constants */
 #define CAMERA_SET 0 			// bound for each Camera
-#define GLOBAL_SET 1 			// bound once [ Camera and Lights ]
+#define SCENE_SET 1 			// bound once [ Camera and Lights ]
 #define RENDER_SET 2 			// bound for each render pass
 #define SUB_RENDER_SET 3 		// bound for each sub pass
 #define MATERIAL_SET 4 			// bound for each material [ textures, material properties ]
@@ -46,7 +46,7 @@
 // should be used with CAMERA_SET
 #define CAMERA_PROPERTIES_BINDING 0 // binding for current camera properties
 
-// should be used with GLOBAL_SET
+// should be used with SCENE_SET
 #define CAMERA_BINDING 0 		// binding for camera properties
 #define LIGHT_BINDING 1 		// binding for light properties
 #define SCREEN_BINDING 2
@@ -215,9 +215,9 @@ CameraInfo\
 
 
 #define CAMERA layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo
-#define LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform Light
-#define DIRECTIONAL_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight
-#define POINT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight
-#define SPOT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight
+#define LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform Light
+#define DIRECTIONAL_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform DirectionalLight
+#define POINT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform PointLight
+#define SPOT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform SpotLight
 #define MATERIAL_PROPERTIES layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Properties
 #define OBJECT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo

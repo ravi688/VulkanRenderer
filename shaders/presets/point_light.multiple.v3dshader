@@ -43,17 +43,6 @@ Shader
 		uniform sampler2D shadowMap;
 	}
 
-	// [NoParse]
-	// Properties
-	// {
-	// 	vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
-	// 	{
-	// 		vec4 color;
-	// 	} parameters;
-
-	// 	fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D shadowMap;
-	// }
-
 	Layout
 	{
 		[Rate(per_vertex)]
@@ -66,13 +55,6 @@ Shader
 		[Attribute(normal)]
 		vec3 normal;
 	}
-
-	// [NoParse]
-	// Layout
-	// {
-	// 	per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
-	// 	per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
-	// }
 
 	RenderPass
 	{
@@ -104,6 +86,69 @@ Shader
 				
 				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
 				layout(set = SCENE_SET, binding = LIGHT_BINDING) uniform PointLight light;
+				/* 	Solution no 1 (using storage buffers and buffer references):
+					-----------------------------------------------------------
+
+					#extension GL_EXT_buffer_reference : enable
+
+				 	layout(SGE_STORAGE_BUFFER_LAYOUT, buffer_reference) readonly buffer PointLightList
+				 	{
+				 		uint count;
+				 		PointLight lights[];
+				 	};
+				 	layout(SGE_STORAGE_BUFFER_LAYOUT, buffer_reference) readonly buffer SpotLightList
+				 	{
+						uint count;
+						SpotLight lights[];
+				 	};
+				 	layout(SGE_STORAGE_BUFFER_LAYOUT, buffer_reference) readonly buffer FarLightList
+				 	{
+				 		uint count;
+						FarLight lights[];
+				 	};
+
+					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform Lights
+					{
+						PointLightList pointLights;
+						SpotLightList spotLights;
+						FarLightList farLights;
+					};
+
+					// shadow maps
+
+					layout(set = SCENE_SET, binding = PLAIN_SHADOW_MAP_BINDING) uniform sampler2D plainShadowMaps[SGE_MAX_PLAIN_SHADOW_MAPS];
+					layout(set = SCENE_SET, binding = CUBE_SHADOW_MAP_BINDING) uniform samplerCube cubeShadowMaps[SGE_MAX_CUBE_SHADOW_MAPS];
+
+					Solution no 2 (using separate buffers only):
+					-----------------------------------------------------------
+
+					#define read_write_qual 
+					#define buffer_type uniform
+					#define buffer_layout SGE_UNIFORM_BUFFER_LAYOUT
+
+					layout(buffer_layout, set = SCENE_SET, binding = POINT_LIGHT_BINDING) read_write_qual buffer_type PointLights
+					{
+						uint count;
+						PointLight lights[];
+					} pointLights;
+
+					layout(buffer_layout, set = SCENE_SET, binding = SPOT_LIGHT_BINDING) read_write_qual buffer_type SpotLights
+					{
+						uint count;
+						SpotLight lights[];
+					} spotLights;
+
+					layout(buffer_layout, set = SCENE_SET, binding = FAR_LIGHT_BINDING) read_write_equal buffer_type FarLights
+					{
+						uint count;
+						FarLight lights[];
+					} farLights;
+
+					// shadow maps
+					layout(set = SCENE_SET, binding = PLAIN_SHADOW_MAP_BINDING) uniform sampler2D plainShadowMaps[SGE_MAX_PLAIN_SHADOW_MAPS];
+					layout(set = SCENE_SET, binding = CUBE_SHADOW_MAP_BINDING) uniform samplerCube cubeShadowMaps[SGE_MAX_CUBE_SHADOW_MAPS];
+	
+				 */
 				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 				
 				layout(location = POSITION_LOCATION) in vec3 position;

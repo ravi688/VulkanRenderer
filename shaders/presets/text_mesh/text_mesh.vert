@@ -27,7 +27,7 @@
 
 #include <v3d.h>
 
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = SCREEN_BINDING) uniform DisplayInfo
 {
     uvec2 resolution;
     uvec2 dpi;

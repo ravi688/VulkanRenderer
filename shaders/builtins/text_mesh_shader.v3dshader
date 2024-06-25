@@ -90,7 +90,7 @@ Shader
                 
                 #include <v3d.h>
                 
-                layout(set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
+                layout(set = SCENE_SET, binding = SCREEN_BINDING) uniform DisplayInfo
                 {
                     uvec2 resolution;
                     uvec2 dpi;

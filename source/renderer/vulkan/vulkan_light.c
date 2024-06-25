@@ -114,7 +114,7 @@ static void setup_gpu_resources(vulkan_light_t* super)
 		};
 	struct_descriptor_end(light->renderer->allocator, &light->struct_definition);
 
-	// create uniform buffers and write to the descriptor set GLOBAL_SET at bindings GLOBAL_CAMERA and GLOBAL_LIGHT
+	// create uniform buffers and write to the descriptor set SCENE_SET at bindings GLOBAL_CAMERA and GLOBAL_LIGHT
 	vulkan_buffer_create_info_t create_info = 
 	{
 		.size = struct_descriptor_sizeof(&light->struct_definition),

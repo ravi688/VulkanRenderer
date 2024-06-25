@@ -25,7 +25,7 @@
 
 
 /* set constants */
-#define GLOBAL_SET 0 			// bound once [ Camera and Lights ]
+#define SCENE_SET 0 			// bound once [ Camera and Lights ]
 #define RENDER_SET 1 			// bound for each render pass
 #define SUB_RENDER_SET 2 		// bound for each sub pass
 #define MATERIAL_SET 3 			// bound for each material [ textures, material properties ]
@@ -33,7 +33,7 @@
 
 /* binding constants  */
 
-// should be used with GLOBAL_SET
+// should be used with SCENE_SET
 #define CAMERA_BINDING 0 		// binding for camera properties
 #define LIGHT_BINDING 1 		// binding for light properties
 
