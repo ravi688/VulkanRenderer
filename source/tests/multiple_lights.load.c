@@ -48,8 +48,6 @@ TEST_DATA(MULTIPLE_LIGHTS_LOAD)
 
 	/* materials */
 	material_t* material;
-	material_t* shadowMapMaterial;
-	material_t* depthReflectionMaterial;
 
 	/* meshes */
 	mesh_t* mesh;
@@ -109,22 +107,12 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 	light_set_position(this->pointLight, vec3_zero());
 	light_set_intensity(this->pointLight, 0.5f);
 
-	this->shadowMapMaterial = material_library_getH(mlib, 
-							material_library_create_materialH(mlib, 
-							shader_library_load_shader(slib, 
-								"shaders/presets/shadowmap.sb"), "ShadowMapMaterial"));
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
 							shader_library_load_shader(slib, 
 								"shaders/presets/point_light.sb"), "PointLightMaterial"));
-	this->depthReflectionMaterial = material_library_getH(mlib, 
-							material_library_create_materialH(mlib, 
-							shader_library_load_shader(slib, 
-								"shaders/presets/reflection.depth.point.sb"), "DepthRefectionMaterial"));
 
 	material_set_vec4(this->material, "parameters.color", vec4(1, 1, 1, 1));
-	material_set_vec4(this->depthReflectionMaterial, "parameters.color", vec4(1, 1, 1, 1));
-	material_set_float(this->depthReflectionMaterial, "parameters.reflectance", 1.0f);
 
 	vulkan_texture_create_info_t create_info = 
 	{
@@ -140,7 +128,6 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 	};	
 	this->shadowMap = vulkan_texture_create(renderer->vulkan_handle, &create_info);
 	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->shadowMap);
-	material_set_texture(this->depthReflectionMaterial, "reflectionMap", this->shadowMap);
 	material_set_texture(this->material, "shadowMap", this->shadowMap);
 
 	AUTO sphereMeshData = mesh3d_load(renderer->allocator, "models/Monkey.obj");
@@ -221,16 +208,10 @@ TEST_ON_UPDATE(MULTIPLE_LIGHTS_LOAD)
 
 TEST_ON_RENDER(MULTIPLE_LIGHTS_LOAD)
 {
-	render_object_set_material(this->renderObject, this->shadowMapMaterial);
-	render_object_set_material(this->wallObject, this->shadowMapMaterial);
-	render_object_set_material(this->cubeObject, this->shadowMapMaterial);
 	camera_set_active(this->offscreenCamera, true);
 	camera_set_active(this->camera, false);
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 
-	render_object_set_material(this->renderObject, this->material);
-	render_object_set_material(this->wallObject, this->material);
-	render_object_set_material(this->cubeObject, this->material);
 	camera_set_active(this->offscreenCamera, false);
 	camera_set_active(this->camera, true);
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
