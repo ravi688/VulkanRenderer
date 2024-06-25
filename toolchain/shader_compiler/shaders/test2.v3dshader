@@ -168,6 +168,12 @@ Shader
 		vec2 texcoord;
 	}
 
+	/* adding [DepthRenderPass] attribute will hint SGE to use the following render pass for rendering the depth values 
+	 * [DepthRenderPass] RenderPass {}
+	 * or [DepthRenderPass] { }
+	 * all such empty render pass expressions would hint SGE to not to include any object using this shader in shadow cast calculations, 
+	 * meaning the objects using this shader won't be able to cast shadows to any other objects in the scene. */
+	[DepthRenderPass]
 	[Name("ShadowPass")]
 	RenderPass
 	{
@@ -204,7 +210,7 @@ Shader
 				
 				#include <v3d.h>
 				
-				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
+				layout(set = SCENE_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
 				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 				
 				layout(location = POSITION_LOCATION) in vec3 position;
@@ -285,7 +291,7 @@ Shader
 				#include <v3d.h>
 				
 				layout(set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
-				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
+				layout(set = SCENE_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
 				layout(set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 				
 				layout(location = POSITION_LOCATION) in vec3 position;
@@ -313,7 +319,7 @@ Shader
 				
 				#include <v3d.h>
 				
-				layout(set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
+				layout(set = SCENE_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
 				layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 				{
 					vec4 color;

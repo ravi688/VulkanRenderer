@@ -57,7 +57,7 @@ RENDERER_API vulkan_camera_t* vulkan_camera_new(memory_allocator_t* allocator)
 
 static void* create_buffer_and_map(vulkan_camera_t* camera, vulkan_buffer_t OUT buffer, vulkan_descriptor_set_t OUT set)
 {
-	// create uniform buffers and write to the descriptor set GLOBAL_SET at bindings GLOBAL_CAMERA and GLOBAL_LIGHT
+	// create uniform buffers and write to the descriptor set SCENE_SET at bindings GLOBAL_CAMERA and GLOBAL_LIGHT
 	vulkan_buffer_create_info_t create_info = 
 	{
 		.size = struct_descriptor_sizeof(&camera->struct_definition),

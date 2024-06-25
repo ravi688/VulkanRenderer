@@ -336,7 +336,7 @@ static const char* parse_square_brackets(const char* start, const char* end, u32
 static u32 parse_set(const char* str, u32 len)
 {
 	if(safe_strncmp_any_va(str, len, 2, "CAMERA_SET", "camera_set")) return 0;
-	else if(safe_strncmp_any_va(str, len, 2, "GLOBAL_SET", "global_set")) return 1;
+	else if(safe_strncmp_any_va(str, len, 2, "SCENE_SET", "scene_set")) return 1;
 	else if(safe_strncmp_any_va(str, len, 2, "RENDER_SET", "render_set")) return 2;
 	else if(safe_strncmp_any_va(str, len, 2, "SUB_RENDER_SET", "sub_render_set")) return 3;
 	else if(safe_strncmp_any_va(str, len, 2, "MATERIAL_SET", "material_set")) return 4;

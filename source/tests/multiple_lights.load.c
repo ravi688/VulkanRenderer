@@ -110,7 +110,7 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
 							shader_library_load_shader(slib, 
-								"shaders/presets/point_light.sb"), "PointLightMaterial"));
+								"shaders/presets/point_light.multiple.sb"), "PointLightMaterial"));
 
 	material_set_vec4(this->material, "parameters.color", vec4(1, 1, 1, 1));
 

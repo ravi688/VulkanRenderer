@@ -46,7 +46,7 @@ enum
 	// bindings for CAMERA_SET
 	VULKAN_DESCRIPTOR_BINDING_CAMERA_PROPERTIES = 0,
 	
-	// bindings for GLOBAL_SET
+	// bindings for SCENE_SET
 	VULKAN_DESCRIPTOR_BINDING_CAMERA = 0,
 	VULKAN_DESCRIPTOR_BINDING_LIGHT = 1,
 	/* holds information related to the screen such as:

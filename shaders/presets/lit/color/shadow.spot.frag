@@ -28,7 +28,7 @@
 
 #include <v3d.h>
 
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight light;
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform SpotLight light;
 
 layout(location = 0) in vec3 position;
 

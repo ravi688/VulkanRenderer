@@ -286,7 +286,7 @@ RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_que
 
 			/* bind CAMERA_SET */
 			vulkan_descriptor_set_bind(&camera->sets[camera->current_shot_index], VULKAN_DESCRIPTOR_SET_CAMERA, layout);
-			/* bind GLOBAL_SET */
+			/* bind SCENE_SET */
 			vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, layout);
 
 			vulkan_render_pass_descriptor_sets_t* render_pass_descriptor_sets = vulkan_camera_get_descriptor_sets(camera, prev_pass_handle, pass_handle);
@@ -441,7 +441,7 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 
 				// bind CAMERA_SET
 				vulkan_descriptor_set_bind(&camera->sets[camera->current_shot_index], VULKAN_DESCRIPTOR_SET_CAMERA, pipeline_layout);
-				// bind GLOBAL_SET
+				// bind SCENE_SET
 				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, pipeline_layout);
 
 				vulkan_render_pass_descriptor_sets_t* render_pass_descriptor_sets = vulkan_camera_get_descriptor_sets(camera, prev_pass_handle, pass_handle);

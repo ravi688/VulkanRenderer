@@ -1273,7 +1273,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 	// push camera set layout, at CAMERA_SET = 0
 	buf_push(&set_layouts, &renderer->camera_set_layout.vo_handle);
 
-	// push global set layout, at GLOBAL_SET = 1
+	// push global set layout, at SCENE_SET = 1
 	buf_push(&set_layouts, &renderer->global_set_layout.vo_handle);
 
 	vulkan_render_pass_pool_create_path(renderer->render_pass_pool);
@@ -1374,7 +1374,7 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 
 	vulkan_render_pass_create_info_builder_destroy(create_info_builder);
 
-	// pop out the GLOBAL_SET layout
+	// pop out the SCENE_SET layout
 	buf_pop(&set_layouts, NULL);
 
 	// pop out the CAMERA_SET layout

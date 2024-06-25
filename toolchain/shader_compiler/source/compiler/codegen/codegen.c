@@ -1253,7 +1253,7 @@ static u32 strntoul(const char* str, u32 len)
 static u32 parse_set(const char* str, u32 len)
 {
 	if(safe_strncmp(str, "CAMERA_SET", len) == 0) return 0;
-	else if(safe_strncmp(str, "GLOBAL_SET", len) == 0) return 1;
+	else if(safe_strncmp(str, "SCENE_SET", len) == 0) return 1;
 	else if(safe_strncmp(str, "RENDER_SET", len) == 0) return 2;
 	else if(safe_strncmp(str, "SUB_RENDER_SET", len) == 0) return 3;
 	else if(safe_strncmp(str, "MATERIAL_SET", len) == 0) return 4;
