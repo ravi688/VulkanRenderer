@@ -1270,11 +1270,11 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 
 	BUFFER set_layouts = memory_allocator_buf_create(renderer->allocator, sizeof(VkDescriptorSetLayout), 1, 0);
 
-	// push camera set layout, at CAMERA_SET = 0
-	buf_push(&set_layouts, &renderer->camera_set_layout.vo_handle);
-
-	// push global set layout, at SCENE_SET = 1
+	// push global set layout, at SCENE_SET = 0
 	buf_push(&set_layouts, &renderer->global_set_layout.vo_handle);
+
+	// push camera set layout, at CAMERA_SET = 1
+	buf_push(&set_layouts, &renderer->camera_set_layout.vo_handle);
 
 	vulkan_render_pass_pool_create_path(renderer->render_pass_pool);
 	

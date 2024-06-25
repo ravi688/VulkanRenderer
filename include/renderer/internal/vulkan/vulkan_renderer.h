@@ -82,6 +82,15 @@ typedef struct vulkan_renderer_create_info_t
 	/* when enabled, call to vulkan_renderer_update() will block execution on the host until rendering commands finish on device for the current frame
 	 * NOTE: if frame_pipelining is disabled, then it is of no use keeping max_frames_in_flight more than 1 */
 	bool frame_pipelining;
+	/* number of point lights which can be added in a render scene,
+	 * this is to preset the descriptor set binding counts for point light shadow maps */
+	u32 max_point_lights;
+	/* number of spot lights which can be added in a render scene,
+	 * this is to preset the descriptor set binding counts for spot light shadow maps */
+	u32 max_spot_lights;
+	/* number of far (directional) lights which can be added in a render scene,
+	 * this is to preset the descriptor set binding counts for directional light shadow maps */
+	u32 max_far_lights;
 } vulkan_renderer_create_info_t;
 
 typedef struct vulkan_renderer_t

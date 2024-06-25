@@ -563,14 +563,8 @@ static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t
 
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer)
 {
-	VkDescriptorSetLayoutBinding bindings[3] =
+	VkDescriptorSetLayoutBinding bindings[2] =
 	{
-		{
-			.binding = VULKAN_DESCRIPTOR_BINDING_CAMERA,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
-		},
 		{
 			.binding = VULKAN_DESCRIPTOR_BINDING_LIGHT,
 			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -586,7 +580,7 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 	};
 
 	var (vulkan_descriptor_set_layout_t, layout);
-	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, bindings, 3, ptr (layout));
+	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, bindings, 2, ptr (layout));
 	log_msg("Global descriptor set layout has been created successfully\n");
 	return val (layout);
 }

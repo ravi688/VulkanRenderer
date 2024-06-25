@@ -424,6 +424,12 @@ static FORCE_INLINE bool vulkan_camera_is_active(vulkan_camera_t* camera)
 {
 	return camera->is_active;
 }
+/* WARNING: the pointer returned must not be stored as it can be invalidated if shot count changes */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_descriptor_set_t* vulkan_camera_get_current_shot_set(vulkan_camera_t* camera)
+{
+	_debug_assert__(camera->current_shot_index < camera->max_shot_count);
+	return &camera->sets[camera->current_shot_index];
+}
 RENDERER_API mat4_t vulkan_camera_get_view(vulkan_camera_t* camera);
 RENDERER_API mat4_t vulkan_camera_get_transform(vulkan_camera_t* camera);
 RENDERER_API mat4_t vulkan_camera_get_projection(vulkan_camera_t* camera);
