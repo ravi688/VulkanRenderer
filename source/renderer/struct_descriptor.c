@@ -564,27 +564,38 @@ RENDERER_API void struct_descriptor_destroy(memory_allocator_t* allocator, struc
 		memory_allocator_dealloc(allocator, descriptor);
 }
 
+static void _struct_descriptor_clone(struct_descriptor_t* descriptor, struct_descriptor_t* const clone)
+{
+	/* copy bit-wise */
+	OBJECT_MEMCOPY(clone, descriptor, struct_descriptor_t);
+
+	/* if there are fields in the descriptor */
+	if(descriptor->field_count > 0)
+	{
+		/* iterate over each fields and perform bit-wise copy */
+		clone->fields = memory_allocator_alloc_obj_array(descriptor->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, descriptor->field_count);
+		for(u16 i = 0; i < descriptor->field_count; i++)
+		{
+			memcopy(&clone->fields[i], &descriptor->fields[i], struct_field_t);
+			/* if this field is another struct descriptor, then call the clone function recursively */
+			if(descriptor->fields[i].record != NULL)
+				clone->fields[i].record = struct_descriptor_clone_p(descriptor->fields[i].record);
+		}
+	}
+}
+
+RENDERER_API struct_descriptor_t* struct_descriptor_clone_p(struct_descriptor_t* descriptor)
+{
+	AUTO clone = struct_descriptor_create(descriptor->allocator);
+	_struct_descriptor_clone(descriptor, clone);
+	return clone;
+}
+
 RENDERER_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descriptor)
 {
 	struct_descriptor_t clone;
-	memcopy(&clone, descriptor, struct_descriptor_t);
 	OBJECT_INIT(&clone, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_EXTERNAL);
-	if(descriptor->field_count > 0)
-	{
-		clone.fields = memory_allocator_alloc_obj_array(descriptor->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_FIELD_ARRAY, struct_field_t, descriptor->field_count);
-		for(u16 i = 0; i < descriptor->field_count; i++)
-		{
-			memcopy(&clone.fields[i], &descriptor->fields[i], struct_field_t);
-			if(descriptor->fields[i].record != NULL)
-			{
-				clone.fields[i].record = memory_allocator_alloc_obj(descriptor->allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRUCT_DESCRIPTOR, struct_descriptor_t);
-				*(clone.fields[i].record) = struct_descriptor_clone(descriptor->fields[i].record);
-				/* the struct descriptor object we are cloning from, might not be of OBJECT_NATIONALITY_INTERNAL, so explicitly state this
-				 * for the new allocated struct_descriptor_t object to be able to free it later */
-				OBJECT_INIT(clone.fields[i].record, OBJECT_TYPE_STRUCT_DESCRIPTOR, OBJECT_NATIONALITY_INTERNAL);
-			}
-		}
-	}
+	_struct_descriptor_clone(descriptor, &clone);
 	return clone;
 }
 
