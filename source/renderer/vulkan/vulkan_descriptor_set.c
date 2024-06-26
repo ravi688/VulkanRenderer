@@ -116,27 +116,43 @@ static VkImageLayout get_layout(VkFormat format)
 	return VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
-RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_texture_t* texture)
+RENDERER_API void vulkan_descriptor_set_write_texturev(vulkan_descriptor_set_t* set, u32 binding_index, u32 dst_index, vulkan_texture_t** textures, u32 texture_count)
 {
-	_debug_assert__(texture->image_view.vo_handle != VK_NULL_HANDLE);
-	
-	// NOTE: texture->vo_image_sampler might be VK_NULL_HANDLE in case of subpassInput
-	// _debug_assert__(texture->vo_image_sampler != VK_NULL_HANDLE);
-	VkDescriptorImageInfo image_info =
+	if(texture_count == 0)
 	{
-		.imageLayout = get_layout(texture->image.vo_format),
-		.imageView = texture->image_view.vo_handle,
-		.sampler = texture->vo_image_sampler
-	};
+		debug_log_warning("No textures to write, texture_count is equal to zero");
+		return;
+	}
+
+DEBUG_BLOCK
+(
+	for(u32 i = 0; i < texture_count; i++)
+		_debug_assert__(textures[i]->image_view.vo_handle != VK_NULL_HANDLE);
+);
+	
+	/* prepare the VkDescriptorImageInfo array */
+	VkDescriptorImageInfo image_info[texture_count] = { };
+	for(u32 i = 0; i < texture_count; i++)
+	{
+		AUTO texture = textures[i];
+		image_info[i] = (VkDescriptorImageInfo)
+		{
+			.imageLayout = get_layout(texture->image.vo_format),
+			.imageView = texture->image_view.vo_handle,
+			.sampler = texture->vo_image_sampler
+		};
+	}
+
+	/* write to the descriptor slots */
 	VkWriteDescriptorSet descriptor_write =
 	{
 		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 		.dstSet = set->vo_handle,
 		.dstBinding = binding_index,
-		.dstArrayElement = 0,
-		.descriptorType = texture->vo_descriptor_type,
-		.descriptorCount = 1,
-		.pImageInfo = &image_info,
+		.dstArrayElement = dst_index,
+		.descriptorType = textures[0]->vo_descriptor_type,
+		.descriptorCount = texture_count,
+		.pImageInfo = image_info,
 	};
 	vkUpdateDescriptorSets(set->renderer->logical_device->vo_handle, 1, &descriptor_write, 0, NULL);
 }

@@ -174,7 +174,15 @@ typedef struct vulkan_renderer_t
 	u32 max_frames_in_flight;
 	/* cache of create_info->frame_pipelining */
 	bool is_pipeline_frame;
-
+	/* number of point lights which can be added in a render scene,
+	 * this is to preset the descriptor set binding counts for point light shadow maps */
+	u32 max_point_lights;
+	/* number of spot lights which can be added in a render scene,
+	 * this is to preset the descriptor set binding counts for spot light shadow maps */
+	u32 max_spot_lights;
+	/* number of far (directional) lights which can be added in a render scene,
+	 * this is to preset the descriptor set binding counts for directional light shadow maps */
+	u32 max_far_lights;
 } vulkan_renderer_t;
 
 BEGIN_CPP_COMPATIBLE

@@ -251,6 +251,9 @@ RENDERER_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_in
 	renderer->vk_allocator = vulkan_allocator_create(_renderer->allocator);
 	IF_DEBUG( renderer->debug_log_builder = _renderer->debug_log_builder );
 	renderer->is_pipeline_frame = create_info->frame_pipelining;
+	renderer->max_point_lights = create_info->max_point_lights;
+	renderer->max_spot_lights = create_info->max_spot_lights;
+	renderer->max_far_lights = create_info->max_far_lights;
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
 	const char* extensions[3] = { "VK_KHR_surface", PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION };
@@ -439,7 +442,7 @@ DEBUG_BLOCK
 	//Create descripter pool
 	VkDescriptorPoolSize sizes[3] =
 	{
-		{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 10 },
+		{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 20 },
 		{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 40 },
 		{ .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = 10 }
 	};
@@ -448,7 +451,7 @@ DEBUG_BLOCK
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		.poolSizeCount = 3,
 		.pPoolSizes = &sizes[0],
-		.maxSets = 60,
+		.maxSets = 70,
 		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 	};
 	vkCall(vkCreateDescriptorPool(renderer->logical_device->vo_handle, &pool_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &renderer->vo_descriptor_pool));
@@ -563,12 +566,24 @@ static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t
 
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer)
 {
-	VkDescriptorSetLayoutBinding bindings[2] =
+	VkDescriptorSetLayoutBinding bindings[4] =
 	{
 		{
-			.binding = VULKAN_DESCRIPTOR_BINDING_LIGHT,
+			.binding = VULKAN_DESCRIPTOR_BINDING_POINT_LIGHT,
 			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
+			.descriptorCount = renderer->max_point_lights,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+		},
+		{
+			.binding = VULKAN_DESCRIPTOR_BINDING_SPOT_LIGHT,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = renderer->max_spot_lights,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+		},
+		{
+			.binding = VULKAN_DESCRIPTOR_BINDING_FAR_LIGHT,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = renderer->max_far_lights,
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		},
 		{
@@ -580,7 +595,7 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 	};
 
 	var (vulkan_descriptor_set_layout_t, layout);
-	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, bindings, 2, ptr (layout));
+	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, bindings, SIZEOF_ARRAY(bindings), ptr (layout));
 	log_msg("Global descriptor set layout has been created successfully\n");
 	return val (layout);
 }

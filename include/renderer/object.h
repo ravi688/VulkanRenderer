@@ -46,6 +46,7 @@ typedef enum object_type_t
 	OBJECT_TYPE_VK_SHADER_MODULE,
 	OBJECT_TYPE_VK_INSTANCE_BUFFER,
 	OBJECT_TYPE_VK_HOST_BUFFERED_BUFFER,
+	OBJECT_TYPE_VK_FORMATTED_BUFFER,
 	OBJECT_TYPE_VK_MESH,
 	OBJECT_TYPE_VK_IMAGE,
 	OBJECT_TYPE_VK_IMAGE_VIEW,
@@ -105,6 +106,7 @@ static CAN_BE_UNUSED_FUNCTION const char* object_type_to_string(object_type_t ty
 		RETURN_STR_CASE(OBJECT_TYPE_VK_SHADER_MODULE);
 		RETURN_STR_CASE(OBJECT_TYPE_VK_INSTANCE_BUFFER);
 		RETURN_STR_CASE(OBJECT_TYPE_VK_HOST_BUFFERED_BUFFER);
+		RETURN_STR_CASE(OBJECT_TYPE_VK_FORMATTED_BUFFER);
 		RETURN_STR_CASE(OBJECT_TYPE_VK_MESH);
 		RETURN_STR_CASE(OBJECT_TYPE_VK_IMAGE);
 		RETURN_STR_CASE(OBJECT_TYPE_VK_IMAGE_VIEW);
@@ -184,17 +186,6 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool object_is_base(const o
 	return obj->is_next;
 }
 
-#define OBJECT_MEMZERO(typed_ptr, type) object_memzero(CAST_TO(void*, OBJECT_VERIFY_FORWARD(typed_ptr)), sizeof(typed_ptr[0]))
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_memzero(void* ptr, u32 size)
-{
-	_debug_assert__((ptr != NULL) && (size != 0));
-	_debug_assert__(size >= sizeof(object_t));
-	memset(ptr + sizeof(object_t), 0, size - sizeof(object_t));
-}
-
-
-
-
 /* nationality (memory ownership) */
 #define OBJECT_IS_INTERNAL(typed_ptr) (OBJECT_GET_NATIONALITY(typed_ptr) == OBJECT_NATIONALITY_INTERNAL)
 #define OBJECT_IS_EXTERNAL(typed_ptr) (OBJECT_GET_NATIONALITY(typed_ptr) == OBJECT_NATIONALITY_EXTERNAL)
@@ -214,6 +205,32 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_set_nationality
 #define OBJECT_GET_TYPE(typed_ptr) object_get_type(OBJECT_CONST(typed_ptr))
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE object_type_t object_get_type(const object_t* obj) { return obj->type; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_set_type(object_t* obj, object_type_t type) { obj->type = type; }
+
+/* OBJECT_MEMZERO preserves the derivation from __OBJECT__ and zeros out the memory following that */
+#define OBJECT_MEMZERO(typed_ptr, type) object_memzero(CAST_TO(void*, OBJECT_VERIFY_FORWARD(typed_ptr)), sizeof(typed_ptr[0]))
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_memzero(void* ptr, u32 size)
+{
+	_debug_assert__((ptr != NULL) && (size != 0));
+	_debug_assert__(size >= sizeof(object_t));
+	memset(ptr + sizeof(object_t), 0, size - sizeof(object_t));
+}
+/* OBJECT_MEMCOPY preserves the nationality of the destination object, so it must be used to copy objects which are derived from __OBJECT__ */
+#define OBJECT_MEMCOPY(dst_typed_ptr, src_typed_ptr, type) object_memcpy(CAST_TO(void*, OBJECT_VERIFY_FORWARD(dst_typed_ptr)), CAST_TO(void*, OBJECT_VERIFY_FORWARD(src_typed_ptr)), sizeof(dst_typed_ptr[0]) \
+														PARAM_IF_DEBUG(sizeof(src_typed_ptr[0])) \
+														PARAM_IF_DEBUG(sizeof(type)))
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_memcpy(void* dst_ptr, void* src_ptr, u32 dst_size 
+														PARAM_IF_DEBUG(u32 src_size)
+														PARAM_IF_DEBUG(u32 assert_size))
+{
+	_debug_assert__(OBJECT_GET_TYPE(dst_ptr) == OBJECT_GET_TYPE(src_ptr));
+DEBUG_BLOCK(
+	_debug_assert__(dst_size == src_size);
+	_debug_assert__(src_size == assert_size);
+)
+	AUTO dst_nationality = OBJECT_GET_NATIONALITY(dst_ptr);
+	memcpy(dst_ptr, src_ptr, dst_size);
+	OBJECT_SET_NATIONALITY(dst_ptr, dst_nationality);
+}
 
 /* returns the lowest multiple of x greater or equal to y*/
 static INLINE u32 lowest_multiple_of(u32 x, u32 y)

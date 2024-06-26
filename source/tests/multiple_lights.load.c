@@ -99,6 +99,7 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 
 	/* create render scene */
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY) | BIT64(RENDER_QUEUE_TYPE_QUEUE0));
+	render_scene_set_use_lights(this->scene, true);
 	/* add the cameras which just created to the scene */
 	render_scene_add_camera(this->scene, this->camera);
 	render_scene_add_camera(this->scene, this->offscreenCamera);
@@ -106,6 +107,8 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 	this->pointLight = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_position(this->pointLight, vec3_zero());
 	light_set_intensity(this->pointLight, 0.5f);
+	/* add the light which j ust created to the scene */
+	render_scene_add_light(this->scene, this->pointLight);
 
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
@@ -208,12 +211,6 @@ TEST_ON_UPDATE(MULTIPLE_LIGHTS_LOAD)
 
 TEST_ON_RENDER(MULTIPLE_LIGHTS_LOAD)
 {
-	camera_set_active(this->offscreenCamera, true);
-	camera_set_active(this->camera, false);
-	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
-
-	camera_set_active(this->offscreenCamera, false);
-	camera_set_active(this->camera, true);
 	render_scene_render(this->scene, RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 }
 

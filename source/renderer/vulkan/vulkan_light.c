@@ -503,14 +503,73 @@ RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color)
 	struct_descriptor_set_vec3(&light->struct_definition, light->color_handle, CAST_TO(float*, &light->color));
 }
 
+RENDERER_API vulkan_light_type_t vulkan_light_get_type(vulkan_light_t* light)
+{
+	light = VULKAN_LIGHT(light);
+	return light->type;
+}
+
+RENDERER_API struct_descriptor_t* vulkan_light_get_struct_def(vulkan_light_t* light)
+{ 
+	light = VULKAN_LIGHT(light);
+	return &light->struct_definition;
+}
+RENDERER_API vulkan_material_t* vulkan_light_get_shadow_material(vulkan_light_t* light)
+{ 
+	light = VULKAN_LIGHT(light);
+	return light->shadow_material;
+}
+RENDERER_API vulkan_texture_t* vulkan_light_get_shadow_map(vulkan_light_t* light)
+{
+	light = VULKAN_LIGHT(light);
+	return light->shadow_map;
+}
+RENDERER_API vulkan_camera_t* vulkan_light_get_shadow_camera(vulkan_light_t* light)
+{ 
+	light = VULKAN_LIGHT(light);
+	return light->shadow_camera;
+}
+RENDERER_API bool vulkan_light_is_active(vulkan_light_t* light)
+{ 
+	light = VULKAN_LIGHT(light);
+	return light->is_active;
+}
+RENDERER_API bool vulkan_light_is_cast_shadow(vulkan_light_t* light)
+{ 
+	light = VULKAN_LIGHT(light);
+	return light->is_cast_shadow;
+}
+
+RENDERER_API bool vulkan_light_is_dirty(vulkan_light_t* light)
+{
+	return false;
+}
+
+RENDERER_API bool vulkan_light_is_shadow_map_dirty(vulkan_light_t* light)
+{
+	return false;
+}
+
+RENDERER_API void* vulkan_light_get_dispatchable_data(vulkan_light_t* light)
+{
+	return NULL;
+}
+
+RENDERER_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light)
+{
+	return 0;
+}
+
 RENDERER_API void vulkan_light_begin(vulkan_light_t* light)
 {
+	light = VULKAN_LIGHT(light);
 	if(light->is_cast_shadow)
 		vulkan_camera_begin(light->shadow_camera);
 }
 
 RENDERER_API bool vulkan_light_irradiate(vulkan_light_t* light)
 {
+	light = VULKAN_LIGHT(light);
 	if(light->is_cast_shadow)
 		return vulkan_camera_capture(light->shadow_camera, VULKAN_CAMERA_CLEAR_FLAG_CLEAR);
 	return false;
@@ -518,6 +577,7 @@ RENDERER_API bool vulkan_light_irradiate(vulkan_light_t* light)
 
 RENDERER_API void vulkan_light_end(vulkan_light_t* light)
 {
+	light = VULKAN_LIGHT(light);
 	if(light->is_cast_shadow)
 		vulkan_camera_end(light->shadow_camera);
 }
