@@ -34,6 +34,8 @@
 	typedef vulkan_render_scene_t render_scene_t;
 	typedef struct vulkan_camera_t vulkan_camera_t;
 	typedef vulkan_camera_t camera_t;
+	typedef struct vulkan_light_t vulkan_light_t;
+	typedef vulkan_light_t light_t;
 	#include <renderer/internal/vulkan/vulkan_handles.h>
 	typedef vulkan_render_scene_object_handle_t render_scene_object_handle_t;
 	#define RENDER_SCENE_OBJECT_HANDLE_INVALID VULKAN_RENDER_SCENE_OBJECT_HANDLE_INVALID
@@ -48,6 +50,8 @@
 	typedef opengl_render_scene_t render_scene_t;
 	typedef struct opengl_camera_t opengl_camera_t;
 	typedef opengl_camera_t camera_t;
+	typedef struct opengl_light_t opengl_light_t;
+	typedef opengl_light_t light_t;
 	#include <renderer/internal/opengl/opengl_handles.h>
 	typedef opengl_render_scene_object_handle_t render_scene_object_handle_t;
 	#define RENDER_SCENE_OBJECT_HANDLE_INVALID OPENGL_RENDER_SCENE_OBJECT_HANDLE_INVALID
@@ -62,6 +66,8 @@
 	typedef directx_render_scene_t render_scene_t;
 	typedef struct directx_camera_t directx_camera_t;
 	typedef directx_camera_t camera_t;
+	typedef struct directx_light_t directx_light_t;
+	typedef directx_light_t light_t;
 	#include <renderer/internal/directx/directx_handles.h>
 	typedef directx_render_scene_object_handle_t render_scene_object_handle_t;
 	#define RENDER_SCENE_OBJECT_HANDLE_INVALID DIRECTX_RENDER_SCENE_OBJECT_HANDLE_INVALID
@@ -76,6 +82,8 @@
 	typedef metal_render_scene_t render_scene_t;
 	typedef struct metal_camera_t metal_camera_t;
 	typedef metal_camera_t camera_t;
+	typedef struct metal_light_t metal_light_t;
+	typedef metal_light_t light_t;
 	#include <renderer/internal/metal/metal_handles.h>
 	typedef metal_render_scene_object_handle_t render_scene_object_handle_t;
 	#define RENDER_SCENE_OBJECT_HANDLE_INVALID METAL_RENDER_SCENE_OBJECT_HANDLE_INVALID
@@ -124,3 +132,7 @@ RENDERER_API void render_scene_destroy_objectH(render_scene_t* scene, render_sce
 RENDERER_API void render_scene_build_queues(render_scene_t* scene);
 RENDERER_API void render_scene_add_camera(render_scene_t* scene, camera_t* camera);
 RENDERER_API void render_scene_remove_camera(render_scene_t* scene, camera_t* camera);
+RENDERER_API void render_scene_add_light(render_scene_t* scene, light_t* light);
+RENDERER_API void render_scene_remove_light(render_scene_t* scene, light_t* light);
+
+RENDERER_API void render_scene_set_use_lights(render_scene_t* scene, bool is_use_lights);

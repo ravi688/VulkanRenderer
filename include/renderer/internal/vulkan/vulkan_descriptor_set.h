@@ -188,8 +188,11 @@ RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, u32 s
  	returns:
  		nothing
  */
-RENDERER_API void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_texture_t* texture);
-
+RENDERER_API void vulkan_descriptor_set_write_texturev(vulkan_descriptor_set_t* set, u32 binding_index, u32 dst_index, vulkan_texture_t** textures, u32 texture_count);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_descriptor_set_write_texture(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_texture_t* texture)
+{
+	vulkan_descriptor_set_write_texturev(set, binding_index, 0, &texture, 1);
+}
 
 /*
  	description:

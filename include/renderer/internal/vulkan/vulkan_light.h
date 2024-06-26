@@ -38,6 +38,7 @@ typedef enum vulkan_light_type_t
 {
 	VULKAN_LIGHT_TYPE_UNDEFINED = 0,
 	VULKAN_LIGHT_TYPE_DIRECTIONAL = 1,
+	VULKAN_LIGHT_TYPE_FAR = VULKAN_LIGHT_TYPE_DIRECTIONAL,
 	VULKAN_LIGHT_TYPE_POINT = 2,
 	VULKAN_LIGHT_TYPE_OMIN = VULKAN_LIGHT_TYPE_POINT,
 	VULKAN_LIGHT_TYPE_SPOT = 3,
@@ -106,8 +107,13 @@ typedef struct vulkan_light_t
 
 } vulkan_light_t;
 
+/* performs dynamic casting (expensive), use only when you don't know the source type */
 #define VULKAN_LIGHT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_light_t*, VULKAN_OBJECT_TYPE_LIGHT, ptr)
 #define VULKAN_LIGHT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_light_t*, VULKAN_OBJECT_TYPE_LIGHT, ptr)
+/* otherwise (if you are sure that the type is VULKAN_OBJECT_TYPE_LIGHT) use the following,
+ * this macro expands to just a C-style cast in release mode so it is very efficient as compared to the dynamic casting above */
+#define VULKAN_LIGHT_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_light_t*, VULKAN_OBJECT_TYPE_LIGHT, ptr)
+#define VULKAN_LIGHT_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_light_t*, VULKAN_OBJECT_TYPE_LIGHT, ptr)
 
 typedef vulkan_light_t vulkan_ambient_light_t;
 
@@ -165,10 +171,17 @@ RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotati
 RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle);
 
 /* getters */
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_material_t* vulkan_light_get_shadow_material(vulkan_light_t* light) { return light->shadow_material; }
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_camera_t* vulkan_light_get_shadow_camera(vulkan_light_t* light) { return light->shadow_camera; }
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_light_is_active(vulkan_light_t* light) { return light->is_active; }
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_light_is_cast_shadow(vulkan_light_t* light) { return light->is_cast_shadow; }
+RENDERER_API vulkan_light_type_t vulkan_light_get_type(vulkan_light_t* light);
+RENDERER_API struct_descriptor_t* vulkan_light_get_struct_def(vulkan_light_t* light);
+RENDERER_API vulkan_material_t* vulkan_light_get_shadow_material(vulkan_light_t* light);
+RENDERER_API vulkan_texture_t* vulkan_light_get_shadow_map(vulkan_light_t* light);
+RENDERER_API vulkan_camera_t* vulkan_light_get_shadow_camera(vulkan_light_t* light);
+RENDERER_API bool vulkan_light_is_active(vulkan_light_t* light);
+RENDERER_API bool vulkan_light_is_cast_shadow(vulkan_light_t* light);
+RENDERER_API bool vulkan_light_is_dirty(vulkan_light_t* light);
+RENDERER_API bool vulkan_light_is_shadow_map_dirty(vulkan_light_t* light);
+RENDERER_API void* vulkan_light_get_dispatchable_data(vulkan_light_t* light);
+RENDERER_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light);
 
 RENDERER_API void vulkan_light_begin(vulkan_light_t* light);
 RENDERER_API bool vulkan_light_irradiate(vulkan_light_t* light);

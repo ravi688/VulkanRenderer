@@ -1,0 +1,56 @@
+#pragma once
+
+#include <renderer/defines.h>
+#include <bufferlib/buffer.h> /* buffer_t* */
+#include <renderer/internal/vulkan/vulkan_object.h>
+#include <vulkan/vulkan_core.h> /* for VkBufferUsageFlags */
+
+typedef struct struct_descriptor_t struct_descriptor_t;
+typedef struct vulkan_host_buffered_buffer_t vulkan_host_buffered_buffer_t;
+
+typedef struct vulkan_formatted_buffer_create_info_t
+{
+	/* it is internally cloned, therefore you can't really modify (add or remove fields) it once vulkan_formatted_buffer_t object is created */
+	struct_descriptor_t* format;
+	/* this usage flags is used when creating the vulkan_host_buffered_buffer_t object internally, otherwise it is ignored */
+	VkBufferUsageFlags vo_usage_flags;
+	/* if supplied NULL, then it will be created internally,
+	 * this also means vo_usage_flags will be used */
+	vulkan_host_buffered_buffer_t* host_buffered_buffer;
+} vulkan_formatted_buffer_create_info_t;
+
+typedef struct vulkan_formatted_buffer_t
+{
+	__VULKAN_OBJECT__;
+	vulkan_renderer_t* renderer;
+	/* clone of create_info.format */
+	struct_descriptor_t* format;
+	/* set to true internally when create_info.host_buffered_buffer is NULL */
+	bool is_user_supplied_host_buffered_buffer;
+	/* points to create_info.host_buffered_buffer or internally created vulkan_host_buffered_buffer_t object */
+	vulkan_host_buffered_buffer_t* host_buffered_buffer;
+} vulkan_formatted_buffer_t;
+
+/* performs dynamic casting (expensive), use only when you don't know the source type */
+#define VULKAN_FORMATTED_BUFFER(ptr) VULKAN_OBJECT_UP_CAST(vulkan_formatted_buffer_t*, VULKAN_OBJECT_TYPE_FORMATTED_BUFFER, ptr)
+#define VULKAN_FORMATTED_BUFFER_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_formatted_buffer_t*, VULKAN_OBJECT_TYPE_FORMATTED_BUFFER, ptr)
+/* otherwise (if you are sure that the type is VULKAN_OBJECT_TYPE_FORMATTED_BUFFER) use the following,
+ * this macro expands to just a C-style cast in release mode so it is very efficient as compared to the dynamic casting above */
+#define VULKAN_FORMATTED_BUFFER_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_formatted_buffer_t*, VULKAN_OBJECT_TYPE_FORMATTED_BUFFER, ptr)
+#define VULKAN_FORMATTED_BUFFER_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_formatted_buffer_t*, VULKAN_OBJECT_TYPE_FORMATTED_BUFFER, ptr)
+
+BEGIN_CPP_COMPATIBLE
+
+/* constructors and destructors */
+RENDERER_API vulkan_formatted_buffer_t* vulkan_formatted_buffer_new(memory_allocator_t* allocator);
+RENDERER_API void vulkan_formatted_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_formatted_buffer_create_info_t* create_info, vulkan_formatted_buffer_t* buffer);
+RENDERER_API vulkan_formatted_buffer_t* vulkan_formatted_buffer_create(vulkan_renderer_t* renderer, vulkan_formatted_buffer_create_info_t* create_info);
+RENDERER_API void vulkan_formatted_buffer_destroy(vulkan_formatted_buffer_t* buffer);
+RENDERER_API void vulkan_formatted_buffer_release_resources(vulkan_formatted_buffer_t* buffer);
+
+/* logic functions */
+RENDERER_API buffer_t* vulkan_formatted_buffer_get_array_buffer(vulkan_formatted_buffer_t* buffer, const char* name);
+RENDERER_API u32 vulkan_formatted_buffer_get_array_length(vulkan_formatted_buffer_t* buffer, const char* name);
+RENDERER_API void vulkan_formatted_buffer_set_uint(vulkan_formatted_buffer_t* buffer, const char* name, u32 value);
+RENDERER_API bool vulkan_formatted_buffer_is_dirty(vulkan_formatted_buffer_t* buffer);
+RENDERER_API void vulkan_formatted_buffer_commit(vulkan_formatted_buffer_t* buffer);

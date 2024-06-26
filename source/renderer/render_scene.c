@@ -30,6 +30,7 @@
 #include <renderer/internal/vulkan/vulkan_render_object.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
 #include <renderer/internal/vulkan/vulkan_camera.h> /* for VULKAN_CAMERA_CAST */
+#include <renderer/internal/vulkan/vulkan_light.h> /* for VULKAN_LIGHT_CAST */
 
 /* constructors & destructors */
 RENDERER_API render_scene_t* render_scene_new(memory_allocator_t* allocator)
@@ -132,4 +133,19 @@ RENDERER_API void render_scene_add_camera(render_scene_t* scene, camera_t* camer
 RENDERER_API void render_scene_remove_camera(render_scene_t* scene, camera_t* camera)
 {
 	vulkan_render_scene_remove_camera(VULKAN_RENDER_SCENE_CAST(scene), VULKAN_CAMERA_CAST(camera));
+}
+
+RENDERER_API void render_scene_add_light(render_scene_t* scene, light_t* light)
+{
+	vulkan_render_scene_add_light(VULKAN_RENDER_SCENE_CAST(scene), VULKAN_LIGHT_CAST(light));
+}
+
+RENDERER_API void render_scene_remove_light(render_scene_t* scene, light_t* light)
+{
+	vulkan_render_scene_remove_light(VULKAN_RENDER_SCENE_CAST(scene), VULKAN_LIGHT_CAST(light));
+}
+
+RENDERER_API void render_scene_set_use_lights(render_scene_t* scene, bool is_use_lights)
+{
+	vulkan_render_scene_set_use_lights(VULKAN_RENDER_SCENE_CAST(scene), is_use_lights);
 }
