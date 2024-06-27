@@ -211,7 +211,7 @@ RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vu
 	queue->scene = scene;
 }
 
-static u32 get_scene_set_lighting_binding(vulkan_light_type_t type)
+static u32 get_scene_set_light_UBO_binding(vulkan_light_type_t type)
 {
 	switch(type)
 	{
@@ -219,7 +219,20 @@ static u32 get_scene_set_lighting_binding(vulkan_light_type_t type)
 		case VULKAN_LIGHT_TYPE_SPOT: return VULKAN_DESCRIPTOR_BINDING_SPOT_LIGHT;
 		case VULKAN_LIGHT_TYPE_FAR: return VULKAN_DESCRIPTOR_BINDING_FAR_LIGHT;
 		default:
-			DEBUG_LOG_FETAL_ERROR("No binding is defined for vulkan_light_type_t(%u)", type);
+			DEBUG_LOG_FETAL_ERROR("No UBO binding is defined for vulkan_light_type_t(%u)", type);
+	}
+	return 0;
+}
+
+static u32 get_scene_set_light_shadowmap_binding(vulkan_light_type_t type)
+{
+	switch(type)
+	{
+		case VULKAN_LIGHT_TYPE_POINT: return VULKAN_DESCRIPTOR_BINDING_POINT_LIGHT_SHADOWMAP;
+		case VULKAN_LIGHT_TYPE_SPOT: return VULKAN_DESCRIPTOR_BINDING_SPOT_LIGHT_SHADOWMAP;
+		case VULKAN_LIGHT_TYPE_FAR: return VULKAN_DESCRIPTOR_BINDING_FAR_LIGHT_SHADOWMAP;
+		default:
+			DEBUG_LOG_FETAL_ERROR("No shadow map binding is defined for vulkan_light_type_t(%u)", type);
 	}
 	return 0;
 }
@@ -241,8 +254,7 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 			/* rebuild light buffer */
 
 			/* get reference to the raw buffer of the light buffer */
-			buffer_t* buffer = vulkan_formatted_buffer_get_array_buffer(&stage->light_buffer, "lights");
-			buf_clear_fast(buffer);
+			buffer_t* buffer = NULL;
 
 			u32 light_count = buf_get_element_count(&stage->lights);
 
@@ -256,8 +268,20 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 				vulkan_light_t* light;
 				buf_get_at_s(&stage->lights, j, &light);
 
+				/* calling vulkan_formatted_buffer_get_array_buffer makes the vulkan_formatted_buffer_t dirty, 
+				 * so only call it when we are confirmed of dirty data */
+				if(buffer == NULL)
+				{
+					buffer = vulkan_formatted_buffer_get_array_buffer(&stage->light_buffer, "lights");
+					buf_clear_fast(buffer);
+				}
+
 				/* add the light data into this light buffer */
-				buf_push_n(buffer, vulkan_light_get_dispatchable_data(light), vulkan_light_get_dispatchable_data_size(light));	
+				u32 data_size = vulkan_light_get_dispatchable_data_size(light);
+				_debug_assert__(data_size == buf_get_element_size(buffer));
+				u8 bytes[data_size];
+				vulkan_light_get_dispatchable_data(light, j, CAST_TO(void*, bytes));
+				buf_push_n(buffer, CAST_TO(void*, bytes), data_size);	
 
 				/* we are doing this here to avoid another for-loop when rewriting the shadow map descriptors */
 				shadow_maps[j] = vulkan_light_get_shadow_map(light);
@@ -267,37 +291,55 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 			vulkan_formatted_buffer_set_uint(&stage->light_buffer, "count", array_len);
 
 			/* rewrite shadow map descriptors */
-			vulkan_descriptor_set_write_texturev(&scene->scene_set, get_scene_set_lighting_binding(light_type), 0, shadow_maps, light_count);
+			vulkan_descriptor_set_write_texturev(&scene->scene_set, get_scene_set_light_shadowmap_binding(light_type), 0, shadow_maps, light_count);
 		}
 		/* otherwise check for each light if they have dirty data to be updated into corresponding light buffer */
 		else
 		{
-			/* get reference to the raw buffer of the light buffer */
-			buffer_t* buffer = vulkan_formatted_buffer_get_array_buffer(&stage->light_buffer, "lights");
+			/* get reference to the raw buffer of the light buffer only if there is something to update */
+			buffer_t* buffer = NULL;
 
 			u32 light_count = buf_get_element_count(&stage->lights);
-			for(u32 i = 0; i < light_count; i++)
+			for(u32 j = 0; j < light_count; j++)
 			{
 				/* get reference to the light */
 				vulkan_light_t* light;
-				buf_get_at_s(&stage->lights, i, &light);
+				buf_get_at_s(&stage->lights, j, &light);
 
 				/* if this light has outdated dispatchable data, then updated it into the light buffer */
 				if(vulkan_light_is_dirty(light))
-					buf_set_at_n(buffer, i, vulkan_light_get_dispatchable_data(light), vulkan_light_get_dispatchable_data_size(light));
+				{
+					/* calling vulkan_formatted_buffer_get_array_buffer makes the vulkan_formatted_buffer_t dirty, 
+					 * so only call it when we are confirmed of dirty data */
+					if(buffer == NULL)
+						buffer = vulkan_formatted_buffer_get_array_buffer(&stage->light_buffer, "lights");
+					u32 data_size = vulkan_light_get_dispatchable_data_size(light);
+					u8 bytes[data_size];
+					vulkan_light_get_dispatchable_data(light, j, CAST_TO(void*, bytes));
+					buf_set_at_n(buffer, j, CAST_TO(void*, bytes), data_size);
+				}
 
 				/* if this light has resized shadow map, i.e. recreated VkImage(s) and VkImageView(s) objects */
 				if(vulkan_light_is_shadow_map_dirty(light))
 				{
 					AUTO shadow_map = vulkan_light_get_shadow_map(light);
-					vulkan_descriptor_set_write_texturev(&scene->scene_set, get_scene_set_lighting_binding(light_type), i, &shadow_map, 1);
+					vulkan_descriptor_set_write_texturev(&scene->scene_set, get_scene_set_light_shadowmap_binding(light_type), j, &shadow_map, 1);
 				}
 			}
 		}
 
 		/* if the light buffer contains outdated data or more/less data then update the GPU-side buffer */
 		if(vulkan_formatted_buffer_is_dirty(&stage->light_buffer))
-			vulkan_formatted_buffer_commit(&stage->light_buffer);
+		{
+			bool is_resized = false;
+			bool is_updated = vulkan_formatted_buffer_commit(&stage->light_buffer, &is_resized);
+			_debug_assert__(is_updated);
+			/* if the VkBuffer object has been recreated then we need to re-write the descriptor slot */
+			if(is_resized)
+				vulkan_descriptor_set_write_uniform_buffer(&scene->scene_set, 
+									get_scene_set_light_UBO_binding(light_type), 
+									vulkan_formatted_buffer_get_device_buffer(&stage->light_buffer));
+		}
 	}
 
 	/* if this render scene uses lights then render the shadow maps */
@@ -316,7 +358,7 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 				buf_get_at_s(&stage->lights, i, &light);
 	
 				/* if this light is not active then do not generate any shadow maps (i.e. do not render to the shadow depth buffer) */
-				if(!vulkan_light_is_active(light))
+				if((!vulkan_light_is_active(light)) || (!vulkan_light_is_cast_shadow(light)))
 					continue;
 	
 				vulkan_light_begin(light);

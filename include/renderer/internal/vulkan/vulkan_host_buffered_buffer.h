@@ -76,6 +76,11 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_host_buffered_b
 	buffer->is_dirty = is_dirty;
 }
 
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_host_buffered_buffer_is_dirty(vulkan_host_buffered_buffer_t* buffer)
+{
+	return buffer->is_dirty;
+}
+
 /* returns true if either the exisiting VkBuffer has been updated with new data or VkBuffer is recreated upon resize */
 RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer, bool OUT is_resized);
 

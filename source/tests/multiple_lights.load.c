@@ -107,6 +107,7 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 	this->pointLight = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_position(this->pointLight, vec3_zero());
 	light_set_intensity(this->pointLight, 0.5f);
+	light_set_cast_shadow(this->pointLight, true);
 	/* add the light which j ust created to the scene */
 	render_scene_add_light(this->scene, this->pointLight);
 

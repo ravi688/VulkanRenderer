@@ -254,6 +254,16 @@ void memory_allocator_call_free(void* ptr, void* user_data);
 /* calls memory_allocator_realloc */
 void* memory_allocator_call_realloc(void* old_ptr, buf_ucount_t size, void* user_data);
 
+#define memory_allocator_BUFcreate(memory_allocator, buffer_ptr, element_size, capacity, offset) \
+	BUFcreate_a(buffer_ptr, element_size, capacity, offset, memory_allocator_call_malloc, 		\
+												memory_allocator_call_free, 			\
+												memory_allocator_call_realloc,			\
+												CAST_TO(void*, memory_allocator))
+#define memory_allocator_BUFcreate_m(memory_allocator, buffer_ptr, ptr, element_size, capacity, offset) \
+	BUFcreate_m(buffer_ptr, ptr, element_size, capacity, offset, memory_allocator_call_malloc, 		\
+												memory_allocator_call_free, 			\
+												memory_allocator_call_realloc,			\
+												CAST_TO(void*, memory_allocator))
 #define memory_allocator_buf_create(memory_allocator, element_size, capacity, offset) 	\
 	buf_create_a(element_size, capacity, offset, memory_allocator_call_malloc, 			\
 												memory_allocator_call_free, 			\

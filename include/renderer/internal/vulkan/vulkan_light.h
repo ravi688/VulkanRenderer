@@ -84,6 +84,13 @@ typedef struct vulkan_light_t
 	 * 			1. The scene will be completely black if the scene uses lights 
 	 * 			2. The scene will be rendered based on the base colors if the scene doesn't use lights */
 	bool is_active;
+	/* is dispatachable data out of date? 
+	 * set to true if any of functions modifying spot angle (for spot light), direction, etc. are called 
+	 * set to false when vulkan_light_get_dispatchable_data is called */
+	bool is_dirty;
+	/* set to true if the shadowmap recreated,
+	 * set to false when vulkan_light_get_shadowmap function is called  */
+	bool is_shadowmap_dirty;
 
 	struct_descriptor_t struct_definition;
 
@@ -125,8 +132,12 @@ typedef struct vulkan_directional_light_t
 	vec3_t direction;
 } vulkan_directional_light_t;
 
+typedef vulkan_directional_light_t vulkan_far_light_t;
+
 #define VULKAN_DIRECTIONAL_LIGHT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_directional_light_t*, VULKAN_OBJECT_TYPE_DIRECTIONAL_LIGHT, ptr)
 #define VULKAN_DIRECTIONAL_LIGHT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_directional_light_t*, VULKAN_OBJECT_TYPE_DIRECTIONAL_LIGHT, ptr)
+#define VULKAN_FAR_LIGHT(ptr) VULKAN_DIRECTIONAL_LIGHT(ptr)
+#define VULKAN_FAR_LIGHT_CONST(ptr) VULKAN_DIRECTIONAL_LIGHT_CONST(ptr)
 
 typedef struct vulkan_point_light_t
 {
@@ -180,7 +191,7 @@ RENDERER_API bool vulkan_light_is_active(vulkan_light_t* light);
 RENDERER_API bool vulkan_light_is_cast_shadow(vulkan_light_t* light);
 RENDERER_API bool vulkan_light_is_dirty(vulkan_light_t* light);
 RENDERER_API bool vulkan_light_is_shadow_map_dirty(vulkan_light_t* light);
-RENDERER_API void* vulkan_light_get_dispatchable_data(vulkan_light_t* light);
+RENDERER_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, void* const out_buffer);
 RENDERER_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light);
 
 RENDERER_API void vulkan_light_begin(vulkan_light_t* light);

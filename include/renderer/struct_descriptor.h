@@ -383,13 +383,37 @@ RENDERER_API u32 struct_descriptor_sizeof(const struct_descriptor_t* descriptor)
 RENDERER_API u32 struct_descriptor_alignof(const struct_descriptor_t* descriptor);
 RENDERER_API u32 struct_descriptor_offsetof(const struct_descriptor_t* descriptor, const char* name);
 RENDERER_API bool struct_descriptor_is_variable_sized(const struct_descriptor_t* descriptor);
+RENDERER_API void* struct_field_get_base_address(struct_descriptor_t* descriptor, struct_field_t* field);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool struct_field_is_array(const struct_field_t* field) { return field->is_array; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool struct_field_is_variable_sized(const struct_field_t* field)
+{
+	return struct_field_is_array(field) && (field->array_size == U32_MAX);
+}
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 struct_field_array_get_element_size(const struct_field_t* field)
+{
+	_release_assert__(struct_field_is_array(field));
+	return field->size;
+}
+/* TODO: rename struct_descriptor_get_field_handle to struct_descriptor_get_field_address 
+ * it just returns the offset (in an offset based address space) to the field */
 RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(const struct_descriptor_t* descriptor, const char* field_name);
+RENDERER_API struct_field_t* struct_descriptor_get_field(struct_descriptor_t* descriptor, const char* name);
 
 RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr);
 RENDERER_API void* struct_descriptor_get_mapped(struct_descriptor_t* descriptor);
 RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor);
+RENDERER_API u32 struct_field_array_get_stride(struct_field_t* field);
 RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor);
+/* NOTE: 'size' is not in bytes, it is just number of elements */
 RENDERER_API void struct_descriptor_set_array_size(struct_descriptor_t* descriptor, const char* name, u32 size);
+RENDERER_API void struct_field_set_array_size(struct_descriptor_t* descriptor, struct_field_t* field, u32 size);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 struct_field_get_array_size(struct_field_t* field)
+{
+	_debug_assert__(field != NULL);
+	release_assert__(field->is_array, "The field \"%s\" is not an array so it couldn't be variable sized", field->name);
+	return field->array_size;
+}
+RENDERER_API u32 struct_descriptor_get_array_size(struct_descriptor_t* descriptor, const char* name);
 
 RENDERER_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in);
 RENDERER_API void struct_descriptor_set_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
