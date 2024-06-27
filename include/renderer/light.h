@@ -71,5 +71,6 @@ RENDERER_API void light_set_position(light_t* light, vec3_t position);
 RENDERER_API void light_set_rotation(light_t* light, vec3_t rotation);
 RENDERER_API void light_set_intensity(light_t* light, float intensity);
 RENDERER_API void light_set_color(light_t* light, vec3_t color);
+RENDERER_API void light_set_cast_shadow(light_t* light, bool is_cast_shadows);
 
 END_CPP_COMPATIBLE

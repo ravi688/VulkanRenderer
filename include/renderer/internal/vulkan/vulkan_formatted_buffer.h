@@ -3,7 +3,9 @@
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h> /* buffer_t* */
 #include <renderer/internal/vulkan/vulkan_object.h>
+#include <renderer/internal/vulkan/vulkan_host_buffered_buffer.h>
 #include <vulkan/vulkan_core.h> /* for VkBufferUsageFlags */
+#include <renderer/dictionary.h>
 
 typedef struct struct_descriptor_t struct_descriptor_t;
 typedef struct vulkan_host_buffered_buffer_t vulkan_host_buffered_buffer_t;
@@ -19,6 +21,8 @@ typedef struct vulkan_formatted_buffer_create_info_t
 	vulkan_host_buffered_buffer_t* host_buffered_buffer;
 } vulkan_formatted_buffer_create_info_t;
 
+typedef dictionary_t /* key: struct_field_t*, value: buffer_t* */ array_buffer_map_t;
+
 typedef struct vulkan_formatted_buffer_t
 {
 	__VULKAN_OBJECT__;
@@ -29,6 +33,11 @@ typedef struct vulkan_formatted_buffer_t
 	bool is_user_supplied_host_buffered_buffer;
 	/* points to create_info.host_buffered_buffer or internally created vulkan_host_buffered_buffer_t object */
 	vulkan_host_buffered_buffer_t* host_buffered_buffer;
+	/* stores buffer_t objects for each array field in 'format' */
+	array_buffer_map_t array_buffer_map;
+	/* the target buffer which the 'format' is mapped to */
+	buffer_t target_buffer;
+	bool is_dynamic_buffer_dirty;
 } vulkan_formatted_buffer_t;
 
 /* performs dynamic casting (expensive), use only when you don't know the source type */
@@ -49,8 +58,12 @@ RENDERER_API void vulkan_formatted_buffer_destroy(vulkan_formatted_buffer_t* buf
 RENDERER_API void vulkan_formatted_buffer_release_resources(vulkan_formatted_buffer_t* buffer);
 
 /* logic functions */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_buffer_t* vulkan_formatted_buffer_get_device_buffer(vulkan_formatted_buffer_t* buffer)
+{ return vulkan_host_buffered_buffer_get_device_buffer(buffer->host_buffered_buffer); }
+/* NOTE: the returned buffer_t object may also be static if the array has size explicitly specified in 'format' */
 RENDERER_API buffer_t* vulkan_formatted_buffer_get_array_buffer(vulkan_formatted_buffer_t* buffer, const char* name);
 RENDERER_API u32 vulkan_formatted_buffer_get_array_length(vulkan_formatted_buffer_t* buffer, const char* name);
 RENDERER_API void vulkan_formatted_buffer_set_uint(vulkan_formatted_buffer_t* buffer, const char* name, u32 value);
-RENDERER_API bool vulkan_formatted_buffer_is_dirty(vulkan_formatted_buffer_t* buffer);
-RENDERER_API void vulkan_formatted_buffer_commit(vulkan_formatted_buffer_t* buffer);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_formatted_buffer_is_dirty(vulkan_formatted_buffer_t* buffer) 
+{ return buffer->is_dynamic_buffer_dirty || vulkan_host_buffered_buffer_is_dirty(buffer->host_buffered_buffer); }
+RENDERER_API bool vulkan_formatted_buffer_commit(vulkan_formatted_buffer_t* buffer, bool OUT is_resized);

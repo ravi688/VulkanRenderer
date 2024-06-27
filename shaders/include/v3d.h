@@ -50,8 +50,11 @@
 #define SCREEN_BINDING 0  		// binding for render window information
 #define LIGHT_BINDING 1
 #define POINT_LIGHT_BINDING 1 	// binding for point lights
-#define SPOT_LIGHT_BINDING 2 	// binding for spot lights
-#define FAR_LIGHT_BINDING 3   	// binding for far lights
+#define POINT_LIGHT_SHADOWMAP_BINDING 2
+#define SPOT_LIGHT_BINDING 3 	// binding for spot lights
+#define SPOT_LIGHT_SHADOWMAP_BINDING 4
+#define FAR_LIGHT_BINDING 5   	// binding for far lights
+#define FAR_LIGHT_SHADOWMAP_BINDING 6
 
 // should be used with SUB_RENDER_SET
 #define INPUT_ATTACHMENT_BINDING0 0

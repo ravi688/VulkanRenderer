@@ -566,12 +566,12 @@ static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t
 
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer)
 {
-	VkDescriptorSetLayoutBinding bindings[4] =
+	VkDescriptorSetLayoutBinding bindings[] =
 	{
 		{
 			.binding = VULKAN_DESCRIPTOR_BINDING_POINT_LIGHT,
 			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = renderer->max_point_lights,
+			.descriptorCount = u32_max(1, renderer->max_point_lights),
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		},
 		{

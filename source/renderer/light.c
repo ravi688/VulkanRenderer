@@ -81,3 +81,7 @@ RENDERER_API void light_set_color(light_t* light, vec3_t color)
 	vulkan_light_set_color(light, color);
 }
 
+RENDERER_API void light_set_cast_shadow(light_t* light, bool is_cast_shadows)
+{
+	vulkan_light_set_cast_shadow(light, is_cast_shadows);
+}

@@ -79,6 +79,7 @@ typedef struct vulkan_render_scene_t
 	bool is_use_lights;
 	/* scene set referencing information about lights and scree information */
 	vulkan_descriptor_set_t scene_set;
+	u32 previous_light_buffer_count;
 } vulkan_render_scene_t;
 
 /* performs dynamic casting (expensive), use only when you don't know the source type */

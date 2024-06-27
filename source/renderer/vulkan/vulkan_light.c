@@ -486,6 +486,8 @@ RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_ca
 		/* create material for it */
 		light->shadow_material = vulkan_material_library_getH(mlib, 
 									vulkan_material_library_create_materialH(mlib, shader_handle, "BuiltIn:Light:ShadowMapShader"));
+
+		light->is_shadowmap_dirty = true;
 	}
 }
 
@@ -522,6 +524,7 @@ RENDERER_API vulkan_material_t* vulkan_light_get_shadow_material(vulkan_light_t*
 RENDERER_API vulkan_texture_t* vulkan_light_get_shadow_map(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
+	light->is_shadowmap_dirty = false;
 	return light->shadow_map;
 }
 RENDERER_API vulkan_camera_t* vulkan_light_get_shadow_camera(vulkan_light_t* light)
@@ -542,21 +545,151 @@ RENDERER_API bool vulkan_light_is_cast_shadow(vulkan_light_t* light)
 
 RENDERER_API bool vulkan_light_is_dirty(vulkan_light_t* light)
 {
-	return false;
+	light = VULKAN_LIGHT(light);
+	return light->is_dirty;
 }
 
 RENDERER_API bool vulkan_light_is_shadow_map_dirty(vulkan_light_t* light)
 {
-	return false;
+	light = VULKAN_LIGHT(light);
+	return light->is_shadowmap_dirty;
 }
 
-RENDERER_API void* vulkan_light_get_dispatchable_data(vulkan_light_t* light)
+typedef struct point_light_dispatchable_data_t
 {
-	return NULL;
+	/* offset 0 */
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t color;
+	/* offset 12 */
+	ALIGN_AS(GLSL_STD140_FLOAT_ALIGN) f32 intensity;
+	/* offset 16 */
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t position;
+	/* offset 28 */
+	ALIGN_AS(GLSL_STD140_UINT_ALIGN) u32 shadow_index;
+} point_light_dispatchable_data_t ALIGN_AS(U32_NEXT_MULTIPLE(GLSL_STD140_VEC3_ALIGN, 16));
+
+#define SIZEOF_POINT_LIGHT_DISPATCHABLE_DATA_T 32 /* bytes */
+#define STRIDE_POINT_LIGHT_DISPATCHABLE_DATA_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_POINT_LIGHT_DISPATCHABLE_DATA_T, ALIGN_OF(point_light_dispatchable_data_t))
+
+typedef struct spot_light_dispatchable_data_t
+{
+	/* offset 0 */
+	ALIGN_AS(GLSL_STD140_MAT4_ALIGN) _mat4_t proj;
+	/* offset 64 */
+	ALIGN_AS(GLSL_STD140_MAT4_ALIGN) _mat4_t view;
+	/* offset 128 */
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t color;
+	/* offset 140 */
+	ALIGN_AS(GLSL_STD140_FLOAT_ALIGN) f32 intensity;
+	/* offset 144 */
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t position;
+	/* offset 160 */
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t direction;
+	/* offset 172 */
+	ALIGN_AS(GLSL_STD140_FLOAT_ALIGN) f32 angle;
+	/* offset 176 */
+	ALIGN_AS(GLSL_STD140_UINT_ALIGN) u32 shadow_index;
+} spot_light_dispatchable_data_t ALIGN_AS(U32_NEXT_MULTIPLE(GLSL_STD140_MAT4_ALIGN, 16));
+
+#define SIZEOF_SPOT_LIGHT_DISPATCHABLE_DATA_T 180 /* bytes */
+#define STRIDE_SPOT_LIGHT_DISPATCHABLE_DATA_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_SPOT_LIGHT_DISPATCHABLE_DATA_T, ALIGN_OF(spot_light_dispatchable_data_t))
+
+typedef struct far_light_dispatchable_data_t
+{
+	/* offset 0 */
+	ALIGN_AS(GLSL_STD140_MAT4_ALIGN) _mat4_t proj;
+	/* offset 64 */
+	ALIGN_AS(GLSL_STD140_MAT4_ALIGN) _mat4_t view;
+	/* offset 128 */
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t color;
+	/* offset 140 */
+	ALIGN_AS(GLSL_STD140_FLOAT_ALIGN) f32 intensity;
+	/* offset 144 */
+	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t direction;
+	/* offset 156 */
+	ALIGN_AS(GLSL_STD140_UINT_ALIGN) u32 shadow_index;
+} far_light_dispatchable_data_t ALIGN_AS(U32_NEXT_MULTIPLE(GLSL_STD140_MAT4_ALIGN, 16));
+
+#define SIZEOF_FAR_LIGHT_DISPATCHABLE_DATA_T 160 /* bytes */
+#define STRIDE_FAR_LIGHT_DISPATCHABLE_DATA_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_FAR_LIGHT_DISPATCHABLE_DATA_T, ALIGN_OF(far_light_dispatchable_data_t))
+
+static void get_spot_light_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, spot_light_dispatchable_data_t* const data)
+{
+	vulkan_spot_light_t* spot_light = VULKAN_SPOT_LIGHT(light);
+	light = VULKAN_LIGHT(light);
+	data->proj = light->projection.raw4x4f32;
+	data->view = light->view.raw4x4f32;
+	data->color = light->color;
+	data->intensity = light->intensity;
+	data->position = light->position;
+	data->direction = spot_light->direction;
+	data->angle = spot_light->angle;
+	data->shadow_index = shadowmap_index;
+}
+
+static void get_point_light_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, point_light_dispatchable_data_t* const data)
+{
+	light = VULKAN_LIGHT(light);
+	data->color = light->color;
+	data->intensity = light->intensity;
+	data->position = light->position;
+	data->shadow_index = shadowmap_index;
+}
+
+static void get_far_light_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, far_light_dispatchable_data_t* const data)
+{
+	vulkan_far_light_t* far_light = VULKAN_FAR_LIGHT(light);
+	light = VULKAN_LIGHT(light);
+	data->proj = light->projection.raw4x4f32;
+	data->view = light->view.raw4x4f32;
+	data->color = light->color;
+	data->intensity = light->intensity;
+	data->direction = far_light->direction;
+	data->shadow_index = shadowmap_index;
+}
+
+RENDERER_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, void* const out_buffer)
+{
+	vulkan_light_t* _light = VULKAN_LIGHT(light);
+	switch(_light->type)
+	{
+		case VULKAN_LIGHT_TYPE_SPOT:
+		{
+			spot_light_dispatchable_data_t data;
+			get_spot_light_dispatchable_data(light, shadowmap_index, &data);
+			memcpy(out_buffer, &data, SIZEOF_SPOT_LIGHT_DISPATCHABLE_DATA_T);
+			break;
+		}
+		case VULKAN_LIGHT_TYPE_POINT:
+		{
+			point_light_dispatchable_data_t data;
+			get_point_light_dispatchable_data(light, shadowmap_index, &data);
+			memcpy(out_buffer, &data, SIZEOF_POINT_LIGHT_DISPATCHABLE_DATA_T);
+			break;
+		}
+		case VULKAN_LIGHT_TYPE_FAR:
+		{
+			far_light_dispatchable_data_t data;
+			get_far_light_dispatchable_data(light, shadowmap_index, &data);
+			memcpy(out_buffer, &data, SIZEOF_FAR_LIGHT_DISPATCHABLE_DATA_T);
+			break;
+		}
+		default:
+			DEBUG_LOG_FETAL_ERROR("Dispatchable data can't be built for vulkan_light_type_t(%u)", _light->type);
+	}
+	light->is_dirty = false;
 }
 
 RENDERER_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light)
 {
+	AUTO type = vulkan_light_get_type(light);
+	switch(type)
+	{
+		case VULKAN_LIGHT_TYPE_SPOT: return SIZEOF_SPOT_LIGHT_DISPATCHABLE_DATA_T;
+		case VULKAN_LIGHT_TYPE_POINT: return SIZEOF_SPOT_LIGHT_DISPATCHABLE_DATA_T;
+		case VULKAN_LIGHT_TYPE_FAR: return SIZEOF_FAR_LIGHT_DISPATCHABLE_DATA_T;
+		default:
+			DEBUG_LOG_FETAL_ERROR("Dispatchable data size isn't defined for vulkan_light_type_t(%u)", type);
+	}
 	return 0;
 }
 

@@ -77,10 +77,16 @@ static field_type_align_t field_type_align_getter(void* user_data, u32 index)
 	};
 }
 
+RENDERER_API u32 struct_field_array_get_stride(struct_field_t* field)
+{
+	_debug_assert__(field->is_array);
+	return com_get_stride_in_array(field->size, field->alignment);
+}
+
 static u32 get_array_size(struct_field_t* field)
 {
 	_debug_assert__(field->is_array);
-	return com_get_stride_in_array(field->size, field->alignment) * field->array_size;
+	return struct_field_array_get_stride(field) * field->array_size;
 }
 
 RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
@@ -147,6 +153,16 @@ RENDERER_API bool struct_descriptor_is_variable_sized(const struct_descriptor_t*
 	return false;
 }
 
+RENDERER_API void* struct_field_get_base_address(struct_descriptor_t* descriptor, struct_field_t* field)
+{
+	if(descriptor->ptr == NULL)
+	{
+		debug_assert__(false, "Struct Descriptor %s is not mapped to any memory", descriptor->name);
+		return NULL;
+	}
+	return descriptor->ptr + field->offset;
+}
+
 static struct_field_t* get_field(struct_descriptor_t* descriptor, const char* name, u32 name_len)
 {
 	/* get the index of the field */
@@ -204,7 +220,7 @@ RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(const stru
 	return BIT64_PACK32(field->offset + BIT64_UNPACK32(handle, 1), BIT64_UNPACK32(handle, 0));
 }
 
-RENDERER_API void struct_descriptor_set_array_size(struct_descriptor_t* descriptor, const char* name, u32 size)
+RENDERER_API struct_field_t* struct_descriptor_get_field(struct_descriptor_t* descriptor, const char* name)
 {
 	_debug_assert__(descriptor != NULL);
 	_debug_assert__(descriptor->field_count < 0xFFFF);
@@ -217,17 +233,34 @@ RENDERER_API void struct_descriptor_set_array_size(struct_descriptor_t* descript
 
 	/* if this is the last name in the fully qualified name */
 	if(ptr == NULL)
-	{
-		release_assert__(field->is_array, "The field \"%s\" is not an array so it couldn't be variable sized", name);
-		field->array_size = size;
-		return;
-	}
+		return field;
 
 	_debug_assert__(field->record != NULL);
-	release_assert__(!struct_descriptor_is_variable_sized(field->record), "The field \"%s\" is variable sized record so it can't be declared as an array at all", name);
 	
-	/* set array size recursively */
-	struct_descriptor_set_array_size(field->record, ptr + 1, size);
+	/* get the field from next level records recursively */
+	return struct_descriptor_get_field(field->record, ptr + 1);
+}
+
+RENDERER_API void struct_descriptor_set_array_size(struct_descriptor_t* descriptor, const char* name, u32 size)
+{
+	struct_field_t* field = struct_descriptor_get_field(descriptor, name);
+	struct_field_set_array_size(descriptor, field, size);
+}
+
+RENDERER_API void struct_field_set_array_size(struct_descriptor_t* descriptor, struct_field_t* field, u32 size)
+{
+	_debug_assert__(field != NULL);
+	release_assert__(field->is_array, "The field \"%s\" is not an array so it couldn't be variable sized", field->name);
+	field->array_size = size;
+	struct_descriptor_recalculate(descriptor);
+}
+
+RENDERER_API u32 struct_descriptor_get_array_size(struct_descriptor_t* descriptor, const char* name)
+{
+	struct_field_t* field = struct_descriptor_get_field(descriptor, name);
+	_debug_assert__(field != NULL);
+	release_assert__(field->is_array, "The field \"%s\" is not an array so it couldn't be variable sized", name);
+	return field->array_size;
 }
 
 #ifndef GLOBAL_DEBUG
@@ -241,11 +274,15 @@ RENDERER_API void struct_descriptor_set_array_size(struct_descriptor_t* descript
 
 static inline void __cpy_data_from(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const data)
 {
+	/* the struct_descriptor_t object must be mapped to some memory first */
+	_debug_assert__(descriptor->ptr != NULL);
 	memcopyv(descriptor->ptr + BIT64_UNPACK32(handle, 1), data, u8, BIT64_UNPACK32(handle, 0));
 }
 
 static inline void __cpy_data_to(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const data)
 {
+	/* the struct_descriptor_t object must be mapped to some memory first */
+	_debug_assert__(descriptor->ptr != NULL);
 	memcopyv(data, descriptor->ptr + BIT64_UNPACK32(handle, 1), u8, BIT64_UNPACK32(handle, 0));
 }
 
@@ -514,6 +551,7 @@ RENDERER_API void struct_descriptor_add_field_array(struct_descriptor_t* descrip
 
 RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record, u32 array_size)
 {
+	release_assert__(!struct_descriptor_is_variable_sized(record), "The record \"%s\" is variable sized record so it can't be declared as an array at all", record->name);
 	struct_field_t* field = prvt_add_field2(descriptor, name, record, true);
 	field->is_array = true;
 	field->array_size = array_size;	
