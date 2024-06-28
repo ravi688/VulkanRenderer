@@ -118,22 +118,6 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 
 	material_set_vec4(this->material, "parameters.color", vec4(1, 1, 1, 1));
 
-	vulkan_texture_create_info_t create_info = 
-	{
-		.width = 800,
-		.height = 800,
-		.depth = 1,
-		.channel_count = 4,
-		.type = VULKAN_TEXTURE_TYPE_DEPTH | VULKAN_TEXTURE_TYPE_CUBE | VULKAN_TEXTURE_TYPE_RENDER_TARGET ,
-		.initial_usage = VULKAN_TEXTURE_USAGE_SAMPLED,
-		.usage = VULKAN_TEXTURE_USAGE_RENDER_TARGET,
-		.final_usage = VULKAN_TEXTURE_USAGE_SAMPLED,
-		.technique = VULKAN_RENDER_TARGET_TECHNIQUE_ATTACH 
-	};	
-	this->shadowMap = vulkan_texture_create(renderer->vulkan_handle, &create_info);
-	camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->shadowMap);
-	material_set_texture(this->material, "shadowMap", this->shadowMap);
-
 	AUTO sphereMeshData = mesh3d_load(renderer->allocator, "models/Monkey.obj");
 	mesh3d_make_centroid_origin(sphereMeshData);
 
