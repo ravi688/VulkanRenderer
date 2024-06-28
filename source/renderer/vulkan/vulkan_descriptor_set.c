@@ -131,7 +131,7 @@ DEBUG_BLOCK
 );
 	
 	/* prepare the VkDescriptorImageInfo array */
-	VkDescriptorImageInfo image_info[texture_count] = { };
+	VkDescriptorImageInfo image_info[texture_count];
 	for(u32 i = 0; i < texture_count; i++)
 	{
 		AUTO texture = textures[i];
