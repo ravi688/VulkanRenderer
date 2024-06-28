@@ -48,9 +48,11 @@ typedef struct renderer_t renderer_t;
 
 #include <renderer/defines.h>
 
+/* NOTE: this must be in-sync with vulkan_render_texture_type_t */
 /* type of the render texture */
 typedef enum render_texture_type_t
 {
+	RENDER_TEXTURE_TYPE_UNDEFINED = 0,
 	RENDER_TEXTURE_TYPE_ALBEDO,		/* for rendering sRGB colors to the render texture */
 	RENDER_TEXTURE_TYPE_COLOR,		/* for rendering linear color values to the render texture */
 	RENDER_TEXTURE_TYPE_DEPTH,		/* for rendering depth values to the render texture */
