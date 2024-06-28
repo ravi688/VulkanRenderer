@@ -95,7 +95,7 @@ static VkFormat get_format(vulkan_texture_type_t type, u32 channel_count)
 				return VK_FORMAT_B8G8R8A8_SRGB; 	// swapchain format
 			case VULKAN_TEXTURE_TYPE_COLOR:
 			case VULKAN_TEXTURE_TYPE_NORMAL:
-				LOG_FETAL_ERR("VULKAN_TEXTURE_TYPE_COLOR or VULKAN_TEXTURE_TYPE_NORMAL can't be used as a render target\n");
+				DEBUG_LOG_FETAL_ERROR("VULKAN_TEXTURE_TYPE_COLOR or VULKAN_TEXTURE_TYPE_NORMAL can't be used as a render target\n");
 			break;
 			case VULKAN_TEXTURE_TYPE_DEPTH:
 				return VK_FORMAT_D32_SFLOAT;

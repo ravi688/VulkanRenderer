@@ -297,6 +297,7 @@ static void vulkan_light_set_view(vulkan_light_t* light, mat4_t view)
 	light->view = view;
 	mat4_t DTO = mat4_transpose(light->view);
 	struct_descriptor_set_mat4(&light->struct_definition, light->view_handle, CAST_TO(float*, &DTO));
+	light->is_dirty = true;
 }
 
 static void vulkan_light_set_projection(vulkan_light_t* light, mat4_t projection)
@@ -305,6 +306,7 @@ static void vulkan_light_set_projection(vulkan_light_t* light, mat4_t projection
 	light->projection = projection;
 	mat4_t DTO = mat4_transpose(projection);
 	struct_descriptor_set_mat4(&light->struct_definition, light->projection_handle, CAST_TO(float*, &DTO));
+	light->is_dirty = true;
 }
 
 RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle)
@@ -325,6 +327,7 @@ RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle
 			log_wrn("You are trying to set spot angle for the light which isn't a spot light, light type: %u\n", VULKAN_LIGHT(light)->type);
 		break;
 	}
+	light->is_dirty = true;
 }
 
 RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t position)
@@ -354,6 +357,7 @@ RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t positi
 		default:
 			UNSUPPORTED_LIGHT_TYPE(light->type);
 	}
+	light->is_dirty = true;
 }
 
 RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation)
@@ -396,6 +400,8 @@ RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotati
 			break;
 		}
 	}
+
+	light->is_dirty = true;
 }
 
 static const char* get_shadow_shader_path(vulkan_light_type_t type)
@@ -442,14 +448,31 @@ static vulkan_camera_projection_type_t  get_camera_projection_type(vulkan_light_
 
 RENDERER_API void vulkan_light_set_active(vulkan_light_t* light, bool is_active)
 {
+	light = VULKAN_LIGHT(light);
 	light->is_active = is_active;
 	/* TODO: clear the shadow map render texture with 0.0 depth values so that object will be rendered black if only this light existed 
 	 * NOTE: it might be possible that we are clearing the render texture while it is still being used in the previous frame, 
 	 * in that case we may wait for the previous frame to complete. */
 }
 
+static void setup_shadow_camera_properties(vulkan_camera_t* shadow_camera, vulkan_light_t* light)
+{
+	light = VULKAN_LIGHT(light);
+	vulkan_camera_set_clear(shadow_camera, COLOR_RED, 1.0f);
+	if(light->type == VULKAN_LIGHT_TYPE_POINT)
+		vulkan_camera_set_position_cube(shadow_camera, light->position);
+	else if(light->type != VULKAN_LIGHT_TYPE_FAR)
+		vulkan_camera_set_position(shadow_camera, vec3_zero());
+	else
+		vulkan_camera_set_position(shadow_camera, light->position);
+	vulkan_camera_set_rotation(shadow_camera, light->euler_rotation);
+	if((light->type == VULKAN_LIGHT_TYPE_POINT) || (light->type == VULKAN_LIGHT_TYPE_SPOT))
+		vulkan_camera_set_field_of_view(shadow_camera, 90 DEG);
+}
+
 RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow)
 {
+	light = VULKAN_LIGHT(light);
 	light->is_cast_shadow = is_cast_shadow;
 	if(is_cast_shadow && (light->shadow_shader == NULL))
 	{
@@ -473,6 +496,7 @@ RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_ca
 		light->shadow_camera = vulkan_camera_system_getH(csys, vulkan_camera_system_create_camera(csys, get_camera_projection_type(light->type)));
 		/* and set the shadow map render texture as render target for this camera */
 		vulkan_camera_set_render_target(light->shadow_camera, VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH, VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, light->shadow_map);
+		setup_shadow_camera_properties(light->shadow_camera, light);
 
 		/* load the shadow map shader */
 		vulkan_shader_load_info_t load_info =
@@ -496,6 +520,7 @@ RENDERER_API void vulkan_light_set_intensity(vulkan_light_t* light, float intens
 	light = VULKAN_LIGHT(light);
 	light->intensity = intensity;
 	struct_descriptor_set_float(&light->struct_definition, light->intensity_handle, &light->intensity);
+	light->is_dirty = true;
 }
 
 RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color)
@@ -503,6 +528,7 @@ RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color)
 	light = VULKAN_LIGHT(light);
 	light->color = color;
 	struct_descriptor_set_vec3(&light->struct_definition, light->color_handle, CAST_TO(float*, &light->color));
+	light->is_dirty = true;
 }
 
 RENDERER_API vulkan_light_type_t vulkan_light_get_type(vulkan_light_t* light)
@@ -656,6 +682,7 @@ RENDERER_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 
 		{
 			spot_light_dispatchable_data_t data;
 			get_spot_light_dispatchable_data(light, shadowmap_index, &data);
+			_debug_assert__(SIZEOF_SPOT_LIGHT_DISPATCHABLE_DATA_T <= sizeof(data));
 			memcpy(out_buffer, &data, SIZEOF_SPOT_LIGHT_DISPATCHABLE_DATA_T);
 			break;
 		}
@@ -663,6 +690,7 @@ RENDERER_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 
 		{
 			point_light_dispatchable_data_t data;
 			get_point_light_dispatchable_data(light, shadowmap_index, &data);
+			_debug_assert__(SIZEOF_POINT_LIGHT_DISPATCHABLE_DATA_T <= sizeof(data));
 			memcpy(out_buffer, &data, SIZEOF_POINT_LIGHT_DISPATCHABLE_DATA_T);
 			break;
 		}
@@ -670,6 +698,7 @@ RENDERER_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 
 		{
 			far_light_dispatchable_data_t data;
 			get_far_light_dispatchable_data(light, shadowmap_index, &data);
+			_debug_assert__(SIZEOF_FAR_LIGHT_DISPATCHABLE_DATA_T <= sizeof(data));
 			memcpy(out_buffer, &data, SIZEOF_FAR_LIGHT_DISPATCHABLE_DATA_T);
 			break;
 		}
