@@ -37,10 +37,6 @@ Shader
 		{
 			vec4 color;
 		} parameters;
-
-		[Stage(fragment)]
-		[Set(material_set, texture0)]
-		uniform sampler2D shadowMap;
 	}
 
 	Layout
@@ -85,7 +81,6 @@ Shader
 				#include <v3d.h>
 				
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
-				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform PointLight light;
 				/* 	Solution no 1 (using storage buffers and buffer references):
 					-----------------------------------------------------------
 
@@ -107,7 +102,7 @@ Shader
 						FarLight lights[];
 				 	};
 
-					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform Lights
+					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform Lights
 					{
 						PointLightList pointLights;
 						SpotLightList spotLights;
@@ -116,8 +111,8 @@ Shader
 
 					// shadow maps
 
-					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = PLAIN_SHADOW_MAP_BINDING) uniform sampler2D plainShadowMaps[SGE_MAX_PLAIN_SHADOW_MAPS];
-					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = CUBE_SHADOW_MAP_BINDING) uniform samplerCube cubeShadowMaps[SGE_MAX_CUBE_SHADOW_MAPS];
+					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = PLAIN_SHADOW_MAP_BINDING) uniform sampler2D plainShadowMaps[SGE_MAX_PLAIN_SHADOW_MAPS];
+					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = CUBE_SHADOW_MAP_BINDING) uniform samplerCube cubeShadowMaps[SGE_MAX_CUBE_SHADOW_MAPS];
 
 					Solution no 2 (using separate buffers only):
 					-----------------------------------------------------------
@@ -126,31 +121,53 @@ Shader
 					#define buffer_type uniform
 					#define buffer_layout SGE_UNIFORM_BUFFER_LAYOUT
 
-					layout(buffer_layout, set = SCENE_SET, binding = POINT_LIGHT_BINDING) read_write_qual buffer_type PointLights
+					layout(buffer_layout, set = GLOBAL_SET, binding = POINT_LIGHT_BINDING) read_write_qual buffer_type PointLights
 					{
 						uint count;
 						PointLight lights[];
 					} pointLights;
 
-					layout(buffer_layout, set = SCENE_SET, binding = SPOT_LIGHT_BINDING) read_write_qual buffer_type SpotLights
+					layout(buffer_layout, set = GLOBAL_SET, binding = SPOT_LIGHT_BINDING) read_write_qual buffer_type SpotLights
 					{
 						uint count;
 						SpotLight lights[];
 					} spotLights;
 
-					layout(buffer_layout, set = SCENE_SET, binding = FAR_LIGHT_BINDING) read_write_equal buffer_type FarLights
+					layout(buffer_layout, set = GLOBAL_SET, binding = FAR_LIGHT_BINDING) read_write_equal buffer_type FarLights
 					{
 						uint count;
 						FarLight lights[];
 					} farLights;
 
 					// shadow maps
-					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = PLAIN_SHADOW_MAP_BINDING) uniform sampler2D plainShadowMaps[SGE_MAX_PLAIN_SHADOW_MAPS];
-					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = CUBE_SHADOW_MAP_BINDING) uniform samplerCube cubeShadowMaps[SGE_MAX_CUBE_SHADOW_MAPS];
+					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = PLAIN_SHADOW_MAP_BINDING) uniform sampler2D plainShadowMaps[SGE_MAX_PLAIN_SHADOW_MAPS];
+					layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = CUBE_SHADOW_MAP_BINDING) uniform samplerCube cubeShadowMaps[SGE_MAX_CUBE_SHADOW_MAPS];
 	
 				 */
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 				
+				#define read_write_qual 
+				#define buffer_type uniform
+				#define buffer_layout SGE_UNIFORM_BUFFER_LAYOUT
+
+				layout(buffer_layout, set = GLOBAL_SET, binding = POINT_LIGHT_BINDING) read_write_qual buffer_type PointLights
+				{
+					uint count;
+					PointLightType lights[];
+				} pointLights;
+
+				layout(buffer_layout, set = GLOBAL_SET, binding = SPOT_LIGHT_BINDING) read_write_qual buffer_type SpotLights
+				{
+					uint count;
+					SpotLightType lights[];
+				} spotLights;
+
+				layout(buffer_layout, set = GLOBAL_SET, binding = FAR_LIGHT_BINDING) read_write_equal buffer_type FarLights
+				{
+					uint count;
+					FarLightType lights[];
+				} farLights;
+
 				layout(location = POSITION_LOCATION) in vec3 position;
 				layout(location = NORMAL_LOCATION) in vec3 normal;
 				
@@ -174,14 +191,38 @@ Shader
 				
 				#include <v3d.h>
 				
-				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform PointLight light;
 				layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 				{
 					vec4 color;
 				} parameters;
-				
-				// TODO: set must be RENDER_SET
-				layout(set = MATERIAL_SET, binding = TEXTURE_BINDING0) uniform samplerCube shadowMap;
+
+				/* light UBOs */
+				#define read_write_qual 
+				#define buffer_type uniform
+				#define buffer_layout SGE_UNIFORM_BUFFER_LAYOUT
+
+				layout(buffer_layout, set = GLOBAL_SET, binding = POINT_LIGHT_BINDING) read_write_qual buffer_type PointLights
+				{
+					uint count;
+					PointLightType lights[];
+				} pointLights;
+
+				layout(buffer_layout, set = GLOBAL_SET, binding = SPOT_LIGHT_BINDING) read_write_qual buffer_type SpotLights
+				{
+					uint count;
+					SpotLightType lights[];
+				} spotLights;
+
+				layout(buffer_layout, set = GLOBAL_SET, binding = FAR_LIGHT_BINDING) read_write_equal buffer_type FarLights
+				{
+					uint count;
+					FarLightType lights[];
+				} farLights;
+
+				/* shadow maps */
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = POINT_LIGHT_SHADOWMAP_BINDING) uniform samplerCube pointLightShadowMaps[SGE_MAX_POINT_LIGHT_SHADOW_MAPS];
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SPOT_LIGHT_SHADOWMAP_BINDING) uniform sampler2D spotLightShadowMaps[SGE_MAX_SPOT_LIGHT_SHADOW_MAPS];
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = FAR_LIGHT_SHADOWMAP_BINDING) uniform sampler2D farLightShadowMaps[SGE_MAX_FAR_LIGHT_SHADOW_MAPS];
 				
 				layout(location = 0) in vec3 normal;
 				layout(location = 1) in vec3 position;
@@ -207,20 +248,31 @@ Shader
 				
 				void main()
 				{
-					vec3 dir = light.position - position;
+					vec4 totalIrradiance = vec4(0.0, 0.0, 0.0, 0.0);
+					for(uint i = 0; i < pointLights.count; i++)
+					{
+						PointLightType light = pointLights.lights[i];
+						vec3 dir = light.position - position;
+						
+						samplerCube shadowMap = pointLightShadowMaps[light.shadow_index];
+						float closestDepth = texture(shadowMap, -vec3(dir.z, dir.y, dir.x)).r;
+						closestDepth = linearize(closestDepth, 0.04, 20.0) * (20.0 - 0.04) + 0.04;
+						float depth = max(dir.x, dir.y, dir.z, -dir.x, -dir.y, -dir.z);
+						float receivedShadow = 1.0f;
+						if(closestDepth < (depth + shadowBias))
+							receivedShadow = minShadow;
 				
-					float closestDepth = texture(shadowMap, -vec3(dir.z, dir.y, dir.x)).r;
-					closestDepth = linearize(closestDepth, 0.04, 20.0) * (20.0 - 0.04) + 0.04;
-					float depth = max(dir.x, dir.y, dir.z, -dir.x, -dir.y, -dir.z);
-					float receivedShadow = 1.0f;
-					if(closestDepth < (depth + shadowBias))
-						receivedShadow = minShadow;
-				
-					float sqrDistance = dot(dir, dir);
-					float litAmount = light.intensity / sqrDistance;
-					float dp = dot(normal, normalize(dir));
-					float castedShadow = max(0.0, dp) + castedBias;
-					vec4 _color = receivedShadow * litAmount * castedShadow * vec4(light.color, 1) * parameters.color;
+						float sqrDistance = dot(dir, dir);
+						float litAmount = light.intensity / sqrDistance;
+						float dp = dot(normal, normalize(dir));
+						float castedShadow = max(0.0, dp) + castedBias;
+						
+						vec4 irradiance = receivedShadow * litAmount * castedShadow * vec4(light.color, 1);
+						
+						totalIrradiance += irradiance;
+					}
+
+					vec4 _color = totalIrradiance * parameters.color;
 					color = vec4(_color.r, _color.g, _color.b, 1);
 				}
 

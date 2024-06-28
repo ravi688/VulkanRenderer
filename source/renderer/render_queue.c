@@ -27,7 +27,8 @@
 #include <renderer/render_queue.h>
 #include <renderer/renderer.h>
 #include <renderer/internal/vulkan/vulkan_render_queue.h>
-#include <renderer/internal/vulkan/vulkan_render_object.h> /* VULKAN_RENDER_OBJECT() casting */
+#include <renderer/internal/vulkan/vulkan_render_object.h> /* VULKAN_RENDER_OBJECT_CAST() casting */
+#include <renderer/internal/vulkan/vulkan_render_scene.h> /* VULKAN_RENDER_SCENE_CAST() casting */
 
 RENDERER_API render_queue_t* render_queue_new(memory_allocator_t* allocator)
 {
@@ -58,12 +59,12 @@ RENDERER_API void render_queue_release_resources(render_queue_t* queue)
 /* logic functions */
 RENDERER_API void render_queue_add(render_queue_t* queue, render_object_t* obj)
 {
-	return vulkan_render_queue_add(queue, VULKAN_RENDER_OBJECT(obj));
+	return vulkan_render_queue_add(queue, VULKAN_RENDER_OBJECT_CAST(obj));
 }
 
 RENDERER_API void render_queue_removeH(render_queue_t* queue, render_object_t* obj)
 {
-	vulkan_render_queue_removeH(queue, VULKAN_RENDER_OBJECT(obj));
+	vulkan_render_queue_removeH(queue, VULKAN_RENDER_OBJECT_CAST(obj));
 }
 
 RENDERER_API void render_queue_build(render_queue_t* queue)
@@ -71,8 +72,8 @@ RENDERER_API void render_queue_build(render_queue_t* queue)
 	vulkan_render_queue_build(queue);
 }
 
-RENDERER_API void render_queue_dispatch(render_queue_t* queue, camera_t* camera)
+RENDERER_API void render_queue_dispatch(render_queue_t* queue, camera_t* camera, render_scene_t* scene)
 {
-	vulkan_render_queue_dispatch(queue, CAST_TO(vulkan_camera_t*, camera));
+	vulkan_render_queue_dispatch(queue, CAST_TO(vulkan_camera_t*, camera), VULKAN_RENDER_SCENE_CAST(scene));
 }
 

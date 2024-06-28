@@ -41,7 +41,6 @@ TEST_DATA(MULTIPLE_LIGHTS_LOAD)
 
 	/* cameras */
 	camera_t* camera;
-	camera_t* offscreenCamera;
 
 	/* lights */
 	light_t* pointLight;
@@ -88,21 +87,12 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
 	camera_set_clear(this->camera, COLOR_WHITE, 1.0f);
 	camera_set_active(this->camera, true);
-	
-	this->offscreenCamera = camera_system_getH(camera_system,
-		camera_system_create_camera(camera_system, CAMERA_PROJECTION_TYPE_PERSPECTIVE));
-	camera_set_clear(this->offscreenCamera, COLOR_RED, 1.0f);
-	camera_set_position(this->offscreenCamera, vec3_zero());
-	camera_set_rotation(this->offscreenCamera, vec3(0, 0, 0));
-	camera_set_field_of_view(this->offscreenCamera, 90 DEG);
-	camera_set_active(this->offscreenCamera, false);
 
 	/* create render scene */
 	this->scene = render_scene_create_from_mask(renderer, BIT64(RENDER_QUEUE_TYPE_GEOMETRY) | BIT64(RENDER_QUEUE_TYPE_QUEUE0));
 	render_scene_set_use_lights(this->scene, true);
 	/* add the cameras which just created to the scene */
 	render_scene_add_camera(this->scene, this->camera);
-	render_scene_add_camera(this->scene, this->offscreenCamera);
 	
 	this->pointLight = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_position(this->pointLight, vec3_zero());
@@ -158,9 +148,6 @@ TEST_ON_TERMINATE(MULTIPLE_LIGHTS_LOAD)
 	light_destroy(this->pointLight);
 	light_release_resources(this->pointLight);
 
-	vulkan_texture_destroy(this->shadowMap);
-	vulkan_texture_release_resources(this->shadowMap);
-
 	render_scene_destroy(this->scene);
 	render_scene_release_resources(this->scene);
 }
@@ -171,23 +158,9 @@ static float angle = 0;
 
 TEST_ON_UPDATE(MULTIPLE_LIGHTS_LOAD)
 {
-	if(kbhit())
-	{
-		getch();
-		swap = !swap;
-		if(swap)
-			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_SHARED, CAMERA_RENDER_TARGET_SCREEN);
-		else 
-			camera_set_render_target(this->offscreenCamera, CAMERA_RENDER_TARGET_TYPE_DEPTH, CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, this->shadowMap);
-	}
-
 	angle += deltaTime;
 	float _angle = (0.5f * sin(angle) + 0.5f) * 180.0f - 180.0f;
 	vec3_t pos = vec3(0.8f * sin(_angle DEG), 0, 0.8f * cos(_angle DEG));
-	if(swap)
-		vulkan_camera_set_position(this->offscreenCamera, pos);
-	else
-		vulkan_camera_set_position_cube(this->offscreenCamera, pos);
 	light_set_position(this->pointLight, pos);
 	light_set_color(this->pointLight, vec3(pos.x * 0.5f + 0.5f, pos.y * 0.5f + 0.5f, pos.z * 0.5f + 0.5f));
 	render_object_set_transform(this->cubeObject, mat4_mul(2, mat4_translation(pos.x, pos.y, pos.z),

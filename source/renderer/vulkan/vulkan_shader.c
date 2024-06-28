@@ -1270,10 +1270,13 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 
 	BUFFER set_layouts = memory_allocator_buf_create(renderer->allocator, sizeof(VkDescriptorSetLayout), 1, 0);
 
-	// push global set layout, at SCENE_SET = 0
+	// push global set layout, at GLOBAL_SET = 0
 	buf_push(&set_layouts, &renderer->global_set_layout.vo_handle);
 
-	// push camera set layout, at CAMERA_SET = 1
+	// push global set layout, at SCENE_SET = 1
+	buf_push(&set_layouts, &renderer->scene_set_layout.vo_handle);
+
+	// push camera set layout, at CAMERA_SET = 2
 	buf_push(&set_layouts, &renderer->camera_set_layout.vo_handle);
 
 	vulkan_render_pass_pool_create_path(renderer->render_pass_pool);
@@ -1324,16 +1327,16 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 
 		vulkan_render_pass_t* render_pass = vulkan_render_pass_pool_getH(renderer->render_pass_pool, passes[i].handle);
 
-		// push render set layout, at RENDER_SET = 2
+		// push render set layout, at RENDER_SET = 3
 		buf_push(&set_layouts, &render_pass->render_set_layout.vo_handle);
 
 		for(u32 j = 0; j < subpass_count; j++)
 		{
-			// push sub render set layout, at SUB_RENDER_SET = 3
+			// push sub render set layout, at SUB_RENDER_SET = 4
 			buf_push(&set_layouts, &render_pass->sub_render_set_layouts[j].vo_handle);
-			// push material set layout, at MATERIAL_SET = 4
+			// push material set layout, at MATERIAL_SET = 5
 			buf_push(&set_layouts, &common_data->material_set_layout.vo_handle);
-			// push object set layout, at OBJECT_SET = 5
+			// push object set layout, at OBJECT_SET = 6
 			buf_push(&set_layouts, &renderer->object_set_layout.vo_handle);
 
 			// create pipeline layout for this subpass
@@ -1374,11 +1377,16 @@ static vulkan_shader_render_pass_t* create_shader_render_passes(vulkan_renderer_
 
 	vulkan_render_pass_create_info_builder_destroy(create_info_builder);
 
+	// pop out the CAMERA_SET layout
+	buf_pop(&set_layouts, NULL);
+
 	// pop out the SCENE_SET layout
 	buf_pop(&set_layouts, NULL);
 
-	// pop out the CAMERA_SET layout
+	// pop out the GLOBAL_SET layout
 	buf_pop(&set_layouts, NULL);
+
+	_debug_assert__(buf_get_element_count(&set_layouts) == 0);
 
 	buf_free(&set_layouts);
 	

@@ -165,6 +165,7 @@ static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, re
 }
 
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer);
+static vulkan_descriptor_set_layout_t create_scene_set_layout(vulkan_renderer_t* renderer);
 static vulkan_descriptor_set_layout_t create_object_set_layout(vulkan_renderer_t* renderer);
 static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t* renderer);
 static void setup_global_set(vulkan_renderer_t* renderer);
@@ -472,6 +473,7 @@ DEBUG_BLOCK
 	log_msg("Descriptor pool has been allocated successfully\n");
 
 	renderer->global_set_layout = create_global_set_layout(renderer);
+	renderer->scene_set_layout = create_scene_set_layout(renderer);
 	renderer->object_set_layout = create_object_set_layout(renderer);
 	renderer->camera_set_layout = create_camera_set_layout(renderer);
 	setup_global_set(renderer);
@@ -577,8 +579,31 @@ static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t
 	log_msg("Camera descriptor set layout has been created successfully\n");
 	return val (layout);
 }
-
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer)
+{
+	VkDescriptorSetLayoutBinding bindings[] =
+	{
+		{
+			.binding = VULKAN_DESCRIPTOR_BINDING_LIGHT,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+		},
+		{
+			.binding = VULKAN_DESCRIPTOR_BINDING_SCREEN,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+		}
+	};
+
+	var (vulkan_descriptor_set_layout_t, layout);
+	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, bindings, SIZEOF_ARRAY(bindings), ptr (layout));
+	log_msg("Global descriptor set layout has been created successfully\n");
+	return val (layout);	
+}
+
+static vulkan_descriptor_set_layout_t create_scene_set_layout(vulkan_renderer_t* renderer)
 {
 	VkDescriptorSetLayoutBinding bindings[] =
 	{
@@ -617,18 +642,12 @@ static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t
 			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.descriptorCount = renderer->max_far_lights,
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
-		},
-		{
-			.binding = VULKAN_DESCRIPTOR_BINDING_SCREEN,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		}
 	};
 
 	var (vulkan_descriptor_set_layout_t, layout);
 	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, bindings, SIZEOF_ARRAY(bindings), ptr (layout));
-	log_msg("Global descriptor set layout has been created successfully\n");
+	log_msg("Scene descriptor set layout has been created successfully\n");
 	return val (layout);
 }
 
@@ -777,6 +796,8 @@ RENDERER_API void vulkan_renderer_destroy(vulkan_renderer_t* renderer)
 	vulkan_descriptor_set_layout_release_resources(&renderer->camera_set_layout);
 	vulkan_descriptor_set_layout_destroy(&renderer->object_set_layout);
 	vulkan_descriptor_set_layout_release_resources(&renderer->object_set_layout);
+	vulkan_descriptor_set_layout_destroy(&renderer->scene_set_layout);
+	vulkan_descriptor_set_layout_release_resources(&renderer->scene_set_layout);
 	vulkan_descriptor_set_layout_destroy(&renderer->global_set_layout);
 	vulkan_descriptor_set_layout_release_resources(&renderer->global_set_layout);
 

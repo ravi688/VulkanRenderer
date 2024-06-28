@@ -154,6 +154,7 @@ typedef struct vulkan_renderer_t
 	VkSharingMode vo_sharing_mode;
 
 	vulkan_descriptor_set_layout_t global_set_layout;
+	vulkan_descriptor_set_layout_t scene_set_layout;
 	vulkan_descriptor_set_layout_t object_set_layout;
 	vulkan_descriptor_set_layout_t camera_set_layout;
 

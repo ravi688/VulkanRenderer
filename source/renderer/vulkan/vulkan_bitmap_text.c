@@ -745,7 +745,8 @@ RENDERER_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t*
 	_mat4_t glsl_transform = get_glsl_mat4_from_mat4(&transform);
 	buf_set_at(vulkan_host_buffered_buffer_get_host_buffer(&text->text_string_transform_buffer), handle, &glsl_transform);
 	bool is_resized = false;
-	vulkan_host_buffered_buffer_commit(&text->text_string_transform_buffer, &is_resized);
+	bool is_updated = vulkan_host_buffered_buffer_commit(&text->text_string_transform_buffer, &is_resized);
+	_debug_assert__(is_updated == true);
 	/* we are just updating the data, so no resize can be expected */
 	_debug_assert__(is_resized == false);
 }

@@ -125,3 +125,4 @@ RENDERER_API void vulkan_render_scene_remove_light(vulkan_render_scene_t* scene,
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_set_use_lights(vulkan_render_scene_t* scene, bool is_use_lights) { scene->is_use_lights = is_use_lights; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_render_scene_is_use_lights(vulkan_render_scene_t* scene) { return scene->is_use_lights; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_descriptor_set_t* vulkan_render_scene_get_scene_set(vulkan_render_scene_t* scene) { return &scene->scene_set; }
