@@ -76,7 +76,7 @@ RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* rendere
 	vulkan_descriptor_set_create_info_t set_create_info = 
 	{
 		.vo_pool = renderer->vo_descriptor_pool,
-		.layout = &renderer->global_set_layout
+		.layout = &renderer->scene_set_layout
 	};
 	VULKAN_OBJECT_INIT(&scene->scene_set, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_descriptor_set_create_no_alloc(renderer, &set_create_info, &scene->scene_set);
@@ -371,7 +371,8 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 						if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
 						vulkan_render_queue_dispatch_single_material(get_queue_at(scene, i), 
 										vulkan_light_get_shadow_material(light),
-										vulkan_light_get_shadow_camera(light));
+										vulkan_light_get_shadow_camera(light),
+										scene);
 					}
 				}
 				vulkan_light_end(light);
@@ -410,7 +411,7 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 			{
 				AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, i));
 				if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
-					vulkan_render_queue_dispatch(get_queue_at(scene, i), camera);
+					vulkan_render_queue_dispatch(get_queue_at(scene, i), camera, scene);
 			}
 		}
 		

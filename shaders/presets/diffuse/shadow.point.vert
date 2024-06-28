@@ -28,7 +28,7 @@
 
 #include <v3d.h>
 
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform PointLight light;
+layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight light;
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
 layout(location = POSITION_LOCATION) in vec3 position;

@@ -31,6 +31,7 @@
 #include <renderer/internal/vulkan/vulkan_shader_library.h>
 #include <renderer/internal/vulkan/vulkan_material_library.h>
 #include <renderer/internal/vulkan/vulkan_render_object.h>
+#include <renderer/internal/vulkan/vulkan_render_scene.h>
 #include <renderer/internal/vulkan/vulkan_material.h>
 #include <renderer/internal/vulkan/vulkan_shader.h>
 #include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
@@ -251,7 +252,7 @@ DEBUG_BLOCK
 	queue->is_ready = true;
 }
 
-RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera)
+RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
 	vulkan_shader_t* shader = material->shader;
 	vulkan_shader_render_pass_counter_reset(shader);
@@ -284,10 +285,14 @@ RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_que
 
 			vulkan_graphics_pipeline_bind(pipeline);
 
+			/* bind GLOBAL_SET */
+			vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, layout);
+
+			/* bind SCENE_SET */
+			vulkan_descriptor_set_bind(vulkan_render_scene_get_scene_set(scene), VULKAN_DESCRIPTOR_SET_SCENE, layout);
+
 			/* bind CAMERA_SET */
 			vulkan_descriptor_set_bind(&camera->sets[camera->current_shot_index], VULKAN_DESCRIPTOR_SET_CAMERA, layout);
-			/* bind SCENE_SET */
-			vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, layout);
 
 			vulkan_render_pass_descriptor_sets_t* render_pass_descriptor_sets = vulkan_camera_get_descriptor_sets(camera, prev_pass_handle, pass_handle);
 			/* bind RENDER_SET */
@@ -334,7 +339,7 @@ RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_que
 	}
 }
 
-RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera)
+RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
 	debug_assert_wrn__(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it");
 
@@ -343,7 +348,7 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 	if(vulkan_camera_is_depth_render_only(camera))
 	{
 		_debug_assert__(camera->depth_material != NULL);
-		vulkan_render_queue_dispatch_single_material(queue, camera->depth_material, camera);
+		vulkan_render_queue_dispatch_single_material(queue, camera->depth_material, camera, scene);
 		return;
 	}
 
@@ -439,10 +444,14 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 				// get the pipeline layout for this render pass and sub pass 'j'
 				vulkan_pipeline_layout_t* pipeline_layout = vulkan_shader_get_pipeline_layout(shader, pass->handle, j);
 
+				// bind GLOBAL_SET
+				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, pipeline_layout);
+
+				/* bind SCENE_SET */
+				vulkan_descriptor_set_bind(vulkan_render_scene_get_scene_set(scene), VULKAN_DESCRIPTOR_SET_SCENE, pipeline_layout);
+
 				// bind CAMERA_SET
 				vulkan_descriptor_set_bind(vulkan_camera_get_current_shot_set(camera), VULKAN_DESCRIPTOR_SET_CAMERA, pipeline_layout);
-				// bind SCENE_SET
-				vulkan_descriptor_set_bind(&queue->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, pipeline_layout);
 
 				vulkan_render_pass_descriptor_sets_t* render_pass_descriptor_sets = vulkan_camera_get_descriptor_sets(camera, prev_pass_handle, pass_handle);
 				// bind RENDER_SET

@@ -92,8 +92,13 @@ typedef struct vulkan_render_object_t
 	struct_field_handle_t normal_handle;
 } vulkan_render_object_t;
 
+/* performs dynamic casting (expensive), use only when you don't know the source type */
 #define VULKAN_RENDER_OBJECT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_render_object_t*, VULKAN_OBJECT_TYPE_RENDER_OBJECT, ptr)
 #define VULKAN_RENDER_OBJECT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_render_object_t*, VULKAN_OBJECT_TYPE_RENDER_OBJECT, ptr)
+/* otherwise (if you are sure that the type is VULKAN_OBJECT_TYPE_RENDER_OBJECT) use the following,
+ * this macro expands to just a C-style cast in release mode so it is very efficient as compared to the dynamic casting above */
+#define VULKAN_RENDER_OBJECT_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_render_object_t*, VULKAN_OBJECT_TYPE_RENDER_OBJECT, ptr)
+#define VULKAN_RENDER_OBJECT_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_render_object_t*, VULKAN_OBJECT_TYPE_RENDER_OBJECT, ptr)
 
 BEGIN_CPP_COMPATIBLE
 

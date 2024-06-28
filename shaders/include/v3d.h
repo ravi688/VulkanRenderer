@@ -34,27 +34,30 @@
 
 
 /* set constants */
-#define SCENE_SET 0 			// bound once [ Camera and Lights ]
-#define CAMERA_SET 1 			// bound for each Camera
-#define RENDER_SET 2 			// bound for each render pass
-#define SUB_RENDER_SET 3 		// bound for each sub pass
-#define MATERIAL_SET 4 			// bound for each material [ textures, material properties ]
-#define OBJECT_SET 5 			// bound for each object [ model and normal matrices ]
+#define GLOBAL_SET 0   			// bound once (display/monitor information and perhaps time also?)
+#define SCENE_SET 1 			// bound for each render scene (holds information about lights in the scene)
+#define CAMERA_SET 2 			// bound for each Camera
+#define RENDER_SET 3 			// bound for each render pass
+#define SUB_RENDER_SET 4 		// bound for each sub pass
+#define MATERIAL_SET 5 			// bound for each material [ textures, material properties ]
+#define OBJECT_SET 6 			// bound for each object [ model and normal matrices ]
 
 /* binding constants  */
+
+/* should be used with GLOBAL_SET */
+#define SCREEN_BINDING 0  		// binding for render window information
 
 // should be used with CAMERA_SET
 #define CAMERA_PROPERTIES_BINDING 0 // binding for current camera properties
 
-// should be used with SCENE_SET
-#define SCREEN_BINDING 0  		// binding for render window information
 #define LIGHT_BINDING 1
-#define POINT_LIGHT_BINDING 1 	// binding for point lights
-#define POINT_LIGHT_SHADOWMAP_BINDING 2
-#define SPOT_LIGHT_BINDING 3 	// binding for spot lights
-#define SPOT_LIGHT_SHADOWMAP_BINDING 4
-#define FAR_LIGHT_BINDING 5   	// binding for far lights
-#define FAR_LIGHT_SHADOWMAP_BINDING 6
+// should be used with SCENE_SET
+#define POINT_LIGHT_BINDING 0 	// binding for point lights
+#define POINT_LIGHT_SHADOWMAP_BINDING 1
+#define SPOT_LIGHT_BINDING 2 	// binding for spot lights
+#define SPOT_LIGHT_SHADOWMAP_BINDING 3
+#define FAR_LIGHT_BINDING 4   	// binding for far lights
+#define FAR_LIGHT_SHADOWMAP_BINDING 5
 
 // should be used with SUB_RENDER_SET
 #define INPUT_ATTACHMENT_BINDING0 0
@@ -217,12 +220,40 @@ CameraInfo\
 	mat4 screen;\
 }
 
+struct PointLightType
+{
+	vec3 color;
+	float intensity;
+	vec3 position;
+	uint shadow_index;
+};
 
+struct SpotLightType
+{
+	mat4 proj;
+	mat4 view;
+	vec3 color;
+	float intensity;
+	vec3 position;
+	vec3 direction;
+	float angle;
+	uint shadow_index;
+};
+
+struct FarLightType
+{
+	mat4 proj;
+	mat4 view;
+	vec3 color;
+	float intensity;
+	vec3 direction;
+	uint shadow_index;	
+};
 
 #define CAMERA layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo
-#define LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform Light
-#define DIRECTIONAL_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform DirectionalLight
-#define POINT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform PointLight
-#define SPOT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = SCENE_SET, binding = LIGHT_BINDING) uniform SpotLight
+#define LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform Light
+#define DIRECTIONAL_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight
+#define POINT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight
+#define SPOT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight
 #define MATERIAL_PROPERTIES layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Properties
 #define OBJECT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo

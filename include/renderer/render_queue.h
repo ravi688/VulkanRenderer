@@ -39,6 +39,8 @@
 
 	typedef struct vulkan_camera_t vulkan_camera_t;
 	typedef vulkan_camera_t camera_t;
+	typedef struct vulkan_render_scene_t vulkan_render_scene_t;
+	typedef vulkan_render_scene_t render_scene_t;
 
 #elif RENDERER_OPENGL_DRIVER
 	typedef struct opengl_render_queue_t opengl_render_queue_t;
@@ -49,6 +51,8 @@
 
 	typedef struct opengl_camera_t opengl_camera_t;
 	typedef opengl_camera_t camera_t;
+	typedef struct opengl_render_scene_t opengl_render_scene_t;
+	typedef opengl_render_scene_t render_scene_t;
 	
 #elif RENDERER_DIRECTX_DRIVER
 	typedef struct directx_render_queue_t directx_render_queue_t;
@@ -59,6 +63,8 @@
 
 	typedef struct directx_camera_t directx_camera_t;
 	typedef directx_camera_t camera_t;
+	typedef struct directx_render_scene_t directx_render_scene_t;
+	typedef directx_render_scene_t render_scene_t;
 	
 #elif RENDERER_METAL_DRIVER
 	typedef struct metal_render_queue_t metal_render_queue_t;
@@ -69,6 +75,8 @@
 
 	typedef struct metal_camera_t metal_camera_t;
 	typedef metal_camera_t camera_t;
+	typedef struct metal_render_scene_t metal_render_scene_t;
+	typedef metal_render_scene_t render_scene_t;
 	
 #endif
 
@@ -175,8 +183,9 @@ RENDERER_API void render_queue_build(render_queue_t* queue);
 	params:
 		queue: this render queue
 		camera: the camera to which output have to be written
+		scene: pointer to the render_scene_t object, it is used to query scene specific information and pass that to shaders
 	returns:
 		nothing
 	NOTE: if this render queue isn't ready (is_ready = false), then it first calls render_queue_build()
  */
-RENDERER_API void render_queue_dispatch(render_queue_t* queue, camera_t* camera);
+RENDERER_API void render_queue_dispatch(render_queue_t* queue, camera_t* camera, render_scene_t* scene);

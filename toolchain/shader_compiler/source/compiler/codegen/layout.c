@@ -335,12 +335,13 @@ static const char* parse_square_brackets(const char* start, const char* end, u32
 
 static u32 parse_set(const char* str, u32 len)
 {
-	if(safe_strncmp_any_va(str, len, 2, "CAMERA_SET", "camera_set")) return 0;
+	if(safe_strncmp_any_va(str, len, 2, "GLOBAL_SET", "global_set")) return 0;
 	else if(safe_strncmp_any_va(str, len, 2, "SCENE_SET", "scene_set")) return 1;
-	else if(safe_strncmp_any_va(str, len, 2, "RENDER_SET", "render_set")) return 2;
-	else if(safe_strncmp_any_va(str, len, 2, "SUB_RENDER_SET", "sub_render_set")) return 3;
-	else if(safe_strncmp_any_va(str, len, 2, "MATERIAL_SET", "material_set")) return 4;
-	else if(safe_strncmp_any_va(str, len, 2, "OBJECT_SET", "object_set")) return 5;
+	else if(safe_strncmp_any_va(str, len, 2, "CAMERA_SET", "camera_set")) return 2;
+	else if(safe_strncmp_any_va(str, len, 2, "RENDER_SET", "render_set")) return 3;
+	else if(safe_strncmp_any_va(str, len, 2, "SUB_RENDER_SET", "sub_render_set")) return 4;
+	else if(safe_strncmp_any_va(str, len, 2, "MATERIAL_SET", "material_set")) return 5;
+	else if(safe_strncmp_any_va(str, len, 2, "OBJECT_SET", "object_set")) return 6;
 	return U32_MAX;
 }
 
@@ -358,7 +359,7 @@ static u32 parse_binding(const char* str, u32 len)
 {
 	if(safe_strncmp_any_va(str, len, 2, "CAMERA_PROPERTIES_BINDING", "camera_properties_binding")) return 0;
 	else if(safe_strncmp_any_va(str, len, 2, "CAMERA_BINDING", "camera_binding")) return 0;
-	else if(safe_strncmp_any_va(str, len, 2, "LIGHT_BINDING", "light_binding")) return 1;
+	else if(safe_strncmp_any_va(str, len, 2, "LIGHT_BINDING", "light_binding")) return 0;
 	else if(safe_strncmp_any_va(str, len, 3, "INPUT_ATTACHMENT_BINDING0", "input_attachment0", "input_attachment_binding0")) return 0;
 	else if(safe_strncmp_any_va(str, len, 3, "INPUT_ATTACHMENT_BINDING1", "input_attachment1", "input_attachment_binding1")) return 1;
 	else if(safe_strncmp_any_va(str, len, 3, "INPUT_ATTACHMENT_BINDING2", "input_attachment2", "input_attachment_binding2")) return 2;

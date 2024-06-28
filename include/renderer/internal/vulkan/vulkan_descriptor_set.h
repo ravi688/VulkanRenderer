@@ -32,12 +32,20 @@
 // NOTE: This must be in sync with v3d.h
 enum
 {
+	/* bound once per frame */
 	VULKAN_DESCRIPTOR_SET_GLOBAL 	 = 	0,
-	VULKAN_DESCRIPTOR_SET_CAMERA 	 =  1,
-	VULKAN_DESCRIPTOR_SET_RENDER 	 = 	2,
-	VULKAN_DESCRIPTOR_SET_SUB_RENDER =  3,
-	VULKAN_DESCRIPTOR_SET_MATERIAL 	 = 	4,
-	VULKAN_DESCRIPTOR_SET_OBJECT 	 =	5
+	/* bound once per scene in the frame */
+	VULKAN_DESCRIPTOR_SET_SCENE  	 =  1,
+	/* bound once per camera in the scene */
+	VULKAN_DESCRIPTOR_SET_CAMERA 	 =  2,
+	/* bound once per render pass in the camera */
+	VULKAN_DESCRIPTOR_SET_RENDER 	 = 	3,
+	/* bound once per subpass in the render pass */
+	VULKAN_DESCRIPTOR_SET_SUB_RENDER =  4,
+	/* bound once per material */
+	VULKAN_DESCRIPTOR_SET_MATERIAL 	 = 	5,
+	/* bound once per object */
+	VULKAN_DESCRIPTOR_SET_OBJECT 	 =	6
 };
 
 // NOTE: This must be in sync with v3d.h
@@ -46,20 +54,22 @@ enum
 	// bindings for CAMERA_SET
 	VULKAN_DESCRIPTOR_BINDING_CAMERA_PROPERTIES = 0,
 	
-	// bindings for SCENE_SET
+	/* bindings for GLOBAL_SET */
 	/* holds information related to the screen such as:
 	 * 1. display resolution (width x height, in pixels)
 	 * 2. display dpi (horizontal_dpi x vertical_dpi, in pixels / inch)
 	 * 3. window size (width x height, in pixels)
 	 * 4. screen_matrix  */
 	VULKAN_DESCRIPTOR_BINDING_SCREEN = 0,
+
+	// bindings for SCENE_SET
 	VULKAN_DESCRIPTOR_BINDING_LIGHT = 1,
-	VULKAN_DESCRIPTOR_BINDING_POINT_LIGHT = 1,
-	VULKAN_DESCRIPTOR_BINDING_POINT_LIGHT_SHADOWMAP = 2,
-	VULKAN_DESCRIPTOR_BINDING_SPOT_LIGHT = 3,
-	VULKAN_DESCRIPTOR_BINDING_SPOT_LIGHT_SHADOWMAP = 4,
-	VULKAN_DESCRIPTOR_BINDING_FAR_LIGHT = 5,
-	VULKAN_DESCRIPTOR_BINDING_FAR_LIGHT_SHADOWMAP = 6,
+	VULKAN_DESCRIPTOR_BINDING_POINT_LIGHT = 0,
+	VULKAN_DESCRIPTOR_BINDING_POINT_LIGHT_SHADOWMAP = 1,
+	VULKAN_DESCRIPTOR_BINDING_SPOT_LIGHT = 2,
+	VULKAN_DESCRIPTOR_BINDING_SPOT_LIGHT_SHADOWMAP = 3,
+	VULKAN_DESCRIPTOR_BINDING_FAR_LIGHT = 4,
+	VULKAN_DESCRIPTOR_BINDING_FAR_LIGHT_SHADOWMAP = 5,
 
 	// bindings for SUB_RENDER_SET
 	VULKAN_DESCRIPTOR_BINDING_INPUT_ATTACHMENT0 = 0,
