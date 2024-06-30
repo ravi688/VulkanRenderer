@@ -380,6 +380,7 @@ RENDERER_API struct_descriptor_t* struct_descriptor_clone_p(struct_descriptor_t*
 RENDERER_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descriptor);
 
 RENDERER_API u32 struct_descriptor_sizeof(const struct_descriptor_t* descriptor);
+RENDERER_API u32 struct_descriptor_min_sizeof(const struct_descriptor_t* descriptor);
 RENDERER_API u32 struct_descriptor_alignof(const struct_descriptor_t* descriptor);
 RENDERER_API u32 struct_descriptor_offsetof(const struct_descriptor_t* descriptor, const char* name);
 RENDERER_API bool struct_descriptor_is_variable_sized(const struct_descriptor_t* descriptor);

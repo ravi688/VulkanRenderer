@@ -86,6 +86,7 @@ RENDERER_API u32 struct_field_array_get_stride(struct_field_t* field)
 static u32 get_array_size(struct_field_t* field)
 {
 	_debug_assert__(field->is_array);
+	_debug_assert__(field->array_size != U32_MAX);
 	return struct_field_array_get_stride(field) * field->array_size;
 }
 
@@ -100,7 +101,12 @@ RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 	{
 		u16 field_align = fields[i].alignment;
 		fields[i].offset = ((field_align - (offset % field_align)) % field_align) + offset;
-		offset = fields[i].offset + (fields[i].is_array ? get_array_size(&fields[i]) : fields[i].size);
+		if(fields[i].is_array && fields[i].array_size == U32_MAX)
+		{
+			_debug_assert__(i == (descriptor->field_count - 1u));
+			break;
+		}
+		else offset = fields[i].offset + (fields[i].is_array ? get_array_size(&fields[i]) : fields[i].size);
 	}
 	descriptor->align = descriptor->layout_callbacks.get_struct_align(field_type_align_getter, descriptor, descriptor->field_count, false);
 	descriptor->size = COM_GET_STRIDE_IN_ARRAY(offset, descriptor->align);
@@ -127,6 +133,11 @@ RENDERER_API u32 struct_descriptor_sizeof(const struct_descriptor_t* descriptor)
 {
 	_debug_assert__(descriptor != NULL);
 	_debug_assert__(!struct_descriptor_is_variable_sized(descriptor));
+	return descriptor->size;
+}
+
+RENDERER_API u32 struct_descriptor_min_sizeof(const struct_descriptor_t* descriptor)
+{
 	return descriptor->size;
 }
 

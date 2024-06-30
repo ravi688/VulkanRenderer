@@ -137,12 +137,14 @@ RENDERER_API void render_scene_remove_camera(render_scene_t* scene, camera_t* ca
 
 RENDERER_API void render_scene_add_light(render_scene_t* scene, light_t* light)
 {
-	vulkan_render_scene_add_light(VULKAN_RENDER_SCENE_CAST(scene), VULKAN_LIGHT_CAST(light));
+	/* NOTE: here we are using VULKAN_LIGHT() casting, that's because the light can be a point light, spot light, or far light
+	 * we need to upcast it to abstract light class. */
+	vulkan_render_scene_add_light(VULKAN_RENDER_SCENE_CAST(scene), VULKAN_LIGHT(light));
 }
 
 RENDERER_API void render_scene_remove_light(render_scene_t* scene, light_t* light)
 {
-	vulkan_render_scene_remove_light(VULKAN_RENDER_SCENE_CAST(scene), VULKAN_LIGHT_CAST(light));
+	vulkan_render_scene_remove_light(VULKAN_RENDER_SCENE_CAST(scene), VULKAN_LIGHT(light));
 }
 
 RENDERER_API void render_scene_set_use_lights(render_scene_t* scene, bool is_use_lights)

@@ -286,12 +286,19 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 				/* we are doing this here to avoid another for-loop when rewriting the shadow map descriptors */
 				shadow_maps[j] = vulkan_light_get_shadow_map(light);
 			}
-			u32 array_len = vulkan_formatted_buffer_get_array_length(&stage->light_buffer, "lights");
+
+DEBUG_BLOCK(
+			if(buffer == NULL)
+				_debug_assert__(light_count == 0);
+)
+			u32 array_len = buf_get_element_count(buffer);
 			_debug_assert__(array_len == light_count);
 			vulkan_formatted_buffer_set_uint(&stage->light_buffer, "count", array_len);
 
 			/* rewrite shadow map descriptors */
 			vulkan_descriptor_set_write_texturev(&scene->scene_set, get_scene_set_light_shadowmap_binding(light_type), 0, shadow_maps, light_count);
+
+			stage->is_light_list_dirty = false;
 		}
 		/* otherwise check for each light if they have dirty data to be updated into corresponding light buffer */
 		else
@@ -464,7 +471,7 @@ static struct_descriptor_t* get_UBO_format(memory_allocator_t* allocator, struct
 	struct_descriptor_t* desc = struct_descriptor_create(allocator);
 	struct_descriptor_begin(allocator, desc, "lights_UBO", GLSL_TYPE_UNIFORM_BUFFER, GLSL_UNIFORM_BUFFER_MEMORY_LAYOUT);
 		struct_descriptor_add_field(desc, "count", GLSL_TYPE_UINT);
-	struct_descriptor_add_field_array2(desc, "lights", light_properties, U32_MAX);
+		struct_descriptor_add_field_array2(desc, "lights", light_properties, U32_MAX);
 	struct_descriptor_end(allocator, desc);
 	return desc;
 }
@@ -507,6 +514,7 @@ RENDERER_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vu
 
 		stage = CAST_TO(vulkan_light_buffer_stage_t*, dictionary_get_value_ptr(&scene->light_buffer_map, &type));
 	}
+	buf_push(&stage->lights, &light);
 	stage->is_light_list_dirty = true;
 }
 

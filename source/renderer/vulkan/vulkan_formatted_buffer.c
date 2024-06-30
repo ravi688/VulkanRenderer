@@ -25,12 +25,12 @@ RENDERER_API void vulkan_formatted_buffer_create_no_alloc(vulkan_renderer_t* ren
 		vulkan_host_buffered_buffer_create_info_t _create_info = 
 		{
 			.stride = 1 /* 1 byte */,
-			.capacity = struct_descriptor_sizeof(buffer->format),
+			.capacity = struct_descriptor_min_sizeof(buffer->format),
 			.vo_usage_flags = create_info->vo_usage_flags
 		};
 		buffer->host_buffered_buffer = vulkan_host_buffered_buffer_create(renderer, &_create_info);
 	}
-	buffer->array_buffer_map = dictionary_create(struct_field_t*, buffer_t*, 0, dictionary_key_comparer_ptr);
+	buffer->array_buffer_map = dictionary_create(struct_field_t*, buffer_t*, 1, dictionary_key_comparer_ptr);
 	struct_descriptor_map(buffer->format, buf_get_ptr(vulkan_host_buffered_buffer_get_host_buffer(buffer->host_buffered_buffer)));
 }
 
@@ -82,8 +82,8 @@ RENDERER_API buffer_t* vulkan_formatted_buffer_get_array_buffer(vulkan_formatted
 	}
 
 	/* if no raw buffer existings for this struct field array, then create and add it */
-	buffer_t* raw_buffer;
-	if(!dictionary_try_get_value_ptr(&buffer->array_buffer_map, &field, CAST_TO(void**, &raw_buffer)))
+	buffer_t* raw_buffer = NULL;
+	if(!dictionary_try_get_value(&buffer->array_buffer_map, &field, CAST_TO(void*, &raw_buffer)))
 	{
 		if(struct_field_is_variable_sized(field))
 			raw_buffer = memory_allocator_BUFcreate(buffer->renderer->allocator, NULL, struct_field_array_get_stride(field), 0, 0);
@@ -92,6 +92,7 @@ RENDERER_API buffer_t* vulkan_formatted_buffer_get_array_buffer(vulkan_formatted
 																								struct_field_array_get_stride(field), 0, 0);
 		dictionary_add(&buffer->array_buffer_map, &field, &raw_buffer);
 	}
+	_debug_assert__(raw_buffer != NULL);
 	if(!buf_is_static(raw_buffer))
 		buffer->is_dynamic_buffer_dirty = true;
 	else
