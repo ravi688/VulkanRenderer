@@ -144,55 +144,6 @@ static void setup_gpu_resources(vulkan_light_t* super)
 			UNSUPPORTED_LIGHT_TYPE(light->type);
 	};
 	struct_descriptor_end(light->renderer->allocator, &light->struct_definition);
-
-	// // create uniform buffers and write to the descriptor set SCENE_SET at bindings GLOBAL_CAMERA and GLOBAL_LIGHT
-	// vulkan_buffer_create_info_t create_info = 
-	// {
-	// 	.size = struct_descriptor_sizeof(&light->struct_definition),
-	// 	.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	// 	.vo_sharing_mode = light->renderer->vo_sharing_mode,
-	// 	.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-	// };
-	// VULKAN_OBJECT_INIT(&light->buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
-	// vulkan_buffer_create_no_alloc(light->renderer, &create_info, &light->buffer);
-	// struct_descriptor_map(&light->struct_definition, vulkan_buffer_map(&light->buffer));
-	// vulkan_descriptor_set_write_uniform_buffer(&light->renderer->global_set, VULKAN_DESCRIPTOR_BINDING_LIGHT, &light->buffer);
-
-	// setup the field handles for faster access
-	// light->projection_handle = struct_descriptor_get_field_handle(&light->struct_definition, "projection");
-	// light->view_handle = struct_descriptor_get_field_handle(&light->struct_definition, "view");
-	// light->color_handle = struct_descriptor_get_field_handle(&light->struct_definition, "color");
-	// light->intensity_handle = struct_descriptor_get_field_handle(&light->struct_definition, "intensity");
-	
-	// switch(light->type)
-	// {
-	// 	case VULKAN_LIGHT_TYPE_DIRECTIONAL:
-	// 	{
-	// 		AUTO _light = VULKAN_DIRECTIONAL_LIGHT(super);
-	// 		_light->direction_handle = struct_descriptor_get_field_handle(&light->struct_definition, "direction");
-	// 		break;
-	// 	}
-	// 	case VULKAN_LIGHT_TYPE_POINT:
-	// 	{
-	// 		AUTO _light = VULKAN_POINT_LIGHT(super);
-	// 		_light->position_handle = struct_descriptor_get_field_handle(&light->struct_definition, "position");
-	// 		break;
-	// 	}
-	// 	case VULKAN_LIGHT_TYPE_SPOT:
-	// 	{
-	// 		AUTO _light = VULKAN_SPOT_LIGHT(super);
-	// 		_light->angle_handle = struct_descriptor_get_field_handle(&light->struct_definition, "angle");
-	// 		_light->direction_handle = struct_descriptor_get_field_handle(&light->struct_definition, "direction");
-	// 		_light->position_handle = struct_descriptor_get_field_handle(&light->struct_definition, "position");
-	// 		break;
-	// 	}
-	// 	case VULKAN_LIGHT_TYPE_AMBIENT:
-	// 	{
-	// 		break;
-	// 	}
-	// 	default:
-	// 		UNSUPPORTED_LIGHT_TYPE(light->type);
-	// };
 }
 
 RENDERER_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vulkan_light_type_t type)
@@ -297,8 +248,6 @@ RENDERER_API void vulkan_light_destroy(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	struct_descriptor_unmap(&light->struct_definition);
-	vulkan_buffer_unmap(&light->buffer);
-	vulkan_buffer_destroy(&light->buffer);
 	if(light->is_cast_shadow)
 	{
 		_debug_assert__(light->shadow_camera != NULL);
@@ -315,7 +264,6 @@ RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light)
 	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(light);
 	struct_descriptor_destroy(light->renderer->allocator, &light->struct_definition);
-	vulkan_buffer_release_resources(&light->buffer);
 	if(VULKAN_OBJECT_IS_INTERNAL(super))
 		memory_allocator_dealloc(light->renderer->allocator, super);
 }
@@ -326,8 +274,6 @@ static void vulkan_light_set_view(vulkan_light_t* light, mat4_t view)
 {
 	light = VULKAN_LIGHT(light);
 	light->view = view;
-	// mat4_t DTO = mat4_transpose(light->view);
-	// struct_descriptor_set_mat4(&light->struct_definition, light->view_handle, CAST_TO(float*, &DTO));
 	light->is_dirty = true;
 }
 
@@ -335,8 +281,6 @@ static void vulkan_light_set_projection(vulkan_light_t* light, mat4_t projection
 {
 	light = VULKAN_LIGHT(light);
 	light->projection = projection;
-	// mat4_t DTO = mat4_transpose(projection);
-	// struct_descriptor_set_mat4(&light->struct_definition, light->projection_handle, CAST_TO(float*, &DTO));
 	light->is_dirty = true;
 }
 
@@ -350,8 +294,6 @@ RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle
 		{
 			AUTO _light = VULKAN_SPOT_LIGHT(super);
 			_light->angle = angle;
-			// struct_descriptor_set_float(&light->struct_definition, _light->angle_handle, &angle);
-			// vulkan_light_set_projection(light, mat4_persp_projection(0.04f, 20.0f, _light->angle, 1));
 			break;
 		}
 		default:
@@ -397,7 +339,6 @@ RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotati
 			AUTO _light = VULKAN_DIRECTIONAL_LIGHT(super);
 			vec4_t dir = mat4_mul_vec4(mat4_transpose(view), 1, 0, 0, 0);
 			_light->direction = vec3(dir.x, dir.y, dir.z);
-			// struct_descriptor_set_vec3(&light->struct_definition, _light->direction_handle, CAST_TO(float*, &dir));
 		}
 		break;
 		case VULKAN_LIGHT_TYPE_SPOT:
@@ -405,7 +346,6 @@ RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotati
 			AUTO _light = VULKAN_SPOT_LIGHT(super);
 			vec4_t dir = mat4_mul_vec4(mat4_transpose(view), 1, 0, 0, 0);
 			_light->direction = vec3(dir.x, dir.y, dir.z);
-			// struct_descriptor_set_vec3(&light->struct_definition, _light->direction_handle, CAST_TO(float*, &dir));
 		}
 		break;
 		case VULKAN_LIGHT_TYPE_POINT:
@@ -544,7 +484,6 @@ RENDERER_API void vulkan_light_set_intensity(vulkan_light_t* light, float intens
 {
 	light = VULKAN_LIGHT(light);
 	light->intensity = intensity;
-	// struct_descriptor_set_float(&light->struct_definition, light->intensity_handle, &light->intensity);
 	light->is_dirty = true;
 }
 
@@ -552,7 +491,6 @@ RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color)
 {
 	light = VULKAN_LIGHT(light);
 	light->color = color;
-	// struct_descriptor_set_vec3(&light->struct_definition, light->color_handle, CAST_TO(float*, &light->color));
 	light->is_dirty = true;
 }
 

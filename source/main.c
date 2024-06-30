@@ -136,7 +136,19 @@ int main(int argc, const char** argv)
 			break;
 		}
 	}
-	AUTO driver = renderer_init(allocator, gpu_type, data.window_width, data.window_height, data.window_name, data.is_fullscreen, data.is_resizable);
+	renderer_create_info_t driver_create_info = 
+	{
+		.gpu_type = gpu_type,
+		.width = data.window_width, 
+		.height = data.window_height, 
+		.title = data.window_name, 
+		.full_screen = data.is_fullscreen, 
+		.resizable = data.is_resizable,
+		.max_point_lights = data.max_point_lights,
+		.max_spot_lights = data.max_spot_lights,
+		.max_far_lights = data.max_far_lights
+	};
+	AUTO driver = renderer_init(allocator, &driver_create_info);
 
 	test->initialize(driver, test->user_data);
 

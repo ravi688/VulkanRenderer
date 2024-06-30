@@ -466,7 +466,7 @@ DEBUG_BLOCK
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		.poolSizeCount = SIZEOF_ARRAY(sizes),
 		.pPoolSizes = &sizes[0],
-		.maxSets = get_pool_sizes_sum(sizes, SIZEOF_ARRAY(sizes)),
+		.maxSets = 40 + get_pool_sizes_sum(sizes, SIZEOF_ARRAY(sizes)),
 		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 	};
 	vkCall(vkCreateDescriptorPool(renderer->logical_device->vo_handle, &pool_create_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &renderer->vo_descriptor_pool));

@@ -56,6 +56,9 @@ typedef struct renderer_initialization_data_t
 	const char* window_name;
 	bool is_fullscreen;
 	bool is_resizable;
+	u32 max_point_lights;
+	u32 max_spot_lights;
+	u32 max_far_lights;
 } renderer_initialization_data_t;
 
 typedef struct test_t

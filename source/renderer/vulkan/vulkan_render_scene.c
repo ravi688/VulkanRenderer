@@ -490,7 +490,7 @@ RENDERER_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vu
 	 * otherwise, use the existing one. */
 	vulkan_light_buffer_stage_t* stage;
 	AUTO type = vulkan_light_get_type(light);
-	if(!dictionary_try_get_value(&scene->light_buffer_map, &type, &stage))
+	if(!dictionary_try_get_value_ptr(&scene->light_buffer_map, &type, CAST_TO(void**, &stage)))
 	{
 		vulkan_formatted_buffer_create_info_t create_info = 
 		{

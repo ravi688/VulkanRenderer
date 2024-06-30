@@ -72,6 +72,28 @@ typedef struct memory_allocator_t memory_allocator_t;
 
 typedef struct FT_LibraryRec_  *FT_Library;
 
+typedef enum renderer_gpu_type_t
+{
+	RENDERER_GPU_TYPE_AUTO = 0,
+	RENDERER_GPU_TYPE_INTEGRATED,
+	RENDERER_GPU_TYPE_DISCRETE,
+	RENDERER_GPU_TYPE_CPU
+} renderer_gpu_type_t;
+
+
+typedef struct renderer_create_info_t
+{
+	renderer_gpu_type_t gpu_type;
+	u32 width;
+	u32 height;
+	const char* title;
+	bool full_screen;
+	bool resizable;
+	u32 max_point_lights;
+	u32 max_spot_lights;
+	u32 max_far_lights;
+} renderer_create_info_t;
+
 typedef struct renderer_t
 {
 	union
@@ -98,17 +120,9 @@ typedef struct renderer_t
 	// render_pass_pool_t* render_pass_pool;
 } renderer_t;
 
-typedef enum renderer_gpu_type_t
-{
-	RENDERER_GPU_TYPE_AUTO = 0,
-	RENDERER_GPU_TYPE_INTEGRATED,
-	RENDERER_GPU_TYPE_DISCRETE,
-	RENDERER_GPU_TYPE_CPU
-} renderer_gpu_type_t;
-
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable);
+RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_create_info_t* create_info);
 RENDERER_API void renderer_terminate(renderer_t* renderer);
 RENDERER_API void renderer_update(renderer_t* renderer);
 RENDERER_API bool renderer_is_running(renderer_t* renderer);
