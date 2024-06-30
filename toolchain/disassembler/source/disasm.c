@@ -370,6 +370,7 @@ static void disasm_pipeline_description(disassembler_t* disasm, BUFFER* str)
 			 */
 			u32 spirv_length = binary_reader_u32(reader);
 			u32 spirv_offset = binary_reader_u32(reader);
+			_printf(str, "spirv: {offset:%" PRIu32 ", length:%" PRIu32 "}\n", spirv_offset, spirv_length);
 			/*
 				NOTE: we can't just use __binary_reader_read(reader, spirv_length) after read length and offset
 				because we have jumped once and the internal read_cursor is changed.
