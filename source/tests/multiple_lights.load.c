@@ -44,6 +44,8 @@ TEST_DATA(MULTIPLE_LIGHTS_LOAD)
 
 	/* lights */
 	light_t* pointLight;
+	light_t* pointLight2;
+	light_t* pointLight3;
 
 	/* materials */
 	material_t* material;
@@ -57,6 +59,8 @@ TEST_DATA(MULTIPLE_LIGHTS_LOAD)
 	render_object_t* renderObject;
 	render_object_t* wallObject;
 	render_object_t* cubeObject;
+	render_object_t* cubeObject2;
+	render_object_t* cubeObject3;
 
 	/* textures */
 	vulkan_texture_t* shadowMap;
@@ -72,7 +76,8 @@ TEST_ON_RENDERER_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 		.window_width = 800,
 		.window_height = 800,
 		.is_resizable = true,
-		.is_fullscreen = false
+		.is_fullscreen = false,
+		.max_point_lights = 3
 	};
 }
 
@@ -96,10 +101,23 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 	
 	this->pointLight = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_position(this->pointLight, vec3_zero());
-	light_set_intensity(this->pointLight, 0.5f);
+	light_set_intensity(this->pointLight, 0.3f);
+	light_set_color(this->pointLight, COLOR_YELLOW.rgb);
 	light_set_cast_shadow(this->pointLight, true);
+	this->pointLight2 = light_create(renderer, LIGHT_TYPE_POINT);
+	light_set_position(this->pointLight2, vec3_zero());
+	light_set_intensity(this->pointLight2, 0.3f);
+	light_set_color(this->pointLight2, COLOR_ORANGE.rgb);
+	light_set_cast_shadow(this->pointLight2, true);
+	this->pointLight3 = light_create(renderer, LIGHT_TYPE_POINT);
+	light_set_position(this->pointLight3, vec3_zero());
+	light_set_intensity(this->pointLight3, 0.3f);
+	light_set_color(this->pointLight3, COLOR_WHITE.rgb);
+	light_set_cast_shadow(this->pointLight3, true);
 	/* add the light which j ust created to the scene */
 	render_scene_add_light(this->scene, this->pointLight);
+	render_scene_add_light(this->scene, this->pointLight2);
+	render_scene_add_light(this->scene, this->pointLight3);
 
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
@@ -124,6 +142,15 @@ TEST_ON_INITIALIZE(MULTIPLE_LIGHTS_LOAD)
 	render_object_set_material(this->cubeObject, this->material);
 	render_object_attach(this->cubeObject, this->cubeMesh);
 	render_object_set_transform(this->cubeObject, mat4_mul(2, mat4_translation(-0.5f, 0, 0.5f), mat4_scale(0.1f, 0.1f, 0.1f)));
+	this->cubeObject2 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->cubeObject2, this->material);
+	render_object_attach(this->cubeObject2, this->cubeMesh);
+	render_object_set_transform(this->cubeObject2, mat4_mul(2, mat4_translation(-0.5f, 0, 0.5f), mat4_scale(0.1f, 0.1f, 0.1f)));
+	this->cubeObject3 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->cubeObject3, this->material);
+	render_object_attach(this->cubeObject3, this->cubeMesh);
+	render_object_set_transform(this->cubeObject3, mat4_mul(2, mat4_translation(-0.5f, 0, 0.5f), mat4_scale(0.1f, 0.1f, 0.1f)));
+
 
 	mesh3d_transform_set(cubeMeshData, mat4_scale(-1, -1, -1));
 	this->wallMesh = mesh_create(renderer, cubeMeshData);
@@ -147,6 +174,10 @@ TEST_ON_TERMINATE(MULTIPLE_LIGHTS_LOAD)
 	mesh_release_resources(this->cubeMesh);
 	light_destroy(this->pointLight);
 	light_release_resources(this->pointLight);
+	light_destroy(this->pointLight2);
+	light_release_resources(this->pointLight2);
+	light_destroy(this->pointLight3);
+	light_release_resources(this->pointLight3);
 
 	render_scene_destroy(this->scene);
 	render_scene_release_resources(this->scene);
@@ -162,8 +193,13 @@ TEST_ON_UPDATE(MULTIPLE_LIGHTS_LOAD)
 	float _angle = (0.5f * sin(angle) + 0.5f) * 180.0f - 180.0f;
 	vec3_t pos = vec3(0.8f * sin(_angle DEG), 0, 0.8f * cos(_angle DEG));
 	light_set_position(this->pointLight, pos);
-	light_set_color(this->pointLight, vec3(pos.x * 0.5f + 0.5f, pos.y * 0.5f + 0.5f, pos.z * 0.5f + 0.5f));
+	light_set_position(this->pointLight2, vec3_negate(pos));
+	light_set_position(this->pointLight3, vec3(0.0f, pos.z, pos.x));
 	render_object_set_transform(this->cubeObject, mat4_mul(2, mat4_translation(pos.x, pos.y, pos.z),
+		mat4_scale(0.1f, 0.1f, 0.1f)));
+	render_object_set_transform(this->cubeObject2, mat4_mul(2, mat4_translation_v(vec3_negate(pos)),
+		mat4_scale(0.1f, 0.1f, 0.1f)));
+	render_object_set_transform(this->cubeObject3, mat4_mul(2, mat4_translation(0.0f, pos.z, pos.x),
 		mat4_scale(0.1f, 0.1f, 0.1f)));
 }
 

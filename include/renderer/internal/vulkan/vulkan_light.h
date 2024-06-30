@@ -28,7 +28,6 @@
 
 #include <renderer/defines.h>
 #include <renderer/struct_descriptor.h>
-#include <renderer/internal/vulkan/vulkan_buffer.h>
 #include <renderer/internal/vulkan/vulkan_object.h>
 
 #include <hpml/vec3.h>
@@ -58,7 +57,6 @@ typedef struct vulkan_light_t
 {
 	__VULKAN_OBJECT__;
 	vulkan_renderer_t* renderer;
-	vulkan_buffer_t buffer;
 
 	/* the reason we can't have only single shadow camera, shader or material
 	 * is that, we need separate depth buffers for each light as they have different positions and configurations in space,
@@ -97,11 +95,6 @@ typedef struct vulkan_light_t
 	/* internal use only, however can be used externally also! */
 	vulkan_light_type_t type;
 
-	// struct_field_handle_t projection_handle;	 // STRUCT_FIELD_INVALID_HANDLE in case of ambient light
-	// struct_field_handle_t view_handle; 			 // STRUCT_FIELD_INVALID_HANDLE in case of ambient light
-	// struct_field_handle_t color_handle;
-	// struct_field_handle_t intensity_handle;
-
 	// cpu side cache to reduce GPU memory access
 	mat4_t projection;
 	mat4_t view;
@@ -128,7 +121,6 @@ typedef struct vulkan_directional_light_t
 {
 	__VULKAN_OBJECT__;
 	DERIVE_FROM(vulkan_light_t);
-	// struct_field_handle_t direction_handle;
 	vec3_t direction;
 } vulkan_directional_light_t;
 
@@ -143,7 +135,6 @@ typedef struct vulkan_point_light_t
 {
 	__VULKAN_OBJECT__;
 	DERIVE_FROM(vulkan_light_t);
-	// struct_field_handle_t position_handle;
 } vulkan_point_light_t;
 
 #define VULKAN_POINT_LIGHT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_point_light_t*, VULKAN_OBJECT_TYPE_POINT_LIGHT, ptr)
@@ -153,9 +144,6 @@ typedef struct vulkan_spot_light_t
 {
 	__VULKAN_OBJECT__;
 	DERIVE_FROM(vulkan_light_t);
-	// struct_field_handle_t angle_handle;
-	// struct_field_handle_t direction_handle;
-	// struct_field_handle_t position_handle;
 	float angle;
 	vec3_t direction;
 } vulkan_spot_light_t;

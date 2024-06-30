@@ -27,6 +27,7 @@
 #pragma once
 
 #include <renderer/defines.h>
+#include <hpml/vec3.h>
 
 typedef union color_t
 {
@@ -44,6 +45,12 @@ typedef union color_t
 		float y;
 		float z;
 		float w;
+	};
+
+	union
+	{
+		vec3_t xyz;
+		vec3_t rgb;
 	};
 } color_t;
 

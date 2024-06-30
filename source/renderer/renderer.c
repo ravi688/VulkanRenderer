@@ -35,7 +35,7 @@
 
 #include <freetype/freetype.h>
 
-RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_gpu_type_t gpu_type, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
+RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_create_info_t* _create_info)
 {
 	renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDERER, renderer_t);
 	memzero(renderer, renderer_t);
@@ -52,12 +52,15 @@ RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_g
 	vulkan_renderer_create_info_t create_info = 
 	{
 		.renderer = renderer,
-		.prefered_gpu_type = CAST_TO(vulkan_renderer_gpu_type_t, gpu_type), 
-		.width = width, 
-		.height = height, 
-		.title = title, 
-		.full_screen = full_screen, 
-		.resizable = resizable
+		.prefered_gpu_type = CAST_TO(vulkan_renderer_gpu_type_t, _create_info->gpu_type), 
+		.width = _create_info->width, 
+		.height = _create_info->height, 
+		.title = _create_info->title, 
+		.full_screen = _create_info->full_screen, 
+		.resizable = _create_info->resizable,
+		.max_point_lights = _create_info->max_point_lights,
+		.max_spot_lights = _create_info->max_spot_lights,
+		.max_far_lights = _create_info->max_far_lights
 	};
 	renderer->vulkan_handle = vulkan_renderer_create(&create_info);
 
