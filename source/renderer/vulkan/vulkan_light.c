@@ -369,6 +369,14 @@ RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t positi
 	vulkan_light_set_view(light, mat4_inverse(transform));
 	light->position = position;
 	light->is_dirty = true;
+	if(light->is_cast_shadow)
+	{
+		_debug_assert__(light->shadow_camera != NULL);
+		if(light->type == VULKAN_LIGHT_TYPE_POINT)
+			vulkan_camera_set_position_cube(light->shadow_camera, light->position);
+		else
+			vulkan_camera_set_position(light->shadow_camera, light->position);
+	}
 }
 
 RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation)
@@ -413,6 +421,12 @@ RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotati
 	}
 
 	light->is_dirty = true;
+
+	if(light->is_cast_shadow)
+	{
+		_debug_assert__(light->shadow_camera != NULL);
+		vulkan_camera_set_rotation(light->shadow_camera, light->euler_rotation);
+	}
 }
 
 static const char* get_shadow_shader_path(vulkan_light_type_t type)
