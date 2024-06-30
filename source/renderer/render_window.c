@@ -72,8 +72,7 @@ RENDERER_API render_window_t* render_window_init(memory_allocator_t* allocator, 
 		window->handle = glfwCreateWindow(width, height, title, NULL, NULL);
 	glfwSetFramebufferSizeCallback(window->handle, glfwOnWindowResizeCallback);
 	glfwSetWindowUserPointer(window->handle, window);
-	window->width = width;
-	window->height = height;
+	render_window_get_framebuffer_extent(window, &window->width, &window->height);
 	log_msg("Render window created successfully\n");
 	return window;
 }
