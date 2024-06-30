@@ -101,7 +101,7 @@ RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor)
 	{
 		u16 field_align = fields[i].alignment;
 		fields[i].offset = ((field_align - (offset % field_align)) % field_align) + offset;
-		if(fields[i].is_array && fields[i].array_size == U32_MAX)
+		if(fields[i].is_array && (fields[i].array_size == U32_MAX))
 		{
 			_debug_assert__(i == (descriptor->field_count - 1u));
 			break;
