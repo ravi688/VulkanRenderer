@@ -95,18 +95,20 @@ signal_handler(__SIGTRAP, memory_allocation_tree_dump(allocator, "__SIGTRAP.runt
  * 2. all the fetal errors or just errors must use __builtin_trap() to raise SIGILL. */
 static void setup_signal_handlers()
 {
-	_debug_assert__(signal(SIGINT, __SIGINT_handler) != SIG_ERR);
-	_debug_assert__(signal(SIGILL, __SIGILL_handler) != SIG_ERR);
-	_debug_assert__(signal(SIGFPE, __SIGFPE_handler) != SIG_ERR);
-	_debug_assert__(signal(SIGSEGV, __SIGSEGV_handler) != SIG_ERR);
-	_debug_assert__(signal(SIGTERM, __SIGTERM_handler) != SIG_ERR);
-	_debug_assert__(signal(SIGABRT, __SIGABRT_handler) != SIG_ERR);
-	#ifdef PLATFORM_WINDOWS
-	_debug_assert__(signal(SIGBREAK, __SIGBREAK_handler) != SIG_ERR);
-	_debug_assert__(signal(SIGABRT_COMPAT, __SIGABRT_COMPAT_handler) != SIG_ERR);
-	_debug_assert__(signal(SIGABRT2, __SIGABRT2_handler) != SIG_ERR);
-	#elif defined(PLATFORM_LINUX)
-	_debug_assert__(signal(SIGTRAP, __SIGTRAP_handler) != SIG_ERR);
+	#ifdef HANDLE_SIGNALS
+		_debug_assert__(signal(SIGINT, __SIGINT_handler) != SIG_ERR);
+		_debug_assert__(signal(SIGILL, __SIGILL_handler) != SIG_ERR);
+		_debug_assert__(signal(SIGFPE, __SIGFPE_handler) != SIG_ERR);
+		_debug_assert__(signal(SIGSEGV, __SIGSEGV_handler) != SIG_ERR);
+		_debug_assert__(signal(SIGTERM, __SIGTERM_handler) != SIG_ERR);
+		_debug_assert__(signal(SIGABRT, __SIGABRT_handler) != SIG_ERR);
+		#ifdef PLATFORM_WINDOWS
+		_debug_assert__(signal(SIGBREAK, __SIGBREAK_handler) != SIG_ERR);
+		_debug_assert__(signal(SIGABRT_COMPAT, __SIGABRT_COMPAT_handler) != SIG_ERR);
+		_debug_assert__(signal(SIGABRT2, __SIGABRT2_handler) != SIG_ERR);
+		#elif defined(PLATFORM_LINUX)
+		_debug_assert__(signal(SIGTRAP, __SIGTRAP_handler) != SIG_ERR);
+		#endif
 	#endif
 }
 
