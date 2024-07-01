@@ -677,7 +677,7 @@ RENDERER_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 
 		default:
 			DEBUG_LOG_FETAL_ERROR("Dispatchable data can't be built for vulkan_light_type_t(%u)", _light->type);
 	}
-	light->is_dirty = false;
+	_light->is_dirty = false;
 }
 
 RENDERER_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light)
