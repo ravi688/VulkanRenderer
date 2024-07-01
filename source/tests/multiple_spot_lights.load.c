@@ -73,7 +73,7 @@ TEST_ON_RENDERER_INITIALIZE(MULTIPLE_SPOT_LIGHTS_LOAD)
 		.window_height = 800,
 		.is_resizable = true,
 		.is_fullscreen = false,
-		.max_spot_lights = 1
+		.max_spot_lights = 2
 	};
 }
 
