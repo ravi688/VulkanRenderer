@@ -92,7 +92,7 @@ A camera can render its depth and color output to a user supplied textures - bot
 
 ### Materials
 
-1. String to fast integer handles for constant lookup
+1. String to fast integer handles for constant time lookup
 
 ### Shaders
 
@@ -101,6 +101,8 @@ A camera can render its depth and color output to a user supplied textures - bot
 2. Custom attachments configuration
 
 3. Fixed Function pipeline configuration for each pass
+
+4. Full control over the memory layout for UBOs, and SSBOs.
 
 ## Tested on
 
