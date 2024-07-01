@@ -1,3 +1,4 @@
+
 /*
 	***This is computer generated notice - Do not modify it***
 
@@ -70,7 +71,8 @@ TEST_ON_RENDERER_INITIALIZE(SPOT_LIGHT_LOAD)
 		.window_width = 800,
 		.window_height = 800,
 		.is_resizable = true,
-		.is_fullscreen = false
+		.is_fullscreen = false,
+		.max_spot_lights = 1
 	};
 }
 
@@ -95,6 +97,11 @@ TEST_ON_INITIALIZE(SPOT_LIGHT_LOAD)
 	light_set_rotation(this->light, vec3(0, 0, 0));
 	light_set_position(this->light, vec3(-0.5, 0, 0));
 	light_set_spot_angle(this->light, 90 DEG);
+	light_set_cast_shadow(this->light, true);
+	/* add the light into the render scene */
+	render_scene_add_light(this->scene, this->light);
+
+	render_scene_set_use_lights(this->scene, true);
 
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
