@@ -5,7 +5,7 @@
 	such as toolchains written by the same author) is a software to render 
 	2D & 3D geometries by writing C/C++ code and shaders.
 
-	File: point_light.v3dshader is a part of VulkanRenderer
+	File: spot_light.v3dshader is a part of VulkanRenderer
 
 	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh
 
@@ -82,7 +82,7 @@ Shader
 				
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
-
+				
 				layout(location = POSITION_LOCATION) in vec3 position;
 				layout(location = NORMAL_LOCATION) in vec3 normal;
 				
@@ -91,23 +91,21 @@ Shader
 				
 				void main()
 				{
-					vec4 pos = objectInfo.transform * vec4(position, 1);
-					_position = pos.xyz;
 					vec4 clipPos = cameraInfo.projection * cameraInfo.view * objectInfo.transform * vec4(position, 1);
 					clipPos.y = -clipPos.y;
 					gl_Position = clipPos;
 					_normal = normalize((objectInfo.normal * vec4(normal, 1)).xyz);
+					_position = (objectInfo.transform * vec4(position, 1)).xyz;
 				}
-
 
 				#stage fragment
 
 				#version 450
 				
-				#define USE_POINT_LIGHTS
+				#define USE_SPOT_LIGHTS
 				#include <v3d.h>
 				
-				layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 				{
 					vec4 color;
 				} parameters;
@@ -117,52 +115,45 @@ Shader
 				
 				layout(location = 0) out vec4 color;
 				
-				
 				const float shadowBias = 0.0006f;
-				const float minShadow = 0.2;
-				
-				float linearize(float depth, float n, float f)
-				{
-					float t = ((n - f) * depth + f) * (f - n);
-					return n * f * 1 / t;
-				}
-				
-				float max(float x1, float x2, float x3, float x4, float x5, float x6)
-				{
-					return max(max(max(max(max(x1, x2), x3), x4), x5), x6);
-				}
-				
-				const float castedBias = 0.01f;
+				const float minShadow = 0.001f;
+				const float ambient = 0.02f;
+				const float bias = 0.001f;
 				
 				void main()
 				{
 					vec4 totalIrradiance = vec4(0.0, 0.0, 0.0, 0.0);
-					for(uint i = 0; i < pointLights.count; i++)
+					for(uint i = 0; i < spotLights.count; i++)
 					{
-						PointLightType light = pointLights.lights[i];
-						vec3 dir = light.position - position;
-						
-						float closestDepth = texture(pointLightShadowMaps[light.shadow_index], -vec3(dir.z, dir.y, dir.x)).r;
-						closestDepth = linearize(closestDepth, 0.04, 20.0) * (20.0 - 0.04) + 0.04;
-						float depth = max(dir.x, dir.y, dir.z, -dir.x, -dir.y, -dir.z);
+						SpotLightType light = spotLights.lights[i];
+						vec4 shadowMapCoord = light.proj * light.view * vec4(position, 1.0);
+						shadowMapCoord /= shadowMapCoord.w;
+						float depth = shadowMapCoord.z;
+						shadowMapCoord = shadowMapCoord * 0.5 + 0.5;
+						float closestDepth = texture(spotLightShadowMaps[i], vec2(shadowMapCoord.x, 1 - shadowMapCoord.y)).r;
+				
+						vec3 dir = position - light.position;
+						float distance = length(dir);
+				
 						float receivedShadow = 1.0f;
-						if(closestDepth < (depth + shadowBias))
+				
+						if(depth > (closestDepth + 0.001))
 							receivedShadow = minShadow;
 				
-						float sqrDistance = dot(dir, dir);
-						float litAmount = light.intensity / sqrDistance;
-						float dp = dot(normal, normalize(dir));
-						float castedShadow = max(0.0, dp) + castedBias;
-						
-						vec4 irradiance = receivedShadow * litAmount * castedShadow * vec4(light.color, 1);
-						
-						totalIrradiance += irradiance;
+						vec3 normalized_dir = dir / distance;
+						float litAmount = 1;
+						if(cos(light.angle * 0.5) < dot(light.direction, normalized_dir))
+							litAmount = light.intensity / (distance * distance);
+						else
+							litAmount = 0;
+				
+						float dp = dot(normal, -normalized_dir);
+						float castedShadow = max(0, dp) + bias;
+
+						totalIrradiance += max(receivedShadow * castedShadow * litAmount, ambient) * vec4(light.color, 1);
 					}
-
-					vec4 _color = totalIrradiance * parameters.color;
-					color = vec4(_color.r, _color.g, _color.b, 1);
+					color = totalIrradiance * parameters.color;
 				}
-
 			}
 		}
 	}

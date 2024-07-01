@@ -278,7 +278,7 @@ RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 q
 
 				/* add the light data into this light buffer */
 				u32 data_size = vulkan_light_get_dispatchable_data_size(light);
-				_debug_assert__(data_size == buf_get_element_size(buffer));
+				_debug_assert__(data_size <= buf_get_element_size(buffer));
 				u8 bytes[data_size];
 				vulkan_light_get_dispatchable_data(light, j, CAST_TO(void*, bytes));
 				buf_push_n(buffer, CAST_TO(void*, bytes), data_size);	
@@ -358,11 +358,11 @@ DEBUG_BLOCK(
 			AUTO stage = CAST_TO(vulkan_light_buffer_stage_t*, dictionary_get_value_ptr_at(&scene->light_buffer_map, i));
 			/* render to shadow maps first */
 			u32 light_count = buf_get_element_count(&stage->lights);
-			for(u32 i = 0; i < light_count; i++)
+			for(u32 j = 0; j < light_count; j++)
 			{
 				/* get the light */
 				vulkan_light_t* light;
-				buf_get_at_s(&stage->lights, i, &light);
+				buf_get_at_s(&stage->lights, j, &light);
 	
 				/* if this light is not active then do not generate any shadow maps (i.e. do not render to the shadow depth buffer) */
 				if((!vulkan_light_is_active(light)) || (!vulkan_light_is_cast_shadow(light)))
@@ -372,11 +372,11 @@ DEBUG_BLOCK(
 				while(vulkan_light_irradiate(light))
 				{
 					u32 count = dictionary_get_count(&scene->queues);
-					for(u32 i = 0; i < count; i++)
+					for(u32 k = 0; k < count; k++)
 					{
-						AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, i));
+						AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, k));
 						if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
-						vulkan_render_queue_dispatch_single_material(get_queue_at(scene, i), 
+						vulkan_render_queue_dispatch_single_material(get_queue_at(scene, k), 
 										vulkan_light_get_shadow_material(light),
 										vulkan_light_get_shadow_camera(light),
 										scene);
@@ -479,7 +479,7 @@ static struct_descriptor_t* get_UBO_format(memory_allocator_t* allocator, struct
 static vulkan_light_buffer_stage_t* get_light_buffer_stage(vulkan_render_scene_t* scene, vulkan_light_type_t type)
 {
 	vulkan_light_buffer_stage_t* stage;
-	if(dictionary_try_get_value(&scene->light_buffer_map, &type, &stage))
+	if(dictionary_try_get_value_ptr(&scene->light_buffer_map, &type, CAST_TO(void**, &stage)))
 		return stage;
 	return NULL;
 }
@@ -521,6 +521,7 @@ RENDERER_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vu
 RENDERER_API void vulkan_render_scene_remove_light(vulkan_render_scene_t* scene, vulkan_light_t* light)
 { 
 	vulkan_light_buffer_stage_t* stage = get_light_buffer_stage(scene, vulkan_light_get_type(light));
+	_debug_assert__(stage != NULL);
 	bool result = buf_remove(&stage->lights, &light, buf_ptr_comparer);
 	if(!result)
 		DEBUG_LOG_WARNING("You're trying to remove vulkan_light_t from vulkan_render_scene_t which doesn't exists in it");

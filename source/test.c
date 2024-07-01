@@ -42,6 +42,7 @@
 #include <renderer/tests/spot_light.h>
 #include <renderer/tests/spot_light.load.h>
 #include <renderer/tests/multiple_lights.load.h>
+#include <renderer/tests/multiple_spot_lights.load.h>
 
 #include <renderer/tests/cube.h>
 #include <renderer/tests/texture_sampling.h>
@@ -99,6 +100,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 	ELSE_IF(SPOT_LIGHT);
 	ELSE_IF(SPOT_LIGHT_LOAD);
 	ELSE_IF(MULTIPLE_LIGHTS_LOAD);
+	ELSE_IF(MULTIPLE_SPOT_LIGHTS_LOAD);
 	ELSE_IF(CUBE);
 	ELSE_IF(TEXTURE_SAMPLING);
 	ELSE_IF(TEXTURE_SAMPLING_ALPHA_CHANNEL);
@@ -139,6 +141,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 					"\tSPOT_LIGHT\n"
 					"\tSPOT_LIGHT_LOAD\n"
 					"\tMULTIPLE_LIGHTS_LOAD\n"
+					"\tMULTIPLE_SPOT_LIGHTS_LOAD\n"
 					"\tCUBE\n"
 					"\tTEXTURE_SAMPLING\n"
 					"\tTEXTURE_SAMPLING_ALPHA_CHANNEL\n"
