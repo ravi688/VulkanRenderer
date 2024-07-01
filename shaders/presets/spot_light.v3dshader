@@ -39,15 +39,6 @@ Shader
 		} parameters;
 	}
 
-	// [NoParse]
-	// Properties
-	// {
-	// 	vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
-	// 	{
-	// 		vec4 color;
-	// 	} parameters;
-	// }
-
 	Layout
 	{
 		[Rate(per_vertex)]
@@ -61,79 +52,6 @@ Shader
 		vec3 normal;
 	}
 
-	// [NoParse]
-	// Layout
-	// {
-	// 	per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
-	// 	per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
-	// }
-
-	RenderPass
-	{
-		SubPass
-		{
-			Layout
-			{
-				[Rate(per_vertex)]
-				[MeshLayout(sge_optimal)]
-				[Attribute(position)]
-				vec3 position;
-			}
-
-			[NoParse]
-			GraphicsPipeline
-			{
-				depthStencil
-				{
-					depthWriteEnable = true,
-					depthTestEnable = true
-				}
-			}
-
-			[NoParse]
-			GLSL
-			{
-				#stage vertex
-
-				#version 450
-				
-				#include <v3d.h>
-				
-				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight light;
-				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
-				
-				layout(location = POSITION_LOCATION) in vec3 position;
-				
-				layout(location = 0) out vec3 _position;
-				
-				void main()
-				{
-					_position = (objectInfo.transform * vec4(position, 1.0)).xyz;
-					vec4 clipPos = light.projection * light.view * objectInfo.transform * vec4(position, 1);
-					clipPos.y = -clipPos.y;
-					gl_Position = clipPos;
-				}
-
-				#stage fragment
-
-				#version 450
-				
-				#include <v3d.h>
-				
-				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight light;
-				
-				layout(location = 0) in vec3 position;
-				
-				void main()
-				{
-				 	gl_FragDepth = length(position - light.position) / (20.0 - 0.04);
-				}
-
-			}
-		}
-	}
-
-	[Read(depth, set = RENDER_SET, binding = TEXTURE_BINDING0)]
 	RenderPass
 	{
 		SubPass
@@ -162,7 +80,6 @@ Shader
 				
 				#include <v3d.h>
 				
-				SPOT_LIGHT light;
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 				
@@ -185,14 +102,13 @@ Shader
 
 				#version 450
 				
+				#define USE_SPOT_LIGHTS
 				#include <v3d.h>
 				
-				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight light;
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 				{
 					vec4 color;
 				} parameters;
-				layout(set = RENDER_SET, binding = TEXTURE_BINDING0) uniform sampler2D shadowMap;
 				
 				layout(location = 0) in vec3 normal;
 				layout(location = 1) in vec3 position;
@@ -206,31 +122,38 @@ Shader
 				
 				void main()
 				{
-					vec4 shadowMapCoord = light.projection * light.view * vec4(position, 1.0);
-					shadowMapCoord /= shadowMapCoord.w;
-					shadowMapCoord = shadowMapCoord * 0.5 + 0.5;
-					float closestDistance = texture(shadowMap, vec2(shadowMapCoord.x, 1 - shadowMapCoord.y)).r;
+					vec4 totalIrradiance = vec4(0.0, 0.0, 0.0, 0.0);
+					for(uint i = 0; i < spotLights.count; i++)
+					{
+						SpotLightType light = spotLights.lights[i];
+						vec4 shadowMapCoord = light.proj * light.view * vec4(position, 1.0);
+						shadowMapCoord /= shadowMapCoord.w;
+						float depth = shadowMapCoord.z;
+						shadowMapCoord = shadowMapCoord * 0.5 + 0.5;
+						float closestDepth = texture(spotLightShadowMaps[i], vec2(shadowMapCoord.x, 1 - shadowMapCoord.y)).r;
 				
-					vec3 dir = position - light.position;
-					float distance = length(dir);
+						vec3 dir = position - light.position;
+						float distance = length(dir);
 				
-					float receivedShadow = 1.0f;
+						float receivedShadow = 1.0f;
 				
-					if(distance > ((closestDistance * (20.0 - 0.04)) + 0.001))
-						receivedShadow = minShadow;
+						if(depth > (closestDepth + 0.001))
+							receivedShadow = minShadow;
 				
-					vec3 normalized_dir = dir / distance;
-					float litAmount = 1;
-					if(cos(light.angle * 0.5) < dot(light.direction, normalized_dir))
-						litAmount = light.intensity / (distance * distance);
-					else
-						litAmount = 0;
+						vec3 normalized_dir = dir / distance;
+						float litAmount = 1;
+						if(cos(light.angle * 0.5) < dot(light.direction, normalized_dir))
+							litAmount = light.intensity / (distance * distance);
+						else
+							litAmount = 0;
 				
-					float dp = dot(normal, -normalized_dir)				;				
-					float castedShadow = max(0, dp) + bias;				
-					color = max(receivedShadow * castedShadow * litAmount, ambient) * vec4(light.color, 1) * 				parameters.color;
-				}
+						float dp = dot(normal, -normalized_dir);
+						float castedShadow = max(0, dp) + bias;
 
+						totalIrradiance += max(receivedShadow * castedShadow * litAmount, ambient) * vec4(light.color, 1);
+					}
+					color = totalIrradiance * parameters.color;
+				}
 			}
 		}
 	}

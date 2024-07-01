@@ -44,6 +44,7 @@ TEST_DATA(MULTIPLE_SPOT_LIGHTS_LOAD)
 
 	/* lights */
 	light_t* light;
+	light_t* light2;
 
 	/* materials */
 	material_t* material;
@@ -58,6 +59,7 @@ TEST_DATA(MULTIPLE_SPOT_LIGHTS_LOAD)
 	render_object_t* renderObject;
 	render_object_t* wallObject;
 	render_object_t* cubeObject;
+	render_object_t* cubeObject2;
 };
 
 SETUP_TEST(MULTIPLE_SPOT_LIGHTS_LOAD);
@@ -97,8 +99,16 @@ TEST_ON_INITIALIZE(MULTIPLE_SPOT_LIGHTS_LOAD)
 	light_set_position(this->light, vec3(-0.5, 0, 0));
 	light_set_spot_angle(this->light, 45 DEG);
 	light_set_cast_shadow(this->light, true);
+	light_set_color(this->light, COLOR_YELLOW.rgb);
+	this->light2 = light_create(renderer, LIGHT_TYPE_SPOT);
+	light_set_rotation(this->light2, vec3(0, 0, 0));
+	light_set_position(this->light2, vec3(-0.5, 0, 0));
+	light_set_spot_angle(this->light2, 45 DEG);
+	light_set_cast_shadow(this->light2, true);
+	light_set_color(this->light2, COLOR_WHITE.rgb);
 	/* add the light into the render scene */
 	render_scene_add_light(this->scene, this->light);
+	render_scene_add_light(this->scene, this->light2);
 
 	render_scene_set_use_lights(this->scene, true);
 
@@ -132,6 +142,10 @@ TEST_ON_INITIALIZE(MULTIPLE_SPOT_LIGHTS_LOAD)
 	render_object_set_material(this->cubeObject, this->unlitMaterial);
 	render_object_attach(this->cubeObject, this->cubeMesh);
 	render_object_set_transform(this->cubeObject, mat4_mul(2, mat4_translation(-0.5f, 0, 0.5f), mat4_scale(0.1f, 0.1f, 0.1f)));
+	this->cubeObject2 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->cubeObject2, this->unlitMaterial);
+	render_object_attach(this->cubeObject2, this->cubeMesh);
+	render_object_set_transform(this->cubeObject2, mat4_mul(2, mat4_translation(-0.5f, 0, 0.5f), mat4_scale(0.1f, 0.1f, 0.1f)));
 	mesh3d_transform_set(cubeMeshData, mat4_scale(-1, -1, -1));
 	this->wallMesh = mesh_create(renderer, cubeMeshData);
 	mesh3d_destroy(cubeMeshData);
@@ -153,6 +167,8 @@ TEST_ON_TERMINATE(MULTIPLE_SPOT_LIGHTS_LOAD)
 	mesh_release_resources(this->cubeMesh);
 	light_destroy(this->light);
 	light_release_resources(this->light);
+	light_destroy(this->light2);
+	light_release_resources(this->light2);
 
 	render_scene_destroy(this->scene);
 	render_scene_release_resources(this->scene);
@@ -168,11 +184,18 @@ TEST_ON_UPDATE(MULTIPLE_SPOT_LIGHTS_LOAD)
 	vec3_t pos = vec3(sin(_angle DEG), 0, cos(_angle DEG));
 	light_set_position(this->light, pos);
 	light_set_rotation(this->light, vec3(0, (90 + _angle) DEG, 0));
+	render_object_set_transform(this->cubeObject, mat4_mul(2, mat4_translation(pos.x, pos.y, pos.z),
+		mat4_scale(0.05f, 0.05f, 0.05f)));
+	_angle = (0.5f * sin(-angle) + 0.5f) * 180.0f - 180.0f;
+	pos = vec3(sin(_angle DEG), 0, cos(_angle DEG));
+	light_set_position(this->light2, pos);
+	light_set_rotation(this->light2, vec3(0, (90 + _angle) DEG, 0));
+	render_object_set_transform(this->cubeObject2, mat4_mul(2, mat4_translation_v(pos),
+		mat4_scale(0.05f, 0.05f, 0.05f)));
+
 	AUTO color = vec3(pos.x * 0.5f + 0.5f, pos.y * 0.5f + 0.5f, pos.z * 0.5f + 0.5f);
 	light_set_color(this->light, color);
 	material_set_vec4(this->unlitMaterial, "parameters.color", vec4(color.x, color.y, color.z, 1));
-	render_object_set_transform(this->cubeObject, mat4_mul(2, mat4_translation(pos.x, pos.y, pos.z),
-		mat4_scale(0.05f, 0.05f, 0.05f)));
 }
 
 TEST_ON_RENDER(MULTIPLE_SPOT_LIGHTS_LOAD)
