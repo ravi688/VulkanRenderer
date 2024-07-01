@@ -294,6 +294,11 @@ RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle
 		{
 			AUTO _light = VULKAN_SPOT_LIGHT(super);
 			_light->angle = angle;
+			if(light->is_cast_shadow)
+			{
+				_debug_assert__(light->shadow_camera != NULL);
+				vulkan_camera_set_field_of_view(light->shadow_camera, _light->angle);
+			}
 			break;
 		}
 		default:
@@ -422,6 +427,7 @@ RENDERER_API void vulkan_light_set_active(vulkan_light_t* light, bool is_active)
 
 static void setup_shadow_camera_properties(vulkan_camera_t* shadow_camera, vulkan_light_t* light)
 {
+	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(light);
 	vulkan_camera_set_clear(shadow_camera, COLOR_RED, 1.0f);
 	if(light->type == VULKAN_LIGHT_TYPE_POINT)
@@ -431,12 +437,15 @@ static void setup_shadow_camera_properties(vulkan_camera_t* shadow_camera, vulka
 	else
 		vulkan_camera_set_position(shadow_camera, light->position);
 	vulkan_camera_set_rotation(shadow_camera, light->euler_rotation);
-	if((light->type == VULKAN_LIGHT_TYPE_POINT) || (light->type == VULKAN_LIGHT_TYPE_SPOT))
+	if(light->type == VULKAN_LIGHT_TYPE_POINT)
 		vulkan_camera_set_field_of_view(shadow_camera, 90 DEG);
+	else if(light->type == VULKAN_LIGHT_TYPE_SPOT)
+		vulkan_camera_set_field_of_view(shadow_camera, VULKAN_SPOT_LIGHT(super)->angle);
 }
 
 RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow)
 {
+	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(light);
 	light->is_cast_shadow = is_cast_shadow;
 	if(is_cast_shadow && (light->shadow_shader == NULL))
@@ -461,7 +470,7 @@ RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_ca
 		light->shadow_camera = vulkan_camera_system_getH(csys, vulkan_camera_system_create_camera(csys, get_camera_projection_type(light->type)));
 		/* and set the shadow map render texture as render target for this camera */
 		vulkan_camera_set_render_target(light->shadow_camera, VULKAN_CAMERA_RENDER_TARGET_TYPE_DEPTH, VULKAN_CAMERA_RENDER_TARGET_BINDING_TYPE_EXCLUSIVE, light->shadow_map);
-		setup_shadow_camera_properties(light->shadow_camera, light);
+		setup_shadow_camera_properties(light->shadow_camera, super);
 
 		/* load the shadow map shader */
 		vulkan_shader_load_info_t load_info =

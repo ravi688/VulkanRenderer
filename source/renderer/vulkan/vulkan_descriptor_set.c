@@ -116,6 +116,26 @@ static VkImageLayout get_layout(VkFormat format)
 	return VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
+static VkDescriptorType get_descriptor_type(vulkan_texture_t** textures, u32 texture_count)
+{
+	for(u32 i = 0; i < texture_count; i++)
+	{
+		if(textures[i] != NULL)
+			return textures[i]->vo_descriptor_type;
+	}
+	return 0;
+}
+
+static bool is_all_null_textures(vulkan_texture_t** textures, u32 texture_count)
+{
+	for(u32 i = 0; i < texture_count; i++)
+	{
+		if(textures[i] != NULL)
+			return false;
+	}
+	return true;
+}
+
 RENDERER_API void vulkan_descriptor_set_write_texturev(vulkan_descriptor_set_t* set, u32 binding_index, u32 dst_index, vulkan_texture_t** textures, u32 texture_count)
 {
 	if(texture_count == 0)
@@ -123,6 +143,9 @@ RENDERER_API void vulkan_descriptor_set_write_texturev(vulkan_descriptor_set_t* 
 		debug_log_warning("No textures to write, texture_count is equal to zero");
 		return;
 	}
+
+	if(is_all_null_textures(textures, texture_count))
+		return;
 
 DEBUG_BLOCK
 (
@@ -135,12 +158,24 @@ DEBUG_BLOCK
 	for(u32 i = 0; i < texture_count; i++)
 	{
 		AUTO texture = textures[i];
-		image_info[i] = (VkDescriptorImageInfo)
+		if(texture == NULL)
 		{
-			.imageLayout = get_layout(texture->image.vo_format),
-			.imageView = texture->image_view.vo_handle,
-			.sampler = texture->vo_image_sampler
-		};
+			image_info[i] = (VkDescriptorImageInfo)
+			{
+				.imageLayout = 0,
+				.imageView = VK_NULL_HANDLE,
+				.sampler = VK_NULL_HANDLE
+			};
+		}
+		else
+		{
+			image_info[i] = (VkDescriptorImageInfo)
+			{
+				.imageLayout = get_layout(texture->image.vo_format),
+				.imageView = texture->image_view.vo_handle,
+				.sampler = texture->vo_image_sampler
+			};
+		}
 	}
 
 	/* write to the descriptor slots */
@@ -150,7 +185,7 @@ DEBUG_BLOCK
 		.dstSet = set->vo_handle,
 		.dstBinding = binding_index,
 		.dstArrayElement = dst_index,
-		.descriptorType = textures[0]->vo_descriptor_type,
+		.descriptorType = get_descriptor_type(textures, texture_count),
 		.descriptorCount = texture_count,
 		.pImageInfo = image_info,
 	};

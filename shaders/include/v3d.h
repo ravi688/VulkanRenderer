@@ -261,3 +261,35 @@ struct FarLightType
 #define SPOT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight
 #define MATERIAL_PROPERTIES layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Properties
 #define OBJECT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo
+
+
+#define read_write_qual 
+#define buffer_type uniform
+#define buffer_layout SGE_UNIFORM_BUFFER_LAYOUT
+
+#ifdef USE_POINT_LIGHTS
+layout(buffer_layout, set = SCENE_SET, binding = POINT_LIGHT_BINDING) read_write_qual buffer_type PointLights
+{
+	uint count;
+	PointLightType lights[SGE_MAX_POINT_LIGHTS];
+} pointLights;
+layout(set = SCENE_SET, binding = POINT_LIGHT_SHADOWMAP_BINDING) uniform samplerCube pointLightShadowMaps[SGE_MAX_POINT_LIGHTS];
+#endif
+
+#ifdef USE_SPOT_LIGHTS
+layout(buffer_layout, set = SCENE_SET, binding = SPOT_LIGHT_BINDING) read_write_qual buffer_type SpotLights
+{
+	uint count;
+	SpotLightType lights[SGE_MAX_SPOT_LIGHTS];
+} spotLights;
+layout(set = SCENE_SET, binding = SPOT_LIGHT_SHADOWMAP_BINDING) uniform sampler2D spotLightShadowMaps[SGE_MAX_SPOT_LIGHTS];
+#endif
+
+#ifdef USE_FAR_LIGHTS
+layout(buffer_layout, set = SCENE_SET, binding = FAR_LIGHT_BINDING) read_write_qual buffer_type FarLights
+{
+	uint count;
+	FarLightType lights[SGE_MAX_FAR_LIGHTS];
+} farLights;
+layout(set = SCENE_SET, binding = FAR_LIGHT_SHADOWMAP_BINDING) uniform sampler2D farLightShadowMaps[SGE_MAX_FAR_LIGHTS];
+#endif
