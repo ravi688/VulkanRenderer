@@ -154,9 +154,6 @@ RENDERER_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vu
 }
 
 
-static void vulkan_light_set_view(vulkan_light_t* light, mat4_t view);
-static void vulkan_light_set_projection(vulkan_light_t* light, mat4_t projection);
-
 RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_light_type_t type, vulkan_light_t OUT light)
 {
 	switch(type)
@@ -203,9 +200,6 @@ RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulk
 	light->is_active = true;
 	light->position = vec3_zero();
 	light->euler_rotation = vec3_zero();
-	light->rotation = mat4_identity();
-	light->projection = mat4_identity();
-	light->view = mat4_identity();
 	light->color = vec3_one();
 	light->intensity = 1.0f;
 	light->type = type;
@@ -225,18 +219,18 @@ RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulk
 		}
 		case VULKAN_LIGHT_TYPE_DIRECTIONAL:
 		{
-			vulkan_light_set_projection(super, mat4_ortho_projection(0.04f, 20.0f, 3, 1));
+			// vulkan_light_set_projection(super, mat4_ortho_projection(0.04f, 20.0f, 3, 1));
 			break;
 		}
 		case VULKAN_LIGHT_TYPE_SPOT:
 		{
 			vulkan_light_set_spot_angle(super, 30 DEG);
-			vulkan_light_set_projection(super, mat4_persp_projection(0.04f, 20.0f, VULKAN_SPOT_LIGHT(super)->angle, 1));
+			// vulkan_light_set_projection(super, mat4_persp_projection(0.04f, 20.0f, VULKAN_SPOT_LIGHT(super)->angle, 1));
 			break;
 		}
 		case VULKAN_LIGHT_TYPE_POINT:
 		{
-			vulkan_light_set_projection(super, mat4_persp_projection(0.04f, 20.0f, 65 DEG, 1));
+			// vulkan_light_set_projection(super, mat4_persp_projection(0.04f, 20.0f, 65 DEG, 1));
 			break;
 		}
 		default:
@@ -270,20 +264,6 @@ RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light)
 
 /* setters */
 
-static void vulkan_light_set_view(vulkan_light_t* light, mat4_t view)
-{
-	light = VULKAN_LIGHT(light);
-	light->view = view;
-	light->is_dirty = true;
-}
-
-static void vulkan_light_set_projection(vulkan_light_t* light, mat4_t projection)
-{
-	light = VULKAN_LIGHT(light);
-	light->projection = projection;
-	light->is_dirty = true;
-}
-
 RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle)
 {
 	vulkan_light_t* super = light;
@@ -312,8 +292,6 @@ RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t positi
 {
 	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(super);
-	mat4_t transform = mat4_mul(2, mat4_translation(position.x, position.y, position.z), light->rotation);
-	vulkan_light_set_view(light, mat4_inverse(transform));
 	light->position = position;
 	light->is_dirty = true;
 	if(light->is_cast_shadow)
@@ -335,7 +313,6 @@ RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotati
 	vec3_t position = light->position;
 	
 	mat4_t view = mat4_inverse(mat4_mul(2, mat4_translation(position.x, position.y, position.z), light->rotation));
-	vulkan_light_set_view(light, view);
 
 	switch(light->type)
 	{
@@ -614,8 +591,10 @@ static void get_spot_light_dispatchable_data(vulkan_light_t* light, u32 shadowma
 {
 	vulkan_spot_light_t* spot_light = VULKAN_SPOT_LIGHT(light);
 	light = VULKAN_LIGHT(light);
-	data->proj = mat4_transpose(light->projection).raw4x4f32;
-	data->view = mat4_transpose(light->view).raw4x4f32;
+	_debug_assert__(light->is_cast_shadow);
+	_debug_assert__(light->shadow_camera != NULL);
+	data->proj = mat4_transpose(vulkan_camera_get_projection(light->shadow_camera)).raw4x4f32;
+	data->view = mat4_transpose(vulkan_camera_get_view(light->shadow_camera)).raw4x4f32;
 	data->color = light->color;
 	data->intensity = light->intensity;
 	data->position = light->position;
@@ -637,8 +616,8 @@ static void get_far_light_dispatchable_data(vulkan_light_t* light, u32 shadowmap
 {
 	vulkan_far_light_t* far_light = VULKAN_FAR_LIGHT(light);
 	light = VULKAN_LIGHT(light);
-	data->proj = mat4_transpose(light->projection).raw4x4f32;
-	data->view = mat4_transpose(light->view).raw4x4f32;
+	data->proj = mat4_transpose(vulkan_camera_get_projection(light->shadow_camera)).raw4x4f32;
+	data->view = mat4_transpose(vulkan_camera_get_view(light->shadow_camera)).raw4x4f32;
 	data->color = light->color;
 	data->intensity = light->intensity;
 	data->direction = far_light->direction;

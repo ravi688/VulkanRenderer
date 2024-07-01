@@ -96,8 +96,6 @@ typedef struct vulkan_light_t
 	vulkan_light_type_t type;
 
 	// cpu side cache to reduce GPU memory access
-	mat4_t projection;
-	mat4_t view;
 	vec3_t color;
 	float intensity;
 
