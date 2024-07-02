@@ -83,7 +83,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 min(u32 v1, u32 v2) { r
 
 #define typedef_pair_t(T1, T2) struct __pair_##T1##_##T2##_t { T1 first; T2 second; }
 #define pair_t(T1, T2) struct __pair_##T1##_##T2##_t
-#define make_pair(T1, T2) (pair_t(T1, T2))
+#define make_pair_t(T1, T2) (pair_t(T1, T2))
 
 #define typedef_tuple2_t(T1, T2) struct __tuple_##T1##_##T2##_t { T1 first; T2 second; }
 #define tuple2_t(T1, T2) struct __tuple_##T1##_##T2##_t

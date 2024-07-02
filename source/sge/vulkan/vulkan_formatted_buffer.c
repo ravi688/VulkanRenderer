@@ -127,10 +127,10 @@ static pair_t(buffer_ptr_t, struct_field_ptr_t) get_dynamic_array_buffer(vulkan_
 		{
 			struct_field_t* field;
 			dictionary_get_key_at(&buffer->array_buffer_map, i, &field);
-			return make_pair(buffer_ptr_t, struct_field_ptr_t) { raw_buffer, field };
+			return make_pair_t(buffer_ptr_t, struct_field_ptr_t) { raw_buffer, field };
 		}
 	}
-	return make_pair(buffer_ptr_t, struct_field_ptr_t) { NULL, NULL };
+	return make_pair_t(buffer_ptr_t, struct_field_ptr_t) { NULL, NULL };
 }
 
 SGE_API bool vulkan_formatted_buffer_commit(vulkan_formatted_buffer_t* buffer, bool OUT is_resized)

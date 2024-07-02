@@ -67,3 +67,5 @@ SGE_API void vulkan_formatted_buffer_set_uint(vulkan_formatted_buffer_t* buffer,
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_formatted_buffer_is_dirty(vulkan_formatted_buffer_t* buffer) 
 { return buffer->is_dynamic_buffer_dirty || vulkan_host_buffered_buffer_is_dirty(buffer->host_buffered_buffer); }
 SGE_API bool vulkan_formatted_buffer_commit(vulkan_formatted_buffer_t* buffer, bool OUT is_resized);
+
+END_CPP_COMPATIBLE
