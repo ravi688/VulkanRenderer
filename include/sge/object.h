@@ -199,7 +199,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool object_is_base(const o
 #define OBJECT_SET_NATIONALITY(typed_ptr, nationality) object_set_nationality(OBJECT(typed_ptr), nationality)
 #define OBJECT_GET_NATIONALITY(typed_ptr) object_get_nationality(OBJECT_CONST(typed_ptr))
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE object_nationality_t object_get_nationality(const object_t* obj) { return obj->nationality; }
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_set_nationality(object_t* obj, bool nationality) { obj->nationality = nationality; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_set_nationality(object_t* obj, object_nationality_t nationality) { obj->nationality = nationality; }
 
 #define OBJECT_SET_TYPE(typed_ptr, type) object_set_type(OBJECT(typed_ptr), type)
 #define OBJECT_GET_TYPE(typed_ptr) object_get_type(OBJECT_CONST(typed_ptr))
@@ -250,7 +250,7 @@ static CAN_BE_UNUSED_FUNCTION void* object_up_cast(object_t* obj, object_type_t 
 		return NULL;
 	#endif /* not GLOBAL_DEBUG */
 
-	return object_up_cast(CAST_TO(void*, obj) + lowest_multiple_of(sizeof(object_t), sizeof(void*)), dst_type);
+	return object_up_cast(CAST_TO(object_t*, CAST_TO(void*, obj) + lowest_multiple_of(sizeof(object_t), sizeof(void*))), dst_type);
 }
 #define OBJECT_UP_CAST_CONST(dst_ptr_type, dst_object_type, src_typed_ptr) CAST_TO(dst_ptr_type, object_up_cast_const(OBJECT_CONST(src_typed_ptr), dst_object_type))
 static CAN_BE_UNUSED_FUNCTION const void* object_up_cast_const(const object_t* obj, object_type_t dst_type)
@@ -264,7 +264,7 @@ static CAN_BE_UNUSED_FUNCTION const void* object_up_cast_const(const object_t* o
 		return NULL;
 	#endif /* not GLOBAL_DEBUG */
 
-	return object_up_cast_const(CAST_TO(void*, obj) + lowest_multiple_of(sizeof(object_t), sizeof(void*)), dst_type);
+	return object_up_cast_const(CAST_TO(const object_t*, CAST_TO(const void*, obj) + lowest_multiple_of(sizeof(object_t), sizeof(void*))), dst_type);
 }
 
 #ifdef GLOBAL_DEBUG

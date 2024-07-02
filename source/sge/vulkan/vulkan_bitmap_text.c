@@ -493,7 +493,7 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 		vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t texcoords;
 		if(info.is_graph)
 		{
-			texcoord_indices[i] = get_or_create_glyph_texture_coordinate(text, make_pair(utf32_t, u32) { ch, text_string->point_size });
+			texcoord_indices[i] = get_or_create_glyph_texture_coordinate(text, make_pair_t(utf32_t, u32) { ch, text_string->point_size });
 			buf_get_at_s(vulkan_host_buffered_buffer_get_host_buffer(&text->glyph_texcoord_buffer), texcoord_indices[i], &texcoords);
 		}
 		else

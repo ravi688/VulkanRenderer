@@ -34,6 +34,7 @@
 #include <sge/internal/vulkan/vulkan_descriptor_set.h>
 #include <sge/internal/vulkan/vulkan_handles.h> 		// vulkan_render_pass_handle_t
 #include <sge/internal/vulkan/vulkan_object.h>
+#include <sge/internal/vulkan/vulkan_attachment.h> /* vulkan_attachment_next_pass_usage_t */
 #include <sge/event.h>
 
 #define VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN (~0U)
@@ -63,8 +64,6 @@ typedef struct vulkan_subpass_create_info_t
 	u32 sub_render_set_binding_count;
 
 } vulkan_subpass_create_info_t;
-
-typedef enum vulkan_attachment_next_pass_usage_t vulkan_attachment_next_pass_usage_t;
 
 /* structure to hold all the information for creating vulkan_attachment_t objects and setting up framebuffer attachments */
 typedef struct vulkan_framebuffer_attachments_layout_description_t

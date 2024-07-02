@@ -721,9 +721,9 @@ static pair_t(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_
 		vulkan_uniform_resource_t* uniform = &material->uniform_resources[i];
 		vulkan_shader_resource_description_t* binding = &material->shader->material_set_bindings[uniform->index];
 		if(strcmp(binding->handle.name, block_name) == 0)
-			return make_pair(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) { uniform, binding };
+			return make_pair_t(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) { uniform, binding };
 	}
-	return make_pair(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) { NULL, NULL };
+	return make_pair_t(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) { NULL, NULL };
 }
 
 SGE_API void vulkan_material_set_array_size(vulkan_material_t* material, const char* name, u32 size)

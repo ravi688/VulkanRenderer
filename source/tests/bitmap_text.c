@@ -587,9 +587,9 @@ static void test_glyph_packing(renderer_t* renderer)
 	{
 		glyph_texcoord_t texcoord;
 		font_set_char_size(&font, i / 2);
-		bitmap_glyph_pool_get_texcoord(pool, make_pair(utf32_t, u32) { i, i / 2 }, &texcoord, NULL);
+		bitmap_glyph_pool_get_texcoord(pool, make_pair_t(utf32_t, u32) { i, i / 2 }, &texcoord, NULL);
 		font_set_char_size(&font, i / 4);
-		bitmap_glyph_pool_get_texcoord(pool, make_pair(utf32_t, u32) { i, i / 4 }, &texcoord, NULL);
+		bitmap_glyph_pool_get_texcoord(pool, make_pair_t(utf32_t, u32) { i, i / 4 }, &texcoord, NULL);
 	}
 
 	IF_DEBUG( bitmap_glyph_pool_dump(pool, "test_bitmap_glyph_pool_dump.bmp") );
@@ -782,7 +782,7 @@ TEST_ON_UPDATE(BITMAP_TEXT)
 		else if(ch == 'b')
 		{
 			static char ch = 33;
-			bitmap_glyph_atlas_texture_get_texcoord(this->texture, make_pair(utf32_t, u32) { ch++, 34 }, NULL);
+			bitmap_glyph_atlas_texture_get_texcoord(this->texture, make_pair_t(utf32_t, u32) { ch++, 34 }, NULL);
 		}
 	}
 

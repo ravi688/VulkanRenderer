@@ -147,7 +147,7 @@ SGE_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info_t OU
 		{
 			#if GLOBAL_DEBUG
 				/* NOTE: we can't use IF_DEBUG macro here, as the ',' will be treated as another parameter next */
-				AUTO key = make_pair(utf32_t, u32) { unicode, font->point_size };
+				AUTO key = make_pair_t(utf32_t, u32) { unicode, font->point_size };
 			#endif /* GLOBAL_DEBUG */
 			_debug_assert__(hash_table_contains(&font->glyph_info_table, &key));
 			return true;
@@ -163,7 +163,7 @@ SGE_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info_t OU
 		font->loaded_point_size = font->point_size;
 
 		bool is_graph = isgraph(CAST_TO(s32, unicode)) != 0;
-		AUTO key = make_pair(utf32_t, u32) { unicode, font->point_size };
+		AUTO key = make_pair_t(utf32_t, u32) { unicode, font->point_size };
 		if(!hash_table_contains(&font->glyph_info_table, &key))
 		{
 			FT_GlyphSlot glyph_slot = font->ft_handle->glyph;
@@ -290,7 +290,7 @@ SGE_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_
 
 SGE_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info)
 {
-	AUTO key = make_pair(utf32_t, u32) { unicode, font->point_size };
+	AUTO key = make_pair_t(utf32_t, u32) { unicode, font->point_size };
 	void* ptr = hash_table_get_value(&font->glyph_info_table, &key);
 	if(ptr != NULL)
 		OUT info = DREF_TO(font_glyph_info_t, ptr);
