@@ -23,15 +23,15 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_bitmap_text.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_bitmap_glyph_atlas_texture.h>
-#include <renderer/internal/vulkan/vulkan_material.h>
-#include <renderer/render_window.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/system/display.h> // display_get_dpi()
-#include <renderer/string.h> // strlen_safe
-#include <renderer/string_builder.h>
+#include <sge/internal/vulkan/vulkan_bitmap_text.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_bitmap_glyph_atlas_texture.h>
+#include <sge/internal/vulkan/vulkan_material.h>
+#include <sge/render_window.h>
+#include <sge/memory_allocator.h>
+#include <sge/system/display.h> // display_get_dpi()
+#include <sge/string.h> // strlen_safe
+#include <sge/string_builder.h>
 #include <ctype.h> // isgraph
 
 SGE_API vulkan_bitmap_text_t* vulkan_bitmap_text_new(memory_allocator_t* allocator)

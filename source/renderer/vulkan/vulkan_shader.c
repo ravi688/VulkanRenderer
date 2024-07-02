@@ -23,30 +23,30 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_shader.h>
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_descriptor_set.h>
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
-#include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
-#include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
-#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_description.h>
-#include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
-#include <renderer/internal/vulkan/vulkan_shader_loader.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_create_info_builder.h>
-#include <renderer/internal/vulkan/vulkan_subpass_create_info_builder.h>
-#include <renderer/glsl_memory_layout.h>
+#include <sge/internal/vulkan/vulkan_shader.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_descriptor_set.h>
+#include <sge/internal/vulkan/vulkan_render_pass.h>
+#include <sge/internal/vulkan/vulkan_render_pass_pool.h>
+#include <sge/internal/vulkan/vulkan_pipeline_layout.h>
+#include <sge/internal/vulkan/vulkan_graphics_pipeline.h>
+#include <sge/internal/vulkan/vulkan_shader_resource_description.h>
+#include <sge/internal/vulkan/vulkan_render_pass_description.h>
+#include <sge/internal/vulkan/vulkan_graphics_pipeline_description.h>
+#include <sge/internal/vulkan/vulkan_shader_loader.h>
+#include <sge/internal/vulkan/vulkan_render_pass_create_info_builder.h>
+#include <sge/internal/vulkan/vulkan_subpass_create_info_builder.h>
+#include <sge/glsl_memory_layout.h>
 #include <glslcommon/glsl_types.h>
 #include <disk_manager/file_reader.h>
 #include <common/binary_reader.h>
-#include <renderer/assert.h>
-#include <renderer/debug.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/dictionary.h>
-#include <renderer/render_window.h>
+#include <sge/assert.h>
+#include <sge/debug.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
+#include <sge/dictionary.h>
+#include <sge/render_window.h>
 
 #include <string.h> 			// for strlen()
 #include <math.h> 				// for log2(), and ceil()

@@ -24,16 +24,16 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_camera_system.h>
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_attachment.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_create_info_builder.h>
-#include <renderer/internal/vulkan/vulkan_subpass_create_info_builder.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/internal/vulkan/vulkan_camera_system.h>
+#include <sge/internal/vulkan/vulkan_render_pass.h>
+#include <sge/internal/vulkan/vulkan_render_pass_pool.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_attachment.h>
+#include <sge/internal/vulkan/vulkan_render_pass_create_info_builder.h>
+#include <sge/internal/vulkan/vulkan_subpass_create_info_builder.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 
 SGE_API vulkan_camera_system_t* vulkan_camera_system_new(memory_allocator_t* allocator)

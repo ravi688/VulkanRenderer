@@ -23,19 +23,19 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_image_view.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_image.h>
-#include <renderer/internal/vulkan/vulkan_result.h>
-#include <renderer/internal/vulkan/vulkan_command_buffer.h>
-#include <renderer/internal/vulkan/vulkan_command.h>
-#include <renderer/internal/vulkan/vulkan_queue.h>
-#include <renderer/internal/vulkan/vulkan_buffer.h>
-#include <renderer/internal/vulkan/vulkan_allocator.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/assert.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_image_view.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_image.h>
+#include <sge/internal/vulkan/vulkan_result.h>
+#include <sge/internal/vulkan/vulkan_command_buffer.h>
+#include <sge/internal/vulkan/vulkan_command.h>
+#include <sge/internal/vulkan/vulkan_queue.h>
+#include <sge/internal/vulkan/vulkan_buffer.h>
+#include <sge/internal/vulkan/vulkan_allocator.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
+#include <sge/assert.h>
 
 static VkImageViewType get_view_type(vulkan_image_view_type_t type);
 static u32 get_layer_count(vulkan_image_view_type_t type);

@@ -23,10 +23,10 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/buffer2d.h>
-#include <renderer/hash_table.h>
-#include <renderer/bmp.h>
-#include <renderer/memory_allocator.h>
+#include <sge/buffer2d.h>
+#include <sge/hash_table.h>
+#include <sge/bmp.h>
+#include <sge/memory_allocator.h>
 
 static rect2d_info_key_t generate_rect2d_info_key(buffer2d_t* buffer)
 {

@@ -23,4 +23,4 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_shader_loader.h>
+#include <sge/internal/vulkan/vulkan_shader_loader.h>

@@ -28,7 +28,7 @@
 
 #include <Showcase/Defines.hpp>	// SHOWCASE_API
 #include <Renderer/IRenderObject.hpp>
-#include <renderer/shader.h>
+#include <sge/shader.h>
 
 #include <string>
 

@@ -10,10 +10,10 @@ static const u64 TYPE_ID(FPSText) = CREATE_COMPONENT_ID(4);
 #include <RenderSystem.h>
 #include <Math.h>
 
-#include <renderer/material.h>
-#include <renderer/shader.h>
-#include <renderer/text_mesh.h>
-#include <renderer/time.h>
+#include <sge/material.h>
+#include <sge/shader.h>
+#include <sge/text_mesh.h>
+#include <sge/time.h>
 
 typedef struct FPSText
 {

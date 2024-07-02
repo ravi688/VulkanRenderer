@@ -24,7 +24,7 @@
 */
 
 
-#include <renderer/legal/legal.h>
+#include <sge/legal/legal.h>
 
 #include <stdio.h>
 

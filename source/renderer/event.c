@@ -23,9 +23,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/event.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/string_builder.h>
+#include <sge/event.h>
+#include <sge/memory_allocator.h>
+#include <sge/string_builder.h>
 #ifdef GLOBAL_DEBUG
 #	include <string.h>
 #endif /* GLOBAL_DEBUG */

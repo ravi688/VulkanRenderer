@@ -24,10 +24,10 @@
 */
 
 
-#include <renderer/tests/TID-42.case1.h>
-#include <renderer/debug.h>
+#include <sge/tests/TID-42.case1.h>
+#include <sge/debug.h>
 
-#include <renderer/memory_allocator.h>
+#include <sge/memory_allocator.h>
 
 #define SIZE(num_bytes) char bytes[num_bytes]
 

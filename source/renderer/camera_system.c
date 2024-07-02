@@ -24,9 +24,9 @@
 */
 
 
-#include <renderer/camera_system.h>
-#include <renderer/internal/vulkan/vulkan_camera_system.h>
-#include <renderer/renderer.h>
+#include <sge/camera_system.h>
+#include <sge/internal/vulkan/vulkan_camera_system.h>
+#include <sge/sge.h>
 
 /* constructors and destructors */
 SGE_API camera_system_t* camera_system_new(memory_allocator_t* allocator)

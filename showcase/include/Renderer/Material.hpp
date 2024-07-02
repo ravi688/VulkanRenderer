@@ -31,7 +31,7 @@
 #include <Math/Vec4.hpp>
 #include <Math/Vec3.hpp>
 #include <Math/Vec2.hpp>
-#include <renderer/material.h>
+#include <sge/material.h>
 
 
 namespace V3D

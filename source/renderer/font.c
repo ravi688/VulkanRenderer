@@ -24,16 +24,16 @@
 */
 
 
-#include <renderer/font.h>
-#include <renderer/mesh3d.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/font.h>
+#include <sge/mesh3d.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 #include <disk_manager/file_reader.h>
 #include <disk_manager/file_writer.h>
 #include <ttf2mesh.h>
-#include <renderer/assert.h>
-#include <renderer/system/display.h>
-#include <renderer/renderer.h>
+#include <sge/assert.h>
+#include <sge/system/display.h>
+#include <sge/sge.h>
 
 #include <freetype/freetype.h>
 #include <freetype/ftimage.h>

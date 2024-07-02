@@ -24,9 +24,9 @@
 */
 
 
-#include <renderer/png.h>
-#include <renderer/debug.h>
-#include <renderer/assert.h>
+#include <sge/png.h>
+#include <sge/debug.h>
+#include <sge/assert.h>
 #include <disk_manager/file_reader.h>
 #include <disk_manager/file_writer.h>
 #include <meshlib/parsers/binary.h>

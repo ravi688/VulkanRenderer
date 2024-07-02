@@ -23,10 +23,10 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/string_builder.h>
-#include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/string_builder.h>
+#include <sge/assert.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 #include <stdarg.h>
 #include <stdio.h>
 

@@ -24,13 +24,13 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_render_pass_description.h>
-#include <renderer/internal/vulkan/vulkan_attachment.h>
-#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
-#include <renderer/internal/vulkan/vulkan_descriptor_set.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/internal/vulkan/vulkan_render_pass_description.h>
+#include <sge/internal/vulkan/vulkan_attachment.h>
+#include <sge/internal/vulkan/vulkan_shader_resource_description.h>
+#include <sge/internal/vulkan/vulkan_descriptor_set.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 #include <bufferlib/buffer.h>
 
 

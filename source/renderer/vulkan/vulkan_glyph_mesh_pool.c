@@ -23,14 +23,14 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_glyph_mesh_pool.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_mesh.h>
-#include <renderer/mesh3d.h>	// mesh3d_t
-#include <renderer/mesh.h>		// for mesh_create_no_alloc
-#include <renderer/font.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/assert.h> 	// assert
+#include <sge/internal/vulkan/vulkan_glyph_mesh_pool.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_mesh.h>
+#include <sge/mesh3d.h>	// mesh3d_t
+#include <sge/mesh.h>		// for mesh_create_no_alloc
+#include <sge/font.h>
+#include <sge/memory_allocator.h>
+#include <sge/assert.h> 	// assert
 #include <ctype.h> 				// isspace
 
 // constructors and destructors

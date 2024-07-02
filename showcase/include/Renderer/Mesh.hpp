@@ -27,7 +27,7 @@
 
 #include <Showcase/Defines.hpp>		// SHOWCASE_API
 #include <Renderer/IRenderObject.hpp>
-#include <renderer/mesh.h>			// C header
+#include <sge/mesh.h>			// C header
 
 namespace V3D
 {

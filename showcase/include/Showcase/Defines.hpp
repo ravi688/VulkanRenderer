@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <renderer/defines.h>
+#include <sge/defines.h>
 
 #ifdef SHOWCASE_STATIC_LIBRARY
 #	define SHOWCASE_API

@@ -23,15 +23,15 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_shader_module.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_allocator.h>
+#include <sge/internal/vulkan/vulkan_shader_module.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_allocator.h>
 #include <disk_manager/file_reader.h>
 
-#include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/assert.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 static VkShaderModule get_shader_module(vulkan_renderer_t* renderer, void* spirv, u32 length);
 static VkPipelineShaderStageCreateInfo get_pipeline_shader_stage_create_info(VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point);

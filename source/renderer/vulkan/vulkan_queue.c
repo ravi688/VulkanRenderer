@@ -23,7 +23,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_queue.h>
+#include <sge/internal/vulkan/vulkan_queue.h>
 
 SGE_API bool vulkan_queue_present(VkQueue queue, VkSwapchainKHR swapchain, u32 image_index, VkSemaphore wait)
 {

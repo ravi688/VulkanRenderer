@@ -23,8 +23,8 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/hash_table.h>
-#include <renderer/memory_allocator.h> // stack_alloc
+#include <sge/hash_table.h>
+#include <sge/memory_allocator.h> // stack_alloc
 
 SGE_API hash_table_t __hash_table_create(memory_allocator_t* allocator, u32 key_size, u32 value_size, u32 capacity, comparer_t key_comparer, hash_function_t key_hash_function)
 {

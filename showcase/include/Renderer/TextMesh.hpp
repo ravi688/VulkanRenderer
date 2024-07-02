@@ -30,7 +30,7 @@
 #include <Renderer/IRenderObject.hpp>
 #include <Math/Vec3.hpp>
 
-#include <renderer/text_mesh.h> 			// C header, text_mesh_t
+#include <sge/text_mesh.h> 			// C header, text_mesh_t
 
 namespace V3D
 {

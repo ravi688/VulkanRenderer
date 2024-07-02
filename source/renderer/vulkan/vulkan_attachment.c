@@ -24,16 +24,16 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_attachment.h>
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_allocator.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/assert.h>
+#include <sge/internal/vulkan/vulkan_attachment.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_allocator.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
+#include <sge/assert.h>
 
 // TODO: remove it after debugging
-#include <renderer/debug.h>
+#include <sge/debug.h>
 
 SGE_API vulkan_attachment_t* vulkan_attachment_new(memory_allocator_t* allocator)
 {

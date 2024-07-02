@@ -32,14 +32,14 @@
  */
 
 
-#include <renderer/tests/TID-48.case5.h>
+#include <sge/tests/TID-48.case5.h>
 
 #define SGE_INCLUDE_EVERYTHING_INTERNAL
 #define SGE_INCLUDE_MATH
 #define SGE_INCLUDE_3D_MESH_RENDER_SYSTEM
 #define SGE_INCLUDE_3D_LIGHT_SYSTEM
 #define SGE_INCLUDE_CORE
-#include <renderer/renderer.h>
+#include <sge/sge.h>
 
 TEST_DATA(TEXTURE_SAMPLING)
 {

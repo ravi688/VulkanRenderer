@@ -23,8 +23,8 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/material.h>
-#include <renderer/renderer.h>
+#include <sge/material.h>
+#include <sge/sge.h>
 
 SGE_API material_t* material_new(memory_allocator_t* allocator)
 {

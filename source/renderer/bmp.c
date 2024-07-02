@@ -24,13 +24,13 @@
 */
 
 
-#include <renderer/bmp.h>
-#include <renderer/assert.h>
+#include <sge/bmp.h>
+#include <sge/assert.h>
 #include <disk_manager/file_reader.h>
 #include <meshlib/parsers/binary.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/debug.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
+#include <sge/debug.h>
 #include <stdio.h> // FILE
 #include <stb/stb_image_write.h>
 

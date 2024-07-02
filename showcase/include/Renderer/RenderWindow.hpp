@@ -27,7 +27,7 @@
 #pragma once
 
 #include <Showcase/Defines.hpp>
-#include <renderer/render_window.h> 			// C header
+#include <sge/render_window.h> 			// C header
 
 namespace V3D
 {

@@ -23,10 +23,10 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/render_texture.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_render_texture.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <sge/render_texture.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_render_texture.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
 
 SGE_API render_texture_t* render_texture_create(renderer_t* renderer, render_texture_create_info_t* create_info)
 {

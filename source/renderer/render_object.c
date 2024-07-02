@@ -24,10 +24,10 @@
 */
 
 
-#include <renderer/render_object.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_render_object.h>
-#include <renderer/alloc.h>
+#include <sge/render_object.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_render_object.h>
+#include <sge/alloc.h>
 
 /* constructors and destructors */
 SGE_API render_object_t* render_object_new(memory_allocator_t* allocator)

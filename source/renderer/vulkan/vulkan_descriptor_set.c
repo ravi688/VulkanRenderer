@@ -23,15 +23,15 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_descriptor_set.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_swapchain.h>
-#include <renderer/internal/vulkan/vulkan_texture.h>
-#include <renderer/internal/vulkan/vulkan_buffer.h>
-#include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_descriptor_set.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_swapchain.h>
+#include <sge/internal/vulkan/vulkan_texture.h>
+#include <sge/internal/vulkan/vulkan_buffer.h>
+#include <sge/internal/vulkan/vulkan_pipeline_layout.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 SGE_API vulkan_descriptor_set_t* vulkan_descriptor_set_new(memory_allocator_t* allocator)
 {

@@ -24,13 +24,13 @@
 */
 
 
-#include <renderer/test.h>
+#include <sge/test.h>
 
 #define SGE_INCLUDE_TIMING
 #define SGE_INCLUDE_CORE
-#include <renderer/renderer.h>
-#include <renderer/legal/legal.h>
-#include <renderer/conio.h>
+#include <sge/sge.h>
+#include <sge/legal/legal.h>
+#include <sge/conio.h>
 
 #include <signal.h>
 

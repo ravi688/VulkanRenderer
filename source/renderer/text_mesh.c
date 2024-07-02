@@ -23,9 +23,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/text_mesh.h>
-#include <renderer/internal/vulkan/vulkan_text_mesh.h>
-#include <renderer/renderer.h>
+#include <sge/text_mesh.h>
+#include <sge/internal/vulkan/vulkan_text_mesh.h>
+#include <sge/sge.h>
 
 // constructors and destructors
 SGE_API text_mesh_t* text_mesh_new(memory_allocator_t* allocator)

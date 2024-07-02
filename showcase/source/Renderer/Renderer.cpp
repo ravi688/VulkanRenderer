@@ -27,8 +27,8 @@
 #include <Renderer/Renderer.hpp>
 #include <Renderer/Mesh3D.hpp>
 
-#include <renderer/renderer.h>				// C header
-#include <renderer/memory_allocator.h>		// C header, memory_allocator_init()
+#include <sge/sge.h>				// C header
+#include <sge/memory_allocator.h>		// C header, memory_allocator_init()
 #include <stdarg.h> 						// C header, va_list, va_arg etc.
 
 namespace V3D

@@ -23,11 +23,11 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_render_pass_description_builder.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_description.h>
-#include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description_builder.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/assert.h>
+#include <sge/internal/vulkan/vulkan_render_pass_description_builder.h>
+#include <sge/internal/vulkan/vulkan_render_pass_description.h>
+#include <sge/internal/vulkan/vulkan_vertex_buffer_layout_description_builder.h>
+#include <sge/memory_allocator.h>
+#include <sge/assert.h>
 
 SGE_API vulkan_render_pass_description_builder_t* vulkan_render_pass_description_builder_create(memory_allocator_t* allocator)
 {

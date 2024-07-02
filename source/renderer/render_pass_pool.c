@@ -24,14 +24,14 @@
 */
 
 
-#include <renderer/render_pass_pool.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_attachment.h>
-#include <renderer/alloc.h>
-#include <renderer/debug.h>
+#include <sge/render_pass_pool.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_render_pass_pool.h>
+#include <sge/internal/vulkan/vulkan_render_pass.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_attachment.h>
+#include <sge/alloc.h>
+#include <sge/debug.h>
 
 /* constructors & destructors */
 SGE_API render_pass_pool_t* render_pass_pool_new(memory_allocator_t* allocator)

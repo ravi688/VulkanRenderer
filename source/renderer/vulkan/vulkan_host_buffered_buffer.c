@@ -23,9 +23,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_host_buffered_buffer.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/memory_allocator.h>
+#include <sge/internal/vulkan/vulkan_host_buffered_buffer.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/memory_allocator.h>
 
 SGE_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_new(memory_allocator_t* allocator)
 {

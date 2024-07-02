@@ -2,8 +2,8 @@
 #pragma once
 
 #include <Defines.h>
-#include <renderer/renderer.h>
-#include <renderer/render_window.h>
+#include <sge/sge.h>
+#include <sge/render_window.h>
 #include <ecs/scene_manager.h>
 
 

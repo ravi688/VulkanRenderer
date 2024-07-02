@@ -24,16 +24,16 @@
 */
 
 
-#include <renderer/tests/multiple_spot_lights.load.h>
+#include <sge/tests/multiple_spot_lights.load.h>
 
 #define SGE_INCLUDE_EVERYTHING_INTERNAL
 #define SGE_INCLUDE_MATH
 #define SGE_INCLUDE_3D_MESH_RENDER_SYSTEM
 #define SGE_INCLUDE_3D_LIGHT_SYSTEM
 #define SGE_INCLUDE_CORE
-#include <renderer/renderer.h>
+#include <sge/sge.h>
 
-#include <renderer/conio.h>
+#include <sge/conio.h>
 
 TEST_DATA(MULTIPLE_SPOT_LIGHTS_LOAD)
 {

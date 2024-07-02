@@ -23,7 +23,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/garbage_collector.h>
+#include <sge/garbage_collector.h>
 
 
 // SGE_API tgc_t gc;

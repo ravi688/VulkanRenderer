@@ -24,17 +24,17 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_light.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_render_texture.h>
-#include <renderer/internal/vulkan/vulkan_shader.h>
-#include <renderer/internal/vulkan/vulkan_shader_library.h>
-#include <renderer/internal/vulkan/vulkan_material_library.h>
-#include <renderer/internal/vulkan/vulkan_camera_system.h>
-#include <renderer/glsl_memory_layout.h>
+#include <sge/internal/vulkan/vulkan_light.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_render_texture.h>
+#include <sge/internal/vulkan/vulkan_shader.h>
+#include <sge/internal/vulkan/vulkan_shader_library.h>
+#include <sge/internal/vulkan/vulkan_material_library.h>
+#include <sge/internal/vulkan/vulkan_camera_system.h>
+#include <sge/glsl_memory_layout.h>
 #include <glslcommon/glsl_types.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 #include <hpml/vec4.h>
 #include <hpml/affine_transformation.h>

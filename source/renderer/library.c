@@ -24,9 +24,9 @@
 */
 
 
-#include <renderer/library.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/library.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 SGE_API library_t* library_new(memory_allocator_t* allocator)
 {

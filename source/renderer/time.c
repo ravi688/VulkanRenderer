@@ -24,7 +24,7 @@
 */
 
 
-#include <renderer/time.h>
+#include <sge/time.h>
 
 
 #include <common/platform.h>

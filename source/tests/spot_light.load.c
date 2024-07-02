@@ -25,16 +25,16 @@
 */
 
 
-#include <renderer/tests/spot_light.load.h>
+#include <sge/tests/spot_light.load.h>
 
 #define SGE_INCLUDE_EVERYTHING_INTERNAL
 #define SGE_INCLUDE_MATH
 #define SGE_INCLUDE_3D_MESH_RENDER_SYSTEM
 #define SGE_INCLUDE_3D_LIGHT_SYSTEM
 #define SGE_INCLUDE_CORE
-#include <renderer/renderer.h>
+#include <sge/sge.h>
 
-#include <renderer/conio.h>
+#include <sge/conio.h>
 
 TEST_DATA(SPOT_LIGHT_LOAD)
 {

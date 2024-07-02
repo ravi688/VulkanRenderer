@@ -29,13 +29,13 @@
 	Test to check if text mesh is working fine
  */
 
-#include <renderer/tests/text_mesh.h>
+#include <sge/tests/text_mesh.h>
 
 #define SGE_INCLUDE_MATH
 #define SGE_INCLUDE_3D_TEXT_RENDER_SYSTEM
 #define SGE_INCLUDE_CORE
-#include <renderer/renderer.h>
-#include <renderer/conio.h>
+#include <sge/sge.h>
+#include <sge/conio.h>
 
 TEST_DATA(TEXT_MESH)
 {

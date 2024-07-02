@@ -24,56 +24,56 @@
 */
 
 
-#include <renderer/test.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/assert.h>
+#include <sge/test.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
+#include <sge/assert.h>
 #include <string.h>
 #include <stdio.h>
 
-#include <renderer/tests/depth_render_texture.h>
-#include <renderer/tests/depth_render_texture.load.h>
-#include <renderer/tests/environment_reflections.h>
-#include <renderer/tests/environment_reflections.load.h>
-#include <renderer/tests/depth_cube_render_texture.h>
-#include <renderer/tests/depth_cube_render_texture.load.h>
-#include <renderer/tests/point_light_shadows.h>
-#include <renderer/tests/point_light_shadows.load.h>
-#include <renderer/tests/spot_light.h>
-#include <renderer/tests/spot_light.load.h>
-#include <renderer/tests/multiple_lights.load.h>
-#include <renderer/tests/multiple_spot_lights.load.h>
+#include <sge/tests/depth_render_texture.h>
+#include <sge/tests/depth_render_texture.load.h>
+#include <sge/tests/environment_reflections.h>
+#include <sge/tests/environment_reflections.load.h>
+#include <sge/tests/depth_cube_render_texture.h>
+#include <sge/tests/depth_cube_render_texture.load.h>
+#include <sge/tests/point_light_shadows.h>
+#include <sge/tests/point_light_shadows.load.h>
+#include <sge/tests/spot_light.h>
+#include <sge/tests/spot_light.load.h>
+#include <sge/tests/multiple_lights.load.h>
+#include <sge/tests/multiple_spot_lights.load.h>
 
-#include <renderer/tests/cube.h>
-#include <renderer/tests/texture_sampling.h>
-#include <renderer/tests/texture_sampling_alpha_channel.h>
-#include <renderer/tests/bitmap_glyph_atlas_texture.h>
-#include <renderer/tests/text_mesh.h>
-#include <renderer/tests/text_mesh.load.h>
-#include <renderer/tests/bitmap_text.h>
-#include <renderer/tests/bitmap_text.load.h>
+#include <sge/tests/cube.h>
+#include <sge/tests/texture_sampling.h>
+#include <sge/tests/texture_sampling_alpha_channel.h>
+#include <sge/tests/bitmap_glyph_atlas_texture.h>
+#include <sge/tests/text_mesh.h>
+#include <sge/tests/text_mesh.load.h>
+#include <sge/tests/bitmap_text.h>
+#include <sge/tests/bitmap_text.load.h>
 
-#include <renderer/tests/TID-14.case1.h>
-#include <renderer/tests/TID-14.case2.h>
-#include <renderer/tests/TID-14.case3.h>
+#include <sge/tests/TID-14.case1.h>
+#include <sge/tests/TID-14.case2.h>
+#include <sge/tests/TID-14.case3.h>
 
-#include <renderer/tests/TID-28.case1.h>
-#include <renderer/tests/TID-28.case2.h>
-#include <renderer/tests/TID-28.case3.h>
-#include <renderer/tests/TID-28.case4.h>
+#include <sge/tests/TID-28.case1.h>
+#include <sge/tests/TID-28.case2.h>
+#include <sge/tests/TID-28.case3.h>
+#include <sge/tests/TID-28.case4.h>
 
-#include <renderer/tests/TID-42.case1.h>
+#include <sge/tests/TID-42.case1.h>
 
-#include <renderer/tests/TID-43.case1.h>
-#include <renderer/tests/TID-43.case2.h>
-#include <renderer/tests/TID-43.case3.h>
-#include <renderer/tests/TID-43.case4.h>
+#include <sge/tests/TID-43.case1.h>
+#include <sge/tests/TID-43.case2.h>
+#include <sge/tests/TID-43.case3.h>
+#include <sge/tests/TID-43.case4.h>
 
-#include <renderer/tests/TID-48.case1.h>
-#include <renderer/tests/TID-48.case2.h>
-#include <renderer/tests/TID-48.case3.h>
-#include <renderer/tests/TID-48.case4.h>
-#include <renderer/tests/TID-48.case5.h>
+#include <sge/tests/TID-48.case1.h>
+#include <sge/tests/TID-48.case2.h>
+#include <sge/tests/TID-48.case3.h>
+#include <sge/tests/TID-48.case4.h>
+#include <sge/tests/TID-48.case5.h>
 
 SGE_API test_t* test_new(memory_allocator_t* allocator)
 {

@@ -24,9 +24,9 @@
 */
 
 
-#include <renderer/string.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/string.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 #include <string.h>
 

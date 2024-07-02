@@ -32,17 +32,17 @@
  */
 
 
-#include <renderer/tests/bitmap_glyph_atlas_texture.h>
+#include <sge/tests/bitmap_glyph_atlas_texture.h>
 
 #define SGE_INCLUDE_EVERYTHING_INTERNAL
 #define SGE_INCLUDE_MATH
 #define SGE_INCLUDE_3D_MESH_RENDER_SYSTEM
 #define SGE_INCLUDE_3D_LIGHT_SYSTEM
 #define SGE_INCLUDE_CORE
-#include <renderer/renderer.h>
+#include <sge/sge.h>
 
-#include <renderer/bitmap_glyph_atlas_texture.h>
-#include <renderer/conio.h>
+#include <sge/bitmap_glyph_atlas_texture.h>
+#include <sge/conio.h>
 
 TEST_DATA(BITMAP_GLYPH_ATLAS_TEXTURE)
 {

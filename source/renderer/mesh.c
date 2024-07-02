@@ -23,13 +23,13 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_mesh.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_mesh.h>
 
-#include <renderer/mesh.h>
-#include <renderer/mesh3d.h>
-#include <renderer/assert.h>
-#include <renderer/alloc.h>
+#include <sge/mesh.h>
+#include <sge/mesh3d.h>
+#include <sge/assert.h>
+#include <sge/alloc.h>
 
 static VkIndexType get_vulkan_index_from_stride(u32 stride);
 

@@ -24,9 +24,9 @@
 */
 
 
-#include <renderer/material_library.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_material_library.h>
+#include <sge/material_library.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_material_library.h>
 
 
 /* constructors & destructors */

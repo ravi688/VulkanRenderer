@@ -24,9 +24,9 @@
 */
 
 
-#include <renderer/shader.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_shader.h>
+#include <sge/shader.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_shader.h>
 
 SGE_API shader_t* shader_create(renderer_t* renderer, shader_create_info_t* create_info)
 {

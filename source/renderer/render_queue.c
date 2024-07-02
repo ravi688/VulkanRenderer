@@ -24,11 +24,11 @@
 */
 
 
-#include <renderer/render_queue.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_render_queue.h>
-#include <renderer/internal/vulkan/vulkan_render_object.h> /* VULKAN_RENDER_OBJECT_CAST() casting */
-#include <renderer/internal/vulkan/vulkan_render_scene.h> /* VULKAN_RENDER_SCENE_CAST() casting */
+#include <sge/render_queue.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_render_queue.h>
+#include <sge/internal/vulkan/vulkan_render_object.h> /* VULKAN_RENDER_OBJECT_CAST() casting */
+#include <sge/internal/vulkan/vulkan_render_scene.h> /* VULKAN_RENDER_SCENE_CAST() casting */
 
 SGE_API render_queue_t* render_queue_new(memory_allocator_t* allocator)
 {

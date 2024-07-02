@@ -23,11 +23,11 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/renderer.h>
-#include <renderer/texture.h>
-#include <renderer/internal/vulkan/vulkan_texture.h>
-#include <renderer/bmp.h>
-#include <renderer/debug.h>
+#include <sge/sge.h>
+#include <sge/texture.h>
+#include <sge/internal/vulkan/vulkan_texture.h>
+#include <sge/bmp.h>
+#include <sge/debug.h>
 #include <stdarg.h> 		// va_start, va_end, va_list
 
 static vulkan_texture_usage_t get_vulkan_texture_usage(texture_usage_t usage)
