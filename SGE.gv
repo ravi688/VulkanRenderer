@@ -1,7 +1,7 @@
 
 #pragma once
 
-digraph VulkanRenderer
+digraph SGE
 {
 	#define digraph subgraph
 	#include <HPML.gv>
@@ -31,11 +31,11 @@ digraph VulkanRenderer
 	#include <MeshLib.gv>
 	#undef digraph
 
-	HPML -> VulkanRenderer;
-	SafeMemory -> VulkanRenderer;
-	TemplateSystem -> VulkanRenderer;
-	tgc -> VulkanRenderer;
-	BufferLib -> VulkanRenderer;
-	CallTrace -> VulkanRenderer;
-	MeshLib -> VulkanRenderer;
+	HPML -> SGE;
+	SafeMemory -> SGE;
+	TemplateSystem -> SGE;
+	tgc -> SGE;
+	BufferLib -> SGE;
+	CallTrace -> SGE;
+	MeshLib -> SGE;
 }
