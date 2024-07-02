@@ -1,0 +1,14 @@
+
+#pragma once
+
+digraph SUTK
+{
+	SGE -> STUK;
+	HPML -> SUTK;
+	SafeMemory -> SUTK;
+	TemplateSystem -> SUTK;
+	tgc -> SUTK;
+	BufferLib -> SUTK;
+	CallTrace -> SUTK;
+	MeshLib -> SUTK;
+}
