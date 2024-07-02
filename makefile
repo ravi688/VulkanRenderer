@@ -11,10 +11,10 @@
 #-------------------------------------------
 #		Supported commands
 #-------------------------------------------
-#	1. 	lib-static-debug				For building static library (vulkanrenderer.a) in debug mode
-#	2. 	lib-static-release				For buliding static library (vulkanrenderer.a) in release mode
-#	3. 	lib-dynamic-debug				For building dynamic library (vulkanrenderer.dll) in debug mode
-#	4. 	lib-dynamic-release				For building dynamic library (vulkanrenderer.dll) in release mode
+#	1. 	lib-static-debug				For building static library (sge.a) in debug mode
+#	2. 	lib-static-release				For buliding static library (sge.a) in release mode
+#	3. 	lib-dynamic-debug				For building dynamic library (sge.dll) in debug mode
+#	4. 	lib-dynamic-release				For building dynamic library (sge.dll) in release mode
 #	5. 	debug 							For building executable (main.exe) in debug mode
 #	6. 	release 						For building executable (main.exe) in release mode
 #	7. 	clean 							For cleaning the object files (.obj)
@@ -43,9 +43,9 @@ endif
 #-------------------------------------------
 #		Project Configuration
 #-------------------------------------------
-PROJECT_NAME = VulkanRenderer
-STATIC_LIB_NAME = vulkanrenderer.a
-DYNAMIC_LIB_NAME = vulkanrenderer.dll
+PROJECT_NAME = SGE
+STATIC_LIB_NAME = sge.a
+DYNAMIC_LIB_NAME = sge.dll
 EXECUTABLE_NAME = main
 EXTERNAL_LIBRARIES = -L./external-dependency-libs
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies -I./include/freetype
