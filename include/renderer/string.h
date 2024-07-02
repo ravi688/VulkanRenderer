@@ -43,7 +43,7 @@ typedef struct string_t
 	returns:
 		string_t, string_t object
  */
-RENDERER_API string_t string_create(memory_allocator_t* allocator, const char* str);
+SGE_API string_t string_create(memory_allocator_t* allocator, const char* str);
 
 static FORCE_INLINE string_t string_null() { return (string_t) { NULL, 0 }; }
 
@@ -54,6 +54,6 @@ static FORCE_INLINE string_t string_null() { return (string_t) { NULL, 0 }; }
 	returns:
 		nothing
  */
-RENDERER_API void string_destroy(string_t* str);
+SGE_API void string_destroy(string_t* str);
 
-RENDERER_API u32 strlen_safe(const char* str);
+SGE_API u32 strlen_safe(const char* str);

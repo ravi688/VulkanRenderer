@@ -32,7 +32,7 @@
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 
-RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new(memory_allocator_t* allocator)
+SGE_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new(memory_allocator_t* allocator)
 {
 	vulkan_pipeline_layout_t* layout = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_PIPELINE_LAYOUT, vulkan_pipeline_layout_t);
 	memzero(layout, vulkan_pipeline_layout_t);
@@ -40,7 +40,7 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new(memory_allocat
 	return layout;
 }
 
-RENDERER_API void vulkan_pipeline_layout_create_no_alloc(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info, vulkan_pipeline_layout_t* layout)
+SGE_API void vulkan_pipeline_layout_create_no_alloc(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info, vulkan_pipeline_layout_t* layout)
 {
 	VULKAN_OBJECT_MEMZERO(layout, vulkan_pipeline_layout_t);
 
@@ -56,7 +56,7 @@ RENDERER_API void vulkan_pipeline_layout_create_no_alloc(vulkan_renderer_t* rend
 	vkCall(vkCreatePipelineLayout(renderer->logical_device->vo_handle, &pipeline_layout_info, VULKAN_ALLOCATION_CALLBACKS(renderer), &layout->vo_handle));
 }
 
-RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info)
+SGE_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(vulkan_renderer_t* renderer, vulkan_pipeline_layout_create_info_t* create_info)
 {
 	vulkan_pipeline_layout_t* layout = vulkan_pipeline_layout_new(renderer->allocator);
 	vulkan_pipeline_layout_create_no_alloc(renderer, create_info, layout);
@@ -64,19 +64,19 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_create(vulkan_rend
 }
 
 
-RENDERER_API void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* layout)
+SGE_API void vulkan_pipeline_layout_destroy(vulkan_pipeline_layout_t* layout)
 {
 	vkDestroyPipelineLayout(layout->renderer->logical_device->vo_handle, layout->vo_handle, VULKAN_ALLOCATION_CALLBACKS(layout->renderer));
 }
 
-RENDERER_API void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* layout)
+SGE_API void vulkan_pipeline_layout_release_resources(vulkan_pipeline_layout_t* layout)
 {
 	if(VULKAN_OBJECT_IS_INTERNAL(layout))
 		memory_allocator_dealloc(layout->renderer->allocator, layout);
 }
 
 
-RENDERER_API void vulkan_pipeline_layout_push_constants(vulkan_pipeline_layout_t* layout, VkShaderStageFlagBits stage_flags, u32 offset, u32 size, void* bytes)
+SGE_API void vulkan_pipeline_layout_push_constants(vulkan_pipeline_layout_t* layout, VkShaderStageFlagBits stage_flags, u32 offset, u32 size, void* bytes)
 {
 	VkCommandBuffer command_buffer = layout->renderer->vo_command_buffers[layout->renderer->current_frame_index];
 	vkCmdPushConstants(command_buffer, layout->vo_handle, stage_flags, offset, size, bytes);

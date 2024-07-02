@@ -87,33 +87,33 @@ BEGIN_CPP_COMPATIBLE
 /* constructors and destructors */
 
 /* creates a vulkan_render_pass_graph_t object and returns pointer to it. */
-RENDERER_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_new(memory_allocator_t* allocator);
+SGE_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_new(memory_allocator_t* allocator);
 /* (calls vulkan_render_pass_graph_create internally). 
  * allocates memory for the lists in the vulkan_render_pass_graph_t structure. */
-RENDERER_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_create(vulkan_renderer_t* renderer);
+SGE_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_create(vulkan_renderer_t* renderer);
 /* identical to the above fuction except it doesn't allocate memory for vulkan_render_pass_graph_t object */
-RENDERER_API void vulkan_render_pass_graph_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_graph_t OUT graph);
+SGE_API void vulkan_render_pass_graph_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_graph_t OUT graph);
 /* destroys the vulkan API objects and makes the vulkan_render_pass_graph_t reusable again */
-RENDERER_API void vulkan_render_pass_graph_destroy(vulkan_render_pass_graph_t* graph);
+SGE_API void vulkan_render_pass_graph_destroy(vulkan_render_pass_graph_t* graph);
 /* releases all the heap memory allocated */
-RENDERER_API void vulkan_render_pass_graph_release_resources(vulkan_render_pass_graph_t* graph);
+SGE_API void vulkan_render_pass_graph_release_resources(vulkan_render_pass_graph_t* graph);
 
 /* logic functions */
 
 /* creates a new path in the render pass graph (must be called before adding render pass handles for the new shader) */
-RENDERER_API void vulkan_render_pass_graph_create_path(vulkan_render_pass_graph_t* graph);
+SGE_API void vulkan_render_pass_graph_create_path(vulkan_render_pass_graph_t* graph);
 /* adds a new render pass handle */
-RENDERER_API void vulkan_render_pass_graph_add(vulkan_render_pass_graph_t* graph, vulkan_render_pass_handle_t pass_handle);
+SGE_API void vulkan_render_pass_graph_add(vulkan_render_pass_graph_t* graph, vulkan_render_pass_handle_t pass_handle);
 
 /* prints the graph in dot language */
 #ifdef GLOBAL_DEBUG
-RENDERER_API void vulkan_render_pass_graph_dump(vulkan_render_pass_graph_t* graph);
+SGE_API void vulkan_render_pass_graph_dump(vulkan_render_pass_graph_t* graph);
 #else
 #	define vulkan_render_pass_graph_dump(...)
 #endif /* GLOBAL_DEBUG */
 
 /* returns a list of nodes (an optimized render path) */
-RENDERER_API vulkan_render_pass_graph_node_handle_list_t* vulkan_render_pass_graph_get_or_build_optimized_path(vulkan_render_pass_graph_t* graph);
+SGE_API vulkan_render_pass_graph_node_handle_list_t* vulkan_render_pass_graph_get_or_build_optimized_path(vulkan_render_pass_graph_t* graph);
 
 
 END_CPP_COMPATIBLE

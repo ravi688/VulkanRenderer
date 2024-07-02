@@ -35,7 +35,7 @@
 #endif /*GLOBAL_DEBUG*/
 
 // constructors and destructors
-RENDERER_API function_signature(dictionary_t, __dictionary_create, u32 key_size, u32 value_size, u64 capacity, bool (*key_comparer)(void* compare_key, void* key))
+SGE_API function_signature(dictionary_t, __dictionary_create, u32 key_size, u32 value_size, u64 capacity, bool (*key_comparer)(void* compare_key, void* key))
 {
 	CALLTRACE_BEGIN();
 	_debug_assert__(key_comparer != NULL);
@@ -48,7 +48,7 @@ RENDERER_API function_signature(dictionary_t, __dictionary_create, u32 key_size,
 	CALLTRACE_RETURN(dictionary);
 }
 
-RENDERER_API function_signature(void, dictionary_free, dictionary_t* dictionary)
+SGE_API function_signature(void, dictionary_free, dictionary_t* dictionary)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -58,7 +58,7 @@ RENDERER_API function_signature(void, dictionary_free, dictionary_t* dictionary)
 }
 
 // getters
-RENDERER_API function_signature(void, dictionary_get_at, dictionary_t* dictionary, u64 index, void* out_key, void* out_value)
+SGE_API function_signature(void, dictionary_get_at, dictionary_t* dictionary, u64 index, void* out_key, void* out_value)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -68,7 +68,7 @@ RENDERER_API function_signature(void, dictionary_get_at, dictionary_t* dictionar
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(void, dictionary_get_value, dictionary_t* dictionary, void* key, void* out_value)
+SGE_API function_signature(void, dictionary_get_value, dictionary_t* dictionary, void* key, void* out_value)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -78,7 +78,7 @@ RENDERER_API function_signature(void, dictionary_get_value, dictionary_t* dictio
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(bool, dictionary_try_get_value_ptr, dictionary_t* dictionary, void* key, void** out_ptr)
+SGE_API function_signature(bool, dictionary_try_get_value_ptr, dictionary_t* dictionary, void* key, void** out_ptr)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -92,7 +92,7 @@ RENDERER_API function_signature(bool, dictionary_try_get_value_ptr, dictionary_t
 	CALLTRACE_RETURN(true);
 }
 
-RENDERER_API function_signature(bool, dictionary_try_get_value, dictionary_t* dictionary, void* key, void* out_value)
+SGE_API function_signature(bool, dictionary_try_get_value, dictionary_t* dictionary, void* key, void* out_value)
 {
 	CALLTRACE_BEGIN();
 	void* value_ptr;
@@ -102,7 +102,7 @@ RENDERER_API function_signature(bool, dictionary_try_get_value, dictionary_t* di
 	CALLTRACE_RETURN(true);	
 }
 
-RENDERER_API function_signature(void, dictionary_get_key_at, dictionary_t* dictionary, u64 index, void* out_key)
+SGE_API function_signature(void, dictionary_get_key_at, dictionary_t* dictionary, u64 index, void* out_key)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -110,14 +110,14 @@ RENDERER_API function_signature(void, dictionary_get_key_at, dictionary_t* dicti
 	CALLTRACE_END();	
 }
 
-RENDERER_API function_signature(void*, dictionary_get_key_ptr_at, dictionary_t* dictionary, u64 index)
+SGE_API function_signature(void*, dictionary_get_key_ptr_at, dictionary_t* dictionary, u64 index)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	CALLTRACE_RETURN(buf_get_ptr_at(&dictionary->buffer, index));
 }
 
-RENDERER_API function_signature(void, dictionary_get_value_at, dictionary_t* dictionary, u64 index, void* out_value)
+SGE_API function_signature(void, dictionary_get_value_at, dictionary_t* dictionary, u64 index, void* out_value)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -125,14 +125,14 @@ RENDERER_API function_signature(void, dictionary_get_value_at, dictionary_t* dic
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(void*, dictionary_get_value_ptr_at, dictionary_t* dictionary, u64 index)
+SGE_API function_signature(void*, dictionary_get_value_ptr_at, dictionary_t* dictionary, u64 index)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	CALLTRACE_RETURN(buf_get_ptr_at(&dictionary->buffer, index) + dictionary->key_size);
 }
 
-RENDERER_API function_signature(void*, dictionary_get_value_ptr, dictionary_t* dictionary, void* key)
+SGE_API function_signature(void*, dictionary_get_value_ptr, dictionary_t* dictionary, void* key)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -140,14 +140,14 @@ RENDERER_API function_signature(void*, dictionary_get_value_ptr, dictionary_t* d
 	CALLTRACE_RETURN(buf_get_ptr_at(buffer, buf_find_index_of(buffer, key, dictionary->key_comparer)) + dictionary->key_size);
 }
 
-RENDERER_API function_signature(u64, dictionary_get_count, dictionary_t* dictionary)
+SGE_API function_signature(u64, dictionary_get_count, dictionary_t* dictionary)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	CALLTRACE_RETURN(buf_get_element_count(&dictionary->buffer));
 }
 
-RENDERER_API function_signature(u64, dictionary_get_capacity, dictionary_t* dictionary)
+SGE_API function_signature(u64, dictionary_get_capacity, dictionary_t* dictionary)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -156,7 +156,7 @@ RENDERER_API function_signature(u64, dictionary_get_capacity, dictionary_t* dict
 
 
 // setters
-RENDERER_API function_signature(void, dictionary_set_at, dictionary_t* dictionary, u64 index, void* in_key, void* in_value)
+SGE_API function_signature(void, dictionary_set_at, dictionary_t* dictionary, u64 index, void* in_key, void* in_value)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -166,7 +166,7 @@ RENDERER_API function_signature(void, dictionary_set_at, dictionary_t* dictionar
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(void, dictionary_set_value, dictionary_t* dictionary, void* key, void* in_value)
+SGE_API function_signature(void, dictionary_set_value, dictionary_t* dictionary, void* key, void* in_value)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -176,7 +176,7 @@ RENDERER_API function_signature(void, dictionary_set_value, dictionary_t* dictio
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(void, dictionary_set_value_at, dictionary_t* dictionary, u64 index, void* in_value)
+SGE_API function_signature(void, dictionary_set_value_at, dictionary_t* dictionary, u64 index, void* in_value)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -186,7 +186,7 @@ RENDERER_API function_signature(void, dictionary_set_value_at, dictionary_t* dic
 }
 
 // logic functions
-RENDERER_API function_signature(void, dictionary_push, dictionary_t* dictionary, void* in_key, void* in_value)
+SGE_API function_signature(void, dictionary_push, dictionary_t* dictionary, void* in_key, void* in_value)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -200,7 +200,7 @@ RENDERER_API function_signature(void, dictionary_push, dictionary_t* dictionary,
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(void, dictionary_pop, dictionary_t* dictionary, void* out_key, void* out_value)
+SGE_API function_signature(void, dictionary_pop, dictionary_t* dictionary, void* out_key, void* out_value)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -211,7 +211,7 @@ RENDERER_API function_signature(void, dictionary_pop, dictionary_t* dictionary, 
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(void, dictionary_remove, dictionary_t* dictionary, void* key)
+SGE_API function_signature(void, dictionary_remove, dictionary_t* dictionary, void* key)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -220,14 +220,14 @@ RENDERER_API function_signature(void, dictionary_remove, dictionary_t* dictionar
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(bool, dictionary_contains, dictionary_t* dictionary, void* key)
+SGE_API function_signature(bool, dictionary_contains, dictionary_t* dictionary, void* key)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	CALLTRACE_RETURN(buf_find_index_of(&dictionary->buffer, key, dictionary->key_comparer) != BUF_INVALID_INDEX);
 }
 
-RENDERER_API function_signature(void, dictionary_clear, dictionary_t* dictionary)
+SGE_API function_signature(void, dictionary_clear, dictionary_t* dictionary)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
@@ -235,69 +235,69 @@ RENDERER_API function_signature(void, dictionary_clear, dictionary_t* dictionary
 	CALLTRACE_END();
 }
 
-RENDERER_API function_signature(u64, dictionary_find_index_of, dictionary_t* dictionary, void* key)
+SGE_API function_signature(u64, dictionary_find_index_of, dictionary_t* dictionary, void* key)
 {
 	CALLTRACE_BEGIN();
 	check_pre_condition(dictionary);
 	CALLTRACE_RETURN(buf_find_index_of(&dictionary->buffer, key, dictionary->key_comparer));
 }
 
-RENDERER_API bool dictionary_key_comparer_u16(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_u16(void* v1, void* v2)
 {
 	return (*(u16*)v1) == (*(u16*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_u32(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_u32(void* v1, void* v2)
 {
 	return (*(u32*)v1) == (*(u32*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_u64(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_u64(void* v1, void* v2)
 {
 	return (*(u64*)v1) == (*(u64*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_u8(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_u8(void* v1, void* v2)
 {
 	return (*(u8*)v1) == (*(u8*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_s16(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_s16(void* v1, void* v2)
 {
 	return (*(s16*)v1) == (*(s16*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_s32(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_s32(void* v1, void* v2)
 {
 	return (*(s32*)v1) == (*(s32*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_s64(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_s64(void* v1, void* v2)
 {
 	return (*(s64*)v1) == (*(s64*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_s8(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_s8(void* v1, void* v2)
 {
 	return (*(s8*)v1) == (*(s8*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_float(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_float(void* v1, void* v2)
 {
 	return (*(float*)v1) == (*(float*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_double(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_double(void* v1, void* v2)
 {
 	return (*(double*)v1) == (*(double*)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_string(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_string(void* v1, void* v2)
 {
 	return (*(char**)v1) == (*(char**)v2);
 }
 
-RENDERER_API bool dictionary_key_comparer_ptr(void* v1, void* v2)
+SGE_API bool dictionary_key_comparer_ptr(void* v1, void* v2)
 {
 	return CAST_TO(void*, DREF_TO(u64, v1)) == CAST_TO(void*, DREF_TO(u64, v2));
 }

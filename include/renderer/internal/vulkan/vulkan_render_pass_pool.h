@@ -78,17 +78,17 @@ typedef struct vulkan_render_pass_pool_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_create(vulkan_renderer_t* renderer);
-RENDERER_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_pool_t OUT pool);
-RENDERER_API void vulkan_render_pass_pool_destroy(vulkan_render_pass_pool_t* pool);
-RENDERER_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_pool_t* pool);
+SGE_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_new(memory_allocator_t* allocator);
+SGE_API vulkan_render_pass_pool_t* vulkan_render_pass_pool_create(vulkan_renderer_t* renderer);
+SGE_API void vulkan_render_pass_pool_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_pool_t OUT pool);
+SGE_API void vulkan_render_pass_pool_destroy(vulkan_render_pass_pool_t* pool);
+SGE_API void vulkan_render_pass_pool_release_resources(vulkan_render_pass_pool_t* pool);
 
 /* logic functions */
-RENDERER_API void vulkan_render_pass_pool_create_path(vulkan_render_pass_pool_t* pool);
-RENDERER_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_input_info_t* input);
-RENDERER_API vulkan_render_pass_pool_slot_t* vulkan_render_pass_pool_get_slotH(vulkan_render_pass_pool_t* pool, vulkan_render_pass_handle_t handle);
-RENDERER_API vulkan_render_pass_t* vulkan_render_pass_pool_getH(vulkan_render_pass_pool_t* pool, vulkan_render_pass_handle_t handle);
+SGE_API void vulkan_render_pass_pool_create_path(vulkan_render_pass_pool_t* pool);
+SGE_API vulkan_render_pass_handle_t vulkan_render_pass_pool_create_pass(vulkan_render_pass_pool_t* pool, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_input_info_t* input);
+SGE_API vulkan_render_pass_pool_slot_t* vulkan_render_pass_pool_get_slotH(vulkan_render_pass_pool_t* pool, vulkan_render_pass_handle_t handle);
+SGE_API vulkan_render_pass_t* vulkan_render_pass_pool_getH(vulkan_render_pass_pool_t* pool, vulkan_render_pass_handle_t handle);
 static FORCE_INLINE buf_ucount_t vulkan_render_pass_pool_get_count(vulkan_render_pass_pool_t* pool)
 {
 	return buf_get_element_count(&pool->slots);

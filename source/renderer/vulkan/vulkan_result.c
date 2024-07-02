@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-RENDERER_API void __vulkan_result_assert_success(VkResult result, u32 line, const char* fnname, const char* flname)
+SGE_API void __vulkan_result_assert_success(VkResult result, u32 line, const char* fnname, const char* flname)
 {
 	if(result == VK_SUCCESS)
 		return;
@@ -39,7 +39,7 @@ RENDERER_API void __vulkan_result_assert_success(VkResult result, u32 line, cons
 	buf_free(&buffer);
 }
 
-// RENDERER_API void vulkan_result_assert_success(VkResult result)
+// SGE_API void vulkan_result_assert_success(VkResult result)
 // {
 // 	if(result == VK_SUCCESS)
 // 		return;
@@ -50,7 +50,7 @@ RENDERER_API void __vulkan_result_assert_success(VkResult result, u32 line, cons
 // 	exit(0);
 // }
 
-RENDERER_API void __vulkan_result_assert_on_time(VkResult result, u32 line, const char* fnname, const char* flname)
+SGE_API void __vulkan_result_assert_on_time(VkResult result, u32 line, const char* fnname, const char* flname)
 {
 	if(result != VK_TIMEOUT)
 		return;
@@ -60,7 +60,7 @@ RENDERER_API void __vulkan_result_assert_on_time(VkResult result, u32 line, cons
 	buf_free(&buffer);
 }
 
-RENDERER_API void __vulkan_result_assert_complete(VkResult result, u32 line, const char* fnname, const char* flname)
+SGE_API void __vulkan_result_assert_complete(VkResult result, u32 line, const char* fnname, const char* flname)
 {
 	if(result != VK_INCOMPLETE)
 		return;
@@ -70,7 +70,7 @@ RENDERER_API void __vulkan_result_assert_complete(VkResult result, u32 line, con
 	buf_free(&buffer);
 }
 
-RENDERER_API void __vulkan_result_assert_no_error(VkResult result, u32 line, const char* fnname, const char* flname)
+SGE_API void __vulkan_result_assert_no_error(VkResult result, u32 line, const char* fnname, const char* flname)
 {
 	if(result <= 5)
 		return;
@@ -80,13 +80,13 @@ RENDERER_API void __vulkan_result_assert_no_error(VkResult result, u32 line, con
 	buf_free(&buffer);
 }
 
-RENDERER_API void vulkan_result_to_string(VkResult result, BUFFER* string_buffer)
+SGE_API void vulkan_result_to_string(VkResult result, BUFFER* string_buffer)
 {
 	_debug_assert__(buf_get_element_size(string_buffer) == sizeof(char));
 	buf_push_string(string_buffer, (char*)vulkan_result_to_string_literal(result));
 }
 
-RENDERER_API const char* vulkan_result_to_string_literal(VkResult result)
+SGE_API const char* vulkan_result_to_string_literal(VkResult result)
 {
 	switch(result)
 	{

@@ -31,7 +31,7 @@
 #endif /* GLOBAL_DEBUG */
 
 
-RENDERER_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_new(memory_allocator_t* allocator)
+SGE_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_new(memory_allocator_t* allocator)
 {
     vulkan_render_pass_graph_t* graph = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_GRAPH, vulkan_render_pass_graph_t);
     memzero(graph, vulkan_render_pass_graph_t);
@@ -39,14 +39,14 @@ RENDERER_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_new(memory_all
     return graph;
 }
 
-RENDERER_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_create(vulkan_renderer_t* renderer)
+SGE_API vulkan_render_pass_graph_t* vulkan_render_pass_graph_create(vulkan_renderer_t* renderer)
 {
     vulkan_render_pass_graph_t* graph = vulkan_render_pass_graph_new(renderer->allocator);
     vulkan_render_pass_graph_create_no_alloc(renderer, graph);
     return graph;
 }
 
-RENDERER_API void vulkan_render_pass_graph_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_graph_t OUT graph)
+SGE_API void vulkan_render_pass_graph_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_graph_t OUT graph)
 {
     VULKAN_OBJECT_MEMZERO(graph, vulkan_render_pass_graph_t);
     graph->renderer = renderer;
@@ -56,7 +56,7 @@ RENDERER_API void vulkan_render_pass_graph_create_no_alloc(vulkan_renderer_t* re
     graph->staging_list = memory_allocator_buf_new(renderer->allocator, vulkan_render_pass_graph_node_handle_t);
 }
 
-RENDERER_API void vulkan_render_pass_graph_destroy(vulkan_render_pass_graph_t* graph)
+SGE_API void vulkan_render_pass_graph_destroy(vulkan_render_pass_graph_t* graph)
 {
     u32 node_count = buf_get_element_count(&graph->nodes);
     for(u32 i = 0; i < node_count; i++)
@@ -68,7 +68,7 @@ RENDERER_API void vulkan_render_pass_graph_destroy(vulkan_render_pass_graph_t* g
     buf_clear(&graph->optimized_render_path, NULL);
 }
 
-RENDERER_API void vulkan_render_pass_graph_release_resources(vulkan_render_pass_graph_t* graph)
+SGE_API void vulkan_render_pass_graph_release_resources(vulkan_render_pass_graph_t* graph)
 {
     buf_free(&graph->nodes);
     buf_free(&graph->optimized_render_path);
@@ -78,7 +78,7 @@ RENDERER_API void vulkan_render_pass_graph_release_resources(vulkan_render_pass_
 }
 
 
-RENDERER_API void vulkan_render_pass_graph_create_path(vulkan_render_pass_graph_t* graph)
+SGE_API void vulkan_render_pass_graph_create_path(vulkan_render_pass_graph_t* graph)
 {
     graph->prev_pass_node_handle = VULKAN_RENDER_PASS_GRAPH_NODE_HANDLE_INVALID;
 }
@@ -125,7 +125,7 @@ static bool node_handle_comparer(void* value, void* cursor)
     return DREF_TO(vulkan_render_pass_graph_node_handle_t, value) == DREF_TO(vulkan_render_pass_graph_node_handle_t, cursor);
 }
 
-RENDERER_API void vulkan_render_pass_graph_add(vulkan_render_pass_graph_t* graph, vulkan_render_pass_handle_t pass_handle)
+SGE_API void vulkan_render_pass_graph_add(vulkan_render_pass_graph_t* graph, vulkan_render_pass_handle_t pass_handle)
 {
     graph->is_outdated = true;
 
@@ -189,7 +189,7 @@ static void render_pass_graph_dump(vulkan_render_pass_graph_t* graph, bool is_pr
     puts("}");
 }
 
-RENDERER_API void vulkan_render_pass_graph_dump(vulkan_render_pass_graph_t* graph)
+SGE_API void vulkan_render_pass_graph_dump(vulkan_render_pass_graph_t* graph)
 {
     render_pass_graph_dump(graph, false);
     render_pass_graph_dump(graph, true);
@@ -222,7 +222,7 @@ static bool node_handle_greater_than(void* lhs, void* rhs, void* user_data)
     return buf_get_element_count(&lhs_node->next_pass_node_handles) > buf_get_element_count(&rhs_node->next_pass_node_handles);
 }
 
-RENDERER_API vulkan_render_pass_graph_node_handle_list_t* vulkan_render_pass_graph_get_or_build_optimized_path(vulkan_render_pass_graph_t* graph)
+SGE_API vulkan_render_pass_graph_node_handle_list_t* vulkan_render_pass_graph_get_or_build_optimized_path(vulkan_render_pass_graph_t* graph)
 {
     if(!graph->is_outdated)
         return &graph->optimized_render_path;
@@ -270,7 +270,7 @@ RENDERER_API vulkan_render_pass_graph_node_handle_list_t* vulkan_render_pass_gra
 }
 
 #ifdef GLOBAL_DEBUG
-RENDERER_API void vulkan_render_pass_graph_dump_optimized_path(vulkan_render_pass_graph_t* graph)
+SGE_API void vulkan_render_pass_graph_dump_optimized_path(vulkan_render_pass_graph_t* graph)
 {
     printf("Optimized Render Path: ");
     u32 count = buf_get_element_count(&graph->optimized_render_path);

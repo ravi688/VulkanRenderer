@@ -31,19 +31,19 @@
 
 typedef struct mesh3d_t mesh3d_t;
 
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 	#include <renderer/internal/vulkan/vulkan_mesh.h>
 	typedef vulkan_mesh_t mesh_t;
 	#define MESH(ptr) VULKAN_MESH(ptr)
-#elif RENDERER_OPENGL_DRIVER
+#elif SGE_OPENGL_DRIVER
 	#include <renderer/internal/opengl/opengl_mesh.h>
 	typedef opengl_mesh_t mesh_t;
 	#define MESH(ptr) OPENGL_MESH(ptr)
-#elif RENDERER_DIRECTX_DRIVER
+#elif SGE_DIRECTX_DRIVER
 	#include <renderer/internal/directx/directx_mesh.h>
 	typedef directx_mesh_t mesh_t;
 	#define MESH(ptr) DIRECTX_MESH(ptr)
-#elif RENDERER_METAL_DRIVER
+#elif SGE_METAL_DRIVER
 	#include <renderer/internal/metal/metal_mesh.h>
 	typedef metal_mesh_t mesh_t;
 	#define MESH(ptr) METAL_MESH(ptr)
@@ -53,17 +53,17 @@ typedef struct mesh3d_t mesh3d_t;
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API mesh_t* mesh_new(memory_allocator_t* allocator);
-RENDERER_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data);
-RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
-RENDERER_API void mesh_create_no_alloc_ext(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
-RENDERER_API void mesh_destroy(mesh_t* mesh);
-RENDERER_API void mesh_release_resources(mesh_t* mesh);
+SGE_API mesh_t* mesh_new(memory_allocator_t* allocator);
+SGE_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data);
+SGE_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
+SGE_API void mesh_create_no_alloc_ext(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh);
+SGE_API void mesh_destroy(mesh_t* mesh);
+SGE_API void mesh_release_resources(mesh_t* mesh);
 
 /* draw calls */
-RENDERER_API DEPRECATED void mesh_draw(mesh_t* mesh);
-RENDERER_API void mesh_draw_indexed(mesh_t* mesh);
-RENDERER_API void mesh_draw_instanced(mesh_t* mesh, u32 instance_count);
-RENDERER_API void mesh_draw_indexed_instanced(mesh_t* mesh, u32 instance_count);
+SGE_API DEPRECATED void mesh_draw(mesh_t* mesh);
+SGE_API void mesh_draw_indexed(mesh_t* mesh);
+SGE_API void mesh_draw_instanced(mesh_t* mesh, u32 instance_count);
+SGE_API void mesh_draw_indexed_instanced(mesh_t* mesh, u32 instance_count);
 
 END_CPP_COMPATIBLE

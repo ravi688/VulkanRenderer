@@ -71,17 +71,17 @@ typedef struct bitmap_glyph_pool_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_new(memory_allocator_t* allocator);
-RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_create(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info);
-RENDERER_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info, bitmap_glyph_pool_t OUT pool);
+SGE_API bitmap_glyph_pool_t* bitmap_glyph_pool_new(memory_allocator_t* allocator);
+SGE_API bitmap_glyph_pool_t* bitmap_glyph_pool_create(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info);
+SGE_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info, bitmap_glyph_pool_t OUT pool);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_create_no_alloc_ext(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info, bitmap_glyph_pool_t OUT pool)
 {
 	OBJECT_INIT(pool, OBJECT_TYPE_BITMAP_GLYPH_POOL, OBJECT_NATIONALITY_EXTERNAL);
 	bitmap_glyph_pool_create_no_alloc(renderer, create_info, pool);
 }
 
-RENDERER_API void bitmap_glyph_pool_destroy(bitmap_glyph_pool_t* pool);
-RENDERER_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool);
+SGE_API void bitmap_glyph_pool_destroy(bitmap_glyph_pool_t* pool);
+SGE_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool);
 
 /* clears the pool for reuse */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_clear(bitmap_glyph_pool_t* pool) { buffer2d_clear(&pool->pixels, NULL); }
@@ -89,15 +89,15 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_clea
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE font_t* bitmap_glyph_pool_get_font(bitmap_glyph_pool_t* pool) { return pool->font; }
 /* returns true if the glyph has graphical representation and no errors,
  * outputs the texture coordinates of the glyph represented by the unicode encoding 'unicode' and with point size 'point_size' */
-RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized);
+SGE_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized);
 /* returns true if this pool has a rasterized graphical representation of a glyph represented by unicode encoding 'unicode' and with point size 'point_size' */
-RENDERER_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode);
+SGE_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode);
 
 #ifdef GLOBAL_DEBUG
 /* creates a file and dumps the colors values in the bitmap to the file (.bmp) */
-RENDERER_API void bitmap_glyph_pool_dump(bitmap_glyph_pool_t* pool, const char* file_path);
+SGE_API void bitmap_glyph_pool_dump(bitmap_glyph_pool_t* pool, const char* file_path);
 /* creates a file and dumps the bounding box color values of the packed rects to the file (.bmp) */
-RENDERER_API void bitmap_glyph_pool_dump_bb(bitmap_glyph_pool_t* pool, const char* file_path);
+SGE_API void bitmap_glyph_pool_dump_bb(bitmap_glyph_pool_t* pool, const char* file_path);
 #endif // GLOBAL_DEBUG
 
 END_CPP_COMPATIBLE

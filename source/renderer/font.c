@@ -40,21 +40,21 @@
 
 #include <ctype.h> // isgraph
 
-RENDERER_API font_t* font_new(memory_allocator_t* allocator)
+SGE_API font_t* font_new(memory_allocator_t* allocator)
 {
 	font_t* font = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_FONT, font_t);
 	memzero(font, font_t);
 	return font;
 }
 
-RENDERER_API font_t* font_create(renderer_t* renderer, void* bytes, u64 length)
+SGE_API font_t* font_create(renderer_t* renderer, void* bytes, u64 length)
 {
 	font_t* font = font_new(renderer->allocator);
 	font_create_no_alloc(renderer, bytes, length, font);
 	return font;
 }
 
-RENDERER_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 length, font_t OUT font)
+SGE_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 length, font_t OUT font)
 {
 	_debug_assert__(bytes != NULL);
 	_debug_assert__(length != 0);
@@ -95,21 +95,21 @@ RENDERER_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 le
 	font->glyph_info_table = hash_table_create(renderer->allocator, pair_t(utf32_t, u32), font_glyph_info_t, 128, utf32_u32_equal_to, utf32_u32_hash);
 }
 
-RENDERER_API font_t* font_load_and_create(renderer_t* renderer, const char* file_name)
+SGE_API font_t* font_load_and_create(renderer_t* renderer, const char* file_name)
 {
 	font_t* font = font_new(renderer->allocator);
 	font_load_and_create_no_alloc(renderer, file_name, font);
 	return font;
 }
 
-RENDERER_API void font_load_and_create_no_alloc(renderer_t* renderer, const char* file_name, font_t OUT font)
+SGE_API void font_load_and_create_no_alloc(renderer_t* renderer, const char* file_name, font_t OUT font)
 {
 	BUFFER* data = load_binary_from_file(file_name);
 	font_create_no_alloc(renderer, data->bytes, data->element_count, font);
 	buf_free(data);
 }
 
-RENDERER_API void font_destroy(font_t* font)
+SGE_API void font_destroy(font_t* font)
 {
 	if(font->ttf_handle != NULL)
 		ttf_free(font->ttf_handle);
@@ -121,12 +121,12 @@ RENDERER_API void font_destroy(font_t* font)
 	hash_table_free(&font->glyph_info_table);
 }
 
-RENDERER_API void font_release_resources(font_t* font)
+SGE_API void font_release_resources(font_t* font)
 {
 	memory_allocator_dealloc(font->renderer->allocator, font);
 }
 
-RENDERER_API void font_set_char_size(font_t* font, u32 point_size)
+SGE_API void font_set_char_size(font_t* font, u32 point_size)
 {
 	if(font->point_size == point_size) return;
 
@@ -136,7 +136,7 @@ RENDERER_API void font_set_char_size(font_t* font, u32 point_size)
 	font->point_size = point_size;
 }
 
-RENDERER_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info_t OUT glyph_info)
+SGE_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info_t OUT glyph_info)
 {
 	if(font->ft_handle != NULL)
 	{
@@ -198,7 +198,7 @@ RENDERER_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info
 	return false;
 }
 
-RENDERER_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bitmap_t OUT bitmap)
+SGE_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bitmap_t OUT bitmap)
 {
 	if(font->ft_handle != NULL)
 	{
@@ -226,7 +226,7 @@ RENDERER_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bit
 	return true;
 }
 
-RENDERER_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_quality,  mesh3d_t OUT out_mesh)
+SGE_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_quality,  mesh3d_t OUT out_mesh)
 {
 	_debug_assert__(out_mesh != NULL);
 	mesh3d_positions_new(out_mesh, 0);
@@ -269,7 +269,7 @@ RENDERER_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_qua
 }
 
 
-RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_t* out_info)
+SGE_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_t* out_info)
 {
 	int index = ttf_find_glyph(font->ttf_handle, unicode);
 	out_info->is_graph = isgraph(CAST_TO(s32, unicode)) != 0;
@@ -288,7 +288,7 @@ RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_
 	out_info->index = index;
 }
 
-RENDERER_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info)
+SGE_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info)
 {
 	AUTO key = make_pair(utf32_t, u32) { unicode, font->point_size };
 	void* ptr = hash_table_get_value(&font->glyph_info_table, &key);
@@ -298,13 +298,13 @@ RENDERER_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph
 		font_load_glyph(font, unicode, info);
 }
 
-RENDERER_API f32 font_get_ascender(font_t* font)
+SGE_API f32 font_get_ascender(font_t* font)
 {
 	_release_assert__(font->ft_handle != NULL);
 	return CAST_TO(f32, font->ft_handle->ascender);
 }
 
-RENDERER_API f32 font_get_units_per_em(font_t* font)
+SGE_API f32 font_get_units_per_em(font_t* font)
 {
 	_release_assert__(font->ft_handle != NULL);
 	return CAST_TO(f32, font->ft_handle->units_per_EM);

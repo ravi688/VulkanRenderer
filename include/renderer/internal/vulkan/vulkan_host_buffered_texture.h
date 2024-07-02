@@ -63,11 +63,11 @@ typedef struct vulkan_host_buffered_texture_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_host_buffered_texture_t* vulkan_host_buffered_texture_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_host_buffered_texture_t* vulkan_host_buffered_texture_create(vulkan_renderer_t* renderer, vulkan_host_buffered_texture_create_info_t* create_info);
-RENDERER_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_host_buffered_texture_create_info_t* create_info, vulkan_host_buffered_texture_t OUT texture);
-RENDERER_API void vulkan_host_buffered_texture_destroy(vulkan_host_buffered_texture_t* texture);
-RENDERER_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buffered_texture_t* texture);
+SGE_API vulkan_host_buffered_texture_t* vulkan_host_buffered_texture_new(memory_allocator_t* allocator);
+SGE_API vulkan_host_buffered_texture_t* vulkan_host_buffered_texture_create(vulkan_renderer_t* renderer, vulkan_host_buffered_texture_create_info_t* create_info);
+SGE_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_host_buffered_texture_create_info_t* create_info, vulkan_host_buffered_texture_t OUT texture);
+SGE_API void vulkan_host_buffered_texture_destroy(vulkan_host_buffered_texture_t* texture);
+SGE_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buffered_texture_t* texture);
 
 /* returns pointer to the 2d view object used over the host side linear buffer */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer2d_view_t* vulkan_host_buffered_texture_get_view(vulkan_host_buffered_texture_t* texture)
@@ -94,7 +94,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_host_buffered_t
 
 /* flushes the host side buffer to the device (gpu) side VkDeviceMemory 
  * returns true if either the contents are updated or the internal VkImage, VkDeviceMemory, and VkBuffer has been recreated */
-RENDERER_API bool vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture, bool OUT is_resized);
+SGE_API bool vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture, bool OUT is_resized);
 
 
 END_CPP_COMPATIBLE

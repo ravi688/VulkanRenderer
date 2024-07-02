@@ -54,7 +54,7 @@ static void glfwOnWindowResizeCallback(GLFWwindow* glfw_window, int width, int h
 	event_publish(window->on_resize_event);
 }
 
-RENDERER_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
+SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
 	render_window_t* window = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDER_WINDOW, render_window_t);
 	memzero(window, render_window_t);
@@ -77,17 +77,17 @@ RENDERER_API render_window_t* render_window_init(memory_allocator_t* allocator, 
 	return window;
 }
 
-RENDERER_API bool render_window_should_close(render_window_t* window)
+SGE_API bool render_window_should_close(render_window_t* window)
 {
 	return glfwWindowShouldClose(window->handle);
 }
 
-RENDERER_API void render_window_poll_events(render_window_t* window)
+SGE_API void render_window_poll_events(render_window_t* window)
 {
 	glfwPollEvents();
 }
 
-RENDERER_API void render_window_destroy(render_window_t* window)
+SGE_API void render_window_destroy(render_window_t* window)
 {
 	event_destroy(window->on_resize_event);
 	event_release_resources(window->on_resize_event);
@@ -97,7 +97,7 @@ RENDERER_API void render_window_destroy(render_window_t* window)
 	log_msg("Render window destroyed successfully\n");
 }
 
-RENDERER_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height)
+SGE_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height)
 {
 	int height, width;
 	glfwGetFramebufferSize(window->handle, &width, &height);
@@ -113,7 +113,7 @@ static VkSurfaceKHR glfw_get_vulkan_surface(GLFWwindow* window, vulkan_renderer_
 	return surface;
 }
 
-RENDERER_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_driver, void* out_surface)
+SGE_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_driver, void* out_surface)
 {
 	VkSurfaceKHR surface = glfw_get_vulkan_surface(window->handle, CAST_TO(vulkan_renderer_t*, vk_driver));
 	memcpy(out_surface, &surface, sizeof(VkSurfaceKHR));

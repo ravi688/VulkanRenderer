@@ -28,14 +28,14 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/debug.h>
 
-RENDERER_API vulkan_render_texture_t* vulkan_render_texture_create(vulkan_renderer_t* renderer, vulkan_render_texture_create_info_t* create_info)
+SGE_API vulkan_render_texture_t* vulkan_render_texture_create(vulkan_renderer_t* renderer, vulkan_render_texture_create_info_t* create_info)
 {
 	vulkan_texture_t* texture = vulkan_texture_new(renderer->allocator);
 	vulkan_render_texture_create_no_alloc(renderer, create_info, texture);
 	return texture;
 }
 
-RENDERER_API void vulkan_render_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_texture_create_info_t* create_info, vulkan_render_texture_t OUT texture)
+SGE_API void vulkan_render_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_texture_create_info_t* create_info, vulkan_render_texture_t OUT texture)
 {
 	vulkan_texture_create_info_t _create_info = 
 	{
@@ -76,12 +76,12 @@ RENDERER_API void vulkan_render_texture_create_no_alloc(vulkan_renderer_t* rende
 	vulkan_texture_create_no_alloc(renderer, &_create_info, texture);
 }
 
-RENDERER_API void vulkan_render_texture_destroy(vulkan_render_texture_t* texture)
+SGE_API void vulkan_render_texture_destroy(vulkan_render_texture_t* texture)
 {
 	vulkan_texture_destroy(texture);
 }
 
-RENDERER_API void vulkan_render_texture_release_resources(vulkan_render_texture_t* texture)
+SGE_API void vulkan_render_texture_release_resources(vulkan_render_texture_t* texture)
 {
 	vulkan_texture_release_resources(texture);
 }

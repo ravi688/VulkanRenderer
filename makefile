@@ -231,11 +231,11 @@ DEBUG_DEFINES = -DHPML_DEBUG_MODE -DLOG_DEBUG -DGLOBAL_DEBUG -DDEBUG
 RELEASE_DEFINES = -DHPML_RELEASE_MODE -DLOG_RELEASE -DGLOBAL_RELEASE -DRELEASE
 # Supported switches
 # 	MEMORY_ALLOCATION_SAFETY_LEVEL_{0 | 1 | 2}
-# 	RENDERER_{VULKAN | OPENGL | DIRECTX | METAL}_DRIVER
+# 	SGE_{VULKAN | OPENGL | DIRECTX | METAL}_DRIVER
 #	USE_VULKAN_ALLOCATOR
 # 	MEMORY_METRICS
 #	ENABLE_VULKAN_VALIDATION_LAYERS
-DEFINES = -DMEMORY_ALLOCATION_SAFETY_LEVEL_0 -DRENDERER_VULKAN_DRIVER #-DUSE_VULKAN_ALLOCATOR #-DMEMORY_METRICS
+DEFINES = -DMEMORY_ALLOCATION_SAFETY_LEVEL_0 -DSGE_VULKAN_DRIVER #-DUSE_VULKAN_ALLOCATOR #-DMEMORY_METRICS
 
 COMPILER_FLAGS= -m64
 LINKER_FLAGS= -m64
@@ -579,11 +579,11 @@ clean: bin-clean glsl-shader-clean vsc-clean #shader-clean
 .PHONY: build-debug
 .PHONY: run
 
-build-release: glsl-shader vsc-release  shader-release
+build-release: glsl-shader vsc-release
 	$(MAKE) lib-static-release
 	$(MAKE) release
 
-build-debug: glsl-shader vsc-debug shader-debug
+build-debug: glsl-shader vsc-debug
 	$(MAKE) lib-static-debug
 	$(MAKE) debug
 

@@ -143,7 +143,7 @@ static void stdlib_free(void* ptr, bool was_aligned, void* user_data)
 		heap_free(ptr);
 }
 
-RENDERER_API memory_allocator_t* memory_allocator_create(const memory_allocator_create_info_t* create_info)
+SGE_API memory_allocator_t* memory_allocator_create(const memory_allocator_create_info_t* create_info)
 {
 	memory_allocator_t* allocator = heap_new(memory_allocator_t);
 	memzero(allocator, memory_allocator_t);
@@ -160,18 +160,18 @@ RENDERER_API memory_allocator_t* memory_allocator_create(const memory_allocator_
 	return allocator;
 }
 
-RENDERER_API void memory_allocator_destroy(memory_allocator_t* allocator)
+SGE_API void memory_allocator_destroy(memory_allocator_t* allocator)
 {
 	dictionary_free(&allocator->allocation_map);
 	heap_free(allocator);
 }
 
-RENDERER_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size)
+SGE_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size)
 {
 	return __memory_allocator_aligned_alloc(allocator, debug_info, size, ALLOCATION_FLAG_NO_ALIGN_RESTRICTION);
 }
 
-RENDERER_API void* __memory_allocator_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size)
+SGE_API void* __memory_allocator_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size)
 {
 	return __memory_allocator_aligned_realloc(allocator, old_ptr, debug_info, size, ALLOCATION_FLAG_NO_ALIGN_RESTRICTION);
 }
@@ -183,7 +183,7 @@ static void update_peek_usage_if_more(memory_allocator_t* allocator)
 		allocator->footprint.peek_usage = allocator->footprint.curr_usage;
 }
 
-RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
+SGE_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
 {
 	_debug_assert__(size != 0);
 	allocate_result_t result = allocator->allocate(size, align, allocator->user_data);
@@ -209,7 +209,7 @@ RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocato
 	return result.ptr;
 }
 
-RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* allocator, void* old_ptr,  __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
+SGE_API void* __memory_allocator_aligned_realloc(memory_allocator_t* allocator, void* old_ptr,  __memory_allocation_debug_info_t debug_info, u32 size,  u32 align)
 {
 	_debug_assert__(size != 0);
 	memory_allocation_t* old_alloc = NULL;
@@ -281,12 +281,12 @@ static memory_allocation_t* memory_allocator_try_get_allocation(memory_allocator
 	return NULL;
 }
 
-RENDERER_API bool memory_allocator_is_allocation_exists(memory_allocator_t* allocator, void* ptr)
+SGE_API bool memory_allocator_is_allocation_exists(memory_allocator_t* allocator, void* ptr)
 {
 	return dictionary_find_index_of(&allocator->allocation_map, &ptr) != BUF_INVALID_INDEX;
 }
 
-RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr)
+SGE_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr)
 {
 	_debug_assert__(ptr != NULL);
 
@@ -458,7 +458,7 @@ static void memory_allocation_tree_to_string(memory_allocation_tree_t* tree, str
 
 static void string_builder_write_to_file_and_destroy(string_builder_t* builder, const char* const file_path);
 
-RENDERER_API void memory_allocator_serialize_to_file(memory_allocator_t* allocator, const char* const file_path)
+SGE_API void memory_allocator_serialize_to_file(memory_allocator_t* allocator, const char* const file_path)
 {
 	string_builder_t* builder = string_builder_create(NULL, 512);
 	IF_DEBUG( string_builder_append(builder, "LEAKED MEMORY BLOCK COUNT: %"PRIu64"\n", allocator->alloc_counter) );
@@ -478,12 +478,12 @@ static INLINE memory_allocation_tree_t* build_allocation_tree(memory_allocation_
 	return build_tree(resolve_references(allocation_map), dictionary_get_count(allocation_map));
 }
 
-RENDERER_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(memory_allocator_t* allocator)
+SGE_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(memory_allocator_t* allocator)
 {
 	return build_allocation_tree(&allocator->allocation_map);
 }
 
-RENDERER_API void memory_allocation_tree_destroy(memory_allocation_tree_t* tree)
+SGE_API void memory_allocation_tree_destroy(memory_allocation_tree_t* tree)
 {
 	if(tree->root->child_count > 0)
 		free(tree->root->children);
@@ -571,14 +571,14 @@ static void string_builder_write_to_file_and_destroy(string_builder_t* builder, 
 	string_builder_destroy(builder);
 }
 
-RENDERER_API void memory_allocation_tree_serialize_to_file(memory_allocation_tree_t* tree, const char* const file_path)
+SGE_API void memory_allocation_tree_serialize_to_file(memory_allocation_tree_t* tree, const char* const file_path)
 {
 	string_builder_t* builder = string_builder_create(NULL, 512);
 	memory_allocation_tree_to_string(tree, builder);
 	string_builder_write_to_file_and_destroy(builder, file_path);
 }
 
-RENDERER_API memory_allocation_footprint_t* memory_allocator_get_footprint(memory_allocator_t* allocator)
+SGE_API memory_allocation_footprint_t* memory_allocator_get_footprint(memory_allocator_t* allocator)
 {
 	return &allocator->footprint;
 }
@@ -589,7 +589,7 @@ static void memory_allocation_footprint_to_string(const memory_allocation_footpr
 	string_builder_append(builder, "PEEK MEMORY USAGE: %"PRIu32" (%.1f KB)\n", footprint->peek_usage, CAST_TO(f32, footprint->peek_usage) / 1024);
 }
 
-RENDERER_API void memory_allocation_footprint_serialize_to_file(const memory_allocation_footprint_t* footprint, const char* const file_path)
+SGE_API void memory_allocation_footprint_serialize_to_file(const memory_allocation_footprint_t* footprint, const char* const file_path)
 {
 	string_builder_t* builder = string_builder_create(NULL, 128);
 	memory_allocation_footprint_to_string(footprint, builder);

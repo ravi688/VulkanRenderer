@@ -51,7 +51,7 @@
 #include <string.h> 			// for strlen()
 #include <math.h> 				// for log2(), and ceil()
 
-RENDERER_API vulkan_shader_t* vulkan_shader_new(memory_allocator_t* allocator)
+SGE_API vulkan_shader_t* vulkan_shader_new(memory_allocator_t* allocator)
 {
 	vulkan_shader_t* shader = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER, vulkan_shader_t);
 	memzero(shader, vulkan_shader_t);
@@ -1432,7 +1432,7 @@ static void recreate_graphics_pipelines(void* publisher_data, void* handler_data
 	debug_log_info("Graphics pipeline recreate success");
 }
 
-RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, vulkan_shader_create_info_t* create_info)
+SGE_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, vulkan_shader_create_info_t* create_info)
 {
 	vulkan_shader_t* shader = vulkan_shader_new(renderer->allocator);
 	shader->renderer = renderer;
@@ -2223,7 +2223,7 @@ static void destroy_vulkan_shader_create_info(memory_allocator_t* allocator, vul
 	memory_allocator_dealloc(allocator, create_info);
 }
 
-RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* load_info)
+SGE_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* load_info)
 {
 	vulkan_shader_create_info_t* create_info = NULL;
 	if((load_info->data != NULL) && (load_info->data_size != 0))
@@ -2247,7 +2247,7 @@ RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vu
 	return shader;
 }
 
-RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
+SGE_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 {
 	event_unsubscribe(shader->renderer->window->on_resize_event, shader->pipeline_recreate_handle);
 
@@ -2256,7 +2256,7 @@ RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader)
 	destroy_shader_render_passes(shader->renderer->allocator, shader->render_passes, shader->render_pass_count);
 }
 
-RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
+SGE_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 {
 	destroy_vulkan_push_constant(shader->renderer->allocator, &shader->push_constant);
 	destroy_vulkan_shader_resource_descriptions(shader->renderer->allocator, shader->material_set_bindings, shader->material_set_binding_count);
@@ -2264,7 +2264,7 @@ RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader)
 		memory_allocator_dealloc(shader->renderer->allocator, shader);
 }
 
-RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index)
+SGE_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index)
 {
 	u32 count = shader->render_pass_count;
 	for(u32 i = 0; i < count; i++)
@@ -2278,7 +2278,7 @@ RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shade
 	return NULL;
 }
 
-RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index)
+SGE_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index)
 {
 	u32 count = shader->render_pass_count;
 	for(u32 i = 0; i < count; i++)
@@ -2292,12 +2292,12 @@ RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_
 	return NULL;
 }
 
-RENDERER_API vulkan_render_pass_handle_t vulkan_shader_get_prev_pass_handle(vulkan_shader_t* shader)
+SGE_API vulkan_render_pass_handle_t vulkan_shader_get_prev_pass_handle(vulkan_shader_t* shader)
 {
 	return (shader->pass_counter == 0) ? VULKAN_RENDER_PASS_HANDLE_INVALID : shader->render_passes[shader->pass_counter - 1].handle;
 }
 
-RENDERER_API bool vulkan_shader_render_pass_is_next(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle)
+SGE_API bool vulkan_shader_render_pass_is_next(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle)
 {
 	AUTO pass = &shader->render_passes[shader->pass_counter];
 	if((shader->pass_counter < shader->render_pass_count) && (pass->handle == handle))
@@ -2313,7 +2313,7 @@ RENDERER_API bool vulkan_shader_render_pass_is_next(vulkan_shader_t* shader, vul
 	return false;
 }
 
-RENDERER_API void vulkan_shader_render_pass_counter_reset(vulkan_shader_t* shader)
+SGE_API void vulkan_shader_render_pass_counter_reset(vulkan_shader_t* shader)
 {
 	shader->pass_counter = 0;
 }

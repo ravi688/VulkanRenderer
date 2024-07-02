@@ -393,27 +393,27 @@ typedef struct vulkan_camera_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_camera_t* vulkan_camera_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info);
-RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info, vulkan_camera_t OUT camera);
-RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera);
-RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera);
+SGE_API vulkan_camera_t* vulkan_camera_new(memory_allocator_t* allocator);
+SGE_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info);
+SGE_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info, vulkan_camera_t OUT camera);
+SGE_API void vulkan_camera_destroy(vulkan_camera_t* camera);
+SGE_API void vulkan_camera_release_resources(vulkan_camera_t* camera);
 
 /* logic functions */
 #define VULKAN_CAMERA_CLEAR_FLAG_DONT_CARE 1
 #define VULKAN_CAMERA_CLEAR_FLAG_CLEAR 0
-RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera);
-RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera);
-RENDERER_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags);
-RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth);
-RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_camera_render_target_binding_type_t binding_type, vulkan_texture_t* texture);
-RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask);
-RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_texture_t* texture);
+SGE_API void vulkan_camera_begin(vulkan_camera_t* camera);
+SGE_API void vulkan_camera_end(vulkan_camera_t* camera);
+SGE_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags);
+SGE_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth);
+SGE_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_camera_render_target_binding_type_t binding_type, vulkan_texture_t* texture);
+SGE_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask);
+SGE_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_texture_t* texture);
 
-RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle);
-RENDERER_API vulkan_render_pass_descriptor_sets_t* vulkan_camera_get_descriptor_sets(vulkan_camera_t* camera, vulkan_render_pass_handle_t prev_handle, vulkan_render_pass_handle_t handle);
-RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* render_pass, vulkan_render_pass_handle_t prev_pass_handle, vulkan_framebuffer_attachments_layout_description_t* framebuffer_layout_description);
-RENDERER_API vulkan_camera_render_pass_t* vulkan_camera_get_camera_render_pass_from_pass_handle(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle);
+SGE_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle);
+SGE_API vulkan_render_pass_descriptor_sets_t* vulkan_camera_get_descriptor_sets(vulkan_camera_t* camera, vulkan_render_pass_handle_t prev_handle, vulkan_render_pass_handle_t handle);
+SGE_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* render_pass, vulkan_render_pass_handle_t prev_pass_handle, vulkan_framebuffer_attachments_layout_description_t* framebuffer_layout_description);
+SGE_API vulkan_camera_render_pass_t* vulkan_camera_get_camera_render_pass_from_pass_handle(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle);
 
 /* getters */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_camera_is_depth_render_only(vulkan_camera_t* camera)
@@ -430,15 +430,15 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_descriptor_set_t* vu
 	_debug_assert__(camera->current_shot_index < camera->max_shot_count);
 	return &camera->sets[camera->current_shot_index];
 }
-RENDERER_API mat4_t vulkan_camera_get_view(vulkan_camera_t* camera);
-RENDERER_API mat4_t vulkan_camera_get_transform(vulkan_camera_t* camera);
-RENDERER_API mat4_t vulkan_camera_get_projection(vulkan_camera_t* camera);
-RENDERER_API vec3_t vulkan_camera_get_position(vulkan_camera_t* camera);
-RENDERER_API vec3_t vulkan_camera_get_rotation(vulkan_camera_t* camera);
-RENDERER_API vec2_t vulkan_camera_get_clip_planes(vulkan_camera_t* camera);
+SGE_API mat4_t vulkan_camera_get_view(vulkan_camera_t* camera);
+SGE_API mat4_t vulkan_camera_get_transform(vulkan_camera_t* camera);
+SGE_API mat4_t vulkan_camera_get_projection(vulkan_camera_t* camera);
+SGE_API vec3_t vulkan_camera_get_position(vulkan_camera_t* camera);
+SGE_API vec3_t vulkan_camera_get_rotation(vulkan_camera_t* camera);
+SGE_API vec2_t vulkan_camera_get_clip_planes(vulkan_camera_t* camera);
 static FORCE_INLINE float vulkan_camera_get_near_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_get_clip_planes(camera).x; }
 static FORCE_INLINE float vulkan_camera_get_far_clip_plane(vulkan_camera_t* camera) { return vulkan_camera_get_clip_planes(camera).y; }
-RENDERER_API float vulkan_camera_get_field_of_view(vulkan_camera_t* camera);
+SGE_API float vulkan_camera_get_field_of_view(vulkan_camera_t* camera);
 static FORCE_INLINE float vulkan_camera_get_height(vulkan_camera_t* camera) { return vulkan_camera_get_field_of_view(camera); }
 
 /* setters */
@@ -446,12 +446,12 @@ static FORCE_INLINE void vulkan_camera_set_active(vulkan_camera_t* camera, bool 
 {
 	camera->is_active = is_active;
 }
-RENDERER_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t transform);
-RENDERER_API void vulkan_camera_set_position_cube(vulkan_camera_t* camera, vec3_t position);
-RENDERER_API void vulkan_camera_set_position(vulkan_camera_t* camera, vec3_t position);
-RENDERER_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t rotation);
-RENDERER_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane);
-RENDERER_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float fov);
+SGE_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t transform);
+SGE_API void vulkan_camera_set_position_cube(vulkan_camera_t* camera, vec3_t position);
+SGE_API void vulkan_camera_set_position(vulkan_camera_t* camera, vec3_t position);
+SGE_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t rotation);
+SGE_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane);
+SGE_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float fov);
 static FORCE_INLINE void vulkan_camera_set_height(vulkan_camera_t* camera, float height) { vulkan_camera_set_field_of_view(camera, height); }
 /* 	offset_x: offset in the x direction relative to the global viewport
 	offset_y: offset in the y direction relative to the global viewport 
@@ -459,15 +459,15 @@ static FORCE_INLINE void vulkan_camera_set_height(vulkan_camera_t* camera, float
 	height: height of the render area following the offset_y 
 	NOTE: calling this function overrides any values (and any effects) set by vulkan_camera_set_render_area_relative(...) function.
 */
-RENDERER_API void vulkan_camera_set_render_area(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height);
+SGE_API void vulkan_camera_set_render_area(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height);
 /*	offset_x: valid values are from 0 to 100
 	offset_y: valid values are from 0 to 100
 	width: valid values are from 0 to 100
 	height: valid values are from 0 to 100
 	NOTE: calling this function overrides any values set by vulkan_camera_set_render_area(...) function.
  */
-RENDERER_API void vulkan_camera_set_render_area_relative(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height);
+SGE_API void vulkan_camera_set_render_area_relative(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height);
 /*	sets the render area to the size of the render window */
-RENDERER_API void vulkan_camera_set_render_area_default(vulkan_camera_t* camera);
+SGE_API void vulkan_camera_set_render_area_default(vulkan_camera_t* camera);
 
 END_CPP_COMPATIBLE

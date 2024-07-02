@@ -363,28 +363,28 @@ typedef u64 struct_field_handle_t;
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API struct_descriptor_t* struct_descriptor_create(memory_allocator_t* allocator);
-RENDERER_API void struct_descriptor_destroy(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
+SGE_API struct_descriptor_t* struct_descriptor_create(memory_allocator_t* allocator);
+SGE_API void struct_descriptor_destroy(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u8 struct_descriptor_get_type(const struct_descriptor_t* descriptor) { return descriptor->type; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const char* struct_descriptor_get_name(const struct_descriptor_t* descriptor) { return descriptor->name; }
 
-RENDERER_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type, memory_layout_provider_callbacks_t layout_callbacks);
-RENDERER_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
-RENDERER_API void struct_descriptor_set_name(struct_descriptor_t* descriptor, const char* name);
-RENDERER_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type);
-RENDERER_API void struct_descriptor_add_field2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record);
-RENDERER_API void struct_descriptor_add_field_array(struct_descriptor_t* descriptor, const char* name, u8 type, u32 array_size);
-RENDERER_API void struct_descriptor_add_field_array2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record, u32 array_size);
-RENDERER_API struct_descriptor_t* struct_descriptor_clone_p(struct_descriptor_t* descriptor);
-RENDERER_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descriptor);
+SGE_API void struct_descriptor_begin(memory_allocator_t* allocator, struct_descriptor_t* descriptor, const char* name, u8 type, memory_layout_provider_callbacks_t layout_callbacks);
+SGE_API void struct_descriptor_end(memory_allocator_t* allocator, struct_descriptor_t* descriptor);
+SGE_API void struct_descriptor_set_name(struct_descriptor_t* descriptor, const char* name);
+SGE_API void struct_descriptor_add_field(struct_descriptor_t* descriptor, const char* name, u8 type);
+SGE_API void struct_descriptor_add_field2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record);
+SGE_API void struct_descriptor_add_field_array(struct_descriptor_t* descriptor, const char* name, u8 type, u32 array_size);
+SGE_API void struct_descriptor_add_field_array2(struct_descriptor_t* descriptor, const char* name, struct_descriptor_t* record, u32 array_size);
+SGE_API struct_descriptor_t* struct_descriptor_clone_p(struct_descriptor_t* descriptor);
+SGE_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descriptor);
 
-RENDERER_API u32 struct_descriptor_sizeof(const struct_descriptor_t* descriptor);
-RENDERER_API u32 struct_descriptor_min_sizeof(const struct_descriptor_t* descriptor);
-RENDERER_API u32 struct_descriptor_alignof(const struct_descriptor_t* descriptor);
-RENDERER_API u32 struct_descriptor_offsetof(const struct_descriptor_t* descriptor, const char* name);
-RENDERER_API bool struct_descriptor_is_variable_sized(const struct_descriptor_t* descriptor);
-RENDERER_API void* struct_field_get_base_address(struct_descriptor_t* descriptor, struct_field_t* field);
+SGE_API u32 struct_descriptor_sizeof(const struct_descriptor_t* descriptor);
+SGE_API u32 struct_descriptor_min_sizeof(const struct_descriptor_t* descriptor);
+SGE_API u32 struct_descriptor_alignof(const struct_descriptor_t* descriptor);
+SGE_API u32 struct_descriptor_offsetof(const struct_descriptor_t* descriptor, const char* name);
+SGE_API bool struct_descriptor_is_variable_sized(const struct_descriptor_t* descriptor);
+SGE_API void* struct_field_get_base_address(struct_descriptor_t* descriptor, struct_field_t* field);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool struct_field_is_array(const struct_field_t* field) { return field->is_array; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool struct_field_is_variable_sized(const struct_field_t* field)
 {
@@ -397,57 +397,57 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 struct_field_array_get_
 }
 /* TODO: rename struct_descriptor_get_field_handle to struct_descriptor_get_field_address 
  * it just returns the offset (in an offset based address space) to the field */
-RENDERER_API struct_field_handle_t struct_descriptor_get_field_handle(const struct_descriptor_t* descriptor, const char* field_name);
-RENDERER_API struct_field_t* struct_descriptor_get_field(struct_descriptor_t* descriptor, const char* name);
+SGE_API struct_field_handle_t struct_descriptor_get_field_handle(const struct_descriptor_t* descriptor, const char* field_name);
+SGE_API struct_field_t* struct_descriptor_get_field(struct_descriptor_t* descriptor, const char* name);
 
-RENDERER_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr);
-RENDERER_API void* struct_descriptor_get_mapped(struct_descriptor_t* descriptor);
-RENDERER_API void struct_descriptor_unmap(struct_descriptor_t* descriptor);
-RENDERER_API u32 struct_field_array_get_stride(struct_field_t* field);
-RENDERER_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor);
+SGE_API void struct_descriptor_map(struct_descriptor_t* descriptor, void* ptr);
+SGE_API void* struct_descriptor_get_mapped(struct_descriptor_t* descriptor);
+SGE_API void struct_descriptor_unmap(struct_descriptor_t* descriptor);
+SGE_API u32 struct_field_array_get_stride(struct_field_t* field);
+SGE_API void struct_descriptor_recalculate(struct_descriptor_t* descriptor);
 /* NOTE: 'size' is not in bytes, it is just number of elements */
-RENDERER_API void struct_descriptor_set_array_size(struct_descriptor_t* descriptor, const char* name, u32 size);
-RENDERER_API void struct_field_set_array_size(struct_descriptor_t* descriptor, struct_field_t* field, u32 size);
+SGE_API void struct_descriptor_set_array_size(struct_descriptor_t* descriptor, const char* name, u32 size);
+SGE_API void struct_field_set_array_size(struct_descriptor_t* descriptor, struct_field_t* field, u32 size);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 struct_field_get_array_size(struct_field_t* field)
 {
 	_debug_assert__(field != NULL);
 	release_assert__(field->is_array, "The field \"%s\" is not an array so it couldn't be variable sized", field->name);
 	return field->array_size;
 }
-RENDERER_API u32 struct_descriptor_get_array_size(struct_descriptor_t* descriptor, const char* name);
+SGE_API u32 struct_descriptor_get_array_size(struct_descriptor_t* descriptor, const char* name);
 
-RENDERER_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in);
-RENDERER_API void struct_descriptor_set_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
-RENDERER_API void struct_descriptor_set_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in);
-RENDERER_API void struct_descriptor_set_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in);
-RENDERER_API void struct_descriptor_set_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
-RENDERER_API void struct_descriptor_set_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
-RENDERER_API void struct_descriptor_set_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
-RENDERER_API void struct_descriptor_set_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in);
-RENDERER_API void struct_descriptor_set_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in);
-RENDERER_API void struct_descriptor_set_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in);
-RENDERER_API void struct_descriptor_set_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in);
-RENDERER_API void struct_descriptor_set_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in);
-RENDERER_API void struct_descriptor_set_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in);
-RENDERER_API void struct_descriptor_set_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
-RENDERER_API void struct_descriptor_set_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
-RENDERER_API void struct_descriptor_set_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
+SGE_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in);
+SGE_API void struct_descriptor_set_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
+SGE_API void struct_descriptor_set_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in);
+SGE_API void struct_descriptor_set_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in);
+SGE_API void struct_descriptor_set_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
+SGE_API void struct_descriptor_set_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
+SGE_API void struct_descriptor_set_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
+SGE_API void struct_descriptor_set_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in);
+SGE_API void struct_descriptor_set_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in);
+SGE_API void struct_descriptor_set_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in);
+SGE_API void struct_descriptor_set_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in);
+SGE_API void struct_descriptor_set_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in);
+SGE_API void struct_descriptor_set_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in);
+SGE_API void struct_descriptor_set_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
+SGE_API void struct_descriptor_set_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
+SGE_API void struct_descriptor_set_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in);
 
-RENDERER_API void struct_descriptor_get_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const in);
-RENDERER_API void struct_descriptor_get_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
-RENDERER_API void struct_descriptor_get_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out);
-RENDERER_API void struct_descriptor_get_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out);
-RENDERER_API void struct_descriptor_get_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
-RENDERER_API void struct_descriptor_get_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
-RENDERER_API void struct_descriptor_get_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
-RENDERER_API void struct_descriptor_get_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out);
-RENDERER_API void struct_descriptor_get_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out);
-RENDERER_API void struct_descriptor_get_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out);
-RENDERER_API void struct_descriptor_get_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out);
-RENDERER_API void struct_descriptor_get_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out);
-RENDERER_API void struct_descriptor_get_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out);
-RENDERER_API void struct_descriptor_get_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
-RENDERER_API void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
-RENDERER_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
+SGE_API void struct_descriptor_get_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const in);
+SGE_API void struct_descriptor_get_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
+SGE_API void struct_descriptor_get_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out);
+SGE_API void struct_descriptor_get_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out);
+SGE_API void struct_descriptor_get_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
+SGE_API void struct_descriptor_get_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
+SGE_API void struct_descriptor_get_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
+SGE_API void struct_descriptor_get_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out);
+SGE_API void struct_descriptor_get_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out);
+SGE_API void struct_descriptor_get_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out);
+SGE_API void struct_descriptor_get_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out);
+SGE_API void struct_descriptor_get_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out);
+SGE_API void struct_descriptor_get_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out);
+SGE_API void struct_descriptor_get_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
+SGE_API void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
+SGE_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out);
 
 END_CPP_COMPATIBLE

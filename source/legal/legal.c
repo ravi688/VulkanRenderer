@@ -28,7 +28,7 @@
 
 #include <stdio.h>
 
-RENDERER_API void legal_show_notice(const char* path)
+SGE_API void legal_show_notice(const char* path)
 {
 	printf("***NOTICE REGARDING THE USE OF THIS SOFTWARE*** \n"
     "%s (a.k.a VulkanRenderer @https://github.com/ravi688/VulkanRenderer.git)\n"

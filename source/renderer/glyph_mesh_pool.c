@@ -28,34 +28,34 @@
 #include <renderer/renderer.h> // VULKAN_RENDERER(...)
 
 // constructors and destructors
-RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new(memory_allocator_t* allocator)
+SGE_API glyph_mesh_pool_t* glyph_mesh_pool_new(memory_allocator_t* allocator)
 {
 	return vulkan_glyph_mesh_pool_new(allocator);
 }
 
-RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font)
+SGE_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font)
 {
 	return vulkan_glyph_mesh_pool_create(VULKAN_RENDERER(renderer), font);
 }
 
-RENDERER_API void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool)
+SGE_API void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool)
 {
 	vulkan_glyph_mesh_pool_destroy(pool);
 }
 
-RENDERER_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool)
+SGE_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool)
 {
 	vulkan_glyph_mesh_pool_release_resources(pool);
 }
 
 // getters
 
-RENDERER_API font_t* glyph_mesh_pool_get_font(glyph_mesh_pool_t* pool)
+SGE_API font_t* glyph_mesh_pool_get_font(glyph_mesh_pool_t* pool)
 {
 	return vulkan_glyph_mesh_pool_get_font(pool);
 }
 
-RENDERER_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph)
+SGE_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph)
 {
 	return vulkan_glyph_mesh_pool_get_mesh(pool, glyph);
 }

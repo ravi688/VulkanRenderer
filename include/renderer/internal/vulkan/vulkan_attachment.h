@@ -98,11 +98,11 @@ typedef struct vulkan_attachment_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_attachment_t* vulkan_attachment_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_attachment_t* vulkan_attachment_create(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info);
-RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment);
-RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment);
-RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment);
+SGE_API vulkan_attachment_t* vulkan_attachment_new(memory_allocator_t* allocator);
+SGE_API vulkan_attachment_t* vulkan_attachment_create(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info);
+SGE_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment);
+SGE_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment);
+SGE_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment);
 
 /* structure to hold the recreate information for vulkan attachment object */
 typedef struct vulkan_attachment_recreate_info_t
@@ -114,10 +114,10 @@ typedef struct vulkan_attachment_recreate_info_t
 } vulkan_attachment_recreate_info_t;
 
 /* recreates the attachment object */
-RENDERER_API void vulkan_attachment_recreate(vulkan_attachment_t* attachment, vulkan_attachment_recreate_info_t* info);
+SGE_API void vulkan_attachment_recreate(vulkan_attachment_t* attachment, vulkan_attachment_recreate_info_t* info);
 
 /* getters */
-RENDERER_API vulkan_image_t* vulkan_attachment_get_image(vulkan_attachment_t* attachment);
-RENDERER_API vulkan_image_view_t* vulkan_attachment_get_image_view(vulkan_attachment_t* attachment);
+SGE_API vulkan_image_t* vulkan_attachment_get_image(vulkan_attachment_t* attachment);
+SGE_API vulkan_image_view_t* vulkan_attachment_get_image_view(vulkan_attachment_t* attachment);
 
 END_CPP_COMPATIBLE

@@ -33,7 +33,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_logical_device_t* vulkan_logical_device_new(memory_allocator_t* allocator)
+SGE_API vulkan_logical_device_t* vulkan_logical_device_new(memory_allocator_t* allocator)
 {
 	vulkan_logical_device_t* device = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_LOGICAL_DEVICE, vulkan_logical_device_t);
 	memzero(device, vulkan_logical_device_t);
@@ -41,7 +41,7 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_new(memory_allocator
 	return device;	
 }
 
-RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* physical_device, vulkan_logical_device_create_info_t* device_create_info)
+SGE_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* physical_device, vulkan_logical_device_create_info_t* device_create_info)
 {
 	vulkan_logical_device_t* device = vulkan_logical_device_new(physical_device->renderer->allocator);
 	device->renderer = physical_device->renderer;
@@ -113,19 +113,19 @@ RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physic
 	return device;	
 }
 
-RENDERER_API void vulkan_logical_device_destroy(vulkan_logical_device_t* device)
+SGE_API void vulkan_logical_device_destroy(vulkan_logical_device_t* device)
 {
 	vkDestroyDevice(device->vo_handle, VULKAN_ALLOCATION_CALLBACKS(device->renderer));
 	log_msg("Logical device destroyed successfully\n");
 }
 
-RENDERER_API void vulkan_logical_device_release_resources(vulkan_logical_device_t* device)
+SGE_API void vulkan_logical_device_release_resources(vulkan_logical_device_t* device)
 {
 	if(VULKAN_OBJECT_IS_INTERNAL(device))
 		memory_allocator_dealloc(device->renderer->allocator, device);
 }
 
-RENDERER_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index)
+SGE_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index)
 {
 	VkQueue vo_queue;
 	vkGetDeviceQueue(device->vo_handle, family_index, queue_index, &vo_queue);

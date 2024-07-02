@@ -136,41 +136,41 @@ typedef buffer2d_t* buffer2d_ptr_t;
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructurs */
-RENDERER_API buffer2d_t* buffer2d_new(memory_allocator_t* allocator);
-RENDERER_API buffer2d_t* buffer2d_create(memory_allocator_t* allocator, buffer2d_create_info_t* create_info);
-RENDERER_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer2d_create_info_t* create_info, buffer2d_t OUT buffer);
+SGE_API buffer2d_t* buffer2d_new(memory_allocator_t* allocator);
+SGE_API buffer2d_t* buffer2d_create(memory_allocator_t* allocator, buffer2d_create_info_t* create_info);
+SGE_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer2d_create_info_t* create_info, buffer2d_t OUT buffer);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_create_no_alloc_ext(memory_allocator_t* allocator, buffer2d_create_info_t* create_info, buffer2d_t OUT buffer)
 {
 	OBJECT_INIT(buffer, OBJECT_TYPE_BUFFER2D, OBJECT_NATIONALITY_EXTERNAL);
 	buffer2d_create_no_alloc(allocator, create_info, buffer);
 }
-RENDERER_API void buffer2d_destroy(buffer2d_t* buffer);
-RENDERER_API void buffer2d_release_resources(buffer2d_t* buffer);
+SGE_API void buffer2d_destroy(buffer2d_t* buffer);
+SGE_API void buffer2d_release_resources(buffer2d_t* buffer);
 
 /* returns pointer to the backed buffer */
-RENDERER_API buffer_t* buffer2d_get_backed_buffer(buffer2d_t* buffer);
+SGE_API buffer_t* buffer2d_get_backed_buffer(buffer2d_t* buffer);
 /* returns filled rectangle information with key 'key' */
-RENDERER_API filled_rect_info_t* buffer2d_get_rect(buffer2d_t* buffer, void* key);
+SGE_API filled_rect_info_t* buffer2d_get_rect(buffer2d_t* buffer, void* key);
 /* fills 'out_data' with the data contained by 'rect_info' */
-RENDERER_API void buffer2d_get_rect_data(buffer2d_t* buffer, filled_rect_info_t* rect_info, void* out_data);
+SGE_API void buffer2d_get_rect_data(buffer2d_t* buffer, filled_rect_info_t* rect_info, void* out_data);
 #ifdef GLOBAL_DEBUG
-RENDERER_API bool buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height);
+SGE_API bool buffer2d_push_debug(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height);
 #endif /* GLOBAL_DEBUG */
 /* creates a buffer2d element and adds a value with a key and size (width, height)
  * returns true if the size has been resized, otherwise false */
-RENDERER_API bool buffer2d_push(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color));
+SGE_API bool buffer2d_push(buffer2d_t* buffer, void* key, void* value, u32 width, u32 height PARAM_IF_DEBUG(icolor3_t color));
 /* creates a buffer2d element and broadcasts a value of size 'size' to the entire rect with a key
  * returns true if the size has been resized, otherwise false */
-RENDERER_API bool buffer2d_push_broadcast(buffer2d_t* buffer, void* key, void* value, u32 size, u32 width, u32 heigh PARAM_IF_DEBUG(icolor3_t color));
+SGE_API bool buffer2d_push_broadcast(buffer2d_t* buffer, void* key, void* value, u32 size, u32 width, u32 heigh PARAM_IF_DEBUG(icolor3_t color));
 /* issues warning if the resize doesn't comply with the 'resize_mode' specified while creating this buffer */
-RENDERER_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_columns);
+SGE_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_columns);
 /* clears the entire buffer */
-RENDERER_API void buffer2d_clear(buffer2d_t* buffer, void* clear_value);
+SGE_API void buffer2d_clear(buffer2d_t* buffer, void* clear_value);
 /* returns (filled area) / (total area) */
-RENDERER_API f32 buffer2d_get_packing_efficiency(buffer2d_t* buffer);
+SGE_API f32 buffer2d_get_packing_efficiency(buffer2d_t* buffer);
 
 #ifdef GLOBAL_DEBUG
-RENDERER_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name);
+SGE_API void buffer2d_dump(buffer2d_t* buffer, const char* file_name);
 #endif /* GLOBAL_DEBUG */
 
 #if DBG_ENABLED(BUFFER2D_RESIZE)

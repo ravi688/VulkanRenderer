@@ -41,7 +41,7 @@
 #include <renderer/assert.h>
 
 /* constructors & destructors */
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator)
+SGE_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator)
 {
 	vulkan_render_scene_t* scene = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_SCENE, vulkan_render_scene_t);
 	memzero(scene, vulkan_render_scene_t);
@@ -49,7 +49,7 @@ RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* 
 	return scene;
 }
 
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info)
+SGE_API vulkan_render_scene_t* vulkan_render_scene_create(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info)
 {
 	vulkan_render_scene_t* scene = vulkan_render_scene_new(renderer->allocator);
 	vulkan_render_scene_create_no_alloc(renderer, create_info, scene);
@@ -63,7 +63,7 @@ static bool dictionary_light_type_comparer(void* key_we_passed, void* key_in_dic
 }
 
 
-RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info, vulkan_render_scene_t OUT scene)
+SGE_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info, vulkan_render_scene_t OUT scene)
 {
 	VULKAN_OBJECT_MEMZERO(scene, vulkan_render_scene_t);
 	_debug_assert__(sizeof(vulkan_render_queue_type_t) == sizeof(s32));
@@ -90,7 +90,7 @@ RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* rendere
 	}
 }
 
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_preset(vulkan_renderer_t* renderer, vulkan_render_scene_preset_type_t type)
+SGE_API vulkan_render_scene_t* vulkan_render_scene_create_from_preset(vulkan_renderer_t* renderer, vulkan_render_scene_preset_type_t type)
 {
 	BUFFER queue_types = memory_allocator_buf_new(renderer->allocator, vulkan_render_queue_type_t);
 	switch(type)
@@ -129,7 +129,7 @@ RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_preset(vulka
 	return scene;
 }
 
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_mask(vulkan_renderer_t* renderer, u64 mask)
+SGE_API vulkan_render_scene_t* vulkan_render_scene_create_from_mask(vulkan_renderer_t* renderer, u64 mask)
 {
 	BUFFER queue_types = memory_allocator_buf_new(renderer->allocator, vulkan_render_queue_type_t);
 	for(int i = VULKAN_RENDER_QUEUE_TYPE_MIN + 1; i < VULKAN_RENDER_QUEUE_TYPE_MAX; i++)
@@ -152,7 +152,7 @@ static vulkan_render_queue_t* get_queue_at(vulkan_render_scene_t* scene, u32 ind
 	return VULKAN_RENDER_QUEUE(queue);
 }
 
-RENDERER_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene)
+SGE_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene)
 {
 	u32 count = dictionary_get_count(&scene->queues);
 	for(u32 i = 0; i < count; i++)
@@ -177,7 +177,7 @@ RENDERER_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene)
 	vulkan_descriptor_set_destroy(&scene->scene_set);
 }
 
-RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* scene)
+SGE_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* scene)
 {
 	u32 count = dictionary_get_count(&scene->queues);
 	for(u32 i = 0; i < count; i++)
@@ -194,7 +194,7 @@ RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* s
 
 /* logic functions */
 
-RENDERER_API void vulkan_render_scene_create_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type)
+SGE_API void vulkan_render_scene_create_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type)
 {
 	if(dictionary_contains(&scene->queues, &queue_type))
 	{
@@ -205,7 +205,7 @@ RENDERER_API void vulkan_render_scene_create_queue(vulkan_render_scene_t* scene,
 	vulkan_render_scene_add_queue(scene, queue);
 }
 
-RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_t* queue)
+SGE_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_t* queue)
 {
 	dictionary_add(&scene->queues, &queue->type, &queue);
 	queue->scene = scene;
@@ -237,7 +237,7 @@ static u32 get_scene_set_light_shadowmap_binding(vulkan_light_type_t type)
 	return 0;
 }
 
-RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 flags)
+SGE_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 flags)
 {
 	u32 light_buffer_count = dictionary_get_count(&scene->light_buffer_map);
 	for(u32 i = 0; i < light_buffer_count; i++)
@@ -426,12 +426,12 @@ DEBUG_BLOCK(
 	}
 }
 
-RENDERER_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle)
+SGE_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle)
 {
 	return handle.object;
 }
 
-RENDERER_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_object(vulkan_render_scene_t* scene, vulkan_render_object_type_t object_type, vulkan_render_queue_type_t queue_type)
+SGE_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_object(vulkan_render_scene_t* scene, vulkan_render_object_type_t object_type, vulkan_render_queue_type_t queue_type)
 {
 	vulkan_render_object_create_info_t create_info = { .type = CAST_TO(vulkan_render_object_type_t, object_type) };
 	vulkan_render_object_t* object = vulkan_render_object_create(scene->renderer, &create_info);
@@ -448,12 +448,12 @@ RENDERER_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_obje
 	};
 }
 
-RENDERER_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle)
+SGE_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle)
 {
 	vulkan_render_queue_removeH(handle.queue, handle.object);
 }
 
-RENDERER_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene)
+SGE_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene)
 {
 	debug_log_info("Render Queue Graphs");
 	u32 count = dictionary_get_count(&scene->queues);
@@ -484,7 +484,7 @@ static vulkan_light_buffer_stage_t* get_light_buffer_stage(vulkan_render_scene_t
 	return NULL;
 }
 
-RENDERER_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vulkan_light_t* light)
+SGE_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vulkan_light_t* light)
 { 
 	/* if no formatted buffer exists for this light type, i.e. light->type, then create a new one.
 	 * otherwise, use the existing one. */
@@ -518,7 +518,7 @@ RENDERER_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vu
 	stage->is_light_list_dirty = true;
 }
 
-RENDERER_API void vulkan_render_scene_remove_light(vulkan_render_scene_t* scene, vulkan_light_t* light)
+SGE_API void vulkan_render_scene_remove_light(vulkan_render_scene_t* scene, vulkan_light_t* light)
 { 
 	vulkan_light_buffer_stage_t* stage = get_light_buffer_stage(scene, vulkan_light_get_type(light));
 	_debug_assert__(stage != NULL);

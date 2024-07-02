@@ -31,7 +31,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_image_t* vulkan_image_new(memory_allocator_t* allocator)
+SGE_API vulkan_image_t* vulkan_image_new(memory_allocator_t* allocator)
 {
 	vulkan_image_t* image = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE, vulkan_image_t);
 	memzero(image, vulkan_image_t);
@@ -39,7 +39,7 @@ RENDERER_API vulkan_image_t* vulkan_image_new(memory_allocator_t* allocator)
 	return image;
 }
 
-RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* image)
+SGE_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info, vulkan_image_t* image)
 {
 	assert(!((create_info->vo_type == VK_IMAGE_TYPE_2D) && (create_info->depth > 1)));
 	_debug_assert__(create_info->depth != 0);
@@ -88,14 +88,14 @@ RENDERER_API void vulkan_image_create_no_alloc(vulkan_renderer_t* renderer, vulk
 }
 
 
-RENDERER_API vulkan_image_t* vulkan_image_create(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info)
+SGE_API vulkan_image_t* vulkan_image_create(vulkan_renderer_t* renderer, vulkan_image_create_info_t* create_info)
 {
 	vulkan_image_t* image = vulkan_image_new(renderer->allocator);
 	vulkan_image_create_no_alloc(renderer, create_info, image);
 	return image;
 }
 
-RENDERER_API void vulkan_image_destroy(vulkan_image_t* image)
+SGE_API void vulkan_image_destroy(vulkan_image_t* image)
 {
 	_debug_assert__(image != NULL);
 	vkDestroyImage(image->renderer->logical_device->vo_handle, image->vo_handle, VULKAN_ALLOCATION_CALLBACKS(image->renderer));
@@ -104,7 +104,7 @@ RENDERER_API void vulkan_image_destroy(vulkan_image_t* image)
 	image->vo_memory = VK_NULL_HANDLE;
 }
 
-RENDERER_API void vulkan_image_release_resources(vulkan_image_t* image)
+SGE_API void vulkan_image_release_resources(vulkan_image_t* image)
 {
 	if(VULKAN_OBJECT_IS_INTERNAL(image))
 		memory_allocator_dealloc(image->renderer->allocator, image);

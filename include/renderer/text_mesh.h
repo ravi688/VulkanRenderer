@@ -27,26 +27,26 @@
 
 #include <renderer/defines.h>
 
-#if   defined(RENDERER_VULKAN_DRIVER)
+#if   defined(SGE_VULKAN_DRIVER)
 	// we need to include this header here because we don't know the implementation of vulkan_text_mesh_string_handle_t
 	#include <renderer/internal/vulkan/vulkan_text_mesh.h>
 	typedef vulkan_text_mesh_t text_mesh_t;
 	typedef vulkan_text_mesh_string_handle_t text_mesh_string_handle_t;
     typedef vulkan_material_t material_t;
 	typedef vulkan_glyph_mesh_pool_t glyph_mesh_pool_t;
-#elif defined(RENDERER_OPENGL_DRIVER)
+#elif defined(SGE_OPENGL_DRIVER)
 	#include <renderer/internal/opengl/opengl_text_mesh.h>
 	typedef opengl_text_mesh_t text_mesh_t;
 	typedef opengl_text_mesh_string_handle_t text_mesh_string_handle_t;
     typedef opengl_material_t material_t;
 	typedef opengl_glyph_mesh_pool_t glyph_mesh_pool_t;
-#elif defined(RENDERER_DIRECTX_DRIVER)
+#elif defined(SGE_DIRECTX_DRIVER)
 	#include <renderer/internal/directx/directx_text_mesh.h>
 	typedef directx_text_mesh_t text_mesh_t;
 	typedef directx_text_mesh_string_handle_t text_mesh_string_handle_t;
     typedef directx_material_t material_t;
 	typedef directx_glyph_mesh_pool_t glyph_mesh_pool_t;
-#elif defined(RENDERER_METAL_DRIVER)
+#elif defined(SGE_METAL_DRIVER)
 	#include <renderer/internal/metal/metal_text_mesh.h>
 	typedef metal_text_mesh_t text_mesh_t;
 	typedef metal_text_mesh_string_handle_t text_mesh_string_handle_t;
@@ -69,32 +69,32 @@ typedef enum text_mesh_render_surface_type_t
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API text_mesh_t* text_mesh_new(memory_allocator_t* allocator);
-RENDERER_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool);
-RENDERER_API void text_mesh_create_no_alloc(renderer_t* renderer, glyph_mesh_pool_t* pool, text_mesh_t OUT text);
-RENDERER_API void text_mesh_destroy(text_mesh_t* text);
-RENDERER_API void text_mesh_release_resources(text_mesh_t* text);
+SGE_API text_mesh_t* text_mesh_new(memory_allocator_t* allocator);
+SGE_API text_mesh_t* text_mesh_create(renderer_t* renderer, glyph_mesh_pool_t* pool);
+SGE_API void text_mesh_create_no_alloc(renderer_t* renderer, glyph_mesh_pool_t* pool, text_mesh_t OUT text);
+SGE_API void text_mesh_destroy(text_mesh_t* text);
+SGE_API void text_mesh_release_resources(text_mesh_t* text);
 
 // logic functions
-RENDERER_API void text_mesh_draw(text_mesh_t* text);
+SGE_API void text_mesh_draw(text_mesh_t* text);
 
 // constructors and destructors
-RENDERER_API text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh);
-RENDERER_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+SGE_API text_mesh_string_handle_t text_mesh_string_create(text_mesh_t* text_mesh);
+SGE_API void text_mesh_string_destroyH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
 
 // setters
-RENDERER_API void text_mesh_set_point_size(text_mesh_t* text, u32 point_size);
-RENDERER_API void text_mesh_set_material(text_mesh_t* text, material_t* material);
-RENDERER_API void text_mesh_set_render_space_type(text_mesh_t* text, text_mesh_render_space_type_t space_type);
-RENDERER_API void text_mesh_set_render_surface_type(text_mesh_t* text, text_mesh_render_surface_type_t surface_type);
-RENDERER_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* string);
-RENDERER_API void text_mesh_string_set_point_sizeH(text_mesh_t* text, text_mesh_string_handle_t handle, u32 point_size);
-RENDERER_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t transform);
+SGE_API void text_mesh_set_point_size(text_mesh_t* text, u32 point_size);
+SGE_API void text_mesh_set_material(text_mesh_t* text, material_t* material);
+SGE_API void text_mesh_set_render_space_type(text_mesh_t* text, text_mesh_render_space_type_t space_type);
+SGE_API void text_mesh_set_render_surface_type(text_mesh_t* text, text_mesh_render_surface_type_t surface_type);
+SGE_API void text_mesh_string_setH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, const char* string);
+SGE_API void text_mesh_string_set_point_sizeH(text_mesh_t* text, text_mesh_string_handle_t handle, u32 point_size);
+SGE_API void text_mesh_string_set_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle, mat4_t transform);
 
 // getters
-RENDERER_API u32 text_mesh_get_point_size(text_mesh_t* text);
-RENDERER_API const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
-RENDERER_API u32 text_mesh_string_get_point_sizeH(text_mesh_t* text, text_mesh_string_handle_t handle);
-RENDERER_API mat4_t text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+SGE_API u32 text_mesh_get_point_size(text_mesh_t* text);
+SGE_API const char* text_mesh_string_getH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
+SGE_API u32 text_mesh_string_get_point_sizeH(text_mesh_t* text, text_mesh_string_handle_t handle);
+SGE_API mat4_t text_mesh_string_get_transformH(text_mesh_t* text_mesh, text_mesh_string_handle_t handle);
 
 END_CPP_COMPATIBLE

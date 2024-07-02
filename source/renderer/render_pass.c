@@ -31,37 +31,37 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 
 /* constructors and destructors */
-RENDERER_API render_pass_t* render_pass_new(memory_allocator_t* allocator)
+SGE_API render_pass_t* render_pass_new(memory_allocator_t* allocator)
 {
 	return vulkan_render_pass_new(allocator);
 }
 
-RENDERER_API render_pass_t* render_pass_create(renderer_t* renderer, render_pass_create_info_t* create_info)
+SGE_API render_pass_t* render_pass_create(renderer_t* renderer, render_pass_create_info_t* create_info)
 {
 	return vulkan_render_pass_create(renderer->vulkan_handle, create_info);
 }
 
-RENDERER_API void render_pass_create_no_alloc(renderer_t* renderer, render_pass_create_info_t* create_info, render_pass_t OUT pass)
+SGE_API void render_pass_create_no_alloc(renderer_t* renderer, render_pass_create_info_t* create_info, render_pass_t OUT pass)
 {
 	vulkan_render_pass_create_no_alloc(renderer->vulkan_handle, create_info, pass);
 }
 
-RENDERER_API void render_pass_destroy(render_pass_t* pass)
+SGE_API void render_pass_destroy(render_pass_t* pass)
 {
 	vulkan_render_pass_destroy(pass);
 }
 
-RENDERER_API void render_pass_release_resources(render_pass_t* pass)
+SGE_API void render_pass_release_resources(render_pass_t* pass)
 {
 	vulkan_render_pass_release_resources(pass);
 }
 
-RENDERER_API void render_pass_set_clear(render_pass_t* pass, color_t color, float depth)
+SGE_API void render_pass_set_clear(render_pass_t* pass, color_t color, float depth)
 {
 	vulkan_render_pass_set_clear(pass, color, depth);
 }
 
-RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific, camera_t* camera)
+SGE_API void render_pass_begin(render_pass_t* pass, void* api_specific, camera_t* camera)
 {
 	u32 framebuffer_index;
 	if(api_specific == NULL)
@@ -71,7 +71,7 @@ RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific, cam
 	vulkan_render_pass_begin(pass, framebuffer_index, camera);
 }
 
-RENDERER_API void render_pass_end(render_pass_t* pass)
+SGE_API void render_pass_end(render_pass_t* pass)
 {
 	vulkan_render_pass_end(pass);
 }

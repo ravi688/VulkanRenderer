@@ -54,7 +54,7 @@ static vulkan_texture_usage_t get_vulkan_texture_usage(texture_usage_t usage)
 	return VULKAN_TEXTURE_USAGE_NONE;
 }
 
-RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info)
+SGE_API texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info)
 {
 	vulkan_texture_type_t vulkan_type;
 	switch(create_info->type)
@@ -92,7 +92,7 @@ RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info
 	return vulkan_texture_create(renderer->handle, &vulkan_create_info);
 }
 
-RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...)
+SGE_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...)
 {
 	va_list file_paths;
 	va_start(file_paths, type);
@@ -101,7 +101,7 @@ RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, 
 	return texture;
 }
 
-RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths)
+SGE_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths)
 {
 	u32 file_path_count;
 	switch(type)
@@ -155,7 +155,7 @@ RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type,
 	return texture;
 }
 
-RENDERER_API void texture_upload_data(texture_t* texture, u32 data_count, texture_data_t* data)
+SGE_API void texture_upload_data(texture_t* texture, u32 data_count, texture_data_t* data)
 {
 	vulkan_texture_data_t vk_data[data_count];
 	for(u32 i = 0; i < data_count; i++)
@@ -172,7 +172,7 @@ RENDERER_API void texture_upload_data(texture_t* texture, u32 data_count, textur
 	vulkan_texture_upload_data(texture, data_count, vk_data);
 }
 
-RENDERER_API void texture_set_usage_stage(texture_t* texture, texture_usage_stage_t stage)
+SGE_API void texture_set_usage_stage(texture_t* texture, texture_usage_stage_t stage)
 {
 	vulkan_texture_usage_stage_t vk_stage = VULKAN_TEXTURE_USAGE_STAGE_UNDEFINED;
 	switch(stage)
@@ -193,12 +193,12 @@ RENDERER_API void texture_set_usage_stage(texture_t* texture, texture_usage_stag
 	vulkan_texture_set_usage_stage(texture, vk_stage);
 }
 
-RENDERER_API void texture_destroy(texture_t* texture)
+SGE_API void texture_destroy(texture_t* texture)
 {
 	vulkan_texture_destroy(texture);
 }
 
-RENDERER_API void texture_release_resources(texture_t* texture)
+SGE_API void texture_release_resources(texture_t* texture)
 {
 	vulkan_texture_release_resources(texture);
 }

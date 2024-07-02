@@ -34,7 +34,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_material_t* vulkan_material_new(memory_allocator_t* allocator)
+SGE_API vulkan_material_t* vulkan_material_new(memory_allocator_t* allocator)
 {
 	vulkan_material_t* material = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MATERIAL, vulkan_material_t);
 	memzero(material, vulkan_material_t);
@@ -103,7 +103,7 @@ static void setup_material_resources(vulkan_material_t* material)
 	material->uniform_resource_count = count;
 }
 
-RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_t* shader, vulkan_material_t* material)
+SGE_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_t* shader, vulkan_material_t* material)
 {
 	VULKAN_OBJECT_MEMZERO(material, vulkan_material_t);
 
@@ -121,7 +121,7 @@ RENDERER_API void vulkan_material_create_no_alloc(vulkan_renderer_t* renderer, v
 	setup_material_resources(material);
 }
 
-RENDERER_API vulkan_material_t* vulkan_material_create(vulkan_renderer_t* renderer, vulkan_shader_t* shader)
+SGE_API vulkan_material_t* vulkan_material_create(vulkan_renderer_t* renderer, vulkan_shader_t* shader)
 {
 	// allocate memory and intitalize
 	vulkan_material_t* material = vulkan_material_new(renderer->allocator);
@@ -131,7 +131,7 @@ RENDERER_API vulkan_material_t* vulkan_material_create(vulkan_renderer_t* render
 	return material;
 }
 
-RENDERER_API void vulkan_material_destroy(vulkan_material_t* material)
+SGE_API void vulkan_material_destroy(vulkan_material_t* material)
 {
 	vulkan_descriptor_set_destroy(&material->material_set);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
@@ -139,7 +139,7 @@ RENDERER_API void vulkan_material_destroy(vulkan_material_t* material)
 			vulkan_buffer_destroy(&material->uniform_resources[i].buffer);
 }
 
-RENDERER_API void vulkan_material_release_resources(vulkan_material_t* material)
+SGE_API void vulkan_material_release_resources(vulkan_material_t* material)
 {
 	vulkan_descriptor_set_release_resources(&material->material_set);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
@@ -162,7 +162,7 @@ static void set_push_constants(vulkan_material_t* material, vulkan_shader_resour
 											descriptor->handle.ptr);
 }
 
-RENDERER_API void vulkan_material_push_constants(vulkan_material_t* material, vulkan_pipeline_layout_t* pipeline_layout)
+SGE_API void vulkan_material_push_constants(vulkan_material_t* material, vulkan_pipeline_layout_t* pipeline_layout)
 {
 	u32 binding_count = material->shader->material_set_binding_count;
 	for(u32 i = 0; i < binding_count; i++)
@@ -197,42 +197,42 @@ static void __set_push_value(vulkan_material_t* material, vulkan_material_field_
 	// set_push_constants(material, descriptor);
 }
 
-RENDERER_API void vulkan_material_set_push_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle, float value)
+SGE_API void vulkan_material_set_push_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle, float value)
 {
 	set_push_value(material, handle, struct_descriptor_set_float, &value);
 }
 
-RENDERER_API void vulkan_material_set_push_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle, int value)
+SGE_API void vulkan_material_set_push_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle, int value)
 {
 	set_push_value(material, handle, struct_descriptor_set_int, &value);
 }
 
-RENDERER_API void vulkan_material_set_push_uintH(vulkan_material_t* material, vulkan_material_field_handle_t handle, uint value)
+SGE_API void vulkan_material_set_push_uintH(vulkan_material_t* material, vulkan_material_field_handle_t handle, uint value)
 {
 	set_push_value(material, handle, struct_descriptor_set_uint, &value);
 }
 
-RENDERER_API void vulkan_material_set_push_vec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec2_t value)
+SGE_API void vulkan_material_set_push_vec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec2_t value)
 {
 	set_push_value(material, handle, struct_descriptor_set_vec2, &value);
 }
 
-RENDERER_API void vulkan_material_set_push_vec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec3_t value)
+SGE_API void vulkan_material_set_push_vec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec3_t value)
 {
 	set_push_value(material, handle, struct_descriptor_set_vec3, &value);
 }
 
-RENDERER_API void vulkan_material_set_push_vec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec4_t value)
+SGE_API void vulkan_material_set_push_vec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec4_t value)
 {
 	set_push_value(material, handle, struct_descriptor_set_vec4, &value);
 }
 
-RENDERER_API void vulkan_material_set_push_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat2_t value)
+SGE_API void vulkan_material_set_push_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat2_t value)
 {
 	set_push_value(material, handle, struct_descriptor_set_mat2, &value);
 }
 
-RENDERER_API void vulkan_material_set_push_mat4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat4_t value)
+SGE_API void vulkan_material_set_push_mat4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat4_t value)
 {
 	set_push_value(material, handle, struct_descriptor_set_mat4, &value);
 }
@@ -245,56 +245,56 @@ static void __get_push_value(vulkan_material_t* material, vulkan_material_field_
 	getter(&descriptor->handle, handle.field_handle, out);
 }
 
-RENDERER_API float vulkan_material_get_push_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API float vulkan_material_get_push_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	float value;
 	get_push_value(material, handle, struct_descriptor_get_float, &value);
 	return value;
 }
 
-RENDERER_API int vulkan_material_get_push_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API int vulkan_material_get_push_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	int value;
 	get_push_value(material, handle, struct_descriptor_get_int, &value);
 	return value;
 }
 
-RENDERER_API uint vulkan_material_get_push_uintH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API uint vulkan_material_get_push_uintH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	uint value;
 	get_push_value(material, handle, struct_descriptor_get_uint, &value);
 	return value;
 }
 
-RENDERER_API vec2_t vulkan_material_get_push_vec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API vec2_t vulkan_material_get_push_vec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	vec2_t value;
 	get_push_value(material, handle, struct_descriptor_get_vec2, &value);
 	return value;
 }
 
-RENDERER_API vec3_t vulkan_material_get_push_vec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API vec3_t vulkan_material_get_push_vec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	vec3_t value;
 	get_push_value(material, handle, struct_descriptor_get_vec3, &value);
 	return value;
 }
 
-RENDERER_API vec4_t vulkan_material_get_push_vec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API vec4_t vulkan_material_get_push_vec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	vec4_t value;
 	get_push_value(material, handle, struct_descriptor_get_vec4, &value);
 	return value;
 }
 
-RENDERER_API mat2_t vulkan_material_get_push_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API mat2_t vulkan_material_get_push_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	mat2_t value;
 	get_push_value(material, handle, struct_descriptor_get_mat2, &value);
 	return value;
 }
 
-RENDERER_API mat4_t vulkan_material_get_push_mat4H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API mat4_t vulkan_material_get_push_mat4H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	mat4_t value;
 	get_push_value(material, handle, struct_descriptor_get_mat4, &value);
@@ -302,82 +302,82 @@ RENDERER_API mat4_t vulkan_material_get_push_mat4H(vulkan_material_t* material, 
 }
 
 /* functions accepting strings */
-RENDERER_API void vulkan_material_set_push_float(vulkan_material_t* material, const char* name, float value)
+SGE_API void vulkan_material_set_push_float(vulkan_material_t* material, const char* name, float value)
 {
 	vulkan_material_set_push_floatH(material, vulkan_material_get_field_handle(material, name), value);
 }
 
-RENDERER_API void vulkan_material_set_push_int(vulkan_material_t* material, const char* name, int value)
+SGE_API void vulkan_material_set_push_int(vulkan_material_t* material, const char* name, int value)
 {
 	vulkan_material_set_push_intH(material, vulkan_material_get_field_handle(material, name), value);
 }
 
-RENDERER_API void vulkan_material_set_push_uint(vulkan_material_t* material, const char* name, uint value)
+SGE_API void vulkan_material_set_push_uint(vulkan_material_t* material, const char* name, uint value)
 {
 	vulkan_material_set_push_uintH(material, vulkan_material_get_field_handle(material, name), value);
 }
 
-RENDERER_API void vulkan_material_set_push_vec2(vulkan_material_t* material, const char* name, vec2_t v)
+SGE_API void vulkan_material_set_push_vec2(vulkan_material_t* material, const char* name, vec2_t v)
 {
 	vulkan_material_set_push_vec2H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
-RENDERER_API void vulkan_material_set_push_vec3(vulkan_material_t* material, const char* name, vec3_t v)
+SGE_API void vulkan_material_set_push_vec3(vulkan_material_t* material, const char* name, vec3_t v)
 {
 	vulkan_material_set_push_vec3H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
-RENDERER_API void vulkan_material_set_push_vec4(vulkan_material_t* material, const char* name, vec4_t v)
+SGE_API void vulkan_material_set_push_vec4(vulkan_material_t* material, const char* name, vec4_t v)
 {
 	vulkan_material_set_push_vec4H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
-RENDERER_API void vulkan_material_set_push_mat2(vulkan_material_t* material, const char* name, mat2_t m)
+SGE_API void vulkan_material_set_push_mat2(vulkan_material_t* material, const char* name, mat2_t m)
 {
 	vulkan_material_set_push_mat2H(material, vulkan_material_get_field_handle(material, name), m);
 }
 
-RENDERER_API void vulkan_material_set_push_mat4(vulkan_material_t* material, const char* name, mat4_t m)
+SGE_API void vulkan_material_set_push_mat4(vulkan_material_t* material, const char* name, mat4_t m)
 {
 	vulkan_material_set_push_mat4H(material, vulkan_material_get_field_handle(material, name), m);
 }
 
-RENDERER_API float vulkan_material_get_push_float(vulkan_material_t* material, const char* name)
+SGE_API float vulkan_material_get_push_float(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_push_floatH(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API int vulkan_material_get_push_int(vulkan_material_t* material, const char* name)
+SGE_API int vulkan_material_get_push_int(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_push_intH(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API uint vulkan_material_get_push_uint(vulkan_material_t* material, const char* name)
+SGE_API uint vulkan_material_get_push_uint(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_push_uintH(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API vec2_t vulkan_material_get_push_vec2(vulkan_material_t* material, const char* name)
+SGE_API vec2_t vulkan_material_get_push_vec2(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_push_vec2H(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API vec3_t vulkan_material_get_push_vec3(vulkan_material_t* material, const char* name)
+SGE_API vec3_t vulkan_material_get_push_vec3(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_push_vec3H(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API vec4_t vulkan_material_get_push_vec4(vulkan_material_t* material, const char* name)
+SGE_API vec4_t vulkan_material_get_push_vec4(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_push_vec4H(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API mat2_t vulkan_material_get_push_mat2(vulkan_material_t* material, const char* name)
+SGE_API mat2_t vulkan_material_get_push_mat2(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_push_mat2H(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API mat4_t vulkan_material_get_push_mat4(vulkan_material_t* material, const char* name)
+SGE_API mat4_t vulkan_material_get_push_mat4(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_push_mat4H(material, vulkan_material_get_field_handle(material, name));
 }
@@ -400,73 +400,73 @@ static struct_descriptor_t* map_descriptor(vulkan_material_t* material, vulkan_m
 	return descriptor;
 }
 
-RENDERER_API void vulkan_material_set_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle, float value)
+SGE_API void vulkan_material_set_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle, float value)
 {
 	struct_descriptor_set_float(map_descriptor(material, handle), handle.field_handle, &value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle, int value)
+SGE_API void vulkan_material_set_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle, int value)
 {
 	struct_descriptor_set_int(map_descriptor(material, handle), handle.field_handle, &value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_uintH(vulkan_material_t* material, vulkan_material_field_handle_t handle, uint value)
+SGE_API void vulkan_material_set_uintH(vulkan_material_t* material, vulkan_material_field_handle_t handle, uint value)
 {
 	struct_descriptor_set_uint(map_descriptor(material, handle), handle.field_handle, &value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_vec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec2_t value)
+SGE_API void vulkan_material_set_vec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec2_t value)
 {
 	struct_descriptor_set_vec2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_vec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec3_t value)
+SGE_API void vulkan_material_set_vec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec3_t value)
 {
 	struct_descriptor_set_vec3(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_vec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec4_t value)
+SGE_API void vulkan_material_set_vec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, vec4_t value)
 {
 	struct_descriptor_set_vec4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_uvec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec2_t value)
+SGE_API void vulkan_material_set_uvec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec2_t value)
 {
 	struct_descriptor_set_uvec2(map_descriptor(material, handle), handle.field_handle, (uint*)&value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_uvec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec3_t value)
+SGE_API void vulkan_material_set_uvec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec3_t value)
 {
 	struct_descriptor_set_uvec3(map_descriptor(material, handle), handle.field_handle, (uint*)&value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_uvec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec4_t value)
+SGE_API void vulkan_material_set_uvec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, uvec4_t value)
 {
 	struct_descriptor_set_uvec4(map_descriptor(material, handle), handle.field_handle, (uint*)&value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat2_t value)
+SGE_API void vulkan_material_set_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat2_t value)
 {
 	struct_descriptor_set_mat2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_mat4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat4_t value)
+SGE_API void vulkan_material_set_mat4H(vulkan_material_t* material, vulkan_material_field_handle_t handle, mat4_t value)
 {
 	struct_descriptor_set_mat4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	unmap_descriptor(material, handle);
 }
 
-RENDERER_API void vulkan_material_set_textureH(vulkan_material_t* material, vulkan_material_field_handle_t handle, vulkan_texture_t* texture)
+SGE_API void vulkan_material_set_textureH(vulkan_material_t* material, vulkan_material_field_handle_t handle, vulkan_texture_t* texture)
 {
 	_debug_assert__(handle.index < material->shader->material_set_binding_count);
 	vulkan_shader_resource_description_t descriptor = material->shader->material_set_bindings[handle.index];
@@ -474,170 +474,170 @@ RENDERER_API void vulkan_material_set_textureH(vulkan_material_t* material, vulk
 	vulkan_descriptor_set_write_texture(&material->material_set, descriptor.binding_number, texture);
 }
 
-RENDERER_API float vulkan_material_get_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API float vulkan_material_get_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	float value;
 	struct_descriptor_get_float(map_descriptor(material, handle), handle.field_handle, &value);
 	return value;
 }
 
-RENDERER_API int vulkan_material_get_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API int vulkan_material_get_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	int value;
 	struct_descriptor_get_int(map_descriptor(material, handle), handle.field_handle, &value);
 	return value;
 }
 
-RENDERER_API uint vulkan_material_get_uintH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API uint vulkan_material_get_uintH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	uint value;
 	struct_descriptor_get_uint(map_descriptor(material, handle), handle.field_handle, &value);
 	return value;
 }
 
-RENDERER_API vec2_t vulkan_material_get_vec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API vec2_t vulkan_material_get_vec2H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	vec2_t value;
 	struct_descriptor_get_vec2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	return value;
 }
 
-RENDERER_API vec3_t vulkan_material_get_vec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API vec3_t vulkan_material_get_vec3H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	vec3_t value;
 	struct_descriptor_get_vec3(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	return value;
 }
 
-RENDERER_API vec4_t vulkan_material_get_vec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API vec4_t vulkan_material_get_vec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	vec4_t value;
 	struct_descriptor_get_vec4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	return value;
 }
 
-RENDERER_API mat2_t vulkan_material_get_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API mat2_t vulkan_material_get_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	mat2_t value;
 	struct_descriptor_get_mat2(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	return value;
 }
 
-RENDERER_API mat4_t vulkan_material_get_mat4H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API mat4_t vulkan_material_get_mat4H(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	mat4_t value;
 	struct_descriptor_get_mat4(map_descriptor(material, handle), handle.field_handle, (float*)&value);
 	return value;
 }
 
-RENDERER_API vulkan_texture_t* vulkan_material_get_texture2dH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API vulkan_texture_t* vulkan_material_get_texture2dH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
 	LOG_WRN("material_get_texture2dH isn't defined, for now it will return NULL\n");
 	return NULL;
 }
 
 /* functions accepting strings */
-RENDERER_API void vulkan_material_set_float(vulkan_material_t* material, const char* name, float value)
+SGE_API void vulkan_material_set_float(vulkan_material_t* material, const char* name, float value)
 {
 	vulkan_material_set_floatH(material, vulkan_material_get_field_handle(material, name), value);
 }
 
-RENDERER_API void vulkan_material_set_int(vulkan_material_t* material, const char* name, int value)
+SGE_API void vulkan_material_set_int(vulkan_material_t* material, const char* name, int value)
 {
 	vulkan_material_set_intH(material, vulkan_material_get_field_handle(material, name), value);
 }
 
-RENDERER_API void vulkan_material_set_uint(vulkan_material_t* material, const char* name, uint value)
+SGE_API void vulkan_material_set_uint(vulkan_material_t* material, const char* name, uint value)
 {
 	vulkan_material_set_uintH(material, vulkan_material_get_field_handle(material, name), value);
 }
 
-RENDERER_API void vulkan_material_set_vec2(vulkan_material_t* material, const char* name, vec2_t v)
+SGE_API void vulkan_material_set_vec2(vulkan_material_t* material, const char* name, vec2_t v)
 {
 	vulkan_material_set_vec2H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
-RENDERER_API void vulkan_material_set_vec3(vulkan_material_t* material, const char* name, vec3_t v)
+SGE_API void vulkan_material_set_vec3(vulkan_material_t* material, const char* name, vec3_t v)
 {
 	vulkan_material_set_vec3H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
-RENDERER_API void vulkan_material_set_vec4(vulkan_material_t* material, const char* name, vec4_t v)
+SGE_API void vulkan_material_set_vec4(vulkan_material_t* material, const char* name, vec4_t v)
 {
 	vulkan_material_set_vec4H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
-RENDERER_API void vulkan_material_set_uvec2(vulkan_material_t* material, const char* name, uvec2_t v)
+SGE_API void vulkan_material_set_uvec2(vulkan_material_t* material, const char* name, uvec2_t v)
 {
 	vulkan_material_set_uvec2H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
-RENDERER_API void vulkan_material_set_uvec3(vulkan_material_t* material, const char* name, uvec3_t v)
+SGE_API void vulkan_material_set_uvec3(vulkan_material_t* material, const char* name, uvec3_t v)
 {
  	vulkan_material_set_uvec3H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
-RENDERER_API void vulkan_material_set_uvec4(vulkan_material_t* material, const char* name, uvec4_t v)
+SGE_API void vulkan_material_set_uvec4(vulkan_material_t* material, const char* name, uvec4_t v)
 {
 	vulkan_material_set_uvec4H(material, vulkan_material_get_field_handle(material, name), v);
 }
 
-RENDERER_API void vulkan_material_set_mat2(vulkan_material_t* material, const char* name, mat2_t m)
+SGE_API void vulkan_material_set_mat2(vulkan_material_t* material, const char* name, mat2_t m)
 {
 	vulkan_material_set_mat2H(material, vulkan_material_get_field_handle(material, name), m);
 }
 
-RENDERER_API void vulkan_material_set_mat4(vulkan_material_t* material, const char* name, mat4_t m)
+SGE_API void vulkan_material_set_mat4(vulkan_material_t* material, const char* name, mat4_t m)
 {
 	vulkan_material_set_mat4H(material, vulkan_material_get_field_handle(material, name), m);
 }
 
-RENDERER_API void vulkan_material_set_texture(vulkan_material_t* material, const char* name, vulkan_texture_t* texture)
+SGE_API void vulkan_material_set_texture(vulkan_material_t* material, const char* name, vulkan_texture_t* texture)
 {
 	vulkan_material_set_textureH(material, vulkan_material_get_field_handle(material, name), texture);
 }
 
-RENDERER_API float vulkan_material_get_float(vulkan_material_t* material, const char* name)
+SGE_API float vulkan_material_get_float(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_floatH(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API int vulkan_material_get_int(vulkan_material_t* material, const char* name)
+SGE_API int vulkan_material_get_int(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_intH(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API uint vulkan_material_get_uint(vulkan_material_t* material, const char* name)
+SGE_API uint vulkan_material_get_uint(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_uintH(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API vec2_t vulkan_material_get_vec2(vulkan_material_t* material, const char* name)
+SGE_API vec2_t vulkan_material_get_vec2(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_vec2H(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API vec3_t vulkan_material_get_vec3(vulkan_material_t* material, const char* name)
+SGE_API vec3_t vulkan_material_get_vec3(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_vec3H(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API vec4_t vulkan_material_get_vec4(vulkan_material_t* material, const char* name)
+SGE_API vec4_t vulkan_material_get_vec4(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_vec4H(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API mat2_t vulkan_material_get_mat2(vulkan_material_t* material, const char* name)
+SGE_API mat2_t vulkan_material_get_mat2(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_mat2H(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API mat4_t vulkan_material_get_mat4(vulkan_material_t* material, const char* name)
+SGE_API mat4_t vulkan_material_get_mat4(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_mat4H(material, vulkan_material_get_field_handle(material, name));
 }
 
-RENDERER_API vulkan_texture_t* vulkan_material_get_texture2d(vulkan_material_t* material, const char* name)
+SGE_API vulkan_texture_t* vulkan_material_get_texture2d(vulkan_material_t* material, const char* name)
 {
 	return vulkan_material_get_texture2dH(material, vulkan_material_get_field_handle(material, name));
 }
@@ -668,7 +668,7 @@ static bool get_record_and_field_name(const char* const full_name, char out_stru
 	return true;
 }
 
-RENDERER_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vulkan_material_t* material, const char* name)
+SGE_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vulkan_material_t* material, const char* name)
 {
 	_debug_assert__(material->shader != NULL);
 
@@ -726,7 +726,7 @@ static pair_t(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_
 	return make_pair(vulkan_uniform_resource_ptr_t, vulkan_shader_resource_description_ptr_t) { NULL, NULL };
 }
 
-RENDERER_API void vulkan_material_set_array_size(vulkan_material_t* material, const char* name, u32 size)
+SGE_API void vulkan_material_set_array_size(vulkan_material_t* material, const char* name, u32 size)
 {
 	/* split the name into block_name and field_name */
 	char block_name[STRUCT_DESCRIPTOR_MAX_NAME_SIZE];
@@ -746,7 +746,7 @@ RENDERER_API void vulkan_material_set_array_size(vulkan_material_t* material, co
 	_debug_assert__(!struct_descriptor_is_variable_sized(descriptor));
 }
 
-RENDERER_API void vulkan_material_set_buffer(vulkan_material_t* material, const char* block_name, vulkan_buffer_t* buffer)
+SGE_API void vulkan_material_set_buffer(vulkan_material_t* material, const char* block_name, vulkan_buffer_t* buffer)
 {
 	AUTO resource_descriptor = get_uniform_resource_descriptor(material, block_name);
 	release_assert__(resource_descriptor.first != NULL, "Unable to find block name \"%s\" in the material", block_name);
@@ -772,7 +772,7 @@ RENDERER_API void vulkan_material_set_buffer(vulkan_material_t* material, const 
 	vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, buffer);
 }
 
-RENDERER_API const struct_descriptor_t* vulkan_material_get_interface(vulkan_material_t* material, const char* block_name)
+SGE_API const struct_descriptor_t* vulkan_material_get_interface(vulkan_material_t* material, const char* block_name)
 {
 	AUTO resource_descriptor = get_uniform_resource_descriptor(material, block_name);
 	_debug_assert__(resource_descriptor.second != NULL);

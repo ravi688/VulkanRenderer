@@ -28,27 +28,27 @@
 
 #include <renderer/defines.h>
 
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 	#include <renderer/internal/vulkan/vulkan_material.h>
 	typedef struct vulkan_texture_t vulkan_texture_t;
 	typedef vulkan_texture_t texture_t;
 	typedef vulkan_shader_t shader_t;
 	typedef vulkan_material_t material_t;
 	typedef vulkan_material_field_handle_t material_field_handle_t;
-#elif RENDERER_OPENGL_DRIVER
+#elif SGE_OPENGL_DRIVER
 	#include <renderer/internal/opengl/opengl_material.h>
 	typedef struct opengl_texture_t opengl_texture_t;
 	typedef opengl_shader_t shader_t;
 	typedef opengl_material_t material_t;
 	typedef opengl_material_field_handle_t material_field_handle_t;
-#elif RENDERER_DIRECTX_DRIVER
+#elif SGE_DIRECTX_DRIVER
 	#include <renderer/internal/directx/directx_material.h>
 	typedef struct directx_texture_t directx_texture_t;
 	typedef directx_texture_t directx_texture_t;
 	typedef directx_shader_t shader_t;
 	typedef directx_material_t material_t;
 	typedef directx_material_field_handle_t material_field_handle_t;
-#elif RENDERER_METAL_DRIVER
+#elif SGE_METAL_DRIVER
 	#include <renderer/internal/metal/metal_material.h>
 	typedef struct metal_texture_t metal_texture_t;
 	typedef metal_texture_t metal_texture_t;
@@ -66,90 +66,90 @@
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API material_t* material_new(memory_allocator_t* allocator);
-RENDERER_API material_t* material_create(renderer_t* renderer, shader_t* shader);
-RENDERER_API void material_create_no_alloc(renderer_t* renderer, shader_t* shader, material_t* material);
-RENDERER_API void material_destroy(material_t* material);
-RENDERER_API void material_release_resources(material_t* material);
+SGE_API material_t* material_new(memory_allocator_t* allocator);
+SGE_API material_t* material_create(renderer_t* renderer, shader_t* shader);
+SGE_API void material_create_no_alloc(renderer_t* renderer, shader_t* shader, material_t* material);
+SGE_API void material_destroy(material_t* material);
+SGE_API void material_release_resources(material_t* material);
 
-RENDERER_API material_field_handle_t material_get_field_handle(material_t* material, const char* name);
+SGE_API material_field_handle_t material_get_field_handle(material_t* material, const char* name);
 
-RENDERER_API void material_set_push_floatH(material_t* material, material_field_handle_t handle, float value);
-RENDERER_API void material_set_push_intH(material_t* material, material_field_handle_t handle, int value);
-RENDERER_API void material_set_push_uintH(material_t* material, material_field_handle_t handle, uint value);
-RENDERER_API void material_set_push_vec2H(material_t* material, material_field_handle_t handle, vec2_t value);
-RENDERER_API void material_set_push_vec3H(material_t* material, material_field_handle_t handle, vec3_t value);
-RENDERER_API void material_set_push_vec4H(material_t* material, material_field_handle_t handle, vec4_t value);
-RENDERER_API void material_set_push_mat2H(material_t* material, material_field_handle_t handle, mat2_t value);
-RENDERER_API void material_set_push_mat4H(material_t* material, material_field_handle_t handle, mat4_t value);
+SGE_API void material_set_push_floatH(material_t* material, material_field_handle_t handle, float value);
+SGE_API void material_set_push_intH(material_t* material, material_field_handle_t handle, int value);
+SGE_API void material_set_push_uintH(material_t* material, material_field_handle_t handle, uint value);
+SGE_API void material_set_push_vec2H(material_t* material, material_field_handle_t handle, vec2_t value);
+SGE_API void material_set_push_vec3H(material_t* material, material_field_handle_t handle, vec3_t value);
+SGE_API void material_set_push_vec4H(material_t* material, material_field_handle_t handle, vec4_t value);
+SGE_API void material_set_push_mat2H(material_t* material, material_field_handle_t handle, mat2_t value);
+SGE_API void material_set_push_mat4H(material_t* material, material_field_handle_t handle, mat4_t value);
 
-RENDERER_API void material_set_push_float(material_t* material, const char* name, float value);
-RENDERER_API void material_set_push_int(material_t* material, const char* name, int value);
-RENDERER_API void material_set_push_uint(material_t* material, const char* name, uint value);
-RENDERER_API void material_set_push_vec2(material_t* material, const char* name, vec2_t v);
-RENDERER_API void material_set_push_vec3(material_t* material, const char* name, vec3_t v);
-RENDERER_API void material_set_push_vec4(material_t* material, const char* name, vec4_t v);
-RENDERER_API void material_set_push_mat2(material_t* material, const char* name, mat2_t m);
-RENDERER_API void material_set_push_mat4(material_t* material, const char* name, mat4_t m);
+SGE_API void material_set_push_float(material_t* material, const char* name, float value);
+SGE_API void material_set_push_int(material_t* material, const char* name, int value);
+SGE_API void material_set_push_uint(material_t* material, const char* name, uint value);
+SGE_API void material_set_push_vec2(material_t* material, const char* name, vec2_t v);
+SGE_API void material_set_push_vec3(material_t* material, const char* name, vec3_t v);
+SGE_API void material_set_push_vec4(material_t* material, const char* name, vec4_t v);
+SGE_API void material_set_push_mat2(material_t* material, const char* name, mat2_t m);
+SGE_API void material_set_push_mat4(material_t* material, const char* name, mat4_t m);
 
-RENDERER_API float material_get_push_floatH(material_t* material, material_field_handle_t handle);
-RENDERER_API int material_get_push_intH(material_t* material, material_field_handle_t handle);
-RENDERER_API uint material_get_push_uintH(material_t* material, material_field_handle_t handle);
-RENDERER_API vec2_t material_get_push_vec2H(material_t* material, material_field_handle_t handle);
-RENDERER_API vec3_t material_get_push_vec3H(material_t* material, material_field_handle_t handle);
-RENDERER_API vec4_t material_get_push_vec4H(material_t* material, material_field_handle_t handle);
-RENDERER_API mat2_t material_get_push_mat2H(material_t* material, material_field_handle_t handle);
-RENDERER_API mat4_t material_get_push_mat4H(material_t* material, material_field_handle_t handle);
+SGE_API float material_get_push_floatH(material_t* material, material_field_handle_t handle);
+SGE_API int material_get_push_intH(material_t* material, material_field_handle_t handle);
+SGE_API uint material_get_push_uintH(material_t* material, material_field_handle_t handle);
+SGE_API vec2_t material_get_push_vec2H(material_t* material, material_field_handle_t handle);
+SGE_API vec3_t material_get_push_vec3H(material_t* material, material_field_handle_t handle);
+SGE_API vec4_t material_get_push_vec4H(material_t* material, material_field_handle_t handle);
+SGE_API mat2_t material_get_push_mat2H(material_t* material, material_field_handle_t handle);
+SGE_API mat4_t material_get_push_mat4H(material_t* material, material_field_handle_t handle);
 
-RENDERER_API float material_get_push_float(material_t* material, const char* name);
-RENDERER_API int material_get_push_int(material_t* material, const char* name);
-RENDERER_API uint material_get_push_uint(material_t* material, const char* name);
-RENDERER_API vec2_t material_get_push_vec2(material_t* material, const char* name);
-RENDERER_API vec3_t material_get_push_vec3(material_t* material, const char* name);
-RENDERER_API vec4_t material_get_push_vec4(material_t* material, const char* name);
-RENDERER_API mat2_t material_get_push_mat2(material_t* material, const char* name);
-RENDERER_API mat4_t material_get_push_mat4(material_t* material, const char* name);
-
-
-RENDERER_API void material_set_floatH(material_t* material, material_field_handle_t handle, float value);
-RENDERER_API void material_set_intH(material_t* material, material_field_handle_t handle, int value);
-RENDERER_API void material_set_uintH(material_t* material, material_field_handle_t handle, uint value);
-RENDERER_API void material_set_vec2H(material_t* material, material_field_handle_t handle, vec2_t v);
-RENDERER_API void material_set_vec3H(material_t* material, material_field_handle_t handle, vec3_t v);
-RENDERER_API void material_set_vec4H(material_t* material, material_field_handle_t handle, vec4_t v);
-RENDERER_API void material_set_mat2H(material_t* material, material_field_handle_t handle, mat2_t m);
-RENDERER_API void material_set_mat4H(material_t* material, material_field_handle_t handle, mat4_t m);
-RENDERER_API void material_set_textureH(material_t* material, material_field_handle_t handle, texture_t* texture);
-
-RENDERER_API void material_set_float(material_t* material, const char* name, float value);
-RENDERER_API void material_set_int(material_t* material, const char* name, int value);
-RENDERER_API void material_set_uint(material_t* material, const char* name, uint value);
-RENDERER_API void material_set_vec2(material_t* material, const char* name, vec2_t v);
-RENDERER_API void material_set_vec3(material_t* material, const char* name, vec3_t v);
-RENDERER_API void material_set_vec4(material_t* material, const char* name, vec4_t v);
-RENDERER_API void material_set_mat2(material_t* material, const char* name, mat2_t m);
-RENDERER_API void material_set_mat4(material_t* material, const char* name, mat4_t m);
-RENDERER_API void material_set_texture(material_t* material, const char* name, texture_t* texture);
+SGE_API float material_get_push_float(material_t* material, const char* name);
+SGE_API int material_get_push_int(material_t* material, const char* name);
+SGE_API uint material_get_push_uint(material_t* material, const char* name);
+SGE_API vec2_t material_get_push_vec2(material_t* material, const char* name);
+SGE_API vec3_t material_get_push_vec3(material_t* material, const char* name);
+SGE_API vec4_t material_get_push_vec4(material_t* material, const char* name);
+SGE_API mat2_t material_get_push_mat2(material_t* material, const char* name);
+SGE_API mat4_t material_get_push_mat4(material_t* material, const char* name);
 
 
-RENDERER_API float material_get_floatH(material_t* material, material_field_handle_t handle);
-RENDERER_API int material_get_intH(material_t* material, material_field_handle_t handle);
-RENDERER_API uint material_get_uintH(material_t* material, material_field_handle_t handle);
-RENDERER_API vec2_t material_get_vec2H(material_t* material, material_field_handle_t handle);
-RENDERER_API vec3_t material_get_vec3H(material_t* material, material_field_handle_t handle);
-RENDERER_API vec4_t material_get_vec4H(material_t* material, material_field_handle_t handle);
-RENDERER_API mat2_t material_get_mat2H(material_t* material, material_field_handle_t handle);
-RENDERER_API mat4_t material_get_mat4H(material_t* material, material_field_handle_t handle);
-RENDERER_API texture_t* material_get_texture2dH(material_t* material, material_field_handle_t handle);
+SGE_API void material_set_floatH(material_t* material, material_field_handle_t handle, float value);
+SGE_API void material_set_intH(material_t* material, material_field_handle_t handle, int value);
+SGE_API void material_set_uintH(material_t* material, material_field_handle_t handle, uint value);
+SGE_API void material_set_vec2H(material_t* material, material_field_handle_t handle, vec2_t v);
+SGE_API void material_set_vec3H(material_t* material, material_field_handle_t handle, vec3_t v);
+SGE_API void material_set_vec4H(material_t* material, material_field_handle_t handle, vec4_t v);
+SGE_API void material_set_mat2H(material_t* material, material_field_handle_t handle, mat2_t m);
+SGE_API void material_set_mat4H(material_t* material, material_field_handle_t handle, mat4_t m);
+SGE_API void material_set_textureH(material_t* material, material_field_handle_t handle, texture_t* texture);
 
-RENDERER_API float material_get_float(material_t* material, const char* name);
-RENDERER_API int material_get_int(material_t* material, const char* name);
-RENDERER_API uint material_get_uint(material_t* material, const char* name);
-RENDERER_API vec2_t material_get_vec2(material_t* material, const char* name);
-RENDERER_API vec3_t material_get_vec3(material_t* material, const char* name);
-RENDERER_API vec4_t material_get_vec4(material_t* material, const char* name);
-RENDERER_API mat2_t material_get_mat2(material_t* material, const char* name);
-RENDERER_API mat4_t material_get_mat4(material_t* material, const char* name);
-RENDERER_API texture_t* material_get_texture2d(material_t* material, const char* name);
+SGE_API void material_set_float(material_t* material, const char* name, float value);
+SGE_API void material_set_int(material_t* material, const char* name, int value);
+SGE_API void material_set_uint(material_t* material, const char* name, uint value);
+SGE_API void material_set_vec2(material_t* material, const char* name, vec2_t v);
+SGE_API void material_set_vec3(material_t* material, const char* name, vec3_t v);
+SGE_API void material_set_vec4(material_t* material, const char* name, vec4_t v);
+SGE_API void material_set_mat2(material_t* material, const char* name, mat2_t m);
+SGE_API void material_set_mat4(material_t* material, const char* name, mat4_t m);
+SGE_API void material_set_texture(material_t* material, const char* name, texture_t* texture);
+
+
+SGE_API float material_get_floatH(material_t* material, material_field_handle_t handle);
+SGE_API int material_get_intH(material_t* material, material_field_handle_t handle);
+SGE_API uint material_get_uintH(material_t* material, material_field_handle_t handle);
+SGE_API vec2_t material_get_vec2H(material_t* material, material_field_handle_t handle);
+SGE_API vec3_t material_get_vec3H(material_t* material, material_field_handle_t handle);
+SGE_API vec4_t material_get_vec4H(material_t* material, material_field_handle_t handle);
+SGE_API mat2_t material_get_mat2H(material_t* material, material_field_handle_t handle);
+SGE_API mat4_t material_get_mat4H(material_t* material, material_field_handle_t handle);
+SGE_API texture_t* material_get_texture2dH(material_t* material, material_field_handle_t handle);
+
+SGE_API float material_get_float(material_t* material, const char* name);
+SGE_API int material_get_int(material_t* material, const char* name);
+SGE_API uint material_get_uint(material_t* material, const char* name);
+SGE_API vec2_t material_get_vec2(material_t* material, const char* name);
+SGE_API vec3_t material_get_vec3(material_t* material, const char* name);
+SGE_API vec4_t material_get_vec4(material_t* material, const char* name);
+SGE_API mat2_t material_get_mat2(material_t* material, const char* name);
+SGE_API mat4_t material_get_mat4(material_t* material, const char* name);
+SGE_API texture_t* material_get_texture2d(material_t* material, const char* name);
 
 END_CPP_COMPATIBLE

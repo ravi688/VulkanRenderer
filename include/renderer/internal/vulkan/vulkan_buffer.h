@@ -72,7 +72,7 @@ BEGIN_CPP_COMPATIBLE
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_buffer_init(vulkan_buffer_t* buffer);
+SGE_API void vulkan_buffer_init(vulkan_buffer_t* buffer);
 
 /* 
 	description:
@@ -82,7 +82,7 @@ RENDERER_API void vulkan_buffer_init(vulkan_buffer_t* buffer);
 	returns:
 		pointer to newly created vulkan_buffer_t object on the heap
  */
-RENDERER_API vulkan_buffer_t* vulkan_buffer_new(memory_allocator_t* allocator);
+SGE_API vulkan_buffer_t* vulkan_buffer_new(memory_allocator_t* allocator);
 
 /* 
 	description:
@@ -94,7 +94,7 @@ RENDERER_API vulkan_buffer_t* vulkan_buffer_new(memory_allocator_t* allocator);
 	returns:
 		pointer to newly created vulkan_buffer_t object on the heap
  */
-RENDERER_API vulkan_buffer_t* vulkan_buffer_create(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info);
+SGE_API vulkan_buffer_t* vulkan_buffer_create(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info);
 
 /* 
 	description:
@@ -106,7 +106,7 @@ RENDERER_API vulkan_buffer_t* vulkan_buffer_create(vulkan_renderer_t* renderer, 
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer);
+SGE_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_buffer_create_info_t* create_info, vulkan_buffer_t* buffer);
 
 /*
 	description:
@@ -116,7 +116,7 @@ RENDERER_API void vulkan_buffer_create_no_alloc(vulkan_renderer_t* renderer, vul
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_buffer_destroy(vulkan_buffer_t* buffer);
+SGE_API void vulkan_buffer_destroy(vulkan_buffer_t* buffer);
 
 /*
 	description:
@@ -127,7 +127,7 @@ RENDERER_API void vulkan_buffer_destroy(vulkan_buffer_t* buffer);
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_buffer_release_resources(vulkan_buffer_t* buffer);
+SGE_API void vulkan_buffer_release_resources(vulkan_buffer_t* buffer);
 
 /*
 	description:
@@ -140,7 +140,7 @@ RENDERER_API void vulkan_buffer_release_resources(vulkan_buffer_t* buffer);
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* data, u32 data_size);
+SGE_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* data, u32 data_size);
 
 /*
 	description:
@@ -150,7 +150,7 @@ RENDERER_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_of
 	returns:
 		nothing
  */
-RENDERER_API void* vulkan_buffer_map(vulkan_buffer_t* buffer);
+SGE_API void* vulkan_buffer_map(vulkan_buffer_t* buffer);
 
 /*
 	description:
@@ -160,7 +160,7 @@ RENDERER_API void* vulkan_buffer_map(vulkan_buffer_t* buffer);
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_buffer_unmap(vulkan_buffer_t* buffer);
+SGE_API void vulkan_buffer_unmap(vulkan_buffer_t* buffer);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_size(vulkan_buffer_t* buffer)
 {

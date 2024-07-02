@@ -35,7 +35,7 @@
 // TODO: remove it after debugging
 #include <renderer/debug.h>
 
-RENDERER_API vulkan_attachment_t* vulkan_attachment_new(memory_allocator_t* allocator)
+SGE_API vulkan_attachment_t* vulkan_attachment_new(memory_allocator_t* allocator)
 {
 	vulkan_attachment_t* attachment = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ATTACHMENT, vulkan_attachment_t);
 	memzero(attachment, vulkan_attachment_t);
@@ -43,7 +43,7 @@ RENDERER_API vulkan_attachment_t* vulkan_attachment_new(memory_allocator_t* allo
 	return attachment;
 }
 
-RENDERER_API vulkan_attachment_t* vulkan_attachment_create(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info)
+SGE_API vulkan_attachment_t* vulkan_attachment_create(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info)
 {
 	vulkan_attachment_t* attachment = vulkan_attachment_new(renderer->allocator);
 	vulkan_attachment_create_no_alloc(renderer, create_info, attachment);
@@ -182,7 +182,7 @@ UNUSED_FUNCTION static VkImageLayout get_layout_from_format(VkFormat format)
 	return VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
-RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment)
+SGE_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer, vulkan_attachment_create_info_t* create_info, vulkan_attachment_t OUT attachment)
 {
 	VULKAN_OBJECT_MEMZERO(attachment, vulkan_attachment_t);
 	attachment->renderer = renderer;
@@ -239,7 +239,7 @@ RENDERER_API void vulkan_attachment_create_no_alloc(vulkan_renderer_t* renderer,
 	memcopy(attachment->view_create_info, &view_create_info, vulkan_image_view_create_info_t);
 }
 
-RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)
+SGE_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)
 {
 	vulkan_image_destroy(&attachment->image);
 	vulkan_image_view_destroy(&attachment->image_view);
@@ -250,7 +250,7 @@ RENDERER_API void vulkan_attachment_destroy(vulkan_attachment_t* attachment)
 	}
 }
 
-RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment)
+SGE_API void vulkan_attachment_release_resources(vulkan_attachment_t* attachment)
 {
 	vulkan_image_release_resources(&attachment->image);
 	vulkan_image_view_release_resources(&attachment->image_view);
@@ -260,7 +260,7 @@ RENDERER_API void vulkan_attachment_release_resources(vulkan_attachment_t* attac
 		memory_allocator_dealloc(attachment->renderer->allocator, attachment);
 }
 
-RENDERER_API void vulkan_attachment_recreate(vulkan_attachment_t* attachment, vulkan_attachment_recreate_info_t* info)
+SGE_API void vulkan_attachment_recreate(vulkan_attachment_t* attachment, vulkan_attachment_recreate_info_t* info)
 {
 	/* recreate VkImage object */
 	/* we can't just call vulkan_attachment_destroy as we need to persist the sampler object (recreating that is a redundant thing) */
@@ -278,12 +278,12 @@ RENDERER_API void vulkan_attachment_recreate(vulkan_attachment_t* attachment, vu
 	vulkan_image_view_create_no_alloc(attachment->renderer, attachment->view_create_info, &attachment->image_view);
 }
 
-RENDERER_API vulkan_image_t* vulkan_attachment_get_image(vulkan_attachment_t* attachment)
+SGE_API vulkan_image_t* vulkan_attachment_get_image(vulkan_attachment_t* attachment)
 {
 	return &attachment->image;
 }
 
-RENDERER_API vulkan_image_view_t* vulkan_attachment_get_image_view(vulkan_attachment_t* attachment)
+SGE_API vulkan_image_view_t* vulkan_attachment_get_image_view(vulkan_attachment_t* attachment)
 {
 	return &attachment->image_view;
 }

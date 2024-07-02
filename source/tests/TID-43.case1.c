@@ -66,7 +66,7 @@ static void swapchain_recreate(void* publisher_data, void* handler_data)
 	debug_log_info("Swapchain recreate success!");
 }
 
-TEST_ON_RENDERER_INITIALIZE(TID_43_CASE_1)
+TEST_ON_SGE_INITIALIZE(TID_43_CASE_1)
 {
 	return (renderer_initialization_data_t)
 	{

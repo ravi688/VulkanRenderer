@@ -41,7 +41,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator)
+SGE_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator)
 {
 	vulkan_render_queue_t* queue = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_QUEUE, vulkan_render_queue_t);
 	memzero(queue, vulkan_render_queue_t);
@@ -49,7 +49,7 @@ RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* 
 	return queue;
 }
 
-RENDERER_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type)
+SGE_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type)
 {
 	vulkan_render_queue_t* queue = vulkan_render_queue_new(renderer->allocator);
 	vulkan_render_queue_create_no_alloc(renderer, type, queue);
@@ -60,7 +60,7 @@ typedef BUFFER subpass_shader_list_t;
 typedef BUFFER /* element_type: vulkan_render_object_t* */ render_object_list_t;
 typedef dictionary_t material_and_render_object_list_map_t;
 
-RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type, vulkan_render_queue_t OUT queue)
+SGE_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type, vulkan_render_queue_t OUT queue)
 {
 	VULKAN_OBJECT_MEMZERO(queue, vulkan_render_queue_t);
 
@@ -75,7 +75,7 @@ RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* rendere
 	vulkan_render_pass_graph_create_no_alloc(renderer, &queue->pass_graph);
 }
 
-RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
+SGE_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 {
 	/* TODO:
 	 * if(queue->scene != NULL)
@@ -118,7 +118,7 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 	vulkan_render_pass_graph_destroy(&queue->pass_graph);
 }
 
-RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue)
+SGE_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue)
 {
 	dictionary_free(&queue->render_pass_handles);
 	dictionary_free(&queue->shader_handles);
@@ -129,7 +129,7 @@ RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* q
 		memory_allocator_dealloc(queue->renderer->allocator, queue);
 }
 
-RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue)
+SGE_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue)
 {
 	buf_ucount_t count = dictionary_get_count(&queue->shader_handles);
 	for(buf_ucount_t i = 0; i < count; i++)
@@ -155,7 +155,7 @@ RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t*
 	}
 }
 
-RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj)
+SGE_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj)
 {
 	/* we need to preserve reference to the queue whether the object has material or not,
 	 * as it might be possible the user want to add the render object first
@@ -220,11 +220,11 @@ RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_r
 }
 
 // TODO
-RENDERER_API void vulkan_render_queue_remove_materialH();
-RENDERER_API void vulkan_render_queue_remove_render_passH();
-RENDERER_API void vulkan_render_queue_remove_shaderH();
+SGE_API void vulkan_render_queue_remove_materialH();
+SGE_API void vulkan_render_queue_remove_render_passH();
+SGE_API void vulkan_render_queue_remove_shaderH();
 
-RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_t* object)
+SGE_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_t* object)
 {
 	material_and_render_object_list_map_t* map = dictionary_get_value_ptr(&queue->shader_handles, &object->material->shader->handle);
 	render_object_list_t* list = dictionary_get_value_ptr(map, &object->material->handle);
@@ -235,7 +235,7 @@ RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulk
 	object->queue = NULL;
 }
 
-RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
+SGE_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
 {
 	debug_log_info("Building optimized render path ...");
 	vulkan_render_pass_graph_dump(&queue->pass_graph);
@@ -252,7 +252,7 @@ DEBUG_BLOCK
 	queue->is_ready = true;
 }
 
-RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
+SGE_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
 	vulkan_shader_t* shader = material->shader;
 	vulkan_shader_render_pass_counter_reset(shader);
@@ -339,7 +339,7 @@ RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_que
 	}
 }
 
-RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
+SGE_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
 	debug_assert_wrn__(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it");
 

@@ -28,7 +28,7 @@
 
 #include <renderer/defines.h>
 
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 	#include <renderer/internal/vulkan/vulkan_material_library.h>
 	typedef vulkan_material_library_t material_library_t;
 	typedef vulkan_material_t material_t;
@@ -38,7 +38,7 @@
 	typedef vulkan_shader_t shader_t;
 	typedef vulkan_shader_library_t shader_library_t;
 	typedef vulkan_shader_handle_t shader_handle_t;
-#elif defined(RENDERER_OPENGL_DRIVER)
+#elif defined(SGE_OPENGL_DRIVER)
 	#include <renderer/internal/opengl/opengl_material_library.h>
 	typedef opengl_material_library_t material_library_t;
 	typedef opengl_material_t material_t;
@@ -48,7 +48,7 @@
 	typedef opengl_shader_t shader_t;
 	typedef opengl_shader_library_t shader_library_t;
 	typedef opengl_shader_handle_t shader_handle_t;
-#elif defined(RENDERER_DIRECTX_DRIVER)
+#elif defined(SGE_DIRECTX_DRIVER)
 	#include <renderer/internal/directx/directx_material_library.h>
 	typedef directx_material_library_t material_library_t;
 	typedef directx_material_t material_t;
@@ -58,7 +58,7 @@
 	typedef directx_shader_t shader_t;
 	typedef directx_shader_library_t shader_library_t;
 	typedef directx_shader_handle_t shader_handle_t;
-#elif defined(RENDERER_METAL_DRIVER)
+#elif defined(SGE_METAL_DRIVER)
 	#include <renderer/internal/metal/metal_material_library.h>
 	typedef metal_material_library_t material_library_t;
 	typedef metal_material_t material_t;
@@ -71,10 +71,10 @@
 #endif
 
 /* constructors & destructors */
-RENDERER_API material_library_t* material_library_new(memory_allocator_t* allocator);
-RENDERER_API material_library_t* material_library_create(renderer_t* renderer, shader_library_t* shader_library);
-RENDERER_API void material_library_destroy(material_library_t* library);
-RENDERER_API void material_library_release_resources(material_library_t* library);
+SGE_API material_library_t* material_library_new(memory_allocator_t* allocator);
+SGE_API material_library_t* material_library_create(renderer_t* renderer, shader_library_t* shader_library);
+SGE_API void material_library_destroy(material_library_t* library);
+SGE_API void material_library_release_resources(material_library_t* library);
 
 /* logic functions */
 
@@ -88,7 +88,7 @@ RENDERER_API void material_library_release_resources(material_library_t* library
 		material_handle_t, handle to the material_t object just created
 		MATERIAL_HANDLE_INVALID, if the creation failed
  */
-RENDERER_API material_handle_t material_library_create_material(material_library_t* library, const char* shader_name, const char* material_name);
+SGE_API material_handle_t material_library_create_material(material_library_t* library, const char* shader_name, const char* material_name);
 
 /*
 	description: creates a material into the library with a shader handle 'handle' with the identification name as 'material_name'
@@ -100,7 +100,7 @@ RENDERER_API material_handle_t material_library_create_material(material_library
 		material_handle_t, handle to the material_t object just created
 		MATERIAL_HANDLE_INVALID, if the creation failed
  */
-RENDERER_API material_handle_t material_library_create_materialH(material_library_t* library, shader_handle_t handle, const char* material_name);
+SGE_API material_handle_t material_library_create_materialH(material_library_t* library, shader_handle_t handle, const char* material_name);
 
 /*
 	description: loads and creates a material into the library with the identification name as 'material_name'
@@ -112,7 +112,7 @@ RENDERER_API material_handle_t material_library_create_materialH(material_librar
 		material_handle_t, handle to the material_t object just loaded & created
 		MATERAIL_HANDLE_INVALID, if the creation or load failed
  */
-RENDERER_API material_handle_t material_library_load_material(material_library_t* library, const char* file_path);
+SGE_API material_handle_t material_library_load_material(material_library_t* library, const char* file_path);
 
 /*
 	description: destroys & removes a material in the library with the material named as 'material_name'
@@ -123,7 +123,7 @@ RENDERER_API material_handle_t material_library_load_material(material_library_t
 		true, if the destruction succeed
 		false, if the destruction failed
  */
-RENDERER_API bool material_library_destroy_material(material_library_t* library, const char* material_name);
+SGE_API bool material_library_destroy_material(material_library_t* library, const char* material_name);
 
 /*
 	description: destroys & removes a material in the library with the material having handle as 'handle'
@@ -134,7 +134,7 @@ RENDERER_API bool material_library_destroy_material(material_library_t* library,
 		true, if the destruction succeed
 		false, if the destruction failed
  */
-RENDERER_API bool material_library_destroy_materialH(material_library_t* library, material_handle_t handle);
+SGE_API bool material_library_destroy_materialH(material_library_t* library, material_handle_t handle);
 
 /*
 	description: serializes the material_library_t object into stream of bytes (BUFFER* object)
@@ -144,7 +144,7 @@ RENDERER_API bool material_library_destroy_materialH(material_library_t* library
 		ptr to the BUFFER object containing the serialized bytes
 		NULL, if the serialization failed
  */
-RENDERER_API BUFFER* material_library_serialize(material_library_t* library);
+SGE_API BUFFER* material_library_serialize(material_library_t* library);
 
 /*
 	description: deserializes a stream of bytes into material_library_t object
@@ -155,7 +155,7 @@ RENDERER_API BUFFER* material_library_serialize(material_library_t* library);
 		ptr to the deserialized material_library_t object
 		NULL if the deserialization failed
  */
-RENDERER_API material_library_t* material_library_deserialize(void* bytes, u64 length);
+SGE_API material_library_t* material_library_deserialize(void* bytes, u64 length);
 
 /*
 	description: deserializes a stream of bytes into material_library_t object
@@ -166,7 +166,7 @@ RENDERER_API material_library_t* material_library_deserialize(void* bytes, u64 l
 	returns:
 		true if the deserialization succeed, otherwise false
  */
-RENDERER_API bool material_library_deserialize_no_alloc(void* bytes, u64 length, material_library_t* out_library);
+SGE_API bool material_library_deserialize_no_alloc(void* bytes, u64 length, material_library_t* out_library);
 
 /* getters */
 
@@ -179,7 +179,7 @@ RENDERER_API bool material_library_deserialize_no_alloc(void* bytes, u64 length,
 		material_handle_t, handle to the material object
 		MATERIAL_HANDLE_INVALID, if the material object isn't found with name 'material_name'
  */
-RENDERER_API material_handle_t material_library_get_handle(material_library_t* library, const char* material_name);
+SGE_API material_handle_t material_library_get_handle(material_library_t* library, const char* material_name);
 
 /*
 	description: returns a ptr to the material with the name 'material_name'
@@ -190,7 +190,7 @@ RENDERER_API material_handle_t material_library_get_handle(material_library_t* l
 		material_t*, ptr to the material object
 		NULL, if the material object isn't found with the name 'name'
  */
-RENDERER_API material_t* material_library_get(material_library_t* library, const char* material_name);
+SGE_API material_t* material_library_get(material_library_t* library, const char* material_name);
 
 /*
 	description: returns a ptr to the material with the handle 'handle'
@@ -201,7 +201,7 @@ RENDERER_API material_t* material_library_get(material_library_t* library, const
 		material_t*, ptr to the material object 
 		NULL, if the material object isn't found with handle 'handle'
  */
-RENDERER_API material_t* material_library_getH(material_library_t* library, material_handle_t handle);
+SGE_API material_t* material_library_getH(material_library_t* library, material_handle_t handle);
 
 /*
 	description: returns the name of the material with the handle 'handle'
@@ -212,5 +212,5 @@ RENDERER_API material_t* material_library_getH(material_library_t* library, mate
 		const char*, name of the material object
 		NULL, if the material object isn't found with handle 'handle'
  */
-RENDERER_API const char* material_library_get_nameH(material_library_t* library, material_handle_t handle);
+SGE_API const char* material_library_get_nameH(material_library_t* library, material_handle_t handle);
 

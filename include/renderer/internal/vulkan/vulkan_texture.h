@@ -143,7 +143,7 @@ typedef struct vulkan_texture_t
 BEGIN_CPP_COMPATIBLE
 
 /* creates a new vulkan_texture_t object, ready to be used in vulkan_texture_create_no_alloc function */
-RENDERER_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator);
+SGE_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator);
 
 /*	
 	description:
@@ -154,9 +154,9 @@ RENDERER_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator)
 	returns:
 		pointer to the newly created vulkan texture object
  */
-RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info);
-RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info, vulkan_texture_t OUT texture);
-RENDERER_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_texture_recreate_info_t* recreate_info);
+SGE_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info);
+SGE_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info, vulkan_texture_t OUT texture);
+SGE_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_texture_recreate_info_t* recreate_info);
 
 /*
 	description:
@@ -166,7 +166,7 @@ RENDERER_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_text
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture);
+SGE_API void vulkan_texture_destroy(vulkan_texture_t* texture);
 
 /*
 	description:
@@ -176,13 +176,13 @@ RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture);
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture);
+SGE_API void vulkan_texture_release_resources(vulkan_texture_t* texture);
 
 /* transitions from initial usage state to the runtime usage state */
-RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulkan_texture_usage_stage_t stage);
+SGE_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulkan_texture_usage_stage_t stage);
 
 /* uploads the data to the GPU local memory */
-RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data_count, vulkan_texture_data_t* data);
+SGE_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data_count, vulkan_texture_data_t* data);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_image_view_t* vulkan_texture_get_image_views(vulkan_texture_t* texture)
 {

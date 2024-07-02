@@ -103,18 +103,18 @@ typedef struct vulkan_render_object_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructurs */
-RENDERER_API vulkan_render_object_t* vulkan_render_object_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info);
-RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object);
-RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* object);
-RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t* object);
+SGE_API vulkan_render_object_t* vulkan_render_object_new(memory_allocator_t* allocator);
+SGE_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info);
+SGE_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object);
+SGE_API void vulkan_render_object_destroy(vulkan_render_object_t* object);
+SGE_API void vulkan_render_object_release_resources(vulkan_render_object_t* object);
 
-RENDERER_API void vulkan_render_object_attach(vulkan_render_object_t* object, void* user_data);
-RENDERER_API void vulkan_render_object_draw(vulkan_render_object_t* object);
-RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* object, vulkan_material_t* material);
-RENDERER_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* object);
-RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* object, mat4_t transform);
-RENDERER_API mat4_t vulkan_render_object_get_transform(vulkan_render_object_t* object);
-RENDERER_API mat4_t vulkan_render_object_get_normal(vulkan_render_object_t* object);
+SGE_API void vulkan_render_object_attach(vulkan_render_object_t* object, void* user_data);
+SGE_API void vulkan_render_object_draw(vulkan_render_object_t* object);
+SGE_API void vulkan_render_object_set_material(vulkan_render_object_t* object, vulkan_material_t* material);
+SGE_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* object);
+SGE_API void vulkan_render_object_set_transform(vulkan_render_object_t* object, mat4_t transform);
+SGE_API mat4_t vulkan_render_object_get_transform(vulkan_render_object_t* object);
+SGE_API mat4_t vulkan_render_object_get_normal(vulkan_render_object_t* object);
 
 END_CPP_COMPATIBLE

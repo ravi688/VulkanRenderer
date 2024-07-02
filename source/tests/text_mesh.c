@@ -31,9 +31,9 @@
 
 #include <renderer/tests/text_mesh.h>
 
-#define RENDERER_INCLUDE_MATH
-#define RENDERER_INCLUDE_3D_TEXT_RENDER_SYSTEM
-#define RENDERER_INCLUDE_CORE
+#define SGE_INCLUDE_MATH
+#define SGE_INCLUDE_3D_TEXT_RENDER_SYSTEM
+#define SGE_INCLUDE_CORE
 #include <renderer/renderer.h>
 #include <renderer/conio.h>
 
@@ -57,7 +57,7 @@ TEST_DATA(TEXT_MESH)
 
 SETUP_TEST(TEXT_MESH);
 
-TEST_ON_RENDERER_INITIALIZE(TEXT_MESH)
+TEST_ON_SGE_INITIALIZE(TEXT_MESH)
 {
 	return (renderer_initialization_data_t)
 	{

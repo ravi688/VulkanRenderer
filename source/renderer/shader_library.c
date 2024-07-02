@@ -46,27 +46,27 @@
 #include <string.h> 		// strcpy
 
 /* constructors & destructors */
-RENDERER_API shader_library_t* shader_library_new(memory_allocator_t* allocator)
+SGE_API shader_library_t* shader_library_new(memory_allocator_t* allocator)
 {
 	return vulkan_shader_library_new(allocator);
 }
 
-RENDERER_API shader_library_t* shader_library_create(renderer_t* renderer)
+SGE_API shader_library_t* shader_library_create(renderer_t* renderer)
 {
 	return vulkan_shader_library_create(renderer->vulkan_handle);
 }
 
-RENDERER_API shader_library_t* shader_library_load_folder(renderer_t* renderer, const char* folder_path)
+SGE_API shader_library_t* shader_library_load_folder(renderer_t* renderer, const char* folder_path)
 {
 	return vulkan_shader_library_load_folder(renderer->vulkan_handle, folder_path);
 }
 
-RENDERER_API void shader_library_destroy(shader_library_t* library)
+SGE_API void shader_library_destroy(shader_library_t* library)
 {
 	vulkan_shader_library_destroy(library);
 }
 
-RENDERER_API void shader_library_release_resources(shader_library_t* library)
+SGE_API void shader_library_release_resources(shader_library_t* library)
 {
 	vulkan_shader_library_release_resources(library);
 }
@@ -959,7 +959,7 @@ static vulkan_shader_create_info_builder_t* get_create_info_from_preset(memory_a
 	return builder;
 }
 
-RENDERER_API shader_handle_t shader_library_create_shader_from_preset(shader_library_t* library, shader_library_shader_preset_t preset)
+SGE_API shader_handle_t shader_library_create_shader_from_preset(shader_library_t* library, shader_library_shader_preset_t preset)
 {
 	vulkan_shader_create_info_builder_t* builder = get_create_info_from_preset(library->renderer->allocator, preset);
 	AUTO handle = vulkan_shader_library_create_shader(library, vulkan_shader_create_info_builder_get(builder), "Built-In");
@@ -967,12 +967,12 @@ RENDERER_API shader_handle_t shader_library_create_shader_from_preset(shader_lib
 	return handle;
 }
 
-RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* library, shader_create_info_t* create_info, const char* shader_name)
+SGE_API shader_handle_t shader_library_create_shader(shader_library_t* library, shader_create_info_t* create_info, const char* shader_name)
 {
 	return vulkan_shader_library_create_shader(library, CAST_TO(vulkan_shader_create_info_t*, create_info), shader_name);
 }
 
-RENDERER_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path)
+SGE_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path)
 {
 	vulkan_shader_load_info_t load_info =
 	{
@@ -982,34 +982,34 @@ RENDERER_API shader_handle_t shader_library_load_shader(shader_library_t* librar
 	return vulkan_shader_library_load_shader(library, &load_info, "Untitled");
 }
 
-RENDERER_API bool shader_library_destroy_shader(shader_library_t* library, const char* shader_name)
+SGE_API bool shader_library_destroy_shader(shader_library_t* library, const char* shader_name)
 {
 	return vulkan_shader_library_destroy_shader(library, shader_name);
 }
 
-RENDERER_API bool shader_library_destroy_shaderH(shader_library_t* library, shader_handle_t handle)
+SGE_API bool shader_library_destroy_shaderH(shader_library_t* library, shader_handle_t handle)
 {
 	return vulkan_shader_library_destroy_shaderH(library, handle);
 }
 
 /* getters */
 
-RENDERER_API shader_handle_t shader_library_get_handle(shader_library_t* library, const char* shader_name)
+SGE_API shader_handle_t shader_library_get_handle(shader_library_t* library, const char* shader_name)
 {
 	return vulkan_shader_library_get_handle(library, shader_name);
 }
 
-RENDERER_API const char* shader_library_get_nameH(shader_library_t* library, shader_handle_t handle)
+SGE_API const char* shader_library_get_nameH(shader_library_t* library, shader_handle_t handle)
 {
 	return vulkan_shader_library_get_nameH(library, handle);
 }
 
-RENDERER_API shader_t* shader_library_getH(shader_library_t* library, shader_handle_t handle)
+SGE_API shader_t* shader_library_getH(shader_library_t* library, shader_handle_t handle)
 {
 	return SHADER(vulkan_shader_library_getH(library, handle));
 }
 
-RENDERER_API shader_t* shader_library_get(shader_library_t* library, const char* shader_name)
+SGE_API shader_t* shader_library_get(shader_library_t* library, const char* shader_name)
 {
 	return SHADER(vulkan_shader_library_get(library, shader_name));
 }

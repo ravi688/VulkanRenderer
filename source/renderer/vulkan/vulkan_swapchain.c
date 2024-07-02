@@ -36,7 +36,7 @@
 static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info);
 static void destroy_swapchain(vulkan_swapchain_t* swapchain);
 
-RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new(memory_allocator_t* allocator)
+SGE_API vulkan_swapchain_t* vulkan_swapchain_new(memory_allocator_t* allocator)
 {
 	vulkan_swapchain_t* swapchain = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SWAPCHAIN, vulkan_swapchain_t);
 	memzero(swapchain, vulkan_swapchain_t);
@@ -44,7 +44,7 @@ RENDERER_API vulkan_swapchain_t* vulkan_swapchain_new(memory_allocator_t* alloca
 	return swapchain;
 }
 
-RENDERER_API vulkan_swapchain_t* vulkan_swapchain_create(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
+SGE_API vulkan_swapchain_t* vulkan_swapchain_create(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info)
 {
 	// allocate memory and initialize it
 	vulkan_swapchain_t* swapchain = vulkan_swapchain_new(renderer->allocator);
@@ -52,7 +52,7 @@ RENDERER_API vulkan_swapchain_t* vulkan_swapchain_create(vulkan_renderer_t* rend
 	return swapchain;
 }
 
-RENDERER_API void vulkan_swapchain_create_no_alloc(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info, vulkan_swapchain_t OUT swapchain)
+SGE_API void vulkan_swapchain_create_no_alloc(vulkan_renderer_t* renderer, vulkan_swapchain_create_info_t* create_info, vulkan_swapchain_t OUT swapchain)
 {
 	VULKAN_OBJECT_MEMZERO(swapchain, vulkan_swapchain_t);
 
@@ -63,20 +63,20 @@ RENDERER_API void vulkan_swapchain_create_no_alloc(vulkan_renderer_t* renderer, 
 }
 
 
-RENDERER_API void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info)
+SGE_API void vulkan_swapchain_refresh(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info)
 {
 	destroy_swapchain(swapchain);
 	create_swapchain(swapchain, create_info);
 }
 
-RENDERER_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain)
+SGE_API void vulkan_swapchain_destroy(vulkan_swapchain_t* swapchain)
 {
 	destroy_swapchain(swapchain);
 	
 	log_msg("Swapchain destroyed successfully\n");
 }
 
-RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain)
+SGE_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapchain)
 {
 	memory_allocator_dealloc(swapchain->renderer->allocator, swapchain->vo_image_views);
 	memory_allocator_dealloc(swapchain->renderer->allocator, swapchain->vo_images);
@@ -84,7 +84,7 @@ RENDERER_API void vulkan_swapchain_release_resources(vulkan_swapchain_t* swapcha
 		memory_allocator_dealloc(swapchain->renderer->allocator, swapchain);
 }
 
-RENDERER_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, VkSemaphore signal_semaphore)
+SGE_API u32 vulkan_swapchain_acquire_next_image(vulkan_swapchain_t* swapchain, VkSemaphore signal_semaphore)
 {
 	vkCall(vkAcquireNextImageKHR(swapchain->renderer->logical_device->vo_handle, swapchain->vo_handle, UINT64_MAX, signal_semaphore, VK_NULL_HANDLE, &(swapchain->current_image_index)));
 	return swapchain->current_image_index;

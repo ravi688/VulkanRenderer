@@ -51,19 +51,19 @@ typedef struct vulkan_formatted_buffer_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API vulkan_formatted_buffer_t* vulkan_formatted_buffer_new(memory_allocator_t* allocator);
-RENDERER_API void vulkan_formatted_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_formatted_buffer_create_info_t* create_info, vulkan_formatted_buffer_t* buffer);
-RENDERER_API vulkan_formatted_buffer_t* vulkan_formatted_buffer_create(vulkan_renderer_t* renderer, vulkan_formatted_buffer_create_info_t* create_info);
-RENDERER_API void vulkan_formatted_buffer_destroy(vulkan_formatted_buffer_t* buffer);
-RENDERER_API void vulkan_formatted_buffer_release_resources(vulkan_formatted_buffer_t* buffer);
+SGE_API vulkan_formatted_buffer_t* vulkan_formatted_buffer_new(memory_allocator_t* allocator);
+SGE_API void vulkan_formatted_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_formatted_buffer_create_info_t* create_info, vulkan_formatted_buffer_t* buffer);
+SGE_API vulkan_formatted_buffer_t* vulkan_formatted_buffer_create(vulkan_renderer_t* renderer, vulkan_formatted_buffer_create_info_t* create_info);
+SGE_API void vulkan_formatted_buffer_destroy(vulkan_formatted_buffer_t* buffer);
+SGE_API void vulkan_formatted_buffer_release_resources(vulkan_formatted_buffer_t* buffer);
 
 /* logic functions */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_buffer_t* vulkan_formatted_buffer_get_device_buffer(vulkan_formatted_buffer_t* buffer)
 { return vulkan_host_buffered_buffer_get_device_buffer(buffer->host_buffered_buffer); }
 /* NOTE: the returned buffer_t object may also be static if the array has size explicitly specified in 'format' */
-RENDERER_API buffer_t* vulkan_formatted_buffer_get_array_buffer(vulkan_formatted_buffer_t* buffer, const char* name);
-RENDERER_API u32 vulkan_formatted_buffer_get_array_length(vulkan_formatted_buffer_t* buffer, const char* name);
-RENDERER_API void vulkan_formatted_buffer_set_uint(vulkan_formatted_buffer_t* buffer, const char* name, u32 value);
+SGE_API buffer_t* vulkan_formatted_buffer_get_array_buffer(vulkan_formatted_buffer_t* buffer, const char* name);
+SGE_API u32 vulkan_formatted_buffer_get_array_length(vulkan_formatted_buffer_t* buffer, const char* name);
+SGE_API void vulkan_formatted_buffer_set_uint(vulkan_formatted_buffer_t* buffer, const char* name, u32 value);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_formatted_buffer_is_dirty(vulkan_formatted_buffer_t* buffer) 
 { return buffer->is_dynamic_buffer_dirty || vulkan_host_buffered_buffer_is_dirty(buffer->host_buffered_buffer); }
-RENDERER_API bool vulkan_formatted_buffer_commit(vulkan_formatted_buffer_t* buffer, bool OUT is_resized);
+SGE_API bool vulkan_formatted_buffer_commit(vulkan_formatted_buffer_t* buffer, bool OUT is_resized);

@@ -30,10 +30,10 @@
 
 #include <renderer/tests/bitmap_text.load.h>
 
-#define RENDERER_INCLUDE_EVERYTHING_INTERNAL
-#define RENDERER_INCLUDE_DATA_STRUCTURES
-#define RENDERER_INCLUDE_MATH
-#define RENDERER_INCLUDE_CORE
+#define SGE_INCLUDE_EVERYTHING_INTERNAL
+#define SGE_INCLUDE_DATA_STRUCTURES
+#define SGE_INCLUDE_MATH
+#define SGE_INCLUDE_CORE
 #include <renderer/renderer.h>
 
 #include <renderer/hash_table.h>
@@ -73,7 +73,7 @@ TEST_DATA(BITMAP_TEXT_LOAD)
 
 SETUP_TEST(BITMAP_TEXT_LOAD);
 
-TEST_ON_RENDERER_INITIALIZE(BITMAP_TEXT_LOAD)
+TEST_ON_SGE_INITIALIZE(BITMAP_TEXT_LOAD)
 {
 	return (renderer_initialization_data_t)
 	{

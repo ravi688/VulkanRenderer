@@ -25,7 +25,7 @@
 
 #include <renderer/debug.h>
 
-RENDERER_API void debug_break__(debug_break_reason_t reason)
+SGE_API void debug_break__(debug_break_reason_t reason)
 {
 	switch(reason)
 	{

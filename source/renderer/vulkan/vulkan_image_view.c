@@ -40,7 +40,7 @@
 static VkImageViewType get_view_type(vulkan_image_view_type_t type);
 static u32 get_layer_count(vulkan_image_view_type_t type);
 
-RENDERER_API vulkan_image_view_t* vulkan_image_view_new(memory_allocator_t* allocator)
+SGE_API vulkan_image_view_t* vulkan_image_view_new(memory_allocator_t* allocator)
 {
 	vulkan_image_view_t* view = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_IMAGE_VIEW, vulkan_image_view_t);
 	memzero(view, vulkan_image_view_t);
@@ -48,14 +48,14 @@ RENDERER_API vulkan_image_view_t* vulkan_image_view_new(memory_allocator_t* allo
 	return view;
 }
 
-RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info)
+SGE_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info)
 {
 	vulkan_image_view_t* view = vulkan_image_view_new(renderer->allocator);
 	vulkan_image_view_create_no_alloc(renderer, create_info, view);
 	return view;
 }
 
-RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info, vulkan_image_view_t OUT view)
+SGE_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info, vulkan_image_view_t OUT view)
 {
 	VULKAN_OBJECT_MEMZERO(view, vulkan_image_view_t);
 
@@ -97,13 +97,13 @@ RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer,
 	vkCall(vkCreateImageView(view->renderer->logical_device->vo_handle, &view_create_info, VULKAN_ALLOCATION_CALLBACKS(view->renderer), &view->vo_handle));
 }
 
-RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
+SGE_API void vulkan_image_view_destroy(vulkan_image_view_t* view)
 {
 	vkDestroyImageView(view->renderer->logical_device->vo_handle, view->vo_handle, VULKAN_ALLOCATION_CALLBACKS(view->renderer));
 	view->vo_handle = VK_NULL_HANDLE;
 }
 
-RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)
+SGE_API void vulkan_image_view_release_resources(vulkan_image_view_t* view)
 {
 	if(VULKAN_OBJECT_IS_INTERNAL(view))
 		memory_allocator_dealloc(view->renderer->allocator, view);
@@ -203,7 +203,7 @@ static void get_access_and_stage_flags(VkAccessFlags OUT src_access, VkAccessFla
 	}
 }
 
-RENDERER_API void vulkan_image_view_transition_layout_to(vulkan_image_view_t* view, u32 flags, VkImageLayout vo_layout)
+SGE_API void vulkan_image_view_transition_layout_to(vulkan_image_view_t* view, u32 flags, VkImageLayout vo_layout)
 {
 	if((vo_layout  == view->vo_layout) && (flags != VULKAN_IMAGE_VIEW_DONT_CARE_OLD_LAYOUT))
 	{
@@ -243,7 +243,7 @@ u32 get_texel_size_from_format(VkFormat format)
 	return 0;
 }
 
-RENDERER_API void vulkan_image_view_copy_from_buffer(vulkan_image_view_t* view, vulkan_buffer_t* buffer)
+SGE_API void vulkan_image_view_copy_from_buffer(vulkan_image_view_t* view, vulkan_buffer_t* buffer)
 {
 	_debug_assert__(view->vo_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	_debug_assert__(view->image->depth == 1);
@@ -267,7 +267,7 @@ RENDERER_API void vulkan_image_view_copy_from_buffer(vulkan_image_view_t* view, 
 	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 }
 
-RENDERER_API void vulkan_image_view_upload_data(vulkan_image_view_t* view, void* data)
+SGE_API void vulkan_image_view_upload_data(vulkan_image_view_t* view, void* data)
 {
 	_debug_assert__(data != NULL);
 	

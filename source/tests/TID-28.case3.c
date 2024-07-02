@@ -26,10 +26,10 @@
 
 #include <renderer/tests/TID-28.case3.h>
 
-#define RENDERER_INCLUDE_MATH
-#define RENDERER_INCLUDE_3D_MESH_RENDER_SYSTEM
-#define RENDERER_INCLUDE_3D_LIGHT_SYSTEM
-#define RENDERER_INCLUDE_CORE
+#define SGE_INCLUDE_MATH
+#define SGE_INCLUDE_3D_MESH_RENDER_SYSTEM
+#define SGE_INCLUDE_3D_LIGHT_SYSTEM
+#define SGE_INCLUDE_CORE
 #include <renderer/renderer.h>
 #include <renderer/conio.h>
 
@@ -60,7 +60,7 @@ TEST_DATA(TID_28_CASE_3)
 
 SETUP_TEST(TID_28_CASE_3);
 
-TEST_ON_RENDERER_INITIALIZE(TID_28_CASE_3)
+TEST_ON_SGE_INITIALIZE(TID_28_CASE_3)
 {
 	return (renderer_initialization_data_t)
 	{

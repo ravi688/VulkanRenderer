@@ -29,7 +29,7 @@
 
 #include <renderer/defines.h>
 
-#if 	defined(RENDERER_VULKAN_DRIVER)
+#if 	defined(SGE_VULKAN_DRIVER)
 	typedef struct vulkan_render_scene_t vulkan_render_scene_t;
 	typedef vulkan_render_scene_t render_scene_t;
 	typedef struct vulkan_camera_t vulkan_camera_t;
@@ -45,7 +45,7 @@
 	#define RENDER_SCENE_CLEAR VULKAN_RENDER_SCENE_CLEAR
 	#define RENDER_SCENE_DONT_CARE VULKAN_RENDER_SCENE_DONT_CARE
 
-#elif 	defined(RENDERER_OPENGL_DRIVER)
+#elif 	defined(SGE_OPENGL_DRIVER)
 	typedef struct opengl_render_scene_t opengl_render_scene_t;
 	typedef opengl_render_scene_t render_scene_t;
 	typedef struct opengl_camera_t opengl_camera_t;
@@ -61,7 +61,7 @@
 	#define RENDER_SCENE_CLEAR OPENGL_RENDER_SCENE_CLEAR
 	#define RENDER_SCENE_DONT_CARE OPENGL_RENDER_SCENE_DONT_CARE
 
-#elif  	defined(RENDERER_DIRECTX_DRIVER)
+#elif  	defined(SGE_DIRECTX_DRIVER)
 	typedef struct directx_render_scene_t directx_render_scene_t;
 	typedef directx_render_scene_t render_scene_t;
 	typedef struct directx_camera_t directx_camera_t;
@@ -77,7 +77,7 @@
 	#define RENDER_SCENE_CLEAR DIRECTX_RENDER_SCENE_CLEAR
 	#define RENDER_SCENE_DONT_CARE DIRECTX_RENDER_SCENE_DONT_CARE
 
-#elif  	defined(RENDERER_METAL_DRIVER)
+#elif  	defined(SGE_METAL_DRIVER)
 	typedef struct metal_render_scene_t metal_render_scene_t;
 	typedef metal_render_scene_t render_scene_t;
 	typedef struct metal_camera_t metal_camera_t;
@@ -114,25 +114,25 @@ typedef struct render_scene_create_info_t
 } render_scene_create_info_t;
 
 /* constructors & destructors */
-RENDERER_API render_scene_t* render_scene_new(memory_allocator_t* allocator);
-RENDERER_API render_scene_t* render_scene_create(renderer_t* renderer, render_scene_create_info_t* create_info);
-RENDERER_API void render_scene_create_no_alloc(renderer_t* renderer, render_scene_create_info_t* create_info, render_scene_t OUT scene);
-RENDERER_API render_scene_t* render_scene_create_from_preset(renderer_t* renderer, render_scene_preset_type_t type);
-RENDERER_API render_scene_t* render_scene_create_from_mask(renderer_t* renderer, u64 queue_mask);
-RENDERER_API void render_scene_destroy(render_scene_t* scene);
-RENDERER_API void render_scene_release_resources(render_scene_t* scene);
+SGE_API render_scene_t* render_scene_new(memory_allocator_t* allocator);
+SGE_API render_scene_t* render_scene_create(renderer_t* renderer, render_scene_create_info_t* create_info);
+SGE_API void render_scene_create_no_alloc(renderer_t* renderer, render_scene_create_info_t* create_info, render_scene_t OUT scene);
+SGE_API render_scene_t* render_scene_create_from_preset(renderer_t* renderer, render_scene_preset_type_t type);
+SGE_API render_scene_t* render_scene_create_from_mask(renderer_t* renderer, u64 queue_mask);
+SGE_API void render_scene_destroy(render_scene_t* scene);
+SGE_API void render_scene_release_resources(render_scene_t* scene);
 
 /* logic functions */
-RENDERER_API void render_scene_create_queue(render_scene_t* scene, render_queue_type_t queue_type);
-RENDERER_API void render_scene_add_queue(render_scene_t* scene, render_queue_t* queue);
-RENDERER_API void render_scene_render(render_scene_t* scene, u64 queue_mask, u32 flags);
-RENDERER_API render_object_t* render_scene_getH(render_scene_t* scene, render_scene_object_handle_t handle);
-RENDERER_API render_scene_object_handle_t render_scene_create_object(render_scene_t* scene, render_object_type_t object_type, render_queue_type_t queue_type);
-RENDERER_API void render_scene_destroy_objectH(render_scene_t* scene, render_scene_object_handle_t handle);
-RENDERER_API void render_scene_build_queues(render_scene_t* scene);
-RENDERER_API void render_scene_add_camera(render_scene_t* scene, camera_t* camera);
-RENDERER_API void render_scene_remove_camera(render_scene_t* scene, camera_t* camera);
-RENDERER_API void render_scene_add_light(render_scene_t* scene, light_t* light);
-RENDERER_API void render_scene_remove_light(render_scene_t* scene, light_t* light);
+SGE_API void render_scene_create_queue(render_scene_t* scene, render_queue_type_t queue_type);
+SGE_API void render_scene_add_queue(render_scene_t* scene, render_queue_t* queue);
+SGE_API void render_scene_render(render_scene_t* scene, u64 queue_mask, u32 flags);
+SGE_API render_object_t* render_scene_getH(render_scene_t* scene, render_scene_object_handle_t handle);
+SGE_API render_scene_object_handle_t render_scene_create_object(render_scene_t* scene, render_object_type_t object_type, render_queue_type_t queue_type);
+SGE_API void render_scene_destroy_objectH(render_scene_t* scene, render_scene_object_handle_t handle);
+SGE_API void render_scene_build_queues(render_scene_t* scene);
+SGE_API void render_scene_add_camera(render_scene_t* scene, camera_t* camera);
+SGE_API void render_scene_remove_camera(render_scene_t* scene, camera_t* camera);
+SGE_API void render_scene_add_light(render_scene_t* scene, light_t* light);
+SGE_API void render_scene_remove_light(render_scene_t* scene, light_t* light);
 
-RENDERER_API void render_scene_set_use_lights(render_scene_t* scene, bool is_use_lights);
+SGE_API void render_scene_set_use_lights(render_scene_t* scene, bool is_use_lights);

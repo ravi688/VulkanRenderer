@@ -28,7 +28,7 @@
 #include <renderer/bmp.h> // bmp_write
 #include <ctype.h> // isgraph
 
-RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_new(memory_allocator_t* allocator)
+SGE_API bitmap_glyph_pool_t* bitmap_glyph_pool_new(memory_allocator_t* allocator)
 {
 	bitmap_glyph_pool_t* pool = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_BITMAP_GLYPH_POOL, bitmap_glyph_pool_t);
 	memzero(pool, bitmap_glyph_pool_t);
@@ -36,14 +36,14 @@ RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_new(memory_allocator_t* allo
 	return pool;
 }
 
-RENDERER_API bitmap_glyph_pool_t* bitmap_glyph_pool_create(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info)
+SGE_API bitmap_glyph_pool_t* bitmap_glyph_pool_create(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info)
 {
 	bitmap_glyph_pool_t* pool = bitmap_glyph_pool_new(renderer->allocator);
 	bitmap_glyph_pool_create_no_alloc(renderer, create_info, pool);
 	return pool;
 }
 
-RENDERER_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info, bitmap_glyph_pool_t OUT pool)
+SGE_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap_glyph_pool_create_info_t* create_info, bitmap_glyph_pool_t OUT pool)
 {
 	OBJECT_MEMZERO(pool, bitmap_glyph_pool_t);
 	pool->renderer = renderer;
@@ -62,19 +62,19 @@ RENDERER_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap
 	buffer2d_clear(&pool->pixels, NULL);
 }
 
-RENDERER_API void bitmap_glyph_pool_destroy(bitmap_glyph_pool_t* pool)
+SGE_API void bitmap_glyph_pool_destroy(bitmap_glyph_pool_t* pool)
 {
 	buffer2d_destroy(&pool->pixels);
 }
 
-RENDERER_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool)
+SGE_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool)
 {
 	buffer2d_release_resources(&pool->pixels);
 	if(OBJECT_IS_INTERNAL(pool))
 		memory_allocator_dealloc(pool->renderer->allocator, pool);
 }
 
-RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized)
+SGE_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized)
 {
 	AUTO info = buffer2d_get_rect(&pool->pixels, &unicode);
 	/* if no rect exists confiding/holding the rasterized glyph's pixels */
@@ -145,19 +145,19 @@ RENDERER_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair
 	return true;
 }
 
-RENDERER_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode)
+SGE_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode)
 {
 	return buffer2d_get_rect(&pool->pixels, &unicode) != NULL;
 }
 
-RENDERER_API void bitmap_glyph_pool_dump(bitmap_glyph_pool_t* pool, const char* file_path)
+SGE_API void bitmap_glyph_pool_dump(bitmap_glyph_pool_t* pool, const char* file_path)
 {
 	void* ptr = buf_get_ptr(buffer2d_get_backed_buffer(&pool->pixels));
 	bmp_write(ptr, pool->pixels.view->size.x / sizeof(u8), pool->pixels.view->size.y, 1, file_path);
 }
 
 #ifdef GLOBAL_DEBUG
-RENDERER_API void bitmap_glyph_pool_dump_bb(bitmap_glyph_pool_t* pool, const char* file_path)
+SGE_API void bitmap_glyph_pool_dump_bb(bitmap_glyph_pool_t* pool, const char* file_path)
 {
 	buffer2d_dump(&pool->pixels, file_path);
 }

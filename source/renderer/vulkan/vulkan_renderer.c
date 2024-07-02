@@ -61,7 +61,7 @@ UNUSED_FUNCTION static void memory_allocator_dump(memory_allocator_t* allocator,
 static void recreate_swapchain(void* _window, void* renderer);
 static void update_screen_info(void* _window, void* renderer);
 
-RENDERER_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer) { return renderer->window; }
+SGE_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer) { return renderer->window; }
 
 UNUSED_FUNCTION static vulkan_physical_device_t* get_lowest_score_device(vulkan_physical_device_t** devices, u32 count) { /* TODO: */ return NULL; }
 
@@ -98,13 +98,13 @@ static vulkan_physical_device_t* find_physical_device(vulkan_physical_device_t* 
 	void* gpu = NULL;
 	switch(type)
 	{
-		case VULKAN_RENDERER_GPU_TYPE_INTEGRATED:
+		case SGE_VULKAN_GPU_TYPE_INTEGRATED:
 			gpu = (integrated_gpu == NULL) ? discrete_gpu : integrated_gpu;
 			break;
-		case VULKAN_RENDERER_GPU_TYPE_DISCRETE:
+		case SGE_VULKAN_GPU_TYPE_DISCRETE:
 			gpu = (discrete_gpu == NULL) ? integrated_gpu : discrete_gpu;
 			break;
-		case VULKAN_RENDERER_GPU_TYPE_CPU:
+		case SGE_VULKAN_GPU_TYPE_CPU:
 			gpu = (cpu_gpu == NULL) ? ((integrated_gpu != NULL) ? integrated_gpu : discrete_gpu) : cpu_gpu;
 			break;
 		default:
@@ -243,7 +243,7 @@ static u32 get_pool_sizes_sum(const VkDescriptorPoolSize* const pool_sizes, u32 
 	return sum;
 }
 
-RENDERER_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t* create_info)
+SGE_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t* create_info)
 {
 	renderer_t* _renderer = create_info->renderer; 
 	vulkan_renderer_gpu_type_t prefered_gpu_type = create_info->prefered_gpu_type;
@@ -661,7 +661,7 @@ static void vulkan_wait_current_frame_commands_to_finish(vulkan_renderer_t* rend
 	vkCall(vkResetFences(renderer->logical_device->vo_handle, 1, &renderer->render_present_sync_primitives.vo_fences[current_frame_index]));
 }
 
-RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
+SGE_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 {
 	u32 current_frame_index = renderer->current_frame_index;
 	
@@ -697,7 +697,7 @@ RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer)
 		/* dstStage: */ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 }
 
-RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
+SGE_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 {
 	u32 current_frame_index = renderer->current_frame_index;
 	VkCommandBuffer cb = renderer->vo_command_buffers[current_frame_index];
@@ -722,7 +722,7 @@ RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 	vulkan_command_buffer_end(renderer->vo_command_buffers[current_frame_index]);
 }
 
-RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
+SGE_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 {
 	u32 current_frame_index = renderer->current_frame_index;
 	VkCommandBuffer cb = renderer->vo_command_buffers[current_frame_index];
@@ -746,17 +746,17 @@ RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 	renderer->current_frame_index = (1u + renderer->current_frame_index) % renderer->max_frames_in_flight;
 }
 
-RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
+SGE_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer)
 {
 	return !render_window_should_close(renderer->window);
 }
 
-RENDERER_API void vulkan_renderer_wait_idle(vulkan_renderer_t* renderer)
+SGE_API void vulkan_renderer_wait_idle(vulkan_renderer_t* renderer)
 {
 	vulkan_queue_wait_idle(renderer->vo_graphics_queue);
 }
 
-RENDERER_API void vulkan_renderer_destroy(vulkan_renderer_t* renderer)
+SGE_API void vulkan_renderer_destroy(vulkan_renderer_t* renderer)
 {
 	vulkan_renderer_wait_idle(renderer);
 

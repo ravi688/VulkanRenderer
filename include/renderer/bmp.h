@@ -47,9 +47,9 @@ extern "C"
 #define bmp_destroy(...) define_alias_function_macro(bmp_destroy, __VA_ARGS__)
 #define bmp_write(...) define_alias_function_macro(bmp_write, __VA_ARGS__)
 
-RENDERER_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, const char* file_path);
-RENDERER_API function_signature(void, bmp_destroy, bmp_t bmp);
-RENDERER_API function_signature(void, bmp_write, void* data, u32 width, u32 height, u8 channel_count, const char* file_path);
+SGE_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, const char* file_path);
+SGE_API function_signature(void, bmp_destroy, bmp_t bmp);
+SGE_API function_signature(void, bmp_write, void* data, u32 width, u32 height, u8 channel_count, const char* file_path);
 
 #ifdef __cplusplus
 }

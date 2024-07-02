@@ -35,7 +35,7 @@
 
 #include <freetype/freetype.h>
 
-RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_create_info_t* _create_info)
+SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_create_info_t* _create_info)
 {
 	renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDERER, renderer_t);
 	memzero(renderer, renderer_t);
@@ -67,7 +67,7 @@ RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_c
 	return renderer;
 }
 
-RENDERER_API void renderer_terminate(renderer_t* renderer)
+SGE_API void renderer_terminate(renderer_t* renderer)
 {
 	// terminate the renderer
 	vulkan_renderer_destroy(renderer->vulkan_handle);
@@ -79,54 +79,54 @@ RENDERER_API void renderer_terminate(renderer_t* renderer)
 	memory_allocator_dealloc(renderer->allocator, renderer);
 }
 
-RENDERER_API void renderer_update(renderer_t* renderer)
+SGE_API void renderer_update(renderer_t* renderer)
 {
 	vulkan_renderer_update(renderer->vulkan_handle);
 }
 
-RENDERER_API bool renderer_is_running(renderer_t* renderer)
+SGE_API bool renderer_is_running(renderer_t* renderer)
 {
 	return vulkan_renderer_is_running(renderer->vulkan_handle);
 }
 
 
-RENDERER_API void renderer_begin_frame(renderer_t* renderer)
+SGE_API void renderer_begin_frame(renderer_t* renderer)
 {
 	vulkan_renderer_begin_frame(renderer->vulkan_handle);
 }
 
-RENDERER_API void renderer_end_frame(renderer_t* renderer)
+SGE_API void renderer_end_frame(renderer_t* renderer)
 {
 	vulkan_renderer_end_frame(renderer->vulkan_handle);
 }
 
-RENDERER_API void renderer_wait_idle(renderer_t* renderer)
+SGE_API void renderer_wait_idle(renderer_t* renderer)
 {
 	vulkan_renderer_wait_idle(renderer->vulkan_handle);
 }
 
 /* getters */
-RENDERER_API render_window_t* renderer_get_window(renderer_t* renderer)
+SGE_API render_window_t* renderer_get_window(renderer_t* renderer)
 {
 	return vulkan_renderer_get_window(renderer->vulkan_handle);
 }
 
-RENDERER_API shader_library_t* renderer_get_shader_library(renderer_t* renderer)
+SGE_API shader_library_t* renderer_get_shader_library(renderer_t* renderer)
 {
 	return renderer->vulkan_handle->shader_library;
 }
 
-RENDERER_API material_library_t* renderer_get_material_library(renderer_t* renderer)
+SGE_API material_library_t* renderer_get_material_library(renderer_t* renderer)
 {
 	return renderer->vulkan_handle->material_library;
 }
 
-RENDERER_API render_pass_pool_t* renderer_get_render_pass_pool(renderer_t* renderer)
+SGE_API render_pass_pool_t* renderer_get_render_pass_pool(renderer_t* renderer)
 {
 	return renderer->vulkan_handle->render_pass_pool;
 }
 
-RENDERER_API camera_system_t* renderer_get_camera_system(renderer_t* renderer)
+SGE_API camera_system_t* renderer_get_camera_system(renderer_t* renderer)
 {
 	return renderer->vulkan_handle->camera_system;
 }

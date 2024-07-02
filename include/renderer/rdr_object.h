@@ -28,19 +28,19 @@
 #include <renderer/defines.h>
 
 
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 #	include <renderer/internal/vulkan/vulkan_object.h>
 #	define DEFINE_ENUM(x) RDR_##x = VULKAN_##x
 #	define RDR_OBJECT_INIT(ptr, type, nationality) VULKAN_OBJECT_INIT(ptr, type, nationality)
-#elif RENDERER_OPENGL_DRIVER
+#elif SGE_OPENGL_DRIVER
 #	include <renderer/internal/opengl/opengl_object.h>
 #	define DEFINE_ENUM(x) RDR_##x = OPENGL_##x
 #	define RDR_OBJECT_INIT(ptr, type, nationality) OPENGL_OBJECT_INIT(ptr, type, nationality)
-#elif RENDERER_DIRECTX_DRIVER
+#elif SGE_DIRECTX_DRIVER
 #	include <renderer/internal/directx/directx_object.h>
 #	define DEFINE_ENUM(x) RDR_##x = DIRECTX_##x
 #	define RDR_OBJECT_INIT(ptr, type, nationality) DIRECTX_OBJECT_INIT(ptr, type, nationality)
-#elif RENDERER_METAL_DRIVER
+#elif SGE_METAL_DRIVER
 #	include <renderer/internal/metal/metal_object.h>
 #	define DEFINE_ENUM(x) RDR_##x = METAL_##x
 #	define RDR_OBJECT_INIT(ptr, type, nationality) METAL_OBJECT_INIT(ptr, type, nationality)

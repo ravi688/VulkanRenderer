@@ -34,7 +34,7 @@
 #include <ctype.h> 				// isspace
 
 // constructors and destructors
-RENDERER_API vulkan_glyph_mesh_pool_t* vulkan_glyph_mesh_pool_new(memory_allocator_t* allocator)
+SGE_API vulkan_glyph_mesh_pool_t* vulkan_glyph_mesh_pool_new(memory_allocator_t* allocator)
 {
 	vulkan_glyph_mesh_pool_t* pool = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GLYPH_MESH_POOL, vulkan_glyph_mesh_pool_t);
 	memzero(pool, vulkan_glyph_mesh_pool_t);
@@ -42,7 +42,7 @@ RENDERER_API vulkan_glyph_mesh_pool_t* vulkan_glyph_mesh_pool_new(memory_allocat
 	return pool;
 }
 
-RENDERER_API vulkan_glyph_mesh_pool_t* vulkan_glyph_mesh_pool_create(vulkan_renderer_t* renderer, font_t* font)
+SGE_API vulkan_glyph_mesh_pool_t* vulkan_glyph_mesh_pool_create(vulkan_renderer_t* renderer, font_t* font)
 {
 	_debug_assert__(font != NULL);
 	vulkan_glyph_mesh_pool_t* pool = vulkan_glyph_mesh_pool_new(renderer->allocator);
@@ -52,7 +52,7 @@ RENDERER_API vulkan_glyph_mesh_pool_t* vulkan_glyph_mesh_pool_create(vulkan_rend
 	return pool;
 }
 
-RENDERER_API void vulkan_glyph_mesh_pool_destroy(vulkan_glyph_mesh_pool_t* pool)
+SGE_API void vulkan_glyph_mesh_pool_destroy(vulkan_glyph_mesh_pool_t* pool)
 {
 	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
 	{
@@ -62,7 +62,7 @@ RENDERER_API void vulkan_glyph_mesh_pool_destroy(vulkan_glyph_mesh_pool_t* pool)
 	}
 }
 
-RENDERER_API void vulkan_glyph_mesh_pool_release_resources(vulkan_glyph_mesh_pool_t* pool)
+SGE_API void vulkan_glyph_mesh_pool_release_resources(vulkan_glyph_mesh_pool_t* pool)
 {
 	for(u64 i = 0; i < dictionary_get_count(&pool->glyph_meshes); i++)
 		vulkan_mesh_release_resources(VULKAN_MESH(CAST_TO(vulkan_glyph_mesh_t*, dictionary_get_value_ptr_at(&pool->glyph_meshes, i))->mesh));
@@ -74,12 +74,12 @@ RENDERER_API void vulkan_glyph_mesh_pool_release_resources(vulkan_glyph_mesh_poo
 
 // getters
 
-RENDERER_API font_t* vulkan_glyph_mesh_pool_get_font(vulkan_glyph_mesh_pool_t* pool)
+SGE_API font_t* vulkan_glyph_mesh_pool_get_font(vulkan_glyph_mesh_pool_t* pool)
 {
 	return pool->font;
 }
 
-RENDERER_API vulkan_mesh_t* vulkan_glyph_mesh_pool_get_mesh(vulkan_glyph_mesh_pool_t* pool, u16 glyph)
+SGE_API vulkan_mesh_t* vulkan_glyph_mesh_pool_get_mesh(vulkan_glyph_mesh_pool_t* pool, u16 glyph)
 {
 	if(isspace(glyph)) return NULL;
 

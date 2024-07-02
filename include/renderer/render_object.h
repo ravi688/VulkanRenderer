@@ -29,28 +29,28 @@
 #include <renderer/defines.h>
 #include <bufferlib/buffer.h>
 
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 	typedef struct vulkan_render_object_t vulkan_render_object_t;
 	typedef vulkan_render_object_t render_object_t;
 	#include <renderer/internal/vulkan/vulkan_handles.h>
 	#define RENDER_OBJECT_HANDLE_INVALID VULKAN_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct vulkan_material_t vulkan_material_t;
 	typedef vulkan_material_t material_t;
-#elif RENDERER_OPENGL_DRIVER
+#elif SGE_OPENGL_DRIVER
 	typedef struct opengl_render_object_t opengl_render_object_t;
 	typedef opengl_render_object_t render_object_t;
 	#include <renderer/internal/opengl/opengl_handles.h>
 	#define RENDER_OBJECT_HANDLE_INVALID OPENGL_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct opengl_material_t opengl_material_t;
 	typedef opengl_material_t material_t;
-#elif RENDERER_DIRECTX_DRIVER
+#elif SGE_DIRECTX_DRIVER
 	typedef struct directx_render_object_t directx_render_object_t;
 	typedef directx_render_object_t render_object_t;
 	#include <renderer/internal/directx/directx_handles.h>
 	#define RENDER_OBJECT_HANDLE_INVALID DIRECTX_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct directx_material_t directx_material_t;
 	typedef directx_material_t material_t;
-#elif RENDERER_METAL_DRIVER
+#elif SGE_METAL_DRIVER
 	typedef struct metal_render_object_t metal_render_object_t;
 	typedef metal_render_object_t metal_render_object_t;
 	#include <renderer/internal/metal/metal_handles.h>
@@ -83,19 +83,19 @@ typedef struct render_object_create_info_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API render_object_t* render_object_new(memory_allocator_t* allocator);
-RENDERER_API render_object_t* render_object_create(renderer_t* renderer, render_object_create_info_t* create_info);
-RENDERER_API void render_object_create_no_alloc(renderer_t* renderer, render_object_create_info_t* create_info, render_object_t OUT object);
-RENDERER_API void render_object_destroy(render_object_t* object);
-RENDERER_API void render_object_release_resources(render_object_t* object);
+SGE_API render_object_t* render_object_new(memory_allocator_t* allocator);
+SGE_API render_object_t* render_object_create(renderer_t* renderer, render_object_create_info_t* create_info);
+SGE_API void render_object_create_no_alloc(renderer_t* renderer, render_object_create_info_t* create_info, render_object_t OUT object);
+SGE_API void render_object_destroy(render_object_t* object);
+SGE_API void render_object_release_resources(render_object_t* object);
 
 /* logic functions */
-RENDERER_API void render_object_attach(render_object_t* object, void* user_data);
-RENDERER_API void render_object_draw(render_object_t* object);
-RENDERER_API void render_object_set_material(render_object_t* object, material_t* material);
-RENDERER_API material_t* render_object_get_material(render_object_t* object);
-RENDERER_API void render_object_set_transform(render_object_t* obj, mat4_t transform);
-RENDERER_API mat4_t render_object_get_transform(render_object_t* obj);
-RENDERER_API mat4_t render_object_get_normal(render_object_t* obj);
+SGE_API void render_object_attach(render_object_t* object, void* user_data);
+SGE_API void render_object_draw(render_object_t* object);
+SGE_API void render_object_set_material(render_object_t* object, material_t* material);
+SGE_API material_t* render_object_get_material(render_object_t* object);
+SGE_API void render_object_set_transform(render_object_t* obj, mat4_t transform);
+SGE_API mat4_t render_object_get_transform(render_object_t* obj);
+SGE_API mat4_t render_object_get_normal(render_object_t* obj);
 
 END_CPP_COMPATIBLE

@@ -38,7 +38,7 @@
 
 static u32 get_index_stride(VkIndexType index_type);
 
-RENDERER_API vulkan_mesh_t* vulkan_mesh_new(memory_allocator_t* allocator)
+SGE_API vulkan_mesh_t* vulkan_mesh_new(memory_allocator_t* allocator)
 {
 	vulkan_mesh_t* mesh = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MESH, vulkan_mesh_t);
 	memzero(mesh, vulkan_mesh_t);
@@ -46,14 +46,14 @@ RENDERER_API vulkan_mesh_t* vulkan_mesh_new(memory_allocator_t* allocator)
 	return mesh;
 }
 
-RENDERER_API vulkan_mesh_t* vulkan_mesh_create(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info)
+SGE_API vulkan_mesh_t* vulkan_mesh_create(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info)
 {
 	vulkan_mesh_t* mesh = vulkan_mesh_new(renderer->allocator);
 	vulkan_mesh_create_no_alloc(renderer, create_info, mesh);
 	return mesh;
 }
 
-RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
+SGE_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mesh_create_info_t* create_info, vulkan_mesh_t* mesh)
 {
 	VULKAN_OBJECT_MEMZERO(mesh, vulkan_mesh_t);
 	mesh->renderer = renderer;
@@ -96,7 +96,7 @@ RENDERER_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulka
 	}
 }
 
-RENDERER_API void vulkan_mesh_destroy(vulkan_mesh_t* mesh)
+SGE_API void vulkan_mesh_destroy(vulkan_mesh_t* mesh)
 {
 	/* destroy the vertex buffers */
 	u32 vertex_buffer_count = buf_get_element_count(&mesh->vertex_buffers);
@@ -119,7 +119,7 @@ RENDERER_API void vulkan_mesh_destroy(vulkan_mesh_t* mesh)
 	mesh->binding_index = 0;
 }
 
-RENDERER_API void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
+SGE_API void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 {
 	buf_free(&mesh->vertex_buffers);
 	if(mesh->index_buffer.buffer != NULL)
@@ -128,17 +128,17 @@ RENDERER_API void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 		memory_allocator_dealloc(mesh->renderer->allocator, mesh);
 }
 
-RENDERER_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh)
+SGE_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh)
 {
 	vulkan_mesh_draw_indexed_instanced(mesh, 1);
 }
 
-RENDERER_API void vulkan_mesh_draw(vulkan_mesh_t* mesh)
+SGE_API void vulkan_mesh_draw(vulkan_mesh_t* mesh)
 {
 	vulkan_mesh_draw_instanced(mesh, 1);
 }
 
-RENDERER_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u32 instance_count)
+SGE_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u32 instance_count)
 {
 	_debug_assert__(mesh->index_buffer.buffer != NULL);
 	_debug_assert__(mesh->index_buffer.index_type != VK_INDEX_TYPE_MAX_ENUM);
@@ -151,7 +151,7 @@ RENDERER_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u
 	mesh->binding_index = 0;
 }
 
-RENDERER_API void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh)
+SGE_API void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh)
 {	
 	u32 count = buf_get_element_count(&mesh->vertex_buffers);
 	VkBuffer buffers[count];
@@ -170,7 +170,7 @@ RENDERER_API void vulkan_mesh_bind_all_vertex_buffers(vulkan_mesh_t* mesh)
 	}
 }
 
-RENDERER_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 instance_count)
+SGE_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 instance_count)
 {
 	_debug_assert__(mesh->index_buffer.buffer != NULL);
 	_debug_assert__(mesh->index_buffer.index_type != VK_INDEX_TYPE_MAX_ENUM);
@@ -179,7 +179,7 @@ RENDERER_API void vulkan_mesh_draw_indexed_instanced(vulkan_mesh_t* mesh, u32 in
 	vulkan_mesh_draw_indexed_instanced_only(mesh, instance_count);
 }
 
-RENDERER_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_count)
+SGE_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_count)
 {
 	vulkan_mesh_bind_all_vertex_buffers(mesh);
 	VkCommandBuffer vo_command_buffer = mesh->renderer->vo_command_buffers[mesh->renderer->current_frame_index];
@@ -189,7 +189,7 @@ RENDERER_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_c
 	mesh->binding_index = 0;
 }
 
-RENDERER_API void vulkan_mesh_set_material(vulkan_mesh_t* mesh, vulkan_material_t* material)
+SGE_API void vulkan_mesh_set_material(vulkan_mesh_t* mesh, vulkan_material_t* material)
 {
 	mesh->material = material;
 }
@@ -215,19 +215,19 @@ static void _vulkan_mesh_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t*
 	// puts("");
 }
 
-RENDERER_API void vulkan_mesh_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, u32 binding)
+SGE_API void vulkan_mesh_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, u32 binding)
 {
 	_vulkan_mesh_add_vertex_buffer(mesh, buffer, binding, false);
 }
 
-RENDERER_API void vulkan_mesh_set_index_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, VkIndexType vo_type)
+SGE_API void vulkan_mesh_set_index_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, VkIndexType vo_type)
 {
 	mesh->index_buffer.buffer = buffer;
 	mesh->index_buffer.index_type = vo_type;
 	mesh->index_buffer.is_internal = false;
 }
 
-RENDERER_API void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_vertex_buffer_create_info_t* create_info)
+SGE_API void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_vertex_buffer_create_info_t* create_info)
 {
 	_debug_assert__(create_info != NULL);
 	_debug_assert__(create_info->count != 0);

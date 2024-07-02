@@ -51,7 +51,7 @@ static void bmp_parse_error(parse_error_t error)
 	}
 }
 
-RENDERER_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, const char* file_path)
+SGE_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, const char* file_path)
 {
 	CALLTRACE_BEGIN();
 	BUFFER* file_data = load_binary_from_file(file_path);
@@ -112,7 +112,7 @@ RENDERER_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, 
 }
 
 
-RENDERER_API function_signature(void, bmp_destroy, bmp_t bmp)
+SGE_API function_signature(void, bmp_destroy, bmp_t bmp)
 {
 	CALLTRACE_BEGIN();
 	memory_allocator_dealloc(bmp.allocator, bmp.data);
@@ -144,7 +144,7 @@ UNUSED_FUNCTION static void WORD_write(FILE* file, WORD value)
 	write(file, &value, 2);
 }
 
-RENDERER_API function_signature(void, bmp_write, void* data, u32 width, u32 height, u8 channel_count, const char* file_path)
+SGE_API function_signature(void, bmp_write, void* data, u32 width, u32 height, u8 channel_count, const char* file_path)
 {
 	CALLTRACE_BEGIN();
 

@@ -36,7 +36,7 @@
 #include <renderer/alloc.h>
 
 
-RENDERER_API vulkan_camera_system_t* vulkan_camera_system_new(memory_allocator_t* allocator)
+SGE_API vulkan_camera_system_t* vulkan_camera_system_new(memory_allocator_t* allocator)
 {
 	vulkan_camera_system_t* system = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CAMERA_SYSTEM, vulkan_camera_system_t);
 	memzero(system, vulkan_camera_system_t);
@@ -44,7 +44,7 @@ RENDERER_API vulkan_camera_system_t* vulkan_camera_system_new(memory_allocator_t
 	return system;
 }
 
-RENDERER_API vulkan_camera_system_t* vulkan_camera_system_create(vulkan_renderer_t* renderer)
+SGE_API vulkan_camera_system_t* vulkan_camera_system_create(vulkan_renderer_t* renderer)
 {
 	vulkan_camera_system_t* system = vulkan_camera_system_new(renderer->allocator);
 	system->renderer = renderer;
@@ -52,7 +52,7 @@ RENDERER_API vulkan_camera_system_t* vulkan_camera_system_create(vulkan_renderer
 	return system;
 }
 
-RENDERER_API void vulkan_camera_system_destroy(vulkan_camera_system_t* system)
+SGE_API void vulkan_camera_system_destroy(vulkan_camera_system_t* system)
 {
 	buf_ucount_t count = library_get_count(&system->lib);
 	for(buf_ucount_t i = 0; i < count; i++)
@@ -64,7 +64,7 @@ RENDERER_API void vulkan_camera_system_destroy(vulkan_camera_system_t* system)
 	library_destroy(&system->lib);
 }
 
-RENDERER_API void vulkan_camera_system_release_resources(vulkan_camera_system_t* system)
+SGE_API void vulkan_camera_system_release_resources(vulkan_camera_system_t* system)
 {
 	library_release_resources(&system->lib);
 	if(VULKAN_OBJECT_IS_INTERNAL(system))
@@ -337,7 +337,7 @@ static vulkan_render_pass_handle_t create_swapchain_clear_pass(vulkan_renderer_t
  	return handle;
 }
 
-RENDERER_API vulkan_camera_handle_t vulkan_camera_system_create_camera(vulkan_camera_system_t* system, vulkan_camera_projection_type_t projection_type)
+SGE_API vulkan_camera_handle_t vulkan_camera_system_create_camera(vulkan_camera_system_t* system, vulkan_camera_projection_type_t projection_type)
 {
 	vulkan_render_pass_input_info_t input = 
 	{
@@ -362,12 +362,12 @@ RENDERER_API vulkan_camera_handle_t vulkan_camera_system_create_camera(vulkan_ca
 	return handle;
 }
 
-RENDERER_API vulkan_camera_t* vulkan_camera_system_getH(vulkan_camera_system_t* system, vulkan_camera_handle_t handle)
+SGE_API vulkan_camera_t* vulkan_camera_system_getH(vulkan_camera_system_t* system, vulkan_camera_handle_t handle)
 {
 	return CAST_TO(vulkan_camera_t*, library_getH(&system->lib, handle));
 }
 
-RENDERER_API void vulkan_camera_system_destroy_cameraH(vulkan_camera_system_t* system, vulkan_camera_handle_t handle)
+SGE_API void vulkan_camera_system_destroy_cameraH(vulkan_camera_system_t* system, vulkan_camera_handle_t handle)
 {
 	vulkan_camera_t* camera = vulkan_camera_system_getH(system, handle);
 	vulkan_camera_destroy(camera);

@@ -44,7 +44,7 @@ float TIME;
 int main()
 {
 	memory_allocator_init(&argc);
-	RENDERER = renderer_init(RENDERER_GPU_TYPE_DISCRETE, 800, 800, "Shadow map", false);
+	RENDERER = renderer_init(SGE_GPU_TYPE_DISCRETE, 800, 800, "Shadow map", false);
 	WINDOW = renderer_get_window(RENDERER);
 
 	SCENE_MANAGER = scene_manager_create();

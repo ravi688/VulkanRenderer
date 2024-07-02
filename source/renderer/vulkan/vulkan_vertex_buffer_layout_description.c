@@ -41,7 +41,7 @@ static BUFFER* __create_buffer(memory_allocator_t* allocator,  u32 size)
 	return buffer;
 }
 
-RENDERER_API void vulkan_vertex_buffer_layout_description_begin(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
+SGE_API void vulkan_vertex_buffer_layout_description_begin(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
 {
 	memzero(description, vulkan_vertex_buffer_layout_description_t);
 	description->binding = binding_number;
@@ -53,14 +53,14 @@ RENDERER_API void vulkan_vertex_buffer_layout_description_begin(memory_allocator
 	description->attribute_offsets = CAST_TO(u32*, create_buffer(allocator, u32));
 }
 
-RENDERER_API void vulkan_vertex_buffer_layout_description_add_attribute(vulkan_vertex_buffer_layout_description_t* description, u32 location, VkFormat format, u32 offset)
+SGE_API void vulkan_vertex_buffer_layout_description_add_attribute(vulkan_vertex_buffer_layout_description_t* description, u32 location, VkFormat format, u32 offset)
 {
 	buf_push_auto(CAST_TO(BUFFER*, description->attribute_locations), location);
 	buf_push_auto(CAST_TO(BUFFER*, description->attribute_formats), format);
 	buf_push_auto(CAST_TO(BUFFER*, description->attribute_offsets), offset);
 }
 
-RENDERER_API void vulkan_vertex_buffer_layout_description_end(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description)
+SGE_API void vulkan_vertex_buffer_layout_description_end(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description)
 {
 	BUFFER* buffer = CAST_TO(BUFFER*, description->attribute_locations);
 	description->attribute_count = buf_get_element_count(buffer);
@@ -74,7 +74,7 @@ RENDERER_API void vulkan_vertex_buffer_layout_description_end(memory_allocator_t
 	memory_allocator_dealloc(allocator, buffer);
 }
 
-RENDERER_API void vulkan_vertex_buffer_layout_description_destroy_allocations(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description)
+SGE_API void vulkan_vertex_buffer_layout_description_destroy_allocations(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description)
 {
 	if(description->attribute_count > 0)
 	{

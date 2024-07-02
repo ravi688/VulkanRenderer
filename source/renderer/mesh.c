@@ -33,19 +33,19 @@
 
 static VkIndexType get_vulkan_index_from_stride(u32 stride);
 
-RENDERER_API mesh_t* mesh_new(memory_allocator_t* allocator)
+SGE_API mesh_t* mesh_new(memory_allocator_t* allocator)
 {
 	return vulkan_mesh_new(allocator);
 }
 
-RENDERER_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
+SGE_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 {
 	mesh_t* vulkan_mesh = vulkan_mesh_new(renderer->allocator);
 	mesh_create_no_alloc(renderer, mesh_data, vulkan_mesh);
 	return vulkan_mesh;
 }
 
-RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
+SGE_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
 {
 	debug_assert__(mesh_data != NULL, "Failed to create mesh_t, mesh3d_t* mesh_data == NULL\n");
 	vulkan_vertex_buffer_create_info_t* vertex_buffer_infos = stack_newv(vulkan_vertex_buffer_create_info_t, MESH3D_MAX_ATTRIBUTE_COUNT);
@@ -82,37 +82,37 @@ RENDERER_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data
 	stack_free(vertex_buffer_infos);
 }
 
-RENDERER_API void mesh_create_no_alloc_ext(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
+SGE_API void mesh_create_no_alloc_ext(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
 {
 	RDR_OBJECT_INIT(mesh, RDR_OBJECT_TYPE_MESH, RDR_OBJECT_NATIONALITY_EXTERNAL);
 	mesh_create_no_alloc(renderer, mesh_data, mesh);
 }
 
-RENDERER_API void mesh_destroy(mesh_t* mesh)
+SGE_API void mesh_destroy(mesh_t* mesh)
 {
 	vulkan_mesh_destroy(mesh);
 }
 
-RENDERER_API void mesh_release_resources(mesh_t* mesh)
+SGE_API void mesh_release_resources(mesh_t* mesh)
 {
 	vulkan_mesh_release_resources(mesh);
 }
 
-RENDERER_API void mesh_draw(mesh_t* mesh)
+SGE_API void mesh_draw(mesh_t* mesh)
 {
 	vulkan_mesh_draw(mesh);
 }
 
-RENDERER_API void mesh_draw_indexed(mesh_t* mesh)
+SGE_API void mesh_draw_indexed(mesh_t* mesh)
 {
 	vulkan_mesh_draw_indexed(mesh);
 }
 
-RENDERER_API void mesh_draw_instanced(mesh_t* mesh, uint32_t instance_count)
+SGE_API void mesh_draw_instanced(mesh_t* mesh, uint32_t instance_count)
 {
 	vulkan_mesh_draw_instanced(mesh, instance_count);
 }
-RENDERER_API void mesh_draw_indexed_instanced(mesh_t* mesh, uint32_t instance_count)
+SGE_API void mesh_draw_indexed_instanced(mesh_t* mesh, uint32_t instance_count)
 {
 	vulkan_mesh_draw_indexed_instanced(mesh, instance_count);
 }

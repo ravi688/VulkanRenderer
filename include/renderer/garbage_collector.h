@@ -32,7 +32,7 @@
 
 BEGIN_CPP_COMPATIBLE
 
-// RENDERER_API extern tgc_t gc;
+// SGE_API extern tgc_t gc;
 
 END_CPP_COMPATIBLE
 

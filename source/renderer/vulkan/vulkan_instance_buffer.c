@@ -31,7 +31,7 @@
 #include <renderer/memory_allocator.h>
 
 // constructors and destructors
-RENDERER_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)
+SGE_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)
 {
 	_debug_assert__(out_instance_buffer != NULL);
 	_debug_assert__(create_info->stride != 0);
@@ -56,14 +56,14 @@ RENDERER_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vul
 	}
 }
 
-RENDERER_API void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer)
+SGE_API void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer)
 {
 	if(instance_buffer->has_device_buffer)
 		vulkan_buffer_destroy(&instance_buffer->device_buffer);
 	multi_buffer_clear(&instance_buffer->host_buffer);
 }
 
-RENDERER_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer)
+SGE_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer)
 {
 	if(instance_buffer->has_device_buffer)
 		vulkan_buffer_release_resources(&instance_buffer->device_buffer);
@@ -73,14 +73,14 @@ RENDERER_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffe
 }
 
 // getters
-RENDERER_API multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer)
+SGE_API multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer)
 {
 	AUTO buffer = &instance_buffer->host_buffer;
 	instance_buffer->is_dirty = true;
 	return buffer;
 }
 
-RENDERER_API vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer)
+SGE_API vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer)
 {
 	if(instance_buffer->has_device_buffer)
 		return &instance_buffer->device_buffer;
@@ -89,7 +89,7 @@ RENDERER_API vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_in
 }
 
 // logic functions
-RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer, bool OUT is_resized)
+SGE_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer, bool OUT is_resized)
 {
 	if(!instance_buffer->is_dirty)
 		return false;

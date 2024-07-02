@@ -69,8 +69,8 @@ BEGIN_CPP_COMPATIBLE
 	returns:
 		pointer to the newly created vulkan render texture object
  */
-RENDERER_API vulkan_render_texture_t* vulkan_render_texture_create(vulkan_renderer_t* renderer, vulkan_render_texture_create_info_t* create_info);
-RENDERER_API void vulkan_render_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_texture_create_info_t* create_info, vulkan_render_texture_t OUT texture);
+SGE_API vulkan_render_texture_t* vulkan_render_texture_create(vulkan_renderer_t* renderer, vulkan_render_texture_create_info_t* create_info);
+SGE_API void vulkan_render_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_texture_create_info_t* create_info, vulkan_render_texture_t OUT texture);
 
 /*
 	description:
@@ -80,7 +80,7 @@ RENDERER_API void vulkan_render_texture_create_no_alloc(vulkan_renderer_t* rende
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_texture_destroy(vulkan_render_texture_t* texture);
+SGE_API void vulkan_render_texture_destroy(vulkan_render_texture_t* texture);
 
 /*
 	description:
@@ -90,6 +90,6 @@ RENDERER_API void vulkan_render_texture_destroy(vulkan_render_texture_t* texture
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_texture_release_resources(vulkan_render_texture_t* texture);
+SGE_API void vulkan_render_texture_release_resources(vulkan_render_texture_t* texture);
 
 END_CPP_COMPATIBLE

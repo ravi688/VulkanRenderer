@@ -48,7 +48,7 @@ static BUFFER* __create_buffer(memory_allocator_t* allocator, u32 size)
 	return buffer;
 }
 
-RENDERER_API void vulkan_render_pass_description_begin(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, vulkan_render_pass_type_t type)
+SGE_API void vulkan_render_pass_description_begin(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, vulkan_render_pass_type_t type)
 {
 	memzero(description, vulkan_render_pass_description_t);
 	description->type = type;
@@ -59,18 +59,18 @@ RENDERER_API void vulkan_render_pass_description_begin(memory_allocator_t* alloc
 	description->render_set_bindings = CAST_TO(vulkan_shader_resource_description_t*, create_buffer(allocator, vulkan_shader_resource_description_t));
 }
 
-RENDERER_API void vulkan_render_pass_description_add_input(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, glsl_type_t type, u32 index, u32 binding)
+SGE_API void vulkan_render_pass_description_add_input(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, glsl_type_t type, u32 index, u32 binding)
 {
 	buf_push_auto(CAST_TO(BUFFER*, description->input_attachments), index);
 	vulkan_shader_resource_description_create_opaque(allocator, create_element(CAST_TO(BUFFER*, description->render_set_bindings)), "internal", type, VULKAN_DESCRIPTOR_SET_RENDER, binding);
 }
 
-RENDERER_API void vulkan_render_pass_description_add_attachment(vulkan_render_pass_description_t* description, vulkan_attachment_type_t type)
+SGE_API void vulkan_render_pass_description_add_attachment(vulkan_render_pass_description_t* description, vulkan_attachment_type_t type)
 {
 	buf_push_auto(CAST_TO(BUFFER*, description->attachments), type);
 }
 
-RENDERER_API void vulkan_render_pass_description_begin_subpass(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, u32 pipeline_index)
+SGE_API void vulkan_render_pass_description_begin_subpass(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, u32 pipeline_index)
 {
 	vulkan_subpass_description_t* subpass = create_element(CAST_TO(BUFFER*, description->subpass_descriptions));
 	subpass->pipeline_description_index = pipeline_index;
@@ -82,7 +82,7 @@ RENDERER_API void vulkan_render_pass_description_begin_subpass(memory_allocator_
 	subpass->sub_render_set_bindings = CAST_TO(vulkan_shader_resource_description_t*, create_buffer(allocator, vulkan_shader_resource_description_t));
 }
 
-RENDERER_API void vulkan_render_pass_description_add_attachment_reference(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
+SGE_API void vulkan_render_pass_description_add_attachment_reference(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
 {
 	vulkan_subpass_description_t* subpass = buf_peek_ptr(CAST_TO(BUFFER*, description->subpass_descriptions));
 	switch(type)
@@ -105,7 +105,7 @@ RENDERER_API void vulkan_render_pass_description_add_attachment_reference(memory
 	}
 }
 
-RENDERER_API void vulkan_render_pass_description_end_subpass(memory_allocator_t* allocator, vulkan_render_pass_description_t* description)
+SGE_API void vulkan_render_pass_description_end_subpass(memory_allocator_t* allocator, vulkan_render_pass_description_t* description)
 {
 	vulkan_subpass_description_t* subpass = buf_peek_ptr(CAST_TO(BUFFER*, description->subpass_descriptions));
 	BUFFER* buffer;
@@ -131,13 +131,13 @@ RENDERER_API void vulkan_render_pass_description_end_subpass(memory_allocator_t*
 	memory_allocator_dealloc(allocator, buffer);
 }
 
-RENDERER_API void vulkan_render_pass_description_add_subpass_dependency(vulkan_render_pass_description_t* description, VkSubpassDependency* dependency)
+SGE_API void vulkan_render_pass_description_add_subpass_dependency(vulkan_render_pass_description_t* description, VkSubpassDependency* dependency)
 {
 	VkSubpassDependency* dst_dependency = create_element(CAST_TO(BUFFER*, description->subpass_dependencies));
 	memcopy(dst_dependency, dependency, VkSubpassDependency);
 }
 
-RENDERER_API void vulkan_render_pass_description_end(memory_allocator_t* allocator, vulkan_render_pass_description_t* description)
+SGE_API void vulkan_render_pass_description_end(memory_allocator_t* allocator, vulkan_render_pass_description_t* description)
 {
 	BUFFER* buffer = CAST_TO(BUFFER*, description->attachments);
 	description->attachment_count = buf_get_element_count(buffer);
@@ -161,7 +161,7 @@ RENDERER_API void vulkan_render_pass_description_end(memory_allocator_t* allocat
 	memory_allocator_dealloc(allocator, buffer);
 }
 
-RENDERER_API void vulkan_render_pass_description_destroy_allocations(memory_allocator_t* allocator, vulkan_render_pass_description_t* description)
+SGE_API void vulkan_render_pass_description_destroy_allocations(memory_allocator_t* allocator, vulkan_render_pass_description_t* description)
 {
 	if(description->attachment_count > 0)
 		memory_allocator_dealloc(allocator, description->attachments);

@@ -182,7 +182,7 @@ BEGIN_CPP_COMPATIBLE
 	description: Creates a render queue object
 	returns: ptr to the newly created vulkan_render_queue_t object
  */
-RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator);
+SGE_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator);
 
 /*
 	description: Creates a render queue object
@@ -190,7 +190,7 @@ RENDERER_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* 
 		renderer: ptr to the context
 	returns: ptr to the newly created vulkan_render_queue_t object
  */
-RENDERER_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type);
+SGE_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type);
 
 /*
 	description: Creates a render queue object
@@ -199,7 +199,7 @@ RENDERER_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t
 		OUT queue: pre allocated vulkan_render_queue_t object (using vulkan_render_queue_new())
 	returns: nothing
  */
-RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type, vulkan_render_queue_t OUT queue);
+SGE_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type, vulkan_render_queue_t OUT queue);
 
 /*
 	description: Destroys the API specific resources
@@ -207,7 +207,7 @@ RENDERER_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* rendere
 		queue: ptr to render queue
 	return: nothing
  */
-RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue);
+SGE_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue);
 
 /*
 	description: Releases the CPU side cached resources
@@ -215,11 +215,11 @@ RENDERER_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue);
 		queue: ptr to render queue
 	return: nothing
  */
-RENDERER_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue);
+SGE_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue);
 
 /* logic functions */
 
-RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue);
+SGE_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t* queue);
 
 /*
 	description: Adds a render object into the render queue
@@ -232,7 +232,7 @@ RENDERER_API void vulkan_render_queue_destroy_all_objects(vulkan_render_queue_t*
 		you would still need to call render_queue_build()
 		Adding render object into the queue sets is_ready to false
  */
-RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
+SGE_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
 
 /*
 	description: Removes a render object from the render queue
@@ -245,7 +245,7 @@ RENDERER_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_r
 		you would still need to call render_queue_build()
 		Removing render object from the queue sets is_ready to false
  */
-RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
+SGE_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_t* obj);
 
 /*
 	description: Builds and Orders the render objects according to the render pass handles
@@ -255,7 +255,7 @@ RENDERER_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulk
 		nothing
 	NOTE: sets is_ready to true
  */
-RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue);
+SGE_API void vulkan_render_queue_build(vulkan_render_queue_t* queue);
 
 /*
 	description: Builds the actual API specific command buffers
@@ -265,7 +265,7 @@ RENDERER_API void vulkan_render_queue_build(vulkan_render_queue_t* queue);
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene);
+SGE_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene);
 
 /*
 	description: Builds the actual API specific command buffers, but using a single material for all the objects in the queue
@@ -276,6 +276,6 @@ RENDERER_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vul
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera, vulkan_render_scene_t* scene);
+SGE_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera, vulkan_render_scene_t* scene);
 
 END_CPP_COMPATIBLE

@@ -201,20 +201,20 @@ typedef struct vulkan_shader_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_shader_t* vulkan_shader_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, vulkan_shader_create_info_t* create_info);
-RENDERER_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* file_info);
-RENDERER_API void vulkan_shader_destroy(vulkan_shader_t* shader);
-RENDERER_API void vulkan_shader_release_resources(vulkan_shader_t* shader);
+SGE_API vulkan_shader_t* vulkan_shader_new(memory_allocator_t* allocator);
+SGE_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, vulkan_shader_create_info_t* create_info);
+SGE_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* file_info);
+SGE_API void vulkan_shader_destroy(vulkan_shader_t* shader);
+SGE_API void vulkan_shader_release_resources(vulkan_shader_t* shader);
 
 /* logic functions */
-RENDERER_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index);
-RENDERER_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index);
+SGE_API vulkan_graphics_pipeline_t* vulkan_shader_get_pipeline(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index);
+SGE_API vulkan_pipeline_layout_t* vulkan_shader_get_pipeline_layout(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle, u32 subpass_index);
 /* returns handle to the previous render pass which ran, otherwise VULKAN_RENDER_PASS_HANDLE_INVALID */
-RENDERER_API vulkan_render_pass_handle_t vulkan_shader_get_prev_pass_handle(vulkan_shader_t* shader);
+SGE_API vulkan_render_pass_handle_t vulkan_shader_get_prev_pass_handle(vulkan_shader_t* shader);
 /* returns true if the handle matches with the next pass's handle the shader exepects to be executed */
-RENDERER_API bool vulkan_shader_render_pass_is_next(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle);
+SGE_API bool vulkan_shader_render_pass_is_next(vulkan_shader_t* shader, vulkan_render_pass_handle_t handle);
 /* resets the pass_counter variable to zero for next rendering */
-RENDERER_API void vulkan_shader_render_pass_counter_reset(vulkan_shader_t* shader);
+SGE_API void vulkan_shader_render_pass_counter_reset(vulkan_shader_t* shader);
 
 END_CPP_COMPATIBLE

@@ -26,7 +26,7 @@
 
 #include <renderer/internal/vulkan/vulkan_to_string.h>
 
-RENDERER_API void vk_present_mode_to_string(const char* description, VkPresentModeKHR present_mode, BUFFER* string_buffer)
+SGE_API void vk_present_mode_to_string(const char* description, VkPresentModeKHR present_mode, BUFFER* string_buffer)
 {
     buf_push_string(string_buffer, description);
     switch(present_mode)
@@ -52,7 +52,7 @@ RENDERER_API void vk_present_mode_to_string(const char* description, VkPresentMo
     }
 }
 
-RENDERER_API void vk_format_to_string(const char* description, VkFormat format, BUFFER* string_buffer)
+SGE_API void vk_format_to_string(const char* description, VkFormat format, BUFFER* string_buffer)
 {
     buf_push_string(string_buffer, description);
     switch(format)
@@ -457,7 +457,7 @@ RENDERER_API void vk_format_to_string(const char* description, VkFormat format, 
     }
 }
 
-RENDERER_API void vk_color_space_to_string(const char* description, VkColorSpaceKHR color_space, BUFFER* string_buffer)
+SGE_API void vk_color_space_to_string(const char* description, VkColorSpaceKHR color_space, BUFFER* string_buffer)
 {
     buf_push_string(string_buffer, description);
     switch(color_space)
@@ -516,7 +516,7 @@ RENDERER_API void vk_color_space_to_string(const char* description, VkColorSpace
     }
 }
 
-RENDERER_API void vk_surface_format_to_string(const char* description, VkSurfaceFormatKHR surface_format, BUFFER* string_buffer)
+SGE_API void vk_surface_format_to_string(const char* description, VkSurfaceFormatKHR surface_format, BUFFER* string_buffer)
 {
     buf_push_string(string_buffer, description);
     buf_push_char(string_buffer, '(');
@@ -527,7 +527,7 @@ RENDERER_API void vk_surface_format_to_string(const char* description, VkSurface
     buf_push_newline(string_buffer);
 }
 
-RENDERER_API void vk_surface_transform_flag_bits_to_string(const char* description, VkSurfaceTransformFlagBitsKHR transform, BUFFER* string_buffer)
+SGE_API void vk_surface_transform_flag_bits_to_string(const char* description, VkSurfaceTransformFlagBitsKHR transform, BUFFER* string_buffer)
 {
     buf_push_string(string_buffer, description);
     switch(transform)
@@ -564,7 +564,7 @@ RENDERER_API void vk_surface_transform_flag_bits_to_string(const char* descripti
     }
 }
 
-RENDERER_API void vk_surface_transform_flags_to_string(const char* description, VkSurfaceTransformFlagsKHR transform_flags, BUFFER* string_buffer)
+SGE_API void vk_surface_transform_flags_to_string(const char* description, VkSurfaceTransformFlagsKHR transform_flags, BUFFER* string_buffer)
 {
     buf_push_string(string_buffer, description);
     if(transform_flags & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
@@ -588,7 +588,7 @@ RENDERER_API void vk_surface_transform_flags_to_string(const char* description, 
     buf_push_newline(string_buffer);
 }
 
-RENDERER_API void vk_surface_capabilities_to_string(const char* description, VkSurfaceCapabilitiesKHR* capabilities, BUFFER* string_buffer)
+SGE_API void vk_surface_capabilities_to_string(const char* description, VkSurfaceCapabilitiesKHR* capabilities, BUFFER* string_buffer)
 {
     buf_push_string(string_buffer, description);
     char stage_buffer[512];
@@ -602,7 +602,7 @@ RENDERER_API void vk_surface_capabilities_to_string(const char* description, VkS
     vk_surface_transform_flag_bits_to_string("\t\tcurrentTransform: ", capabilities->currentTransform, string_buffer);
 }
 
-RENDERER_API void vk_bool32_to_string(const char* name, VkBool32 value, BUFFER* string_buffer)
+SGE_API void vk_bool32_to_string(const char* name, VkBool32 value, BUFFER* string_buffer)
 {
 	buf_push_string(string_buffer, name);
 	switch(value)
@@ -619,7 +619,7 @@ RENDERER_API void vk_bool32_to_string(const char* name, VkBool32 value, BUFFER* 
 	}
 }
 
-RENDERER_API void vk_sample_count_flags_to_string(const char* name, VkSampleCountFlags flags, BUFFER* string_buffer)
+SGE_API void vk_sample_count_flags_to_string(const char* name, VkSampleCountFlags flags, BUFFER* string_buffer)
 {
 	buf_push_string(string_buffer, name);
     if(flags & VK_SAMPLE_COUNT_1_BIT)
@@ -639,7 +639,7 @@ RENDERER_API void vk_sample_count_flags_to_string(const char* name, VkSampleCoun
     buf_push_newline(string_buffer);
 }
 
-RENDERER_API void vk_physical_device_type_to_string(const char* name, VkPhysicalDeviceType type, BUFFER* string_buffer)
+SGE_API void vk_physical_device_type_to_string(const char* name, VkPhysicalDeviceType type, BUFFER* string_buffer)
 {
 	buf_push_string(string_buffer, name);
  	switch(type)
@@ -665,7 +665,7 @@ RENDERER_API void vk_physical_device_type_to_string(const char* name, VkPhysical
     }
 }
 
-RENDERER_API void vk_physical_device_properties_to_string(const char* description, VkPhysicalDeviceProperties* properties, BUFFER* string_buffer)
+SGE_API void vk_physical_device_properties_to_string(const char* description, VkPhysicalDeviceProperties* properties, BUFFER* string_buffer)
 {
 	char buffer[512];
     buf_push_string(string_buffer, description);
@@ -678,7 +678,7 @@ RENDERER_API void vk_physical_device_properties_to_string(const char* descriptio
     buf_push_newline(string_buffer);
 }
 
-RENDERER_API void vk_physical_device_limits_to_string(const char* description, VkPhysicalDeviceLimits* limits, BUFFER* string_buffer)
+SGE_API void vk_physical_device_limits_to_string(const char* description, VkPhysicalDeviceLimits* limits, BUFFER* string_buffer)
 {
 	buf_push_string(string_buffer, description);
 	char buffer[512]; 	// staging buffer

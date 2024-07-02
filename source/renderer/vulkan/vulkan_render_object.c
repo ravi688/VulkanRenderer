@@ -34,19 +34,19 @@
 #include <renderer/assert.h>
 
 typedef struct vulkan_mesh_t vulkan_mesh_t;
-RENDERER_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh);
-RENDERER_API void vulkan_mesh_set_material(vulkan_mesh_t* mesh, vulkan_material_t* material);
+SGE_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh);
+SGE_API void vulkan_mesh_set_material(vulkan_mesh_t* mesh, vulkan_material_t* material);
 
 typedef struct text_mesh_t text_mesh_t;
-RENDERER_API void text_mesh_draw(text_mesh_t* text);
-RENDERER_API void text_mesh_set_material(text_mesh_t* text, vulkan_material_t* material);
+SGE_API void text_mesh_draw(text_mesh_t* text);
+SGE_API void text_mesh_set_material(text_mesh_t* text, vulkan_material_t* material);
 
 typedef struct vulkan_bitmap_text_t vulkan_bitmap_text_t;
-RENDERER_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text);
-RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material);
+SGE_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text);
+SGE_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material);
 
 
-RENDERER_API vulkan_render_object_t* vulkan_render_object_new(memory_allocator_t* allocator)
+SGE_API vulkan_render_object_t* vulkan_render_object_new(memory_allocator_t* allocator)
 {
 	vulkan_render_object_t* obj = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_OBJECT, vulkan_render_object_t);
 	memzero(obj, vulkan_render_object_t);
@@ -89,13 +89,13 @@ static void setup_gpu_resources(vulkan_render_object_t* object)
 	object->normal_handle = struct_descriptor_get_field_handle(&object->struct_definition, "normal");
 }
 
-RENDERER_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info)
+SGE_API vulkan_render_object_t* vulkan_render_object_create(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info)
 {
 	vulkan_render_object_t* object = vulkan_render_object_new(renderer->allocator);
 	vulkan_render_object_create_no_alloc(renderer, create_info, object);
 	return object;
 }
-RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object)
+SGE_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_object_create_info_t* create_info, vulkan_render_object_t OUT object)
 {
 	VULKAN_OBJECT_MEMZERO(object, vulkan_render_object_t);
 
@@ -128,7 +128,7 @@ RENDERER_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* render
 	vulkan_render_object_set_transform(object, mat4_identity());
 }
 
-RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* obj)
+SGE_API void vulkan_render_object_destroy(vulkan_render_object_t* obj)
 {
 	if(obj->queue != NULL)
 		vulkan_render_queue_removeH(obj->queue, obj);
@@ -138,7 +138,7 @@ RENDERER_API void vulkan_render_object_destroy(vulkan_render_object_t* obj)
 	vulkan_buffer_destroy(&obj->buffer);
 }
 
-RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t* obj)
+SGE_API void vulkan_render_object_release_resources(vulkan_render_object_t* obj)
 {
 	struct_descriptor_destroy(obj->renderer->allocator, &obj->struct_definition);
 	vulkan_descriptor_set_release_resources(&obj->object_set);
@@ -147,19 +147,19 @@ RENDERER_API void vulkan_render_object_release_resources(vulkan_render_object_t*
 		memory_allocator_dealloc(obj->renderer->allocator, obj);
 }
 
-RENDERER_API void vulkan_render_object_attach(vulkan_render_object_t* obj, void* user_data)
+SGE_API void vulkan_render_object_attach(vulkan_render_object_t* obj, void* user_data)
 {
 	obj->user_data = user_data;
 	if((user_data != NULL) && (obj->set_material != NULL) && (obj->material != NULL))
 		obj->set_material(obj->user_data, obj->material);
 }
 
-RENDERER_API void vulkan_render_object_draw(vulkan_render_object_t* obj)
+SGE_API void vulkan_render_object_draw(vulkan_render_object_t* obj)
 {
 	obj->draw(obj->user_data);
 }
 
-RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* obj, vulkan_material_t* material)
+SGE_API void vulkan_render_object_set_material(vulkan_render_object_t* obj, vulkan_material_t* material)
 {
 	if(obj->material == material) return;
 	/* cache the queue as vulkan_render_queue_removeH internally sets the obj->queue to NULL */
@@ -179,12 +179,12 @@ RENDERER_API void vulkan_render_object_set_material(vulkan_render_object_t* obj,
 		obj->set_material(obj->user_data, material);
 }
 
-RENDERER_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* obj)
+SGE_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* obj)
 {
 	return obj->material;
 }
 
-RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* obj, mat4_t transform)
+SGE_API void vulkan_render_object_set_transform(vulkan_render_object_t* obj, mat4_t transform)
 {
 	mat4_t normal = mat4_inverse(transform);
 	mat4_move(transform, mat4_transpose(transform));
@@ -192,14 +192,14 @@ RENDERER_API void vulkan_render_object_set_transform(vulkan_render_object_t* obj
 	struct_descriptor_set_mat4(&obj->struct_definition, obj->normal_handle, CAST_TO(float*, &normal));
 }
 
-RENDERER_API mat4_t vulkan_render_object_get_transform(vulkan_render_object_t* obj)
+SGE_API mat4_t vulkan_render_object_get_transform(vulkan_render_object_t* obj)
 {
 	mat4_t transform;
 	struct_descriptor_get_mat4(&obj->struct_definition, obj->transform_handle, CAST_TO(float*, &transform));
 	return transform;
 }
 
-RENDERER_API mat4_t vulkan_render_object_get_normal(vulkan_render_object_t* obj)
+SGE_API mat4_t vulkan_render_object_get_normal(vulkan_render_object_t* obj)
 {
 	mat4_t normal;
 	struct_descriptor_get_mat4(&obj->struct_definition, obj->normal_handle, CAST_TO(float*, &normal));

@@ -25,12 +25,12 @@
 
 #include <renderer/internal/vulkan/vulkan_queue.h>
 
-RENDERER_API bool vulkan_queue_present(VkQueue queue, VkSwapchainKHR swapchain, u32 image_index, VkSemaphore wait)
+SGE_API bool vulkan_queue_present(VkQueue queue, VkSwapchainKHR swapchain, u32 image_index, VkSemaphore wait)
 {
 	return vulkan_queue_presentv(queue, 1, &swapchain, &image_index, wait);
 }
 
-RENDERER_API bool vulkan_queue_presentv(VkQueue queue, u32 swapchain_count, VkSwapchainKHR* swapchains, u32* image_indices, VkSemaphore wait)
+SGE_API bool vulkan_queue_presentv(VkQueue queue, u32 swapchain_count, VkSwapchainKHR* swapchains, u32* image_indices, VkSemaphore wait)
 {
 	VkPresentInfoKHR present_info =
 	{
@@ -49,12 +49,12 @@ RENDERER_API bool vulkan_queue_presentv(VkQueue queue, u32 swapchain_count, VkSw
 	return true;
 }
 
-RENDERER_API void vulkan_queue_submit(VkQueue queue, VkCommandBuffer buffer, VkSemaphore wait, VkPipelineStageFlags wait_dst_stage, VkSemaphore signal, VkFence fence)
+SGE_API void vulkan_queue_submit(VkQueue queue, VkCommandBuffer buffer, VkSemaphore wait, VkPipelineStageFlags wait_dst_stage, VkSemaphore signal, VkFence fence)
 {
 	vulkan_queue_submitv(queue, 1, &buffer, wait, wait_dst_stage, signal, fence);
 }
 
-RENDERER_API void vulkan_queue_submitv(VkQueue queue, u32 count, VkCommandBuffer* buffers, VkSemaphore wait, VkPipelineStageFlags wait_dst, VkSemaphore signal, VkFence fence)
+SGE_API void vulkan_queue_submitv(VkQueue queue, u32 count, VkCommandBuffer* buffers, VkSemaphore wait, VkPipelineStageFlags wait_dst, VkSemaphore signal, VkFence fence)
 {
 	VkSubmitInfo submit_info =
 	{

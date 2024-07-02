@@ -47,7 +47,7 @@
 #include <hpml/vec4.h>
 #include <hpml/affine_transformation.h>
 
-RENDERER_API vulkan_camera_t* vulkan_camera_new(memory_allocator_t* allocator)
+SGE_API vulkan_camera_t* vulkan_camera_new(memory_allocator_t* allocator)
 {
 	vulkan_camera_t* camera = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_CAMERA, vulkan_camera_t);
 	memzero(camera, vulkan_camera_t);
@@ -356,7 +356,7 @@ typedef struct vulkan_supplementary_attachments_copy_info_t
 	u32 supplementary_attachment_bucket_depth;
 } vulkan_supplementary_attachments_copy_info_t;
 
-RENDERER_API void camera_render_pass_recopy_supplementary_attachments(memory_allocator_t* allocator, vulkan_camera_render_pass_t* render_pass, vulkan_supplementary_attachments_copy_info_t* info)
+SGE_API void camera_render_pass_recopy_supplementary_attachments(memory_allocator_t* allocator, vulkan_camera_render_pass_t* render_pass, vulkan_supplementary_attachments_copy_info_t* info)
 {
 	if((info->supplementary_attachment_bucket_count != render_pass->supplementary_attachment_bucket_count)
 		|| (info->supplementary_attachment_bucket_depth != render_pass->supplementary_attachment_bucket_depth))
@@ -415,7 +415,7 @@ static void recreate_framebuffers(void* _window, void* user_data)
 	debug_log_info("Framebuffer recreate success");
 }
 
-RENDERER_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info)
+SGE_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info)
 {
 	vulkan_camera_t* camera = vulkan_camera_new(renderer->allocator);
 	vulkan_camera_create_no_alloc(renderer, create_info, camera);
@@ -429,7 +429,7 @@ static bool render_pass_handle_pair_comparer(void* value, void* cursor)
 	return (pair1->handle == pair2->handle) && (pair1->prev_handle == pair2->prev_handle);
 }
 
-RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info, vulkan_camera_t OUT camera)
+SGE_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info, vulkan_camera_t OUT camera)
 {
 	VULKAN_OBJECT_MEMZERO(camera, vulkan_camera_t);
 
@@ -553,7 +553,7 @@ RENDERER_API void vulkan_camera_create_no_alloc(vulkan_renderer_t* renderer, vul
 	log_msg("Vulkan Camera has been created successfully\n");
 }
 
-RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
+SGE_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 {
 	/* unsubscribe window resize event handles */
 	event_unsubscribe(camera->renderer->window->on_resize_event, camera->render_area_recalculate_handle);
@@ -622,7 +622,7 @@ RENDERER_API void vulkan_camera_destroy(vulkan_camera_t* camera)
 	log_msg("Vulkan Camera has been destroyed successfully\n");
 }
 
-RENDERER_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
+SGE_API void vulkan_camera_release_resources(vulkan_camera_t* camera)
 {
 	if(camera->shot_rotations != NULL)
 		memory_allocator_dealloc(camera->renderer->allocator, camera->shot_rotations);
@@ -729,13 +729,13 @@ static void transition_target_layout_for_sample(VkFormat format, vulkan_image_vi
 }
 
 /* logic functions */
-RENDERER_API void vulkan_camera_begin(vulkan_camera_t* camera)
+SGE_API void vulkan_camera_begin(vulkan_camera_t* camera)
 {
 	camera->current_shot_index = 0;
 	camera->shot_taken = 0;
 }
 
-RENDERER_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags)
+SGE_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags)
 {
 	bool is_capture = camera->shot_taken < camera->max_shot_count;
 
@@ -799,7 +799,7 @@ RENDERER_API bool vulkan_camera_capture(vulkan_camera_t* camera, u32 clear_flags
 	return true;
 }
 
-RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera)
+SGE_API void vulkan_camera_end(vulkan_camera_t* camera)
 {
 	if(camera->color_render_target != NULL)
 	{
@@ -822,7 +822,7 @@ RENDERER_API void vulkan_camera_end(vulkan_camera_t* camera)
 	}
 }
 
-RENDERER_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth)
+SGE_API void vulkan_camera_set_clear(vulkan_camera_t* camera, color_t color, float depth)
 {
 	vulkan_render_pass_set_clear_indirect(camera->swapchain_depth_clear_pass, color, depth, camera->clear_buffer);
 }
@@ -1340,7 +1340,7 @@ static void vulkan_camera_set_depth_render_target_texture(vulkan_camera_t* camer
 	set_active_all_on_resize_subscriptions(camera, false);
 }
 
-RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_camera_render_target_binding_type_t binding_type, vulkan_texture_t* texture)
+SGE_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_camera_render_target_type_t target_type, vulkan_camera_render_target_binding_type_t binding_type, vulkan_texture_t* texture)
 {	
 	if((texture != VULKAN_CAMERA_RENDER_TARGET_SCREEN) && ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == VULKAN_TEXTURE_TYPE_CUBE))
 	{
@@ -1414,7 +1414,7 @@ RENDERER_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulka
 	debug_log_info("Render Target Status: %s", vulkan_camera_render_target_status_str(camera->render_target_status));
 }
 
-RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask)
+SGE_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask)
 {
 	// vulkan_render_pass_begin(camera->swapchain_depth_clear_pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN, camera);
 	// vulkan_render_pass_end(camera->swapchain_depth_clear_pass);
@@ -1422,7 +1422,7 @@ RENDERER_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_sc
 	// 	vulkan_render_scene_render(scene, queue_mask);
 }
 
-RENDERER_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_texture_t* target)
+SGE_API void vulkan_camera_render_to_texture(vulkan_camera_t* camera, vulkan_render_scene_t* scene, vulkan_texture_t* target)
 {
 
 }
@@ -1450,7 +1450,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool is_depth_render_only(v
 		|| (camera->render_target_status == VULKAN_CAMERA_RENDER_TARGET_STATUS_SIMPLEX_EXTERNAL_DEPTH);
 }
 
-RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle)
+SGE_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle)
 {
 	if(is_depth_render_only(camera))
 	{
@@ -1474,19 +1474,19 @@ RENDERER_API vulkan_framebuffer_t* vulkan_camera_get_framebuffer_list(vulkan_cam
 	return buf_get_ptr_at_typeof(&pass->framebuffers, vulkan_framebuffer_t, camera->current_shot_index * (framebuffer_count / camera->max_shot_count));
 }
 
-RENDERER_API vulkan_render_pass_descriptor_sets_t* vulkan_camera_get_descriptor_sets(vulkan_camera_t* camera, vulkan_render_pass_handle_t prev_handle, vulkan_render_pass_handle_t handle)
+SGE_API vulkan_render_pass_descriptor_sets_t* vulkan_camera_get_descriptor_sets(vulkan_camera_t* camera, vulkan_render_pass_handle_t prev_handle, vulkan_render_pass_handle_t handle)
 {
 	vulkan_render_pass_handle_pair_t pair = { prev_handle, handle };
 	return CAST_TO(vulkan_render_pass_descriptor_sets_t*, dictionary_get_value_ptr(&camera->render_pass_descriptor_sets, &pair));
 }
 
-RENDERER_API vulkan_camera_render_pass_t* vulkan_camera_get_camera_render_pass_from_pass_handle(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle)
+SGE_API vulkan_camera_render_pass_t* vulkan_camera_get_camera_render_pass_from_pass_handle(vulkan_camera_t* camera, vulkan_render_pass_handle_t handle)
 {
 	buf_ucount_t index = buf_find_index_of(&camera->render_passes, &handle, render_pass_handle_comparer);
 	return (index == BUF_INVALID_INDEX) ? NULL : buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, index);
 }
 
-RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* render_pass, vulkan_render_pass_handle_t prev_pass_handle, vulkan_framebuffer_attachments_layout_description_t* framebuffer_layout_description)
+SGE_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_render_pass_t* render_pass, vulkan_render_pass_handle_t prev_pass_handle, vulkan_framebuffer_attachments_layout_description_t* framebuffer_layout_description)
 {
 	_debug_assert__(render_pass->handle != VULKAN_RENDER_PASS_HANDLE_INVALID);
 
@@ -1646,44 +1646,44 @@ RENDERER_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vu
 
 /* getters */
 
-RENDERER_API mat4_t vulkan_camera_get_view(vulkan_camera_t* camera)
+SGE_API mat4_t vulkan_camera_get_view(vulkan_camera_t* camera)
 {
 	return camera->view;
 }
 
-RENDERER_API mat4_t vulkan_camera_get_projection(vulkan_camera_t* camera)
+SGE_API mat4_t vulkan_camera_get_projection(vulkan_camera_t* camera)
 {
 	return camera->projection;
 }
 
-RENDERER_API mat4_t vulkan_camera_get_transform(vulkan_camera_t* camera)
+SGE_API mat4_t vulkan_camera_get_transform(vulkan_camera_t* camera)
 {
 	return camera->transform;
 }
 
-RENDERER_API vec3_t vulkan_camera_get_position(vulkan_camera_t* camera)
+SGE_API vec3_t vulkan_camera_get_position(vulkan_camera_t* camera)
 {
 	return camera->position;
 }
 
-RENDERER_API vec3_t vulkan_camera_get_rotation(vulkan_camera_t* camera)
+SGE_API vec3_t vulkan_camera_get_rotation(vulkan_camera_t* camera)
 {
 	return camera->rotation;
 }
 
-RENDERER_API vec2_t vulkan_camera_get_clip_planes(vulkan_camera_t* camera)
+SGE_API vec2_t vulkan_camera_get_clip_planes(vulkan_camera_t* camera)
 {
 	return vec2(camera->near_clip_plane, camera->far_clip_plane);
 }
 
-RENDERER_API float vulkan_camera_get_field_of_view(vulkan_camera_t* camera)
+SGE_API float vulkan_camera_get_field_of_view(vulkan_camera_t* camera)
 {
 	return camera->field_of_view;
 }
 
 /* setters */
 
-RENDERER_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t transform)
+SGE_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t transform)
 {
 	camera->transform = transform;
 	mat4_t m = mat4_transpose(camera->transform);
@@ -1693,7 +1693,7 @@ RENDERER_API void vulkan_camera_set_transform(vulkan_camera_t* camera, mat4_t tr
 	update_mat4(camera, camera->view_handle, CAST_TO(float*, &m));
 }
 
-RENDERER_API void vulkan_camera_set_position_cube(vulkan_camera_t* camera, vec3_t position)
+SGE_API void vulkan_camera_set_position_cube(vulkan_camera_t* camera, vec3_t position)
 {
 	camera->position = position;
 	_debug_assert__(camera->max_shot_count == 6);
@@ -1710,32 +1710,32 @@ RENDERER_API void vulkan_camera_set_position_cube(vulkan_camera_t* camera, vec3_
 	}
 }
 
-RENDERER_API void vulkan_camera_set_position(vulkan_camera_t* camera, vec3_t position)
+SGE_API void vulkan_camera_set_position(vulkan_camera_t* camera, vec3_t position)
 {
 	camera->position = position;
 	recalculate_transform(camera);
 }
 
-RENDERER_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t rotation)
+SGE_API void vulkan_camera_set_rotation(vulkan_camera_t* camera, vec3_t rotation)
 {
 	camera->rotation = rotation;
 	recalculate_transform(camera);
 }
 
-RENDERER_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane)
+SGE_API void vulkan_camera_set_clip_planes(vulkan_camera_t* camera, float near_clip_plane, float far_clip_plane)
 {
 	camera->near_clip_plane = near_clip_plane;
 	camera->far_clip_plane = far_clip_plane;
 	recalculate_projection_matrices(camera);
 }
 
-RENDERER_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float fov)
+SGE_API void vulkan_camera_set_field_of_view(vulkan_camera_t* camera, float fov)
 {
 	camera->field_of_view = fov;
 	recalculate_projection_matrices(camera);
 }
 
-RENDERER_API void vulkan_camera_set_render_area(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
+SGE_API void vulkan_camera_set_render_area(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
 {
 	/* render area is not absolute (size defined by the user) */
 	camera->is_render_area_relative = false;
@@ -1763,7 +1763,7 @@ static void recalculate_render_area_from_relative(vulkan_camera_t* camera)
 	recalculate_projection_matrices(camera);
 }
 
-RENDERER_API void vulkan_camera_set_render_area_relative(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
+SGE_API void vulkan_camera_set_render_area_relative(vulkan_camera_t* camera, u32 offset_x, u32 offset_y, u32 width, u32 height)
 {
 	/* render is now relative (in general, not the size of the render window) */
 	camera->is_render_area_relative = true;
@@ -1775,7 +1775,7 @@ RENDERER_API void vulkan_camera_set_render_area_relative(vulkan_camera_t* camera
 	recalculate_render_area_from_relative(camera);
 }
 
-RENDERER_API void vulkan_camera_set_render_area_default(vulkan_camera_t* camera)
+SGE_API void vulkan_camera_set_render_area_default(vulkan_camera_t* camera)
 {
 	camera->is_render_area_relative = false;
 	camera->is_render_area_full = true;

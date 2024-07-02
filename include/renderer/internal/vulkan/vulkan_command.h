@@ -32,7 +32,7 @@
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkImage image,
+SGE_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkImage image,
 		VkImageSubresourceRange* subresource,
 		VkImageLayout old_layout,
 		VkImageLayout new_layout,
@@ -41,6 +41,6 @@ RENDERER_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkI
 		VkPipelineStageFlags src_pipeline_stage,
 		VkPipelineStageFlags dst_pipeline_stage);
 
-RENDERER_API void vulkan_command_bind_vertex_buffers(VkCommandBuffer cb, u32* bindings, VkBuffer* buffers, u32 buffer_count);
+SGE_API void vulkan_command_bind_vertex_buffers(VkCommandBuffer cb, u32* bindings, VkBuffer* buffers, u32 buffer_count);
 
 END_CPP_COMPATIBLE

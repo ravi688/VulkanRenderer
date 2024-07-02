@@ -47,10 +47,10 @@ typedef struct vulkan_buffer_t vulkan_buffer_t;
 
 typedef enum vulkan_renderer_gpu_type_t
 {
-	VULKAN_RENDERER_GPU_TYPE_AUTO = 0,				// automatically selects the best GPU
-	VULKAN_RENDERER_GPU_TYPE_INTEGRATED,			// selects integrated gpu if present, otherwise fallbacks to discrete
-	VULKAN_RENDERER_GPU_TYPE_DISCRETE,				// selects discrete gpu if present, otherwise fallbacks to integrated
-	VULKAN_RENDERER_GPU_TYPE_CPU					// selects cpu based software implementation of vulkan, otherwise fallbacks to integrated or discrete device
+	SGE_VULKAN_GPU_TYPE_AUTO = 0,				// automatically selects the best GPU
+	SGE_VULKAN_GPU_TYPE_INTEGRATED,			// selects integrated gpu if present, otherwise fallbacks to discrete
+	SGE_VULKAN_GPU_TYPE_DISCRETE,				// selects discrete gpu if present, otherwise fallbacks to integrated
+	SGE_VULKAN_GPU_TYPE_CPU					// selects cpu based software implementation of vulkan, otherwise fallbacks to integrated or discrete device
 } vulkan_renderer_gpu_type_t;
 
 typedef struct memory_allocator_t memory_allocator_t;
@@ -188,21 +188,21 @@ typedef struct vulkan_renderer_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t* create_info);
-RENDERER_API void vulkan_renderer_destroy(vulkan_renderer_t* renderer);
+SGE_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t* create_info);
+SGE_API void vulkan_renderer_destroy(vulkan_renderer_t* renderer);
 
 /* submits the recorded command buffer to the graphics queue and performs presentation */
-RENDERER_API void vulkan_renderer_update(vulkan_renderer_t* renderer);
+SGE_API void vulkan_renderer_update(vulkan_renderer_t* renderer);
 
-RENDERER_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer);
+SGE_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer);
 
 /* begins the command buffer recording */
-RENDERER_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer);
+SGE_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer);
 /* ends the command buffer recording */
-RENDERER_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer);
+SGE_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer);
 
-RENDERER_API void vulkan_renderer_wait_idle(vulkan_renderer_t* renderer);
+SGE_API void vulkan_renderer_wait_idle(vulkan_renderer_t* renderer);
 
-RENDERER_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer);
+SGE_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer);
 
 END_CPP_COMPATIBLE

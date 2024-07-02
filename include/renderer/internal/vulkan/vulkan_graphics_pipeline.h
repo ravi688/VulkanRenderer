@@ -129,14 +129,14 @@ typedef struct vulkan_graphics_pipeline_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info);
-RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline);
-RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline);
-RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline);
+SGE_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_allocator_t* allocator);
+SGE_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info);
+SGE_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline);
+SGE_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline);
+SGE_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline);
 
 /* logic functions */
-RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline);
+SGE_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline);
 
 /* info struct to store the informations to be refreshed such as window's width and height */
 typedef struct vulkan_graphics_pipeline_refresh_info_t
@@ -149,6 +149,6 @@ typedef struct vulkan_graphics_pipeline_refresh_info_t
 
 /* refresh is just like recreation of the gfx pipeline with create_noalloc version 
  * but this is much more efficient as it uses the cached values that are not supposed to refreshed generally */
-RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* pipeline, vulkan_graphics_pipeline_refresh_info_t* info);
+SGE_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* pipeline, vulkan_graphics_pipeline_refresh_info_t* info);
 
 END_CPP_COMPATIBLE

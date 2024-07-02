@@ -29,7 +29,7 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/glsl_memory_layout.h>
 
-RENDERER_API void vulkan_shader_resource_description_create_vertex_attribute(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 location_number, u32 binding_number)
+SGE_API void vulkan_shader_resource_description_create_vertex_attribute(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 location_number, u32 binding_number)
 {
 	description->vertex_attrib_location_number = location_number;
 	description->vertex_attrib_binding_number = binding_number;
@@ -41,7 +41,7 @@ RENDERER_API void vulkan_shader_resource_description_create_vertex_attribute(mem
 	struct_descriptor_end(allocator, &description->handle);
 }
 
-RENDERER_API void vulkan_shader_resource_description_create_opaque(memory_allocator_t* allocator,  vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 set_number, u32 binding_number)
+SGE_API void vulkan_shader_resource_description_create_opaque(memory_allocator_t* allocator,  vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 set_number, u32 binding_number)
 {
 	description->is_opaque = true;
 	description->set_number = set_number;
@@ -54,7 +54,7 @@ RENDERER_API void vulkan_shader_resource_description_create_opaque(memory_alloca
 	struct_descriptor_end(allocator, &description->handle);
 }
 
-RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_create_uniform(memory_allocator_t* allocator,  vulkan_shader_resource_description_t* description, const char* name, u32 set_number, u32 binding_number)
+SGE_API struct_descriptor_t* vulkan_shader_resource_description_create_uniform(memory_allocator_t* allocator,  vulkan_shader_resource_description_t* description, const char* name, u32 set_number, u32 binding_number)
 {
 	description->is_uniform = true;
 	description->set_number = set_number;
@@ -66,7 +66,7 @@ RENDERER_API struct_descriptor_t* vulkan_shader_resource_description_create_unif
 	return &description->handle;
 }
 
-RENDERER_API void vulkan_shader_resource_description_end_uniform(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description)
+SGE_API void vulkan_shader_resource_description_end_uniform(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description)
 {
 	struct_descriptor_end(allocator, &description->handle);
 }

@@ -30,7 +30,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
-RENDERER_API vulkan_render_pass_create_info_builder_t* vulkan_render_pass_create_info_builder_create(memory_allocator_t* allocator)
+SGE_API vulkan_render_pass_create_info_builder_t* vulkan_render_pass_create_info_builder_create(memory_allocator_t* allocator)
 {
 	vulkan_render_pass_create_info_builder_t* builder = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_CREATE_INFO_BUILDER, vulkan_render_pass_create_info_builder_t);
 	memzero(builder, vulkan_render_pass_create_info_builder_t);
@@ -41,7 +41,7 @@ RENDERER_API vulkan_render_pass_create_info_builder_t* vulkan_render_pass_create
 	return builder;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_destroy(vulkan_render_pass_create_info_builder_t* builder)
+SGE_API void vulkan_render_pass_create_info_builder_destroy(vulkan_render_pass_create_info_builder_t* builder)
 {
 	buf_free(&builder->create_info_array);
 	u32 build_info_count = buf_get_element_count(&builder->build_info_array);
@@ -66,7 +66,7 @@ RENDERER_API void vulkan_render_pass_create_info_builder_destroy(vulkan_render_p
 }
 
 
-RENDERER_API void vulkan_render_pass_create_info_builder_add(vulkan_render_pass_create_info_builder_t* builder, u32 count)
+SGE_API void vulkan_render_pass_create_info_builder_add(vulkan_render_pass_create_info_builder_t* builder, u32 count)
 {
 	u32 index = buf_get_element_count(&builder->build_info_array);
 	buf_push_pseudo(&builder->create_info_array, count);
@@ -80,12 +80,12 @@ RENDERER_API void vulkan_render_pass_create_info_builder_add(vulkan_render_pass_
 		build_info->is_attachment_usages_internal = true;
 	}
 }
-RENDERER_API void vulkan_render_pass_create_info_builder_bind(vulkan_render_pass_create_info_builder_t* builder, u32 index)
+SGE_API void vulkan_render_pass_create_info_builder_bind(vulkan_render_pass_create_info_builder_t* builder, u32 index)
 {
 	_debug_assert__(index < buf_get_element_count(&builder->build_info_array));
 	builder->bind_index = index;
 }
-RENDERER_API void vulkan_render_pass_create_info_builder_add_next(vulkan_render_pass_create_info_builder_t* builder)
+SGE_API void vulkan_render_pass_create_info_builder_add_next(vulkan_render_pass_create_info_builder_t* builder)
 {
 	vulkan_render_pass_create_info_builder_add(builder, 1);
 	vulkan_render_pass_create_info_builder_bind(builder, CAST_TO(u32, buf_get_element_count(&builder->build_info_array) - 1u));
@@ -115,7 +115,7 @@ static INLINE_IF_RELEASE_MODE vulkan_render_pass_create_info_t* get_bound_create
 	return get_create_info(builder, builder->bind_index);
 }
 
-RENDERER_API vulkan_render_pass_create_info_t* vulkan_render_pass_create_info_builder_get(vulkan_render_pass_create_info_builder_t* builder)
+SGE_API vulkan_render_pass_create_info_t* vulkan_render_pass_create_info_builder_get(vulkan_render_pass_create_info_builder_t* builder)
 {
 	if(buf_get_element_count(&builder->build_info_array) == 0)
 		return NULL;
@@ -169,19 +169,19 @@ RENDERER_API vulkan_render_pass_create_info_t* vulkan_render_pass_create_info_bu
 	return CAST_TO(vulkan_render_pass_create_info_t*, buf_get_ptr(&builder->create_info_array));
 }
 
-RENDERER_API u32 vulkan_render_pass_create_info_builder_get_count(vulkan_render_pass_create_info_builder_t* builder)
+SGE_API u32 vulkan_render_pass_create_info_builder_get_count(vulkan_render_pass_create_info_builder_t* builder)
 {
 	return CAST_TO(u32, buf_get_element_count(&builder->build_info_array));
 }
 
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_framebuffer_count(vulkan_render_pass_create_info_builder_t* builder, u32 framebuffer_count)
+SGE_API void vulkan_render_pass_create_info_builder_set_framebuffer_count(vulkan_render_pass_create_info_builder_t* builder, u32 framebuffer_count)
 {
 	AUTO create_info = get_bound_create_info(builder);
 	create_info->framebuffer_count = framebuffer_count;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_supplementary_attachment_bucket(vulkan_render_pass_create_info_builder_t* builder, u32 bucket_count, u32 bucket_depth)
+SGE_API void vulkan_render_pass_create_info_builder_set_supplementary_attachment_bucket(vulkan_render_pass_create_info_builder_t* builder, u32 bucket_count, u32 bucket_depth)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	AUTO create_info = get_bound_create_info(builder);
@@ -203,27 +203,27 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_supplementary_attac
 		build_info->vo_supplementary_attachments = NULL;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_supplementary_attachments(vulkan_render_pass_create_info_builder_t* builder, u32 start_index, VkImageView* views, u32 view_count)
+SGE_API void vulkan_render_pass_create_info_builder_set_supplementary_attachments(vulkan_render_pass_create_info_builder_t* builder, u32 start_index, VkImageView* views, u32 view_count)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	_debug_assert__(build_info->vo_supplementary_attachments != NULL);
 	memcopyv(build_info->vo_supplementary_attachments + start_index, views, VkImageView, view_count);
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_add_attachment_descriptions(vulkan_render_pass_create_info_builder_t* builder, VkAttachmentDescription* descriptions, u32 description_count)
+SGE_API void vulkan_render_pass_create_info_builder_add_attachment_descriptions(vulkan_render_pass_create_info_builder_t* builder, VkAttachmentDescription* descriptions, u32 description_count)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	buf_pushv(&build_info->attachment_descriptions, descriptions, description_count);
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_add_attachment_usages(vulkan_render_pass_create_info_builder_t* builder, vulkan_attachment_next_pass_usage_t* usages, u32 usage_count)
+SGE_API void vulkan_render_pass_create_info_builder_add_attachment_usages(vulkan_render_pass_create_info_builder_t* builder, vulkan_attachment_next_pass_usage_t* usages, u32 usage_count)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	buf_pushv(&build_info->attachment_usages, usages, usage_count);
 }
 
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_t* bindings, u32 binding_count)
+SGE_API void vulkan_render_pass_create_info_builder_set_render_set_bindings(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_t* bindings, u32 binding_count)
 {
 	AUTO create_info = get_bound_create_info(builder);
 	create_info->render_set_bindings = bindings;
@@ -232,7 +232,7 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings
 	build_info->is_use_render_set_bindings_builder = false;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy)
+SGE_API void vulkan_render_pass_create_info_builder_set_render_set_bindings_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->render_set_bindings_builder = srd_builder;
@@ -240,7 +240,7 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_render_set_bindings
 	build_info->is_use_render_set_bindings_builder = true;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_t* infos, u32 info_count)
+SGE_API void vulkan_render_pass_create_info_builder_set_subpasses(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_t* infos, u32 info_count)
 {
 	AUTO create_info = get_bound_create_info(builder);
 	create_info->subpasses = infos;
@@ -249,7 +249,7 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses(vulkan_re
 	build_info->is_use_subpasses_builder = false;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_builder_t* sci_builder, bool is_destroy)
+SGE_API void vulkan_render_pass_create_info_builder_set_subpasses_builder(vulkan_render_pass_create_info_builder_t* builder, vulkan_subpass_create_info_builder_t* sci_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->subpasses_builder = sci_builder;
@@ -257,7 +257,7 @@ RENDERER_API void vulkan_render_pass_create_info_builder_set_subpasses_builder(v
 	build_info->is_use_subpasses_builder = true;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_add_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count)
+SGE_API void vulkan_render_pass_create_info_builder_add_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	if(!build_info->is_supbass_dependencies_internal)
@@ -266,7 +266,7 @@ RENDERER_API void vulkan_render_pass_create_info_builder_add_dependencies(vulkan
 	build_info->is_supbass_dependencies_internal = true;
 }
 
-RENDERER_API buffer_t* vulkan_render_pass_create_info_builder_get_dependencies_buffer(vulkan_render_pass_create_info_builder_t* builder)
+SGE_API buffer_t* vulkan_render_pass_create_info_builder_get_dependencies_buffer(vulkan_render_pass_create_info_builder_t* builder)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	if(!build_info->is_supbass_dependencies_internal)
@@ -275,7 +275,7 @@ RENDERER_API buffer_t* vulkan_render_pass_create_info_builder_get_dependencies_b
 	return &build_info->subpass_dependencies;
 }
 
-RENDERER_API void vulkan_render_pass_create_info_builder_set_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count)
+SGE_API void vulkan_render_pass_create_info_builder_set_dependencies(vulkan_render_pass_create_info_builder_t* builder, VkSubpassDependency* dependencies, u32 dependency_count)
 {
 	AUTO create_info = get_bound_create_info(builder);
 	AUTO build_info = get_bound_build_info(builder);

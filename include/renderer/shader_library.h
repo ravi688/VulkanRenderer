@@ -28,16 +28,16 @@
 
 #include <renderer/defines.h>
 
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 	typedef struct vulkan_shader_library_t vulkan_shader_library_t;
 	typedef vulkan_shader_library_t shader_library_t;
-#elif defined(RENDERER_OPENGL_DRIVER)
+#elif defined(SGE_OPENGL_DRIVER)
 	typedef struct opengl_shader_library_t opengl_shader_library_t;
 	typedef opengl_shader_library_t shader_library_t;
-#elif defined(RENDERER_DIRECTX_DRIVER)
+#elif defined(SGE_DIRECTX_DRIVER)
 	typedef struct directx_shader_library_t directx_shader_library_t;
 	typedef directx_shader_library_t shader_library_t;
-#elif defined(RENDERER_METAL_DRIVER)
+#elif defined(SGE_METAL_DRIVER)
 	typedef struct metal_shader_library_t metal_shader_library_t;
 	typedef metal_shader_library_t shader_library_t;
 #endif
@@ -91,15 +91,15 @@ typedef enum shader_library_shader_preset_t
 } shader_library_shader_preset_t;
 
 /* constructors & destructors */
-RENDERER_API shader_library_t* shader_library_new(memory_allocator_t* allocator);
-RENDERER_API shader_library_t* shader_library_create(renderer_t* renderer);
-RENDERER_API shader_library_t* shader_library_load_folder(renderer_t* renderer, const char* folder_path);
-RENDERER_API void shader_library_destroy(shader_library_t* library);
-RENDERER_API void shader_library_release_resources(shader_library_t* library);
+SGE_API shader_library_t* shader_library_new(memory_allocator_t* allocator);
+SGE_API shader_library_t* shader_library_create(renderer_t* renderer);
+SGE_API shader_library_t* shader_library_load_folder(renderer_t* renderer, const char* folder_path);
+SGE_API void shader_library_destroy(shader_library_t* library);
+SGE_API void shader_library_release_resources(shader_library_t* library);
 
 /* logic functions */
 
-RENDERER_API shader_handle_t shader_library_create_shader_from_preset(shader_library_t* library, shader_library_shader_preset_t preset);
+SGE_API shader_handle_t shader_library_create_shader_from_preset(shader_library_t* library, shader_library_shader_preset_t preset);
 
 /*
 	description: creates a shader from bytes with identification name 'shader_name'
@@ -112,7 +112,7 @@ RENDERER_API shader_handle_t shader_library_create_shader_from_preset(shader_lib
 		shader_handle_t, handle to the newly created shader
 		SHADER_HANDLE_INVALID, if the shader creation failed
  */
-RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* library, shader_create_info_t* create_info, const char* shader_name);
+SGE_API shader_handle_t shader_library_create_shader(shader_library_t* library, shader_create_info_t* create_info, const char* shader_name);
 
 /*
 	description: loads a file and creates a shader from that with identification name 'shader_name'
@@ -124,7 +124,7 @@ RENDERER_API shader_handle_t shader_library_create_shader(shader_library_t* libr
 		shader_handle_t, handle to the newly created shader
 		SHADER_HANDLE_INVALID, if the shader creation failed
  */
-RENDERER_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path);
+SGE_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path);
 
 /*
 	description: destroys a shader with identification name as 'shader_name'
@@ -135,7 +135,7 @@ RENDERER_API shader_handle_t shader_library_load_shader(shader_library_t* librar
 		true, if shader destruction succeed
 		false, otherwise
  */
-RENDERER_API bool shader_library_destroy_shader(shader_library_t* library, const char* shader_name);
+SGE_API bool shader_library_destroy_shader(shader_library_t* library, const char* shader_name);
 
 /*
 	description: destroys a shader with handle as 'handle'
@@ -146,7 +146,7 @@ RENDERER_API bool shader_library_destroy_shader(shader_library_t* library, const
 		true, if the shader destruction succeed
 		false, otherwise
  */
-RENDERER_API bool shader_library_destroy_shaderH(shader_library_t* library, shader_handle_t handle);
+SGE_API bool shader_library_destroy_shaderH(shader_library_t* library, shader_handle_t handle);
 
 /* getters */
 
@@ -159,7 +159,7 @@ RENDERER_API bool shader_library_destroy_shaderH(shader_library_t* library, shad
 		shader_handle_t, handle to the shader slot
 		SHADER_HANDLE_INVALID, if the shader slot with name 'shader_name' isn't found
  */
-RENDERER_API shader_handle_t shader_library_get_handle(shader_library_t* library, const char* shader_name);
+SGE_API shader_handle_t shader_library_get_handle(shader_library_t* library, const char* shader_name);
 
 /*
 	description: returns the name of the shader slot with handle 'handle' in the library
@@ -170,7 +170,7 @@ RENDERER_API shader_handle_t shader_library_get_handle(shader_library_t* library
 		const char*, name of the shader slot in the library
 		NULL, if the shader slot isn't found with handle 'handle'
  */
-RENDERER_API const char* shader_library_get_nameH(shader_library_t* library, shader_handle_t handle);
+SGE_API const char* shader_library_get_nameH(shader_library_t* library, shader_handle_t handle);
 
 /*
 	description: returns the name of the shader slot with ptr to the shader_t as 'shader'
@@ -182,7 +182,7 @@ RENDERER_API const char* shader_library_get_nameH(shader_library_t* library, sha
 		NULL, if the shader slot isn't found with ptr as 'shader'
  */
 
-RENDERER_API shader_t* shader_library_getH(shader_library_t* library, shader_handle_t handle);
+SGE_API shader_t* shader_library_getH(shader_library_t* library, shader_handle_t handle);
 
 /*
 	description: returns ptr to the shader_t object in the library with name as 'shader_name'
@@ -193,4 +193,4 @@ RENDERER_API shader_t* shader_library_getH(shader_library_t* library, shader_han
 		shader_t*, ptr to the shader_t object
 		NULL, if the shader isn't found
  */
-RENDERER_API shader_t* shader_library_get(shader_library_t* library, const char* shader_name);
+SGE_API shader_t* shader_library_get(shader_library_t* library, const char* shader_name);

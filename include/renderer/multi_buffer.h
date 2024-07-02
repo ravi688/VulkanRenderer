@@ -49,33 +49,33 @@ typedef buf_ucount_t sub_buffer_handle_t;
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API void multi_buffer_create(u32 element_size, u32 capacity, multi_buffer_t* out_buffer);
-RENDERER_API void multi_buffer_free(multi_buffer_t* buffer);
+SGE_API void multi_buffer_create(u32 element_size, u32 capacity, multi_buffer_t* out_buffer);
+SGE_API void multi_buffer_free(multi_buffer_t* buffer);
 
 // getters
-RENDERER_API buf_ucount_t multi_buffer_get_count(multi_buffer_t* buffer);
-RENDERER_API buf_ucount_t multi_buffer_get_capacity(multi_buffer_t* buffer);
-RENDERER_API buf_ucount_t multi_buffer_get_sub_buffer_count(multi_buffer_t* buffer);
+SGE_API buf_ucount_t multi_buffer_get_count(multi_buffer_t* buffer);
+SGE_API buf_ucount_t multi_buffer_get_capacity(multi_buffer_t* buffer);
+SGE_API buf_ucount_t multi_buffer_get_sub_buffer_count(multi_buffer_t* buffer);
 
 
 // logic functions
-RENDERER_API void multi_buffer_clear(multi_buffer_t* buffer);
+SGE_API void multi_buffer_clear(multi_buffer_t* buffer);
 
 // sub buffer
 
 // constructors and destructors
-RENDERER_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* buffer, buf_ucount_t capacity);
-RENDERER_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* buffer, sub_buffer_handle_t handle); /*TODO*/
+SGE_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* buffer, buf_ucount_t capacity);
+SGE_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* buffer, sub_buffer_handle_t handle); /*TODO*/
 #define sub_buffer_create multi_buffer_sub_buffer_create
 #define sub_buffer_destroy multi_buffer_sub_buffer_destroy
 
 // logic functions
-RENDERER_API void multi_buffer_sub_buffer_push(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value);
-RENDERER_API void multi_buffer_sub_buffer_push_n(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value, u32 max_size);
-RENDERER_API void multi_buffer_sub_buffer_push_back(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value);
-RENDERER_API void multi_buffer_sub_buffer_clear(multi_buffer_t* buffer, sub_buffer_handle_t handle);
-RENDERER_API buf_ucount_t multi_buffer_sub_buffer_find_index_of(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal);
-RENDERER_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal);
+SGE_API void multi_buffer_sub_buffer_push(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value);
+SGE_API void multi_buffer_sub_buffer_push_n(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value, u32 max_size);
+SGE_API void multi_buffer_sub_buffer_push_back(multi_buffer_t* buffer, sub_buffer_handle_t handle, void* in_value);
+SGE_API void multi_buffer_sub_buffer_clear(multi_buffer_t* buffer, sub_buffer_handle_t handle);
+SGE_API buf_ucount_t multi_buffer_sub_buffer_find_index_of(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal);
+SGE_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal);
 #define sub_buffer_push multi_buffer_sub_buffer_push
 #define sub_buffer_push_n multi_buffer_sub_buffer_push_n
 #define sub_buffer_push_back multi_buffer_sub_buffer_push_back
@@ -84,14 +84,14 @@ RENDERER_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, s
 #define sub_buffer_remove multi_buffer_sub_buffer_remove
 
 // setters
-RENDERER_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value);
+SGE_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value);
 #define sub_buffer_set_at multi_buffer_sub_buffer_set_at
 
 // getters
-RENDERER_API buf_ucount_t multi_buffer_sub_buffer_get_count(multi_buffer_t* buffer, sub_buffer_handle_t handle);
-RENDERER_API buf_ucount_t multi_buffer_sub_buffer_get_capacity(multi_buffer_t* buffer, sub_buffer_handle_t handle);
-RENDERER_API void multi_buffer_sub_buffer_get_at(multi_buffer_t* buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* out_value);
-RENDERER_API void* multi_buffer_sub_buffer_get_ptr_at(multi_buffer_t* buffer, sub_buffer_handle_t handle, buf_ucount_t index);
+SGE_API buf_ucount_t multi_buffer_sub_buffer_get_count(multi_buffer_t* buffer, sub_buffer_handle_t handle);
+SGE_API buf_ucount_t multi_buffer_sub_buffer_get_capacity(multi_buffer_t* buffer, sub_buffer_handle_t handle);
+SGE_API void multi_buffer_sub_buffer_get_at(multi_buffer_t* buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* out_value);
+SGE_API void* multi_buffer_sub_buffer_get_ptr_at(multi_buffer_t* buffer, sub_buffer_handle_t handle, buf_ucount_t index);
 #define sub_buffer_get_count multi_buffer_sub_buffer_get_count
 #define sub_buffer_get_capacity multi_buffer_sub_buffer_get_capacity
 #define sub_buffer_get_at multi_buffer_sub_buffer_get_at

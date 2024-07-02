@@ -35,7 +35,7 @@
 #include <stdio.h> 		// sprintf
 #include <string.h>		// strcmp
 
-RENDERER_API vulkan_instance_t* vulkan_instance_new(memory_allocator_t* allocator)
+SGE_API vulkan_instance_t* vulkan_instance_new(memory_allocator_t* allocator)
 {
 	vulkan_instance_t* instance = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_INSTANCE, vulkan_instance_t);
 	memzero(instance, vulkan_instance_t);
@@ -46,7 +46,7 @@ RENDERER_API vulkan_instance_t* vulkan_instance_new(memory_allocator_t* allocato
 	return instance;
 }
 
-RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* renderer, const char* const* extensions, u32 extension_count, const char* const* layers, u32 layer_count)
+SGE_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* renderer, const char* const* extensions, u32 extension_count, const char* const* layers, u32 layer_count)
 {
 	vulkan_instance_t* instance = vulkan_instance_new(renderer->allocator);
 	instance->renderer = renderer;
@@ -107,7 +107,7 @@ RENDERER_API vulkan_instance_t* vulkan_instance_create(vulkan_renderer_t* render
 	return instance;
 }
 
-RENDERER_API void vulkan_instance_destroy(vulkan_instance_t* instance)
+SGE_API void vulkan_instance_destroy(vulkan_instance_t* instance)
 {
 	if(instance->physical_devices != NULL)
 		for(u32 i = 0; i < instance->physical_device_count; i++)
@@ -118,7 +118,7 @@ RENDERER_API void vulkan_instance_destroy(vulkan_instance_t* instance)
 	log_msg("Vulkan instance destroyed successfully\n");
 }
 
-RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
+SGE_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
 {
 	_debug_assert__(instance != NULL);
 	if(instance->extension_properties != NULL)
@@ -133,7 +133,7 @@ RENDERER_API void vulkan_instance_release_resources(vulkan_instance_t* instance)
 		memory_allocator_dealloc(instance->renderer->allocator, instance);
 }
 
-RENDERER_API u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* instance)
+SGE_API u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* instance)
 {
 	_debug_assert__(instance != NULL);
 	if(instance->physical_device_count != U32_MAX)
@@ -143,7 +143,7 @@ RENDERER_API u32 vulkan_instance_get_physical_device_count(vulkan_instance_t* in
 	return instance->physical_device_count;
 }
 
-RENDERER_API u32 vulkan_instance_get_extension_count(vulkan_instance_t* instance, const char* layer_name)
+SGE_API u32 vulkan_instance_get_extension_count(vulkan_instance_t* instance, const char* layer_name)
 {
 	_debug_assert__(layer_name == NULL); 		// for now it should be null, since we are not enabling any layers
 	if(instance->extension_count != U32_MAX)
@@ -153,7 +153,7 @@ RENDERER_API u32 vulkan_instance_get_extension_count(vulkan_instance_t* instance
 	return instance->extension_count;
 }
 
-RENDERER_API vulkan_physical_device_t* vulkan_instance_get_physical_devices(vulkan_instance_t* instance)
+SGE_API vulkan_physical_device_t* vulkan_instance_get_physical_devices(vulkan_instance_t* instance)
 {
 	if(instance->physical_devices != NULL)
 		return instance->physical_devices;
@@ -171,7 +171,7 @@ RENDERER_API vulkan_physical_device_t* vulkan_instance_get_physical_devices(vulk
 	return instance->physical_devices;
 }
 
-RENDERER_API VkExtensionProperties* vulkan_instance_get_extension_properties(vulkan_instance_t* instance, const char* layer_name)
+SGE_API VkExtensionProperties* vulkan_instance_get_extension_properties(vulkan_instance_t* instance, const char* layer_name)
 {
 	_debug_assert__(layer_name == NULL); 		// for now it should be null, since we are not enabling any layers
 	if(instance->extension_properties != NULL)
@@ -184,7 +184,7 @@ RENDERER_API VkExtensionProperties* vulkan_instance_get_extension_properties(vul
 }
 
 // returning bools
-RENDERER_API bool vulkan_instance_is_extension_supported(vulkan_instance_t* instance, const char* extension, const char* layer_name)
+SGE_API bool vulkan_instance_is_extension_supported(vulkan_instance_t* instance, const char* extension, const char* layer_name)
 {
 	_debug_assert__(layer_name == NULL);
 	u32 extension_count = vulkan_instance_get_extension_count(instance, layer_name);
@@ -195,7 +195,7 @@ RENDERER_API bool vulkan_instance_is_extension_supported(vulkan_instance_t* inst
 	return false;
 }
 
-RENDERER_API bool* vulkan_instance_get_filter_for_supported_layers(memory_allocator_t* allocator, u32 layer_count, const char* const* layers)
+SGE_API bool* vulkan_instance_get_filter_for_supported_layers(memory_allocator_t* allocator, u32 layer_count, const char* const* layers)
 {
 	if(layer_count == 0)
 		return NULL;
@@ -244,7 +244,7 @@ RENDERER_API bool* vulkan_instance_get_filter_for_supported_layers(memory_alloca
 }
 
 // to string (s)
-RENDERER_API void vulkan_instance_to_string(vulkan_instance_t* instance, BUFFER* string_buffer)
+SGE_API void vulkan_instance_to_string(vulkan_instance_t* instance, BUFFER* string_buffer)
 {
 	char buffer[512];
 	buf_printf(string_buffer, buffer, "Vulkan Instance | physical device count: %u, extension property count: %u\n",

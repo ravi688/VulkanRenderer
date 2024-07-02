@@ -91,27 +91,27 @@ typedef struct vulkan_render_scene_t
 #define VULKAN_RENDER_SCENE_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
 
 /* constructors & destructors */
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info);
-RENDERER_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info, vulkan_render_scene_t OUT scene);
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_preset(vulkan_renderer_t* renderer, vulkan_render_scene_preset_type_t type);
-RENDERER_API vulkan_render_scene_t* vulkan_render_scene_create_from_mask(vulkan_renderer_t* renderer, u64 mask);
-RENDERER_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene);
-RENDERER_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* scene);
+SGE_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator);
+SGE_API vulkan_render_scene_t* vulkan_render_scene_create(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info);
+SGE_API void vulkan_render_scene_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info, vulkan_render_scene_t OUT scene);
+SGE_API vulkan_render_scene_t* vulkan_render_scene_create_from_preset(vulkan_renderer_t* renderer, vulkan_render_scene_preset_type_t type);
+SGE_API vulkan_render_scene_t* vulkan_render_scene_create_from_mask(vulkan_renderer_t* renderer, u64 mask);
+SGE_API void vulkan_render_scene_destroy(vulkan_render_scene_t* scene);
+SGE_API void vulkan_render_scene_release_resources(vulkan_render_scene_t* scene);
 
 /* logic functions */
 
-RENDERER_API void vulkan_render_scene_create_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type);
+SGE_API void vulkan_render_scene_create_queue(vulkan_render_scene_t* scene, vulkan_render_queue_type_t queue_type);
 typedef struct vulkan_render_queue_t vulkan_render_queue_t;
-RENDERER_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_t* queue);
+SGE_API void vulkan_render_scene_add_queue(vulkan_render_scene_t* scene, vulkan_render_queue_t* queue);
 #define VULKAN_RENDER_SCENE_ALL_QUEUES (~0ULL)
 #define VULKAN_RENDER_SCENE_DONT_CARE 1UL
 #define VULKAN_RENDER_SCENE_CLEAR 0UL
-RENDERER_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 render_flags);
-RENDERER_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle);
-RENDERER_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_object(vulkan_render_scene_t* scene, vulkan_render_object_type_t object_type, vulkan_render_queue_type_t queue_type);
-RENDERER_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle);
-RENDERER_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene);
+SGE_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 render_flags);
+SGE_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle);
+SGE_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_object(vulkan_render_scene_t* scene, vulkan_render_object_type_t object_type, vulkan_render_queue_type_t queue_type);
+SGE_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle);
+SGE_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_add_camera(vulkan_render_scene_t* scene, vulkan_camera_t* camera) { buf_push(&scene->cameras, &camera); }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_remove_camera(vulkan_render_scene_t* scene, vulkan_camera_t* camera)
@@ -120,8 +120,8 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_re
 	if(!result)
 		DEBUG_LOG_WARNING("You're trying to remove vulkan_camera_t from vulkan_render_scene_t which doesn't exists in it"); 
 }
-RENDERER_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vulkan_light_t* light);
-RENDERER_API void vulkan_render_scene_remove_light(vulkan_render_scene_t* scene, vulkan_light_t* light);
+SGE_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vulkan_light_t* light);
+SGE_API void vulkan_render_scene_remove_light(vulkan_render_scene_t* scene, vulkan_light_t* light);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_set_use_lights(vulkan_render_scene_t* scene, bool is_use_lights) { scene->is_use_lights = is_use_lights; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_render_scene_is_use_lights(vulkan_render_scene_t* scene) { return scene->is_use_lights; }

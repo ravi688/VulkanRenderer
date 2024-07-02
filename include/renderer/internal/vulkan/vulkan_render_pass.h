@@ -174,7 +174,7 @@ BEGIN_CPP_COMPATIBLE
 	returns:
 		pointer to newly created vulkan_render_pass_t object on heap
  */
-RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new(memory_allocator_t* allocator);
+SGE_API vulkan_render_pass_t* vulkan_render_pass_new(memory_allocator_t* allocator);
 
 /*
 	description:
@@ -185,7 +185,7 @@ RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new(memory_allocator_t* al
 	returns:
 		pointer to newly created vulkan_render_pass_t object on heap
  */
-RENDERER_API vulkan_render_pass_t* vulkan_render_pass_create(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info);
+SGE_API vulkan_render_pass_t* vulkan_render_pass_create(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info);
 
 /*
 	description:
@@ -197,7 +197,7 @@ RENDERER_API vulkan_render_pass_t* vulkan_render_pass_create(vulkan_renderer_t* 
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_t OUT render_pass);
+SGE_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_t OUT render_pass);
 
 /*
 	description:
@@ -207,7 +207,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass);
+SGE_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass);
 
 /*
 	description:
@@ -217,10 +217,10 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass);
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass);
+SGE_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass);
 
-RENDERER_API void vulkan_render_pass_set_clear_indirect(vulkan_render_pass_t* render_pass, color_t color, float depth, VkClearValue* indirect_buffer);
-RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth);
+SGE_API void vulkan_render_pass_set_clear_indirect(vulkan_render_pass_t* render_pass, color_t color, float depth, VkClearValue* indirect_buffer);
+SGE_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth);
 
 /*
 	description:
@@ -232,7 +232,7 @@ RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index, vulkan_camera_t* camera);
+SGE_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index, vulkan_camera_t* camera);
 
 /*
 	description:
@@ -242,7 +242,7 @@ RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u3
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass);
+SGE_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass);
 
 /*
 	description:
@@ -252,6 +252,6 @@ RENDERER_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass);
 	returns:
 		nothing
  */
-RENDERER_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass);
+SGE_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass);
 
 END_CPP_COMPATIBLE

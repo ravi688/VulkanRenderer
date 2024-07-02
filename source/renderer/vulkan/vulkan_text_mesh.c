@@ -50,7 +50,7 @@ static sub_buffer_handle_t get_sub_buffer_handle(multi_buffer_t* multi_buffer, d
 static vulkan_instance_buffer_t* get_instance_buffer(vulkan_renderer_t* renderer, dictionary_t* buffers, u16 key);
 
 // constructors and destructors
-RENDERER_API vulkan_text_mesh_t* vulkan_text_mesh_new(memory_allocator_t* allocator)
+SGE_API vulkan_text_mesh_t* vulkan_text_mesh_new(memory_allocator_t* allocator)
 {
 	vulkan_text_mesh_t* mesh = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_TEXT_MESH, vulkan_text_mesh_t);
 	memzero(mesh, vulkan_text_mesh_t);
@@ -58,7 +58,7 @@ RENDERER_API vulkan_text_mesh_t* vulkan_text_mesh_new(memory_allocator_t* alloca
 	return mesh;
 }
 
-RENDERER_API vulkan_text_mesh_t* vulkan_text_mesh_create(vulkan_renderer_t* renderer, vulkan_glyph_mesh_pool_t* pool)
+SGE_API vulkan_text_mesh_t* vulkan_text_mesh_create(vulkan_renderer_t* renderer, vulkan_glyph_mesh_pool_t* pool)
 {
 	vulkan_text_mesh_t* text = vulkan_text_mesh_new(renderer->allocator);
 	vulkan_text_mesh_create_no_alloc(renderer, pool, text);
@@ -86,7 +86,7 @@ static bool default_glyph_layout_handler(vulkan_text_mesh_glyph_layout_data_buff
 	return true;
 }
 
-RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_glyph_mesh_pool_t* pool, vulkan_text_mesh_t OUT text)
+SGE_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_glyph_mesh_pool_t* pool, vulkan_text_mesh_t OUT text)
 {
 	_debug_assert__(pool != NULL);
 	VULKAN_OBJECT_MEMZERO(text, vulkan_text_mesh_t);
@@ -118,7 +118,7 @@ RENDERER_API void vulkan_text_mesh_create_no_alloc(vulkan_renderer_t* renderer, 
 	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &text->text_string_transform_buffer);
 }
 
-RENDERER_API void vulkan_text_mesh_destroy(vulkan_text_mesh_t* text_mesh)
+SGE_API void vulkan_text_mesh_destroy(vulkan_text_mesh_t* text_mesh)
 {
 	buf_clear(&text_mesh->glyph_layout_data_buffer, NULL);
 	dictionary_t* glyph_render_data_buffers = &text_mesh->glyph_render_data_buffers;
@@ -131,7 +131,7 @@ RENDERER_API void vulkan_text_mesh_destroy(vulkan_text_mesh_t* text_mesh)
 	vulkan_host_buffered_buffer_destroy(&text_mesh->text_string_transform_buffer);
 }
 
-RENDERER_API void vulkan_text_mesh_release_resources(vulkan_text_mesh_t* text_mesh)
+SGE_API void vulkan_text_mesh_release_resources(vulkan_text_mesh_t* text_mesh)
 {
 	buf_free(&text_mesh->glyph_layout_data_buffer);
 	dictionary_t* glyph_render_data_buffers = &text_mesh->glyph_render_data_buffers;
@@ -148,7 +148,7 @@ RENDERER_API void vulkan_text_mesh_release_resources(vulkan_text_mesh_t* text_me
 }
 
 // logic functions
-RENDERER_API void vulkan_text_mesh_draw(vulkan_text_mesh_t* text_mesh)
+SGE_API void vulkan_text_mesh_draw(vulkan_text_mesh_t* text_mesh)
 {
 	dictionary_t* glyph_render_data_buffers = &text_mesh->glyph_render_data_buffers;
 	buf_ucount_t count = dictionary_get_count(glyph_render_data_buffers);
@@ -187,7 +187,7 @@ static void update_host_side_tst_buffer_for_text_string(vulkan_text_mesh_t* text
 }
 
 // constructors and destructors
-RENDERER_API vulkan_text_mesh_string_handle_t vulkan_text_mesh_string_create(vulkan_text_mesh_t* text_mesh)
+SGE_API vulkan_text_mesh_string_handle_t vulkan_text_mesh_string_create(vulkan_text_mesh_t* text_mesh)
 {
 	BUFFER* strings = &text_mesh->strings;
 	vulkan_text_mesh_string_t* string;
@@ -245,7 +245,7 @@ RENDERER_API vulkan_text_mesh_string_handle_t vulkan_text_mesh_string_create(vul
 	return handle;
 }
 
-RENDERER_API void vulkan_text_mesh_string_destroyH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
+SGE_API void vulkan_text_mesh_string_destroyH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
 {
 	BUFFER* strings = &text_mesh->strings;
 	buf_ucount_t index = text_mesh->inuse_list;
@@ -315,7 +315,7 @@ static void commit_tst_buffer_expect_no_resize(vulkan_text_mesh_t* text_mesh)
 	_debug_assert__((!is_resized) && is_updated);
 }
 
-RENDERER_API void vulkan_text_mesh_set_point_size(vulkan_text_mesh_t* text, u32 point_size)
+SGE_API void vulkan_text_mesh_set_point_size(vulkan_text_mesh_t* text, u32 point_size)
 {
 	text->point_size = point_size;
 
@@ -331,7 +331,7 @@ RENDERER_API void vulkan_text_mesh_set_point_size(vulkan_text_mesh_t* text, u32 
 	commit_tst_buffer_expect_no_resize(text);
 }
 
-RENDERER_API void vulkan_text_mesh_set_material(vulkan_text_mesh_t* text, vulkan_material_t* material)
+SGE_API void vulkan_text_mesh_set_material(vulkan_text_mesh_t* text, vulkan_material_t* material)
 {
 	text->material = material;
 
@@ -341,7 +341,7 @@ RENDERER_API void vulkan_text_mesh_set_material(vulkan_text_mesh_t* text, vulkan
 	vulkan_material_set_buffer(material, "TSTBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->text_string_transform_buffer));
 }
 
-RENDERER_API void vulkan_text_mesh_set_render_space_type(vulkan_text_mesh_t* text, vulkan_text_mesh_render_space_type_t space_type)
+SGE_API void vulkan_text_mesh_set_render_space_type(vulkan_text_mesh_t* text, vulkan_text_mesh_render_space_type_t space_type)
 {
 	if(text->render_space_type == space_type)
 		return;
@@ -354,7 +354,7 @@ RENDERER_API void vulkan_text_mesh_set_render_space_type(vulkan_text_mesh_t* tex
 	set_render_space_type(text, space_type);
 }
 
-RENDERER_API void vulkan_text_mesh_set_render_surface_type(vulkan_text_mesh_t* text, vulkan_text_mesh_render_surface_type_t surface_type)
+SGE_API void vulkan_text_mesh_set_render_surface_type(vulkan_text_mesh_t* text, vulkan_text_mesh_render_surface_type_t surface_type)
 {
 	if(text->render_surface_type == surface_type)
 		return;
@@ -377,7 +377,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE f32 get_world_from_pixels(f
 	return pixels / get_pixels_from_point_size(point_size, dpi);
 }
 
-RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, const char* str)
+SGE_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, const char* str)
 {
 	// TODO: ensure handle isn't in the free-list, meaning it has been already destroyed, this check should be in debug mode only
 	vulkan_text_mesh_string_t* string = get_text_stringH(text_mesh, handle);
@@ -492,7 +492,7 @@ RENDERER_API void vulkan_text_mesh_string_setH(vulkan_text_mesh_t* text_mesh, vu
 	}
 }
 
-RENDERER_API void vulkan_text_mesh_string_set_point_sizeH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, u32 point_size)
+SGE_API void vulkan_text_mesh_string_set_point_sizeH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, u32 point_size)
 {
 	AUTO string = get_text_stringH(text_mesh, handle);
 	string->point_size = point_size;
@@ -519,7 +519,7 @@ RENDERER_API void vulkan_text_mesh_string_set_point_sizeH(vulkan_text_mesh_t* te
 		text_mesh->point_size = point_size;
 }
 
-RENDERER_API void vulkan_text_mesh_string_set_transformH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, mat4_t transform)
+SGE_API void vulkan_text_mesh_string_set_transformH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle, mat4_t transform)
 {
 	AUTO string = get_text_stringH(text_mesh, handle);
 	mat4_move(string->transform, transform);
@@ -529,37 +529,37 @@ RENDERER_API void vulkan_text_mesh_string_set_transformH(vulkan_text_mesh_t* tex
 }
 
 // getters
-RENDERER_API void vulkan_text_mesh_set_glyph_layout_handler(vulkan_text_mesh_t* text, vulkan_text_mesh_glyph_layout_handler_t handler, void* user_data)
+SGE_API void vulkan_text_mesh_set_glyph_layout_handler(vulkan_text_mesh_t* text, vulkan_text_mesh_glyph_layout_handler_t handler, void* user_data)
 {
 	text->glyph_layout_handler = (vulkan_text_mesh_glyph_layout_handler_void_ptr_pair_t) { handler, user_data };
 }
 
-RENDERER_API void vulkan_text_mesh_set_glyph_strikethrough_handler(vulkan_text_mesh_t* text, vulkan_text_mesh_glyph_strikethrough_handler_t handler, void* user_data)
+SGE_API void vulkan_text_mesh_set_glyph_strikethrough_handler(vulkan_text_mesh_t* text, vulkan_text_mesh_glyph_strikethrough_handler_t handler, void* user_data)
 {
 	text->glyph_strikethrough_handler = (vulkan_text_mesh_glyph_strikethrough_handler_void_ptr_pair_t) { handler, user_data };
 }
 
-RENDERER_API void vulkan_text_mesh_set_glyph_underline_handler(vulkan_text_mesh_t* text, vulkan_text_mesh_glyph_underline_handler_t handler, void* user_data)
+SGE_API void vulkan_text_mesh_set_glyph_underline_handler(vulkan_text_mesh_t* text, vulkan_text_mesh_glyph_underline_handler_t handler, void* user_data)
 {
 	text->glyph_underline_handler = (vulkan_text_mesh_glyph_underline_handler_void_ptr_pair_t) { handler, user_data };
 }
 
-RENDERER_API u32 vulkan_text_mesh_get_point_size(vulkan_text_mesh_t* text_mesh)
+SGE_API u32 vulkan_text_mesh_get_point_size(vulkan_text_mesh_t* text_mesh)
 {
 	return text_mesh->point_size;
 }
 
-RENDERER_API const char* vulkan_text_mesh_string_getH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
+SGE_API const char* vulkan_text_mesh_string_getH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
 {
 	return CAST_TO(const char*, buf_get_ptr(&get_text_stringH(text_mesh, handle)->str));
 }
 
-RENDERER_API u32 vulkan_text_mesh_string_get_point_sizeH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
+SGE_API u32 vulkan_text_mesh_string_get_point_sizeH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
 {
 	return get_text_stringH(text_mesh, handle)->point_size;
 }
 
-RENDERER_API mat4_t vulkan_text_mesh_string_get_transformH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
+SGE_API mat4_t vulkan_text_mesh_string_get_transformH(vulkan_text_mesh_t* text_mesh, vulkan_text_mesh_string_handle_t handle)
 {
 	return get_text_stringH(text_mesh, handle)->transform;
 }
@@ -597,7 +597,7 @@ static vulkan_instance_buffer_t* get_instance_buffer(vulkan_renderer_t* renderer
 	return dictionary_get_value_ptr_at(buffers, index);
 }
 
-RENDERER_API font_t* vulkan_text_mesh_get_font(vulkan_text_mesh_t* text_mesh)
+SGE_API font_t* vulkan_text_mesh_get_font(vulkan_text_mesh_t* text_mesh)
 {
 	return vulkan_glyph_mesh_pool_get_font(text_mesh->pool);
 }
