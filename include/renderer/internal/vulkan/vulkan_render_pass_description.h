@@ -106,10 +106,10 @@ typedef struct vulkan_render_pass_description_t
 } vulkan_render_pass_description_t;
 
 
-RENDERER_API void vulkan_render_pass_description_begin(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, vulkan_render_pass_type_t type);
-RENDERER_API void vulkan_render_pass_description_add_input(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, glsl_type_t type, u32 index, u32 binding);
-RENDERER_API void vulkan_render_pass_description_add_attachment(vulkan_render_pass_description_t* description, vulkan_attachment_type_t type);
-RENDERER_API void vulkan_render_pass_description_begin_subpass(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, u32 pipeline_index);
+SGE_API void vulkan_render_pass_description_begin(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, vulkan_render_pass_type_t type);
+SGE_API void vulkan_render_pass_description_add_input(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, glsl_type_t type, u32 index, u32 binding);
+SGE_API void vulkan_render_pass_description_add_attachment(vulkan_render_pass_description_t* description, vulkan_attachment_type_t type);
+SGE_API void vulkan_render_pass_description_begin_subpass(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, u32 pipeline_index);
 
 typedef enum vulkan_attachment_reference_type_t
 {
@@ -120,12 +120,12 @@ typedef enum vulkan_attachment_reference_type_t
 	VUKLAN_ATTACHMENT_REFERENCE_TYPE_PRESERVE
 } vulkan_attachment_reference_type_t;
 
-RENDERER_API void vulkan_render_pass_description_add_attachment_reference(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, vulkan_attachment_reference_type_t type, u32 reference, u32 binding);
-RENDERER_API void vulkan_render_pass_description_end_subpass(memory_allocator_t* allocator, vulkan_render_pass_description_t* description);
-RENDERER_API void vulkan_render_pass_description_add_subpass_dependency(vulkan_render_pass_description_t* description, VkSubpassDependency* dependency);
-RENDERER_API void vulkan_render_pass_description_end(memory_allocator_t* allocator, vulkan_render_pass_description_t* description);
+SGE_API void vulkan_render_pass_description_add_attachment_reference(memory_allocator_t* allocator, vulkan_render_pass_description_t* description, vulkan_attachment_reference_type_t type, u32 reference, u32 binding);
+SGE_API void vulkan_render_pass_description_end_subpass(memory_allocator_t* allocator, vulkan_render_pass_description_t* description);
+SGE_API void vulkan_render_pass_description_add_subpass_dependency(vulkan_render_pass_description_t* description, VkSubpassDependency* dependency);
+SGE_API void vulkan_render_pass_description_end(memory_allocator_t* allocator, vulkan_render_pass_description_t* description);
 
-RENDERER_API void vulkan_render_pass_description_destroy_allocations(memory_allocator_t* allocator, vulkan_render_pass_description_t* description);
+SGE_API void vulkan_render_pass_description_destroy_allocations(memory_allocator_t* allocator, vulkan_render_pass_description_t* description);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void begin_pass(memory_allocator_t* allocator, BUFFER* list, vulkan_render_pass_type_t type)
 {

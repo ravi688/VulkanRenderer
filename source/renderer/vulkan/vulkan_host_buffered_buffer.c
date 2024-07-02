@@ -27,7 +27,7 @@
 #include <renderer/internal/vulkan/vulkan_renderer.h>
 #include <renderer/memory_allocator.h>
 
-RENDERER_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_new(memory_allocator_t* allocator)
+SGE_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_new(memory_allocator_t* allocator)
 {
 	vulkan_host_buffered_buffer_t* buffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_HOST_BUFFERED_BUFFER, vulkan_host_buffered_buffer_t);
 	memzero(buffer, vulkan_host_buffered_buffer_t);
@@ -35,14 +35,14 @@ RENDERER_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_new(memo
 	return buffer;
 }
 
-RENDERER_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_create(vulkan_renderer_t* renderer, vulkan_host_buffered_buffer_create_info_t* create_info)
+SGE_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_create(vulkan_renderer_t* renderer, vulkan_host_buffered_buffer_create_info_t* create_info)
 {
 	vulkan_host_buffered_buffer_t* buffer = vulkan_host_buffered_buffer_new(renderer->allocator);
 	vulkan_host_buffered_buffer_create_no_alloc(renderer, create_info, buffer);
 	return buffer;
 }
 
-RENDERER_API void vulkan_host_buffered_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_host_buffered_buffer_create_info_t* create_info, vulkan_host_buffered_buffer_t OUT buffer)
+SGE_API void vulkan_host_buffered_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_host_buffered_buffer_create_info_t* create_info, vulkan_host_buffered_buffer_t OUT buffer)
 {
 	VULKAN_OBJECT_MEMZERO(buffer, vulkan_host_buffered_buffer_t);
 	buffer->renderer = renderer;
@@ -66,7 +66,7 @@ RENDERER_API void vulkan_host_buffered_buffer_create_no_alloc(vulkan_renderer_t*
 	buffer->host_buffer = memory_allocator_buf_create(renderer->allocator, create_info->stride, create_info->capacity, 0);
 }
 
-RENDERER_API void vulkan_host_buffered_buffer_destroy(vulkan_host_buffered_buffer_t* buffer)
+SGE_API void vulkan_host_buffered_buffer_destroy(vulkan_host_buffered_buffer_t* buffer)
 {
 	if(buffer->has_device_buffer)
 	{
@@ -77,7 +77,7 @@ RENDERER_API void vulkan_host_buffered_buffer_destroy(vulkan_host_buffered_buffe
 	buf_clear(&buffer->host_buffer, NULL);
 }
 
-RENDERER_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buffered_buffer_t* buffer)
+SGE_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buffered_buffer_t* buffer)
 {
 	buf_free(&buffer->host_buffer);
 	if(VULKAN_OBJECT_IS_INTERNAL(buffer))
@@ -85,20 +85,20 @@ RENDERER_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buff
 }
 
 
-RENDERER_API buffer_t* vulkan_host_buffered_buffer_get_host_buffer(vulkan_host_buffered_buffer_t* buffer)
+SGE_API buffer_t* vulkan_host_buffered_buffer_get_host_buffer(vulkan_host_buffered_buffer_t* buffer)
 {
 	AUTO host_buffer = &buffer->host_buffer;
 	buffer->is_dirty = true;
 	return host_buffer;
 }
 
-RENDERER_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulkan_host_buffered_buffer_t* buffer)
+SGE_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulkan_host_buffered_buffer_t* buffer)
 {
 	return buffer->has_device_buffer ? &buffer->device_buffer : NULL;
 }
 
 
-RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer, bool OUT is_resized)
+SGE_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer, bool OUT is_resized)
 {
 	if(!buffer->is_dirty)
 		return false;

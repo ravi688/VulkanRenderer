@@ -31,23 +31,23 @@
 
 #define INTERNAL
 
-#ifdef RENDERER_STATIC_LIBRARY
-#	define RENDERER_API
-#elif RENDERER_DYNAMIC_LIBRARY
-#	define RENDERER_API __declspec(dllimport)
+#ifdef SGE_STATIC_LIBRARY
+#	define SGE_API
+#elif SGE_DYNAMIC_LIBRARY
+#	define SGE_API __declspec(dllimport)
 #elif BUILD_DYNAMIC_LIBRARY
-#	define RENDERER_API __declspec(dllexport)
+#	define SGE_API __declspec(dllexport)
 #else
-#	define RENDERER_API
+#	define SGE_API
 #endif
 
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 	typedef struct vulkan_renderer_t vulkan_renderer_t;
-#elif defined(RENDERER_OPENGL_DRIVER)
+#elif defined(SGE_OPENGL_DRIVER)
 	typedef struct opengl_renderer_t opengl_renderer_t;
-#elif defined(RENDERER_DIRECTX_DRIVER)
+#elif defined(SGE_DIRECTX_DRIVER)
 	typedef struct directx_renderer_t directx_renderer_t;
-#elif defined(RENDERER_METAL_DRIVER)
+#elif defined(SGE_METAL_DRIVER)
 	typedef struct metal_renderer_t metal_renderer_t;
 #endif
 

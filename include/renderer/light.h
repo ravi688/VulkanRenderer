@@ -27,16 +27,16 @@
 #pragma once
 
 /* API level object selection */
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 	typedef struct vulkan_light_t vulkan_light_t;
 	typedef vulkan_light_t light_t;
-#elif RENDERER_OPENGL_DRIVER
+#elif SGE_OPENGL_DRIVER
 	typedef struct opengl_light_t opengl_light_t;
 	typedef opengl_light_t light_t;
-#elif RENDERER_DIRECTX_DRIVER
+#elif SGE_DIRECTX_DRIVER
 	typedef struct directx_light_t directx_light_t;
 	typedef directx_light_t light_t;
-#elif RENDERER_METAL_DRIVER
+#elif SGE_METAL_DRIVER
 	typedef struct metal_light_t metal_light_t;
 	typedef metal_light_t light_t;
 #endif
@@ -60,17 +60,17 @@ typedef enum light_type_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API light_t* light_new(memory_allocator_t* allocator, light_type_t type);
-RENDERER_API light_t* light_create(renderer_t* renderer, light_type_t type);
-RENDERER_API void light_create_no_alloc(renderer_t* renderer, light_type_t type, light_t OUT light);
-RENDERER_API void light_destroy(light_t* light);
-RENDERER_API void light_release_resources(light_t* light);
+SGE_API light_t* light_new(memory_allocator_t* allocator, light_type_t type);
+SGE_API light_t* light_create(renderer_t* renderer, light_type_t type);
+SGE_API void light_create_no_alloc(renderer_t* renderer, light_type_t type, light_t OUT light);
+SGE_API void light_destroy(light_t* light);
+SGE_API void light_release_resources(light_t* light);
 
-RENDERER_API void light_set_spot_angle(light_t* light, float angle);
-RENDERER_API void light_set_position(light_t* light, vec3_t position);
-RENDERER_API void light_set_rotation(light_t* light, vec3_t rotation);
-RENDERER_API void light_set_intensity(light_t* light, float intensity);
-RENDERER_API void light_set_color(light_t* light, vec3_t color);
-RENDERER_API void light_set_cast_shadow(light_t* light, bool is_cast_shadows);
+SGE_API void light_set_spot_angle(light_t* light, float angle);
+SGE_API void light_set_position(light_t* light, vec3_t position);
+SGE_API void light_set_rotation(light_t* light, vec3_t rotation);
+SGE_API void light_set_intensity(light_t* light, float intensity);
+SGE_API void light_set_color(light_t* light, vec3_t color);
+SGE_API void light_set_cast_shadow(light_t* light, bool is_cast_shadows);
 
 END_CPP_COMPATIBLE

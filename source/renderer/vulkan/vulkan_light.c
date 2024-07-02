@@ -43,7 +43,7 @@
 
 #define UNSUPPORTED_LIGHT_TYPE(type) LOG_FETAL_ERR("Unsupported light type: %u\n", type)
 
-RENDERER_API vulkan_light_t* vulkan_light_new(memory_allocator_t* allocator, vulkan_light_type_t type)
+SGE_API vulkan_light_t* vulkan_light_new(memory_allocator_t* allocator, vulkan_light_type_t type)
 {
 	switch(type)
 	{
@@ -146,7 +146,7 @@ static void setup_gpu_resources(vulkan_light_t* super)
 	struct_descriptor_end(light->renderer->allocator, &light->struct_definition);
 }
 
-RENDERER_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vulkan_light_type_t type)
+SGE_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vulkan_light_type_t type)
 {
 	vulkan_light_t* light = vulkan_light_new(renderer->allocator, type);
 	vulkan_light_create_no_alloc(renderer, type, light);
@@ -154,7 +154,7 @@ RENDERER_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vu
 }
 
 
-RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_light_type_t type, vulkan_light_t OUT light)
+SGE_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_light_type_t type, vulkan_light_t OUT light)
 {
 	switch(type)
 	{
@@ -238,7 +238,7 @@ RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulk
 	}
 }
 
-RENDERER_API void vulkan_light_destroy(vulkan_light_t* light)
+SGE_API void vulkan_light_destroy(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	struct_descriptor_unmap(&light->struct_definition);
@@ -253,7 +253,7 @@ RENDERER_API void vulkan_light_destroy(vulkan_light_t* light)
 	}
 }
 
-RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light)
+SGE_API void vulkan_light_release_resources(vulkan_light_t* light)
 {
 	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(light);
@@ -264,7 +264,7 @@ RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light)
 
 /* setters */
 
-RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle)
+SGE_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle)
 {
 	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(super);
@@ -288,7 +288,7 @@ RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle
 	light->is_dirty = true;
 }
 
-RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t position)
+SGE_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t position)
 {
 	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(super);
@@ -304,7 +304,7 @@ RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t positi
 	}
 }
 
-RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation)
+SGE_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation)
 {
 	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(super);
@@ -393,7 +393,7 @@ static vulkan_camera_projection_type_t  get_camera_projection_type(vulkan_light_
 	return VULKAN_CAMERA_PROJECTION_TYPE_UNDEFINED;
 }
 
-RENDERER_API void vulkan_light_set_active(vulkan_light_t* light, bool is_active)
+SGE_API void vulkan_light_set_active(vulkan_light_t* light, bool is_active)
 {
 	light = VULKAN_LIGHT(light);
 	light->is_active = is_active;
@@ -420,7 +420,7 @@ static void setup_shadow_camera_properties(vulkan_camera_t* shadow_camera, vulka
 		vulkan_camera_set_field_of_view(shadow_camera, VULKAN_SPOT_LIGHT(super)->angle);
 }
 
-RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow)
+SGE_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow)
 {
 	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(light);
@@ -466,65 +466,65 @@ RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_ca
 	}
 }
 
-RENDERER_API void vulkan_light_set_intensity(vulkan_light_t* light, float intensity)
+SGE_API void vulkan_light_set_intensity(vulkan_light_t* light, float intensity)
 {
 	light = VULKAN_LIGHT(light);
 	light->intensity = intensity;
 	light->is_dirty = true;
 }
 
-RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color)
+SGE_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color)
 {
 	light = VULKAN_LIGHT(light);
 	light->color = color;
 	light->is_dirty = true;
 }
 
-RENDERER_API vulkan_light_type_t vulkan_light_get_type(vulkan_light_t* light)
+SGE_API vulkan_light_type_t vulkan_light_get_type(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	return light->type;
 }
 
-RENDERER_API struct_descriptor_t* vulkan_light_get_struct_def(vulkan_light_t* light)
+SGE_API struct_descriptor_t* vulkan_light_get_struct_def(vulkan_light_t* light)
 { 
 	light = VULKAN_LIGHT(light);
 	return &light->struct_definition;
 }
-RENDERER_API vulkan_material_t* vulkan_light_get_shadow_material(vulkan_light_t* light)
+SGE_API vulkan_material_t* vulkan_light_get_shadow_material(vulkan_light_t* light)
 { 
 	light = VULKAN_LIGHT(light);
 	return light->shadow_material;
 }
-RENDERER_API vulkan_texture_t* vulkan_light_get_shadow_map(vulkan_light_t* light)
+SGE_API vulkan_texture_t* vulkan_light_get_shadow_map(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	light->is_shadowmap_dirty = false;
 	return light->shadow_map;
 }
-RENDERER_API vulkan_camera_t* vulkan_light_get_shadow_camera(vulkan_light_t* light)
+SGE_API vulkan_camera_t* vulkan_light_get_shadow_camera(vulkan_light_t* light)
 { 
 	light = VULKAN_LIGHT(light);
 	return light->shadow_camera;
 }
-RENDERER_API bool vulkan_light_is_active(vulkan_light_t* light)
+SGE_API bool vulkan_light_is_active(vulkan_light_t* light)
 { 
 	light = VULKAN_LIGHT(light);
 	return light->is_active;
 }
-RENDERER_API bool vulkan_light_is_cast_shadow(vulkan_light_t* light)
+SGE_API bool vulkan_light_is_cast_shadow(vulkan_light_t* light)
 { 
 	light = VULKAN_LIGHT(light);
 	return light->is_cast_shadow;
 }
 
-RENDERER_API bool vulkan_light_is_dirty(vulkan_light_t* light)
+SGE_API bool vulkan_light_is_dirty(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	return light->is_dirty;
 }
 
-RENDERER_API bool vulkan_light_is_shadow_map_dirty(vulkan_light_t* light)
+SGE_API bool vulkan_light_is_shadow_map_dirty(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	return light->is_shadowmap_dirty;
@@ -624,7 +624,7 @@ static void get_far_light_dispatchable_data(vulkan_light_t* light, u32 shadowmap
 	data->shadow_index = shadowmap_index;
 }
 
-RENDERER_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, void* const out_buffer)
+SGE_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, void* const out_buffer)
 {
 	vulkan_light_t* _light = VULKAN_LIGHT(light);
 	switch(_light->type)
@@ -659,7 +659,7 @@ RENDERER_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 
 	_light->is_dirty = false;
 }
 
-RENDERER_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light)
+SGE_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light)
 {
 	AUTO type = vulkan_light_get_type(light);
 	switch(type)
@@ -673,14 +673,14 @@ RENDERER_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light)
 	return 0;
 }
 
-RENDERER_API void vulkan_light_begin(vulkan_light_t* light)
+SGE_API void vulkan_light_begin(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	if(light->is_cast_shadow)
 		vulkan_camera_begin(light->shadow_camera);
 }
 
-RENDERER_API bool vulkan_light_irradiate(vulkan_light_t* light)
+SGE_API bool vulkan_light_irradiate(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	if(light->is_cast_shadow)
@@ -688,7 +688,7 @@ RENDERER_API bool vulkan_light_irradiate(vulkan_light_t* light)
 	return false;
 }
 
-RENDERER_API void vulkan_light_end(vulkan_light_t* light)
+SGE_API void vulkan_light_end(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	if(light->is_cast_shadow)

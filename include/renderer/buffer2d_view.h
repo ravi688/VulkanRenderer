@@ -55,36 +55,36 @@ typedef buffer2d_view_t* buffer2d_view_ptr_t;
 BEGIN_CPP_COMPATIBLE
 
 /* constructor and destructures */
-RENDERER_API buffer2d_view_t* buffer2d_view_new(memory_allocator_t* allocator);
-RENDERER_API buffer2d_view_t* buffer2d_view_create(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info);
-RENDERER_API void buffer2d_view_create_no_alloc(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info, buffer2d_view_t OUT view);
+SGE_API buffer2d_view_t* buffer2d_view_new(memory_allocator_t* allocator);
+SGE_API buffer2d_view_t* buffer2d_view_create(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info);
+SGE_API void buffer2d_view_create_no_alloc(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info, buffer2d_view_t OUT view);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_create_no_alloc_ext(memory_allocator_t* allocator, buffer2d_view_create_info_t* create_info, buffer2d_view_t OUT view)
 {
 	OBJECT_INIT(view, OBJECT_TYPE_BUFFER2D_VIEW, OBJECT_NATIONALITY_EXTERNAL);
 	buffer2d_view_create_no_alloc(allocator, create_info, view);
 }
-RENDERER_API void buffer2d_view_destroy(buffer2d_view_t* view);
-RENDERER_API void buffer2d_view_release_resources(buffer2d_view_t* view);
+SGE_API void buffer2d_view_destroy(buffer2d_view_t* view);
+SGE_API void buffer2d_view_release_resources(buffer2d_view_t* view);
 
-RENDERER_API void buffer2d_view_set_buffer(buffer2d_view_t* view, buffer_t* buffer);
-RENDERER_API void buffer2d_view_resize(buffer2d_view_t* view, u32 width, u32 height);
-RENDERER_API void buffer2d_view_clear(buffer2d_view_t* view, void* clear_value);
+SGE_API void buffer2d_view_set_buffer(buffer2d_view_t* view, buffer_t* buffer);
+SGE_API void buffer2d_view_resize(buffer2d_view_t* view, u32 width, u32 height);
+SGE_API void buffer2d_view_clear(buffer2d_view_t* view, void* clear_value);
 
 /* getters */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* buffer2d_view_get_backed_buffer(buffer2d_view_t* view) { return view->backed_buffer; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE iextent2d_t buffer2d_view_get_size(buffer2d_view_t* view) { return view->size; }
-RENDERER_API void buffer2d_view_get_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* out_data);
+SGE_API void buffer2d_view_get_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* out_data);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_get_rect(buffer2d_view_t* view, irect2d_t rect, void* out_data)
 {
 	buffer2d_view_get_at(view, rect.offset.x, rect.offset.y, rect.extent.x, rect.extent.y, out_data);
 }
 
 /* setters */
-RENDERER_API void buffer2d_view_set_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* in_data);
+SGE_API void buffer2d_view_set_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* in_data);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_set_rect(buffer2d_view_t* view, irect2d_t rect, void* in_data)
 {
 	buffer2d_view_set_at(view, rect.offset.x, rect.offset.y, rect.extent.x, rect.extent.y, in_data);
 }
-RENDERER_API void buffer2d_view_broadcast_rect(buffer2d_view_t* view, irect2d_t rect, void* in_value, u32 in_value_size);
+SGE_API void buffer2d_view_broadcast_rect(buffer2d_view_t* view, irect2d_t rect, void* in_value, u32 in_value_size);
 
 END_CPP_COMPATIBLE

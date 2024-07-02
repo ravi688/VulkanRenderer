@@ -28,22 +28,22 @@
 
 #include <renderer/defines.h>
 
-#if   defined(RENDERER_VULKAN_DRIVER)
+#if   defined(SGE_VULKAN_DRIVER)
 	typedef struct vulkan_glyph_mesh_pool_t vulkan_glyph_mesh_pool_t;
 	typedef vulkan_glyph_mesh_pool_t glyph_mesh_pool_t;
 	typedef struct vulkan_mesh_t vulkan_mesh_t;
 	typedef vulkan_mesh_t mesh_t;
-#elif defined(RENDERER_OPENGL_DRIVER)
+#elif defined(SGE_OPENGL_DRIVER)
 	typedef struct opengl_glyph_mesh_pool_t opengl_glyph_mesh_pool_t;
 	typedef opengl_glyph_mesh_pool_t glyph_mesh_pool_t;
 	typedef struct opeongl_mesh_t opeongl_mesh_t;
 	typedef opeongl_mesh_t mesh_t;
-#elif defined(RENDERER_DIRECTX_DRIVER)
+#elif defined(SGE_DIRECTX_DRIVER)
 	typedef struct directx_glyph_mesh_pool_t directx_glyph_mesh_pool_t;
 	typedef directx_glyph_mesh_pool_t glyph_mesh_pool_t;
 	typedef struct directx_mesh_t directx_mesh_t;
 	typedef directx_mesh_t mesh_t;
-#elif defined(RENDERER_METAL_DRIVER)
+#elif defined(SGE_METAL_DRIVER)
 	typedef struct metal_glyph_mesh_pool_t metal_glyph_mesh_pool_t;
 	typedef metal_glyph_mesh_pool_t glyph_mesh_pool_t;
 	typedef struct metal_mesh_t metal_mesh_t;
@@ -55,14 +55,14 @@ typedef struct font_t font_t;
 BEGIN_CPP_COMPATIBLE
 
 // contructors and destructors
-RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_new(memory_allocator_t* allocator);
-RENDERER_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font);
-RENDERER_API void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool);
-RENDERER_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool);
+SGE_API glyph_mesh_pool_t* glyph_mesh_pool_new(memory_allocator_t* allocator);
+SGE_API glyph_mesh_pool_t* glyph_mesh_pool_create(renderer_t* renderer, font_t* font);
+SGE_API void glyph_mesh_pool_destroy(glyph_mesh_pool_t* pool);
+SGE_API void glyph_mesh_pool_release_resources(glyph_mesh_pool_t* pool);
 
 // getters
-RENDERER_API font_t* glyph_mesh_pool_get_font(glyph_mesh_pool_t* pool);
-RENDERER_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph);
+SGE_API font_t* glyph_mesh_pool_get_font(glyph_mesh_pool_t* pool);
+SGE_API mesh_t* glyph_mesh_pool_get_mesh(glyph_mesh_pool_t* pool, u16 glyph);
 
 
 END_CPP_COMPATIBLE

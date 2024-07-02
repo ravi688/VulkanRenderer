@@ -30,7 +30,7 @@
 #include <stdarg.h>
 #include <renderer/alloc.h>	 // memcopyv
 
-RENDERER_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkImage image,
+SGE_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkImage image,
 		VkImageSubresourceRange* subresource,
 		VkImageLayout old_layout,
 		VkImageLayout new_layout,
@@ -54,7 +54,7 @@ RENDERER_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkI
 	vkCmdPipelineBarrier(cb, src_pipeline_stage, dst_pipeline_stage, 0, 0, NULL, 0, NULL, 1, &barrier);
 }
 
-RENDERER_API void vulkan_command_bind_vertex_buffers(VkCommandBuffer cb, u32* bindings, VkBuffer* buffers, u32 buffer_count)
+SGE_API void vulkan_command_bind_vertex_buffers(VkCommandBuffer cb, u32* bindings, VkBuffer* buffers, u32 buffer_count)
 {
 #if GLOBAL_DEBUG
 	_debug_assert__(buffer_count >= 1);

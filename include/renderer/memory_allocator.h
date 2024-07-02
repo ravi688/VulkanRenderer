@@ -182,8 +182,8 @@ typedef struct memory_allocator_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructor and destructor */
-RENDERER_API memory_allocator_t* memory_allocator_create(const memory_allocator_create_info_t* create_info);
-RENDERER_API void memory_allocator_destroy(memory_allocator_t* allocator);
+SGE_API memory_allocator_t* memory_allocator_create(const memory_allocator_create_info_t* create_info);
+SGE_API void memory_allocator_destroy(memory_allocator_t* allocator);
 
 /* allocates memory chunk and attaches appropriate debug information to that chunk */
 #define memory_allocator_alloc_obj_array(allocator, allocation_type, type, count) CAST_TO(type*, memory_allocator_alloc(allocator, allocation_type, sizeof(type) * (count)))
@@ -199,29 +199,29 @@ RENDERER_API void memory_allocator_destroy(memory_allocator_t* allocator);
 #	define memory_allocator_realloc(allocator, old_ptr, allocation_type, size) heap_realloc(old_ptr, size)
 #endif
 
-RENDERER_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size);
-RENDERER_API void* __memory_allocator_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size);
+SGE_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size);
+SGE_API void* __memory_allocator_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size);
 /* allocates memory chunk with alignment, and attaches appropriate debug information to that chunk */
 #ifdef MEMORY_METRICS
 #	define memory_allocator_aligned_alloc(allocator, allocation_type, size, align) __memory_allocator_aligned_alloc(allocator, __memory_allocation_debug_info(allocation_type), size, align)
 #else
 #	define memory_allocator_aligned_alloc(allocator, allocation_type, size, align) heap_aligned_alloc(size, align)
 #endif
-RENDERER_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size, u32 align);
+SGE_API void* __memory_allocator_aligned_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size, u32 align);
 /* rellocates memory chunk with alignment, and attaches or overwrites appropriate debug information to that chunk */
 #ifdef MEMORY_METRICS
 #   define memory_allocator_aligned_realloc(allocator, old_ptr, allocation_type, size, align) __memory_allocator_aligned_realloc(allocator, old_ptr, __memory_allocation_debug_info(allocation_type), size, align)
 #else 
 #   define memory_allocator_aligned_realloc(allocator, old_ptr, allocation_type, size, align) heap_aligned_realloc(old_ptr, size, align)
 #endif
-RENDERER_API void* __memory_allocator_aligned_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size, u32 align);
+SGE_API void* __memory_allocator_aligned_realloc(memory_allocator_t* allocator, void* old_ptr, __memory_allocation_debug_info_t debug_info, u32 size, u32 align);
 /* deallocates memory chunk */
 #ifdef MEMORY_METRICS
 #   define memory_allocator_dealloc(allocator, ptr) __memory_allocator_dealloc(allocator, ptr)
 #else
 #   define memory_allocator_dealloc(allocator, ptr) heap_free(ptr)
 #endif
-RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr);
+SGE_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void* ptr);
 
 #ifdef MEMORY_METRICS
 #   define memory_allocator_aligned_deallocate(allocator, ptr) __memory_allocator_dealloc(allocator, ptr)
@@ -229,22 +229,22 @@ RENDERER_API void __memory_allocator_dealloc(memory_allocator_t* allocator, void
 #   define memory_allocator_aligned_deallocate(allocator, ptr) heap_aligned_free(ptr)
 #endif
 
-RENDERER_API bool memory_allocator_is_allocation_exists(memory_allocator_t* allocator, void* ptr);
+SGE_API bool memory_allocator_is_allocation_exists(memory_allocator_t* allocator, void* ptr);
 
 /* serializes current memory allocation tree and current memory footprint into one file */
-RENDERER_API void memory_allocator_serialize_to_file(memory_allocator_t* allocator, const char* const file_path);
+SGE_API void memory_allocator_serialize_to_file(memory_allocator_t* allocator, const char* const file_path);
 
 /* builds a memory allocation tree, usually it is used for debug logging purpose */
-RENDERER_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(memory_allocator_t* allocator);
+SGE_API memory_allocation_tree_t* memory_allocator_build_allocation_tree(memory_allocator_t* allocator);
 /* destroys the memory allocation tree (frees up the allocated memory) */
-RENDERER_API void memory_allocation_tree_destroy(memory_allocation_tree_t* tree);
+SGE_API void memory_allocation_tree_destroy(memory_allocation_tree_t* tree);
 /* serializes the memory_allocation_tree_t object into a file (human readable text file) */
-RENDERER_API void memory_allocation_tree_serialize_to_file(memory_allocation_tree_t* tree, const char* const file_path);
+SGE_API void memory_allocation_tree_serialize_to_file(memory_allocation_tree_t* tree, const char* const file_path);
 
 /* returns a valid memory footprint analysis if MEMORY_ALLOCATION_PRESIST_FOOTPRINT_ANALYSIS_BIT bit is set, otherwise NULL */
-RENDERER_API memory_allocation_footprint_t* memory_allocator_get_footprint(memory_allocator_t* allocator);
+SGE_API memory_allocation_footprint_t* memory_allocator_get_footprint(memory_allocator_t* allocator);
 /* serializes the memory_allocation_footprint_t object into a file (binary file) */
-RENDERER_API void memory_allocation_footprint_serialize_to_file(const memory_allocation_footprint_t* footprint, const char* const file_path);
+SGE_API void memory_allocation_footprint_serialize_to_file(const memory_allocation_footprint_t* footprint, const char* const file_path);
 
 
 /* calls memory_allocator_alloc */

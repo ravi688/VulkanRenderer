@@ -56,7 +56,7 @@ typedef struct subscription_t
 	bool is_active;
 } subscription_t;
 
-RENDERER_API event_t* event_new(memory_allocator_t* allocator)
+SGE_API event_t* event_new(memory_allocator_t* allocator)
 {
 	AUTO event = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_EVENT, event_t);
 	memzero(event, event_t);
@@ -65,14 +65,14 @@ RENDERER_API event_t* event_new(memory_allocator_t* allocator)
 	return event;
 }
 
-RENDERER_API event_t* event_create(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name))
+SGE_API event_t* event_create(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name))
 {
 	AUTO event = event_new(allocator);
 	event_create_no_alloc(allocator, publisher_data PARAM_IF_DEBUG(name), event);
 	return event;
 }
 
-RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event)
+SGE_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event)
 {
 	OBJECT_MEMZERO(event, event_t);
 	event->allocator = allocator;
@@ -94,13 +94,13 @@ RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* pub
 	event->signal_table[SIGNAL_NOTHING] = 0;
 }
 
-RENDERER_API void event_create_no_alloc_ext(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event)
+SGE_API void event_create_no_alloc_ext(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event)
 {
 	OBJECT_INIT(event, OBJECT_TYPE_EVENT, OBJECT_NATIONALITY_EXTERNAL);
 	event_create_no_alloc(allocator, publisher_data PARAM_IF_DEBUG(name), event);
 }
 
-RENDERER_API void event_destroy(event_t* event)
+SGE_API void event_destroy(event_t* event)
 {
 	for(u32 i = SIGNAL_NOTHING; i < SIGNAL_MAX; i++)
 		event->signal_table[i] = U32_MAX;
@@ -111,7 +111,7 @@ RENDERER_API void event_destroy(event_t* event)
 	buf_clear(&event->unsubscribed_handles, NULL);
 }
 
-RENDERER_API void event_release_resources(event_t* event)
+SGE_API void event_release_resources(event_t* event)
 {
 	string_builder_destroy(event->string_builder);
 	memory_allocator_dealloc(event->allocator, event->signal_table);
@@ -142,7 +142,7 @@ static bool signal_waits_done(event_t* event, signal_bits_t wait_bits)
 /* dumps the subscription data in the string builder */
 static void subscription_dump(memory_allocator_t* allocator, subscription_t* subscription, string_builder_t* builder);
 
-RENDERER_API void event_publish(event_t* event)
+SGE_API void event_publish(event_t* event)
 {
 	DBG_EVENT_PUBLISH( debug_log_info("***--event-publish-begin-%s--***", event->name) );
 
@@ -227,7 +227,7 @@ RENDERER_API void event_publish(event_t* event)
 	DBG_EVENT_PUBLISH( debug_log_info("***--event-publish-end--***") );
 }
 
-RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file)
+SGE_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file)
 {
 	subscription_t subscription = { .debug_info = { line, function, file }, .is_active = true };
 
@@ -278,7 +278,7 @@ static bool handle_comparer(void* handle, void* subscription)
 	return CAST_TO(subscription_t*, subscription)->handle == DREF_TO(event_subscription_handle_t, handle);
 }
 
-RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t handle)
+SGE_API void event_unsubscribe(event_t* event, event_subscription_handle_t handle)
 {
 	/* remove the subscriber, and if success then add the just unclaimed handle to the list of unsubscribed handles to be later used */
 	buf_ucount_t index = buf_find_index_of(&event->subscribers, &handle, handle_comparer);
@@ -355,7 +355,7 @@ static void subscription_dump(memory_allocator_t* allocator, subscription_t* sub
 #endif /* GLOBAL_DEBUG */
 }
 
-RENDERER_API void event_dump(event_t* event)
+SGE_API void event_dump(event_t* event)
 {
 #ifdef GLOBAL_DEBUG
 	string_builder_t* builder = string_builder_create(event->allocator, 512);
@@ -372,7 +372,7 @@ RENDERER_API void event_dump(event_t* event)
 #endif /* GLOBAL_DEBUG */
 }
 
-RENDERER_API void event_set_subscription_active(event_t* event, event_subscription_handle_t handle, bool is_active)
+SGE_API void event_set_subscription_active(event_t* event, event_subscription_handle_t handle, bool is_active)
 {
 	/* remove the subscriber, and if success then add the just unclaimed handle to the list of unsubscribed handles to be later used */
 	buf_ucount_t index = buf_find_index_of(&event->subscribers, &handle, handle_comparer);

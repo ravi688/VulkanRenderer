@@ -62,14 +62,14 @@ typedef struct vulkan_host_buffered_buffer_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_create(vulkan_renderer_t* renderer, vulkan_host_buffered_buffer_create_info_t* create_info);
-RENDERER_API void vulkan_host_buffered_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_host_buffered_buffer_create_info_t* create_info, vulkan_host_buffered_buffer_t OUT buffer);
-RENDERER_API void vulkan_host_buffered_buffer_destroy(vulkan_host_buffered_buffer_t* buffer);
-RENDERER_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buffered_buffer_t* buffer);
+SGE_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_new(memory_allocator_t* allocator);
+SGE_API vulkan_host_buffered_buffer_t* vulkan_host_buffered_buffer_create(vulkan_renderer_t* renderer, vulkan_host_buffered_buffer_create_info_t* create_info);
+SGE_API void vulkan_host_buffered_buffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_host_buffered_buffer_create_info_t* create_info, vulkan_host_buffered_buffer_t OUT buffer);
+SGE_API void vulkan_host_buffered_buffer_destroy(vulkan_host_buffered_buffer_t* buffer);
+SGE_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buffered_buffer_t* buffer);
 
-RENDERER_API buffer_t* vulkan_host_buffered_buffer_get_host_buffer(vulkan_host_buffered_buffer_t* buffer);
-RENDERER_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulkan_host_buffered_buffer_t* buffer);
+SGE_API buffer_t* vulkan_host_buffered_buffer_get_host_buffer(vulkan_host_buffered_buffer_t* buffer);
+SGE_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulkan_host_buffered_buffer_t* buffer);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_host_buffered_buffer_set_dirty(vulkan_host_buffered_buffer_t* buffer, bool is_dirty)
 {
@@ -82,6 +82,6 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_host_buffered_b
 }
 
 /* returns true if either the exisiting VkBuffer has been updated with new data or VkBuffer is recreated upon resize */
-RENDERER_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer, bool OUT is_resized);
+SGE_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* buffer, bool OUT is_resized);
 
 END_CPP_COMPATIBLE

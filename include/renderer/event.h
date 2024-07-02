@@ -148,25 +148,25 @@ typedef struct event_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API event_t* event_new(memory_allocator_t* allocator);
-RENDERER_API event_t* event_create(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name));
-RENDERER_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event);
-RENDERER_API void event_create_no_alloc_ext(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event);
-RENDERER_API void event_destroy(event_t* event);
-RENDERER_API void event_release_resources(event_t* event);
+SGE_API event_t* event_new(memory_allocator_t* allocator);
+SGE_API event_t* event_create(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name));
+SGE_API void event_create_no_alloc(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event);
+SGE_API void event_create_no_alloc_ext(memory_allocator_t* allocator, void* publisher_data PARAM_IF_DEBUG(const char* name), event_t OUT event);
+SGE_API void event_destroy(event_t* event);
+SGE_API void event_release_resources(event_t* event);
 
 /* calls all the event handlers subscribed to this event */
-RENDERER_API void event_publish(event_t* event);
+SGE_API void event_publish(event_t* event);
 /* adds a subscription to the event subscription list */
 #define event_subscribe(event, create_info) __event_subscribe(event, create_info, __LINE__, __FUNCTION__, __FILE__)
-RENDERER_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file);
+SGE_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file);
 /* removes a subscription from the event subscription list */
-RENDERER_API void event_unsubscribe(event_t* event, event_subscription_handle_t handle);
+SGE_API void event_unsubscribe(event_t* event, event_subscription_handle_t handle);
 /* dumps the subscribers to this event onto stdout */
-RENDERER_API void event_dump(event_t* event);
+SGE_API void event_dump(event_t* event);
 /* sets a subscription identified by 'handle' as active or inactive
  * if a subscrpition becomes inactive then it's handler will not be executed but it would still be considered as executed
  * meaning if some subscriptions were waiting on that subscription to be executed, all those subscriptoins would be executed after that. */
-RENDERER_API void event_set_subscription_active(event_t* event, event_subscription_handle_t handle, bool is_active);
+SGE_API void event_set_subscription_active(event_t* event, event_subscription_handle_t handle, bool is_active);
 
 END_CPP_COMPATIBLE

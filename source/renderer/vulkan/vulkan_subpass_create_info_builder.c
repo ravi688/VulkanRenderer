@@ -28,7 +28,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
-RENDERER_API vulkan_subpass_create_info_builder_t* vulkan_subpass_create_info_builder_create(memory_allocator_t* allocator)
+SGE_API vulkan_subpass_create_info_builder_t* vulkan_subpass_create_info_builder_create(memory_allocator_t* allocator)
 {
 	vulkan_subpass_create_info_builder_t* builder = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SUBPASS_CREATE_INFO_BUILDER, vulkan_subpass_create_info_builder_t);
 	memzero(builder, vulkan_subpass_create_info_builder_t);
@@ -39,7 +39,7 @@ RENDERER_API vulkan_subpass_create_info_builder_t* vulkan_subpass_create_info_bu
 	return builder;
 }
 
-RENDERER_API void vulkan_subpass_create_info_builder_destroy(vulkan_subpass_create_info_builder_t* builder)
+SGE_API void vulkan_subpass_create_info_builder_destroy(vulkan_subpass_create_info_builder_t* builder)
 {
 	buf_free(&builder->create_info_array);
 	u32 build_info_count = buf_get_element_count(&builder->build_info_array);
@@ -57,7 +57,7 @@ RENDERER_API void vulkan_subpass_create_info_builder_destroy(vulkan_subpass_crea
 }
 
 
-RENDERER_API void vulkan_subpass_create_info_builder_add(vulkan_subpass_create_info_builder_t* builder, u32 count)
+SGE_API void vulkan_subpass_create_info_builder_add(vulkan_subpass_create_info_builder_t* builder, u32 count)
 {
 	u32 index = buf_get_element_count(&builder->build_info_array);
 	buf_push_pseudo(&builder->create_info_array, count);
@@ -74,7 +74,7 @@ RENDERER_API void vulkan_subpass_create_info_builder_add(vulkan_subpass_create_i
 	}
 }
 
-RENDERER_API void vulkan_subpass_create_info_builder_bind(vulkan_subpass_create_info_builder_t* builder, u32 index)
+SGE_API void vulkan_subpass_create_info_builder_bind(vulkan_subpass_create_info_builder_t* builder, u32 index)
 {
 	_debug_assert__(index < buf_get_element_count(&builder->build_info_array));
 	builder->bind_index = index;
@@ -105,7 +105,7 @@ static INLINE_IF_RELEASE_MODE vulkan_subpass_create_info_t* get_bound_create_inf
 }
 
 
-RENDERER_API vulkan_subpass_create_info_t* vulkan_subpass_create_info_builder_get(vulkan_subpass_create_info_builder_t* builder)
+SGE_API vulkan_subpass_create_info_t* vulkan_subpass_create_info_builder_get(vulkan_subpass_create_info_builder_t* builder)
 {
 	if(buf_get_element_count(&builder->build_info_array) == 0)
 		return NULL;
@@ -148,13 +148,13 @@ RENDERER_API vulkan_subpass_create_info_t* vulkan_subpass_create_info_builder_ge
 	return CAST_TO(vulkan_subpass_create_info_t*, buf_get_ptr(&builder->create_info_array));
 }
 
-RENDERER_API u32 vulkan_subpass_create_info_builder_get_count(vulkan_subpass_create_info_builder_t* builder)
+SGE_API u32 vulkan_subpass_create_info_builder_get_count(vulkan_subpass_create_info_builder_t* builder)
 {
 	return CAST_TO(u32, buf_get_element_count(&builder->build_info_array));
 }
 
 
-RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings(vulkan_subpass_create_info_builder_t* builder, vulkan_shader_resource_description_t* bindings, u32 binding_count)
+SGE_API void vulkan_subpass_create_info_builder_set_render_set_bindings(vulkan_subpass_create_info_builder_t* builder, vulkan_shader_resource_description_t* bindings, u32 binding_count)
 {
 	AUTO create_info = get_bound_create_info(builder);
 	create_info->sub_render_set_bindings = bindings;
@@ -164,7 +164,7 @@ RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings(vul
 	build_info->is_use_render_set_bindings_builder = false;
 }
 
-RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings_builder(vulkan_subpass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy)
+SGE_API void vulkan_subpass_create_info_builder_set_render_set_bindings_builder(vulkan_subpass_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->render_set_bindings_builder = srd_builder;
@@ -174,31 +174,31 @@ RENDERER_API void vulkan_subpass_create_info_builder_set_render_set_bindings_bui
 }
 
 
-RENDERER_API void vulkan_subpass_create_info_builder_set_bind_point(vulkan_subpass_create_info_builder_t* builder, VkPipelineBindPoint bind_point)
+SGE_API void vulkan_subpass_create_info_builder_set_bind_point(vulkan_subpass_create_info_builder_t* builder, VkPipelineBindPoint bind_point)
 {
 	AUTO create_info = get_bound_create_info(builder);
 	create_info->pipeline_bind_point = bind_point;
 }
 
-RENDERER_API void vulkan_subpass_create_info_builder_add_color_attachments(vulkan_subpass_create_info_builder_t* builder, VkAttachmentReference* attachments, u32 attachment_count)
+SGE_API void vulkan_subpass_create_info_builder_add_color_attachments(vulkan_subpass_create_info_builder_t* builder, VkAttachmentReference* attachments, u32 attachment_count)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	buf_pushv(&build_info->color_attachments, attachments, attachment_count);
 }
 
-RENDERER_API void vulkan_subpass_create_info_builder_add_input_attachments(vulkan_subpass_create_info_builder_t* builder, VkAttachmentReference* attachments, u32 attachment_count)
+SGE_API void vulkan_subpass_create_info_builder_add_input_attachments(vulkan_subpass_create_info_builder_t* builder, VkAttachmentReference* attachments, u32 attachment_count)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	buf_pushv(&build_info->input_attachments, attachments, attachment_count);
 }
 
-RENDERER_API void vulkan_subpass_create_info_builder_add_preserve_attachments(vulkan_subpass_create_info_builder_t* builder, u32* attachments, u32 attachment_count)
+SGE_API void vulkan_subpass_create_info_builder_add_preserve_attachments(vulkan_subpass_create_info_builder_t* builder, u32* attachments, u32 attachment_count)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	buf_pushv(&build_info->preserve_attachments, attachments, attachment_count);
 }
 
-RENDERER_API void vulkan_subpass_create_info_builder_set_depth_stencil_attachment(vulkan_subpass_create_info_builder_t* builder, VkAttachmentReference attachment)
+SGE_API void vulkan_subpass_create_info_builder_set_depth_stencil_attachment(vulkan_subpass_create_info_builder_t* builder, VkAttachmentReference attachment)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->depth_stencil_attachment = attachment;

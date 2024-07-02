@@ -34,22 +34,22 @@
 #include <renderer/debug.h>
 
 /* constructors & destructors */
-RENDERER_API render_pass_pool_t* render_pass_pool_new(memory_allocator_t* allocator)
+SGE_API render_pass_pool_t* render_pass_pool_new(memory_allocator_t* allocator)
 {
 	return vulkan_render_pass_pool_new(allocator);
 }
 
-RENDERER_API render_pass_pool_t* render_pass_pool_create(renderer_t* renderer)
+SGE_API render_pass_pool_t* render_pass_pool_create(renderer_t* renderer)
 {
 	return vulkan_render_pass_pool_create(renderer->vulkan_handle);
 }
 
-RENDERER_API void render_pass_pool_destroy(render_pass_pool_t* pool)
+SGE_API void render_pass_pool_destroy(render_pass_pool_t* pool)
 {
 	vulkan_render_pass_pool_destroy(pool);
 }
 
-RENDERER_API void render_pass_pool_release_resources(render_pass_pool_t* pool)
+SGE_API void render_pass_pool_release_resources(render_pass_pool_t* pool)
 {
 	vulkan_render_pass_pool_release_resources(pool);
 }
@@ -165,7 +165,7 @@ CAN_BE_UNUSED_FUNCTION static const char* preset_to_string(render_pass_pool_pass
 	}
 }
 
-RENDERER_API render_pass_handle_t render_pass_pool_create_pass_from_preset(render_pass_pool_t* pool, render_pass_pool_pass_preset_t preset)
+SGE_API render_pass_handle_t render_pass_pool_create_pass_from_preset(render_pass_pool_t* pool, render_pass_pool_pass_preset_t preset)
 {
 	vulkan_render_pass_create_info_t* create_info;
 	switch(preset)
@@ -197,12 +197,12 @@ RENDERER_API render_pass_handle_t render_pass_pool_create_pass_from_preset(rende
 	return handle;
 }
 
-RENDERER_API render_pass_handle_t render_pass_pool_create_pass(render_pass_pool_t* pool, render_pass_create_info_t* create_info, render_pass_input_info_t* input)
+SGE_API render_pass_handle_t render_pass_pool_create_pass(render_pass_pool_t* pool, render_pass_create_info_t* create_info, render_pass_input_info_t* input)
 {
 	return vulkan_render_pass_pool_create_pass(pool, create_info, input);
 }
 
-RENDERER_API render_pass_t* render_pass_pool_getH(render_pass_pool_t* pool, render_pass_handle_t handle)
+SGE_API render_pass_t* render_pass_pool_getH(render_pass_pool_t* pool, render_pass_handle_t handle)
 {
 	return vulkan_render_pass_pool_getH(pool, handle);
 }

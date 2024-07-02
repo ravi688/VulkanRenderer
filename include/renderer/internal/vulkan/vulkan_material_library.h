@@ -56,23 +56,23 @@ typedef struct vulkan_material_library_t
 #define VULKAN_MATERIAL_LIBRARY_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_material_library_t*, VULKAN_OBJECT_TYPE_MATERIAL_LIBRARY, ptr)
 
 /* constructors & destructors */
-RENDERER_API vulkan_material_library_t* vulkan_material_library_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_material_library_t* vulkan_material_library_create(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library);
-RENDERER_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library, vulkan_material_library_t OUT library);
-RENDERER_API void vulkan_material_library_destroy(vulkan_material_library_t* library);
-RENDERER_API void vulkan_material_library_release_resources(vulkan_material_library_t* library);
+SGE_API vulkan_material_library_t* vulkan_material_library_new(memory_allocator_t* allocator);
+SGE_API vulkan_material_library_t* vulkan_material_library_create(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library);
+SGE_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library, vulkan_material_library_t OUT library);
+SGE_API void vulkan_material_library_destroy(vulkan_material_library_t* library);
+SGE_API void vulkan_material_library_release_resources(vulkan_material_library_t* library);
 
 /* logic functions */
-RENDERER_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, const char* shader_name, const char* material_name);
-RENDERER_API vulkan_material_handle_t vulkan_material_library_create_materialH(vulkan_material_library_t* library, vulkan_shader_handle_t handle, const char* material_name);
-RENDERER_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path);
-RENDERER_API bool vulkan_material_library_destroy_material(vulkan_material_library_t* library, const char* material_name);
-RENDERER_API bool vulkan_material_library_destroy_materialH(vulkan_material_library_t* library, vulkan_material_handle_t handle);
-RENDERER_API BUFFER* vulkan_material_library_serialize(vulkan_material_library_t* library);
-RENDERER_API vulkan_material_library_t* vulkan_material_library_deserialize(void* bytes, u64 length);
-RENDERER_API bool vulkan_material_library_deserialize_no_alloc(void* bytes, u64 length, vulkan_material_library_t* out_library);
+SGE_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, const char* shader_name, const char* material_name);
+SGE_API vulkan_material_handle_t vulkan_material_library_create_materialH(vulkan_material_library_t* library, vulkan_shader_handle_t handle, const char* material_name);
+SGE_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path);
+SGE_API bool vulkan_material_library_destroy_material(vulkan_material_library_t* library, const char* material_name);
+SGE_API bool vulkan_material_library_destroy_materialH(vulkan_material_library_t* library, vulkan_material_handle_t handle);
+SGE_API BUFFER* vulkan_material_library_serialize(vulkan_material_library_t* library);
+SGE_API vulkan_material_library_t* vulkan_material_library_deserialize(void* bytes, u64 length);
+SGE_API bool vulkan_material_library_deserialize_no_alloc(void* bytes, u64 length, vulkan_material_library_t* out_library);
 
 /* getters */
-RENDERER_API vulkan_material_handle_t vulkan_material_library_get_handle(vulkan_material_library_t* library, const char* material_name);
-RENDERER_API vulkan_material_t* vulkan_material_library_get(vulkan_material_library_t* library, const char* material_name);
-RENDERER_API vulkan_material_t* vulkan_material_library_getH(vulkan_material_library_t* library, vulkan_material_handle_t handle);
+SGE_API vulkan_material_handle_t vulkan_material_library_get_handle(vulkan_material_library_t* library, const char* material_name);
+SGE_API vulkan_material_t* vulkan_material_library_get(vulkan_material_library_t* library, const char* material_name);
+SGE_API vulkan_material_t* vulkan_material_library_getH(vulkan_material_library_t* library, vulkan_material_handle_t handle);

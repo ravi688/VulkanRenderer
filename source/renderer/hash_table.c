@@ -26,7 +26,7 @@
 #include <renderer/hash_table.h>
 #include <renderer/memory_allocator.h> // stack_alloc
 
-RENDERER_API hash_table_t __hash_table_create(memory_allocator_t* allocator, u32 key_size, u32 value_size, u32 capacity, comparer_t key_comparer, hash_function_t key_hash_function)
+SGE_API hash_table_t __hash_table_create(memory_allocator_t* allocator, u32 key_size, u32 value_size, u32 capacity, comparer_t key_comparer, hash_function_t key_hash_function)
 {
 	hash_table_t table =
 	{
@@ -51,14 +51,14 @@ RENDERER_API hash_table_t __hash_table_create(memory_allocator_t* allocator, u32
 	return table;
 }
 
-RENDERER_API void hash_table_free(hash_table_t* table)
+SGE_API void hash_table_free(hash_table_t* table)
 {
 	hash_table_clear(table);
 	buf_free(&table->bucket_handles);
 	multi_buffer_free(&table->buffer);
 }
 
-RENDERER_API void hash_table_clear(hash_table_t* table)
+SGE_API void hash_table_clear(hash_table_t* table)
 {
 	u32 bucket_count = buf_get_element_count(&table->bucket_handles);
 	for(u32 i = 0; i < bucket_count; i++)
@@ -107,7 +107,7 @@ static bool is_equal(void* lhs, void* rhs)
 	return pair->first->is_equal(CAST_TO(void*, DREF_TO(u8*, (void**)lhs)), pair->second);
 }
 
-RENDERER_API void hash_table_add(hash_table_t* table, void* key, void* value)
+SGE_API void hash_table_add(hash_table_t* table, void* key, void* value)
 {	/* get handle to the bucket */
 	sub_buffer_handle_t bucket_handle = get_bucket_handle(table, key);
 
@@ -137,7 +137,7 @@ static void** __hash_table_get_value(hash_table_t* table, void* key)
 	return CAST_TO(void**, sub_buffer_get_ptr_at(&table->buffer, bucket_handle, index));
 }
 
-RENDERER_API bool hash_table_remove(hash_table_t* table, void* key)
+SGE_API bool hash_table_remove(hash_table_t* table, void* key)
 {
 	void** ptr = __hash_table_get_value(table, key);
 	void* _ptr = NULL;
@@ -153,7 +153,7 @@ RENDERER_API bool hash_table_remove(hash_table_t* table, void* key)
 	return result;
 }
 
-RENDERER_API bool hash_table_contains(hash_table_t* table, void* key)
+SGE_API bool hash_table_contains(hash_table_t* table, void* key)
 {
 	pair_t(hash_table_ptr_t, void_ptr_t) pair = { table, key };
 	return sub_buffer_find_index_of(&table->buffer, get_bucket_handle(table, key), &pair, is_equal) != BUF_INVALID_INDEX;
@@ -164,14 +164,14 @@ static void accumulate(void*, void*, void* user_data)
 	DREF_TO(u32, user_data) += 1;
 }
 
-RENDERER_API u32 hash_table_get_count(hash_table_t* table)
+SGE_API u32 hash_table_get_count(hash_table_t* table)
 {
 	u32 count = 0;
 	hash_table_foreach(table, accumulate, (void*)&count);
 	return count;
 }
 
-RENDERER_API void* hash_table_get_value(hash_table_t* table, void* key)
+SGE_API void* hash_table_get_value(hash_table_t* table, void* key)
 {
 	void* ptr = __hash_table_get_value(table, key);
 	if(ptr == NULL)
@@ -179,7 +179,7 @@ RENDERER_API void* hash_table_get_value(hash_table_t* table, void* key)
 	return DREF_VOID_PTR(ptr) + table->key_size;
 }
 
-RENDERER_API void hash_table_foreach(hash_table_t* table, void (*visitor)(void* key, void* value, void* user_data), void* user_data)
+SGE_API void hash_table_foreach(hash_table_t* table, void (*visitor)(void* key, void* value, void* user_data), void* user_data)
 {
 	/* for each bucket */
 	u32 bucket_count = buf_get_element_count(&table->bucket_handles);
@@ -200,7 +200,7 @@ RENDERER_API void hash_table_foreach(hash_table_t* table, void (*visitor)(void* 
 	}
 }
 
-RENDERER_API void hash_table_foreach_until(hash_table_t* table, bool (*visitor)(void* key, void* value, void* user_data), void* user_data)
+SGE_API void hash_table_foreach_until(hash_table_t* table, bool (*visitor)(void* key, void* value, void* user_data), void* user_data)
 {
 	/* for each bucket */
 	u32 bucket_count = buf_get_element_count(&table->bucket_handles);

@@ -128,36 +128,36 @@ typedef struct font_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API font_t* font_new(memory_allocator_t* allocator);
-RENDERER_API font_t* font_create(renderer_t* renderer, void* bytes, u64 length);
-RENDERER_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 length, font_t OUT font);
-RENDERER_API font_t* font_load_and_create(renderer_t* renderer, const char* file_name);
-RENDERER_API void font_load_and_create_no_alloc(renderer_t* renderer, const char* file_name, font_t OUT font);
-RENDERER_API void font_destroy(font_t* font);
-RENDERER_API void font_release_resources(font_t* font);
+SGE_API font_t* font_new(memory_allocator_t* allocator);
+SGE_API font_t* font_create(renderer_t* renderer, void* bytes, u64 length);
+SGE_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 length, font_t OUT font);
+SGE_API font_t* font_load_and_create(renderer_t* renderer, const char* file_name);
+SGE_API void font_load_and_create_no_alloc(renderer_t* renderer, const char* file_name, font_t OUT font);
+SGE_API void font_destroy(font_t* font);
+SGE_API void font_release_resources(font_t* font);
 
 /* sets the point size of the glyphs in this font */
-RENDERER_API void font_set_char_size(font_t* font, u32 point_size);
+SGE_API void font_set_char_size(font_t* font, u32 point_size);
 
 /* loads 'info' with information of the loaded glyph represented by unicode encoding 'unicode' */
-RENDERER_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info_t OUT glyph_info);
+SGE_API bool font_load_glyph(font_t* font, utf32_t unicode, font_glyph_info_t OUT glyph_info);
 
 /* returns true if glyph has graphical representation and there are no errors, and fills buffer 'buffer' with antialiased bitmap values (GREY) */
-RENDERER_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bitmap_t OUT bitmap);
+SGE_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bitmap_t OUT bitmap);
 
 /* fills 'mesh' with 3d polygon data of the glyph represented by unicode encoding 'unicode' */
-RENDERER_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_quality, mesh3d_t OUT mesh);
+SGE_API void font_get_glyph_mesh(font_t* font, utf32_t unicode, u8 mesh_quality, mesh3d_t OUT mesh);
 
 /* fills 'info' with information of the glyph represented by unicode encoding 'unicode' */
-RENDERER_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
+SGE_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
 /* fills 'info' with information of the glyph only but calls font_load_glyph internally if required (be careful) */
-RENDERER_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
+SGE_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
 
 /* returns the ascender of the face (the ascender of the glyph having heighest value in the face) */
-RENDERER_API f32 font_get_ascender(font_t* font);
+SGE_API f32 font_get_ascender(font_t* font);
 
 /* returns the units (in point size) per EM */
-RENDERER_API f32 font_get_units_per_em(font_t* font);
+SGE_API f32 font_get_units_per_em(font_t* font);
 
 /* returns the point size of the characters in the font */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 font_get_char_size(font_t* font) { return font->point_size; }

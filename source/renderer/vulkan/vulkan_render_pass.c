@@ -45,7 +45,7 @@ vulkan_render_pass_create_info_t* vulkan_render_pass_create_info_new(memory_allo
 	return create_info;
 }
 
-RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new(memory_allocator_t* allocator)
+SGE_API vulkan_render_pass_t* vulkan_render_pass_new(memory_allocator_t* allocator)
 {
 	vulkan_render_pass_t* render_pass = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS, vulkan_render_pass_t);
 	memzero(render_pass, vulkan_render_pass_t);
@@ -53,7 +53,7 @@ RENDERER_API vulkan_render_pass_t* vulkan_render_pass_new(memory_allocator_t* al
 	return render_pass;
 }
 
-RENDERER_API vulkan_render_pass_t* vulkan_render_pass_create(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
+SGE_API vulkan_render_pass_t* vulkan_render_pass_create(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info)
 {
 	vulkan_render_pass_t* render_pass = vulkan_render_pass_new(renderer->allocator);
 	vulkan_render_pass_create_no_alloc(renderer, create_info, render_pass);
@@ -88,7 +88,7 @@ UNUSED_FUNCTION static VkImageLayout get_attachment_layout(VkFormat format)
 	return VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
-RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_t OUT render_pass)
+SGE_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_pass_create_info_t* create_info, vulkan_render_pass_t OUT render_pass)
 {
 	VULKAN_OBJECT_MEMZERO(render_pass, vulkan_render_pass_t);
 
@@ -156,7 +156,7 @@ RENDERER_API void vulkan_render_pass_create_no_alloc(vulkan_renderer_t* renderer
 	}
 }
 
-RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
+SGE_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 {
 	// unregister this render pass from the all the cameras
 	// TODO
@@ -172,7 +172,7 @@ RENDERER_API void vulkan_render_pass_destroy(vulkan_render_pass_t* render_pass)
 	vulkan_descriptor_set_layout_destroy(&render_pass->render_set_layout);
 }
 
-RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass)
+SGE_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* render_pass)
 {
 	for(u32 i = 0; i < render_pass->subpass_count; i++)
 		vulkan_descriptor_set_layout_release_resources(&render_pass->sub_render_set_layouts[i]);
@@ -187,7 +187,7 @@ RENDERER_API void vulkan_render_pass_release_resources(vulkan_render_pass_t* ren
 		memory_allocator_dealloc(render_pass->renderer->allocator, render_pass);
 }
 
-RENDERER_API void vulkan_render_pass_set_clear_indirect(vulkan_render_pass_t* render_pass, color_t color, float depth, VkClearValue* indirect_buffer)
+SGE_API void vulkan_render_pass_set_clear_indirect(vulkan_render_pass_t* render_pass, color_t color, float depth, VkClearValue* indirect_buffer)
 {
 	for(u32 i = 0; i < render_pass->attachment_count; i++)
 	{
@@ -211,12 +211,12 @@ RENDERER_API void vulkan_render_pass_set_clear_indirect(vulkan_render_pass_t* re
 	}	
 }
 
-RENDERER_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth)
+SGE_API void vulkan_render_pass_set_clear(vulkan_render_pass_t* render_pass, color_t color, float depth)
 {
 	vulkan_render_pass_set_clear_indirect(render_pass, color, depth, render_pass->vo_clear_values);
 }
 
-RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index, vulkan_camera_t* camera)
+SGE_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u32 framebuffer_index, vulkan_camera_t* camera)
 {
 	framebuffer_index = (framebuffer_index == VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN) ? render_pass->renderer->swapchain->current_image_index : framebuffer_index;
 	framebuffer_index = min(render_pass->required_framebuffer_count - 1, framebuffer_index);
@@ -246,12 +246,12 @@ RENDERER_API void vulkan_render_pass_begin(vulkan_render_pass_t* render_pass, u3
 	render_pass->current_subpass_index = 0;
 }
 
-RENDERER_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass)
+SGE_API void vulkan_render_pass_end(vulkan_render_pass_t* render_pass)
 {
 	vkCmdEndRenderPass(render_pass->renderer->vo_command_buffers[render_pass->renderer->current_frame_index]);
 }
 
-RENDERER_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass)
+SGE_API void vulkan_render_pass_next(vulkan_render_pass_t* render_pass)
 {
 	if(render_pass->current_subpass_index >= render_pass->subpass_count)
 	{

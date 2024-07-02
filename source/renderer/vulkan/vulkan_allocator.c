@@ -88,7 +88,7 @@ static INLINE VkAllocationCallbacks get_allocation_callbacks(vulkan_allocator_t*
 	};
 }
 
-RENDERER_API vulkan_allocator_t* vulkan_allocator_create(memory_allocator_t* allocator)
+SGE_API vulkan_allocator_t* vulkan_allocator_create(memory_allocator_t* allocator)
 {
 	vulkan_allocator_t* vk_allocator = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_ALLOCATOR, vulkan_allocator_t);
 	memzero(vk_allocator, vulkan_allocator_t);
@@ -99,13 +99,13 @@ RENDERER_API vulkan_allocator_t* vulkan_allocator_create(memory_allocator_t* all
 	return vk_allocator;
 }
 
-RENDERER_API void vulkan_allocator_destroy(vulkan_allocator_t* allocator)
+SGE_API void vulkan_allocator_destroy(vulkan_allocator_t* allocator)
 {
 	if(VULKAN_OBJECT_IS_INTERNAL(allocator))
 		memory_allocator_dealloc(allocator->allocator, allocator);
 }
 
-RENDERER_API VkAllocationCallbacks* vulkan_allocator_get_native_callbacks(vulkan_allocator_t* allocator, memory_allocation_type_t allocation_type)
+SGE_API VkAllocationCallbacks* vulkan_allocator_get_native_callbacks(vulkan_allocator_t* allocator, memory_allocation_type_t allocation_type)
 {
 	allocator->current_allocation_type = allocation_type;
 	return &allocator->vo_callbacks;

@@ -29,7 +29,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
-RENDERER_API vulkan_render_pass_description_builder_t* vulkan_render_pass_description_builder_create(memory_allocator_t* allocator)
+SGE_API vulkan_render_pass_description_builder_t* vulkan_render_pass_description_builder_create(memory_allocator_t* allocator)
 {
 	vulkan_render_pass_description_builder_t* builder = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_PASS_DESCRIPTION_BUILDER, vulkan_render_pass_description_builder_t);
 	memzero(builder, vulkan_render_pass_description_builder_t);
@@ -40,7 +40,7 @@ RENDERER_API vulkan_render_pass_description_builder_t* vulkan_render_pass_descri
 	return builder;
 }
 
-RENDERER_API vulkan_render_pass_description_builder_t* vulkan_render_pass_description_builder_create_inverse(memory_allocator_t* allocator, vulkan_render_pass_description_t* descriptions, u32 description_count)
+SGE_API vulkan_render_pass_description_builder_t* vulkan_render_pass_description_builder_create_inverse(memory_allocator_t* allocator, vulkan_render_pass_description_t* descriptions, u32 description_count)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 	vulkan_render_pass_description_builder_t* builder = vulkan_render_pass_description_builder_create(allocator);
@@ -52,7 +52,7 @@ RENDERER_API vulkan_render_pass_description_builder_t* vulkan_render_pass_descri
 	return builder;
 }
 
-RENDERER_API void vulkan_render_pass_description_builder_destroy(vulkan_render_pass_description_builder_t* builder)
+SGE_API void vulkan_render_pass_description_builder_destroy(vulkan_render_pass_description_builder_t* builder)
 {
 	u32 count = buf_get_element_count(&builder->description_array);
 	for(u32 i = 0; i < count; i++)
@@ -82,20 +82,20 @@ RENDERER_API void vulkan_render_pass_description_builder_destroy(vulkan_render_p
 }
 
 
-RENDERER_API void vulkan_render_pass_description_builder_add(vulkan_render_pass_description_builder_t* builder, u32 count)
+SGE_API void vulkan_render_pass_description_builder_add(vulkan_render_pass_description_builder_t* builder, u32 count)
 {
 	buf_push_pseudo(&builder->description_array, count);
 	buf_push_pseudo(&builder->build_info_array, count);
 }
 
-RENDERER_API void vulkan_render_pass_description_builder_bind(vulkan_render_pass_description_builder_t* builder, u32 index)
+SGE_API void vulkan_render_pass_description_builder_bind(vulkan_render_pass_description_builder_t* builder, u32 index)
 {
 	_debug_assert__(index < buf_get_element_count(&builder->description_array));
 	builder->bind_index = index;
 }
 
 
-RENDERER_API vulkan_render_pass_description_t* vulkan_render_pass_description_builder_get(vulkan_render_pass_description_builder_t* builder)
+SGE_API vulkan_render_pass_description_t* vulkan_render_pass_description_builder_get(vulkan_render_pass_description_builder_t* builder)
 {
 	if(buf_get_element_count(&builder->description_array) == 0)
 		return NULL;
@@ -122,7 +122,7 @@ RENDERER_API vulkan_render_pass_description_t* vulkan_render_pass_description_bu
 	return render_passes;
 }
 
-RENDERER_API u32 vulkan_render_pass_description_builder_get_count(vulkan_render_pass_description_builder_t* builder)
+SGE_API u32 vulkan_render_pass_description_builder_get_count(vulkan_render_pass_description_builder_t* builder)
 {
 	return CAST_TO(u32, buf_get_element_count(&builder->description_array));
 }
@@ -152,7 +152,7 @@ static INLINE_IF_RELEASE_MODE vulkan_render_pass_description_t* get_bound_descri
 }
 
 
-RENDERER_API void vulkan_render_pass_description_builder_begin_pass(vulkan_render_pass_description_builder_t* builder, vulkan_render_pass_type_t type)
+SGE_API void vulkan_render_pass_description_builder_begin_pass(vulkan_render_pass_description_builder_t* builder, vulkan_render_pass_type_t type)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_begin(builder->allocator, description, type);
@@ -160,20 +160,20 @@ RENDERER_API void vulkan_render_pass_description_builder_begin_pass(vulkan_rende
 	build_info->vbld_builders = memory_allocator_buf_new(builder->allocator, vulkan_vertex_buffer_layout_description_builder_traits_t);
 }
 
-RENDERER_API void vulkan_render_pass_description_builder_add_input(vulkan_render_pass_description_builder_t* builder, glsl_type_t type, u32 index, u32 binding)
+SGE_API void vulkan_render_pass_description_builder_add_input(vulkan_render_pass_description_builder_t* builder, glsl_type_t type, u32 index, u32 binding)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_add_input(builder->allocator, description, type, index, binding);
 }
 
-RENDERER_API void vulkan_render_pass_description_builder_add_attachment(vulkan_render_pass_description_builder_t* builder, vulkan_attachment_type_t type)
+SGE_API void vulkan_render_pass_description_builder_add_attachment(vulkan_render_pass_description_builder_t* builder, vulkan_attachment_type_t type)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_add_attachment(description, type);
 }
 
 
-RENDERER_API void vulkan_render_pass_description_builder_begin_subpass(vulkan_render_pass_description_builder_t* builder, u32 pipeline_index)
+SGE_API void vulkan_render_pass_description_builder_begin_subpass(vulkan_render_pass_description_builder_t* builder, u32 pipeline_index)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_begin_subpass(builder->allocator, description, pipeline_index);
@@ -181,7 +181,7 @@ RENDERER_API void vulkan_render_pass_description_builder_begin_subpass(vulkan_re
 	buf_push_pseudo(&build_info->vbld_builders, 1);
 }
 
-RENDERER_API void vulkan_render_pass_description_builder_set_vertex_infos_builder(vulkan_render_pass_description_builder_t* builder, vulkan_vertex_buffer_layout_description_builder_t* vbld_builder, bool is_destroy)
+SGE_API void vulkan_render_pass_description_builder_set_vertex_infos_builder(vulkan_render_pass_description_builder_t* builder, vulkan_vertex_buffer_layout_description_builder_t* vbld_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	AUTO traits = CAST_TO(vulkan_vertex_buffer_layout_description_builder_traits_t*, buf_peek_ptr(&build_info->vbld_builders));
@@ -189,26 +189,26 @@ RENDERER_API void vulkan_render_pass_description_builder_set_vertex_infos_builde
 	traits->is_destroy = is_destroy;
 }
 
-RENDERER_API void vulkan_render_pass_description_builder_add_attachment_reference(vulkan_render_pass_description_builder_t* builder, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
+SGE_API void vulkan_render_pass_description_builder_add_attachment_reference(vulkan_render_pass_description_builder_t* builder, vulkan_attachment_reference_type_t type, u32 reference, u32 binding)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_add_attachment_reference(builder->allocator, description, type, reference, binding);
 }
 
-RENDERER_API void vulkan_render_pass_description_builder_end_subpass(vulkan_render_pass_description_builder_t* builder)
+SGE_API void vulkan_render_pass_description_builder_end_subpass(vulkan_render_pass_description_builder_t* builder)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_end_subpass(builder->allocator, description);
 }
 
 
-RENDERER_API void vulkan_render_pass_description_builder_add_subpass_dependency(vulkan_render_pass_description_builder_t* builder, VkSubpassDependency* dependency)
+SGE_API void vulkan_render_pass_description_builder_add_subpass_dependency(vulkan_render_pass_description_builder_t* builder, VkSubpassDependency* dependency)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_add_subpass_dependency(description, dependency);
 }
 
-RENDERER_API void vulkan_render_pass_description_builder_end_pass(vulkan_render_pass_description_builder_t* builder)
+SGE_API void vulkan_render_pass_description_builder_end_pass(vulkan_render_pass_description_builder_t* builder)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_render_pass_description_end(builder->allocator, description);

@@ -80,7 +80,7 @@ static void refresh_render_passes(void* publisher_data, void* handler_data)
 	debug_log_info("Render passes refresh success");
 }
 
-TEST_ON_RENDERER_INITIALIZE(TID_32_CASE_2)
+TEST_ON_SGE_INITIALIZE(TID_32_CASE_2)
 {
 	return (renderer_initialization_data_t)
 	{

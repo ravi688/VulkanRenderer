@@ -51,14 +51,14 @@ inline static buf_ucount_t get_master_index(sub_buffer_t* sub_buffer, buf_ucount
 }
 
 // constructors and destructors
-RENDERER_API void multi_buffer_create(u32 element_size, u32 capacity, multi_buffer_t* out_multi_buffer)
+SGE_API void multi_buffer_create(u32 element_size, u32 capacity, multi_buffer_t* out_multi_buffer)
 {
 	_debug_assert__(out_multi_buffer != NULL);
 	out_multi_buffer->buffer = buf_create(element_size, capacity, 0);
 	out_multi_buffer->sub_buffers = buf_create(sizeof(sub_buffer_t), 1, 0);
 }
 
-RENDERER_API void multi_buffer_free(multi_buffer_t* multi_buffer)
+SGE_API void multi_buffer_free(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	buf_free(&multi_buffer->buffer);
@@ -66,26 +66,26 @@ RENDERER_API void multi_buffer_free(multi_buffer_t* multi_buffer)
 }
 
 // getters
-RENDERER_API buf_ucount_t multi_buffer_get_count(multi_buffer_t* multi_buffer)
+SGE_API buf_ucount_t multi_buffer_get_count(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	return buf_get_element_count(&multi_buffer->buffer);
 }
 
-RENDERER_API buf_ucount_t multi_buffer_get_capacity(multi_buffer_t* multi_buffer)
+SGE_API buf_ucount_t multi_buffer_get_capacity(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	return buf_get_capacity(&multi_buffer->buffer);
 }
 
-RENDERER_API buf_ucount_t multi_buffer_get_sub_buffer_count(multi_buffer_t* multi_buffer)
+SGE_API buf_ucount_t multi_buffer_get_sub_buffer_count(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	return buf_get_element_count(&multi_buffer->sub_buffers);
 }
 
 // logic functions
-RENDERER_API void multi_buffer_clear(multi_buffer_t* multi_buffer)
+SGE_API void multi_buffer_clear(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	buf_clear(&multi_buffer->buffer, NULL);
@@ -95,7 +95,7 @@ RENDERER_API void multi_buffer_clear(multi_buffer_t* multi_buffer)
 // sub buffer
 
 // constructors and destructors
-RENDERER_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* multi_buffer, buf_ucount_t capacity)
+SGE_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* multi_buffer, buf_ucount_t capacity)
 {
 	check_pre_condition(multi_buffer);
 	BUFFER* sub_buffers = &multi_buffer->sub_buffers;
@@ -120,18 +120,18 @@ RENDERER_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* 
 	return buf_get_element_count(sub_buffers) - 1;
 }
 
-RENDERER_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
+SGE_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
 	assert_not_implemented();
 }
 
 // logic functions
-RENDERER_API void multi_buffer_sub_buffer_push(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value)
+SGE_API void multi_buffer_sub_buffer_push(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value)
 {
 	multi_buffer_sub_buffer_push_n(multi_buffer, handle, in_value, multi_buffer->buffer.element_size);
 }
 
-RENDERER_API void multi_buffer_sub_buffer_push_n(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, u32 max_size)
+SGE_API void multi_buffer_sub_buffer_push_n(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, u32 max_size)
 {
 	check_pre_condition(multi_buffer);
 	BUFFER* sub_buffers = &multi_buffer->sub_buffers;
@@ -157,7 +157,7 @@ RENDERER_API void multi_buffer_sub_buffer_push_n(multi_buffer_t* multi_buffer, s
 	sub_buffer->count++;
 }
 
-RENDERER_API void multi_buffer_sub_buffer_clear(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
+SGE_API void multi_buffer_sub_buffer_clear(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
 	check_pre_condition(multi_buffer);
 	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
@@ -166,7 +166,7 @@ RENDERER_API void multi_buffer_sub_buffer_clear(multi_buffer_t* multi_buffer, su
 	sub_buffer->count = 0;
 }
 
-RENDERER_API buf_ucount_t multi_buffer_sub_buffer_find_index_of(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal)
+SGE_API buf_ucount_t multi_buffer_sub_buffer_find_index_of(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal)
 {
 	check_pre_condition(multi_buffer);
 	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
@@ -180,7 +180,7 @@ RENDERER_API buf_ucount_t multi_buffer_sub_buffer_find_index_of(multi_buffer_t* 
 	return BUF_INVALID_INDEX;
 }
 
-RENDERER_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal)
+SGE_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, void* in_value, comparer_t is_equal)
 {
 	check_pre_condition(multi_buffer);
 	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
@@ -207,33 +207,33 @@ RENDERER_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, s
 }
 
 // getters
-RENDERER_API buf_ucount_t multi_buffer_sub_buffer_get_count(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
+SGE_API buf_ucount_t multi_buffer_sub_buffer_get_count(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
 	check_pre_condition(multi_buffer);
 	return get_sub_buffer(multi_buffer, handle)->count;
 }
 
-RENDERER_API buf_ucount_t multi_buffer_sub_buffer_get_capacity(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
+SGE_API buf_ucount_t multi_buffer_sub_buffer_get_capacity(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
 	check_pre_condition(multi_buffer);
 	return get_sub_buffer(multi_buffer, handle)->capacity;
 }
 
-RENDERER_API void multi_buffer_sub_buffer_get_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* out_value)
+SGE_API void multi_buffer_sub_buffer_get_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* out_value)
 {
 	_debug_assert__(out_value != NULL);
 	check_pre_condition(multi_buffer);
 	buf_get_at(&multi_buffer->buffer, get_master_index(get_sub_buffer(multi_buffer, handle), index), out_value);
 }
 
-RENDERER_API void* multi_buffer_sub_buffer_get_ptr_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index)
+SGE_API void* multi_buffer_sub_buffer_get_ptr_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index)
 {
 	check_pre_condition(multi_buffer);
 	return buf_get_ptr_at(&multi_buffer->buffer, get_master_index(get_sub_buffer(multi_buffer, handle), index));
 }
 
 // setters
-RENDERER_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value)
+SGE_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value)
 {
 	_debug_assert__(in_value != NULL);
 	check_pre_condition(multi_buffer);

@@ -36,7 +36,7 @@
 #include <renderer/alloc.h>
 #include <disk_manager/file_reader.h>
 
-RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_allocator_t* allocator)
+SGE_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_allocator_t* allocator)
 {
 	vulkan_graphics_pipeline_t* pipeline = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE, vulkan_graphics_pipeline_t);
 	memzero(pipeline, vulkan_graphics_pipeline_t);
@@ -52,7 +52,7 @@ static u32 calculate_attribute_description_count(vulkan_vertex_buffer_layout_des
 	return count;
 }
 
-RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline)
+SGE_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline)
 {
 	_debug_assert__(create_info->spirv_code_count > 0);
 
@@ -214,14 +214,14 @@ RENDERER_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* re
 	pipeline->subpass_index = create_info->subpass_index;
 }
 
-RENDERER_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
+SGE_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info)
 {
 	vulkan_graphics_pipeline_t* pipeline = vulkan_graphics_pipeline_new(renderer->allocator);
 	vulkan_graphics_pipeline_create_no_alloc(renderer, create_info, pipeline);
 	return pipeline;
 }
 
-RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline)
+SGE_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline)
 {
 	AUTO command_buffer = pipeline->renderer->vo_command_buffers[pipeline->renderer->current_frame_index];
 	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vo_handle);
@@ -250,7 +250,7 @@ RENDERER_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipe
 		vkCmdSetScissor(command_buffer, 0, 1, &pipeline->render_pass->vo_current_render_area);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* pipeline, vulkan_graphics_pipeline_refresh_info_t* info)
+SGE_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* pipeline, vulkan_graphics_pipeline_refresh_info_t* info)
 {
 	/* if there is nothing to update, we don't need to recreate the graphics pipeline unneccessarily */
 	if((!pipeline->is_user_defined_scissor) && (!pipeline->is_user_defined_viewport))
@@ -341,7 +341,7 @@ RENDERER_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* p
 	vkCall(vkCreateGraphicsPipelines(pipeline->renderer->logical_device->vo_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, VULKAN_ALLOCATION_CALLBACKS(pipeline->renderer), &pipeline->vo_handle));
 }
 
-RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline)
+SGE_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline)
 {
 	vkDestroyPipeline(pipeline->renderer->logical_device->vo_handle, pipeline->vo_handle, VULKAN_ALLOCATION_CALLBACKS(pipeline->renderer));
 	pipeline->vo_handle = VK_NULL_HANDLE;
@@ -351,7 +351,7 @@ RENDERER_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* p
 		vulkan_shader_module_destroy(&pipeline->shader_modules[i]);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)
+SGE_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline)
 {
 	/* destroy shader modules */
 	for(u32 i = 0; i < pipeline->shader_module_count; i++)

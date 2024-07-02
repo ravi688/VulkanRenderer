@@ -334,10 +334,10 @@ typedef struct vulkan_vertex_buffer_layout_description_t
 	u32* attribute_offsets;
 } vulkan_vertex_buffer_layout_description_t;
 
-RENDERER_API void vulkan_vertex_buffer_layout_description_begin(memory_allocator_t* allocator, vulkan_vertex_buffer_layout_description_t* description, u32 stride, VkVertexInputRate input_rate, u32 binding_number);
-RENDERER_API void vulkan_vertex_buffer_layout_description_add_attribute(vulkan_vertex_buffer_layout_description_t* description, u32 location, VkFormat format, u32 offset);
-RENDERER_API void vulkan_vertex_buffer_layout_description_end(memory_allocator_t* allocator, vulkan_vertex_buffer_layout_description_t* description);
-RENDERER_API void vulkan_vertex_buffer_layout_description_destroy_allocations(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description);
+SGE_API void vulkan_vertex_buffer_layout_description_begin(memory_allocator_t* allocator, vulkan_vertex_buffer_layout_description_t* description, u32 stride, VkVertexInputRate input_rate, u32 binding_number);
+SGE_API void vulkan_vertex_buffer_layout_description_add_attribute(vulkan_vertex_buffer_layout_description_t* description, u32 location, VkFormat format, u32 offset);
+SGE_API void vulkan_vertex_buffer_layout_description_end(memory_allocator_t* allocator, vulkan_vertex_buffer_layout_description_t* description);
+SGE_API void vulkan_vertex_buffer_layout_description_destroy_allocations(memory_allocator_t* allocator,  vulkan_vertex_buffer_layout_description_t* description);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void begin_vertex_binding(memory_allocator_t* allocator, BUFFER* list, u32 stride, VkVertexInputRate input_rate, u32 binding_number)
 {

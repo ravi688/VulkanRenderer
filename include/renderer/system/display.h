@@ -28,8 +28,8 @@
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API iextent2d_t display_get_resolution();
-RENDERER_API iextent2d_t display_get_dpi();
-RENDERER_API extent2d_t display_get_inches();
+SGE_API iextent2d_t display_get_resolution();
+SGE_API iextent2d_t display_get_dpi();
+SGE_API extent2d_t display_get_inches();
 
 END_CPP_COMPATIBLE

@@ -37,7 +37,7 @@ static VkShaderModule get_shader_module(vulkan_renderer_t* renderer, void* spirv
 static VkPipelineShaderStageCreateInfo get_pipeline_shader_stage_create_info(VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point);
 
 
-RENDERER_API vulkan_shader_module_t* vulkan_shader_module_new(memory_allocator_t* allocator)
+SGE_API vulkan_shader_module_t* vulkan_shader_module_new(memory_allocator_t* allocator)
 {
 	vulkan_shader_module_t* shader = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_MODULE, vulkan_shader_module_t);
 	memzero(shader, vulkan_shader_module_t);
@@ -45,14 +45,14 @@ RENDERER_API vulkan_shader_module_t* vulkan_shader_module_new(memory_allocator_t
 	return shader;
 }
 
-RENDERER_API vulkan_shader_module_t* vulkan_shader_module_create(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info)
+SGE_API vulkan_shader_module_t* vulkan_shader_module_create(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info)
 {
 	vulkan_shader_module_t* shader = vulkan_shader_module_new(renderer->allocator);
 	vulkan_shader_module_create_no_alloc(renderer, create_info, shader);
 	return shader;
 }
 
-RENDERER_API void vulkan_shader_module_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info, vulkan_shader_module_t* shader)
+SGE_API void vulkan_shader_module_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_create_info_t* create_info, vulkan_shader_module_t* shader)
 {
 	VULKAN_OBJECT_MEMZERO(shader, vulkan_shader_module_t);
 
@@ -61,7 +61,7 @@ RENDERER_API void vulkan_shader_module_create_no_alloc(vulkan_renderer_t* render
 	shader->vo_stage = get_pipeline_shader_stage_create_info(shader->vo_module, create_info->type, "main");
 }
 
-RENDERER_API void vulkan_shader_module_load_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_load_info_t* load_info, vulkan_shader_module_t OUT shader)
+SGE_API void vulkan_shader_module_load_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_module_load_info_t* load_info, vulkan_shader_module_t OUT shader)
 {
 	VULKAN_OBJECT_MEMZERO(shader, vulkan_shader_module_t);
 	shader->renderer = renderer;
@@ -71,19 +71,19 @@ RENDERER_API void vulkan_shader_module_load_no_alloc(vulkan_renderer_t* renderer
 	buf_free(shader_bytes);
 }
 
-RENDERER_API vulkan_shader_module_t* vulkan_shader_module_load(vulkan_renderer_t* renderer, vulkan_shader_module_load_info_t* load_info)
+SGE_API vulkan_shader_module_t* vulkan_shader_module_load(vulkan_renderer_t* renderer, vulkan_shader_module_load_info_t* load_info)
 {
 	vulkan_shader_module_t* shader = vulkan_shader_module_new(renderer->allocator);
 	vulkan_shader_module_load_no_alloc(renderer, load_info, shader);
 	return shader;
 }
 
-RENDERER_API void vulkan_shader_module_destroy(vulkan_shader_module_t* shader)
+SGE_API void vulkan_shader_module_destroy(vulkan_shader_module_t* shader)
 {
 	vkDestroyShaderModule(shader->renderer->logical_device->vo_handle, shader->vo_module, VULKAN_ALLOCATION_CALLBACKS(shader->renderer));
 }
 
-RENDERER_API void vulkan_shader_module_release_resources(vulkan_shader_module_t* shader)
+SGE_API void vulkan_shader_module_release_resources(vulkan_shader_module_t* shader)
 {
 	if(VULKAN_OBJECT_IS_INTERNAL(shader))
 		memory_allocator_dealloc(shader->renderer->allocator, shader);

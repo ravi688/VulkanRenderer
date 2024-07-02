@@ -26,8 +26,8 @@
 
 #include <renderer/test.h>
 
-#define RENDERER_INCLUDE_TIMING
-#define RENDERER_INCLUDE_CORE
+#define SGE_INCLUDE_TIMING
+#define SGE_INCLUDE_CORE
 #include <renderer/renderer.h>
 #include <renderer/legal/legal.h>
 #include <renderer/conio.h>

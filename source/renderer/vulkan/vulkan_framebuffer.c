@@ -33,7 +33,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_new(memory_allocator_t* allocator)
+SGE_API vulkan_framebuffer_t* vulkan_framebuffer_new(memory_allocator_t* allocator)
 {
 	vulkan_framebuffer_t* framebuffer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_FRAMEBUFFER, vulkan_framebuffer_t);
 	memzero(framebuffer, vulkan_framebuffer_t);
@@ -41,14 +41,14 @@ RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_new(memory_allocator_t* al
 	return framebuffer;
 }
 
-RENDERER_API vulkan_framebuffer_t* vulkan_framebuffer_create(vulkan_renderer_t* renderer, vulkan_framebuffer_create_info_t* create_info)
+SGE_API vulkan_framebuffer_t* vulkan_framebuffer_create(vulkan_renderer_t* renderer, vulkan_framebuffer_create_info_t* create_info)
 {
 	vulkan_framebuffer_t* framebuffer = vulkan_framebuffer_new(renderer->allocator);
 	vulkan_framebuffer_create_no_alloc(renderer, create_info, framebuffer);
 	return framebuffer;
 }
 
-RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_framebuffer_create_info_t* create_info, vulkan_framebuffer_t OUT framebuffer)
+SGE_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer, vulkan_framebuffer_create_info_t* create_info, vulkan_framebuffer_t OUT framebuffer)
 {
 	VULKAN_OBJECT_MEMZERO(framebuffer, vulkan_framebuffer_t);
 	framebuffer->renderer = renderer;
@@ -76,19 +76,19 @@ RENDERER_API void vulkan_framebuffer_create_no_alloc(vulkan_renderer_t* renderer
 	framebuffer->height = create_info->height;
 }
 
-RENDERER_API void vulkan_framebuffer_create_no_alloc_ext(vulkan_renderer_t* renderer, vulkan_framebuffer_create_info_t* create_info, vulkan_framebuffer_t OUT framebuffer)
+SGE_API void vulkan_framebuffer_create_no_alloc_ext(vulkan_renderer_t* renderer, vulkan_framebuffer_create_info_t* create_info, vulkan_framebuffer_t OUT framebuffer)
 {
 	VULKAN_OBJECT_INIT(framebuffer, VULKAN_OBJECT_TYPE_FRAMEBUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_framebuffer_create_no_alloc(renderer, create_info, framebuffer);
 }
 
-RENDERER_API void vulkan_framebuffer_destroy(vulkan_framebuffer_t* framebuffer)
+SGE_API void vulkan_framebuffer_destroy(vulkan_framebuffer_t* framebuffer)
 {
 	vkDestroyFramebuffer(framebuffer->renderer->logical_device->vo_handle, framebuffer->vo_handle, VULKAN_ALLOCATION_CALLBACKS(framebuffer->renderer));
 	framebuffer->vo_handle = VK_NULL_HANDLE;
 }
 
-RENDERER_API void vulkan_framebuffer_release_resources(vulkan_framebuffer_t* framebuffer)
+SGE_API void vulkan_framebuffer_release_resources(vulkan_framebuffer_t* framebuffer)
 {
 	if(VULKAN_OBJECT_IS_INTERNAL(framebuffer))
 		memory_allocator_dealloc(framebuffer->renderer->allocator, framebuffer);

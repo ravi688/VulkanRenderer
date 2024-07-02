@@ -30,49 +30,49 @@
 #include <renderer/internal/vulkan/vulkan_render_object.h> /* VULKAN_RENDER_OBJECT_CAST() casting */
 #include <renderer/internal/vulkan/vulkan_render_scene.h> /* VULKAN_RENDER_SCENE_CAST() casting */
 
-RENDERER_API render_queue_t* render_queue_new(memory_allocator_t* allocator)
+SGE_API render_queue_t* render_queue_new(memory_allocator_t* allocator)
 {
 	return vulkan_render_queue_new(allocator);
 }
 
-RENDERER_API render_queue_t* render_queue_create(renderer_t* renderer, render_queue_type_t type)
+SGE_API render_queue_t* render_queue_create(renderer_t* renderer, render_queue_type_t type)
 {
 	return vulkan_render_queue_create(renderer->vulkan_handle, CAST_TO(vulkan_render_queue_type_t, type));
 }
 
-RENDERER_API void render_queue_create_no_alloc(renderer_t* renderer, render_queue_type_t type, render_queue_t OUT queue)
+SGE_API void render_queue_create_no_alloc(renderer_t* renderer, render_queue_type_t type, render_queue_t OUT queue)
 {
 	vulkan_render_queue_create_no_alloc(renderer->vulkan_handle, CAST_TO(vulkan_render_queue_type_t, type), queue);
 }
 
-RENDERER_API void render_queue_destroy(render_queue_t* queue)
+SGE_API void render_queue_destroy(render_queue_t* queue)
 {
 	vulkan_render_queue_destroy(queue);
 }
 
-RENDERER_API void render_queue_release_resources(render_queue_t* queue)
+SGE_API void render_queue_release_resources(render_queue_t* queue)
 {
 	vulkan_render_queue_release_resources(queue);
 }
 
 
 /* logic functions */
-RENDERER_API void render_queue_add(render_queue_t* queue, render_object_t* obj)
+SGE_API void render_queue_add(render_queue_t* queue, render_object_t* obj)
 {
 	return vulkan_render_queue_add(queue, VULKAN_RENDER_OBJECT_CAST(obj));
 }
 
-RENDERER_API void render_queue_removeH(render_queue_t* queue, render_object_t* obj)
+SGE_API void render_queue_removeH(render_queue_t* queue, render_object_t* obj)
 {
 	vulkan_render_queue_removeH(queue, VULKAN_RENDER_OBJECT_CAST(obj));
 }
 
-RENDERER_API void render_queue_build(render_queue_t* queue)
+SGE_API void render_queue_build(render_queue_t* queue)
 {
 	vulkan_render_queue_build(queue);
 }
 
-RENDERER_API void render_queue_dispatch(render_queue_t* queue, camera_t* camera, render_scene_t* scene)
+SGE_API void render_queue_dispatch(render_queue_t* queue, camera_t* camera, render_scene_t* scene)
 {
 	vulkan_render_queue_dispatch(queue, CAST_TO(vulkan_camera_t*, camera), VULKAN_RENDER_SCENE_CAST(scene));
 }

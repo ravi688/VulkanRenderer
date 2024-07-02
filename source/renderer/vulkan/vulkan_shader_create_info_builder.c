@@ -32,7 +32,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
-RENDERER_API vulkan_shader_create_info_builder_t* vulkan_shader_create_info_builder_create(memory_allocator_t* allocator)
+SGE_API vulkan_shader_create_info_builder_t* vulkan_shader_create_info_builder_create(memory_allocator_t* allocator)
 {
 	vulkan_shader_create_info_builder_t* builder = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_SHADER_CREATE_INFO_BUILDER, vulkan_shader_create_info_builder_t);
 	memzero(builder, vulkan_shader_create_info_builder_t);
@@ -43,7 +43,7 @@ RENDERER_API vulkan_shader_create_info_builder_t* vulkan_shader_create_info_buil
 	return builder;
 }
 
-RENDERER_API void vulkan_shader_create_info_builder_destroy(vulkan_shader_create_info_builder_t* builder)
+SGE_API void vulkan_shader_create_info_builder_destroy(vulkan_shader_create_info_builder_t* builder)
 {
 	buf_free(&builder->create_info_array);
 	u32 build_info_count = buf_get_element_count(&builder->build_info_array);
@@ -64,13 +64,13 @@ RENDERER_API void vulkan_shader_create_info_builder_destroy(vulkan_shader_create
 }
 
 
-RENDERER_API void vulkan_shader_create_info_builder_add(vulkan_shader_create_info_builder_t* builder, u32 count)
+SGE_API void vulkan_shader_create_info_builder_add(vulkan_shader_create_info_builder_t* builder, u32 count)
 {
 	buf_push_pseudo(&builder->create_info_array, count);
 	buf_push_pseudo(&builder->build_info_array, count);
 }
 
-RENDERER_API void vulkan_shader_create_info_builder_bind(vulkan_shader_create_info_builder_t* builder, u32 index)
+SGE_API void vulkan_shader_create_info_builder_bind(vulkan_shader_create_info_builder_t* builder, u32 index)
 {
 	_debug_assert__(index < buf_get_element_count(&builder->build_info_array));
 	builder->bind_index = index;
@@ -100,7 +100,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_shader_create_info_t
 	return get_create_info(builder, builder->bind_index);
 }
 
-RENDERER_API vulkan_shader_create_info_t* vulkan_shader_create_info_builder_get(vulkan_shader_create_info_builder_t* builder)
+SGE_API vulkan_shader_create_info_t* vulkan_shader_create_info_builder_get(vulkan_shader_create_info_builder_t* builder)
 {
 	if(buf_get_element_count(&builder->create_info_array) == 0)
 		return NULL;
@@ -138,12 +138,12 @@ RENDERER_API vulkan_shader_create_info_t* vulkan_shader_create_info_builder_get(
 	return CAST_TO(vulkan_shader_create_info_t*, buf_get_ptr(&builder->create_info_array));
 }
 
-RENDERER_API u32 vulkan_shader_create_info_builder_get_count(vulkan_shader_create_info_builder_t* builder)
+SGE_API u32 vulkan_shader_create_info_builder_get_count(vulkan_shader_create_info_builder_t* builder)
 {
 	return CAST_TO(u32, buf_get_element_count(&builder->create_info_array));
 }
 
-RENDERER_API void vulkan_shader_create_info_builder_set_material_set_bindings_builder(vulkan_shader_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy)
+SGE_API void vulkan_shader_create_info_builder_set_material_set_bindings_builder(vulkan_shader_create_info_builder_t* builder, vulkan_shader_resource_description_builder_t* srd_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->is_use_msb_builder = true;
@@ -151,7 +151,7 @@ RENDERER_API void vulkan_shader_create_info_builder_set_material_set_bindings_bu
 	build_info->msb_builder = srd_builder;
 }
 
-RENDERER_API void vulkan_shader_create_info_builder_set_vertex_buffer_layout_descriptions_builder(vulkan_shader_create_info_builder_t* builder, vulkan_vertex_buffer_layout_description_builder_t* vbld_builder, bool is_destroy)
+SGE_API void vulkan_shader_create_info_builder_set_vertex_buffer_layout_descriptions_builder(vulkan_shader_create_info_builder_t* builder, vulkan_vertex_buffer_layout_description_builder_t* vbld_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->is_use_vbld_builder = true;
@@ -159,7 +159,7 @@ RENDERER_API void vulkan_shader_create_info_builder_set_vertex_buffer_layout_des
 	build_info->vbld_builder = vbld_builder;
 }
 
-RENDERER_API void vulkan_shader_create_info_builder_set_render_pass_descriptions_builder(vulkan_shader_create_info_builder_t* builder, vulkan_render_pass_description_builder_t* rpd_builder, bool is_destroy)
+SGE_API void vulkan_shader_create_info_builder_set_render_pass_descriptions_builder(vulkan_shader_create_info_builder_t* builder, vulkan_render_pass_description_builder_t* rpd_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->is_use_rpd_builder = true;
@@ -167,7 +167,7 @@ RENDERER_API void vulkan_shader_create_info_builder_set_render_pass_descriptions
 	build_info->rpd_builder = rpd_builder;
 }
 
-RENDERER_API void vulkan_shader_create_info_builder_set_graphics_pipeline_descriptions_builder(vulkan_shader_create_info_builder_t* builder, vulkan_graphics_pipeline_description_builder_t* gfx_pipes_builder, bool is_destroy)
+SGE_API void vulkan_shader_create_info_builder_set_graphics_pipeline_descriptions_builder(vulkan_shader_create_info_builder_t* builder, vulkan_graphics_pipeline_description_builder_t* gfx_pipes_builder, bool is_destroy)
 {
 	AUTO build_info = get_bound_build_info(builder);
 	build_info->is_use_gfx_pipes_builder = true;

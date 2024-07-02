@@ -28,19 +28,19 @@
 
 typedef struct renderer_t renderer_t;
 
-#if   defined(RENDERER_VULKAN_DRIVER)
+#if   defined(SGE_VULKAN_DRIVER)
 #	include <renderer/internal/vulkan/vulkan_texture.h>
 	typedef vulkan_texture_t texture_t;
 #	define TEXTURE(ptr) VULKAN_TEXTURE(ptr)
-#elif defined(RENDERER_OPENGL_DRIVER)
+#elif defined(SGE_OPENGL_DRIVER)
 #	include <renderer/internal/opengl/opengl_texture.h>
 	typedef opengl_texture_t texture_t;
 #	define TEXTURE(ptr) OPENGL_TEXTURE(ptr)
-#elif defined(RENDERER_DIRECTX_DRIVER)
+#elif defined(SGE_DIRECTX_DRIVER)
 #	include <renderer/internal/directx/directx_texture.h>
 	typedef directx_texture_t texture_t;
 #	define TEXTURE(ptr) DIRECTX_TEXTURE(ptr)
-#elif defined(RENDERER_METAL_DRIVER)
+#elif defined(SGE_METAL_DRIVER)
 #	include <renderer/internal/metal/metal_texture.h>
 	typedef metal_texture_t texture_t;
 #	define TEXTURE(ptr) METAL_TEXTURE(ptr)
@@ -111,7 +111,7 @@ BEGIN_CPP_COMPATIBLE
 	returns:
 		pointer to the newly created texture object
  */
-RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info);
+SGE_API texture_t* texture_create(renderer_t* renderer, texture_create_info_t* create_info);
 
 /*
 	description:
@@ -123,7 +123,7 @@ RENDERER_API texture_t* texture_create(renderer_t* renderer, texture_create_info
 	returns:
 		pointer to the newly created texture object
  */
-RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...);
+SGE_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...);
 
 /*
 	description:
@@ -135,7 +135,7 @@ RENDERER_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, 
 	returns:
 		pointer to the newly created texture object
  */
-RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths);
+SGE_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths);
 
 /*
 	description:
@@ -146,7 +146,7 @@ RENDERER_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type,
 	returns:
 		nothing
  */
-RENDERER_API void texture_upload_data(texture_t* texture, u32 data_count, texture_data_t* data);
+SGE_API void texture_upload_data(texture_t* texture, u32 data_count, texture_data_t* data);
 
 /* 
 	description:
@@ -157,7 +157,7 @@ RENDERER_API void texture_upload_data(texture_t* texture, u32 data_count, textur
 	returns:
 		nothing
  */
-RENDERER_API void texture_set_usage_stage(texture_t* texture, texture_usage_stage_t stage);
+SGE_API void texture_set_usage_stage(texture_t* texture, texture_usage_stage_t stage);
 
 /*
 	description:
@@ -167,7 +167,7 @@ RENDERER_API void texture_set_usage_stage(texture_t* texture, texture_usage_stag
 	returns:
 		nothing
  */
-RENDERER_API void texture_destroy(texture_t* texture);
+SGE_API void texture_destroy(texture_t* texture);
 
 /*
 	description:
@@ -177,6 +177,6 @@ RENDERER_API void texture_destroy(texture_t* texture);
 	returns:
 		nothing
  */
-RENDERER_API void texture_release_resources(texture_t* texture);
+SGE_API void texture_release_resources(texture_t* texture);
 
 END_CPP_COMPATIBLE

@@ -35,7 +35,7 @@
 #include <renderer/alloc.h>
 #include <renderer/assert.h>
 
-RENDERER_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator)
+SGE_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator)
 {
 	vulkan_texture_t* texture = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_TEXTURE, vulkan_texture_t);
 	memzero(texture, vulkan_texture_t);
@@ -43,7 +43,7 @@ RENDERER_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator)
 	return texture;
 }
 
-RENDERER_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info)
+SGE_API vulkan_texture_t* vulkan_texture_create(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info)
 {
 	vulkan_texture_t* texture = vulkan_texture_new(renderer->allocator);
 	vulkan_texture_create_no_alloc(renderer, create_info, texture);
@@ -367,7 +367,7 @@ static vulkan_image_view_t* create_write_image_views(vulkan_texture_t* texture, 
 	return views;
 }
 
-RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info, vulkan_texture_t OUT texture)
+SGE_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_texture_create_info_t* create_info, vulkan_texture_t OUT texture)
 {
 	VULKAN_OBJECT_MEMZERO(texture, vulkan_texture_t);
 
@@ -427,7 +427,7 @@ RENDERER_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vu
 	vulkan_texture_set_usage_stage(texture, VULKAN_TEXTURE_USAGE_STAGE_INITIAL);
 }
 
-RENDERER_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_texture_recreate_info_t* recreate_info)
+SGE_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_texture_recreate_info_t* recreate_info)
 {
 	if((texture->width == recreate_info->width)
 	 	&& (texture->height == recreate_info->height)
@@ -500,7 +500,7 @@ RENDERER_API void vulkan_texture_recreate(vulkan_texture_t* texture, vulkan_text
 	vulkan_texture_set_usage_stage(texture, texture->current_stage);
 }
 
-RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
+SGE_API void vulkan_texture_destroy(vulkan_texture_t* texture)
 {
 	if(texture->vo_image_sampler != VK_NULL_HANDLE)
 	{
@@ -513,7 +513,7 @@ RENDERER_API void vulkan_texture_destroy(vulkan_texture_t* texture)
 	vulkan_image_destroy(&texture->image);
 }
 
-RENDERER_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
+SGE_API void vulkan_texture_release_resources(vulkan_texture_t* texture)
 {
 	vulkan_image_view_release_resources(&texture->image_view);
 	for(u32 i = 0; i < texture->image_view_count; i++)
@@ -547,7 +547,7 @@ static vulkan_texture_usage_t get_current_usage(vulkan_texture_t* texture)
 	return get_usage_from_stage(texture, texture->current_stage);
 }
 
-RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulkan_texture_usage_stage_t stage)
+SGE_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulkan_texture_usage_stage_t stage)
 {
 	if(stage == texture->current_stage)
 	 	return;
@@ -635,7 +635,7 @@ RENDERER_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulk
 	texture->current_stage = stage;
 }
 
-RENDERER_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data_count, vulkan_texture_data_t* data)
+SGE_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data_count, vulkan_texture_data_t* data)
 {
 	vulkan_texture_usage_t current_usage = get_current_usage(texture);
 	if(current_usage != VULKAN_TEXTURE_USAGE_TRANSFER_DST)

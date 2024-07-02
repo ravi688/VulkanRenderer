@@ -26,4 +26,4 @@
 #include <renderer/garbage_collector.h>
 
 
-// RENDERER_API tgc_t gc;
+// SGE_API tgc_t gc;

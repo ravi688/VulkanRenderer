@@ -30,7 +30,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-RENDERER_API string_builder_t* string_builder_create(memory_allocator_t* allocator, u32 capacity)
+SGE_API string_builder_t* string_builder_create(memory_allocator_t* allocator, u32 capacity)
 {
 	string_builder_t* builder = (allocator == NULL) ? heap_new(string_builder_t) : memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_STRING_BUILDER, string_builder_t);
 	builder->allocator = allocator;
@@ -39,7 +39,7 @@ RENDERER_API string_builder_t* string_builder_create(memory_allocator_t* allocat
 	return builder;
 }
 
-RENDERER_API void string_builder_destroy(string_builder_t* builder)
+SGE_API void string_builder_destroy(string_builder_t* builder)
 {
 	buf_free(&builder->string_buffer);
 	buf_free(&builder->indentation_buffer);
@@ -49,7 +49,7 @@ RENDERER_API void string_builder_destroy(string_builder_t* builder)
 		heap_free(builder);
 }
 
-RENDERER_API void string_builder_append(string_builder_t* builder, const char* const format, ...)
+SGE_API void string_builder_append(string_builder_t* builder, const char* const format, ...)
 {
 	MEM_CHECK(builder);
 
@@ -85,7 +85,7 @@ RENDERER_API void string_builder_append(string_builder_t* builder, const char* c
 	buf_pop_pseudo(&builder->string_buffer, 1);
 }
 
-RENDERER_API void string_builder_stitch(string_builder_t* builder, const char* const format, ...)
+SGE_API void string_builder_stitch(string_builder_t* builder, const char* const format, ...)
 {
 	MEM_CHECK(builder);
 
@@ -114,39 +114,39 @@ RENDERER_API void string_builder_stitch(string_builder_t* builder, const char* c
 	buf_pop_pseudo(&builder->string_buffer, 1);
 }
 
-RENDERER_API void string_builder_append_null(string_builder_t* builder)
+SGE_API void string_builder_append_null(string_builder_t* builder)
 {
 	buf_push_null(&builder->string_buffer);
 }
 
-RENDERER_API void string_builder_append_newline(string_builder_t* builder)
+SGE_API void string_builder_append_newline(string_builder_t* builder)
 {
 	buf_push_char(&builder->indentation_buffer, '\n');
 }
 
-RENDERER_API void string_builder_stitch_newline(string_builder_t* builder)
+SGE_API void string_builder_stitch_newline(string_builder_t* builder)
 {
 	buf_push_char(&builder->string_buffer, '\n');
 }
 
-RENDERER_API void string_builder_increment_indentation(string_builder_t* builder)
+SGE_API void string_builder_increment_indentation(string_builder_t* builder)
 {
 	buf_push_char(&builder->indentation_buffer, '\t');
 }
 
-RENDERER_API void string_builder_decrement_indentation(string_builder_t* builder)
+SGE_API void string_builder_decrement_indentation(string_builder_t* builder)
 {
 	buf_pop(&builder->indentation_buffer, NULL);
 }
 
-RENDERER_API char* string_builder_get_str(string_builder_t* builder)
+SGE_API char* string_builder_get_str(string_builder_t* builder)
 {
 	if(buf_get_element_count(&builder->string_buffer) == 0)
 		return "";
 	return CAST_TO(char*, buf_get_ptr(&builder->string_buffer));
 }
 
-RENDERER_API char* string_builder_get_str_null(string_builder_t* builder)
+SGE_API char* string_builder_get_str_null(string_builder_t* builder)
 {
 	if(buf_get_element_count(&builder->string_buffer) == 0)
 		return "";
@@ -157,7 +157,7 @@ RENDERER_API char* string_builder_get_str_null(string_builder_t* builder)
 	return CAST_TO(char*, buf_get_ptr(&builder->string_buffer));
 }
 
-RENDERER_API void string_builder_clear(string_builder_t* builder)
+SGE_API void string_builder_clear(string_builder_t* builder)
 {
 	buf_clear(&builder->string_buffer, NULL);
 	buf_clear(&builder->indentation_buffer, NULL);

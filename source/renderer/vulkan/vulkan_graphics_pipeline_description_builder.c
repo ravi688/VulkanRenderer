@@ -28,7 +28,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/assert.h>
 
-RENDERER_API vulkan_graphics_pipeline_description_builder_t* vulkan_graphics_pipeline_description_builder_create(memory_allocator_t* allocator)
+SGE_API vulkan_graphics_pipeline_description_builder_t* vulkan_graphics_pipeline_description_builder_create(memory_allocator_t* allocator)
 {
 	vulkan_graphics_pipeline_description_builder_t* builder = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_DESCRIPTION_BUILDER, vulkan_graphics_pipeline_description_builder_t);
 	memzero(builder, vulkan_graphics_pipeline_description_builder_t);
@@ -38,7 +38,7 @@ RENDERER_API vulkan_graphics_pipeline_description_builder_t* vulkan_graphics_pip
 	return builder;
 }
 
-RENDERER_API vulkan_graphics_pipeline_description_builder_t* vulkan_graphics_pipeline_description_builder_create_inverse(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* descriptions, u32 description_count)
+SGE_API vulkan_graphics_pipeline_description_builder_t* vulkan_graphics_pipeline_description_builder_create_inverse(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* descriptions, u32 description_count)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 	vulkan_graphics_pipeline_description_builder_t* builder = vulkan_graphics_pipeline_description_builder_create(allocator);
@@ -50,7 +50,7 @@ RENDERER_API vulkan_graphics_pipeline_description_builder_t* vulkan_graphics_pip
 	return builder;
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_builder_destroy(vulkan_graphics_pipeline_description_builder_t* builder)
+SGE_API void vulkan_graphics_pipeline_description_builder_destroy(vulkan_graphics_pipeline_description_builder_t* builder)
 {
 	u32 count = buf_get_element_count(&builder->description_array);
 	for(u32 i = 0; i < count; i++)
@@ -63,26 +63,26 @@ RENDERER_API void vulkan_graphics_pipeline_description_builder_destroy(vulkan_gr
 }
 
 
-RENDERER_API void vulkan_graphics_pipeline_description_builder_add(vulkan_graphics_pipeline_description_builder_t* builder, u32 count)
+SGE_API void vulkan_graphics_pipeline_description_builder_add(vulkan_graphics_pipeline_description_builder_t* builder, u32 count)
 {
 	buf_push_pseudo(&builder->description_array, count);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_builder_bind(vulkan_graphics_pipeline_description_builder_t* builder, u32 index)
+SGE_API void vulkan_graphics_pipeline_description_builder_bind(vulkan_graphics_pipeline_description_builder_t* builder, u32 index)
 {
 	_debug_assert__(index < buf_get_element_count(&builder->description_array));
 	builder->bind_index = index;
 }
 
 
-RENDERER_API vulkan_graphics_pipeline_description_t* vulkan_graphics_pipeline_description_builder_get(vulkan_graphics_pipeline_description_builder_t* builder)
+SGE_API vulkan_graphics_pipeline_description_t* vulkan_graphics_pipeline_description_builder_get(vulkan_graphics_pipeline_description_builder_t* builder)
 {
 	if(buf_get_element_count(&builder->description_array) == 0)
 		return NULL;
 	return CAST_TO(vulkan_graphics_pipeline_description_t*, buf_get_ptr(&builder->description_array));
 }
 
-RENDERER_API u32 vulkan_graphics_pipeline_description_builder_get_count(vulkan_graphics_pipeline_description_builder_t* builder)
+SGE_API u32 vulkan_graphics_pipeline_description_builder_get_count(vulkan_graphics_pipeline_description_builder_t* builder)
 {
 	return CAST_TO(u32, buf_get_element_count(&builder->description_array));
 }
@@ -100,31 +100,31 @@ static INLINE_IF_RELEASE_MODE vulkan_graphics_pipeline_description_t* get_bound_
 	return get_description(builder, builder->bind_index);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_builder_begin_pipeline(vulkan_graphics_pipeline_description_builder_t* builder)
+SGE_API void vulkan_graphics_pipeline_description_builder_begin_pipeline(vulkan_graphics_pipeline_description_builder_t* builder)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_graphics_pipeline_description_begin(builder->allocator, description);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_builder_add_color_blend_state(vulkan_graphics_pipeline_description_builder_t* builder, VkBool32 is_blend_enable)
+SGE_API void vulkan_graphics_pipeline_description_builder_add_color_blend_state(vulkan_graphics_pipeline_description_builder_t* builder, VkBool32 is_blend_enable)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_graphics_pipeline_description_add_color_blend_state(description, is_blend_enable);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_builder_add_shader(vulkan_graphics_pipeline_description_builder_t* builder, const char* file_path, vulkan_shader_type_t shader_type)
+SGE_API void vulkan_graphics_pipeline_description_builder_add_shader(vulkan_graphics_pipeline_description_builder_t* builder, const char* file_path, vulkan_shader_type_t shader_type)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_graphics_pipeline_description_add_shader(description, file_path, shader_type);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_builder_set_depth_stencil(vulkan_graphics_pipeline_description_builder_t* builder, VkBool32 is_depth_write, VkBool32 is_depth_test)
+SGE_API void vulkan_graphics_pipeline_description_builder_set_depth_stencil(vulkan_graphics_pipeline_description_builder_t* builder, VkBool32 is_depth_write, VkBool32 is_depth_test)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_graphics_pipeline_description_set_depth_stencil(description, is_depth_write, is_depth_test);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_builder_end_pipeline(vulkan_graphics_pipeline_description_builder_t* builder)
+SGE_API void vulkan_graphics_pipeline_description_builder_end_pipeline(vulkan_graphics_pipeline_description_builder_t* builder)
 {
 	AUTO description = get_bound_description(builder);
 	vulkan_graphics_pipeline_description_end(builder->allocator, description);

@@ -28,19 +28,19 @@
 
 typedef struct renderer_t renderer_t;
 
-#if defined(RENDERER_VULKAN_DRIVER)
+#if defined(SGE_VULKAN_DRIVER)
 	typedef struct vulkan_texture_t vulkan_texture_t;
 	typedef vulkan_texture_t vulkan_render_texture_t;
 	typedef vulkan_render_texture_t render_texture_t;
-#elif defined(RENDERER_OPENGL_DRIVER)
+#elif defined(SGE_OPENGL_DRIVER)
 	typedef struct opengl_texture_t opengl_texture_t;
 	typedef opengl_texture_t opengl_render_texture_t;
 	typedef opengl_render_texture_t render_texture_t;
-#elif defined(RENDERER_DIRECTX_DRIVER)
+#elif defined(SGE_DIRECTX_DRIVER)
 	typedef struct directx_texture_t directx_texture_t;
 	typedef directx_texture_t directx_render_texture_t;
 	typedef directx_render_texture_t render_texture_t;
-#elif defined(RENDERER_METAL_DRIVER)
+#elif defined(SGE_METAL_DRIVER)
 	typedef struct metal_texture_t metal_texture_t;
 	typedef metal_texture_t metal_render_texture_t;
 	typedef metal_render_texture_t render_texture_t;
@@ -82,8 +82,8 @@ BEGIN_CPP_COMPATIBLE
 	returns:
 		pointer to the newly created render texture object
  */
-RENDERER_API render_texture_t* render_texture_create(renderer_t* renderer, render_texture_create_info_t* create_info);
-RENDERER_API void render_texture_create_no_alloc(renderer_t* renderer, render_texture_create_info_t* create_info, render_texture_t OUT texture);
+SGE_API render_texture_t* render_texture_create(renderer_t* renderer, render_texture_create_info_t* create_info);
+SGE_API void render_texture_create_no_alloc(renderer_t* renderer, render_texture_create_info_t* create_info, render_texture_t OUT texture);
 
 /*
 	description:
@@ -93,7 +93,7 @@ RENDERER_API void render_texture_create_no_alloc(renderer_t* renderer, render_te
 	returns:
 		nothing
  */
-RENDERER_API void render_texture_destroy(render_texture_t* texture);
+SGE_API void render_texture_destroy(render_texture_t* texture);
 
 /*
 	description:
@@ -103,6 +103,6 @@ RENDERER_API void render_texture_destroy(render_texture_t* texture);
 	returns:
 		nothing
  */
-RENDERER_API void render_texture_release_resources(render_texture_t* texture);
+SGE_API void render_texture_release_resources(render_texture_t* texture);
 
 END_CPP_COMPATIBLE

@@ -81,16 +81,16 @@ typedef struct vulkan_image_view_t
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API vulkan_image_view_t* vulkan_image_view_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info);
-RENDERER_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info, vulkan_image_view_t OUT view);
-RENDERER_API void vulkan_image_view_destroy(vulkan_image_view_t* view);
-RENDERER_API void vulkan_image_view_release_resources(vulkan_image_view_t* view);
+SGE_API vulkan_image_view_t* vulkan_image_view_new(memory_allocator_t* allocator);
+SGE_API vulkan_image_view_t* vulkan_image_view_create(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info);
+SGE_API void vulkan_image_view_create_no_alloc(vulkan_renderer_t* renderer, vulkan_image_view_create_info_t* create_info, vulkan_image_view_t OUT view);
+SGE_API void vulkan_image_view_destroy(vulkan_image_view_t* view);
+SGE_API void vulkan_image_view_release_resources(vulkan_image_view_t* view);
 
 /* logic functions */
 #define VULKAN_IMAGE_VIEW_DONT_CARE_OLD_LAYOUT 1
-RENDERER_API void vulkan_image_view_transition_layout_to(vulkan_image_view_t* view, u32 flags, VkImageLayout layout);
-RENDERER_API void vulkan_image_view_upload_data(vulkan_image_view_t* view, void* data);
-RENDERER_API void vulkan_image_view_copy_from_buffer(vulkan_image_view_t* view, vulkan_buffer_t* buffer);
+SGE_API void vulkan_image_view_transition_layout_to(vulkan_image_view_t* view, u32 flags, VkImageLayout layout);
+SGE_API void vulkan_image_view_upload_data(vulkan_image_view_t* view, void* data);
+SGE_API void vulkan_image_view_copy_from_buffer(vulkan_image_view_t* view, vulkan_buffer_t* buffer);
 
 END_CPP_COMPATIBLE

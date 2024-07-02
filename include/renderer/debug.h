@@ -61,6 +61,6 @@ typedef enum debug_break_reason_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API NO_RETURN_FUNCTION void debug_break__(debug_break_reason_t reason);
+SGE_API NO_RETURN_FUNCTION void debug_break__(debug_break_reason_t reason);
 
 END_CPP_COMPATIBLE

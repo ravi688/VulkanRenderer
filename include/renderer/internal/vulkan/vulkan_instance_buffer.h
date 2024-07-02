@@ -54,13 +54,13 @@ typedef struct vulkan_instance_buffer_t
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer);
-RENDERER_API void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer);
-RENDERER_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer);
+SGE_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer);
+SGE_API void vulkan_instance_buffer_destroy(vulkan_instance_buffer_t* instance_buffer);
+SGE_API void vulkan_instance_buffer_release_resources(vulkan_instance_buffer_t* instance_buffer);
 
 // getters
-RENDERER_API multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer);
-RENDERER_API vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer);
+SGE_API multi_buffer_t* vulkan_instance_buffer_get_host_buffer(vulkan_instance_buffer_t* instance_buffer);
+SGE_API vulkan_buffer_t* vulkan_instance_buffer_get_device_buffer(vulkan_instance_buffer_t* instance_buffer);
 
 UNUSED_FUNCTION static bool vulkan_instance_buffer_has_device_buffer(vulkan_instance_buffer_t* instance_buffer)
 {
@@ -74,6 +74,6 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_instance_buffer
 // logic functions
 
 // returns true when this buffer should be binded in the pipeline, otherwise false
-RENDERER_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer, bool OUT is_resized);
+SGE_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_buffer, bool OUT is_resized);
 
 END_CPP_COMPATIBLE

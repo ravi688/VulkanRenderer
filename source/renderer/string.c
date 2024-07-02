@@ -30,7 +30,7 @@
 
 #include <string.h>
 
-RENDERER_API string_t string_create(memory_allocator_t* allocator, const char* str)
+SGE_API string_t string_create(memory_allocator_t* allocator, const char* str)
 {
 	u32 len = strlen(str);
 	string_t string =
@@ -43,7 +43,7 @@ RENDERER_API string_t string_create(memory_allocator_t* allocator, const char* s
 	return string;
 }
 
-RENDERER_API void string_destroy(string_t* str)
+SGE_API void string_destroy(string_t* str)
 {
 	if(str->data == NULL) return;
 
@@ -52,7 +52,7 @@ RENDERER_API void string_destroy(string_t* str)
 	str->length = 0;
 }
 
-RENDERER_API u32 strlen_safe(const char* str)
+SGE_API u32 strlen_safe(const char* str)
 {
 	if(str == NULL)
 		return 0;

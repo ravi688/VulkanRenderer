@@ -61,13 +61,13 @@ typedef struct vulkan_logical_device_t
 BEGIN_CPP_COMPATIBLE
 
 // constructors and destructors
-RENDERER_API vulkan_logical_device_t* vulkan_logical_device_new(memory_allocator_t* allocator);
-RENDERER_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* physical_device, vulkan_logical_device_create_info_t* device_create_info);
-RENDERER_API void vulkan_logical_device_destroy(vulkan_logical_device_t* device);
-RENDERER_API void vulkan_logical_device_release_resources(vulkan_logical_device_t* device);
+SGE_API vulkan_logical_device_t* vulkan_logical_device_new(memory_allocator_t* allocator);
+SGE_API vulkan_logical_device_t* vulkan_logical_device_create(vulkan_physical_device_t* physical_device, vulkan_logical_device_create_info_t* device_create_info);
+SGE_API void vulkan_logical_device_destroy(vulkan_logical_device_t* device);
+SGE_API void vulkan_logical_device_release_resources(vulkan_logical_device_t* device);
 
 
 // getters
-RENDERER_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index);
+SGE_API VkQueue vulkan_logical_device_get_queue(vulkan_logical_device_t* device, u32 family_index, u32 queue_index);
 
 END_CPP_COMPATIBLE

@@ -34,7 +34,7 @@
 #include <renderer/string_builder.h>
 #include <ctype.h> // isgraph
 
-RENDERER_API vulkan_bitmap_text_t* vulkan_bitmap_text_new(memory_allocator_t* allocator)
+SGE_API vulkan_bitmap_text_t* vulkan_bitmap_text_new(memory_allocator_t* allocator)
 {
 	vulkan_bitmap_text_t* text = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_BITMAP_TEXT, vulkan_bitmap_text_t);
 	memzero(text, vulkan_bitmap_text_t);
@@ -42,7 +42,7 @@ RENDERER_API vulkan_bitmap_text_t* vulkan_bitmap_text_new(memory_allocator_t* al
 	return text;
 }
 
-RENDERER_API vulkan_bitmap_text_t* vulkan_bitmap_text_create(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info)
+SGE_API vulkan_bitmap_text_t* vulkan_bitmap_text_create(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info)
 {
 	vulkan_bitmap_text_t* text = vulkan_bitmap_text_new(renderer->allocator);
 	vulkan_bitmap_text_create_no_alloc(renderer, create_info, text);
@@ -122,7 +122,7 @@ static bool default_glyph_layout_handler(vulkan_bitmap_text_glyph_layout_data_bu
 	return true;
 }
 
-RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info, vulkan_bitmap_text_t OUT text)
+SGE_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_text_create_info_t* create_info, vulkan_bitmap_text_t OUT text)
 {
 	VULKAN_OBJECT_MEMZERO(text, vulkan_bitmap_text_t);
 	text->renderer = renderer;
@@ -233,7 +233,7 @@ RENDERER_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer
 	vulkan_mesh_add_vertex_buffer(&text->quad_mesh, vulkan_instance_buffer_get_device_buffer(&text->glyph_render_data_buffer), 5);
 }
 
-RENDERER_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
+SGE_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 {
 	event_unsubscribe(text->texture->on_resize_event, text->bga_texture_update_handle);
 	buf_clear(&text->glyph_layout_data_buffer, NULL);
@@ -258,7 +258,7 @@ RENDERER_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 	vulkan_mesh_destroy(&text->quad_mesh);
 }
 
-RENDERER_API void vulkan_bitmap_text_release_resources(vulkan_bitmap_text_t* text)
+SGE_API void vulkan_bitmap_text_release_resources(vulkan_bitmap_text_t* text)
 {
 	dictionary_free(&text->glyph_texcoord_index_table);
 	vulkan_mesh_release_resources(&text->quad_mesh);
@@ -271,7 +271,7 @@ RENDERER_API void vulkan_bitmap_text_release_resources(vulkan_bitmap_text_t* tex
 		memory_allocator_dealloc(text->renderer->allocator, text);
 }
 
-RENDERER_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text)
+SGE_API void vulkan_bitmap_text_draw(vulkan_bitmap_text_t* text)
 {
 	AUTO count = vulkan_buffer_get_count(vulkan_instance_buffer_get_device_buffer(&text->glyph_render_data_buffer));
 	if(count > 0)
@@ -321,7 +321,7 @@ static _mat4_t get_glsl_mat4_from_mat4(const mat4_t* const mat)
 	};
 }
 
-RENDERER_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulkan_bitmap_text_t* text)
+SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulkan_bitmap_text_t* text)
 {
 	vulkan_bitmap_text_string_handle_t handle;
 	vulkan_bitmap_text_string_t* text_string = NULL;
@@ -383,7 +383,7 @@ RENDERER_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create
 	return handle;
 }
 
-RENDERER_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
+SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
 {
 	vulkan_bitmap_text_string_list_t* text_strings = &text->text_strings;
 
@@ -626,22 +626,22 @@ static void text_string_set_point_size(vulkan_bitmap_text_t* text, vulkan_bitmap
 		text_string_set(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
 }
 
-RENDERER_API void vulkan_bitmap_text_set_glyph_layout_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_layout_handler_t handler, void* user_data)
+SGE_API void vulkan_bitmap_text_set_glyph_layout_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_layout_handler_t handler, void* user_data)
 {
 	text->glyph_layout_handler = (vulkan_bitmap_text_glyph_layout_handler_void_ptr_pair_t) { handler, user_data };
 }
 
-RENDERER_API void vulkan_bitmap_text_set_glyph_strikethrough_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_strikethrough_handler_t handler, void* user_data)
+SGE_API void vulkan_bitmap_text_set_glyph_strikethrough_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_strikethrough_handler_t handler, void* user_data)
 {
 	text->glyph_strikethrough_handler = (vulkan_bitmap_text_glyph_strikethrough_handler_void_ptr_pair_t) { handler, user_data };
 }
 
-RENDERER_API void vulkan_bitmap_text_set_glyph_underline_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_underline_handler_t handler, void* user_data)
+SGE_API void vulkan_bitmap_text_set_glyph_underline_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_underline_handler_t handler, void* user_data)
 {
 	text->glyph_underline_handler = (vulkan_bitmap_text_glyph_underline_handler_void_ptr_pair_t) { handler, user_data };
 }
 
-RENDERER_API void vulkan_bitmap_text_set_point_size(vulkan_bitmap_text_t* text, u32 point_size)
+SGE_API void vulkan_bitmap_text_set_point_size(vulkan_bitmap_text_t* text, u32 point_size)
 {
 	text->point_size = point_size;
 	buf_ucount_t count = buf_get_element_count(&text->text_strings);
@@ -649,7 +649,7 @@ RENDERER_API void vulkan_bitmap_text_set_point_size(vulkan_bitmap_text_t* text, 
 		text_string_set_point_size(text, buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, i), point_size);
 }
 
-RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material)
+SGE_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_material_t* material)
 {
 	text->material = material;
 
@@ -667,7 +667,7 @@ RENDERER_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vu
 	vulkan_material_set_buffer(material, "TSTBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->text_string_transform_buffer));
 }
 
-RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type)
+SGE_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_space_type_t space_type)
 {
 	if(text->render_space_type == space_type)
 		return;
@@ -680,7 +680,7 @@ RENDERER_API void vulkan_bitmap_text_set_render_space_type(vulkan_bitmap_text_t*
 	set_render_space_type(text, space_type);
 }
 
-RENDERER_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_surface_type_t surface_type)
+SGE_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* text, vulkan_bitmap_text_render_surface_type_t surface_type)
 {
 	if(text->render_surface_type == surface_type)
 		return;
@@ -698,7 +698,7 @@ static vulkan_bitmap_text_string_t* get_text_stringH(vulkan_bitmap_text_t* text,
 	return buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, handle);
 }
 
-RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle, const char* string)
+SGE_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle, const char* string)
 {
 	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
 
@@ -712,7 +712,7 @@ RENDERER_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vu
 	text_string_set(text, text_string, string);
 }
 
-RENDERER_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 point_size)
+SGE_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 point_size)
 {
 	text_string_set_point_size(text, get_text_stringH(text, handle), point_size);
 
@@ -738,7 +738,7 @@ RENDERER_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t
 	}
 }
 
-RENDERER_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform)
+SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform)
 {
 	mat4_move(get_text_stringH(text, handle)->transform, transform);
 	mat4_move(transform, mat4_transpose(transform));
@@ -752,27 +752,27 @@ RENDERER_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t*
 }
 
 /* getters */
-RENDERER_API u32 vulkan_bitmap_text_get_point_size(vulkan_bitmap_text_t* text)
+SGE_API u32 vulkan_bitmap_text_get_point_size(vulkan_bitmap_text_t* text)
 {
 	return text->point_size;
 }
 
-RENDERER_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle)
+SGE_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle)
 {
 	return CAST_TO(const char*, buf_get_ptr(&get_text_stringH(text, handle)->chars));
 }
 
-RENDERER_API u32 vulkan_bitmap_text_string_get_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
+SGE_API u32 vulkan_bitmap_text_string_get_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
 {
 	return get_text_stringH(text, handle)->point_size;
 }
 
-RENDERER_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
+SGE_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
 {
 	return get_text_stringH(text, handle)->transform;
 }
 
-RENDERER_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text)
+SGE_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text)
 {
 	_debug_assert__(text->texture != NULL);
 	return vulkan_bitmap_glyph_atlas_texture_get_font(text->texture);

@@ -53,7 +53,7 @@ static function_signature(void, png_parse_error, parse_error_t error)
 }
 
 
-RENDERER_API function_signature(png_t, png_load, const char* file_path)
+SGE_API function_signature(png_t, png_load, const char* file_path)
 {
 	CALLTRACE_BEGIN();
 	LOG_FETAL_ERR("This method is undefined, it is yet to be defined completely\n");
@@ -75,7 +75,7 @@ RENDERER_API function_signature(png_t, png_load, const char* file_path)
 }
 
 
-RENDERER_API void png_destroy(png_t png)
+SGE_API void png_destroy(png_t png)
 {
 
 }

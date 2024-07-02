@@ -30,6 +30,6 @@
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API void legal_show_notice(const char* path);
+SGE_API void legal_show_notice(const char* path);
 
 END_CPP_COMPATIBLE

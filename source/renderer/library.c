@@ -28,21 +28,21 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API library_t* library_new(memory_allocator_t* allocator)
+SGE_API library_t* library_new(memory_allocator_t* allocator)
 {
 	library_t* lib = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_LIBRARY, library_t);
 	memzero(lib, library_t);
 	return lib;
 }
 
-RENDERER_API library_t* library_create(memory_allocator_t* allocator)
+SGE_API library_t* library_create(memory_allocator_t* allocator)
 {
 	library_t* lib = library_new(allocator);
 	library_create_no_alloc(allocator, lib);
 	return lib;
 }
 
-RENDERER_API void library_create_no_alloc(memory_allocator_t* allocator, library_t OUT lib)
+SGE_API void library_create_no_alloc(memory_allocator_t* allocator, library_t OUT lib)
 {
 	memzero(lib, library_t);
 	lib->slots = memory_allocator_buf_create(allocator, sizeof(library_slot_t), 1, 0);
@@ -50,13 +50,13 @@ RENDERER_API void library_create_no_alloc(memory_allocator_t* allocator, library
 	lib->allocator = allocator;
 }
 
-RENDERER_API void library_destroy(library_t* lib)
+SGE_API void library_destroy(library_t* lib)
 {
 	buf_clear(&lib->slots, NULL);
 	buf_clear(&lib->relocation_table, NULL);
 }
 
-RENDERER_API void library_release_resources(library_t* lib)
+SGE_API void library_release_resources(library_t* lib)
 {
 	buf_free(&lib->slots);
 	buf_free(&lib->relocation_table);
@@ -65,7 +65,7 @@ RENDERER_API void library_release_resources(library_t* lib)
 	// heap_free(lib);
 }
 
-RENDERER_API library_slot_handle_t library_create_slot(library_t* lib, void* object)
+SGE_API library_slot_handle_t library_create_slot(library_t* lib, void* object)
 {
 	buf_push_auto(&lib->relocation_table, buf_get_element_count(&lib->slots));
 
@@ -78,7 +78,7 @@ RENDERER_API library_slot_handle_t library_create_slot(library_t* lib, void* obj
 	return slot.handle;
 }
 
-RENDERER_API void* library_getH(library_t* lib, library_slot_handle_t handle)
+SGE_API void* library_getH(library_t* lib, library_slot_handle_t handle)
 {
 	_debug_assert__(handle != LIBRARY_SLOT_HANDLE_INVALID);
 	buf_ucount_t index;
@@ -86,7 +86,7 @@ RENDERER_API void* library_getH(library_t* lib, library_slot_handle_t handle)
 	return CAST_TO(library_slot_t*, buf_get_ptr_at(&lib->slots, index))->object;
 }
 
-RENDERER_API void library_destroy_slotH(library_t* lib, library_slot_handle_t handle)
+SGE_API void library_destroy_slotH(library_t* lib, library_slot_handle_t handle)
 {
 	_debug_assert__(handle != LIBRARY_SLOT_HANDLE_INVALID);
 	buf_ucount_t index;

@@ -75,7 +75,7 @@
 #include <renderer/tests/TID-48.case4.h>
 #include <renderer/tests/TID-48.case5.h>
 
-RENDERER_API test_t* test_new(memory_allocator_t* allocator)
+SGE_API test_t* test_new(memory_allocator_t* allocator)
 {
 	test_t* test = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_TEST, test_t);
 	memzero(test, test_t);
@@ -85,7 +85,7 @@ RENDERER_API test_t* test_new(memory_allocator_t* allocator)
 #define IF(NAME) if(strcmp(name, TEST_NAME(NAME)) == 0) NAME##_setup_callbacks(test)
 #define ELSE_IF(NAME) else IF(NAME)
 
-RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name)
+SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 {
 	test_t* test = test_new(allocator);
 	test->allocator = allocator;
@@ -172,7 +172,7 @@ RENDERER_API test_t* test_create(memory_allocator_t* allocator, const char* name
 	return test;
 }
 
-RENDERER_API void test_destroy(test_t* test)
+SGE_API void test_destroy(test_t* test)
 {
 	heap_free(test->user_data);
 	memory_allocator_dealloc(test->allocator, test);

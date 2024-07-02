@@ -28,7 +28,7 @@
 
 #include <renderer/defines.h>
 
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 	#include <renderer/internal/vulkan/vulkan_render_pass.h>
 	typedef vulkan_render_pass_t render_pass_t;
 	typedef vulkan_render_pass_create_info_t render_pass_create_info_t;
@@ -38,7 +38,7 @@
 	typedef struct vulkan_camera_t vulkan_camera_t;
 	typedef vulkan_camera_t camera_t;
 
-#elif defined(RENDERER_OPENGL_DRIVER)
+#elif defined(SGE_OPENGL_DRIVER)
 	#include <renderer/internal/opengl/opengl_render_pass.h>
 	typedef opengl_render_pass_t render_pass_t;
 	typedef opengl_render_pass_create_info_t render_pass_create_info_t;
@@ -48,7 +48,7 @@
 	typedef struct opengl_camera_t opengl_camera_t;
 	typedef opengl_camera_t camera_t;
 
-#elif defined(RENDERER_DIRECTX_DRIVER)
+#elif defined(SGE_DIRECTX_DRIVER)
 	#include <renderer/internal/directx/directx_render_pass.h>
 	typedef directx_render_pass_t render_pass_t;
 	typedef directx_render_pass_create_info_t render_pass_create_info_t;
@@ -58,7 +58,7 @@
 	typedef struct directx_camera_t directx_camera_t;
 	typedef directx_camera_t camera_t;
 
-#elif defined(RENDERER_METAL_DRIVER)
+#elif defined(SGE_METAL_DRIVER)
 	#include <renderer/internal/metal/metal_render_pass.h>
 	typedef metal_render_pass_t render_pass_t;
 	typedef metal_render_pass_create_info_t render_pass_create_info_t;
@@ -74,15 +74,15 @@
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API render_pass_t* render_pass_new(memory_allocator_t* allocator);
-RENDERER_API render_pass_t* render_pass_create(renderer_t* renderer, render_pass_create_info_t* create_info);
-RENDERER_API void render_pass_create_no_alloc(renderer_t* renderer, render_pass_create_info_t* create_info, render_pass_t OUT pass);
-RENDERER_API void render_pass_destroy(render_pass_t* pass);
-RENDERER_API void render_pass_release_resources(render_pass_t* pass);
+SGE_API render_pass_t* render_pass_new(memory_allocator_t* allocator);
+SGE_API render_pass_t* render_pass_create(renderer_t* renderer, render_pass_create_info_t* create_info);
+SGE_API void render_pass_create_no_alloc(renderer_t* renderer, render_pass_create_info_t* create_info, render_pass_t OUT pass);
+SGE_API void render_pass_destroy(render_pass_t* pass);
+SGE_API void render_pass_release_resources(render_pass_t* pass);
 
 /* logic functions */
-RENDERER_API void render_pass_set_clear(render_pass_t* pass, color_t color, float depth);
-RENDERER_API void render_pass_begin(render_pass_t* pass, void* api_specific, camera_t* camera);
-RENDERER_API void render_pass_end(render_pass_t* pass);
+SGE_API void render_pass_set_clear(render_pass_t* pass, color_t color, float depth);
+SGE_API void render_pass_begin(render_pass_t* pass, void* api_specific, camera_t* camera);
+SGE_API void render_pass_end(render_pass_t* pass);
 
 END_CPP_COMPATIBLE

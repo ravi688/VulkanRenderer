@@ -29,7 +29,7 @@
 #include <renderer/defines.h>
 
 /* API level object selection */
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 #	include <renderer/internal/vulkan/vulkan_renderer.h>
 	typedef vulkan_renderer_t driver_t;
 	typedef vulkan_render_pass_pool_t render_pass_pool_t;
@@ -38,7 +38,7 @@
 	typedef vulkan_camera_system_t camera_system_t;
 #	define RENDERER(vk_ptr) ((vk_ptr)->renderer)
 #	define VULKAN_RENDERER(ptr) ((ptr)->vulkan_handle)
-#elif RENDERER_OPENGL_DRIVER
+#elif SGE_OPENGL_DRIVER
 #	include <renderer/internal/opengl/opengl_renderer.h>
 	typedef opengl_renderer_t driver_t;
 	typedef opengl_render_pass_pool_t render_pass_pool_t;
@@ -47,7 +47,7 @@
 	typedef opengl_camera_system_t camera_system_t;
 #	define RENDERER(gl_ptr) ((gl_ptr)->renderer)
 #	define OPENGL_RENDERER(ptr) ((ptr)->opengl_handle)
-#elif RENDERER_DIRECTX_DRIVER
+#elif SGE_DIRECTX_DRIVER
 #	include <renderer/internal/directx/directx_renderer.h>
 	typedef directx_renderer_t driver_t;
 	typedef directx_render_pass_pool_t render_pass_pool_t;
@@ -56,7 +56,7 @@
 	typedef directx_camera_system_t camera_system_t;
 #	define RENDERER(dx_ptr) ((dx_ptr)->renderer)
 #	define DIRECTX_RENDERER(ptr) ((ptr)->directx_handle)
-#elif RENDERER_METAL_DRIVER
+#elif SGE_METAL_DRIVER
 #	include <renderer/internal/metal/metal_renderer.h>
 	typedef metal_renderer_t driver_t;
 	typedef metal_render_pass_pool_t render_pass_pool_t;
@@ -74,10 +74,10 @@ typedef struct FT_LibraryRec_  *FT_Library;
 
 typedef enum renderer_gpu_type_t
 {
-	RENDERER_GPU_TYPE_AUTO = 0,
-	RENDERER_GPU_TYPE_INTEGRATED,
-	RENDERER_GPU_TYPE_DISCRETE,
-	RENDERER_GPU_TYPE_CPU
+	SGE_GPU_TYPE_AUTO = 0,
+	SGE_GPU_TYPE_INTEGRATED,
+	SGE_GPU_TYPE_DISCRETE,
+	SGE_GPU_TYPE_CPU
 } renderer_gpu_type_t;
 
 
@@ -99,13 +99,13 @@ typedef struct renderer_t
 	union
 	{
 		driver_t*
-#ifdef RENDERER_VULKAN_DRIVER
+#ifdef SGE_VULKAN_DRIVER
 		vulkan_driver, *vulkan_handle;
-#elif RENDERER_OPENGL_DRIVER
+#elif SGE_OPENGL_DRIVER
 		opengl_driver, *opengl_handle;
-#elif RENDERER_DIRECTX_DRIVER
+#elif SGE_DIRECTX_DRIVER
 		directx_driver, directx_handle;
-#elif RENDERER_METAL_DRIVER
+#elif SGE_METAL_DRIVER
 		metal_driver, *metal_handle;
 #endif
 		driver_t* handle;
@@ -122,10 +122,10 @@ typedef struct renderer_t
 
 BEGIN_CPP_COMPATIBLE
 
-RENDERER_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_create_info_t* create_info);
-RENDERER_API void renderer_terminate(renderer_t* renderer);
-RENDERER_API void renderer_update(renderer_t* renderer);
-RENDERER_API bool renderer_is_running(renderer_t* renderer);
+SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_create_info_t* create_info);
+SGE_API void renderer_terminate(renderer_t* renderer);
+SGE_API void renderer_update(renderer_t* renderer);
+SGE_API bool renderer_is_running(renderer_t* renderer);
 
 /*
 	description:
@@ -135,22 +135,22 @@ RENDERER_API bool renderer_is_running(renderer_t* renderer);
 	returns:
 		nothing
  */
-RENDERER_API void renderer_begin_frame(renderer_t* renderer);
+SGE_API void renderer_begin_frame(renderer_t* renderer);
 
 /*
 	description:
 		ends command buffer recording
  */
-RENDERER_API void renderer_end_frame(renderer_t* renderer);
+SGE_API void renderer_end_frame(renderer_t* renderer);
 
-RENDERER_API void renderer_wait_idle(renderer_t* renderer);
+SGE_API void renderer_wait_idle(renderer_t* renderer);
 
 /* getters */
-RENDERER_API render_window_t* renderer_get_window(renderer_t* renderer);
-RENDERER_API shader_library_t* renderer_get_shader_library(renderer_t* renderer);
-RENDERER_API material_library_t* renderer_get_material_library(renderer_t* renderer);
-RENDERER_API render_pass_pool_t* renderer_get_render_pass_pool(renderer_t* renderer);
-RENDERER_API camera_system_t* renderer_get_camera_system(renderer_t* renderer);
+SGE_API render_window_t* renderer_get_window(renderer_t* renderer);
+SGE_API shader_library_t* renderer_get_shader_library(renderer_t* renderer);
+SGE_API material_library_t* renderer_get_material_library(renderer_t* renderer);
+SGE_API render_pass_pool_t* renderer_get_render_pass_pool(renderer_t* renderer);
+SGE_API camera_system_t* renderer_get_camera_system(renderer_t* renderer);
 
 END_CPP_COMPATIBLE
 

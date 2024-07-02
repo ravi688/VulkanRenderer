@@ -32,7 +32,7 @@
 #include <renderer/debug.h>
 
 /* constructors & destructors */
-RENDERER_API vulkan_material_library_t* vulkan_material_library_new(memory_allocator_t* allocator)
+SGE_API vulkan_material_library_t* vulkan_material_library_new(memory_allocator_t* allocator)
 {
 	vulkan_material_library_t* library = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_MATERIAL_LIBRARY, vulkan_material_library_t);
 	memzero(library, vulkan_material_library_t);
@@ -40,7 +40,7 @@ RENDERER_API vulkan_material_library_t* vulkan_material_library_new(memory_alloc
 	return library;
 }
 
-RENDERER_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library, vulkan_material_library_t OUT library)
+SGE_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library, vulkan_material_library_t OUT library)
 {
 	VULKAN_OBJECT_MEMZERO(library, vulkan_material_library_t);
 
@@ -51,14 +51,14 @@ RENDERER_API void vulkan_material_library_create_no_alloc(vulkan_renderer_t* ren
 	log_msg("Vulkan material library has been created successfully\n");
 }
 
-RENDERER_API vulkan_material_library_t* vulkan_material_library_create(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library)
+SGE_API vulkan_material_library_t* vulkan_material_library_create(vulkan_renderer_t* renderer, vulkan_shader_library_t* shader_library)
 {
 	vulkan_material_library_t* library = vulkan_material_library_new(renderer->allocator);
 	vulkan_material_library_create_no_alloc(renderer, shader_library, library);
 	return library;
 }
 
-RENDERER_API void vulkan_material_library_destroy(vulkan_material_library_t* library)
+SGE_API void vulkan_material_library_destroy(vulkan_material_library_t* library)
 {
 	buf_ucount_t count = buf_get_element_count(&library->materials);
 	for(buf_ucount_t i = 0; i < count; i++)
@@ -71,7 +71,7 @@ RENDERER_API void vulkan_material_library_destroy(vulkan_material_library_t* lib
 	log_msg("Vulkan material library has been destroyed successfully\n");
 }
 
-RENDERER_API void vulkan_material_library_release_resources(vulkan_material_library_t* library)
+SGE_API void vulkan_material_library_release_resources(vulkan_material_library_t* library)
 {
 	buf_ucount_t count = buf_get_element_count(&library->materials);
 	for(buf_ucount_t i = 0; i < count; i++)
@@ -107,7 +107,7 @@ static vulkan_material_handle_t vulkan_material_library_add(vulkan_material_libr
 	return handle;
 }
 
-RENDERER_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, const char* shader_name, const char* material_name)
+SGE_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, const char* shader_name, const char* material_name)
 {
 	vulkan_shader_t* shader = vulkan_shader_library_get(library->shader_library, shader_name);
 	if(shader == NULL)
@@ -118,7 +118,7 @@ RENDERER_API vulkan_material_handle_t vulkan_material_library_create_material(vu
 	return vulkan_material_library_add(library, vulkan_material_create(library->shader_library->renderer, shader), material_name);
 }
 
-RENDERER_API vulkan_material_handle_t vulkan_material_library_create_materialH(vulkan_material_library_t* library, vulkan_shader_handle_t handle, const char* material_name)
+SGE_API vulkan_material_handle_t vulkan_material_library_create_materialH(vulkan_material_library_t* library, vulkan_shader_handle_t handle, const char* material_name)
 {
 	vulkan_shader_t* shader = vulkan_shader_library_getH(library->shader_library, handle);
 	if(shader == NULL)
@@ -129,7 +129,7 @@ RENDERER_API vulkan_material_handle_t vulkan_material_library_create_materialH(v
 	return vulkan_material_library_add(library, vulkan_material_create(library->shader_library->renderer, shader), material_name);
 }
 
-RENDERER_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path)
+SGE_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 }
@@ -146,7 +146,7 @@ static bool vulkan_material_library_removeH(vulkan_material_library_t* library, 
 }
 
 
-RENDERER_API bool vulkan_material_library_destroy_material(vulkan_material_library_t* library, const char* material_name)
+SGE_API bool vulkan_material_library_destroy_material(vulkan_material_library_t* library, const char* material_name)
 {
 	vulkan_material_t* material = vulkan_material_library_get(library, material_name);
 	if(material == NULL)
@@ -156,7 +156,7 @@ RENDERER_API bool vulkan_material_library_destroy_material(vulkan_material_libra
 	return vulkan_material_library_remove(library, material_name);
 }
 
-RENDERER_API bool vulkan_material_library_destroy_materialH(vulkan_material_library_t* library, vulkan_material_handle_t handle)
+SGE_API bool vulkan_material_library_destroy_materialH(vulkan_material_library_t* library, vulkan_material_handle_t handle)
 {
 	vulkan_material_t* material = vulkan_material_library_getH(library, handle);
 	if(material == NULL)
@@ -166,17 +166,17 @@ RENDERER_API bool vulkan_material_library_destroy_materialH(vulkan_material_libr
 	return vulkan_material_library_removeH(library, handle);
 }
 
-RENDERER_API BUFFER* vulkan_material_library_serialize(vulkan_material_library_t* library)
+SGE_API BUFFER* vulkan_material_library_serialize(vulkan_material_library_t* library)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 }
 
-RENDERER_API vulkan_material_library_t* vulkan_material_library_deserialize(void* bytes, u64 length)
+SGE_API vulkan_material_library_t* vulkan_material_library_deserialize(void* bytes, u64 length)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 }
 
-RENDERER_API bool vulkan_material_library_deserialize_no_alloc(void* bytes, u64 length, vulkan_material_library_t* out_library)
+SGE_API bool vulkan_material_library_deserialize_no_alloc(void* bytes, u64 length, vulkan_material_library_t* out_library)
 {
 	NOT_IMPLEMENTED_FUNCTION();
 }
@@ -208,19 +208,19 @@ static vulkan_material_library_slot_t* vulkan_material_library_get_slotH(vulkan_
 	return NULL;
 }
 
-RENDERER_API vulkan_material_handle_t vulkan_material_library_get_handle(vulkan_material_library_t* library, const char* material_name)
+SGE_API vulkan_material_handle_t vulkan_material_library_get_handle(vulkan_material_library_t* library, const char* material_name)
 {
 	vulkan_material_library_slot_t* slot = vulkan_material_library_get_slot(library, material_name);
 	return (slot == NULL) ? VULKAN_MATERIAL_HANDLE_INVALID : slot->handle;
 }
 
-RENDERER_API vulkan_material_t* vulkan_material_library_get(vulkan_material_library_t* library, const char* material_name)
+SGE_API vulkan_material_t* vulkan_material_library_get(vulkan_material_library_t* library, const char* material_name)
 {
 	vulkan_material_library_slot_t* slot = vulkan_material_library_get_slot(library, material_name);
 	return (slot == NULL) ? NULL : slot->material;
 }
 
-RENDERER_API vulkan_material_t* vulkan_material_library_getH(vulkan_material_library_t* library, vulkan_material_handle_t handle)
+SGE_API vulkan_material_t* vulkan_material_library_getH(vulkan_material_library_t* library, vulkan_material_handle_t handle)
 {
 	vulkan_material_library_slot_t* slot = vulkan_material_library_get_slotH(library, handle);
 	return (slot == NULL) ? NULL : slot->material;

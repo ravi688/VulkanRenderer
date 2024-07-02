@@ -152,36 +152,36 @@ typedef struct vulkan_spot_light_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
-RENDERER_API vulkan_light_t* vulkan_light_new(memory_allocator_t* allocator, vulkan_light_type_t type);
-RENDERER_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vulkan_light_type_t type);
-RENDERER_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_light_type_t type, vulkan_light_t OUT light);
-RENDERER_API void vulkan_light_destroy(vulkan_light_t* light);
-RENDERER_API void vulkan_light_release_resources(vulkan_light_t* light);
+SGE_API vulkan_light_t* vulkan_light_new(memory_allocator_t* allocator, vulkan_light_type_t type);
+SGE_API vulkan_light_t* vulkan_light_create(vulkan_renderer_t* renderer, vulkan_light_type_t type);
+SGE_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_light_type_t type, vulkan_light_t OUT light);
+SGE_API void vulkan_light_destroy(vulkan_light_t* light);
+SGE_API void vulkan_light_release_resources(vulkan_light_t* light);
 
 /* setters */
-RENDERER_API void vulkan_light_set_active(vulkan_light_t* light, bool is_active);
-RENDERER_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow);
-RENDERER_API void vulkan_light_set_intensity(vulkan_light_t* light, float intensity);
-RENDERER_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color);
-RENDERER_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t position);
-RENDERER_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation);
-RENDERER_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle);
+SGE_API void vulkan_light_set_active(vulkan_light_t* light, bool is_active);
+SGE_API void vulkan_light_set_cast_shadow(vulkan_light_t* light, bool is_cast_shadow);
+SGE_API void vulkan_light_set_intensity(vulkan_light_t* light, float intensity);
+SGE_API void vulkan_light_set_color(vulkan_light_t* light, vec3_t color);
+SGE_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t position);
+SGE_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation);
+SGE_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle);
 
 /* getters */
-RENDERER_API vulkan_light_type_t vulkan_light_get_type(vulkan_light_t* light);
-RENDERER_API struct_descriptor_t* vulkan_light_get_struct_def(vulkan_light_t* light);
-RENDERER_API vulkan_material_t* vulkan_light_get_shadow_material(vulkan_light_t* light);
-RENDERER_API vulkan_texture_t* vulkan_light_get_shadow_map(vulkan_light_t* light);
-RENDERER_API vulkan_camera_t* vulkan_light_get_shadow_camera(vulkan_light_t* light);
-RENDERER_API bool vulkan_light_is_active(vulkan_light_t* light);
-RENDERER_API bool vulkan_light_is_cast_shadow(vulkan_light_t* light);
-RENDERER_API bool vulkan_light_is_dirty(vulkan_light_t* light);
-RENDERER_API bool vulkan_light_is_shadow_map_dirty(vulkan_light_t* light);
-RENDERER_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, void* const out_buffer);
-RENDERER_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light);
+SGE_API vulkan_light_type_t vulkan_light_get_type(vulkan_light_t* light);
+SGE_API struct_descriptor_t* vulkan_light_get_struct_def(vulkan_light_t* light);
+SGE_API vulkan_material_t* vulkan_light_get_shadow_material(vulkan_light_t* light);
+SGE_API vulkan_texture_t* vulkan_light_get_shadow_map(vulkan_light_t* light);
+SGE_API vulkan_camera_t* vulkan_light_get_shadow_camera(vulkan_light_t* light);
+SGE_API bool vulkan_light_is_active(vulkan_light_t* light);
+SGE_API bool vulkan_light_is_cast_shadow(vulkan_light_t* light);
+SGE_API bool vulkan_light_is_dirty(vulkan_light_t* light);
+SGE_API bool vulkan_light_is_shadow_map_dirty(vulkan_light_t* light);
+SGE_API void vulkan_light_get_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, void* const out_buffer);
+SGE_API u32 vulkan_light_get_dispatchable_data_size(vulkan_light_t* light);
 
-RENDERER_API void vulkan_light_begin(vulkan_light_t* light);
-RENDERER_API bool vulkan_light_irradiate(vulkan_light_t* light);
-RENDERER_API void vulkan_light_end(vulkan_light_t* light);
+SGE_API void vulkan_light_begin(vulkan_light_t* light);
+SGE_API bool vulkan_light_irradiate(vulkan_light_t* light);
+SGE_API void vulkan_light_end(vulkan_light_t* light);
 
 END_CPP_COMPATIBLE

@@ -47,11 +47,11 @@ typedef struct library_t
 BEGIN_CPP_COMPATIBLE
 
 /* constructors and destructors */
-RENDERER_API library_t* library_new(memory_allocator_t* allocator);
-RENDERER_API library_t* library_create(memory_allocator_t* allocator);
-RENDERER_API void library_create_no_alloc(memory_allocator_t* allocator, library_t OUT lib);
-RENDERER_API void library_destroy(library_t* lib);
-RENDERER_API void library_release_resources(library_t* lib);
+SGE_API library_t* library_new(memory_allocator_t* allocator);
+SGE_API library_t* library_create(memory_allocator_t* allocator);
+SGE_API void library_create_no_alloc(memory_allocator_t* allocator, library_t OUT lib);
+SGE_API void library_destroy(library_t* lib);
+SGE_API void library_release_resources(library_t* lib);
 
 /* getters */
 static FORCE_INLINE u32 library_get_count(library_t* lib) 
@@ -62,10 +62,10 @@ static FORCE_INLINE void* library_get_at(library_t* lib, buf_ucount_t index)
 {
 	return CAST_TO(library_slot_t*, buf_get_ptr_at(&lib->slots, index))->object;
 }
-RENDERER_API void* library_getH(library_t* lib, library_slot_handle_t handle);
+SGE_API void* library_getH(library_t* lib, library_slot_handle_t handle);
 
-RENDERER_API library_slot_handle_t library_create_slot(library_t* lib, void* object);
-RENDERER_API void library_destroy_slotH(library_t* lib, library_slot_handle_t handle);
+SGE_API library_slot_handle_t library_create_slot(library_t* lib, void* object);
+SGE_API void library_destroy_slotH(library_t* lib, library_slot_handle_t handle);
 
 END_CPP_COMPATIBLE
 

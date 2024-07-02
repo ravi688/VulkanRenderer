@@ -48,7 +48,7 @@ BEGIN_CPP_COMPATIBLE
 		static FORCE_INLINE bool cio_kbhit() { /* TODO */ return false; }
 		#define getch cio_getch
 		#define kbhit cio_kbhit
-#	endif // RENDERER_COMPILER_MINGW
+#	endif // SGE_COMPILER_MINGW
 #else
 #	warning "Unrecognized platform you are compiling on, some features/functionalities might not work"
 	static FORCE_INLINE char cio_getch() { return 0; }

@@ -33,7 +33,7 @@
 #include <renderer/memory_allocator.h>
 #include <renderer/alloc.h>
 
-RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new(memory_allocator_t* allocator)
+SGE_API vulkan_descriptor_set_t* vulkan_descriptor_set_new(memory_allocator_t* allocator)
 {
 	vulkan_descriptor_set_t* set = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_DESCRIPTOR_SET, vulkan_descriptor_set_t);
 	memzero(set, vulkan_descriptor_set_t);
@@ -42,7 +42,7 @@ RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_new(memory_allocator
 	return set;
 }
 
-RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
+SGE_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
 {
 	VULKAN_OBJECT_MEMZERO(set, vulkan_descriptor_set_t);
 	set->renderer = renderer;
@@ -62,33 +62,33 @@ RENDERER_API void vulkan_descriptor_set_create_no_alloc(vulkan_renderer_t* rende
 	vkCall(vkAllocateDescriptorSets(set->renderer->logical_device->vo_handle, &alloc_info, &set->vo_handle));
 }
 
-RENDERER_API void vulkan_descriptor_set_create_no_alloc_ext(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
+SGE_API void vulkan_descriptor_set_create_no_alloc_ext(vulkan_renderer_t* renderer,  vulkan_descriptor_set_create_info_t* create_info, vulkan_descriptor_set_t* set)
 {
 	VULKAN_OBJECT_INIT(set, VULKAN_OBJECT_TYPE_DESCRIPTOR_SET, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_descriptor_set_create_no_alloc(renderer, create_info, set);
 }
 
-RENDERER_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(vulkan_renderer_t* renderer, vulkan_descriptor_set_create_info_t* create_info)
+SGE_API vulkan_descriptor_set_t* vulkan_descriptor_set_create(vulkan_renderer_t* renderer, vulkan_descriptor_set_create_info_t* create_info)
 {
 	vulkan_descriptor_set_t* set = vulkan_descriptor_set_new(renderer->allocator);
 	vulkan_descriptor_set_create_no_alloc(renderer, create_info, set);
 	return set;
 }
 
-RENDERER_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set)
+SGE_API void vulkan_descriptor_set_destroy(vulkan_descriptor_set_t* set)
 {
 	if(set->vo_handle == VK_NULL_HANDLE) return;
 	vkCall(vkFreeDescriptorSets(set->renderer->logical_device->vo_handle, set->vo_pool, 1, &set->vo_handle));
 	set->vo_handle = VK_NULL_HANDLE;
 }
 
-RENDERER_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_t* set)
+SGE_API void vulkan_descriptor_set_release_resources(vulkan_descriptor_set_t* set)
 {
 	if(VULKAN_OBJECT_IS_INTERNAL(set))
 		memory_allocator_dealloc(set->renderer->allocator, set);
 }
 
-RENDERER_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, u32 set_number, vulkan_pipeline_layout_t* pipeline_layout)
+SGE_API void vulkan_descriptor_set_bind(vulkan_descriptor_set_t* set, u32 set_number, vulkan_pipeline_layout_t* pipeline_layout)
 {
 	u32 image_index = set->renderer->current_frame_index;
 	vkCmdBindDescriptorSets(set->renderer->vo_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->vo_handle, set_number, 1, &set->vo_handle, 0, NULL);
@@ -136,7 +136,7 @@ static bool is_all_null_textures(vulkan_texture_t** textures, u32 texture_count)
 	return true;
 }
 
-RENDERER_API void vulkan_descriptor_set_write_texturev(vulkan_descriptor_set_t* set, u32 binding_index, u32 dst_index, vulkan_texture_t** textures, u32 texture_count)
+SGE_API void vulkan_descriptor_set_write_texturev(vulkan_descriptor_set_t* set, u32 binding_index, u32 dst_index, vulkan_texture_t** textures, u32 texture_count)
 {
 	if(texture_count == 0)
 	{
@@ -192,7 +192,7 @@ DEBUG_BLOCK
 	vkUpdateDescriptorSets(set->renderer->logical_device->vo_handle, 1, &descriptor_write, 0, NULL);
 }
 
-RENDERER_API void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_buffer_t* buffer)
+SGE_API void vulkan_descriptor_set_write_uniform_buffer(vulkan_descriptor_set_t* set, u32 binding_index, vulkan_buffer_t* buffer)
 {
 	VkDescriptorBufferInfo buffer_info =
 	{

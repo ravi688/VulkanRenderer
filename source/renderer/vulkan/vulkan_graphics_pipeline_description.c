@@ -39,7 +39,7 @@ static BUFFER* __create_buffer(memory_allocator_t* allocator, u32 size)
 	return buffer;
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_begin(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
+SGE_API void vulkan_graphics_pipeline_description_begin(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
 {
 	memzero(description, vulkan_graphics_pipeline_description_t);
 	vulkan_graphics_pipeline_settings_t* settings = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_SETTINGS, vulkan_graphics_pipeline_settings_t);
@@ -124,7 +124,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_begin(memory_allocator_t*
 	};
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_add_color_blend_state(vulkan_graphics_pipeline_description_t* description, VkBool32 blendEnable)
+SGE_API void vulkan_graphics_pipeline_description_add_color_blend_state(vulkan_graphics_pipeline_description_t* description, VkBool32 blendEnable)
 {
 	VkPipelineColorBlendAttachmentState state =
 	{
@@ -140,14 +140,14 @@ RENDERER_API void vulkan_graphics_pipeline_description_add_color_blend_state(vul
 	buf_push(CAST_TO(BUFFER*, info->pAttachments), &state);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_set_depth_stencil(vulkan_graphics_pipeline_description_t* description, VkBool32 depthWrite, VkBool32 depthTest)
+SGE_API void vulkan_graphics_pipeline_description_set_depth_stencil(vulkan_graphics_pipeline_description_t* description, VkBool32 depthWrite, VkBool32 depthTest)
 {
 	VkPipelineDepthStencilStateCreateInfo* info = &description->settings->depthstencil;
 	info->depthWriteEnable = depthWrite;
 	info->depthTestEnable = depthTest;
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_set_depth_bias(vulkan_graphics_pipeline_description_t* description, float factor, float clamp, float slope_factor)
+SGE_API void vulkan_graphics_pipeline_description_set_depth_bias(vulkan_graphics_pipeline_description_t* description, float factor, float clamp, float slope_factor)
 {
 	VkPipelineRasterizationStateCreateInfo* info = &description->settings->rasterization;
 	if(info->depthBiasEnable == VK_FALSE)
@@ -157,7 +157,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_set_depth_bias(vulkan_gra
 	info->depthBiasSlopeFactor = slope_factor;
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_add_shader(vulkan_graphics_pipeline_description_t* description, const char* file_path, vulkan_shader_type_t type)
+SGE_API void vulkan_graphics_pipeline_description_add_shader(vulkan_graphics_pipeline_description_t* description, const char* file_path, vulkan_shader_type_t type)
 {
 	BUFFER* data = load_binary_from_file(file_path);
 	vulkan_spirv_code_t code =
@@ -170,7 +170,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_add_shader(vulkan_graphic
 	free(data);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_end(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
+SGE_API void vulkan_graphics_pipeline_description_end(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
 {
 	VkPipelineColorBlendStateCreateInfo* info = &description->settings->colorblend;
 	BUFFER* buffer = CAST_TO(BUFFER*, info->pAttachments);
@@ -183,7 +183,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_end(memory_allocator_t* a
 	memory_allocator_dealloc(allocator, buffer);
 }
 
-RENDERER_API void vulkan_graphics_pipeline_description_destroy_allocations(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
+SGE_API void vulkan_graphics_pipeline_description_destroy_allocations(memory_allocator_t* allocator, vulkan_graphics_pipeline_description_t* description)
 {
 	_debug_assert__(description->settings != NULL);
 	debug_assert__(description->is_official == true, "You're trying to destroy an unofficial vulkan_graphics_pipeline_description_t object which is not created by official functions defined in vulkan_graphics_pipeline_description.h");
@@ -209,7 +209,7 @@ RENDERER_API void vulkan_graphics_pipeline_description_destroy_allocations(memor
 	}
 }
 
-RENDERER_API VkPipelineRasterizationStateCreateInfo* vulkan_graphics_pipeline_description_get_rasterization(vulkan_graphics_pipeline_description_t* description)
+SGE_API VkPipelineRasterizationStateCreateInfo* vulkan_graphics_pipeline_description_get_rasterization(vulkan_graphics_pipeline_description_t* description)
 {
 	return &description->settings->rasterization;
 }
