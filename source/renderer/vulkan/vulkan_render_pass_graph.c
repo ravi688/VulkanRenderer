@@ -23,9 +23,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_render_pass_graph.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_render_pass_graph.h>
+#include <sge/memory_allocator.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
 #ifdef GLOBAL_DEBUG
 #include <stdio.h>
 #endif /* GLOBAL_DEBUG */

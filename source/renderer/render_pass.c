@@ -24,11 +24,11 @@
 */
 
 
-#include <renderer/render_pass.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
-#include <renderer/internal/vulkan/vulkan_camera.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <sge/render_pass.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_render_pass.h>
+#include <sge/internal/vulkan/vulkan_camera.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
 
 /* constructors and destructors */
 SGE_API render_pass_t* render_pass_new(memory_allocator_t* allocator)

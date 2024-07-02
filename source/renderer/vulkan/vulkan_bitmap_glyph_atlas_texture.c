@@ -24,10 +24,10 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_bitmap_glyph_atlas_texture.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/renderer.h>
-#include <renderer/memory_allocator.h>
+#include <sge/internal/vulkan/vulkan_bitmap_glyph_atlas_texture.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/sge.h>
+#include <sge/memory_allocator.h>
 
 SGE_API vulkan_bitmap_glyph_atlas_texture_t* vulkan_bitmap_glyph_atlas_texture_new(memory_allocator_t* allocator)
 {

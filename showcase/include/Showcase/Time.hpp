@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <renderer/time.h>
+#include <sge/time.h>
 
 namespace Showcase
 {

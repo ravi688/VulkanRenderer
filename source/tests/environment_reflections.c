@@ -24,15 +24,15 @@
 */
 
 
-#include <renderer/tests/environment_reflections.h>
+#include <sge/tests/environment_reflections.h>
 
 #define SGE_INCLUDE_EVERYTHING_INTERNAL
 #define SGE_INCLUDE_MATH
 #define SGE_INCLUDE_3D_MESH_RENDER_SYSTEM
 #define SGE_INCLUDE_3D_LIGHT_SYSTEM
 #define SGE_INCLUDE_CORE
-#include <renderer/renderer.h>
-#include <renderer/conio.h>
+#include <sge/sge.h>
+#include <sge/conio.h>
 
 
 TEST_DATA(ENVIRONMENT_REFLECTIONS)

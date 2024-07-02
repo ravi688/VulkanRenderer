@@ -24,10 +24,10 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_command_buffer.h>
-#include <renderer/internal/vulkan/vulkan_allocator.h>
-#include <renderer/debug.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_command_buffer.h>
+#include <sge/internal/vulkan/vulkan_allocator.h>
+#include <sge/debug.h>
 
 SGE_API VkCommandPool vulkan_command_pool_create(vulkan_renderer_t* renderer, u32 queueFamilyIndex, VkCommandPoolCreateFlags flags)
 {

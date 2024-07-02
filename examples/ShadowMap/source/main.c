@@ -1,7 +1,7 @@
 // rendering systems
-#include <renderer/renderer.h>
-#include <renderer/render_window.h>
-#include <renderer/memory_allocator.h>
+#include <sge/sge.h>
+#include <sge/render_window.h>
+#include <sge/memory_allocator.h>
 
 // scene management
 #include <ecs/scene_manager.h>
@@ -12,7 +12,7 @@
 #include <Camera.h>
 #include <FPSText.h>
 
-#include <renderer/time.h>
+#include <sge/time.h>
 
 static void setup_scene(scene_t* scene)
 {

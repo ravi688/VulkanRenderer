@@ -23,7 +23,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/debug.h>
+#include <sge/debug.h>
 
 SGE_API void debug_break__(debug_break_reason_t reason)
 {

@@ -24,11 +24,11 @@
 */
 
 
-#include <renderer/struct_descriptor.h>
-#include <renderer/assert.h>
-#include <renderer/debug.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/struct_descriptor.h>
+#include <sge/assert.h>
+#include <sge/debug.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 #include <string.h>
 #include <bufferlib/buffer.h>
 

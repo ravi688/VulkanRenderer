@@ -27,7 +27,7 @@
 #include <Renderer/GlyphMeshPool.hpp>
 #include <Renderer/Renderer.hpp>
 #include <Renderer/Font.hpp>
-#include <renderer/glyph_mesh_pool.h> 
+#include <sge/glyph_mesh_pool.h> 
 
 namespace V3D
 {

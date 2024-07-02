@@ -23,10 +23,10 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/bitmap_text.h>
-#include <renderer/internal/vulkan/vulkan_bitmap_text.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/renderer.h>
+#include <sge/bitmap_text.h>
+#include <sge/internal/vulkan/vulkan_bitmap_text.h>
+#include <sge/memory_allocator.h>
+#include <sge/sge.h>
 
 SGE_API bitmap_text_t* bitmap_text_new(memory_allocator_t* allocator)
 {

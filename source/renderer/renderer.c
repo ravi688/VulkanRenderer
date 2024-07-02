@@ -24,14 +24,14 @@
 */
 
 
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/alloc.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/alloc.h>
 
-#include <renderer/shader_library.h>
-#include <renderer/material_library.h>
-#include <renderer/render_pass_pool.h>
-#include <renderer/string_builder.h>
+#include <sge/shader_library.h>
+#include <sge/material_library.h>
+#include <sge/render_pass_pool.h>
+#include <sge/string_builder.h>
 
 #include <freetype/freetype.h>
 

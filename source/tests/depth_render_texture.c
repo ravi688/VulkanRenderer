@@ -24,7 +24,7 @@
 */
 
 
-#include <renderer/tests/depth_render_texture.h>
+#include <sge/tests/depth_render_texture.h>
 
 #define SGE_INCLUDE_EVERYTHING_INTERNAL
 #define SGE_INCLUDE_MATH
@@ -32,8 +32,8 @@
 #define SGE_INCLUDE_3D_LIGHT_SYSTEM
 #define SGE_INCLUDE_DEBUG
 #define SGE_INCLUDE_CORE
-#include <renderer/renderer.h>
-#include <renderer/conio.h>
+#include <sge/sge.h>
+#include <sge/conio.h>
 
 
 TEST_DATA(DEPTH_RENDER_TEXTURE)

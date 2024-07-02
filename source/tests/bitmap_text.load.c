@@ -28,22 +28,22 @@
 	Test to check if bitmap text is working fine
  */
 
-#include <renderer/tests/bitmap_text.load.h>
+#include <sge/tests/bitmap_text.load.h>
 
 #define SGE_INCLUDE_EVERYTHING_INTERNAL
 #define SGE_INCLUDE_DATA_STRUCTURES
 #define SGE_INCLUDE_MATH
 #define SGE_INCLUDE_CORE
-#include <renderer/renderer.h>
+#include <sge/sge.h>
 
-#include <renderer/hash_table.h>
-#include <renderer/bmp.h>
-#include <renderer/color.h>
-#include <renderer/buffer2d.h>
-#include <renderer/system/display.h>
-#include <renderer/bitmap_glyph_atlas_texture.h>
-#include <renderer/bitmap_text.h>
-#include <renderer/conio.h>
+#include <sge/hash_table.h>
+#include <sge/bmp.h>
+#include <sge/color.h>
+#include <sge/buffer2d.h>
+#include <sge/system/display.h>
+#include <sge/bitmap_glyph_atlas_texture.h>
+#include <sge/bitmap_text.h>
+#include <sge/conio.h>
 
 #include <freetype/ft2build.h>
 #include <freetype/freetype/freetype.h>

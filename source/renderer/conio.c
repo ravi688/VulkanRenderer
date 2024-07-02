@@ -24,7 +24,7 @@
 */
 
 
-#include <renderer/conio.h>
+#include <sge/conio.h>
 
 #ifdef CONIO_IMPLEMENTATION
 #include <ncurses.h>

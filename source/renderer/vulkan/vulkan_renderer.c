@@ -23,31 +23,31 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_swapchain.h>
-#include <renderer/internal/vulkan/vulkan_instance.h>
-#include <renderer/internal/vulkan/vulkan_physical_device.h>
-#include <renderer/internal/vulkan/vulkan_command_buffer.h>
-#include <renderer/internal/vulkan/vulkan_command.h>
-#include <renderer/internal/vulkan/vulkan_shader_library.h>
-#include <renderer/internal/vulkan/vulkan_material_library.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
-#include <renderer/internal/vulkan/vulkan_camera_system.h>
-#include <renderer/internal/vulkan/vulkan_queue.h>
-#include <renderer/internal/vulkan/vulkan_to_string.h>
-#include <renderer/internal/vulkan/vulkan_allocator.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_swapchain.h>
+#include <sge/internal/vulkan/vulkan_instance.h>
+#include <sge/internal/vulkan/vulkan_physical_device.h>
+#include <sge/internal/vulkan/vulkan_command_buffer.h>
+#include <sge/internal/vulkan/vulkan_command.h>
+#include <sge/internal/vulkan/vulkan_shader_library.h>
+#include <sge/internal/vulkan/vulkan_material_library.h>
+#include <sge/internal/vulkan/vulkan_render_pass_pool.h>
+#include <sge/internal/vulkan/vulkan_camera_system.h>
+#include <sge/internal/vulkan/vulkan_queue.h>
+#include <sge/internal/vulkan/vulkan_to_string.h>
+#include <sge/internal/vulkan/vulkan_allocator.h>
 #include <hpml/affine_transformation.h>
-#include <renderer/glsl_memory_layout.h>
+#include <sge/glsl_memory_layout.h>
 #include <glslcommon/glsl_types.h>
-#include <renderer/render_window.h>
-#include <renderer/system/display.h>
-#include <renderer/debug.h>
-#include <renderer/assert.h>
-#include <renderer/defines.h>
-#include <renderer/alloc.h>
-#include <renderer/renderer.h>
-#include <renderer/memory_allocator.h>
+#include <sge/render_window.h>
+#include <sge/system/display.h>
+#include <sge/debug.h>
+#include <sge/assert.h>
+#include <sge/defines.h>
+#include <sge/alloc.h>
+#include <sge/sge.h>
+#include <sge/memory_allocator.h>
 
 #include <stdio.h> 		// puts
 

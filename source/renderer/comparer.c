@@ -23,7 +23,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/comparer.h>
+#include <sge/comparer.h>
 
 #include <string.h> // strlen and strcmp
 

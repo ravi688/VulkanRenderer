@@ -24,7 +24,7 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_to_string.h>
+#include <sge/internal/vulkan/vulkan_to_string.h>
 
 SGE_API void vk_present_mode_to_string(const char* description, VkPresentModeKHR present_mode, BUFFER* string_buffer)
 {

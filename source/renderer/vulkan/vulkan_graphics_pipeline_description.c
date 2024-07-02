@@ -24,10 +24,10 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/internal/vulkan/vulkan_graphics_pipeline_description.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 #include <bufferlib/buffer.h>
 #include <disk_manager/file_reader.h>
 

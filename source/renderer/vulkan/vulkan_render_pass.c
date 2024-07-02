@@ -24,19 +24,19 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_attachment.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_image_view.h>
-#include <renderer/internal/vulkan/vulkan_framebuffer.h>
-#include <renderer/internal/vulkan/vulkan_allocator.h>
-#include <renderer/internal/vulkan/vulkan_camera.h>
-#include <renderer/render_window.h>
-#include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/debug.h>
+#include <sge/internal/vulkan/vulkan_render_pass.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_attachment.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_image_view.h>
+#include <sge/internal/vulkan/vulkan_framebuffer.h>
+#include <sge/internal/vulkan/vulkan_allocator.h>
+#include <sge/internal/vulkan/vulkan_camera.h>
+#include <sge/render_window.h>
+#include <sge/assert.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
+#include <sge/debug.h>
 
 vulkan_render_pass_create_info_t* vulkan_render_pass_create_info_new(memory_allocator_t* allocator)
 {

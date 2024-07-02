@@ -23,9 +23,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/bitmap_glyph_atlas_texture.h>
-#include <renderer/internal/vulkan/vulkan_bitmap_glyph_atlas_texture.h>
-#include <renderer/renderer.h> // VULKAN_RENDERER()
+#include <sge/bitmap_glyph_atlas_texture.h>
+#include <sge/internal/vulkan/vulkan_bitmap_glyph_atlas_texture.h>
+#include <sge/sge.h> // VULKAN_RENDERER()
 
 SGE_API bitmap_glyph_atlas_texture_t* bitmap_glyph_atlas_texture_new(memory_allocator_t* allocator)
 {

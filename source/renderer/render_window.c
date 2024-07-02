@@ -24,15 +24,15 @@
 */
 
 
-#include <renderer/render_window.h>
-#include <renderer/debug.h>
-#include <renderer/assert.h>
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_instance.h>
-#include <renderer/internal/vulkan/vulkan_allocator.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/render_window.h>
+#include <sge/debug.h>
+#include <sge/assert.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_instance.h>
+#include <sge/internal/vulkan/vulkan_allocator.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 #include <stdio.h>
 
 #define GLFW_INCLUDE_VULKAN

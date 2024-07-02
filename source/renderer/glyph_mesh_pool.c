@@ -23,9 +23,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/glyph_mesh_pool.h>
-#include <renderer/internal/vulkan/vulkan_glyph_mesh_pool.h>
-#include <renderer/renderer.h> // VULKAN_RENDERER(...)
+#include <sge/glyph_mesh_pool.h>
+#include <sge/internal/vulkan/vulkan_glyph_mesh_pool.h>
+#include <sge/sge.h> // VULKAN_RENDERER(...)
 
 // constructors and destructors
 SGE_API glyph_mesh_pool_t* glyph_mesh_pool_new(memory_allocator_t* allocator)

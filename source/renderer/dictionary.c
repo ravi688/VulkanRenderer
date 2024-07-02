@@ -24,9 +24,9 @@
 */
 
 
-#include <renderer/dictionary.h>
-#include <renderer/alloc.h>
-#include <renderer/assert.h>
+#include <sge/dictionary.h>
+#include <sge/alloc.h>
+#include <sge/assert.h>
 
 #ifndef GLOBAL_DEBUG
 #	define check_pre_condition(dictionary)

@@ -23,18 +23,18 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_text_mesh.h>
-#include <renderer/internal/vulkan/vulkan_mesh.h> 				// vulkan_mesh_create_and_vertex_buffer
-#include <renderer/internal/vulkan/vulkan_instance_buffer.h> 	// vulkan_instance_buffer_t
-#include <renderer/internal/vulkan/vulkan_command.h>
-#include <renderer/internal/vulkan/vulkan_glyph_mesh_pool.h> 	// vulkan_glyph_mesh_pool_t
-#include <renderer/internal/vulkan/vulkan_material.h>			// vulkan_material_set_int
-#include <renderer/mesh3d.h>									// mesh3d_t
-#include <renderer/assert.h>
-#include <renderer/font.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/system/display.h> 							// display_get_dpi()
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_text_mesh.h>
+#include <sge/internal/vulkan/vulkan_mesh.h> 				// vulkan_mesh_create_and_vertex_buffer
+#include <sge/internal/vulkan/vulkan_instance_buffer.h> 	// vulkan_instance_buffer_t
+#include <sge/internal/vulkan/vulkan_command.h>
+#include <sge/internal/vulkan/vulkan_glyph_mesh_pool.h> 	// vulkan_glyph_mesh_pool_t
+#include <sge/internal/vulkan/vulkan_material.h>			// vulkan_material_set_int
+#include <sge/mesh3d.h>									// mesh3d_t
+#include <sge/assert.h>
+#include <sge/font.h>
+#include <sge/memory_allocator.h>
+#include <sge/system/display.h> 							// display_get_dpi()
 #include <string.h>												// strlen
 #include <ctype.h> 												// isspace
 

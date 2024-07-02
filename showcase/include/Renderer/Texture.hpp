@@ -28,7 +28,7 @@
 
 #include <Showcase/Defines.hpp>
 #include <Renderer/IRenderObject.hpp>
-#include <renderer/texture.h>
+#include <sge/texture.h>
 
 #include <stdarg.h>		// va_list
 

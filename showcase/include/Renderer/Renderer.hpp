@@ -37,8 +37,8 @@
 #include <Renderer/Material.hpp>
 #include <Renderer/RenderWindow.hpp>
 
-#include <renderer/defines.h>			// C header, u32
-#include <renderer/renderer.h>			// C header
+#include <sge/defines.h>			// C header, u32
+#include <sge/sge.h>			// C header
 #include <string>
 
 namespace V3D

@@ -24,22 +24,22 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_render_queue.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_graph.h>
-#include <renderer/internal/vulkan/vulkan_shader_library.h>
-#include <renderer/internal/vulkan/vulkan_material_library.h>
-#include <renderer/internal/vulkan/vulkan_render_object.h>
-#include <renderer/internal/vulkan/vulkan_render_scene.h>
-#include <renderer/internal/vulkan/vulkan_material.h>
-#include <renderer/internal/vulkan/vulkan_shader.h>
-#include <renderer/internal/vulkan/vulkan_graphics_pipeline.h>
-#include <renderer/internal/vulkan/vulkan_camera.h>
-#include <renderer/assert.h>
-#include <renderer/debug.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/internal/vulkan/vulkan_render_queue.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_render_pass_pool.h>
+#include <sge/internal/vulkan/vulkan_render_pass_graph.h>
+#include <sge/internal/vulkan/vulkan_shader_library.h>
+#include <sge/internal/vulkan/vulkan_material_library.h>
+#include <sge/internal/vulkan/vulkan_render_object.h>
+#include <sge/internal/vulkan/vulkan_render_scene.h>
+#include <sge/internal/vulkan/vulkan_material.h>
+#include <sge/internal/vulkan/vulkan_shader.h>
+#include <sge/internal/vulkan/vulkan_graphics_pipeline.h>
+#include <sge/internal/vulkan/vulkan_camera.h>
+#include <sge/assert.h>
+#include <sge/debug.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 SGE_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator)
 {

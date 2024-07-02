@@ -7,10 +7,10 @@ static const u64 TYPE_ID(Plane) = CREATE_COMPONENT_ID(3);
 #include <Math.h>
 #include <Camera.h>
 
-#include <renderer/mesh.h>
-#include <renderer/texture.h>
-#include <renderer/material.h>
-#include <renderer/shader.h>
+#include <sge/mesh.h>
+#include <sge/texture.h>
+#include <sge/material.h>
+#include <sge/shader.h>
 
 typedef struct Plane
 {

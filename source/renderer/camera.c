@@ -24,15 +24,15 @@
 */
 
 
-#include <renderer/camera.h>
-#include <renderer/internal/vulkan/vulkan_camera.h>
-#include <renderer/renderer.h>
-#include <renderer/render_pass_pool.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
+#include <sge/camera.h>
+#include <sge/internal/vulkan/vulkan_camera.h>
+#include <sge/sge.h>
+#include <sge/render_pass_pool.h>
+#include <sge/internal/vulkan/vulkan_render_pass_pool.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
 
-#include <renderer/alloc.h>
-#include <renderer/assert.h>
+#include <sge/alloc.h>
+#include <sge/assert.h>
 
 /* constructors & destructors */
 SGE_API camera_t* camera_new(memory_allocator_t* allocator)

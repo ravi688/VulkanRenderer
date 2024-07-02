@@ -28,7 +28,7 @@
 #include <Showcase/Defines.hpp>
 #include <Renderer/IRenderObject.hpp>
 #include <Renderer/Mesh.hpp> 				// Mesh
-#include <renderer/glyph_mesh_pool.h> 		// C header, glyph_mesh_pool_t
+#include <sge/glyph_mesh_pool.h> 		// C header, glyph_mesh_pool_t
 
 
 namespace V3D

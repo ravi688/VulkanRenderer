@@ -23,15 +23,15 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_instance.h>
-#include <renderer/internal/vulkan/vulkan_result.h>
-#include <renderer/internal/vulkan/vulkan_physical_device.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_allocator.h>
-#include <renderer/assert.h>
-#include <renderer/alloc.h> 	// heap_new, heap_newv, heap_free
-#include <renderer/memory_allocator.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_instance.h>
+#include <sge/internal/vulkan/vulkan_result.h>
+#include <sge/internal/vulkan/vulkan_physical_device.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_allocator.h>
+#include <sge/assert.h>
+#include <sge/alloc.h> 	// heap_new, heap_newv, heap_free
+#include <sge/memory_allocator.h>
 #include <stdio.h> 		// sprintf
 #include <string.h>		// strcmp
 

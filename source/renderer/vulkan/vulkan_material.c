@@ -23,16 +23,16 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_material.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_texture.h>
-#include <renderer/internal/vulkan/vulkan_shader.h>
-#include <renderer/internal/vulkan/vulkan_pipeline_layout.h>
-#include <renderer/internal/vulkan/vulkan_types.h>
-#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
-#include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/internal/vulkan/vulkan_material.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_texture.h>
+#include <sge/internal/vulkan/vulkan_shader.h>
+#include <sge/internal/vulkan/vulkan_pipeline_layout.h>
+#include <sge/internal/vulkan/vulkan_types.h>
+#include <sge/internal/vulkan/vulkan_shader_resource_description.h>
+#include <sge/assert.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 SGE_API vulkan_material_t* vulkan_material_new(memory_allocator_t* allocator)
 {

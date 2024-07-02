@@ -24,10 +24,10 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
-#include <renderer/internal/vulkan/vulkan_types.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/glsl_memory_layout.h>
+#include <sge/internal/vulkan/vulkan_shader_resource_description.h>
+#include <sge/internal/vulkan/vulkan_types.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/glsl_memory_layout.h>
 
 SGE_API void vulkan_shader_resource_description_create_vertex_attribute(memory_allocator_t* allocator, vulkan_shader_resource_description_t* description, const char* name, glsl_type_t type, u32 location_number, u32 binding_number)
 {

@@ -24,7 +24,7 @@
 */
 
 
-#include <renderer/mesh3d.h>
+#include <sge/mesh3d.h>
 #include <memory.h>
 #include <stdlib.h>
 
@@ -51,11 +51,11 @@
 
 
 //These header should be include at the last because there maybe previous definitions of ASSERT from other library headers
-#include <renderer/defines.h>
-#include <renderer/assert.h>
+#include <sge/defines.h>
+#include <sge/assert.h>
 
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 #define __UVS_ARE_NOT_FOUND__ "mesh3d_t::uvs are not found, make sure to call mesh3d_uvs_new(count) first\n"
 #define __NORMALS_ARE_NOT_FOUND__ "mesh3d_t::normals are not found, make sure to call mesh3d_normals_new(count) first\n"

@@ -23,12 +23,12 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_instance_buffer.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/assert.h>
-#include <renderer/alloc.h> 			// memcopyv
-#include <renderer/memory_allocator.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_instance_buffer.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/assert.h>
+#include <sge/alloc.h> 			// memcopyv
+#include <sge/memory_allocator.h>
 
 // constructors and destructors
 SGE_API void vulkan_instance_buffer_create(vulkan_renderer_t* renderer, vulkan_instance_buffer_create_info_t* create_info, vulkan_instance_buffer_t* out_instance_buffer)

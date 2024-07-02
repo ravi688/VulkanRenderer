@@ -24,14 +24,14 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_defines.h>  					// vkCall
-#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
-#include <renderer/internal/vulkan/vulkan_types.h> 			// vulkan_shader_type_t
-#include <renderer/internal/vulkan/vulkan_allocator.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/internal/vulkan/vulkan_descriptor_set_layout.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_defines.h>  					// vkCall
+#include <sge/internal/vulkan/vulkan_shader_resource_description.h>
+#include <sge/internal/vulkan/vulkan_types.h> 			// vulkan_shader_type_t
+#include <sge/internal/vulkan/vulkan_allocator.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 static VkDescriptorSetLayout get_null_set_layout(vulkan_renderer_t* renderer)
 {

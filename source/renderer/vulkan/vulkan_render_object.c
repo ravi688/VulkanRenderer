@@ -24,14 +24,14 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_render_object.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_render_queue.h>
-#include <renderer/glsl_memory_layout.h>
+#include <sge/internal/vulkan/vulkan_render_object.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_render_queue.h>
+#include <sge/glsl_memory_layout.h>
 #include <glslcommon/glsl_types.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/assert.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
+#include <sge/assert.h>
 
 typedef struct vulkan_mesh_t vulkan_mesh_t;
 SGE_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh);

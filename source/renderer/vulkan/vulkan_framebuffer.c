@@ -24,14 +24,14 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_framebuffer.h>
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_allocator.h>
-#include <renderer/render_window.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/internal/vulkan/vulkan_framebuffer.h>
+#include <sge/internal/vulkan/vulkan_render_pass.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_allocator.h>
+#include <sge/render_window.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
 SGE_API vulkan_framebuffer_t* vulkan_framebuffer_new(memory_allocator_t* allocator)
 {

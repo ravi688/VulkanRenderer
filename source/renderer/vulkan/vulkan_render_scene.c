@@ -24,21 +24,21 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_render_scene.h>
-#include <renderer/internal/vulkan/vulkan_render_object.h>
-#include <renderer/internal/vulkan/vulkan_render_queue.h>
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
-#include <renderer/internal/vulkan/vulkan_camera_system.h>
-#include <renderer/internal/vulkan/vulkan_light.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/glsl_memory_layout.h>
+#include <sge/internal/vulkan/vulkan_render_scene.h>
+#include <sge/internal/vulkan/vulkan_render_object.h>
+#include <sge/internal/vulkan/vulkan_render_queue.h>
+#include <sge/internal/vulkan/vulkan_render_pass.h>
+#include <sge/internal/vulkan/vulkan_camera_system.h>
+#include <sge/internal/vulkan/vulkan_light.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/glsl_memory_layout.h>
 #include <glslcommon/glsl_types.h>
 
-#include <renderer/renderer.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/sge.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 
-#include <renderer/assert.h>
+#include <sge/assert.h>
 
 /* constructors & destructors */
 SGE_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator)

@@ -24,9 +24,9 @@
 */
 
 
-#include <renderer/multi_buffer.h>
-#include <renderer/assert.h>
-#include <renderer/memory_allocator.h>
+#include <sge/multi_buffer.h>
+#include <sge/assert.h>
+#include <sge/memory_allocator.h>
 
 #ifndef GLOBAL_DEBUG
 #	define check_pre_condition(multi_buffer)

@@ -23,16 +23,16 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_defines.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_mesh.h>
-#include <renderer/internal/vulkan/vulkan_swapchain.h>
-#include <renderer/internal/vulkan/vulkan_buffer.h>
-#include <renderer/internal/vulkan/vulkan_command.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/internal/vulkan/vulkan_defines.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_mesh.h>
+#include <sge/internal/vulkan/vulkan_swapchain.h>
+#include <sge/internal/vulkan/vulkan_buffer.h>
+#include <sge/internal/vulkan/vulkan_command.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 #include <memory.h>
-#include <renderer/assert.h>
+#include <sge/assert.h>
 
 #include <stdio.h> // TODO: remove it
 

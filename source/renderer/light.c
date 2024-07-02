@@ -24,9 +24,9 @@
 */
 
 
-#include <renderer/light.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_light.h>
+#include <sge/light.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_light.h>
 
 /* constructors & destructors */
 SGE_API light_t* light_new(memory_allocator_t* allocator, light_type_t type)

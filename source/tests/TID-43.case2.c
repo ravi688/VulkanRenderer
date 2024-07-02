@@ -24,12 +24,12 @@
 */
 
 
-#include <renderer/tests/TID-43.case2.h>
-#include <renderer/debug.h>
+#include <sge/tests/TID-43.case2.h>
+#include <sge/debug.h>
 
-#include <renderer/memory_allocator.h>
-#include <renderer/event.h>
-#include <renderer/conio.h>
+#include <sge/memory_allocator.h>
+#include <sge/event.h>
+#include <sge/conio.h>
 
 TEST_DATA(TID_43_CASE_2)
 {

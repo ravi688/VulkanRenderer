@@ -26,11 +26,11 @@
 /* here order matters, as vulkan_vertex_buffer_layout_description.h defines only VkFormat if vulkan/vulkan.h is not included,
  * but if it is include then the inclusion of vulkan/vulkan.h must come first to let the header define VULKAN_CORE_H_ 
  * here vulkan/vulkan_renderer.h includes vulkan/vulkan.h under the hood, hence it should come first. */
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
 
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
 #include <bufferlib/buffer.h>
 
 #define create_buffer(allocator, type) __create_buffer(allocator, sizeof(type))

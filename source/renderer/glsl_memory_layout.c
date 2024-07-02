@@ -23,7 +23,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/glsl_memory_layout.h>
+#include <sge/glsl_memory_layout.h>
 #include <glslcommon/glsl_types.h>
 
 u32 glsl_std140_get_type_align(u8 type, bool is_array)

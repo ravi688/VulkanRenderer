@@ -23,7 +23,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/system/display.h>
+#include <sge/system/display.h>
 #include <math.h>
 
 SGE_API iextent2d_t display_get_resolution()

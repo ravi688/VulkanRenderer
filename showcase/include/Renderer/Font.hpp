@@ -27,7 +27,7 @@
 
 #include <Showcase/Defines.hpp>
 #include <Renderer/IResourceObject.hpp>
-#include <renderer/font.h>			// C header, font_t
+#include <sge/font.h>			// C header, font_t
 #include <string>
 
 namespace V3D

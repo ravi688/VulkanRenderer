@@ -23,24 +23,24 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/shader_library.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_shader_library.h>
-#include <renderer/internal/vulkan/vulkan_descriptor_set.h>
-#include <renderer/internal/vulkan/vulkan_descriptor_set_layout.h>
-#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
-#include <renderer/internal/vulkan/vulkan_shader_resource_description_builder.h>
-#include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
-#include <renderer/internal/vulkan/vulkan_vertex_buffer_layout_description_builder.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_description.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_description_builder.h>
-#include <renderer/internal/vulkan/vulkan_graphics_pipeline_description.h>
-#include <renderer/internal/vulkan/vulkan_graphics_pipeline_description_builder.h>
-#include <renderer/internal/vulkan/vulkan_shader_create_info_builder.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_mesh.h>
-#include <renderer/glsl_memory_layout.h>
-#include <renderer/alloc.h>
+#include <sge/shader_library.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_shader_library.h>
+#include <sge/internal/vulkan/vulkan_descriptor_set.h>
+#include <sge/internal/vulkan/vulkan_descriptor_set_layout.h>
+#include <sge/internal/vulkan/vulkan_shader_resource_description.h>
+#include <sge/internal/vulkan/vulkan_shader_resource_description_builder.h>
+#include <sge/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
+#include <sge/internal/vulkan/vulkan_vertex_buffer_layout_description_builder.h>
+#include <sge/internal/vulkan/vulkan_render_pass_description.h>
+#include <sge/internal/vulkan/vulkan_render_pass_description_builder.h>
+#include <sge/internal/vulkan/vulkan_graphics_pipeline_description.h>
+#include <sge/internal/vulkan/vulkan_graphics_pipeline_description_builder.h>
+#include <sge/internal/vulkan/vulkan_shader_create_info_builder.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_mesh.h>
+#include <sge/glsl_memory_layout.h>
+#include <sge/alloc.h>
 
 #include <disk_manager/file_reader.h>
 #include <string.h> 		// strcpy

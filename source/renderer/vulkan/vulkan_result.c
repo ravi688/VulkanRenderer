@@ -24,8 +24,8 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_result.h>
-#include <renderer/debug.h>
+#include <sge/internal/vulkan/vulkan_result.h>
+#include <sge/debug.h>
 #include <stdlib.h>
 #include <stdio.h>
 

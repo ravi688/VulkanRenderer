@@ -24,20 +24,20 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_render_pass_pool.h>
-#include <renderer/internal/vulkan/vulkan_render_pass.h>
-#include <renderer/internal/vulkan/vulkan_descriptor_set.h>
-#include <renderer/internal/vulkan/vulkan_attachment.h>
-#include <renderer/internal/vulkan/vulkan_shader_resource_description.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/internal/vulkan/vulkan_camera_system.h>
-#include <renderer/internal/vulkan/vulkan_render_pass_create_info_builder.h>
-#include <renderer/internal/vulkan/vulkan_subpass_create_info_builder.h>
-#include <renderer/internal/vulkan/vulkan_shader_resource_description_builder.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/assert.h>
-#include <renderer/debug.h>
+#include <sge/internal/vulkan/vulkan_render_pass_pool.h>
+#include <sge/internal/vulkan/vulkan_render_pass.h>
+#include <sge/internal/vulkan/vulkan_descriptor_set.h>
+#include <sge/internal/vulkan/vulkan_attachment.h>
+#include <sge/internal/vulkan/vulkan_shader_resource_description.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/internal/vulkan/vulkan_camera_system.h>
+#include <sge/internal/vulkan/vulkan_render_pass_create_info_builder.h>
+#include <sge/internal/vulkan/vulkan_subpass_create_info_builder.h>
+#include <sge/internal/vulkan/vulkan_shader_resource_description_builder.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
+#include <sge/assert.h>
+#include <sge/debug.h>
 #include <string.h>
 
 /* constructors & destructors */

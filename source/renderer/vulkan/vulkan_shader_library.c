@@ -23,13 +23,13 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/internal/vulkan/vulkan_shader_library.h>
-#include <renderer/internal/vulkan/vulkan_shader.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/io.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/alloc.h>
-#include <renderer/debug.h>
+#include <sge/internal/vulkan/vulkan_shader_library.h>
+#include <sge/internal/vulkan/vulkan_shader.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/io.h>
+#include <sge/memory_allocator.h>
+#include <sge/alloc.h>
+#include <sge/debug.h>
 #include <string.h>
 
 /* constructors & destructors */

@@ -24,13 +24,13 @@
 */
 
 
-#include <renderer/render_scene.h>
-#include <renderer/renderer.h>
-#include <renderer/internal/vulkan/vulkan_render_scene.h>
-#include <renderer/internal/vulkan/vulkan_render_object.h>
-#include <renderer/internal/vulkan/vulkan_render_queue.h>
-#include <renderer/internal/vulkan/vulkan_camera.h> /* for VULKAN_CAMERA_CAST */
-#include <renderer/internal/vulkan/vulkan_light.h> /* for VULKAN_LIGHT_CAST */
+#include <sge/render_scene.h>
+#include <sge/sge.h>
+#include <sge/internal/vulkan/vulkan_render_scene.h>
+#include <sge/internal/vulkan/vulkan_render_object.h>
+#include <sge/internal/vulkan/vulkan_render_queue.h>
+#include <sge/internal/vulkan/vulkan_camera.h> /* for VULKAN_CAMERA_CAST */
+#include <sge/internal/vulkan/vulkan_light.h> /* for VULKAN_LIGHT_CAST */
 
 /* constructors & destructors */
 SGE_API render_scene_t* render_scene_new(memory_allocator_t* allocator)

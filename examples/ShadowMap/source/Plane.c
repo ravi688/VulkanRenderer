@@ -3,7 +3,7 @@
 #include <RenderSystem.h>
 #include <calltrace/calltrace.h>
 #include <assert.h>
-#include <renderer/mesh3d.h>
+#include <sge/mesh3d.h>
 
 static void loadAndSetup(Plane* this)
 {

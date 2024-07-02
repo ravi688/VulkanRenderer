@@ -23,9 +23,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/bitmap_glyph_pool.h>
-#include <renderer/renderer.h>
-#include <renderer/bmp.h> // bmp_write
+#include <sge/bitmap_glyph_pool.h>
+#include <sge/sge.h>
+#include <sge/bmp.h> // bmp_write
 #include <ctype.h> // isgraph
 
 SGE_API bitmap_glyph_pool_t* bitmap_glyph_pool_new(memory_allocator_t* allocator)

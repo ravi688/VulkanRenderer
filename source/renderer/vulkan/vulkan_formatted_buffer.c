@@ -1,8 +1,8 @@
-#include <renderer/internal/vulkan/vulkan_formatted_buffer.h>
-#include <renderer/internal/vulkan/vulkan_host_buffered_buffer.h>
-#include <renderer/internal/vulkan/vulkan_renderer.h>
-#include <renderer/memory_allocator.h>
-#include <renderer/struct_descriptor.h>
+#include <sge/internal/vulkan/vulkan_formatted_buffer.h>
+#include <sge/internal/vulkan/vulkan_host_buffered_buffer.h>
+#include <sge/internal/vulkan/vulkan_renderer.h>
+#include <sge/memory_allocator.h>
+#include <sge/struct_descriptor.h>
 
 SGE_API vulkan_formatted_buffer_t* vulkan_formatted_buffer_new(memory_allocator_t* allocator)
 {

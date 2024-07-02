@@ -24,11 +24,11 @@
 */
 
 
-#include <renderer/internal/vulkan/vulkan_command.h>
-#include <renderer/assert.h>
+#include <sge/internal/vulkan/vulkan_command.h>
+#include <sge/assert.h>
 
 #include <stdarg.h>
-#include <renderer/alloc.h>	 // memcopyv
+#include <sge/alloc.h>	 // memcopyv
 
 SGE_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkImage image,
 		VkImageSubresourceRange* subresource,

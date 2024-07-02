@@ -23,6 +23,6 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/text.h>
-#include <renderer/internal/vulkan/vulkan_text.h>
-#include <renderer/memory_allocator.h>
+#include <sge/text.h>
+#include <sge/internal/vulkan/vulkan_text.h>
+#include <sge/memory_allocator.h>

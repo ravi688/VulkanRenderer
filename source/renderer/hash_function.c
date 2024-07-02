@@ -23,7 +23,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-#include <renderer/hash_function.h>
+#include <sge/hash_function.h>
 #include <string.h>
 
 SGE_API hash_t string_hash(void* v)
