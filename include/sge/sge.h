@@ -72,18 +72,18 @@ typedef struct memory_allocator_t memory_allocator_t;
 
 typedef struct FT_LibraryRec_  *FT_Library;
 
-typedef enum renderer_gpu_type_t
+typedef enum sge_gpu_type_t
 {
 	SGE_GPU_TYPE_AUTO = 0,
 	SGE_GPU_TYPE_INTEGRATED,
 	SGE_GPU_TYPE_DISCRETE,
 	SGE_GPU_TYPE_CPU
-} renderer_gpu_type_t;
+} sge_gpu_type_t;
 
 
-typedef struct renderer_create_info_t
+typedef struct sge_driver_create_info_t
 {
-	renderer_gpu_type_t gpu_type;
+	sge_gpu_type_t gpu_type;
 	u32 width;
 	u32 height;
 	const char* title;
@@ -92,7 +92,7 @@ typedef struct renderer_create_info_t
 	u32 max_point_lights;
 	u32 max_spot_lights;
 	u32 max_far_lights;
-} renderer_create_info_t;
+} sge_driver_create_info_t;
 
 typedef struct renderer_t
 {
@@ -122,7 +122,7 @@ typedef struct renderer_t
 
 BEGIN_CPP_COMPATIBLE
 
-SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_create_info_t* create_info);
+SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, sge_driver_create_info_t* create_info);
 SGE_API void renderer_terminate(renderer_t* renderer);
 SGE_API void renderer_update(renderer_t* renderer);
 SGE_API bool renderer_is_running(renderer_t* renderer);
