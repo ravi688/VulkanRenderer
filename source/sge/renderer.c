@@ -35,7 +35,7 @@
 
 #include <freetype/freetype.h>
 
-SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, renderer_create_info_t* _create_info)
+SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, sge_driver_create_info_t* _create_info)
 {
 	renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDERER, renderer_t);
 	memzero(renderer, renderer_t);
