@@ -129,16 +129,16 @@ int main(int argc, const char** argv)
 
 	test_t* test = test_create(allocator, (argc > 1) ? argv[1] : "");
 	renderer_initialization_data_t data = test->renderer_initialize();
-	renderer_gpu_type_t gpu_type = data.gpu_type;
+	sge_gpu_type_t gpu_type = data.gpu_type;
 	for(int i = 1; i < argc; i++)
 	{
 		if(strncmp(argv[i], "gpu_type=", strlen("gpu_type=")) == 0)
 		{
-			gpu_type = CAST_TO(renderer_gpu_type_t, atoi(argv[i] + strlen("gpu_type=")));
+			gpu_type = CAST_TO(sge_gpu_type_t, atoi(argv[i] + strlen("gpu_type=")));
 			break;
 		}
 	}
-	renderer_create_info_t driver_create_info = 
+	sge_driver_create_info_t driver_create_info = 
 	{
 		.gpu_type = gpu_type,
 		.width = data.window_width, 
