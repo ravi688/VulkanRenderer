@@ -47,6 +47,8 @@ PROJECT_NAME = SGE
 STATIC_LIB_NAME = sge.a
 DYNAMIC_LIB_NAME = sge.dll
 EXECUTABLE_NAME = main
+MAIN_SOURCE_LANG = cpp
+MAIN_SOURCES=main.cpp
 EXTERNAL_LIBRARIES = -L./external-dependency-libs
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies -I./include/freetype
 DEPENDENCIES = ../toolchain/shader_compiler ECS MeshLib GLSLCommon Common MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
@@ -82,7 +84,7 @@ __SHARED_DEPENDENCY_LIBS = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEP
 ifeq (Windows,$(PLATFORM))
 	__EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
 else
-	__EXECUTABLE_NAME = $(EXECUTABLE_NAME)
+	__EXECUTABLE_NAME = $(basename EXECUTABLE_NAME)
 endif
 __UNPACKED_DIRS = $(notdir $(basename $(DEPENDENCY_LIBS) $(SHARED_DEPENDENCY_LIBS)))
 .PHONY: all
@@ -221,9 +223,12 @@ TARGET = $(__EXECUTABLE_NAME)
 DEPENDENCY_INCLUDES = $(addsuffix /include, $(__DEPENDENCIES))
 SHARED_DEPENDENCY_INCLUDES = $(addsuffix /include, $(__SHARED_DEPENDENCIES))
 
+MAIN_OBJECT=$(addsuffix .o, $(wildcard $(MAIN_SOURCES)))
 INCLUDES= -I./include $(EXTERNAL_INCLUDES) $(addprefix -I, $(DEPENDENCY_INCLUDES) $(SHARED_DEPENDENCY_INCLUDES))
-SOURCES= $(wildcard source/*.c source/*/*.c source/*/*/*.c)
-OBJECTS= $(addsuffix .o, $(basename $(SOURCES)))
+C_SOURCES=$(wildcard source/*.c source/*/*.c source/*/*/*.c)
+CPP_SOURCES=$(wildcard source/*.cpp source/*/*.cpp)
+SOURCES= $(C_SOURCES) $(CPP_SOURCES)
+OBJECTS= $(addsuffix .o, $(SOURCES))
 LIBS = $(EXTERNAL_LIBRARIES)
 
 #Flags and Defines
@@ -238,10 +243,14 @@ RELEASE_DEFINES = -DHPML_RELEASE_MODE -DLOG_RELEASE -DGLOBAL_RELEASE -DRELEASE
 DEFINES = -DMEMORY_ALLOCATION_SAFETY_LEVEL_0 -DSGE_VULKAN_DRIVER #-DUSE_VULKAN_ALLOCATOR #-DMEMORY_METRICS
 
 COMPILER_FLAGS= -m64
+C_COMPILER_FLAGS = $(COMPILER_FLAGS)
+CPP_COMPILER_FLAGS = $(COMPILER_FLAGS)
+LINKER=g++
 LINKER_FLAGS= -m64
 DYNAMIC_LIBRARY_COMPILATION_FLAG = -shared
 DYNAMIC_IMPORT_LIBRARY_FLAG = -Wl,--out-implib,
-COMPILER = gcc
+C_COMPILER = gcc
+CPP_COMPILER = g++
 ARCHIVER_FLAGS = -rc
 ARCHIVER_UNPACK_FLAGS = -x
 ARCHIVER = ar
@@ -312,7 +321,9 @@ ifeq ($(VALIDATION),1)
 endif
 
 DEBUG_COMPILER_FLAGS= -g #-fsanitize=integer-divide-by-zero // why it is not working on windows 64 bit?
+RELEASE_COMPILER_FLAGS= -O3 
 DEBUG_LINKER_FLAGS= -g #-fsanitize=integer-divide-by-zero  // why it is not working on windows 64 bit?
+RELEASE_LINKER_FLAGS= -flto
 
 TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefix lib, $(notdir $(TARGET_DYNAMIC_LIB).a)))
 
@@ -322,6 +333,9 @@ TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefi
 .PHONY: lib-dynamic
 .PHONY: lib-dynamic-debug
 .PHONY: lib-dynamic-release
+.PHONY: lib-static-dynamic
+.PHONY: lib-static-dynamic-debug
+.PHONY: lib-static-dynamic-release
 .PHONY: release
 .PHONY: debug
 .PHONY: $(TARGET)
@@ -337,6 +351,8 @@ lib-static-debug: LINKER_FLAGS += $(DEBUG_LINKER_FLAGS)
 lib-static-debug: $(TARGET_STATIC_LIB)
 lib-static-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_STATIC_LIBRARY
 lib-static-release: __STATIC_LIB_COMMAND = lib-static-release
+lib-static-release: COMPILER_FLAGS += $(RELEASE_COMPILER_FLAGS)
+lib-static-release: LINKER_FLAGS += $(RELEASE_LINKER_FLAGS)
 lib-static-release: $(TARGET_STATIC_LIB)
 
 lib-dynamic: lib-dynamic-release
@@ -347,6 +363,8 @@ lib-dynamic-debug: LINKER_FLAGS += $(DEBUG_LINKER_FLAGS) -fPIC
 lib-dynamic-debug: $(TARGET_DYNAMIC_LIB)
 lib-dynamic-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_DYNAMIC_LIBRARY
 lib-dynamic-release: __STATIC_LIB_COMMAND = lib-static-dynamic-release
+lib-dynamic-release: COMPILER_FLAGS += $(RELEASE_COMPILER_FLAGS) -fPIC
+lib-dynamic-release: LINKER_FLAGS += $(RELEASE_LINKER_FLAGS) -fPIC
 lib-dynamic-release: COMPILER_FLAGS += -fPIC
 lib-dynamic-release: LINKER_FLAGS += -fPIC
 lib-dynamic-release: $(TARGET_DYNAMIC_LIB)
@@ -384,9 +402,13 @@ build-examples-release: $(EXAMPLES)
 examples-clean:
 	$(foreach var, $(dir $(EXAMPLES)) ,$(MAKE) --directory=$(var) clean & )
 
-%.o : %.c
+%.c.o : %.c
 	@echo [Log] Compiling $< to $@
-	$(COMPILER) $(COMPILER_FLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+	$(C_COMPILER) $(C_COMPILER_FLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+%.cpp.o: %.cpp
+	@echo [Log] Compiling $< to $@
+	$(CPP_COMPILER) $(CPP_COMPILER_FLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
 
 %.a:
 	@echo [Log] Building $@ ...
@@ -402,13 +424,13 @@ PRINT_STATIC_INFO:
 PRINT_DYNAMIC_INFO:
 	@echo [Log] Building $(TARGET_DYNAMIC_LIB) ...
 
-$(TARGET_STATIC_LIB) : PRINT_STATIC_INFO $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_LIB_DIR)
+$(TARGET_STATIC_LIB) : PRINT_STATIC_INFO $(filter-out $(MAIN_OBJECT), $(OBJECTS)) | $(TARGET_LIB_DIR)
 	$(ARCHIVER) $(ARCHIVER_FLAGS) $@ $(filter-out $<, $^)
 	@echo [Log] $@ built successfully!
 
-$(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(filter-out source/main.o, $(OBJECTS)) | $(TARGET_LIB_DIR)
+$(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(filter-out $(MAIN_OBJECT), $(OBJECTS)) | $(TARGET_LIB_DIR)
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(filter-out source/main.o, $(OBJECTS)) \
+	$(COMPILER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(filter-out $(MAIN_OBJECT), $(OBJECTS)) \
 	$(addprefix -L, $(dir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(LIBS) \
@@ -431,16 +453,16 @@ ifeq (Linux,$(PLATFORM))
 endif
 	$(RM_DIR) $(UNPACKED_OBJECTS_DIR)
 
-$(TARGET_DYNAMIC_PACKED_LIB) : PRINT_DYNAMIC_INFO  $(filter-out source/main.o, $(OBJECTS)) UNPACK_LIBS | $(TARGET_LIB_DIR)
+$(TARGET_DYNAMIC_PACKED_LIB) : PRINT_DYNAMIC_INFO  $(filter-out $(MAIN_OBJECT), $(OBJECTS)) UNPACK_LIBS | $(TARGET_LIB_DIR)
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG)  $(wildcard $(UNPACKED_OBJECTS_DIR)/*/*.o) $(filter-out source/main.o, $(OBJECTS)) \
+	$(COMPILER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG)  $(wildcard $(UNPACKED_OBJECTS_DIR)/*/*.o) $(filter-out $(MAIN_OBJECT), $(OBJECTS)) \
 	$(LIBS) \
 	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
 	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
 
-$(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) source/main.o
+$(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) $(MAIN_OBJECT)
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(LINKER_FLAGS) source/main.o \
+	$(COMPILER) $(LINKER_FLAGS) $(MAIN_OBJECT) \
 	$(addprefix -L, $(dir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(LIBS) \
@@ -450,6 +472,7 @@ $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB)
 bin-clean:
 ifeq (Windows,$(PLATFORM))
 	$(RM) $(subst /,\, $(OBJECTS))
+	$(RM) $(MAIN_OBJECT)
 	$(RM) $(__EXECUTABLE_NAME)
 	$(RM) $(subst /,\, $(TARGET_STATIC_LIB))
 	$(RM) $(subst /,\, $(TARGET_DYNAMIC_LIB))
@@ -460,6 +483,7 @@ ifeq (Windows,$(PLATFORM))
 endif
 ifeq (Linux,$(PLATFORM))
 	$(RM) $(OBJECTS)
+	$(RM) $(MAIN_OBJECT)
 	$(RM) $(__EXECUTABLE_NAME)
 	$(RM) $(TARGET_STATIC_LIB)
 	$(RM) $(TARGET_DYNAMIC_LIB)
