@@ -32,13 +32,32 @@ STATIC_LIB_NAME = sutk.a
 DYNAMIC_LIB_NAME = sutk.dll
 EXECUTABLE_NAME = sutk
 MAIN_SOURCE_LANG = cpp
-MAIN_SOURCES=main.cpp
+MAIN_SOURCES= source/main.cpp
 EXTERNAL_INCLUDES =
 EXTERNAL_LIBRARIES =
 BUILD_DEFINES= -DSGE_VULKAN_DRIVER # TODO: no vulkan, opengl or directx defines should be required, the SGE library must keep the underlying API details into .c files
 
-DEPENDENCIES = ../.. ../../dependencies/HPML ../../dependencies/GLSLCommon ../../dependencies/Common ../../dependencies/PhyMacParser ../../dependencies/MeshLib/dependencies/DiskManager ../../shared-dependencies/BufferLib ../../dependencies/SafeMemory/shared-dependencies/CallTrace
-DEPENDENCY_LIBS =  ../../lib/sge.a ../../dependencies/HPML/lib/hpml.a ../../dependencies/GLSLCommon/lib/glslcommon.a ../../dependencies/Common/lib/common.a ../../dependencies/PhyMacParser/lib/ppsr.a ../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../shared-dependencies/BufferLib/lib/bufferlib.a ../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCIES = 	../.. \
+				../../dependencies/HPML \
+				../../dependencies/GLSLCommon \
+				../../dependencies/PhyMacParser \
+				../../dependencies/MeshLib/dependencies/DiskManager \
+				../../dependencies/MeshLib \
+				../../dependencies/Common \
+				../../shared-dependencies/BufferLib \
+				../../dependencies/SafeMemory \
+				../../dependencies/SafeMemory/shared-dependencies/CallTrace
+DEPENDENCY_LIBS = 	../../lib/sge.a \
+					../../dependencies/GLSLCommon/lib/glslcommon.a \
+					../../dependencies/MeshLib/lib/meshlib.a \
+					../../dependencies/HPML/lib/hpml.a \
+					../../dependencies/PhyMacParser/lib/ppsr.a \
+					../../dependencies/Common/lib/common.a \
+					../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a \
+					../../dependencies/SafeMemory/lib/safemem.a \
+					../../shared-dependencies/BufferLib/lib/bufferlib.a \
+					../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a \
+					../../dependencies/ttf2mesh/lib/ttf2mesh.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES =
 SHARED_DEPENDENCY_LIBS =
