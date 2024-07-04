@@ -47,8 +47,8 @@ PROJECT_NAME = SGE
 STATIC_LIB_NAME = sge.a
 DYNAMIC_LIB_NAME = sge.dll
 EXECUTABLE_NAME = main
-MAIN_SOURCE_LANG = cpp
-MAIN_SOURCES=main.cpp
+MAIN_SOURCE_LANG = c
+MAIN_SOURCES=source/main.c
 EXTERNAL_LIBRARIES = -L./external-dependency-libs
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies -I./include/freetype
 DEPENDENCIES = ../toolchain/shader_compiler ECS MeshLib GLSLCommon Common MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
@@ -84,7 +84,7 @@ __SHARED_DEPENDENCY_LIBS = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEP
 ifeq (Windows,$(PLATFORM))
 	__EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
 else
-	__EXECUTABLE_NAME = $(basename EXECUTABLE_NAME)
+	__EXECUTABLE_NAME = $(basename $(EXECUTABLE_NAME))
 endif
 __UNPACKED_DIRS = $(notdir $(basename $(DEPENDENCY_LIBS) $(SHARED_DEPENDENCY_LIBS)))
 .PHONY: all
@@ -430,7 +430,7 @@ $(TARGET_STATIC_LIB) : PRINT_STATIC_INFO $(filter-out $(MAIN_OBJECT), $(OBJECTS)
 
 $(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(filter-out $(MAIN_OBJECT), $(OBJECTS)) | $(TARGET_LIB_DIR)
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(filter-out $(MAIN_OBJECT), $(OBJECTS)) \
+	$(LINKER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(filter-out $(MAIN_OBJECT), $(OBJECTS)) \
 	$(addprefix -L, $(dir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(LIBS) \
@@ -455,14 +455,14 @@ endif
 
 $(TARGET_DYNAMIC_PACKED_LIB) : PRINT_DYNAMIC_INFO  $(filter-out $(MAIN_OBJECT), $(OBJECTS)) UNPACK_LIBS | $(TARGET_LIB_DIR)
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG)  $(wildcard $(UNPACKED_OBJECTS_DIR)/*/*.o) $(filter-out $(MAIN_OBJECT), $(OBJECTS)) \
+	$(LINKER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG)  $(wildcard $(UNPACKED_OBJECTS_DIR)/*/*.o) $(filter-out $(MAIN_OBJECT), $(OBJECTS)) \
 	$(LIBS) \
 	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
 	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
 
 $(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) $(MAIN_OBJECT)
 	@echo [Log] Linking $@ ...
-	$(COMPILER) $(LINKER_FLAGS) $(MAIN_OBJECT) \
+	$(LINKER) $(LINKER_FLAGS) $(MAIN_OBJECT) \
 	$(addprefix -L, $(dir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(LIBS) \
