@@ -29,8 +29,10 @@
 #include <sge/defines.h>
 
 #if   defined(SGE_VULKAN_DRIVER)
-	typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_texture_t;
+	#include <sge/internal/vulkan/vulkan_bitmap_glyph_atlas_texture.h>
 	typedef vulkan_bitmap_glyph_atlas_texture_t bitmap_glyph_atlas_texture_t;
+	#define BITMAP_GLYPH_ATLAS_TEXTURE(ptr) VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE(ptr)
+	#define BITMAP_GLYPH_ATLAS_TEXTURE_CAST(ptr) VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE_CAST(ptr)
 	typedef struct vulkan_texture_t vulkan_texture_t;
 	typedef vulkan_texture_t texture_t;
 #elif defined(SGE_OPENGL_DRIVER)

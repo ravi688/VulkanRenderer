@@ -90,6 +90,8 @@ typedef struct vulkan_render_scene_t
 #define VULKAN_RENDER_SCENE_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
 #define VULKAN_RENDER_SCENE_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_render_scene_t*, VULKAN_OBJECT_TYPE_RENDER_SCENE, ptr)
 
+BEGIN_CPP_COMPATIBLE
+
 /* constructors & destructors */
 SGE_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator);
 SGE_API vulkan_render_scene_t* vulkan_render_scene_create(vulkan_renderer_t* renderer, vulkan_render_scene_create_info_t* create_info);
@@ -111,6 +113,7 @@ SGE_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_
 SGE_API vulkan_render_object_t* vulkan_render_scene_getH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle);
 SGE_API vulkan_render_scene_object_handle_t vulkan_render_scene_create_object(vulkan_render_scene_t* scene, vulkan_render_object_type_t object_type, vulkan_render_queue_type_t queue_type);
 SGE_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* scene, vulkan_render_scene_object_handle_t handle);
+SGE_API void vulkan_render_scene_destroy_object(vulkan_render_scene_t* scene, vulkan_render_object_t* obj);
 SGE_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_add_camera(vulkan_render_scene_t* scene, vulkan_camera_t* camera) { buf_push(&scene->cameras, &camera); }
@@ -126,3 +129,5 @@ SGE_API void vulkan_render_scene_remove_light(vulkan_render_scene_t* scene, vulk
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_set_use_lights(vulkan_render_scene_t* scene, bool is_use_lights) { scene->is_use_lights = is_use_lights; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_render_scene_is_use_lights(vulkan_render_scene_t* scene) { return scene->is_use_lights; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_descriptor_set_t* vulkan_render_scene_get_scene_set(vulkan_render_scene_t* scene) { return &scene->scene_set; }
+
+END_CPP_COMPATIBLE

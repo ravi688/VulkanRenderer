@@ -107,7 +107,7 @@ static vulkan_material_handle_t vulkan_material_library_add(vulkan_material_libr
 	return handle;
 }
 
-SGE_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, const char* shader_name, const char* material_name)
+SGE_API vulkan_material_handle_t vulkan_material_library_create_material_str(vulkan_material_library_t* library, const char* shader_name, const char* material_name)
 {
 	vulkan_shader_t* shader = vulkan_shader_library_get(library->shader_library, shader_name);
 	if(shader == NULL)
@@ -115,6 +115,11 @@ SGE_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_
 		log_wrn("Material creation failed as shader with name \"%s\" isn't found in the shader library\n", shader_name);
 		return VULKAN_MATERIAL_HANDLE_INVALID;
 	}
+	return vulkan_material_library_create_material(library, shader, material_name);
+}
+
+SGE_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, vulkan_shader_t* shader, const char* material_name)
+{
 	return vulkan_material_library_add(library, vulkan_material_create(library->shader_library->renderer, shader), material_name);
 }
 
@@ -126,7 +131,7 @@ SGE_API vulkan_material_handle_t vulkan_material_library_create_materialH(vulkan
 		log_wrn("Material creation failed as shader with the specified handle isn't found in the shader library\n");
 		return VULKAN_MATERIAL_HANDLE_INVALID;
 	}
-	return vulkan_material_library_add(library, vulkan_material_create(library->shader_library->renderer, shader), material_name);
+	return vulkan_material_library_create_material(library, shader, material_name);
 }
 
 SGE_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path)

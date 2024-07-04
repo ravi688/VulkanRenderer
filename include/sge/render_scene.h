@@ -113,6 +113,8 @@ typedef struct render_scene_create_info_t
 	u32 required_queue_count;
 } render_scene_create_info_t;
 
+BEGIN_CPP_COMPATIBLE
+
 /* constructors & destructors */
 SGE_API render_scene_t* render_scene_new(memory_allocator_t* allocator);
 SGE_API render_scene_t* render_scene_create(renderer_t* renderer, render_scene_create_info_t* create_info);
@@ -129,6 +131,7 @@ SGE_API void render_scene_render(render_scene_t* scene, u64 queue_mask, u32 flag
 SGE_API render_object_t* render_scene_getH(render_scene_t* scene, render_scene_object_handle_t handle);
 SGE_API render_scene_object_handle_t render_scene_create_object(render_scene_t* scene, render_object_type_t object_type, render_queue_type_t queue_type);
 SGE_API void render_scene_destroy_objectH(render_scene_t* scene, render_scene_object_handle_t handle);
+SGE_API void render_scene_destroy_object(render_scene_t* scene, render_object_t* obj);
 SGE_API void render_scene_build_queues(render_scene_t* scene);
 SGE_API void render_scene_add_camera(render_scene_t* scene, camera_t* camera);
 SGE_API void render_scene_remove_camera(render_scene_t* scene, camera_t* camera);
@@ -136,3 +139,5 @@ SGE_API void render_scene_add_light(render_scene_t* scene, light_t* light);
 SGE_API void render_scene_remove_light(render_scene_t* scene, light_t* light);
 
 SGE_API void render_scene_set_use_lights(render_scene_t* scene, bool is_use_lights);
+
+END_CPP_COMPATIBLE

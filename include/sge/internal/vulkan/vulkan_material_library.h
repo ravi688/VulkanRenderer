@@ -35,6 +35,7 @@
 
 typedef struct vulkan_shader_library_t vulkan_shader_library_t;
 typedef struct vulkan_material_t vulkan_material_t;
+typedef struct vulkan_shader_t vulkan_shader_t;
 
 typedef struct vulkan_material_library_slot_t
 {
@@ -63,7 +64,8 @@ SGE_API void vulkan_material_library_destroy(vulkan_material_library_t* library)
 SGE_API void vulkan_material_library_release_resources(vulkan_material_library_t* library);
 
 /* logic functions */
-SGE_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, const char* shader_name, const char* material_name);
+SGE_API vulkan_material_handle_t vulkan_material_library_create_material_str(vulkan_material_library_t* library, const char* shader_name, const char* material_name);
+SGE_API vulkan_material_handle_t vulkan_material_library_create_material(vulkan_material_library_t* library, vulkan_shader_t* shader, const char* material_name);
 SGE_API vulkan_material_handle_t vulkan_material_library_create_materialH(vulkan_material_library_t* library, vulkan_shader_handle_t handle, const char* material_name);
 SGE_API vulkan_material_handle_t vulkan_material_library_load_material(vulkan_material_library_t* library, const char* file_path);
 SGE_API bool vulkan_material_library_destroy_material(vulkan_material_library_t* library, const char* material_name);

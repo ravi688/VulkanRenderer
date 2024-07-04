@@ -56,6 +56,10 @@ typedef struct vulkan_bitmap_glyph_atlas_texture_t
 
 #define VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_bitmap_glyph_atlas_texture_t*, VULKAN_OBJECT_TYPE_BITMAP_GLYPH_ATLAS_TEXTURE, ptr)
 #define VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_bitmap_glyph_atlas_texture_t*, VULKAN_OBJECT_TYPE_BITMAP_GLYPH_ATLAS_TEXTURE, ptr)
+/* otherwise (if you are sure that the type is VULKAN_OBJECT_TYPE_BITMAP_GLYPH_ATLAS_TEXTURE) use the following,
+ * this macro expands to just a C-style cast in release mode so it is very efficient as compared to the dynamic casting above */
+#define VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_bitmap_glyph_atlas_texture_t*, VULKAN_OBJECT_TYPE_BITMAP_GLYPH_ATLAS_TEXTURE, ptr)
+#define VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_bitmap_glyph_atlas_texture_t*, VULKAN_OBJECT_TYPE_BITMAP_GLYPH_ATLAS_TEXTURE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
