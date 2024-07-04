@@ -120,6 +120,11 @@ SGE_API void render_scene_destroy_objectH(render_scene_t* scene, render_scene_ob
 	vulkan_render_scene_destroy_objectH(scene, handle);
 }
 
+SGE_API void render_scene_destroy_object(render_scene_t* scene, render_object_t* obj)
+{
+	vulkan_render_scene_destroy_object(scene, obj);
+}
+
 SGE_API void render_scene_build_queues(render_scene_t* scene)
 {
 	vulkan_render_scene_build_queues(scene);

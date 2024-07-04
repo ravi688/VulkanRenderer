@@ -90,6 +90,8 @@ typedef enum shader_library_shader_preset_t
 	SHADER_LIBRARY_SHADER_PRESET_BUMPED_SPECULAR_OVERLAY
 } shader_library_shader_preset_t;
 
+BEGIN_CPP_COMPATIBLE
+
 /* constructors & destructors */
 SGE_API shader_library_t* shader_library_new(memory_allocator_t* allocator);
 SGE_API shader_library_t* shader_library_create(renderer_t* renderer);
@@ -194,3 +196,5 @@ SGE_API shader_t* shader_library_getH(shader_library_t* library, shader_handle_t
 		NULL, if the shader isn't found
  */
 SGE_API shader_t* shader_library_get(shader_library_t* library, const char* shader_name);
+
+END_CPP_COMPATIBLE

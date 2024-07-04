@@ -453,6 +453,11 @@ SGE_API void vulkan_render_scene_destroy_objectH(vulkan_render_scene_t* scene, v
 	vulkan_render_queue_removeH(handle.queue, handle.object);
 }
 
+SGE_API void vulkan_render_scene_destroy_object(vulkan_render_scene_t* scene, vulkan_render_object_t* obj)
+{
+	vulkan_render_queue_removeH(vulkan_render_object_get_queue(obj), obj);
+}
+
 SGE_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene)
 {
 	debug_log_info("Render Queue Graphs");

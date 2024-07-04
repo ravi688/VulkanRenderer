@@ -85,7 +85,7 @@ typedef enum vulkan_object_type_t
 } vulkan_object_type_t;
 
 #define __VULKAN_OBJECT__ __OBJECT__
-#define VULKAN_OBJECT_INIT(typed_ptr, type, nationality) OBJECT_INIT(typed_ptr, type, nationality)
+#define VULKAN_OBJECT_INIT(typed_ptr, type, nationality) OBJECT_INIT(typed_ptr, CAST_TO(object_type_t, type), nationality)
 #define VULKAN_OBJECT_SET_BASE(typed_ptr, is_base) OBJECT_SET_BASE(typed_ptr, is_base)
 #define VULKAN_OBJECT_IS_BASE(typed_ptr) OBJECT_IS_BASE(typed_ptr)
 
@@ -105,19 +105,19 @@ typedef enum vulkan_object_type_t
 #define VULKAN_OBJECT_SET_NATIONALITY(typed_ptr, nationality) OBJECT_SET_NATIONALITY(typed_ptr, nationality)
 #define VULKAN_OBJECT_GET_NATIONALITY(typed_ptr) OBJECT_GET_NATIONALITY(typed_ptr)
 
-#define VULKAN_OBJECT_SET_TYPE(typed_ptr, type) OBJECT_SET_TYPE(typed_ptr, type)
+#define VULKAN_OBJECT_SET_TYPE(typed_ptr, type) OBJECT_SET_TYPE(typed_ptr, CAST_TO(object_type_t, type))
 #define VULKAN_OBJECT_GET_TYPE(typed_ptr) OBJECT_GET_TYPE(typed_ptr)
 
 #define VULKAN_OBJECT_UP_CAST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) OBJECT_UP_CAST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) 
 #define VULKAN_OBJECT_UP_CAST_CONST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) OBJECT_UP_CAST_CONST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr)
 
-#define VULKAN_OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
-#define VULKAN_OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
-#define VULKAN_OBJECT_TYPE_CHECK(type_ptr, vulkan_object_type) OBJECT_TYPE_CHECK(type_ptr, vulkan_object_type)
-#define VULKAN_OBJECT_TYPE_CHECK_FORWARD(typed_ptr, vulkan_object_type) OBJECT_TYPE_CHECK_FORWARD(typed_ptr, vulkan_object_type)
-#define VULKAN_OBJECT_TYPE_CHECK_CONST_FORWARD(typed_ptr, vulkan_object_type) OBJECT_TYPE_CHECK_CONST_FORWARD(typed_ptr, vulkan_object_type)
+#define VULKAN_OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CAST(dst_ptr_type, CAST_TO(object_type_t, vulkan_object_type), src_typed_ptr)
+#define VULKAN_OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CONST_CAST(dst_ptr_type, CAST_TO(object_type_t, vulkan_object_type), src_typed_ptr)
+#define VULKAN_OBJECT_TYPE_CHECK(type_ptr, vulkan_object_type) OBJECT_TYPE_CHECK(type_ptr, CAST_TO(object_type_t, vulkan_object_type))
+#define VULKAN_OBJECT_TYPE_CHECK_FORWARD(typed_ptr, vulkan_object_type) OBJECT_TYPE_CHECK_FORWARD(typed_ptr, CAST_TO(object_type_t, vulkan_object_type))
+#define VULKAN_OBJECT_TYPE_CHECK_CONST_FORWARD(typed_ptr, vulkan_object_type) OBJECT_TYPE_CHECK_CONST_FORWARD(typed_ptr, CAST_TO(object_type_t, vulkan_object_type))
 
-#define VULKAN_OBJECT_TYPE_CAST_CONST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr)
+#define VULKAN_OBJECT_TYPE_CAST_CONST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CONST_CAST(dst_ptr_type, CAST_TO(object_type_t, vulkan_object_type), src_typed_ptr)
 
 #define VULKAN_OBJECT_VERIFY(typed_ptr) OBJECT_VERIFY(typed_ptr)
 #define VULKAN_OBJECT_VERIFY_FORWARD(typed_ptr) OBJECT_VERIFY_FORWARD(typed_ptr)

@@ -109,6 +109,7 @@ SGE_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, v
 SGE_API void vulkan_render_object_destroy(vulkan_render_object_t* object);
 SGE_API void vulkan_render_object_release_resources(vulkan_render_object_t* object);
 
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_render_queue_t* vulkan_render_object_get_queue(vulkan_render_object_t* object) { return object->queue; }
 SGE_API void vulkan_render_object_attach(vulkan_render_object_t* object, void* user_data);
 SGE_API void vulkan_render_object_draw(vulkan_render_object_t* object);
 SGE_API void vulkan_render_object_set_material(vulkan_render_object_t* object, vulkan_material_t* material);

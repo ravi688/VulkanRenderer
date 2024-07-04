@@ -70,6 +70,8 @@
 	typedef metal_shader_handle_t shader_handle_t;
 #endif
 
+BEGIN_CPP_COMPATIBLE
+
 /* constructors & destructors */
 SGE_API material_library_t* material_library_new(memory_allocator_t* allocator);
 SGE_API material_library_t* material_library_create(renderer_t* renderer, shader_library_t* shader_library);
@@ -88,7 +90,9 @@ SGE_API void material_library_release_resources(material_library_t* library);
 		material_handle_t, handle to the material_t object just created
 		MATERIAL_HANDLE_INVALID, if the creation failed
  */
-SGE_API material_handle_t material_library_create_material(material_library_t* library, const char* shader_name, const char* material_name);
+SGE_API material_handle_t material_library_create_material_str(material_library_t* library, const char* shader_name, const char* material_name);
+
+SGE_API material_handle_t material_library_create_material(material_library_t* library, shader_t* shader, const char* material_name);
 
 /*
 	description: creates a material into the library with a shader handle 'handle' with the identification name as 'material_name'
@@ -214,3 +218,4 @@ SGE_API material_t* material_library_getH(material_library_t* library, material_
  */
 SGE_API const char* material_library_get_nameH(material_library_t* library, material_handle_t handle);
 
+END_CPP_COMPATIBLE

@@ -32,6 +32,7 @@ typedef struct renderer_t renderer_t;
 #	include <sge/internal/vulkan/vulkan_texture.h>
 	typedef vulkan_texture_t texture_t;
 #	define TEXTURE(ptr) VULKAN_TEXTURE(ptr)
+#	define TEXTURE_CAST(ptr) VULKAN_TEXTURE_CAST(ptr)
 #elif defined(SGE_OPENGL_DRIVER)
 #	include <sge/internal/opengl/opengl_texture.h>
 	typedef opengl_texture_t texture_t;

@@ -206,6 +206,9 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_set_nationality
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE object_type_t object_get_type(const object_t* obj) { return obj->type; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_set_type(object_t* obj, object_type_t type) { obj->type = type; }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
+
 /* OBJECT_MEMZERO preserves the derivation from __OBJECT__ and zeros out the memory following that */
 #define OBJECT_MEMZERO(typed_ptr, type) object_memzero(CAST_TO(void*, OBJECT_VERIFY_FORWARD(typed_ptr)), sizeof(typed_ptr[0]))
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_memzero(void* ptr, u32 size)
@@ -214,6 +217,8 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_memzero(void* p
 	_debug_assert__(size >= sizeof(object_t));
 	memset(ptr + sizeof(object_t), 0, size - sizeof(object_t));
 }
+#pragma GCC diagnostic pop
+
 /* OBJECT_MEMCOPY preserves the nationality of the destination object, so it must be used to copy objects which are derived from __OBJECT__ */
 #define OBJECT_MEMCOPY(dst_typed_ptr, src_typed_ptr, type) object_memcpy(CAST_TO(void*, OBJECT_VERIFY_FORWARD(dst_typed_ptr)), CAST_TO(void*, OBJECT_VERIFY_FORWARD(src_typed_ptr)), sizeof(dst_typed_ptr[0]) \
 														PARAM_IF_DEBUG(sizeof(src_typed_ptr[0])) \
@@ -237,6 +242,9 @@ static INLINE u32 lowest_multiple_of(u32 x, u32 y)
 {
 	return (x % y) + x;
 }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
 
 #define OBJECT_UP_CAST(dst_ptr_type, dst_object_type, src_typed_ptr)  CAST_TO(dst_ptr_type, object_up_cast(OBJECT(src_typed_ptr), dst_object_type))
 static CAN_BE_UNUSED_FUNCTION void* object_up_cast(object_t* obj, object_type_t dst_type)
@@ -266,6 +274,8 @@ static CAN_BE_UNUSED_FUNCTION const void* object_up_cast_const(const object_t* o
 
 	return object_up_cast_const(CAST_TO(const object_t*, CAST_TO(const void*, obj) + lowest_multiple_of(sizeof(object_t), sizeof(void*))), dst_type);
 }
+
+#pragma GCC diagnostic pop
 
 #ifdef GLOBAL_DEBUG
 #	define OBJECT_TYPE_CAST(dst_ptr_type, object_type, src_typed_ptr) _REINTERPRET_CAST(dst_ptr_type, OBJECT_TYPE_CHECK_FORWARD(src_typed_ptr, object_type), sizeof(DREF(src_typed_ptr)))

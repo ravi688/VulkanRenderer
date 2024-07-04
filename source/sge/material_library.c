@@ -53,9 +53,14 @@ SGE_API void material_library_release_resources(material_library_t* library)
 
 /* logic functions */
 
-SGE_API material_handle_t material_library_create_material(material_library_t* library, const char* shader_name, const char* material_name)
+SGE_API material_handle_t material_library_create_material_str(material_library_t* library, const char* shader_name, const char* material_name)
 {
-	return vulkan_material_library_create_material(library, shader_name, material_name);
+	return vulkan_material_library_create_material_str(library, shader_name, material_name);
+}
+
+SGE_API material_handle_t material_library_create_material(material_library_t* library, shader_t* shader, const char* material_name)
+{
+	return vulkan_material_library_create_material(library, shader, material_name);
 }
 
 SGE_API material_handle_t material_library_create_materialH(material_library_t* library, shader_handle_t handle, const char* material_name)
