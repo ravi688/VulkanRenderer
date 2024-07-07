@@ -9,9 +9,13 @@
 
 int main(int argc, char** argv)
 {
-	debug_log_info("SUTK Repository!");
-
 	std::unique_ptr<SUTK::ITest> test = SUTK::ITest::Create((argc > 1) ? argv[1] : "");
+	if(!test)
+	{
+		debug_log_error("Invalid test id %s", argv[1]);
+		return 0;
+	}
+
 	SUTK::DriverInitializationData data = test->getInitializationData();
 
 	SGE::Driver driver(data.gpuType, data.width, data.height, data.title, data.fullScreen, data.resizable);
