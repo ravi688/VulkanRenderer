@@ -5,6 +5,7 @@
 
 
 #include <sutk/tests/BitmapTextTest.hpp>
+#include <sutk/tests/Text.hpp>
 
 namespace SUTK
 {
@@ -13,7 +14,8 @@ namespace SUTK
 
 	std::unordered_map<std::string, TestCreateCallback> gTestCreateCallbackMap =
 	{
-		{ "BITMAP_TEXT", [] () { return std::unique_ptr<ITest>(new BitmapTextTest()); }}
+		{ "BITMAP_TEXT", [] () { return std::unique_ptr<ITest>(new BitmapTextTest()); }},
+		{ "TEXT", [] () { return std::unique_ptr<ITest>(new Text()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)
