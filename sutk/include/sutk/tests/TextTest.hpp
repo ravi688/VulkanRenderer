@@ -4,14 +4,18 @@
 
 #include <sge-cpp/sge.hpp>
 
+#include <sutk/UIDriver.hpp>
+
 namespace SUTK
 {
 	class TextTest : public ITest
 	{
 	private:
+		UIDriver* m_uiDriver;
+		Text* m_text;
 
 	public:
-		TextTest() = default;
+		TextTest() : m_uiDriver(NULL) { }
 
 		DriverInitializationData getInitializationData() override;
 

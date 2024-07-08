@@ -5,6 +5,7 @@
 namespace SUTK
 {
 	class Container;
+	class TextContainer;
 	class Text;
 
 	struct UIRendererCallbacks
@@ -21,7 +22,13 @@ namespace SUTK
 
 		void render();
 
-		Container* createContainer();
-		Text* createText();
+		template<typename ContainerType>
+		ContainerType* createContainer(Container* parent = NULL) { return NULL; }
+		Text* createText(TextContainer* parent);
 	};
+
+	template<>
+	Container* UIDriver::createContainer<Container>(Container* parent);
+	template<>
+	TextContainer* UIDriver::createContainer<TextContainer>(Container* parent);
 }
