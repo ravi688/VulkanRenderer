@@ -6,12 +6,12 @@
 
 namespace SUTK
 {
-	class Text : public ITest
+	class TextTest : public ITest
 	{
 	private:
 
 	public:
-		Text() = default;
+		TextTest() = default;
 
 		DriverInitializationData getInitializationData() override;
 
