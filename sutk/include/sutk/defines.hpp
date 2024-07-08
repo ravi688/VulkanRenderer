@@ -31,4 +31,20 @@ namespace SUTK
 	typedef u32 LineCountType;
 
 	#define LINE_COUNT_TYPE_MAX std::numeric_limits<LineCountType>::max()
+
+	/* For now, we can support display resolutions upto U16_MAX x U16_MAX pixels,
+	 * but in future we may increase its bit-width to support gigantic displays
+	 * with larger resolutions. However, it would never be needed I guess. */
+	typedef u16 DisplaySizeType;
+
+	#define DISPLAY_SIZE_TYPE_MAX std::numeric_limits<DisplaySizeType>::max()
+
+	template<typename T>
+	struct Rect2D
+	{
+		T x;
+		T y;
+		T width;
+		T height;
+	};
 }

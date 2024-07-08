@@ -1,5 +1,7 @@
 #include <sutk/tests/TextTest.hpp>
 
+#include <sutk/Text.hpp>
+
 namespace SUTK
 {
 	DriverInitializationData TextTest::getInitializationData()
@@ -11,34 +13,36 @@ namespace SUTK
 
 	void TextTest::initialize(SGE::Driver& driver)
 	{
-		// SUTK::UIRendererCallbacks callbacks = { };
-		// callbacks.userData = reinterpret_cast<void*>(&driver);
-		// SUTK::UIDriver uiDriver(callbacks);
-		// SUTK::Container container = uiDriver.createContainer();
-		// SUTK::Text text = uiDriver.createText();
-		// container.add(text);
-		// text.set("Hello World");
-		// text.append("Hello Another World");
-		// text.appendLine("Hello Yet Another World");
-		// text.insert(34, "Hello Yet Yet Another World");
-		// text.appendChar('A');
-		// text.insertChar(45, 'S');
-		// std::size_t lineCount = text.getLineCount();
-		// text.appendLine();
+		UIRendererCallbacks callbacks = { };
+		callbacks.userData = reinterpret_cast<void*>(&driver);
+		m_uiDriver = new UIDriver(callbacks);
+		Container* rootContainer = m_uiDriver->createContainer<Container>(NULL);
+		TextContainer* textContainer = m_uiDriver->createContainer<TextContainer>(rootContainer);
+		m_text = m_uiDriver->createText(textContainer);
+		m_text->set("Hello World");
 	}
 
 	void TextTest::terminate(SGE::Driver& driver)
 	{
-
+		delete m_uiDriver;
 	}
 
 	void TextTest::render(SGE::Driver& driver)
 	{
-		// uiDriver.render();
+		m_uiDriver->render();
 	}
 
 	void TextTest::update(SGE::Driver& driver, float deltaTime)
 	{
-
+		static float t = 0;
+		t += deltaTime;
+		if((static_cast<int>(deltaTime) % 500) == 0)
+		{
+			static u64 counter = 0;
+			++counter;
+			char buffer[128];
+			sprintf(buffer, "%llu", counter);
+			m_text->set(buffer);
+		}
 	}
 }

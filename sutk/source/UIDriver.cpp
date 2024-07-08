@@ -1,7 +1,7 @@
 #include <sutk/UIDriver.hpp>
 
+#include <sutk/TextContainer.hpp>
 #include <sutk/Text.hpp>
-#include <sutk/Container.hpp>
 
 namespace SUTK
 {
@@ -15,13 +15,28 @@ namespace SUTK
 
 	}
 
-	Container* UIDriver::createContainer()
+	template<>
+	Container* UIDriver::createContainer<Container>(Container* parent)
 	{
-		return NULL;
+		Container* cntr = new Container(*this);
+		if(parent != NULL)
+			parent->add(cntr);
+		return cntr;
 	}
 
-	Text* UIDriver::createText()
+	template<>
+	TextContainer* UIDriver::createContainer<TextContainer>(Container* parent)
 	{
-		return NULL;
+		TextContainer* txtCntr = new TextContainer(*this);
+		if(parent != NULL)
+			parent->add(txtCntr);
+		return txtCntr;
+	}
+
+	Text* UIDriver::createText(TextContainer* container)
+	{
+		Text* text = new Text(*this, container);
+		container->setText(text);
+		return text;
 	}
 }

@@ -1,12 +1,13 @@
-#include <sutk/defines.hpp>
+#pragma once
 
-#include <sutk/UIDriver.hpp> /* for SUTK::UIDriver */
+#include <sutk/defines.hpp>
 
 #include <string> /* for std::string */
 
 namespace SUTK
 {
 	class Container;
+	class UIDriver;
 	
 	class Text
 	{
@@ -15,7 +16,7 @@ namespace SUTK
 		Container* m_container;
 
 	public:
-		Text(UIDriver& driver, Container* container);
+		Text(UIDriver& driver, Container* container = NULL);
 
 		void set(const std::string& str);
 		void set(const std::string& str, LineCountType lineNo);
