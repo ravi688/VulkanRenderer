@@ -11,11 +11,15 @@ namespace SUTK
 	private:
 		Text* m_text;
 
+		// this can only be called by SUTK::UIDriver
+		TextContainer(UIDriver& driver) : Container(driver) { }
+
+		friend class UIDriver;
+
 	protected:
 		virtual void onAdd(Container* parent) override;
 
 	public:
-		TextContainer(UIDriver& driver) : Container(driver) { }
 
 		void setText(Text* text);
 

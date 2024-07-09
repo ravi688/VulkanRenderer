@@ -8,14 +8,17 @@
 
 namespace SUTK
 {
+	class IGfxDriver;
+
 	class TextTest : public ITest
 	{
 	private:
 		UIDriver* m_uiDriver;
+		IGfxDriver* m_gfxDriver;
 		Text* m_text;
 
 	public:
-		TextTest() : m_uiDriver(NULL) { }
+		TextTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }
 
 		DriverInitializationData getInitializationData() override;
 

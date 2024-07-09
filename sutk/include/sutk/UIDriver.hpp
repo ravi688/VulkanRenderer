@@ -2,25 +2,27 @@
 
 #include <sutk/defines.hpp>
 
+#include <vector> /* for std::vector */
+
 namespace SUTK
 {
+	class IRenderable;
 	class Container;
 	class TextContainer;
 	class Text;
-
-	struct UIRendererCallbacks
-	{
-		void* userData;
-	};
+	class IGfxDriver;
 
 	class UIDriver
 	{
 	private:
-		UIRendererCallbacks m_callbacks;
+		IGfxDriver& m_gfxDriver;
+		std::vector<IRenderable*> m_renderables;
 	public:
-		UIDriver(UIRendererCallbacks& callbacks);
+		UIDriver(IGfxDriver& gfxDriver);
 
 		void render();
+
+		IGfxDriver& getGfxDriver() { return m_gfxDriver; }
 
 		template<typename ContainerType>
 		ContainerType* createContainer(Container* parent = NULL) { return NULL; }
