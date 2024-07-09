@@ -15,6 +15,7 @@ namespace SGE
 		friend class MaterialLibrary;
 		
 	public:
+		Material() : m_handle(NULL) { }
 		material_t* getHandle() const noexcept { return m_handle; }
 
 		template<typename T>

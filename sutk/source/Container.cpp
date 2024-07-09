@@ -1,5 +1,7 @@
 #include <sutk/Container.hpp>
 
+#include <sutk/assert.h> /* _assert() */
+
 namespace SUTK
 {
 	Container::Container(SUTK::UIDriver& driver) : m_driver(driver)
@@ -9,12 +11,13 @@ namespace SUTK
 
 	void Container::onAdd(Container* parent)
 	{
-
+		_assert(parent != NULL);
+		setRect(parent->getRect());
 	}
 
 	void Container::onRemove(Container* parent)
 	{
-
+		_assert(parent != NULL);
 	}
 
 	void Container::add(Container* container)

@@ -40,11 +40,47 @@ namespace SUTK
 	#define DISPLAY_SIZE_TYPE_MAX std::numeric_limits<DisplaySizeType>::max()
 
 	template<typename T>
+	union Vec2D
+	{
+		struct
+		{
+			T x;
+			T y;
+		};
+
+		struct
+		{
+			T width;
+			T height;
+		};
+	};
+
+	template<typename T>
 	struct Rect2D
 	{
 		T x;
 		T y;
 		T width;
 		T height;
+	};
+
+	typedef u32 GfxDriverObjectHandleType;
+	#define GFX_DRIVER_OBJECT_NULL_HANDLE U32_MAX
+
+	struct Color3
+	{
+		u8 r;
+		u8 g;
+		u8 b;
+
+		operator ==(Color3& rhs) const noexcept
+		{
+			return (r == rhs.r) && (g == rhs.g) && (b == rhs.b);
+		}
+
+		operator !=(Color3& rhs) const noexcept
+		{
+			return !Color3::operator==(rhs);
+		}
 	};
 }

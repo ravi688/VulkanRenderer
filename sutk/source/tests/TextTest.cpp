@@ -1,6 +1,9 @@
 #include <sutk/tests/TextTest.hpp>
 
 #include <sutk/Text.hpp>
+#include <sutk/SGEGfxDriver.hpp>
+
+#include <common/id_generator.h>
 
 namespace SUTK
 {
@@ -13,9 +16,8 @@ namespace SUTK
 
 	void TextTest::initialize(SGE::Driver& driver)
 	{
-		UIRendererCallbacks callbacks = { };
-		callbacks.userData = reinterpret_cast<void*>(&driver);
-		m_uiDriver = new UIDriver(callbacks);
+		m_gfxDriver = new SGEGfxDriver(driver);
+		m_uiDriver = new UIDriver(*m_gfxDriver);
 		Container* rootContainer = m_uiDriver->createContainer<Container>(NULL);
 		TextContainer* textContainer = m_uiDriver->createContainer<TextContainer>(rootContainer);
 		m_text = m_uiDriver->createText(textContainer);
@@ -25,10 +27,12 @@ namespace SUTK
 	void TextTest::terminate(SGE::Driver& driver)
 	{
 		delete m_uiDriver;
+		delete m_gfxDriver;
 	}
 
 	void TextTest::render(SGE::Driver& driver)
 	{
+		// SUTK::UIDriver::render() should only be called when there is an update in the UI or screen resize
 		m_uiDriver->render();
 	}
 
