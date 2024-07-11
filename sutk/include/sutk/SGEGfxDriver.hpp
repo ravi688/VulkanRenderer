@@ -11,6 +11,20 @@
 
 namespace SUTK
 {	
+	struct SGEBitmapTextData
+	{
+		SGE::BitmapText text;
+		SGE::RenderObject object;
+		// holds total aggregate number of characters in 'text' (BitmapText), i.e. sum over all text strings's sizes created out of this 'text'
+		u32 charCount;
+	};
+	struct SGEBitmapTextStringData
+	{
+		SGE::BitmapTextString textString;
+		// handle to SGE::BitmapText out of which this text string has been created
+		// this is used to hash into the 'm_bitmapTextMappings' unordered map and update the 'charCount'
+		GfxDriverObjectHandleType textHandle;
+	};
 	class SGEGfxDriver : public IGfxDriver
 	{
 	private:
@@ -20,26 +34,36 @@ namespace SUTK
 		SGE::RenderScene m_scene;
 		SGE::Material m_material;
 		id_generator_t m_id_generator;
-		std::unordered_map<GfxDriverObjectHandleType, std::pair<SGE::BitmapText, SGE::RenderObject>> m_bitmapTextMappings;
-		std::unordered_map<GfxDriverObjectHandleType, SGE::BitmapTextString> m_bitmapTextStringMappings;
+		GfxDriverObjectHandleType m_currentBitmapTextHandle;
+		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextData> m_bitmapTextMappings;
+		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
+
+	private:
+		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextData>::iterator
+		getBitmapTextIterator(GfxDriverObjectHandleType handle);
+		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData>::iterator
+		getSubTextIterator(GfxDriverObjectHandleType handle);
+		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> getOrCreateBitmapText();
+		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> createBitmapText();
+		void destroyBitmapText(GfxDriverObjectHandleType handle);
+		SGE::BitmapTextString getText(GfxDriverObjectHandleType handle);
 	public:
+
+		// Constructors
 		SGEGfxDriver(SGE::Driver& driver);
+		// Destructor
 		~SGEGfxDriver();
+
+
+		// IGfxDriver INTERFACE IMPLEMENTATION
+
 		virtual Vec2D<DisplaySizeType> getSize() override;
 		virtual void render(UIDriver& driver) override;
 
 		virtual GfxDriverObjectHandleType createText() override;
-
-		std::unordered_map<GfxDriverObjectHandleType, std::pair<SGE::BitmapText, SGE::RenderObject>>::iterator
-		getBitmapTextIterator(GfxDriverObjectHandleType handle);
-
 		virtual void destroyText(GfxDriverObjectHandleType handle) override;
 
-		virtual GfxDriverObjectHandleType createSubtext(GfxDriverObjectHandleType textHandle) override;
-
-		std::unordered_map<GfxDriverObjectHandleType, SGE::BitmapTextString>::iterator
-		getSubTextIterator(GfxDriverObjectHandleType handle);
-
-		virtual void destroySubText(GfxDriverObjectHandleType subTextHandle) override;
+		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2D<DisplaySizeType> position) override;
+		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
 	};
 }

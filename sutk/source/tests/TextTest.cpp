@@ -40,13 +40,13 @@ namespace SUTK
 	{
 		static float t = 0;
 		t += deltaTime;
-		if((static_cast<int>(deltaTime) % 500) == 0)
+		if((static_cast<int>(deltaTime) % 1000) == 0)
 		{
 			static u64 counter = 0;
 			++counter;
 			char buffer[128];
-			sprintf(buffer, "%llu", counter);
-			m_text->set(buffer);
+			sprintf(buffer, " %llu", counter);
+			m_text->append(buffer);
 		}
 	}
 }
