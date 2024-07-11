@@ -7,7 +7,7 @@ namespace SUTK
 	{
 	public:
 		/* returns true, if GPU side data is out of sync with respect to the CPU side data, otherwise false */
-		virtual bool isDirty() const = 0;
+		virtual bool isDirty() = 0;
 		/* updates (copies CPU side data to) GPU side data, and it may also create or recreate exisiting GPU Driver objects */
 		virtual void update() = 0;
 	};

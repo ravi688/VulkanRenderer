@@ -2,6 +2,7 @@
 
 #include <sutk/defines.hpp>
 #include <sutk/IRenderable.hpp> /* for SUTK::IRenderable */
+#include <sutk/UIDriver.hpp> /* for SUTK::UIDriver::getGfxDriver() */
 
 #include <string> /* for std::string */
 #include <vector> /* for std::vector*/
@@ -20,39 +21,77 @@ namespace SUTK
 
 	class TextContainer;
 	class UIDriver;
+	class IGfxDriver;
 
-	class SubText : public IRenderable
+	class ColumnIterator { };
+
+	class LineTextData
 	{
 	private:
-		UIDriver& m_driver;
-		GfxDriverObjectHandleType m_handle;
-		bool m_isDirty;
-
-		// data and rendering attributes 
 		std::string m_data;
-		Color3 m_color;
-		TPGEmphasis m_emphasis;
-		GfxDriverObjectHandleType m_font;
-		u32 m_pointSize;
+	public:
+		// constructors
+		LineTextData() = default;
+		LineTextData(LineTextData&& data) : m_data(std::move(data.m_data)) { }
+		LineTextData(const LineTextData& data) : m_data(data.m_data) { }
 
-		SubText(UIDriver& driver, GfxDriverObjectHandleType handle) noexcept : m_driver(driver), m_handle(handle) { }
+		// assignment operators
+		LineTextData& operator =(LineTextData&& data) { m_data = std::move(data.m_data); return *this; }
+		LineTextData& operator =(const LineTextData& data) { m_data = data.m_data; return *this; }
+		LineTextData& operator =(const std::string& data) { m_data = data; return *this; }
+		LineTextData& operator =(std::string&& data) { m_data = std::move(data); return *this; }
+	
+		// implict conversion operators
+		operator const std::string&() const { return m_data; }
+
+		// equality comparison operators
+		operator ==(const LineTextData& data) { return m_data == data.m_data; }
+		operator ==(const std::string& data) { return m_data == data; }
+
+		// concatenation operator
+		LineTextData& operator +=(const LineTextData& data) { m_data += data.m_data; return *this; }
+		LineTextData& operator +=(const std::string& data) { m_data += data; return *this; }
+
+		ColumnIterator begin() { return ColumnIterator(); }
+		ColumnIterator end() { return ColumnIterator(); }
+	
+		void clear() { m_data.clear(); }
+		void append(const std::string& chars, std::string::size_type index = 0) { insert(U32_MAX, chars, index); }
+		void insert(u32 col, const std::string& chars, std::string::size_type index = 0)
+		{ 
+			if(col == U32_MAX)
+			{
+				if(index == 0)
+					m_data += chars;
+				else
+					m_data += chars.substr(index);
+			}
+			else
+				m_data.insert(col, chars, index); 
+		}
+	};
+
+	class LineText : public IRenderable, public UIDriverObject
+	{
+	private:
+		GfxDriverObjectHandleType m_handle;
+		bool m_isPosDirty;
+		bool m_isDataDirty;
+		LineTextData m_data;
+		Vec2D<DisplaySizeType> m_pos;
+
+		LineText(UIDriver& driver) noexcept;
+
+		friend class Text;
 
 	public:
-
-		virtual bool isDirty() const override { return m_isDirty; }
+		virtual bool isDirty() override;
 		virtual void update() override;
-
-		// getters
-		Color3 getColor() const noexcept { return m_color; }
-		TPGEmphasis getEmphasis() const noexcept { return m_emphasis; }
-		GfxDriverObjectHandleType getFont() const noexcept { return m_font; }
-
-		// below set of functions mark this 'SubText' as dirty, i.e. set m_isDirty to true
 		void setData(const std::string& data) noexcept;
-		void setColor(const Color3 color) noexcept;
-		void setEmphasis(TPGEmphasis emphasis) noexcept;
-		void setFont(GfxDriverObjectHandleType font) noexcept;
-		void setSize(u32 pointSize) noexcept;
+		void append(const std::string& data) noexcept;
+		void setPosition(Vec2D<DisplaySizeType> pos) noexcept;
+		void addDisplacement(Vec2D<DisplaySizeType> pos) noexcept;
+		void clear() noexcept;
 	};
 
 	enum class HorizontalAlignment : u8
@@ -72,17 +111,16 @@ namespace SUTK
 	// One text object is responsible for rendering a small to medium sized sub-text
 	// This usually translates to a single Gfx API specific buffer object. For example, it is VkBuffer (and VkDeviceMemory) in vulkan.
 	// This is to ensure fast manipulation of larget text data consisting of multiple such 'Text' objects.
-	class Text : public IRenderable
+	class Text : public IRenderable, public UIDriverObject
 	{
 	private:
-		UIDriver& m_driver;
 		TextContainer* m_container;
-		GfxDriverObjectHandleType m_handle;
-		std::vector<GfxDriverObjectHandleType> m_subHandles;
+		
+		std::vector<LineText*> m_lines;
+
 		bool m_isDirty;
 
 		// data and rendering attributes
-		std::vector<std::string> m_lines;
 		Color3 m_color;
 		TPGEmphasis m_emphasis;
 		GfxDriverObjectHandleType m_font;
@@ -97,28 +135,14 @@ namespace SUTK
 
 	public:
 
-		virtual bool isDirty() const override { return m_isDirty; }
+		virtual bool isDirty() override;
 		virtual void update() override;
 
-		void set(const std::string& str);
-		void set(const std::string& str, LineCountType lineNo);
-		void set(std::string&& str);
-		void set(std::string&& str, LineCountType lineNo);
+		void clear();
+		LineText* createNewLine();
+		LineText* getLastLine();
 		void append(const std::string& str);
-		void appendChar(const CharType ch);
-		void insert(const std::string& str, LineCountType lineNo, LineCountType columnNo);
-		void insertChar(const CharType ch, LineCountType lineNo, LineCountType columnNo);
-
-		// below set of functions markt this 'Text' is 'dirty', i.e. set m_isDirty to true
-		void setColor(const Color3 color) noexcept;
-		void setEmphasis(const TPGEmphasis style) noexcept;
-		void setFont(GfxDriverObjectHandleType font) noexcept;
-		void setSize(u32 pointSize) noexcept;
-		void setHorizontalAlignment(const HorizontalAlignment alignment) noexcept;
-		void setVerticalAlignment(const VerticalAlignment alignment) noexcept;
-
-		LineCountType getLineCount() const;
-		LineCountType getColumnCount(LineCountType lineNo) const;
+		void set(const std::string& str);
 
 		TextContainer* getContainer() noexcept { return m_container; }
 	};

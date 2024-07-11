@@ -31,6 +31,10 @@ namespace SUTK
 	typedef u32 LineCountType;
 
 	#define LINE_COUNT_TYPE_MAX std::numeric_limits<LineCountType>::max()
+	/* should be used in place of 'column number' */
+	#define END_OF_LINE LINE_COUNT_TYPE_MAX
+	/* should be used in place of 'line number' in a multiline text */
+	#define END_OF_TEXT LINE_COUNT_TYPE_MAX
 
 	/* For now, we can support display resolutions upto U16_MAX x U16_MAX pixels,
 	 * but in future we may increase its bit-width to support gigantic displays
@@ -53,7 +57,23 @@ namespace SUTK
 			T width;
 			T height;
 		};
+
+		Vec2D() : x(0), y(0) { }
+		Vec2D(T _x, T _y) : x(_x), y(_y) { }
+
+		// static methods
+		static Vec2D<T> zero();
+
+		// operator overloads
+		operator ==(const Vec2D<T>& v) { return (x == v.x) && (y == v.y); }
+		operator !=(const Vec2D<T>& v) { return !operator==(v); }
+
+		// arithmetic operator overloads
+		Vec2D& operator +=(const Vec2D<T>& v) { x += v.x; y += v.y; return *this; }
 	};
+
+	template<typename T>
+	Vec2D<T> Vec2D<T>::zero() { return { 0, 0 }; }
 
 	template<typename T>
 	struct Rect2D
@@ -62,6 +82,9 @@ namespace SUTK
 		T y;
 		T width;
 		T height;
+
+		Rect2D() : x(0), y(0), width(0), height(0) { }
+		Rect2D(T _x, T _y, T _width, T _height) : x(_x), y(_y), width(_width), height(_height) { }
 	};
 
 	typedef u32 GfxDriverObjectHandleType;
@@ -72,6 +95,9 @@ namespace SUTK
 		u8 r;
 		u8 g;
 		u8 b;
+
+		Color3() : r(0), g(0), b(0) { }
+		Color3(u8 _r, u8 _g, u8 _b) : r(_r), g(_g), b(_b) { }
 
 		operator ==(Color3& rhs) const noexcept
 		{

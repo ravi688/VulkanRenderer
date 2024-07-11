@@ -33,4 +33,15 @@ namespace SUTK
 	Container* UIDriver::createContainer<Container>(Container* parent);
 	template<>
 	TextContainer* UIDriver::createContainer<TextContainer>(Container* parent);
+
+	class UIDriverObject
+	{
+	private:
+		UIDriver& m_uiDriver;
+	protected:
+		UIDriverObject(UIDriver& uiDriver) : m_uiDriver(uiDriver) { }
+	public:
+		UIDriver& getUIDriver() { return m_uiDriver; }
+		IGfxDriver& getGfxDriver() { return getUIDriver().getGfxDriver(); }
+	};
 }
