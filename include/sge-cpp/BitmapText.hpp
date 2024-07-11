@@ -5,6 +5,8 @@
 
 #include <string> /* for std::string */
 
+#include <hpml/affine_transformation.h> /* for mat4_translation */
+
 namespace SGE
 {
 	class SGE_API BitmapTextString
@@ -29,9 +31,17 @@ namespace SGE
 		{
 			return bitmap_text_string_get_point_sizeH(m_bitmapTextHandle, m_handle);
 		}
+		u32 getLength() const noexcept
+		{
+			return bitmap_text_string_get_lengthH(m_bitmapTextHandle, m_handle);
+		}
 		void setTransform(mat4_t transform) const noexcept
 		{
 			bitmap_text_string_set_transformH(m_bitmapTextHandle, m_handle, transform);
+		}
+		void setPosition(vec3_t position) const noexcept
+		{
+			setTransform(mat4_translation(position.x, position.y, position.z));
 		}
 
 		void destroy() const noexcept

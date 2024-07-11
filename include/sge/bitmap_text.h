@@ -95,6 +95,7 @@ SGE_API void bitmap_text_string_set_transformH(bitmap_text_t* text, bitmap_text_
 SGE_API u32 bitmap_text_get_point_size(bitmap_text_t* text);
 SGE_API const char* bitmap_text_string_getH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 SGE_API u32 bitmap_text_string_get_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
+SGE_API u32 bitmap_text_string_get_lengthH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 SGE_API mat4_t bitmap_text_string_get_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 
 END_CPP_COMPATIBLE

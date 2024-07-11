@@ -275,6 +275,8 @@ SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text
 SGE_API u32 vulkan_bitmap_text_get_point_size(vulkan_bitmap_text_t* text);
 SGE_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 SGE_API u32 vulkan_bitmap_text_string_get_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
+/* NOTE: this returns number of characters exclusive of null character at the end of 'chars' buffer */
+SGE_API u32 vulkan_bitmap_text_string_get_lengthH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 SGE_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 SGE_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text);
 
