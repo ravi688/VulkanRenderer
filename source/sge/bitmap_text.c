@@ -148,6 +148,11 @@ SGE_API u32 bitmap_text_string_get_point_sizeH(bitmap_text_t* text, bitmap_text_
 	return vulkan_bitmap_text_string_get_point_sizeH(text, handle);
 }
 
+SGE_API u32 bitmap_text_string_get_lengthH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
+{
+	return vulkan_bitmap_text_string_get_lengthH(text, handle);
+}
+
 SGE_API mat4_t bitmap_text_string_get_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
 {
 	return vulkan_bitmap_text_string_get_transformH(text, handle);

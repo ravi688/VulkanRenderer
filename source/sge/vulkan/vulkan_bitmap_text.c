@@ -341,6 +341,9 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 		buf_push_pseudo(&text->text_strings, 1);
 		text_string = buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, handle);
 		text_string->chars = memory_allocator_buf_new(text->renderer->allocator, s8);
+		/* vulkan_bitmap_text_string_get_lengthH function returns text_string->chars's element count - 1
+		 * therefore, the number of characters in 'chars' must be greater than or equal to 1 (including the null character) */
+		buf_push_null(&text_string->chars);
 		buf_push_pseudo(tst_buffer, 1);
 	}
 
@@ -765,6 +768,13 @@ SGE_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text,  
 SGE_API u32 vulkan_bitmap_text_string_get_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
 {
 	return get_text_stringH(text, handle)->point_size;
+}
+
+SGE_API u32 vulkan_bitmap_text_string_get_lengthH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
+{
+	AUTO count = buf_get_element_count(&get_text_stringH(text, handle)->chars);
+	_debug_assert__(count >= 1);
+	return count - 1u;
 }
 
 SGE_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
