@@ -1,10 +1,11 @@
 #include <sutk/SGEGfxDriver.hpp>
+#include <sge-cpp/Display.hpp>
 
 #include <utility> /* for std::pair */
 
 #include <hpml/affine_transformation.h>
 
-#define BITMAP_TEXT_OVERLOAD_THRESHOLD 800 // 800 number of characters rewrite can be assumed to have near to zero latency
+#define BITMAP_TEXT_OVERLOAD_THRESHOLD 15 // 800 number of characters rewrite can be assumed to have near to zero latency
 
 namespace SUTK
 {	
@@ -31,8 +32,8 @@ namespace SUTK
 		m_material.set<float>("parameters.color.g", 1.0f);
 		m_material.set<float>("parameters.color.b", 1.0f);
 
-		m_font = driver.loadFont("../showcase/resource/fonts/arial.ttf");
-		m_font.setCharSize(24);
+		m_font = driver.loadFont("fonts/Calibri Regular.ttf");
+		m_font.setCharSize(15);
 
 		SGE::BitmapGlyphAtlasTexture::CreateInfo createInfo =
 		{
@@ -69,6 +70,7 @@ namespace SUTK
 
 	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::createBitmapText()
 	{
+		debug_log_info("[SGE] Creating new SGE::BitmapText object");
 		SGE::BitmapText text = m_driver.createBitmapText(m_bgaTexture);
 		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Text, SGE::RenderQueue::Type::Geometry);
 		object.setMaterial(m_material);
@@ -120,7 +122,7 @@ namespace SUTK
 	{
 		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> bitmapText = getOrCreateBitmapText();
 		SGE::BitmapTextString subText = bitmapText.first.createString();
-		subText.setPointSize(24);
+		subText.setPointSize(15);
 		u32 id = id_generator_get(&m_id_generator);
 		m_bitmapTextStringMappings.insert({ id, { subText,  bitmapText.second } });
 		return static_cast<GfxDriverObjectHandleType>(id);
@@ -151,7 +153,9 @@ namespace SUTK
 
 	void SGEGfxDriver::setTextPosition(GfxDriverObjectHandleType handle, Vec2D<DisplaySizeType> position)
 	{
-		getText(handle).setPosition(vec3(0.0f, position.y, position.x));
+		auto windowSize = getSize();
+		getText(handle).setPosition(vec3(0.0f, static_cast<float>(windowSize.height >> 1) - static_cast<float>(position.y), 
+											   static_cast<float>(position.x) - static_cast<float>(windowSize.width >> 1)));
 	}
 
 	void SGEGfxDriver::setTextData(GfxDriverObjectHandleType handle, const std::string& data)
@@ -164,5 +168,10 @@ namespace SUTK
 		textString.set(data);
 		bitmapTextData.charCount += textString.getLength();
 		m_bgaTexture.commit(NULL);
+	}
+
+	u32 SGEGfxDriver::getBaselineHeightInPixels()
+	{
+		return m_font.getFontUnitsToPixels(m_font.getBaselineSpace(), SGE::Display::GetDPI().height);
 	}
 }

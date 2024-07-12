@@ -90,7 +90,8 @@ namespace SUTK
 		void setData(const std::string& data) noexcept;
 		void append(const std::string& data) noexcept;
 		void setPosition(Vec2D<DisplaySizeType> pos) noexcept;
-		void addDisplacement(Vec2D<DisplaySizeType> pos) noexcept;
+		void addPosition(Vec2D<DisplaySizeType> pos) noexcept;
+		void subPosition(Vec2D<DisplaySizeType> pos) noexcept;
 		void clear() noexcept;
 	};
 
@@ -108,6 +109,28 @@ namespace SUTK
 		Middle
 	};
 	
+	template<typename T>
+	class CursorPosition
+	{
+	private:
+		T m_line;
+		T m_col;
+
+	public:
+		CursorPosition() : m_line(0), m_col(0) { }
+		CursorPosition(T line, T col = 0) : m_line(line), m_col(col) { }
+		CursorPosition(const CursorPosition&) = default;
+		CursorPosition& operator=(const CursorPosition&) = default;
+
+		void moveToNextLine() { m_line += 1; }
+		void moveToPrevLine() { if(m_line >= 1) m_line -= 1; }
+		void moveToLine(T line) { m_line = line; }
+		void moveToColumn(T col) { m_col = col; }
+		T getLine() const { return m_line; }
+		T getColumn() const { return m_col; }
+	};
+
+
 	// One text object is responsible for rendering a small to medium sized sub-text
 	// This usually translates to a single Gfx API specific buffer object. For example, it is VkBuffer (and VkDeviceMemory) in vulkan.
 	// This is to ensure fast manipulation of larget text data consisting of multiple such 'Text' objects.
@@ -117,6 +140,9 @@ namespace SUTK
 		TextContainer* m_container;
 		
 		std::vector<LineText*> m_lines;
+		
+		// distance between two consecutive base lines in screen pixel coordinate
+		u32 m_baselineHeight;
 
 		bool m_isDirty;
 
@@ -133,17 +159,22 @@ namespace SUTK
 
 		friend class UIDriver;
 
+		Vec2D<DisplaySizeType> getLocalPositionFromCursorPosition(const CursorPosition<DisplaySizeType>& cursor);
+
 	public:
 
 		virtual bool isDirty() override;
 		virtual void update() override;
 
 		void clear();
+
 		LineText* createNewLine();
 		LineText* getLastLine();
 		void append(const std::string& str);
 		void set(const std::string& str);
 
 		TextContainer* getContainer() noexcept { return m_container; }
+
+		void onContainerResize(const Rect2D<DisplaySizeType>& rect, bool isPositionChanged, bool isSizeChanged);
 	};
 }

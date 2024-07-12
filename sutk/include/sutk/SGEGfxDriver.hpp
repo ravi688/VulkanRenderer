@@ -65,5 +65,7 @@ namespace SUTK
 
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2D<DisplaySizeType> position) override;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
+
+		virtual u32 getBaselineHeightInPixels() override;
 	};
 }

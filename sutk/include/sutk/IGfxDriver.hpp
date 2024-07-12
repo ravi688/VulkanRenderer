@@ -16,5 +16,6 @@ namespace SUTK
 		virtual void destroyText(GfxDriverObjectHandleType handle) = 0;
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2D<DisplaySizeType> position) = 0;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) = 0;
+		virtual u32 getBaselineHeightInPixels() = 0;
 	};
 }

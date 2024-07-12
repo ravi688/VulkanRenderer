@@ -24,5 +24,7 @@ namespace SUTK
 		void setText(Text* text);
 
 		Text* getText() noexcept { return m_text; }
+
+		virtual void onResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged) override;
 	};
 }

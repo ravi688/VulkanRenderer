@@ -58,18 +58,21 @@ namespace SUTK
 			T height;
 		};
 
-		Vec2D() : x(0), y(0) { }
-		Vec2D(T _x, T _y) : x(_x), y(_y) { }
+		Vec2D() noexcept : x(0), y(0) { }
+		Vec2D(T _x, T _y) noexcept : x(_x), y(_y) { }
 
 		// static methods
 		static Vec2D<T> zero();
 
 		// operator overloads
-		operator ==(const Vec2D<T>& v) { return (x == v.x) && (y == v.y); }
-		operator !=(const Vec2D<T>& v) { return !operator==(v); }
+		operator ==(const Vec2D<T>& v) noexcept { return (x == v.x) && (y == v.y); }
+		operator !=(const Vec2D<T>& v) noexcept { return !operator==(v); }
 
 		// arithmetic operator overloads
-		Vec2D& operator +=(const Vec2D<T>& v) { x += v.x; y += v.y; return *this; }
+		Vec2D<T> operator +(const Vec2D<T>& v) const noexcept { return { x + v.x, y + v.y }; }
+		Vec2D<T> operator -(const Vec2D<T>& v) const noexcept { return { x - v.x, y - v.y }; }
+		Vec2D<T>& operator +=(const Vec2D<T>& v) noexcept { x += v.x; y += v.y; return *this; }
+		Vec2D<T>& operator -=(const Vec2D<T>& v) noexcept { x -= v.x; y -= v.y; return *this; }
 	};
 
 	template<typename T>
@@ -83,8 +86,23 @@ namespace SUTK
 		T width;
 		T height;
 
-		Rect2D() : x(0), y(0), width(0), height(0) { }
-		Rect2D(T _x, T _y, T _width, T _height) : x(_x), y(_y), width(_width), height(_height) { }
+		Rect2D() noexcept : x(0), y(0), width(0), height(0) { }
+		Rect2D(T _x, T _y, T _width, T _height) noexcept : x(_x), y(_y), width(_width), height(_height) { }
+
+		Vec2D<T> getPosition() const noexcept { return { x, y }; }
+		Vec2D<T> getSize() const noexcept { return { width, height }; }
+
+		void setPosition(Vec2D<T> pos) noexcept
+		{
+			x = pos.x;
+			y = pos.y;
+		}
+
+		void setSize(Vec2D<T> size) noexcept
+		{
+			width = size.width;
+			height = size.height;
+		}
 	};
 
 	typedef u32 GfxDriverObjectHandleType;
@@ -96,8 +114,8 @@ namespace SUTK
 		u8 g;
 		u8 b;
 
-		Color3() : r(0), g(0), b(0) { }
-		Color3(u8 _r, u8 _g, u8 _b) : r(_r), g(_g), b(_b) { }
+		Color3() noexcept : r(0), g(0), b(0) { }
+		Color3(u8 _r, u8 _g, u8 _b) noexcept : r(_r), g(_g), b(_b) { }
 
 		operator ==(Color3& rhs) const noexcept
 		{
