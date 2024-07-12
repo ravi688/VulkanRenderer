@@ -45,8 +45,8 @@ namespace SUTK
 		operator const std::string&() const { return m_data; }
 
 		// equality comparison operators
-		operator ==(const LineTextData& data) { return m_data == data.m_data; }
-		operator ==(const std::string& data) { return m_data == data; }
+		bool operator ==(const LineTextData& data) { return m_data == data.m_data; }
+		bool operator ==(const std::string& data) { return m_data == data; }
 
 		// concatenation operator
 		LineTextData& operator +=(const LineTextData& data) { m_data += data.m_data; return *this; }
