@@ -93,7 +93,7 @@ void main()
     vec2 win_size = vec2(displayInfo.window_size);
     vec2 glyph_size = vec2(texcoord.trtc.x - texcoord.tltc.x, texcoord.bltc.y - texcoord.tltc.y) * tex_size;
 
-    vec4 pos = vec4((position.x * glyph_size.x + ofst.x) * 0.5, (position.y * glyph_size.y + ofst.y) * 0.5, 0, 1.0);
+    vec4 pos = vec4((position.x * glyph_size.x + ofst.x), (position.y * glyph_size.y + ofst.y), 0, 1.0);
 
     vec4 world = objectInfo.transform * tst_buffer[stid] * pos.zyxw;
 
