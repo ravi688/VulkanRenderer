@@ -509,7 +509,9 @@ DEBUG_BLOCK
 
 	/* set the display dpi value */
 	AUTO dpi = display_get_dpi();
-	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.dpi_field, CAST_TO(uint*, &dpi));
+	iextent2d_t i_dpi = { dpi.width, dpi.height };
+	/* TODO: dpi should be in floating points */
+	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.dpi_field, CAST_TO(uint*, &i_dpi));
 
 	/* set the screen size and screen matrix
 	 * NOTE: this function is called whenever the window is resized, but we are calling it here for the first time to populate

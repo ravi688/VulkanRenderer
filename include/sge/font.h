@@ -119,7 +119,7 @@ typedef struct font_t
 		u32 ft_data_size;
 	};
 	/* display resolution in dpi */
-	iextent2d_t dpi;
+	extent2d_t dpi;
 	u32 point_size;
 	u32 loaded_point_size;
 	/* cached glyph infos as we are not sure how does the FT_Load_Glyph works and how much expensive it is */
@@ -153,8 +153,17 @@ SGE_API void font_get_glyph_info(font_t* font, utf32_t unicode, font_glyph_info_
 /* fills 'info' with information of the glyph only but calls font_load_glyph internally if required (be careful) */
 SGE_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info_t OUT info);
 
+SGE_API f32 font_get_baseline_space(font_t* font);
+
 /* returns the ascender of the face (the ascender of the glyph having heighest value in the face) */
 SGE_API f32 font_get_ascender(font_t* font);
+/* returns the descender of the face (the descneder of the glyph having heighest value in the face), it may be negative I guess */
+SGE_API f32 font_get_descender(font_t* font);
+
+/* returns position of underline rendering relative to the baseline, i.e. it may be negative */
+SGE_API f32 font_get_underline_position(font_t* font);
+/* returns thickness of the underline rendering */
+SGE_API f32 font_get_underline_thickness(font_t* font);
 
 /* returns the units (in point size) per EM */
 SGE_API f32 font_get_units_per_em(font_t* font);
@@ -168,7 +177,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE f32 get_inches_from_point_s
 	return point_size * 1.0 / 72;
 }
 
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 get_pixels_from_point_size(u32 point_size, u32 dpi)
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 get_pixels_from_point_size(u32 point_size, f32 dpi)
 {
 	/* convert inches to pixels by multiplying with 'dots per inch' */
 	return CAST_TO(u32, (get_inches_from_point_size(point_size) * dpi));

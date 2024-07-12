@@ -28,8 +28,22 @@
 
 BEGIN_CPP_COMPATIBLE
 
+/* BELOW SET OF THREE FUNCTIONS ARE TO QUERY SPECIFICATIONS ABOUT THE DISPLAY PROVIDED BY ITS MANUFACTURER */
+
+/* returns display resolution in pixels { number of pixels across width, number of pixels across height } */
 SGE_API iextent2d_t display_get_resolution();
-SGE_API iextent2d_t display_get_dpi();
+/* returns aspect ratio in terms of separated { nominator (represents "primitive or reduced or factored out" width), denominator "primitive..." height }
+ * for example, { 16, 9 } */
+SGE_API iextent2d_t display_get_aspect_ratio();
+/* returns diagonal size of the display in inches */
+SGE_API f32 display_get_diagonal_size();
+
+
+/* BELOW FUNCTIONS ARE DERIVED FROM THE ABOVE FUNCTIONS */
+
+/* returns number of pixels per inch across width and height as { width_dpi, height_dpi } */
+SGE_API extent2d_t display_get_dpi();
+/* returns physical width and height of display in inches */
 SGE_API extent2d_t display_get_inches();
 
 END_CPP_COMPATIBLE
