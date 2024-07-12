@@ -499,9 +499,9 @@ static void test_glyph_rasterization(renderer_t* renderer)
 	debug_log_info("Num glyphs: %lu", face->num_glyphs);
 
 	AUTO dpi = display_get_dpi();
-	debug_log_info("DPI: width = %lu dpi, height = %lu dpi", dpi.x, dpi.y);
+	debug_log_info("DPI: width = %f dpi, height = %f dpi", dpi.x, dpi.y);
 
-	error = FT_Set_Char_Size(face, 0, 11*64, dpi.x, dpi.y);
+	error = FT_Set_Char_Size(face, 0, 11*64, CAST_TO(u32, dpi.x), CAST_TO(u32, dpi.y));
 
 	if(error)
 	{
