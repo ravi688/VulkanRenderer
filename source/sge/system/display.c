@@ -56,5 +56,5 @@ SGE_API extent2d_t display_get_inches()
 	f32 diagonal = display_get_diagonal_size();
 	iextent2d_t aspect_ratio = display_get_aspect_ratio();
 	u32 squared_sum = aspect_ratio.width * aspect_ratio.width + aspect_ratio.height * aspect_ratio.height;
-	return extent2d(diagonal * aspect_ratio.width / sqrt(squared_sum), diagonal * aspect_ratio.height * sqrt(squared_sum));
+	return extent2d(diagonal * aspect_ratio.width / sqrt(squared_sum), diagonal * aspect_ratio.height / sqrt(squared_sum));
 }
