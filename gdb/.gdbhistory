@@ -1560,3 +1560,327 @@ r
 quit
 r
 quit
+r
+quit
+r
+bt
+quit
+r
+f 3
+f 4
+bt
+f 5
+quit
+r
+bt
+quit
+r
+bt
+quit
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break main
+r
+next
+quit
+break vulkan_renderer_create
+r
+next
+quit
+break vulkan_instance_create
+r
+next
+quity
+quit
+break vulkan_instance_is_extension_supported
+r
+next
+r
+next
+p extension_count
+next
+next
+quit
+r
+quit
+break point_light_shadows.load.c:140
+r
+next
+r
+next
+quit
+break mesh3d.c:1255
+r
+next
+quit
+break read_text_from_file_ptr
+r
+next
+until
+next
+until
+until 40
+quit
+r
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+quit
+r
+quit
+break vulkan_render_object_set_material
+r
+next
+c
+next
+c
+next
+c
+next
+quit
+break vulkan_render_object.c:171
+r
+next
+p material
+next
+c
+next
+step
+next
+quit
+break render_scene_render
+r
+step
+next
+p camera_count
+next
+p count
+next
+step
+next
+step
+step
+step
+stpe
+step
+next
+next
+next
+step
+step
+next
+step
+step
+step
+step
+step
+step
+next
+next
+p pass_count
+next
+p shader_count
+next
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quuit
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+break vulkan_render_queue_destroy_all_objects
+r
+next
+p count
+next
+p count1
+next
+p count2
+c
+next
+r
+next
+p count
+p *queue
+next
+c
+next
+p *queue
+next
+quit
+break vulkan_render_queue.c:189
+r
+p *queue
+c
+p *queue
+c
+p *queue
+c
+quit
+r
+break vulkan_render_queue.c:189
+r
+p list
+c
+p list
+c
+p list
+c
+r
+y
+p *list
+c
+p *list
+c
+p *list
+c
+r
+y
+p *list
+p &list->element_count
+watch  *0x5555560bf6f0
+c
+c
+c
+c
+c
+c
+bt
+c
+quit
+r
+bt
+quit
+r
+quit
+r
+bt
+quit
+r
+bt
+quit
+r
+quit
+r
+bt
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+bt
+f 3
+f 5
+f 4
+p *create_info
+f 5
+p _create_info
+break vulkan_render_texture_create_no_alloc
+r
+next
+p create_info->type
+bt
+f 3
+p create_info
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+quit
+r
+bt
+f 1
+f 2
+list
+quit
+break vulkan_light.c:488
+r
+p &light->material
+p &light->shadow_material
+watch *0x555555b9e858
+c
+p &light->shadow_material
+watch *0x555555b9e378
+c
+p &light->shadow_material
+watch *0x555555b9d7f8
+c
+bt
+f 2
+f 1
+p data_size
+quit
+r
+quit
+r
+quit
+r
+quit

@@ -65,8 +65,8 @@ namespace SUTK
 		static Vec2D<T> zero();
 
 		// operator overloads
-		operator ==(const Vec2D<T>& v) noexcept { return (x == v.x) && (y == v.y); }
-		operator !=(const Vec2D<T>& v) noexcept { return !operator==(v); }
+		bool operator ==(const Vec2D<T>& v) noexcept { return (x == v.x) && (y == v.y); }
+		bool operator !=(const Vec2D<T>& v) noexcept { return !operator==(v); }
 
 		// arithmetic operator overloads
 		Vec2D<T> operator +(const Vec2D<T>& v) const noexcept { return { x + v.x, y + v.y }; }
@@ -117,12 +117,12 @@ namespace SUTK
 		Color3() noexcept : r(0), g(0), b(0) { }
 		Color3(u8 _r, u8 _g, u8 _b) noexcept : r(_r), g(_g), b(_b) { }
 
-		operator ==(Color3& rhs) const noexcept
+		bool operator ==(Color3& rhs) const noexcept
 		{
 			return (r == rhs.r) && (g == rhs.g) && (b == rhs.b);
 		}
 
-		operator !=(Color3& rhs) const noexcept
+		bool operator !=(Color3& rhs) const noexcept
 		{
 			return !Color3::operator==(rhs);
 		}
