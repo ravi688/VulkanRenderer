@@ -131,7 +131,7 @@ SGE_API void font_set_char_size(font_t* font, u32 point_size)
 	if(font->point_size == point_size) return;
 
 	if(font->ft_handle != NULL)
-		if(FT_Set_Char_Size(font->ft_handle, 0, point_size << 6, font->dpi.x, font->dpi.y) != 0)
+		if(FT_Set_Char_Size(font->ft_handle, 0, point_size << 6, CAST_TO(u32, font->dpi.x), CAST_TO(u32, font->dpi.y)) != 0)
 			debug_log_fetal_error("Failed to set char size");
 	font->point_size = point_size;
 }
@@ -298,10 +298,34 @@ SGE_API void font_get_glyph_info2(font_t* font, utf32_t unicode, font_glyph_info
 		font_load_glyph(font, unicode, info);
 }
 
+SGE_API f32 font_get_baseline_space(font_t* font)
+{
+	_release_assert__(font->ft_handle != NULL);
+	return CAST_TO(f32, font->ft_handle->height);	
+}
+
 SGE_API f32 font_get_ascender(font_t* font)
 {
 	_release_assert__(font->ft_handle != NULL);
 	return CAST_TO(f32, font->ft_handle->ascender);
+}
+
+SGE_API f32 font_get_descender(font_t* font)
+{
+	_release_assert__(font->ft_handle != NULL);
+	return CAST_TO(f32, font->ft_handle->descender);
+}
+
+SGE_API f32 font_get_underline_position(font_t* font)
+{
+	_release_assert__(font->ft_handle != NULL);
+	return CAST_TO(f32, font->ft_handle->underline_position);
+}
+
+SGE_API f32 font_get_underline_thickness(font_t* font)
+{
+	_release_assert__(font->ft_handle != NULL);
+	return CAST_TO(f32, font->ft_handle->underline_thickness);
 }
 
 SGE_API f32 font_get_units_per_em(font_t* font)

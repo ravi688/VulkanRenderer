@@ -28,20 +28,33 @@
 
 SGE_API iextent2d_t display_get_resolution()
 {
+	/* width = 1920,  height = 1080 */
 	return iextent2d(1920, 1080);
 }
 
-SGE_API iextent2d_t display_get_dpi()
+SGE_API iextent2d_t display_get_aspect_ratio()
 {
-	AUTO res = display_get_resolution();
+	/* aspect ratio = width (in inches) : height (in inches) */
+	return iextent2d(16, 9);
+}
+
+SGE_API f32 display_get_diagonal_size()
+{
+	/* 22.0f inches */
+	return 22.0f;
+}
+
+SGE_API extent2d_t display_get_dpi()
+{
+	AUTO pixels = display_get_resolution();
 	AUTO inches = display_get_inches();
-	return iextent2d(res.x / inches.x , res.y / inches.y);
+	return extent2d(pixels.width / inches.width, pixels.height / inches.height);
 }
 
 SGE_API extent2d_t display_get_inches()
 {
-	f32 diagonal = 15.6f; // inches
-	AUTO res = display_get_resolution();
-	f32 angle = atan2(res.y, res.x);
-	return extent2d(diagonal * cos(angle), diagonal * sin(angle));
+	f32 diagonal = display_get_diagonal_size();
+	iextent2d_t aspect_ratio = display_get_aspect_ratio();
+	u32 squared_sum = aspect_ratio.width * aspect_ratio.width + aspect_ratio.height * aspect_ratio.height;
+	return extent2d(diagonal * aspect_ratio.width / sqrt(squared_sum), diagonal * aspect_ratio.height * sqrt(squared_sum));
 }

@@ -21,6 +21,21 @@ namespace SGE
 
 		font_t* getHandle() const noexcept { return m_handle; }
 
+		u32 getBaselineSpace() const noexcept
+		{
+			return static_cast<u32>(font_get_baseline_space(m_handle));
+		}
+
+		s32 getAscender() const noexcept
+		{
+			return static_cast<s32>(font_get_ascender(m_handle));
+		}
+
+		s32 getDescender() const noexcept
+		{
+			return static_cast<s32>(font_get_descender(m_handle));
+		}
+
 		void setCharSize(u32 pointSize) const noexcept 
 		{
 			font_set_char_size(m_handle, pointSize);
