@@ -183,4 +183,9 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 get_pixels_from_point_s
 	return CAST_TO(u32, (get_inches_from_point_size(point_size) * dpi));
 }
 
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 font_get_font_units_to_pixels(font_t* font, u32 font_units, f32 dpi)
+{
+	return get_pixels_from_point_size((font_units / font_get_units_per_em(font)) * font_get_char_size(font), dpi);
+}
+
 END_CPP_COMPATIBLE

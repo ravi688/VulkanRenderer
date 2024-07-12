@@ -471,7 +471,7 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 
 	/* build the precusor glyph layout data for each character requested */
 	/* offset added to y coordinate, to adjust the anchor of the text to the top-left corner */
-	f32 anchor_offset_y = get_pixels_from_point_size((font_get_ascender(font) / font_get_units_per_em(font)) * font_get_char_size(font), display_get_dpi().y);
+	f32 anchor_offset_y = font_get_font_units_to_pixels(font, font_get_ascender(font), display_get_dpi().y);
 
 	u32 len = strlen_safe(data);
 

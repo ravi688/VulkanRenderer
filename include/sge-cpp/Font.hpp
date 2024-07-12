@@ -41,11 +41,18 @@ namespace SGE
 			font_set_char_size(m_handle, pointSize);
 		}
 
+		u32 getCharSize() const noexcept
+		{
+			return font_get_char_size(m_handle);
+		}
+
 		void destroy() noexcept
 		{
 			font_destroy(m_handle);
 			font_release_resources(m_handle);
 			m_handle = NULL;
 		}
+
+		u32 getFontUnitsToPixels(u32 fontUnits, f32 dpi) { return font_get_font_units_to_pixels(m_handle, fontUnits, dpi); }
 	};
 };
