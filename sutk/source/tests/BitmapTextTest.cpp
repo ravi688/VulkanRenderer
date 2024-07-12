@@ -52,7 +52,7 @@ namespace SUTK
 		m_textString = m_text.createString();
 		m_anotherString = m_text.createString();
 
-		m_anotherString.setPointSize(24);
+		m_anotherString.setPointSize(72);
 		m_textString.setPointSize(35);
 		m_anotherString.set("Hardwork with dedication suffices to c");
 		m_textString.set("Hardwork with dedication suffices to c: 1234324");

@@ -2,12 +2,13 @@
 
 #include <sutk/UIDriver.hpp> /* for SUTK::UIDriver::getGfxDriver() */
 #include <sutk/IGfxDriver.hpp> /* for SUTK::IGfxDriver::createText() */
+#include <sutk/TextContainer.hpp> /* for SUTK::TextContainer::getLocalCoordsToScreenCoords() */
 
 #include <common/assert.h> /* for _assert() */
 
 namespace SUTK
 {
-	LineText::LineText(UIDriver& driver) noexcept : UIDriverObject(driver), m_isPosDirty(false), m_isDataDirty(false)
+	LineText::LineText(UIDriver& driver) noexcept : UIDriverObject(driver), m_isPosDirty(true), m_isDataDirty(false)
 	{
 		m_handle = getGfxDriver().createText();
 	}
@@ -49,11 +50,18 @@ namespace SUTK
 		m_pos = pos;
 		m_isPosDirty = true;
 	}
-	void LineText::addDisplacement(Vec2D<DisplaySizeType> pos) noexcept
+	void LineText::addPosition(Vec2D<DisplaySizeType> pos) noexcept
 	{
 		if(pos == Vec2D<DisplaySizeType>::zero())
 			return;
 		m_pos += pos;
+		m_isPosDirty = true;
+	}
+	void LineText::subPosition(Vec2D<DisplaySizeType> pos) noexcept
+	{
+		if(pos == Vec2D<DisplaySizeType>::zero())
+			return;
+		m_pos -= pos;
 		m_isPosDirty = true;
 	}
 	void LineText::clear() noexcept
@@ -63,7 +71,7 @@ namespace SUTK
 
 	Text::Text(UIDriver& driver, TextContainer* container) : UIDriverObject(driver), m_container(container), m_isDirty(false)
 	{
-
+		m_baselineHeight = getGfxDriver().getBaselineHeightInPixels();
 	}
 
 	bool Text::isDirty()
@@ -99,10 +107,29 @@ namespace SUTK
 			m_lines[i]->clear();
 	}
 
+	Vec2D<DisplaySizeType> Text::getLocalPositionFromCursorPosition(const CursorPosition<DisplaySizeType>& cursor)
+	{
+		return { 0, static_cast<DisplaySizeType>(m_baselineHeight * cursor.getLine()) };
+	}
+
+	// this creates a new line before line pointed by current cursor
 	LineText* Text::createNewLine()
 	{
+		CursorPosition<DisplaySizeType> cursorPosition;
+		cursorPosition.moveToLine(static_cast<DisplaySizeType>(m_lines.size()));
+
+		// shift the line at which the cursor points to and the lines succeeding it
+		for(std::size_t i = cursorPosition.getLine(); i < m_lines.size(); i++)
+			m_lines[i]->subPosition({ 0, 50 });
+
+		// insert the line at which the cursor points to
 		LineText* lineText = new LineText(getUIDriver());
-		m_lines.push_back(lineText);
+		m_lines.insert(com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, cursorPosition.getLine()), lineText);
+
+		Vec2D<DisplaySizeType> localCoords = getLocalPositionFromCursorPosition(cursorPosition);
+		Vec2D<DisplaySizeType> screenCoords = getContainer()->getLocalCoordsToScreenCoords(localCoords);
+		lineText->setPosition(screenCoords);
+
 		return lineText;
 	}
 
@@ -165,5 +192,10 @@ namespace SUTK
 		clear();
 		// wring new data
 		append(str);
+	}
+
+	void Text::onContainerResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged)
+	{
+
 	}
 }
