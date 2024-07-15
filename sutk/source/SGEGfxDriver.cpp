@@ -13,7 +13,6 @@ namespace SUTK
 	{
 		SGE::CameraSystem cameraSystem = driver.getCameraSystem();
 		SGE::ShaderLibrary shaderLibrary = driver.getShaderLibrary();
-		SGE::MaterialLibrary materialLibrary = driver.getMaterialLibrary();
 
 		// create camera 
 		SGE::Camera camera = cameraSystem.createCamera(SGE::Camera::ProjectionType::Perspective);
@@ -26,11 +25,7 @@ namespace SUTK
 		// add the camera to the scene 
 		m_scene.addCamera(camera);
 
-		SGE::Shader shader = shaderLibrary.loadShader("../shaders/builtins/bitmap_text_shader.sb");
-		m_material = materialLibrary.createMaterial(shader, "BitmapTextShaderTest");
-		m_material.set<float>("parameters.color.r", 1.0f);
-		m_material.set<float>("parameters.color.g", 1.0f);
-		m_material.set<float>("parameters.color.b", 1.0f);
+		m_shader = shaderLibrary.loadShader("../shaders/builtins/bitmap_text_shader.sb");
 
 		m_font = driver.loadFont("fonts/Calibri Regular.ttf");
 		m_font.setCharSize(15);
@@ -65,6 +60,7 @@ namespace SUTK
 	
 	void SGEGfxDriver::render(UIDriver& driver)
 	{
+		m_bgaTexture.commit(NULL);
 		m_scene.render(RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 	}
 
@@ -73,7 +69,11 @@ namespace SUTK
 		debug_log_info("[SGE] Creating new SGE::BitmapText object");
 		SGE::BitmapText text = m_driver.createBitmapText(m_bgaTexture);
 		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Text, SGE::RenderQueue::Type::Geometry);
-		object.setMaterial(m_material);
+		SGE::Material material = m_driver.getMaterialLibrary().createMaterial(m_shader, "BitmapTextShaderTest");
+		material.set<float>("parameters.color.r", 1.0f);
+		material.set<float>("parameters.color.g", 1.0f);
+		material.set<float>("parameters.color.b", 1.0f);
+		object.setMaterial(material);
 		object.attach(text);
 		// rebuild render pass graph as new objects have been added into the render scene 
 		m_scene.buildQueues();
@@ -167,7 +167,6 @@ namespace SUTK
 		bitmapTextData.charCount -= textString.getLength();
 		textString.set(data);
 		bitmapTextData.charCount += textString.getLength();
-		m_bgaTexture.commit(NULL);
 	}
 
 	u32 SGEGfxDriver::getBaselineHeightInPixels()

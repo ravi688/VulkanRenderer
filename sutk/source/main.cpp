@@ -18,8 +18,7 @@ int main(int argc, char** argv)
 
 	SUTK::DriverInitializationData data = test->getInitializationData();
 
-	SGE::Driver driver(data.gpuType, data.width, data.height, data.title, data.fullScreen, data.resizable);
-
+	SGE::Driver driver(data.gpuType, data.width, data.height, data.title, data.fullScreen, data.resizable, SGE::Requirements { /* require bitmap text: */ true });
 	test->initialize(driver);
 
 	auto start = std::chrono::high_resolution_clock::now();
@@ -37,7 +36,8 @@ int main(int argc, char** argv)
 
 		// update the scene
 		auto end = std::chrono::high_resolution_clock::now();
-		test->update(driver, std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+		test->update(driver, std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() * 0.001f);
+		start = end;
 	}
 
 	driver.waitIdle();
