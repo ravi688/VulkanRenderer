@@ -32,7 +32,7 @@ namespace SUTK
 		SGE::BitmapGlyphAtlasTexture m_bgaTexture;
 		SGE::Font m_font;
 		SGE::RenderScene m_scene;
-		SGE::Material m_material;
+		SGE::Shader m_shader;
 		id_generator_t m_id_generator;
 		GfxDriverObjectHandleType m_currentBitmapTextHandle;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextData> m_bitmapTextMappings;

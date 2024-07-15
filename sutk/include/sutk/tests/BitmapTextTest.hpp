@@ -20,9 +20,11 @@ namespace SUTK
 		SGE::Font m_font;
 		SGE::BitmapGlyphAtlasTexture m_texture;
 		SGE::BitmapText m_text;
+		SGE::BitmapText m_text2;
 		SGE::BitmapTextString m_textString;
 		SGE::BitmapTextString m_anotherString;
 		SGE::RenderObject m_textObject;
+		SGE::RenderObject m_textObject2;
 
 	public:
 		BitmapTextTest() = default;
