@@ -98,13 +98,13 @@ SGE_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer2d_cr
 
 	/* create linear buffer if not supplied by the user */
 	buffer_t* backed_buffer = create_info->buffer;
-	if((backed_buffer == NULL) && (buffer2d_view_get_backed_buffer(buffer->view) == NULL))
+	if((backed_buffer == NULL) && (buffer2d_view_get_backed_buffer_readonly(buffer->view) == NULL))
 	{
 		backed_buffer = BUFcreate(NULL, sizeof(u8), IEXTENT2D_AREA(create_info->size), 0);
 		buffer->is_backed_buffer_owner = true;
 	}
 
-	if(buffer2d_view_get_backed_buffer(buffer->view) == NULL)
+	if(buffer2d_view_get_backed_buffer_readonly(buffer->view) == NULL)
 	{
 		buf_clear(backed_buffer, NULL);
 		buffer2d_view_set_buffer(buffer->view, backed_buffer);
@@ -119,7 +119,7 @@ SGE_API void buffer2d_destroy(buffer2d_t* buffer)
 	if(buffer->is_view_owner)
 		buffer2d_view_destroy(buffer->view);
 	if(buffer->is_backed_buffer_owner)
-		buf_free(buffer->view->backed_buffer);
+		buf_free(buffer2d_view_get_backed_buffer_readonly(buffer->view));
 	hash_table_free(&buffer->filled_rects);
 	hash_table_free(&buffer->vacant_rects);
 }
@@ -134,7 +134,12 @@ SGE_API void buffer2d_release_resources(buffer2d_t* buffer)
 
 SGE_API buffer_t* buffer2d_get_backed_buffer(buffer2d_t* buffer)
 {
-	return buffer->view->backed_buffer;
+	return buffer2d_view_get_backed_buffer(buffer->view);
+}
+
+SGE_API buffer_t* buffer2d_get_backed_buffer_readonly(buffer2d_t* buffer)
+{
+	return buffer2d_view_get_backed_buffer_readonly(buffer->view);
 }
 
 SGE_API filled_rect_info_t* buffer2d_get_rect(buffer2d_t* buffer, void* key)
@@ -413,7 +418,7 @@ SGE_API void buffer2d_resize(buffer2d_t* buffer, u32 num_rows, u32 num_columns)
 	buffer2d_view_t* view = buffer->view;
 
 	/* save the data temporarily as we need it later to repack the filled rects into resized buffer2d */
-	buffer_t old_backed_buffer = buf_get_clone(view->backed_buffer);
+	buffer_t old_backed_buffer = buf_get_clone(buffer2d_view_get_backed_buffer_readonly(view));
 	buffer2d_view_create_info_t view_create_info =
 	{
 		.size = view->size,

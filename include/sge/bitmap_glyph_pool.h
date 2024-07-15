@@ -88,7 +88,10 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_clea
 /* returns the font used by this bitmap glyph pool */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE font_t* bitmap_glyph_pool_get_font(bitmap_glyph_pool_t* pool) { return pool->font; }
 /* returns true if the glyph has graphical representation and no errors,
- * outputs the texture coordinates of the glyph represented by the unicode encoding 'unicode' and with point size 'point_size' */
+ * outputs the texture coordinates of the glyph represented by the unicode encoding 'unicode' and with point size 'point_size' 
+ * OUT is_resized : set to true if the 2D view has been resized (eventually the underlying linear buffer) 
+ * OUT is_updated : set to true if more contents (or existing content updated) are added into the underlying linear buffer.
+ * NOTE: is_updated may set to true even if there is no resize (i.e. is_resizeed equals false) */
 SGE_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized);
 /* returns true if this pool has a rasterized graphical representation of a glyph represented by unicode encoding 'unicode' and with point size 'point_size' */
 SGE_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode);

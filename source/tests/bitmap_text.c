@@ -561,7 +561,7 @@ static void test_buffer2d_backed_buffer_dump(renderer_t* renderer)
 		buffer2d_push_broadcast(&bitmap, &inputs[i].key, IF_DEBUG((void*)&color) ELSE(NULL), sizeof(icolor3_t), inputs[i].width * sizeof(icolor3_t), inputs[i].height PARAM_IF_DEBUG(color));
 	}
 
-	void* ptr = buf_get_ptr(buffer2d_get_backed_buffer(&bitmap));
+	void* ptr = buf_get_ptr(buffer2d_get_backed_buffer_readonly(&bitmap));
 	bmp_write(ptr, bitmap.view->size.x / sizeof(icolor3_t), bitmap.view->size.y, 3, "test_buffer2d_backed_buffer_dump.bmp");
 
 	buffer2d_destroy(&bitmap);

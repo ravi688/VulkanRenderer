@@ -243,6 +243,49 @@ static u32 get_pool_sizes_sum(const VkDescriptorPoolSize* const pool_sizes, u32 
 	return sum;
 }
 
+static void setup_screen_binding(vulkan_renderer_t* renderer)
+{
+	/* create GPU buffer (till now the logical device has been created) to store window details to be made available to shaders */
+	renderer->screen_info.struct_def = create_screen_info_struct(renderer->allocator);
+	/* calculate the size of the struct and offsets of the fields inside it */
+	struct_descriptor_recalculate(&renderer->screen_info.struct_def);
+	/* get the field handles, to later use them to modify the field values */
+	renderer->screen_info.resolution_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "resolution");
+	renderer->screen_info.dpi_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "dpi");
+	renderer->screen_info.size_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "size");
+	renderer->screen_info.matrix_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "matrix");
+	/* create gpu buffer with the required size */
+	vulkan_buffer_create_info_t buffer_create_info =
+	{
+		.size = struct_descriptor_sizeof(&renderer->screen_info.struct_def),
+		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
+		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+	};
+	renderer->screen_info.buffer = vulkan_buffer_create(renderer, &buffer_create_info);
+
+	/* write to the descriptor with binding VULKAN_DESCRIPTOR_BINDING_SCREEN */
+	vulkan_descriptor_set_write_uniform_buffer(&renderer->global_set, VULKAN_DESCRIPTOR_BINDING_SCREEN, renderer->screen_info.buffer);
+
+	/* map the gpu buffer to the host memory */
+	struct_descriptor_map(&renderer->screen_info.struct_def, vulkan_buffer_map(renderer->screen_info.buffer));
+
+	/* set the display resolution value */
+	AUTO resolution = display_get_resolution();
+	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.size_field, CAST_TO(uint*, &resolution));
+
+	/* set the display dpi value */
+	AUTO dpi = display_get_dpi();
+	iextent2d_t i_dpi = { dpi.width, dpi.height };
+	/* TODO: dpi should be in floating points */
+	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.dpi_field, CAST_TO(uint*, &i_dpi));
+
+	/* set the screen size and screen matrix
+	 * NOTE: this function is called whenever the window is resized, but we are calling it here for the first time to populate
+	 * window size and screen projection matrix, otherwise the values for the 'matrix' and 'window_size' fields in 'displayInfo' UBO will be garbage */
+	update_screen_info(renderer->window, renderer);
+}
+
 SGE_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t* create_info)
 {
 	renderer_t* _renderer = create_info->renderer; 
@@ -260,6 +303,7 @@ SGE_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t*
 	renderer->vk_allocator = vulkan_allocator_create(_renderer->allocator);
 	IF_DEBUG( renderer->debug_log_builder = _renderer->debug_log_builder );
 	renderer->is_pipeline_frame = create_info->frame_pipelining;
+	renderer->is_bitmap_text = create_info->require_bitmap_text;
 	renderer->max_point_lights = create_info->max_point_lights;
 	renderer->max_spot_lights = create_info->max_spot_lights;
 	renderer->max_far_lights = create_info->max_far_lights;
@@ -478,45 +522,8 @@ DEBUG_BLOCK
 	renderer->camera_set_layout = create_camera_set_layout(renderer);
 	setup_global_set(renderer);
 
-	/* create GPU buffer (till now the logical device has been created) to store window details to be made available to shaders */
-	renderer->screen_info.struct_def = create_screen_info_struct(renderer->allocator);
-	/* calculate the size of the struct and offsets of the fields inside it */
-	struct_descriptor_recalculate(&renderer->screen_info.struct_def);
-	/* get the field handles, to later use them to modify the field values */
-	renderer->screen_info.resolution_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "resolution");
-	renderer->screen_info.dpi_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "dpi");
-	renderer->screen_info.size_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "size");
-	renderer->screen_info.matrix_field = struct_descriptor_get_field_handle(&renderer->screen_info.struct_def, "matrix");
-	/* create gpu buffer with the required size */
-	vulkan_buffer_create_info_t buffer_create_info =
-	{
-		.size = struct_descriptor_sizeof(&renderer->screen_info.struct_def),
-		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
-		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-	};
-	renderer->screen_info.buffer = vulkan_buffer_create(renderer, &buffer_create_info);
-
-	/* write to the descriptor with binding VULKAN_DESCRIPTOR_BINDING_SCREEN */
-	vulkan_descriptor_set_write_uniform_buffer(&renderer->global_set, VULKAN_DESCRIPTOR_BINDING_SCREEN, renderer->screen_info.buffer);
-
-	/* map the gpu buffer to the host memory */
-	struct_descriptor_map(&renderer->screen_info.struct_def, vulkan_buffer_map(renderer->screen_info.buffer));
-
-	/* set the display resolution value */
-	AUTO resolution = display_get_resolution();
-	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.size_field, CAST_TO(uint*, &resolution));
-
-	/* set the display dpi value */
-	AUTO dpi = display_get_dpi();
-	iextent2d_t i_dpi = { dpi.width, dpi.height };
-	/* TODO: dpi should be in floating points */
-	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.dpi_field, CAST_TO(uint*, &i_dpi));
-
-	/* set the screen size and screen matrix
-	 * NOTE: this function is called whenever the window is resized, but we are calling it here for the first time to populate
-	 * window size and screen projection matrix, otherwise the values for the 'matrix' and 'window_size' fields in 'displayInfo' UBO will be garbage */
-	update_screen_info(renderer->window, renderer);
+	/* below two functions create uniform buffers (and populate data) for screen info descriptor binding, and gtc buffer descriptor binding */
+	setup_screen_binding(renderer);
 
 	subscription = (event_subscription_create_info_t)
 	{
@@ -583,25 +590,39 @@ static vulkan_descriptor_set_layout_t create_camera_set_layout(vulkan_renderer_t
 }
 static vulkan_descriptor_set_layout_t create_global_set_layout(vulkan_renderer_t* renderer)
 {
-	VkDescriptorSetLayoutBinding bindings[] =
+	buffer_t bindings = memory_allocator_buf_new(renderer->allocator, VkDescriptorSetLayoutBinding);
+	VkDescriptorSetLayoutBinding binding = 
 	{
-		{
-			.binding = VULKAN_DESCRIPTOR_BINDING_LIGHT,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
-		},
-		{
-			.binding = VULKAN_DESCRIPTOR_BINDING_SCREEN,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
-		}
+		.binding = VULKAN_DESCRIPTOR_BINDING_SCREEN,
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 	};
+	buf_push(&bindings, &binding);
+	if(renderer->is_bitmap_text)
+	{
+		binding = (VkDescriptorSetLayoutBinding)
+		{
+			.binding = VULKAN_DESCRIPTOR_BINDING_GTC_BUFFER,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+		};
+		buf_push(&bindings, &binding);
+		binding = (VkDescriptorSetLayoutBinding)
+		{
+			.binding = VULKAN_DESCRIPTOR_BINDING_BGA_TEXTURE,
+			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
+		};
+		buf_push(&bindings, &binding);
+	}
 
 	var (vulkan_descriptor_set_layout_t, layout);
-	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, bindings, SIZEOF_ARRAY(bindings), ptr (layout));
+	vulkan_descriptor_set_layout_create_no_alloc_ext(renderer, CAST_TO(VkDescriptorSetLayoutBinding*, buf_get_ptr(&bindings)), buf_get_element_count(&bindings), ptr (layout));
 	log_msg("Global descriptor set layout has been created successfully\n");
+	buf_free(&bindings);
 	return val (layout);	
 }
 

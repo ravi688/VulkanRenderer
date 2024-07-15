@@ -146,6 +146,7 @@ int main(int argc, const char** argv)
 		.title = data.window_name, 
 		.full_screen = data.is_fullscreen, 
 		.resizable = data.is_resizable,
+		.require_bitmap_text = data.require_bitmap_text,
 		.max_point_lights = data.max_point_lights,
 		.max_spot_lights = data.max_spot_lights,
 		.max_far_lights = data.max_far_lights

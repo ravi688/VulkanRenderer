@@ -13,6 +13,7 @@ namespace SGE
 		friend class ShaderLibrary;
 
 	public:
+		Shader() noexcept : m_handle(NULL) { }
 		shader_t* getHandle() const noexcept { return m_handle; }
 	};
 }

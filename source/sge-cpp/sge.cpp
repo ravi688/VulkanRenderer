@@ -26,7 +26,7 @@ namespace SGE
 				const std::string& title,
 				bool fullScreen,
 				bool resizable,
-				com::OptionalReference<Requirements> requirements)
+				com::OptionalReference<const Requirements> requirements)
 	{
 		alloc_init(&argv);
 
@@ -45,6 +45,7 @@ namespace SGE
 			driver_create_info.max_point_lights = requirements->maxPointLights;
 			driver_create_info.max_spot_lights = requirements->maxSpotLights;
 			driver_create_info.max_far_lights = requirements->maxFarLights;
+			driver_create_info.require_bitmap_text = requirements->bitmapText;
 		}
 		m_driver = renderer_init(m_allocator, &driver_create_info);
 	}

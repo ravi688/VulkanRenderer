@@ -71,7 +71,12 @@ SGE_API void buffer2d_view_set_buffer(buffer2d_view_t* view, buffer_t* buffer)
 	}
 	_debug_assert__(buf_get_element_size(buffer) == 1);
 	if(buf_get_capacity(buffer) < (IEXTENT2D_AREA(view->size)))
+	{
 		buf_resize(buffer, IEXTENT2D_AREA(view->size));
+		view->is_backed_buffer_modified = true;
+	}
+	else
+		view->is_backed_buffer_modified = false;
 	buf_set_element_count(buffer, IEXTENT2D_AREA(view->size));
 
 	view->backed_buffer = buffer;
@@ -85,6 +90,7 @@ SGE_API void buffer2d_view_resize(buffer2d_view_t* view, u32 width, u32 height)
 	buf_resize(view->backed_buffer, width * height);
 	buf_set_element_count(view->backed_buffer, width * height);
 	view->size = iextent2d(width, height);
+	view->is_backed_buffer_modified = true;
 }
 
 SGE_API void buffer2d_view_clear(buffer2d_view_t* view, void* clear_value)
@@ -92,6 +98,7 @@ SGE_API void buffer2d_view_clear(buffer2d_view_t* view, void* clear_value)
 	buf_clear(view->backed_buffer, clear_value);
 	buf_set_element_count(view->backed_buffer, IEXTENT2D_AREA(view->size));
 	_debug_assert__(buf_get_element_count(view->backed_buffer) == buf_get_capacity(view->backed_buffer));
+	view->is_backed_buffer_modified = true;
 }
 
 SGE_API void buffer2d_view_set_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* in_data)
@@ -103,6 +110,7 @@ SGE_API void buffer2d_view_set_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u
 	for(u32 i = 0, k = 0; i < size_y; i++)
 		for(u32 j = 0; j < size_x; j++, k++)
 			buf_set_at(view->backed_buffer, (loc_y + i) * view->size.x + (loc_x + j), &_data[k]);
+	view->is_backed_buffer_modified = true;
 }
 
 SGE_API void buffer2d_view_broadcast_rect(buffer2d_view_t* view, irect2d_t rect, void* in_value, u32 in_value_size)
@@ -113,6 +121,7 @@ SGE_API void buffer2d_view_broadcast_rect(buffer2d_view_t* view, irect2d_t rect,
 	for(u32 i = 0; i < rect.extent.y; i++)
 		for(u32 j = 0; j < rect.extent.x; j++)
 			buf_set_at(view->backed_buffer, (rect.offset.y + i) * view->size.x + (rect.offset.x + j), &_data[j % in_value_size]);
+	view->is_backed_buffer_modified = true;
 }
 
 SGE_API void buffer2d_view_get_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* out_data)

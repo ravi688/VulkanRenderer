@@ -44,6 +44,9 @@ typedef struct buffer2d_view_t
 	memory_allocator_t* allocator;
 	buffer_t* backed_buffer;
 	iextent2d_t size;
+	/* set to true if any modification functions such as buffer2d_view_set_at or buffer2d_resize etc. are called 
+	 * and can also be set to false or true by calling buffer2d_view_set_backed_buffer_modified() */
+	bool is_backed_buffer_modified;
 } buffer2d_view_t;
 
 typedef buffer2d_view_t* buffer2d_view_ptr_t;
@@ -71,7 +74,19 @@ SGE_API void buffer2d_view_resize(buffer2d_view_t* view, u32 width, u32 height);
 SGE_API void buffer2d_view_clear(buffer2d_view_t* view, void* clear_value);
 
 /* getters */
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* buffer2d_view_get_backed_buffer(buffer2d_view_t* view) { return view->backed_buffer; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool buffer2d_view_is_backed_buffer_modified(buffer2d_view_t* view)
+{
+	return view->is_backed_buffer_modified;
+}
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* buffer2d_view_get_backed_buffer(buffer2d_view_t* view)
+{ 
+	view->is_backed_buffer_modified = true; 
+	return view->backed_buffer; 
+}
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* buffer2d_view_get_backed_buffer_readonly(buffer2d_view_t* view)
+{
+	return view->backed_buffer;
+}
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE iextent2d_t buffer2d_view_get_size(buffer2d_view_t* view) { return view->size; }
 SGE_API void buffer2d_view_get_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* out_data);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_get_rect(buffer2d_view_t* view, irect2d_t rect, void* out_data)
@@ -80,6 +95,10 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_get_rect
 }
 
 /* setters */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_set_backed_buffer_modified(buffer2d_view_t* view, bool is_modified)
+{
+	view->is_backed_buffer_modified = is_modified;
+}
 SGE_API void buffer2d_view_set_at(buffer2d_view_t* view, u32 loc_x, u32 loc_y, u32 size_x, u32 size_y, void* in_data);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void buffer2d_view_set_rect(buffer2d_view_t* view, irect2d_t rect, void* in_data)
 {

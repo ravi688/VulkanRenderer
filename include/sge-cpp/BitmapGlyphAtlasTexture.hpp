@@ -36,5 +36,12 @@ namespace SGE
 		{
 			bitmap_glyph_atlas_texture_commit(m_handle, isResized);
 		}
+
+		#ifdef GLOBAL_DEBUG
+		void dump(const std::string& filePath) const noexcept
+		{
+			bitmap_glyph_atlas_texture_dump(m_handle, filePath.c_str());
+		}
+		#endif
 	};
 }

@@ -54,7 +54,6 @@ typedef struct vulkan_host_buffered_texture_t
 	vulkan_host_buffered_buffer_t buffer;
 	/* 2d view of the above linear buffer */
 	buffer2d_view_t view;
-	bool is_dirty;
 } vulkan_host_buffered_texture_t;
 
 #define VULKAN_HOST_BUFFERED_TEXTURE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_host_buffered_texture_t*, VULKAN_OBJECT_TYPE_HOST_BUFFERED_TEXTURE, ptr)
@@ -72,14 +71,22 @@ SGE_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buffered
 /* returns pointer to the 2d view object used over the host side linear buffer */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer2d_view_t* vulkan_host_buffered_texture_get_view(vulkan_host_buffered_texture_t* texture)
 { 
-	texture->is_dirty = true;	
-	return &texture->view; 
+	return &texture->view;
+}
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer2d_view_t* vulkan_host_buffered_texture_get_view_readonly(vulkan_host_buffered_texture_t* texture)
+{ 
+	return vulkan_host_buffered_texture_get_view(texture); 
 }
 /* returns pointer to the host side linear buffer object */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* vulkan_host_buffered_texture_get_host_buffer(vulkan_host_buffered_texture_t* texture) 
 { 
-	texture->is_dirty = true;
 	return vulkan_host_buffered_buffer_get_host_buffer(&texture->buffer);
+}
+/* usage of this function should be preferred over the above function as this one doesn't mark the device side VkBuffer object outdated.
+ * Also, the contents of the queried host buffer must not be modified as it would be meant only for reading. */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* vulkan_host_buffered_texture_get_host_buffer_readonly(vulkan_host_buffered_texture_t* texture) 
+{ 
+	return vulkan_host_buffered_buffer_get_host_buffer_readonly(&texture->buffer);
 }
 /* returns pointer to the underlying vulkan_texture_t object */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_texture_t* vulkan_host_buffered_texture_get_texture(vulkan_host_buffered_texture_t* texture)
@@ -87,9 +94,10 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_texture_t* vulkan_ho
 	return BASE(texture);
 }
 
+/* however, currently it is not used anywehere */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_host_buffered_texture_set_dirty(vulkan_host_buffered_texture_t* texture, bool is_dirty)
 {
-	texture->is_dirty = is_dirty;
+	vulkan_host_buffered_buffer_set_dirty(&texture->buffer, is_dirty);
 }
 
 /* flushes the host side buffer to the device (gpu) side VkDeviceMemory 

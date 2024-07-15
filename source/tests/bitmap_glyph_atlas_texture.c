@@ -71,7 +71,8 @@ TEST_ON_SGE_INITIALIZE(BITMAP_GLYPH_ATLAS_TEXTURE)
 		.window_width = 800,
 		.window_height = 800,
 		.is_resizable = true,
-		.is_fullscreen = false
+		.is_fullscreen = false,
+		.require_bitmap_text = true
 	};
 }
 
@@ -92,8 +93,6 @@ TEST_ON_INITIALIZE(BITMAP_GLYPH_ATLAS_TEXTURE)
 	/* add the camera into the scene */
 	render_scene_add_camera(this->scene, this->camera);
 
-	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
-
 	this->material = material_library_getH(mlib,
 							material_library_create_materialH(mlib,
 							shader_library_load_shader(slib,
@@ -104,8 +103,8 @@ TEST_ON_INITIALIZE(BITMAP_GLYPH_ATLAS_TEXTURE)
 
 	bitmap_glyph_atlas_texture_create_info_t create_info =
 	{
-		.width = 256,
-		.height = 256,
+		.width = 64,
+		.height = 64,
 		.font = this->font
 	};
 	this->texture = bitmap_glyph_atlas_texture_create(renderer, &create_info);
@@ -130,19 +129,17 @@ TEST_ON_TERMINATE(BITMAP_GLYPH_ATLAS_TEXTURE)
 	font_destroy(this->font);
 	mesh_destroy(this->mesh);
 	mesh_release_resources(this->mesh);
-	light_destroy(this->light);
-	light_release_resources(this->light);
 	render_scene_destroy(this->scene);
 	render_scene_release_resources(this->scene);
 }
 
-char ch = 32;
+char ch = '#';
 
 TEST_ON_UPDATE(BITMAP_GLYPH_ATLAS_TEXTURE)
 {
-	if(kbhit())
+	static u64 counter = 0;
+	if(counter == 100)
 	{
-		getch();
 		bitmap_glyph_atlas_texture_get_texcoord(this->texture, make_pair_t(utf32_t, u32) { ch, font_get_char_size(this->font) }, NULL);
 		bool is_resized = false;
 		bitmap_glyph_atlas_texture_commit(this->texture, &is_resized);
@@ -150,9 +147,14 @@ TEST_ON_UPDATE(BITMAP_GLYPH_ATLAS_TEXTURE)
 		bitmap_glyph_atlas_texture_dump(this->texture, "BITMAP_GLYPH_ATLAS_TEXTURE.bmp");
 		#endif
 		if(is_resized)
+		{
+			debug_log_info("BGA Resized");
 			material_set_texture(this->material, "albedo", TEXTURE(this->texture));
+		}
 		ch++;
+		counter = 0;
 	}
+	++counter;
 }
 
 TEST_ON_RENDER(BITMAP_GLYPH_ATLAS_TEXTURE)

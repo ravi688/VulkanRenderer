@@ -29,7 +29,11 @@
 #include <sge/defines.h>
 #include <sge/internal/vulkan/vulkan_host_buffered_texture.h>
 #include <sge/internal/vulkan/vulkan_object.h>
+#include <sge/internal/vulkan/vulkan_host_buffered_buffer.h>
 #include <sge/bitmap_glyph_pool.h>
+#include <hpml/vec2.h> /* vec2_t */
+#include <sge/dictionary.h>
+#include <glslcommon/glsl_types.h>
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_create_info_t
 {
@@ -41,7 +45,31 @@ typedef struct vulkan_bitmap_glyph_atlas_texture_create_info_t
 	font_t* font;
 } vulkan_bitmap_glyph_atlas_texture_create_info_t;
 
+/* element of Glyph Texture Coordinate (GTC) buffer */
+typedef struct vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t
+{
+	/* per_instance [BTM_TXT_TLTC_BND, BTM_TXT_TLTC_LOC, BTM_TXT_TLTC_COMP] in vec2 tltc; */
+	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t tltc;
+	/* per_instance [BTM_TXT_TRTC_BND, BTM_TXT_TRTC_LOC, BTM_TXT_TRTC_COMP] in vec2 trtc; */
+	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t trtc;
+	/* per_instance [BTM_TXT_BRTC_BND, BTM_TXT_BRTC_LOC, BTM_TXT_BRTC_COMP] in vec2 brtc; */
+	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t brtc;
+	/* per_instance [BTM_TXT_BLTC_BND, BTM_TXT_BLTC_LOC, BTM_TXT_BLTC_COMP] in vec2 bltc; */
+	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t bltc;
+} vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t ALIGN_AS(U32_NEXT_MULTIPLE(GLSL_STD140_VEC2_ALIGN, 16));
+
+/* deterministic and minimum (portable) size of vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t
+ * the C compiler may add extra padding resulting in non-portable code or undefined behaviour */
+#define SIZEOF_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T (4 * COM_GET_STRIDE_IN_ARRAY(8, GLSL_STD140_VEC2_ALIGN))
+/* deterministic (portable) size of vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t in a homogeneous array, i.e. stride to the next element.
+ * same as reason as above */
+#define STRIDE_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T, ALIGN_OF(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t))
+
 typedef struct event_t event_t;
+
+/* Glyph Texture Coordinate (GTC) buffer */
+typedef vulkan_host_buffered_buffer_t vulkan_bitmap_glyph_texcoord_buffer_t;
+typedef dictionary_t glyph_texcoord_index_table_t;
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_t
 {
@@ -51,7 +79,13 @@ typedef struct vulkan_bitmap_glyph_atlas_texture_t
 	vulkan_renderer_t* renderer;
 	/* facilitates pooling of rasterized glyphs, works on the host side pixel buffer */
 	bitmap_glyph_pool_t pool;
+	/* GTC buffer */
+	vulkan_bitmap_glyph_texcoord_buffer_t glyph_texcoord_buffer;
+	glyph_texcoord_index_table_t glyph_texcoord_index_table;
+	/* this event will be published (just after) whenever BGA texture's device side objects are resized/recreated */
 	event_t* on_resize_event;
+	/* this event will be published (just after) whenever GTC buffer's device side objects are resized/recreated */
+	event_t* on_gtc_buffer_resize_event;
 } vulkan_bitmap_glyph_atlas_texture_t;
 
 #define VULKAN_BITMAP_GLYPH_ATLAS_TEXTURE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_bitmap_glyph_atlas_texture_t*, VULKAN_OBJECT_TYPE_BITMAP_GLYPH_ATLAS_TEXTURE, ptr)
@@ -70,14 +104,24 @@ SGE_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_renderer_t
 SGE_API void vulkan_bitmap_glyph_atlas_texture_destroy(vulkan_bitmap_glyph_atlas_texture_t* texture);
 SGE_API void vulkan_bitmap_glyph_atlas_texture_release_resources(vulkan_bitmap_glyph_atlas_texture_t* texture);
 
+/* rasterizes the glyph if not already and returns index to it in the BGA texture's texcoord table 
+ * this function may mark the underlying vulkan API objects as dirty (out of date) */
+SGE_API u32 vulkan_bitmap_glyph_atlas_texture_get_or_create_glyph(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode);
+/* returns actual texture coordinates from the index returned by vulkan_bitmap_glyph_atlas_texture_get_or_create_glyph 
+ * this function doesn't mark any underlying vulkan API objects as dirty */
+SGE_API vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t vulkan_bitmap_glyph_atlas_texture_get_texcoord_from_index(vulkan_bitmap_glyph_atlas_texture_t* texture, u32 index);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE event_t* vulkan_bitmap_glyph_atlas_texture_get_on_resize_event(vulkan_bitmap_glyph_atlas_texture_t*  texture)
 {
 	return texture->on_resize_event;
 }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE event_t* vulkan_bitmap_glyph_atlas_texture_get_on_gtc_buffer_resize_event(vulkan_bitmap_glyph_atlas_texture_t*  texture)
+{
+	return texture->on_gtc_buffer_resize_event;
+}
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE iextent2d_t vulkan_bitmap_glyph_atlas_texture_get_size(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
-	return buffer2d_view_get_size(vulkan_host_buffered_texture_get_view(BASE(texture)));
+	return buffer2d_view_get_size(vulkan_host_buffered_texture_get_view_readonly(BASE(texture)));
 }
 /* returns pointer to the bitmap_glyph_pool_t object */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bitmap_glyph_pool_t* vulkan_bitmap_glyph_atlas_texture_get_pool(vulkan_bitmap_glyph_atlas_texture_t* texture)
@@ -101,10 +145,10 @@ SGE_API bool vulkan_bitmap_glyph_atlas_texture_commit(vulkan_bitmap_glyph_atlas_
  * unicode: glyph's unicode value to rasterize
  * texcoords: the texture coordinates (list of 4 vec2(s)), filled by this function if the glyph has graphical representation
  * returns: true if the glyph has graphical representation and there are no errors */
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord)
+SGE_API bool vulkan_bitmap_glyph_atlas_texture_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* vulkan_bitmap_glyph_atlas_texture_get_gtc_host_buffer_readonly(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
-	vulkan_host_buffered_texture_set_dirty(BASE(texture), true);
-	return bitmap_glyph_pool_get_texcoord(&texture->pool, unicode, texcoord, NULL);
+	return vulkan_host_buffered_buffer_get_host_buffer_readonly(&texture->glyph_texcoord_buffer);
 }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_contains_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode)
 {
