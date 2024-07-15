@@ -89,6 +89,7 @@ typedef struct sge_driver_create_info_t
 	const char* title;
 	bool full_screen;
 	bool resizable;
+	bool require_bitmap_text;
 	u32 max_point_lights;
 	u32 max_spot_lights;
 	u32 max_far_lights;

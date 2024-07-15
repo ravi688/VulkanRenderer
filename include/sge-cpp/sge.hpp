@@ -25,11 +25,13 @@ namespace SGE
 
 	struct Requirements
 	{
+		bool bitmapText;
 		u32 maxPointLights;
 		u32 maxSpotLights;
 		u32 maxFarLights;
 
-		Requirements() noexcept : maxPointLights(0), maxSpotLights(0), maxFarLights(0) { }
+		Requirements() noexcept : bitmapText(false), maxPointLights(0), maxSpotLights(0), maxFarLights(0) { }
+		Requirements(bool _bitmapText) noexcept : bitmapText(_bitmapText), maxPointLights(0), maxSpotLights(0), maxFarLights(0) { }
 	};
 
 	class SGE_API Driver final
@@ -45,7 +47,7 @@ namespace SGE
 				const std::string& title = "SGE",
 				bool fullScreen = false,
 				bool resizable = true,
-				com::OptionalReference<Requirements> requirements = { });
+				com::OptionalReference<const Requirements> requirements = { });
 		~Driver();
 
 		renderer_t* getHandle() const noexcept { return m_driver; }

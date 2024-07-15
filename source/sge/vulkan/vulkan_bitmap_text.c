@@ -49,7 +49,7 @@ SGE_API vulkan_bitmap_text_t* vulkan_bitmap_text_create(vulkan_renderer_t* rende
 	return text;
 }
 
-static void update_bga_and_gtc_buffer(void* publisher, void* handler_data)
+static void on_bga_texture_update(void* publisher, void* handler_data)
 {
 	AUTO text = VULKAN_BITMAP_TEXT(handler_data);
 
@@ -65,40 +65,10 @@ static void update_bga_and_gtc_buffer(void* publisher, void* handler_data)
 	/* update bga texture */
 	if(text->material != NULL)
 	{
-		vulkan_material_set_texture(text->material, "bga", VULKAN_TEXTURE(publisher));
+		// vulkan_material_set_texture(text->material, "bga", VULKAN_TEXTURE(publisher));
 		AUTO tex_size = vulkan_bitmap_glyph_atlas_texture_get_size(text->texture);
 		vulkan_material_set_uvec2(text->material, "parameters.tex_size", (uvec2_t) { tex_size.width, tex_size.height });
 	}
-
-	/* update gtc buffer as the texture coordinate space has been transformed because of the new texture size */
-	buffer_t* gtc_buffer = vulkan_host_buffered_buffer_get_host_buffer(&text->glyph_texcoord_buffer);
-	u32 count = buf_get_element_count(gtc_buffer);
-	_debug_assert__(count == dictionary_get_count(&text->glyph_texcoord_index_table));
-	for(u32 i = 0; i < count; i++)
-	{
-		/* get the index of the GTC of this ascii in the GTC buffer */
-		u32 index;
-		dictionary_get_value_at(&text->glyph_texcoord_index_table, i, &index);
-		pair_t(utf32_t, u32) key;
-		dictionary_get_key_at(&text->glyph_texcoord_index_table, i, &key);
-
-		_debug_assert__(vulkan_bitmap_glyph_atlas_texture_contains_texcoord(text->texture, key));
-
-		/* update the GTC at the index */
-		glyph_texcoord_t texcoord;
-		vulkan_bitmap_glyph_atlas_texture_get_texcoord(text->texture, key, &texcoord);
-		vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t glsl_texcoord =
-		{
-			.tltc = { texcoord.tltc.x, texcoord.tltc.y },
-			.trtc = { texcoord.trtc.x, texcoord.trtc.y },
-			.brtc = { texcoord.brtc.x, texcoord.brtc.y },
-			.bltc = { texcoord.bltc.x, texcoord.bltc.y }
-		};
-		buf_set_at(gtc_buffer, index, &glsl_texcoord);
-	}
-	bool is_resized = false;
-	_release_assert__(vulkan_host_buffered_buffer_commit(&text->glyph_texcoord_buffer, &is_resized));
-	_debug_assert__(is_resized == false);
 }
 
 static bool default_glyph_layout_handler(vulkan_bitmap_text_glyph_layout_data_buffer_t* output, const vulkan_bitmap_text_glyph_layout_handler_input_data_t* input, void* user_data)
@@ -145,13 +115,13 @@ SGE_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vul
 	/* subscribe to the on resize texture event */
 	event_subscription_create_info_t subscription =
 	{
-		.handler = EVENT_HANDLER(update_bga_and_gtc_buffer),
+		.handler = EVENT_HANDLER(on_bga_texture_update),
 		/* call the handler as soon as the event occurs */
 		.wait_for = SIGNAL_NOTHING_BIT,
 		.signal = SIGNAL_NOTHING_BIT,
 		.handler_data = (void*)text
 	};
-	text->bga_texture_update_handle = event_subscribe(text->texture->on_resize_event, &subscription);
+	text->bga_texture_update_handle = event_subscribe(vulkan_bitmap_glyph_atlas_texture_get_on_resize_event(text->texture), &subscription);
 
 	/* create GRD buffer */
 	vulkan_instance_buffer_create_info_t grd_buffer_create_info =
@@ -163,25 +133,10 @@ SGE_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vul
 	VULKAN_OBJECT_INIT(&text->glyph_render_data_buffer, VULKAN_OBJECT_TYPE_INSTANCE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_instance_buffer_create(renderer, &grd_buffer_create_info, &text->glyph_render_data_buffer);
 
-	// _debug_assert__(glsl_sizeof(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t) == sizeof(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t));
-
-	/* create GTC buffer to store texture coordinates for each unique glyph */
-	vulkan_host_buffered_buffer_create_info_t buffer_create_info =
-	{
-		/* stride to the next element of type vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t */
-		.stride = STRIDE_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T_ARRAY,
-		/* initially we can store texcoord coordinates of upto 127 characters, so there will be no chance of buffer resize until 512 */
-		.capacity = 127,
-		/* this buffer will be indexed with glyph_render_data_t.indx */
-		.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
-	};
-	VULKAN_OBJECT_INIT(&text->glyph_texcoord_buffer, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
-	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &text->glyph_texcoord_buffer);
-
 	// _debug_assert__(glsl_sizeof(_mat4_t) == sizeof(_mat4_t));
 
 	/* create TST buffer to store string transform matrices */
-	buffer_create_info = (vulkan_host_buffered_buffer_create_info_t)
+	vulkan_host_buffered_buffer_create_info_t buffer_create_info =
 	{
 		.stride = sizeof(_mat4_t),
 		/* initially we can have upto 2 string transform matrices without buffer resize */
@@ -191,8 +146,6 @@ SGE_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vul
 	};
 	VULKAN_OBJECT_INIT(&text->text_string_transform_buffer, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &text->text_string_transform_buffer);
-
-	text->glyph_texcoord_index_table = dictionary_create(pair_t(utf32_t, u32), u32, 127, utf32_u32_equal_to);
 
 	/* setup the quad mesh */
 
@@ -250,23 +203,16 @@ SGE_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 	/* destroy the TST buffer */
 	vulkan_host_buffered_buffer_destroy(&text->text_string_transform_buffer);
 
-	/* destroy the GTC buffer */
-	vulkan_host_buffered_buffer_destroy(&text->glyph_texcoord_buffer);
-
-	dictionary_clear(&text->glyph_texcoord_index_table);
-
 	vulkan_mesh_destroy(&text->quad_mesh);
 }
 
 SGE_API void vulkan_bitmap_text_release_resources(vulkan_bitmap_text_t* text)
 {
-	dictionary_free(&text->glyph_texcoord_index_table);
 	vulkan_mesh_release_resources(&text->quad_mesh);
 	buf_free(&text->glyph_layout_data_buffer);
 	buf_free(&text->text_strings);
 	vulkan_instance_buffer_release_resources(&text->glyph_render_data_buffer);
 	vulkan_host_buffered_buffer_release_resources(&text->text_string_transform_buffer);
-	vulkan_host_buffered_buffer_release_resources(&text->glyph_texcoord_buffer);
 	if(VULKAN_OBJECT_IS_INTERNAL(text))
 		memory_allocator_dealloc(text->renderer->allocator, text);
 }
@@ -372,8 +318,8 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 	{
 		AUTO tst_device_buffer = vulkan_host_buffered_buffer_get_device_buffer(&text->text_string_transform_buffer);
 		/* new string transform has been added, hence update the trasform count */
-		if(is_updated)
-			vulkan_material_set_array_size(text->material, "TSTBuffer.transforms", vulkan_buffer_get_count(tst_device_buffer));
+		// if(is_updated)
+			// vulkan_material_set_array_size(text->material, "TSTBuffer.transforms", vulkan_buffer_get_count(tst_device_buffer));
 		/* if the tst device buffer has been resized (meaning it is recreated) then rewrite the descriptors */
 		if(is_resized)
 			vulkan_material_set_buffer(text->material, "TSTBuffer", tst_device_buffer);
@@ -423,40 +369,6 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 	text->free_list = handle;
 }
 
-static u32 get_or_create_glyph_texture_coordinate(vulkan_bitmap_text_t* text, pair_t(utf32_t, u32) unicode)
-{
-	/* if the BGA texture already contains the character texture coordinates then just return it. */
-	if(vulkan_bitmap_glyph_atlas_texture_contains_texcoord(text->texture, unicode))
-	{
-		u32 index = U32_MAX;
-		dictionary_get_value(&text->glyph_texcoord_index_table, &unicode, &index);
-		return index;
-	}
-
-	/* rasterize the glyph with code as 'unicode' and get the texture coordinate of it in the BGA texture */
-	glyph_texcoord_t texcoord;
-	vulkan_bitmap_glyph_atlas_texture_get_texcoord(text->texture, unicode, &texcoord);
-
-	/* convert the glyph_texcoord_t to vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t */
-	vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t glsl_texcoord =
-	{
-		.tltc = { texcoord.tltc.x, texcoord.tltc.y },
-		.trtc = { texcoord.trtc.x, texcoord.trtc.y },
-		.brtc = { texcoord.brtc.x, texcoord.brtc.y },
-		.bltc = { texcoord.bltc.x, texcoord.bltc.y }
-	};
-
-	/* add the texture coordinate into the GTC Buffer */
-	buffer_t* buffer = vulkan_host_buffered_buffer_get_host_buffer(&text->glyph_texcoord_buffer);
-	u32 index = buf_get_element_count(buffer);
-	buf_push_n(buffer, &glsl_texcoord, SIZEOF_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T);
-
-	/* add the index of the texture coordinate into GTI table for faster checking if the character has already rasterized */
-	dictionary_add(&text->glyph_texcoord_index_table, &unicode, &index);
-
-	return index;
-}
-
 /* setters */
 static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char* data)
 {
@@ -496,8 +408,9 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 		vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t texcoords;
 		if(info.is_graph)
 		{
-			texcoord_indices[i] = get_or_create_glyph_texture_coordinate(text, make_pair_t(utf32_t, u32) { ch, text_string->point_size });
-			buf_get_at_s(vulkan_host_buffered_buffer_get_host_buffer(&text->glyph_texcoord_buffer), texcoord_indices[i], &texcoords);
+			/* NOTE: calling vulkan_bitmap_glyph_atlas_texture_get_or_create_glyph() may or may not mark the device side memory/buffer dirty (oudated) */
+			texcoord_indices[i] = vulkan_bitmap_glyph_atlas_texture_get_or_create_glyph(text->texture, make_pair_t(utf32_t, u32) { ch, text_string->point_size });
+			texcoords = vulkan_bitmap_glyph_atlas_texture_get_texcoord_from_index(text->texture, texcoord_indices[i]);
 		}
 		else
 		{
@@ -531,7 +444,7 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 		horizontal_pen += info.advance_width;
 
 		#if DBG_ENABLED(VULKAN_BITMAP_TEXT_STRING_SETH)
-			buffer_t* buffer = vulkan_host_buffered_buffer_get_host_buffer(&text->glyph_texcoord_buffer);
+			buffer_t* buffer = vulkan_bitmap_glyph_atlas_texture_get_gtc_host_buffer_readonly(text->texture);
 			AUTO texcoord = buf_get_ptr_at_typeof(buffer, vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t, data.indx);
 			string_builder_append(builder, "%c =\n", CAST_TO(char, ch));
 			string_builder_append(builder, "{\n");
@@ -603,23 +516,11 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 	/* clear the glyph layout data buffer for the next set call */
 	buf_clear(&text->glyph_layout_data_buffer, NULL);
 
+	/* update GPU (device) side buffer if it was marked dirty */
 	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
 
-	/* update the device side GTC buffer */
-	bool is_resized = false;
-	bool is_updated = vulkan_host_buffered_buffer_commit(&text->glyph_texcoord_buffer, &is_resized);
-
-	/* if material is not NULL then update GTC buffer uniform interface block descriptor */
-	if(text->material != NULL)
-	{
-		AUTO gtc_device_buffer = vulkan_host_buffered_buffer_get_device_buffer(&text->glyph_texcoord_buffer);
-		/* if the new glyphs has been added into the GTC buffer then update the GTC size in the material */
-		if(is_updated)
-			vulkan_material_set_array_size(text->material, "GTCBuffer.texcoords", vulkan_buffer_get_count(gtc_device_buffer));
-		/* if the GTC device buffer has been resized (meaning it is recreated), then rewrite descriptors */
-		if(is_resized)
-			vulkan_material_set_buffer(text->material, "GTCBuffer", gtc_device_buffer);
-	}
+	/* update the GPU (device) side buffers if they were marked dirty */
+	// vulkan_bitmap_glyph_atlas_texture_commit(text->texture, NULL);
 }
 
 static void text_string_set_point_size(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, u32 point_size)
@@ -659,14 +560,22 @@ SGE_API void vulkan_bitmap_text_set_material(vulkan_bitmap_text_t* text, vulkan_
 	set_render_space_type(text, text->render_space_type);
 	set_render_surface_type(text, text->render_surface_type);
 
-	vulkan_material_set_texture(material, "bga", VULKAN_TEXTURE(text->texture));
+	// vulkan_material_set_texture(material, "bga", VULKAN_TEXTURE(text->texture));
 	AUTO tex_size = vulkan_bitmap_glyph_atlas_texture_get_size(text->texture);
 	vulkan_material_set_uvec2(material, "parameters.tex_size", (uvec2_t) { tex_size.width, tex_size.height });
 
-	vulkan_material_set_array_size(material, "GTCBuffer.texcoords", buf_get_element_count(vulkan_host_buffered_buffer_get_host_buffer(&text->glyph_texcoord_buffer)));
-	vulkan_material_set_array_size(material, "TSTBuffer.transforms", buf_get_element_count(vulkan_host_buffered_buffer_get_host_buffer(&text->text_string_transform_buffer)));
+	/* NOTE: There is no need to set the array size to non-zero 
+	* 		because we do not create the VkBuffer object on the material side, and we also do not use the size
+	* 		information of the buffer on the material side or anywhere else, anyway.
+	*		The sole purpose of declaring the TSTBuffer array in the .v3dshader file is that it automatically
+	* 		creates a descriptor for the buffer and we can just write to that descriptor with its string name
+	* 		at a much easier convenience. 
+	* WARNING: Also, if we do set array size here, then it will modify the shader's internal information which would
+	* 			violate the immutability of shader_t objects. */
+	// vulkan_material_set_array_size(material, "GTCBuffer.texcoords", buf_get_element_count(vulkan_host_buffered_buffer_get_host_buffer_readonly(&text->glyph_texcoord_buffer)));
+	// vulkan_material_set_array_size(material, "TSTBuffer.transforms", buf_get_element_count(vulkan_host_buffered_buffer_get_host_buffer_readonly(&text->text_string_transform_buffer)));
 
-	vulkan_material_set_buffer(material, "GTCBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->glyph_texcoord_buffer));
+	// vulkan_material_set_buffer(material, "GTCBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->glyph_texcoord_buffer));
 	vulkan_material_set_buffer(material, "TSTBuffer", vulkan_host_buffered_buffer_get_device_buffer(&text->text_string_transform_buffer));
 }
 

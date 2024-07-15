@@ -105,7 +105,7 @@ SGE_API bool vulkan_host_buffered_buffer_commit(vulkan_host_buffered_buffer_t* b
 
 	buffer->is_dirty = false;
 
-	buffer_t* host_buffer = vulkan_host_buffered_buffer_get_host_buffer(buffer);
+	buffer_t* host_buffer = vulkan_host_buffered_buffer_get_host_buffer_readonly(buffer);
 	vulkan_buffer_t* device_buffer = vulkan_host_buffered_buffer_get_device_buffer(buffer);
 	
 	u32 size = buf_get_element_count(host_buffer) * buf_get_element_size(host_buffer);

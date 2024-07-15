@@ -58,6 +58,7 @@ SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, sge_driver_crea
 		.title = _create_info->title, 
 		.full_screen = _create_info->full_screen, 
 		.resizable = _create_info->resizable,
+		.require_bitmap_text = _create_info->require_bitmap_text,
 		.max_point_lights = _create_info->max_point_lights,
 		.max_spot_lights = _create_info->max_spot_lights,
 		.max_far_lights = _create_info->max_far_lights

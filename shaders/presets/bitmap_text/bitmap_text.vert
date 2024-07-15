@@ -25,6 +25,7 @@
 
 #version 450
 
+#define REQUIRE_BITMAP_TEXT
 #include <v3d.h>
 
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
@@ -52,19 +53,6 @@ layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERT
     int space_type;
     int surface_type;
 } parameters;
-
-struct GlyphTexCoord
-{
-    vec2 tltc;
-    vec2 trtc;
-    vec2 brtc;
-    vec2 bltc;
-};
-
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = TEXTURE_BINDING1) uniform GTCBuffer
-{
-    GlyphTexCoord[512] gtc_buffer;
-};
 
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer
 {

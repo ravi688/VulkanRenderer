@@ -50,6 +50,10 @@
 
 /* should be used with GLOBAL_SET */
 #define SCREEN_BINDING 0  		// binding for render window information
+#ifdef REQUIRE_BITMAP_TEXT
+#	define GTC_BUFFER_BINDING 1 	// binding for GTC buffer (common to all bitmap based texts)
+#	define BGA_TEXTURE_BINDING 2 	// binding for BGA texture (common to all bitmap based texts)
+#endif
 
 // should be used with CAMERA_SET
 #define CAMERA_PROPERTIES_BINDING 0 // binding for current camera properties
@@ -107,6 +111,23 @@
 /* <end> for Vertex Attributes */
 
 /* <begin> bitmap text shader  */
+#ifdef REQUIRE_BITMAP_TEXT
+	struct GlyphTexCoord
+	{
+		vec2 tltc;
+		vec2 trtc;
+		vec2 brtc;
+		vec2 bltc;
+	};
+
+	layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = GTC_BUFFER_BINDING) uniform GTCBuffer
+	{
+		GlyphTexCoord[512] gtc_buffer;
+	};
+
+	layout(set = GLOBAL_SET, binding = BGA_TEXTURE_BINDING) uniform sampler2D bga;
+#endif
+
 #	define BTM_TXT_BND 4
 	/* <begin> per instance of the glyphs */
 # 	define BTM_TXT_TLTC_BND BTM_TXT_BND /* binding of top left texture coordinate of the quad */

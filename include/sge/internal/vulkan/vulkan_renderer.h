@@ -82,6 +82,8 @@ typedef struct vulkan_renderer_create_info_t
 	/* when enabled, call to vulkan_renderer_update() will block execution on the host until rendering commands finish on device for the current frame
 	 * NOTE: if frame_pipelining is disabled, then it is of no use keeping max_frames_in_flight more than 1 */
 	bool frame_pipelining;
+	/* when set true, this renderer will bind a "Bitmap Glyph Atlas Texture" at {GLOBAL_SET, BGA_TEXTURE_BINDING}, and a "Glyph Texcoord Buffer" at {GLOBAL_SET, GTC_BUFFER_BINDING} */
+	bool require_bitmap_text;
 	/* number of point lights which can be added in a render scene,
 	 * this is to preset the descriptor set binding counts for point light shadow maps */
 	u32 max_point_lights;
@@ -175,6 +177,8 @@ typedef struct vulkan_renderer_t
 	u32 max_frames_in_flight;
 	/* cache of create_info->frame_pipelining */
 	bool is_pipeline_frame;
+	/* cache of create_info->require_bitmap_text */
+	bool is_bitmap_text;
 	/* number of point lights which can be added in a render scene,
 	 * this is to preset the descriptor set binding counts for point light shadow maps */
 	u32 max_point_lights;
@@ -204,5 +208,6 @@ SGE_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer);
 SGE_API void vulkan_renderer_wait_idle(vulkan_renderer_t* renderer);
 
 SGE_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_descriptor_set_t* vulkan_renderer_get_global_set(vulkan_renderer_t* renderer) { return &renderer->global_set; }
 
 END_CPP_COMPATIBLE

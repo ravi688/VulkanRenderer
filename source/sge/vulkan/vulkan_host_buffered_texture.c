@@ -104,11 +104,18 @@ SGE_API void vulkan_host_buffered_texture_release_resources(vulkan_host_buffered
 
 SGE_API bool vulkan_host_buffered_texture_commit(vulkan_host_buffered_texture_t* texture, bool OUT is_resized)
 {
-	if(!texture->is_dirty)
+	/* the underlying linear buffer (buffer_t) of the host buffered buffer object is being used (referenced) by buffer2d view object 
+	 * since this reference remains valid across multiple frames, the host buffered buffer object looses track of changes in its underlying 
+	 * linear buffer object. so, here we would need to query that information from the buffer2d view object itself. */
+	if(buffer2d_view_is_backed_buffer_modified(&texture->view))
+	{
+		vulkan_host_buffered_buffer_set_dirty(&texture->buffer, true);
+		buffer2d_view_set_backed_buffer_modified(&texture->view, false);
+	}
+
+	if(!vulkan_host_buffered_buffer_is_dirty(&texture->buffer))
 		return false;
 
-	texture->is_dirty = false;
-	
 	/* transfer the data from host to the staging device buffer via PCI-E */
 	bool _is_resized = false;
 	bool is_updated = vulkan_host_buffered_buffer_commit(&texture->buffer, &_is_resized);

@@ -32,15 +32,9 @@ Shader
 	Properties
 	{
 		[Stage(fragment)]
-		[Set(material_set, material_properties)]
+		[Set(material_set, texture0)]
 		uniform sampler2D albedo;
 	}
-
-	// [NoParse]
-	// Properties
-	// {
-	// 	fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
-	// }
 
 	Layout
 	{
@@ -103,6 +97,7 @@ Shader
 
 				#version 450
 				
+				#define REQUIRE_BITMAP_TEXT
 				#include <v3d.h>
 				
 				layout(set = MATERIAL_SET, binding = TEXTURE_BINDING0) uniform sampler2D albedo;

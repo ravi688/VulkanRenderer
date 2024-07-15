@@ -68,7 +68,15 @@ SGE_API void vulkan_host_buffered_buffer_create_no_alloc(vulkan_renderer_t* rend
 SGE_API void vulkan_host_buffered_buffer_destroy(vulkan_host_buffered_buffer_t* buffer);
 SGE_API void vulkan_host_buffered_buffer_release_resources(vulkan_host_buffered_buffer_t* buffer);
 
+/* calling this function marks the device side VkBuffer object dirty (outdated) even if you wouldn't write to the host buffer! */
 SGE_API buffer_t* vulkan_host_buffered_buffer_get_host_buffer(vulkan_host_buffered_buffer_t* buffer);
+/* calling this function doesn't mark the device side VkBuffer object dirty (outdate);
+ * it must be used if you only indent to read the host side data and do not modify it. 
+ * NOTE: Usage of this function must be preferred over the vulkan_host_buffered_buffer_get_host_buffer */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* vulkan_host_buffered_buffer_get_host_buffer_readonly(vulkan_host_buffered_buffer_t* buffer)
+{
+	return &buffer->host_buffer;
+}
 SGE_API vulkan_buffer_t* vulkan_host_buffered_buffer_get_device_buffer(vulkan_host_buffered_buffer_t* buffer);
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_host_buffered_buffer_set_dirty(vulkan_host_buffered_buffer_t* buffer, bool is_dirty)

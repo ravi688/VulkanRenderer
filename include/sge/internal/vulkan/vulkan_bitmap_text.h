@@ -38,7 +38,6 @@
 #include <sge/rect.h> // rect2d_t
 #include <hpml/mat4.h> 	// mat4_t
 #include <hpml/vec3.h> /* vec3_t */
-#include <hpml/vec2.h> /* vec2_t */
 #include <glslcommon/glsl_types.h>
 
 typedef enum vulkan_bitmap_text_render_space_type_t
@@ -56,26 +55,6 @@ typedef enum vulkan_bitmap_text_render_surface_type_t
 	/* the text will be rendered on to the screen (i.e. will not be affected by the any camera's transformations or projections) */
 	VULKAN_BITMAP_TEXT_RENDER_SURFACE_TYPE_SCREEN
 } vulkan_bitmap_text_render_surface_type_t;
-
-/* element of Glyph Texture Coordinate (GTC) buffer */
-typedef struct vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t
-{
-	/* per_instance [BTM_TXT_TLTC_BND, BTM_TXT_TLTC_LOC, BTM_TXT_TLTC_COMP] in vec2 tltc; */
-	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t tltc;
-	/* per_instance [BTM_TXT_TRTC_BND, BTM_TXT_TRTC_LOC, BTM_TXT_TRTC_COMP] in vec2 trtc; */
-	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t trtc;
-	/* per_instance [BTM_TXT_BRTC_BND, BTM_TXT_BRTC_LOC, BTM_TXT_BRTC_COMP] in vec2 brtc; */
-	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t brtc;
-	/* per_instance [BTM_TXT_BLTC_BND, BTM_TXT_BLTC_LOC, BTM_TXT_BLTC_COMP] in vec2 bltc; */
-	ALIGN_AS(GLSL_STD140_VEC2_ALIGN) vec2_t bltc;
-} vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t ALIGN_AS(U32_NEXT_MULTIPLE(GLSL_STD140_VEC2_ALIGN, 16));
-
-/* deterministic and minimum (portable) size of vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t
- * the C compiler may add extra padding resulting in non-portable code or undefined behaviour */
-#define SIZEOF_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T (4 * COM_GET_STRIDE_IN_ARRAY(8, GLSL_STD140_VEC2_ALIGN))
-/* deterministic (portable) size of vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t in a homogeneous array, i.e. stride to the next element.
- * same as reason as above */
-#define STRIDE_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T, ALIGN_OF(vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t))
 
 /* element of Glyph Render Data (GRD) buffer */
 typedef struct vulkan_bitmap_text_glsl_glyph_render_data_t
@@ -134,16 +113,12 @@ typedef struct vulkan_bitmap_text_create_info_t
 
 typedef vulkan_instance_buffer_t vulkan_host_multibuffered_buffer_t;
 
-/* Glyph Texture Coordinate (GTC) buffer */
-typedef vulkan_host_buffered_buffer_t vulkan_bitmap_glyph_texcoord_buffer_t;
 /* Glyph Render Data (GRD) buffer */
 typedef vulkan_host_multibuffered_buffer_t vulkan_bitmap_glyph_render_data_buffer_t;
 /* Text String Transform (TST) buffer */
 typedef vulkan_host_buffered_buffer_t vulkan_bitmap_text_string_transform_buffer_t;
 
 typedef buffer_t vulkan_bitmap_text_string_list_t;
-
-typedef dictionary_t glyph_texcoord_index_table_t;
 
 typedef struct vulkan_material_t vulkan_material_t;
 
@@ -222,12 +197,8 @@ typedef struct vulkan_bitmap_text_t
 	};
 	/* GRD buffers mapped to each unique glyph across all the text strings */
 	vulkan_bitmap_glyph_render_data_buffer_t glyph_render_data_buffer;
-	/* GTC buffer */
-	vulkan_bitmap_glyph_texcoord_buffer_t glyph_texcoord_buffer;
 	/* TST buffer */
 	vulkan_bitmap_text_string_transform_buffer_t text_string_transform_buffer;
-
-	glyph_texcoord_index_table_t glyph_texcoord_index_table;
 
 	/* instances of this quad will be drawn to lay out the glyph bitmaps */
 	vulkan_mesh_t quad_mesh;

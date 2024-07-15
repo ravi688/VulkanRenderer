@@ -149,6 +149,8 @@ SGE_API void buffer2d_release_resources(buffer2d_t* buffer);
 
 /* returns pointer to the backed buffer */
 SGE_API buffer_t* buffer2d_get_backed_buffer(buffer2d_t* buffer);
+/* returns pointer to the backed buffer which must not be modified! */
+SGE_API buffer_t* buffer2d_get_backed_buffer_readonly(buffer2d_t* buffer);
 /* returns filled rectangle information with key 'key' */
 SGE_API filled_rect_info_t* buffer2d_get_rect(buffer2d_t* buffer, void* key);
 /* fills 'out_data' with the data contained by 'rect_info' */

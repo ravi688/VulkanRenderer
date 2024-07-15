@@ -152,7 +152,7 @@ SGE_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, pair
 
 SGE_API void bitmap_glyph_pool_dump(bitmap_glyph_pool_t* pool, const char* file_path)
 {
-	void* ptr = buf_get_ptr(buffer2d_get_backed_buffer(&pool->pixels));
+	void* ptr = buf_get_ptr(buffer2d_get_backed_buffer_readonly(&pool->pixels));
 	bmp_write(ptr, pool->pixels.view->size.x / sizeof(u8), pool->pixels.view->size.y, 1, file_path);
 }
 
