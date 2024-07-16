@@ -8,6 +8,9 @@
 
 namespace SUTK
 {
+	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText() { return { END_OF_TEXT, END_OF_LINE }; }
+	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line) { return { line, END_OF_LINE }; }
+
 	LineText::LineText(UIDriver& driver) noexcept : UIDriverObject(driver), m_isPosDirty(true), m_isDataDirty(false)
 	{
 		m_handle = getGfxDriver().createText();
@@ -114,7 +117,7 @@ namespace SUTK
 			m_lines[i]->clear();
 	}
 
-	Vec2D<DisplaySizeType> Text::getLocalPositionFromCursorPosition(const CursorPosition<DisplaySizeType>& cursor) noexcept
+	Vec2D<DisplaySizeType> Text::getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept
 	{
 		return { 0, static_cast<DisplaySizeType>(m_baselineHeight * cursor.getLine()) };
 	}
@@ -122,7 +125,7 @@ namespace SUTK
 	// this creates a new line before line pointed by current cursor
 	LineText* Text::createNewLine(Flags flags, LineCountType line) noexcept
 	{
-		CursorPosition<DisplaySizeType> cursorPosition;
+		CursorPosition<LineCountType> cursorPosition;
 		
 		if(line == END_OF_TEXT)
 		{
@@ -169,19 +172,20 @@ namespace SUTK
 		return m_lines[line];
 	}
 
-	void Text::insert(LineCountType line, LineCountType col, const std::string& str) noexcept
+	void Text::insert(const CursorPosition<LineCountType>& position, const std::string& str) noexcept
 	{
 		// if there is nothing to write then return
 		if(str.empty())
 			return;
-		LineText* lineText = getLine(line);
+		LineText* lineText = getLine(position.getLine());
 
 		std::string::size_type index = str.find_first_of('\n');
 		if(index == std::string::npos)
-			lineText->insert(col, str);
+			lineText->insert(position.getColumn(), str);
 		else
-			lineText->insert(col, str.substr(0, index));
+			lineText->insert(position.getColumn(), str.substr(0, index));
 
+		auto line = position.getLine();
 		while(index != std::string::npos)
 		{
 			// create a new line
@@ -208,6 +212,11 @@ namespace SUTK
 				lineText->append(str.substr(index, end - index));
 			index = end;
 		}
+	}
+
+	void Text::remove(const CursorPosition<LineCountType>& position, LineCountType numChars) noexcept
+	{
+
 	}
 
 	void Text::set(const std::string& str) noexcept
