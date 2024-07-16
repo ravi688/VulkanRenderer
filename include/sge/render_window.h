@@ -29,11 +29,13 @@
 #include <sge/defines.h>
 #include <sge/event.h>
 #include <sge/type_system.h>
+#include <sge/object.h>
 
 static const type_t TYPE_ID(render_window_t) = TYPE_ID_CREATE(1);
 
 typedef struct render_window_t
 {
+	__OBJECT__;
 	memory_allocator_t* allocator;
 
 	/* handle to the internal GLFWwindow object */
@@ -48,12 +50,19 @@ typedef struct render_window_t
 	event_t* on_resize_event;
 } render_window_t;
 
+#define RENDER_WINDOW(ptr) OBJECT_UP_CAST(render_window_t*, OBJECT_TYPE_RENDER_WINDOW, ptr)
+#define RENDER_WINDOW_CONST(ptr) OBJECT_UP_CAST(const render_window_t*, OBJECT_TYPE_RENDER_WINDOW, ptr)
+#define RENDER_WINDOW_CAST(ptr) OBJECT_TYPE_CAST(render_window_t*, OBJECT_TYPE_RENDER_WINDOW, ptr)
+#define RENDER_WINDOW_CAST_CONST(ptr) OBJECT_TYPE_CAST_CONST(const render_window_t*, OBJECT_TYPE_RENDER_WINDOW, ptr)
+
 BEGIN_CPP_COMPATIBLE
 
 SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 width, u32 height, const char* title, bool full_screen, bool resizable);
 SGE_API bool render_window_should_close(render_window_t* window);
 SGE_API void render_window_poll_events(render_window_t* window);
 SGE_API void render_window_destroy(render_window_t* window);
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE event_t* render_window_get_on_resize_event(render_window_t* window) { return window->on_resize_event; }
 
 // getters
 SGE_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height);

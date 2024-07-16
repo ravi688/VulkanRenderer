@@ -58,6 +58,7 @@ SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 w
 {
 	render_window_t* window = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDER_WINDOW, render_window_t);
 	memzero(window, render_window_t);
+	OBJECT_INIT(window, OBJECT_TYPE_RENDER_WINDOW, OBJECT_NATIONALITY_INTERNAL);
 	window->allocator = allocator;
 	window->on_resize_event = event_create(allocator, (void*)window PARAM_IF_DEBUG("Render-Window-Resize"));
 	glfwInit();
@@ -89,6 +90,8 @@ SGE_API void render_window_poll_events(render_window_t* window)
 
 SGE_API void render_window_destroy(render_window_t* window)
 {
+	_debug_assert__(OBJECT_IS_INTERNAL(window));
+	
 	event_destroy(window->on_resize_event);
 	event_release_resources(window->on_resize_event);
 	glfwDestroyWindow(window->handle);
