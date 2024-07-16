@@ -64,13 +64,13 @@ namespace SUTK
 			if(counter3 == 15)
 			{
 				counter3 = 0;
-				m_text->insert(END_OF_TEXT, END_OF_LINE, "\nH");
+				m_text->insert(CursorPosition<LineCountType>::EndOfText(), "\nH");
 				// m_text->append("\n");
 			}
 			if(counter3 == 14)
 			{
-				m_text->insert(3, 0, "#$");
-				m_text->insert(4, END_OF_LINE, "\nHello World");
+				m_text->insert({ 3, 0 }, "#$");
+				m_text->insert(CursorPosition<LineCountType>::EndOfLine(4), "\nHello World");
 			}
 		}
 	}

@@ -125,7 +125,13 @@ namespace SUTK
 		void moveToColumn(T col) noexcept { m_col = col; }
 		T getLine() const noexcept { return m_line; }
 		T getColumn() const noexcept { return m_col; }
+
+		static CursorPosition EndOfText();
+		static CursorPosition EndOfLine(T line);
 	};
+
+	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText();
+	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line);
 
 
 	// One text object is responsible for rendering a small to medium sized sub-text
@@ -157,7 +163,7 @@ namespace SUTK
 		friend class UIDriver;
 		friend class TextContainer;
 
-		Vec2D<DisplaySizeType> getLocalPositionFromCursorPosition(const CursorPosition<DisplaySizeType>& cursor) noexcept;
+		Vec2D<DisplaySizeType> getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
 		void onContainerResize(const Rect2D<DisplaySizeType>& rect, bool isPositionChanged, bool isSizeChanged) noexcept;
 
 	public:
@@ -175,9 +181,10 @@ namespace SUTK
 
 		LineText* createNewLine(Flags flags = Flags::After, LineCountType line = END_OF_TEXT) noexcept;
 		LineText* getOrCreateLastLine() noexcept;
-		void append(const std::string& str) noexcept { insert(END_OF_TEXT, END_OF_LINE, str); }
+		void append(const std::string& str) noexcept { insert(CursorPosition<LineCountType>::EndOfText(), str); }
 		LineText* getLine(LineCountType line) noexcept;
-		void insert(LineCountType line, LineCountType col, const std::string& str) noexcept;
+		void insert(const CursorPosition<LineCountType>& position, const std::string& str) noexcept;
+		void remove(const CursorPosition<LineCountType>& position, LineCountType numChars) noexcept;
 		void set(const std::string& str) noexcept;
 
 		TextContainer* getContainer() noexcept { return m_container; }
