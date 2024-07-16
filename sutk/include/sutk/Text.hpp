@@ -158,8 +158,10 @@ namespace SUTK
 		Text(UIDriver& driver, TextContainer* container);
 
 		friend class UIDriver;
+		friend class TextContainer;
 
 		Vec2D<DisplaySizeType> getLocalPositionFromCursorPosition(const CursorPosition<DisplaySizeType>& cursor);
+		void onContainerResize(const Rect2D<DisplaySizeType>& rect, bool isPositionChanged, bool isSizeChanged);
 
 	public:
 
@@ -174,7 +176,5 @@ namespace SUTK
 		void set(const std::string& str);
 
 		TextContainer* getContainer() noexcept { return m_container; }
-
-		void onContainerResize(const Rect2D<DisplaySizeType>& rect, bool isPositionChanged, bool isSizeChanged);
 	};
 }

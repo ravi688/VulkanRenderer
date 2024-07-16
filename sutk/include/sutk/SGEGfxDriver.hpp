@@ -38,6 +38,10 @@ namespace SUTK
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextData> m_bitmapTextMappings;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
 
+		// We're caching current window size into this member variable to avoid calling internal function calls everytime getSize() is called
+		// The value of this variable will be updated whenever window is resized.
+		Vec2D<DisplaySizeType> m_size;
+
 	private:
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextData>::iterator
 		getBitmapTextIterator(GfxDriverObjectHandleType handle);
@@ -57,7 +61,7 @@ namespace SUTK
 
 		// IGfxDriver INTERFACE IMPLEMENTATION
 
-		virtual Vec2D<DisplaySizeType> getSize() override;
+		virtual Vec2D<DisplaySizeType> getSize() override { return m_size; }
 		virtual void render(UIDriver& driver) override;
 
 		virtual GfxDriverObjectHandleType createText() override;

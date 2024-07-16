@@ -59,7 +59,7 @@ namespace SUTK
 
 			static u64 counter3 = 0;
 			++counter3;
-			if(counter3 == 3)
+			if(counter3 == 10)
 			{
 				counter3 = 0;
 				m_text->append("\n");
