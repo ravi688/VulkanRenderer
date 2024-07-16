@@ -6,6 +6,7 @@
 
 #include <string> /* for std::string */
 #include <vector> /* for std::vector*/
+#include <limits> /* for std::numeric_limits */
 
 namespace SUTK
 {
@@ -56,18 +57,13 @@ namespace SUTK
 		ColumnIterator end() { return ColumnIterator(); }
 	
 		void clear() { m_data.clear(); }
-		void append(const std::string& chars, std::string::size_type index = 0) { insert(U32_MAX, chars, index); }
-		void insert(u32 col, const std::string& chars, std::string::size_type index = 0)
+		void append(const std::string& chars) { insert(END_OF_LINE, chars); }
+		void insert(LineCountType col, const std::string& chars)
 		{ 
-			if(col == U32_MAX)
-			{
-				if(index == 0)
+			if(col == END_OF_LINE)
 					m_data += chars;
-				else
-					m_data += chars.substr(index);
-			}
 			else
-				m_data.insert(col, chars, index); 
+				m_data.insert(col, chars); 
 		}
 	};
 
@@ -89,6 +85,7 @@ namespace SUTK
 		virtual void update() override;
 		void setData(const std::string& data) noexcept;
 		void append(const std::string& data) noexcept;
+		void insert(LineCountType col, const std::string& data) noexcept;
 		void setPosition(Vec2D<DisplaySizeType> pos) noexcept;
 		void addPosition(Vec2D<DisplaySizeType> pos) noexcept;
 		void subPosition(Vec2D<DisplaySizeType> pos) noexcept;
@@ -117,17 +114,17 @@ namespace SUTK
 		T m_col;
 
 	public:
-		CursorPosition() : m_line(0), m_col(0) { }
-		CursorPosition(T line, T col = 0) : m_line(line), m_col(col) { }
+		CursorPosition() noexcept : m_line(0), m_col(0) { }
+		CursorPosition(T line, T col = 0) noexcept : m_line(line), m_col(col) { }
 		CursorPosition(const CursorPosition&) = default;
 		CursorPosition& operator=(const CursorPosition&) = default;
 
-		void moveToNextLine() { m_line += 1; }
-		void moveToPrevLine() { if(m_line >= 1) m_line -= 1; }
-		void moveToLine(T line) { m_line = line; }
-		void moveToColumn(T col) { m_col = col; }
-		T getLine() const { return m_line; }
-		T getColumn() const { return m_col; }
+		void moveToNextLine(const T& max = std::numeric_limits<T>::max()) noexcept { if(m_line < max) m_line += 1; }
+		void moveToPrevLine(const T& min = std::numeric_limits<T>::min()) noexcept { if(m_line > min) m_line -= 1; }
+		void moveToLine(T line) noexcept { m_line = line; }
+		void moveToColumn(T col) noexcept { m_col = col; }
+		T getLine() const noexcept { return m_line; }
+		T getColumn() const noexcept { return m_col; }
 	};
 
 
@@ -155,25 +152,33 @@ namespace SUTK
 		VerticalAlignment m_verticalAlignment;
 
 		// this can only be called by SUTK::UIDriver
-		Text(UIDriver& driver, TextContainer* container);
+		Text(UIDriver& driver, TextContainer* container) noexcept;
 
 		friend class UIDriver;
 		friend class TextContainer;
 
-		Vec2D<DisplaySizeType> getLocalPositionFromCursorPosition(const CursorPosition<DisplaySizeType>& cursor);
-		void onContainerResize(const Rect2D<DisplaySizeType>& rect, bool isPositionChanged, bool isSizeChanged);
+		Vec2D<DisplaySizeType> getLocalPositionFromCursorPosition(const CursorPosition<DisplaySizeType>& cursor) noexcept;
+		void onContainerResize(const Rect2D<DisplaySizeType>& rect, bool isPositionChanged, bool isSizeChanged) noexcept;
 
 	public:
+
+		enum class Flags
+		{
+			Before,
+			After
+		};
 
 		virtual bool isDirty() override;
 		virtual void update() override;
 
-		void clear();
+		void clear() noexcept;
 
-		LineText* createNewLine();
-		LineText* getLastLine();
-		void append(const std::string& str);
-		void set(const std::string& str);
+		LineText* createNewLine(Flags flags = Flags::After, LineCountType line = END_OF_TEXT) noexcept;
+		LineText* getOrCreateLastLine() noexcept;
+		void append(const std::string& str) noexcept { insert(END_OF_TEXT, END_OF_LINE, str); }
+		LineText* getLine(LineCountType line) noexcept;
+		void insert(LineCountType line, LineCountType col, const std::string& str) noexcept;
+		void set(const std::string& str) noexcept;
 
 		TextContainer* getContainer() noexcept { return m_container; }
 	};

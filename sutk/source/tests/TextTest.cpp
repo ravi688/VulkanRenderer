@@ -30,6 +30,8 @@ namespace SUTK
 		m_text->append("\tuint32_t c = a + b; \n");
 		m_text->append("\treturn 0; \n");
 		m_text->append("}");
+
+		// m_text->createNewLine(Text::Flags::After, 3);
 	}
 
 	void TextTest::terminate(SGE::Driver& driver)
@@ -59,10 +61,16 @@ namespace SUTK
 
 			static u64 counter3 = 0;
 			++counter3;
-			if(counter3 == 10)
+			if(counter3 == 15)
 			{
 				counter3 = 0;
-				m_text->append("\n");
+				m_text->insert(END_OF_TEXT, END_OF_LINE, "\nH");
+				// m_text->append("\n");
+			}
+			if(counter3 == 14)
+			{
+				m_text->insert(3, 0, "#$");
+				m_text->insert(4, END_OF_LINE, "\nHello World");
 			}
 		}
 	}
