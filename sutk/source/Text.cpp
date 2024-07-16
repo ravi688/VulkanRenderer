@@ -43,6 +43,13 @@ namespace SUTK
 		m_data += data;
 		m_isDataDirty = true;
 	}
+	void LineText::insert(LineCountType col, const std::string& data) noexcept
+	{
+		if(data.empty())
+			return;
+		m_data.insert(col, data);
+		m_isDataDirty = true;
+	}
 	void LineText::setPosition(Vec2D<DisplaySizeType> pos) noexcept
 	{
 		if(m_pos == pos)
@@ -69,7 +76,7 @@ namespace SUTK
 		m_data.clear();
 	}
 
-	Text::Text(UIDriver& driver, TextContainer* container) : UIDriverObject(driver), m_container(container), m_isDirty(false)
+	Text::Text(UIDriver& driver, TextContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_isDirty(false)
 	{
 		m_baselineHeight = getGfxDriver().getBaselineHeightInPixels();
 	}
@@ -96,7 +103,7 @@ namespace SUTK
 		}
 	}
 
-	void Text::clear()
+	void Text::clear() noexcept
 	{
 		// clear existing data
 		// NOTE: here clearing means, the CPU side data clear.
@@ -107,20 +114,30 @@ namespace SUTK
 			m_lines[i]->clear();
 	}
 
-	Vec2D<DisplaySizeType> Text::getLocalPositionFromCursorPosition(const CursorPosition<DisplaySizeType>& cursor)
+	Vec2D<DisplaySizeType> Text::getLocalPositionFromCursorPosition(const CursorPosition<DisplaySizeType>& cursor) noexcept
 	{
 		return { 0, static_cast<DisplaySizeType>(m_baselineHeight * cursor.getLine()) };
 	}
 
 	// this creates a new line before line pointed by current cursor
-	LineText* Text::createNewLine()
+	LineText* Text::createNewLine(Flags flags, LineCountType line) noexcept
 	{
 		CursorPosition<DisplaySizeType> cursorPosition;
-		cursorPosition.moveToLine(static_cast<DisplaySizeType>(m_lines.size()));
+		
+		if(line == END_OF_TEXT)
+		{
+			line = m_lines.size();
+			if(line >= 1u)
+				line -= 1u;
+		};
+		cursorPosition.moveToLine(static_cast<DisplaySizeType>(line));
+
+		if(flags == Flags::After)
+			cursorPosition.moveToNextLine(m_lines.size());
 
 		// shift the line at which the cursor points to and the lines succeeding it
 		for(std::size_t i = cursorPosition.getLine(); i < m_lines.size(); i++)
-			m_lines[i]->subPosition({ 0, 50 });
+			m_lines[i]->addPosition({ 0, static_cast<DisplaySizeType>(m_baselineHeight) });
 
 		// insert the line at which the cursor points to
 		LineText* lineText = new LineText(getUIDriver());
@@ -133,35 +150,42 @@ namespace SUTK
 		return lineText;
 	}
 
-	LineText* Text::getLastLine()
+	LineText* Text::getOrCreateLastLine() noexcept
 	{
 		// if there are no lines
 		if(m_lines.size() == 0)
 			// create a new line (the very first one; it would also be the last line as it is the only line currently)
-			return createNewLine();
+			return createNewLine(Flags::After, END_OF_TEXT);
 		// otherwise, the last 
 		return m_lines.back();
 	}
 
-	void Text::append(const std::string& str)
+	LineText* Text::getLine(LineCountType line) noexcept
+	{
+		if(line == END_OF_TEXT)
+			return getOrCreateLastLine();
+		if(line >= m_lines.size())
+			return NULL;
+		return m_lines[line];
+	}
+
+	void Text::insert(LineCountType line, LineCountType col, const std::string& str) noexcept
 	{
 		// if there is nothing to write then return
 		if(str.empty())
 			return;
+		LineText* lineText = getLine(line);
 
-		// append the first set of character preceding the first line break,
-		// or all character if no line break exists.
 		std::string::size_type index = str.find_first_of('\n');
 		if(index == std::string::npos)
-			getLastLine()->append(str);
+			lineText->insert(col, str);
 		else
-			getLastLine()->append(str.substr(0, index));
-
+			lineText->insert(col, str.substr(0, index));
 
 		while(index != std::string::npos)
 		{
 			// create a new line
-			auto line = createNewLine();
+			auto lineText = createNewLine(Flags::After, line++);
 			
 			// if the new line character is at the very end, then no extra characters to add,
 			// i.e. it is an empty new line
@@ -178,15 +202,15 @@ namespace SUTK
 
 			// if no new line character on the right side, then append rest of the string
 			if(end == std::string::npos)
-				line->append(str.substr(index, std::string::npos));
+				lineText->append(str.substr(index, std::string::npos));
 			// otherwise, append a substring surrounded by '\n' charactesr from both the sides (left and right)
 			else
-				line->append(str.substr(index, end - index));
+				lineText->append(str.substr(index, end - index));
 			index = end;
 		}
 	}
 
-	void Text::set(const std::string& str)
+	void Text::set(const std::string& str) noexcept
 	{
 		// clear the exisiting data
 		clear();
@@ -194,7 +218,7 @@ namespace SUTK
 		append(str);
 	}
 
-	void Text::onContainerResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged)
+	void Text::onContainerResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
 
 	}
