@@ -5,12 +5,25 @@
 
 #include <hpml/affine_transformation.h>
 
-#define BITMAP_TEXT_OVERLOAD_THRESHOLD 15 // 800 number of characters rewrite can be assumed to have near to zero latency
+#define BITMAP_TEXT_OVERLOAD_THRESHOLD 500 // 800 number of characters rewrite can be assumed to have near to zero latency
 
 namespace SUTK
 {	
+	static Vec2D<DisplaySizeType> getVec2DFromStdPair(std::pair<u32, u32> pair)
+	{
+		return {static_cast<DisplaySizeType>(pair.first), static_cast<DisplaySizeType>(pair.second)};
+	}
 	SGEGfxDriver::SGEGfxDriver(SGE::Driver& driver) : m_driver(driver), m_id_generator(id_generator_create(0, NULL)), m_currentBitmapTextHandle(GFX_DRIVER_OBJECT_NULL_HANDLE)
 	{
+		driver.getRenderWindow().getOnResizeEvent().subscribe(
+					[](void* publisher, void* handlerData)
+					{
+						std::pair<u32, u32> pair = SGE::Event::ReinterpretPublisher<SGE::RenderWindow>(publisher).getSize();
+						auto& size = *reinterpret_cast<Vec2D<DisplaySizeType>*>(handlerData);
+						size = getVec2DFromStdPair(pair);
+					}, &m_size);
+		m_size = getVec2DFromStdPair(driver.getRenderWindow().getSize());
+
 		SGE::CameraSystem cameraSystem = driver.getCameraSystem();
 		SGE::ShaderLibrary shaderLibrary = driver.getShaderLibrary();
 
@@ -52,12 +65,6 @@ namespace SUTK
 		id_generator_destroy(&m_id_generator);
 	}
 
-	Vec2D<DisplaySizeType> SGEGfxDriver::getSize()
-	{
-		std::pair<u32, u32> size = m_driver.getRenderWindow().getSize();
-		return { static_cast<DisplaySizeType>(size.first), static_cast<DisplaySizeType>(size.second) };
-	}
-	
 	void SGEGfxDriver::render(UIDriver& driver)
 	{
 		m_bgaTexture.commit(NULL);
