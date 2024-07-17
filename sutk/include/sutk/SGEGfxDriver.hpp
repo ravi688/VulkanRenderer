@@ -37,6 +37,12 @@ namespace SUTK
 		GfxDriverObjectHandleType m_currentBitmapTextHandle;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextData> m_bitmapTextMappings;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
+		struct OnResizeCallbackHandlerData
+		{
+			OnResizeCallbackHandler handler;
+			SGE::Event::SubscriptionHandle handle;
+		};
+		std::unordered_map<id_generator_id_type_t, OnResizeCallbackHandlerData> m_onResizeHandlers;
 
 		// We're caching current window size into this member variable to avoid calling internal function calls everytime getSize() is called
 		// The value of this variable will be updated whenever window is resized.
@@ -71,5 +77,7 @@ namespace SUTK
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
 
 		virtual u32 getBaselineHeightInPixels() override;
+		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) override;
+		virtual void removeOnResizeHandler(u32 id) override;
 	};
 }

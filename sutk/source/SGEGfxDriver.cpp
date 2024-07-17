@@ -84,7 +84,7 @@ namespace SUTK
 		object.attach(text);
 		// rebuild render pass graph as new objects have been added into the render scene 
 		m_scene.buildQueues();
-		u32 id = id_generator_get(&m_id_generator);
+		id_generator_id_type_t id = id_generator_get(&m_id_generator);
 		m_bitmapTextMappings.insert({ id, { text, object, 0u } });
 		return { text, static_cast<GfxDriverObjectHandleType>(id) };
 	}
@@ -103,7 +103,7 @@ namespace SUTK
 		SGEBitmapTextData bitmapTextData = it->second;
 		bitmapTextData.text.destroy();
 		// TODO: pair.second.destroy();
-		id_generator_return(&m_id_generator, static_cast<u32>(handle));
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(handle));
 		m_bitmapTextMappings.erase(it);
 	}
 
@@ -154,7 +154,7 @@ namespace SUTK
 		auto it = getSubTextIterator(handle);
 		SGE::BitmapTextString subText = it->second.textString;
 		subText.destroy();
-		id_generator_return(&m_id_generator, static_cast<u32>(handle));
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(handle));
 		m_bitmapTextStringMappings.erase(it);
 	}
 
@@ -179,5 +179,31 @@ namespace SUTK
 	u32 SGEGfxDriver::getBaselineHeightInPixels()
 	{
 		return m_font.getFontUnitsToPixels(m_font.getBaselineSpace(), SGE::Display::GetDPI().height);
+	}
+
+	u32 SGEGfxDriver::addOnResizeHandler(OnResizeCallbackHandler handler)
+	{
+		u32 id = id_generator_get(&m_id_generator);
+		m_onResizeHandlers.insert({ id, { handler, EVENT_SUBSCRIPTION_HANDLE_INVALID } });
+		auto& onResizeHandlerData = m_onResizeHandlers[id];
+		SGE::Event::SubscriptionHandle handle = m_driver.getRenderWindow().getOnResizeEvent().subscribe(
+			[](void* publisher, void* handlerData)
+			{
+				std::pair<u32, u32> pair = SGE::Event::ReinterpretPublisher<SGE::RenderWindow>(publisher).getSize();
+				auto size = getVec2DFromStdPair(pair);
+				auto& _handlerData = *reinterpret_cast<OnResizeCallbackHandlerData*>(handlerData);
+				_handlerData.handler(size);
+			}, &onResizeHandlerData);
+		onResizeHandlerData.handle = handle;
+		return id;
+	}
+	void SGEGfxDriver::removeOnResizeHandler(u32 id)
+	{
+		auto it = m_onResizeHandlers.find(id);
+		if(it == m_onResizeHandlers.end())
+			return;
+		m_driver.getRenderWindow().getOnResizeEvent().unsubscribe(it->second.handle);
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(id));
+		m_onResizeHandlers.erase(it);
 	}
 }

@@ -2,30 +2,27 @@
 
 #include <sutk/defines.hpp> /* for Rect2D */
 #include <vector> /* for std::vector */
+#include <sutk/UIDriver.hpp>
 
 namespace SUTK
 {
 	class Text;
 	class Container;
-	class UIDriver;
 
-	class Container
+	class Container : public UIDriverObject
 	{
 	private:
-		UIDriver& m_driver;
 		std::vector<Container*> m_containers;
 		Rect2D<DisplaySizeType> m_rect;
 		Container* m_parent;
 
-		void setParent(Container* parent) noexcept { m_parent = parent; }
 
 	protected:
 		// this can only be called by SUTK::UIDriver
-		Container(SUTK::UIDriver& driver);
+		Container(SUTK::UIDriver& driver, Container* parent = NULL);
 
 		friend class UIDriver;
 
-		UIDriver& getUIDriver() { return m_driver; }
 		std::vector<Container*>& getContainerList() { return m_containers; }
 		const std::vector<Container*>& getContainerList() const { return m_containers; }
 
@@ -39,8 +36,10 @@ namespace SUTK
 		virtual void onResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged) { }
 	public:
 		Container* getParent() { return m_parent; }
+		void setParent(Container* parent) noexcept;
 		const Container* getParent() const { return m_parent; }
 		Rect2D<DisplaySizeType> getRect() const { return m_rect; }
+		Vec2D<DisplaySizeType> getScreenCoordsToLocalCoords(Vec2D<DisplaySizeType> screenCoords) const;
 		Vec2D<DisplaySizeType> getLocalCoordsToScreenCoords(Vec2D<DisplaySizeType> localCoords) const;
 		virtual void setRect(Rect2D<DisplaySizeType> rect) { m_rect = rect; onResize(rect, true, true); }
 		void setPosition(Vec2D<DisplaySizeType> pos) { m_rect.setPosition(pos); onResize(m_rect, true, false); }

@@ -8,6 +8,7 @@ namespace SUTK
 {
 	class IRenderable;
 	class Container;
+	class FullWindowContainer;
 	class TextContainer;
 	class Text;
 	class IGfxDriver;
@@ -31,6 +32,8 @@ namespace SUTK
 
 	template<>
 	Container* UIDriver::createContainer<Container>(Container* parent);
+	template<>
+	FullWindowContainer* UIDriver::createContainer<FullWindowContainer>(Container* parent);
 	template<>
 	TextContainer* UIDriver::createContainer<TextContainer>(Container* parent);
 
