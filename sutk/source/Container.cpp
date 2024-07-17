@@ -4,9 +4,43 @@
 
 namespace SUTK
 {
-	Container::Container(SUTK::UIDriver& driver) : m_driver(driver), m_parent(NULL)
+	Container::Container(SUTK::UIDriver& driver, Container* parent) : UIDriverObject(driver), m_rect({0, 0, 100, 100}), m_parent(NULL)
 	{
+		setParent(parent);
+	}
 
+	void Container::setParent(Container* parent) noexcept
+	{
+		// recalculate this container's rect into the local space of new parent container
+		Vec2D<DisplaySizeType> screenCoords = getLocalCoordsToScreenCoords({ 0u, 0u });
+		Vec2D<DisplaySizeType> localCoords = (parent != NULL) ? parent->getScreenCoordsToLocalCoords(screenCoords) : screenCoords;
+		setPosition(localCoords);
+
+		// previous parent is non-null, then remove this container from the parent
+		if(m_parent != NULL)
+		{
+			// remove this container from the list of "childs" of the (old) parent container
+			bool result = com::erase_first_if(m_parent->m_containers.begin(), m_parent->m_containers.end(), [this](Container*& _container) { return _container == this; });
+			_assert(result == true);
+			m_parent = NULL;
+			// invoke onRemove callback for this container as it has now been removed from the old (parent) container
+			onRemove(this);
+		}
+
+		// if this (new) parent is non-null, then add this container into the parent
+		if(parent != NULL)
+		{
+			// add this container into the list of "childs" of the (new) parent container
+			parent->m_containers.push_back(this);
+			m_parent = parent;
+			// invoke onAdd callback function for this container as it has now been added into another (parent) container
+			onAdd(this);
+		}
+	}
+
+	Vec2D<DisplaySizeType> Container::getScreenCoordsToLocalCoords(Vec2D<DisplaySizeType> screenCoords) const
+	{
+		return screenCoords - getLocalCoordsToScreenCoords({ 0u, 0u });
 	}
 
 	Vec2D<DisplaySizeType> Container::getLocalCoordsToScreenCoords(Vec2D<DisplaySizeType> localCoords) const
@@ -19,7 +53,6 @@ namespace SUTK
 	void Container::onAdd(Container* parent)
 	{
 		_assert(parent != NULL);
-		setRect(parent->getRect());
 	}
 
 	void Container::onRemove(Container* parent)
@@ -29,18 +62,13 @@ namespace SUTK
 
 	void Container::add(Container* container)
 	{
-		m_containers.push_back(container);
+		_assert(container != NULL);
 		container->setParent(this);
-		container->onAdd(this);
 	}
 
 	void Container::remove(Container* container)
 	{
-		bool result = com::erase_first_if(m_containers.begin(), m_containers.end(), [container](Container*& _container) { return _container == container; });
-		if(result)
-		{
-			container->setParent(NULL);
-			container->onRemove(this);
-		}
+		_assert(container != NULL);
+		container->setParent(NULL);
 	}
 }

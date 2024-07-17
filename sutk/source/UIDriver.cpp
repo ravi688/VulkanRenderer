@@ -1,6 +1,7 @@
 #include <sutk/UIDriver.hpp>
 
 #include <sutk/TextContainer.hpp>
+#include <sutk/FullWindowContainer.hpp>
 #include <sutk/Text.hpp>
 #include <sutk/IGfxDriver.hpp>
 
@@ -27,28 +28,21 @@ namespace SUTK
 	template<>
 	Container* UIDriver::createContainer<Container>(Container* parent)
 	{
-		Container* cntr = new Container(*this);
-		if(parent != NULL)
-			parent->add(cntr);
-		else
-		{
-			auto size = m_gfxDriver.getSize();
-			cntr->setRect({ 0, 0, size.width, size.height });
-		}
+		Container* cntr = new Container(*this, parent);
+		return cntr;
+	}
+
+	template<>
+	FullWindowContainer* UIDriver::createContainer<FullWindowContainer>(Container* parent)
+	{
+		FullWindowContainer* cntr = new FullWindowContainer(*this);
 		return cntr;
 	}
 
 	template<>
 	TextContainer* UIDriver::createContainer<TextContainer>(Container* parent)
 	{
-		TextContainer* txtCntr = new TextContainer(*this);
-		if(parent != NULL)
-			parent->add(txtCntr);
-		else
-		{
-			auto size = m_gfxDriver.getSize();
-			txtCntr->setRect({ 0, 0, size.width, size.height });
-		}
+		TextContainer* txtCntr = new TextContainer(*this, parent);
 		return txtCntr;
 	}
 
