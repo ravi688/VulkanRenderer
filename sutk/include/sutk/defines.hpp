@@ -15,6 +15,7 @@
 
 
 #include <limits>
+#include <sstream>
 
 namespace SUTK
 {
@@ -103,7 +104,31 @@ namespace SUTK
 			width = size.width;
 			height = size.height;
 		}
+
+		std::string toString() const noexcept
+		{
+			// NOTE: we are creating here r-value std::ostringstream object
+			// because in C++20, it has r-value overload for str() function
+			// which returns std::move(underlying str object), this way we are only
+			// allocating one std::string and that is being returned at the end out 
+			// of this toString() function.
+			return operator <<(std::ostringstream(), *this).str();
+		}
 	};
+
+	template<typename T>
+	std::ostream&& operator <<(std::ostream&& stream, const Rect2D<T>& rect)
+	{
+		auto& _stream = operator << <T>(stream, rect);
+		return std::move(_stream);
+	}
+	
+	template<typename T>
+	std::ostream& operator <<(std::ostream& stream, const Rect2D<T>& rect)
+	{
+		stream << "{ " << rect.x << ", " << rect.y << ", " << rect.width << ", " << rect.height << " }";
+		return stream;
+	}
 
 	typedef u32 GfxDriverObjectHandleType;
 	#define GFX_DRIVER_OBJECT_NULL_HANDLE U32_MAX
