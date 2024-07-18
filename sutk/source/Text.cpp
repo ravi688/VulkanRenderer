@@ -229,6 +229,14 @@ namespace SUTK
 
 	void Text::onContainerResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
-
+		CursorPosition<LineCountType> cursorPosition { 0u, 0u };
+		for(std::size_t i = 0; i < m_lines.size(); i++)
+		{
+			Vec2D<DisplaySizeType> localCoords = getLocalPositionFromCursorPosition(cursorPosition);
+			Vec2D<DisplaySizeType> screenCoords = getContainer()->getLocalCoordsToScreenCoords(localCoords);
+			LineText* lineText = m_lines[i];
+			lineText->setPosition(screenCoords);
+			cursorPosition.moveToNextLine();
+		}
 	}
 }

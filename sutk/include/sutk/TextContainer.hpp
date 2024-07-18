@@ -12,7 +12,7 @@ namespace SUTK
 		Text* m_text;
 
 		// this can only be called by SUTK::UIDriver
-		TextContainer(UIDriver& driver, Container* parent) : Container(driver, parent) { }
+		TextContainer(UIDriver& driver, Container* parent) : Container(driver, parent), m_text(NULL) { }
 
 		friend class UIDriver;
 

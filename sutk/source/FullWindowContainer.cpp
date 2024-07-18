@@ -13,7 +13,6 @@ namespace SUTK
 		driver.getGfxDriver().addOnResizeHandler([this](Vec2D<DisplaySizeType> size)
 			{ 
 				setRect({ 0, 0, size.width, size.height });
-				std::cout << getRect() << std::endl;
 			});
 	}
 }

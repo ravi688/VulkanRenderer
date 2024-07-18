@@ -21,9 +21,9 @@ namespace SUTK
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
-		TextContainer* textContainer = m_uiDriver->createContainer<TextContainer>(rootContainer);
-		textContainer->setRect({ 0, 0, rootContainer->getRect().width, rootContainer->getRect().height });
-		m_text = m_uiDriver->createText(textContainer);
+		m_textContainer = m_uiDriver->createContainer<TextContainer>(rootContainer);
+		m_textContainer->setRect({ 100, 0, 300, 300 });
+		m_text = m_uiDriver->createText(m_textContainer);
 		m_text->append("#include <iostream>\n");
 		m_text->append("int main()\n");
 		m_text->append("{\n");
@@ -53,8 +53,10 @@ namespace SUTK
 	{
 		static u64 counter = 0;
 		++counter;
-		if(counter >= 100)
+		m_textContainer->setRect({ 100 + (counter / 2000.0f) * 100 , (counter / 2000.0f) * 200, 300, 300 });
+		if(counter >= 1000)
 		{
+			counter = 0;
 			static u64 counter2 = 0;
 			++counter2;
 			char buffer[128];
