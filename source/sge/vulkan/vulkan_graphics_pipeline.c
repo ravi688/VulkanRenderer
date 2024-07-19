@@ -209,6 +209,12 @@ SGE_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* rendere
 
 	pipeline->settings = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_GRAPHICS_PIPELINE_SETTINGS, vulkan_graphics_pipeline_settings_t);
 	memcopy(pipeline->settings, create_info->settings, vulkan_graphics_pipeline_settings_t);
+	if(pipeline->settings->colorblend.attachmentCount > 0)
+		pipeline->settings->colorblend.pAttachments = memory_allocator_duplicate_array(renderer->allocator, 
+																				MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PIPELINE_COLOR_BLEND_ATTACHMENT_STATE_ARRAY,
+																				VkPipelineColorBlendAttachmentState,
+																				create_info->settings->colorblend.pAttachments, 
+																				create_info->settings->colorblend.attachmentCount);
 	pipeline->layout = create_info->layout;
 	pipeline->render_pass = create_info->render_pass;
 	pipeline->subpass_index = create_info->subpass_index;
@@ -257,7 +263,7 @@ SGE_API void vulkan_graphics_pipeline_refresh(vulkan_graphics_pipeline_t* pipeli
 	_debug_assert__(pipeline->vo_handle != VK_NULL_HANDLE);
 
 	/* destroy the outdated pipeline */
-	// vulkan_graphics_pipeline_destroy(pipeline);
+	vkDestroyPipeline(pipeline->renderer->logical_device->vo_handle, pipeline->vo_handle, VULKAN_ALLOCATION_CALLBACKS(pipeline->renderer));
 
 	/* recreate the pipeline */
 
@@ -367,6 +373,7 @@ SGE_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_viewports);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_scissors);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_scissors);
+	memory_allocator_dealloc(pipeline->renderer->allocator, CAST_TO(void*, pipeline->settings->colorblend.pAttachments));
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->settings);
 	if(VULKAN_OBJECT_IS_INTERNAL(pipeline))
 		memory_allocator_dealloc(pipeline->renderer->allocator, pipeline);
