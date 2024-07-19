@@ -243,8 +243,6 @@ SGE_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline)
 		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 	}
 	
-	debug_assert__(!pipeline->is_user_defined_scissor, "For now let's focus on full render area of the render target\n");
-	
 	/* setup the scissor if there is no user defined scissors in v3d shader */
 	if(!pipeline->is_user_defined_scissor)
 		vkCmdSetScissor(command_buffer, 0, 1, &pipeline->render_pass->vo_current_render_area);
