@@ -12,7 +12,7 @@ namespace SGE
 		render_window_t* m_handle;
 		RenderWindow(render_window_t* window) : m_handle(window) { }
 		friend class Driver;
-		friend RenderWindow Event::ReinterpretPublisher(void* publisher);
+		friend RenderWindow Event::ReinterpretPublisher<RenderWindow>(void* publisher);
 	public:
 
 		Event getOnResizeEvent() noexcept
