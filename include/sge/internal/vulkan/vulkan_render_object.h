@@ -34,7 +34,7 @@
 #include <sge/internal/vulkan/vulkan_handles.h> 			// for vulkan_render_object_handle_t
 #include <sge/internal/vulkan/vulkan_object.h>
 #include <sge/struct_descriptor.h> 						// for struct_descriptor_t
-
+#include <sge/rect.h> 									// for irect2d_t
 
 #include <hpml/mat4.h>
 
@@ -84,6 +84,11 @@ typedef struct vulkan_render_object_t
 	vulkan_descriptor_set_t object_set;
 	vulkan_buffer_t buffer;
 
+	/* if scissor_rect.has_value is true then this scissor will be proritized over what is defined into the .sb shader file 
+	 * if scissor_rect.has_value is false and no scissor has been defined into .sb shader file, then full render area scissor will be used
+	 * from the current rendering camera. */
+	COM_OPTIONAL(irect2d_t) scissor_rect;
+
 	// TODO: Since this is identical for all the render objects, 
 	// 		it would be part of vulkan_renderer_t [Global Data] to save some memory
 	struct_descriptor_t struct_definition;
@@ -117,5 +122,14 @@ SGE_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_objec
 SGE_API void vulkan_render_object_set_transform(vulkan_render_object_t* object, mat4_t transform);
 SGE_API mat4_t vulkan_render_object_get_transform(vulkan_render_object_t* object);
 SGE_API mat4_t vulkan_render_object_get_normal(vulkan_render_object_t* object);
-
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE irect2d_t vulkan_render_object_get_scissor(vulkan_render_object_t* object)
+{ 
+	_debug_assert__(object->scissor_rect.has_value);
+	return object->scissor_rect.value; 
+}
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_object_set_scissor(vulkan_render_object_t* object, irect2d_t scissor_rect)
+{ 
+	object->scissor_rect.has_value = true;
+	object->scissor_rect.value = scissor_rect;
+}
 END_CPP_COMPATIBLE

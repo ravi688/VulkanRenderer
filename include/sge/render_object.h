@@ -28,6 +28,7 @@
 
 #include <sge/defines.h>
 #include <bufferlib/buffer.h>
+#include <sge/rect.h>
 
 #ifdef SGE_VULKAN_DRIVER
 	typedef struct vulkan_render_object_t vulkan_render_object_t;
@@ -97,5 +98,7 @@ SGE_API material_t* render_object_get_material(render_object_t* object);
 SGE_API void render_object_set_transform(render_object_t* obj, mat4_t transform);
 SGE_API mat4_t render_object_get_transform(render_object_t* obj);
 SGE_API mat4_t render_object_get_normal(render_object_t* obj);
+SGE_API irect2d_t render_object_get_scissor(render_object_t* obj);
+SGE_API void render_object_set_scissor(render_object_t* obj, irect2d_t rect);
 
 END_CPP_COMPATIBLE

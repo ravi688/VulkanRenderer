@@ -156,6 +156,16 @@ SGE_API void vulkan_render_object_attach(vulkan_render_object_t* obj, void* user
 
 SGE_API void vulkan_render_object_draw(vulkan_render_object_t* obj)
 {
+	AUTO command_buffer = obj->renderer->vo_command_buffers[obj->renderer->current_frame_index];
+	if(obj->scissor_rect.has_value)
+	{
+		VkRect2D vk_rect = 
+		{ 
+			.offset = { obj->scissor_rect.value.offset.x, obj->scissor_rect.value.offset.y },
+			.extent = { obj->scissor_rect.value.extent.width, obj->scissor_rect.value.extent.height }
+		};
+		vkCmdSetScissor(command_buffer, 0, 1, &vk_rect);
+	}
 	obj->draw(obj->user_data);
 }
 
