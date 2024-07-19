@@ -83,6 +83,7 @@ namespace SUTK
 	public:
 		virtual bool isDirty() override;
 		virtual void update() override;
+		void setClipRect(const Rect2D<DisplaySizeType> rect) noexcept;
 		void setData(const std::string& data) noexcept;
 		void append(const std::string& data) noexcept;
 		void insert(LineCountType col, const std::string& data) noexcept;
@@ -148,6 +149,7 @@ namespace SUTK
 		u32 m_baselineHeight;
 
 		bool m_isDirty;
+		bool m_isClippingEnabled;
 
 		// data and rendering attributes
 		Color3 m_color;
@@ -165,6 +167,7 @@ namespace SUTK
 
 		Vec2D<DisplaySizeType> getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
 		void onContainerResize(const Rect2D<DisplaySizeType>& rect, bool isPositionChanged, bool isSizeChanged) noexcept;
+		void recalculateClipRect() noexcept;
 
 	public:
 
@@ -186,6 +189,7 @@ namespace SUTK
 		void insert(const CursorPosition<LineCountType>& position, const std::string& str) noexcept;
 		void remove(const CursorPosition<LineCountType>& position, LineCountType numChars) noexcept;
 		void set(const std::string& str) noexcept;
+		void enableClipping(bool isEnable = true) noexcept;
 
 		TextContainer* getContainer() noexcept { return m_container; }
 	};

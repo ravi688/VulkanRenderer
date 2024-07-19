@@ -71,6 +71,15 @@ namespace SUTK
 		m_scene.render(RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 	}
 
+	#define GET_RENDER_OBJECT_ID(gfxDriverObjectHandle) get_render_object_id(gfxDriverObjectHandle)
+	static u32 get_render_object_id(GfxDriverObjectHandleType handle)
+	{
+		u32 id = BIT64_UNPACK32(handle, 0);
+		_assert(id != U32_MAX);
+		return id;
+	}
+	#define GET_ATTACHED_OBJECT_ID(gfxDriverObjectHandle) BIT64_UNPACK32(gfxDriverObjectHandle, 1)
+
 	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::createBitmapText()
 	{
 		debug_log_info("[SGE] Creating new SGE::BitmapText object");
@@ -84,27 +93,51 @@ namespace SUTK
 		object.attach(text);
 		// rebuild render pass graph as new objects have been added into the render scene 
 		m_scene.buildQueues();
-		id_generator_id_type_t id = id_generator_get(&m_id_generator);
-		m_bitmapTextMappings.insert({ id, { text, object, 0u } });
-		return { text, static_cast<GfxDriverObjectHandleType>(id) };
+		
+		// add bitmap text into the bitmap text mappings table
+		id_generator_id_type_t bitmapTextID = id_generator_get(&m_id_generator);
+		m_bitmapTextMappings.insert({ bitmapTextID, { text, 0u } });
+
+		// add corresponding render object into the render object mappings table
+		id_generator_id_type_t renderObjectID = id_generator_get(&m_id_generator);
+		m_renderObjectMappings.insert({ renderObjectID, object });
+
+		static_assert(sizeof(GfxDriverObjectHandleType) == sizeof(u64));
+
+		return { text, static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(bitmapTextID, renderObjectID)) };
 	}
 
-	std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextData>::iterator
+	std::unordered_map<id_generator_id_type_t, SGEBitmapTextData>::iterator
 	SGEGfxDriver::getBitmapTextIterator(GfxDriverObjectHandleType handle)
 	{	
-		auto it = m_bitmapTextMappings.find(handle);
+		auto it = m_bitmapTextMappings.find(GET_ATTACHED_OBJECT_ID(handle));
 		_assert(it != m_bitmapTextMappings.end());
+		return it;
+	}
+
+	std::unordered_map<id_generator_id_type_t, SGE::RenderObject>::iterator
+	SGEGfxDriver::getRenderObjectIterator(GfxDriverObjectHandleType handle)
+	{
+		auto it = m_renderObjectMappings.find(GET_RENDER_OBJECT_ID(handle));
+		_assert(it != m_renderObjectMappings.end());
 		return it;
 	}
 
 	void SGEGfxDriver::destroyBitmapText(GfxDriverObjectHandleType handle)
 	{
+		// erase the bitmap text object
 		auto it = getBitmapTextIterator(handle);
 		SGEBitmapTextData bitmapTextData = it->second;
 		bitmapTextData.text.destroy();
-		// TODO: pair.second.destroy();
-		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(handle));
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_ATTACHED_OBJECT_ID(handle)));
 		m_bitmapTextMappings.erase(it);
+
+		// erase the corresponding render object also 
+		auto it2 = getRenderObjectIterator(handle);
+		// SGE::RenderObject object = *it2;
+		// TODO: object.destroy()
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_RENDER_OBJECT_ID(handle)));
+		m_renderObjectMappings.erase(it2);
 	}
 
 	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::getOrCreateBitmapText()
@@ -132,13 +165,13 @@ namespace SUTK
 		subText.setPointSize(15);
 		u32 id = id_generator_get(&m_id_generator);
 		m_bitmapTextStringMappings.insert({ id, { subText,  bitmapText.second } });
-		return static_cast<GfxDriverObjectHandleType>(id);
+		return static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(id, U32_MAX));
 	}
 
 	std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData>::iterator
 	SGEGfxDriver::getSubTextIterator(GfxDriverObjectHandleType handle)
 	{	
-		auto it = m_bitmapTextStringMappings.find(handle);
+		auto it = m_bitmapTextStringMappings.find(GET_ATTACHED_OBJECT_ID(handle));
 		_assert(it != m_bitmapTextStringMappings.end());
 		return it;
 	}
@@ -174,6 +207,18 @@ namespace SUTK
 		bitmapTextData.charCount -= textString.getLength();
 		textString.set(data);
 		bitmapTextData.charCount += textString.getLength();
+	}
+
+	GfxDriverObjectHandleType SGEGfxDriver::getTextObject(GfxDriverObjectHandleType handle)
+	{
+		auto it = getSubTextIterator(handle);
+		return it->second.textHandle;
+	}
+
+	void SGEGfxDriver::setObjectScissor(GfxDriverObjectHandleType handle, const Rect2D<DisplaySizeType> rect)
+	{
+		auto it = getRenderObjectIterator(handle);
+		it->second.setScissor(irect2d(ioffset2d(rect.x, rect.y), iextent2d(rect.width, rect.height)));
 	}
 
 	u32 SGEGfxDriver::getBaselineHeightInPixels()
