@@ -39,5 +39,9 @@ namespace SGE
 		{
 			render_object_set_transform(m_handle, transform);
 		}
+		void setScissor(irect2d_t rect) const noexcept
+		{
+			render_object_set_scissor(m_handle, rect);
+		}
 	};
 }

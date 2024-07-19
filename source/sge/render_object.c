@@ -98,3 +98,13 @@ SGE_API mat4_t render_object_get_normal(render_object_t* obj)
 {
 	return vulkan_render_object_get_normal(obj);
 }
+
+SGE_API irect2d_t render_object_get_scissor(render_object_t* obj)
+{
+	return vulkan_render_object_get_scissor(VULKAN_RENDER_OBJECT_CAST(obj));
+}
+
+SGE_API void render_object_set_scissor(render_object_t* obj, irect2d_t rect)
+{
+	return vulkan_render_object_set_scissor(VULKAN_RENDER_OBJECT_CAST(obj), rect);
+}
