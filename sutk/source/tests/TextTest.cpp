@@ -34,6 +34,7 @@ namespace SUTK
 		m_text->append("\treturn 0; \n");
 		m_text->append("}");
 
+		m_text->enableClipping();
 		// m_text->createNewLine(Text::Flags::After, 3);
 	}
 

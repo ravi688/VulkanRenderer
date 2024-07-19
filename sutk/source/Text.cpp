@@ -32,6 +32,10 @@ namespace SUTK
 			m_isDataDirty = false;
 		}
 	}
+	void LineText::setClipRect(const Rect2D<DisplaySizeType> rect) noexcept
+	{
+		getGfxDriver().setTextScissor(m_handle, rect);
+	}
 	void LineText::setData(const std::string& data) noexcept
 	{
 		if(m_data == data)
@@ -77,9 +81,10 @@ namespace SUTK
 	void LineText::clear() noexcept
 	{
 		m_data.clear();
+		m_isDataDirty = true;
 	}
 
-	Text::Text(UIDriver& driver, TextContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_isDirty(false)
+	Text::Text(UIDriver& driver, TextContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_isDirty(false), m_isClippingEnabled(false)
 	{
 		m_baselineHeight = getGfxDriver().getBaselineHeightInPixels();
 	}
@@ -115,6 +120,7 @@ namespace SUTK
 		// In this case, we are (want to) first clearing the data and then write again, so there could have been double writes to GPU side storage!
 		for(std::size_t i = 0; i < m_lines.size(); i++)
 			m_lines[i]->clear();
+		m_lines.clear();
 	}
 
 	Vec2D<DisplaySizeType> Text::getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept
@@ -225,6 +231,25 @@ namespace SUTK
 		clear();
 		// wring new data
 		append(str);
+	}
+
+	void Text::recalculateClipRect() noexcept
+	{
+		for(std::size_t i = 0; i < m_lines.size(); i++)
+		{
+			TextContainer* container = getContainer();
+
+			// convert the top-left corner of the container, in which this text is, to screen coordinates
+			auto position = container->getLocalCoordsToScreenCoords({ 0u, 0u });
+			// set the clip rect, note that width and height should remain as that of its text container
+			m_lines[i]->setClipRect({ position.x, position.y, container->getRect().width, container->getRect().height });
+		}
+	}
+
+	void Text::enableClipping(bool isEnable) noexcept
+	{
+		m_isClippingEnabled = isEnable;
+		recalculateClipRect();
 	}
 
 	void Text::onContainerResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged) noexcept

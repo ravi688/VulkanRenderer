@@ -130,8 +130,8 @@ namespace SUTK
 		return stream;
 	}
 
-	typedef u32 GfxDriverObjectHandleType;
-	#define GFX_DRIVER_OBJECT_NULL_HANDLE U32_MAX
+	typedef u64 GfxDriverObjectHandleType;
+	#define GFX_DRIVER_OBJECT_NULL_HANDLE U64_MAX
 
 	struct Color3
 	{

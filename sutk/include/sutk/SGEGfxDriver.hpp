@@ -14,7 +14,6 @@ namespace SUTK
 	struct SGEBitmapTextData
 	{
 		SGE::BitmapText text;
-		SGE::RenderObject object;
 		// holds total aggregate number of characters in 'text' (BitmapText), i.e. sum over all text strings's sizes created out of this 'text'
 		u32 charCount;
 	};
@@ -35,8 +34,9 @@ namespace SUTK
 		SGE::Shader m_shader;
 		id_generator_t m_id_generator;
 		GfxDriverObjectHandleType m_currentBitmapTextHandle;
-		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextData> m_bitmapTextMappings;
+		std::unordered_map<id_generator_id_type_t, SGEBitmapTextData> m_bitmapTextMappings;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
+		std::unordered_map<id_generator_id_type_t, SGE::RenderObject> m_renderObjectMappings;
 		struct OnResizeCallbackHandlerData
 		{
 			OnResizeCallbackHandler handler;
@@ -49,8 +49,10 @@ namespace SUTK
 		Vec2D<DisplaySizeType> m_size;
 
 	private:
-		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextData>::iterator
+		std::unordered_map<id_generator_id_type_t, SGEBitmapTextData>::iterator
 		getBitmapTextIterator(GfxDriverObjectHandleType handle);
+		std::unordered_map<id_generator_id_type_t, SGE::RenderObject>::iterator
+		getRenderObjectIterator(GfxDriverObjectHandleType handle);
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData>::iterator
 		getSubTextIterator(GfxDriverObjectHandleType handle);
 		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> getOrCreateBitmapText();
@@ -75,6 +77,9 @@ namespace SUTK
 
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2D<DisplaySizeType> position) override;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
+
+		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) override;
+		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2D<DisplaySizeType> rect) override;
 
 		virtual u32 getBaselineHeightInPixels() override;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) override;
