@@ -166,6 +166,13 @@ SGE_API void memory_allocator_destroy(memory_allocator_t* allocator)
 	heap_free(allocator);
 }
 
+SGE_API void* __memory_allocator_duplicate(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, const void* ptr, u32 size)
+{
+	void* dup = __memory_allocator_aligned_alloc(allocator, debug_info, size, ALLOCATION_FLAG_NO_ALIGN_RESTRICTION);
+	memcopy_void(dup, CAST_TO(void*, ptr), size);
+	return dup;
+}
+
 SGE_API void* __memory_allocator_alloc(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, u32 size)
 {
 	return __memory_allocator_aligned_alloc(allocator, debug_info, size, ALLOCATION_FLAG_NO_ALIGN_RESTRICTION);

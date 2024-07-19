@@ -185,6 +185,11 @@ BEGIN_CPP_COMPATIBLE
 SGE_API memory_allocator_t* memory_allocator_create(const memory_allocator_create_info_t* create_info);
 SGE_API void memory_allocator_destroy(memory_allocator_t* allocator);
 
+/* duplicates memory of an array and returns pointer to the duplicate array's memory */
+#define memory_allocator_duplicate(allocator, allocation_type, type, ptr) CAST_TO(type*, __memory_allocator_duplicate(allocator, __memory_allocation_debug_info(allocation_type), ptr, sizeof(type)))
+#define memory_allocator_duplicate_array(allocator, allocation_type, type, array_ptr, count) CAST_TO(type*, __memory_allocator_duplicate(allocator, __memory_allocation_debug_info(allocation_type), array_ptr, sizeof(type) * (count)))
+SGE_API void* __memory_allocator_duplicate(memory_allocator_t* allocator, __memory_allocation_debug_info_t debug_info, const void* ptr, u32 size);
+
 /* allocates memory chunk and attaches appropriate debug information to that chunk */
 #define memory_allocator_alloc_obj_array(allocator, allocation_type, type, count) CAST_TO(type*, memory_allocator_alloc(allocator, allocation_type, sizeof(type) * (count)))
 #define memory_allocator_alloc_obj(allocator, allocation_type, type) CAST_TO(type*, memory_allocator_alloc(allocator, allocation_type, sizeof(type)))
