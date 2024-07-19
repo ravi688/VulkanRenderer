@@ -89,6 +89,8 @@ A camera can render its depth and color output to a user supplied textures - bot
 ### Bitmap Text Rendering
 1. Glyph Bitmap Atlas to avoid glyph bitmap duplication
 2. Text Layout Callback to customize the placement of glyphs.
+3. Multi-line Text
+4. Fully Editable Text (insert, append and remove)
 
 ### Materials
 
