@@ -13,7 +13,10 @@ namespace SUTK
 	{
 		return {static_cast<DisplaySizeType>(pair.first), static_cast<DisplaySizeType>(pair.second)};
 	}
-	SGEGfxDriver::SGEGfxDriver(SGE::Driver& driver) : m_driver(driver), m_id_generator(id_generator_create(0, NULL)), m_currentBitmapTextHandle(GFX_DRIVER_OBJECT_NULL_HANDLE)
+	SGEGfxDriver::SGEGfxDriver(SGE::Driver& driver, bool autoCmdRecordAndExecute) : m_driver(driver), 
+																					m_autoCmdRecordAndExecute(autoCmdRecordAndExecute),
+																					m_id_generator(id_generator_create(0, NULL)), 
+																					m_currentBitmapTextHandle(GFX_DRIVER_OBJECT_NULL_HANDLE)
 	{
 		driver.getRenderWindow().getOnResizeEvent().subscribe(
 					[](void* publisher, void* handlerData)
@@ -38,9 +41,9 @@ namespace SUTK
 		// add the camera to the scene 
 		m_scene.addCamera(camera);
 
-		m_shader = shaderLibrary.loadShader("../shaders/builtins/bitmap_text_shader.sb");
+		m_shader = shaderLibrary.loadShader("dependencies/VulkanRenderer/shaders/builtins/bitmap_text_shader.sb");
 
-		m_font = driver.loadFont("fonts/Calibri Regular.ttf");
+		m_font = driver.loadFont("dependencies/VulkanRenderer/sutk/fonts/Calibri Regular.ttf");
 		m_font.setCharSize(15);
 
 		SGE::BitmapGlyphAtlasTexture::CreateInfo createInfo =
@@ -67,8 +70,18 @@ namespace SUTK
 
 	void SGEGfxDriver::render(UIDriver& driver)
 	{
+		if(m_autoCmdRecordAndExecute)
+			// begin command buffer recording
+			m_driver.beginFrame();
 		m_bgaTexture.commit(NULL);
 		m_scene.render(RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
+		if(m_autoCmdRecordAndExecute)
+		{
+			// end command buffer recording
+			m_driver.endFrame();
+			// dispatch the command buffers for execution on GPU
+			m_driver.update();
+		}
 	}
 
 	#define GET_RENDER_OBJECT_ID(gfxDriverObjectHandle) get_render_object_id(gfxDriverObjectHandle)

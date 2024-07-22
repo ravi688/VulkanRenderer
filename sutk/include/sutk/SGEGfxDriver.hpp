@@ -28,6 +28,7 @@ namespace SUTK
 	{
 	private:
 		SGE::Driver& m_driver;
+		bool m_autoCmdRecordAndExecute;
 		SGE::BitmapGlyphAtlasTexture m_bgaTexture;
 		SGE::Font m_font;
 		SGE::RenderScene m_scene;
@@ -62,7 +63,7 @@ namespace SUTK
 	public:
 
 		// Constructors
-		SGEGfxDriver(SGE::Driver& driver);
+		SGEGfxDriver(SGE::Driver& driver, bool autoCmdRecordAndExecute = false);
 		// Destructor
 		~SGEGfxDriver();
 
