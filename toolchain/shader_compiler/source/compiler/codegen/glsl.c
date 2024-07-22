@@ -169,6 +169,13 @@ static char* merge_dir_and_file(const char* dir, const char* file, com_allocatio
 	return buf_get_ptr(&buffer);
 }
 
+static buffer_t* load_file(compiler_ctx_t* ctx, const char* file_path)
+{
+	if(ctx->file_load_callback != NULL)
+		return ctx->file_load_callback(file_path);
+	else return load_text_from_file_s(file_path);
+}
+
 static shaderc_include_result* resolve_include(void* user_data, const char* requested_source, int type, const char* requesting_source, size_t include_depth)
 {
 	compiler_ctx_t* ctx = CAST_TO(compiler_ctx_t*, user_data);
@@ -195,7 +202,9 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 				file_path = resolve_relative_file_path(requested_source, ctx->input->cwd, &ctx->callbacks);
 				ctx->is_include_path_allocated = true;
 			}
-			data = load_text_from_file(file_path);
+			data = load_file(ctx, file_path);
+			if(data == NULL)
+				debug_log_error("[Codegen] [Legacy] Failed to load %s", file_path);
 		}
 		break;
 		
@@ -208,7 +217,7 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 				file_path = resolve_relative_file_path(merged_path, ctx->input->cwd, &ctx->callbacks);
 				com_call_deallocate(&ctx->callbacks, merged_path);
 				ctx->is_include_path_allocated = true;
-				BUFFER* _data = load_text_from_file_s(file_path);
+				BUFFER* _data = load_file(ctx, file_path);
 				debug_log_info("[Codegen] [Legacy] Resolved include file: %s", file_path);
 				if(_data == NULL)
 					continue;
