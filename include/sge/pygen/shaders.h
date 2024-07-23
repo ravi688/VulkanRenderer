@@ -3,7 +3,7 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 23h:23m:46s, 23/7/2024
+ * Time & Date (yy/mm/yyy) of Generation: 23h:40m:14s, 23/7/2024
  */
 
 #pragma once
@@ -245,5 +245,5 @@ typedef struct shader_file_path_and_data_mapping_t
 
 static const shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT] =
 {
-	{ "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", "_________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER" }
+	{ "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER }
 };
