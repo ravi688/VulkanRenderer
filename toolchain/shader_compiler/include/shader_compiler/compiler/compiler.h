@@ -30,13 +30,16 @@
 #include <bufferlib/buffer.h>
 #include <shader_compiler/sb_emitter.h>
 
-typedef buffer_t* (*sc_file_load_callback_t)(const char* file_path);
+typedef buffer_t* (*sc_file_load_callback_t)(const char* file_path, void* user_data);
 
 /* enclosure structure to hold src string and include paths */
 typedef struct sc_compiler_input_t
 {
-	/* callback for file load function */
+	/* this is called when loading any file during compilation (for example when load included files in the GLSL source) 
+	 * if this is NULL, then the compiler uses load_text_from_file_s() from DiskManager submodule */
 	sc_file_load_callback_t file_load_callback;
+	/* pointer to an arbitrary data which is passed to the above callback as second argument */
+	void* user_data;
 	/* pointer to ASCII characters in the source string data */
 	const char* src;
 	/* number of ASCII characters in the above source string data */
@@ -96,10 +99,6 @@ typedef struct compiler_ctx_t
 	/* private/internal properties */
 
 	com_allocation_callbacks_t callbacks;
-
-	/* this is called when loading any file during compilation (for example when load included files in the GLSL source) 
-	 * if this is NULL, then the compiler uses load_text_from_file_s() from DiskManager submodule */
-	sc_file_load_callback_t file_load_callback;
 
 	/* binary buffer to write code generation data (final output) */
 	codegen_buffer_t* codegen_buffer;
