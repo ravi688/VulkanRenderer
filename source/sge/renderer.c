@@ -35,6 +35,8 @@
 
 #include <freetype/freetype.h>
 
+#include <sge/pygen/shaders.h>
+
 SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, sge_driver_create_info_t* _create_info)
 {
 	renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDERER, renderer_t);
@@ -107,6 +109,61 @@ SGE_API void renderer_wait_idle(renderer_t* renderer)
 }
 
 /* getters */
+static bool str_ends_with(const char* str, const char* suffix)
+{
+	u32 str_len = strlen(str);
+	u32 sfx_len = strlen(suffix);
+
+	/* screening case */
+	if(str_len < sfx_len)
+		return false;
+
+	return strncmp(str + (str_len - sfx_len), suffix, sfx_len) == 0;
+}
+
+SGE_API const char* renderer_get_builtin_file_data(renderer_t* renderer, const char* virtual_file_path, u64 OUT data_size)
+{
+	_debug_assert__(strlen(virtual_file_path) > 0);
+	if(virtual_file_path[0] != '/')
+	{
+		debug_log_error("Invalid root directory in %s", virtual_file_path);
+		return NULL;
+	}
+
+	/* skip first '/' (possibly multiple adjacent) characters */
+	while(*virtual_file_path == '/')
+		virtual_file_path += 1;
+
+	/* find a match */
+	u32 match_index = U32_MAX;
+	const shader_file_path_and_data_mapping_t* mappings = g_get_shader_mappings();
+	for(u32 i = 0; i < G_SHADER_MAPPING_COUNT; i++)
+	{
+		if(str_ends_with(mappings[i].file_path, virtual_file_path))
+		{
+			if(match_index != U32_MAX)
+			{
+				debug_log_error("Multiple matches were found, returning the first match: %s", mappings[i].file_path);
+				break;
+			}
+			else match_index = i;
+		}
+	}
+
+	if(match_index == U32_MAX)
+	{
+		debug_log_warning("No match found for virtual file path: %s, returning NULL", virtual_file_path);
+		return NULL;
+	}
+
+	_debug_assert__(match_index < G_SHADER_MAPPING_COUNT);
+
+	if(data_size != NULL)
+		OUT data_size = CAST_TO(u64, mappings[match_index].data_size);
+
+	return mappings[match_index].data;
+}
+
 SGE_API render_window_t* renderer_get_window(renderer_t* renderer)
 {
 	return vulkan_renderer_get_window(renderer->vulkan_handle);

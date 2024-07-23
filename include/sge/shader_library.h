@@ -129,6 +129,18 @@ SGE_API shader_handle_t shader_library_create_shader(shader_library_t* library, 
 SGE_API shader_handle_t shader_library_load_shader(shader_library_t* library, const char* file_path);
 
 /*
+	description: compiles .v3dshader source and creates a shader from that with identification name 'shader_name'
+	params:
+		library: ptr to the shader_library_t object
+		source: file path to load from
+		shader_name: identification name of the created shader
+	returns:
+		shader_handle_t, handle to the newly created shader
+		SHADER_HANDLE_INVALID, if the shader creation failed
+ */
+SGE_API shader_handle_t shader_library_compile_and_load_shader(shader_library_t* library, const char* source);
+
+/*
 	description: destroys a shader with identification name as 'shader_name'
 	params:
 		library: ptr to the shader_library_t object

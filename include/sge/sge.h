@@ -147,6 +147,7 @@ SGE_API void renderer_end_frame(renderer_t* renderer);
 SGE_API void renderer_wait_idle(renderer_t* renderer);
 
 /* getters */
+SGE_API const char* renderer_get_builtin_file_data(renderer_t* renderer, const char* virtual_file_path, u64 OUT data_size);
 SGE_API render_window_t* renderer_get_window(renderer_t* renderer);
 SGE_API shader_library_t* renderer_get_shader_library(renderer_t* renderer);
 SGE_API material_library_t* renderer_get_material_library(renderer_t* renderer);

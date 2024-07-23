@@ -2267,7 +2267,8 @@ SGE_API vulkan_shader_t* vulkan_shader_compile_and_load(vulkan_renderer_t* rende
 		vulkan_shader_load_info_t load_info = 
 		{
 			.data = output.sb_bytes,
-			.data_size = output.sb_byte_count
+			.data_size = output.sb_byte_count,
+			.is_vertex_attrib_from_file = true
 		};
 		AUTO shader = vulkan_shader_load(renderer, &load_info);
 		return shader;

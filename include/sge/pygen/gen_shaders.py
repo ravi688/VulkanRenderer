@@ -12,8 +12,11 @@ import time
 
 # path to the generated header file, it is relative to where this python scripts resides
 c_header_file_path='./shaders.h'
-# if a folder is specified, then which files to consider for embedding?
-allowed_file_extensions = [ '.v3dshader', '.txt', '.hpp', '.cpp', '.h', '.c' ]
+# if a folder is specified, then which text files to consider for embedding?
+text_file_extensions = [ '.v3dshader', '.txt', '.hpp', '.cpp', '.h', '.c' ]
+# if a folder is specified, then which binary files to consider for embedding?
+binary_file_extensions = [ '.ttf' ]
+bytes_per_row = 20
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -30,21 +33,25 @@ def get_var_name_from_file_path(path):
 		path.insert(0, '_')
 	return "".join(path)
 
-def is_allowed(file_path):
-	for extension in allowed_file_extensions:
+def is_text_encoding(file_path):
+	for extension in text_file_extensions:
 		if file_path.endswith(extension):
 			return True
 	return False
 
-# loads a file at 'file_path' and embeds its contents to the header file at 'c_header_file_path'
-def embed_file(file_path, header_file):
-	if not is_allowed(file_path):
-		return
+def is_binary_encoding(file_path):
+	for extension in binary_file_extensions:
+		if file_path.endswith(extension):
+			return True
+	return False
+
+def embed_text_file(file_path, header_file):
 	abs_file_path = os.path.join(base_dir, file_path)
 	var_name = get_var_name_from_file_path(file_path)
 	header_file.write('static const char* %s = \n' % (var_name))
 	file = open(abs_file_path, 'r')
 	header_file.write('"');
+	i = 0
 	while True:
 		char = file.read(1)
 		if not char:
@@ -52,13 +59,49 @@ def embed_file(file_path, header_file):
 		if char == '"' or char == '\\':
 			header_file.write('\\')
 		if char == '\n' or char == '\r':
-			header_file.write('"')
+			header_file.write('\\n"')
 		header_file.write(char)
 		if char == '\n' or char == '\r':
 			header_file.write('"')
+		i = i + 1
 	header_file.write('";\n')
 	file.close()
-	mappings[abs_file_path] = var_name
+	mappings[abs_file_path] = (var_name, i)
+
+def embed_binary_file(file_path, header_file):
+	abs_file_path = os.path.join(base_dir, file_path)
+	var_name = get_var_name_from_file_path(file_path)
+	header_file.write('static const char %s[] = \n' % (var_name))
+	file = open(abs_file_path, 'rb')
+	file.seek(0, os.SEEK_END)
+	file_size = file.tell()
+	file.seek(0)
+	header_file.write('{');
+	i = 0
+	while True:
+		byte = file.read(1)
+		if not byte:
+			break
+		header_file.write('0x%x' % byte[0])
+		if not (i + 1) == file_size:
+			header_file.write(', ')
+		if ((i + 1) % bytes_per_row) == 0:
+			header_file.write('\n')
+		i = i + 1
+	header_file.write('\n};\n')
+	file.close()
+	mappings[abs_file_path] = (var_name, i)
+
+
+# loads a file at 'file_path' and embeds its contents to the header file at 'c_header_file_path'
+def embed_file(file_path, header_file):
+	if is_text_encoding(file_path):
+		embed_text_file(file_path, header_file)
+	elif is_binary_encoding(file_path):
+		embed_binary_file(file_path, header_file)
+	else:
+		print('Skipping %s' % file_path)
+	return
 
 # traverses a directory recursively and calls 'callback' upon encountering a file
 def traverse_dir_recursively(root_dir, callback):
@@ -89,6 +132,7 @@ typedef struct shader_file_path_and_data_mapping_t
 {
 	const char* file_path;
 	const char* data;
+	long long data_size;
 } shader_file_path_and_data_mapping_t;
 
 #define G_SHADER_MAPPING_COUNT %d
@@ -112,7 +156,7 @@ epilog_template_part2 = """
 def setup_header_file_epilog(file):
 	file.write(epilog_template_part1 % (len(mappings)))
 	for i, (key, value) in enumerate(mappings.items()):
-		file.write('\t\tg_shader_mappings[%d] = (shader_file_path_and_data_mapping_t) { \"%s\", %s };\n' % (i, key, value))
+		file.write('\t\tg_shader_mappings[%d] = (shader_file_path_and_data_mapping_t) { \"%s\", %s, %lu };\n' % (i, key, value[0], value[1]))
 	file.write(epilog_template_part2)
 
 def main():
