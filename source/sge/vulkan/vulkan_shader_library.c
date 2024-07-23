@@ -32,6 +32,8 @@
 #include <sge/debug.h>
 #include <string.h>
 
+#include <sge/pygen/shaders.h>
+
 /* constructors & destructors */
 SGE_API vulkan_shader_library_t* vulkan_shader_library_new(memory_allocator_t* allocator)
 {
@@ -136,6 +138,21 @@ SGE_API vulkan_shader_handle_t vulkan_shader_library_create_shader(vulkan_shader
 SGE_API vulkan_shader_handle_t vulkan_shader_library_load_shader(vulkan_shader_library_t* library, vulkan_shader_load_info_t* load_info, const char* shader_name)
 {
 	return vulkan_shader_library_add(library, vulkan_shader_load(library->renderer, load_info), shader_name);
+}
+
+static buffer_t* load_file(const char* file_path, void* user_data)
+{
+	return NULL;
+}
+
+static void close_file(buffer_t* data, void* user_data)
+{
+
+}
+
+SGE_API vulkan_shader_handle_t vulkan_shader_library_compile_and_load_shader(vulkan_shader_library_t* library, const char* source, const char* shader_name)
+{
+	return vulkan_shader_library_add(library, vulkan_shader_compile_and_load(library->renderer, source, load_file, close_file, NULL), shader_name);
 }
 
 static bool vulkan_shader_library_remove(vulkan_shader_library_t* library, const char* vulkan_shader_name)
