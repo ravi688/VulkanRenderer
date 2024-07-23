@@ -31,6 +31,7 @@
 #include <shader_compiler/sb_emitter.h>
 
 typedef buffer_t* (*sc_file_load_callback_t)(const char* file_path, void* user_data);
+typedef void (*sc_file_close_callback_t)(buffer_t* file_data, void* user_data);
 
 /* enclosure structure to hold src string and include paths */
 typedef struct sc_compiler_input_t
@@ -38,6 +39,9 @@ typedef struct sc_compiler_input_t
 	/* this is called when loading any file during compilation (for example when load included files in the GLSL source) 
 	 * if this is NULL, then the compiler uses load_text_from_file_s() from DiskManager submodule */
 	sc_file_load_callback_t file_load_callback;
+	/* this is called when closing the loaded file (during call to 'file_load_callback'), 
+	 * if this is NULL, the above 'file_load_callback' must also be null, same must be true for the opposite case. */
+	sc_file_close_callback_t file_close_callback;
 	/* pointer to an arbitrary data which is passed to the above callback as second argument */
 	void* user_data;
 	/* pointer to ASCII characters in the source string data */
@@ -129,6 +133,8 @@ typedef struct compiler_ctx_t
 
 	/* this is used in glsl.c file in the resolve_include function, it is used to determine if the allocation need to be freed */
 	bool is_include_path_allocated;
+	/* this is used in glsl.c file in the resolve_include function and release_include function, it is used to allow external file load handler to also free up their data */
+	buffer_t* file_data;
 
 	/* shader language version, assigned during header parsing, and later checked in parsing, etc. stages to adapt the compilation with 'sl_version' */
 	u32 sl_version;
