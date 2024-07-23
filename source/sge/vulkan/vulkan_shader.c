@@ -48,6 +48,8 @@
 #include <sge/dictionary.h>
 #include <sge/render_window.h>
 
+#include <shader_compiler/compiler/compiler.h> /* for sc_compile() and udat_layout_t */
+
 #include <string.h> 			// for strlen()
 #include <math.h> 				// for log2(), and ceil()
 
@@ -1482,21 +1484,13 @@ typedef struct shader_binary_read_context_t
 #define ARRAY_BIT BIT32(30)
 #define LAYOUT_FORCE_BIT BIT8(7)
 
-/* see the SB2023.2 spec */
-typedef enum udat_layout_t
-{
-	SCALAR = 0,
-	STD430 = 1,
-	STD140 = 2
-} udat_layout_t;
-
 static memory_layout_provider_callbacks_t get_glsl_memory_layout_callbacks_from_udat_layout(u8 udat_layout)
 {
 	switch(udat_layout & 0x7fu)
 	{
-		case SCALAR: return glsl_scalar_memory_layout_callbacks();
-		case STD430: return glsl_std430_memory_layout_callbacks();
-		case STD140: return glsl_std140_memory_layout_callbacks();
+		case SCALAR_LAYOUT: return glsl_scalar_memory_layout_callbacks();
+		case STD430_LAYOUT: return glsl_std430_memory_layout_callbacks();
+		case STD140_LAYOUT: return glsl_std140_memory_layout_callbacks();
 		default: DEBUG_LOG_FETAL_ERROR("Unrecognized udat layout: %u", udat_layout);
 	}
 	return glsl_scalar_memory_layout_callbacks();
@@ -2245,6 +2239,45 @@ SGE_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_
 	AUTO shader = vulkan_shader_create(renderer, create_info);
 	destroy_vulkan_shader_create_info(renderer->allocator, create_info);
 	return shader;
+}
+
+SGE_API vulkan_shader_t* vulkan_shader_compile_and_load(vulkan_renderer_t* renderer, const char* source, sc_file_load_callback_t file_load_callback, sc_file_close_callback_t file_close_callback, void* user_data)
+{
+	/* prepare input data */
+	const char* include_path = "/";
+	sc_compiler_input_t input = 
+	{
+		.file_load_callback = file_load_callback,
+		.file_close_callback = file_close_callback,
+		.user_data = user_data,
+		.src = source,
+		.src_len = strlen(source),
+		.src_path = "",
+		.exe_path = "",
+		.cwd = "",
+		.include_paths = &include_path,
+		.include_path_count = 1
+	};
+	/* compile the source string */
+	sc_compiler_output_t output = sc_compile(&input, NULL);
+
+	/* if compilation has been successful then proceed to create vulkan_shader_t object */
+	if(output.is_success)
+	{
+		vulkan_shader_load_info_t load_info = 
+		{
+			.data = output.sb_bytes,
+			.data_size = output.sb_byte_count
+		};
+		AUTO shader = vulkan_shader_load(renderer, &load_info);
+		return shader;
+	}
+	/* otherwise issue an error what gone wrong and return NULL value */
+	else
+	{
+		debug_log_error("Failed to compile source string, Reason: %s", output.log);
+		return NULL;
+	}
 }
 
 SGE_API void vulkan_shader_destroy(vulkan_shader_t* shader)

@@ -76,7 +76,6 @@ typedef struct memory_allocator_t memory_allocator_t;
 #define IF_DEBUG(x) IF_DEBUG_MODE(x)
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 max(u32 v1, u32 v2) { return (v1 > v2) ? v1 : v2; }
-static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 min(u32 v1, u32 v2) { return (v1 < v2) ? v1 : v2; }
 
 
 #define DYNAMIC_CAST(target_type, ptr) CAST_TO(target_type, ptr)

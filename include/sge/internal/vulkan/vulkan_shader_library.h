@@ -67,6 +67,7 @@ SGE_API void vulkan_shader_library_release_resources(vulkan_shader_library_t* li
 
 SGE_API vulkan_shader_handle_t vulkan_shader_library_create_shader(vulkan_shader_library_t* library, vulkan_shader_create_info_t* create_info, const char* shader_name);
 SGE_API vulkan_shader_handle_t vulkan_shader_library_load_shader(vulkan_shader_library_t* library, vulkan_shader_load_info_t* load_info, const char* shader_name);
+SGE_API vulkan_shader_handle_t vulkan_shader_library_compile_and_load_shader(vulkan_shader_library_t* library, const char* source, const char* shader_name);
 SGE_API bool vulkan_shader_library_destroy_shader(vulkan_shader_library_t* library, const char* shader_name);
 SGE_API bool vulkan_shader_library_destroy_shaderH(vulkan_shader_library_t* library, vulkan_shader_handle_t handle);
 

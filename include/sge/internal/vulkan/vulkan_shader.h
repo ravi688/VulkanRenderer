@@ -33,6 +33,8 @@
 #include <sge/internal/vulkan/vulkan_object.h>
 #include <sge/event.h>
 #include <glslcommon/glsl_types.h>
+#include <shader_compiler/compiler/compiler.h>
+
 #define VERTEX_ATTRIB(value, index) ((value) << ((index) * 5))
 enum
 {
@@ -204,6 +206,11 @@ BEGIN_CPP_COMPATIBLE
 SGE_API vulkan_shader_t* vulkan_shader_new(memory_allocator_t* allocator);
 SGE_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, vulkan_shader_create_info_t* create_info);
 SGE_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_shader_load_info_t* file_info);
+/* renderer: pointer to the vulkan_renderer_t object
+ * source: null-terminated source text
+ * file_load_callback: this is a function pointer to issue a callback for loading resolved include files
+ * user_data: is a pointer to the arbitrary data which might be needed by file_load_callback (and it is also passed as the second argument) */
+SGE_API vulkan_shader_t* vulkan_shader_compile_and_load(vulkan_renderer_t* renderer, const char* source, sc_file_load_callback_t file_load_callback, sc_file_close_callback_t file_close_callback, void* user_data);
 SGE_API void vulkan_shader_destroy(vulkan_shader_t* shader);
 SGE_API void vulkan_shader_release_resources(vulkan_shader_t* shader);
 
