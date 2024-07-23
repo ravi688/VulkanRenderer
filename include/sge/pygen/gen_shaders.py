@@ -96,7 +96,7 @@ def setup_header_file_epilog(file):
 	file.write(epilog_template % (len(mappings)))
 	file.write('{\n')
 	for i, (key, value) in enumerate(mappings.items()):
-		file.write('\t{ \"%s\", \"%s\" }' % (key, value))
+		file.write('\t{ \"%s\", %s }' % (key, value))
 		if not (i + 1) == len(mappings):
 			file.write(',')
 		file.write('\n')
