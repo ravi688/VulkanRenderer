@@ -1,0 +1,249 @@
+
+
+/***This is computer generated file - Do not modify it***/
+
+/* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
+ * Time & Date (yy/mm/yyy) of Generation: 23h:23m:46s, 23/7/2024
+ */
+
+#pragma once
+static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER = 
+"/*
+	***This is computer generated notice - Do not modify it***
+
+	VulkanRenderer (inclusive of its dependencies and subprojects 
+	such as toolchains written by the same author) is a software to render 
+	2D & 3D geometries by writing C/C++ code and shaders.
+
+	File: bitmap_text_shader.v3dshader is a part of VulkanRenderer
+
+	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+*/
+
+
+#sb version 2023
+#sl version 2023
+
+[Name(\"BitmapTextShader\")]
+Shader
+{
+    Properties
+    {
+        struct Color
+        {
+            float r;
+            float g;
+            float b;
+        }
+
+        [Stage(vertex, fragment)]
+        [Set(material_set, material_properties)]
+        uniform Parameters
+        {
+            vec2 tex_size;
+            Color color;
+            int space_type;
+            int surface_type;
+        } parameters;
+
+        [Stage(vertex)]
+        [Set(material_set, texture2)]
+        uniform TSTBuffer
+        {
+            mat4 transforms[];
+        } TSTBuffer;
+    }
+
+    Layout
+    {
+        [Rate(per_vertex)]
+        [MeshLayout(sge_optimal)]
+        [Attribute(position)]
+        vec3 position;
+
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=5)]
+        vec4 ofst_indx;
+
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=6)]
+        vec4 rotn_stid;
+
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=7)]
+        vec4 rotn_stid;
+    }
+    
+    RenderPass
+    {
+        SubPass
+        {
+            [NoParse]
+            GraphicsPipeline
+            {
+                colorBlend
+                {
+                    attachment { }
+                }
+            }
+            [NoParse]
+            GLSL
+            {
+                #stage vertex
+        
+                #version 450
+                
+                #define REQUIRE_BITMAP_TEXT
+                #include <v3d.h>
+                
+                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
+                {
+                    uvec2 resolution;
+                    uvec2 dpi;
+                    uvec2 window_size;
+                    mat4 matrix;
+                } displayInfo;
+                
+                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+                
+                struct Color
+                {
+                    float r;
+                    float g;
+                    float b;
+                };
+                
+                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+                {
+                    uvec2 tex_size;
+                    Color color;
+                    int space_type;
+                    int surface_type;
+                } parameters;
+                
+                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer
+                {
+                    mat4[128] tst_buffer;
+                };
+                
+                layout(location = POSITION_LOCATION) in vec3 position;
+                
+                layout(location = 5, component = 0) in vec3 ofst;
+                layout(location = 5, component = 3) in float indx_f;
+                layout(location = 6, component = 0) in vec3 rotn; // not required
+                layout(location = 6, component = 3) in float stid_f;
+                layout(location = 7, component = 0) in vec3 scal; // not required
+                
+                layout(location = 0) out vec2 out_texcoord;
+                layout(location = 1) out vec3 out_color;
+                
+                void main()
+                {
+                    uint indx = floatBitsToUint(indx_f);
+                    uint stid = floatBitsToUint(stid_f);
+                
+                    GlyphTexCoord texcoord = gtc_buffer[indx];
+                
+                    vec2 tex_size = parameters.tex_size;
+                    vec2 win_size = vec2(displayInfo.window_size);
+                    vec2 glyph_size = vec2(texcoord.trtc.x - texcoord.tltc.x, texcoord.bltc.y - texcoord.tltc.y) * tex_size;
+                
+                    vec4 pos = vec4((position.x * glyph_size.x + ofst.x), (position.y * glyph_size.y + ofst.y), 0, 1.0);
+                
+                    vec4 world = objectInfo.transform * tst_buffer[stid] * pos.zyxw;
+                
+                    vec4 clipPos;
+                
+                    switch(parameters.space_type)
+                    {
+                        case TEXT_RENDER_SPACE_TYPE_2D:
+                        {
+                            switch(parameters.surface_type)
+                            {
+                                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
+                                    clipPos = cameraInfo.screen * world;
+                                    break;
+                                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
+                                    clipPos = displayInfo.matrix * world;
+                                    break;
+                            }
+                            break;
+                        }
+                        case TEXT_RENDER_SPACE_TYPE_3D:
+                        {
+                            switch(parameters.surface_type)
+                            {
+                                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
+                                    clipPos = cameraInfo.projection * cameraInfo.view * world;
+                                    break;
+                                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
+                                    clipPos = displayInfo.matrix * world;
+                                    break;
+                            }
+                            break;
+                        }
+                    }
+                
+                    gl_Position = vec4(clipPos.x, -clipPos.y, clipPos.z, clipPos.w);
+                
+                    if(gl_VertexIndex == 0)
+                        out_texcoord = texcoord.tltc;
+                    else if(gl_VertexIndex == 1)
+                        out_texcoord = texcoord.trtc;
+                    else if(gl_VertexIndex == 2)
+                        out_texcoord = texcoord.brtc;
+                    else if(gl_VertexIndex == 3)
+                        out_texcoord = texcoord.bltc;
+                
+                    out_color = vec3(parameters.color.r, parameters.color.g, parameters.color.b);
+                }
+
+                #stage fragment
+                
+                #version 450
+                
+                #define REQUIRE_BITMAP_TEXT
+                #include <v3d.h>
+                
+                layout(location = 0) in vec2 in_texcoord;
+                layout(location = 1) in vec3 in_color;
+                
+                layout(location = 0) out vec4 color;
+                
+                void main()
+                {
+                    vec2 texcoord = vec2(in_texcoord.x, in_texcoord.y);
+                    color = vec4(in_color.x, in_color.y, in_color.z, 1.0) * texture(bga, texcoord).r;
+                }
+            }
+        }
+    }
+
+}";
+
+typedef struct shader_file_path_and_data_mapping_t
+{
+	const char* file_path;
+	const char* data;
+} shader_file_path_and_data_mapping_t;
+
+#define G_SHADER_MAPPING_COUNT 1
+
+static const shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT] =
+{
+	{ "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", "_________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER" }
+};
