@@ -171,8 +171,8 @@ static char* merge_dir_and_file(const char* dir, const char* file, com_allocatio
 
 static buffer_t* load_file(compiler_ctx_t* ctx, const char* file_path)
 {
-	if(ctx->file_load_callback != NULL)
-		return ctx->file_load_callback(file_path);
+	if(ctx->input->file_load_callback != NULL)
+		return ctx->input->file_load_callback(file_path, ctx->input->user_data);
 	else return load_text_from_file_s(file_path);
 }
 
