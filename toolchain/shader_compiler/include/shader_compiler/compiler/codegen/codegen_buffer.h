@@ -884,13 +884,13 @@ enum
 	MARK_ID_FIELD_COUNT = MARK_ID_FIELD_COUNT_0
 };
 
-#include <shader_compiler/utilities/dictionary.h> /* dictionary_t */
+#include <sge/dictionary.h> /* dictionary_t */
 #include <common/static_string.h> /* static_string_64_t */
 
 /* TODO: replace this typedef with a real hash_table_t implementation in the SGE project */
-typedef dictionary_t hash_table_t;
+// **REMOVE THIS LINE** typedef dictionary_t hash_table_t;
 
-typedef hash_table_t  /* key: static_string_64_t (section name), value: binary_writer_t* (section writer) */section_writer_map_t;
+typedef dictionary_t  /* key: static_string_64_t (section name), value: binary_writer_t* (section writer) */section_writer_map_t;
 
 /* abstract buffer used to store the compiled shader binary */
 typedef struct codegen_buffer_t

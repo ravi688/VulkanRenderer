@@ -244,9 +244,12 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 		result->source_name_length = strlen(file_path);
 		result->content = buf_get_ptr(data);
 		result->content_length = buf_get_element_count(data) - 1;
-		buf_free_except_data(data);
+
+		if(ctx->input->file_load_callback == NULL)
+			buf_free_except_data(data);
 	}
 
+	ctx->file_data = data;
 	
 	return result;
 }
@@ -259,8 +262,16 @@ static void release_include(void* user_data, shaderc_include_result* include_res
 		com_call_deallocate(&ctx->callbacks, CAST_TO(void*, include_result->source_name));
 		ctx->is_include_path_allocated = false;
 	}
-	if((include_result->content != NULL) && (strcmp(include_result->content, "Include Error") != 0))
-		free(CAST_TO(void*, include_result->content));
+	if(ctx->input->file_load_callback == NULL)
+	{
+		if((include_result->content != NULL) && (strcmp(include_result->content, "Include Error") != 0))
+			free(CAST_TO(void*, include_result->content));
+	}
+	else
+	{
+		_ASSERT(ctx->input->file_close_callback != NULL);
+		ctx->input->file_close_callback(ctx->file_data, ctx->input->user_data);
+	}
 	com_call_deallocate(&ctx->callbacks, include_result);
 }
 
