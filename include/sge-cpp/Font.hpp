@@ -18,6 +18,7 @@ namespace SGE
 	public:
 		Font() : m_handle(NULL) { }
 		Font(Driver& driver, const std::string& filePath) noexcept;
+		Font(Driver& driver, const void* bytes, u64 length) noexcept;
 
 		font_t* getHandle() const noexcept { return m_handle; }
 

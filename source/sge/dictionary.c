@@ -294,7 +294,7 @@ SGE_API bool dictionary_key_comparer_double(void* v1, void* v2)
 
 SGE_API bool dictionary_key_comparer_string(void* v1, void* v2)
 {
-	return (*(char**)v1) == (*(char**)v2);
+	return strcmp(*(char**)v1, *(char**)v2) == 0;
 }
 
 SGE_API bool dictionary_key_comparer_ptr(void* v1, void* v2)

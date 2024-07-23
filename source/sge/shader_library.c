@@ -982,6 +982,11 @@ SGE_API shader_handle_t shader_library_load_shader(shader_library_t* library, co
 	return vulkan_shader_library_load_shader(library, &load_info, "Untitled");
 }
 
+SGE_API shader_handle_t shader_library_compile_and_load_shader(shader_library_t* library, const char* source)
+{
+	return vulkan_shader_library_compile_and_load_shader(library, source, "Untitled");
+}
+
 SGE_API bool shader_library_destroy_shader(shader_library_t* library, const char* shader_name)
 {
 	return vulkan_shader_library_destroy_shader(library, shader_name);

@@ -12,6 +12,7 @@
 #include <sge-cpp/RenderWindow.hpp> /* for SGE::RenderWindow */
 
 #include <string> /* for std::string */
+#include <string_view> /* for std::string_view */
 
 namespace SGE
 {
@@ -58,7 +59,15 @@ namespace SGE
 		void endFrame() { renderer_end_frame(m_driver); }
 		void waitIdle() { renderer_wait_idle(m_driver); }
 
+		const std::pair<std::string_view, u64> getBuiltinFileData(const std::string_view virtualFilePath) const noexcept
+		{
+			u64 data_size = 0;
+			const char* data = renderer_get_builtin_file_data(m_driver, virtualFilePath.data(), &data_size);
+			return { std::string_view(data), data_size };
+		}
+
 		Font loadFont(const std::string& filePath) noexcept { return Font(*this, filePath); }
+		Font createFont(const void* bytes, u64 length) noexcept { return Font(*this, bytes, length); }
 
 		MaterialLibrary getMaterialLibrary() const noexcept { return MaterialLibrary(renderer_get_material_library(m_driver)); }
 		ShaderLibrary getShaderLibrary() const noexcept { return ShaderLibrary(renderer_get_shader_library(m_driver)); }
