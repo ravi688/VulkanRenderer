@@ -49,9 +49,13 @@ def embed_file(file_path, header_file):
 		char = file.read(1)
 		if not char:
 			break
-		if char == '"':
+		if char == '"' or char == '\\':
 			header_file.write('\\')
+		if char == '\n' or char == '\r':
+			header_file.write('"')
 		header_file.write(char)
+		if char == '\n' or char == '\r':
+			header_file.write('"')
 	header_file.write('";\n')
 	file.close()
 	mappings[abs_file_path] = var_name
@@ -80,7 +84,7 @@ def setup_header_file_prolog(file):
 	_str = prolog_template % (t.tm_hour, t.tm_min, t.tm_sec, t.tm_mday, t.tm_mon, t.tm_year)
 	file.write(_str)
 
-epilog_template = """
+epilog_template_part1 = """
 typedef struct shader_file_path_and_data_mapping_t
 {
 	const char* file_path;
@@ -89,18 +93,27 @@ typedef struct shader_file_path_and_data_mapping_t
 
 #define G_SHADER_MAPPING_COUNT %d
 
-static const shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT] =
+static shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT];
+static bool g_is_shader_mappings_populated = false;
+
+static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_shader_mappings()
+{
+	if(!g_is_shader_mappings_populated)
+	{
+"""
+
+epilog_template_part2 = """
+		g_is_shader_mappings_populated = true;
+	}
+	return g_shader_mappings;
+}
 """
 
 def setup_header_file_epilog(file):
-	file.write(epilog_template % (len(mappings)))
-	file.write('{\n')
+	file.write(epilog_template_part1 % (len(mappings)))
 	for i, (key, value) in enumerate(mappings.items()):
-		file.write('\t{ \"%s\", %s }' % (key, value))
-		if not (i + 1) == len(mappings):
-			file.write(',')
-		file.write('\n')
-	file.write('};\n')
+		file.write('\t\tg_shader_mappings[%d] = (shader_file_path_and_data_mapping_t) { \"%s\", %s };\n' % (i, key, value))
+	file.write(epilog_template_part2)
 
 def main():
 	arg_count = len(sys.argv)

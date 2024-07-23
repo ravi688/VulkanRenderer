@@ -3,237 +3,555 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 23h:40m:14s, 23/7/2024
+ * Time & Date (yy/mm/yyy) of Generation: 0h:36m:32s, 24/7/2024
  */
 
 #pragma once
+static const char* _________SHADERS_INCLUDE_V3D_H = 
+"/*"
+"	***This is computer generated notice - Do not modify it***"
+""
+"	VulkanRenderer (inclusive of its dependencies and subprojects "
+"	such as toolchains written by the same author) is a software to render "
+"	2D & 3D geometries by writing C/C++ code and shaders."
+""
+"	File: v3d.h is a part of VulkanRenderer"
+""
+"	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh"
+""
+"	This program is free software: you can redistribute it and/or modify"
+"	it under the terms of the GNU General Public License as published by"
+"	the Free Software Foundation, either version 3 of the License, or"
+"	(at your option) any later version."
+""
+"	This program is distributed in the hope that it will be useful,"
+"	but WITHOUT ANY WARRANTY; without even the implied warranty of"
+"	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+"	GNU General Public License for more details."
+""
+"	You should have received a copy of the GNU General Public License"
+"	along with this program.  If not, see <https://www.gnu.org/licenses/>. "
+"*/"
+""
+"#define SGE_UNIFORM_BUFFER_LAYOUT std140"
+"#define SGE_STORAGE_BUFFER_LAYOUT std430"
+"#define SGE_MAX_POINT_LIGHTS 1"
+"#define SGE_MAX_SPOT_LIGHTS 1"
+"#define SGE_MAX_FAR_LIGHTS 1"
+""
+""
+"#define TEXT_RENDER_SPACE_TYPE_2D 0"
+"#define TEXT_RENDER_SPACE_TYPE_3D 1"
+""
+"#define TEXT_RENDER_SURFACE_TYPE_CAMERA 0"
+"#define TEXT_RENDER_SURFACE_TYPE_SCREEN 1"
+""
+""
+"/* set constants */"
+"#define GLOBAL_SET 0   			// bound once (display/monitor information and perhaps time also?)"
+"#define SCENE_SET 1 			// bound for each render scene (holds information about lights in the scene)"
+"#define CAMERA_SET 2 			// bound for each Camera"
+"#define RENDER_SET 3 			// bound for each render pass"
+"#define SUB_RENDER_SET 4 		// bound for each sub pass"
+"#define MATERIAL_SET 5 			// bound for each material [ textures, material properties ]"
+"#define OBJECT_SET 6 			// bound for each object [ model and normal matrices ]"
+""
+"/* binding constants  */"
+""
+"/* should be used with GLOBAL_SET */"
+"#define SCREEN_BINDING 0  		// binding for render window information"
+"#ifdef REQUIRE_BITMAP_TEXT"
+"#	define GTC_BUFFER_BINDING 1 	// binding for GTC buffer (common to all bitmap based texts)"
+"#	define BGA_TEXTURE_BINDING 2 	// binding for BGA texture (common to all bitmap based texts)"
+"#endif"
+""
+"// should be used with CAMERA_SET"
+"#define CAMERA_PROPERTIES_BINDING 0 // binding for current camera properties"
+""
+"#define LIGHT_BINDING 1"
+"// should be used with SCENE_SET"
+"#define POINT_LIGHT_BINDING 0 	// binding for point lights"
+"#define POINT_LIGHT_SHADOWMAP_BINDING 1"
+"#define SPOT_LIGHT_BINDING 2 	// binding for spot lights"
+"#define SPOT_LIGHT_SHADOWMAP_BINDING 3"
+"#define FAR_LIGHT_BINDING 4   	// binding for far lights"
+"#define FAR_LIGHT_SHADOWMAP_BINDING 5"
+""
+"// should be used with SUB_RENDER_SET"
+"#define INPUT_ATTACHMENT_BINDING0 0"
+"#define INPUT_ATTACHMENT_BINDING1 1"
+"#define INPUT_ATTACHMENT_BINDING2 2"
+""
+""
+"// should be used with MATERIAL_SET"
+"#define MATERIAL_PROPERTIES_BINDING 0 	// binding for material properties"
+""
+"// should be used with MATERIAL_SET & RENDER_SET"
+"#define TEXTURE_BINDING0 1 		// binding for texture unit 0"
+"#define TEXTURE_BINDING1 2 		// binding for texture unit 1"
+"#define TEXTURE_BINDING2 3 		// binding for texture unit 2"
+"#define TEXTURE_BINDING3 4 		// binding for texture unit 3"
+"#define TEXTURE_BINDING4 5 		// binding for texture unit 4"
+"#define TEXTURE_BINDING5 6	 	// binding for texture unit 5"
+"#define TEXTURE_BINDING6 7 		// binding for texture unit 6"
+"#define TEXTURE_BINDING7 8		// binding for texture unit 7"
+"#define TEXTURE_BINDING8 9 		// binding for texture unit 8"
+""
+"// should be used with OBJECT_SET"
+"#define TRANSFORM_BINDING 0 	// binding for object transform matrices"
+""
+"/* location constants  */"
+"#define POSITION_LOCATION  0"
+"#define NORMAL_LOCATION 1"
+"#define COLOR_LOCATION 2"
+"#define TEXCOORD_LOCATION 3"
+"#define TANGENT_LOCATION 4"
+""
+"/* <begin> for Vertex Attributes */"
+"/* NOTE: vertex attributes are not interleaved so we need to store them in separate buffers */"
+"#define VTX_POS_BIN 0 /* binding of the position attribute */"
+"#define VTX_NML_BIN 1 /* binding of the normal attribute */"
+"#define VTX_TXC_BIN 2 /* binding of the texture coordinate attribute */"
+"#define VTX_TNG_BIN 3 /* binding of the tangent attribute */"
+""
+"#define VTX_POS_LOC 0 /* location of the position attribute */"
+"#define VTX_NML_LOC 1 /* location of the normal attribute */"
+"#define VTX_TXC_LOC 2 /* location of the texture coordinate attribute */"
+"#define VTX_TNG_LOC 3 /* location of the tangent attribute */"
+"/* <end> for Vertex Attributes */"
+""
+"/* <begin> bitmap text shader  */"
+"#ifdef REQUIRE_BITMAP_TEXT"
+"	struct GlyphTexCoord"
+"	{"
+"		vec2 tltc;"
+"		vec2 trtc;"
+"		vec2 brtc;"
+"		vec2 bltc;"
+"	};"
+""
+"	layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = GTC_BUFFER_BINDING) uniform GTCBuffer"
+"	{"
+"		GlyphTexCoord[512] gtc_buffer;"
+"	};"
+""
+"	layout(set = GLOBAL_SET, binding = BGA_TEXTURE_BINDING) uniform sampler2D bga;"
+"#endif"
+""
+"#	define BTM_TXT_BND 4"
+"	/* <begin> per instance of the glyphs */"
+"# 	define BTM_TXT_TLTC_BND BTM_TXT_BND /* binding of top left texture coordinate of the quad */"
+"# 	define BTM_TXT_TRTC_BND BTM_TXT_BND /* binding of top right texture coordinate of the quad */"
+"# 	define BTM_TXT_BRTC_BND BTM_TXT_BND /* binding of bottom right texture coordinate of the quad */"
+"# 	define BTM_TXT_BLTC_BND BTM_TXT_BND /* binding of bottom left texture coordinate of the quad */"
+"#	define BTM_TXT_OFST_BND BTM_TXT_BND /* binding of offset of the quad (vec3) */"
+"#	define BTM_TXT_XTNT_BND BTM_TXT_BND /* binding of extent of the quad (vec2) */"
+"#	define BTM_TXT_ROTN_BND BTM_TXT_BND /* binding of rotation of the quad (vec3) */"
+"#	define BTM_TXT_STID_BND BTM_TXT_BND /* binding of string id of the quad (to which it belongs) (uint) */"
+"# 	define BTM_TXT_TLTC_LOC 4 /* location of top left texture coordinate of the quad */"
+"# 	define BTM_TXT_TRTC_LOC 4 /* location of top right texture coordinate of the quad */"
+"# 	define BTM_TXT_BRTC_LOC 5 /* location of bottom right texture coordinate of the quad */"
+"# 	define BTM_TXT_BLTC_LOC 5 /* location of bottom left texture coordinate of the quad */"
+"#	define BTM_TXT_OFST_LOC 6 /* location of offset of the quad (vec3) */"
+"#	define BTM_TXT_XTNT_LOC 7 /* location of extent of the quad (vec2) */"
+"#	define BTM_TXT_ROTN_LOC 8 /* location of rotation of the quad (vec3) */"
+"#	define BTM_TXT_STID_LOC 8 /* location of string id of the quad (uint) */"
+"# 	define BTM_TXT_TLTC_COMP 0 /* component of top left texture coordinate of the quad */"
+"# 	define BTM_TXT_TRTC_COMP 2 /* component of top right texture coordinate of the quad */"
+"# 	define BTM_TXT_BRTC_COMP 0 /* component of bottom right texture coordinate of the quad */"
+"# 	define BTM_TXT_BLTC_COMP 2 /* component of bottom left texture coordinate of the quad */"
+"#	define BTM_TXT_OFST_COMP 0 /* component of offset of the quad */"
+"#	define BTM_TXT_XTNT_COMP 0 /* component of extent of the quad */"
+"#	define BTM_TXT_ROTN_COMP 0 /* component of rotation of the quad */"
+"#	define BTM_TXT_STID_COMP 3 /* component of string id of the quad */"
+"	/* <end> per instance of the glyphs */"
+"	/* <begin> per string object */"
+"#	define BTM_TXT_TNFM_SET OBJECT_SET /* set number of the list of transform matrices */"
+"#	define BTM_TXT_TNFM_BND (TRANSFORM_BINDING + 1) /* binding of the list of transform matrices */"
+"	/* <end> per string object */"
+"/* <end> bitmap text shader */"
+""
+"/* <begin> mesh text shader */"
+"#	define MSH_TXT_BND 5"
+"	/* <begin> per instance of the glyph */"
+"#	define MSH_TXT_OFST_BND MSH_TXT_BND /* binding of offset of the instanced mesh of the glyph */"
+"#	define MSH_TXT_SCAL_BND MSH_TXT_BND /* binding of scale of the instanced mesh of the glyph */"
+"#	define MSH_TXT_ROTN_BND MSH_TXT_BND /* binding of rotation of the instanced mesh of the glyph */"
+"#	define MSH_TXT_STID_BND MSH_TXT_BND /* binding of string id of the instanced mesh of the glyph */"
+"#	define MSH_TXT_OFST_LOC 4 /* location of offset of the instanced mesh (vec3) */"
+"#	define MSH_TXT_SCAL_LOC 5 /* location of scale of the instanced mesh (vec3) */"
+"#	define MSH_TXT_ROTN_LOC 6 /* location of rotation of the instanced mesh (vec3) */"
+"#	define MSH_TXT_STID_LOC 6 /* location of string id of the instanced mesh (to which it belongs) (uint) */"
+"#	define MSH_TXT_OFST_COMP 0 /* component of offset of the instanced mesh  */"
+"#	define MSH_TXT_SCAL_COMP 0 /* component of scale of the instanced mesh */"
+"#	define MSH_TXT_ROTN_COMP 0 /* component of rotation of the instanced mesh */"
+"#	define MSH_TXT_STID_COMP 3 /* component of string id of the instanced mesh */"
+"	/* <end> per instance of the glyph */"
+"	/* <begin> per string object */"
+"#	define MSH_TXT_TNFM_SET OBJECT_SET /* set number of the list of transform matrices */"
+"#	define MSH_TXT_TNFM_BND (TRANSFORM_BINDING + 1) /* binding of the list of transform matrices */"
+"	/* <end> per string object */"
+"/* <end> mesh text shader */"
+""
+"#define POSITION layout(location = POSITION_LOCATION) in vec3"
+"#define NORMAL layout(location = NORMAL_LOCATION) in vec3"
+"#define TEXCOORD layout(location = TEXCOORD_LOCATION) in vec2"
+"#define TANGENT layout(location = TANGENT_LOCATION) in vec3"
+""
+"#define Light \\"
+"Light\\"
+"{\\"
+"	mat4 projection;\\"
+"	mat4 view;\\"
+"	vec3 color;\\"
+"	float intensity;\\"
+"}"
+""
+"#define DirectionalLight \\"
+"DirectionalLight\\"
+"{\\"
+"	mat4 projection;\\"
+"	mat4 view;\\"
+"	vec3 color;\\"
+"	float intensity;\\"
+"	vec3 direction;\\"
+"}"
+""
+"#define PointLight \\"
+"PointLight\\"
+"{\\"
+"	mat4 projection;\\"
+"	mat4 view;\\"
+"	vec3 color;\\"
+"	float intensity;\\"
+"	vec3 position;\\"
+"}"
+""
+"#define SpotLight \\"
+"SpotLight\\"
+"{\\"
+"	mat4 projection;\\"
+"	mat4 view;\\"
+"	vec3 color;\\"
+"	float intensity;\\"
+"	vec3 direction;\\"
+"	vec3 position;\\"
+"	float angle;\\"
+"}"
+""
+"#define ObjectInfo \\"
+"ObjectInfo\\"
+"{\\"
+"	mat4 transform;\\"
+"	mat4 normal;\\"
+"}"
+""
+"#define CameraInfo \\"
+"CameraInfo\\"
+"{\\"
+"	mat4 transform;\\"
+"	mat4 projection;\\"
+"	mat4 view;\\"
+"	mat4 screen;\\"
+"}"
+""
+"struct PointLightType"
+"{"
+"	vec3 color;"
+"	float intensity;"
+"	vec3 position;"
+"	uint shadow_index;"
+"};"
+""
+"struct SpotLightType"
+"{"
+"	mat4 proj;"
+"	mat4 view;"
+"	vec3 color;"
+"	float intensity;"
+"	vec3 position;"
+"	vec3 direction;"
+"	float angle;"
+"	uint shadow_index;"
+"};"
+""
+"struct FarLightType"
+"{"
+"	mat4 proj;"
+"	mat4 view;"
+"	vec3 color;"
+"	float intensity;"
+"	vec3 direction;"
+"	uint shadow_index;	"
+"};"
+""
+"#define CAMERA layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo"
+"#define LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform Light"
+"#define DIRECTIONAL_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight"
+"#define POINT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight"
+"#define SPOT_LIGHT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight"
+"#define MATERIAL_PROPERTIES layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Properties"
+"#define OBJECT layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo"
+""
+""
+"#define read_write_qual "
+"#define buffer_type uniform"
+"#define buffer_layout SGE_UNIFORM_BUFFER_LAYOUT"
+""
+"#ifdef USE_POINT_LIGHTS"
+"layout(buffer_layout, set = SCENE_SET, binding = POINT_LIGHT_BINDING) read_write_qual buffer_type PointLights"
+"{"
+"	uint count;"
+"	PointLightType lights[SGE_MAX_POINT_LIGHTS];"
+"} pointLights;"
+"layout(set = SCENE_SET, binding = POINT_LIGHT_SHADOWMAP_BINDING) uniform samplerCube pointLightShadowMaps[SGE_MAX_POINT_LIGHTS];"
+"#endif"
+""
+"#ifdef USE_SPOT_LIGHTS"
+"layout(buffer_layout, set = SCENE_SET, binding = SPOT_LIGHT_BINDING) read_write_qual buffer_type SpotLights"
+"{"
+"	uint count;"
+"	SpotLightType lights[SGE_MAX_SPOT_LIGHTS];"
+"} spotLights;"
+"layout(set = SCENE_SET, binding = SPOT_LIGHT_SHADOWMAP_BINDING) uniform sampler2D spotLightShadowMaps[SGE_MAX_SPOT_LIGHTS];"
+"#endif"
+""
+"#ifdef USE_FAR_LIGHTS"
+"layout(buffer_layout, set = SCENE_SET, binding = FAR_LIGHT_BINDING) read_write_qual buffer_type FarLights"
+"{"
+"	uint count;"
+"	FarLightType lights[SGE_MAX_FAR_LIGHTS];"
+"} farLights;"
+"layout(set = SCENE_SET, binding = FAR_LIGHT_SHADOWMAP_BINDING) uniform sampler2D farLightShadowMaps[SGE_MAX_FAR_LIGHTS];"
+"#endif"
+"";
 static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER = 
-"/*
-	***This is computer generated notice - Do not modify it***
-
-	VulkanRenderer (inclusive of its dependencies and subprojects 
-	such as toolchains written by the same author) is a software to render 
-	2D & 3D geometries by writing C/C++ code and shaders.
-
-	File: bitmap_text_shader.v3dshader is a part of VulkanRenderer
-
-	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
-*/
-
-
-#sb version 2023
-#sl version 2023
-
-[Name(\"BitmapTextShader\")]
-Shader
-{
-    Properties
-    {
-        struct Color
-        {
-            float r;
-            float g;
-            float b;
-        }
-
-        [Stage(vertex, fragment)]
-        [Set(material_set, material_properties)]
-        uniform Parameters
-        {
-            vec2 tex_size;
-            Color color;
-            int space_type;
-            int surface_type;
-        } parameters;
-
-        [Stage(vertex)]
-        [Set(material_set, texture2)]
-        uniform TSTBuffer
-        {
-            mat4 transforms[];
-        } TSTBuffer;
-    }
-
-    Layout
-    {
-        [Rate(per_vertex)]
-        [MeshLayout(sge_optimal)]
-        [Attribute(position)]
-        vec3 position;
-
-        [Rate(per_instance)]
-        [Attribute(binding=5,location=5)]
-        vec4 ofst_indx;
-
-        [Rate(per_instance)]
-        [Attribute(binding=5,location=6)]
-        vec4 rotn_stid;
-
-        [Rate(per_instance)]
-        [Attribute(binding=5,location=7)]
-        vec4 rotn_stid;
-    }
-    
-    RenderPass
-    {
-        SubPass
-        {
-            [NoParse]
-            GraphicsPipeline
-            {
-                colorBlend
-                {
-                    attachment { }
-                }
-            }
-            [NoParse]
-            GLSL
-            {
-                #stage vertex
-        
-                #version 450
-                
-                #define REQUIRE_BITMAP_TEXT
-                #include <v3d.h>
-                
-                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
-                {
-                    uvec2 resolution;
-                    uvec2 dpi;
-                    uvec2 window_size;
-                    mat4 matrix;
-                } displayInfo;
-                
-                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
-                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
-                
-                struct Color
-                {
-                    float r;
-                    float g;
-                    float b;
-                };
-                
-                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
-                {
-                    uvec2 tex_size;
-                    Color color;
-                    int space_type;
-                    int surface_type;
-                } parameters;
-                
-                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer
-                {
-                    mat4[128] tst_buffer;
-                };
-                
-                layout(location = POSITION_LOCATION) in vec3 position;
-                
-                layout(location = 5, component = 0) in vec3 ofst;
-                layout(location = 5, component = 3) in float indx_f;
-                layout(location = 6, component = 0) in vec3 rotn; // not required
-                layout(location = 6, component = 3) in float stid_f;
-                layout(location = 7, component = 0) in vec3 scal; // not required
-                
-                layout(location = 0) out vec2 out_texcoord;
-                layout(location = 1) out vec3 out_color;
-                
-                void main()
-                {
-                    uint indx = floatBitsToUint(indx_f);
-                    uint stid = floatBitsToUint(stid_f);
-                
-                    GlyphTexCoord texcoord = gtc_buffer[indx];
-                
-                    vec2 tex_size = parameters.tex_size;
-                    vec2 win_size = vec2(displayInfo.window_size);
-                    vec2 glyph_size = vec2(texcoord.trtc.x - texcoord.tltc.x, texcoord.bltc.y - texcoord.tltc.y) * tex_size;
-                
-                    vec4 pos = vec4((position.x * glyph_size.x + ofst.x), (position.y * glyph_size.y + ofst.y), 0, 1.0);
-                
-                    vec4 world = objectInfo.transform * tst_buffer[stid] * pos.zyxw;
-                
-                    vec4 clipPos;
-                
-                    switch(parameters.space_type)
-                    {
-                        case TEXT_RENDER_SPACE_TYPE_2D:
-                        {
-                            switch(parameters.surface_type)
-                            {
-                                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
-                                    clipPos = cameraInfo.screen * world;
-                                    break;
-                                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
-                                    clipPos = displayInfo.matrix * world;
-                                    break;
-                            }
-                            break;
-                        }
-                        case TEXT_RENDER_SPACE_TYPE_3D:
-                        {
-                            switch(parameters.surface_type)
-                            {
-                                case TEXT_RENDER_SURFACE_TYPE_CAMERA:
-                                    clipPos = cameraInfo.projection * cameraInfo.view * world;
-                                    break;
-                                case TEXT_RENDER_SURFACE_TYPE_SCREEN:
-                                    clipPos = displayInfo.matrix * world;
-                                    break;
-                            }
-                            break;
-                        }
-                    }
-                
-                    gl_Position = vec4(clipPos.x, -clipPos.y, clipPos.z, clipPos.w);
-                
-                    if(gl_VertexIndex == 0)
-                        out_texcoord = texcoord.tltc;
-                    else if(gl_VertexIndex == 1)
-                        out_texcoord = texcoord.trtc;
-                    else if(gl_VertexIndex == 2)
-                        out_texcoord = texcoord.brtc;
-                    else if(gl_VertexIndex == 3)
-                        out_texcoord = texcoord.bltc;
-                
-                    out_color = vec3(parameters.color.r, parameters.color.g, parameters.color.b);
-                }
-
-                #stage fragment
-                
-                #version 450
-                
-                #define REQUIRE_BITMAP_TEXT
-                #include <v3d.h>
-                
-                layout(location = 0) in vec2 in_texcoord;
-                layout(location = 1) in vec3 in_color;
-                
-                layout(location = 0) out vec4 color;
-                
-                void main()
-                {
-                    vec2 texcoord = vec2(in_texcoord.x, in_texcoord.y);
-                    color = vec4(in_color.x, in_color.y, in_color.z, 1.0) * texture(bga, texcoord).r;
-                }
-            }
-        }
-    }
-
-}";
+"/*"
+"	***This is computer generated notice - Do not modify it***"
+""
+"	VulkanRenderer (inclusive of its dependencies and subprojects "
+"	such as toolchains written by the same author) is a software to render "
+"	2D & 3D geometries by writing C/C++ code and shaders."
+""
+"	File: bitmap_text_shader.v3dshader is a part of VulkanRenderer"
+""
+"	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh"
+""
+"	This program is free software: you can redistribute it and/or modify"
+"	it under the terms of the GNU General Public License as published by"
+"	the Free Software Foundation, either version 3 of the License, or"
+"	(at your option) any later version."
+""
+"	This program is distributed in the hope that it will be useful,"
+"	but WITHOUT ANY WARRANTY; without even the implied warranty of"
+"	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+"	GNU General Public License for more details."
+""
+"	You should have received a copy of the GNU General Public License"
+"	along with this program.  If not, see <https://www.gnu.org/licenses/>. "
+"*/"
+""
+""
+"#sb version 2023"
+"#sl version 2023"
+""
+"[Name(\"BitmapTextShader\")]"
+"Shader"
+"{"
+"    Properties"
+"    {"
+"        struct Color"
+"        {"
+"            float r;"
+"            float g;"
+"            float b;"
+"        }"
+""
+"        [Stage(vertex, fragment)]"
+"        [Set(material_set, material_properties)]"
+"        uniform Parameters"
+"        {"
+"            vec2 tex_size;"
+"            Color color;"
+"            int space_type;"
+"            int surface_type;"
+"        } parameters;"
+""
+"        [Stage(vertex)]"
+"        [Set(material_set, texture2)]"
+"        uniform TSTBuffer"
+"        {"
+"            mat4 transforms[];"
+"        } TSTBuffer;"
+"    }"
+""
+"    Layout"
+"    {"
+"        [Rate(per_vertex)]"
+"        [MeshLayout(sge_optimal)]"
+"        [Attribute(position)]"
+"        vec3 position;"
+""
+"        [Rate(per_instance)]"
+"        [Attribute(binding=5,location=5)]"
+"        vec4 ofst_indx;"
+""
+"        [Rate(per_instance)]"
+"        [Attribute(binding=5,location=6)]"
+"        vec4 rotn_stid;"
+""
+"        [Rate(per_instance)]"
+"        [Attribute(binding=5,location=7)]"
+"        vec4 rotn_stid;"
+"    }"
+"    "
+"    RenderPass"
+"    {"
+"        SubPass"
+"        {"
+"            [NoParse]"
+"            GraphicsPipeline"
+"            {"
+"                colorBlend"
+"                {"
+"                    attachment { }"
+"                }"
+"            }"
+"            [NoParse]"
+"            GLSL"
+"            {"
+"                #stage vertex"
+"        "
+"                #version 450"
+"                "
+"                #define REQUIRE_BITMAP_TEXT"
+"                #include <v3d.h>"
+"                "
+"                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo"
+"                {"
+"                    uvec2 resolution;"
+"                    uvec2 dpi;"
+"                    uvec2 window_size;"
+"                    mat4 matrix;"
+"                } displayInfo;"
+"                "
+"                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;"
+"                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;"
+"                "
+"                struct Color"
+"                {"
+"                    float r;"
+"                    float g;"
+"                    float b;"
+"                };"
+"                "
+"                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters"
+"                {"
+"                    uvec2 tex_size;"
+"                    Color color;"
+"                    int space_type;"
+"                    int surface_type;"
+"                } parameters;"
+"                "
+"                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = TEXTURE_BINDING2) uniform TSTBuffer"
+"                {"
+"                    mat4[128] tst_buffer;"
+"                };"
+"                "
+"                layout(location = POSITION_LOCATION) in vec3 position;"
+"                "
+"                layout(location = 5, component = 0) in vec3 ofst;"
+"                layout(location = 5, component = 3) in float indx_f;"
+"                layout(location = 6, component = 0) in vec3 rotn; // not required"
+"                layout(location = 6, component = 3) in float stid_f;"
+"                layout(location = 7, component = 0) in vec3 scal; // not required"
+"                "
+"                layout(location = 0) out vec2 out_texcoord;"
+"                layout(location = 1) out vec3 out_color;"
+"                "
+"                void main()"
+"                {"
+"                    uint indx = floatBitsToUint(indx_f);"
+"                    uint stid = floatBitsToUint(stid_f);"
+"                "
+"                    GlyphTexCoord texcoord = gtc_buffer[indx];"
+"                "
+"                    vec2 tex_size = parameters.tex_size;"
+"                    vec2 win_size = vec2(displayInfo.window_size);"
+"                    vec2 glyph_size = vec2(texcoord.trtc.x - texcoord.tltc.x, texcoord.bltc.y - texcoord.tltc.y) * tex_size;"
+"                "
+"                    vec4 pos = vec4((position.x * glyph_size.x + ofst.x), (position.y * glyph_size.y + ofst.y), 0, 1.0);"
+"                "
+"                    vec4 world = objectInfo.transform * tst_buffer[stid] * pos.zyxw;"
+"                "
+"                    vec4 clipPos;"
+"                "
+"                    switch(parameters.space_type)"
+"                    {"
+"                        case TEXT_RENDER_SPACE_TYPE_2D:"
+"                        {"
+"                            switch(parameters.surface_type)"
+"                            {"
+"                                case TEXT_RENDER_SURFACE_TYPE_CAMERA:"
+"                                    clipPos = cameraInfo.screen * world;"
+"                                    break;"
+"                                case TEXT_RENDER_SURFACE_TYPE_SCREEN:"
+"                                    clipPos = displayInfo.matrix * world;"
+"                                    break;"
+"                            }"
+"                            break;"
+"                        }"
+"                        case TEXT_RENDER_SPACE_TYPE_3D:"
+"                        {"
+"                            switch(parameters.surface_type)"
+"                            {"
+"                                case TEXT_RENDER_SURFACE_TYPE_CAMERA:"
+"                                    clipPos = cameraInfo.projection * cameraInfo.view * world;"
+"                                    break;"
+"                                case TEXT_RENDER_SURFACE_TYPE_SCREEN:"
+"                                    clipPos = displayInfo.matrix * world;"
+"                                    break;"
+"                            }"
+"                            break;"
+"                        }"
+"                    }"
+"                "
+"                    gl_Position = vec4(clipPos.x, -clipPos.y, clipPos.z, clipPos.w);"
+"                "
+"                    if(gl_VertexIndex == 0)"
+"                        out_texcoord = texcoord.tltc;"
+"                    else if(gl_VertexIndex == 1)"
+"                        out_texcoord = texcoord.trtc;"
+"                    else if(gl_VertexIndex == 2)"
+"                        out_texcoord = texcoord.brtc;"
+"                    else if(gl_VertexIndex == 3)"
+"                        out_texcoord = texcoord.bltc;"
+"                "
+"                    out_color = vec3(parameters.color.r, parameters.color.g, parameters.color.b);"
+"                }"
+""
+"                #stage fragment"
+"                "
+"                #version 450"
+"                "
+"                #define REQUIRE_BITMAP_TEXT"
+"                #include <v3d.h>"
+"                "
+"                layout(location = 0) in vec2 in_texcoord;"
+"                layout(location = 1) in vec3 in_color;"
+"                "
+"                layout(location = 0) out vec4 color;"
+"                "
+"                void main()"
+"                {"
+"                    vec2 texcoord = vec2(in_texcoord.x, in_texcoord.y);"
+"                    color = vec4(in_color.x, in_color.y, in_color.z, 1.0) * texture(bga, texcoord).r;"
+"                }"
+"            }"
+"        }"
+"    }"
+""
+"}";
 
 typedef struct shader_file_path_and_data_mapping_t
 {
@@ -241,9 +559,19 @@ typedef struct shader_file_path_and_data_mapping_t
 	const char* data;
 } shader_file_path_and_data_mapping_t;
 
-#define G_SHADER_MAPPING_COUNT 1
+#define G_SHADER_MAPPING_COUNT 2
 
-static const shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT] =
+static shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT];
+static bool g_is_shader_mappings_populated = false;
+
+static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_shader_mappings()
 {
-	{ "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER }
-};
+	if(!g_is_shader_mappings_populated)
+	{
+		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H };
+		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER };
+
+		g_is_shader_mappings_populated = true;
+	}
+	return g_shader_mappings;
+}
