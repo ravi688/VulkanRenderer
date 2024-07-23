@@ -41,9 +41,10 @@ namespace SUTK
 		// add the camera to the scene 
 		m_scene.addCamera(camera);
 
-		m_shader = shaderLibrary.loadShader("dependencies/VulkanRenderer/shaders/builtins/bitmap_text_shader.sb");
+		m_shader = shaderLibrary.compileAndLoadShader(driver.getBuiltinFileData("/bitmap_text_shader.v3dshader").first);
+		auto font_data = driver.getBuiltinFileData("/Calibri Regular.ttf");
+		m_font = driver.createFont(font_data.first.data(), font_data.second);
 
-		m_font = driver.loadFont("dependencies/VulkanRenderer/sutk/fonts/Calibri Regular.ttf");
 		m_font.setCharSize(15);
 
 		SGE::BitmapGlyphAtlasTexture::CreateInfo createInfo =
