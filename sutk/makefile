@@ -34,10 +34,11 @@ EXECUTABLE_NAME = sutk
 MAIN_SOURCE_LANG = cpp
 MAIN_SOURCES= source/main.cpp
 EXTERNAL_INCLUDES =
-EXTERNAL_LIBRARIES =
+EXTERNAL_LIBRARIES = -L../toolchain/shader_compiler/external-dependency-libs -lshaderc_shared
 BUILD_DEFINES= -DSGE_VULKAN_DRIVER # TODO: no vulkan, opengl or directx defines should be required, the SGE library must keep the underlying API details into .c files
 
 DEPENDENCIES = 	../.. \
+				../../toolchain/shader_compiler \
 				../../dependencies/HPML \
 				../../dependencies/GLSLCommon \
 				../../dependencies/PhyMacParser \
@@ -48,6 +49,7 @@ DEPENDENCIES = 	../.. \
 				../../dependencies/SafeMemory \
 				../../dependencies/SafeMemory/shared-dependencies/CallTrace
 DEPENDENCY_LIBS = 	../../lib/sge.a \
+					../../toolchain/shader_compiler/lib/shader_compiler.a \
 					../../dependencies/GLSLCommon/lib/glslcommon.a \
 					../../dependencies/MeshLib/lib/meshlib.a \
 					../../dependencies/HPML/lib/hpml.a \
