@@ -3,6 +3,7 @@
 #include <sutk/defines.hpp>
 #include <sutk/IRenderable.hpp> // for SUTK::IRenderable interfae
 #include <sutk/UIDriver.hpp> // for SUTK::UIDriverObject
+#include <sutk/Geometry.hpp> // for SUTK::Geometry
 
 namespace SUTK
 {
@@ -11,9 +12,11 @@ namespace SUTK
 	class RenderRect : public UIDriverObject, public IRenderable
 	{
 	private:
+		GfxDriverObjectHandleType m_handle;
 		bool m_isDirty;
 		Rect2D<DisplaySizeType> m_rect;
 		RenderRectContainer* m_container;
+		Geometry m_geometry;
 	public:
 		// Constructors
 		RenderRect(UIDriver& driver, RenderRectContainer* container) noexcept;

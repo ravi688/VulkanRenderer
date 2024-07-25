@@ -59,25 +59,73 @@ namespace SUTK
 			T height;
 		};
 
-		Vec2D() noexcept : x(0), y(0) { }
-		Vec2D(T _x, T _y) noexcept : x(_x), y(_y) { }
+		constexpr Vec2D() noexcept : x(0), y(0) { }
+		constexpr Vec2D(T _x, T _y) noexcept : x(_x), y(_y) { }
 
 		// static methods
 		static Vec2D<T> zero();
+		static Vec2D<T> left();
+		static Vec2D<T> right();
+		static Vec2D<T> up();
+		static Vec2D<T> down();
 
 		// operator overloads
 		bool operator ==(const Vec2D<T>& v) noexcept { return (x == v.x) && (y == v.y); }
 		bool operator !=(const Vec2D<T>& v) noexcept { return !operator==(v); }
 
+		Vec2D<T>& operator=(const Vec2D<T> v) noexcept { x = v.x; y = v.y; return *this; }
+
 		// arithmetic operator overloads
 		Vec2D<T> operator +(const Vec2D<T>& v) const noexcept { return { x + v.x, y + v.y }; }
 		Vec2D<T> operator -(const Vec2D<T>& v) const noexcept { return { x - v.x, y - v.y }; }
+		Vec2D<T> operator *(const Vec2D<T>& v) const noexcept { return { x * v.x, y * v.y }; }
+		Vec2D<T> operator *(T s) const noexcept { return { x * s, y * s }; }
 		Vec2D<T>& operator +=(const Vec2D<T>& v) noexcept { x += v.x; y += v.y; return *this; }
 		Vec2D<T>& operator -=(const Vec2D<T>& v) noexcept { x -= v.x; y -= v.y; return *this; }
+
+		// implicit conversion operator overloads
+		template<typename U>
+		operator Vec2D<U>()
+		{
+			return { static_cast<U>(x), static_cast<U>(y) };
+		}
 	};
 
 	template<typename T>
+	Vec2D<T> operator *(T s, const Vec2D<T>& v) noexcept { return { s * v.x, s * v.y, s * v.z }; }
+
+	template<typename T>
+	struct NegativeSign { };
+
+	template<>
+	struct NegativeSign<s64> { static constexpr s64 value = -1; };
+	template<>
+	struct NegativeSign<s32> { static constexpr s32 value = -1; };
+	template<>
+	struct NegativeSign<s16> { static constexpr s16 value = -1; };
+	template<>
+	struct NegativeSign<s8> { static constexpr s8 value = -1; };
+	template<>
+	struct NegativeSign<f32> { static constexpr f32 value = -1.0f; };
+	template<>
+	struct NegativeSign<f64> { static constexpr f64 value = -1.0; }; 
+
+	// Coordinate System
+	//  ______________ x
+	// |
+	// |
+	// |  Downwards is +ve
+	// y
+	template<typename T>
 	Vec2D<T> Vec2D<T>::zero() { return { 0, 0 }; }
+	template<typename T>
+	Vec2D<T> Vec2D<T>::left() { return { NegativeSign<T>::value, 0 }; }
+	template<typename T>
+	Vec2D<T> Vec2D<T>::right() { return { 1, 0 }; }
+	template<typename T>
+	Vec2D<T> Vec2D<T>::up() { return { NegativeSign<T>::value, 0 }; }
+	template<typename T>
+	Vec2D<T> Vec2D<T>::down() { return { 1, 0 }; }
 
 	template<typename T>
 	struct Rect2D
@@ -87,11 +135,36 @@ namespace SUTK
 		T width;
 		T height;
 
-		Rect2D() noexcept : x(0), y(0), width(0), height(0) { }
-		Rect2D(T _x, T _y, T _width, T _height) noexcept : x(_x), y(_y), width(_width), height(_height) { }
+		constexpr Rect2D() noexcept : x(0), y(0), width(0), height(0) { }
+		constexpr Rect2D(T _x, T _y, T _width, T _height) noexcept : x(_x), y(_y), width(_width), height(_height) { }
 
 		Vec2D<T> getPosition() const noexcept { return { x, y }; }
 		Vec2D<T> getSize() const noexcept { return { width, height }; }
+
+		Vec2D<T> getCenter() const noexcept
+		{
+			return getPosition() + getSize() * 0.5;
+		}
+
+		Vec2D<T> getTopLeft() const noexcept
+		{
+			return getPosition();
+		}
+
+		Vec2D<T> getTopRight() const noexcept
+		{
+			return getPosition() + Vec2D<T>::right() * width;
+		}
+
+		Vec2D<T> getBottomRight() const noexcept
+		{
+			return getPosition() + Vec2D<T> { width, height };
+		}
+
+		Vec2D<T> getBottomLeft() const noexcept
+		{
+			return getPosition() + Vec2D<T>::down() * height;
+		}
 
 		void setPosition(Vec2D<T> pos) noexcept
 		{
@@ -139,8 +212,8 @@ namespace SUTK
 		u8 g;
 		u8 b;
 
-		Color3() noexcept : r(0), g(0), b(0) { }
-		Color3(u8 _r, u8 _g, u8 _b) noexcept : r(_r), g(_g), b(_b) { }
+		constexpr Color3() noexcept : r(0), g(0), b(0) { }
+		constexpr Color3(u8 _r, u8 _g, u8 _b) noexcept : r(_r), g(_g), b(_b) { }
 
 		bool operator ==(Color3& rhs) const noexcept
 		{
@@ -151,5 +224,11 @@ namespace SUTK
 		{
 			return !Color3::operator==(rhs);
 		}
+
+		static constexpr Color3 red() noexcept { return { 255, 0, 0 }; }
+		static constexpr Color3 blue() noexcept { return { 0, 255, 0 }; }
+		static constexpr Color3 green() noexcept { return { 0, 0, 255 }; }
+		static constexpr Color3 white() noexcept { return { 255, 255, 255 }; }
+		static constexpr Color3 black() noexcept { return { 0, 0, 0 }; }
 	};
 }
