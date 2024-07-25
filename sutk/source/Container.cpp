@@ -1,10 +1,12 @@
 #include <sutk/Container.hpp>
 
 #include <sutk/assert.h> /* _assert() */
+#include <sutk/RenderRectContainer.hpp>
+#include <sutk/RenderRect.hpp>
 
 namespace SUTK
 {
-	Container::Container(SUTK::UIDriver& driver, Container* parent) : UIDriverObject(driver), m_rect({0, 0, 100, 100}), m_parent(NULL), m_isDebug(false)
+	Container::Container(SUTK::UIDriver& driver, Container* parent) : UIDriverObject(driver), m_rect({0, 0, 100, 100}), m_parent(NULL), m_renderRectCont(NULL), m_renderRect(NULL), m_isDebug(false)
 	{
 		setParent(parent);
 	}
@@ -72,8 +74,29 @@ namespace SUTK
 		container->setParent(NULL);
 	}
 
+	void Container::onResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged)
+	{
+		// if this container is resized and update the renderRect's size as well
+		if(m_renderRectCont != NULL)
+		{
+			_assert(m_isDebug);
+			m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
+		}
+	}
+
 	void Container::enableDebug(bool isEnable) noexcept
 	{
+		// only create SUTK::RenderRectContainer and SUTK::RenderRect once in the life-time of this Container
+		if(m_renderRectCont == NULL)
+		{
+			// create SUTK::RenderRectContainer and setup its rect
+			m_renderRectCont = getUIDriver().createContainer<RenderRectContainer>(this);
+			m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
+			
+			// create SUTKU::RenderRect and establish parent-child link with SUTK::RenderRectContainer just created
+			m_renderRect = getUIDriver().createRenderable<RenderRect>(m_renderRectCont);
+			m_renderRectCont->setRenderRect(m_renderRect);
+		}
 		m_isDebug = true;
 	}
 }

@@ -10,6 +10,8 @@ namespace SUTK
 {
 	class Text;
 	class Container;
+	class RenderRect;
+	class RenderRectContainer;
 
 	class Container : public UIDriverObject, public IDebuggable
 	{
@@ -17,6 +19,8 @@ namespace SUTK
 		std::vector<Container*> m_containers;
 		Rect2D<DisplaySizeType> m_rect;
 		Container* m_parent;
+		RenderRectContainer* m_renderRectCont;
+		RenderRect* m_renderRect;
 		bool m_isDebug;
 
 
@@ -36,7 +40,7 @@ namespace SUTK
 		// called after rect of this container has been resized
 		// isPositionChanged is set to true if position has been modified
 		// isSizeChanged is set to true if size has been modified
-		virtual void onResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged) { }
+		virtual void onResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged);
 	public:
 		Container* getParent() { return m_parent; }
 		void setParent(Container* parent) noexcept;

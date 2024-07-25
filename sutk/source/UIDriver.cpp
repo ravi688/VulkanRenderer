@@ -4,6 +4,8 @@
 #include <sutk/FullWindowContainer.hpp>
 #include <sutk/Text.hpp>
 #include <sutk/IGfxDriver.hpp>
+#include <sutk/RenderRect.hpp>
+#include <sutk/RenderRectContainer.hpp>
 
 #include <common/assert.h>
 
@@ -46,6 +48,13 @@ namespace SUTK
 		return txtCntr;
 	}
 
+	template<>
+	RenderRectContainer* UIDriver::createContainer<RenderRectContainer>(Container* parent)
+	{
+		RenderRectContainer* rectCntr = new RenderRectContainer(*this, parent);
+		return rectCntr;
+	}
+
 	Text* UIDriver::createText(TextContainer* container)
 	{
 		_assert(container != NULL);
@@ -54,4 +63,19 @@ namespace SUTK
 		m_renderables.push_back(text);
 		return text;
 	}
+
+	RenderRect* UIDriver::createRenderRect(RenderRectContainer* container)
+	{
+		_assert(container != NULL);
+		RenderRect* rect = new RenderRect(*this, container);
+		container->setRenderRect(rect);
+		m_renderables.push_back(rect);
+		return rect;
+	}
+
+	template<>
+	Text* UIDriver::createRenderable<Text>(typename RenderableContainer<Text>::type* parent) { return createText(parent); }
+
+	template<>
+	RenderRect* UIDriver::createRenderable<RenderRect>(typename RenderableContainer<RenderRect>::type* parent) { return createRenderRect(parent); }
 }
