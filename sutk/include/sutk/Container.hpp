@@ -4,17 +4,20 @@
 #include <vector> /* for std::vector */
 #include <sutk/UIDriver.hpp>
 
+#include <sutk/IDebuggable.hpp> // for SUTK::IDebuggable class
+
 namespace SUTK
 {
 	class Text;
 	class Container;
 
-	class Container : public UIDriverObject
+	class Container : public UIDriverObject, public IDebuggable
 	{
 	private:
 		std::vector<Container*> m_containers;
 		Rect2D<DisplaySizeType> m_rect;
 		Container* m_parent;
+		bool m_isDebug;
 
 
 	protected:
@@ -49,5 +52,7 @@ namespace SUTK
 		virtual void add(Container* container);
 		virtual void remove(Container* container);
 
+		// IMPLEMENTATION of IDebuggable
+		virtual void enableDebug(bool isEnable = false) noexcept override;
 	};
 }

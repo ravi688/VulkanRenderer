@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	Container::Container(SUTK::UIDriver& driver, Container* parent) : UIDriverObject(driver), m_rect({0, 0, 100, 100}), m_parent(NULL)
+	Container::Container(SUTK::UIDriver& driver, Container* parent) : UIDriverObject(driver), m_rect({0, 0, 100, 100}), m_parent(NULL), m_isDebug(false)
 	{
 		setParent(parent);
 	}
@@ -70,5 +70,10 @@ namespace SUTK
 	{
 		_assert(container != NULL);
 		container->setParent(NULL);
+	}
+
+	void Container::enableDebug(bool isEnable) noexcept
+	{
+		m_isDebug = true;
 	}
 }
