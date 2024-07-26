@@ -30,14 +30,29 @@
 #include <sge/defines.h>		// u32
 #include <sge/internal/vulkan/vulkan_object.h>
 
+typedef struct vulkan_buffer_traits_t
+{
+	/* number of elements in this buffer */
+	u32 element_count;
+	/* size of each element in this buffer */
+	u32 element_size;
+} vulkan_buffer_traits_t;
+
 typedef struct vulkan_buffer_create_info_t
 {
 	void* data;							// pointer to the data filled inside the vulkan buffer's device memory,
 										// if no data is available to copy/fill right now then it can be left NULL
 	
-	/* TODO: rename 'count' to 'capacity' */
-	u32 count;							// entity count; number of entities to be stored of size "stride"
-	u32 stride;							// stride; size of each entity
+	union
+	{
+		struct
+		{
+			/* TODO: rename 'count' to 'capacity' */
+			u32 count;							// entity count; number of entities to be stored of size "stride"
+			u32 stride;							// stride; size of each entity
+		};
+		vulkan_buffer_traits_t traits;
+	};
 
 	u32 size;							// capacity of the buffer in bytes, 
 										// if it is non-zero then "count" and "stride" would be ignored
@@ -54,13 +69,22 @@ typedef struct vulkan_buffer_t
 	VkBuffer vo_handle;
 	VkDeviceMemory vo_memory;
 	u32 size; 							// size of the buffer in bytes
-	u32 stride;							// equals to create_info->stride
-	u32 count; 							// equals to create_info->count
+	union
+	{
+		struct
+		{
+			u32 stride;							// equals to create_info->stride
+			u32 count; 							// equals to create_info->count
+		};
+		vulkan_buffer_traits_t traits;
+	};
 } vulkan_buffer_t;
 
 typedef vulkan_buffer_t* vulkan_buffer_ptr_t;
 #define VULKAN_BUFFER(ptr) VULKAN_OBJECT_UP_CAST(vulkan_buffer_t*, VULKAN_OBJECT_TYPE_BUFFER, ptr)
 #define VULKAN_BUFFER_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_buffer_t*, VULKAN_OBJECT_TYPE_BUFFER, ptr)
+#define VULKAN_BUFFER_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_buffer_t*, VULKAN_OBJECT_TYPE_BUFFER, ptr)
+#define VULKAN_BUFFER_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_buffer_t*, VULKAN_OBJECT_TYPE_BUFFER, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -171,6 +195,12 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_size(
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 vulkan_buffer_get_count(vulkan_buffer_t* buffer)
 {
 	return buffer->count;
+}
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_buffer_traits_t* vulkan_buffer_get_traits(vulkan_buffer_t* buffer) { return &buffer->traits; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_buffer_set_traits(vulkan_buffer_t* buffer, const vulkan_buffer_traits_t* traits)
+{
+	memcopy(&buffer->traits, traits, vulkan_buffer_traits_t);
 }
 
 END_CPP_COMPATIBLE
