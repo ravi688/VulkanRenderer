@@ -190,6 +190,8 @@ typedef struct vulkan_renderer_t
 	u32 max_far_lights;
 } vulkan_renderer_t;
 
+typedef vulkan_renderer_t sge_vulkan_driver_t;
+
 BEGIN_CPP_COMPATIBLE
 
 SGE_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t* create_info);
