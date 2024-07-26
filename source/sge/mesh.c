@@ -25,6 +25,7 @@
 
 #include <sge/sge.h>
 #include <sge/internal/vulkan/vulkan_mesh.h>
+#include <sge/internal/vulkan/vulkan_buffer.h> /* for VULKAN_BUFFER_CAST() */
 
 #include <sge/mesh.h>
 #include <sge/mesh3d.h>
@@ -47,39 +48,43 @@ SGE_API mesh_t* mesh_create(renderer_t* renderer, mesh3d_t* mesh_data)
 
 SGE_API void mesh_create_no_alloc(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
 {
-	debug_assert__(mesh_data != NULL, "Failed to create mesh_t, mesh3d_t* mesh_data == NULL\n");
-	vulkan_vertex_buffer_create_info_t* vertex_buffer_infos = stack_newv(vulkan_vertex_buffer_create_info_t, MESH3D_MAX_ATTRIBUTE_COUNT);
-	BUFFER** buffers = (BUFFER**)mesh_data;
-	u8 buffer_count = 0;
-	for(u8 i = 0; i < MESH3D_MAX_ATTRIBUTE_COUNT; i++)
+	vulkan_mesh_create_info_t create_info = { };
+	
+	/* if mesh3d data is not NULL then create vertex buffers and index buffers from mesh3d */
+	if(mesh_data != NULL)
 	{
-		if((buffers[i] == NULL) || (buffers[i]->element_count == 0)) continue;
-		vulkan_vertex_buffer_create_info_t* create_info = &vertex_buffer_infos[buffer_count];
-		create_info->data = buffers[i]->bytes;
-		create_info->stride = buffers[i]->element_size;
-		create_info->count = buffers[i]->element_count;
-		create_info->binding = i;
-		++buffer_count;
-	}
-	_debug_assert_wrn__(buffer_count != 0);
-
-	vulkan_mesh_create_info_t create_info =
-	{
-		.vertex_buffer_infos = vertex_buffer_infos,
-		.vertex_buffer_info_count = buffer_count
-	};
-	BUFFER* index_buffer = buffers[MESH3D_MAX_ATTRIBUTE_COUNT];
-	if((index_buffer != NULL) && (index_buffer->element_count != 0))
-	{
-		create_info.index_buffer_info = (vulkan_index_buffer_create_info_t)
+		vulkan_vertex_buffer_create_info_t vertex_buffer_infos[MESH3D_MAX_ATTRIBUTE_COUNT];
+		BUFFER** buffers = (BUFFER**)mesh_data;
+		u8 buffer_count = 0;
+		for(u8 i = 0; i < MESH3D_MAX_ATTRIBUTE_COUNT; i++)
 		{
-			.data = index_buffer->bytes,
-			.index_type = get_vulkan_index_from_stride(MESH3D_INDEX_SIZE),
-			.count = index_buffer->element_count * 3 //element_size = sizeof(vec3_t(index_t)), and element_count = count of vec3_t(index_t)
-		};
+			if((buffers[i] == NULL) || (buffers[i]->element_count == 0)) continue;
+			vulkan_vertex_buffer_create_info_t* create_info = &vertex_buffer_infos[buffer_count];
+			create_info->data = buffers[i]->bytes;
+			create_info->stride = buffers[i]->element_size;
+			create_info->count = buffers[i]->element_count;
+			create_info->binding = i;
+			++buffer_count;
+		}
+		_debug_assert_wrn__(buffer_count != 0);
+
+		create_info.vertex_buffer_infos = vertex_buffer_infos,
+		create_info.vertex_buffer_info_count = buffer_count;
+
+		BUFFER* index_buffer = buffers[MESH3D_MAX_ATTRIBUTE_COUNT];
+		if((index_buffer != NULL) && (index_buffer->element_count != 0))
+		{
+			create_info.index_buffer_info = (vulkan_index_buffer_create_info_t)
+			{
+				.data = index_buffer->bytes,
+				.index_type = get_vulkan_index_from_stride(MESH3D_INDEX_SIZE),
+				.count = index_buffer->element_count * 3 //element_size = sizeof(vec3_t(index_t)), and element_count = count of vec3_t(index_t)
+			};
+		}
+		vulkan_mesh_create_no_alloc(renderer->handle, &create_info, mesh);
 	}
-	vulkan_mesh_create_no_alloc(renderer->handle, &create_info, mesh);
-	stack_free(vertex_buffer_infos);
+	/* otherwise create vulkan_mesh_t with no vertex buffers or index buffers */
+	else vulkan_mesh_create_no_alloc(renderer->handle, &create_info, mesh);
 }
 
 SGE_API void mesh_create_no_alloc_ext(renderer_t* renderer, mesh3d_t* mesh_data, mesh_t* mesh)
@@ -96,6 +101,48 @@ SGE_API void mesh_destroy(mesh_t* mesh)
 SGE_API void mesh_release_resources(mesh_t* mesh)
 {
 	vulkan_mesh_release_resources(mesh);
+}
+
+SGE_API void mesh_add_vertex_buffer(mesh_t* mesh, sge_buffer_t* buffer, u32 binding)
+{
+	vulkan_mesh_add_vertex_buffer(VULKAN_MESH_CAST(mesh), VULKAN_BUFFER_CAST(buffer), binding);
+}
+
+static VkIndexType get_vulkan_index_type_from_index_type(index_type_t type)
+{
+	switch(type)
+	{
+		case INDEX_TYPE_U16: return VK_INDEX_TYPE_UINT16;
+		case INDEX_TYPE_U32: return VK_INDEX_TYPE_UINT32;
+		default: DEBUG_LOG_FETAL_ERROR("Unsupport index type: %u", type);
+	}
+	return 0;
+}
+
+SGE_API void mesh_set_index_buffer(mesh_t* mesh, sge_buffer_t* buffer, index_type_t type)
+{
+	vulkan_mesh_set_index_buffer(VULKAN_MESH_CAST(mesh), VULKAN_BUFFER_CAST(buffer), get_vulkan_index_type_from_index_type(type));
+}
+
+SGE_API void mesh_create_and_set_index_buffer(mesh_t* mesh, index_buffer_create_info_t* create_info)
+{
+	vulkan_index_buffer_create_info_t v_create_info =
+	{
+		.data = create_info->data,
+		.index_type = get_vulkan_index_type_from_index_type(create_info->index_type),
+		.count = create_info->count
+	};
+	vulkan_mesh_create_and_set_index_buffer(VULKAN_MESH_CAST(mesh), &v_create_info);
+}
+
+SGE_API sge_buffer_t* mesh_get_index_buffer(mesh_t* mesh)
+{
+	return vulkan_mesh_get_index_buffer(VULKAN_MESH_CAST(mesh));
+}
+
+SGE_API sge_buffer_t* mesh_get_vertex_buffer_at(mesh_t* mesh, u32 index)
+{
+	return vulkan_mesh_get_vertex_buffer_at(VULKAN_MESH_CAST(mesh), index);
 }
 
 SGE_API void mesh_draw(mesh_t* mesh)

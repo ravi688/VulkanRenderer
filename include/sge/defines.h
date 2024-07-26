@@ -43,15 +43,20 @@
 
 #ifdef SGE_VULKAN_DRIVER
 	typedef struct vulkan_renderer_t vulkan_renderer_t;
+	typedef vulkan_renderer_t sge_vulkan_driver_t;
 #elif defined(SGE_OPENGL_DRIVER)
 	typedef struct opengl_renderer_t opengl_renderer_t;
+	typedef opengl_renderer_t sge_opengl_driver_t;
 #elif defined(SGE_DIRECTX_DRIVER)
 	typedef struct directx_renderer_t directx_renderer_t;
+	typedef directx_renderer_t sge_directx_driver_t;
 #elif defined(SGE_METAL_DRIVER)
 	typedef struct metal_renderer_t metal_renderer_t;
+	typedef metal_renderer_t sge_metal_driver_t;
 #endif
 
 typedef struct renderer_t renderer_t;
+typedef renderer_t sge_driver_t;
 typedef struct memory_allocator_t memory_allocator_t;
 
 #include <sge/assert.h>

@@ -115,6 +115,8 @@ typedef struct vulkan_mesh_t
 
 #define VULKAN_MESH(ptr) VULKAN_OBJECT_UP_CAST(vulkan_mesh_t*, VULKAN_OBJECT_TYPE_MESH, ptr)
 #define VULKAN_MESH_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_mesh_t*, VULKAN_OBJECT_TYPE_MESH, ptr)
+#define VULKAN_MESH_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_mesh_t*, VULKAN_OBJECT_TYPE_MESH, ptr)
+#define VULKAN_MESH_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_mesh_t*, VULKAN_OBJECT_TYPE_MESH, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -145,7 +147,11 @@ SGE_API void vulkan_mesh_set_material(vulkan_mesh_t* mesh, vulkan_material_t* ma
  * NOTE: it's more efficient to pass 'binding' as consecutive integers (>= 0)
  * Because, this function internally groups consecutive bindings and binds the vertex buffers with consecutive bindings in one vkCmdBindVertexBuffers call */
 SGE_API void vulkan_mesh_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, u32 binding);
+SGE_API vulkan_buffer_t* vulkan_mesh_get_vertex_buffer_at(vulkan_mesh_t* mesh, u32 index);
 SGE_API void vulkan_mesh_set_index_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, VkIndexType vo_type);
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_buffer_t* vulkan_mesh_get_index_buffer(vulkan_mesh_t* mesh) { return mesh->index_buffer.buffer; }
+/* similar to the above function but it creates the buffer internally from the create info and calls the above to set it as index buffer */
+SGE_API void vulkan_mesh_create_and_set_index_buffer(vulkan_mesh_t* mesh, vulkan_index_buffer_create_info_t* create_info);
 /* similar to the above function but it creates the buffer internally with a create info and calls the above function to add it */
 SGE_API void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_vertex_buffer_create_info_t* create_info);
 /* binds all the vertex buffers this mesh has */
