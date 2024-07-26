@@ -96,6 +96,7 @@ SGE_API void render_object_draw(render_object_t* object);
 SGE_API void render_object_set_material(render_object_t* object, material_t* material);
 SGE_API material_t* render_object_get_material(render_object_t* object);
 SGE_API void render_object_set_transform(render_object_t* obj, mat4_t transform);
+SGE_API void render_object_set_position(render_object_t* obj, vec3_t position);
 SGE_API mat4_t render_object_get_transform(render_object_t* obj);
 SGE_API mat4_t render_object_get_normal(render_object_t* obj);
 SGE_API irect2d_t render_object_get_scissor(render_object_t* obj);

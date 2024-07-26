@@ -39,6 +39,10 @@ namespace SGE
 		{
 			render_object_set_transform(m_handle, transform);
 		}
+		void setPosition(vec3_t position) const noexcept
+		{
+			render_object_set_position(m_handle, position);
+		}
 		void setScissor(irect2d_t rect) const noexcept
 		{
 			render_object_set_scissor(m_handle, rect);
