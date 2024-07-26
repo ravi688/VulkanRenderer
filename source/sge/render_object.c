@@ -89,6 +89,15 @@ SGE_API void render_object_set_transform(render_object_t* obj, mat4_t transform)
 	vulkan_render_object_set_transform(obj, transform);
 }
 
+SGE_API void render_object_set_position(render_object_t* obj, vec3_t position)
+{
+	mat4_t m = render_object_get_transform(obj);
+	m.m03 = position.x;
+	m.m13 = position.y;
+	m.m23 = position.z;
+	render_object_set_transform(obj, m);
+}
+
 SGE_API mat4_t render_object_get_transform(render_object_t* obj)
 {
 	return vulkan_render_object_get_transform(obj);
