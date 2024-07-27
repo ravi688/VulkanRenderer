@@ -19,6 +19,6 @@ namespace SUTK
 		Container::onResize(newRect, isPositionChanged, isSizeChanged);
 
 		if(m_renderRect != NULL)
-			m_renderRect->setRect(getRect());
+			m_renderRect->onContainerResize(newRect, isPositionChanged, isSizeChanged);
 	}
 }

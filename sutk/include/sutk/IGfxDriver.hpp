@@ -8,6 +8,8 @@ namespace SUTK
 {
 	class UIDriver;
 
+	class Geometry;
+
 	class IGfxDriver
 	{
 	public:
@@ -20,11 +22,16 @@ namespace SUTK
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) = 0;
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) = 0;
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2D<DisplaySizeType> rect) = 0;
+		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec2D<f32> position) = 0;
 		void setTextScissor(GfxDriverObjectHandleType handle, const Rect2D<DisplaySizeType> rect) noexcept
 		{
 			GfxDriverObjectHandleType objHandle = getTextObject(handle);
 			setObjectScissor(objHandle, rect);
 		}
+		virtual GfxDriverObjectHandleType compileGeometry(const Geometry& geometryDsc, GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) = 0;
+		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) = 0;
+		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) = 0;
+
 		virtual u32 getBaselineHeightInPixels() = 0;
 		typedef std::function<void(Vec2D<DisplaySizeType>)> OnResizeCallbackHandler;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) = 0;

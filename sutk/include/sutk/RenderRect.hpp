@@ -14,9 +14,15 @@ namespace SUTK
 	private:
 		GfxDriverObjectHandleType m_handle;
 		bool m_isDirty;
+		bool m_isPosDirty;
+		bool m_isSizeDirty;
 		Rect2D<DisplaySizeType> m_rect;
 		RenderRectContainer* m_container;
 		Geometry m_geometry;
+
+		friend class RenderRectContainer;
+		void onContainerResize(Rect2D<DisplaySizeType> rect, bool isPositionChanged, bool isSizeChanged) noexcept;
+
 	public:
 		// Constructors
 		RenderRect(UIDriver& driver, RenderRectContainer* container) noexcept;
@@ -25,7 +31,6 @@ namespace SUTK
 		virtual bool isDirty() override;
 		virtual void update() override;
 
-		void setRect(Rect2D<DisplaySizeType> rect) noexcept;
 		Rect2D<DisplaySizeType> getRect() const noexcept { return m_rect; }
 
 		RenderRectContainer* getContainer() noexcept { return m_container; }

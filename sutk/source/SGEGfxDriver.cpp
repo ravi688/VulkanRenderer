@@ -1,4 +1,5 @@
 #include <sutk/SGEGfxDriver.hpp>
+#include <sutk/Geometry.hpp> // for SGE::Geometry
 #include <sge-cpp/Display.hpp>
 
 #include <utility> /* for std::pair */
@@ -205,11 +206,17 @@ namespace SUTK
 		m_bitmapTextStringMappings.erase(it);
 	}
 
-	void SGEGfxDriver::setTextPosition(GfxDriverObjectHandleType handle, Vec2D<DisplaySizeType> position)
+	template<typename T>
+	vec3_t SGEGfxDriver::SUTKToSGECoordTransform(const Vec2D<T> position)
 	{
 		auto windowSize = getSize();
-		getText(handle).setPosition(vec3(0.0f, static_cast<float>(windowSize.height >> 1) - static_cast<float>(position.y), 
-											   static_cast<float>(position.x) - static_cast<float>(windowSize.width >> 1)));
+		return vec3(0.0f, static_cast<float>(windowSize.height) * 0.5f - static_cast<float>(position.y), 
+											   static_cast<float>(position.x) - static_cast<float>(windowSize.width) * 0.5f);
+	}
+
+	void SGEGfxDriver::setTextPosition(GfxDriverObjectHandleType handle, Vec2D<DisplaySizeType> position)
+	{
+		getText(handle).setPosition(SUTKToSGECoordTransform<DisplaySizeType>(position));
 	}
 
 	void SGEGfxDriver::setTextData(GfxDriverObjectHandleType handle, const std::string& data)
@@ -233,6 +240,156 @@ namespace SUTK
 	{
 		auto it = getRenderObjectIterator(handle);
 		it->second.setScissor(irect2d(ioffset2d(rect.x, rect.y), iextent2d(rect.width, rect.height)));
+	}
+
+	void SGEGfxDriver::setObjectPosition(GfxDriverObjectHandleType handle, const Vec2D<f32> position)
+	{
+		auto it = getRenderObjectIterator(handle);
+		it->second.setPosition(SUTKToSGECoordTransform<f32>(position));
+	}
+
+	std::unordered_map<id_generator_id_type_t, SGE::Mesh>::iterator
+	SGEGfxDriver::getMeshIterator(GfxDriverObjectHandleType handle)
+	{	
+		auto it = m_meshMappings.find(GET_ATTACHED_OBJECT_ID(handle));
+		_assert(it != m_meshMappings.end());
+		return it;
+	}
+
+	std::pair<SGE::Mesh, GfxDriverObjectHandleType> SGEGfxDriver::createMesh()
+	{
+		debug_log_info("[SGE] Creating new SGE::Mesh object");
+		SGE::Mesh mesh = m_driver.createMesh();
+		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Mesh, SGE::RenderQueue::Type::Geometry);
+		object.attach(mesh);
+		// rebuild render pass graph as new objects have been added into the render scene 
+		m_scene.buildQueues();
+		
+		// add mesh into the mesh mappings table
+		id_generator_id_type_t meshID = id_generator_get(&m_id_generator);
+		m_meshMappings.insert({ meshID, mesh });
+
+		// add corresponding render object into the render object mappings table
+		id_generator_id_type_t renderObjectID = id_generator_get(&m_id_generator);
+		m_renderObjectMappings.insert({ renderObjectID, object });
+
+		static_assert(sizeof(GfxDriverObjectHandleType) == sizeof(u64));
+
+		return { mesh, static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(meshID, renderObjectID)) };
+	}
+
+	GfxDriverObjectHandleType SGEGfxDriver::compileGeometry(const Geometry& geometry, GfxDriverObjectHandleType previous)
+	{
+		SGE::Mesh mesh;
+		GfxDriverObjectHandleType newHandle;
+
+		// if handle to the old compiled geometry has been provided, then we should use that one
+		// and no need to create new set of SGE objects
+		if(previous != GFX_DRIVER_OBJECT_NULL_HANDLE)
+		{
+			 mesh = getMeshIterator(previous)->second;
+			 newHandle = previous;
+		}
+		// otherwise, create new compiled geometry objects.
+		else
+		{
+			std::pair<SGE::Mesh, GfxDriverObjectHandleType> result = createMesh();
+			newHandle = result.second;
+			mesh = result.first;
+		}
+
+		if(geometry.isVertexIndexArrayModified())
+		{
+			// prepare the index buffer create info struct
+			SGE::Mesh::IndexBufferCreateInfo createInfo = { };
+			const Geometry::VertexIndexArray& indexArray = geometry.getVertexIndexArray();
+			void* data = reinterpret_cast<void*>(const_cast<Geometry::VertexIndex*>(indexArray.data()));
+			createInfo.data = data;
+			createInfo.index_type = INDEX_TYPE_U32;
+			createInfo.count = indexArray.size();
+
+			// if there is no index buffer then create one
+			if(!mesh.hasIndexBuffer())
+				mesh.createAndAddIndexBuffer(createInfo);
+			else
+			{
+				SGE::Buffer indexBuffer = mesh.getIndexBuffer();
+				_assert(indexBuffer.getTraits()->elementSize == sizeof(u32));
+				// if previous index buffer's size doesn't match the new number of indices
+				if(indexBuffer.getTraits()->elementCount != indexArray.size())
+				{
+					// then destroh the old index buffer
+					mesh.destroyIndexBuffer();
+					// and create a new index buffer
+					mesh.createAndAddIndexBuffer(createInfo);
+				}
+				// otherwise, just copy the new data to the existing buffer
+				else
+					indexBuffer.copyData(0, data, sizeof(u32) * indexArray.size());
+			}
+		}
+
+		if(geometry.isVertexPositionArrayModified())
+		{
+			// convert vertex position array into SGE's coordinates and strides.
+			auto& positionArray = geometry.getVertexPositionArray();
+			vec4_t data[positionArray.size()];
+			for(u32 i = 0; i < positionArray.size(); ++i)
+			{
+				auto pos = SUTKToSGECoordTransform(positionArray[i]);
+				data[i] = { pos.x, pos.y, pos.z, 0.0f };
+			}
+
+			// prepare the vertex buffer create info struct
+			SGE::Mesh::VertexBufferCreateInfo createInfo = { };
+			createInfo.data = data,
+			createInfo.stride = sizeof(vec4_t),
+			createInfo.count = positionArray.size(),
+			createInfo.binding = 0;
+
+			// if there is no vertex buffer then create one with binding equal to zero
+			if(mesh.getVertexBufferCount() == 0)
+				mesh.createAndAddVertexBuffer(createInfo);
+			else
+			{
+				SGE::Buffer vertexBuffer = mesh.getVertexBuffer(0);
+				_assert(vertexBuffer.getTraits()->elementSize == createInfo.stride);
+				// if the existing vertex buffer's capacity is not equal to that of new number of posijtions
+				if(vertexBuffer.getTraits()->elementCount != positionArray.size())
+				{
+					// then destroy the vertex buffer at binding = 0
+					mesh.destroyVertexBuffer(0);
+					// and create a new vertex buffer for the binding = 0
+					mesh.createAndAddVertexBuffer(createInfo);
+				}
+				// otherwise, just copy the new data
+				else
+					vertexBuffer.copyData(0, reinterpret_cast<void*>(data), sizeof(vec4_t) * positionArray.size());
+			}
+		}
+
+		return newHandle;
+	}
+
+	void SGEGfxDriver::destroyGeometry(GfxDriverObjectHandleType geometry)
+	{
+		// erase the mesh object
+		auto it = getMeshIterator(geometry);
+		it->second.destroy();
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_ATTACHED_OBJECT_ID(geometry)));
+		m_meshMappings.erase(it);
+
+		// erase the corresponding render object also 
+		auto it2 = getRenderObjectIterator(geometry);
+		// SGE::RenderObject object = *it2;
+		// TODO: object.destroy()
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_RENDER_OBJECT_ID(geometry)));
+		m_renderObjectMappings.erase(it2);
+	}
+
+	GfxDriverObjectHandleType SGEGfxDriver::getGeometryObject(GfxDriverObjectHandleType geometry)
+	{
+		return geometry;
 	}
 
 	u32 SGEGfxDriver::getBaselineHeightInPixels()
