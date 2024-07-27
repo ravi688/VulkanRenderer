@@ -16,7 +16,14 @@ namespace SUTK
 		struct VertexPositionArrayInfo
 		{
 			VertexPositionArray array;
-			bool is_modified;
+			bool isModified;
+		};
+		typedef u32 VertexIndex;
+		typedef std::vector<VertexIndex> VertexIndexArray;
+		struct VertexIndexArrayInfo
+		{
+			VertexIndexArray array;
+			bool isModified;
 		};
 		struct LineStroke
 		{
@@ -30,26 +37,52 @@ namespace SUTK
 		{
 			LineStroke stroke;
 			bool isStrokeWidthDynamic;
-			bool is_modified;
+			bool isModified;
+		};
+		enum class Topology
+		{
+			LineList,
+			LineStrip,
+			TriangleList,
+			TriangleStrip
 		};
 	private:
 		VertexPositionArrayInfo m_positionArrayInfo;
+		VertexIndexArrayInfo m_indexArrayInfo;
 		std::optional<LineStrokeInfo> m_strokeInfo;
+		Topology m_topology;
 	public:
 		Geometry(UIDriver& driver) noexcept;
 
 		GfxDriverObjectHandleType compile(GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
-		VertexPositionArray& getVertexPositionArray() { return m_positionArrayInfo.array; }
+		Geometry& topology(Topology topology) noexcept;
 
-		Geometry& setLineStrokeDynamic(bool isDynamic = true) noexcept;
+		Geometry& line(VertexIndex p1, VertexIndex p2) noexcept;
+		Geometry& triangle(VertexIndex p1, VertexIndex p2, VertexIndex p3) noexcept;
+		Geometry& nextLine(VertexIndex p) noexcept;
+		Geometry& nextTriangle(VertexIndex p) noexcept;
 
 		Geometry& vertexPositionArray(u32 positionCount) noexcept;
+		Geometry& vertexPositionArray(const std::vector<VertexPosition>& positions) noexcept;
 		Geometry& vertexPosition(VertexPosition position) noexcept;
-		Geometry& lineStroke(LineStroke stroke) noexcept;
-		Geometry& lineStroke(float width, Color3 color = Color3::white()) noexcept
+		Geometry& lineStroke(LineStroke stroke, bool isDynamic = false) noexcept;
+		Geometry& lineStroke(float width, Color3 color = Color3::white(), bool isDynamic = false) noexcept
 		{
-			return lineStroke({ width, color });
+			return lineStroke({ width, color }, isDynamic);
 		}
+
+		// getters
+
+		Topology getTopology() const noexcept { return m_topology; }
+
+		VertexPositionArray& getVertexPositionArray() { return m_positionArrayInfo.array; }
+		const VertexPositionArray& getVertexPositionArray() const { return m_positionArrayInfo.array; }
+		VertexIndexArray& getVertexIndexArray() { return m_indexArrayInfo.array; }
+		const VertexIndexArray& getVertexIndexArray() const { return m_indexArrayInfo.array; }
+
+		bool isVertexIndexArrayModified() const noexcept { return m_indexArrayInfo.isModified; }
+		bool isVertexPositionArrayModified() const noexcept { return m_positionArrayInfo.isModified; }
+		bool isLineStrokeModified() const noexcept { return m_strokeInfo.has_value() && m_strokeInfo->isModified; }
 	};
 }

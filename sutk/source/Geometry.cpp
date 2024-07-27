@@ -1,32 +1,62 @@
 #include <sutk/Geometry.hpp>
-
+#include <sutk/IGfxDriver.hpp> // for SUTK::IGfxDriver::compileGeometry()
 #include <sutk/assert.h>
 
 namespace SUTK
 {
-	Geometry::Geometry(UIDriver& driver) noexcept : UIDriverObject(driver), m_positionArrayInfo({ VertexPositionArray { }, false })
+	Geometry::Geometry(UIDriver& driver) noexcept : UIDriverObject(driver), 
+													m_positionArrayInfo({ VertexPositionArray { }, false }),
+													m_indexArrayInfo({ VertexIndexArray { }, false }),
+													m_strokeInfo({ }),
+													m_topology(Topology::TriangleList)
 	{
 
 	}
 
 	GfxDriverObjectHandleType Geometry::compile(GfxDriverObjectHandleType previous) noexcept
 	{
+		auto& gfxDriver = getGfxDriver();
+		auto handle = gfxDriver.compileGeometry(*this, previous);
 		if(m_strokeInfo.has_value())
-			m_strokeInfo->is_modified = false;
-		m_positionArrayInfo.is_modified = false;
-		return GFX_DRIVER_OBJECT_NULL_HANDLE;
+			m_strokeInfo->isModified = false;
+		m_positionArrayInfo.isModified = false;
+		return handle;
 	}
 
-	Geometry& Geometry::setLineStrokeDynamic(bool isDynamic) noexcept
+	Geometry& Geometry::topology(Topology topology) noexcept
 	{
-		// if no stroke information already exists then create a new info
-		if(!m_strokeInfo.has_value())
-			m_strokeInfo = LineStrokeInfo { };
+		m_topology = topology;
+		return *this;
+	}
 
-		// update the info
-		m_strokeInfo->isStrokeWidthDynamic = isDynamic;
-		m_strokeInfo->is_modified = true;
+	Geometry& Geometry::line(VertexIndex p1, VertexIndex p2) noexcept
+	{
+		m_indexArrayInfo.array.push_back(p1);
+		m_indexArrayInfo.array.push_back(p2);
+		m_indexArrayInfo.isModified = true;
+		return *this;
+	}
 
+	Geometry& Geometry::triangle(VertexIndex p1, VertexIndex p2, VertexIndex p3) noexcept
+	{
+		m_indexArrayInfo.array.push_back(p1);
+		m_indexArrayInfo.array.push_back(p2);
+		m_indexArrayInfo.array.push_back(p3);
+		m_indexArrayInfo.isModified = true;
+		return *this;
+	}
+
+	Geometry& Geometry::nextLine(VertexIndex p) noexcept
+	{
+		m_indexArrayInfo.array.push_back(p);
+		m_indexArrayInfo.isModified = true;
+		return *this;
+	}
+
+	Geometry& Geometry::nextTriangle(VertexIndex p) noexcept
+	{
+		m_indexArrayInfo.array.push_back(p);
+		m_indexArrayInfo.isModified = true;
 		return *this;
 	}
 
@@ -52,23 +82,37 @@ namespace SUTK
 		while(array.size() < positionCount)
 			array.push_back({ });
 
+		m_positionArrayInfo.isModified = true;
+
+		return *this;
+	}
+
+	Geometry& Geometry::vertexPositionArray(const std::vector<VertexPosition>& positions) noexcept
+	{
+		auto& array = m_positionArrayInfo.array;
+		for(std::size_t i = 0; i < positions.size(); ++i)
+			array.push_back(positions[i]);
+		m_positionArrayInfo.isModified = true;
 		return *this;
 	}
 
 	Geometry& Geometry::vertexPosition(VertexPosition position) noexcept
 	{
 		getVertexPositionArray().push_back(position);
+		m_positionArrayInfo.isModified = true;
 		return *this;
 	}
 
-	Geometry& Geometry::lineStroke(LineStroke stroke) noexcept
+	Geometry& Geometry::lineStroke(LineStroke stroke, bool isDynamic) noexcept
 	{
 		if(!m_strokeInfo.has_value())
 			m_strokeInfo = { stroke, false };
 		else
 			m_strokeInfo->stroke = stroke;
 		
-		m_strokeInfo->is_modified = true;
+		m_strokeInfo->isStrokeWidthDynamic = isDynamic;
+
+		m_strokeInfo->isModified = true;
 
 		return *this;
 	}

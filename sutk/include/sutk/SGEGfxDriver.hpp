@@ -24,6 +24,7 @@ namespace SUTK
 		// this is used to hash into the 'm_bitmapTextMappings' unordered map and update the 'charCount'
 		GfxDriverObjectHandleType textHandle;
 	};
+	class Geometry;
 	class SGEGfxDriver : public IGfxDriver
 	{
 	private:
@@ -36,6 +37,7 @@ namespace SUTK
 		id_generator_t m_id_generator;
 		GfxDriverObjectHandleType m_currentBitmapTextHandle;
 		std::unordered_map<id_generator_id_type_t, SGEBitmapTextData> m_bitmapTextMappings;
+		std::unordered_map<id_generator_id_type_t, SGE::Mesh> m_meshMappings;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
 		std::unordered_map<id_generator_id_type_t, SGE::RenderObject> m_renderObjectMappings;
 		struct OnResizeCallbackHandlerData
@@ -60,6 +62,13 @@ namespace SUTK
 		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> createBitmapText();
 		void destroyBitmapText(GfxDriverObjectHandleType handle);
 		SGE::BitmapTextString getText(GfxDriverObjectHandleType handle);
+		std::unordered_map<id_generator_id_type_t, SGE::Mesh>::iterator
+		getMeshIterator(GfxDriverObjectHandleType handle);
+		std::pair<SGE::Mesh, GfxDriverObjectHandleType> createMesh();
+		// Transforms SUTK coordinates (origin at top-left, and y downwards) to SGE coordinates (origin at center, and y upwards)
+		template<typename T>
+		vec3_t SUTKToSGECoordTransform(const Vec2D<T> position);
+
 	public:
 
 		// Constructors
@@ -81,6 +90,12 @@ namespace SUTK
 
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) override;
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2D<DisplaySizeType> rect) override;
+		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec2D<f32> position) override;
+
+		// compiles SUTK::Geometry description into SGE objects which can eventually be renderered in SGE
+		virtual GfxDriverObjectHandleType compileGeometry(const Geometry& geometryDsc, GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) override;
+		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) override;
+		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) override;
 
 		virtual u32 getBaselineHeightInPixels() override;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) override;

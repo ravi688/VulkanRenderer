@@ -1,4 +1,5 @@
 #include <sutk/RenderRect.hpp>
+#include <sutk/IGfxDriver.hpp>
 
 namespace SUTK
 {
@@ -9,7 +10,14 @@ namespace SUTK
 																			m_container(container),
 																			m_geometry(driver)
 	{
-		m_geometry.vertexPositionArray(4).lineStroke(2.0f, Color3::white());
+		m_geometry
+			.vertexPositionArray(4)
+			.topology(Geometry::Topology::LineStrip)
+			.line(0, 1)
+			.nextLine(2)
+			.nextLine(3)
+			.nextLine(0)
+			.lineStroke(2.0f, Color3::white());
 	}
 
 	bool RenderRect::isDirty()
@@ -22,18 +30,29 @@ namespace SUTK
 		if(!m_isDirty) return;
 		m_isDirty = false;
 
-		Geometry::VertexPositionArray& array = m_geometry.getVertexPositionArray();
-		array[0] = m_rect.getTopLeft() + m_rect.getCenter();
-		array[1] = m_rect.getBottomLeft() + m_rect.getCenter();
-		array[2] = m_rect.getBottomRight() + m_rect.getCenter();
-		array[3] = m_rect.getTopRight() + m_rect.getCenter();
+		if(m_isSizeDirty)
+		{
+			Geometry::VertexPositionArray& array = m_geometry.getVertexPositionArray();
+			array[0] = m_rect.getTopLeft();
+			array[1] = m_rect.getBottomLeft();
+			array[2] = m_rect.getBottomRight();
+			array[3] = m_rect.getTopRight();
+			m_handle = m_geometry.compile(m_handle);
+		}
 
-		m_handle = m_geometry.compile(m_handle);
+		if(m_isPosDirty)
+		{
+			auto& gfxDriver = getGfxDriver();
+			GfxDriverObjectHandleType objHandle = gfxDriver.getGeometryObject(m_handle);
+			gfxDriver.setObjectPosition(objHandle, m_rect.getPosition());
+		}
 	}
 
-	void RenderRect::setRect(Rect2D<DisplaySizeType> rect) noexcept
+	void RenderRect::onContainerResize(Rect2D<DisplaySizeType> rect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
 		m_rect = rect;
 		m_isDirty = true;
+		m_isPosDirty = isPositionChanged;
+		m_isSizeDirty = isSizeChanged;
 	}
 }
