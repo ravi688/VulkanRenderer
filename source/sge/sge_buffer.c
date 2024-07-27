@@ -59,7 +59,7 @@ SGE_API void sge_buffer_set_traits(sge_buffer_t* buffer, const sge_buffer_traits
 	vulkan_buffer_set_traits(VULKAN_BUFFER_CAST(buffer), REINTERPRET_CONST_CAST(const vulkan_buffer_traits_t*, traits));
 }
 
-SGE_API sge_buffer_traits_t* buffer_get_tratis(sge_buffer_t* buffer)
+SGE_API sge_buffer_traits_t* sge_buffer_get_traits(sge_buffer_t* buffer)
 {
 	AUTO traits = vulkan_buffer_get_traits(VULKAN_BUFFER_CAST(buffer));
 	return REINTERPRET_CAST(sge_buffer_traits_t*, traits);

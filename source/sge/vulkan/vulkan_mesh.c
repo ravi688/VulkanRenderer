@@ -86,22 +86,10 @@ SGE_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mes
 SGE_API void vulkan_mesh_destroy(vulkan_mesh_t* mesh)
 {
 	/* destroy the vertex buffers */
-	u32 vertex_buffer_count = buf_get_element_count(&mesh->vertex_buffers);
-	for(u32 i = 0; i < vertex_buffer_count; i++)
-	{
-		AUTO vertex_buffer = CAST_TO(vulkan_vertex_buffer_t*, buf_get_ptr_at(&mesh->vertex_buffers, i));
-		/* only destroy and release resources if the vulkan_buffer_t has been allocated internally (i.e. by vulkan_mesh_t) */
-		if(vertex_buffer->is_internal)
-		{
-			vulkan_buffer_destroy(vertex_buffer->buffer);
-			vulkan_buffer_release_resources(vertex_buffer->buffer);
-		}
-	}
-	buf_clear(&mesh->vertex_buffers, NULL);
+	vulkan_mesh_destroy_vertex_buffers(mesh);
 
 	/* destroy the index buffer if it non null and created internally */
-	if((mesh->index_buffer.buffer != NULL) && mesh->index_buffer.is_internal)
-		vulkan_buffer_destroy(mesh->index_buffer.buffer);
+	vulkan_mesh_destroy_index_buffer(mesh);
 	
 	mesh->binding_index = 0;
 }
@@ -109,8 +97,6 @@ SGE_API void vulkan_mesh_destroy(vulkan_mesh_t* mesh)
 SGE_API void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 {
 	buf_free(&mesh->vertex_buffers);
-	if(mesh->index_buffer.buffer != NULL)
-		vulkan_buffer_release_resources(mesh->index_buffer.buffer);
 	if(VULKAN_OBJECT_IS_INTERNAL(mesh))
 		memory_allocator_dealloc(mesh->renderer->allocator, mesh);
 }
@@ -207,27 +193,100 @@ SGE_API void vulkan_mesh_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t*
 	_vulkan_mesh_add_vertex_buffer(mesh, buffer, binding, false);
 }
 
+SGE_API void vulkan_mesh_destroy_vertex_buffers(vulkan_mesh_t* mesh)
+{
+	u32 count = buf_get_element_count(&mesh->vertex_buffers);
+	for(u32 i = 0; i < count; i++)
+	{
+		AUTO vbuffer = CAST_TO(vulkan_vertex_buffer_t*, buf_get_ptr_at(&mesh->vertex_buffers, i));
+		/* only destroy the vulkan buffers which were created internally */
+		if(vbuffer->is_internal)
+		{
+			_debug_assert__(vbuffer->buffer != NULL);
+			vulkan_buffer_destroy(vbuffer->buffer);
+			vulkan_buffer_release_resources(vbuffer->buffer);
+		}
+	}
+	buf_clear(&mesh->vertex_buffers, NULL);
+}
+
+typedef vulkan_vertex_buffer_t* vulkan_vertex_buffer_ptr_t;
+typedef_pair_t(vulkan_vertex_buffer_ptr_t, u32);
+
+static pair_t(vulkan_vertex_buffer_ptr_t, u32) find_vertex_buffer(vulkan_mesh_t* mesh, u32 binding)
+{
+	u32 count = buf_get_element_count(&mesh->vertex_buffers);
+	for(u32 i = 0; i < count; i++)
+	{
+		AUTO vbuffer = CAST_TO(vulkan_vertex_buffer_t*, buf_get_ptr_at(&mesh->vertex_buffers, i));
+		if(vbuffer->binding == binding)
+			return make_pair_t(vulkan_vertex_buffer_ptr_t, u32) { vbuffer, i };
+	}
+	return make_pair_t(vulkan_vertex_buffer_ptr_t, u32) { NULL, U32_MAX };
+}
+
+SGE_API void vulkan_mesh_destroy_vertex_buffer(vulkan_mesh_t* mesh, u32 binding)
+{
+	/* find the vertex buffer with the supplied binding */
+	AUTO result = find_vertex_buffer(mesh, binding);
+	_debug_assert__(result.first != NULL);
+
+	// destroy it only if it is internally created
+	if(result.first->is_internal)
+	{
+		vulkan_buffer_destroy(result.first->buffer);
+		vulkan_buffer_release_resources(result.first->buffer);
+	}
+
+	// remove the reference from the list of vertex buffers of this mesh
+	bool _result = buf_remove_at(&mesh->vertex_buffers, result.second, NULL);
+	_debug_assert__(_result == true);
+}
+
 SGE_API vulkan_buffer_t* vulkan_mesh_get_vertex_buffer_at(vulkan_mesh_t* mesh, u32 index)
 {
 	_debug_assert__(index < buf_get_element_count(&mesh->vertex_buffers));
 	return CAST_TO(vulkan_vertex_buffer_t*, buf_get_ptr_at(&mesh->vertex_buffers, index))->buffer;
 }
 
+SGE_API vulkan_buffer_t* vulkan_mesh_get_vertex_buffer(vulkan_mesh_t* mesh, u32 binding)
+{
+	/* find the vertex buffer with the supplied binding */
+	AUTO result = find_vertex_buffer(mesh, binding);
+	if(result.first == NULL)
+		return NULL;
+	_debug_assert__(result.first->buffer != NULL);
+	return result.first->buffer;
+}
+
+SGE_API u32 vulkan_mesh_get_vertex_buffer_count(vulkan_mesh_t* mesh)
+{
+	return buf_get_element_count(&mesh->vertex_buffers);
+}
+
 SGE_API void vulkan_mesh_set_index_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, VkIndexType vo_type)
 {
 	/* if index buffer has already been created internally, then destroy that */
+	vulkan_mesh_destroy_index_buffer(mesh);
+
+	mesh->index_buffer.buffer = buffer;
+	mesh->index_buffer.index_type = vo_type;
+	mesh->index_buffer.is_internal = false;
+}
+
+SGE_API void vulkan_mesh_destroy_index_buffer(vulkan_mesh_t* mesh)
+{
+	/* destroy the index buffer only if it is internal */
 	if(mesh->index_buffer.is_internal)
 	{
 		_debug_assert__(mesh->index_buffer.buffer != NULL);
 		vulkan_buffer_destroy(mesh->index_buffer.buffer);
 		vulkan_buffer_release_resources(mesh->index_buffer.buffer);
-		mesh->index_buffer.buffer = NULL;
-		mesh->index_buffer.index_type = VK_INDEX_TYPE_MAX_ENUM;
-		mesh->index_buffer.is_internal = false;
 	}
 
-	mesh->index_buffer.buffer = buffer;
-	mesh->index_buffer.index_type = vo_type;
+	/* remove the reference */
+	mesh->index_buffer.buffer = NULL;
+	mesh->index_buffer.index_type = VK_INDEX_TYPE_MAX_ENUM;
 	mesh->index_buffer.is_internal = false;
 }
 

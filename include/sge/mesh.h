@@ -70,6 +70,7 @@ SGE_API void mesh_release_resources(mesh_t* mesh);
 
 /* vertex and index buffer data update calls */
 SGE_API void mesh_add_vertex_buffer(mesh_t* mesh, sge_buffer_t* buffer, u32 binding);
+/* IMPORTANT: this must be in sync with vulkan_vertex_buffer_create_info_t */
 typedef struct vertex_buffer_create_info_t
 {
 	void* data;
@@ -78,6 +79,8 @@ typedef struct vertex_buffer_create_info_t
 	u32 binding;
 } vertex_buffer_create_info_t;
 SGE_API void mesh_create_and_add_vertex_buffer(mesh_t* mesh, vertex_buffer_create_info_t* create_info);
+SGE_API void mesh_destroy_vertex_buffers(mesh_t* mesh);
+SGE_API void mesh_destroy_vertex_buffer(mesh_t* mesh, u32 binding);
 typedef enum index_type_t
 {
 	INDEX_TYPE_UNDEFINED = 0,
@@ -86,6 +89,7 @@ typedef enum index_type_t
 } index_type_t;
 /* NOTE: the index buffer must have buffer_traits_t set */
 SGE_API void mesh_set_index_buffer(mesh_t* mesh, sge_buffer_t* buffer, index_type_t type);
+SGE_API void mesh_destroy_index_buffer(mesh_t* mesh);
 typedef struct index_buffer_create_info_t
 {
 	void* data;
@@ -94,7 +98,10 @@ typedef struct index_buffer_create_info_t
 } index_buffer_create_info_t;
 SGE_API void mesh_create_and_set_index_buffer(mesh_t* mesh, index_buffer_create_info_t* create_info);
 SGE_API sge_buffer_t* mesh_get_index_buffer(mesh_t* mesh);
+SGE_API bool mesh_has_index_buffer(mesh_t* mesh);
 SGE_API sge_buffer_t* mesh_get_vertex_buffer_at(mesh_t* mesh, u32 index);
+SGE_API sge_buffer_t* mesh_get_vertex_buffer(mesh_t* mesh, u32 binding);
+SGE_API u32 mesh_get_vertex_buffer_count(mesh_t* mesh);
 
 /* draw calls */
 SGE_API DEPRECATED void mesh_draw(mesh_t* mesh);

@@ -73,8 +73,8 @@ typedef struct vulkan_buffer_t
 	{
 		struct
 		{
-			u32 stride;							// equals to create_info->stride
 			u32 count; 							// equals to create_info->count
+			u32 stride;							// equals to create_info->stride
 		};
 		vulkan_buffer_traits_t traits;
 	};
