@@ -625,7 +625,7 @@ Shader
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/6K_JPCuZfFM/0.jpg)](https://www.youtube.com/watch?v=6K_JPCuZfFM)
 
-## About Me (Open for Hire)
+## About Me
 
 #### [LinkedIn](https://www.linkedin.com/in/ravi-prakash-singh-095a271a8/)
 #### [Github](https://github.com/ravi688)
