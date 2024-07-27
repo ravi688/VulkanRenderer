@@ -60,6 +60,7 @@ namespace SUTK
 
 		Geometry& line(VertexIndex p1, VertexIndex p2) noexcept;
 		Geometry& triangle(VertexIndex p1, VertexIndex p2, VertexIndex p3) noexcept;
+		Geometry& quad(VertexIndex p1, VertexIndex p2, VertexIndex p3, VertexIndex p4) noexcept;
 		Geometry& nextLine(VertexIndex p) noexcept;
 		Geometry& nextTriangle(VertexIndex p) noexcept;
 

@@ -3,7 +3,7 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 4h:51m:24s, 24/7/2024
+ * Time & Date (yy/mm/yyy) of Generation: 1h:18m:15s, 28/7/2024
  */
 
 #pragma once
@@ -18191,6 +18191,90 @@ static const char _________SUTK_FONTS_CALIBRI_REGULAR_TTF[] =
 0x5c, 0xd9, 0x1d, 0x33, 0x1a, 0x11, 0x9d, 0xa9, 0xea, 0xd6, 0x91, 0xfb, 0xf8, 0x2b, 0xff, 0x28, 0x56, 0x22, 0xef, 0x3c, 
 0x26, 0x67, 0x66, 0xdc, 0x66, 0xeb, 0x95, 0xaf, 0xd0, 0x37, 0x24, 0xfd, 0xb0, 0xbd, 0x0, 0x0
 };
+static const char* _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER = 
+"#sl version 2023\n"
+"#sb version 2023\n"
+"\n"
+"[Name(\"SolidColor\")]\n"
+"Shader\n"
+"{\n"
+"	Properties\n"
+"	{\n"
+"		[Stage(fragment, vertex)]\n"
+"		[Set(material_set, material_properties)]\n"
+"		uniform Parameters\n"
+"		{\n"
+"			vec4 color;\n"
+"		} parameters;\n"
+"	}\n"
+"\n"
+"	Layout\n"
+"	{\n"
+"		[Rate(per_vertex)]\n"
+"		[MeshLayout(sge_optimal)]\n"
+"		[Attribute(position)]\n"
+"		vec3 position;\n"
+"	}\n"
+"\n"
+"	RenderPass\n"
+"	{\n"
+"		SubPass\n"
+"		{\n"
+"			[NoParse]\n"
+"			GraphicsPipeline\n"
+"			{\n"
+"				rasterization\n"
+"				{\n"
+"					frontface = counterclockwise\n"
+"				}\n"
+"				colorBlend\n"
+"				{\n"
+"					attachment { }\n"
+"				}\n"
+"			}\n"
+"\n"
+"			[NoParse]\n"
+"			GLSL\n"
+"			{\n"
+"				#stage vertex\n"
+"\n"
+"				#version 450\n"
+"				\n"
+"				#include <v3d.h>\n"
+"				\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;\n"
+"				\n"
+"				layout(location = POSITION_LOCATION) in vec3 position;\n"
+"				\n"
+"				void main()\n"
+"				{\n"
+"					vec4 clipPos = cameraInfo.screen * objectInfo.transform * vec4(position, 1);\n"
+"					clipPos.y = -clipPos.y;\n"
+"					gl_Position = clipPos;\n"
+"				}\n"
+"\n"
+"				#stage fragment\n"
+"\n"
+"				#version 450\n"
+"				\n"
+"				#include <v3d.h>\n"
+"				\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters\n"
+"				{\n"
+"					vec4 color;\n"
+"				} parameters;\n"
+"				\n"
+"				layout(location = 0) out vec4 color;\n"
+"				\n"
+"				void main()\n"
+"				{\n"
+"					color = parameters.color;\n"
+"				}\n"
+"			}\n"
+"		}\n"
+"	}\n"
+"}";
 
 typedef struct shader_file_path_and_data_mapping_t
 {
@@ -18199,7 +18283,7 @@ typedef struct shader_file_path_and_data_mapping_t
 	long long data_size;
 } shader_file_path_and_data_mapping_t;
 
-#define G_SHADER_MAPPING_COUNT 3
+#define G_SHADER_MAPPING_COUNT 4
 
 static shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT];
 static bool g_is_shader_mappings_populated = false;
@@ -18211,6 +18295,7 @@ static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_
 		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 11952 };
 		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 7948 };
 		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
+		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER, 1419 };
 
 		g_is_shader_mappings_populated = true;
 	}

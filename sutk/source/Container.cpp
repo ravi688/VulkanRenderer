@@ -96,6 +96,9 @@ namespace SUTK
 			// create SUTKU::RenderRect and establish parent-child link with SUTK::RenderRectContainer just created
 			m_renderRect = getUIDriver().createRenderable<RenderRect>(m_renderRectCont);
 			m_renderRectCont->setRenderRect(m_renderRect);
+
+			m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
+			m_renderRect->setThickness(5);
 		}
 		m_isDebug = true;
 	}
