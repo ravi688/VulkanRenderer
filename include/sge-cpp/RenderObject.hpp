@@ -3,6 +3,7 @@
 #include <sge/render_object.h> /* for render_object_t* */
 #include <sge-cpp/Material.hpp> /* for SGE::Material */
 #include <sge-cpp/BitmapText.hpp> /* for SGE::BitmapText */
+#include <sge-cpp/Mesh.hpp> // for SGE::Mesh
 
 namespace SGE
 {
@@ -30,6 +31,10 @@ namespace SGE
 		void attach(BitmapText text) const noexcept
 		{
 			render_object_attach(m_handle, reinterpret_cast<void*>(text.getHandle()));
+		}
+		void attach(Mesh mesh) const noexcept
+		{
+			render_object_attach(m_handle, reinterpret_cast<void*>(mesh.getHandle()));
 		}
 		void setMaterial(Material material) const noexcept
 		{

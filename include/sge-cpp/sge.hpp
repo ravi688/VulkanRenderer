@@ -10,6 +10,7 @@
 #include <sge-cpp/BitmapGlyphAtlasTexture.hpp> /* for SGE::BitmapGlyphAtlasTexture */
 #include <sge-cpp/Font.hpp> /* for SGE::Font */
 #include <sge-cpp/RenderWindow.hpp> /* for SGE::RenderWindow */
+#include <sge-cpp/Mesh.hpp> // for SGE::Mesh
 
 #include <string> /* for std::string */
 #include <string_view> /* for std::string_view */
@@ -76,6 +77,7 @@ namespace SGE
 		RenderScene createRenderScene(u32 queueMask) noexcept { return RenderScene(*this, queueMask); }
 		BitmapGlyphAtlasTexture createBitmapGlyphAtlasTexture(const BitmapGlyphAtlasTexture::CreateInfo& createInfo) noexcept { return BitmapGlyphAtlasTexture(*this, createInfo); }
 		BitmapText createBitmapText(BitmapGlyphAtlasTexture texture) noexcept { return BitmapText(*this, texture); }
+		Mesh createMesh() noexcept { return Mesh(*this); }
 
 		RenderWindow getRenderWindow() const noexcept { return RenderWindow(renderer_get_window(m_driver)); }
 	};

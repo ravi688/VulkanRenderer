@@ -108,6 +108,21 @@ SGE_API void mesh_add_vertex_buffer(mesh_t* mesh, sge_buffer_t* buffer, u32 bind
 	vulkan_mesh_add_vertex_buffer(VULKAN_MESH_CAST(mesh), VULKAN_BUFFER_CAST(buffer), binding);
 }
 
+SGE_API void mesh_create_and_add_vertex_buffer(mesh_t* mesh, vertex_buffer_create_info_t* create_info)
+{
+	vulkan_mesh_create_and_add_vertex_buffer(VULKAN_MESH_CAST(mesh), REINTERPRET_CAST(vulkan_vertex_buffer_create_info_t*, create_info));
+}
+
+SGE_API void mesh_destroy_vertex_buffers(mesh_t* mesh)
+{
+	vulkan_mesh_destroy_vertex_buffers(VULKAN_MESH_CAST(mesh));
+}
+
+SGE_API void mesh_destroy_vertex_buffer(mesh_t* mesh, u32 binding)
+{
+	vulkan_mesh_destroy_vertex_buffer(VULKAN_MESH_CAST(mesh), binding);
+}
+
 static VkIndexType get_vulkan_index_type_from_index_type(index_type_t type)
 {
 	switch(type)
@@ -122,6 +137,11 @@ static VkIndexType get_vulkan_index_type_from_index_type(index_type_t type)
 SGE_API void mesh_set_index_buffer(mesh_t* mesh, sge_buffer_t* buffer, index_type_t type)
 {
 	vulkan_mesh_set_index_buffer(VULKAN_MESH_CAST(mesh), VULKAN_BUFFER_CAST(buffer), get_vulkan_index_type_from_index_type(type));
+}
+
+SGE_API void mesh_destroy_index_buffer(mesh_t* mesh)
+{
+	vulkan_mesh_destroy_index_buffer(VULKAN_MESH_CAST(mesh));
 }
 
 SGE_API void mesh_create_and_set_index_buffer(mesh_t* mesh, index_buffer_create_info_t* create_info)
@@ -140,9 +160,24 @@ SGE_API sge_buffer_t* mesh_get_index_buffer(mesh_t* mesh)
 	return vulkan_mesh_get_index_buffer(VULKAN_MESH_CAST(mesh));
 }
 
+SGE_API bool mesh_has_index_buffer(mesh_t* mesh)
+{
+	return vulkan_mesh_has_index_buffer(VULKAN_MESH_CAST(mesh));
+}
+
 SGE_API sge_buffer_t* mesh_get_vertex_buffer_at(mesh_t* mesh, u32 index)
 {
 	return vulkan_mesh_get_vertex_buffer_at(VULKAN_MESH_CAST(mesh), index);
+}
+
+SGE_API sge_buffer_t* mesh_get_vertex_buffer(mesh_t* mesh, u32 binding)
+{
+	return vulkan_mesh_get_vertex_buffer(VULKAN_MESH_CAST(mesh), binding);
+}
+
+SGE_API u32 mesh_get_vertex_buffer_count(mesh_t* mesh)
+{
+	return vulkan_mesh_get_vertex_buffer_count(VULKAN_MESH_CAST(mesh));
 }
 
 SGE_API void mesh_draw(mesh_t* mesh)

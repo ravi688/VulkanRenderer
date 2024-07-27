@@ -28,6 +28,7 @@
 
 #include <bufferlib/buffer.h>
 #include <sge/internal/vulkan/vulkan_object.h>
+#include <vulkan/vulkan.h> /* for VkIndexType */
 
 // TODO: need to be refactored
 enum
@@ -147,9 +148,20 @@ SGE_API void vulkan_mesh_set_material(vulkan_mesh_t* mesh, vulkan_material_t* ma
  * NOTE: it's more efficient to pass 'binding' as consecutive integers (>= 0)
  * Because, this function internally groups consecutive bindings and binds the vertex buffers with consecutive bindings in one vkCmdBindVertexBuffers call */
 SGE_API void vulkan_mesh_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, u32 binding);
+SGE_API void vulkan_mesh_destroy_vertex_buffers(vulkan_mesh_t* mesh);
+/* destroys (if internal) and removes a vertex buffer having binding equal to 'binding' */
+SGE_API void vulkan_mesh_destroy_vertex_buffer(vulkan_mesh_t* mesh, u32 binding);
+/* returns pointer to the vertex buffer object at index 'index' in the list of vertex buffers for this mesh */
 SGE_API vulkan_buffer_t* vulkan_mesh_get_vertex_buffer_at(vulkan_mesh_t* mesh, u32 index);
+/* returns pointer to the vertex buffer having binding equal to 'binding', if binding is not found then it returns NULL. */
+SGE_API vulkan_buffer_t* vulkan_mesh_get_vertex_buffer(vulkan_mesh_t* mesh, u32 binding);
+/* returns number of vertex buffers added into this mesh */
+SGE_API u32 vulkan_mesh_get_vertex_buffer_count(vulkan_mesh_t* mesh);
 SGE_API void vulkan_mesh_set_index_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, VkIndexType vo_type);
+/* destroys (if internal) and removes the index buffer references */
+SGE_API void vulkan_mesh_destroy_index_buffer(vulkan_mesh_t* mesh);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_buffer_t* vulkan_mesh_get_index_buffer(vulkan_mesh_t* mesh) { return mesh->index_buffer.buffer; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_mesh_has_index_buffer(vulkan_mesh_t* mesh) { return vulkan_mesh_get_index_buffer(mesh) != NULL; }
 /* similar to the above function but it creates the buffer internally from the create info and calls the above to set it as index buffer */
 SGE_API void vulkan_mesh_create_and_set_index_buffer(vulkan_mesh_t* mesh, vulkan_index_buffer_create_info_t* create_info);
 /* similar to the above function but it creates the buffer internally with a create info and calls the above function to add it */
