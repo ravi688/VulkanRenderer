@@ -20,6 +20,7 @@ namespace SUTK
 		if(m_strokeInfo.has_value())
 			m_strokeInfo->isModified = false;
 		m_positionArrayInfo.isModified = false;
+		m_indexArrayInfo.isModified = false;
 		return handle;
 	}
 
@@ -43,6 +44,23 @@ namespace SUTK
 		m_indexArrayInfo.array.push_back(p2);
 		m_indexArrayInfo.array.push_back(p3);
 		m_indexArrayInfo.isModified = true;
+		return *this;
+	}
+
+	Geometry& Geometry::quad(VertexIndex p1, VertexIndex p2, VertexIndex p3, VertexIndex p4) noexcept
+	{
+		/*	
+			Anti-clockwise winding
+
+			 p1 <----------- p4
+			  |  		     |
+			  |				 |
+			  |				 |
+			  p2 -----------p3
+
+		*/
+		triangle(p1, p2, p3);
+		triangle(p3, p4, p1);
 		return *this;
 	}
 

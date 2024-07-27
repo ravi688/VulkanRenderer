@@ -3,6 +3,7 @@
 #include <sge-cpp/Display.hpp>
 
 #include <utility> /* for std::pair */
+#include <sstream> // for std::ostringstream
 
 #include <hpml/affine_transformation.h>
 
@@ -46,7 +47,7 @@ namespace SUTK
 		auto font_data = driver.getBuiltinFileData("/Calibri Regular.ttf");
 		m_font = driver.createFont(font_data.first.data(), font_data.second);
 
-		m_font.setCharSize(15);
+		m_font.setCharSize(24);
 
 		SGE::BitmapGlyphAtlasTexture::CreateInfo createInfo =
 		{
@@ -177,7 +178,7 @@ namespace SUTK
 	{
 		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> bitmapText = getOrCreateBitmapText();
 		SGE::BitmapTextString subText = bitmapText.first.createString();
-		subText.setPointSize(15);
+		subText.setPointSize(24);
 		u32 id = id_generator_get(&m_id_generator);
 		m_bitmapTextStringMappings.insert({ id, { subText,  bitmapText.second } });
 		return static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(id, U32_MAX));
@@ -248,7 +249,7 @@ namespace SUTK
 		it->second.setPosition(SUTKToSGECoordTransform<f32>(position));
 	}
 
-	std::unordered_map<id_generator_id_type_t, SGE::Mesh>::iterator
+	std::unordered_map<id_generator_id_type_t, SGEMeshData>::iterator
 	SGEGfxDriver::getMeshIterator(GfxDriverObjectHandleType handle)
 	{	
 		auto it = m_meshMappings.find(GET_ATTACHED_OBJECT_ID(handle));
@@ -256,18 +257,27 @@ namespace SUTK
 		return it;
 	}
 
-	std::pair<SGE::Mesh, GfxDriverObjectHandleType> SGEGfxDriver::createMesh()
+	SGE::Shader SGEGfxDriver::compileShader(const Geometry& geometry)
+	{
+		return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first);
+	}
+
+	std::pair<SGEMeshData, GfxDriverObjectHandleType> SGEGfxDriver::createMesh(const Geometry& geometry)
 	{
 		debug_log_info("[SGE] Creating new SGE::Mesh object");
 		SGE::Mesh mesh = m_driver.createMesh();
 		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Mesh, SGE::RenderQueue::Type::Geometry);
+		SGE::Shader shader = compileShader(geometry);
+		SGE::Material material = m_driver.getMaterialLibrary().createMaterial(shader, "Untittled");
+		material.set<vec4_t>("parameters.color", vec4(1.0f, 1.0f, 1.0f, 1.0f));
+		object.setMaterial(material);
 		object.attach(mesh);
 		// rebuild render pass graph as new objects have been added into the render scene 
 		m_scene.buildQueues();
 		
 		// add mesh into the mesh mappings table
 		id_generator_id_type_t meshID = id_generator_get(&m_id_generator);
-		m_meshMappings.insert({ meshID, mesh });
+		m_meshMappings.insert({ meshID, { mesh, shader } });
 
 		// add corresponding render object into the render object mappings table
 		id_generator_id_type_t renderObjectID = id_generator_get(&m_id_generator);
@@ -275,7 +285,7 @@ namespace SUTK
 
 		static_assert(sizeof(GfxDriverObjectHandleType) == sizeof(u64));
 
-		return { mesh, static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(meshID, renderObjectID)) };
+		return { { mesh, shader }, static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(meshID, renderObjectID)) };
 	}
 
 	GfxDriverObjectHandleType SGEGfxDriver::compileGeometry(const Geometry& geometry, GfxDriverObjectHandleType previous)
@@ -287,15 +297,15 @@ namespace SUTK
 		// and no need to create new set of SGE objects
 		if(previous != GFX_DRIVER_OBJECT_NULL_HANDLE)
 		{
-			 mesh = getMeshIterator(previous)->second;
+			 mesh = getMeshIterator(previous)->second.mesh;
 			 newHandle = previous;
 		}
 		// otherwise, create new compiled geometry objects.
 		else
 		{
-			std::pair<SGE::Mesh, GfxDriverObjectHandleType> result = createMesh();
+			std::pair<SGEMeshData, GfxDriverObjectHandleType> result = createMesh(geometry);
 			newHandle = result.second;
-			mesh = result.first;
+			mesh = result.first.mesh;
 		}
 
 		if(geometry.isVertexIndexArrayModified())
@@ -375,7 +385,7 @@ namespace SUTK
 	{
 		// erase the mesh object
 		auto it = getMeshIterator(geometry);
-		it->second.destroy();
+		it->second.mesh.destroy();
 		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_ATTACHED_OBJECT_ID(geometry)));
 		m_meshMappings.erase(it);
 

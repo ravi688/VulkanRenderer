@@ -19,6 +19,7 @@ namespace SUTK
 		Rect2D<DisplaySizeType> m_rect;
 		RenderRectContainer* m_container;
 		Geometry m_geometry;
+		f32 m_thickness;
 
 		friend class RenderRectContainer;
 		void onContainerResize(Rect2D<DisplaySizeType> rect, bool isPositionChanged, bool isSizeChanged) noexcept;
@@ -31,6 +32,7 @@ namespace SUTK
 		virtual bool isDirty() override;
 		virtual void update() override;
 
+		void setThickness(f32 thickness) noexcept;
 		Rect2D<DisplaySizeType> getRect() const noexcept { return m_rect; }
 
 		RenderRectContainer* getContainer() noexcept { return m_container; }

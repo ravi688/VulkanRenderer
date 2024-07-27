@@ -92,7 +92,7 @@ namespace SUTK
 	};
 
 	template<typename T>
-	Vec2D<T> operator *(T s, const Vec2D<T>& v) noexcept { return { s * v.x, s * v.y, s * v.z }; }
+	Vec2D<T> operator *(T s, const Vec2D<T>& v) noexcept { return { s * v.x, s * v.y }; }
 
 	template<typename T>
 	struct NegativeSign { };
@@ -123,9 +123,9 @@ namespace SUTK
 	template<typename T>
 	Vec2D<T> Vec2D<T>::right() { return { 1, 0 }; }
 	template<typename T>
-	Vec2D<T> Vec2D<T>::up() { return { NegativeSign<T>::value, 0 }; }
+	Vec2D<T> Vec2D<T>::up() { return { 0, NegativeSign<T>::value }; }
 	template<typename T>
-	Vec2D<T> Vec2D<T>::down() { return { 1, 0 }; }
+	Vec2D<T> Vec2D<T>::down() { return { 0, 1 }; }
 
 	template<typename T>
 	struct Rect2D
@@ -143,7 +143,7 @@ namespace SUTK
 
 		Vec2D<T> getCenter() const noexcept
 		{
-			return getPosition() + getSize() * 0.5;
+			return static_cast<Vec2D<f32>>(getPosition()) + static_cast<Vec2D<f32>>(getSize()) * 0.5;
 		}
 
 		Vec2D<T> getTopLeft() const noexcept
