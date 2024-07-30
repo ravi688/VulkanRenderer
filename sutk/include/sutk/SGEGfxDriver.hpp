@@ -55,6 +55,7 @@ namespace SUTK
 		// We're caching current window size into this member variable to avoid calling internal function calls everytime getSize() is called
 		// The value of this variable will be updated whenever window is resized.
 		Vec2D<DisplaySizeType> m_size;
+		Vec2Df m_sizeCentimeters;
 
 	private:
 		std::unordered_map<id_generator_id_type_t, SGEBitmapTextData>::iterator
@@ -72,8 +73,7 @@ namespace SUTK
 		std::pair<SGEMeshData, GfxDriverObjectHandleType> createMesh(const Geometry& geometry);
 		SGE::Shader compileShader(const Geometry& geometry);
 		// Transforms SUTK coordinates (origin at top-left, and y downwards) to SGE coordinates (origin at center, and y upwards)
-		template<typename T>
-		vec3_t SUTKToSGECoordTransform(const Vec2D<T> position);
+		vec3_t SUTKToSGECoordTransform(const Vec2Df position);
 
 	public:
 
@@ -85,18 +85,19 @@ namespace SUTK
 
 		// IGfxDriver INTERFACE IMPLEMENTATION
 
-		virtual Vec2D<DisplaySizeType> getSize() override { return m_size; }
+		virtual Vec2D<DisplaySizeType> getSizeInPixels() override { return m_size; }
+		virtual Vec2Df getSizeInCentimeters() override { return m_sizeCentimeters; }
 		virtual void render(UIDriver& driver) override;
 
 		virtual GfxDriverObjectHandleType createText() override;
 		virtual void destroyText(GfxDriverObjectHandleType handle) override;
 
-		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2D<DisplaySizeType> position) override;
+		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) override;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
 
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) override;
-		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2D<DisplaySizeType> rect) override;
-		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec2D<f32> position) override;
+		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) override;
+		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec2Df position) override;
 
 		// compiles SUTK::Geometry description into SGE objects which can eventually be renderered in SGE
 		virtual GfxDriverObjectHandleType compileGeometry(const Geometry& geometryDsc, GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) override;
@@ -104,6 +105,7 @@ namespace SUTK
 		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) override;
 
 		virtual u32 getBaselineHeightInPixels() override;
+		virtual f32 getBaselineHeightInCentimeters() override;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) override;
 		virtual void removeOnResizeHandler(u32 id) override;
 	};

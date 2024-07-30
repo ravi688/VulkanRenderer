@@ -74,7 +74,7 @@ namespace SUTK
 		bool m_isPosDirty;
 		bool m_isDataDirty;
 		LineTextData m_data;
-		Vec2D<DisplaySizeType> m_pos;
+		Vec2Df m_pos;
 
 		LineText(UIDriver& driver) noexcept;
 
@@ -83,13 +83,13 @@ namespace SUTK
 	public:
 		virtual bool isDirty() override;
 		virtual void update() override;
-		void setClipRect(const Rect2D<DisplaySizeType> rect) noexcept;
+		void setClipRect(const Rect2Df rect) noexcept;
 		void setData(const std::string& data) noexcept;
 		void append(const std::string& data) noexcept;
 		void insert(LineCountType col, const std::string& data) noexcept;
-		void setPosition(Vec2D<DisplaySizeType> pos) noexcept;
-		void addPosition(Vec2D<DisplaySizeType> pos) noexcept;
-		void subPosition(Vec2D<DisplaySizeType> pos) noexcept;
+		void setPosition(Vec2Df pos) noexcept;
+		void addPosition(Vec2Df pos) noexcept;
+		void subPosition(Vec2Df pos) noexcept;
 		void clear() noexcept;
 	};
 
@@ -145,8 +145,8 @@ namespace SUTK
 		
 		std::vector<LineText*> m_lines;
 		
-		// distance between two consecutive base lines in screen pixel coordinate
-		u32 m_baselineHeight;
+		// distance between two consecutive base lines in centimeters
+		f32 m_baselineHeight;
 
 		bool m_isDirty;
 		bool m_isClippingEnabled;
@@ -165,8 +165,8 @@ namespace SUTK
 		friend class UIDriver;
 		friend class TextContainer;
 
-		Vec2D<DisplaySizeType> getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
-		void onContainerResize(const Rect2D<DisplaySizeType>& rect, bool isPositionChanged, bool isSizeChanged) noexcept;
+		Vec2Df getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
+		void onContainerResize(const Rect2Df& rect, bool isPositionChanged, bool isSizeChanged) noexcept;
 		void recalculateClipRect() noexcept;
 
 	public:

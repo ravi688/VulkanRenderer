@@ -12,7 +12,7 @@ namespace SUTK
 																			m_rect({ 0, 0, 100, 100 }), 
 																			m_container(container),
 																			m_geometry(driver),
-																			m_thickness(10.0f)
+																			m_thickness(0.2f)
 	{
 		m_geometry
 			.vertexPositionArray(8)
@@ -53,19 +53,19 @@ namespace SUTK
 				7  			  5
 			*/
 
-			auto downRight = (Vec2D<f32>::down() + Vec2D<f32>::right()) * m_thickness * 0.5f;
-			auto downLeft = (Vec2D<f32>::down() + Vec2D<f32>::left()) * m_thickness * 0.5f;
-			array[0] = static_cast<Vec2D<f32>>(topLeft) - downRight;
-			array[1] = static_cast<Vec2D<f32>>(topLeft) + downRight;
-			array[2] = static_cast<Vec2D<f32>>(topRight) + downLeft;
-			array[3] = static_cast<Vec2D<f32>>(topRight) - downLeft;
+			auto downRight = (Vec2Df::down() + Vec2Df::right()) * m_thickness * 0.5f;
+			auto downLeft = (Vec2Df::down() + Vec2Df::left()) * m_thickness * 0.5f;
+			array[0] = static_cast<Vec2Df>(topLeft) - downRight;
+			array[1] = static_cast<Vec2Df>(topLeft) + downRight;
+			array[2] = static_cast<Vec2Df>(topRight) + downLeft;
+			array[3] = static_cast<Vec2Df>(topRight) - downLeft;
 
-			auto upLeft = (Vec2D<f32>::up() + Vec2D<f32>::left()) * m_thickness * 0.5f;
-			auto upRight = (Vec2D<f32>::up() + Vec2D<f32>::right()) * m_thickness * 0.5f;
-			array[4] = static_cast<Vec2D<f32>>(bottomRight) + upLeft;
-			array[5] = static_cast<Vec2D<f32>>(bottomRight) - upLeft;
-			array[6] = static_cast<Vec2D<f32>>(bottomLeft) + upRight;
-			array[7] = static_cast<Vec2D<f32>>(bottomLeft) - upRight;
+			auto upLeft = (Vec2Df::up() + Vec2Df::left()) * m_thickness * 0.5f;
+			auto upRight = (Vec2Df::up() + Vec2Df::right()) * m_thickness * 0.5f;
+			array[4] = static_cast<Vec2Df>(bottomRight) + upLeft;
+			array[5] = static_cast<Vec2Df>(bottomRight) - upLeft;
+			array[6] = static_cast<Vec2Df>(bottomLeft) + upRight;
+			array[7] = static_cast<Vec2Df>(bottomLeft) - upRight;
 
 			m_handle = m_geometry.compile(m_handle);
 		}
@@ -85,7 +85,7 @@ namespace SUTK
 		 m_isSizeDirty = true;
 	}
 
-	void RenderRect::onContainerResize(Rect2D<DisplaySizeType> rect, bool isPositionChanged, bool isSizeChanged) noexcept
+	void RenderRect::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
 		m_rect = rect;
 		m_isDirty = true;

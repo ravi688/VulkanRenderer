@@ -15,7 +15,7 @@ namespace SUTK
 		m_text = text;
 	}
 
-	void TextContainer::onResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged)
+	void TextContainer::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		// It is mandatory to call Container::onResize in any of the derived class overriding the function.
 		Container::onResize(newRect, isPositionChanged, isSizeChanged);

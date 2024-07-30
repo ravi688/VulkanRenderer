@@ -14,8 +14,8 @@ namespace SUTK
 	void Container::setParent(Container* parent) noexcept
 	{
 		// recalculate this container's rect into the local space of new parent container
-		Vec2D<DisplaySizeType> screenCoords = getLocalCoordsToScreenCoords({ 0u, 0u });
-		Vec2D<DisplaySizeType> localCoords = (parent != NULL) ? parent->getScreenCoordsToLocalCoords(screenCoords) : screenCoords;
+		Vec2Df screenCoords = getLocalCoordsToScreenCoords({ 0u, 0u });
+		Vec2Df localCoords = (parent != NULL) ? parent->getScreenCoordsToLocalCoords(screenCoords) : screenCoords;
 		setPosition(localCoords);
 
 		// previous parent is non-null, then remove this container from the parent
@@ -40,12 +40,12 @@ namespace SUTK
 		}
 	}
 
-	Vec2D<DisplaySizeType> Container::getScreenCoordsToLocalCoords(Vec2D<DisplaySizeType> screenCoords) const
+	Vec2Df Container::getScreenCoordsToLocalCoords(Vec2Df screenCoords) const
 	{
 		return screenCoords - getLocalCoordsToScreenCoords({ 0u, 0u });
 	}
 
-	Vec2D<DisplaySizeType> Container::getLocalCoordsToScreenCoords(Vec2D<DisplaySizeType> localCoords) const
+	Vec2Df Container::getLocalCoordsToScreenCoords(Vec2Df localCoords) const
 	{
 		if(getParent() != NULL)
 			return getParent()->getLocalCoordsToScreenCoords(getRect().getPosition()) + localCoords;
@@ -74,7 +74,7 @@ namespace SUTK
 		container->setParent(NULL);
 	}
 
-	void Container::onResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged)
+	void Container::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		// if this container is resized and update the renderRect's size as well
 		if(m_renderRectCont != NULL)
@@ -98,7 +98,7 @@ namespace SUTK
 			m_renderRectCont->setRenderRect(m_renderRect);
 
 			m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
-			m_renderRect->setThickness(5);
+			m_renderRect->setThickness(0.05f);
 		}
 		m_isDebug = true;
 	}
