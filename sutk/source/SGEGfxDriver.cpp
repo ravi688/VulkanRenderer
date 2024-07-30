@@ -8,6 +8,8 @@
 #include <hpml/affine_transformation.h>
 
 #define BITMAP_TEXT_OVERLOAD_THRESHOLD 500 // 800 number of characters rewrite can be assumed to have near to zero latency
+#define CENTIMETERS_PER_INCH 2.54f
+#define INCHES_PER_CENTIMETER (1.0f / CENTIMETERS_PER_INCH)
 
 namespace SUTK
 {	
@@ -24,17 +26,21 @@ namespace SUTK
 					[](void* publisher, void* handlerData)
 					{
 						std::pair<u32, u32> pair = SGE::Event::ReinterpretPublisher<SGE::RenderWindow>(publisher).getSize();
-						auto& size = *reinterpret_cast<Vec2D<DisplaySizeType>*>(handlerData);
-						size = getVec2DFromStdPair(pair);
+						auto& gfxDriver = *reinterpret_cast<SGEGfxDriver*>(handlerData);
+						gfxDriver.m_size = getVec2DFromStdPair(pair);
+						extent2d_t inches = SGE::Display::ConvertPixelsToInches({ static_cast<f32>(pair.first), static_cast<f32>(pair.second) });
+						gfxDriver.m_sizeCentimeters = { inches.width * CENTIMETERS_PER_INCH, inches.height * CENTIMETERS_PER_INCH };
 					}, &m_size);
 		m_size = getVec2DFromStdPair(driver.getRenderWindow().getSize());
+		extent2d_t inches = SGE::Display::ConvertPixelsToInches({ static_cast<f32>(m_size.width), static_cast<f32>(m_size.height) });
+		m_sizeCentimeters = { inches.width * CENTIMETERS_PER_INCH, inches.height * CENTIMETERS_PER_INCH };
 
 		SGE::CameraSystem cameraSystem = driver.getCameraSystem();
 		SGE::ShaderLibrary shaderLibrary = driver.getShaderLibrary();
 
 		// create camera 
 		SGE::Camera camera = cameraSystem.createCamera(SGE::Camera::ProjectionType::Perspective);
-		camera.setClear(COLOR_BLACK, 1.0f);
+		camera.setClear(COLOR_BLUE, 1.0f);
 		camera.setActive(true);
 		camera.setTransform(mat4_mul(2, mat4_translation(-1.8f, 0.6f, 0), mat4_rotation(0, 0, -22 * DEG2RAD)));
 
@@ -207,17 +213,17 @@ namespace SUTK
 		m_bitmapTextStringMappings.erase(it);
 	}
 
-	template<typename T>
-	vec3_t SGEGfxDriver::SUTKToSGECoordTransform(const Vec2D<T> position)
+	vec3_t SGEGfxDriver::SUTKToSGECoordTransform(const Vec2Df position)
 	{
-		auto windowSize = getSize();
-		return vec3(0.0f, static_cast<float>(windowSize.height) * 0.5f - static_cast<float>(position.y), 
-											   static_cast<float>(position.x) - static_cast<float>(windowSize.width) * 0.5f);
+		// SUTK's coordinate system is in centimeters, while SGE's coordinate system is in pixels
+		extent2d_t pixelPosition = SGE::Display::ConvertInchesToPixels({ position.x * INCHES_PER_CENTIMETER, position.y * INCHES_PER_CENTIMETER });
+		auto windowSize = getSizeInPixels();
+		return vec3(0.0f, windowSize.height * 0.5f - pixelPosition.height, pixelPosition.width - windowSize.width * 0.5f);
 	}
 
-	void SGEGfxDriver::setTextPosition(GfxDriverObjectHandleType handle, Vec2D<DisplaySizeType> position)
+	void SGEGfxDriver::setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position)
 	{
-		getText(handle).setPosition(SUTKToSGECoordTransform<DisplaySizeType>(position));
+		getText(handle).setPosition(SUTKToSGECoordTransform(position));
 	}
 
 	void SGEGfxDriver::setTextData(GfxDriverObjectHandleType handle, const std::string& data)
@@ -237,16 +243,18 @@ namespace SUTK
 		return it->second.textHandle;
 	}
 
-	void SGEGfxDriver::setObjectScissor(GfxDriverObjectHandleType handle, const Rect2D<DisplaySizeType> rect)
+	void SGEGfxDriver::setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect)
 	{
 		auto it = getRenderObjectIterator(handle);
-		it->second.setScissor(irect2d(ioffset2d(rect.x, rect.y), iextent2d(rect.width, rect.height)));
+		extent2d_t rectPosition = SGE::Display::ConvertInchesToPixels({ rect.x * INCHES_PER_CENTIMETER, rect.y * INCHES_PER_CENTIMETER });
+		extent2d_t rectSize = SGE::Display::ConvertInchesToPixels({ rect.width * INCHES_PER_CENTIMETER, rect.height * INCHES_PER_CENTIMETER });
+		it->second.setScissor(irect2d(ioffset2d(rectPosition.x, rectPosition.y), iextent2d(rectSize.width, rectSize.height)));
 	}
 
-	void SGEGfxDriver::setObjectPosition(GfxDriverObjectHandleType handle, const Vec2D<f32> position)
+	void SGEGfxDriver::setObjectPosition(GfxDriverObjectHandleType handle, const Vec2Df position)
 	{
 		auto it = getRenderObjectIterator(handle);
-		it->second.setPosition(SUTKToSGECoordTransform<f32>(position));
+		it->second.setPosition(SUTKToSGECoordTransform(position));
 	}
 
 	std::unordered_map<id_generator_id_type_t, SGEMeshData>::iterator
@@ -407,6 +415,11 @@ namespace SUTK
 		return m_font.getFontUnitsToPixels(m_font.getBaselineSpace(), SGE::Display::GetDPI().height);
 	}
 
+	f32 SGEGfxDriver::getBaselineHeightInCentimeters()
+	{
+		return SGE::Display::ConvertPixelsToInches({ 0, static_cast<f32>(getBaselineHeightInPixels()) }).height * CENTIMETERS_PER_INCH;
+	}
+
 	u32 SGEGfxDriver::addOnResizeHandler(OnResizeCallbackHandler handler)
 	{
 		u32 id = id_generator_get(&m_id_generator);
@@ -417,8 +430,10 @@ namespace SUTK
 			{
 				std::pair<u32, u32> pair = SGE::Event::ReinterpretPublisher<SGE::RenderWindow>(publisher).getSize();
 				auto size = getVec2DFromStdPair(pair);
+				// window size in inches
+				extent2d_t size_inches = SGE::Display::ConvertPixelsToInches(extent2d(size.width, size.height));
 				auto& _handlerData = *reinterpret_cast<OnResizeCallbackHandlerData*>(handlerData);
-				_handlerData.handler(size);
+				_handlerData.handler(Vec2Df{ size_inches.width * CENTIMETERS_PER_INCH, size_inches.height * CENTIMETERS_PER_INCH });
 			}, &onResizeHandlerData);
 		onResizeHandlerData.handle = handle;
 		return id;

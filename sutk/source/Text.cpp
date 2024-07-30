@@ -32,7 +32,7 @@ namespace SUTK
 			m_isDataDirty = false;
 		}
 	}
-	void LineText::setClipRect(const Rect2D<DisplaySizeType> rect) noexcept
+	void LineText::setClipRect(const Rect2Df rect) noexcept
 	{
 		getGfxDriver().setTextScissor(m_handle, rect);
 	}
@@ -57,23 +57,23 @@ namespace SUTK
 		m_data.insert(col, data);
 		m_isDataDirty = true;
 	}
-	void LineText::setPosition(Vec2D<DisplaySizeType> pos) noexcept
+	void LineText::setPosition(Vec2Df pos) noexcept
 	{
 		if(m_pos == pos)
 			return;
 		m_pos = pos;
 		m_isPosDirty = true;
 	}
-	void LineText::addPosition(Vec2D<DisplaySizeType> pos) noexcept
+	void LineText::addPosition(Vec2Df pos) noexcept
 	{
-		if(pos == Vec2D<DisplaySizeType>::zero())
+		if(pos == Vec2Df::zero())
 			return;
 		m_pos += pos;
 		m_isPosDirty = true;
 	}
-	void LineText::subPosition(Vec2D<DisplaySizeType> pos) noexcept
+	void LineText::subPosition(Vec2Df pos) noexcept
 	{
-		if(pos == Vec2D<DisplaySizeType>::zero())
+		if(pos == Vec2Df::zero())
 			return;
 		m_pos -= pos;
 		m_isPosDirty = true;
@@ -86,7 +86,7 @@ namespace SUTK
 
 	Text::Text(UIDriver& driver, TextContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_isDirty(false), m_isClippingEnabled(false)
 	{
-		m_baselineHeight = getGfxDriver().getBaselineHeightInPixels();
+		m_baselineHeight = getGfxDriver().getBaselineHeightInCentimeters();
 	}
 
 	bool Text::isDirty()
@@ -123,9 +123,9 @@ namespace SUTK
 		m_lines.clear();
 	}
 
-	Vec2D<DisplaySizeType> Text::getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept
+	Vec2Df Text::getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept
 	{
-		return { 0, static_cast<DisplaySizeType>(m_baselineHeight * cursor.getLine()) };
+		return { 0, m_baselineHeight * cursor.getLine() };
 	}
 
 	// this creates a new line before line pointed by current cursor
@@ -146,14 +146,14 @@ namespace SUTK
 
 		// shift the line at which the cursor points to and the lines succeeding it
 		for(std::size_t i = cursorPosition.getLine(); i < m_lines.size(); i++)
-			m_lines[i]->addPosition({ 0, static_cast<DisplaySizeType>(m_baselineHeight) });
+			m_lines[i]->addPosition({ 0, m_baselineHeight });
 
 		// insert the line at which the cursor points to
 		LineText* lineText = new LineText(getUIDriver());
 		m_lines.insert(com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, cursorPosition.getLine()), lineText);
 
-		Vec2D<DisplaySizeType> localCoords = getLocalPositionFromCursorPosition(cursorPosition);
-		Vec2D<DisplaySizeType> screenCoords = getContainer()->getLocalCoordsToScreenCoords(localCoords);
+		Vec2Df localCoords = getLocalPositionFromCursorPosition(cursorPosition);
+		Vec2Df screenCoords = getContainer()->getLocalCoordsToScreenCoords(localCoords);
 		lineText->setPosition(screenCoords);
 
 		return lineText;
@@ -252,13 +252,13 @@ namespace SUTK
 		recalculateClipRect();
 	}
 
-	void Text::onContainerResize(const Rect2D<DisplaySizeType>& newRect, bool isPositionChanged, bool isSizeChanged) noexcept
+	void Text::onContainerResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
 		CursorPosition<LineCountType> cursorPosition { 0u, 0u };
 		for(std::size_t i = 0; i < m_lines.size(); i++)
 		{
-			Vec2D<DisplaySizeType> localCoords = getLocalPositionFromCursorPosition(cursorPosition);
-			Vec2D<DisplaySizeType> screenCoords = getContainer()->getLocalCoordsToScreenCoords(localCoords);
+			Vec2Df localCoords = getLocalPositionFromCursorPosition(cursorPosition);
+			Vec2Df screenCoords = getContainer()->getLocalCoordsToScreenCoords(localCoords);
 			LineText* lineText = m_lines[i];
 			lineText->setPosition(screenCoords);
 			cursorPosition.moveToNextLine();

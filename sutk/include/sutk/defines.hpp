@@ -281,4 +281,7 @@ namespace SUTK
 		static constexpr Color3 white() noexcept { return { 255, 255, 255 }; }
 		static constexpr Color3 black() noexcept { return { 0, 0, 0 }; }
 	};
+
+	typedef Rect2D<f32> Rect2Df;
+	typedef Vec2D<f32> Vec2Df;
 }

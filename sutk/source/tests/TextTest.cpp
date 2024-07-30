@@ -22,7 +22,7 @@ namespace SUTK
 		m_uiDriver = new UIDriver(*m_gfxDriver);
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
 		m_textContainer = m_uiDriver->createContainer<TextContainer>(rootContainer);
-		m_textContainer->setRect({ 100, 0, 300, 300 });
+		m_textContainer->setRect({ 1.0f, 0, 7, 7 });
 		m_text = m_uiDriver->createText(m_textContainer);
 		m_text->append("#include <iostream>\n");
 		m_text->append("int main()\n");
@@ -54,7 +54,7 @@ namespace SUTK
 	{
 		static u64 counter = 0;
 		++counter;
-		m_textContainer->setRect({ 100 + (counter / 2000.0f) * 100 , (counter / 2000.0f) * 200, 300, 300 });
+		m_textContainer->setRect({ 1.0f + (counter / 2000.0f) * 1.0f , (counter / 2000.0f) * 2.0f, 7.0f, 7.0f });
 		if(counter >= 1000)
 		{
 			counter = 0;
