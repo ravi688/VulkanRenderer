@@ -178,6 +178,56 @@ namespace SUTK
 			height = size.height;
 		}
 
+		void extendTopLeft(Vec2D<T> disp) noexcept
+		{
+			extendTop(disp.y);
+			extendLeft(disp.x);
+		}
+
+		void extendBottomRight(Vec2D<T> disp) noexcept
+		{
+			extendBottom(disp.y);
+			extendRight(disp.x);
+		}
+
+		void extendTopRight(Vec2D<T> disp) noexcept
+		{
+			extendTop(disp.y);
+			extendRight(disp.x);
+		}
+
+		void extendBottomLeft(Vec2D<T> disp) noexcept
+		{
+			extendBottom(disp.y);
+			extendLeft(disp.x);
+		}
+
+		// +ve values means extend towards left
+		void extendLeft(T value) noexcept
+		{
+			x += value * NegativeSign<T>::value;
+			width += value;
+		}
+
+		// +ve value means extend towards right
+		void extendRight(T value) noexcept
+		{
+			width += value;
+		}
+
+		// +ve value means extend towards top (up direction)
+		void extendTop(T value) noexcept
+		{
+			y += value * NegativeSign<T>::value;
+			height += value;
+		}
+
+		// +ve value means extend towards bottom (downward direction)
+		void extendBottom(T value) noexcept
+		{
+			height += value;
+		}
+
 		std::string toString() const noexcept
 		{
 			// NOTE: we are creating here r-value std::ostringstream object
