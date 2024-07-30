@@ -881,7 +881,7 @@ static void update_screen_info(void* _window, void* _renderer)
 	struct_descriptor_set_uvec2(&renderer->screen_info.struct_def, renderer->screen_info.size_field, CAST_TO(uint*, &size));
 
 	/* set the screen matrix */
-	AUTO matrix = mat4_ortho_projection(-0.04f, 100, size.height, (f32)size.width / (f32)size.height);
+	AUTO matrix = mat4_ortho_projection2(-0.04f, 100, size.height, (f32)size.width / (f32)size.height);
 	mat4_move(matrix, mat4_transpose(matrix));
 	struct_descriptor_set_mat4(&renderer->screen_info.struct_def, renderer->screen_info.matrix_field, CAST_TO(f32*, &matrix));
 }

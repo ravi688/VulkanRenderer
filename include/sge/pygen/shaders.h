@@ -3,7 +3,7 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 1h:18m:15s, 28/7/2024
+ * Time & Date (yy/mm/yyy) of Generation: 12h:3m:7s, 30/7/2024
  */
 
 #pragma once
@@ -18225,6 +18225,7 @@ static const char* _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER =
 "			{\n"
 "				rasterization\n"
 "				{\n"
+"					// in SUTK (geometry compilation) we need this to be counterclockwise\n"
 "					frontface = counterclockwise\n"
 "				}\n"
 "				colorBlend\n"
@@ -18245,11 +18246,19 @@ static const char* _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER =
 "				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;\n"
 "				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;\n"
 "				\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform ScreenInfo\n"
+"				{\n"
+"					uvec2 resolution;\n"
+"					uvec2 dpi;\n"
+"					uvec2 size;\n"
+"					mat4 matrix;\n"
+"				} screenInfo;\n"
+"\n"
 "				layout(location = POSITION_LOCATION) in vec3 position;\n"
 "				\n"
 "				void main()\n"
 "				{\n"
-"					vec4 clipPos = cameraInfo.screen * objectInfo.transform * vec4(position, 1);\n"
+"					vec4 clipPos = screenInfo.matrix * objectInfo.transform * vec4(position, 1);\n"
 "					clipPos.y = -clipPos.y;\n"
 "					gl_Position = clipPos;\n"
 "				}\n"
@@ -18295,7 +18304,7 @@ static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_
 		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 11952 };
 		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 7948 };
 		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
-		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER, 1419 };
+		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "/home/ravi/Indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER, 1694 };
 
 		g_is_shader_mappings_populated = true;
 	}
