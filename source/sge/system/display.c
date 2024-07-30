@@ -53,8 +53,23 @@ SGE_API extent2d_t display_get_dpi()
 
 SGE_API extent2d_t display_get_inches()
 {
+	/* diagonal size in inches */
 	f32 diagonal = display_get_diagonal_size();
 	iextent2d_t aspect_ratio = display_get_aspect_ratio();
 	u32 squared_sum = aspect_ratio.width * aspect_ratio.width + aspect_ratio.height * aspect_ratio.height;
 	return extent2d(diagonal * aspect_ratio.width / sqrt(squared_sum), diagonal * aspect_ratio.height / sqrt(squared_sum));
+}
+
+SGE_API extent2d_t display_convert_inches_to_pixels(extent2d_t inches)
+{
+	/* display size (width, height) in inches */
+	extent2d_t display_size = display_get_inches();
+	iextent2d_t display_res = display_get_resolution();
+	return extent2d((inches.width / display_size.width) * display_res.width, (inches.height / display_size.height) * display_res.height);
+}
+
+SGE_API extent2d_t display_convert_pixels_to_inches(extent2d_t pixels)
+{
+	extent2d_t dpi = display_get_dpi();
+	return extent2d(pixels.width / dpi.width,  pixels.height / dpi.height);
 }
