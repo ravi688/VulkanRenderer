@@ -45,5 +45,9 @@ SGE_API f32 display_get_diagonal_size();
 SGE_API extent2d_t display_get_dpi();
 /* returns physical width and height of display in inches */
 SGE_API extent2d_t display_get_inches();
+/* returns width and height in pixels given the width and height in inches */
+SGE_API extent2d_t display_convert_inches_to_pixels(extent2d_t inches);
+/* returns width and height in inches given the width and height in pixels */
+SGE_API extent2d_t display_convert_pixels_to_inches(extent2d_t pixels);
 
 END_CPP_COMPATIBLE
