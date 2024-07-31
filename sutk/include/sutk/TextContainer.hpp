@@ -19,6 +19,7 @@ namespace SUTK
 	protected:
 		virtual void onAdd(Container* parent) override;
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
+		virtual void onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 
 	public:
 

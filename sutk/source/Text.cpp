@@ -235,12 +235,12 @@ namespace SUTK
 
 	void Text::recalculateClipRect() noexcept
 	{
+		TextContainer* container = getContainer();
+		// convert the top-left corner of the container, in which this text is, to screen coordinates
+		auto position = container->getLocalCoordsToScreenCoords({ 0u, 0u });
+		
 		for(std::size_t i = 0; i < m_lines.size(); i++)
 		{
-			TextContainer* container = getContainer();
-
-			// convert the top-left corner of the container, in which this text is, to screen coordinates
-			auto position = container->getLocalCoordsToScreenCoords({ 0u, 0u });
 			// set the clip rect, note that width and height should remain as that of its text container
 			m_lines[i]->setClipRect({ position.x, position.y, container->getRect().width, container->getRect().height });
 		}
@@ -263,5 +263,7 @@ namespace SUTK
 			lineText->setPosition(screenCoords);
 			cursorPosition.moveToNextLine();
 		}
+		if(m_isClippingEnabled)
+			recalculateClipRect();
 	}
 }

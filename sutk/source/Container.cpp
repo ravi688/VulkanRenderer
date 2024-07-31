@@ -6,9 +6,24 @@
 
 namespace SUTK
 {
-	Container::Container(SUTK::UIDriver& driver, Container* parent) : UIDriverObject(driver), m_rect({0, 0, 100, 100}), m_parent(NULL), m_renderRectCont(NULL), m_renderRect(NULL), m_isDebug(false)
+	Container::Container(SUTK::UIDriver& driver, Container* parent) : 
+															UIDriverObject(driver), 
+															m_rect({0, 0, 5.0f, 5.0f}),
+															m_anchorRect(NULL),
+															m_parent(NULL), 
+															m_renderRectCont(NULL), 
+															m_renderRect(NULL), 
+															m_isDebug(false)
 	{
 		setParent(parent);
+		if(parent != NULL)
+			m_anchorRect = new AnchorRect(*this, *parent);
+	}
+
+	Container::~Container()
+	{
+		if(m_anchorRect != NULL)
+			delete m_anchorRect;
 	}
 
 	void Container::setParent(Container* parent) noexcept
@@ -74,14 +89,28 @@ namespace SUTK
 		container->setParent(NULL);
 	}
 
+	void Container::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
+	{
+		if(m_anchorRect != NULL)
+			m_anchorRect->onParentResize(newRect, isPositionChanged, isSizeChanged);
+	}
+
 	void Container::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		// if this container is resized and update the renderRect's size as well
 		if(m_renderRectCont != NULL)
 		{
 			_assert(m_isDebug);
-			m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
+			if(isSizeChanged)
+				m_renderRectCont->setRect({ 0, 0, newRect.width, newRect.height });
 		}
+
+		if(m_anchorRect != NULL)
+			m_anchorRect->onChildResize(newRect, isPositionChanged, isSizeChanged);
+
+		// inform the child containers that parent's rect has been resized or has changed its position
+		for(Container*& container : m_containers)
+			container->onParentResize(newRect, isPositionChanged, isSizeChanged);
 	}
 
 	void Container::enableDebug(bool isEnable) noexcept
@@ -95,10 +124,9 @@ namespace SUTK
 			
 			// create SUTKU::RenderRect and establish parent-child link with SUTK::RenderRectContainer just created
 			m_renderRect = getUIDriver().createRenderable<RenderRect>(m_renderRectCont);
-			m_renderRectCont->setRenderRect(m_renderRect);
-
-			m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
 			m_renderRect->setThickness(0.05f);
+
+			m_renderRectCont->setRenderRect(m_renderRect);
 		}
 		m_isDebug = true;
 	}

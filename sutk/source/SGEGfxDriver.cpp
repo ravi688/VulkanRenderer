@@ -30,7 +30,7 @@ namespace SUTK
 						gfxDriver.m_size = getVec2DFromStdPair(pair);
 						extent2d_t inches = SGE::Display::ConvertPixelsToInches({ static_cast<f32>(pair.first), static_cast<f32>(pair.second) });
 						gfxDriver.m_sizeCentimeters = { inches.width * CENTIMETERS_PER_INCH, inches.height * CENTIMETERS_PER_INCH };
-					}, &m_size);
+					}, reinterpret_cast<void*>(this));
 		m_size = getVec2DFromStdPair(driver.getRenderWindow().getSize());
 		extent2d_t inches = SGE::Display::ConvertPixelsToInches({ static_cast<f32>(m_size.width), static_cast<f32>(m_size.height) });
 		m_sizeCentimeters = { inches.width * CENTIMETERS_PER_INCH, inches.height * CENTIMETERS_PER_INCH };

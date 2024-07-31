@@ -77,9 +77,9 @@ namespace SUTK
 
 		Topology getTopology() const noexcept { return m_topology; }
 
-		VertexPositionArray& getVertexPositionArray() { return m_positionArrayInfo.array; }
+		VertexPositionArray& getVertexPositionArrayForWrite() { m_positionArrayInfo.isModified = true; return m_positionArrayInfo.array; }
 		const VertexPositionArray& getVertexPositionArray() const { return m_positionArrayInfo.array; }
-		VertexIndexArray& getVertexIndexArray() { return m_indexArrayInfo.array; }
+		VertexIndexArray& getVertexIndexArrayForWrite() { m_indexArrayInfo.isModified = true; return m_indexArrayInfo.array; }
 		const VertexIndexArray& getVertexIndexArray() const { return m_indexArrayInfo.array; }
 
 		bool isVertexIndexArrayModified() const noexcept { return m_indexArrayInfo.isModified; }

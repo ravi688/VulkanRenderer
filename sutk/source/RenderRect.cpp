@@ -9,11 +9,12 @@ namespace SUTK
 	RenderRect::RenderRect(UIDriver& driver, RenderRectContainer* container) noexcept : UIDriverObject(driver), 
 																			m_handle(GFX_DRIVER_OBJECT_NULL_HANDLE), 
 																			m_isDirty(true), 
-																			m_rect({ 0, 0, 100, 100 }), 
 																			m_container(container),
 																			m_geometry(driver),
 																			m_thickness(0.2f)
 	{
+		_assert(container != NULL);
+		m_rect = container->getRect();
 		m_geometry
 			.vertexPositionArray(8)
 			.topology(Geometry::Topology::TriangleList)
@@ -33,9 +34,9 @@ namespace SUTK
 		if(!m_isDirty) return;
 		m_isDirty = false;
 
-		if(m_isSizeDirty)
+		if(m_isSizeDirty || m_isPosDirty)
 		{
-			Geometry::VertexPositionArray& array = m_geometry.getVertexPositionArray();
+			Geometry::VertexPositionArray& array = m_geometry.getVertexPositionArrayForWrite();
 			_assert(array.size() == 8);
 			auto topLeft = getContainer()->getLocalCoordsToScreenCoords(m_rect.getTopLeft());
 			auto bottomLeft = getContainer()->getLocalCoordsToScreenCoords(m_rect.getBottomLeft());
