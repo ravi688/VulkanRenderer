@@ -46,10 +46,16 @@ namespace SUTK
 			TriangleList,
 			TriangleStrip
 		};
+		struct FillColorInfo
+		{
+			Color3 color;
+			bool isModified;
+		};
 	private:
 		VertexPositionArrayInfo m_positionArrayInfo;
 		VertexIndexArrayInfo m_indexArrayInfo;
 		std::optional<LineStrokeInfo> m_strokeInfo;
+		FillColorInfo m_fillColorInfo;
 		Topology m_topology;
 	public:
 		Geometry(UIDriver& driver) noexcept;
@@ -67,11 +73,14 @@ namespace SUTK
 		Geometry& vertexPositionArray(u32 positionCount) noexcept;
 		Geometry& vertexPositionArray(const std::vector<VertexPosition>& positions) noexcept;
 		Geometry& vertexPosition(VertexPosition position) noexcept;
+
+
 		Geometry& lineStroke(LineStroke stroke, bool isDynamic = false) noexcept;
 		Geometry& lineStroke(float width, Color3 color = Color3::white(), bool isDynamic = false) noexcept
 		{
 			return lineStroke({ width, color }, isDynamic);
 		}
+		Geometry& fillColor(Color3 color) noexcept;
 
 		// getters
 
@@ -82,8 +91,11 @@ namespace SUTK
 		VertexIndexArray& getVertexIndexArrayForWrite() { m_indexArrayInfo.isModified = true; return m_indexArrayInfo.array; }
 		const VertexIndexArray& getVertexIndexArray() const { return m_indexArrayInfo.array; }
 
+		Color3 getFillColor() const { return m_fillColorInfo.color; }
+
 		bool isVertexIndexArrayModified() const noexcept { return m_indexArrayInfo.isModified; }
 		bool isVertexPositionArrayModified() const noexcept { return m_positionArrayInfo.isModified; }
 		bool isLineStrokeModified() const noexcept { return m_strokeInfo.has_value() && m_strokeInfo->isModified; }
+		bool isFillColorModified() const noexcept { return m_fillColorInfo.isModified; }
 	};
 }

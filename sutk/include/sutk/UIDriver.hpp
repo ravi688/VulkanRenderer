@@ -12,7 +12,8 @@ namespace SUTK
 	class TextContainer;
 	class RenderRectContainer;
 	class Text;
-	class RenderRect;
+	class RenderRectOutline;
+	class RenderRectFill;
 	class IGfxDriver;
 
 	template<typename RenderableType>
@@ -22,7 +23,10 @@ namespace SUTK
 	struct RenderableContainer<Text> { typedef TextContainer type; };
 
 	template<>
-	struct RenderableContainer<RenderRect> { typedef RenderRectContainer type; };
+	struct RenderableContainer<RenderRectOutline> { typedef RenderRectContainer type; };
+
+	template<>
+	struct RenderableContainer<RenderRectFill> { typedef RenderRectContainer type; };
 
 	class UIDriver
 	{
@@ -41,7 +45,8 @@ namespace SUTK
 		template<typename RenderableType>
 		RenderableType* createRenderable(typename RenderableContainer<RenderableType>::type* parent = NULL) { return NULL; }
 		Text* createText(TextContainer* parent);
-		RenderRect* createRenderRect(RenderRectContainer* container);
+		template<typename RenderRectType>
+		RenderRectType* createRenderRect(RenderRectContainer* container);
 	};
 
 	// declarations for the template specializations for Containers (non-renderable)
@@ -58,7 +63,9 @@ namespace SUTK
 	template<>
 	Text* UIDriver::createRenderable<Text>(typename RenderableContainer<Text>::type* parent);
 	template<>
-	RenderRect* UIDriver::createRenderable<RenderRect>(typename RenderableContainer<RenderRect>::type* parent);
+	RenderRectOutline* UIDriver::createRenderable<RenderRectOutline>(typename RenderableContainer<RenderRectOutline>::type* parent);
+	template<>
+	RenderRectFill* UIDriver::createRenderable<RenderRectFill>(typename RenderableContainer<RenderRectFill>::type* parent);
 
 	class UIDriverObject
 	{

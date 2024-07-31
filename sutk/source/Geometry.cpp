@@ -8,6 +8,7 @@ namespace SUTK
 													m_positionArrayInfo({ VertexPositionArray { }, false }),
 													m_indexArrayInfo({ VertexIndexArray { }, false }),
 													m_strokeInfo({ }),
+													m_fillColorInfo({Color3::white(), false }),
 													m_topology(Topology::TriangleList)
 	{
 
@@ -21,6 +22,7 @@ namespace SUTK
 			m_strokeInfo->isModified = false;
 		m_positionArrayInfo.isModified = false;
 		m_indexArrayInfo.isModified = false;
+		m_fillColorInfo.isModified = false;
 		return handle;
 	}
 
@@ -131,6 +133,13 @@ namespace SUTK
 
 		m_strokeInfo->isModified = true;
 
+		return *this;
+	}
+
+	Geometry& Geometry::fillColor(Color3 color) noexcept
+	{
+		m_fillColorInfo.color = color;
+		m_fillColorInfo.isModified = true;
 		return *this;
 	}
 }

@@ -18,8 +18,8 @@ namespace SUTK
 		// mandatory
 		Container::onParentResize(newRect, isPositionChanged, isSizeChanged);
 
-		if(m_renderRect != NULL)
-			m_renderRect->onContainerResize(getRect(), isPositionChanged, false);
+		if((m_renderRect != NULL) && isPositionChanged)
+			m_renderRect->onGlobalCoordDirty();
 	}
 
 	void RenderRectContainer::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)

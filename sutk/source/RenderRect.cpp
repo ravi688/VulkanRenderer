@@ -6,16 +6,14 @@
 
 namespace SUTK
 {
-	RenderRect::RenderRect(UIDriver& driver, RenderRectContainer* container) noexcept : UIDriverObject(driver), 
-																			m_handle(GFX_DRIVER_OBJECT_NULL_HANDLE), 
-																			m_isDirty(true), 
-																			m_container(container),
-																			m_geometry(driver),
-																			m_thickness(0.2f)
+	RenderRectOutline::RenderRectOutline(UIDriver& driver, RenderRectContainer* container) noexcept : RenderRect(driver, container),
+																						m_isPosDirty(true),
+																						m_isSizeDirty(true),
+																						m_thickness(0.2f)
 	{
 		_assert(container != NULL);
-		m_rect = container->getRect();
-		m_geometry
+		setRect(container->getRect());
+		getGeometry()
 			.vertexPositionArray(8)
 			.topology(Geometry::Topology::TriangleList)
 			.quad(0, 1, 2, 3) // top line
@@ -24,24 +22,22 @@ namespace SUTK
 			.quad(7, 6, 1, 0);// left line
 	}
 
-	bool RenderRect::isDirty()
+	bool RenderRectOutline::isDirty()
 	{
-		return m_isDirty;
+		return m_isPosDirty || m_isSizeDirty;
 	}
 
-	void RenderRect::update()
+	void RenderRectOutline::update()
 	{
-		if(!m_isDirty) return;
-		m_isDirty = false;
-
 		if(m_isSizeDirty || m_isPosDirty)
 		{
-			Geometry::VertexPositionArray& array = m_geometry.getVertexPositionArrayForWrite();
+			Geometry::VertexPositionArray& array = getGeometry().getVertexPositionArrayForWrite();
 			_assert(array.size() == 8);
-			auto topLeft = getContainer()->getLocalCoordsToScreenCoords(m_rect.getTopLeft());
-			auto bottomLeft = getContainer()->getLocalCoordsToScreenCoords(m_rect.getBottomLeft());
-			auto bottomRight = getContainer()->getLocalCoordsToScreenCoords(m_rect.getBottomRight());
-			auto topRight = getContainer()->getLocalCoordsToScreenCoords(m_rect.getTopRight());
+			Rect2Df rect = getRect();
+			auto topLeft = getContainer()->getLocalCoordsToScreenCoords(rect.getTopLeft());
+			auto bottomLeft = getContainer()->getLocalCoordsToScreenCoords(rect.getBottomLeft());
+			auto bottomRight = getContainer()->getLocalCoordsToScreenCoords(rect.getBottomRight());
+			auto topRight = getContainer()->getLocalCoordsToScreenCoords(rect.getTopRight());
 
 			/*   0   		  3
 				 _____________
@@ -67,29 +63,120 @@ namespace SUTK
 			array[5] = static_cast<Vec2Df>(bottomRight) - upLeft;
 			array[6] = static_cast<Vec2Df>(bottomLeft) + upRight;
 			array[7] = static_cast<Vec2Df>(bottomLeft) - upRight;
-
-			m_handle = m_geometry.compile(m_handle);
 		}
 
 		if(m_isPosDirty)
 		{
 			// auto& gfxDriver = getGfxDriver();
 			// GfxDriverObjectHandleType objHandle = gfxDriver.getGeometryObject(m_handle);
-			// auto position = getContainer()->getLocalCoordsToScreenCoords(m_rect.getPosition());
+			// auto position = getContainer()->getLocalCoordsToScreenCoords(getRect().getPosition());
 			// gfxDriver.setObjectPosition(objHandle, position);
+		}
+
+		if(m_isPosDirty || m_isSizeDirty)
+		{
+			GfxDriverObjectHandleType handle = getGfxDriverObjectHandle();
+			handle = getGeometry().compile(handle);
+			setGfxDriverObjectHandle(handle);
+			m_isPosDirty = false;
+			m_isSizeDirty = false;
 		}
 	}
 
-	void RenderRect::setThickness(f32 thickness) noexcept
+	void RenderRectOutline::setThickness(f32 thickness) noexcept
 	{
 		 m_thickness = thickness;
 		 m_isSizeDirty = true;
 	}
 
-	void RenderRect::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
+	void RenderRectOutline::onGlobalCoordDirty() noexcept
 	{
-		m_rect = rect;
-		m_isDirty = true;
+		m_isPosDirty = true;
+	}
+
+	void RenderRectOutline::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
+	{
+		setRect(rect);
+		m_isPosDirty = isPositionChanged;
+		m_isSizeDirty = isSizeChanged;
+	}
+
+	RenderRectFill::RenderRectFill(UIDriver& driver, RenderRectContainer* container) noexcept : RenderRect(driver, container),
+																						m_isPosDirty(true),
+																						m_isSizeDirty(true),
+																						m_isColorDirty(true),
+																						m_color(Color3::white())
+	{
+		_assert(container != NULL);
+		setRect(container->getRect());
+		getGeometry()
+			.vertexPositionArray(4)
+			.topology(Geometry::Topology::TriangleList)
+			.quad(0, 1, 2, 3)
+			.fillColor(m_color);
+	}
+
+	bool RenderRectFill::isDirty()
+	{
+		return m_isPosDirty || m_isSizeDirty;
+	}
+
+	void RenderRectFill::update()
+	{
+		if(m_isSizeDirty || m_isPosDirty)
+		{
+			Geometry::VertexPositionArray& array = getGeometry().getVertexPositionArrayForWrite();
+			_assert(array.size() == 4);
+			Rect2Df rect = getRect();
+			auto topLeft = getContainer()->getLocalCoordsToScreenCoords(rect.getTopLeft());
+			auto bottomLeft = getContainer()->getLocalCoordsToScreenCoords(rect.getBottomLeft());
+			auto bottomRight = getContainer()->getLocalCoordsToScreenCoords(rect.getBottomRight());
+			auto topRight = getContainer()->getLocalCoordsToScreenCoords(rect.getTopRight());
+
+			array[0] = topLeft;
+			array[1] = bottomLeft;
+			array[2] = bottomRight;
+			array[3] = topRight;
+		}
+
+		if(m_isPosDirty)
+		{
+			// auto& gfxDriver = getGfxDriver();
+			// GfxDriverObjectHandleType objHandle = gfxDriver.getGeometryObject(m_handle);
+			// auto position = getContainer()->getLocalCoordsToScreenCoords(getRect().getPosition());
+			// gfxDriver.setObjectPosition(objHandle, position);
+		}
+
+		if(m_isColorDirty)
+		{
+			getGeometry().fillColor(m_color);
+		}
+
+		if(m_isPosDirty || m_isSizeDirty || m_isColorDirty)
+		{
+			GfxDriverObjectHandleType handle = getGfxDriverObjectHandle();
+			handle = getGeometry().compile(handle);
+			setGfxDriverObjectHandle(handle);
+			m_isPosDirty = false;
+			m_isSizeDirty = false;
+			m_isColorDirty = false;
+		}
+	}
+
+	void RenderRectFill::setColor(Color3 color) noexcept
+	{
+		 m_color = color;
+		 m_isColorDirty = true;
+	}
+
+	void RenderRectFill::onGlobalCoordDirty() noexcept
+	{
+		m_isPosDirty = true;
+	}
+
+	void RenderRectFill::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
+	{
+		setRect(rect);
 		m_isPosDirty = isPositionChanged;
 		m_isSizeDirty = isSizeChanged;
 	}
