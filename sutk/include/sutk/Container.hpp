@@ -11,7 +11,7 @@ namespace SUTK
 {
 	class Text;
 	class Container;
-	class RenderRect;
+	class RenderRectOutline;
 	class RenderRectContainer;
 
 	class Container : public UIDriverObject, public IDebuggable
@@ -22,7 +22,7 @@ namespace SUTK
 		AnchorRect* m_anchorRect;
 		Container* m_parent;
 		RenderRectContainer* m_renderRectCont;
-		RenderRect* m_renderRect;
+		RenderRectOutline* m_renderRect;
 		bool m_isDebug;
 
 

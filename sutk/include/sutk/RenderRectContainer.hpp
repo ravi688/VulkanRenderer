@@ -23,7 +23,7 @@ namespace SUTK
 
 	public:
 
-		void setRenderRect(RenderRect* text);
+		void setRenderRect(RenderRect* renderRect);
 
 		RenderRect* getRenderRect() noexcept { return m_renderRect; }
 	};
