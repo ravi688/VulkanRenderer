@@ -116,8 +116,7 @@ namespace SUTK
 
 	Geometry& Geometry::vertexPosition(VertexPosition position) noexcept
 	{
-		getVertexPositionArray().push_back(position);
-		m_positionArrayInfo.isModified = true;
+		getVertexPositionArrayForWrite().push_back(position);
 		return *this;
 	}
 

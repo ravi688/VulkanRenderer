@@ -137,6 +137,23 @@ namespace SUTK
 
 		constexpr Rect2D() noexcept : x(0), y(0), width(0), height(0) { }
 		constexpr Rect2D(T _x, T _y, T _width, T _height) noexcept : x(_x), y(_y), width(_width), height(_height) { }
+		constexpr Rect2D(Vec2D<T> pos, Vec2D<T> size) noexcept : x(pos.x), y(pos.y), width(size.width), height(size.height) { }
+
+		// (u + du) - Constraint
+		// du + r
+		// Constraint: u - r
+
+		// this is being used in calculate constraints between two rects
+		Rect2D<T> operator-(const Rect2D<T>& rect) const noexcept
+		{
+			constexpr auto neg = NegativeSign<T>::value;
+			return { x +  neg * rect.x, y + neg * rect.y, width + neg * rect.width, height + neg * rect.height };
+		}
+
+		Rect2D<T> operator+(const Rect2D<T>& rect) const noexcept
+		{
+			return { x + rect.x, y + rect.y, width + rect.width, height + rect.height };
+		}
 
 		Vec2D<T> getPosition() const noexcept { return { x, y }; }
 		Vec2D<T> getSize() const noexcept { return { width, height }; }
@@ -176,6 +193,44 @@ namespace SUTK
 		{
 			width = size.width;
 			height = size.height;
+		}
+
+		// returns true, if either of width and height is negative
+		// otherwise false.
+		bool isInverted() const noexcept
+		{
+			return ((NegativeSign<T>::value * width) > 0) || ((NegativeSign<T>::value * height) > 0);
+		}
+
+		void setTopLeft(Vec2D<T> point) noexcept
+		{
+			auto bottomRight = getBottomRight();
+			x = point.x;
+			y = point.y;
+			width = bottomRight.x - point.x;
+			height = bottomRight.y - point.y;
+		}
+
+		void setBottomRight(Vec2D<T> point) noexcept
+		{
+			width = point.x - x;
+			height = point.y - y;
+		}
+
+		void setTopRight(Vec2D<T> point) noexcept
+		{
+			T bottomLeftYCoord = y + height;
+			y = point.y;
+			width = point.x - x;
+			height = bottomLeftYCoord - point.y;
+		}
+
+		void setBottomLeft(Vec2D<T> point) noexcept
+		{
+			T bottomRightXCoord = x + width;
+			x = point.x;
+			height = point.y - y;
+			width = bottomRightXCoord - point.x;
 		}
 
 		void extendTopLeft(Vec2D<T> disp) noexcept

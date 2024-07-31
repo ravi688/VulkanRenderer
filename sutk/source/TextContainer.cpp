@@ -15,6 +15,17 @@ namespace SUTK
 		m_text = text;
 	}
 
+	void TextContainer::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
+	{
+		// mandatory
+		Container::onParentResize(newRect, isPositionChanged, isSizeChanged);
+
+		// the text is being rendered in absolute coordinate system of SGE, so to recalcuate the absolute coordinates we need to call 
+		// the function onContainerResize again.
+		if(m_text != NULL)
+			m_text->onContainerResize(getRect(), false, false);
+	}
+
 	void TextContainer::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		// It is mandatory to call Container::onResize in any of the derived class overriding the function.

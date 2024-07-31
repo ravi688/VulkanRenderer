@@ -13,6 +13,15 @@ namespace SUTK
 		m_renderRect = renderRect;
 	}
 
+	void RenderRectContainer::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
+	{
+		// mandatory
+		Container::onParentResize(newRect, isPositionChanged, isSizeChanged);
+
+		if(m_renderRect != NULL)
+			m_renderRect->onContainerResize(getRect(), isPositionChanged, false);
+	}
+
 	void RenderRectContainer::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		// It is mandatory to call Container::onResize in any of the derived class overriding the function.
