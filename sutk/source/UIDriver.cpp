@@ -6,14 +6,26 @@
 #include <sutk/IGfxDriver.hpp>
 #include <sutk/RenderRect.hpp>
 #include <sutk/RenderRectContainer.hpp>
+#include <sutk/DummyInputDriver.hpp> // for STUK::DummyInputDriver
 
 #include <common/assert.h>
 
 namespace SUTK
 {
-	UIDriver::UIDriver(IGfxDriver& gfxDriver): m_gfxDriver(gfxDriver)
+	UIDriver::UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept: m_gfxDriver(gfxDriver), m_inputDriver(&inputDriver), m_isDummyInputDriver(false)
 	{
 
+	}
+
+	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), m_inputDriver(new DummyInputDriver{ }), m_isDummyInputDriver(true)
+	{
+		
+	}
+
+	UIDriver::~UIDriver()
+	{
+		if(m_isDummyInputDriver)
+			delete m_inputDriver;
 	}
 
 	void UIDriver::render()

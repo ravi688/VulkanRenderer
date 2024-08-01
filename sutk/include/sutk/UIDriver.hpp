@@ -15,6 +15,7 @@ namespace SUTK
 	class RenderRectOutline;
 	class RenderRectFill;
 	class IGfxDriver;
+	class IInputDriver;
 
 	template<typename RenderableType>
 	struct RenderableContainer { };
@@ -32,13 +33,18 @@ namespace SUTK
 	{
 	private:
 		IGfxDriver& m_gfxDriver;
+		IInputDriver* m_inputDriver;
+		bool m_isDummyInputDriver;
 		std::vector<IRenderable*> m_renderables;
 	public:
-		UIDriver(IGfxDriver& gfxDriver);
+		UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept;
+		UIDriver(IGfxDriver& gfxDriver) noexcept;
+		~UIDriver();
 
 		void render();
 
 		IGfxDriver& getGfxDriver() { return m_gfxDriver; }
+		IInputDriver& getInputDriver() { return *m_inputDriver; }
 
 		template<typename ContainerType>
 		ContainerType* createContainer(Container* parent = NULL) { return NULL; }
@@ -76,5 +82,6 @@ namespace SUTK
 	public:
 		UIDriver& getUIDriver() { return m_uiDriver; }
 		IGfxDriver& getGfxDriver() { return getUIDriver().getGfxDriver(); }
+		IInputDriver& getInputDriver() { return getUIDriver().getInputDriver(); }
 	};
 }
