@@ -23,7 +23,7 @@ namespace SUTK
 		// the text is being rendered in absolute coordinate system of SGE, so to recalcuate the absolute coordinates we need to call 
 		// the function onContainerResize again.
 		if(m_text != NULL)
-			m_text->onContainerResize(getRect(), false, false);
+			m_text->onContainerResize(getRect(), true, false);
 	}
 
 	void TextContainer::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
