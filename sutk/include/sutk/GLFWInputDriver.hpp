@@ -1,9 +1,10 @@
 #include <sutk/IInputDriver.hpp>
 
+// This typedef taken from glfw3.h
+typedef struct GLFWwindow GLFWwindow;
+
 namespace SUTK
 {
-	// This typedef taken from glfw3.h
-	typedef struct GLFWwindow GLFWwindow;
 
 	class SUTK_API GLFWInputDriver : public IInputDriver
 	{

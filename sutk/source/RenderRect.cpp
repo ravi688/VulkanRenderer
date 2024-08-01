@@ -12,7 +12,9 @@ namespace SUTK
 																						m_thickness(0.2f)
 	{
 		_assert(container != NULL);
-		setRect(container->getRect());
+		auto rect = container->getRect();
+		rect.setPosition({ 0, 0 });
+		setRect(rect);
 		getGeometry()
 			.vertexPositionArray(8)
 			.topology(Geometry::Topology::TriangleList)
@@ -96,7 +98,13 @@ namespace SUTK
 
 	void RenderRectOutline::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
-		setRect(rect);
+		if(m_isSizeDirty)
+		{
+			// The rect for this RenderRect is in local coordinates of the RenderRectContainer for this RenderRect.
+			// Therefore, the position would always be { 0, 0 } for this rect.
+			rect.setPosition({ 0, 0 });
+			setRect(rect);
+		}
 		m_isPosDirty = isPositionChanged;
 		m_isSizeDirty = isSizeChanged;
 	}
@@ -108,7 +116,9 @@ namespace SUTK
 																						m_color(Color3::white())
 	{
 		_assert(container != NULL);
-		setRect(container->getRect());
+		auto rect = container->getRect();
+		rect.setPosition({ 0, 0 });
+		setRect(rect);
 		getGeometry()
 			.vertexPositionArray(4)
 			.topology(Geometry::Topology::TriangleList)
@@ -176,7 +186,13 @@ namespace SUTK
 
 	void RenderRectFill::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
-		setRect(rect);
+		if(m_isSizeDirty)
+		{
+			// The rect for this RenderRect is in local coordinates of the RenderRectContainer for this RenderRect.
+			// Therefore, the position would always be { 0, 0 } for this rect.
+			rect.setPosition({ 0, 0 });
+			setRect(rect);
+		}
 		m_isPosDirty = isPositionChanged;
 		m_isSizeDirty = isSizeChanged;
 	}
