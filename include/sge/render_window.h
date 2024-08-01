@@ -70,4 +70,7 @@ SGE_API void render_window_get_framebuffer_extent(render_window_t* window, u32* 
 //API specific extensions
 SGE_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_driver, void* out_surface);
 
+// Window System specific extension
+// out_ptr: will be a double pointer (&(GLFWwindow*))
+SGE_API void render_window_get_glfw_window_ptr(render_window_t* window, void* out_ptr);
 END_CPP_COMPATIBLE

@@ -26,6 +26,13 @@ namespace SGE
 			render_window_get_framebuffer_extent(m_handle, &width, &height);
 			return { width, height };
 		}
+
+		void* getGLFWWindowPtr() noexcept
+		{
+			void* ptr;
+			render_window_get_glfw_window_ptr(m_handle, &ptr);
+			return ptr;
+		}
 	};
 
 	template<> RenderWindow Event::ReinterpretPublisher<RenderWindow>(void* publisher);

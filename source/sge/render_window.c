@@ -121,3 +121,8 @@ SGE_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_
 	VkSurfaceKHR surface = glfw_get_vulkan_surface(window->handle, CAST_TO(vulkan_renderer_t*, vk_driver));
 	memcpy(out_surface, &surface, sizeof(VkSurfaceKHR));
 }
+
+SGE_API void render_window_get_glfw_window_ptr(render_window_t* window, void* out_ptr)
+{
+	memcpy(out_ptr, &window->handle, sizeof(void*));
+}
