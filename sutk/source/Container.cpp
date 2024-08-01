@@ -63,7 +63,7 @@ namespace SUTK
 	Vec2Df Container::getLocalCoordsToScreenCoords(Vec2Df localCoords) const
 	{
 		if(getParent() != NULL)
-			return getParent()->getLocalCoordsToScreenCoords(getRect().getPosition()) + localCoords;
+			return getParent()->getLocalCoordsToScreenCoords({ 0u, 0u }) + localCoords;
 		return localCoords;
 	}
 
