@@ -1,12 +1,12 @@
 #include <sutk/RenderRect.hpp>
 #include <sutk/IGfxDriver.hpp>
-#include <sutk/RenderRectContainer.hpp>
+#include <sutk/RenderableContainer.hpp>
 
 #include <sutk/assert.h>
 
 namespace SUTK
 {
-	RenderRectOutline::RenderRectOutline(UIDriver& driver, RenderRectContainer* container) noexcept : RenderRect(driver, container),
+	RenderRectOutline::RenderRectOutline(UIDriver& driver, RenderableContainer* container) noexcept : RenderRect(driver, container),
 																						m_isPosDirty(true),
 																						m_isSizeDirty(true),
 																						m_thickness(0.2f)
@@ -100,7 +100,7 @@ namespace SUTK
 	{
 		if(m_isSizeDirty)
 		{
-			// The rect for this RenderRect is in local coordinates of the RenderRectContainer for this RenderRect.
+			// The rect for this RenderRect is in local coordinates of the RenderableContainer for this RenderRect.
 			// Therefore, the position would always be { 0, 0 } for this rect.
 			rect.setPosition({ 0, 0 });
 			setRect(rect);
@@ -109,7 +109,7 @@ namespace SUTK
 		m_isSizeDirty = isSizeChanged;
 	}
 
-	RenderRectFill::RenderRectFill(UIDriver& driver, RenderRectContainer* container) noexcept : RenderRect(driver, container),
+	RenderRectFill::RenderRectFill(UIDriver& driver, RenderableContainer* container) noexcept : RenderRect(driver, container),
 																						m_isPosDirty(true),
 																						m_isSizeDirty(true),
 																						m_isColorDirty(true),
@@ -188,7 +188,7 @@ namespace SUTK
 	{
 		if(isSizeChanged)
 		{
-			// The rect for this RenderRect is in local coordinates of the RenderRectContainer for this RenderRect.
+			// The rect for this RenderRect is in local coordinates of the RenderableContainer for this RenderRect.
 			// Therefore, the position would always be { 0, 0 } for this rect.
 			rect.setPosition({ 0, 0 });
 			setRect(rect);

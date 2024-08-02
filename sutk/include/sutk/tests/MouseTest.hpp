@@ -17,7 +17,7 @@ namespace SUTK
 		IGfxDriver* m_gfxDriver;
 		IInputDriver* m_inputDriver;
 		RenderRectFill* m_renderRect;
-		RenderRectContainer* m_renderRectContainer;
+		RenderableContainer* m_renderRectContainer;
 
 	public:
 		MouseTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }

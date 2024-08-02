@@ -16,7 +16,7 @@ namespace SUTK
 		UIDriver* m_uiDriver;
 		IGfxDriver* m_gfxDriver;
 		RenderRectFill* m_renderRect;
-		RenderRectContainer* m_renderRectContainer;
+		RenderableContainer* m_renderRectContainer;
 
 	public:
 		AnchorTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }

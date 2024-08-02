@@ -2,7 +2,7 @@
 
 #include <sutk/UIDriver.hpp> /* for SUTK::UIDriver::getGfxDriver() */
 #include <sutk/IGfxDriver.hpp> /* for SUTK::IGfxDriver::createText() */
-#include <sutk/TextContainer.hpp> /* for SUTK::TextContainer::getLocalCoordsToScreenCoords() */
+#include <sutk/RenderableContainer.hpp> /* for SUTK::RenderableContainer::getLocalCoordsToScreenCoords() */
 
 #include <common/assert.h> /* for _assert() */
 
@@ -11,9 +11,9 @@ namespace SUTK
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText() { return { END_OF_TEXT, END_OF_LINE }; }
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line) { return { line, END_OF_LINE }; }
 
-	LineText::LineText(UIDriver& driver) noexcept : UIDriverObject(driver), m_isPosDirty(true), m_isDataDirty(false)
+	LineText::LineText(UIDriver& driver) noexcept : GfxDriverRenderable(driver, NULL), m_isPosDirty(true), m_isDataDirty(false)
 	{
-		m_handle = getGfxDriver().createText();
+		setGfxDriverObjectHandle(getGfxDriver().createText());
 	}
 	bool LineText::isDirty()
 	{
@@ -23,18 +23,18 @@ namespace SUTK
 	{
 		if(m_isPosDirty)
 		{
-			getGfxDriver().setTextPosition(m_handle, m_pos);
+			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), m_pos);
 			m_isPosDirty = false;
 		}
 		if(m_isDataDirty)
 		{
-			getGfxDriver().setTextData(m_handle, m_data);
+			getGfxDriver().setTextData(getGfxDriverObjectHandle(), m_data);
 			m_isDataDirty = false;
 		}
 	}
 	void LineText::setClipRect(const Rect2Df rect) noexcept
 	{
-		getGfxDriver().setTextScissor(m_handle, rect);
+		getGfxDriver().setTextScissor(getGfxDriverObjectHandle(), rect);
 	}
 	void LineText::setData(const std::string& data) noexcept
 	{
@@ -84,7 +84,7 @@ namespace SUTK
 		m_isDataDirty = true;
 	}
 
-	Text::Text(UIDriver& driver, TextContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_isDirty(false), m_isClippingEnabled(false)
+	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_isDirty(false), m_isClippingEnabled(false)
 	{
 		m_baselineHeight = getGfxDriver().getBaselineHeightInCentimeters();
 	}
@@ -235,7 +235,7 @@ namespace SUTK
 
 	void Text::recalculateClipRect() noexcept
 	{
-		TextContainer* container = getContainer();
+		RenderableContainer* container = getContainer();
 		// convert the top-left corner of the container, in which this text is, to screen coordinates
 		auto position = container->getLocalCoordsToScreenCoords({ 0u, 0u });
 		
@@ -252,7 +252,12 @@ namespace SUTK
 		recalculateClipRect();
 	}
 
-	void Text::onContainerResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) noexcept
+	void Text::onGlobalCoordDirty() noexcept
+	{
+		onContainerResize(getContainer()->getRect(), true, true);
+	}
+
+	void Text::onContainerResize(Rect2Df newRect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
 		CursorPosition<LineCountType> cursorPosition { 0u, 0u };
 		for(std::size_t i = 0; i < m_lines.size(); i++)

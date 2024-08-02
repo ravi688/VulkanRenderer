@@ -4,15 +4,15 @@
 
 namespace SUTK
 {
-	class RenderRect;
+	class Renderable;
 
-	class RenderRectContainer : public Container
+	class RenderableContainer : public Container
 	{
 	private:
-		RenderRect* m_renderRect;
+		Renderable* m_renderable;
 
 		// this can only be called by SUTK::UIDriver
-		RenderRectContainer(UIDriver& driver, Container* parent) : Container(driver, parent), m_renderRect(NULL) { }
+		RenderableContainer(UIDriver& driver, Container* parent) : Container(driver, parent), m_renderable(NULL) { }
 
 		friend class UIDriver;
 
@@ -22,9 +22,7 @@ namespace SUTK
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 
 	public:
-
-		void setRenderRect(RenderRect* renderRect);
-
-		RenderRect* getRenderRect() noexcept { return m_renderRect; }
+		void setRenderable(Renderable* renderable) noexcept;
+		Renderable* getRenderable() noexcept { return m_renderable; }
 	};
 }
