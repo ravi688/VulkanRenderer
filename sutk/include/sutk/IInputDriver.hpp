@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sutk/defines.hpp> // for SUTK_API and Vec2Df
+#include <common/Event.hpp> // for com::Event
 
 namespace SUTK
 {
@@ -157,9 +158,14 @@ namespace SUTK
 
 	class SUTK_API IInputDriver
 	{
+	private:
+		com::Event<IInputDriver, Vec2Df> m_onCursorMoveEvent;
+		com::Event<IInputDriver> m_onKeyEvent;
 	public:
-
 		virtual ~IInputDriver() = default;
+
+		com::Event<IInputDriver, Vec2Df>& getOnCursorMoveEvent() { return m_onCursorMoveEvent; }
+		com::Event<IInputDriver>& getOnKeyEvent() { return m_onKeyEvent; }
 
 		// Keyboard
 		virtual bool getKey(KeyCode keycode) noexcept = 0;
