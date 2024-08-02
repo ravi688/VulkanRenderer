@@ -186,7 +186,7 @@ namespace SUTK
 
 	void RenderRectFill::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
-		if(m_isSizeDirty)
+		if(isSizeChanged)
 		{
 			// The rect for this RenderRect is in local coordinates of the RenderRectContainer for this RenderRect.
 			// Therefore, the position would always be { 0, 0 } for this rect.

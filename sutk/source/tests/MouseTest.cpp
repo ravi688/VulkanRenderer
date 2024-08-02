@@ -25,7 +25,7 @@ namespace SUTK
 		m_renderRectContainer->setRect({ 1.0f, 1.0f, 1.0f, 1.0f });
 		AnchorRect* anchor = m_renderRectContainer->getAnchorRect();
 		anchor->setTopLeft({ 0, 0 });
-		anchor->setBottomRight({ 1, 1 });
+		anchor->setBottomRight({ 0, 0 });
 		m_renderRect = m_uiDriver->createRenderRect<RenderRectFill>(m_renderRectContainer);
 		m_renderRect->setColor(Color3::green());
 	}
