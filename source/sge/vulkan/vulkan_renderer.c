@@ -404,7 +404,7 @@ DEBUG_BLOCK
 	// setup image count
 	// NOTE: if VkSurfaceCapabilitiesKHR::maxImageCount equals 0, then there is no maximum limit for image count
 	u32 image_count = clamp_u32(create_info->swapchain_image_count, surface_capabilities.minImageCount, (surface_capabilities.maxImageCount == 0) ? U32_MAX : surface_capabilities.maxImageCount);
-	debug_log_info("Image count: %" PRIu32, image_count);
+	debug_log_info_verbose("Image count: %" PRIu32, image_count);
 	
 	// create logical device
 	VkPhysicalDeviceFeatures* minimum_required_features = memory_allocator_alloc_obj(renderer->allocator, MEMORY_ALLOCATION_TYPE_OBJ_VKAPI_PHYSICAL_DEVICE_FEATURES, VkPhysicalDeviceFeatures);
@@ -477,7 +477,7 @@ DEBUG_BLOCK
 	renderer->max_frames_in_flight = clamp_u32(create_info->max_frames_in_flight, 1u, image_count);
 	if(create_info->max_frames_in_flight != renderer->max_frames_in_flight)
 		DEBUG_LOG_WARNING("Requested max number of in flight frames %" PRIu32 " can't be allowed, it is now set to: %" PRIu32, create_info->max_frames_in_flight, renderer->max_frames_in_flight);
-	else debug_log_info("Max number of in flight frames: %" PRIu32, renderer->max_frames_in_flight);
+	else debug_log_info_verbose("Max number of in flight frames: %" PRIu32, renderer->max_frames_in_flight);
 
 	// create semaphores
 	renderer->render_present_sync_primitives.primitive_count = renderer->max_frames_in_flight;
@@ -868,7 +868,7 @@ static void recreate_swapchain(void* _window, void* _renderer)
 	VkSurfaceCapabilitiesKHR surface_capabilities = vulkan_physical_device_get_surface_capabilities(renderer->physical_device, renderer->vo_surface);
 	renderer->swapchain_create_info.vo_image_extent = find_extent(&surface_capabilities, window);
 	vulkan_swapchain_refresh(renderer->swapchain, &renderer->swapchain_create_info);
-	debug_log_info("Swapchain recreate success");
+	debug_log_info_verbose("Swapchain recreate success");
 }
 
 static void update_screen_info(void* _window, void* _renderer)

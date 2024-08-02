@@ -147,7 +147,7 @@ SC_API void write_gfx_pipeline(const char* start, const char* const end, codegen
 
 	setup_default_values(&data);
 
-	debug_log_info("base offset: %u\n", data.baseOffset);
+	sc_debug_log_info_verbose("base offset: %u\n", data.baseOffset);
 
 	callbacks_t callbacks =
 	{

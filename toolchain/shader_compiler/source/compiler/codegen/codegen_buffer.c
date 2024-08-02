@@ -60,14 +60,14 @@ static void writer_push(void* user_data, const void* bytes, u32 size)
 	buf_push_pseudo(CAST_TO(BUFFER*, user_data), size);
 	if(bytes != NULL)
 		memcpy(buf_get_ptr_at(user_data, index), bytes, size);
-	debug_log_info("[Codegen Buffer] %llu push, position: %u, length: %u, possible value: %llu", (u64)user_data, index, size, get_possible_value(bytes, size));
+	sc_debug_log_info_verbose("[Codegen Buffer] %llu push, position: %u, length: %u, possible value: %llu", (u64)user_data, index, size, get_possible_value(bytes, size));
 }
 
 static void writer_insert(void* user_data, u32 index, const void* bytes, u32 size)
 {
 	buf_insert_pseudo(user_data, index, size);
 	memcpy(buf_get_ptr_at(user_data, index), bytes, size);
-	debug_log_info("[Codegen Buffer] %llu insert, position: %u, length: %u", (u64)user_data, index, size);
+	sc_debug_log_info_verbose("[Codegen Buffer] %llu insert, position: %u, length: %u", (u64)user_data, index, size);
 }
 
 static void* writer_ptr(void* user_data)
@@ -202,7 +202,7 @@ SC_API binary_writer_t* codegen_buffer_create_or_get_section(codegen_buffer_t* b
 	/* otherwise create a new section */
 	else
 	{
-		debug_log_info("Creating new section in codegen buffer named as \"%s\"", section_name);
+		sc_debug_log_info_verbose("Creating new section in codegen buffer named as \"%s\"", section_name);
 		AUTO writer = binary_writer_create((void*)BUFcreate_with_callbacks(buffer->callbacks, NULL, sizeof(u8), 0, 0), writer_push, writer_insert, writer_ptr, writer_pos);
 		AUTO str = static_string_64(section_name);
 		section_t section = { .writer = writer, .id_generator = id_generator_create(0, buffer->callbacks) };
@@ -389,7 +389,7 @@ static buffer_t* merge_buffers_into_one(codegen_buffer_t* buffer)
 	for(u32 i = 0; i < count; i++)
 	{
 		AUTO writer_buffer = CAST_TO(buffer_t*, get_writer_from_index(buffer, i)->user_data);
-		debug_log_info("[Codegen Buffer] %s section size: %lu, offset: %lu", 
+		sc_debug_log_info_verbose("[Codegen Buffer] %s section size: %lu, offset: %lu", 
 							dictionary_get_key_ptr_at(&buffer->map, i), 
 							buf_get_element_count(writer_buffer),
 							buf_get_element_count(flat_buffer));

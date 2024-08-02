@@ -41,7 +41,7 @@ SC_API void write_layout(const char* start, const char* end, codegen_buffer_t* w
 {
 	if(is_empty(start, end))
 	{
-		debug_log_info("[Codegen] [Legacy] Properties or Layout is empty, skipping");
+		sc_debug_log_info_verbose("[Codegen] [Legacy] Properties or Layout is empty, skipping");
 		if(is_write_count)
 			codegen_buffer_write_u8(writer, ".main", (u16)0);
 		return;
@@ -211,7 +211,7 @@ static const char* write_description(const char* start, const char* end, u32 bit
 		}
 
 		if(num_elements == 0)
-			debug_log_warning("[Codegen] [Legacy] Block \"%.*s\" has zero elements", count, block_name);
+			sc_debug_log_warning_verbose("[Codegen] [Legacy] Block \"%.*s\" has zero elements", count, block_name);
 
 		// write number of elements to the buffer, 2 BYTES
 		codegen_buffer_set_u16(writer, field_count_addr, num_elements);

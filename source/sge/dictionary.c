@@ -28,6 +28,8 @@
 #include <sge/alloc.h>
 #include <sge/assert.h>
 
+#include <string.h> /* for strcmp */
+
 #ifndef GLOBAL_DEBUG
 #	define check_pre_condition(dictionary)
 #else 

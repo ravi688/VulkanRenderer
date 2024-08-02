@@ -1431,7 +1431,7 @@ static void recreate_graphics_pipelines(void* publisher_data, void* handler_data
 		for(u32 j = 0; j < subpass_count; j++)
 			vulkan_graphics_pipeline_refresh(shader->render_passes[i].subpasses[j].pipeline, &refresh_info);
 	}
-	debug_log_info("Graphics pipeline recreate success");
+	debug_log_info_verbose("Graphics pipeline recreate success");
 }
 
 SGE_API vulkan_shader_t* vulkan_shader_create(vulkan_renderer_t* renderer, vulkan_shader_create_info_t* create_info)
