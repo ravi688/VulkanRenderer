@@ -16,7 +16,7 @@ namespace SUTK
 		UIDriver* m_uiDriver;
 		IGfxDriver* m_gfxDriver;
 		Text* m_text;
-		TextContainer* m_textContainer;
+		RenderableContainer* m_textContainer;
 
 	public:
 		TextTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }

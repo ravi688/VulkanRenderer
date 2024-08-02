@@ -2,7 +2,7 @@
 
 #include <sutk/RenderRect.hpp>
 #include <sutk/SGEGfxDriver.hpp>
-#include <sutk/RenderRectContainer.hpp>
+#include <sutk/RenderableContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
 
 namespace SUTK
@@ -24,7 +24,7 @@ namespace SUTK
 		AnchorRect* anchor = emptyContainer->getAnchorRect();
 		anchor->setTopLeft({ 0, 0 });
 		anchor->setBottomRight({ 1, 1 });
-		m_renderRectContainer = m_uiDriver->createContainer<RenderRectContainer>(emptyContainer);
+		m_renderRectContainer = m_uiDriver->createContainer<RenderableContainer>(emptyContainer);
 		m_renderRectContainer->setRect({ 1.0f, 1.0f, 5, 5 });
 		anchor = m_renderRectContainer->getAnchorRect();
 		anchor->setTopLeft({ 1, 1 });
@@ -34,7 +34,7 @@ namespace SUTK
 		m_renderRect = m_uiDriver->createRenderRect<RenderRectFill>(m_renderRectContainer);
 		m_renderRect->setColor(Color3::green());
 
-		RenderRectContainer* renderRectContainer2 = m_uiDriver->createContainer<RenderRectContainer>(rootContainer);
+		RenderableContainer* renderRectContainer2 = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
 		RenderRectFill* renderRect2 = m_uiDriver->createRenderRect<RenderRectFill>(renderRectContainer2);
 		renderRectContainer2->setRect({ 5.0f, 10.0f, 5.0f, 5.0f });
 		AnchorRect* anchor2 = renderRectContainer2->getAnchorRect();

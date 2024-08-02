@@ -2,7 +2,7 @@
 
 #include <sutk/Text.hpp>
 #include <sutk/SGEGfxDriver.hpp>
-#include <sutk/TextContainer.hpp>
+#include <sutk/RenderableContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
 
 #include <common/id_generator.h>
@@ -21,7 +21,7 @@ namespace SUTK
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
-		m_textContainer = m_uiDriver->createContainer<TextContainer>(rootContainer);
+		m_textContainer = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
 		m_textContainer->setRect({ 1.0f, 0, 7, 7 });
 		m_text = m_uiDriver->createText(m_textContainer);
 		m_text->append("#include <iostream>\n");

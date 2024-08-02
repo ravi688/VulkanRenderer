@@ -1,7 +1,7 @@
 #include <sutk/Container.hpp>
 
 #include <sutk/assert.h> /* _assert() */
-#include <sutk/RenderRectContainer.hpp>
+#include <sutk/RenderableContainer.hpp>
 #include <sutk/RenderRect.hpp>
 
 namespace SUTK
@@ -115,18 +115,16 @@ namespace SUTK
 
 	void Container::enableDebug(bool isEnable) noexcept
 	{
-		// only create SUTK::RenderRectContainer and SUTK::RenderRect once in the life-time of this Container
+		// only create SUTK::RenderableContainer and SUTK::RenderRect once in the life-time of this Container
 		if(m_renderRectCont == NULL)
 		{
-			// create SUTK::RenderRectContainer and setup its rect
-			m_renderRectCont = getUIDriver().createContainer<RenderRectContainer>(this);
+			// create SUTK::RenderableContainer and setup its rect
+			m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(this);
 			m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
 			
-			// create SUTKU::RenderRect and establish parent-child link with SUTK::RenderRectContainer just created
+			// create SUTK::RenderRect and establish parent-child link with SUTK::RenderableContainer just created
 			m_renderRect = getUIDriver().createRenderable<RenderRectOutline>(m_renderRectCont);
 			m_renderRect->setThickness(0.05f);
-
-			m_renderRectCont->setRenderRect(m_renderRect);
 		}
 		m_isDebug = true;
 	}

@@ -3,7 +3,7 @@
 #include <sutk/RenderRect.hpp>
 #include <sutk/SGEGfxDriver.hpp>
 #include <sutk/SGEInputDriver.hpp>
-#include <sutk/RenderRectContainer.hpp>
+#include <sutk/RenderableContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
 
 namespace SUTK
@@ -21,7 +21,7 @@ namespace SUTK
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
-		m_renderRectContainer = m_uiDriver->createContainer<RenderRectContainer>(rootContainer);
+		m_renderRectContainer = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
 		m_renderRectContainer->setRect({ 1.0f, 1.0f, 1.0f, 1.0f });
 		AnchorRect* anchor = m_renderRectContainer->getAnchorRect();
 		anchor->setTopLeft({ 0, 0 });

@@ -1,11 +1,10 @@
 #include <sutk/UIDriver.hpp>
 
-#include <sutk/TextContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
 #include <sutk/Text.hpp>
 #include <sutk/IGfxDriver.hpp>
 #include <sutk/RenderRect.hpp>
-#include <sutk/RenderRectContainer.hpp>
+#include <sutk/RenderableContainer.hpp>
 #include <sutk/DummyInputDriver.hpp> // for STUK::DummyInputDriver
 
 #include <common/assert.h>
@@ -39,6 +38,8 @@ namespace SUTK
 		m_gfxDriver.render(*this);
 	}
 
+	// Containers
+
 	template<>
 	Container* UIDriver::createContainer<Container>(Container* parent)
 	{
@@ -54,47 +55,41 @@ namespace SUTK
 	}
 
 	template<>
-	TextContainer* UIDriver::createContainer<TextContainer>(Container* parent)
+	RenderableContainer* UIDriver::createContainer<RenderableContainer>(Container* parent)
 	{
-		TextContainer* txtCntr = new TextContainer(*this, parent);
-		return txtCntr;
-	}
-
-	template<>
-	RenderRectContainer* UIDriver::createContainer<RenderRectContainer>(Container* parent)
-	{
-		RenderRectContainer* rectCntr = new RenderRectContainer(*this, parent);
+		RenderableContainer* rectCntr = new RenderableContainer(*this, parent);
 		return rectCntr;
 	}
 
-	Text* UIDriver::createText(TextContainer* container)
+
+	// Renderables 
+
+	Text* UIDriver::createText(RenderableContainer* container)
 	{
 		_assert(container != NULL);
 		Text* text = new Text(*this, container);
-		container->setText(text);
 		m_renderables.push_back(text);
 		return text;
 	}
 
 	template<typename RenderRectType>
-	RenderRectType* UIDriver::createRenderRect(RenderRectContainer* container)
+	RenderRectType* UIDriver::createRenderRect(RenderableContainer* container)
 	{
 		_assert(container != NULL);
 		RenderRectType* rect = new RenderRectType(*this, container);
-		container->setRenderRect(rect);
 		m_renderables.push_back(rect);
 		return rect;
 	}
 
-	template RenderRectOutline* UIDriver::createRenderRect<RenderRectOutline>(RenderRectContainer* container);
-	template RenderRectFill* UIDriver::createRenderRect<RenderRectFill>(RenderRectContainer* container);
+	template RenderRectOutline* UIDriver::createRenderRect<RenderRectOutline>(RenderableContainer* container);
+	template RenderRectFill* UIDriver::createRenderRect<RenderRectFill>(RenderableContainer* container);
 
 	template<>
-	Text* UIDriver::createRenderable<Text>(typename RenderableContainer<Text>::type* parent) { return createText(parent); }
+	Text* UIDriver::createRenderable<Text>(RenderableContainer* parent) { return createText(parent); }
 
 	template<>
-	RenderRectOutline* UIDriver::createRenderable<RenderRectOutline>(typename RenderableContainer<RenderRectOutline>::type* parent) { return createRenderRect<RenderRectOutline>(parent); }
+	RenderRectOutline* UIDriver::createRenderable<RenderRectOutline>(RenderableContainer* parent) { return createRenderRect<RenderRectOutline>(parent); }
 
 	template<>
-	RenderRectFill* UIDriver::createRenderable<RenderRectFill>(typename RenderableContainer<RenderRectFill>::type* parent) { return createRenderRect<RenderRectFill>(parent); }
+	RenderRectFill* UIDriver::createRenderable<RenderRectFill>(RenderableContainer* parent) { return createRenderRect<RenderRectFill>(parent); }
 }

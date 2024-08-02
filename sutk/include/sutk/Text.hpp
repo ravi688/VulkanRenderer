@@ -1,7 +1,7 @@
 #pragma once
 
 #include <sutk/defines.hpp>
-#include <sutk/IRenderable.hpp> /* for SUTK::IRenderable */
+#include <sutk/Renderable.hpp> /* for SUTK::Renderable */
 #include <sutk/UIDriver.hpp> /* for SUTK::UIDriver::getGfxDriver() */
 
 #include <string> /* for std::string */
@@ -20,7 +20,6 @@ namespace SUTK
 		Strikethrough
 	};
 
-	class TextContainer;
 	class UIDriver;
 	class IGfxDriver;
 
@@ -67,10 +66,9 @@ namespace SUTK
 		}
 	};
 
-	class LineText : public IRenderable, public UIDriverObject
+	class LineText : public GfxDriverRenderable
 	{
 	private:
-		GfxDriverObjectHandleType m_handle;
 		bool m_isPosDirty;
 		bool m_isDataDirty;
 		LineTextData m_data;
@@ -81,8 +79,11 @@ namespace SUTK
 		friend class Text;
 
 	public:
+
+		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;
 		virtual void update() override;
+
 		void setClipRect(const Rect2Df rect) noexcept;
 		void setData(const std::string& data) noexcept;
 		void append(const std::string& data) noexcept;
@@ -138,11 +139,9 @@ namespace SUTK
 	// One text object is responsible for rendering a small to medium sized sub-text
 	// This usually translates to a single Gfx API specific buffer object. For example, it is VkBuffer (and VkDeviceMemory) in vulkan.
 	// This is to ensure fast manipulation of larget text data consisting of multiple such 'Text' objects.
-	class Text : public IRenderable, public UIDriverObject
+	class Text : public Renderable
 	{
 	private:
-		TextContainer* m_container;
-		
 		std::vector<LineText*> m_lines;
 		
 		// distance between two consecutive base lines in centimeters
@@ -160,14 +159,16 @@ namespace SUTK
 		VerticalAlignment m_verticalAlignment;
 
 		// this can only be called by SUTK::UIDriver
-		Text(UIDriver& driver, TextContainer* container) noexcept;
+		Text(UIDriver& driver, RenderableContainer* container) noexcept;
 
 		friend class UIDriver;
-		friend class TextContainer;
 
 		Vec2Df getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
-		void onContainerResize(const Rect2Df& rect, bool isPositionChanged, bool isSizeChanged) noexcept;
 		void recalculateClipRect() noexcept;
+
+		// Overrides of Renderable::onContainerResize
+		virtual void onGlobalCoordDirty() noexcept override;
+		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 
 	public:
 
@@ -177,6 +178,7 @@ namespace SUTK
 			After
 		};
 
+		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;
 		virtual void update() override;
 
@@ -190,7 +192,5 @@ namespace SUTK
 		void remove(const CursorPosition<LineCountType>& position, LineCountType numChars) noexcept;
 		void set(const std::string& str) noexcept;
 		void enableClipping(bool isEnable = true) noexcept;
-
-		TextContainer* getContainer() noexcept { return m_container; }
 	};
 }

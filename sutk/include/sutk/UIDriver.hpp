@@ -2,32 +2,25 @@
 
 #include <sutk/defines.hpp>
 
-#include <vector> /* for std::vector */
+#include <vector> // for std::vector
+#include <utility> // for std::forward
 
 namespace SUTK
 {
-	class IRenderable;
+	// Forward declarations for Container classes
 	class Container;
 	class FullWindowContainer;
-	class TextContainer;
-	class RenderRectContainer;
+	class RenderableContainer;
+
+	// Forward declarations for Renderable classes
+	class Renderable;
 	class Text;
 	class RenderRectOutline;
 	class RenderRectFill;
+	
+	// Forward declarations for Interface classes
 	class IGfxDriver;
 	class IInputDriver;
-
-	template<typename RenderableType>
-	struct RenderableContainer { };
-
-	template<>
-	struct RenderableContainer<Text> { typedef TextContainer type; };
-
-	template<>
-	struct RenderableContainer<RenderRectOutline> { typedef RenderRectContainer type; };
-
-	template<>
-	struct RenderableContainer<RenderRectFill> { typedef RenderRectContainer type; };
 
 	class UIDriver
 	{
@@ -35,7 +28,7 @@ namespace SUTK
 		IGfxDriver& m_gfxDriver;
 		IInputDriver* m_inputDriver;
 		bool m_isDummyInputDriver;
-		std::vector<IRenderable*> m_renderables;
+		std::vector<Renderable*> m_renderables;
 	public:
 		UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept;
 		UIDriver(IGfxDriver& gfxDriver) noexcept;
@@ -46,13 +39,22 @@ namespace SUTK
 		IGfxDriver& getGfxDriver() { return m_gfxDriver; }
 		IInputDriver& getInputDriver() { return *m_inputDriver; }
 
-		template<typename ContainerType>
-		ContainerType* createContainer(Container* parent = NULL) { return NULL; }
-		template<typename RenderableType>
-		RenderableType* createRenderable(typename RenderableContainer<RenderableType>::type* parent = NULL) { return NULL; }
-		Text* createText(TextContainer* parent);
+		template<typename ContainerType, typename... Args>
+		ContainerType* createContainer(Container* parent, Args... args)
+		{
+			ContainerType* cntr = new ContainerType(*this, parent, std::forward(args)...);
+			return cntr;
+		}
+		template<typename RenderableType, typename... Args>
+		RenderableType* createRenderable(RenderableContainer* parent, Args... args)
+		{
+			RenderableType* renderable = new RenderableType(*this, parent, std::forward(args)...);
+			m_renderables.push_back(renderable);
+			return renderable;
+		}
+		Text* createText(RenderableContainer* parent);
 		template<typename RenderRectType>
-		RenderRectType* createRenderRect(RenderRectContainer* container);
+		RenderRectType* createRenderRect(RenderableContainer* container);
 	};
 
 	// declarations for the template specializations for Containers (non-renderable)
@@ -61,17 +63,15 @@ namespace SUTK
 	template<>
 	FullWindowContainer* UIDriver::createContainer<FullWindowContainer>(Container* parent);
 	template<>
-	TextContainer* UIDriver::createContainer<TextContainer>(Container* parent);
-	template<>
-	RenderRectContainer* UIDriver::createContainer<RenderRectContainer>(Container* parent);
+	RenderableContainer* UIDriver::createContainer<RenderableContainer>(Container* parent);
 
 	// declarations for the template specializations for Renderables (renderable)
 	template<>
-	Text* UIDriver::createRenderable<Text>(typename RenderableContainer<Text>::type* parent);
+	Text* UIDriver::createRenderable<Text>(RenderableContainer* parent);
 	template<>
-	RenderRectOutline* UIDriver::createRenderable<RenderRectOutline>(typename RenderableContainer<RenderRectOutline>::type* parent);
+	RenderRectOutline* UIDriver::createRenderable<RenderRectOutline>(RenderableContainer* parent);
 	template<>
-	RenderRectFill* UIDriver::createRenderable<RenderRectFill>(typename RenderableContainer<RenderRectFill>::type* parent);
+	RenderRectFill* UIDriver::createRenderable<RenderRectFill>(RenderableContainer* parent);
 
 	class UIDriverObject
 	{
