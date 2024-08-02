@@ -38,8 +38,6 @@ namespace SUTK
 	}
 	void LineText::setData(const std::string& data) noexcept
 	{
-		if(m_data == data)
-			return;
 		m_data = std::string(data);
 		m_isDataDirty = true;
 	}
@@ -59,22 +57,16 @@ namespace SUTK
 	}
 	void LineText::setPosition(Vec2Df pos) noexcept
 	{
-		if(m_pos == pos)
-			return;
 		m_pos = pos;
 		m_isPosDirty = true;
 	}
 	void LineText::addPosition(Vec2Df pos) noexcept
 	{
-		if(pos == Vec2Df::zero())
-			return;
 		m_pos += pos;
 		m_isPosDirty = true;
 	}
 	void LineText::subPosition(Vec2Df pos) noexcept
 	{
-		if(pos == Vec2Df::zero())
-			return;
 		m_pos -= pos;
 		m_isPosDirty = true;
 	}
