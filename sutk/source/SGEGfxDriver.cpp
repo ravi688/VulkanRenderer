@@ -8,8 +8,6 @@
 #include <hpml/affine_transformation.h>
 
 #define BITMAP_TEXT_OVERLOAD_THRESHOLD 500 // 800 number of characters rewrite can be assumed to have near to zero latency
-#define CENTIMETERS_PER_INCH 2.54f
-#define INCHES_PER_CENTIMETER (1.0f / CENTIMETERS_PER_INCH)
 
 namespace SUTK
 {	

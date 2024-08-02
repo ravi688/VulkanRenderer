@@ -54,6 +54,15 @@ static void glfwOnWindowResizeCallback(GLFWwindow* glfw_window, int width, int h
 	event_publish(window->on_resize_event);
 }
 
+static void glfwOnCursorMoveCallback(GLFWwindow* glfw_window, double x, double y)
+{
+	AUTO window = CAST_TO(render_window_t*, glfwGetWindowUserPointer(glfw_window));
+	window->cursor_pos.x = x;
+	window->cursor_pos.y = y;
+	if(window->on_cursor_move_event != NULL)
+		event_publish(window->on_cursor_move_event);
+}
+
 SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
 	render_window_t* window = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDER_WINDOW, render_window_t);
@@ -72,6 +81,7 @@ SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 w
 	else
 		window->handle = glfwCreateWindow(width, height, title, NULL, NULL);
 	glfwSetFramebufferSizeCallback(window->handle, glfwOnWindowResizeCallback);
+	glfwSetCursorPosCallback(window->handle, glfwOnCursorMoveCallback);
 	glfwSetWindowUserPointer(window->handle, window);
 	render_window_get_framebuffer_extent(window, &window->width, &window->height);
 	log_msg("Render window created successfully\n");
@@ -91,13 +101,25 @@ SGE_API void render_window_poll_events(render_window_t* window)
 SGE_API void render_window_destroy(render_window_t* window)
 {
 	_debug_assert__(OBJECT_IS_INTERNAL(window));
-	
+
+	if(window->on_cursor_move_event != NULL)
+	{
+		event_destroy(window->on_cursor_move_event);
+		event_release_resources(window->on_cursor_move_event);
+	}	
 	event_destroy(window->on_resize_event);
 	event_release_resources(window->on_resize_event);
 	glfwDestroyWindow(window->handle);
 	glfwTerminate();
 	memory_allocator_dealloc(window->allocator, window);
 	log_msg("Render window destroyed successfully\n");
+}
+
+SGE_API event_t* render_window_get_on_cursor_move_event(render_window_t* window)
+{
+	if(window->on_cursor_move_event == NULL)
+		window->on_cursor_move_event = event_create(window->allocator, (void*)window PARAM_IF_DEBUG("Render-Window-Cursor-Move"));
+	return window->on_cursor_move_event;
 }
 
 SGE_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height)

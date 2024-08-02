@@ -1,18 +1,20 @@
 #include <sutk/IInputDriver.hpp>
+#include <sge-cpp/RenderWindow.hpp>
 
-// This typedef taken from glfw3.h
-typedef struct GLFWwindow GLFWwindow;
+namespace SGE
+{
+	class Driver;
+}
 
 namespace SUTK
 {
-
-	class SUTK_API GLFWInputDriver : public IInputDriver
+	class SUTK_API SGEInputDriver : public IInputDriver
 	{
 	private:
-		GLFWwindow* m_windowPtr;
+		SGE::RenderWindow m_window;
 	public:
 
-		GLFWInputDriver(GLFWwindow* windowPtr) noexcept;
+		SGEInputDriver(SGE::Driver& driver) noexcept;
 
 		// Keyboard
 		virtual bool getKey(KeyCode keycode) noexcept override;
@@ -20,6 +22,8 @@ namespace SUTK
 		virtual bool getKeyUp(KeyCode keycode) noexcept override;
 
 		// Mouse
+
+		// returns mouse position relative to top-left corner of the window (in centi-meters)
 		virtual Vec2Df getMousePosition() noexcept override;
 		virtual Vec2Df getMouseScrollDelta() noexcept override;
 		virtual bool getMouseButton(MouseButton button) noexcept override;
