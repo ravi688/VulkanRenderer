@@ -21,14 +21,16 @@ namespace SUTK
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
 		Container* emptyContainer = m_uiDriver->createContainer<Container>(rootContainer);
 		emptyContainer->setRect({ 1.0f, 1.0f, 7.0f, 7.0f });
+		AnchorRect* anchor = emptyContainer->getAnchorRect();
+		anchor->setTopLeft({ 0, 0 });
+		anchor->setBottomRight({ 1, 1 });
 		m_renderRectContainer = m_uiDriver->createContainer<RenderRectContainer>(emptyContainer);
 		m_renderRectContainer->setRect({ 1.0f, 1.0f, 5, 5 });
-		AnchorRect* anchor = m_renderRectContainer->getAnchorRect();
-		anchor->setTopLeft({ 0, 0 });
+		anchor = m_renderRectContainer->getAnchorRect();
+		anchor->setTopLeft({ 1, 1 });
 		anchor->setBottomRight({ 1, 1 });
 		emptyContainer->setRect({ 1.0f, 1.0f, 9.0f, 7.0f });
 		emptyContainer->setRect({ 1.0f, 1.0f, 11.0f, 7.0f });
-		// Expected size of m_renderRectContainer, { 1.0f, 1.0f, 9.0f, 5.0f }
 		m_renderRect = m_uiDriver->createRenderRect<RenderRectFill>(m_renderRectContainer);
 		m_renderRect->setColor(Color3::green());
 
