@@ -120,7 +120,7 @@ SC_API void write_glsl(const char* start, const char* end, compiler_ctx_t* ctx)
 			DEBUG_BLOCK
 			(
 				if(previous_source->count > 1)
-					debug_log_warning("[Codegen] [Legacy] More than once occurrences of the stage \"%s\"", stage_to_string(i));
+					sc_debug_log_warning_verbose("[Codegen] [Legacy] More than once occurrences of the stage \"%s\"", stage_to_string(i));
 			)
 			break;
 		}
@@ -184,7 +184,7 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 
 	_assert((type >= shaderc_include_type_relative) && (type <= shaderc_include_type_standard));
 	
-	debug_log_info("[Codegen] [Legacy] Requested include file: %s", requested_source);
+	sc_debug_log_info_verbose("[Codegen] [Legacy] Requested include file: %s", requested_source);
 
 	char* file_path = NULL;
 
@@ -204,7 +204,7 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 			}
 			data = load_file(ctx, file_path);
 			if(data == NULL)
-				debug_log_error("[Codegen] [Legacy] Failed to load %s", file_path);
+				DEBUG_LOG_ERROR("[Codegen] [Legacy] Failed to load %s", file_path);
 		}
 		break;
 		
@@ -218,7 +218,7 @@ static shaderc_include_result* resolve_include(void* user_data, const char* requ
 				com_call_deallocate(&ctx->callbacks, merged_path);
 				ctx->is_include_path_allocated = true;
 				BUFFER* _data = load_file(ctx, file_path);
-				debug_log_info("[Codegen] [Legacy] Resolved include file: %s", file_path);
+				sc_debug_log_info_verbose("[Codegen] [Legacy] Resolved include file: %s", file_path);
 				if(_data == NULL)
 					continue;
 				else 
@@ -317,7 +317,7 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 			case SHADER_STAGE_FRAGMENT: 	{ shader_type = shaderc_fragment_shader; 		break; }
 			default: DEBUG_LOG_ERROR("[Codegen] [Legacy] stage \"%s\" is undefined or unsupported shader stage", stage_to_string(source.stage));
 		}
-		debug_log_info("GLSL source:\n-------------\n%.*s\n--------------", source.length, source.source);
+		sc_debug_log_info_verbose("GLSL source:\n-------------\n%.*s\n--------------", source.length, source.source);
 		shaderc_compilation_result_t result = shaderc_compile_into_spv(compiler, source.source, source.length, shader_type, stage_to_string(source.stage), "main", options);
 		_ASSERT(result != NULL);
 		if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success)
@@ -343,7 +343,7 @@ static void serialize_shader(shader_source_t* sources, u8 shader_count, codegen_
 		shaderc_result_release(result);
 		j++;
 
-		DEBUG_LOG_INFO("[Codegen] [Legacy] %s shader compilation success", stage_to_string(source.stage));
+		SC_DEBUG_LOG_INFO_VERBOSE("[Codegen] [Legacy] %s shader compilation success", stage_to_string(source.stage));
 	}
 	shaderc_compile_options_release(options);
 	shaderc_compiler_release(compiler);

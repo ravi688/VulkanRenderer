@@ -152,10 +152,14 @@ static void recalculate_projection_matrices(vulkan_camera_t* camera)
 	/* recalculate screen projection matrix */
 	set_screen_projection(camera, 
 		mat4_ortho_projection(-0.04f, 100, camera->render_area.extent.height, (float)camera->render_area.extent.width / (float)camera->render_area.extent.height));
-	debug_log_info("Projection Matrix: ");
+	debug_log_info_verbose("Projection Matrix: ");
+	#ifdef COM_VERBOSE
 	mat4_print(camera->projection);
-	debug_log_info("Screen Matrix: ");
+	#endif
+	debug_log_info_verbose("Screen Matrix: ");
+	#ifdef COM_VERBOSE
 	mat4_print(camera->screen);
+	#endif
 }
 
 static void recalculate_transform(vulkan_camera_t* camera)
@@ -245,7 +249,7 @@ static void recreate_allocated_attachments(vulkan_camera_t* camera)
 	camera->allocated_attachment_size.width = camera->render_target_size.width;
 	camera->allocated_attachment_size.height = camera->render_target_size.height;
 
-	debug_log_info("Allocated attachment recreate success");
+	debug_log_info_verbose("Allocated attachment recreate success");
 }
 
 static void resize_default_depth_attachment(vulkan_camera_t* camera, u32 width, u32 height)
@@ -344,7 +348,7 @@ static void rewrite_descriptors(void* window, void* user_data)
 		}
 	}
 
-	debug_log_info("Descriptors rewrite sucess");
+	debug_log_info_verbose("Descriptors rewrite sucess");
 }
 
 /* holds the information to be copied again into the vulkan_camera_render_pass_t object */
@@ -398,7 +402,7 @@ static void recopy_supplementary_attachments(void* _window, void* user_data)
 			camera_render_pass_recopy_supplementary_attachments(camera->renderer->allocator, pass, &copy_info);
 	}
 
-	debug_log_info("Supplementary attachments copy success");
+	debug_log_info_verbose("Supplementary attachments copy success");
 }
 
 static void create_or_recreate_framebuffers_for_camera_pass(vulkan_camera_t* camera, vulkan_camera_render_pass_t* pass);
@@ -412,7 +416,7 @@ static void recreate_framebuffers(void* _window, void* user_data)
 	for(u32 i = 0; i < pass_count; i++)
 		create_or_recreate_framebuffers_for_camera_pass(camera, buf_get_ptr_at_typeof(&camera->render_passes, vulkan_camera_render_pass_t, i));
 
-	debug_log_info("Framebuffer recreate success");
+	debug_log_info_verbose("Framebuffer recreate success");
 }
 
 SGE_API vulkan_camera_t* vulkan_camera_create(vulkan_renderer_t* renderer, vulkan_camera_create_info_t* create_info)
@@ -1315,7 +1319,7 @@ static void vulkan_camera_set_depth_render_target_texture(vulkan_camera_t* camer
 	 * as we are requested only to render depth values */
 	if(camera->depth_material == NULL)
 	{
-		debug_log_info("Loading depth_shader.sb ...");
+		debug_log_info_verbose("Loading depth_shader.sb ...");
 		vulkan_shader_load_info_t load_info = 
 		{
 			.path = "shaders/builtins/depth_shader.sb",
@@ -1411,7 +1415,7 @@ SGE_API void vulkan_camera_set_render_target(vulkan_camera_t* camera, vulkan_cam
 		}
 	}
 
-	debug_log_info("Render Target Status: %s", vulkan_camera_render_target_status_str(camera->render_target_status));
+	debug_log_info_verbose("Render Target Status: %s", vulkan_camera_render_target_status_str(camera->render_target_status));
 }
 
 SGE_API void vulkan_camera_render(vulkan_camera_t* camera, vulkan_render_scene_t* scene, u64 queue_mask)
@@ -1641,7 +1645,7 @@ SGE_API void vulkan_camera_register_render_pass(vulkan_camera_t* camera, vulkan_
 
 	write_render_pass_descriptors(camera, &descriptor_sets, vulkan_camera_get_camera_render_pass_from_pass_handle(camera, prev_pass_handle), pass);
 
-	debug_log_info("Camera: Render pass (handle: %llu) registered success, details { prev(handle: %llu) }", render_pass->handle, prev_pass_handle);
+	debug_log_info_verbose("Camera: Render pass (handle: %llu) registered success, details { prev(handle: %llu) }", render_pass->handle, prev_pass_handle);
 }
 
 /* getters */

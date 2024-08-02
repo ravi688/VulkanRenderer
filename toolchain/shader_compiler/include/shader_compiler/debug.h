@@ -26,3 +26,19 @@
 #pragma once
 
 #include <common/debug.h>
+
+#ifdef SC_VERBOSE
+#	define sc_debug_log_info_verbose(...) debug_log_info(__VA_ARGS__)
+#	define sc_debug_log_warning_verbose(...) debug_log_warning(__VA_ARGS__)
+#	define sc_debug_log_error_verbose(...) debug_log_error(__VA_ARGS__)
+#	define SC_DEBUG_LOG_INFO_VERBOSE(...) DEBUG_LOG_INFO(__VA_ARGS__)
+#	define SC_DEBUG_LOG_WARNING_VERBOSE(...) DEBUG_LOG_WARNING(__VA_ARGS__)
+#	define SC_DEBUG_LOG_ERROR_VERBOSE(...) DEBUG_LOG_ERROR(__VA_ARGS__)
+#else
+#	define sc_debug_log_info_verbose(...)
+#	define sc_debug_log_warning_verbose(...)
+#	define sc_debug_log_error_verbose(...)
+#	define SC_DEBUG_LOG_INFO_VERBOSE(...)
+#	define SC_DEBUG_LOG_WARNING_VERBOSE(...)
+#	define SC_DEBUG_LOG_ERROR_VERBOSE(...)
+#endif
