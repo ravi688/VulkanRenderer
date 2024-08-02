@@ -2,7 +2,7 @@
 
 #include <sutk/RenderRect.hpp>
 #include <sutk/SGEGfxDriver.hpp>
-#include <sutk/GLFWInputDriver.hpp>
+#include <sutk/SGEInputDriver.hpp>
 #include <sutk/RenderRectContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
 
@@ -18,7 +18,7 @@ namespace SUTK
 	void MouseTest::initialize(SGE::Driver& driver)
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
-		m_inputDriver = new GLFWInputDriver(reinterpret_cast<GLFWwindow*>(driver.getRenderWindow().getGLFWWindowPtr()));
+		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
 		m_renderRectContainer = m_uiDriver->createContainer<RenderRectContainer>(rootContainer);

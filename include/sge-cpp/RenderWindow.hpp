@@ -1,3 +1,5 @@
+#pragma once
+
 #include <sge/render_window.h>
 
 #include <utility> /* for std::pair */
@@ -20,11 +22,21 @@ namespace SGE
 			return Event(render_window_get_on_resize_event(m_handle));
 		}
 
+		Event getOnCursorMoveEvent() noexcept
+		{
+			return Event(render_window_get_on_cursor_move_event(m_handle));
+		}
+
 		std::pair<u32, u32> getSize() const noexcept
 		{
 			u32 width, height;
 			render_window_get_framebuffer_extent(m_handle, &width, &height);
 			return { width, height };
+		}
+
+		vec2_t getCursorPosition() const noexcept
+		{
+			return render_window_get_cursor_position(m_handle);
 		}
 
 		void* getGLFWWindowPtr() noexcept

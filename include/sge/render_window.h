@@ -30,6 +30,7 @@
 #include <sge/event.h>
 #include <sge/type_system.h>
 #include <sge/object.h>
+#include <hpml/vec2.h>
 
 static const type_t TYPE_ID(render_window_t) = TYPE_ID_CREATE(1);
 
@@ -46,8 +47,13 @@ typedef struct render_window_t
 	/* height of the window (in pixels) */
 	u32 height;
 
+	/* position of the cursor relative to top-left corner of the window (in pixels) */
+	vec2_t cursor_pos;
+
 	/* event triggered whenever the window resizes */
 	event_t* on_resize_event;
+	/* event triggered whenever the cursor moves */
+	event_t* on_cursor_move_event;
 } render_window_t;
 
 #define RENDER_WINDOW(ptr) OBJECT_UP_CAST(render_window_t*, OBJECT_TYPE_RENDER_WINDOW, ptr)
@@ -62,7 +68,11 @@ SGE_API bool render_window_should_close(render_window_t* window);
 SGE_API void render_window_poll_events(render_window_t* window);
 SGE_API void render_window_destroy(render_window_t* window);
 
+/* returns the last reported position of the cursor */
+static CAN_BE_UNUSED_FUNCTION vec2_t render_window_get_cursor_position(render_window_t* window) { return window->cursor_pos; }
+
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE event_t* render_window_get_on_resize_event(render_window_t* window) { return window->on_resize_event; }
+SGE_API event_t* render_window_get_on_cursor_move_event(render_window_t* window);
 
 // getters
 SGE_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height);
