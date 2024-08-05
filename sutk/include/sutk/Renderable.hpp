@@ -53,6 +53,12 @@ namespace SUTK
 		// Implementation of Renderable
 		virtual bool isDirty() = 0;
 		virtual void update() = 0;
+
+		void setClipRectGlobalCoords(const Rect2Df rect) noexcept;
+
+		// sets the clip rect in the local coordinates of the parent container of its renderable container
+		// if parent is NULL then it does it in the local coordinates of its renderable container
+		void setClipRect(const Rect2Df rect) noexcept;
 	};
 
 	class GeometryRenderable : public GfxDriverRenderable

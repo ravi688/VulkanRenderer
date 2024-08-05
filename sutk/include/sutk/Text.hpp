@@ -83,12 +83,12 @@ namespace SUTK
 		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;
 		virtual void update() override;
-
-		void setClipRect(const Rect2Df rect) noexcept;
+		
 		void setData(const std::string& data) noexcept;
 		void append(const std::string& data) noexcept;
 		void insert(LineCountType col, const std::string& data) noexcept;
 		void setPosition(Vec2Df pos) noexcept;
+		Vec2Df getPosition() const noexcept { return m_pos; }
 		void addPosition(Vec2Df pos) noexcept;
 		void subPosition(Vec2Df pos) noexcept;
 		void clear() noexcept;
@@ -158,19 +158,26 @@ namespace SUTK
 		HorizontalAlignment m_horizontalAlignment;
 		VerticalAlignment m_verticalAlignment;
 
+		// m_scrollDelta.y represents scroll delta in y direction (vertical)
+		// m_scrollDelta.x represents scroll delta in x direction (horizontal)
+		Vec2Df m_scrollDelta;
+
 		// this can only be called by SUTK::UIDriver
 		Text(UIDriver& driver, RenderableContainer* container) noexcept;
 
 		friend class UIDriver;
 
-		Vec2Df getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
 		void recalculateClipRect() noexcept;
 
 		// Overrides of Renderable::onContainerResize
 		virtual void onGlobalCoordDirty() noexcept override;
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 
+		std::pair<s32, s32> getUnclippedLineRange() noexcept;
 	public:
+
+		Vec2Df getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
+		CursorPosition<LineCountType> getCursorPosFromCoords(Vec2Df coords) noexcept;
 
 		enum class Flags
 		{
@@ -192,5 +199,8 @@ namespace SUTK
 		void remove(const CursorPosition<LineCountType>& position, LineCountType numChars) noexcept;
 		void set(const std::string& str) noexcept;
 		void enableClipping(bool isEnable = true) noexcept;
+		void setScrollDelta(Vec2Df delta) noexcept;
+		void addScrollDelta(Vec2Df delta) noexcept;
+		Vec2Df getScrollDelta() const noexcept { return m_scrollDelta; }
 	};
 }

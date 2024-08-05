@@ -160,6 +160,10 @@ namespace SUTK
 		T width;
 		T height;
 
+		// getters
+		T getWidth() const noexcept { return width; }
+		T getHeight() const noexcept { return height; }
+
 		constexpr Rect2D() noexcept : x(0), y(0), width(0), height(0) { }
 		constexpr Rect2D(T _x, T _y, T _width, T _height) noexcept : x(_x), y(_y), width(_width), height(_height) { }
 		constexpr Rect2D(Vec2D<T> pos, Vec2D<T> size) noexcept : x(pos.x), y(pos.y), width(size.width), height(size.height) { }
@@ -306,6 +310,13 @@ namespace SUTK
 		void extendBottom(T value) noexcept
 		{
 			height += value;
+		}
+
+		bool contains(Vec2D<T> point) noexcept
+		{
+			auto tl = getTopLeft();
+			auto br = getBottomRight();
+			return (point.x > tl.x) && (point.y > tl.y) && (point.x < br.x) && (point.y < br.y);
 		}
 
 		std::string toString() const noexcept

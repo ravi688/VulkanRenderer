@@ -22,6 +22,10 @@ namespace SUTK
 			.quad(3, 2, 4, 5) // right line
 			.quad(5, 4, 6, 7) // bottom line
 			.quad(7, 6, 1, 0);// left line
+
+		// call update for the first time as we have geometry description already and
+		// this geometry is supposed to be displayed in the very first frame.
+		update();
 	}
 
 	bool RenderRectOutline::isDirty()
@@ -124,6 +128,10 @@ namespace SUTK
 			.topology(Geometry::Topology::TriangleList)
 			.quad(0, 1, 2, 3)
 			.fillColor(m_color);
+
+		// call update for the first time as we have geometry description already and
+		// this geometry is supposed to be displayed in the very first frame.
+		update();
 	}
 
 	bool RenderRectFill::isDirty()
