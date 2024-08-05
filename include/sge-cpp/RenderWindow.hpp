@@ -27,6 +27,11 @@ namespace SGE
 			return Event(render_window_get_on_cursor_move_event(m_handle));
 		}
 
+		Event getOnMouseButtonEvent() noexcept
+		{
+			return Event(render_window_get_on_mouse_button_event(m_handle));
+		}
+
 		std::pair<u32, u32> getSize() const noexcept
 		{
 			u32 width, height;
@@ -37,6 +42,16 @@ namespace SGE
 		vec2_t getCursorPosition() const noexcept
 		{
 			return render_window_get_cursor_position(m_handle);
+		}
+
+		mouse_button_type_t getMouseButtonType() const noexcept
+		{
+			return render_window_get_mouse_button_type(m_handle);
+		}
+
+		key_event_type_t getKeyEventType() const noexcept
+		{
+			return render_window_get_key_event_type(m_handle);
 		}
 
 		void* getGLFWWindowPtr() noexcept

@@ -63,6 +63,44 @@ static void glfwOnCursorMoveCallback(GLFWwindow* glfw_window, double x, double y
 		event_publish(window->on_cursor_move_event);
 }
 
+static key_event_type_t get_key_event_type(int event_type)
+{
+	switch(event_type)
+	{
+		case GLFW_PRESS: return KEY_EVENT_TYPE_PRESS;
+		case GLFW_RELEASE: return KEY_EVENT_TYPE_RELEASE;
+		default:
+		{
+			debug_log_error("Unknown glfw event type");
+			return KEY_EVENT_TYPE_UNDEFINED;
+		}
+	}
+}
+
+static mouse_button_type_t get_mouse_button_type(int button)
+{
+	switch(button)
+	{
+		case GLFW_MOUSE_BUTTON_LEFT: return MOUSE_BUTTON_TYPE_LEFT;
+		case GLFW_MOUSE_BUTTON_RIGHT: return MOUSE_BUTTON_TYPE_RIGHT;
+		case GLFW_MOUSE_BUTTON_MIDDLE: return MOUSE_BUTTON_TYPE_MIDDLE;
+		default:
+		{
+			debug_log_error("Uknown glfw mouse button type");
+			return MOUSE_BUTTON_TYPE_UNDEFINED;
+		}
+	}
+}
+
+static void glfwOnMouseButtonCallback(GLFWwindow* glfw_window, int button, int event_type, int modifiers)
+{
+	AUTO window = CAST_TO(render_window_t*, glfwGetWindowUserPointer(glfw_window));
+	window->mouse_button_type = get_mouse_button_type(button);
+	window->key_event_type = get_key_event_type(event_type);
+	if(window->on_mouse_button_event != NULL)
+		event_publish(window->on_mouse_button_event);
+}
+
 SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 width, u32 height, const char* title, bool full_screen, bool resizable)
 {
 	render_window_t* window = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDER_WINDOW, render_window_t);
@@ -82,6 +120,7 @@ SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 w
 		window->handle = glfwCreateWindow(width, height, title, NULL, NULL);
 	glfwSetFramebufferSizeCallback(window->handle, glfwOnWindowResizeCallback);
 	glfwSetCursorPosCallback(window->handle, glfwOnCursorMoveCallback);
+	glfwSetMouseButtonCallback(window->handle, glfwOnMouseButtonCallback);
 	glfwSetWindowUserPointer(window->handle, window);
 	render_window_get_framebuffer_extent(window, &window->width, &window->height);
 	log_msg("Render window created successfully\n");
@@ -106,7 +145,12 @@ SGE_API void render_window_destroy(render_window_t* window)
 	{
 		event_destroy(window->on_cursor_move_event);
 		event_release_resources(window->on_cursor_move_event);
-	}	
+	}
+	if(window->on_mouse_button_event != NULL)
+	{
+		event_destroy(window->on_mouse_button_event);
+		event_release_resources(window->on_mouse_button_event);
+	}
 	event_destroy(window->on_resize_event);
 	event_release_resources(window->on_resize_event);
 	glfwDestroyWindow(window->handle);
@@ -120,6 +164,13 @@ SGE_API event_t* render_window_get_on_cursor_move_event(render_window_t* window)
 	if(window->on_cursor_move_event == NULL)
 		window->on_cursor_move_event = event_create(window->allocator, (void*)window PARAM_IF_DEBUG("Render-Window-Cursor-Move"));
 	return window->on_cursor_move_event;
+}
+
+SGE_API event_t* render_window_get_on_mouse_button_event(render_window_t* window)
+{
+	if(window->on_mouse_button_event == NULL)
+		window->on_mouse_button_event = event_create(window->allocator, (void*)window PARAM_IF_DEBUG("Render-Window-Mouse-Button"));
+	return window->on_mouse_button_event;
 }
 
 SGE_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height)
