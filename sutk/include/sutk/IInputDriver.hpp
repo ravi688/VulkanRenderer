@@ -3,6 +3,8 @@
 #include <sutk/defines.hpp> // for SUTK_API and Vec2Df
 #include <common/Event.hpp> // for com::Event
 
+#include <ostream> // for std::ostream
+
 namespace SUTK
 {
 	enum class KeyCode
@@ -156,16 +158,29 @@ namespace SUTK
 		Forward
 	};
 
+
+	std::ostream& operator <<(std::ostream& stream, MouseButton v);
+	std::ostream&& operator <<(std::ostream&& stream, MouseButton v);
+	
+	enum class KeyEvent
+	{
+		Press,
+		Release
+	};
+
+	std::ostream& operator <<(std::ostream& stream, KeyEvent v);
+	std::ostream&& operator <<(std::ostream&& stream, KeyEvent v);
+	
 	class SUTK_API IInputDriver
 	{
 	private:
 		com::Event<IInputDriver, Vec2Df> m_onCursorMoveEvent;
-		com::Event<IInputDriver> m_onKeyEvent;
+		com::Event<IInputDriver, MouseButton, KeyEvent> m_onMouseButtonEvent;
 	public:
 		virtual ~IInputDriver() = default;
 
 		com::Event<IInputDriver, Vec2Df>& getOnCursorMoveEvent() { return m_onCursorMoveEvent; }
-		com::Event<IInputDriver>& getOnKeyEvent() { return m_onKeyEvent; }
+		com::Event<IInputDriver, MouseButton, KeyEvent>& getOnMouseButtonEvent() { return m_onMouseButtonEvent; }
 
 		// Keyboard
 		virtual bool getKey(KeyCode keycode) noexcept = 0;
