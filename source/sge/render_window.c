@@ -63,6 +63,15 @@ static void glfwOnCursorMoveCallback(GLFWwindow* glfw_window, double x, double y
 		event_publish(window->on_cursor_move_event);
 }
 
+static void glfwOnScrollCallback(GLFWwindow* glfw_window, double x, double y)
+{
+	AUTO window = CAST_TO(render_window_t*, glfwGetWindowUserPointer(glfw_window));
+	window->scroll_delta.x = x;
+	window->scroll_delta.y = y;
+	if(window->on_scroll_event != NULL)
+		event_publish(window->on_scroll_event);
+}
+
 static key_event_type_t get_key_event_type(int event_type)
 {
 	switch(event_type)
@@ -121,6 +130,7 @@ SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 w
 	glfwSetFramebufferSizeCallback(window->handle, glfwOnWindowResizeCallback);
 	glfwSetCursorPosCallback(window->handle, glfwOnCursorMoveCallback);
 	glfwSetMouseButtonCallback(window->handle, glfwOnMouseButtonCallback);
+	glfwSetScrollCallback(window->handle, glfwOnScrollCallback);
 	glfwSetWindowUserPointer(window->handle, window);
 	render_window_get_framebuffer_extent(window, &window->width, &window->height);
 	log_msg("Render window created successfully\n");
@@ -151,6 +161,11 @@ SGE_API void render_window_destroy(render_window_t* window)
 		event_destroy(window->on_mouse_button_event);
 		event_release_resources(window->on_mouse_button_event);
 	}
+	if(window->on_scroll_event != NULL)
+	{
+		event_destroy(window->on_scroll_event);
+		event_release_resources(window->on_scroll_event);
+	}
 	event_destroy(window->on_resize_event);
 	event_release_resources(window->on_resize_event);
 	glfwDestroyWindow(window->handle);
@@ -171,6 +186,13 @@ SGE_API event_t* render_window_get_on_mouse_button_event(render_window_t* window
 	if(window->on_mouse_button_event == NULL)
 		window->on_mouse_button_event = event_create(window->allocator, (void*)window PARAM_IF_DEBUG("Render-Window-Mouse-Button"));
 	return window->on_mouse_button_event;
+}
+
+SGE_API event_t* render_window_get_on_scroll_event(render_window_t* window)
+{
+	if(window->on_scroll_event == NULL)
+		window->on_scroll_event = event_create(window->allocator, (void*)window PARAM_IF_DEBUG("Render-Window-Mouse-Scroll"));
+	return window->on_scroll_event;
 }
 
 SGE_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height)

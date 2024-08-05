@@ -66,6 +66,7 @@ typedef struct render_window_t
 
 	/* position of the cursor relative to top-left corner of the window (in pixels) */
 	vec2_t cursor_pos;
+	vec2_t scroll_delta;
 	mouse_button_type_t mouse_button_type;
 	key_event_type_t key_event_type;
 
@@ -75,6 +76,8 @@ typedef struct render_window_t
 	event_t* on_cursor_move_event;
 	/* event triggered whenever a mouse button is pressed or released */
 	event_t* on_mouse_button_event;
+	/* event triggered whenever scroll wheel is turned/rotated */
+	event_t* on_scroll_event;
 } render_window_t;
 
 #define RENDER_WINDOW(ptr) OBJECT_UP_CAST(render_window_t*, OBJECT_TYPE_RENDER_WINDOW, ptr)
@@ -91,12 +94,14 @@ SGE_API void render_window_destroy(render_window_t* window);
 
 /* returns the last reported position of the cursor */
 static CAN_BE_UNUSED_FUNCTION vec2_t render_window_get_cursor_position(render_window_t* window) { return window->cursor_pos; }
+static CAN_BE_UNUSED_FUNCTION vec2_t render_window_get_scroll_delta(render_window_t* window) { return window->scroll_delta; }
 static CAN_BE_UNUSED_FUNCTION mouse_button_type_t render_window_get_mouse_button_type(render_window_t* window) { return window->mouse_button_type; }
 static CAN_BE_UNUSED_FUNCTION key_event_type_t render_window_get_key_event_type(render_window_t* window) { return window->key_event_type; }
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE event_t* render_window_get_on_resize_event(render_window_t* window) { return window->on_resize_event; }
 SGE_API event_t* render_window_get_on_cursor_move_event(render_window_t* window);
 SGE_API event_t* render_window_get_on_mouse_button_event(render_window_t* window);
+SGE_API event_t* render_window_get_on_scroll_event(render_window_t* window);
 
 // getters
 SGE_API void render_window_get_framebuffer_extent(render_window_t* window, u32* out_width, u32* out_height);
