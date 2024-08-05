@@ -185,6 +185,7 @@ namespace SUTK
 		subText.setPointSize(24);
 		u32 id = id_generator_get(&m_id_generator);
 		m_bitmapTextStringMappings.insert({ id, { subText,  bitmapText.second } });
+		m_typeTable.insert({ id, ObjectType::Text });
 		return static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(id, U32_MAX));
 	}
 
@@ -202,13 +203,21 @@ namespace SUTK
 		return it->second.textString;
 	}
 
+	void SGEGfxDriver::removeIDFromTypeTable(u32 id)
+	{
+		auto it = m_typeTable.find(id);
+		_assert(it != m_typeTable.end());
+		m_typeTable.erase(it);
+	}
+
 	void SGEGfxDriver::destroyText(GfxDriverObjectHandleType handle)
 	{
 		auto it = getSubTextIterator(handle);
 		SGE::BitmapTextString subText = it->second.textString;
 		subText.destroy();
-		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(handle));
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_ATTACHED_OBJECT_ID(handle)));
 		m_bitmapTextStringMappings.erase(it);
+		removeIDFromTypeTable(GET_ATTACHED_OBJECT_ID(handle));
 	}
 
 	vec3_t SGEGfxDriver::SUTKToSGECoordTransform(const Vec2Df position)
@@ -239,6 +248,28 @@ namespace SUTK
 	{
 		auto it = getSubTextIterator(handle);
 		return it->second.textHandle;
+	}
+
+	ObjectType SGEGfxDriver::getType(GfxDriverObjectHandleType handle)
+	{
+		u32 id = GET_ATTACHED_OBJECT_ID(handle);
+		auto it = m_typeTable.find(id);
+		_assert(it != m_typeTable.end());
+		return it->second;
+	}
+
+	GfxDriverObjectHandleType SGEGfxDriver::getObject(GfxDriverObjectHandleType handle)
+	{
+		ObjectType type = getType(handle);
+		switch(type)
+		{
+			case ObjectType::Text:
+				return getTextObject(handle);
+			case ObjectType::Mesh:
+				return getGeometryObject(handle);
+		}
+		debug_log_error("Invalid ObjectType: %u", static_cast<u8>(type));
+		return GFX_DRIVER_OBJECT_NULL_HANDLE;
 	}
 
 	void SGEGfxDriver::setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect)
@@ -284,6 +315,8 @@ namespace SUTK
 		// add mesh into the mesh mappings table
 		id_generator_id_type_t meshID = id_generator_get(&m_id_generator);
 		m_meshMappings.insert({ meshID, { mesh, shader } });
+
+		m_typeTable.insert({ meshID, ObjectType::Mesh });
 
 		// add corresponding render object into the render object mappings table
 		id_generator_id_type_t renderObjectID = id_generator_get(&m_id_generator);
@@ -394,6 +427,7 @@ namespace SUTK
 		it->second.mesh.destroy();
 		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_ATTACHED_OBJECT_ID(geometry)));
 		m_meshMappings.erase(it);
+		removeIDFromTypeTable(GET_ATTACHED_OBJECT_ID(geometry));
 
 		// erase the corresponding render object also 
 		auto it2 = getRenderObjectIterator(geometry);

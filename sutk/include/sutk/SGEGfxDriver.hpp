@@ -29,6 +29,13 @@ namespace SUTK
 		SGE::Mesh mesh;
 		SGE::Shader shader;
 	};
+
+	enum class ObjectType : u8
+	{
+		Text,
+		Mesh
+	};
+
 	class Geometry;
 	class SGEGfxDriver : public IGfxDriver
 	{
@@ -45,6 +52,7 @@ namespace SUTK
 		std::unordered_map<id_generator_id_type_t, SGEMeshData> m_meshMappings;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
 		std::unordered_map<id_generator_id_type_t, SGE::RenderObject> m_renderObjectMappings;
+		std::unordered_map<id_generator_id_type_t, ObjectType> m_typeTable;
 		struct OnResizeCallbackHandlerData
 		{
 			OnResizeCallbackHandler handler;
@@ -74,6 +82,8 @@ namespace SUTK
 		SGE::Shader compileShader(const Geometry& geometry);
 		// Transforms SUTK coordinates (origin at top-left, and y downwards) to SGE coordinates (origin at center, and y upwards)
 		vec3_t SUTKToSGECoordTransform(const Vec2Df position);
+		ObjectType getType(GfxDriverObjectHandleType handle);
+		void removeIDFromTypeTable(u32 id);
 
 	public:
 
@@ -96,6 +106,7 @@ namespace SUTK
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
 
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) override;
+		virtual GfxDriverObjectHandleType getObject(GfxDriverObjectHandleType handle) override;
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) override;
 		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec2Df position) override;
 

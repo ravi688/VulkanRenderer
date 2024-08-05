@@ -6,6 +6,8 @@
 
 #include <common/assert.h> /* for _assert() */
 
+#include <algorithm> // for std::min and std::clamp
+
 namespace SUTK
 {
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText() { return { END_OF_TEXT, END_OF_LINE }; }
@@ -31,10 +33,6 @@ namespace SUTK
 			getGfxDriver().setTextData(getGfxDriverObjectHandle(), m_data);
 			m_isDataDirty = false;
 		}
-	}
-	void LineText::setClipRect(const Rect2Df rect) noexcept
-	{
-		getGfxDriver().setTextScissor(getGfxDriverObjectHandle(), rect);
 	}
 	void LineText::setData(const std::string& data) noexcept
 	{
@@ -117,7 +115,32 @@ namespace SUTK
 
 	Vec2Df Text::getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept
 	{
-		return { 0, m_baselineHeight * cursor.getLine() };
+		return { 0, m_baselineHeight * cursor.getLine() + m_scrollDelta.y };
+	}
+
+	std::pair<s32, s32> Text::getUnclippedLineRange() noexcept
+	{
+		auto rect = getContainer()->getRect();
+		auto scrollDelta = getScrollDelta();
+		s32 lowerBound = static_cast<s32>(-scrollDelta.y / m_baselineHeight);
+		s32 upperBound = static_cast<s32>((-scrollDelta.y + rect.getHeight()) / m_baselineHeight);
+		return { 
+					std::clamp(lowerBound, 0, static_cast<s32>(m_lines.size()) - 1),  
+				 	std::clamp(upperBound, 0, static_cast<s32>(m_lines.size()) - 1)
+			   };
+	}
+
+	CursorPosition<LineCountType> Text::getCursorPosFromCoords(Vec2Df coords) noexcept
+	{
+		if(m_lines.size() == 0)
+			return { 0, 0 };
+		std::pair<s32, s32> range = getUnclippedLineRange();
+		auto lineNo = static_cast<s32>((coords - m_scrollDelta).y / m_baselineHeight);
+		lineNo = std::min(lineNo, static_cast<s32>(m_lines.size()) - 1);
+		lineNo = std::max(lineNo, 0);
+		LineCountType colNo = 0;
+		_assert(lineNo >= 0);
+		return { lineNo, colNo };
 	}
 
 	// this creates a new line before line pointed by current cursor
@@ -234,7 +257,7 @@ namespace SUTK
 		for(std::size_t i = 0; i < m_lines.size(); i++)
 		{
 			// set the clip rect, note that width and height should remain as that of its text container
-			m_lines[i]->setClipRect({ position.x, position.y, container->getRect().width, container->getRect().height });
+			m_lines[i]->setClipRectGlobalCoords({ position.x, position.y, container->getRect().width, container->getRect().height });
 		}
 	}
 
@@ -242,6 +265,24 @@ namespace SUTK
 	{
 		m_isClippingEnabled = isEnable;
 		recalculateClipRect();
+	}
+
+	void Text::setScrollDelta(Vec2Df delta) noexcept
+	{
+		for(std::size_t i = 0; i < m_lines.size(); i++)
+		{
+			LineText* lineText = m_lines[i];
+			auto pos = lineText->getPosition();
+			pos -= m_scrollDelta;
+			pos += delta;
+			lineText->setPosition(pos);
+		}
+		m_scrollDelta = delta;
+	}
+
+	void Text::addScrollDelta(Vec2Df delta) noexcept
+	{
+		setScrollDelta(m_scrollDelta + delta);
 	}
 
 	void Text::onGlobalCoordDirty() noexcept

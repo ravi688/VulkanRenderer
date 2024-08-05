@@ -29,6 +29,8 @@ namespace SUTK
 		IInputDriver* m_inputDriver;
 		bool m_isDummyInputDriver;
 		std::vector<Renderable*> m_renderables;
+
+		friend class Renderable;
 	public:
 		UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept;
 		UIDriver(IGfxDriver& gfxDriver) noexcept;

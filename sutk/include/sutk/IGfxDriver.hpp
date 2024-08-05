@@ -22,6 +22,8 @@ namespace SUTK
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) = 0;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) = 0;
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) = 0;
+
+		virtual GfxDriverObjectHandleType getObject(GfxDriverObjectHandleType handle) = 0;
 		// rect should be in centimeters
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) = 0;
 		// position should be centimeters

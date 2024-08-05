@@ -68,7 +68,6 @@ namespace SUTK
 	{
 		_assert(container != NULL);
 		Text* text = new Text(*this, container);
-		m_renderables.push_back(text);
 		return text;
 	}
 
@@ -77,7 +76,6 @@ namespace SUTK
 	{
 		_assert(container != NULL);
 		RenderRectType* rect = new RenderRectType(*this, container);
-		m_renderables.push_back(rect);
 		return rect;
 	}
 

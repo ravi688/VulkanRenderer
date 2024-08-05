@@ -176,11 +176,13 @@ namespace SUTK
 	private:
 		com::Event<IInputDriver, Vec2Df> m_onCursorMoveEvent;
 		com::Event<IInputDriver, MouseButton, KeyEvent> m_onMouseButtonEvent;
+		com::Event<IInputDriver, Vec2Df> m_onScrollEvent;
 	public:
 		virtual ~IInputDriver() = default;
 
 		com::Event<IInputDriver, Vec2Df>& getOnCursorMoveEvent() { return m_onCursorMoveEvent; }
 		com::Event<IInputDriver, MouseButton, KeyEvent>& getOnMouseButtonEvent() { return m_onMouseButtonEvent; }
+		com::Event<IInputDriver, Vec2Df>& getOnScrollEvent() { return m_onScrollEvent; }
 
 		// Keyboard
 		virtual bool getKey(KeyCode keycode) noexcept = 0;

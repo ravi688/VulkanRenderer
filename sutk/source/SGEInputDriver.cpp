@@ -47,6 +47,15 @@ namespace SUTK
 			auto keyEventType = window.getKeyEventType();
 			inputDriver->getOnMouseButtonEvent().publish(SUTK::getMouseButton(mouseButtonType), SUTK::getKeyEventType(keyEventType));
 		}, reinterpret_cast<void*>(this));
+
+		getOnScrollEvent().setPublisher(this);
+		m_window.getOnScrollEvent().subscribe([](void* publisher, void* handlerData)
+		{
+			auto* inputDriver = reinterpret_cast<SGEInputDriver*>(handlerData);
+			auto window = inputDriver->m_window;
+			auto delta = window.getScrollDelta();
+			inputDriver->getOnScrollEvent().publish({ delta.x, delta.y });
+		}, reinterpret_cast<void*>(this));
 	}
 
 	// Keyboard
