@@ -37,6 +37,11 @@ namespace SGE
 			return Event(render_window_get_on_scroll_event(m_handle));
 		}
 
+		Event getOnKeyEvent() noexcept
+		{
+			return Event(render_window_get_on_key_event(m_handle));
+		}
+
 		std::pair<u32, u32> getSize() const noexcept
 		{
 			u32 width, height;
