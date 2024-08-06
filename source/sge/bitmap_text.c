@@ -153,6 +153,16 @@ SGE_API u32 bitmap_text_string_get_lengthH(bitmap_text_t* text, bitmap_text_stri
 	return vulkan_bitmap_text_string_get_lengthH(text, handle);
 }
 
+SGE_API f32 bitmap_text_string_get_zcoord_from_glyph_index(bitmap_text_t* text, bitmap_text_string_handle_t handle, u32 index)
+{
+	return vulkan_bitmap_text_string_get_zcoord_from_glyph_index(VULKAN_BITMAP_TEXT_CAST(text), handle, index);
+}
+
+SGE_API u32 bitmap_text_string_get_glyph_index_from_zcoord(bitmap_text_t* text, bitmap_text_string_handle_t handle, f32 zcoord)
+{
+	return vulkan_bitmap_text_string_get_glyph_index_from_zcoord(VULKAN_BITMAP_TEXT_CAST(text), handle, zcoord);
+}
+
 SGE_API mat4_t bitmap_text_string_get_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
 {
 	return vulkan_bitmap_text_string_get_transformH(text, handle);

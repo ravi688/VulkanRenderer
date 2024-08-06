@@ -35,6 +35,14 @@ namespace SGE
 		{
 			return bitmap_text_string_get_lengthH(m_bitmapTextHandle, m_handle);
 		}
+		f32 getZCoordFromGlyphIndex(u32 glyphIndex) const noexcept
+		{
+			return bitmap_text_string_get_zcoord_from_glyph_index(m_bitmapTextHandle, m_handle, glyphIndex);
+		}
+		u32 getGlyphIndexFromZCoord(f32 zCoord) const noexcept
+		{
+			return bitmap_text_string_get_glyph_index_from_zcoord(m_bitmapTextHandle, m_handle, zCoord);
+		}
 		void setTransform(mat4_t transform) const noexcept
 		{
 			bitmap_text_string_set_transformH(m_bitmapTextHandle, m_handle, transform);

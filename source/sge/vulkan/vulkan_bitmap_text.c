@@ -194,7 +194,11 @@ SGE_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 	/* destroy text strings */
 	u32 text_string_count = buf_get_element_count(&text->text_strings);
 	for(u32 i = 0; i < text_string_count; i++)
-		buf_free(&buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, i)->chars);
+	{
+		AUTO text_string = buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, i);
+		buf_free(&text_string->chars);
+		buf_free(&text_string->glyph_offsets);
+	}
 	buf_clear(&text->text_strings, NULL);
 
 	/* destroy the GRD buffer */
@@ -290,6 +294,7 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 		/* vulkan_bitmap_text_string_get_lengthH function returns text_string->chars's element count - 1
 		 * therefore, the number of characters in 'chars' must be greater than or equal to 1 (including the null character) */
 		buf_push_null(&text_string->chars);
+		text_string->glyph_offsets = memory_allocator_buf_new(text->renderer->allocator, f32);
 		buf_push_pseudo(tst_buffer, 1);
 	}
 
@@ -354,6 +359,7 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 	multi_buffer_sub_buffer_destroy(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), text_string->render_data_handle);
 	text_string->render_data_handle = SUB_BUFFER_HANDLE_INVALID;
 	buf_clear(&text_string->chars, NULL);
+	buf_clear(&text_string->glyph_offsets, NULL);
 	text_string->rect.offset = offset3d(0.0f, 0.0f, 0.0f);
 	text_string->rect.extent = extent2d(500, 300);
 	text_string->transform = mat4_identity();
@@ -374,6 +380,9 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 {
 	/* clear the render data for this text string */
 	multi_buffer_sub_buffer_clear(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), text_string->render_data_handle);
+	/* clear the previous glyph offsets for this text string */
+	/* TODO: it should be buf_clear_fast() */
+	buf_clear(&text_string->glyph_offsets, NULL);
 
 	font_t* font = vulkan_bitmap_text_get_font(text);
 
@@ -430,10 +439,13 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 			};
 		}
 
+		/* offset of the left side of current glyph */
+		f32 ls_offset = horizontal_pen + info.bearing_x;
+
 		glyph_infos[i] = (vulkan_bitmap_text_glyph_info_t)
 		{
 			.unicode = ch,
-			.rect = { offset3d(horizontal_pen + info.width * 0.5f + info.bearing_x,
+			.rect = { offset3d(ls_offset + info.width * 0.5f,
 							   info.height * 0.5f + (info.bearing_y - info.height) - anchor_offset_y,
 							   0.0f),
 					  extent3d((texcoords.trtc.x - texcoords.tltc.x) * tex_size.width,
@@ -441,6 +453,8 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 							   0.0f)
 					}
 		};
+
+		buf_push(&text_string->glyph_offsets, &ls_offset);
 		horizontal_pen += info.advance_width;
 
 		#if DBG_ENABLED(VULKAN_BITMAP_TEXT_STRING_SETH)
@@ -490,11 +504,17 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 		AUTO glyph_data = is_changed ? buf_get_ptr_at_typeof(&text->glyph_layout_data_buffer, vulkan_bitmap_text_glyph_layout_data_t, i) : NULL;
 		u32 index = is_changed ? glyph_data->index : i;
 
+		AUTO offset = vec3_add(2, glyph_infos[index].rect.offset, (is_changed ? glyph_data->offset : vec3_zero()));
+	
+		f32 ls_offset = 0;
+		buf_get_at(&text_string->glyph_offsets, i, &ls_offset);
+		ls_offset += (is_changed ? glyph_data->offset.x : 0);
+		buf_set_at(&text_string->glyph_offsets, i, &ls_offset);
+
 		/* skip the whitespaces (for which we don't have any physical texture coord information) */
 		if(texcoord_indices[index] == U32_MAX)
 			continue;
 
-		AUTO offset = vec3_add(2, glyph_infos[index].rect.offset, (is_changed ? glyph_data->offset : vec3_zero()));
 		// _debug_assert__(info.bitmap_top == info.bearing_y);
 		vulkan_bitmap_text_glsl_glyph_render_data_t data =
 		{
@@ -684,6 +704,73 @@ SGE_API u32 vulkan_bitmap_text_string_get_lengthH(vulkan_bitmap_text_t* text, vu
 	AUTO count = buf_get_element_count(&get_text_stringH(text, handle)->chars);
 	_debug_assert__(count >= 1);
 	return count - 1u;
+}
+
+SGE_API f32 vulkan_bitmap_text_string_get_zcoord_from_glyph_index(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 index)
+{
+	AUTO buf = &get_text_stringH(text, handle)->glyph_offsets;
+	AUTO count = buf_get_element_count(buf);
+	if((count == 0) || (index >= count))
+		return 0;
+	return *buf_get_ptr_at_typeof(buf, f32, index);
+}
+
+static INLINE_IF_RELEASE_MODE f32 f32_abs(const f32 v1, const f32 v2) { f32 d = v2 - v1; return (d < 0) ? -d : d;  }
+
+/* searches for a nearest value in the sorted float array 
+ * for testing, see: unit_tests/nearest_search.cpp 
+ * it has an expectation of being more efficient than linear nearest search */
+static s32 binary_nearest_search_f32(const f32* arr, s32 len, f32 val)
+{
+    if(len == 0)
+    	return -1;
+    if(val >= arr[len - 1])
+    	return len - 1;
+    if(val <= arr[0])
+    	return 0;
+    f32 rd = f32_abs(arr[len - 1], val);
+    f32 ld = f32_abs(arr[0], val);
+    s32 dir = (ld < rd) ? 1 : -1;
+    s32 i = (dir == 1) ? 0 : (len - 1);
+    f32 p_d = (dir == 1) ? ld : rd;
+    f32 m_d = p_d;
+    s32 m_i = i;
+    s32 step_size = (len - 1) / 2;
+    while(true)
+    {
+    	i += dir * step_size;
+    	if((i < 0) || (i >= len))
+    	{
+    		dir *= -1;
+    		continue;
+    	}
+    	f32 d = f32_abs(arr[i], val);
+    	if(d > p_d)
+    	{
+    		dir *= -1;
+    		step_size /= 2;
+    	}
+    	p_d = d;
+    	if(m_d > p_d)
+    	{
+    		m_d = p_d;
+    		m_i = i;
+    	}
+    	if(step_size == 0)
+    		break;
+    }
+    return m_i;
+}
+
+SGE_API u32 vulkan_bitmap_text_string_get_glyph_index_from_zcoord(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, f32 zcoord)
+{
+	AUTO buf = &get_text_stringH(text, handle)->glyph_offsets;
+	if(buf_get_element_count(buf) == 0)
+		return 0;
+	const f32* floats = CAST_TO(const f32*, buf_get_ptr(buf));
+	u32 index = binary_nearest_search_f32(floats, buf_get_element_count(buf), zcoord);
+	_assert(index < buf_get_element_count(buf));
+	return index;
 }
 
 SGE_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
