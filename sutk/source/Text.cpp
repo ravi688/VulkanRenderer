@@ -34,6 +34,14 @@ namespace SUTK
 			m_isDataDirty = false;
 		}
 	}
+	LineCountType LineText::getColPosFromCoord(f32 coord) noexcept
+	{
+		return getGfxDriver().getTextGlyphIndexFromCoord(getGfxDriverObjectHandle(), coord);
+	}
+	f32 LineText::getCoordFromColPos(LineCountType col) noexcept
+	{
+		return getGfxDriver().getTextCoordFromGlyphIndex(getGfxDriverObjectHandle(), col);
+	}
 	void LineText::setData(const std::string& data) noexcept
 	{
 		m_data = std::string(data);
@@ -115,7 +123,9 @@ namespace SUTK
 
 	Vec2Df Text::getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept
 	{
-		return { 0, m_baselineHeight * cursor.getLine() + m_scrollDelta.y };
+		LineCountType line = cursor.getLine();
+		_assert((line >= 0) && (line < m_lines.size()));
+		return { m_lines[line]->getCoordFromColPos(cursor.getColumn()), m_baselineHeight * cursor.getLine() + m_scrollDelta.y };
 	}
 
 	std::pair<s32, s32> Text::getUnclippedLineRange() noexcept
@@ -138,8 +148,8 @@ namespace SUTK
 		auto lineNo = static_cast<s32>((coords - m_scrollDelta).y / m_baselineHeight);
 		lineNo = std::min(lineNo, static_cast<s32>(m_lines.size()) - 1);
 		lineNo = std::max(lineNo, 0);
-		LineCountType colNo = 0;
 		_assert(lineNo >= 0);
+		LineCountType colNo = m_lines[lineNo]->getColPosFromCoord(coords.x);
 		return { lineNo, colNo };
 	}
 

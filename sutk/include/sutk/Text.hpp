@@ -7,6 +7,7 @@
 #include <string> /* for std::string */
 #include <vector> /* for std::vector*/
 #include <limits> /* for std::numeric_limits */
+#include <ostream> // for std::ostream
 
 namespace SUTK
 {
@@ -84,6 +85,9 @@ namespace SUTK
 		virtual bool isDirty() override;
 		virtual void update() override;
 		
+		// returns column (index of a glyph) given a coordinate (absisca) along the line length.
+		LineCountType getColPosFromCoord(f32 coord) noexcept;
+		f32 getCoordFromColPos(LineCountType col) noexcept;
 		void setData(const std::string& data) noexcept;
 		void append(const std::string& data) noexcept;
 		void insert(LineCountType col, const std::string& data) noexcept;
@@ -135,6 +139,13 @@ namespace SUTK
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText();
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line);
 
+
+	template<typename T>
+	std::ostream& operator <<(std::ostream& stream, const CursorPosition<T>& pos)
+	{
+		stream << "{ line: " << pos.getLine() << ", col: " << pos.getColumn() << " }";
+		return stream;
+	}
 
 	// One text object is responsible for rendering a small to medium sized sub-text
 	// This usually translates to a single Gfx API specific buffer object. For example, it is VkBuffer (and VkDeviceMemory) in vulkan.

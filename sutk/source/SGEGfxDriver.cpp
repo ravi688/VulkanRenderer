@@ -228,6 +228,14 @@ namespace SUTK
 		return vec3(0.0f, windowSize.height * 0.5f - pixelPosition.height, pixelPosition.width - windowSize.width * 0.5f);
 	}
 
+	Vec2Df SGEGfxDriver::SGEToSUTKCoordTransform(const vec3_t position)
+	{
+		auto windowSize = getSizeInPixels();
+		Vec2Df sutkPosInPixels = { windowSize.height * 0.5f - position.y, windowSize.width * 0.5f + position.x };
+		extent2d_t sutkPosInInches = SGE::Display::ConvertPixelsToInches({ sutkPosInPixels.x, sutkPosInPixels.y });
+		return { sutkPosInInches.x * CENTIMETERS_PER_INCH, sutkPosInInches.y * CENTIMETERS_PER_INCH };
+	}
+
 	void SGEGfxDriver::setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position)
 	{
 		getText(handle).setPosition(SUTKToSGECoordTransform(position));
@@ -242,6 +250,26 @@ namespace SUTK
 		bitmapTextData.charCount -= textString.getLength();
 		textString.set(data);
 		bitmapTextData.charCount += textString.getLength();
+	}
+
+	LineCountType SGEGfxDriver::getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord)
+	{
+		auto it = getSubTextIterator(handle);
+		SGE::BitmapTextString& textString = it->second.textString;
+		// 'coord' is in centimeters, so convert it into pixels along the width of the monitor/window
+		f32 zCoord = SGE::Display::ConvertInchesToPixels({ coord * INCHES_PER_CENTIMETER, 0 }).x;
+		return static_cast<LineCountType>(textString.getGlyphIndexFromZCoord(zCoord));
+	}
+
+	f32 SGEGfxDriver::getTextCoordFromGlyphIndex(GfxDriverObjectHandleType handle, LineCountType col)
+	{
+		auto it = getSubTextIterator(handle);
+		SGE::BitmapTextString& textString = it->second.textString;
+		// get the offset along horizontal axis in pixel coordinates
+		f32 zCoord = textString.getZCoordFromGlyphIndex(static_cast<u32>(col));
+		// convert it into centimeters
+		f32 xCoord = SGE::Display::ConvertPixelsToInches({ zCoord, 0 }).x * CENTIMETERS_PER_INCH;
+		return xCoord;
 	}
 
 	GfxDriverObjectHandleType SGEGfxDriver::getTextObject(GfxDriverObjectHandleType handle)

@@ -21,6 +21,8 @@ namespace SUTK
 		virtual void destroyText(GfxDriverObjectHandleType handle) = 0;
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) = 0;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) = 0;
+		virtual LineCountType getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord) = 0;
+		virtual f32 getTextCoordFromGlyphIndex(GfxDriverObjectHandleType handle, LineCountType col) = 0;
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) = 0;
 
 		virtual GfxDriverObjectHandleType getObject(GfxDriverObjectHandleType handle) = 0;

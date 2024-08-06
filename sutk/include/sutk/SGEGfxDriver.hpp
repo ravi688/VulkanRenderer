@@ -82,6 +82,7 @@ namespace SUTK
 		SGE::Shader compileShader(const Geometry& geometry);
 		// Transforms SUTK coordinates (origin at top-left, and y downwards) to SGE coordinates (origin at center, and y upwards)
 		vec3_t SUTKToSGECoordTransform(const Vec2Df position);
+		Vec2Df SGEToSUTKCoordTransform(const vec3_t position);
 		ObjectType getType(GfxDriverObjectHandleType handle);
 		void removeIDFromTypeTable(u32 id);
 
@@ -104,6 +105,9 @@ namespace SUTK
 
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) override;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
+
+		virtual LineCountType getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord) override;
+		virtual f32 getTextCoordFromGlyphIndex(GfxDriverObjectHandleType handle, LineCountType col) override;
 
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) override;
 		virtual GfxDriverObjectHandleType getObject(GfxDriverObjectHandleType handle) override;
