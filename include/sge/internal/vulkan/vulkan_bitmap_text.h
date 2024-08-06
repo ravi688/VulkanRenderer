@@ -81,6 +81,7 @@ typedef struct vulkan_bitmap_text_glsl_glyph_render_data_t
 
 /* character buffer to store the characters in a string */
 typedef buffer_t vulkan_bitmap_text_char_buffer_t;
+typedef buffer_t f32_buffer_t;
 typedef buf_ucount_t vulkan_bitmap_text_string_handle_t;
 typedef dictionary_t vulkan_bitmap_glyph_sub_buffer_handle_table_t;
 
@@ -91,6 +92,8 @@ typedef struct vulkan_bitmap_text_string_t
 	/* handle to this string */
 	vulkan_bitmap_text_string_handle_t handle;
 	sub_buffer_handle_t render_data_handle;
+	/* list of offsets, with reference to the left side of very first glyph in the string, along x-axis for each glyph in the chronological order */
+	f32_buffer_t glyph_offsets;
 	/* string */
 	vulkan_bitmap_text_char_buffer_t chars;
 	/* a rectangle in a 3D space
@@ -209,7 +212,8 @@ typedef struct vulkan_bitmap_text_t
 
 #define VULKAN_BITMAP_TEXT(ptr) VULKAN_OBJECT_UP_CAST(vulkan_bitmap_text_t*, VULKAN_OBJECT_TYPE_BITMAP_TEXT, ptr)
 #define VULKAN_BITMAP_TEXT_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const bitmap_text_t*, VULKAN_OBJECT_TYPE_BITMAP_TEXT, ptr)
-
+#define VULKAN_BITMAP_TEXT_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_bitmap_text_t*, VULKAN_OBJECT_TYPE_BITMAP_TEXT, ptr)
+#define VULKAN_BITMAP_TEXT_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_bitmap_text_t*, VULKAN_OBJECT_TYPE_BITMAP_TEXT, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -248,6 +252,8 @@ SGE_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text, v
 SGE_API u32 vulkan_bitmap_text_string_get_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 /* NOTE: this returns number of characters exclusive of null character at the end of 'chars' buffer */
 SGE_API u32 vulkan_bitmap_text_string_get_lengthH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
+SGE_API f32 vulkan_bitmap_text_string_get_zcoord_from_glyph_index(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 index);
+SGE_API u32 vulkan_bitmap_text_string_get_glyph_index_from_zcoord(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, f32 zcoord);
 SGE_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 SGE_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text);
 
