@@ -142,7 +142,7 @@ static bool signal_waits_done(event_t* event, signal_bits_t wait_bits)
 /* dumps the subscription data in the string builder */
 static void subscription_dump(memory_allocator_t* allocator, subscription_t* subscription, string_builder_t* builder);
 
-SGE_API void event_publish(event_t* event)
+static void _event_publish(event_t* event, void* publisher_data)
 {
 	DBG_EVENT_PUBLISH( debug_log_info("***--event-publish-begin-%s--***", event->name) );
 
@@ -189,7 +189,7 @@ SGE_API void event_publish(event_t* event)
 
 				/* if is_dump_only is true then just dump the invocation order but don't make a call to the handlers */
 				if(!event->is_dump_only && (handler != NULL) && subscription->is_active)
-					handler(event->publisher_data, subscription->invocation_data.handler_data);
+					handler(publisher_data, subscription->invocation_data.handler_data);
 				NOT_DBG_EVENT_PUBLISH( else if(event->is_dump_only) )
 					subscription_dump(event->allocator, subscription, event->string_builder);
 
@@ -225,6 +225,17 @@ SGE_API void event_publish(event_t* event)
 		debug_log_info(string_builder_get_str(event->string_builder));
 	}
 	DBG_EVENT_PUBLISH( debug_log_info("***--event-publish-end--***") );
+}
+
+SGE_API void event_publish(event_t* event)
+{
+	_event_publish(event, event->publisher_data);
+}
+
+SGE_API void event_publish_arg(event_t* event, void* arg)
+{
+	event_publisher_arg_data_t arg_data = { event->publisher_data, arg };
+	_event_publish(event, CAST_TO(void*, &arg_data));
 }
 
 SGE_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file)
