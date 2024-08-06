@@ -60,6 +60,13 @@ typedef enum signal_bits_t
 	SIGNAL_ALL_BIT = BIT32(SIGNAL_ALL)
 } signal_bits_t;
 
+/* only used when calling event_publish_arg() function */
+typedef struct event_publisher_arg_data_t
+{
+	void* publisher;
+	void* arg;
+} event_publisher_arg_data_t;
+
 /* publisher_data: pointer to the data owned by the publisher of the event
  * handler_data: pointer to the same data during the event subscription */
 typedef void (*__event_handler_t)(void* publisher_data, void* handler_data);
@@ -157,6 +164,16 @@ SGE_API void event_release_resources(event_t* event);
 
 /* calls all the event handlers subscribed to this event */
 SGE_API void event_publish(event_t* event);
+/* same as above, additionally, it allows passing an extra argument while publishing to all subscribers 
+ * the event handlers should use the 'publisher_data' argument (the first argument in __event_handler_t) as follows:
+ * void handler(void* publisher_data, void* handler_data)
+ * {
+ * 		AUTO data = CAST_TO(event_publisher_arg_data_t*, publisher_data);
+ * 		data->publisher // is the publisher_data if this handler would have been invoked by calling 'event_publish'
+ * 		data->arg // is the same as 'arg'
+ * } 
+ * NOTE: value of 'publisher_data' in this case must not be cached outside the scope of handlers as it is allocated in the stackframe of event_publish_arg() function  */
+SGE_API void event_publish_arg(event_t* event, void* arg);
 /* adds a subscription to the event subscription list */
 #define event_subscribe(event, create_info) __event_subscribe(event, create_info, __LINE__, __FUNCTION__, __FILE__)
 SGE_API event_subscription_handle_t __event_subscribe(event_t* event, event_subscription_create_info_t* create_info, u32 line, const char* const function, const char* const file);
