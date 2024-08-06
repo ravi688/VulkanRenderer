@@ -9,6 +9,7 @@ namespace SUTK
 {
 	enum class KeyCode
 	{
+		Undefined,
 		A,
 		B,
 		C,
@@ -35,16 +36,16 @@ namespace SUTK
 		X,
 		Y,
 		Z,
-		Exclaim, 	// !
-		Atsign,		// @
-		Hash,		// #
-		Dollar,		// $
-		Percent,	// %
-		Hat,		// ^
-		Ampersand,	// &
-		Asterisk,	// *
-		OpenParen,  // (
-		CloseParen, // )
+		Digit_1_Exclaim, 	// !
+		Digit_2_Atsign,		// @
+		Digit_3_Hash,		// #
+		Digit_4_Dollar,		// $
+		Digit_5_Percent,	// %
+		Digit_6_Hat,		// ^
+		Digit_7_Ampersand,	// &
+		Digit_8_Asterisk,	// *
+		Digit_9_OpenParen,  // (
+		Digit_0_CloseParen, // )
 		ReturnEnter, // <Enter>
 		Escape, // <Esc>
 		DeleteBackspace,
@@ -107,7 +108,6 @@ namespace SUTK
 		KeypadDotDelete,
 		BackslashPillorNearLeftShift,
 		Application,
-		WindowsKeyWin95 = Application,
 		Power,
 		KeypadEqual,
 		F13,
@@ -122,6 +122,7 @@ namespace SUTK
 		F22,
 		F23,
 		F24,
+		F25,
 		Execute,
 		Help,
 		Menu,
@@ -148,6 +149,9 @@ namespace SUTK
 		RightAlt,
 		RightGui
 	};
+
+	std::ostream& operator <<(std::ostream& stream, KeyCode v);
+	std::ostream&& operator <<(std::ostream&& stream, KeyCode v);
 
 	enum class MouseButton
 	{
@@ -177,12 +181,14 @@ namespace SUTK
 		com::Event<IInputDriver, Vec2Df> m_onCursorMoveEvent;
 		com::Event<IInputDriver, MouseButton, KeyEvent> m_onMouseButtonEvent;
 		com::Event<IInputDriver, Vec2Df> m_onScrollEvent;
+		com::Event<IInputDriver, KeyCode, KeyEvent> m_onKeyEvent;
 	public:
 		virtual ~IInputDriver() = default;
 
 		com::Event<IInputDriver, Vec2Df>& getOnCursorMoveEvent() { return m_onCursorMoveEvent; }
 		com::Event<IInputDriver, MouseButton, KeyEvent>& getOnMouseButtonEvent() { return m_onMouseButtonEvent; }
 		com::Event<IInputDriver, Vec2Df>& getOnScrollEvent() { return m_onScrollEvent; }
+		com::Event<IInputDriver, KeyCode, KeyEvent>& getOnKeyEvent() { return m_onKeyEvent; }
 
 		// Keyboard
 		virtual bool getKey(KeyCode keycode) noexcept = 0;
