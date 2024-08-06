@@ -127,6 +127,8 @@ namespace SUTK
 
 		void moveToNextLine(const T& max = std::numeric_limits<T>::max()) noexcept { if(m_line < max) m_line += 1; }
 		void moveToPrevLine(const T& min = std::numeric_limits<T>::min()) noexcept { if(m_line > min) m_line -= 1; }
+		void moveToNextColumn(const T& max = std::numeric_limits<T>::max()) noexcept { if(m_col < max) m_col += 1; }
+		void moveToPrevColumn(const T& min = std::numeric_limits<T>::min()) noexcept { if(m_col > min) m_col -= 1; }
 		void moveToLine(T line) noexcept { m_line = line; }
 		void moveToColumn(T col) noexcept { m_col = col; }
 		T getLine() const noexcept { return m_line; }
