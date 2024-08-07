@@ -177,18 +177,26 @@ namespace SUTK
 	
 	class SUTK_API IInputDriver
 	{
+	public:
+		typedef com::Event<IInputDriver, Vec2Df> OnMouseMoveEvent;
+		typedef com::Event<IInputDriver, MouseButton, KeyEvent> OnMouseButtonEvent;
+		typedef com::Event<IInputDriver, Vec2Df> OnMouseScrollEvent;
+		typedef com::Event<IInputDriver, KeyCode, KeyEvent> OnKeyboardEvent;
+		typedef com::Event<IInputDriver, bool> OnMouseEnterExitEvent;
 	private:
-		com::Event<IInputDriver, Vec2Df> m_onCursorMoveEvent;
-		com::Event<IInputDriver, MouseButton, KeyEvent> m_onMouseButtonEvent;
-		com::Event<IInputDriver, Vec2Df> m_onScrollEvent;
-		com::Event<IInputDriver, KeyCode, KeyEvent> m_onKeyEvent;
+		OnMouseMoveEvent m_onCursorMoveEvent;
+		OnMouseButtonEvent m_onMouseButtonEvent;
+		OnMouseScrollEvent m_onScrollEvent;
+		OnKeyboardEvent m_onKeyEvent;
+		OnMouseEnterExitEvent m_onMouseEnterExitEvent;
 	public:
 		virtual ~IInputDriver() = default;
 
-		com::Event<IInputDriver, Vec2Df>& getOnCursorMoveEvent() { return m_onCursorMoveEvent; }
-		com::Event<IInputDriver, MouseButton, KeyEvent>& getOnMouseButtonEvent() { return m_onMouseButtonEvent; }
-		com::Event<IInputDriver, Vec2Df>& getOnScrollEvent() { return m_onScrollEvent; }
-		com::Event<IInputDriver, KeyCode, KeyEvent>& getOnKeyEvent() { return m_onKeyEvent; }
+		OnMouseMoveEvent& getOnCursorMoveEvent() { return m_onCursorMoveEvent; }
+		OnMouseButtonEvent& getOnMouseButtonEvent() { return m_onMouseButtonEvent; }
+		OnMouseScrollEvent& getOnScrollEvent() { return m_onScrollEvent; }
+		OnKeyboardEvent& getOnKeyEvent() { return m_onKeyEvent; }
+		OnMouseEnterExitEvent& getOnMouseEnterExitEvent() { return m_onMouseEnterExitEvent; }
 
 		// Keyboard
 		virtual bool getKey(KeyCode keycode) noexcept = 0;
