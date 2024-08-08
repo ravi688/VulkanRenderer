@@ -17,7 +17,9 @@ namespace SUTK
 		virtual void render(UIDriver& uiDriver) = 0;
 		virtual Vec2D<DisplaySizeType> getSizeInPixels() = 0;
 		virtual Vec2Df getSizeInCentimeters() = 0;
-		virtual GfxDriverObjectHandleType createText() = 0;
+		virtual GfxDriverObjectHandleType createTextGroup() = 0;
+		virtual void destroyTextGroup(GfxDriverObjectHandleType textGroup) = 0;
+		virtual GfxDriverObjectHandleType createText(GfxDriverObjectHandleType textGroup) = 0;
 		virtual void destroyText(GfxDriverObjectHandleType handle) = 0;
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) = 0;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) = 0;

@@ -75,7 +75,7 @@ namespace SUTK
 		LineTextData m_data;
 		Vec2Df m_pos;
 
-		LineText(UIDriver& driver) noexcept;
+		LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup) noexcept;
 
 		friend class Text;
 
@@ -155,6 +155,7 @@ namespace SUTK
 	class Text : public Renderable
 	{
 	private:
+		GfxDriverObjectHandleType m_textGroup;
 		std::vector<LineText*> m_lines;
 		
 		// distance between two consecutive base lines in centimeters

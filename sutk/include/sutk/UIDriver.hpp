@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sutk/defines.hpp>
+#include <sutk/IGfxDriver.hpp> // for SUTK::IGfxDriver::getSizeInCentimeters()
 
 #include <vector> // for std::vector
 #include <utility> // for std::forward
@@ -40,6 +41,8 @@ namespace SUTK
 
 		IGfxDriver& getGfxDriver() { return m_gfxDriver; }
 		IInputDriver& getInputDriver() { return *m_inputDriver; }
+
+		Vec2Df getWindowSize() noexcept { return getGfxDriver().getSizeInCentimeters(); }
 
 		template<typename ContainerType, typename... Args>
 		ContainerType* createContainer(Container* parent, Args... args)

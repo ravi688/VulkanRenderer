@@ -17,8 +17,7 @@ namespace SUTK
 	}
 	SGEGfxDriver::SGEGfxDriver(SGE::Driver& driver, bool autoCmdRecordAndExecute) : m_driver(driver), 
 																					m_autoCmdRecordAndExecute(autoCmdRecordAndExecute),
-																					m_id_generator(id_generator_create(0, NULL)), 
-																					m_currentBitmapTextHandle(GFX_DRIVER_OBJECT_NULL_HANDLE)
+																					m_id_generator(id_generator_create(0, NULL))
 	{
 		driver.getRenderWindow().getOnResizeEvent().subscribe(
 					[](void* publisher, void* handlerData)
@@ -67,8 +66,9 @@ namespace SUTK
 	SGEGfxDriver::~SGEGfxDriver()
 	{
 		// destroy SGE::BitmapText objects
-		for(auto pair : m_bitmapTextMappings)
-			pair.second.text.destroy();
+		for(auto it = m_bitmapTextGroups.begin(); it != m_bitmapTextGroups.end(); it++)
+			destroyTextGroup(it, false);
+		m_bitmapTextGroups.clear();
 		m_bgaTexture.destroy();
 		m_font.destroy();
 		m_scene.destroy();
@@ -100,7 +100,7 @@ namespace SUTK
 	}
 	#define GET_ATTACHED_OBJECT_ID(gfxDriverObjectHandle) BIT64_UNPACK32(gfxDriverObjectHandle, 1)
 
-	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::createBitmapText()
+	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::createBitmapText(SGEBitmapTextGroup& group)
 	{
 		debug_log_info("[SGE] Creating new SGE::BitmapText object");
 		SGE::BitmapText text = m_driver.createBitmapText(m_bgaTexture);
@@ -116,7 +116,7 @@ namespace SUTK
 		
 		// add bitmap text into the bitmap text mappings table
 		id_generator_id_type_t bitmapTextID = id_generator_get(&m_id_generator);
-		m_bitmapTextMappings.insert({ bitmapTextID, { text, 0u } });
+		group.bitmapTextTable.insert({ bitmapTextID, { text, 0u } });
 
 		// add corresponding render object into the render object mappings table
 		id_generator_id_type_t renderObjectID = id_generator_get(&m_id_generator);
@@ -127,11 +127,20 @@ namespace SUTK
 		return { text, static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(bitmapTextID, renderObjectID)) };
 	}
 
+	std::unordered_map<id_generator_id_type_t, SGEGfxDriver::SGEBitmapTextGroup>::iterator
+	SGEGfxDriver::getBitmapTextGroupIterator(GfxDriverObjectHandleType groupHandle)
+	{
+		auto it = m_bitmapTextGroups.find(static_cast<id_generator_id_type_t>(groupHandle));
+		_com_assert(it != m_bitmapTextGroups.end());
+		return it;
+	}
+
 	std::unordered_map<id_generator_id_type_t, SGEBitmapTextData>::iterator
-	SGEGfxDriver::getBitmapTextIterator(GfxDriverObjectHandleType handle)
+	SGEGfxDriver::getBitmapTextIterator(GfxDriverObjectHandleType groupHandle, GfxDriverObjectHandleType handle)
 	{	
-		auto it = m_bitmapTextMappings.find(GET_ATTACHED_OBJECT_ID(handle));
-		_assert(it != m_bitmapTextMappings.end());
+		SGEBitmapTextGroup& group = getBitmapTextGroupIterator(groupHandle)->second;
+		auto it = group.bitmapTextTable.find(GET_ATTACHED_OBJECT_ID(handle));
+		_assert(it != group.bitmapTextTable.end());
 		return it;
 	}
 
@@ -143,14 +152,15 @@ namespace SUTK
 		return it;
 	}
 
-	void SGEGfxDriver::destroyBitmapText(GfxDriverObjectHandleType handle)
+	void SGEGfxDriver::destroyBitmapText(GfxDriverObjectHandleType groupHandle, GfxDriverObjectHandleType handle)
 	{
 		// erase the bitmap text object
-		auto it = getBitmapTextIterator(handle);
+		auto it = getBitmapTextIterator(groupHandle, handle);
 		SGEBitmapTextData bitmapTextData = it->second;
 		bitmapTextData.text.destroy();
 		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_ATTACHED_OBJECT_ID(handle)));
-		m_bitmapTextMappings.erase(it);
+		SGEBitmapTextGroup& group = getBitmapTextGroupIterator(groupHandle)->second;
+		group.bitmapTextTable.erase(it);
 
 		// erase the corresponding render object also 
 		auto it2 = getRenderObjectIterator(handle);
@@ -160,31 +170,58 @@ namespace SUTK
 		m_renderObjectMappings.erase(it2);
 	}
 
-	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::getOrCreateBitmapText()
+	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::getOrCreateBitmapText(GfxDriverObjectHandleType textGroup)
 	{
-		if(m_bitmapTextMappings.size() == 0)
+		SGEBitmapTextGroup& group = getBitmapTextGroupIterator(textGroup)->second;
+		if(group.bitmapTextTable.size() == 0)
 		{
-			auto pair = createBitmapText();
-			m_currentBitmapTextHandle = pair.second;
+			auto pair = createBitmapText(group);
+			group.currentBitmapTextHandle = pair.second;
 			return pair;
 		}
-		SGEBitmapTextData& textData = getBitmapTextIterator(m_currentBitmapTextHandle)->second;
+		SGEBitmapTextData& textData = getBitmapTextIterator(textGroup, group.currentBitmapTextHandle)->second;
 		if(textData.charCount > BITMAP_TEXT_OVERLOAD_THRESHOLD)
 		{
-			auto pair = createBitmapText();
-			m_currentBitmapTextHandle = pair.second;
+			auto pair = createBitmapText(group);
+			group.currentBitmapTextHandle = pair.second;
 			return pair;
 		}
-		return { textData.text, m_currentBitmapTextHandle };
+		return { textData.text, group.currentBitmapTextHandle };
 	}
 
-	GfxDriverObjectHandleType SGEGfxDriver::createText()
+	GfxDriverObjectHandleType SGEGfxDriver::createTextGroup()
 	{
-		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> bitmapText = getOrCreateBitmapText();
+		id_generator_id_type_t id = id_generator_get(&m_id_generator);
+		SGEBitmapTextGroup& group = m_bitmapTextGroups[id];
+		group.currentBitmapTextHandle = GFX_DRIVER_OBJECT_NULL_HANDLE;
+		return static_cast<GfxDriverObjectHandleType>(id);
+	}
+
+	void SGEGfxDriver::destroyTextGroup(std::unordered_map<id_generator_id_type_t, SGEBitmapTextGroup>::iterator it, bool isErase)
+	{
+		for(auto pair : it->second.bitmapTextTable)
+			pair.second.text.destroy();
+		it->second.bitmapTextTable.clear();
+		if(isErase)
+			m_bitmapTextGroups.erase(it);
+	}
+
+	void SGEGfxDriver::destroyTextGroup(GfxDriverObjectHandleType group)
+	{
+		auto it = getBitmapTextGroupIterator(group);
+		destroyTextGroup(it);
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(group));
+	}
+
+	GfxDriverObjectHandleType SGEGfxDriver::createText(GfxDriverObjectHandleType textGroup)
+	{
+		// TODO: This should be ... = getOrCreateUsableBitmapText or getOrCreateLeastLoadedBitmapText
+		// WARNING: removing destroying bitmap text and trying to createText might lead to segfaults or unexpected code execution.
+		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> bitmapText = getOrCreateBitmapText(textGroup);
 		SGE::BitmapTextString subText = bitmapText.first.createString();
 		subText.setPointSize(24);
 		u32 id = id_generator_get(&m_id_generator);
-		m_bitmapTextStringMappings.insert({ id, { subText,  bitmapText.second } });
+		m_bitmapTextStringMappings.insert({ id, { subText,  bitmapText.second, textGroup } });
 		m_typeTable.insert({ id, ObjectType::Text });
 		return static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(id, U32_MAX));
 	}
@@ -245,7 +282,7 @@ namespace SUTK
 	{
 		auto it = getSubTextIterator(handle);
 		SGE::BitmapTextString& textString = it->second.textString;
-		SGEBitmapTextData& bitmapTextData = getBitmapTextIterator(it->second.textHandle)->second;
+		SGEBitmapTextData& bitmapTextData = getBitmapTextIterator(it->second.textGroup, it->second.textHandle)->second;
 		_assert(bitmapTextData.charCount >= textString.getLength());
 		bitmapTextData.charCount -= textString.getLength();
 		textString.set(data);

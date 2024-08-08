@@ -13,9 +13,9 @@ namespace SUTK
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText() { return { END_OF_TEXT, END_OF_LINE }; }
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line) { return { line, END_OF_LINE }; }
 
-	LineText::LineText(UIDriver& driver) noexcept : GfxDriverRenderable(driver, NULL), m_isPosDirty(true), m_isDataDirty(false)
+	LineText::LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup) noexcept : GfxDriverRenderable(driver, NULL), m_isPosDirty(true), m_isDataDirty(false)
 	{
-		setGfxDriverObjectHandle(getGfxDriver().createText());
+		setGfxDriverObjectHandle(getGfxDriver().createText(textGroup));
 	}
 	bool LineText::isDirty()
 	{
@@ -82,9 +82,10 @@ namespace SUTK
 		m_isDataDirty = true;
 	}
 
-	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_isDirty(false), m_isClippingEnabled(false)
+	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_textGroup(GFX_DRIVER_OBJECT_NULL_HANDLE), m_isDirty(false), m_isClippingEnabled(false)
 	{
 		m_baselineHeight = getGfxDriver().getBaselineHeightInCentimeters();
+		m_textGroup = getGfxDriver().createTextGroup();
 	}
 
 	bool Text::isDirty()
@@ -174,7 +175,7 @@ namespace SUTK
 			m_lines[i]->addPosition({ 0, m_baselineHeight });
 
 		// insert the line at which the cursor points to
-		LineText* lineText = new LineText(getUIDriver());
+		LineText* lineText = new LineText(getUIDriver(), m_textGroup);
 		m_lines.insert(com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, cursorPosition.getLine()), lineText);
 
 		Vec2Df localCoords = getLocalPositionFromCursorPosition(cursorPosition);
