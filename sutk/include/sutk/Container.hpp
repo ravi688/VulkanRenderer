@@ -61,6 +61,9 @@ namespace SUTK
 		Rect2Df getRect() const { return m_rect; }
 		Vec2Df getPosition() const noexcept { return m_rect.getPosition(); }
 		Vec2Df getSize() const noexcept { return m_rect.getSize(); }
+		// NOTE: the localCoords must be in the same coordinate space as that of this Container's Rect
+		// i.e. the localCoords must be in the space of ThisContainer::getParent() container.
+		// If getParent() is NULL, then this 'localCoords' shall be considered in global coordinate space.
 		bool contains(Vec2Df localCoords) const noexcept { return m_rect.contains(localCoords); }
 		bool containsGlobalCoords(Vec2Df globalCoords) const noexcept;
 		// rect setters

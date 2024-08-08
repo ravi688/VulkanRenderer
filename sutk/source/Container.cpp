@@ -57,7 +57,10 @@ namespace SUTK
 
 	bool Container::containsGlobalCoords(Vec2Df globalCoords) const noexcept
 	{
-		return contains(getScreenCoordsToLocalCoords(globalCoords));
+		if(getParent() != NULL)
+			return contains(getParent()->getScreenCoordsToLocalCoords(globalCoords));
+		else
+			return contains(globalCoords);
 	}
 
 	Vec2Df Container::getScreenCoordsToLocalCoords(Vec2Df screenCoords) const
