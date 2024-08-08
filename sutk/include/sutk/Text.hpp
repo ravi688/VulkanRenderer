@@ -57,7 +57,9 @@ namespace SUTK
 		ColumnIterator end() { return ColumnIterator(); }
 	
 		void clear() { m_data.clear(); }
+		void removeRange(std::size_t pos, std::size_t len = std::string::npos) noexcept { m_data.erase(pos, len); }
 		void append(const std::string& chars) { insert(END_OF_LINE, chars); }
+		std::string substr(std::size_t pos, std::size_t len) noexcept { return m_data.substr(pos, len); }
 		void insert(LineCountType col, const std::string& chars)
 		{ 
 			if(col == END_OF_LINE)
@@ -89,7 +91,9 @@ namespace SUTK
 		LineCountType getColPosFromCoord(f32 coord) noexcept;
 		f32 getCoordFromColPos(LineCountType col) noexcept;
 		void setData(const std::string& data) noexcept;
+		void removeRange(std::size_t pos, std::size_t len = std::string::npos) noexcept;
 		void append(const std::string& data) noexcept;
+		std::string substr(std::size_t pos, std::size_t len) noexcept { return m_data.substr(pos, len); }
 		void insert(LineCountType col, const std::string& data) noexcept;
 		void setPosition(Vec2Df pos) noexcept;
 		Vec2Df getPosition() const noexcept { return m_pos; }

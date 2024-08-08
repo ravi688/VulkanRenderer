@@ -54,6 +54,13 @@ namespace SUTK
 		m_data += data;
 		m_isDataDirty = true;
 	}
+	void LineText::removeRange(std::size_t pos, std::size_t len) noexcept
+	{
+		if(len == 0)
+			return;
+		m_data.removeRange(pos, len);
+		m_isDataDirty = true;
+	}
 	void LineText::insert(LineCountType col, const std::string& data) noexcept
 	{
 		if(data.empty())
@@ -217,16 +224,18 @@ namespace SUTK
 		else
 			lineText->insert(position.getColumn(), str.substr(0, index));
 
+		LineText* newLineText = NULL;
 		auto line = position.getLine();
+		auto saveIndex = index;
 		while(index != std::string::npos)
 		{
 			// create a new line
-			auto lineText = createNewLine(Flags::After, line++);
+			newLineText = createNewLine(Flags::After, line++);
 			
 			// if the new line character is at the very end, then no extra characters to add,
 			// i.e. it is an empty new line
 			if(index == (str.size() - 1))
-				return;
+				break;
 
 			// character just after '\n'
 			++index;
@@ -238,11 +247,17 @@ namespace SUTK
 
 			// if no new line character on the right side, then append rest of the string
 			if(end == std::string::npos)
-				lineText->append(str.substr(index, std::string::npos));
+				newLineText->append(str.substr(index, std::string::npos));
 			// otherwise, append a substring surrounded by '\n' charactesr from both the sides (left and right)
 			else
-				lineText->append(str.substr(index, end - index));
+				newLineText->append(str.substr(index, end - index));
 			index = end;
+		}
+
+		if((newLineText != NULL) && (position.getColumn() != END_OF_LINE))
+		{
+			newLineText->append(lineText->substr(position.getColumn() + saveIndex, std::string::npos));
+			lineText->removeRange(position.getColumn() + saveIndex);
 		}
 	}
 
