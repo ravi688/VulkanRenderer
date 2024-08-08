@@ -67,6 +67,8 @@ namespace SUTK
 			else
 				m_data.insert(col, chars); 
 		}
+
+		std::size_t size() const noexcept { return m_data.size(); }
 	};
 
 	class LineText : public GfxDriverRenderable
@@ -91,6 +93,7 @@ namespace SUTK
 		LineCountType getColPosFromCoord(f32 coord) noexcept;
 		f32 getCoordFromColPos(LineCountType col) noexcept;
 		void setData(const std::string& data) noexcept;
+		const LineTextData& getData() const noexcept { return m_data; }
 		void removeRange(std::size_t pos, std::size_t len = std::string::npos) noexcept;
 		void append(const std::string& data) noexcept;
 		std::string substr(std::size_t pos, std::size_t len) noexcept { return m_data.substr(pos, len); }
