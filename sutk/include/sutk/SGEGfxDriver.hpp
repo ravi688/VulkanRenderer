@@ -23,6 +23,7 @@ namespace SUTK
 		// handle to SGE::BitmapText out of which this text string has been created
 		// this is used to hash into the 'm_bitmapTextMappings' unordered map and update the 'charCount'
 		GfxDriverObjectHandleType textHandle;
+		GfxDriverObjectHandleType textGroup;
 	};
 	struct SGEMeshData
 	{
@@ -48,7 +49,13 @@ namespace SUTK
 		SGE::Shader m_shader;
 		id_generator_t m_id_generator;
 		GfxDriverObjectHandleType m_currentBitmapTextHandle;
-		std::unordered_map<id_generator_id_type_t, SGEBitmapTextData> m_bitmapTextMappings;
+		typedef std::unordered_map<id_generator_id_type_t, SGEBitmapTextData> SGEBitmapTextTable;
+		struct SGEBitmapTextGroup
+		{
+			SGEBitmapTextTable bitmapTextTable;
+			GfxDriverObjectHandleType currentBitmapTextHandle;
+		};
+		std::unordered_map<id_generator_id_type_t, SGEBitmapTextGroup> m_bitmapTextGroups;
 		std::unordered_map<id_generator_id_type_t, SGEMeshData> m_meshMappings;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
 		std::unordered_map<id_generator_id_type_t, SGE::RenderObject> m_renderObjectMappings;
@@ -66,15 +73,17 @@ namespace SUTK
 		Vec2Df m_sizeCentimeters;
 
 	private:
+		std::unordered_map<id_generator_id_type_t, SGEBitmapTextGroup>::iterator
+		getBitmapTextGroupIterator(GfxDriverObjectHandleType groupHandle);
 		std::unordered_map<id_generator_id_type_t, SGEBitmapTextData>::iterator
-		getBitmapTextIterator(GfxDriverObjectHandleType handle);
+		getBitmapTextIterator(GfxDriverObjectHandleType groupHandle, GfxDriverObjectHandleType handle);
 		std::unordered_map<id_generator_id_type_t, SGE::RenderObject>::iterator
 		getRenderObjectIterator(GfxDriverObjectHandleType handle);
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData>::iterator
 		getSubTextIterator(GfxDriverObjectHandleType handle);
-		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> getOrCreateBitmapText();
-		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> createBitmapText();
-		void destroyBitmapText(GfxDriverObjectHandleType handle);
+		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> getOrCreateBitmapText(GfxDriverObjectHandleType textGroup);
+		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> createBitmapText(SGEBitmapTextGroup& group);
+		void destroyBitmapText(GfxDriverObjectHandleType groupHandle, GfxDriverObjectHandleType handle);
 		SGE::BitmapTextString getText(GfxDriverObjectHandleType handle);
 		std::unordered_map<id_generator_id_type_t, SGEMeshData>::iterator
 		getMeshIterator(GfxDriverObjectHandleType handle);
@@ -85,6 +94,7 @@ namespace SUTK
 		Vec2Df SGEToSUTKCoordTransform(const vec3_t position);
 		ObjectType getType(GfxDriverObjectHandleType handle);
 		void removeIDFromTypeTable(u32 id);
+		void destroyTextGroup(std::unordered_map<id_generator_id_type_t, SGEBitmapTextGroup>::iterator it, bool isErase = true);
 
 	public:
 
@@ -100,7 +110,9 @@ namespace SUTK
 		virtual Vec2Df getSizeInCentimeters() override { return m_sizeCentimeters; }
 		virtual void render(UIDriver& driver) override;
 
-		virtual GfxDriverObjectHandleType createText() override;
+		virtual GfxDriverObjectHandleType createTextGroup() override;
+		virtual void destroyTextGroup(GfxDriverObjectHandleType textGroup) override;
+		virtual GfxDriverObjectHandleType createText(GfxDriverObjectHandleType textGroup) override;
 		virtual void destroyText(GfxDriverObjectHandleType handle) override;
 
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) override;
