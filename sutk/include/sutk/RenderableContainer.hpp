@@ -11,12 +11,12 @@ namespace SUTK
 	private:
 		Renderable* m_renderable;
 
-		// this can only be called by SUTK::UIDriver
-		RenderableContainer(UIDriver& driver, Container* parent) : Container(driver, parent), m_renderable(NULL) { }
-
 		friend class UIDriver;
 
 	protected:
+
+		RenderableContainer(UIDriver& driver, Container* parent) : Container(driver, parent), m_renderable(NULL) { }
+		
 		virtual void onAdd(Container* parent) override;
 		virtual void onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
