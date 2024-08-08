@@ -103,6 +103,8 @@ namespace SUTK
 		void addPosition(Vec2Df pos) noexcept;
 		void subPosition(Vec2Df pos) noexcept;
 		void clear() noexcept;
+
+		std::size_t getColumnCount() const noexcept { return static_cast<const std::string&>(m_data).size(); }
 	};
 
 	enum class HorizontalAlignment : u8
@@ -223,5 +225,7 @@ namespace SUTK
 		void setScrollDelta(Vec2Df delta) noexcept;
 		void addScrollDelta(Vec2Df delta) noexcept;
 		Vec2Df getScrollDelta() const noexcept { return m_scrollDelta; }
+
+		std::size_t getLineCount() const noexcept { return m_lines.size(); }
 	};
 }
