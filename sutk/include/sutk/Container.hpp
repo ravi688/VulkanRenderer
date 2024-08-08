@@ -61,6 +61,8 @@ namespace SUTK
 		Rect2Df getRect() const { return m_rect; }
 		Vec2Df getPosition() const noexcept { return m_rect.getPosition(); }
 		Vec2Df getSize() const noexcept { return m_rect.getSize(); }
+		bool contains(Vec2Df localCoords) const noexcept { return m_rect.contains(localCoords); }
+		bool containsGlobalCoords(Vec2Df globalCoords) const noexcept;
 		// rect setters
 		virtual void setRect(Rect2Df rect) { m_rect = rect; onResize(rect, true, true); }
 		void setPosition(Vec2Df pos) { m_rect.setPosition(pos); onResize(m_rect, true, false); }

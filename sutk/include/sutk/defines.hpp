@@ -312,7 +312,7 @@ namespace SUTK
 			height += value;
 		}
 
-		bool contains(Vec2D<T> point) noexcept
+		bool contains(Vec2D<T> point) const noexcept
 		{
 			auto tl = getTopLeft();
 			auto br = getBottomRight();
