@@ -263,7 +263,14 @@ namespace SUTK
 
 	void Text::remove(const CursorPosition<LineCountType>& position, LineCountType numChars) noexcept
 	{
+		if(position.getLine() >= m_lines.size())
+			return;
 
+		LineText* lineText = m_lines[position.getLine()];
+		if((position.getColumn() + numChars) > lineText->getData().size())
+			return;
+
+		lineText->removeRange(position.getColumn(), numChars);
 	}
 
 	void Text::set(const std::string& str) noexcept
