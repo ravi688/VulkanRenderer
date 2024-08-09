@@ -110,6 +110,24 @@ static void glfwOnMouseButtonCallback(GLFWwindow* glfw_window, int button, int e
 		event_publish(window->on_mouse_button_event);
 }
 
+static modifier_key_bits_t get_modifiers(int modifiers)
+{
+	modifier_key_bits_t bits = 0;
+	if(HAS_FLAG(modifiers, GLFW_MOD_SHIFT))
+		bits |= MODIFIER_KEY_SHIFT_BIT;
+	if(HAS_FLAG(modifiers, GLFW_MOD_CONTROL))
+		bits |= MODIFIER_KEY_CONTROL_BIT;
+	if(HAS_FLAG(modifiers, GLFW_MOD_ALT))
+		bits |= MODIFIER_KEY_ALT_BIT;
+	if(HAS_FLAG(modifiers, GLFW_MOD_SUPER))
+		bits |= MODIFIER_KEY_WINDOWS_BIT;
+	if(HAS_FLAG(modifiers, GLFW_MOD_CAPS_LOCK))
+		bits |= MODIFIER_KEY_CAPSLOCK_BIT;
+	if(HAS_FLAG(modifiers, GLFW_MOD_NUM_LOCK))
+		bits |= MODIFIER_KEY_NUMLOCK_BIT;
+	return bits;
+}
+
 static key_code_t get_keycode(int key)
 {
 	switch(key)
@@ -247,7 +265,8 @@ static void glfwOnKeyCallback(GLFWwindow* glfw_window, int key, int scan_code, i
 		key_event_data_t data = 
 		{
 			.keycode = get_keycode(key),
-			.event_type = get_key_event_type(event_type)
+			.event_type = get_key_event_type(event_type),
+			.modifiers = get_modifiers(modifiers)
 		};
 		event_publish_arg(window->on_key_event, CAST_TO(void*, &data));
 	}
@@ -274,6 +293,7 @@ SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 w
 	glfwSetCursorPosCallback(window->handle, glfwOnCursorMoveCallback);
 	glfwSetMouseButtonCallback(window->handle, glfwOnMouseButtonCallback);
 	glfwSetScrollCallback(window->handle, glfwOnScrollCallback);
+	glfwSetInputMode(window->handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
 	glfwSetKeyCallback(window->handle, glfwOnKeyCallback);
 	glfwSetWindowUserPointer(window->handle, window);
 	render_window_get_framebuffer_extent(window, &window->width, &window->height);

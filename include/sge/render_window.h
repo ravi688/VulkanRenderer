@@ -51,6 +51,17 @@ typedef enum key_event_type_t
 	KEY_EVENT_TYPE_RELEASE
 } key_event_type_t;
 
+typedef enum modifier_key_bits_t
+{
+	MODIFIER_KEY_SHIFT_BIT = BIT32(0),
+	MODIFIER_KEY_CONTROL_BIT = BIT32(1),
+	MODIFIER_KEY_ALT_BIT = BIT32(2),
+	MODIFIER_KEY_WINDOWS_BIT = BIT32(3),
+	MODIFIER_KEY_CMD_BIT = MODIFIER_KEY_WINDOWS_BIT,
+	MODIFIER_KEY_CAPSLOCK_BIT = BIT32(4),
+	MODIFIER_KEY_NUMLOCK_BIT = BIT32(5)
+} modifier_key_bits_t;
+
 typedef enum key_code_t
 {
 	KEY_CODE_UNDEFINED,
@@ -200,6 +211,7 @@ typedef struct key_event_data_t
 {
 	key_code_t keycode;
 	key_event_type_t event_type;
+	modifier_key_bits_t modifiers;
 } key_event_data_t;
 
 typedef struct render_window_t
