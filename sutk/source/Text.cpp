@@ -137,7 +137,7 @@ namespace SUTK
 	{
 		LineCountType line = cursor.getLine();
 		_assert((line >= 0) && (line < m_lines.size()));
-		return { m_lines[line]->getCoordFromColPos(cursor.getColumn()), m_baselineHeight * cursor.getLine() + m_scrollDelta.y };
+		return { m_lines[line]->getCoordFromColPos(cursor.getColumn()) + m_scrollDelta.x, m_baselineHeight * cursor.getLine() + m_scrollDelta.y };
 	}
 
 	std::pair<s32, s32> Text::getUnclippedLineRange() noexcept
@@ -161,7 +161,7 @@ namespace SUTK
 		lineNo = std::min(lineNo, static_cast<s32>(m_lines.size()) - 1);
 		lineNo = std::max(lineNo, 0);
 		_assert(lineNo >= 0);
-		LineCountType colNo = m_lines[lineNo]->getColPosFromCoord(coords.x);
+		LineCountType colNo = m_lines[lineNo]->getColPosFromCoord(coords.x - m_scrollDelta.x);
 		return { lineNo, colNo };
 	}
 

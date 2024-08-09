@@ -21,6 +21,7 @@ namespace SUTK
 	{
 		ModifierKeyBits bits;
 
+		constexpr ModifierKeys() noexcept : bits(com::ForceIntToEnumClass<ModifierKeyBits>(0)) { }
 		constexpr ModifierKeys(ModifierKeyBits _bits) noexcept : bits(_bits) { }
 
 		bool shift() const noexcept { return HAS_FLAG(bits, ModifierKeyBits::ShiftBit); }
