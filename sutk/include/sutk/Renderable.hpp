@@ -34,6 +34,16 @@ namespace SUTK
 		// updates (copies CPU side data to) GPU side data, and it may also create or recreate exisiting GPU Driver objects 
 		virtual void update() = 0;
 
+		bool ensureUpdated() noexcept
+		{ 
+			if(isDirty()) 
+			{ 
+				update(); 
+				return true; 
+			} 
+			return false; 
+		}
+
 		// Getters
 		RenderableContainer* getContainer() noexcept { return m_container; }
 	};

@@ -36,10 +36,14 @@ namespace SUTK
 	}
 	LineCountType LineText::getColPosFromCoord(f32 coord) noexcept
 	{
+		// LineText::getCoordFromColPos function does all the calculations based on the most recent data in SGE
+		ensureUpdated();
 		return getGfxDriver().getTextGlyphIndexFromCoord(getGfxDriverObjectHandle(), coord);
 	}
 	f32 LineText::getCoordFromColPos(LineCountType col) noexcept
 	{
+		// LineText::getCoordFromColPos function does all the calculations based on the most recent data in SGE
+		ensureUpdated();
 		return getGfxDriver().getTextCoordFromGlyphIndex(getGfxDriverObjectHandle(), col);
 	}
 	void LineText::setData(const std::string& data) noexcept
