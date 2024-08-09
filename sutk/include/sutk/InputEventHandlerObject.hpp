@@ -132,7 +132,7 @@ namespace SUTK
 	class KeyboardHandlerObject : public TInputEventHandlerObject<IInputDriver::OnKeyboardEvent>
 	{
 	protected:
-		virtual void onKey(KeyCode keycode, KeyEvent action) = 0;
+		virtual void onKey(KeyCode keycode, KeyEvent action, ModifierKeys modifiers) = 0;
 
 		KeyboardHandlerObject(UIDriver& driver) noexcept;
 

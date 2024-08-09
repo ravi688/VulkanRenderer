@@ -69,9 +69,9 @@ namespace SUTK
 
 	KeyboardHandlerObject::KeyboardHandlerObject(UIDriver& driver) noexcept : TInputEventHandlerObject<IInputDriver::OnKeyboardEvent>(driver.getInputDriver().getOnKeyEvent())
 	{
-		IInputDriver::OnKeyboardEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, KeyCode keycode, KeyEvent action)
+		IInputDriver::OnKeyboardEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, KeyCode keycode, KeyEvent action, ModifierKeys modifiers)
 		{
-			onKey(keycode, action);
+			onKey(keycode, action, modifiers);
 		});
 		setSubscriptionID(id);
 	}	

@@ -2,6 +2,61 @@
 
 namespace SUTK
 {
+
+	std::ostream&& operator <<(std::ostream&& stream, ModifierKeys v)
+	{
+		auto& _stream = operator <<(stream, v);
+		return std::move(_stream);		
+	}
+
+	std::ostream& operator <<(std::ostream& stream, ModifierKeys v)
+	{
+		bool isPrev = false;
+		if(v.shift())
+		{
+			stream << "Shift";
+			isPrev = true;
+		}
+		if(v.ctrl())
+		{
+			if(isPrev)
+				stream << " | ";
+			stream <<  "Ctrl";
+			isPrev = true;
+		}
+		if(v.alt())
+		{
+			if(isPrev)
+				stream << " | ";
+			stream <<  "Atl";
+			isPrev = true;
+		}
+		if(v.win())
+		{
+			if(isPrev)
+				stream << " | ";
+			stream <<  "Win";
+			isPrev = true;
+		}
+		if(v.capsLock())
+		{
+			if(isPrev)
+				stream << " | ";
+			stream <<  "CapsLock";
+			isPrev = true;
+		}
+		if(v.numLock())
+		{
+			if(isPrev)
+				stream << " | ";
+			stream <<  "NumLock";
+			isPrev = true;
+		}
+		if(!isPrev)
+			stream << "<No Modifiers>";
+		return stream;
+	}
+
 	std::ostream&& operator <<(std::ostream&& stream, KeyCode v)
 	{
 		auto& _stream = operator <<(stream, v);

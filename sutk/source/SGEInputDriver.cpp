@@ -26,6 +26,24 @@ namespace SUTK
 		}
 	}
 
+	static ModifierKeys getModifierKeys(modifier_key_bits_t bits)
+	{
+		ModifierKeyBits _bits = com::ForceIntToEnumClass<ModifierKeyBits>(0);
+		if(HAS_FLAG(bits, MODIFIER_KEY_SHIFT_BIT))
+			_bits |= ModifierKeyBits::ShiftBit;;
+		if(HAS_FLAG(bits, MODIFIER_KEY_CONTROL_BIT))
+			_bits |= ModifierKeyBits::CtrlBit;
+		if(HAS_FLAG(bits, MODIFIER_KEY_ALT_BIT))
+			_bits |= ModifierKeyBits::AltBit;
+		if(HAS_FLAG(bits, MODIFIER_KEY_WINDOWS_BIT))
+			_bits |= ModifierKeyBits::WinBit;
+		if(HAS_FLAG(bits, MODIFIER_KEY_CAPSLOCK_BIT))
+			_bits |= ModifierKeyBits::CapsLockBit;
+		if(HAS_FLAG(bits, MODIFIER_KEY_NUMLOCK_BIT))
+			_bits |= ModifierKeyBits::NumLockBit;
+		return { _bits };
+	}
+
 	static KeyCode getKeyCode(key_code_t keycode)
 	{
 		switch(keycode)
@@ -210,7 +228,7 @@ namespace SUTK
 			auto* inputDriver = reinterpret_cast<SGEInputDriver*>(handlerData);
 			auto data = reinterpret_cast<event_publisher_arg_data_t*>(publisherData);
 			auto keyData = reinterpret_cast<key_event_data_t*>(data->arg);
-			inputDriver->getOnKeyEvent().publish(getKeyCode(keyData->keycode), SUTK::getKeyEventType(keyData->event_type));
+			inputDriver->getOnKeyEvent().publish(getKeyCode(keyData->keycode), SUTK::getKeyEventType(keyData->event_type), getModifierKeys(keyData->modifiers));
 		}, reinterpret_cast<void*>(this));
 	}
 

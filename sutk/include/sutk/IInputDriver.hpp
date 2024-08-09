@@ -7,6 +7,33 @@
 
 namespace SUTK
 {
+	enum class ModifierKeyBits : u32
+	{
+		ShiftBit = BIT32(0),
+		CtrlBit = BIT32(1),
+		AltBit = BIT32(2),
+		WinBit = BIT32(3),
+		CapsLockBit = BIT32(4),
+		NumLockBit = BIT32(5)
+	};
+
+	struct ModifierKeys
+	{
+		ModifierKeyBits bits;
+
+		constexpr ModifierKeys(ModifierKeyBits _bits) noexcept : bits(_bits) { }
+
+		bool shift() const noexcept { return HAS_FLAG(bits, ModifierKeyBits::ShiftBit); }
+		bool ctrl() const noexcept { return HAS_FLAG(bits, ModifierKeyBits::CtrlBit); }
+		bool alt() const noexcept { return HAS_FLAG(bits, ModifierKeyBits::AltBit); }
+		bool win() const noexcept { return HAS_FLAG(bits, ModifierKeyBits::WinBit); }
+		bool capsLock() const noexcept { return HAS_FLAG(bits, ModifierKeyBits::CapsLockBit); }
+		bool numLock() const noexcept { return HAS_FLAG(bits, ModifierKeyBits::NumLockBit); }
+	};
+
+	std::ostream& operator <<(std::ostream& stream, ModifierKeys v);
+	std::ostream&& operator <<(std::ostream&& stream, ModifierKeys v);
+
 	enum class KeyCode
 	{
 		Undefined,
@@ -181,7 +208,7 @@ namespace SUTK
 		typedef com::Event<IInputDriver, Vec2Df> OnMouseMoveEvent;
 		typedef com::Event<IInputDriver, MouseButton, KeyEvent> OnMouseButtonEvent;
 		typedef com::Event<IInputDriver, Vec2Df> OnMouseScrollEvent;
-		typedef com::Event<IInputDriver, KeyCode, KeyEvent> OnKeyboardEvent;
+		typedef com::Event<IInputDriver, KeyCode, KeyEvent, ModifierKeys> OnKeyboardEvent;
 		typedef com::Event<IInputDriver, bool> OnMouseEnterExitEvent;
 	private:
 		OnMouseMoveEvent m_onCursorMoveEvent;
