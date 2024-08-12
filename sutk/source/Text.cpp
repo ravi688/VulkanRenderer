@@ -206,9 +206,6 @@ namespace SUTK
 
 	void Text::removeLine(LineCountType line) noexcept
 	{
-		if((line + 1) >= m_lines.size())
-			return;
-
 		// destroy the Gfx driver side objects
 		// m_lines[line]->destroy();
 		// delete m_lines[line];
