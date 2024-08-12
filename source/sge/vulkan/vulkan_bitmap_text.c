@@ -470,6 +470,9 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 		#endif /* DBG_VULKAN_BITMAP_TEXT_STRING_SETH */
 	}
 
+	// glyph_offset for the pseudo (virtual) glyph at the end of a line
+	buf_push(&text_string->glyph_offsets, &horizontal_pen);
+
 	#if DBG_ENABLED(VULKAN_BITMAP_TEXT_STRING_SETH)
 		string_builder_decrement_indentation(builder);
 		string_builder_append(builder, "}\n");
