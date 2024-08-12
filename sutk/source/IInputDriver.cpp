@@ -237,6 +237,7 @@ namespace SUTK
 		{
 			case KeyEvent::Press: stream << "KeyEvent::Press"; break;
 			case KeyEvent::Release: stream << "KeyEvent::Release"; break;
+			case KeyEvent::Repeat: stream << "KeyEvent::Repeat"; break;
 		}
 		return stream;
 	}
