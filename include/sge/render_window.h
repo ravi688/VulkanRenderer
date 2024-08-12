@@ -48,7 +48,8 @@ typedef enum key_event_type_t
 {
 	KEY_EVENT_TYPE_UNDEFINED,
 	KEY_EVENT_TYPE_PRESS,
-	KEY_EVENT_TYPE_RELEASE
+	KEY_EVENT_TYPE_RELEASE,
+	KEY_EVENT_TYPE_REPEAT
 } key_event_type_t;
 
 typedef enum modifier_key_bits_t
