@@ -197,7 +197,8 @@ namespace SUTK
 	enum class KeyEvent
 	{
 		Press,
-		Release
+		Release,
+		Repeat
 	};
 
 	std::ostream& operator <<(std::ostream& stream, KeyEvent v);

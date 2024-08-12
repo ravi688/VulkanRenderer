@@ -22,6 +22,7 @@ namespace SUTK
 		{
 			case KEY_EVENT_TYPE_PRESS: return KeyEvent::Press;
 			case KEY_EVENT_TYPE_RELEASE: return KeyEvent::Release;
+			case KEY_EVENT_TYPE_REPEAT: return KeyEvent::Repeat;
 			default: return KeyEvent::Release;
 		}
 	}
