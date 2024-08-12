@@ -78,6 +78,7 @@ static key_event_type_t get_key_event_type(int event_type)
 	{
 		case GLFW_PRESS: return KEY_EVENT_TYPE_PRESS;
 		case GLFW_RELEASE: return KEY_EVENT_TYPE_RELEASE;
+		case GLFW_REPEAT : return KEY_EVENT_TYPE_REPEAT;
 		default:
 		{
 			debug_log_error("Unknown glfw event type");
