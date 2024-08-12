@@ -28,6 +28,7 @@ namespace SUTK
 
 	public:
 		Renderable(UIDriver& driver, RenderableContainer* container = NULL) noexcept;
+		virtual ~Renderable() = default;
 
 		// returns true, if GPU side data is out of sync with respect to the CPU side data, otherwise false 
 		virtual bool isDirty() = 0;
@@ -59,10 +60,13 @@ namespace SUTK
 
 	public:
 		GfxDriverRenderable(UIDriver& driver, RenderableContainer* container = NULL) noexcept : Renderable(driver, container), m_handle(GFX_DRIVER_OBJECT_NULL_HANDLE) { }
+		virtual ~GfxDriverRenderable() = default;
 
 		// Implementation of Renderable
 		virtual bool isDirty() = 0;
 		virtual void update() = 0;
+
+		virtual void destroy() { }
 
 		void setClipRectGlobalCoords(const Rect2Df rect) noexcept;
 
@@ -77,6 +81,7 @@ namespace SUTK
 		Geometry m_geometry;
 	protected:
 		GeometryRenderable(UIDriver& driver, RenderableContainer* container = NULL) noexcept : GfxDriverRenderable(driver, container), m_geometry(driver) { }
+		virtual ~GeometryRenderable() = default;
 		Geometry& getGeometry() noexcept { return m_geometry; }
 
 		// Implementation of GfxDriverRenderable

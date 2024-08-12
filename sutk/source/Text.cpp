@@ -34,6 +34,14 @@ namespace SUTK
 			m_isDataDirty = false;
 		}
 	}
+	void LineText::destroy()
+	{
+		_com_assert(getGfxDriverObjectHandle() != GFX_DRIVER_OBJECT_NULL_HANDLE);
+		getGfxDriver().destroyText(getGfxDriverObjectHandle());
+		setGfxDriverObjectHandle(GFX_DRIVER_OBJECT_NULL_HANDLE);
+		m_isPosDirty = false;
+		m_isDataDirty = false;
+	}
 	LineCountType LineText::getColPosFromCoord(f32 coord) noexcept
 	{
 		// LineText::getCoordFromColPos function does all the calculations based on the most recent data in SGE
@@ -196,6 +204,23 @@ namespace SUTK
 		return lineText;
 	}
 
+	void Text::removeLine(LineCountType line) noexcept
+	{
+		if((line + 1) >= m_lines.size())
+			return;
+
+		// destroy the Gfx driver side objects
+		// m_lines[line]->destroy();
+		// delete m_lines[line];
+		m_lines[line]->setData("");
+		// remove the line at index 'line'
+		m_lines.erase(com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, line));
+
+		// shift the line at which the cursor points to and the lines succeeding it
+		for(std::size_t i = line; i < m_lines.size(); i++)
+			m_lines[i]->addPosition({ 0, -m_baselineHeight });
+	}
+
 	LineText* Text::getOrCreateLastLine() noexcept
 	{
 		// if there are no lines
@@ -265,16 +290,45 @@ namespace SUTK
 		}
 	}
 
-	void Text::remove(const CursorPosition<LineCountType>& position, LineCountType numChars) noexcept
+	void Text::removeRange(const CursorPosition<LineCountType>& start, const CursorPosition<LineCountType>& end) noexcept
 	{
-		if(position.getLine() >= m_lines.size())
-			return;
+		_com_assert(start.getLine() < m_lines.size());
+		_com_assert(end.getLine() < m_lines.size());
+		//  start line ----- 	 	lower line number
+		//  ---------------- <-- intermediate line
+		//  ---------------- <-- intermediate line
+		/// ---------- end line  	higher line number
+		_com_assert(start.getLine() <= end.getLine());
 
-		LineText* lineText = m_lines[position.getLine()];
-		if((position.getColumn() + numChars) > lineText->getData().size())
-			return;
+		// remove the intermediate lines if any
+		LineCountType lineDiff = end.getLine() - start.getLine();
+		for(LineCountType i = 1; i < lineDiff; i++)
+			removeLine(start.getLine() + i);
 
-		lineText->removeRange(position.getColumn(), numChars);
+		// if start and end are straddled across different lines
+		if(start.getLine() != end.getLine())
+		{
+			// remove characters from start.getColumn() to m_lines[start.getLine()].getColumnCount() exclusive
+			LineText* startLineText = m_lines[start.getLine()];
+			startLineText->removeRange(start.getColumn(), std::string::npos);
+
+			// remove characters from 0 to end.getColumn() 
+			LineText* endLineText = m_lines[end.getLine()];
+			endLineText->removeRange(0, std::min(static_cast<std::string::size_type>(end.getColumn()), endLineText->getColumnCount()));
+
+			// merge
+			startLineText->append(endLineText->getData());
+
+			// remove the last line (end line)
+			removeLine(end.getLine());
+		}
+		// if start and end are in the same line
+		else
+		{
+			LineText* lineText = m_lines[end.getLine()];
+			std::size_t colDiff = end.getColumn() - start.getColumn();
+			lineText->removeRange(start.getColumn(), colDiff);
+		}
 	}
 
 	void Text::set(const std::string& str) noexcept

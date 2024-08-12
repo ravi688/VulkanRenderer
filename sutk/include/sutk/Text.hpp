@@ -88,6 +88,8 @@ namespace SUTK
 		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;
 		virtual void update() override;
+
+		virtual void destroy() override;
 		
 		// returns column (index of a glyph) given a coordinate (absisca) along the line length.
 		LineCountType getColPosFromCoord(f32 coord) noexcept;
@@ -215,11 +217,12 @@ namespace SUTK
 		void clear() noexcept;
 
 		LineText* createNewLine(Flags flags = Flags::After, LineCountType line = END_OF_TEXT) noexcept;
+		void removeLine(LineCountType line) noexcept;
 		LineText* getOrCreateLastLine() noexcept;
 		void append(const std::string& str) noexcept { insert(CursorPosition<LineCountType>::EndOfText(), str); }
 		LineText* getLine(LineCountType line) noexcept;
 		void insert(const CursorPosition<LineCountType>& position, const std::string& str) noexcept;
-		void remove(const CursorPosition<LineCountType>& position, LineCountType numChars) noexcept;
+		void removeRange(const CursorPosition<LineCountType>& start, const CursorPosition<LineCountType>& end) noexcept;
 		void set(const std::string& str) noexcept;
 		void enableClipping(bool isEnable = true) noexcept;
 		void setScrollDelta(Vec2Df delta) noexcept;
