@@ -47,6 +47,8 @@ DYNAMIC_LIB_NAME = shader_compiler.dll
 EXECUTABLE_NAME = vsc
 EXTERNAL_INCLUDES = -Iinclude/shader_compiler
 EXTERNAL_LIBRARIES = -L./external-dependency-libs -lshaderc_shared
+BUILD_DEFINES=
+
 DEPENDENCIES = ../../.. ../../../dependencies/GLSLCommon ../../../dependencies/Common ../../../dependencies/PhyMacParser ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
 DEPENDENCY_LIBS = ../../../dependencies/GLSLCommon/lib/glslcommon.a ../../../dependencies/Common/lib/common.a ../../../dependencies/PhyMacParser/lib/ppsr.a ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
@@ -54,6 +56,11 @@ SHARED_DEPENDENCIES =
 SHARED_DEPENDENCY_LIBS = 
 SHARED_DEPENDENCIES_DIR = ./shared-dependencies
 UNPACKED_OBJECTS_DIR = ./unpacked
+
+ifeq ($(VERBOSE),1)
+	BUILD_DEFINES += -DCOM_VERBOSE
+	BUILD_DEFINES += -DSC_VERBOSE
+endif
 
 # Windows
 ifeq ($(PLATFORM),Windows)
@@ -164,7 +171,7 @@ LIBS = $(EXTERNAL_LIBRARIES)
 #Flags and Defines
 DEBUG_DEFINES = -DHPML_DEBUG_MODE -DLOG_DEBUG -DGLOBAL_DEBUG -DDEBUG
 RELEASE_DEFINES = -DHPML_RELEASE_MODE -DLOG_RELEASE -DGLOBAL_RELEASE -DRELEASE
-DEFINES = #-DMEMORY_ALLOCATION_SAFETY_LEVEL_0 -DRENDERER_VULKAN_DRIVER #-DUSE_VULKAN_ALLOCATOR #-DMEMORY_METRICS
+DEFINES = $(BUILD_DEFINES) #-DMEMORY_ALLOCATION_SAFETY_LEVEL_0 -DRENDERER_VULKAN_DRIVER #-DUSE_VULKAN_ALLOCATOR #-DMEMORY_METRICS
 
 COMPILER_FLAGS= -m64
 LINKER_FLAGS= -m64
