@@ -86,7 +86,10 @@ Shader
             {
                 colorBlend
                 {
-                    attachment { }
+                    attachment
+                    {
+                        blendenable = true
+                    }
                 }
             }
             [NoParse]
@@ -217,7 +220,8 @@ Shader
                 void main()
                 {
                     vec2 texcoord = vec2(in_texcoord.x, in_texcoord.y);
-                    color = vec4(in_color.x, in_color.y, in_color.z, 1.0) * texture(bga, texcoord).r;
+                    float alpha = texture(bga, texcoord).r;
+                    color = vec4(in_color.x, in_color.y, in_color.z, alpha);
                 }
             }
         }
