@@ -3,7 +3,7 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 0h:33m:13s, 14/8/2024
+ * Time & Date (yy/mm/yyy) of Generation: 2h:47m:31s, 14/8/2024
  */
 
 #pragma once
@@ -26515,7 +26515,10 @@ static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER =
 "            {\n"
 "                colorBlend\n"
 "                {\n"
-"                    attachment { }\n"
+"                    attachment\n"
+"                    {\n"
+"                        blendenable = true\n"
+"                    }\n"
 "                }\n"
 "            }\n"
 "            [NoParse]\n"
@@ -26646,7 +26649,8 @@ static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER =
 "                void main()\n"
 "                {\n"
 "                    vec2 texcoord = vec2(in_texcoord.x, in_texcoord.y);\n"
-"                    color = vec4(in_color.x, in_color.y, in_color.z, 1.0) * texture(bga, texcoord).r;\n"
+"                    float alpha = texture(bga, texcoord).r;\n"
+"                    color = vec4(in_color.x, in_color.y, in_color.z, alpha);\n"
 "                }\n"
 "            }\n"
 "        }\n"
@@ -26674,7 +26678,7 @@ static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_
 		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
 		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Roboto-Bold.ttf", _________SUTK_FONTS_ROBOTO_BOLD_TTF, 167336 };
 		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 11952 };
-		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 7948 };
+		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 8066 };
 
 		g_is_shader_mappings_populated = true;
 	}
