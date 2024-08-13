@@ -47,10 +47,10 @@ namespace SUTK
 		m_scene.addCamera(camera);
 
 		m_shader = shaderLibrary.compileAndLoadShader(driver.getBuiltinFileData("/bitmap_text_shader.v3dshader").first);
-		auto font_data = driver.getBuiltinFileData("/Calibri Regular.ttf");
+		auto font_data = driver.getBuiltinFileData("/Roboto-Bold.ttf");
 		m_font = driver.createFont(font_data.first.data(), font_data.second);
 
-		m_font.setCharSize(24);
+		m_font.setCharSize(12);
 
 		SGE::BitmapGlyphAtlasTexture::CreateInfo createInfo =
 		{
@@ -219,7 +219,7 @@ namespace SUTK
 		// WARNING: removing destroying bitmap text and trying to createText might lead to segfaults or unexpected code execution.
 		std::pair<SGE::BitmapText, GfxDriverObjectHandleType> bitmapText = getOrCreateBitmapText(textGroup);
 		SGE::BitmapTextString subText = bitmapText.first.createString();
-		subText.setPointSize(24);
+		subText.setPointSize(12);
 		u32 id = id_generator_get(&m_id_generator);
 		m_bitmapTextStringMappings.insert({ id, { subText,  bitmapText.second, textGroup } });
 		m_typeTable.insert({ id, ObjectType::Text });
@@ -276,6 +276,16 @@ namespace SUTK
 	void SGEGfxDriver::setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position)
 	{
 		getText(handle).setPosition(SUTKToSGECoordTransform(position));
+	}
+
+	void SGEGfxDriver::setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize)
+	{
+		getText(handle).setPointSize(pointSize);
+	}
+
+	f32 SGEGfxDriver::getTextPointSize(GfxDriverObjectHandleType handle)
+	{
+		return getText(handle).getPointSize();
 	}
 
 	void SGEGfxDriver::setTextData(GfxDriverObjectHandleType handle, const std::string& data)
@@ -507,14 +517,19 @@ namespace SUTK
 		return geometry;
 	}
 
-	u32 SGEGfxDriver::getBaselineHeightInPixels()
+	u32 SGEGfxDriver::getTextBaselineHeightInPixels(GfxDriverObjectHandleType handle)
 	{
-		return m_font.getFontUnitsToPixels(m_font.getBaselineSpace(), SGE::Display::GetDPI().height);
+		f32 pointSize = getText(handle).getPointSize();
+		f32 save = m_font.getCharSize();
+		m_font.setCharSize(pointSize);
+		u32 pixels = m_font.getFontUnitsToPixels(m_font.getBaselineSpace(), SGE::Display::GetDPI().height);
+		m_font.setCharSize(save);
+		return pixels;
 	}
 
-	f32 SGEGfxDriver::getBaselineHeightInCentimeters()
+	f32 SGEGfxDriver::getTextBaselineHeightInCentimeters(GfxDriverObjectHandleType handle)
 	{
-		return SGE::Display::ConvertPixelsToInches({ 0, static_cast<f32>(getBaselineHeightInPixels()) }).height * CENTIMETERS_PER_INCH;
+		return SGE::Display::ConvertPixelsToInches({ 0, static_cast<f32>(getTextBaselineHeightInPixels(handle)) }).height * CENTIMETERS_PER_INCH;
 	}
 
 	u32 SGEGfxDriver::addOnResizeHandler(OnResizeCallbackHandler handler)

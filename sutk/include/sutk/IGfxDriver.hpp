@@ -22,6 +22,8 @@ namespace SUTK
 		virtual GfxDriverObjectHandleType createText(GfxDriverObjectHandleType textGroup) = 0;
 		virtual void destroyText(GfxDriverObjectHandleType handle) = 0;
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) = 0;
+		virtual void setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize) = 0;
+		virtual f32 getTextPointSize(GfxDriverObjectHandleType handle) = 0;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) = 0;
 		virtual LineCountType getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord) = 0;
 		virtual f32 getTextCoordFromGlyphIndex(GfxDriverObjectHandleType handle, LineCountType col) = 0;
@@ -42,8 +44,8 @@ namespace SUTK
 		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) = 0;
 		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) = 0;
 
-		virtual u32 getBaselineHeightInPixels() = 0;
-		virtual f32 getBaselineHeightInCentimeters() = 0;
+		virtual u32 getTextBaselineHeightInPixels(GfxDriverObjectHandleType handle) = 0;
+		virtual f32 getTextBaselineHeightInCentimeters(GfxDriverObjectHandleType handle) = 0;
 		// the Vec2Df arguments is in centimeters (not pixels!)
 		typedef std::function<void(Vec2Df)> OnResizeCallbackHandler;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) = 0;
