@@ -84,6 +84,7 @@ typedef struct vulkan_texture_data_t
 
 typedef struct vulkan_texture_create_info_t
 {
+	sge_vulkan_flags_t flags;
 	u32 width;
 	u32 height;
 	u32 depth;

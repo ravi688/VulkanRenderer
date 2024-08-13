@@ -268,13 +268,13 @@ static vulkan_image_view_type_t get_view_type_from_texture_type(vulkan_texture_t
 	return 0;
 }
 
-static VkSampler get_default_sampler(vulkan_renderer_t* renderer)
+static VkSampler get_default_sampler(vulkan_renderer_t* renderer, sge_vulkan_flags_t flags)
 {
 	VkSamplerCreateInfo create_info =
 	{
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-		.magFilter = VK_FILTER_LINEAR,
-		.minFilter = VK_FILTER_LINEAR,
+		.magFilter = (flags == SGE_VULKAN_FLAG_NEAREST_FILTERING) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR,
+		.minFilter = (flags == SGE_VULKAN_FLAG_NEAREST_FILTERING) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR,
 		.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
 		.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
 		.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
@@ -284,7 +284,7 @@ static VkSampler get_default_sampler(vulkan_renderer_t* renderer)
 		.unnormalizedCoordinates = VK_FALSE,
 		.compareEnable = VK_FALSE,
 		.compareOp = VK_COMPARE_OP_NEVER,
-		.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+		.mipmapMode = (flags == SGE_VULKAN_FLAG_NEAREST_FILTERING) ? VK_SAMPLER_MIPMAP_MODE_NEAREST : VK_SAMPLER_MIPMAP_MODE_LINEAR,
 		.mipLodBias = 0.0f,
 		.minLod = 0.0f,
 		.maxLod = 0.0f
@@ -320,7 +320,7 @@ static VkSampler get_cubmap_sampler(vulkan_renderer_t* renderer)
 	return sampler;
 }
 
-static VkSampler get_sampler_from_texture_type(vulkan_renderer_t* renderer, vulkan_texture_type_t type)
+static VkSampler get_sampler_from_texture_type(vulkan_renderer_t* renderer, vulkan_texture_type_t type, sge_vulkan_flags_t flags)
 {
 	if(type & VULKAN_TEXTURE_TYPE_CUBE)
 		return get_cubmap_sampler(renderer);
@@ -332,7 +332,7 @@ static VkSampler get_sampler_from_texture_type(vulkan_renderer_t* renderer, vulk
 			case VULKAN_TEXTURE_TYPE_NORMAL:
 			case VULKAN_TEXTURE_TYPE_COLOR:
 			case VULKAN_TEXTURE_TYPE_DEPTH:
-				return get_default_sampler(renderer);
+				return get_default_sampler(renderer, flags);
 			default:
 				UNSUPPORTED_TEXTURE_TYPE(type & BIT_MASK32(3));
 		}
@@ -420,7 +420,7 @@ SGE_API void vulkan_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_
  	texture->image_views = create_write_image_views(texture, &texture->image_view_count);
 
  	if((create_info->usage | create_info->initial_usage | create_info->final_usage) & VULKAN_TEXTURE_USAGE_SAMPLED)
- 		texture->vo_image_sampler = get_sampler_from_texture_type(texture->renderer, texture->type);
+ 		texture->vo_image_sampler = get_sampler_from_texture_type(texture->renderer, texture->type, create_info->flags);
  	else
  		texture->vo_image_sampler = VK_NULL_HANDLE;
 

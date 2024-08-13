@@ -35,6 +35,7 @@
 
 typedef struct vulkan_host_buffered_texture_create_info_t
 {
+	sge_vulkan_flags_t flags;
 	u32 width;
 	u32 height;
 	u32 depth;

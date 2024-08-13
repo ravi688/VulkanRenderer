@@ -57,6 +57,7 @@ SGE_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_renderer_t
 	/* create host buffered texture */
 	vulkan_host_buffered_texture_create_info_t hbt_create_info =
 	{
+		.flags = SGE_VULKAN_FLAG_NEAREST_FILTERING,
 		.width = create_info->width,
 		.height = create_info->height,
 		.depth = 1,
