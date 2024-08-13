@@ -54,6 +54,7 @@ SGE_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t* ren
 	/* create the texture */
 	vulkan_texture_create_info_t _create_info =
 	{
+		.flags = create_info->flags,
 		.width = create_info->width,
 		.height = create_info->height,
 		.depth = create_info->depth,

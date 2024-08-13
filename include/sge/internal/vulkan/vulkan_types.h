@@ -96,3 +96,11 @@ typedef enum vulkan_render_target_technique_t
 	VULKAN_RENDER_TARGET_TECHNIQUE_MAX
 } vulkan_render_target_technique_t;
 
+typedef enum sge_vulkan_flags_t
+{
+	SGE_VULKAN_FLAG_UNDEFINED = 0,
+	/* used while creating vulkan_texture_t
+	 * this causes the VkSampler object created with nearest filtering, which is useful for bitmap text rendering */
+	SGE_VULKAN_FLAG_NEAREST_FILTERING,
+	SGE_VULKAN_FLAG_MAX
+} sge_vulkan_flags_t;
