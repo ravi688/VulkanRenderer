@@ -40,7 +40,9 @@ namespace SUTK
 		void render();
 
 		IGfxDriver& getGfxDriver() { return m_gfxDriver; }
+		const IGfxDriver& getGfxDriver() const { return m_gfxDriver; }
 		IInputDriver& getInputDriver() { return *m_inputDriver; }
+		const IInputDriver& getInputDriver() const { return *m_inputDriver; }
 
 		Vec2Df getWindowSize() noexcept { return getGfxDriver().getSizeInCentimeters(); }
 
@@ -86,7 +88,10 @@ namespace SUTK
 		UIDriverObject(UIDriver& uiDriver) : m_uiDriver(uiDriver) { }
 	public:
 		UIDriver& getUIDriver() { return m_uiDriver; }
+		const UIDriver& getUIDriver() const { return m_uiDriver; }
 		IGfxDriver& getGfxDriver() { return getUIDriver().getGfxDriver(); }
+		const IGfxDriver& getGfxDriver() const { return getUIDriver().getGfxDriver(); }
 		IInputDriver& getInputDriver() { return getUIDriver().getInputDriver(); }
+		const IInputDriver& getInputDriver() const { return getUIDriver().getInputDriver(); }
 	};
 }

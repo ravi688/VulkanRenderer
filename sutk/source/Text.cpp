@@ -13,16 +13,22 @@ namespace SUTK
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText() { return { END_OF_TEXT, END_OF_LINE }; }
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line) { return { line, END_OF_LINE }; }
 
-	LineText::LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup) noexcept : GfxDriverRenderable(driver, NULL), m_isPosDirty(true), m_isDataDirty(false)
+	LineText::LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup) noexcept : GfxDriverRenderable(driver, NULL), m_isPosDirty(true), m_isDataDirty(false), m_isPointSizeDirty(false)
 	{
 		setGfxDriverObjectHandle(getGfxDriver().createText(textGroup));
+		m_pointSize = getFontSize();
 	}
 	bool LineText::isDirty()
 	{
-		return m_isPosDirty || m_isDataDirty;
+		return m_isPosDirty || m_isDataDirty || m_isPointSizeDirty;
 	}
 	void LineText::update()
 	{
+		if(m_isPointSizeDirty)
+		{
+			getGfxDriver().setTextPointSize(getGfxDriverObjectHandle(), m_pointSize);
+			m_isPointSizeDirty = false;
+		}
 		if(m_isPosDirty)
 		{
 			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), m_pos);
@@ -100,10 +106,32 @@ namespace SUTK
 		m_data.clear();
 		m_isDataDirty = true;
 	}
-
-	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_textGroup(GFX_DRIVER_OBJECT_NULL_HANDLE), m_isDirty(false), m_isClippingEnabled(false)
+	void LineText::updatePointSize() noexcept
 	{
-		m_baselineHeight = getGfxDriver().getBaselineHeightInCentimeters();
+		if(m_isPointSizeDirty)
+		{
+			getGfxDriver().setTextPointSize(getGfxDriverObjectHandle(), m_pointSize);
+			m_isPointSizeDirty = false;
+		}
+	}
+	void LineText::setFontSize(const f32 pointSize) noexcept
+	{
+		m_isPointSizeDirty = true;
+		m_pointSize = pointSize;
+	}
+	f32 LineText::getFontSize() noexcept
+	{
+		updatePointSize();
+		return getGfxDriver().getTextPointSize(getGfxDriverObjectHandle());
+	}
+	f32 LineText::getBaselineHeight() noexcept
+	{
+		updatePointSize();
+		return getGfxDriver().getTextBaselineHeightInCentimeters(getGfxDriverObjectHandle());
+	}
+
+	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_textGroup(GFX_DRIVER_OBJECT_NULL_HANDLE), m_baselineHeight(0), m_isDirty(false), m_isClippingEnabled(false), m_pointSize(12)
+	{
 		m_textGroup = getGfxDriver().createTextGroup();
 	}
 
@@ -145,15 +173,15 @@ namespace SUTK
 	{
 		LineCountType line = cursor.getLine();
 		_assert((line >= 0) && (line < m_lines.size()));
-		return { m_lines[line]->getCoordFromColPos(cursor.getColumn()) + m_scrollDelta.x, m_baselineHeight * cursor.getLine() + m_scrollDelta.y };
+		return { m_lines[line]->getCoordFromColPos(cursor.getColumn()) + m_scrollDelta.x, getBaselineHeight() * cursor.getLine() + m_scrollDelta.y };
 	}
 
 	std::pair<s32, s32> Text::getUnclippedLineRange() noexcept
 	{
 		auto rect = getContainer()->getRect();
 		auto scrollDelta = getScrollDelta();
-		s32 lowerBound = static_cast<s32>(-scrollDelta.y / m_baselineHeight);
-		s32 upperBound = static_cast<s32>((-scrollDelta.y + rect.getHeight()) / m_baselineHeight);
+		s32 lowerBound = static_cast<s32>(-scrollDelta.y / getBaselineHeight());
+		s32 upperBound = static_cast<s32>((-scrollDelta.y + rect.getHeight()) / getBaselineHeight());
 		return { 
 					std::clamp(lowerBound, 0, static_cast<s32>(m_lines.size()) - 1),  
 				 	std::clamp(upperBound, 0, static_cast<s32>(m_lines.size()) - 1)
@@ -165,7 +193,7 @@ namespace SUTK
 		if(m_lines.size() == 0)
 			return { 0, 0 };
 		std::pair<s32, s32> range = getUnclippedLineRange();
-		auto lineNo = static_cast<s32>((coords - m_scrollDelta).y / m_baselineHeight);
+		auto lineNo = static_cast<s32>((coords - m_scrollDelta).y / getBaselineHeight());
 		lineNo = std::min(lineNo, static_cast<s32>(m_lines.size()) - 1);
 		lineNo = std::max(lineNo, 0);
 		_assert(lineNo >= 0);
@@ -191,12 +219,13 @@ namespace SUTK
 
 		// shift the line at which the cursor points to and the lines succeeding it
 		for(std::size_t i = cursorPosition.getLine(); i < m_lines.size(); i++)
-			m_lines[i]->addPosition({ 0, m_baselineHeight });
+			m_lines[i]->addPosition({ 0, getBaselineHeight() });
 
 		// insert the line at which the cursor points to
 		LineText* lineText = new LineText(getUIDriver(), m_textGroup);
 		m_lines.insert(com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, cursorPosition.getLine()), lineText);
 
+		lineText->setFontSize(m_pointSize);
 		Vec2Df localCoords = getLocalPositionFromCursorPosition(cursorPosition);
 		Vec2Df screenCoords = getContainer()->getLocalCoordsToScreenCoords(localCoords);
 		lineText->setPosition(screenCoords);
@@ -215,7 +244,7 @@ namespace SUTK
 
 		// shift the line at which the cursor points to and the lines succeeding it
 		for(std::size_t i = line; i < m_lines.size(); i++)
-			m_lines[i]->addPosition({ 0, -m_baselineHeight });
+			m_lines[i]->addPosition({ 0, -getBaselineHeight() });
 	}
 
 	LineText* Text::getOrCreateLastLine() noexcept
@@ -378,7 +407,7 @@ namespace SUTK
 		onContainerResize(getContainer()->getRect(), true, true);
 	}
 
-	void Text::onContainerResize(Rect2Df newRect, bool isPositionChanged, bool isSizeChanged) noexcept
+	void Text::updateLinePositions() noexcept
 	{
 		CursorPosition<LineCountType> cursorPosition { 0u, 0u };
 		for(std::size_t i = 0; i < m_lines.size(); i++)
@@ -389,7 +418,38 @@ namespace SUTK
 			lineText->setPosition(screenCoords);
 			cursorPosition.moveToNextLine();
 		}
+	}
+
+	void Text::onContainerResize(Rect2Df newRect, bool isPositionChanged, bool isSizeChanged) noexcept
+	{
+		updateLinePositions();
 		if(m_isClippingEnabled)
 			recalculateClipRect();
+	}
+
+	f32 Text::getBaselineHeight() noexcept
+	{
+		if((m_baselineHeight == 0.0f) && (m_lines.size() > 0))
+			m_baselineHeight = m_lines[0]->getBaselineHeight();
+		return m_baselineHeight;
+	}
+
+	void Text::setFontSize(const f32 pointSize) noexcept
+	{
+		// update the point sizes for each line
+		for(LineText*& lineText : m_lines)
+			lineText->setFontSize(pointSize);
+		m_pointSize = pointSize;
+
+		// update the baseline height
+		if(m_lines.size() > 0)
+			m_baselineHeight = m_lines[0]->getBaselineHeight();
+
+		updateLinePositions();
+	}
+
+	f32 Text::getFontSize() const noexcept
+	{
+		return m_pointSize;
 	}
 }

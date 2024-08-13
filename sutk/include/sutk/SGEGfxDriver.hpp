@@ -116,6 +116,8 @@ namespace SUTK
 		virtual void destroyText(GfxDriverObjectHandleType handle) override;
 
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) override;
+		virtual void setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize) override;
+		virtual f32 getTextPointSize(GfxDriverObjectHandleType handle) override;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
 
 		virtual LineCountType getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord) override;
@@ -131,8 +133,8 @@ namespace SUTK
 		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) override;
 		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) override;
 
-		virtual u32 getBaselineHeightInPixels() override;
-		virtual f32 getBaselineHeightInCentimeters() override;
+		virtual u32 getTextBaselineHeightInPixels(GfxDriverObjectHandleType handle) override;
+		virtual f32 getTextBaselineHeightInCentimeters(GfxDriverObjectHandleType handle) override;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) override;
 		virtual void removeOnResizeHandler(u32 id) override;
 	};

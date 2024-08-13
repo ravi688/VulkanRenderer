@@ -76,12 +76,22 @@ namespace SUTK
 	private:
 		bool m_isPosDirty;
 		bool m_isDataDirty;
+		bool m_isPointSizeDirty;
 		LineTextData m_data;
 		Vec2Df m_pos;
+		f32 m_pointSize;
 
 		LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup) noexcept;
 
 		friend class Text;
+
+		// LineText is used only inside the Text class (Multi-line Text)
+		// and it should not be allowed to set different font sizes for two or more LineText(s)
+		void setFontSize(const f32 pointSize) noexcept;
+
+		friend class Text;
+
+		void updatePointSize() noexcept;
 
 	public:
 
@@ -107,6 +117,9 @@ namespace SUTK
 		void clear() noexcept;
 
 		std::size_t getColumnCount() const noexcept { return static_cast<const std::string&>(m_data).size(); }
+
+		f32 getFontSize() noexcept;
+		f32 getBaselineHeight() noexcept;
 	};
 
 	enum class HorizontalAlignment : u8
@@ -179,7 +192,7 @@ namespace SUTK
 		Color3 m_color;
 		TPGEmphasis m_emphasis;
 		GfxDriverObjectHandleType m_font;
-		u32 m_pointSize;
+		f32 m_pointSize;
 		HorizontalAlignment m_horizontalAlignment;
 		VerticalAlignment m_verticalAlignment;
 
@@ -199,6 +212,7 @@ namespace SUTK
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 
 		std::pair<s32, s32> getUnclippedLineRange() noexcept;
+		void updateLinePositions() noexcept;
 	public:
 
 		Vec2Df getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
@@ -230,5 +244,9 @@ namespace SUTK
 		Vec2Df getScrollDelta() const noexcept { return m_scrollDelta; }
 
 		std::size_t getLineCount() const noexcept { return m_lines.size(); }
+
+		void setFontSize(const f32 pointSize) noexcept;
+		f32 getFontSize() const noexcept;
+		f32 getBaselineHeight() noexcept;
 	};
 }
