@@ -3,7 +3,7 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 2h:47m:31s, 14/8/2024
+ * Time & Date (yy/mm/yyy) of Generation: 13h:57m:57s, 15/8/2024
  */
 
 #pragma once
@@ -26503,7 +26503,7 @@ static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER =
 "\n"
 "        [Rate(per_instance)]\n"
 "        [Attribute(binding=5,location=7)]\n"
-"        vec4 rotn_stid;\n"
+"        vec4 color;\n"
 "    }\n"
 "    \n"
 "    RenderPass\n"
@@ -26568,10 +26568,10 @@ static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER =
 "                layout(location = 5, component = 3) in float indx_f;\n"
 "                layout(location = 6, component = 0) in vec3 rotn; // not required\n"
 "                layout(location = 6, component = 3) in float stid_f;\n"
-"                layout(location = 7, component = 0) in vec3 scal; // not required\n"
-"                \n"
+"                layout(location = 7, component = 0) in vec4 colr;\n"
+"\n"
 "                layout(location = 0) out vec2 out_texcoord;\n"
-"                layout(location = 1) out vec3 out_color;\n"
+"                layout(location = 1) out vec4 out_color;\n"
 "                \n"
 "                void main()\n"
 "                {\n"
@@ -26631,7 +26631,7 @@ static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER =
 "                    else if(gl_VertexIndex == 3)\n"
 "                        out_texcoord = texcoord.bltc;\n"
 "                \n"
-"                    out_color = vec3(parameters.color.r, parameters.color.g, parameters.color.b);\n"
+"                    out_color = vec4(parameters.color.r, parameters.color.g, parameters.color.b, 1.0f) * colr;\n"
 "                }\n"
 "\n"
 "                #stage fragment\n"
@@ -26642,7 +26642,7 @@ static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER =
 "                #include <v3d.h>\n"
 "                \n"
 "                layout(location = 0) in vec2 in_texcoord;\n"
-"                layout(location = 1) in vec3 in_color;\n"
+"                layout(location = 1) in vec4 in_color;\n"
 "                \n"
 "                layout(location = 0) out vec4 color;\n"
 "                \n"
@@ -26650,7 +26650,7 @@ static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER =
 "                {\n"
 "                    vec2 texcoord = vec2(in_texcoord.x, in_texcoord.y);\n"
 "                    float alpha = texture(bga, texcoord).r;\n"
-"                    color = vec4(in_color.x, in_color.y, in_color.z, alpha);\n"
+"                    color = vec4(in_color.x, in_color.y, in_color.z, alpha * in_color.w);\n"
 "                }\n"
 "            }\n"
 "        }\n"
@@ -26678,7 +26678,7 @@ static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_
 		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
 		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Roboto-Bold.ttf", _________SUTK_FONTS_ROBOTO_BOLD_TTF, 167336 };
 		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 11952 };
-		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 8066 };
+		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 8056 };
 
 		g_is_shader_mappings_populated = true;
 	}
