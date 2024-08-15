@@ -6,6 +6,31 @@
 
 namespace SUTK
 {
+
+	void RenderRect::setActive(bool isActive) noexcept
+	{
+		// mandatory to call
+		GeometryRenderable::setActive(isActive);
+		m_isActiveDirty = true;
+	}
+
+	bool RenderRect::isDirty()
+	{
+		return m_isActiveDirty;
+	}
+
+	void RenderRect::update()
+	{
+		if(m_isActiveDirty)
+		{
+			auto handle = getGfxDriverObjectHandle();
+			_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
+			auto obj = getGfxDriver().getGeometryObject(handle);
+			getGfxDriver().setObjectActive(obj, isActive());
+			m_isActiveDirty = false;
+		}
+	}
+
 	RenderRectOutline::RenderRectOutline(UIDriver& driver, RenderableContainer* container) noexcept : RenderRect(driver, container),
 																						m_isPosDirty(true),
 																						m_isSizeDirty(true),
@@ -32,11 +57,12 @@ namespace SUTK
 
 	bool RenderRectOutline::isDirty()
 	{
-		return m_isPosDirty || m_isSizeDirty || m_isColorDirty;
+		return m_isPosDirty || m_isSizeDirty || m_isColorDirty || RenderRect::isDirty();
 	}
 
 	void RenderRectOutline::update()
 	{
+		RenderRect::update();
 		if(m_isSizeDirty || m_isPosDirty)
 		{
 			Geometry::VertexPositionArray& array = getGeometry().getVertexPositionArrayForWrite();
@@ -147,11 +173,12 @@ namespace SUTK
 
 	bool RenderRectFill::isDirty()
 	{
-		return m_isPosDirty || m_isSizeDirty || m_isColorDirty;
+		return m_isPosDirty || m_isSizeDirty || m_isColorDirty || RenderRect::isDirty();
 	}
 
 	void RenderRectFill::update()
 	{
+		RenderRect::update();
 		if(m_isSizeDirty || m_isPosDirty)
 		{
 			Geometry::VertexPositionArray& array = getGeometry().getVertexPositionArrayForWrite();

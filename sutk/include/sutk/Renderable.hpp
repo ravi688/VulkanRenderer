@@ -14,6 +14,7 @@ namespace SUTK
 	{
 	private:
 		RenderableContainer* m_container;
+		bool m_isActive;
 
 	protected:
 		friend class RenderableContainer;
@@ -34,6 +35,10 @@ namespace SUTK
 		virtual bool isDirty() = 0;
 		// updates (copies CPU side data to) GPU side data, and it may also create or recreate exisiting GPU Driver objects 
 		virtual void update() = 0;
+
+		// mandatory to be called in overriding method
+		virtual void setActive(bool isActive) noexcept { m_isActive = isActive; }
+		virtual bool isActive() const noexcept { return m_isActive; }
 
 		bool ensureUpdated() noexcept
 		{ 

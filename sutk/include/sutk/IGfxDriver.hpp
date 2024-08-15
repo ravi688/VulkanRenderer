@@ -44,6 +44,7 @@ namespace SUTK
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) = 0;
 
 		virtual GfxDriverObjectHandleType getObject(GfxDriverObjectHandleType handle) = 0;
+		virtual void setObjectActive(GfxDriverObjectHandleType handle, bool isActive) = 0;
 		// rect should be in centimeters
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) = 0;
 		// position should be centimeters

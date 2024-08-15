@@ -129,6 +129,7 @@ namespace SUTK
 
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) override;
 		virtual GfxDriverObjectHandleType getObject(GfxDriverObjectHandleType handle) override;
+		virtual void setObjectActive(GfxDriverObjectHandleType handle, bool isActive) override;
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) override;
 		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec2Df position) override;
 

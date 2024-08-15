@@ -12,6 +12,7 @@ namespace SUTK
 	private:
 		Rect2Df m_rect;
 		Color4 m_color;
+		bool m_isActiveDirty;
 
 	protected:
 		void setRect(const Rect2Df& rect) noexcept { m_rect = rect; }
@@ -20,11 +21,13 @@ namespace SUTK
 
 	public:
 		// Constructors
-		RenderRect(UIDriver& driver, RenderableContainer* container) noexcept : GeometryRenderable(driver, container), m_rect { 0, 0, 2.0f, 2.0f }, m_color(Color4::white()) { }
+		RenderRect(UIDriver& driver, RenderableContainer* container) noexcept : GeometryRenderable(driver, container), m_rect { 0, 0, 2.0f, 2.0f }, m_color(Color4::white()), m_isActiveDirty(false) { }
 
 		// Implementation of Renderable
-		virtual bool isDirty() = 0;
-		virtual void update() = 0;
+		virtual bool isDirty();
+		virtual void update();
+
+		virtual void setActive(bool isActive) noexcept override;
 
 		virtual Color4 getColor() const noexcept override { return m_color; }
 		// it must be called in the overriding method
