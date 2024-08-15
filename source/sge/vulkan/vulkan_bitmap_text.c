@@ -199,6 +199,7 @@ SGE_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 		buf_free(&text_string->chars);
 		buf_free(&text_string->glyph_offsets);
 		buf_free(&text_string->index_mappings);
+		buf_free(&text_string->color_ranges);
 	}
 	buf_clear(&text->text_strings, NULL);
 
@@ -297,6 +298,7 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 		buf_push_null(&text_string->chars);
 		text_string->glyph_offsets = memory_allocator_buf_new(text->renderer->allocator, f32);
 		text_string->index_mappings = memory_allocator_buf_new(text->renderer->allocator, u32);
+		text_string->color_ranges = memory_allocator_buf_new(text->renderer->allocator, char_attr_color_range_t);
 		text_string->color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		buf_push_pseudo(tst_buffer, 1);
 	}
@@ -364,6 +366,7 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 	buf_clear(&text_string->chars, NULL);
 	buf_clear(&text_string->glyph_offsets, NULL);
 	buf_clear(&text_string->index_mappings, NULL);
+	buf_clear(&text_string->color_ranges, NULL);
 	text_string->rect.offset = offset3d(0.0f, 0.0f, 0.0f);
 	text_string->rect.extent = extent2d(500, 300);
 	text_string->transform = mat4_identity();
@@ -538,6 +541,10 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 			/* TODO: Remove this as we don't need this level of flexibility */
 			.rotn = { ((i%3) == 0) ? 1 : 0, ((i%3) == 1) ? 1 : 0, ((i%3) == 2) ? 1 : 0 },
 			.stid = U64_TO_U32(text_string->handle),
+			/* TODO: use exisiting color_ranges (if any) to assign color here, otherwise use the default text_string->color
+			 * How?
+			 * 		you have the index of this character into text_string->chars array
+			 * 		use that index to find the color_range which contains it, and get the color of that color_range. */
 			.colr = text_string->color
 		};
 
@@ -560,11 +567,20 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 	// vulkan_bitmap_glyph_atlas_texture_commit(text->texture, NULL);
 }
 
+static void text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char_attr_color_range_t* ranges, u32 range_count);
+
 static void text_string_set_point_size(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, u32 point_size)
 {
 	text_string->point_size = point_size;
 	if(buf_get_element_count(&text_string->chars) > 0)
+	{
 		text_string_set(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
+
+		// reapply the color ranges as the above call to text_string_set() uses the default color set via vulkan_bitmap_text_string_set_color()
+		u32 range_count = buf_get_element_count(&text_string->color_ranges);
+		if(range_count > 0)
+			text_string_set_char_attr_color(text, text_string, buf_get_ptr_at_typeof(&text_string->color_ranges, char_attr_color_range_t, 0), range_count);
+	}
 }
 
 SGE_API void vulkan_bitmap_text_set_glyph_layout_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_layout_handler_t handler, void* user_data)
@@ -650,6 +666,9 @@ static vulkan_bitmap_text_string_t* get_text_stringH(vulkan_bitmap_text_t* text,
 SGE_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vulkan_bitmap_text_string_handle_t handle, const char* string)
 {
 	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
+
+	/* we need to clear the color ranges buffer as new char array is supplied by the user and now it is now stale */
+	buf_clear(&text_string->color_ranges, NULL);
 
 	/* clear the previous string characters */
 	buf_clear(&text_string->chars, NULL);
@@ -738,9 +757,8 @@ SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vul
 	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
 }
 
-SGE_API void vulkan_bitmap_text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char_attr_color_range_t* ranges, const u32 range_count)
+static void text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char_attr_color_range_t* ranges, u32 range_count)
 {
-	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
 DEBUG_BLOCK
 (
 	AUTO char_count = buf_get_element_count(&text_string->chars);
@@ -756,6 +774,17 @@ DEBUG_BLOCK
 	}
 	/* update GPU (device) side buffer if it was marked dirty */
 	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
+}
+
+SGE_API void vulkan_bitmap_text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char_attr_color_range_t* ranges, const u32 range_count)
+{
+	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
+
+	text_string_set_char_attr_color(text, text_string, ranges, range_count);
+
+	/* TODO: this should be buf_clear_fast */
+	buf_clear(&text_string->color_ranges, NULL);
+	buf_pushv(&text_string->color_ranges, CAST_TO(void*, ranges), range_count);
 }
 
 /* getters */
