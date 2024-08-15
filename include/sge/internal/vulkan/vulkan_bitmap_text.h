@@ -86,6 +86,19 @@ typedef buffer_t /* element_type: u32 */ u32_buffer_t;
 typedef buf_ucount_t vulkan_bitmap_text_string_handle_t;
 typedef dictionary_t vulkan_bitmap_glyph_sub_buffer_handle_table_t;
 
+/* the range also takes whitespaces into account */
+typedef struct char_attr_color_range_t
+{
+	/* inclusive */
+	u32 begin;
+	/* exclusive */
+	u32 end;
+	/* 32-bit x 4 color */
+	color_t color;
+} char_attr_color_range_t;
+
+typedef buffer_t /* element_type: char_attr_color_range_t */ char_attr_color_range_buffer_t;
+
 typedef struct vulkan_bitmap_text_string_t
 {
 	/* handle to the next free string if this string is in the free list or inuse string if this is in the inuse list */
@@ -100,6 +113,9 @@ typedef struct vulkan_bitmap_text_string_t
 	u32_buffer_t index_mappings;
 	/* string */
 	vulkan_bitmap_text_char_buffer_t chars;
+	/* populated when vulkan_bitmap_text_string_set_char_attr_color is called,
+	 * and used for applying the color ranges again whenever set_point_size is called. */
+	char_attr_color_range_buffer_t color_ranges;
 	/* a rectangle in a 3D space
 	 * holds the position and the extents of the text */
 	struct { offset3d_t offset; extent2d_t extent; } rect;
@@ -253,17 +269,6 @@ SGE_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* tex
 SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform);
 
 SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, color_t color);
-/* the range also takes whitespaces into account */
-typedef struct char_attr_color_range_t
-{
-	/* inclusive */
-	u32 begin;
-	/* exclusive */
-	u32 end;
-	/* 32-bit x 4 color */
-	color_t color;
-} char_attr_color_range_t;
-
 /* sets color attribute for each characters lying the range list passed to this function 
  * ranges: is the list of ranges where each range consists of 'begin' and 'end' index
  * range_count: is the number of ranges */
