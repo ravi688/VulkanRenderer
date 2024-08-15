@@ -198,6 +198,7 @@ SGE_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 		AUTO text_string = buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, i);
 		buf_free(&text_string->chars);
 		buf_free(&text_string->glyph_offsets);
+		buf_free(&text_string->index_mappings);
 	}
 	buf_clear(&text->text_strings, NULL);
 
@@ -295,6 +296,8 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 		 * therefore, the number of characters in 'chars' must be greater than or equal to 1 (including the null character) */
 		buf_push_null(&text_string->chars);
 		text_string->glyph_offsets = memory_allocator_buf_new(text->renderer->allocator, f32);
+		text_string->index_mappings = memory_allocator_buf_new(text->renderer->allocator, u32);
+		text_string->color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		buf_push_pseudo(tst_buffer, 1);
 	}
 
@@ -360,6 +363,7 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 	text_string->render_data_handle = SUB_BUFFER_HANDLE_INVALID;
 	buf_clear(&text_string->chars, NULL);
 	buf_clear(&text_string->glyph_offsets, NULL);
+	buf_clear(&text_string->index_mappings, NULL);
 	text_string->rect.offset = offset3d(0.0f, 0.0f, 0.0f);
 	text_string->rect.extent = extent2d(500, 300);
 	text_string->transform = mat4_identity();
@@ -383,6 +387,8 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 	/* clear the previous glyph offsets for this text string */
 	/* TODO: it should be buf_clear_fast() */
 	buf_clear(&text_string->glyph_offsets, NULL);
+	/* TODO: it should be buf_clear_fast() */
+	buf_clear(&text_string->index_mappings, NULL);
 
 	font_t* font = vulkan_bitmap_text_get_font(text);
 
@@ -502,6 +508,8 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 	/* final (post-processed) glyph counts */
 	u32 final_count = is_changed ? buf_get_element_count(&text->glyph_layout_data_buffer) : len;
 
+	multi_buffer_t* grd_host_buffer = vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer);
+
 	for(u32 i = 0; i < final_count; i++)
 	{
 		AUTO glyph_data = is_changed ? buf_get_ptr_at_typeof(&text->glyph_layout_data_buffer, vulkan_bitmap_text_glyph_layout_data_t, i) : NULL;
@@ -516,7 +524,11 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 
 		/* skip the whitespaces (for which we don't have any physical texture coord information) */
 		if(texcoord_indices[index] == U32_MAX)
+		{
+			u32 pad_value = U32_MAX;
+			buf_push(&text_string->index_mappings, &pad_value);
 			continue;
+		}
 
 		// _debug_assert__(info.bitmap_top == info.bearing_y);
 		vulkan_bitmap_text_glsl_glyph_render_data_t data =
@@ -526,11 +538,13 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 			/* TODO: Remove this as we don't need this level of flexibility */
 			.rotn = { ((i%3) == 0) ? 1 : 0, ((i%3) == 1) ? 1 : 0, ((i%3) == 2) ? 1 : 0 },
 			.stid = U64_TO_U32(text_string->handle),
-			/* TODO: Remove this as we don't need this level of flexibility */
-			.scal = { 1, 1, 1 }
+			.colr = text_string->color
 		};
 
-		multi_buffer_sub_buffer_push_n(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 
+		u32 mapped_index = sub_buffer_get_count(grd_host_buffer, text_string->render_data_handle);
+		buf_push(&text_string->index_mappings, &mapped_index);
+
+		multi_buffer_sub_buffer_push_n(grd_host_buffer, 
 										text_string->render_data_handle, 
 										(void*)&data,
 										SIZEOF_VULKAN_BITMAP_TEXT_GLSL_GLYPH_RENDER_DATA_T);
@@ -686,6 +700,64 @@ SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text
 	_debug_assert__(is_resized == false);
 }
 
+/* NOTE: after calling this you must call vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL); to reflect changes on the GPU side */
+static void text_string_set_color_range(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, u32 begin, u32 end, color_t color)
+{
+	const char* chars = CAST_TO(const char*, buf_get_ptr(&text_string->chars));
+	const u32* index_mappings = CAST_TO(const u32*, buf_get_ptr(&text_string->index_mappings));
+	multi_buffer_t* host_grd_buffer = vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer);
+	u32 char_count = buf_get_element_count(&text_string->chars);
+	_debug_assert__(char_count > 0);
+	for(u32 j = begin; j < u32_min(end, char_count - 1); ++j)
+	{
+		AUTO index = index_mappings[j];
+		/* skip the whitespaces (for which we don't have any physical texture coord information) */
+		if(!isgraph(chars[j]))
+		{
+			_debug_assert__(index == U32_MAX);
+			continue;
+		}
+
+		_debug_assert__(index != U32_MAX);
+
+		vulkan_bitmap_text_glsl_glyph_render_data_t* data = sub_buffer_get_ptr_at(host_grd_buffer, text_string->render_data_handle, index);
+		data->colr = vec4(color.r, color.g, color.b, color.a);
+	}	
+}
+
+SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, color_t color)
+{
+	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
+	text_string->color = vec4(color.r, color.g, color.b, color.a);
+
+	/* update colors on the CPU (host) side buffer */
+	AUTO char_count = buf_get_element_count(&text_string->chars);
+	text_string_set_color_range(text, text_string, 0, char_count, color);
+
+	/* update GPU (device) side buffer if it was marked dirty */
+	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
+}
+
+SGE_API void vulkan_bitmap_text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char_attr_color_range_t* ranges, const u32 range_count)
+{
+	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
+DEBUG_BLOCK
+(
+	AUTO char_count = buf_get_element_count(&text_string->chars);
+	char_count = (char_count > 0) ? (char_count - 1) : 0;
+);
+	for(u32 i = 0; i < range_count; i++)
+	{
+		const char_attr_color_range_t range = ranges[i];
+
+		_debug_assert__(range.end <= char_count);
+		_debug_assert__(range.begin <= range.end);
+		text_string_set_color_range(text, text_string, range.begin, range.end, range.color);
+	}
+	/* update GPU (device) side buffer if it was marked dirty */
+	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
+}
+
 /* getters */
 SGE_API u32 vulkan_bitmap_text_get_point_size(vulkan_bitmap_text_t* text)
 {
@@ -706,6 +778,7 @@ SGE_API u32 vulkan_bitmap_text_string_get_lengthH(vulkan_bitmap_text_t* text, vu
 {
 	AUTO count = buf_get_element_count(&get_text_stringH(text, handle)->chars);
 	_debug_assert__(count >= 1);
+	// do not count the null character at the end
 	return count - 1u;
 }
 

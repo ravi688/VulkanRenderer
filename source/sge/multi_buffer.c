@@ -239,6 +239,12 @@ SGE_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* multi_buffer, sub_bu
 	check_pre_condition(multi_buffer);
 	buf_set_at(&multi_buffer->buffer, get_master_index(get_sub_buffer(multi_buffer, handle), index), in_value);
 }
+SGE_API void multi_buffer_sub_buffer_set_at_n(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value, buf_ucount_t max_size)
+{
+	_debug_assert__(in_value != NULL);
+	check_pre_condition(multi_buffer);
+	buf_set_at_n(&multi_buffer->buffer, get_master_index(get_sub_buffer(multi_buffer, handle), index), in_value, max_size);
+}
 
 #ifdef GLOBAL_DEBUG
 static void check_pre_condition(multi_buffer_t* multi_buffer)

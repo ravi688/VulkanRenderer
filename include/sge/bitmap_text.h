@@ -90,6 +90,8 @@ SGE_API void bitmap_text_set_render_surface_type(bitmap_text_t* text, bitmap_tex
 SGE_API void bitmap_text_string_setH(bitmap_text_t* text, bitmap_text_string_handle_t handle, const char* string);
 SGE_API void bitmap_text_string_set_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle, u32 point_size);
 SGE_API void bitmap_text_string_set_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle, mat4_t transform);
+SGE_API void bitmap_text_string_set_color(bitmap_text_t* text, bitmap_text_string_handle_t handle, color_t color);
+SGE_API void bitmap_text_string_set_char_attr_color(bitmap_text_t* text, bitmap_text_string_handle_t handle, const char_attr_color_range_t* ranges, u32 range_count);
 
 /* getters */
 SGE_API u32 bitmap_text_get_point_size(bitmap_text_t* text);

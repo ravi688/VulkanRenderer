@@ -73,15 +73,16 @@ typedef struct vulkan_bitmap_text_glsl_glyph_render_data_t
 	ALIGN_AS(GLSL_STD140_UINT_ALIGN) u32 stid;
 	/* scale of this glyph instance
 	 * per_instance [BTM_TXT_SCAL_BND, BTM_TXT_SCAL_LOC, BTM_TXT_SCAL_COMP] in vec3 scal; */
-	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t scal;
-} vulkan_bitmap_text_glsl_glyph_render_data_t ALIGN_AS(U32_MAX_OF(GLSL_STD140_UINT_ALIGN, GLSL_STD140_VEC3_ALIGN));
+	ALIGN_AS(GLSL_STD140_VEC4_ALIGN) vec4_t colr;
+} vulkan_bitmap_text_glsl_glyph_render_data_t ALIGN_AS(U32_MAX_OF(GLSL_STD140_UINT_ALIGN, GLSL_STD140_VEC4_ALIGN));
 
 #define SIZEOF_VULKAN_BITMAP_TEXT_GLSL_GLYPH_RENDER_DATA_T (16 * 3)
 #define STRIDE_VULKAN_BITMAP_TEXT_GLSL_GLYPH_RENDER_DATA_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_VULKAN_BITMAP_TEXT_GLSL_GLYPH_RENDER_DATA_T, ALIGN_OF(vulkan_bitmap_text_glsl_glyph_render_data_t))
 
 /* character buffer to store the characters in a string */
 typedef buffer_t vulkan_bitmap_text_char_buffer_t;
-typedef buffer_t f32_buffer_t;
+typedef buffer_t /* element_type: f32 */ f32_buffer_t;
+typedef buffer_t /* element_type: u32 */ u32_buffer_t;
 typedef buf_ucount_t vulkan_bitmap_text_string_handle_t;
 typedef dictionary_t vulkan_bitmap_glyph_sub_buffer_handle_table_t;
 
@@ -94,6 +95,9 @@ typedef struct vulkan_bitmap_text_string_t
 	sub_buffer_handle_t render_data_handle;
 	/* list of offsets, with reference to the left side of very first glyph in the string, along x-axis for each glyph in the chronological order */
 	f32_buffer_t glyph_offsets;
+	/* list of index mappings, since 'chars' includes whitespaces but grd buffer not,
+	 * we need this mapping table to index into the grd buffer if we only have indices of 'chars'. */
+	u32_buffer_t index_mappings;
 	/* string */
 	vulkan_bitmap_text_char_buffer_t chars;
 	/* a rectangle in a 3D space
@@ -105,6 +109,8 @@ typedef struct vulkan_bitmap_text_string_t
 	 * This 'point_size' value will be affected by vulkan_bitmap_text_set_point_size and
 	 * vulkan_bitmap_text_string_set_point_sizeH. */
 	u32 point_size;
+	/* default color used for shading the glyphs */
+	vec4_t color;
 } vulkan_bitmap_text_string_t;
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_texture_t;
@@ -245,6 +251,28 @@ SGE_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* te
 SGE_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char* string);
 SGE_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 point_size);
 SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform);
+
+SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, color_t color);
+/* the range also takes whitespaces into account */
+typedef struct char_attr_color_range_t
+{
+	/* inclusive */
+	u32 begin;
+	/* exclusive */
+	u32 end;
+	/* 32-bit x 4 color */
+	color_t color;
+} char_attr_color_range_t;
+
+/* sets color attribute for each characters lying the range list passed to this function 
+ * ranges: is the list of ranges where each range consists of 'begin' and 'end' index
+ * range_count: is the number of ranges */
+SGE_API void vulkan_bitmap_text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char_attr_color_range_t* ranges, const u32 range_count);
+/* TODO:
+ * vulkan_bitmap_text_string_set_char_attr_underline(..., const u32* ranges, u32 range_count)
+ * vulkan_bitmap_text_string_set_char_attr_bold(..., const u32* ranges, u32 range_count)
+ * vulkan_bitmap_text_string_set_char_attr_italic(..., const u32* ranges, u32 range_count)
+ */
 
 /* getters */
 SGE_API u32 vulkan_bitmap_text_get_point_size(vulkan_bitmap_text_t* text);

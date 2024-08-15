@@ -85,7 +85,9 @@ SGE_API bool multi_buffer_sub_buffer_remove(multi_buffer_t* multi_buffer, sub_bu
 
 // setters
 SGE_API void multi_buffer_sub_buffer_set_at(multi_buffer_t* buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value);
+SGE_API void multi_buffer_sub_buffer_set_at_n(multi_buffer_t* buffer, sub_buffer_handle_t handle, buf_ucount_t index, void* in_value, buf_ucount_t max_size);
 #define sub_buffer_set_at multi_buffer_sub_buffer_set_at
+#define sub_buffer_set_at_n multi_buffer_sub_buffer_set_at_n
 
 // getters
 SGE_API buf_ucount_t multi_buffer_sub_buffer_get_count(multi_buffer_t* buffer, sub_buffer_handle_t handle);
