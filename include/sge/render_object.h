@@ -91,6 +91,8 @@ SGE_API void render_object_destroy(render_object_t* object);
 SGE_API void render_object_release_resources(render_object_t* object);
 
 /* logic functions */
+SGE_API void render_object_set_active(render_object_t* object, bool is_active);
+SGE_API bool render_object_is_active(render_object_t* object);
 SGE_API void render_object_attach(render_object_t* object, void* user_data);
 SGE_API void render_object_draw(render_object_t* object);
 SGE_API void render_object_set_material(render_object_t* object, material_t* material);

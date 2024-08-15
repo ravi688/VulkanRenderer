@@ -69,6 +69,15 @@ SGE_API void render_object_release_resources(render_object_t* object)
 	vulkan_render_object_release_resources(object);
 }
 
+SGE_API void render_object_set_active(render_object_t* object, bool is_active)
+{
+	vulkan_render_object_set_active(VULKAN_RENDER_OBJECT_CAST(object), is_active);
+}
+
+SGE_API bool render_object_is_active(render_object_t* object)
+{
+	return vulkan_render_object_is_active(VULKAN_RENDER_OBJECT_CAST(object));
+}
 
 SGE_API void render_object_attach(render_object_t* object, void* user_data)
 {
