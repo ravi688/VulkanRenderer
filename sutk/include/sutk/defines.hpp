@@ -367,10 +367,48 @@ namespace SUTK
 		}
 
 		static constexpr Color3 red() noexcept { return { 255, 0, 0 }; }
-		static constexpr Color3 blue() noexcept { return { 0, 255, 0 }; }
-		static constexpr Color3 green() noexcept { return { 0, 0, 255 }; }
+		static constexpr Color3 blue() noexcept { return { 0, 0, 255 }; }
+		static constexpr Color3 green() noexcept { return { 0, 255, 0 }; }
 		static constexpr Color3 white() noexcept { return { 255, 255, 255 }; }
 		static constexpr Color3 black() noexcept { return { 0, 0, 0 }; }
+		static constexpr Color3 yellow() noexcept { return { 255, 255, 0 }; }
+	};
+
+
+	struct Color4
+	{
+		union
+		{
+			struct
+			{
+				u8 r;
+				u8 g;
+				u8 b;
+			};
+			Color3 color3;
+		};
+		u8 a;
+
+		constexpr Color4() noexcept : r(0), g(0), b(0), a(0) { }
+		constexpr Color4(u8 _r, u8 _g, u8 _b, u8 _a) noexcept : r(_r), g(_g), b(_b), a(_a) { }
+		constexpr Color4(u8 _r, u8 _g, u8 _b) noexcept : Color4(_r, _g, _b, 255) { }
+
+		bool operator ==(Color4& rhs) const noexcept
+		{
+			return (r == rhs.r) && (g == rhs.g) && (b == rhs.b);
+		}
+
+		bool operator !=(Color4& rhs) const noexcept
+		{
+			return !Color4::operator==(rhs);
+		}
+
+		static constexpr Color4 red() noexcept { return { 255, 0, 0, 255 }; }
+		static constexpr Color4 blue() noexcept { return { 0, 0, 255, 255 }; }
+		static constexpr Color4 green() noexcept { return { 0, 255, 0, 255 }; }
+		static constexpr Color4 white() noexcept { return { 255, 255, 255, 255 }; }
+		static constexpr Color4 black() noexcept { return { 0, 0, 0, 255 }; }
+		static constexpr Color4 yellow() noexcept { return { 255, 255, 0, 255 }; }
 	};
 
 	typedef Rect2D<f32> Rect2Df;

@@ -13,17 +13,28 @@ namespace SUTK
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText() { return { END_OF_TEXT, END_OF_LINE }; }
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line) { return { line, END_OF_LINE }; }
 
-	LineText::LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup) noexcept : GfxDriverRenderable(driver, NULL), m_isPosDirty(true), m_isDataDirty(false), m_isPointSizeDirty(false)
+	LineText::LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup, Color4 color) noexcept : GfxDriverRenderable(driver, NULL), m_isPosDirty(true), m_isDataDirty(false), m_isPointSizeDirty(false), m_isColorDirty(true), m_isColorRangesDirty(false), m_color(color)
 	{
 		setGfxDriverObjectHandle(getGfxDriver().createText(textGroup));
 		m_pointSize = getFontSize();
 	}
 	bool LineText::isDirty()
 	{
-		return m_isPosDirty || m_isDataDirty || m_isPointSizeDirty;
+		return m_isPosDirty || m_isDataDirty || m_isPointSizeDirty || m_isColorRangesDirty || m_isColorDirty;
 	}
 	void LineText::update()
 	{
+		// NOTE: Order of function calls are important here
+
+		// should be updated before any updates to character array
+		// this is because calling setTextColor() sets internal variable to 'm_color'
+		// and it uses that variable in subsequent calls to setTextData()
+		if(m_isColorDirty)
+		{
+			getGfxDriver().setTextColor(getGfxDriverObjectHandle(), m_color);
+			m_isColorDirty = false;
+		}
+
 		if(m_isPointSizeDirty)
 		{
 			getGfxDriver().setTextPointSize(getGfxDriverObjectHandle(), m_pointSize);
@@ -39,7 +50,25 @@ namespace SUTK
 			getGfxDriver().setTextData(getGfxDriverObjectHandle(), m_data);
 			m_isDataDirty = false;
 		}
+
+		// should be updated after character array has been updated with setTextData().
+		if(m_isColorRangesDirty)
+		{
+			getGfxDriver().setTextColorRanges(getGfxDriverObjectHandle(), m_colorRanges.data(), static_cast<u32>(m_colorRanges.size()));
+			m_isColorRangesDirty = false;
+		}
 	}
+	void LineText::setColor(Color4 color) noexcept
+	{
+		m_color = color;
+		m_isColorDirty = true;
+	}
+
+	Color4 LineText::getColor() const noexcept
+	{
+		return m_color;
+	}
+
 	void LineText::destroy()
 	{
 		_com_assert(getGfxDriverObjectHandle() != GFX_DRIVER_OBJECT_NULL_HANDLE);
@@ -47,6 +76,21 @@ namespace SUTK
 		setGfxDriverObjectHandle(GFX_DRIVER_OBJECT_NULL_HANDLE);
 		m_isPosDirty = false;
 		m_isDataDirty = false;
+		m_isPointSizeDirty = false;
+		m_isColorRangesDirty = false;
+		m_isColorDirty = false;
+	}
+	void LineText::clearColorRanges() noexcept
+	{
+		m_colorRanges.clear();
+		m_isColorRangesDirty = true;
+	}
+	void LineText::addColorRange(std::size_t pos, std::size_t len, const Color4 color) noexcept
+	{
+		if(len == std::string::npos)
+			len = getColumnCount();
+		m_colorRanges.push_back(ColorRange { static_cast<LineCountType>(pos), static_cast<LineCountType>(pos + len), color });
+		m_isColorRangesDirty = true;
 	}
 	LineCountType LineText::getColPosFromCoord(f32 coord) noexcept
 	{
@@ -130,7 +174,7 @@ namespace SUTK
 		return getGfxDriver().getTextBaselineHeightInCentimeters(getGfxDriverObjectHandle());
 	}
 
-	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_textGroup(GFX_DRIVER_OBJECT_NULL_HANDLE), m_baselineHeight(0), m_isDirty(false), m_isClippingEnabled(false), m_pointSize(12)
+	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_textGroup(GFX_DRIVER_OBJECT_NULL_HANDLE), m_baselineHeight(0), m_isDirty(false), m_isClippingEnabled(false), m_color(SUTK::Color4::yellow()), m_pointSize(12)
 	{
 		m_textGroup = getGfxDriver().createTextGroup();
 	}
@@ -155,6 +199,77 @@ namespace SUTK
 			if(line->isDirty())
 				line->update();
 		}
+	}
+
+	LineCountType Text::getNumChars(const CursorPosition<LineCountType>& position) noexcept
+	{
+		std::size_t count = 0;
+
+		// accumulate the num chars of each preceding lines
+		for(std::size_t i = 0; i < std::min(m_lines.size(), static_cast<std::size_t>(position.getLine())); ++i)
+			count += m_lines[i]->getColumnCount();
+		// accumulate the num chars of the line at position.getLine() which preced position.getColumn()
+		if(position.getLine() < m_lines.size())
+			count += std::min(m_lines[position.getLine()]->getColumnCount(), static_cast<std::size_t>(position.getColumn()));
+		return count;
+	}
+
+	void Text::addColorRange(const SelectionRange<LineCountType>& range, Color4 color) noexcept
+	{
+		std::size_t charCount = getCharCount();
+		_com_assert(range.begin <= range.end);
+		_com_assert((getNumChars(range.begin) <= charCount) && (getNumChars(range.end) <= charCount));
+			
+		auto& start = range.begin;
+		auto& end = range.end;
+
+		// color the intermediate lines if any
+		LineCountType lineDiff = end.getLine() - start.getLine();
+		for(LineCountType i = 1; i < lineDiff; i++)
+			m_lines[start.getLine() + i]->addColorRange(0, std::string::npos, color);
+
+		// if start and end are straddled across different lines
+		if(start.getLine() != end.getLine())
+		{
+			// color characters from start.getColumn() to m_lines[start.getLine()].getColumnCount() exclusive
+			LineText* startLineText = m_lines[start.getLine()];
+			startLineText->addColorRange(start.getColumn(), std::string::npos, color);
+	
+			// color characters from 0 to end.getColumn() 
+			LineText* endLineText = m_lines[end.getLine()];
+			endLineText->addColorRange(0, std::min(end.getColumn(), static_cast<LineCountType>(endLineText->getColumnCount())), color);
+		}
+		// if start and end are in the same line
+		else
+		{
+			LineText* lineText = m_lines[end.getLine()];
+			std::size_t colDiff = end.getColumn() - start.getColumn();
+			lineText->addColorRange(start.getColumn(), colDiff, color);
+		}
+	}
+
+	void Text::setColorRanges(const std::vector<std::pair<SelectionRange<LineCountType>, Color4>>& ranges) noexcept
+	{
+		for(std::size_t i = 0; i < m_lines.size(); ++i)
+			m_lines[i]->clearColorRanges();
+
+		for(std::size_t i = 0; i < ranges.size(); i++)
+		{
+			const std::pair<SelectionRange<LineCountType>, Color4>& pair = ranges[i];
+			addColorRange(pair.first, pair.second);
+		}
+	}
+
+	void Text::setColor(Color4 color) noexcept
+	{
+		m_color = color;
+		for(LineText* &lineText : m_lines)
+			lineText->setColor(color);
+	}
+
+	Color4 Text::getColor() const noexcept
+	{
+		return m_color;
 	}
 
 	void Text::clear() noexcept
@@ -226,6 +341,7 @@ namespace SUTK
 		m_lines.insert(com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, cursorPosition.getLine()), lineText);
 
 		lineText->setFontSize(m_pointSize);
+		lineText->setColor(m_color);
 		Vec2Df localCoords = getLocalPositionFromCursorPosition(cursorPosition);
 		Vec2Df screenCoords = getContainer()->getLocalCoordsToScreenCoords(localCoords);
 		lineText->setPosition(screenCoords);
@@ -402,6 +518,14 @@ namespace SUTK
 		setScrollDelta(m_scrollDelta + delta);
 	}
 
+	std::size_t Text::getCharCount() const noexcept
+	{
+		std::size_t charCount = 0;
+		for(LineText* const &lineText : m_lines)
+			charCount += lineText->getData().size();
+		return charCount;
+	}
+
 	void Text::onGlobalCoordDirty() noexcept
 	{
 		onContainerResize(getContainer()->getRect(), true, true);
@@ -432,6 +556,18 @@ namespace SUTK
 		if((m_baselineHeight == 0.0f) && (m_lines.size() > 0))
 			m_baselineHeight = m_lines[0]->getBaselineHeight();
 		return m_baselineHeight;
+	}
+
+	CursorPosition<LineCountType> Text::begin() const noexcept
+	{
+		return { 0, 0 };
+	}
+
+	CursorPosition<LineCountType> Text::end() const noexcept
+	{
+		if(m_lines.size() == 0)
+			return { 0, 0 };
+		return { static_cast<LineCountType>(m_lines.size() - 1), static_cast<LineCountType>(m_lines.back()->getColumnCount()) };
 	}
 
 	void Text::setFontSize(const f32 pointSize) noexcept
