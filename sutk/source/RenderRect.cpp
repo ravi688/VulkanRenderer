@@ -9,6 +9,7 @@ namespace SUTK
 	RenderRectOutline::RenderRectOutline(UIDriver& driver, RenderableContainer* container) noexcept : RenderRect(driver, container),
 																						m_isPosDirty(true),
 																						m_isSizeDirty(true),
+																						m_isColorDirty(true),
 																						m_thickness(0.2f)
 	{
 		_assert(container != NULL);
@@ -21,7 +22,8 @@ namespace SUTK
 			.quad(0, 1, 2, 3) // top line
 			.quad(3, 2, 4, 5) // right line
 			.quad(5, 4, 6, 7) // bottom line
-			.quad(7, 6, 1, 0);// left line
+			.quad(7, 6, 1, 0)// left line
+			.fillColor(getColor());
 
 		// call update for the first time as we have geometry description already and
 		// this geometry is supposed to be displayed in the very first frame.
@@ -30,7 +32,7 @@ namespace SUTK
 
 	bool RenderRectOutline::isDirty()
 	{
-		return m_isPosDirty || m_isSizeDirty;
+		return m_isPosDirty || m_isSizeDirty || m_isColorDirty;
 	}
 
 	void RenderRectOutline::update()
@@ -79,14 +81,24 @@ namespace SUTK
 			// gfxDriver.setObjectPosition(objHandle, position);
 		}
 
-		if(m_isPosDirty || m_isSizeDirty)
+		if(m_isColorDirty)
+			getGeometry().fillColor(getColor());
+
+		if(m_isPosDirty || m_isSizeDirty || m_isColorDirty)
 		{
 			GfxDriverObjectHandleType handle = getGfxDriverObjectHandle();
 			handle = getGeometry().compile(handle);
 			setGfxDriverObjectHandle(handle);
 			m_isPosDirty = false;
 			m_isSizeDirty = false;
+			m_isColorDirty = false;
 		}
+	}
+
+	void RenderRectOutline::setColor(Color4 color) noexcept
+	{
+		RenderRect::setColor(color);
+		m_isColorDirty = true;
 	}
 
 	void RenderRectOutline::setThickness(f32 thickness) noexcept
@@ -116,8 +128,7 @@ namespace SUTK
 	RenderRectFill::RenderRectFill(UIDriver& driver, RenderableContainer* container) noexcept : RenderRect(driver, container),
 																						m_isPosDirty(true),
 																						m_isSizeDirty(true),
-																						m_isColorDirty(true),
-																						m_color(Color3::white())
+																						m_isColorDirty(true)
 	{
 		_assert(container != NULL);
 		auto rect = container->getRect();
@@ -127,7 +138,7 @@ namespace SUTK
 			.vertexPositionArray(4)
 			.topology(Geometry::Topology::TriangleList)
 			.quad(0, 1, 2, 3)
-			.fillColor(m_color);
+			.fillColor(getColor());
 
 		// call update for the first time as we have geometry description already and
 		// this geometry is supposed to be displayed in the very first frame.
@@ -136,7 +147,7 @@ namespace SUTK
 
 	bool RenderRectFill::isDirty()
 	{
-		return m_isPosDirty || m_isSizeDirty;
+		return m_isPosDirty || m_isSizeDirty || m_isColorDirty;
 	}
 
 	void RenderRectFill::update()
@@ -167,7 +178,7 @@ namespace SUTK
 
 		if(m_isColorDirty)
 		{
-			getGeometry().fillColor(m_color);
+			getGeometry().fillColor(getColor());
 		}
 
 		if(m_isPosDirty || m_isSizeDirty || m_isColorDirty)
@@ -181,9 +192,9 @@ namespace SUTK
 		}
 	}
 
-	void RenderRectFill::setColor(Color3 color) noexcept
+	void RenderRectFill::setColor(Color4 color) noexcept
 	{
-		 m_color = color;
+		 RenderRect::setColor(color);
 		 m_isColorDirty = true;
 	}
 

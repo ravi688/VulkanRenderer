@@ -27,7 +27,7 @@ namespace SUTK
 		anchor->setTopLeft({ 0, 0 });
 		anchor->setBottomRight({ 0, 0 });
 		m_renderRect = m_uiDriver->createRenderRect<RenderRectFill>(m_renderRectContainer);
-		m_renderRect->setColor(Color3::green());
+		m_renderRect->setColor(Color4::green());
 	}
 
 	void MouseTest::terminate(SGE::Driver& driver)
