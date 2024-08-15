@@ -40,6 +40,10 @@ namespace SGE
 		{
 			render_object_set_material(m_handle, material.getHandle());
 		}
+		Material getMaterial() const noexcept
+		{
+			return Material(render_object_get_material(m_handle));
+		}
 		void setTransform(mat4_t transform) const noexcept
 		{
 			render_object_set_transform(m_handle, transform);

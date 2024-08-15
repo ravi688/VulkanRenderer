@@ -13,6 +13,7 @@ namespace SGE
 		Material(material_t* handle) : m_handle(handle) { }
 
 		friend class MaterialLibrary;
+		friend class RenderObject;
 		
 	public:
 		Material() : m_handle(NULL) { }
