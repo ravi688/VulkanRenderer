@@ -32,7 +32,7 @@ namespace SUTK
 		emptyContainer->setRect({ 1.0f, 1.0f, 9.0f, 7.0f });
 		emptyContainer->setRect({ 1.0f, 1.0f, 11.0f, 7.0f });
 		m_renderRect = m_uiDriver->createRenderRect<RenderRectFill>(m_renderRectContainer);
-		m_renderRect->setColor(Color3::green());
+		m_renderRect->setColor(Color4::green());
 
 		RenderableContainer* renderRectContainer2 = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
 		RenderRectFill* renderRect2 = m_uiDriver->createRenderRect<RenderRectFill>(renderRectContainer2);
@@ -40,7 +40,7 @@ namespace SUTK
 		AnchorRect* anchor2 = renderRectContainer2->getAnchorRect();
 		anchor2->setTopLeft({ 0.0f, 0.0f });
 		anchor2->setBottomRight({ 1.0f, 1.0f });
-		renderRect2->setColor(Color3::red());
+		renderRect2->setColor(Color4::red());
 	}
 
 	void AnchorTest::terminate(SGE::Driver& driver)

@@ -28,10 +28,10 @@ namespace SUTK
 		struct LineStroke
 		{
 			f32 width;
-			Color3 color;
+			Color4 color;
 
 			constexpr LineStroke() noexcept : width(2.0f), color({ 255, 255, 255 }) { }
-			constexpr LineStroke(f32 _width, Color3 _color = Color3::white()) noexcept : width(_width), color(_color) { }
+			constexpr LineStroke(f32 _width, Color4 _color = Color4::white()) noexcept : width(_width), color(_color) { }
 		};
 		struct LineStrokeInfo
 		{
@@ -48,7 +48,7 @@ namespace SUTK
 		};
 		struct FillColorInfo
 		{
-			Color3 color;
+			Color4 color;
 			bool isModified;
 		};
 	private:
@@ -76,11 +76,11 @@ namespace SUTK
 
 
 		Geometry& lineStroke(LineStroke stroke, bool isDynamic = false) noexcept;
-		Geometry& lineStroke(float width, Color3 color = Color3::white(), bool isDynamic = false) noexcept
+		Geometry& lineStroke(float width, Color4 color = Color4::white(), bool isDynamic = false) noexcept
 		{
 			return lineStroke({ width, color }, isDynamic);
 		}
-		Geometry& fillColor(Color3 color) noexcept;
+		Geometry& fillColor(Color4 color) noexcept;
 
 		// getters
 
@@ -91,7 +91,7 @@ namespace SUTK
 		VertexIndexArray& getVertexIndexArrayForWrite() { m_indexArrayInfo.isModified = true; return m_indexArrayInfo.array; }
 		const VertexIndexArray& getVertexIndexArray() const { return m_indexArrayInfo.array; }
 
-		Color3 getFillColor() const { return m_fillColorInfo.color; }
+		Color4 getFillColor() const { return m_fillColorInfo.color; }
 
 		bool isVertexIndexArrayModified() const noexcept { return m_indexArrayInfo.isModified; }
 		bool isVertexPositionArrayModified() const noexcept { return m_positionArrayInfo.isModified; }

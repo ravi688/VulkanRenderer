@@ -293,6 +293,11 @@ namespace SUTK
 		return color(_color.r / 255.0f, _color.g / 255.0f, _color.b / 255.0f, _color.a / 255.0f);
 	}
 
+	static INLINE_IF_RELEASE_MODE vec4_t to_vec4(const Color4 _color)
+	{
+		return vec4(_color.r / 255.0f, _color.g / 255.0f, _color.b / 255.0f, _color.a / 255.0f);
+	}
+
 	void SGEGfxDriver::setTextColor(GfxDriverObjectHandleType handle, const Color4 color)
 	{
 		getText(handle).setColor(to_color(color));
@@ -431,6 +436,7 @@ namespace SUTK
 	GfxDriverObjectHandleType SGEGfxDriver::compileGeometry(const Geometry& geometry, GfxDriverObjectHandleType previous)
 	{
 		SGE::Mesh mesh;
+		SGE::Material material;
 		GfxDriverObjectHandleType newHandle;
 
 		// if handle to the old compiled geometry has been provided, then we should use that one
@@ -438,6 +444,7 @@ namespace SUTK
 		if(previous != GFX_DRIVER_OBJECT_NULL_HANDLE)
 		{
 			 mesh = getMeshIterator(previous)->second.mesh;
+			 material = getRenderObjectIterator(previous)->second.getMaterial();
 			 newHandle = previous;
 		}
 		// otherwise, create new compiled geometry objects.
@@ -446,6 +453,14 @@ namespace SUTK
 			std::pair<SGEMeshData, GfxDriverObjectHandleType> result = createMesh(geometry);
 			newHandle = result.second;
 			mesh = result.first.mesh;
+			material = getRenderObjectIterator(result.second)->second.getMaterial();
+		}
+
+		// if fill color is modified then update it on the GPU side
+		if(geometry.isFillColorModified())
+		{
+			Color4 color = geometry.getFillColor();
+			material.set<vec4_t>("parameters.color", to_vec4(color));
 		}
 
 		if(geometry.isVertexIndexArrayModified())
