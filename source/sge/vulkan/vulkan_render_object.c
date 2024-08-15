@@ -100,6 +100,7 @@ SGE_API void vulkan_render_object_create_no_alloc(vulkan_renderer_t* renderer, v
 	VULKAN_OBJECT_MEMZERO(object, vulkan_render_object_t);
 
 	object->renderer = renderer;
+	object->is_active = true;
 	object->material = create_info->material;
 	object->user_data = create_info->user_data;
 

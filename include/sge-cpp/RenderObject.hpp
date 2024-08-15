@@ -28,6 +28,15 @@ namespace SGE
 
 		render_object_t* getHandle() const noexcept { return m_handle; }
 
+		void setActive(bool isActive) noexcept
+		{
+			render_object_set_active(m_handle, isActive);
+		}
+		bool isActive() const noexcept
+		{
+			return render_object_is_active(m_handle);
+		}
+
 		void attach(BitmapText text) const noexcept
 		{
 			render_object_attach(m_handle, reinterpret_cast<void*>(text.getHandle()));
