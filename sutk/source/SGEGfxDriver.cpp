@@ -378,6 +378,12 @@ namespace SUTK
 		return GFX_DRIVER_OBJECT_NULL_HANDLE;
 	}
 
+	void SGEGfxDriver::setObjectActive(GfxDriverObjectHandleType handle, bool isActive)
+	{
+		auto it = getRenderObjectIterator(handle);
+		it->second.setActive(isActive);
+	}
+
 	void SGEGfxDriver::setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect)
 	{
 		auto it = getRenderObjectIterator(handle);
