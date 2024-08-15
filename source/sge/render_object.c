@@ -84,6 +84,11 @@ SGE_API void render_object_set_material(render_object_t* obj, material_t* materi
 	vulkan_render_object_set_material(obj, material);
 }
 
+SGE_API material_t* render_object_get_material(render_object_t* object)
+{
+	return vulkan_render_object_get_material(VULKAN_RENDER_OBJECT_CAST(object));
+}
+
 SGE_API void render_object_set_transform(render_object_t* obj, mat4_t transform)
 {
 	vulkan_render_object_set_transform(obj, transform);
