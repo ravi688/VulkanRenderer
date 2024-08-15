@@ -67,6 +67,8 @@ namespace SUTK
 		};
 		std::unordered_map<id_generator_id_type_t, OnResizeCallbackHandlerData> m_onResizeHandlers;
 
+		std::vector<char_attr_color_range_t> m_colorRangeBuffer;
+
 		// We're caching current window size into this member variable to avoid calling internal function calls everytime getSize() is called
 		// The value of this variable will be updated whenever window is resized.
 		Vec2D<DisplaySizeType> m_size;
@@ -118,6 +120,8 @@ namespace SUTK
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) override;
 		virtual void setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize) override;
 		virtual f32 getTextPointSize(GfxDriverObjectHandleType handle) override;
+		virtual void setTextColor(GfxDriverObjectHandleType handle, const Color4 color) override;
+		virtual void setTextColorRanges(GfxDriverObjectHandleType handle, const ColorRange* ranges, u32 rangeCount) override;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
 
 		virtual LineCountType getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord) override;

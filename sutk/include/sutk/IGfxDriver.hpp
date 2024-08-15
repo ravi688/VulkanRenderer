@@ -10,6 +10,18 @@ namespace SUTK
 
 	class Geometry;
 
+	struct ColorRange
+	{
+		// 4-Byte
+		LineCountType begin;
+		// 4-Byte
+		LineCountType end;
+		// 4-Byte
+		Color4 color;
+	};
+
+	typedef std::vector<ColorRange> ColorRangeList;
+
 	class IGfxDriver
 	{
 	public:
@@ -24,6 +36,8 @@ namespace SUTK
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) = 0;
 		virtual void setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize) = 0;
 		virtual f32 getTextPointSize(GfxDriverObjectHandleType handle) = 0;
+		virtual void setTextColor(GfxDriverObjectHandleType handle, const Color4 color) = 0;
+		virtual void setTextColorRanges(GfxDriverObjectHandleType handle, const ColorRange* ranges, u32 rangeCount) = 0;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) = 0;
 		virtual LineCountType getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord) = 0;
 		virtual f32 getTextCoordFromGlyphIndex(GfxDriverObjectHandleType handle, LineCountType col) = 0;

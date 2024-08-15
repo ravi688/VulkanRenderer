@@ -37,7 +37,7 @@ namespace SUTK
 
 		// create camera 
 		SGE::Camera camera = cameraSystem.createCamera(SGE::Camera::ProjectionType::Perspective);
-		camera.setClear(COLOR_BLUE, 1.0f);
+		camera.setClear(COLOR_BLACK, 1.0f);
 		camera.setActive(true);
 		camera.setTransform(mat4_mul(2, mat4_translation(-1.8f, 0.6f, 0), mat4_rotation(0, 0, -22 * DEG2RAD)));
 
@@ -286,6 +286,32 @@ namespace SUTK
 	f32 SGEGfxDriver::getTextPointSize(GfxDriverObjectHandleType handle)
 	{
 		return getText(handle).getPointSize();
+	}
+
+	static INLINE_IF_RELEASE_MODE color_t to_color(const Color4 _color)
+	{
+		return color(_color.r / 255.0f, _color.g / 255.0f, _color.b / 255.0f, _color.a / 255.0f);
+	}
+
+	void SGEGfxDriver::setTextColor(GfxDriverObjectHandleType handle, const Color4 color)
+	{
+		getText(handle).setColor(to_color(color));
+	}
+
+	void SGEGfxDriver::setTextColorRanges(GfxDriverObjectHandleType handle, const ColorRange* ranges, u32 rangeCount)
+	{
+		SGE::BitmapTextString textString = getText(handle);
+		m_colorRangeBuffer.clear();
+		m_colorRangeBuffer.reserve(textString.getLength());
+		for(u32 i = 0; i < rangeCount; ++i)
+		{
+			char_attr_color_range_t range { };
+			range.begin = ranges[i].begin;
+			range.end = ranges[i].end;
+			range.color = to_color(ranges[i].color);
+			m_colorRangeBuffer.push_back(range);
+		}
+		textString.setCharAttrColor(m_colorRangeBuffer.data(), rangeCount);
 	}
 
 	void SGEGfxDriver::setTextData(GfxDriverObjectHandleType handle, const std::string& data)

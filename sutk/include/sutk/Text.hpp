@@ -3,6 +3,7 @@
 #include <sutk/defines.hpp>
 #include <sutk/Renderable.hpp> /* for SUTK::Renderable */
 #include <sutk/UIDriver.hpp> /* for SUTK::UIDriver::getGfxDriver() */
+#include <sutk/IColorable.hpp> // for SUTK::IColorable 
 
 #include <string> /* for std::string */
 #include <vector> /* for std::vector*/
@@ -71,17 +72,21 @@ namespace SUTK
 		std::size_t size() const noexcept { return m_data.size(); }
 	};
 
-	class LineText : public GfxDriverRenderable
+	class LineText : public GfxDriverRenderable, public IColorable
 	{
 	private:
 		bool m_isPosDirty;
 		bool m_isDataDirty;
 		bool m_isPointSizeDirty;
+		bool m_isColorDirty;
+		bool m_isColorRangesDirty;
 		LineTextData m_data;
+		Color4 m_color;
+		std::vector<ColorRange> m_colorRanges;
 		Vec2Df m_pos;
 		f32 m_pointSize;
 
-		LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup) noexcept;
+		LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup, Color4 color = SUTK::Color4::white()) noexcept;
 
 		friend class Text;
 
@@ -99,7 +104,14 @@ namespace SUTK
 		virtual bool isDirty() override;
 		virtual void update() override;
 
+		// Implementation of IColorable::setColor() and IColorable::getColor()
+		virtual void setColor(Color4 color) noexcept override;
+		virtual Color4 getColor() const noexcept override;
+
 		virtual void destroy() override;
+
+		void clearColorRanges() noexcept;
+		void addColorRange(std::size_t pos, std::size_t len, const Color4 color) noexcept;
 		
 		// returns column (index of a glyph) given a coordinate (absisca) along the line length.
 		LineCountType getColPosFromCoord(f32 coord) noexcept;
@@ -148,6 +160,22 @@ namespace SUTK
 		CursorPosition(T line, T col = 0) noexcept : m_line(line), m_col(col) { }
 		CursorPosition(const CursorPosition&) = default;
 		CursorPosition& operator=(const CursorPosition&) = default;
+		bool operator <(const CursorPosition& rhs) const noexcept
+		{
+			return (m_line < rhs.m_line) && (m_col < rhs.m_col);
+		}
+		bool operator <=(const CursorPosition& rhs) const noexcept
+		{
+			return (m_line <= rhs.m_line) && (m_col <= rhs.m_col);
+		}
+		bool operator >(const CursorPosition& rhs) const noexcept
+		{
+			return (m_line > rhs.m_line) && (m_col > rhs.m_col);
+		}
+		bool operator >=(const CursorPosition& rhs) const noexcept
+		{
+			return (m_line >= rhs.m_line) && (m_col >= rhs.m_col);
+		}
 
 		void moveToNextLine(const T& max = std::numeric_limits<T>::max()) noexcept { if(m_line < max) m_line += 1; }
 		void moveToPrevLine(const T& min = std::numeric_limits<T>::min()) noexcept { if(m_line > min) m_line -= 1; }
@@ -173,10 +201,17 @@ namespace SUTK
 		return stream;
 	}
 
+	template<typename T>
+	struct SelectionRange
+	{
+		CursorPosition<T> begin;
+		CursorPosition<T> end;
+	};
+
 	// One text object is responsible for rendering a small to medium sized sub-text
 	// This usually translates to a single Gfx API specific buffer object. For example, it is VkBuffer (and VkDeviceMemory) in vulkan.
 	// This is to ensure fast manipulation of larget text data consisting of multiple such 'Text' objects.
-	class Text : public Renderable
+	class Text : public Renderable, public IColorable
 	{
 	private:
 		GfxDriverObjectHandleType m_textGroup;
@@ -189,7 +224,7 @@ namespace SUTK
 		bool m_isClippingEnabled;
 
 		// data and rendering attributes
-		Color3 m_color;
+		Color4 m_color;
 		TPGEmphasis m_emphasis;
 		GfxDriverObjectHandleType m_font;
 		f32 m_pointSize;
@@ -213,6 +248,9 @@ namespace SUTK
 
 		std::pair<s32, s32> getUnclippedLineRange() noexcept;
 		void updateLinePositions() noexcept;
+		LineCountType getNumChars(const CursorPosition<LineCountType>& position) noexcept;
+		void addColorRange(const SelectionRange<LineCountType>& range, Color4 color) noexcept;
+
 	public:
 
 		Vec2Df getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
@@ -230,6 +268,12 @@ namespace SUTK
 
 		void clear() noexcept;
 
+		// Implementation of IColorable::setColor() and IColorable::getColor()
+		virtual void setColor(Color4 color) noexcept override;
+		virtual Color4 getColor() const noexcept override;
+
+		void setColorRanges(const std::vector<std::pair<SelectionRange<LineCountType>, Color4>>& ranges) noexcept;
+
 		LineText* createNewLine(Flags flags = Flags::After, LineCountType line = END_OF_TEXT) noexcept;
 		void removeLine(LineCountType line) noexcept;
 		LineText* getOrCreateLastLine() noexcept;
@@ -244,9 +288,17 @@ namespace SUTK
 		Vec2Df getScrollDelta() const noexcept { return m_scrollDelta; }
 
 		std::size_t getLineCount() const noexcept { return m_lines.size(); }
+		// TODO: Optimize it, maintain a monolithic std::string and pass lightweight slices (pair of indices) to LineText class,
+		// and returns (that std::string).size() when getCharCount() is called.
+		// That's because, at the end SGE caches the set character array internally and there is no need to maintain std::string objects for each line.
+		// For now, it iterates through all the lines and sums the char count of each line.
+		std::size_t getCharCount() const noexcept;
 
 		void setFontSize(const f32 pointSize) noexcept;
 		f32 getFontSize() const noexcept;
 		f32 getBaselineHeight() noexcept;
+
+		CursorPosition<LineCountType> begin() const noexcept;
+		CursorPosition<LineCountType> end() const noexcept;
 	};
 }
