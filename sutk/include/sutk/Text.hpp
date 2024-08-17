@@ -160,21 +160,25 @@ namespace SUTK
 		CursorPosition(T line, T col = 0) noexcept : m_line(line), m_col(col) { }
 		CursorPosition(const CursorPosition&) = default;
 		CursorPosition& operator=(const CursorPosition&) = default;
+		bool operator==(const CursorPosition& rhs) const noexcept
+		{
+			return (m_line == rhs.m_line) && (m_col == rhs.m_col);
+		}
 		bool operator <(const CursorPosition& rhs) const noexcept
 		{
-			return (m_line < rhs.m_line) && (m_col < rhs.m_col);
+			return (m_line < rhs.m_line) || ((m_line == rhs.m_line) && (m_col < rhs.m_col));
 		}
 		bool operator <=(const CursorPosition& rhs) const noexcept
 		{
-			return (m_line <= rhs.m_line) && (m_col <= rhs.m_col);
+			return (m_line < rhs.m_line) || ((m_line == rhs.m_line) && (m_col <= rhs.m_col));
 		}
 		bool operator >(const CursorPosition& rhs) const noexcept
 		{
-			return (m_line > rhs.m_line) && (m_col > rhs.m_col);
+			return (m_line > rhs.m_line) || ((m_line == rhs.m_line) && (m_col > rhs.m_col));
 		}
 		bool operator >=(const CursorPosition& rhs) const noexcept
 		{
-			return (m_line >= rhs.m_line) && (m_col >= rhs.m_col);
+			return (m_line > rhs.m_line) || ((m_line == rhs.m_line) && (m_col >= rhs.m_col));
 		}
 
 		void moveToNextLine(const T& max = std::numeric_limits<T>::max()) noexcept { if(m_line < max) m_line += 1; }
