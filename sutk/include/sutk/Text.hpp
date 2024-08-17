@@ -280,6 +280,7 @@ namespace SUTK
 
 		LineText* createNewLine(Flags flags = Flags::After, LineCountType line = END_OF_TEXT) noexcept;
 		void removeLine(LineCountType line) noexcept;
+		// NOTE: end is exclusive here, while start is inclusive
 		void removeLineRange(LineCountType start, LineCountType end) noexcept;
 		LineText* getOrCreateLastLine() noexcept;
 		void append(const std::string& str) noexcept { insert(CursorPosition<LineCountType>::EndOfText(), str); }
