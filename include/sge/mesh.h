@@ -68,6 +68,9 @@ SGE_API void mesh_create_no_alloc_ext(renderer_t* renderer, mesh3d_t* mesh_data,
 SGE_API void mesh_destroy(mesh_t* mesh);
 SGE_API void mesh_release_resources(mesh_t* mesh);
 
+SGE_API void mesh_set_instance_count(mesh_t* mesh, u32 instance_count);
+SGE_API u32 mesh_get_instance_count(mesh_t* mesh);
+
 /* vertex and index buffer data update calls */
 SGE_API void mesh_add_vertex_buffer(mesh_t* mesh, sge_buffer_t* buffer, u32 binding);
 /* IMPORTANT: this must be in sync with vulkan_vertex_buffer_create_info_t */

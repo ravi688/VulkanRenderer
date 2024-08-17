@@ -20,6 +20,16 @@ namespace SGE
 
 		void destroy() noexcept;
 
+		void setInstanceCount(u32 instanceCount) noexcept
+		{
+			mesh_set_instance_count(m_handle, instanceCount);
+		}
+
+		u32 getInstanceCount() const noexcept
+		{
+			return mesh_get_instance_count(m_handle);
+		}
+
 		typedef vertex_buffer_create_info_t VertexBufferCreateInfo;
 
 		void createAndAddVertexBuffer(VertexBufferCreateInfo& createInfo) noexcept

@@ -26,7 +26,6 @@ namespace SGE
 		operator bool() const noexcept { return m_handle != NULL; }
 		operator sge_buffer_t*() noexcept { return m_handle; }
 
-
 		const Traits* getTraits() const noexcept 
 		{ 
 			return reinterpret_cast<Traits*>(sge_buffer_get_traits(m_handle)); 

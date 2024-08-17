@@ -13,4 +13,10 @@ namespace SGE
 	{
 		material_set_vec4(m_handle, name.c_str(), value);
 	}
+
+	template<>
+	void Material::set<s32>(const std::string& name, s32 value)
+	{
+		material_set_int(m_handle, name.c_str(), value);
+	}
 }
