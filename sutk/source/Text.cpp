@@ -363,6 +363,19 @@ namespace SUTK
 			m_lines[i]->addPosition({ 0, -getBaselineHeight() });
 	}
 
+	void Text::removeLineRange(LineCountType start, LineCountType end) noexcept
+	{
+		if(end > m_lines.size())
+			end = static_cast<LineCountType>(m_lines.size());
+		for(LineCountType i = start; i < end; ++i)
+			m_lines[i]->setData("");
+		m_lines.erase(com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, start),
+					  com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, end));
+		// shift the line at which the cursor points to and the lines succeeding it
+		for(std::size_t i = end; i < m_lines.size(); i++)
+			m_lines[i]->addPosition({ 0, -getBaselineHeight() });
+	}
+
 	LineText* Text::getOrCreateLastLine() noexcept
 	{
 		// if there are no lines
@@ -443,9 +456,7 @@ namespace SUTK
 		_com_assert(start.getLine() <= end.getLine());
 
 		// remove the intermediate lines if any
-		LineCountType lineDiff = end.getLine() - start.getLine();
-		for(LineCountType i = 1; i < lineDiff; i++)
-			removeLine(start.getLine() + i);
+		removeLineRange(start.getLine() + 1, end.getLine());
 
 		// if start and end are straddled across different lines
 		if(start.getLine() != end.getLine())
