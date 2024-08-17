@@ -24,14 +24,14 @@ namespace SUTK
 	 * complex characters. */
 	typedef u8 CharType;
 
-	#define CHAR_TYPE_MAX std::numeric_limits<CharType>::max()
+	#define CHAR_TYPE_MAX std::numeric_limits<SUTK::CharType>::max()
 
 	/* For now, we can represent number of lines up to U32_MAX,
 	 * but in future we may increase its bit-width to let users to 
 	 * work with gigantic text files. */
 	typedef u32 LineCountType;
 
-	#define LINE_COUNT_TYPE_MAX std::numeric_limits<LineCountType>::max()
+	#define LINE_COUNT_TYPE_MAX std::numeric_limits<SUTK::LineCountType>::max()
 	/* should be used in place of 'column number' */
 	#define END_OF_LINE LINE_COUNT_TYPE_MAX
 	/* should be used in place of 'line number' in a multiline text */
@@ -42,7 +42,7 @@ namespace SUTK
 	 * with larger resolutions. However, it would never be needed I guess. */
 	typedef u16 DisplaySizeType;
 
-	#define DISPLAY_SIZE_TYPE_MAX std::numeric_limits<DisplaySizeType>::max()
+	#define DISPLAY_SIZE_TYPE_MAX std::numeric_limits<SUTK::DisplaySizeType>::max()
 
 	template<typename T>
 	union Vec2D
