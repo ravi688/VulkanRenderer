@@ -1,0 +1,129 @@
+#sb version 2023
+#sl version 2023
+
+[Name("SlidColorRectArray")]
+Shader
+{
+    Properties
+    {
+        [Stage(vertex, fragment)]
+        [Set(material_set, material_properties)]
+        uniform Parameters
+        {
+            vec4 color;
+            float numPixelsPerCM;
+        } parameters;
+    }
+
+    Layout
+    {
+        [Rate(per_vertex)]
+        [MeshLayout(sge_optimal)]
+        [Attribute(position)]
+        vec3 position;
+
+        [Rate(per_instance)]
+        [Attribute(binding=5,location=5)]
+        vec4 ofst_size;
+    }
+    
+    RenderPass
+    {
+        SubPass
+        {
+            [NoParse]
+            GraphicsPipeline
+            {
+                rasterization
+                {
+                    // in SUTK (geometry compilation) we need this to be counterclockwise
+                    frontface = counterclockwise
+                }
+                colorBlend
+                {
+                    attachment
+                    {
+                        blendenable = false
+                    }
+                }
+            }
+            [NoParse]
+            GLSL
+            {
+                #stage vertex
+        
+                #version 450
+                
+                #include <v3d.h>
+                
+                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform DisplayInfo
+                {
+                    uvec2 resolution;
+                    uvec2 dpi;
+                    uvec2 window_size;
+                    mat4 matrix;
+                } displayInfo;
+                
+                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+                
+                
+                layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+                {
+                    vec4 color;
+                    float numPixelsPerCM;
+                } parameters;
+                
+                layout(location = POSITION_LOCATION) in vec3 position;
+                
+                layout(location = 5, component = 0) in vec2 offset;
+                layout(location = 5, component = 2) in vec2 size;
+
+                layout(location = 0) out vec4 out_color;
+                
+                void main()
+                {
+                    uvec2 win_size = displayInfo.window_size;
+
+                    float offset_x = offset.x + win_size.x * 0.5;
+                    float offset_y = offset.y - win_size.y * 0.5;
+
+                    float size_x = size.x + win_size.x * 0.5;
+                    float size_y = win_size.y * 0.5 - size.y;
+
+                    float pos_x = (position.z + win_size.x * 0.5) / parameters.numPixelsPerCM;
+                    float pos_y = (win_size.y * 0.5 - position.y) / parameters.numPixelsPerCM;
+
+                    pos_x = pos_x * size_x - win_size.x * 0.5 + offset_x;
+                    pos_y = win_size.y * 0.5 - pos_y * size_y + offset_y;
+
+                    vec4 pos = vec4(pos_x, pos_y, 0, 1.0);
+
+                    vec4 world = objectInfo.transform * pos.zyxw;
+                
+                    vec4 clipPos = displayInfo.matrix * world;
+                
+                    gl_Position = vec4(clipPos.x, -clipPos.y, clipPos.z, clipPos.w);
+                
+                    out_color = vec4(parameters.color.r, parameters.color.g, parameters.color.b, parameters.color.a);
+                }
+
+                #stage fragment
+                
+                #version 450
+                
+                #include <v3d.h>
+                
+                layout(location = 0) in vec4 in_color;
+                
+                layout(location = 0) out vec4 color;
+                
+                void main()
+                {
+                    color = vec4(in_color.r, in_color.g, in_color.b, in_color.a);
+                }
+            }
+        }
+    }
+
+}

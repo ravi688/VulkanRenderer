@@ -31,4 +31,7 @@ namespace SGE
 
 	template<>
 	void Material::set<vec4_t>(const std::string& name, vec4_t value);
+
+	template<>
+	void Material::set<s32>(const std::string& name, s32 value);
 }

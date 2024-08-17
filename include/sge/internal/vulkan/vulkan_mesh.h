@@ -105,6 +105,10 @@ typedef struct vulkan_mesh_t
 	vulkan_renderer_t* renderer;
 	vulkan_material_t* material;
 
+	/* number of instances of this mesh to be drawn 
+	 * by default it is set to 1 */
+	u32 instance_count;
+
 	/* list of pointer to the vertex buffers */
 	vulkan_vertex_buffer_list_t vertex_buffers;
 
@@ -142,6 +146,8 @@ SGE_API void vulkan_mesh_draw_indexed_instanced_only(vulkan_mesh_t* mesh, u32 in
 /* binds vertex buffesr, and isues a vkCmdDraw call */
 SGE_API void vulkan_mesh_draw_instanced(vulkan_mesh_t* mesh, u32 instance_count);
 
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_mesh_set_instance_count(vulkan_mesh_t* mesh, u32 instance_count) { mesh->instance_count = instance_count; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 vulkan_mesh_get_instance_count(vulkan_mesh_t* mesh) { return mesh->instance_count; }
 SGE_API void vulkan_mesh_set_material(vulkan_mesh_t* mesh, vulkan_material_t* material);
 
 /* adds a vertex buffer to the mesh with binding as 'binding'

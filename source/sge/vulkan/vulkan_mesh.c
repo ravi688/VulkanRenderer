@@ -58,6 +58,7 @@ SGE_API void vulkan_mesh_create_no_alloc(vulkan_renderer_t* renderer, vulkan_mes
 	VULKAN_OBJECT_MEMZERO(mesh, vulkan_mesh_t);
 	mesh->renderer = renderer;
 
+	mesh->instance_count = 1;
 	mesh->vertex_buffers = memory_allocator_buf_new(renderer->allocator, vulkan_vertex_buffer_t);
 
 	/* create vertex buffers */
@@ -103,7 +104,7 @@ SGE_API void vulkan_mesh_release_resources(vulkan_mesh_t* mesh)
 
 SGE_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh)
 {
-	vulkan_mesh_draw_indexed_instanced(mesh, 1);
+	vulkan_mesh_draw_indexed_instanced(mesh, mesh->instance_count);
 }
 
 SGE_API void vulkan_mesh_draw(vulkan_mesh_t* mesh)

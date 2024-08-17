@@ -2,8 +2,9 @@
 
 # TODO: move this to GNU makefile automaticaly generate shaders.h file whenever any of the following files changes.
 
-python gen_shaders.py \
+python $(pwd)/$(dirname "$0")/gen_shaders.py \
 		../../../shaders/presets/solid_color.v3dshader \
+		../../../shaders/presets/solid_color_rect_array.v3dshader \
 		../../../sutk/fonts/Calibri\ Regular.ttf \
 		../../../sutk/fonts/Roboto-Bold.ttf \
 		../../../shaders/include/v3d.h \

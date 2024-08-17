@@ -103,6 +103,16 @@ SGE_API void mesh_release_resources(mesh_t* mesh)
 	vulkan_mesh_release_resources(mesh);
 }
 
+SGE_API void mesh_set_instance_count(mesh_t* mesh, u32 instance_count)
+{
+	vulkan_mesh_set_instance_count(VULKAN_MESH_CAST(mesh), instance_count);
+}
+
+SGE_API u32 mesh_get_instance_count(mesh_t* mesh)
+{
+	return vulkan_mesh_get_instance_count(VULKAN_MESH_CAST(mesh));
+}
+
 SGE_API void mesh_add_vertex_buffer(mesh_t* mesh, sge_buffer_t* buffer, u32 binding)
 {
 	vulkan_mesh_add_vertex_buffer(VULKAN_MESH_CAST(mesh), VULKAN_BUFFER_CAST(buffer), binding);
