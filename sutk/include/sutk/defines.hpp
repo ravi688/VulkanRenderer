@@ -403,6 +403,9 @@ namespace SUTK
 			return !Color4::operator==(rhs);
 		}
 
+		Color4& alpha(u8 _alpha) & noexcept { a = _alpha; return *this; }
+		Color4&& alpha(u8 _alpha) && noexcept { a = _alpha; return std::move(*this); }
+
 		static constexpr Color4 red() noexcept { return { 255, 0, 0, 255 }; }
 		static constexpr Color4 blue() noexcept { return { 0, 0, 255, 255 }; }
 		static constexpr Color4 green() noexcept { return { 0, 255, 0, 255 }; }

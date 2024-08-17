@@ -49,7 +49,7 @@ namespace SUTK
 	public:
 
 		// IMPLEMENTATION of IDebuggable
-		virtual void enableDebug(bool isEnable = false) noexcept override;
+		virtual void enableDebug(bool isEnable = true, Color4 color = Color4::green()) noexcept override;
 
 		// parent getters
 		Container* getParent() { return m_parent; }

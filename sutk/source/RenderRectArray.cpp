@@ -8,7 +8,7 @@ namespace SUTK
 																						m_color(Color4::white()),
 																						m_isColorDirty(true),
 																						m_isActiveDirty(false),
-																						m_isRectsDirty(true)
+																						m_isRectsDirty(false)
 	{
 		_com_assert(container != NULL);
 		// unit rect (1 centimeter by 1 centimeter)
@@ -20,9 +20,8 @@ namespace SUTK
 			.vertexPosition(rect.getTopRight())
 			.topology(Geometry::Topology::TriangleList)
 			.quad(0, 1, 2, 3)
-			.fillColor(getColor());
-			// we need to have at least one instance to create
-			getRectsForWrite().push_back({ 0.0f, 0.0f, 1.0f, 1.0f});
+			.fillColor(getColor())
+			.setArray(true);
 
 		// call update for the first time as we have geometry description already and
 		// this geometry is supposed to be displayed in the very first frame.

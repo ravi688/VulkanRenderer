@@ -10,7 +10,8 @@ namespace SUTK
 													m_transformArrayInfo({ InstanceTransformArray { }, false }),
 													m_strokeInfo({ }),
 													m_fillColorInfo({Color4::white(), false }),
-													m_topology(Topology::TriangleList)
+													m_topology(Topology::TriangleList),
+													m_isArray(false)
 	{
 
 	}

@@ -121,19 +121,35 @@ namespace SUTK
 			container->onParentResize(newRect, isPositionChanged, isSizeChanged);
 	}
 
-	void Container::enableDebug(bool isEnable) noexcept
+	void Container::enableDebug(bool isEnable, Color4 color) noexcept
 	{
-		// only create SUTK::RenderableContainer and SUTK::RenderRect once in the life-time of this Container
-		if(m_renderRectCont == NULL)
+		if(isEnable)
 		{
-			// create SUTK::RenderableContainer and setup its rect
-			m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(this);
-			m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
-			
-			// create SUTK::RenderRect and establish parent-child link with SUTK::RenderableContainer just created
-			m_renderRect = getUIDriver().createRenderable<RenderRectOutline>(m_renderRectCont);
-			m_renderRect->setThickness(0.05f);
+			// only create SUTK::RenderableContainer and SUTK::RenderRect once in the life-time of this Container
+			if(m_renderRectCont == NULL)
+			{
+				// create SUTK::RenderableContainer and setup its rect
+				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(this);
+				m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
+				
+				// create SUTK::RenderRect and establish parent-child link with SUTK::RenderableContainer just created
+				m_renderRect = getUIDriver().createRenderable<RenderRectOutline>(m_renderRectCont);
+				m_renderRect->setThickness(0.05f);
+			}
+			else
+			{
+				_com_assert(m_renderRect != NULL);
+				m_renderRect->setActive(true);
+			}
+			m_isDebug = true;
 		}
-		m_isDebug = true;
+		else if(m_renderRect != NULL)
+		{
+			m_renderRect->setActive(false);
+			m_isDebug = false;
+		}
+
+		if(m_renderRect != NULL)
+			m_renderRect->setColor(color);
 	}
 }
