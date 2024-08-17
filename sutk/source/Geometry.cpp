@@ -7,6 +7,7 @@ namespace SUTK
 	Geometry::Geometry(UIDriver& driver) noexcept : UIDriverObject(driver), 
 													m_positionArrayInfo({ VertexPositionArray { }, false }),
 													m_indexArrayInfo({ VertexIndexArray { }, false }),
+													m_transformArrayInfo({ InstanceTransformArray { }, false }),
 													m_strokeInfo({ }),
 													m_fillColorInfo({Color4::white(), false }),
 													m_topology(Topology::TriangleList)
@@ -22,6 +23,7 @@ namespace SUTK
 			m_strokeInfo->isModified = false;
 		m_positionArrayInfo.isModified = false;
 		m_indexArrayInfo.isModified = false;
+		m_transformArrayInfo.isModified = false;
 		m_fillColorInfo.isModified = false;
 		return handle;
 	}
@@ -119,6 +121,39 @@ namespace SUTK
 	Geometry& Geometry::vertexPosition(VertexPosition position) noexcept
 	{
 		getVertexPositionArrayForWrite().push_back(position);
+		return *this;
+	}
+
+	Geometry& Geometry::instanceTransformArray(u32 transformCount) noexcept
+	{
+		auto& array = m_transformArrayInfo.array;
+		
+		// ensure the requested size
+		array.reserve(transformCount);
+
+		// if lesser number of positions are requested, then we can decrease
+		// the size of position array from the end till its size becomes
+		// exactly as 'transformCount'
+		if(transformCount < array.size())
+		{
+			array.erase(array.begin() + transformCount, array.end());
+			_assert(array.size() == transformCount);
+		}
+
+		// if the number of already existing positions are lesser then
+		// add more elements at the end until the its size becomes exactly
+		// as 'transformCount'
+		while(array.size() < transformCount)
+			array.push_back({ });
+
+		m_transformArrayInfo.isModified = true;
+
+		return *this;
+	}
+
+	Geometry& Geometry::instanceTransform(InstanceTransform transform) noexcept
+	{
+		getInstanceTransformArrayForWrite().push_back(transform);
 		return *this;
 	}
 

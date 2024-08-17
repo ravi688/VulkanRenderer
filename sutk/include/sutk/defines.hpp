@@ -353,7 +353,7 @@ namespace SUTK
 		u8 g;
 		u8 b;
 
-		constexpr Color3() noexcept : r(0), g(0), b(0) { }
+		constexpr Color3() noexcept : r(255), g(255), b(255) { }
 		constexpr Color3(u8 _r, u8 _g, u8 _b) noexcept : r(_r), g(_g), b(_b) { }
 
 		bool operator ==(Color3& rhs) const noexcept
@@ -389,7 +389,7 @@ namespace SUTK
 		};
 		u8 a;
 
-		constexpr Color4() noexcept : r(0), g(0), b(0), a(0) { }
+		constexpr Color4() noexcept : r(255), g(255), b(255), a(255) { }
 		constexpr Color4(u8 _r, u8 _g, u8 _b, u8 _a) noexcept : r(_r), g(_g), b(_b), a(_a) { }
 		constexpr Color4(u8 _r, u8 _g, u8 _b) noexcept : Color4(_r, _g, _b, 255) { }
 

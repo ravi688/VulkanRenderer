@@ -408,7 +408,10 @@ namespace SUTK
 
 	SGE::Shader SGEGfxDriver::compileShader(const Geometry& geometry)
 	{
-		return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first);
+		if(geometry.getInstanceTransformArray().size() > 0)
+			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color_rect_array.v3dshader").first);
+		else
+			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first);
 	}
 
 	std::pair<SGEMeshData, GfxDriverObjectHandleType> SGEGfxDriver::createMesh(const Geometry& geometry)
@@ -419,6 +422,12 @@ namespace SUTK
 		SGE::Shader shader = compileShader(geometry);
 		SGE::Material material = m_driver.getMaterialLibrary().createMaterial(shader, "Untittled");
 		material.set<vec4_t>("parameters.color", vec4(1.0f, 1.0f, 1.0f, 1.0f));
+		if(geometry.getInstanceTransformArray().size() > 0)
+		{
+			f32 z = SUTKToSGECoordTransform({ 1.0f, 0 }).z;
+			z += getSizeInPixels().x * 0.5f;
+			material.set<float>("parameters.numPixelsPerCM", z);
+		}
 		object.setMaterial(material);
 		object.attach(mesh);
 		// rebuild render pass graph as new objects have been added into the render scene 
@@ -519,11 +528,11 @@ namespace SUTK
 			createInfo.binding = 0;
 
 			// if there is no vertex buffer then create one with binding equal to zero
-			if(mesh.getVertexBufferCount() == 0)
+			SGE::Buffer vertexBuffer = mesh.getVertexBuffer(0);
+			if(static_cast<void*>(vertexBuffer) == NULL)
 				mesh.createAndAddVertexBuffer(createInfo);
 			else
 			{
-				SGE::Buffer vertexBuffer = mesh.getVertexBuffer(0);
 				_assert(vertexBuffer.getTraits()->elementSize == createInfo.stride);
 				// if the existing vertex buffer's capacity is not equal to that of new number of posijtions
 				if(vertexBuffer.getTraits()->elementCount != positionArray.size())
@@ -536,6 +545,49 @@ namespace SUTK
 				// otherwise, just copy the new data
 				else
 					vertexBuffer.copyData(0, reinterpret_cast<void*>(data), sizeof(vec4_t) * positionArray.size());
+			}
+		}
+
+		if(geometry.isInstanceTransformArrayModified())
+		{
+			// convert vertex position array into SGE's coordinates and strides.
+			auto& transformArray = geometry.getInstanceTransformArray();
+			vec4_t data[transformArray.size()];
+			for(u32 i = 0; i < transformArray.size(); ++i)
+			{
+				Rect2Df rect = transformArray[i];
+				vec3_t pos = SUTKToSGECoordTransform(rect.getPosition());
+				vec3_t size = SUTKToSGECoordTransform(rect.getSize());
+				data[i] = { pos.z, pos.y, size.z, size.y };
+			}
+			
+			mesh.setInstanceCount(static_cast<u32>(transformArray.size()));
+
+			// prepare the vertex buffer create info struct
+			SGE::Mesh::VertexBufferCreateInfo createInfo = { };
+			createInfo.data = data,
+			createInfo.stride = sizeof(vec4_t),
+			createInfo.count = transformArray.size(),
+			createInfo.binding = 5;
+
+			// if there is no vertex buffer then create one with binding equal to 5
+			SGE::Buffer vertexBuffer = mesh.getVertexBuffer(5);
+			if(static_cast<void*>(vertexBuffer) == NULL)
+				mesh.createAndAddVertexBuffer(createInfo);
+			else
+			{
+				_assert(vertexBuffer.getTraits()->elementSize == createInfo.stride);
+				// if the existing vertex buffer's capacity is not equal to that of new number of posijtions
+				if(vertexBuffer.getTraits()->elementCount != transformArray.size())
+				{
+					// then destroy the vertex buffer at binding = 0
+					mesh.destroyVertexBuffer(5);
+					// and create a new vertex buffer for the binding = 0
+					mesh.createAndAddVertexBuffer(createInfo);
+				}
+				// otherwise, just copy the new data
+				else
+					vertexBuffer.copyData(0, reinterpret_cast<void*>(data), sizeof(vec4_t) * transformArray.size());
 			}
 		}
 
