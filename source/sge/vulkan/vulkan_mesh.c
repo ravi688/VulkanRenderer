@@ -310,7 +310,7 @@ SGE_API void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulka
 {
 	_debug_assert__(create_info != NULL);
 	_debug_assert__(create_info->count != 0);
-	_debug_assert__(create_info->data != NULL);
+	_debug_assert_wrn__(create_info->data != NULL);
 	
 	vulkan_buffer_create_info_t buffer_create_info =
 	{

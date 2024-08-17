@@ -43,7 +43,7 @@ Shader
                 {
                     attachment
                     {
-                        blendenable = false
+                        blendenable = true
                     }
                 }
             }

@@ -3,7 +3,7 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 14h:17m:42s, 17/8/2024
+ * Time & Date (yy/mm/yyy) of Generation: 15h:23m:21s, 17/8/2024
  */
 
 #pragma once
@@ -46,7 +46,10 @@ static const char* _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER =
 "				}\n"
 "				colorBlend\n"
 "				{\n"
-"					attachment { }\n"
+"					attachment\n"
+"					{\n"
+"						blendenable = true\n"
+"					}\n"
 "				}\n"
 "			}\n"
 "\n"
@@ -146,7 +149,7 @@ static const char* _________SHADERS_PRESETS_SOLID_COLOR_RECT_ARRAY_V3DSHADER =
 "                {\n"
 "                    attachment\n"
 "                    {\n"
-"                        blendenable = false\n"
+"                        blendenable = true\n"
 "                    }\n"
 "                }\n"
 "            }\n"
@@ -26804,8 +26807,8 @@ static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_
 {
 	if(!g_is_shader_mappings_populated)
 	{
-		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER, 1694 };
-		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color_rect_array.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_RECT_ARRAY_V3DSHADER, 4057 };
+		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER, 1729 };
+		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color_rect_array.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_RECT_ARRAY_V3DSHADER, 4056 };
 		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
 		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Roboto-Bold.ttf", _________SUTK_FONTS_ROBOTO_BOLD_TTF, 167336 };
 		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 11952 };
