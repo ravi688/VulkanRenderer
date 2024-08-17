@@ -80,6 +80,12 @@ namespace SUTK
 		Vec2Df getScreenCoordsToLocalCoords(Vec2Df screenCoords) const;
 		// converts local coordinates in its rect (in centimeters) to global coordinates (in centimeters)
 		Vec2Df getLocalCoordsToScreenCoords(Vec2Df localCoords) const;
+		// overload for Rect2Df, does the exact same function as the above function, however, it doesn't modify the localRect.size
+		Rect2Df getLocalCoordsToScreenCoords(Rect2Df localRect) const
+		{ 
+			Vec2Df pos = getLocalCoordsToScreenCoords(localRect.getPosition());
+			return { pos, localRect.getSize() };
+		}
 
 		// addition and removal of child containers
 

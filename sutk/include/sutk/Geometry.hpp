@@ -25,6 +25,15 @@ namespace SUTK
 			VertexIndexArray array;
 			bool isModified;
 		};
+		// Rect2D<f32>::size : this value is multiple by position vertex attribute
+		// Rect2D<f32>::position : this value is added to the above result
+		typedef Rect2D<f32> InstanceTransform;
+		typedef std::vector<InstanceTransform> InstanceTransformArray;
+		struct InstanceTransformArrayInfo
+		{
+			InstanceTransformArray array;
+			bool isModified;
+		};
 		struct LineStroke
 		{
 			f32 width;
@@ -54,6 +63,7 @@ namespace SUTK
 	private:
 		VertexPositionArrayInfo m_positionArrayInfo;
 		VertexIndexArrayInfo m_indexArrayInfo;
+		InstanceTransformArrayInfo m_transformArrayInfo;
 		std::optional<LineStrokeInfo> m_strokeInfo;
 		FillColorInfo m_fillColorInfo;
 		Topology m_topology;
@@ -74,6 +84,8 @@ namespace SUTK
 		Geometry& vertexPositionArray(const std::vector<VertexPosition>& positions) noexcept;
 		Geometry& vertexPosition(VertexPosition position) noexcept;
 
+		Geometry& instanceTransformArray(u32 transformCount) noexcept;
+		Geometry& instanceTransform(InstanceTransform transform) noexcept;
 
 		Geometry& lineStroke(LineStroke stroke, bool isDynamic = false) noexcept;
 		Geometry& lineStroke(float width, Color4 color = Color4::white(), bool isDynamic = false) noexcept
@@ -81,6 +93,8 @@ namespace SUTK
 			return lineStroke({ width, color }, isDynamic);
 		}
 		Geometry& fillColor(Color4 color) noexcept;
+
+		Geometry& array(u32 count) noexcept;
 
 		// getters
 
@@ -90,12 +104,24 @@ namespace SUTK
 		const VertexPositionArray& getVertexPositionArray() const { return m_positionArrayInfo.array; }
 		VertexIndexArray& getVertexIndexArrayForWrite() { m_indexArrayInfo.isModified = true; return m_indexArrayInfo.array; }
 		const VertexIndexArray& getVertexIndexArray() const { return m_indexArrayInfo.array; }
+		InstanceTransformArray& getInstanceTransformArrayForWrite() { m_transformArrayInfo.isModified = true; return m_transformArrayInfo.array; }
+		const InstanceTransformArray& getInstanceTransformArray() const { return m_transformArrayInfo.array; }
 
 		Color4 getFillColor() const { return m_fillColorInfo.color; }
 
 		bool isVertexIndexArrayModified() const noexcept { return m_indexArrayInfo.isModified; }
 		bool isVertexPositionArrayModified() const noexcept { return m_positionArrayInfo.isModified; }
+		bool isInstanceTransformArrayModified() const noexcept { return m_transformArrayInfo.isModified; }
 		bool isLineStrokeModified() const noexcept { return m_strokeInfo.has_value() && m_strokeInfo->isModified; }
 		bool isFillColorModified() const noexcept { return m_fillColorInfo.isModified; }
+
+		bool isModified() const noexcept
+		{
+			return isVertexIndexArrayModified() ||
+					isVertexPositionArrayModified() || 
+					isInstanceTransformArrayModified() ||
+					isLineStrokeModified() ||
+					isFillColorModified();
+		}
 	};
 }
