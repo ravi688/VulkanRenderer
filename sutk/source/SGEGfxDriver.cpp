@@ -408,7 +408,7 @@ namespace SUTK
 
 	SGE::Shader SGEGfxDriver::compileShader(const Geometry& geometry)
 	{
-		if(geometry.getInstanceTransformArray().size() > 0)
+		if(geometry.isArray())
 			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color_rect_array.v3dshader").first);
 		else
 			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first);
@@ -422,7 +422,7 @@ namespace SUTK
 		SGE::Shader shader = compileShader(geometry);
 		SGE::Material material = m_driver.getMaterialLibrary().createMaterial(shader, "Untittled");
 		material.set<vec4_t>("parameters.color", vec4(1.0f, 1.0f, 1.0f, 1.0f));
-		if(geometry.getInstanceTransformArray().size() > 0)
+		if(geometry.isArray())
 		{
 			f32 z = SUTKToSGECoordTransform({ 1.0f, 0 }).z;
 			z += getSizeInPixels().x * 0.5f;
@@ -509,7 +509,10 @@ namespace SUTK
 			}
 		}
 
-		if(geometry.isVertexPositionArrayModified())
+		// NOTE: if a geometry need to be replicated (i.e. it is an array),
+		// it should be obvious that the original geometry information need to be updated whenever instance buffer data is modified
+		// that is to avoid vertices still using the previous window size while calculating SGE's coords from SUTK's coords.
+		if(geometry.isVertexPositionArrayModified() || (geometry.isArray() && geometry.isInstanceTransformArrayModified()))
 		{
 			// convert vertex position array into SGE's coordinates and strides.
 			auto& positionArray = geometry.getVertexPositionArray();
@@ -565,9 +568,10 @@ namespace SUTK
 
 			// prepare the vertex buffer create info struct
 			SGE::Mesh::VertexBufferCreateInfo createInfo = { };
-			createInfo.data = data,
-			createInfo.stride = sizeof(vec4_t),
-			createInfo.count = transformArray.size(),
+			createInfo.data = (transformArray.size() == 0) ? NULL : data;
+			createInfo.stride = sizeof(vec4_t);
+			// SGE requires non-zero count to actually allocate non-zero device memory for VkBuffer
+			createInfo.count = std::max(static_cast<std::size_t>(1), transformArray.size());
 			createInfo.binding = 5;
 
 			// if there is no vertex buffer then create one with binding equal to 5
@@ -577,8 +581,8 @@ namespace SUTK
 			else
 			{
 				_assert(vertexBuffer.getTraits()->elementSize == createInfo.stride);
-				// if the existing vertex buffer's capacity is not equal to that of new number of posijtions
-				if(vertexBuffer.getTraits()->elementCount != transformArray.size())
+				// if the existing vertex buffer's capacity is less than that of new number of instance transforms
+				if(vertexBuffer.getTraits()->elementCount < transformArray.size())
 				{
 					// then destroy the vertex buffer at binding = 0
 					mesh.destroyVertexBuffer(5);

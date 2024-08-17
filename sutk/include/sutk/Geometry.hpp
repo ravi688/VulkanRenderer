@@ -67,6 +67,7 @@ namespace SUTK
 		std::optional<LineStrokeInfo> m_strokeInfo;
 		FillColorInfo m_fillColorInfo;
 		Topology m_topology;
+		bool m_isArray;
 	public:
 		Geometry(UIDriver& driver) noexcept;
 
@@ -94,7 +95,8 @@ namespace SUTK
 		}
 		Geometry& fillColor(Color4 color) noexcept;
 
-		Geometry& array(u32 count) noexcept;
+		Geometry& setArray(bool isArray) noexcept { m_isArray = true; return *this; }
+		bool isArray() const noexcept { return m_isArray; }
 
 		// getters
 
