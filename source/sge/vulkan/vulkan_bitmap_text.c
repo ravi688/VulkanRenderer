@@ -815,8 +815,10 @@ SGE_API f32 vulkan_bitmap_text_string_get_zcoord_from_glyph_index(vulkan_bitmap_
 {
 	AUTO buf = &get_text_stringH(text, handle)->glyph_offsets;
 	AUTO count = buf_get_element_count(buf);
-	if((count == 0) || (index >= count))
+	if(count == 0)
 		return 0;
+	else if(index >= count)
+		return *buf_get_ptr_at_typeof(buf, f32, count - 1);
 	return *buf_get_ptr_at_typeof(buf, f32, index);
 }
 
