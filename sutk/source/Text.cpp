@@ -405,11 +405,14 @@ namespace SUTK
 		return m_lines[line];
 	}
 
-	void Text::insert(CursorPosition<LineCountType> position, const std::string& str) noexcept
+	CursorPosition<LineCountType> Text::insert(CursorPosition<LineCountType> position, const std::string& str) noexcept
 	{
 		// if there is nothing to write then return
 		if(str.empty())
-			return;
+		{
+			if(position > end())
+				return end();
+		}
 
 		LineText* lineText = NULL;
 		if(position >= end())
@@ -474,11 +477,29 @@ namespace SUTK
 			index = end;
 		}
 
+		LineCountType column = 0;
+		if(newLineText == NULL)
+		{
+			if(position.getColumn() == END_OF_LINE)
+				column = lineText->getColumnCount();
+			else 
+			{
+				if(index == std::string::npos)
+					column = position.getColumn() + str.size();
+				else
+					column = position.getColumn() + index + 2;
+			}
+		}
+		else
+			column = newLineText->getColumnCount();
+
 		if((newLineText != NULL) && (position.getColumn() != END_OF_LINE))
 		{
 			newLineText->append(lineText->substr(position.getColumn() + saveIndex, std::string::npos));
 			lineText->removeRange(position.getColumn() + saveIndex);
 		}
+
+		return { static_cast<LineCountType>(line), column };
 	}
 
 	void Text::removeRange(CursorPosition<LineCountType> start, CursorPosition<LineCountType> end) noexcept
