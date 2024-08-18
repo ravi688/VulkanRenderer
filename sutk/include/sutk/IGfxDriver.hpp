@@ -59,8 +59,8 @@ namespace SUTK
 		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) = 0;
 		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) = 0;
 
-		virtual u32 getTextBaselineHeightInPixels(GfxDriverObjectHandleType handle) = 0;
-		virtual f32 getTextBaselineHeightInCentimeters(GfxDriverObjectHandleType handle) = 0;
+		virtual u32 getTextBaselineHeightInPixels(f32 pointSize) = 0;
+		virtual f32 getTextBaselineHeightInCentimeters(f32 pointSize) = 0;
 		// the Vec2Df arguments is in centimeters (not pixels!)
 		typedef std::function<void(Vec2Df)> OnResizeCallbackHandler;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) = 0;

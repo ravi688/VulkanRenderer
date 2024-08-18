@@ -620,9 +620,8 @@ namespace SUTK
 		return geometry;
 	}
 
-	u32 SGEGfxDriver::getTextBaselineHeightInPixels(GfxDriverObjectHandleType handle)
+	u32 SGEGfxDriver::getTextBaselineHeightInPixels(f32 pointSize)
 	{
-		f32 pointSize = getText(handle).getPointSize();
 		f32 save = m_font.getCharSize();
 		m_font.setCharSize(pointSize);
 		u32 pixels = m_font.getFontUnitsToPixels(m_font.getBaselineSpace(), SGE::Display::GetDPI().height);
@@ -630,9 +629,9 @@ namespace SUTK
 		return pixels;
 	}
 
-	f32 SGEGfxDriver::getTextBaselineHeightInCentimeters(GfxDriverObjectHandleType handle)
+	f32 SGEGfxDriver::getTextBaselineHeightInCentimeters(f32 pointSize)
 	{
-		return SGE::Display::ConvertPixelsToInches({ 0, static_cast<f32>(getTextBaselineHeightInPixels(handle)) }).height * CENTIMETERS_PER_INCH;
+		return SGE::Display::ConvertPixelsToInches({ 0, static_cast<f32>(getTextBaselineHeightInPixels(pointSize)) }).height * CENTIMETERS_PER_INCH;
 	}
 
 	u32 SGEGfxDriver::addOnResizeHandler(OnResizeCallbackHandler handler)
