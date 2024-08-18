@@ -190,10 +190,14 @@ namespace SUTK
 		T getLine() const noexcept { return m_line; }
 		T getColumn() const noexcept { return m_col; }
 
+		static CursorPosition StartOfText();
+		static CursorPosition StartOfLine(T line);
 		static CursorPosition EndOfText();
 		static CursorPosition EndOfLine(T line);
 	};
 
+	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::StartOfText();
+	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::StartOfLine(LineCountType line);
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText();
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line);
 
@@ -286,7 +290,7 @@ namespace SUTK
 		void append(const std::string& str) noexcept { insert(CursorPosition<LineCountType>::EndOfText(), str); }
 		LineText* getLine(LineCountType line) noexcept;
 		const LineText* getLine(LineCountType line) const noexcept { return const_cast<Text*>(this)->getLine(line); }
-		void insert(const CursorPosition<LineCountType>& position, const std::string& str) noexcept;
+		void insert(CursorPosition<LineCountType> position, const std::string& str) noexcept;
 		void removeRange(CursorPosition<LineCountType> start, CursorPosition<LineCountType> end) noexcept;
 		void set(const std::string& str) noexcept;
 		void enableClipping(bool isEnable = true) noexcept;
@@ -309,5 +313,8 @@ namespace SUTK
 		CursorPosition<LineCountType> end() const noexcept;
 
 		void serialize(std::ostream& stream) const noexcept;
+		void serializeToFile(const std::string& filePath) const noexcept;
+		void deserialize(std::istream& stream) noexcept;
+		void deserializeFromFile(const std::string& filePath, CursorPosition<LineCountType> pos = CursorPosition<LineCountType>::EndOfText()) noexcept;
 	};
 }

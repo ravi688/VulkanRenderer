@@ -138,8 +138,8 @@ namespace SUTK
 		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) override;
 		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) override;
 
-		virtual u32 getTextBaselineHeightInPixels(GfxDriverObjectHandleType handle) override;
-		virtual f32 getTextBaselineHeightInCentimeters(GfxDriverObjectHandleType handle) override;
+		virtual u32 getTextBaselineHeightInPixels(f32 pointSize) override;
+		virtual f32 getTextBaselineHeightInCentimeters(f32 pointSize) override;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) override;
 		virtual void removeOnResizeHandler(u32 id) override;
 	};

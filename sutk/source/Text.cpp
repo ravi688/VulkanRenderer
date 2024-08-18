@@ -5,11 +5,16 @@
 #include <sutk/RenderableContainer.hpp> /* for SUTK::RenderableContainer::getLocalCoordsToScreenCoords() */
 
 #include <common/assert.h> /* for _assert() */
+#include <common/debug.h> // for debug_log_error()
+#include <disk_manager/file_reader.h> // for load_text_from_file()
 
 #include <algorithm> // for std::min and std::clamp
+#include <fstream> // for std::ofstream
 
 namespace SUTK
 {
+	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::StartOfText() { return { 0, 0 }; }
+	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::StartOfLine(LineCountType line) { return { line, 0 }; }
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText() { return { END_OF_TEXT, END_OF_LINE }; }
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line) { return { line, END_OF_LINE }; }
 
@@ -170,13 +175,13 @@ namespace SUTK
 	}
 	f32 LineText::getBaselineHeight() noexcept
 	{
-		updatePointSize();
-		return getGfxDriver().getTextBaselineHeightInCentimeters(getGfxDriverObjectHandle());
+		return getGfxDriver().getTextBaselineHeightInCentimeters(m_pointSize);
 	}
 
 	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_textGroup(GFX_DRIVER_OBJECT_NULL_HANDLE), m_baselineHeight(0), m_isDirty(false), m_isClippingEnabled(false), m_color(SUTK::Color4::yellow()), m_pointSize(12)
 	{
 		m_textGroup = getGfxDriver().createTextGroup();
+		m_baselineHeight = getGfxDriver().getTextBaselineHeightInCentimeters(m_pointSize);
 	}
 
 	bool Text::isDirty()
@@ -286,6 +291,8 @@ namespace SUTK
 
 	Vec2Df Text::getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept
 	{
+		if(m_lines.size() == 0)
+			return { m_scrollDelta.x, m_scrollDelta.y };
 		LineCountType line = cursor.getLine();
 		_assert((line >= 0) && (line < m_lines.size()));
 		return { m_lines[line]->getCoordFromColPos(cursor.getColumn()) + m_scrollDelta.x, getBaselineHeight() * cursor.getLine() + m_scrollDelta.y };
@@ -320,6 +327,9 @@ namespace SUTK
 	LineText* Text::createNewLine(Flags flags, LineCountType line) noexcept
 	{
 		CursorPosition<LineCountType> cursorPosition;
+
+		if((line == 0) && (getLineCount() == 0))
+			line = END_OF_TEXT;
 		
 		if(line == END_OF_TEXT)
 		{
@@ -327,7 +337,7 @@ namespace SUTK
 			if(line >= 1u)
 				line -= 1u;
 		};
-		cursorPosition.moveToLine(static_cast<DisplaySizeType>(line));
+		cursorPosition.moveToLine(static_cast<LineCountType>(line));
 
 		if(flags == Flags::After)
 			cursorPosition.moveToNextLine(m_lines.size());
@@ -338,7 +348,7 @@ namespace SUTK
 
 		// insert the line at which the cursor points to
 		LineText* lineText = new LineText(getUIDriver(), m_textGroup);
-		m_lines.insert(com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, cursorPosition.getLine()), lineText);
+		m_lines.insert(std::next(m_lines.begin(), cursorPosition.getLine()), lineText);
 
 		lineText->setFontSize(m_pointSize);
 		lineText->setColor(m_color);
@@ -356,7 +366,7 @@ namespace SUTK
 		// delete m_lines[line];
 		m_lines[line]->setData("");
 		// remove the line at index 'line'
-		m_lines.erase(com::GetIteratorFromIndex<std::vector, LineText*>(m_lines, line));
+		m_lines.erase(std::next(m_lines.begin(), line));
 
 		// shift the line at which the cursor points to and the lines succeeding it
 		for(std::size_t i = line; i < m_lines.size(); i++)
@@ -395,46 +405,72 @@ namespace SUTK
 		return m_lines[line];
 	}
 
-	void Text::insert(const CursorPosition<LineCountType>& position, const std::string& str) noexcept
+	void Text::insert(CursorPosition<LineCountType> position, const std::string& str) noexcept
 	{
 		// if there is nothing to write then return
 		if(str.empty())
 			return;
-		LineText* lineText = getLine(position.getLine());
 
-		std::string::size_type index = str.find_first_of('\n');
+		LineText* lineText = NULL;
+		if(position >= end())
+			position = CursorPosition<LineCountType>::EndOfText();
+		 
+		 lineText = getLine(position.getLine());
+
+		// Take line-endings into account
+		// Possible line endings are: '\r', '\r\n', and '\n'.
+		bool isCarriageReturn = false;
+		std::string::size_type index = str.find_first_of('\r');
+		if(index == std::string::npos)
+			index = str.find_first_of('\n');
+		else
+			isCarriageReturn = true;
+
 		if(index == std::string::npos)
 			lineText->insert(position.getColumn(), str);
 		else
 			lineText->insert(position.getColumn(), str.substr(0, index));
 
 		LineText* newLineText = NULL;
-		auto line = position.getLine();
+		auto line = (position.getLine() == END_OF_LINE) ? (getLineCount() - 1) : position.getLine();
 		auto saveIndex = index;
 		while(index != std::string::npos)
 		{
 			// create a new line
 			newLineText = createNewLine(Flags::After, line++);
 			
-			// if the new line character is at the very end, then no extra characters to add,
-			// i.e. it is an empty new line
-			if(index == (str.size() - 1))
-				break;
-
 			// character just after '\n'
 			++index;
+			if(isCarriageReturn && (str[index] == '\n'))
+				++index;
+
+			// if the new line character is at the very end, then no extra characters to add,
+			// i.e. it is an empty new line
+			if(index == str.size())
+				break;
 
 			// determine the substring to be added into the just created new line
 			// i.e. the substring is sandwitched with either '\n' characters on both the sides (left and right),
 			// or '\n' character on left and end of the string on the right.
-			auto end = str.find_first_of('\n', index);
+
+			auto end = str.find_first_of('\r', index);
+			if(end == std::string::npos)
+			{
+				end = str.find_first_of('\n', index);
+				isCarriageReturn = false;
+			}
+			else isCarriageReturn = true;
+
 
 			// if no new line character on the right side, then append rest of the string
 			if(end == std::string::npos)
 				newLineText->append(str.substr(index, std::string::npos));
 			// otherwise, append a substring surrounded by '\n' charactesr from both the sides (left and right)
 			else
+			{
+				_com_assert(end >= index);
 				newLineText->append(str.substr(index, end - index));
+			}
 			index = end;
 		}
 
@@ -568,8 +604,6 @@ namespace SUTK
 
 	f32 Text::getBaselineHeight() noexcept
 	{
-		if((m_baselineHeight == 0.0f) && (m_lines.size() > 0))
-			m_baselineHeight = m_lines[0]->getBaselineHeight();
 		return m_baselineHeight;
 	}
 
@@ -597,6 +631,49 @@ namespace SUTK
 		}
 	}
 
+	void Text::serializeToFile(const std::string& filePath) const noexcept
+	{
+		std::ofstream file(filePath, std::ios::out | std::ios::trunc);
+		if(!file.is_open())
+		{
+			debug_log_error("Failed to open file: %.*s", filePath.size(), filePath.data());
+			return;
+		}
+		serialize(file);
+		file.close();
+	}
+
+	void Text::deserialize(std::istream& stream) noexcept
+	{
+		std::streamsize beginPos = stream.tellg();
+		stream.seekg(0, std::ios::end);
+		std::streamsize endPos = stream.tellg();
+		std::streamsize size = endPos - beginPos;
+		stream.seekg(beginPos);
+		if(size == 0)
+			return;
+		std::string buffer(size, '\0');
+		char* data = reinterpret_cast<char*>(&buffer[0]);
+		stream.read(data, size);
+		std::streamsize readSize = stream.gcount();
+		// ERROR: For some reason, this assertion always fails. Therefore use Text::deserializeFromFile() for now
+		_com_assert(static_cast<std::streamsize>(readSize) == size);
+		set(buffer);
+	}
+
+	void Text::deserializeFromFile(const std::string& filePath, CursorPosition<LineCountType> pos) noexcept
+	{
+		BUFFER* buffer = load_text_from_file_s(filePath.c_str());
+		if(buffer == NULL)
+		{
+			debug_log_error("Failed to open file: %.*s", filePath.size(), filePath.data());
+			return;
+		}
+		std::string str(reinterpret_cast<const char*>(buf_get_ptr(buffer)), buf_get_element_count(buffer));
+		insert(pos, str);
+		buf_free(buffer);
+	}
+
 	void Text::setFontSize(const f32 pointSize) noexcept
 	{
 		// update the point sizes for each line
@@ -606,7 +683,7 @@ namespace SUTK
 
 		// update the baseline height
 		if(m_lines.size() > 0)
-			m_baselineHeight = m_lines[0]->getBaselineHeight();
+			m_baselineHeight = getGfxDriver().getTextBaselineHeightInCentimeters(m_pointSize);
 
 		updateLinePositions();
 	}
