@@ -285,6 +285,7 @@ namespace SUTK
 		LineText* getOrCreateLastLine() noexcept;
 		void append(const std::string& str) noexcept { insert(CursorPosition<LineCountType>::EndOfText(), str); }
 		LineText* getLine(LineCountType line) noexcept;
+		const LineText* getLine(LineCountType line) const noexcept { return const_cast<Text*>(this)->getLine(line); }
 		void insert(const CursorPosition<LineCountType>& position, const std::string& str) noexcept;
 		void removeRange(CursorPosition<LineCountType> start, CursorPosition<LineCountType> end) noexcept;
 		void set(const std::string& str) noexcept;
@@ -306,5 +307,7 @@ namespace SUTK
 
 		CursorPosition<LineCountType> begin() const noexcept;
 		CursorPosition<LineCountType> end() const noexcept;
+
+		void serialize(std::ostream& stream) const noexcept;
 	};
 }
