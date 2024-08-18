@@ -286,7 +286,7 @@ namespace SUTK
 		void append(const std::string& str) noexcept { insert(CursorPosition<LineCountType>::EndOfText(), str); }
 		LineText* getLine(LineCountType line) noexcept;
 		void insert(const CursorPosition<LineCountType>& position, const std::string& str) noexcept;
-		void removeRange(const CursorPosition<LineCountType>& start, const CursorPosition<LineCountType>& end) noexcept;
+		void removeRange(CursorPosition<LineCountType> start, CursorPosition<LineCountType> end) noexcept;
 		void set(const std::string& str) noexcept;
 		void enableClipping(bool isEnable = true) noexcept;
 		void setScrollDelta(Vec2Df delta) noexcept;
