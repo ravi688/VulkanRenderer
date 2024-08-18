@@ -585,6 +585,18 @@ namespace SUTK
 		return { static_cast<LineCountType>(m_lines.size() - 1), static_cast<LineCountType>(m_lines.back()->getColumnCount()) };
 	}
 
+	void Text::serialize(std::ostream& stream) const noexcept
+	{
+		for(std::size_t i = 0; i < getLineCount(); i++)
+		{
+			const SUTK::LineText* lineText = getLine(i);
+			const auto& str = static_cast<const std::string&>(lineText->getData());
+			stream.write(reinterpret_cast<const char*>(str.data()), str.size());
+			if((i + 1) < getLineCount())
+				stream.write("\n", 1);
+		}
+	}
+
 	void Text::setFontSize(const f32 pointSize) noexcept
 	{
 		// update the point sizes for each line
