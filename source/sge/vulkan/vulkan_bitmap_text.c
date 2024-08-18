@@ -34,6 +34,8 @@
 #include <sge/string_builder.h>
 #include <ctype.h> // isgraph
 
+#define NUM_SPACES_PER_TAB 4
+
 SGE_API vulkan_bitmap_text_t* vulkan_bitmap_text_new(memory_allocator_t* allocator)
 {
 	vulkan_bitmap_text_t* text = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_BITMAP_TEXT, vulkan_bitmap_text_t);
@@ -464,6 +466,13 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 		};
 
 		buf_push(&text_string->glyph_offsets, &ls_offset);
+
+		/* for some reason the free type library always outputs advance_width as if the character is ' ' (space), even for '\t' (tab).
+		 * therefore, we can just multiply the advance_width by 4 (NUM_SPACES_PER_TAB) to achieve the same thing.
+		 */
+		if(ch == '\t')
+			info.advance_width *= NUM_SPACES_PER_TAB;
+
 		horizontal_pen += info.advance_width;
 
 		#if DBG_ENABLED(VULKAN_BITMAP_TEXT_STRING_SETH)
