@@ -53,6 +53,8 @@
 #include <sge/tests/bitmap_text.h>
 #include <sge/tests/bitmap_text.load.h>
 
+#include <sge/tests/sdf_rounded_rect.h>
+
 #include <sge/tests/TID-14.case1.h>
 #include <sge/tests/TID-14.case2.h>
 #include <sge/tests/TID-14.case3.h>
@@ -109,6 +111,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 	ELSE_IF(TEXT_MESH_LOAD);
 	ELSE_IF(BITMAP_TEXT);
 	ELSE_IF(BITMAP_TEXT_LOAD);
+	ELSE_IF(SDF_ROUNDED_RECT);
 	ELSE_IF(TID_14_CASE_1);
 	ELSE_IF(TID_14_CASE_2);
 	ELSE_IF(TID_14_CASE_3);
@@ -149,6 +152,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 					"\tTEXT_MESH_LOAD\n"
 					"\tBITMAP_TEXT\n"
 					"\tBITMAP_TEXT_LOAD\n"
+					"\tSDF_ROUNDED_RECT\n"
 					"\tTID_14_CASE_1\n"
 					"\tTID_14_CASE_2\n"
 					"\tTID_14_CASE_3\n"
