@@ -265,14 +265,19 @@ SGE_API u32 vulkan_mesh_get_vertex_buffer_count(vulkan_mesh_t* mesh)
 	return buf_get_element_count(&mesh->vertex_buffers);
 }
 
-SGE_API void vulkan_mesh_set_index_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, VkIndexType vo_type)
+static void _vulkan_mesh_set_index_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, VkIndexType vo_type, bool is_internal)
 {
 	/* if index buffer has already been created internally, then destroy that */
 	vulkan_mesh_destroy_index_buffer(mesh);
 
 	mesh->index_buffer.buffer = buffer;
 	mesh->index_buffer.index_type = vo_type;
-	mesh->index_buffer.is_internal = false;
+	mesh->index_buffer.is_internal = is_internal;
+}
+
+SGE_API void vulkan_mesh_set_index_buffer(vulkan_mesh_t* mesh, vulkan_buffer_t* buffer, VkIndexType vo_type)
+{
+	_vulkan_mesh_set_index_buffer(mesh, buffer, vo_type, false);
 }
 
 SGE_API void vulkan_mesh_destroy_index_buffer(vulkan_mesh_t* mesh)
@@ -303,7 +308,7 @@ SGE_API void vulkan_mesh_create_and_set_index_buffer(vulkan_mesh_t* mesh, vulkan
 		.vo_sharing_mode = VK_SHARING_MODE_EXCLUSIVE,
 		.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
-	vulkan_mesh_set_index_buffer(mesh, vulkan_buffer_create(mesh->renderer, &buffer_create_info), create_info->index_type);
+	_vulkan_mesh_set_index_buffer(mesh, vulkan_buffer_create(mesh->renderer, &buffer_create_info), create_info->index_type, true);
 }
 
 SGE_API void vulkan_mesh_create_and_add_vertex_buffer(vulkan_mesh_t* mesh, vulkan_vertex_buffer_create_info_t* create_info)
