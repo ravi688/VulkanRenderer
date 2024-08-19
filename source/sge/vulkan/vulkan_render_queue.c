@@ -322,6 +322,20 @@ SGE_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t*
 					for(u32 m = 0; m < object_count; m++)
 					{
 						vulkan_render_object_t* object = DEREF_TO(vulkan_render_object_t*, buf_get_ptr_at(objects, m));
+
+						/* MOTE:
+						 * if this render object is not active then skip drawcall for it.
+						 * PERF WARNING: however, is not the efficient way of handling inactive objects.
+						 * for example, if we only have one render object associated with a unique material, and the render object is itself inactive,
+						 * then it is useless initiating render pass pertaining to that material and binding all the descriptor sets associated with the object and the material. 
+						 * 
+						 * How can we make it more efficient?
+						 *	 only run render passes which are required by active render objects.
+						 * 	 TODO: develop an algorithm for it.
+						 * */
+						if(!vulkan_render_object_is_active(object))
+							continue;
+						
 						/* bind OBJECT_SET */
 						vulkan_descriptor_set_bind(&object->object_set, VULKAN_DESCRIPTOR_SET_OBJECT, layout);
 						/* draw the object */
