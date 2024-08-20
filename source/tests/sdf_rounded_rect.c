@@ -88,9 +88,14 @@ TEST_ON_INITIALIZE(SDF_ROUNDED_RECT)
 							"SDFRoundedRectShader"));
 
 	material_set_vec4(this->sdf_material, "parameters.color.r", vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	material_set_float(this->sdf_material, "parameters.roundness", 0.5f);
+	material_set_float(this->sdf_material, "parameters.sharpness", 1.0f);
+	material_set_float(this->sdf_material, "parameters.width", 600);
+	material_set_float(this->sdf_material, "parameters.height", 200);
+	material_set_float(this->sdf_material, "parameters.numGradPixels", 4);
 
 	AUTO planeMeshData2 = mesh3d_plane(renderer->allocator, 200);
-	mesh3d_transform_set(planeMeshData2, mat4_mul(3, mat4_translation(0, 0, 0), mat4_rotation_z(90 DEG), mat4_rotation_y(45 DEG)));
+	mesh3d_transform_set(planeMeshData2, mat4_mul(3, mat4_rotation_z(90 DEG), mat4_rotation_y(0 DEG), mat4_scale(1.0f, 1.0f, 3.0f)));
 	this->mesh = mesh_create(renderer, planeMeshData2);
 	mesh3d_destroy(planeMeshData2);
 

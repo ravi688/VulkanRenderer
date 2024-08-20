@@ -11,6 +11,12 @@ Shader
 		uniform Parameters
 		{
 			vec4 color;
+			float sharpness;
+			// Range: 0.0 to 1.0 inclusive
+			float roundness;
+			float width;
+			float height;
+			float numGradPixels;
 		} parameters;
 	}
 
@@ -33,14 +39,9 @@ Shader
 				{
 					attachment
 					{
+						blendenable = true
 					}
 				}
-
-				// depthStencil
-				// {
-				// 	depthWriteEnable = true,
-				// 	depthTestEnable = true
-				// }
 			}
 
 			[NoParse]
@@ -81,6 +82,11 @@ Shader
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 				{
 					vec4 color;
+					float sharpness;
+					float roundness;
+					float width;
+					float height;
+					float numGradPixels;
 				} parameters;
 				
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
@@ -100,17 +106,48 @@ Shader
 					return vec4(coord.x - screenInfo.size.x * 0.5, screenInfo.size.y * 0.5 - coord.y, coord.z, coord.w);
 				}
 
+				float peekFn(float x, float sharpness)
+				{
+					return (1.0 / (sharpness * sharpness * x * x + 1));
+				}
+
 				void main()
 				{
 					vec4 center = objectInfo.transform[3];
 					center = center.zyxw;
+
+					float roundness = parameters.roundness;
+					float height = parameters.height;
+					float width = parameters.width;
+					float sharpness = parameters.sharpness;
+					float numGradPixels = parameters.numGradPixels;
+
+					float radius = roundness * height * 0.5f;
+					vec2 topLeftCOC = vec2(-width * 0.5f + radius, height * 0.5f - radius) + center.xy;
+					vec2 bottomLeftCOC = vec2(-width * 0.5f + radius, -height * 0.5f + radius) + center.xy;
+					vec2 bottomRightCOC = vec2(width * 0.5f - radius, -height * 0.5f + radius) + center.xy;
+					vec2 topRightCOC = vec2(width * 0.5f - radius, height * 0.5f - radius) + center.xy;
+
 					vec4 fragCoord = gl_FragCoord;
 					fragCoord = convertToCenterOrigin(fragCoord);
-					vec2 v = fragCoord.xy - center.xy;
-					float t = dot(v, v) / 10000.0;
-					if(t >= 1.0)
-						discard;
-					color = vec4(1.0, 1.0, 1.0, 1.0);
+
+					vec2 topLeftDir = fragCoord.xy - topLeftCOC;
+					vec2 bottomLeftDir = fragCoord.xy - bottomLeftCOC;
+					vec2 bottomRightDir = fragCoord.xy - bottomRightCOC;
+					vec2 topRightDir = fragCoord.xy - topRightCOC;
+
+					float radiusSqr = radius * radius;
+					float alpha = 1.0f;
+					if((topLeftDir.x <= 0) && (topLeftDir.y >= 0) && (dot(topLeftDir, topLeftDir) >= radiusSqr))
+						alpha = peekFn((dot(topLeftDir, topLeftDir) - radiusSqr) / (numGradPixels * numGradPixels), sharpness);
+					if((bottomLeftDir.x <= 0) && (bottomLeftDir.y <= 0) && (dot(bottomLeftDir, bottomLeftDir) >= radiusSqr))
+						alpha = peekFn((dot(bottomLeftDir, bottomLeftDir) - radiusSqr) / (numGradPixels * numGradPixels), sharpness);
+					if((bottomRightDir.x >= 0) && (bottomRightDir.y <= 0) && (dot(bottomRightDir, bottomRightDir) >= radiusSqr))
+						alpha = peekFn((dot(bottomRightDir, bottomRightDir) - radiusSqr) / (numGradPixels * numGradPixels), sharpness);
+					if((topRightDir.x >= 0) && (topRightDir.y >= 0) && (dot(topRightDir, topRightDir) >= radiusSqr))
+						alpha = peekFn((dot(topRightDir, topRightDir) - radiusSqr) / (numGradPixels * numGradPixels), sharpness);
+
+					color = vec4(1.0, 1.0, 1.0, alpha);
 				}
 			}
 		}
