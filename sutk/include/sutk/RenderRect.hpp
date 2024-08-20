@@ -71,14 +71,31 @@ namespace SUTK
 		virtual void onGlobalCoordDirty() noexcept override;
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 
+		bool isPosDirty() const noexcept { return m_isPosDirty; }
+		bool isSizeDirty() const noexcept { return m_isSizeDirty; }
+
 	public:
 		// Constructors
-		RenderRectFill(UIDriver& driver, RenderableContainer* container) noexcept;
+		RenderRectFill(UIDriver& driver, RenderableContainer* container, bool isUpdate = true) noexcept;
 
 		// Implementation of RenderRect
 		virtual bool isDirty() override;
 		virtual void update() override;
 
 		virtual void setColor(Color4 color) noexcept override;
+	};
+
+	class RenderRectFillRound : public RenderRectFill
+	{
+	private:
+		SDF::ParameterID m_roundnessID;
+		SDF::ParameterID m_widthID;
+		SDF::ParameterID m_heightID;
+		SDF::ParameterID m_centerID;
+	public:
+		RenderRectFillRound(UIDriver& driver, RenderableContainer* container) noexcept;
+
+		// Override update()
+		virtual void update() override;
 	};
 };

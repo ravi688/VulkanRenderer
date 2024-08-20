@@ -3,7 +3,7 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 15h:23m:21s, 17/8/2024
+ * Time & Date (yy/mm/yyy) of Generation: 23h:50m:22s, 20/8/2024
  */
 
 #pragma once
@@ -232,6 +232,163 @@ static const char* _________SHADERS_PRESETS_SOLID_COLOR_RECT_ARRAY_V3DSHADER =
 "        }\n"
 "    }\n"
 "\n"
+"}";
+static const char* _________SHADERS_PRESETS_NO_STANDALONE_USE_SDF_TEMPLATE_TEMPLATE = 
+"#sl version 2023\n"
+"#sb version 2023\n"
+"\n"
+"[Name(\"SDFRoundedRectShader\")]\n"
+"Shader\n"
+"{\n"
+"	Properties\n"
+"	{\n"
+"		[Stage(fragment, vertex)]\n"
+"		[Set(material_set, material_properties)]\n"
+"		uniform Parameters\n"
+"		{\n"
+"			vec4 color;\n"
+"			PARAMETERS_HERE\n"
+"		} parameters;\n"
+"	}\n"
+"\n"
+"	Layout\n"
+"	{\n"
+"		[Rate(per_vertex)]\n"
+"		[MeshLayout(sge_optimal)]\n"
+"		[Attribute(position)]\n"
+"		vec3 position;\n"
+"	}\n"
+"\n"
+"	RenderPass\n"
+"	{\n"
+"		SubPass\n"
+"		{\n"
+"			[NoParse]\n"
+"			GraphicsPipeline\n"
+"			{\n"
+"                rasterization\n"
+"                {\n"
+"                    // in SUTK (geometry compilation) we need this to be counterclockwise\n"
+"                    frontface = counterclockwise\n"
+"                }\n"
+"\n"
+"				colorBlend\n"
+"				{\n"
+"					attachment\n"
+"					{\n"
+"						blendenable = true\n"
+"					}\n"
+"				}\n"
+"			}\n"
+"\n"
+"			[NoParse]\n"
+"			GLSL\n"
+"			{\n"
+"				#stage vertex\n"
+"\n"
+"				#version 450\n"
+"				\n"
+"				#include <v3d.h>\n"
+"				\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;\n"
+"				\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform ScreenInfo\n"
+"				{\n"
+"					uvec2 resolution;\n"
+"					uvec2 dpi;\n"
+"					uvec2 size;\n"
+"					mat4 matrix;\n"
+"				} screenInfo;\n"
+"\n"
+"				layout(location = POSITION_LOCATION) in vec3 position;\n"
+"				\n"
+"				void main()\n"
+"				{\n"
+"					vec4 clipPos = screenInfo.matrix * objectInfo.transform * vec4(position, 1);\n"
+"					clipPos.y = -clipPos.y;\n"
+"					gl_Position = clipPos;\n"
+"				}\n"
+"\n"
+"				#stage fragment\n"
+"\n"
+"				#version 450\n"
+"				\n"
+"				#include <v3d.h>\n"
+"\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters\n"
+"				{\n"
+"					vec4 color;\n"
+"					PARAMETERS_HERE\n"
+"				} parameters;\n"
+"				\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;\n"
+"\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform ScreenInfo\n"
+"				{\n"
+"					uvec2 resolution;\n"
+"					uvec2 dpi;\n"
+"					uvec2 size;\n"
+"					mat4 matrix;\n"
+"				} screenInfo;\n"
+"\n"
+"				layout(location = 0) out vec4 color;\n"
+"				\n"
+"				vec4 convertToCenterOrigin(vec4 coord)\n"
+"				{\n"
+"					return vec4(coord.x - screenInfo.size.x * 0.5, screenInfo.size.y * 0.5 - coord.y, coord.z, coord.w);\n"
+"				}\n"
+"\n"
+"				float realizeWidth(float width)\n"
+"				{\n"
+"					uvec2 win_size = screenInfo.size;\n"
+"                    return width + win_size.x * 0.5;\n"
+"				}\n"
+"\n"
+"				float realizeHeight(float height)\n"
+"				{\n"
+"					uvec2 win_size = screenInfo.size;\n"
+"					return win_size.y * 0.5 - height;\n"
+"				}\n"
+"\n"
+"				vec2 realizeSize(vec2 size)\n"
+"				{\n"
+"					uvec2 win_size = screenInfo.size;\n"
+"                    float size_x = size.x + win_size.x * 0.5;\n"
+"                    float size_y = win_size.y * 0.5 - size.y;\n"
+"                    return vec2(size_x, size_y);\n"
+"                }\n"
+"\n"
+"				float peekFn(float x, float sharpness)\n"
+"				{\n"
+"					return (1.0 / (sharpness * sharpness * x * x + 1));\n"
+"				}\n"
+"				\n"
+"				float sdf(vec2 fragCoord)\n"
+"				{\n"
+"					PARAMETERS_UNPACK_HERE\n"
+"\n"
+"					// Signed Distance Function Definition\n"
+"				\n"
+"					float alpha = 1.0f;\n"
+"				\n"
+"					SDF_FN_BODY_HERE\n"
+"									\n"
+"					return alpha;\n"
+"				}\n"
+"\n"
+"				void main()\n"
+"				{\n"
+"					vec4 fragCoord = gl_FragCoord;\n"
+"					fragCoord = convertToCenterOrigin(fragCoord);\n"
+"\n"
+"					float alpha = sdf(fragCoord.xy);\n"
+"\n"
+"					color = vec4(1.0, 1.0, 1.0, alpha) * parameters.color;\n"
+"				}\n"
+"			}\n"
+"		}\n"
+"	}\n"
 "}";
 static const char _________SUTK_FONTS_CALIBRI_REGULAR_TTF[] = 
 {0x0, 0x1, 0x0, 0x0, 0x0, 0x15, 0x1, 0x0, 0x0, 0x4, 0x0, 0x50, 0x44, 0x53, 0x49, 0x47, 0xaf, 0x1d, 0x8d, 0x1a, 
@@ -26798,7 +26955,7 @@ typedef struct shader_file_path_and_data_mapping_t
 	long long data_size;
 } shader_file_path_and_data_mapping_t;
 
-#define G_SHADER_MAPPING_COUNT 6
+#define G_SHADER_MAPPING_COUNT 7
 
 static shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT];
 static bool g_is_shader_mappings_populated = false;
@@ -26809,10 +26966,11 @@ static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_
 	{
 		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER, 1729 };
 		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color_rect_array.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_RECT_ARRAY_V3DSHADER, 4056 };
-		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
-		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Roboto-Bold.ttf", _________SUTK_FONTS_ROBOTO_BOLD_TTF, 167336 };
-		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 11952 };
-		g_shader_mappings[5] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 8056 };
+		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/no_standalone_use/sdf_template.template", _________SHADERS_PRESETS_NO_STANDALONE_USE_SDF_TEMPLATE_TEMPLATE, 3335 };
+		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
+		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Roboto-Bold.ttf", _________SUTK_FONTS_ROBOTO_BOLD_TTF, 167336 };
+		g_shader_mappings[5] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 11952 };
+		g_shader_mappings[6] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 8056 };
 
 		g_is_shader_mappings_populated = true;
 	}

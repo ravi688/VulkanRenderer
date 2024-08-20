@@ -13,7 +13,7 @@ import time
 # path to the generated header file, it is relative to where this python scripts resides
 c_header_file_path='./shaders.h'
 # if a folder is specified, then which text files to consider for embedding?
-text_file_extensions = [ '.v3dshader', '.txt', '.hpp', '.cpp', '.h', '.c' ]
+text_file_extensions = [ '.v3dshader', '.template', '.txt', '.hpp', '.cpp', '.h', '.c' ]
 # if a folder is specified, then which binary files to consider for embedding?
 binary_file_extensions = [ '.ttf' ]
 bytes_per_row = 20

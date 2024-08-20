@@ -2,13 +2,16 @@
 
 #include <sutk/defines.hpp>
 #include <sutk/UIDriver.hpp> // for SUTK::UIDriverObject
+#include <sutk/SDF.hpp> // for SUTK::SDF
 
 #include <vector> 	// for std::vector
 #include <optional> // for std::optional
 
+#include <common/assert.h> // for _com_assert
+
 namespace SUTK
 {
-	class Geometry : public UIDriverObject
+	class SUTK_API Geometry : public UIDriverObject
 	{
 	public:
 		typedef Vec2D<f32> VertexPosition;
@@ -68,8 +71,12 @@ namespace SUTK
 		FillColorInfo m_fillColorInfo;
 		Topology m_topology;
 		bool m_isArray;
+		SDF* m_sdf;
+
+		void resetModificationFlags() noexcept;
 	public:
 		Geometry(UIDriver& driver) noexcept;
+		~Geometry() noexcept;
 
 		GfxDriverObjectHandleType compile(GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
@@ -98,6 +105,10 @@ namespace SUTK
 		Geometry& setArray(bool isArray) noexcept { m_isArray = true; return *this; }
 		bool isArray() const noexcept { return m_isArray; }
 
+		Geometry& setSDF(bool isSDF = true) noexcept { _com_assert(isSDF == true); m_sdf = new SDF(); return *this; }
+		bool isSDF() const { return m_sdf != NULL; }
+
+
 		// getters
 
 		Topology getTopology() const noexcept { return m_topology; }
@@ -111,19 +122,13 @@ namespace SUTK
 
 		Color4 getFillColor() const { return m_fillColorInfo.color; }
 
+		SDF& getSDF() { _com_assert(m_sdf != NULL); return *m_sdf; }
+		const SDF& getSDF() const { return const_cast<Geometry*>(this)->getSDF(); }
+
 		bool isVertexIndexArrayModified() const noexcept { return m_indexArrayInfo.isModified; }
 		bool isVertexPositionArrayModified() const noexcept { return m_positionArrayInfo.isModified; }
 		bool isInstanceTransformArrayModified() const noexcept { return m_transformArrayInfo.isModified; }
 		bool isLineStrokeModified() const noexcept { return m_strokeInfo.has_value() && m_strokeInfo->isModified; }
 		bool isFillColorModified() const noexcept { return m_fillColorInfo.isModified; }
-
-		bool isModified() const noexcept
-		{
-			return isVertexIndexArrayModified() ||
-					isVertexPositionArrayModified() || 
-					isInstanceTransformArrayModified() ||
-					isLineStrokeModified() ||
-					isFillColorModified();
-		}
 	};
 }

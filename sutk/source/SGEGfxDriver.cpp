@@ -406,12 +406,264 @@ namespace SUTK
 		return it;
 	}
 
+	static std::string getParametersString(const Geometry& geometry)
+	{
+		std::string str;
+		const std::vector<SDF::ParameterData>& params = geometry.getSDF().getParams();
+		for(const SDF::ParameterData& param : params)
+		{
+			switch(param.type)
+			{
+				case SDF::ParameterType::Float32:
+				{
+					str.append("float");
+					break;
+				}
+				case SDF::ParameterType::Vector2Float32:
+				{
+					str.append("vec2");
+					break;
+				}
+				case SDF::ParameterType::Unsigned32:
+				{
+					str.append("uint");
+					break;
+				}
+				case SDF::ParameterType::Vector2Unsigned32:
+				{
+					str.append("uvec2");
+					break;
+				}
+				case SDF::ParameterType::Signed32:
+				{
+					str.append("int");
+					break;
+				}
+				case SDF::ParameterType::Vector2Signed32:
+				{
+					str.append("ivec2");
+					break;
+				}
+				case SDF::ParameterType::InvariantWidth:
+				case SDF::ParameterType::InvariantHeight:
+				{
+					str.append("float");
+					break;
+				}
+				case SDF::ParameterType::InvariantSize:
+				{
+					str.append("vec2");
+					break;
+				}
+			};
+
+			str.append(" ");
+			str.append(param.name);
+			str.append(";\n");
+		}
+		return str;
+	}
+
+
+	static void getParametersUnpackString(const Geometry& geometry, std::string& str)
+	{
+		const std::vector<SDF::ParameterData>& params = geometry.getSDF().getParams();
+		for(const SDF::ParameterData& param : params)
+		{
+			switch(param.type)
+			{
+				case SDF::ParameterType::Float32:
+				{
+					str.append("float");
+					break;
+				}
+				case SDF::ParameterType::Vector2Float32:
+				{
+					str.append("vec2");
+					break;
+				}
+				case SDF::ParameterType::Unsigned32:
+				{
+					str.append("uint");
+					break;
+				}
+				case SDF::ParameterType::Vector2Unsigned32:
+				{
+					str.append("uvec2");
+					break;
+				}
+				case SDF::ParameterType::Signed32:
+				{
+					str.append("int");
+					break;
+				}
+				case SDF::ParameterType::Vector2Signed32:
+				{
+					str.append("ivec2");
+					break;
+				}
+				case SDF::ParameterType::InvariantWidth:
+				case SDF::ParameterType::InvariantHeight:
+				{
+					str.append("float");
+					break;
+				}
+				case SDF::ParameterType::InvariantSize:
+				{
+					str.append("vec2");
+					break;
+				}
+			};
+
+			str.append(" ");
+			str.append(param.name);
+			if(param.type == SDF::ParameterType::InvariantWidth)
+			{
+				str.append(" = realizeWidth(");
+				str.append("parameters.");
+				str.append(param.name);
+				str.append(")");
+			}
+			else if(param.type == SDF::ParameterType::InvariantHeight)
+			{
+				str.append(" = realizeHeight(");
+				str.append("parameters.");
+				str.append(param.name);
+				str.append(")");
+			}
+			else
+			{
+				str.append(" = parameters.");
+				str.append(param.name);
+			}
+			str.append(";\n");
+		}
+	}
+
 	SGE::Shader SGEGfxDriver::compileShader(const Geometry& geometry)
 	{
-		if(geometry.isArray())
+		if(geometry.isSDF())
+		{
+			std::string str(m_driver.getBuiltinFileData("/sdf_template.template").first);
+
+			// generate the parameter list
+			std::string parameters = getParametersString(geometry);
+
+			// replace every occurence of "PARAMETER_HERE" with the generated parameter list
+			std::string::size_type pos = str.find("PARAMETERS_HERE");
+			while(pos != std::string::npos)
+			{
+				str.erase(pos, strlen("PARAMETERS_HERE"));
+				str.insert(pos, parameters);
+				pos += parameters.size();
+				pos = str.find("PARAMETERS_HERE", pos);
+			}
+
+			// replace every occurence of "PARAMETER_UNPACK_HERE" with unpacked parameter list
+			pos = str.find("PARAMETERS_UNPACK_HERE");
+			_com_assert(pos != std::string::npos);
+			str.erase(pos, strlen("PARAMETERS_UNPACK_HERE"));
+			parameters.clear();
+			getParametersUnpackString(geometry, parameters);
+			str.insert(pos, parameters);
+			pos += parameters.size();
+
+			// replace an occurence of "SDF_FN_BODY_HERE" with the Signed Distance Function code
+			pos = str.find("SDF_FN_BODY_HERE", pos);
+			_com_assert(pos != std::string::npos);
+			str.erase(pos, strlen("SDF_FN_BODY_HERE"));
+			_com_assert(geometry.getSDF().getCode().size() > 0);
+			str.insert(pos, geometry.getSDF().getCode());
+
+			return m_driver.getShaderLibrary().compileAndLoadShader(str);
+		}
+		else if(geometry.isArray())
 			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color_rect_array.v3dshader").first);
 		else
 			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first);
+	}
+
+	static INLINE_IF_RELEASE_MODE vec2_t to_vec2(const Vec2D<f32> value)
+	{
+		return vec2(value.x, value.y);
+	}
+
+	void SGEGfxDriver::updateSDFParameterValues(const Geometry& geometry, SGE::Material material) noexcept
+	{
+		_com_assert(geometry.isSDF());
+
+		if(!geometry.getSDF().isParamsModified())
+			return;
+
+		const std::vector<SDF::ParameterData>& params = geometry.getSDF().getParams();
+		std::string str;
+		for(const SDF::ParameterData& param : params)
+		{
+			if(!param.isModified)
+				continue;
+				
+			str.clear();
+			str.append("parameters.");
+			str.append(param.name);
+			switch(param.type)
+			{
+				case SDF::ParameterType::Float32:
+				{
+					material.set<float>(str, std::get<f32>(param.value));
+					break;
+				}
+				case SDF::ParameterType::Vector2Float32:
+				{
+					material.set<vec2_t>(str, to_vec2(std::get<Vec2D<f32>>(param.value)));
+					break;
+				}
+				case SDF::ParameterType::Unsigned32:
+				{
+					material.set<u32>(str, std::get<u32>(param.value));
+					break;
+				}
+				case SDF::ParameterType::Vector2Unsigned32:
+				{
+					// TODO: material.set<uvec2>(str, std::get<Vec2D<u32>>(param.value));
+					// Currently Material::set doesn't have any template specialization for uvec2
+					_com_assert(false);
+					break;
+				}
+				case SDF::ParameterType::Signed32:
+				{
+					material.set<s32>(str, std::get<s32>(param.value));
+					break;
+				}
+				case SDF::ParameterType::Vector2Signed32:
+				{
+					// TODO: material.set<ivec2>(str, std::get<Vec2D<s32>>(param.value));
+					// Currently Material::set doesn't have any template specialization for ivec2
+					_com_assert(false);
+					break;
+				}
+				case SDF::ParameterType::InvariantWidth:
+				{
+					f32 value = std::get<InvariantWidth>(param.value);
+					value = SUTKToSGECoordTransform({ value, 0 }).z;
+					material.set<f32>(str, value);
+					break;
+				}
+				case SDF::ParameterType::InvariantHeight:
+				{
+					f32 value = std::get<InvariantHeight>(param.value);
+					value = SUTKToSGECoordTransform({ 0, value }).y;
+					material.set<f32>(str, value);
+					break;
+				}
+				case SDF::ParameterType::InvariantSize:
+				{
+					InvariantSize size = std::get<InvariantSize>(param.value);
+					vec3_t v = SUTKToSGECoordTransform({ size.width, size.height });
+					material.set<vec2_t>(str, vec2(v.z, v.y));
+					break;
+				}
+			}
+		}
 	}
 
 	std::pair<SGEMeshData, GfxDriverObjectHandleType> SGEGfxDriver::createMesh(const Geometry& geometry)
@@ -477,6 +729,10 @@ namespace SUTK
 			Color4 color = geometry.getFillColor();
 			material.set<vec4_t>("parameters.color", to_vec4(color));
 		}
+
+		// if this is a SDF geometry and its parameters are modified, then we need to update the GPU side buffer
+		if(geometry.isSDF() && geometry.getSDF().isParamsModified())
+			updateSDFParameterValues(geometry, material);
 
 		if(geometry.isVertexIndexArrayModified())
 		{
