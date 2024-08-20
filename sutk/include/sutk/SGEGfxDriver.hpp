@@ -98,6 +98,8 @@ namespace SUTK
 		void removeIDFromTypeTable(u32 id);
 		void destroyTextGroup(std::unordered_map<id_generator_id_type_t, SGEBitmapTextGroup>::iterator it, bool isErase = true);
 
+		void updateSDFParameterValues(const Geometry& geometry, SGE::Material material) noexcept;
+
 	public:
 
 		// Constructors

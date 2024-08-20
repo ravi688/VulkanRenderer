@@ -11,22 +11,39 @@ namespace SUTK
 													m_strokeInfo({ }),
 													m_fillColorInfo({Color4::white(), false }),
 													m_topology(Topology::TriangleList),
-													m_isArray(false)
+													m_isArray(false),
+													m_sdf(NULL)
 	{
 
+	}
+
+	Geometry::~Geometry() noexcept
+	{
+		if(m_sdf != NULL)
+		{
+			delete m_sdf;
+			m_sdf = NULL;
+		}
 	}
 
 	GfxDriverObjectHandleType Geometry::compile(GfxDriverObjectHandleType previous) noexcept
 	{
 		auto& gfxDriver = getGfxDriver();
 		auto handle = gfxDriver.compileGeometry(*this, previous);
+		resetModificationFlags();
+		return handle;
+	}
+
+	void Geometry::resetModificationFlags() noexcept
+	{
 		if(m_strokeInfo.has_value())
 			m_strokeInfo->isModified = false;
 		m_positionArrayInfo.isModified = false;
 		m_indexArrayInfo.isModified = false;
 		m_transformArrayInfo.isModified = false;
 		m_fillColorInfo.isModified = false;
-		return handle;
+		if(m_sdf != NULL)
+			m_sdf->resetModificationFlags();
 	}
 
 	Geometry& Geometry::topology(Topology topology) noexcept

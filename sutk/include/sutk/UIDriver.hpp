@@ -18,6 +18,7 @@ namespace SUTK
 	class Text;
 	class RenderRectOutline;
 	class RenderRectFill;
+	class RenderRectFillRound;
 	
 	// Forward declarations for Interface classes
 	class IGfxDriver;
@@ -79,6 +80,8 @@ namespace SUTK
 	RenderRectOutline* UIDriver::createRenderable<RenderRectOutline>(RenderableContainer* parent);
 	template<>
 	RenderRectFill* UIDriver::createRenderable<RenderRectFill>(RenderableContainer* parent);
+	template<>
+	RenderRectFillRound* UIDriver::createRenderable<RenderRectFillRound>(RenderableContainer* parent);
 
 	class UIDriverObject
 	{

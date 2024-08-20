@@ -81,6 +81,7 @@ namespace SUTK
 
 	template RenderRectOutline* UIDriver::createRenderRect<RenderRectOutline>(RenderableContainer* container);
 	template RenderRectFill* UIDriver::createRenderRect<RenderRectFill>(RenderableContainer* container);
+	template RenderRectFillRound* UIDriver::createRenderRect<RenderRectFillRound>(RenderableContainer* container);
 
 	template<>
 	Text* UIDriver::createRenderable<Text>(RenderableContainer* parent) { return createText(parent); }
@@ -90,4 +91,7 @@ namespace SUTK
 
 	template<>
 	RenderRectFill* UIDriver::createRenderable<RenderRectFill>(RenderableContainer* parent) { return createRenderRect<RenderRectFill>(parent); }
+
+	template<>
+	RenderRectFillRound* UIDriver::createRenderable<RenderRectFillRound>(RenderableContainer* parent) { return createRenderRect<RenderRectFillRound>(parent); }
 }

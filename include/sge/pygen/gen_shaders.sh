@@ -5,6 +5,7 @@
 python $(pwd)/$(dirname "$0")/gen_shaders.py \
 		../../../shaders/presets/solid_color.v3dshader \
 		../../../shaders/presets/solid_color_rect_array.v3dshader \
+		../../../shaders/presets/no_standalone_use/sdf_template.template \
 		../../../sutk/fonts/Calibri\ Regular.ttf \
 		../../../sutk/fonts/Roboto-Bold.ttf \
 		../../../shaders/include/v3d.h \
