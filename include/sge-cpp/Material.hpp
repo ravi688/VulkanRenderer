@@ -30,6 +30,9 @@ namespace SGE
 	void Material::set<float>(const std::string& name, float value);
 
 	template<>
+	void Material::set<vec2_t>(const std::string& name, vec2_t value);
+
+	template<>
 	void Material::set<vec4_t>(const std::string& name, vec4_t value);
 
 	template<>
