@@ -16,6 +16,7 @@
 
 #include <limits>
 #include <sstream>
+#include <type_traits> // for std::is_constant_evaluated()
 
 namespace SUTK
 {
@@ -406,12 +407,49 @@ namespace SUTK
 		Color4& alpha(u8 _alpha) & noexcept { a = _alpha; return *this; }
 		Color4&& alpha(u8 _alpha) && noexcept { a = _alpha; return std::move(*this); }
 
-		static constexpr Color4 red() noexcept { return { 255, 0, 0, 255 }; }
-		static constexpr Color4 blue() noexcept { return { 0, 0, 255, 255 }; }
-		static constexpr Color4 green() noexcept { return { 0, 255, 0, 255 }; }
-		static constexpr Color4 white() noexcept { return { 255, 255, 255, 255 }; }
-		static constexpr Color4 black() noexcept { return { 0, 0, 0, 255 }; }
-		static constexpr Color4 yellow() noexcept { return { 255, 255, 0, 255 }; }
+		constexpr bool equalsApprox(Color4 rhs) noexcept
+		{
+			// NOTE: we are using here std::max(<u8 value>, 1) - 1, 
+			// and std::min(<u8 value>, 254) + 1 to avoid wrap around in edge cases.
+			return com::LiesBetweenInc(r, static_cast<u8>(com::max(rhs.r, 1) - 1), static_cast<u8>(com::min(rhs.r, 254) + 1))
+				&& com::LiesBetweenInc(g, static_cast<u8>(com::max(rhs.g, 1) - 1), static_cast<u8>(com::min(rhs.g, 254) + 1))
+				&& com::LiesBetweenInc(b, static_cast<u8>(com::max(rhs.b, 1) - 1), static_cast<u8>(com::min(rhs.b, 254) + 1))
+				&& com::LiesBetweenInc(a, static_cast<u8>(com::max(rhs.a, 1) - 1), static_cast<u8>(com::min(rhs.a, 254) + 1));
+		}
+
+		static constexpr Color4 Lerp(Color4 a, Color4 b, f32 t) noexcept
+		{
+			return { com::Lerp(a.r, b.r, t), com::Lerp(a.g, b.g, t), com::Lerp(a.b, b.b, t), com::Lerp(a.a, b.a, t) };
+		}
+
+		static constexpr Color4 red(f32 level = 1.0f) noexcept
+		{ 
+			return { static_cast<u8>(255 * level), 0, 0, 255 }; 
+		}
+		static constexpr Color4 blue(f32 level = 1.0f) noexcept
+		{ 
+			return { 0, 0, static_cast<u8>(255 * level), 255 }; 
+		}
+		static constexpr Color4 green(f32 level = 1.0f) noexcept
+		{
+			return { 0, static_cast<u8>(255 * level), 0, 255 }; 
+		}
+		static constexpr Color4 white() noexcept
+		{
+			return Color4::grey(1.0f);
+		}
+		static constexpr Color4 black() noexcept
+		{
+			return { 0, 0, 0, 255 }; 
+		}
+		static constexpr Color4 yellow(f32 level = 1.0f) noexcept
+		{
+			return { static_cast<u8>(255 * level), static_cast<u8>(255 * level), 0, 255 }; 
+		}
+		static constexpr Color4 grey(f32 level = 0.5f) noexcept
+		{ 
+			return { static_cast<u8>(255 * level), static_cast<u8>(255 * level), static_cast<u8>(255 * level), 255 }; 
+		}
 	};
 
 	typedef Rect2D<f32> Rect2Df;
