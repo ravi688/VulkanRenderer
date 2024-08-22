@@ -31,6 +31,7 @@ namespace SUTK
 		IInputDriver* m_inputDriver;
 		bool m_isDummyInputDriver;
 		std::vector<Renderable*> m_renderables;
+		GfxDriverObjectHandleType m_globalTextGroup;
 
 		friend class Renderable;
 	public:
@@ -46,6 +47,7 @@ namespace SUTK
 		const IInputDriver& getInputDriver() const { return *m_inputDriver; }
 
 		Vec2Df getWindowSize() noexcept { return getGfxDriver().getSizeInCentimeters(); }
+		GfxDriverObjectHandleType getGlobalTextGroup() noexcept;
 
 		template<typename ContainerType, typename... Args>
 		ContainerType* createContainer(Container* parent, Args... args)

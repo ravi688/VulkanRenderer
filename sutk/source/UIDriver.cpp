@@ -11,12 +11,12 @@
 
 namespace SUTK
 {
-	UIDriver::UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept: m_gfxDriver(gfxDriver), m_inputDriver(&inputDriver), m_isDummyInputDriver(false)
+	UIDriver::UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept: m_gfxDriver(gfxDriver), m_inputDriver(&inputDriver), m_isDummyInputDriver(false), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
 	{
 
 	}
 
-	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), m_inputDriver(new DummyInputDriver{ }), m_isDummyInputDriver(true)
+	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), m_inputDriver(new DummyInputDriver{ }), m_isDummyInputDriver(true), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
 	{
 		
 	}
@@ -36,6 +36,16 @@ namespace SUTK
 
 		// now record and dispatch rendering commands (delegated that to rendering backend)
 		m_gfxDriver.render(*this);
+	}
+
+	GfxDriverObjectHandleType UIDriver::getGlobalTextGroup() noexcept
+	{
+		if(m_globalTextGroup == GFX_DRIVER_OBJECT_NULL_HANDLE)
+		{
+			m_globalTextGroup = getGfxDriver().createTextGroup();
+			_com_assert(m_globalTextGroup != GFX_DRIVER_OBJECT_NULL_HANDLE);
+		}
+		return m_globalTextGroup;
 	}
 
 	// Containers

@@ -1,5 +1,7 @@
 #include <sutk/Button.hpp>
 
+#include <sutk/SmallText.hpp> // for SUTK::SmallText
+
 namespace SUTK
 {
 	VisualButtonRect::VisualButtonRect(SUTK::UIDriver& driver, SUTK::RenderableContainer* container) noexcept : RenderRectFillRound(driver, container),
@@ -48,6 +50,16 @@ namespace SUTK
 		m_cta.transitionTo(state);
 	}
 
+	Label::Label(UIDriver& driver, Container* parent) noexcept : RenderableContainer(driver, parent)
+	{
+		m_text = driver.createRenderable<SmallText>(this, driver.getGlobalTextGroup());
+		set("New Label");
+	}
+
+	void Label::set(const std::string& str) noexcept
+	{
+		m_text->setData(str);
+	}
 
 	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent) noexcept : RenderableContainer(driver, parent)
 	{
@@ -58,6 +70,10 @@ namespace SUTK
 		getAnchorRect()->setRect( { 0, 0, 1, 1 });
 
 		m_visualButton = driver.createRenderable<VisualButtonRect>(this);
+		m_label = driver.createContainer<Label>(this);
+		// size of the label's rect should be as that of ButtonGraphic's rect
+		m_label->setRect({ { 0, 0 }, getSize() });
+		m_label->getAnchorRect()->setRect({ 0.0f, 0.0f, 1.0f, 1.0f });
 	}
 
 	/*						____________
