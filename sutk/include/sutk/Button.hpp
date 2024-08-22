@@ -14,6 +14,8 @@
 #include <sutk/ColorTransitionAutomaton.hpp> // for SUTK::ColorTransitionAutomaton
 #include <sutk/InputEventHandlerObject.hpp> // for SUTK::MouseMoveHandlerObject, and SUTK::MouseClickHandlerObject
 
+#include <sutk/Label.hpp> // for SUTK::Label
+
 namespace SUTK
 {
 	class SUTK_API VisualButtonRect : public RenderRectFillRound
@@ -64,17 +66,7 @@ namespace SUTK
 		virtual void onRelease() = 0;
 	};
 
-	class SmallText;
-	
-	class SUTK_API Label : public RenderableContainer
-	{
-	private:
-		SmallText* m_text;
-	public:
-		Label(UIDriver& driver, Container* parent) noexcept;
-
-		void set(const std::string& str) noexcept;
-	};
+	class Label;
 
 	class SUTK_API DefaultButtonGraphic : public RenderableContainer, public IButtonGraphic
 	{
@@ -93,6 +85,7 @@ namespace SUTK
 		virtual void onRelease() noexcept override;
 
 		VisualButtonRect& getVisualButtonRect() noexcept { return *m_visualButton; }
+		Label& getLabel() noexcept { return *m_label; }
 	};
 
 	class SUTK_API Button : public Container, 

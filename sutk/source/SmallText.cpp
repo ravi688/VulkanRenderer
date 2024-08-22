@@ -8,7 +8,17 @@
 
 namespace SUTK
 {
-	SmallText::SmallText(UIDriver& driver, RenderableContainer* container, GfxDriverObjectHandleType textGroup, Color4 color) noexcept : GfxDriverRenderable(driver, container), m_isPosDirty(true), m_isDataDirty(false), m_isPointSizeDirty(false), m_isColorDirty(true), m_isColorRangesDirty(false), m_color(color)
+	SmallText::SmallText(UIDriver& driver, RenderableContainer* container, GfxDriverObjectHandleType textGroup, Color4 color) noexcept : 
+															GfxDriverRenderable(driver, container), 
+															m_isPosDirty(true), 
+															m_isDataDirty(false), 
+															m_isPointSizeDirty(false), 
+															m_isColorDirty(true), 
+															m_isColorRangesDirty(false), 
+															m_color(color),
+															m_horizontalAlignment(HorizontalAlignment::Invalid),
+															m_verticalAlignment(VerticalAlignment::Invalid)
+
 	{
 		setGfxDriverObjectHandle(getGfxDriver().createText(textGroup));
 		m_pointSize = getFontSize();
@@ -35,18 +45,23 @@ namespace SUTK
 			getGfxDriver().setTextPointSize(getGfxDriverObjectHandle(), m_pointSize);
 			m_isPointSizeDirty = false;
 		}
-		if(m_isPosDirty)
-		{
-			Vec2Df pos = m_pos;
-			if(getContainer() != NULL)
-				pos = getContainer()->getLocalCoordsToScreenCoords(m_pos);
-			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), pos);
-			m_isPosDirty = false;
-		}
+
 		if(m_isDataDirty)
 		{
 			getGfxDriver().setTextData(getGfxDriverObjectHandle(), m_data);
 			m_isDataDirty = false;
+		}
+
+		if(m_isPosDirty)
+		{
+			Vec2Df pos = m_pos;
+			if(getContainer() != NULL)
+			{
+				pos = getAlignedPosition(m_pos);
+				pos = getContainer()->getLocalCoordsToScreenCoords(pos);
+			}
+			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), pos);
+			m_isPosDirty = false;
 		}
 
 		// should be updated after character array has been updated with setTextData().
@@ -93,13 +108,15 @@ namespace SUTK
 	LineCountType SmallText::getColPosFromCoord(f32 coord) noexcept
 	{
 		// SmallText::getCoordFromColPos function does all the calculations based on the most recent data in SGE
-		ensureUpdated();
+		if(m_isDataDirty)
+			update();
 		return getGfxDriver().getTextGlyphIndexFromCoord(getGfxDriverObjectHandle(), coord);
 	}
 	f32 SmallText::getCoordFromColPos(LineCountType col) noexcept
 	{
 		// SmallText::getCoordFromColPos function does all the calculations based on the most recent data in SGE
-		ensureUpdated();
+		if(m_isDataDirty)
+			update();
 		return getGfxDriver().getTextCoordFromGlyphIndex(getGfxDriverObjectHandle(), col);
 	}
 	void SmallText::setData(const std::string& data) noexcept
@@ -161,6 +178,11 @@ namespace SUTK
 		_com_assert(getContainer() != NULL);
 		m_isPosDirty = true;
 	}
+	void SmallText::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
+	{
+		if(isSizeChanged)
+			m_isPosDirty = true;
+	}
 	void SmallText::setFontSize(const f32 pointSize) noexcept
 	{
 		m_isPointSizeDirty = true;
@@ -174,5 +196,73 @@ namespace SUTK
 	f32 SmallText::getBaselineHeight() noexcept
 	{
 		return getGfxDriver().getTextBaselineHeightInCentimeters(m_pointSize);
+	}
+
+	Vec2Df SmallText::getBoundingRectSize() noexcept
+	{
+		f32 width = getCoordFromColPos(getColumnCount());
+		f32 height = getBaselineHeight();
+		return { width, height };
+	}
+
+	Vec2Df SmallText::getAlignedPosition(Vec2Df pos) noexcept
+	{
+		if(getContainer() == NULL)
+			return pos;
+
+		// This is to avoid calling getBoundingRect() as much as possible,
+		// as that internally calls getCoordFromColPos() which in turn calls ensureUpdated().
+		if((m_horizontalAlignment == HorizontalAlignment::Invalid) && (m_verticalAlignment == VerticalAlignment::Invalid))
+			return pos;
+
+		Vec2Df size = getBoundingRectSize();
+		f32 hPos = pos.x;
+		switch(m_horizontalAlignment)
+		{
+			case HorizontalAlignment::Left:
+			{
+				hPos = 0.0f;
+				break;
+			}
+			case HorizontalAlignment::Middle:
+			{
+				hPos = getContainer()->getRect().width * 0.5f - size.width * 0.5f;
+				break;
+			}
+			case HorizontalAlignment::Right:
+			{
+				hPos = getContainer()->getRect().width - size.width;
+				break;
+			}
+			default: { }
+		}
+		f32 vPos = pos.y;
+		switch(m_verticalAlignment)
+		{
+			case VerticalAlignment::Top:
+			{
+				vPos = 0.0f;
+				break;
+			}
+			case VerticalAlignment::Middle:
+			{
+				vPos = getContainer()->getRect().height * 0.5f - size.height * 0.5f;
+				break;
+			}
+			case VerticalAlignment::Bottom:
+			{
+				vPos = getContainer()->getRect().height - size.height;
+				break;
+			}
+			default: { }
+		}
+		return { hPos, vPos };
+	}
+
+	void SmallText::setAlignment(HorizontalAlignment hAlign, VerticalAlignment vAlign) noexcept
+	{
+		m_horizontalAlignment = hAlign;
+		m_verticalAlignment = vAlign;
+		m_isPosDirty = true;
 	}
 }
