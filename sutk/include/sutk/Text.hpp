@@ -2,7 +2,6 @@
 
 #include <sutk/defines.hpp>
 #include <sutk/Renderable.hpp> /* for SUTK::Renderable */
-#include <sutk/UIDriver.hpp> /* for SUTK::UIDriver::getGfxDriver() */
 #include <sutk/IColorable.hpp> // for SUTK::IColorable 
 
 #include <string> /* for std::string */
@@ -10,8 +9,15 @@
 #include <limits> /* for std::numeric_limits */
 #include <ostream> // for std::ostream
 
+#include <sutk/SmallText.hpp> // for SUTK::SmallText
+
 namespace SUTK
 {
+	class LineText : public SmallText
+	{
+	public:
+		LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup, Color4 color = SUTK::Color4::white()) noexcept : SmallText(driver, NULL, textGroup, color) { }
+	};
 
 	// Typographical Emphasises
 	enum TPGEmphasis : u8
@@ -20,118 +26,6 @@ namespace SUTK
 		Italics,
 		Underlined,
 		Strikethrough
-	};
-
-	class UIDriver;
-	class IGfxDriver;
-
-	class ColumnIterator { };
-
-	class LineTextData
-	{
-	private:
-		std::string m_data;
-	public:
-		// constructors
-		LineTextData() = default;
-		LineTextData(LineTextData&& data) : m_data(std::move(data.m_data)) { }
-		LineTextData(const LineTextData& data) : m_data(data.m_data) { }
-
-		// assignment operators
-		LineTextData& operator =(LineTextData&& data) { m_data = std::move(data.m_data); return *this; }
-		LineTextData& operator =(const LineTextData& data) { m_data = data.m_data; return *this; }
-		LineTextData& operator =(const std::string& data) { m_data = data; return *this; }
-		LineTextData& operator =(std::string&& data) { m_data = std::move(data); return *this; }
-	
-		// implict conversion operators
-		operator const std::string&() const { return m_data; }
-
-		// equality comparison operators
-		bool operator ==(const LineTextData& data) { return m_data == data.m_data; }
-		bool operator ==(const std::string& data) { return m_data == data; }
-
-		// concatenation operator
-		LineTextData& operator +=(const LineTextData& data) { m_data += data.m_data; return *this; }
-		LineTextData& operator +=(const std::string& data) { m_data += data; return *this; }
-
-		ColumnIterator begin() { return ColumnIterator(); }
-		ColumnIterator end() { return ColumnIterator(); }
-	
-		void clear() { m_data.clear(); }
-		void removeRange(std::size_t pos, std::size_t len = std::string::npos) noexcept { m_data.erase(pos, len); }
-		void append(const std::string& chars) { insert(END_OF_LINE, chars); }
-		std::string substr(std::size_t pos, std::size_t len) noexcept { return m_data.substr(pos, len); }
-		void insert(LineCountType col, const std::string& chars)
-		{ 
-			if(col == END_OF_LINE)
-					m_data += chars;
-			else
-				m_data.insert(col, chars); 
-		}
-
-		std::size_t size() const noexcept { return m_data.size(); }
-	};
-
-	class LineText : public GfxDriverRenderable, public IColorable
-	{
-	private:
-		bool m_isPosDirty;
-		bool m_isDataDirty;
-		bool m_isPointSizeDirty;
-		bool m_isColorDirty;
-		bool m_isColorRangesDirty;
-		LineTextData m_data;
-		Color4 m_color;
-		std::vector<ColorRange> m_colorRanges;
-		Vec2Df m_pos;
-		f32 m_pointSize;
-
-		LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup, Color4 color = SUTK::Color4::white()) noexcept;
-
-		friend class Text;
-
-		// LineText is used only inside the Text class (Multi-line Text)
-		// and it should not be allowed to set different font sizes for two or more LineText(s)
-		void setFontSize(const f32 pointSize) noexcept;
-
-		friend class Text;
-
-		void updatePointSize() noexcept;
-
-	public:
-
-		// Implementation of Renderable::isDirty() and Renderable::update()
-		virtual bool isDirty() override;
-		virtual void update() override;
-
-		// Implementation of IColorable::setColor() and IColorable::getColor()
-		virtual void setColor(Color4 color) noexcept override;
-		virtual Color4 getColor() const noexcept override;
-
-		virtual void destroy() override;
-
-		void clearColorRanges() noexcept;
-		void addColorRange(std::size_t pos, std::size_t len, const Color4 color) noexcept;
-		
-		// returns column (index of a glyph) given a coordinate (absisca) along the line length.
-		LineCountType getColPosFromCoord(f32 coord) noexcept;
-		f32 getCoordFromColPos(LineCountType col) noexcept;
-		void setData(const std::string& data) noexcept;
-		const LineTextData& getData() const noexcept { return m_data; }
-		void removeRange(std::size_t pos, std::size_t len = std::string::npos) noexcept;
-		void append(const std::string& data) noexcept;
-		std::string substr(std::size_t pos, std::size_t len) noexcept { return m_data.substr(pos, len); }
-		void insert(LineCountType col, const std::string& data) noexcept;
-		void setPosition(Vec2Df pos) noexcept;
-		Vec2Df getPosition() const noexcept { return m_pos; }
-		void addPosition(Vec2Df pos) noexcept;
-		void subPosition(Vec2Df pos) noexcept;
-		void clear() noexcept;
-
-		std::size_t getColumnCount() const noexcept { return static_cast<const std::string&>(m_data).size(); }
-
-		f32 getFontSize() noexcept;
-		f32 getBaselineHeight() noexcept;
 	};
 
 	enum class HorizontalAlignment : u8

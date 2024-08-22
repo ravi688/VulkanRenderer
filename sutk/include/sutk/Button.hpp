@@ -64,12 +64,25 @@ namespace SUTK
 		virtual void onRelease() = 0;
 	};
 
+	class SmallText;
+	
+	class SUTK_API Label : public RenderableContainer
+	{
+	private:
+		SmallText* m_text;
+	public:
+		Label(UIDriver& driver, Container* parent) noexcept;
+
+		void set(const std::string& str) noexcept;
+	};
+
 	class SUTK_API DefaultButtonGraphic : public RenderableContainer, public IButtonGraphic
 	{
 	private:
 
 		// Visual Representation of the Button's existence
 		VisualButtonRect* m_visualButton;
+		Label* m_label;
 
 	public:
 		DefaultButtonGraphic(UIDriver& driver, Container* parent) noexcept;
