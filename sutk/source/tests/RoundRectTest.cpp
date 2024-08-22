@@ -1,6 +1,6 @@
 #include <sutk/tests/RoundRectTest.hpp>
 
-#include <sutk/RenderRect.hpp>
+#include <sutk/RenderRectFillRound.hpp>
 #include <sutk/SGEGfxDriver.hpp>
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>

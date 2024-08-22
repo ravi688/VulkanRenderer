@@ -15,6 +15,7 @@ namespace SUTK
 	private:
 		RenderableContainer* m_container;
 		bool m_isActive;
+		u32 m_drawOrder;
 
 	protected:
 		friend class RenderableContainer;
@@ -39,6 +40,10 @@ namespace SUTK
 		// mandatory to be called in overriding method
 		virtual void setActive(bool isActive) noexcept { m_isActive = isActive; }
 		virtual bool isActive() const noexcept { return m_isActive; }
+
+		// mandatory to be called in overriding method
+		virtual void setDrawOrder(u32 drawOrder) noexcept { m_drawOrder = drawOrder; }
+		virtual u32 getDrawOrder() const noexcept { return m_drawOrder; }
 
 		bool ensureUpdated() noexcept
 		{ 

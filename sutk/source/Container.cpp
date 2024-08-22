@@ -2,7 +2,7 @@
 
 #include <sutk/assert.h> /* _assert() */
 #include <sutk/RenderableContainer.hpp>
-#include <sutk/RenderRect.hpp>
+#include <sutk/RenderRectOutline.hpp>
 
 namespace SUTK
 {
@@ -61,6 +61,13 @@ namespace SUTK
 			return contains(getParent()->getScreenCoordsToLocalCoords(globalCoords));
 		else
 			return contains(globalCoords);
+	}
+
+	u32 Container::getDepth() const noexcept
+	{
+		if(getParent() == NULL)
+			return 0;
+		return getParent()->getDepth() + 1u;
 	}
 
 	Vec2Df Container::getScreenCoordsToLocalCoords(Vec2Df screenCoords) const

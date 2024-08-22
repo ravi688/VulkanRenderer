@@ -74,6 +74,9 @@ namespace SUTK
 		// anchor rect getters
 		AnchorRect* getAnchorRect() const noexcept { return m_anchorRect; }
 
+		// returns the number of anscestor containers of this container
+		u32 getDepth() const noexcept;
+
 		// coordinate conversion functions
 
 		// converts global coordinates (in centimeters) to local coordinates (in centimeters) in its rect

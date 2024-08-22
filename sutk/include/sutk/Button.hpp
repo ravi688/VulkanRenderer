@@ -10,7 +10,7 @@
 #include <sutk/defines.hpp> 
 #include <sutk/Container.hpp>
 #include <sutk/RenderableContainer.hpp> // for SUTK::RenderableContainer
-#include <sutk/RenderRect.hpp> // for SUTK::RenderRectFillRound
+#include <sutk/RenderRectFillRound.hpp> // for SUTK::RenderRectFillRound
 #include <sutk/ColorTransitionAutomaton.hpp> // for SUTK::ColorTransitionAutomaton
 #include <sutk/InputEventHandlerObject.hpp> // for SUTK::MouseMoveHandlerObject, and SUTK::MouseClickHandlerObject
 

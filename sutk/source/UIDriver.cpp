@@ -3,7 +3,9 @@
 #include <sutk/FullWindowContainer.hpp>
 #include <sutk/Text.hpp>
 #include <sutk/IGfxDriver.hpp>
-#include <sutk/RenderRect.hpp>
+#include <sutk/RenderRectOutline.hpp>
+#include <sutk/RenderRectFill.hpp>
+#include <sutk/RenderRectFillRound.hpp>
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/DummyInputDriver.hpp> // for STUK::DummyInputDriver
 
