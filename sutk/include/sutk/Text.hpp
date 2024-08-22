@@ -10,6 +10,7 @@
 #include <ostream> // for std::ostream
 
 #include <sutk/SmallText.hpp> // for SUTK::SmallText
+#include <sutk/TextTraits.hpp>
 
 namespace SUTK
 {
@@ -19,29 +20,6 @@ namespace SUTK
 		LineText(UIDriver& driver, GfxDriverObjectHandleType textGroup, Color4 color = SUTK::Color4::white()) noexcept : SmallText(driver, NULL, textGroup, color) { }
 	};
 
-	// Typographical Emphasises
-	enum TPGEmphasis : u8
-	{
-		Bold,
-		Italics,
-		Underlined,
-		Strikethrough
-	};
-
-	enum class HorizontalAlignment : u8
-	{
-		Left,
-		Right,
-		Middle
-	};
-
-	enum class VerticalAlignment : u8
-	{
-		Top,
-		Bottom,
-		Middle
-	};
-	
 	template<typename T>
 	class CursorPosition
 	{

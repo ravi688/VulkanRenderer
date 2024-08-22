@@ -3,6 +3,7 @@
 #include <sutk/defines.hpp>
 #include <sutk/Renderable.hpp> // for SUTK::GfxDriverRenderable
 #include <sutk/IColorable.hpp> // for SUTK::IColorable
+#include <sutk/TextTraits.hpp>
 
 #include <string> // for std:string
 #include <vector> // for std::vector
@@ -72,6 +73,8 @@ namespace SUTK
 		std::vector<ColorRange> m_colorRanges;
 		Vec2Df m_pos;
 		f32 m_pointSize;
+		HorizontalAlignment m_horizontalAlignment;
+		VerticalAlignment m_verticalAlignment;
 
 
 		// SmallText is used only inside the Text class (Multi-line Text)
@@ -84,7 +87,7 @@ namespace SUTK
 
 	protected:
 		virtual void onGlobalCoordDirty() noexcept override;
-
+		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept;
 	public:
 
 		SmallText(UIDriver& driver, RenderableContainer* container, GfxDriverObjectHandleType textGroup, Color4 color = SUTK::Color4::white()) noexcept;
@@ -118,8 +121,11 @@ namespace SUTK
 		void clear() noexcept;
 
 		std::size_t getColumnCount() const noexcept { return static_cast<const std::string&>(m_data).size(); }
-
 		f32 getFontSize() noexcept;
 		f32 getBaselineHeight() noexcept;
+
+		Vec2Df getBoundingRectSize() noexcept;
+		Vec2Df getAlignedPosition(Vec2Df pos) noexcept;
+		void setAlignment(HorizontalAlignment hAlign, VerticalAlignment vAlign) noexcept;
 	};
 }

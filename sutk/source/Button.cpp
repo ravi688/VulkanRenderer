@@ -1,6 +1,7 @@
 #include <sutk/Button.hpp>
 
 #include <sutk/SmallText.hpp> // for SUTK::SmallText
+#include <sutk/Label.hpp> // for SUTK::Label
 
 namespace SUTK
 {
@@ -50,17 +51,6 @@ namespace SUTK
 		m_cta.transitionTo(state);
 	}
 
-	Label::Label(UIDriver& driver, Container* parent) noexcept : RenderableContainer(driver, parent)
-	{
-		m_text = driver.createRenderable<SmallText>(this, driver.getGlobalTextGroup());
-		set("New Label");
-	}
-
-	void Label::set(const std::string& str) noexcept
-	{
-		m_text->setData(str);
-	}
-
 	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent) noexcept : RenderableContainer(driver, parent)
 	{
 		_com_assert(parent != NULL);
@@ -74,6 +64,7 @@ namespace SUTK
 		// size of the label's rect should be as that of ButtonGraphic's rect
 		m_label->setRect({ { 0, 0 }, getSize() });
 		m_label->getAnchorRect()->setRect({ 0.0f, 0.0f, 1.0f, 1.0f });
+		m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
 	}
 
 	/*						____________

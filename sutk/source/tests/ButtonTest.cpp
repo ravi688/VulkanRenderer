@@ -24,18 +24,22 @@ namespace SUTK
 		m_button = m_uiDriver->createContainer<Button>(rootContainer);
 		m_button->setRect({ 5, 5, 3, 1 });
 		auto& visualRect = m_button->getGraphicAs<DefaultButtonGraphic>()->getVisualButtonRect();
+		auto& label = m_button->getGraphicAs<DefaultButtonGraphic>()->getLabel();
 		visualRect.setIdleColor(Color4::red());
 		visualRect.setHoverColor(Color4::red(0.6f));
 		visualRect.setPressColor(Color4::red(0.3f));
 		visualRect.setTransitionDelay(0.2f);
+		label.set("Close");
 
 		m_button = m_uiDriver->createContainer<Button>(rootContainer);
 		m_button->setRect({ 5, 6.1f, 3, 1 });
 		auto& visualRect2 = m_button->getGraphicAs<DefaultButtonGraphic>()->getVisualButtonRect();
+		auto& label2 = m_button->getGraphicAs<DefaultButtonGraphic>()->getLabel();
 		visualRect2.setIdleColor(Color4::yellow());
 		visualRect2.setHoverColor(Color4::yellow(0.6f));
 		visualRect2.setPressColor(Color4::yellow(0.3f));
 		visualRect2.setTransitionDelay(0.2f);
+		label2.set("OK");
 	}
 
 	void ButtonTest::terminate(SGE::Driver& driver)
