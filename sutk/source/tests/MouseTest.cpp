@@ -1,6 +1,6 @@
 #include <sutk/tests/MouseTest.hpp>
 
-#include <sutk/RenderRect.hpp>
+#include <sutk/RenderRectFill.hpp>
 #include <sutk/SGEGfxDriver.hpp>
 #include <sutk/SGEInputDriver.hpp>
 #include <sutk/RenderableContainer.hpp>

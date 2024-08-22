@@ -1,6 +1,6 @@
 #include <sutk/tests/AnchorTest.hpp>
 
-#include <sutk/RenderRect.hpp>
+#include <sutk/RenderRectFill.hpp>
 #include <sutk/SGEGfxDriver.hpp>
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
