@@ -31,10 +31,35 @@ namespace SUTK
 
 	void UIDriver::render()
 	{
+		bool isRecalculateDrawOrder = false;
+		u32 minDrawOrder = std::numeric_limits<u32>::max();
+		u32 maxDrawOrder = 0;
 		// update GPU side data
 		for(auto it = m_renderables.begin(); it != m_renderables.end(); it++)
-			if((*it)->isDirty())
-				(*it)->update();
+		{
+			Renderable* renderable = *it;
+			if(renderable->isDirty())
+				renderable->update();
+			if(renderable->isDrawOrderDirty())
+				isRecalculateDrawOrder = true;
+			u32 drawOrder = renderable->getDrawOrder();
+			if(drawOrder < minDrawOrder)
+				minDrawOrder = drawOrder;
+			if(drawOrder > maxDrawOrder)
+				maxDrawOrder = drawOrder;
+		}
+
+		_com_assert(minDrawOrder <= maxDrawOrder);
+
+		if(isRecalculateDrawOrder)
+		{
+			for(auto it = m_renderables.begin(); it != m_renderables.end(); it++)
+			{
+				f32 normalizeFactor = 1.0f / static_cast<f32>(maxDrawOrder - minDrawOrder);
+				Renderable* renderable = (*it);
+				renderable->updateNormalizedDrawOrder((maxDrawOrder == minDrawOrder) ? 0.0f : ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 40.0f));
+			}
+		}
 
 		// now record and dispatch rendering commands (delegated that to rendering backend)
 		m_gfxDriver.render(*this);

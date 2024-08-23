@@ -46,6 +46,12 @@ namespace SUTK
 		}
 	}
 
+	void Text::updateNormalizedDrawOrder(f32 normalizedDrawOrder)
+	{
+		Renderable::updateNormalizedDrawOrder(normalizedDrawOrder);
+		// Do nothing as individual lines are themselves derived from Renderable and the UI driver will call their updateNormalizedDrawOrder anyway.
+	}
+
 	LineCountType Text::getNumChars(const CursorPosition<LineCountType>& position) noexcept
 	{
 		std::size_t count = 0;

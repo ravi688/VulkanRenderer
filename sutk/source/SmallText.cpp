@@ -17,7 +17,8 @@ namespace SUTK
 															m_isColorRangesDirty(false), 
 															m_color(color),
 															m_horizontalAlignment(HorizontalAlignment::Invalid),
-															m_verticalAlignment(VerticalAlignment::Invalid)
+															m_verticalAlignment(VerticalAlignment::Invalid),
+															m_normalizedDrawOrder(0)
 
 	{
 		setGfxDriverObjectHandle(getGfxDriver().createText(textGroup));
@@ -60,7 +61,7 @@ namespace SUTK
 				pos = getAlignedPosition(m_pos);
 				pos = getContainer()->getLocalCoordsToScreenCoords(pos);
 			}
-			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), pos);
+			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), { pos.x, pos.y, m_normalizedDrawOrder });
 			m_isPosDirty = false;
 		}
 
@@ -70,6 +71,18 @@ namespace SUTK
 			getGfxDriver().setTextColorRanges(getGfxDriverObjectHandle(), m_colorRanges.data(), static_cast<u32>(m_colorRanges.size()));
 			m_isColorRangesDirty = false;
 		}
+	}
+	void SmallText::updateNormalizedDrawOrder(f32 normalizedDrawOrder)
+	{
+		// mandatory to be called in the overriding function
+		Renderable::updateNormalizedDrawOrder(normalizedDrawOrder);
+
+		GfxDriverObjectHandleType handle = getGfxDriverObjectHandle();
+		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
+
+		getGfxDriver().setTextDepth(handle, normalizedDrawOrder);
+
+		m_normalizedDrawOrder = normalizedDrawOrder;
 	}
 	void SmallText::setColor(Color4 color) noexcept
 	{

@@ -33,7 +33,8 @@ namespace SUTK
 		virtual void destroyTextGroup(GfxDriverObjectHandleType textGroup) = 0;
 		virtual GfxDriverObjectHandleType createText(GfxDriverObjectHandleType textGroup) = 0;
 		virtual void destroyText(GfxDriverObjectHandleType handle) = 0;
-		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position) = 0;
+		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec3Df position) = 0;
+		virtual void setTextDepth(GfxDriverObjectHandleType handle, f32 depth) = 0;
 		virtual void setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize) = 0;
 		virtual f32 getTextPointSize(GfxDriverObjectHandleType handle) = 0;
 		virtual void setTextColor(GfxDriverObjectHandleType handle, const Color4 color) = 0;
@@ -48,7 +49,8 @@ namespace SUTK
 		// rect should be in centimeters
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) = 0;
 		// position should be centimeters
-		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec2Df position) = 0;
+		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec3Df position) = 0;
+		virtual void setObjectDepth(GfxDriverObjectHandleType handle, f32 depth) = 0;
 		//.rect should be in centimeters
 		void setTextScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) noexcept
 		{

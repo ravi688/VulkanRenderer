@@ -30,12 +30,13 @@ namespace SUTK
 
 		// Constructors
 		RenderRect(UIDriver& driver, RenderableContainer* container) noexcept;
-		
+
 	public:
 
 		// Implementation of Renderable
 		virtual bool isDirty() noexcept;
 		virtual void update() noexcept;
+		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) noexcept;
 
 		virtual void setActive(bool isActive) noexcept override;
 

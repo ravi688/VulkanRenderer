@@ -145,6 +145,7 @@ namespace SUTK
 		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;
 		virtual void update() override;
+		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) override;
 
 		void clear() noexcept;
 

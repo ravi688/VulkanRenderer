@@ -42,7 +42,7 @@ namespace SUTK
 		camera.setTransform(mat4_mul(2, mat4_translation(-1.8f, 0.6f, 0), mat4_rotation(0, 0, -22 * DEG2RAD)));
 
 		// create scene 
-		m_scene = driver.createRenderScene(BIT64(RENDER_QUEUE_TYPE_GEOMETRY));
+		m_scene = driver.createRenderScene(RENDER_QUEUE_TYPE_GEOMETRY_BIT | RENDER_QUEUE_TYPE_TRANSPARENT_BIT);
 		// add the camera to the scene 
 		m_scene.addCamera(camera);
 
@@ -80,8 +80,13 @@ namespace SUTK
 		if(m_autoCmdRecordAndExecute)
 			// begin command buffer recording
 			m_driver.beginFrame();
+
+		// update device side memory of the BGA texture
 		m_bgaTexture.commit(NULL);
+
+		// record commands
 		m_scene.render(RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
+
 		if(m_autoCmdRecordAndExecute)
 		{
 			// end command buffer recording
@@ -104,7 +109,7 @@ namespace SUTK
 	{
 		debug_log_info("[SGE] Creating new SGE::BitmapText object");
 		SGE::BitmapText text = m_driver.createBitmapText(m_bgaTexture);
-		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Text, SGE::RenderQueue::Type::Geometry);
+		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Text, SGE::RenderQueue::Type::Transparent);
 		SGE::Material material = m_driver.getMaterialLibrary().createMaterial(m_shader, "BitmapTextShaderTest");
 		material.set<float>("parameters.color.r", 1.0f);
 		material.set<float>("parameters.color.g", 1.0f);
@@ -273,9 +278,22 @@ namespace SUTK
 		return { sutkPosInInches.x * CENTIMETERS_PER_INCH, sutkPosInInches.y * CENTIMETERS_PER_INCH };
 	}
 
-	void SGEGfxDriver::setTextPosition(GfxDriverObjectHandleType handle, Vec2Df position)
+	#define MIN_DEPTH -0.001f
+	#define MAX_DEPTH 99.0f
+
+	void SGEGfxDriver::setTextPosition(GfxDriverObjectHandleType handle, Vec3Df position)
 	{
-		getText(handle).setPosition(SUTKToSGECoordTransform(position));
+		vec3_t pos = SUTKToSGECoordTransform(position.xy);
+		pos.x = position.z;
+		getText(handle).setPosition(pos);
+	}
+
+	void SGEGfxDriver::setTextDepth(GfxDriverObjectHandleType handle, f32 depth)
+	{
+		SGE::BitmapTextString textString = getText(handle);
+		vec3_t pos = textString.getPosition();
+		pos.x = depth;
+		textString.setPosition(pos);
 	}
 
 	void SGEGfxDriver::setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize)
@@ -392,10 +410,20 @@ namespace SUTK
 		it->second.setScissor(irect2d(ioffset2d(rectPosition.x, rectPosition.y), iextent2d(rectSize.width, rectSize.height)));
 	}
 
-	void SGEGfxDriver::setObjectPosition(GfxDriverObjectHandleType handle, const Vec2Df position)
+	void SGEGfxDriver::setObjectPosition(GfxDriverObjectHandleType handle, const Vec3Df position)
 	{
 		auto it = getRenderObjectIterator(handle);
-		it->second.setPosition(SUTKToSGECoordTransform(position));
+		vec3_t pos = SUTKToSGECoordTransform(position.xy);
+		pos.x = position.z;
+		it->second.setPosition(pos);
+	}
+
+	void SGEGfxDriver::setObjectDepth(GfxDriverObjectHandleType handle, f32 depth)
+	{
+		auto it = getRenderObjectIterator(handle);
+		vec3_t pos = it->second.getPosition();
+		pos.x = depth;
+		it->second.setPosition(pos);
 	}
 
 	std::unordered_map<id_generator_id_type_t, SGEMeshData>::iterator
