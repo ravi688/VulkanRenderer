@@ -78,9 +78,6 @@ namespace SUTK
 		f32 m_normalizedDrawOrder;
 
 
-		// SmallText is used only inside the Text class (Multi-line Text)
-		// and it should not be allowed to set different font sizes for two or more SmallText(s)
-		void setFontSize(const f32 pointSize) noexcept;
 
 		friend class Text;
 
@@ -123,6 +120,7 @@ namespace SUTK
 		void clear() noexcept;
 
 		std::size_t getColumnCount() const noexcept { return static_cast<const std::string&>(m_data).size(); }
+		void setFontSize(const f32 pointSize) noexcept;
 		f32 getFontSize() noexcept;
 		f32 getBaselineHeight() noexcept;
 

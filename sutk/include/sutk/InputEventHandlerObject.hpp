@@ -1,3 +1,5 @@
+#pragma once
+
 #include <sutk/defines.hpp> // for SUTK_API
 #include <sutk/IInputDriver.hpp> // for SUTK::MouseButton and SUTK::KeyEvent
 #include <sutk/Container.hpp> // for SUTK::Container
