@@ -9,10 +9,10 @@ namespace SUTK
 
 		SDF& sdf = geometry.getSDF();
 		m_roundnessID = sdf.addParameter<f32>("roundness", 0.5f);
-		sdf.addParameter<f32>("sharpness", 1.0f);
+		m_sharpnessID = sdf.addParameter<f32>("sharpness", 1.0f);
 		m_widthID = sdf.addParameter<InvariantWidth>("width", getRect().width);
 		m_heightID = sdf.addParameter<InvariantHeight>("height", getRect().height);
-		sdf.addParameter<f32>("numGradPixels", 4);
+		m_numGradPixelsID = sdf.addParameter<f32>("numGradPixels", 4);
 		m_centerID = sdf.addParameter<InvariantSize>("center", getContainer()->getLocalCoordsToScreenCoords(getRect().getCenter()));
 
 		const char* str = 
@@ -58,5 +58,23 @@ namespace SUTK
 		}
 
 		RenderRectFill::update();
+	}
+
+	void RenderRectFillRound::setRoundness(f32 roundness) noexcept
+	{
+		SDF& sdf = getGeometry().getSDF();
+		sdf.setParameterValue<f32>(m_roundnessID, roundness);
+	}
+
+	void RenderRectFillRound::setSharpness(f32 sharpness) noexcept
+	{
+		SDF& sdf = getGeometry().getSDF();
+		sdf.setParameterValue<f32>(m_sharpnessID, sharpness);
+	}
+
+	void RenderRectFillRound::setNumGradPixels(f32 numGradPixels) noexcept
+	{
+		SDF& sdf = getGeometry().getSDF();
+		sdf.setParameterValue<f32>(m_numGradPixelsID, numGradPixels);
 	}
 }
