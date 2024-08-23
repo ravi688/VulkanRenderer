@@ -45,6 +45,24 @@ namespace SUTK
 
 	#define DISPLAY_SIZE_TYPE_MAX std::numeric_limits<SUTK::DisplaySizeType>::max()
 
+
+	template<typename T>
+	struct NegativeSign { };
+
+	template<>
+	struct NegativeSign<s64> { static constexpr s64 value = -1; };
+	template<>
+	struct NegativeSign<s32> { static constexpr s32 value = -1; };
+	template<>
+	struct NegativeSign<s16> { static constexpr s16 value = -1; };
+	template<>
+	struct NegativeSign<s8> { static constexpr s8 value = -1; };
+	template<>
+	struct NegativeSign<f32> { static constexpr f32 value = -1.0f; };
+	template<>
+	struct NegativeSign<f64> { static constexpr f64 value = -1.0; }; 
+
+
 	template<typename T>
 	union Vec2D
 	{
@@ -119,23 +137,6 @@ namespace SUTK
 		return stream;
 	}
 
-
-	template<typename T>
-	struct NegativeSign { };
-
-	template<>
-	struct NegativeSign<s64> { static constexpr s64 value = -1; };
-	template<>
-	struct NegativeSign<s32> { static constexpr s32 value = -1; };
-	template<>
-	struct NegativeSign<s16> { static constexpr s16 value = -1; };
-	template<>
-	struct NegativeSign<s8> { static constexpr s8 value = -1; };
-	template<>
-	struct NegativeSign<f32> { static constexpr f32 value = -1.0f; };
-	template<>
-	struct NegativeSign<f64> { static constexpr f64 value = -1.0; }; 
-
 	// Coordinate System
 	//  ______________ x
 	// |
@@ -152,6 +153,108 @@ namespace SUTK
 	Vec2D<T> Vec2D<T>::up() { return { 0, NegativeSign<T>::value }; }
 	template<typename T>
 	Vec2D<T> Vec2D<T>::down() { return { 0, 1 }; }
+
+	template<typename T>
+	union Vec3D
+	{
+		struct
+		{
+			T x;
+			T y;
+			T z;
+		};
+
+		struct
+		{
+			T width;
+			T height;
+			T depth;
+		};
+
+		Vec2D<T> xy;
+
+		constexpr Vec3D() noexcept : x(0), y(0), z(0) { }
+		constexpr Vec3D(T _x, T _y, T _z) noexcept : x(_x), y(_y), z(_z) { }
+
+		// static methods
+		static Vec3D<T> zero();
+		static Vec3D<T> left();
+		static Vec3D<T> right();
+		static Vec3D<T> up();
+		static Vec3D<T> down();
+		static Vec3D<T> forward();
+		static Vec3D<T> back();
+
+		// operator overloads
+		bool operator ==(const Vec3D<T>& v) noexcept { return (x == v.x) && (y == v.y) && (z == v.z); }
+		bool operator !=(const Vec3D<T>& v) noexcept { return !operator==(v); }
+
+		Vec3D<T>& operator=(const Vec3D<T> v) noexcept { x = v.x; y = v.y; z = v.z;return *this; }
+
+		// arithmetic operator overloads
+		Vec3D<T> operator +(const Vec3D<T>& v) const noexcept { return { x + v.x, y + v.y, z + v.z }; }
+		Vec3D<T> operator -(const Vec3D<T>& v) const noexcept { return { x - v.x, y - v.y, z - v.z}; }
+		Vec3D<T> operator *(const Vec3D<T>& v) const noexcept { return { x * v.x, y * v.y, z * v.z }; }
+		Vec3D<T> operator *(T s) const noexcept { return { x * s, y * s, z * s }; }
+		Vec3D<T>& operator +=(const Vec3D<T>& v) noexcept { x += v.x; y += v.y; z += v.z; return *this; }
+		Vec3D<T>& operator -=(const Vec3D<T>& v) noexcept { x -= v.x; y -= v.y; z -= v.z; return *this; }
+
+		// implicit conversion operator overloads
+		template<typename U>
+		operator Vec3D<U>()
+		{
+			return { static_cast<U>(x), static_cast<U>(y), static_cast<U>(z) };
+		}
+
+		std::string toString() const noexcept
+		{
+			// NOTE: we are creating here r-value std::ostringstream object
+			// because in C++20, it has r-value overload for str() function
+			// which returns std::move(underlying str object), this way we are only
+			// allocating one std::string and that is being returned at the end out 
+			// of this toString() function.
+			return operator <<(std::ostringstream(), *this).str();
+		}
+	};
+
+	template<typename T>
+	Vec3D<T> operator *(T s, const Vec3D<T>& v) noexcept { return { s * v.x, s * v.y, s * v.z}; }
+
+	template<typename T>
+	std::ostream&& operator <<(std::ostream&& stream, const Vec3D<T>& v)
+	{
+		auto& _stream = operator << <T>(stream, v);
+		return std::move(_stream);
+	}
+	
+	template<typename T>
+	std::ostream& operator <<(std::ostream& stream, const Vec3D<T>& v)
+	{
+		stream << "{ " << v.x << ", " << v.y << ", " << v.z << " }";
+		return stream;
+	}
+
+	// Coordinate System
+	//  ______________ x
+	// |
+	// |
+	// |  Downwards is +ve
+	// y
+	template<typename T>
+	Vec3D<T> Vec3D<T>::zero() { return { 0, 0, 0 }; }
+	template<typename T>
+	Vec3D<T> Vec3D<T>::left() { return { NegativeSign<T>::value, 0, 0 }; }
+	template<typename T>
+	Vec3D<T> Vec3D<T>::right() { return { 1, 0, 0 }; }
+	template<typename T>
+	Vec3D<T> Vec3D<T>::up() { return { 0, NegativeSign<T>::value, 0 }; }
+	template<typename T>
+	Vec3D<T> Vec3D<T>::down() { return { 0, 1, 0 }; }
+	template<typename T>
+	Vec3D<T> Vec3D<T>::forward() { return { 0, 0, 1 }; }
+	template<typename T>
+	Vec3D<T> Vec3D<T>::back() { return { 0, 0, NegativeSign<T>::value }; }
+
 
 	template<typename T>
 	struct Rect2D
@@ -454,4 +557,5 @@ namespace SUTK
 
 	typedef Rect2D<f32> Rect2Df;
 	typedef Vec2D<f32> Vec2Df;
+	typedef Vec3D<f32> Vec3Df;
 }

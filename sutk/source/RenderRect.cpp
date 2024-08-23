@@ -31,15 +31,6 @@ namespace SUTK
 
 	void RenderRect::update() noexcept
 	{
-		if(m_isActiveDirty)
-		{
-			auto handle = getGfxDriverObjectHandle();
-			_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
-			auto obj = getGfxDriver().getGeometryObject(handle);
-			getGfxDriver().setObjectActive(obj, isActive());
-			m_isActiveDirty = false;
-		}
-
 		if(m_isPosDirty)
 		{
 			// auto& gfxDriver = getGfxDriver();
@@ -51,15 +42,39 @@ namespace SUTK
 		if(m_isColorDirty)
 			getGeometry().fillColor(getColor());
 
+		GfxDriverObjectHandleType handle = GFX_DRIVER_OBJECT_NULL_HANDLE;
 		if(m_isPosDirty || m_isSizeDirty || m_isColorDirty)
 		{
-			GfxDriverObjectHandleType handle = getGfxDriverObjectHandle();
+			handle = getGfxDriverObjectHandle();
 			handle = getGeometry().compile(handle);
 			setGfxDriverObjectHandle(handle);
 			m_isPosDirty = false;
 			m_isSizeDirty = false;
 			m_isColorDirty = false;
 		}
+
+		if(m_isActiveDirty)
+		{
+			if(handle == GFX_DRIVER_OBJECT_NULL_HANDLE)
+			{
+				handle = getGfxDriverObjectHandle();
+				_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
+			}
+			GfxDriverObjectHandleType obj = getGfxDriver().getGeometryObject(handle);
+			getGfxDriver().setObjectActive(obj, isActive());
+			m_isActiveDirty = false;
+		}
+	}
+
+	void RenderRect::updateNormalizedDrawOrder(f32 normalizedDrawOrder) noexcept
+	{
+		// mandatory to be called in the overriding function
+		Renderable::updateNormalizedDrawOrder(normalizedDrawOrder);
+
+		GfxDriverObjectHandleType handle = getGfxDriverObjectHandle();
+		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
+		handle = getGfxDriver().getGeometryObject(handle);
+		getGfxDriver().setObjectDepth(handle, normalizedDrawOrder);
 	}
 
 	void RenderRect::setColor(Color4 color) noexcept

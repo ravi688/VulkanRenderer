@@ -4,11 +4,13 @@
 
 namespace SUTK
 {
-	Renderable::Renderable(UIDriver& driver, RenderableContainer* container) noexcept : UIDriverObject(driver), m_container(container)
+	Renderable::Renderable(UIDriver& driver, RenderableContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_drawOrder(0), m_isDrawOrderDirty(true)
 	{
 		if(container != NULL)
 			container->setRenderable(this);
 		driver.m_renderables.push_back(this);
+
+		setDrawOrder((container == NULL) ? 0 : container->getDepth());
 	}
 
 	void GfxDriverRenderable::setClipRectGlobalCoords(const Rect2Df rect) noexcept

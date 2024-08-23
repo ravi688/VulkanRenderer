@@ -75,6 +75,7 @@ namespace SUTK
 		f32 m_pointSize;
 		HorizontalAlignment m_horizontalAlignment;
 		VerticalAlignment m_verticalAlignment;
+		f32 m_normalizedDrawOrder;
 
 
 		// SmallText is used only inside the Text class (Multi-line Text)
@@ -95,6 +96,7 @@ namespace SUTK
 		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;
 		virtual void update() override;
+		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) override;
 
 		// Implementation of IColorable::setColor() and IColorable::getColor()
 		virtual void setColor(Color4 color) noexcept override;

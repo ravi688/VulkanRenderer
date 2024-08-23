@@ -60,6 +60,7 @@ namespace SUTK
 		getAnchorRect()->setRect( { 0, 0, 1, 1 });
 
 		m_visualButton = driver.createRenderable<VisualButtonRect>(this);
+		
 		m_label = driver.createContainer<Label>(this);
 		// size of the label's rect should be as that of ButtonGraphic's rect
 		m_label->setRect({ { 0, 0 }, getSize() });

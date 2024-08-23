@@ -16,6 +16,7 @@ namespace SUTK
 		RenderableContainer* m_container;
 		bool m_isActive;
 		u32 m_drawOrder;
+		bool m_isDrawOrderDirty;
 
 	protected:
 		friend class RenderableContainer;
@@ -36,14 +37,18 @@ namespace SUTK
 		virtual bool isDirty() = 0;
 		// updates (copies CPU side data to) GPU side data, and it may also create or recreate exisiting GPU Driver objects 
 		virtual void update() = 0;
+		// updates draw order (z-buffer) values to the GPU side memory.
+		// mandatory to be called in the overridng method
+		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) { m_isDrawOrderDirty = false; }
 
 		// mandatory to be called in overriding method
 		virtual void setActive(bool isActive) noexcept { m_isActive = isActive; }
 		virtual bool isActive() const noexcept { return m_isActive; }
 
-		// mandatory to be called in overriding method
-		virtual void setDrawOrder(u32 drawOrder) noexcept { m_drawOrder = drawOrder; }
-		virtual u32 getDrawOrder() const noexcept { return m_drawOrder; }
+		bool isDrawOrderDirty() const noexcept { return m_isDrawOrderDirty; }
+
+		void setDrawOrder(u32 drawOrder) { m_drawOrder = drawOrder;  m_isDrawOrderDirty = true; }
+		u32 getDrawOrder() const noexcept { return m_drawOrder; }
 
 		bool ensureUpdated() noexcept
 		{ 
