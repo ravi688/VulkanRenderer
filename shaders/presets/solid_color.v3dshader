@@ -41,6 +41,11 @@ Shader
 						blendenable = true
 					}
 				}
+				depthStencil
+				{
+					depthWriteEnable = true,
+					depthTestEnable = true
+				}
 			}
 
 			[NoParse]
