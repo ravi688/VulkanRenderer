@@ -47,6 +47,10 @@ namespace SGE
 		{
 			bitmap_text_string_set_transformH(m_bitmapTextHandle, m_handle, transform);
 		}
+		mat4_t getTransform() const noexcept
+		{
+			return bitmap_text_string_get_transformH(m_bitmapTextHandle, m_handle);
+		}
 		void setColor(color_t color) noexcept
 		{
 			bitmap_text_string_set_color(m_bitmapTextHandle, m_handle, color);
@@ -58,6 +62,11 @@ namespace SGE
 		void setPosition(vec3_t position) const noexcept
 		{
 			setTransform(mat4_translation(position.x, position.y, position.z));
+		}
+		vec3_t getPosition() const noexcept
+		{
+			mat4_t m = getTransform();
+			return vec3(m.m03, m.m13, m.m23);
 		}
 
 		void destroy() const noexcept

@@ -104,6 +104,8 @@ typedef enum vulkan_render_queue_type_t
 	VULKAN_RENDER_QUEUE_TYPE_GEOMETRY, 		// opaque geometry uses this queue
 	VULKAN_RENDER_QUEUE_TYPE_ALPHA_TESTED, 	// alpha tested geometry uses this queue
 	VULKAN_RENDER_QUEUE_TYPE_GEOMETRY_LAST, // last render queue that is considered "opaque"
+	/* TODO: if the queue type is TRANSPARENT, then we need to sort the render objects in back-to-front order
+	 * to correctly render transparent objects. */
 	VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT, 	// this render queue is rendered after Geometry and AlphaTest, in back-to-front order
 	VULKAN_RENDER_QUEUE_TYPE_OVERLAY, 		// this render queue is meant for overlay effects
 	VULKAN_RENDER_QUEUE_TYPE_QUEUE0, 		// general purpose queue
