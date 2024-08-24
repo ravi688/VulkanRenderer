@@ -67,5 +67,9 @@ namespace SUTK
 		typedef std::function<void(Vec2Df)> OnResizeCallbackHandler;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) = 0;
 		virtual void removeOnResizeHandler(u32 id) = 0;
+		typedef std::function<void()> OnCloseCallbackHandler;
+		virtual u32 addOnCloseHandler(OnCloseCallbackHandler handler) = 0;
+		virtual void removeOnCloseHandler(u32 id) = 0;
+		virtual void setClose(bool isClose) = 0;
 	};
 }

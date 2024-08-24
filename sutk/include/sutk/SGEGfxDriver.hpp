@@ -60,12 +60,14 @@ namespace SUTK
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
 		std::unordered_map<id_generator_id_type_t, SGE::RenderObject> m_renderObjectMappings;
 		std::unordered_map<id_generator_id_type_t, ObjectType> m_typeTable;
-		struct OnResizeCallbackHandlerData
+		template<typename T>
+		struct CallbackHandlerData
 		{
-			OnResizeCallbackHandler handler;
+			T handler;
 			SGE::Event::SubscriptionHandle handle;
 		};
-		std::unordered_map<id_generator_id_type_t, OnResizeCallbackHandlerData> m_onResizeHandlers;
+		std::unordered_map<id_generator_id_type_t, CallbackHandlerData<OnResizeCallbackHandler>> m_onResizeHandlers;
+		std::unordered_map<id_generator_id_type_t, CallbackHandlerData<OnCloseCallbackHandler>> m_onCloseHandlers;
 
 		std::vector<char_attr_color_range_t> m_colorRangeBuffer;
 
@@ -146,5 +148,8 @@ namespace SUTK
 		virtual f32 getTextBaselineHeightInCentimeters(f32 pointSize) override;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) override;
 		virtual void removeOnResizeHandler(u32 id) override;
+		virtual u32 addOnCloseHandler(OnCloseCallbackHandler handler) override;
+		virtual void removeOnCloseHandler(u32 id) override;
+		virtual void setClose(bool isClose) override;
 	};
 }
