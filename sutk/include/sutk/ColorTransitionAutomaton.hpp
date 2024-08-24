@@ -4,5 +4,5 @@
 
 namespace SUTK
 {
-	typedef com::TransitionAutomaton<Color4, Color4::Lerp> ColorTransitionAutomaton;
+	typedef com::TransitionAutomaton<Color4, [](Color4 lhs, Color4 rhs) constexpr { return lhs.equalsApprox(rhs); }, Color4::Lerp> ColorTransitionAutomaton;
 }
