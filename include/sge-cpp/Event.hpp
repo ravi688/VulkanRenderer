@@ -8,6 +8,7 @@ namespace SGE
 	{
 	public:
 		typedef event_subscription_handle_t SubscriptionHandle;
+		typedef void (*Handler)(void* publisher, void* handlerData);
 	private:
 		event_t* m_handle;
 
@@ -19,7 +20,7 @@ namespace SGE
 		typedef event_subscription_create_info_t SubscriptionCreateInfo;
 		void publish() noexcept { event_publish(m_handle); }
 		void publish(void* arg) noexcept { event_publish_arg(m_handle, arg); }
-		SubscriptionHandle subscribe(void (*handler)(void* publisher, void* handlerData), void* handlerData = NULL) noexcept
+		SubscriptionHandle subscribe(Handler handler, void* handlerData = NULL) noexcept
 		{
 			return subscribe(SubscriptionCreateInfo { .handler = EVENT_HANDLER(handler), .handler_data = handlerData });
 		}
