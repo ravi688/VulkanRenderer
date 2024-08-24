@@ -51,6 +51,9 @@ namespace SUTK
 		// IMPLEMENTATION of IDebuggable
 		virtual void enableDebug(bool isEnable = true, Color4 color = Color4::green()) noexcept override;
 
+		// childs getters
+		std::vector<Container*>& getChilds() noexcept { return getContainerList(); }
+
 		// parent getters
 		Container* getParent() { return m_parent; }
 		const Container* getParent() const { return m_parent; }
