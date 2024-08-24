@@ -54,6 +54,12 @@ static void glfwOnWindowResizeCallback(GLFWwindow* glfw_window, int width, int h
 	event_publish(window->on_resize_event);
 }
 
+static void glfwOnWindowCloseCallback(GLFWwindow* glfw_window)
+{
+	AUTO window = CAST_TO(render_window_t*, glfwGetWindowUserPointer(glfw_window));
+	event_publish(window->on_close_event);
+}
+
 static void glfwOnCursorMoveCallback(GLFWwindow* glfw_window, double x, double y)
 {
 	AUTO window = CAST_TO(render_window_t*, glfwGetWindowUserPointer(glfw_window));
@@ -280,6 +286,7 @@ SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 w
 	OBJECT_INIT(window, OBJECT_TYPE_RENDER_WINDOW, OBJECT_NATIONALITY_INTERNAL);
 	window->allocator = allocator;
 	window->on_resize_event = event_create(allocator, (void*)window PARAM_IF_DEBUG("Render-Window-Resize"));
+	window->on_close_event = event_create(allocator, (void*)window PARAM_IF_DEBUG("Render-Window-Close"));
 	glfwInit();
 #if GLOBAL_DEBUG
 	glfwSetErrorCallback(glfwErrorCallback);
@@ -291,6 +298,7 @@ SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 w
 	else
 		window->handle = glfwCreateWindow(width, height, title, NULL, NULL);
 	glfwSetFramebufferSizeCallback(window->handle, glfwOnWindowResizeCallback);
+	glfwSetWindowCloseCallback(window->handle, glfwOnWindowCloseCallback);
 	glfwSetCursorPosCallback(window->handle, glfwOnCursorMoveCallback);
 	glfwSetMouseButtonCallback(window->handle, glfwOnMouseButtonCallback);
 	glfwSetScrollCallback(window->handle, glfwOnScrollCallback);
@@ -300,6 +308,11 @@ SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 w
 	render_window_get_framebuffer_extent(window, &window->width, &window->height);
 	log_msg("Render window created successfully\n");
 	return window;
+}
+
+SGE_API void render_window_set_should_close(render_window_t* window, bool is_close)
+{
+	glfwSetWindowShouldClose(window->handle, is_close ? GLFW_TRUE : GLFW_FALSE);
 }
 
 SGE_API bool render_window_should_close(render_window_t* window)
@@ -336,6 +349,8 @@ SGE_API void render_window_destroy(render_window_t* window)
 		event_destroy(window->on_key_event);
 		event_release_resources(window->on_key_event);
 	}
+	event_destroy(window->on_close_event);
+	event_release_resources(window->on_close_event);
 	event_destroy(window->on_resize_event);
 	event_release_resources(window->on_resize_event);
 	glfwDestroyWindow(window->handle);

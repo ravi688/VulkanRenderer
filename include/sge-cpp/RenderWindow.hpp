@@ -17,9 +17,19 @@ namespace SGE
 		friend RenderWindow Event::ReinterpretPublisher<RenderWindow>(void* publisher);
 	public:
 
+		void setClose(bool isClose) noexcept
+		{
+			render_window_set_should_close(m_handle, isClose);
+		}
+
 		Event getOnResizeEvent() noexcept
 		{
 			return Event(render_window_get_on_resize_event(m_handle));
+		}
+
+		Event getOnCloseEvent() noexcept
+		{
+			return Event(render_window_get_on_close_event(m_handle));
 		}
 
 		Event getOnCursorMoveEvent() noexcept

@@ -236,6 +236,8 @@ typedef struct render_window_t
 
 	/* event triggered whenever the window resizes */
 	event_t* on_resize_event;
+	/* event triggered whenever the user tries to close the window */
+	event_t* on_close_event;
 	/* event triggered whenever the cursor moves */
 	event_t* on_cursor_move_event;
 	/* event triggered whenever a mouse button is pressed or released */
@@ -254,6 +256,7 @@ typedef struct render_window_t
 BEGIN_CPP_COMPATIBLE
 
 SGE_API render_window_t* render_window_init(memory_allocator_t* allocator, u32 width, u32 height, const char* title, bool full_screen, bool resizable);
+SGE_API void render_window_set_should_close(render_window_t* window, bool is_close);
 SGE_API bool render_window_should_close(render_window_t* window);
 SGE_API void render_window_poll_events(render_window_t* window);
 SGE_API void render_window_destroy(render_window_t* window);
@@ -265,6 +268,7 @@ static CAN_BE_UNUSED_FUNCTION mouse_button_type_t render_window_get_mouse_button
 static CAN_BE_UNUSED_FUNCTION key_event_type_t render_window_get_key_event_type(render_window_t* window) { return window->key_event_type; }
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE event_t* render_window_get_on_resize_event(render_window_t* window) { return window->on_resize_event; }
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE event_t* render_window_get_on_close_event(render_window_t* window) { return window->on_close_event; }
 SGE_API event_t* render_window_get_on_cursor_move_event(render_window_t* window);
 SGE_API event_t* render_window_get_on_mouse_button_event(render_window_t* window);
 SGE_API event_t* render_window_get_on_scroll_event(render_window_t* window);
