@@ -22,7 +22,7 @@ namespace SUTK
 		if(m_cta.isRunning())
 		{
 			m_cta.update();
-			setColor(m_cta.getColor());
+			setColor(m_cta.getValue());
 		}
 		RenderRectFillRound::update();
 	}
@@ -44,7 +44,7 @@ namespace SUTK
 	{
 		m_cta.set(State::Idle,  color);
 		m_cta.setDefault(State::Idle);
-		setColor(m_cta.getColor());
+		setColor(m_cta.getValue());
 	}
 	void VisualButtonRect::setState(State state) noexcept
 	{
