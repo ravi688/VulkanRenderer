@@ -971,7 +971,7 @@ namespace SUTK
 		m_onCloseHandlers.erase(it);
 	}
 
-void SGEGfxDriver::setClose(bool isClose)
+	void SGEGfxDriver::setClose(bool isClose)
 	{
 		m_driver.getRenderWindow().setClose(isClose);
 	}
