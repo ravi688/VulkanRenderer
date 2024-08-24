@@ -930,7 +930,7 @@ namespace SUTK
 				auto size = getVec2DFromStdPair(pair);
 				// window size in inches
 				extent2d_t size_inches = SGE::Display::ConvertPixelsToInches(extent2d(size.width, size.height));
-				auto& _handlerData = *reinterpret_cast<OnResizeCallbackHandlerData*>(handlerData);
+				auto& _handlerData = *reinterpret_cast<CallbackHandlerData<OnResizeCallbackHandler>*>(handlerData);
 				_handlerData.handler(Vec2Df{ size_inches.width * CENTIMETERS_PER_INCH, size_inches.height * CENTIMETERS_PER_INCH });
 			}, &onResizeHandlerData);
 		onResizeHandlerData.handle = handle;
@@ -945,4 +945,35 @@ namespace SUTK
 		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(id));
 		m_onResizeHandlers.erase(it);
 	}
+
+	u32 SGEGfxDriver::addOnCloseHandler(OnCloseCallbackHandler handler)
+	{
+		u32 id = id_generator_get(&m_id_generator);
+		m_onCloseHandlers.insert({ id, { handler, EVENT_SUBSCRIPTION_HANDLE_INVALID } });
+		auto& onCloseHandlerData = m_onCloseHandlers[id];
+		SGE::Event::SubscriptionHandle handle = m_driver.getRenderWindow().getOnCloseEvent().subscribe(
+			[](void* publisher, void* handlerData)
+			{
+				auto& _handlerData = *reinterpret_cast<CallbackHandlerData<OnCloseCallbackHandler>*>(handlerData);
+				_handlerData.handler();
+			}, &onCloseHandlerData);
+		onCloseHandlerData.handle = handle;
+		return id;
+	}
+
+	void SGEGfxDriver::removeOnCloseHandler(u32 id)
+	{
+		auto it = m_onCloseHandlers.find(id);
+		if(it == m_onCloseHandlers.end())
+			return;
+		m_driver.getRenderWindow().getOnCloseEvent().unsubscribe(it->second.handle);
+		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(id));
+		m_onCloseHandlers.erase(it);
+	}
+
+void SGEGfxDriver::setClose(bool isClose)
+	{
+		m_driver.getRenderWindow().setClose(isClose);
+	}
+
 }
