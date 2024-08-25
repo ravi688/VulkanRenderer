@@ -127,6 +127,9 @@ typedef struct vulkan_bitmap_text_string_t
 	u32 point_size;
 	/* default color used for shading the glyphs */
 	vec4_t color;
+	/* holds true, if this string is visible (active), otherwise false. 
+	 * inactive means, the characters to render associated with this string will not be part of the GRD buffer. */
+	bool is_active;
 } vulkan_bitmap_text_string_t;
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_texture_t;
@@ -267,7 +270,7 @@ SGE_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* te
 SGE_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char* string);
 SGE_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 point_size);
 SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform);
-
+SGE_API	void vulkan_bitmap_text_string_set_activeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, bool is_active);
 SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, color_t color);
 /* sets color attribute for each characters lying the range list passed to this function 
  * ranges: is the list of ranges where each range consists of 'begin' and 'end' index
@@ -288,6 +291,7 @@ SGE_API u32 vulkan_bitmap_text_string_get_lengthH(vulkan_bitmap_text_t* text, vu
 SGE_API f32 vulkan_bitmap_text_string_get_zcoord_from_glyph_index(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 index);
 SGE_API u32 vulkan_bitmap_text_string_get_glyph_index_from_zcoord(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, f32 zcoord);
 SGE_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
+SGE_API bool vulkan_bitmap_text_string_is_activeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 SGE_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text);
 
 END_CPP_COMPATIBLE

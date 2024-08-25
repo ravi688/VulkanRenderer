@@ -51,6 +51,14 @@ namespace SGE
 		{
 			return bitmap_text_string_get_transformH(m_bitmapTextHandle, m_handle);
 		}
+		void setActive(bool isActive) noexcept
+		{
+			bitmap_text_string_set_activeH(m_bitmapTextHandle, m_handle, isActive);
+		}
+		bool isActive() const noexcept
+		{
+			return bitmap_text_string_is_activeH(m_bitmapTextHandle, m_handle);
+		}
 		void setColor(color_t color) noexcept
 		{
 			bitmap_text_string_set_color(m_bitmapTextHandle, m_handle, color);
