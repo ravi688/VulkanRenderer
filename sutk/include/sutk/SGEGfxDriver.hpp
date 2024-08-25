@@ -128,6 +128,7 @@ namespace SUTK
 		virtual void setTextColor(GfxDriverObjectHandleType handle, const Color4 color) override;
 		virtual void setTextColorRanges(GfxDriverObjectHandleType handle, const ColorRange* ranges, u32 rangeCount) override;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
+		virtual void setTextActive(GfxDriverObjectHandleType handle, bool isActive) override;
 
 		virtual LineCountType getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord) override;
 		virtual f32 getTextCoordFromGlyphIndex(GfxDriverObjectHandleType handle, LineCountType col) override;
