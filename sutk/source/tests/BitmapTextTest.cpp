@@ -96,7 +96,12 @@ namespace SUTK
 		if(kbhit())
 		{
 			char ch = getch();
-			if((ch != 'p') && (ch != 'q') && (ch != 'd') && (ch != 'u') && (ch != 'n'))
+			if(ch == 'k')
+			{
+				// activate and deactivate test
+				m_textString.setActive(!m_textString.isActive());
+			}
+			else if((ch != 'p') && (ch != 'q') && (ch != 'd') && (ch != 'u') && (ch != 'n'))
 			{
 				isScreenSpace = !isScreenSpace;
 				if(isScreenSpace)

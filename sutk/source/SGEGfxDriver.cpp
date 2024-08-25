@@ -348,6 +348,13 @@ namespace SUTK
 		bitmapTextData.charCount += textString.getLength();
 	}
 
+	void SGEGfxDriver::setTextActive(GfxDriverObjectHandleType handle, bool isActive)
+	{
+		auto it = getSubTextIterator(handle);
+		SGE::BitmapTextString& textString = it->second.textString;
+		textString.setActive(isActive);
+	}
+
 	LineCountType SGEGfxDriver::getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord)
 	{
 		auto it = getSubTextIterator(handle);

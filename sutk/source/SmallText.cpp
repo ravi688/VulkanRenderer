@@ -15,6 +15,7 @@ namespace SUTK
 															m_isPointSizeDirty(false), 
 															m_isColorDirty(true), 
 															m_isColorRangesDirty(false), 
+															m_isActiveDirty(false),
 															m_color(color),
 															m_horizontalAlignment(HorizontalAlignment::Invalid),
 															m_verticalAlignment(VerticalAlignment::Invalid),
@@ -71,6 +72,12 @@ namespace SUTK
 			getGfxDriver().setTextColorRanges(getGfxDriverObjectHandle(), m_colorRanges.data(), static_cast<u32>(m_colorRanges.size()));
 			m_isColorRangesDirty = false;
 		}
+
+		if(m_isActiveDirty)
+		{
+			getGfxDriver().setTextActive(getGfxDriverObjectHandle(), isActive());
+			m_isActiveDirty = false;
+		}
 	}
 	void SmallText::updateNormalizedDrawOrder(f32 normalizedDrawOrder)
 	{
@@ -93,6 +100,13 @@ namespace SUTK
 	Color4 SmallText::getColor() const noexcept
 	{
 		return m_color;
+	}
+
+	void SmallText::setActive(bool isActive) noexcept
+	{
+		// mandatory to be called
+		Renderable::setActive(isActive);
+		m_isActiveDirty = true;
 	}
 
 	void SmallText::destroy()

@@ -68,6 +68,7 @@ namespace SUTK
 		bool m_isPointSizeDirty;
 		bool m_isColorDirty;
 		bool m_isColorRangesDirty;
+		bool m_isActiveDirty;
 		SmallTextData m_data;
 		Color4 m_color;
 		std::vector<ColorRange> m_colorRanges;
@@ -98,6 +99,9 @@ namespace SUTK
 		// Implementation of IColorable::setColor() and IColorable::getColor()
 		virtual void setColor(Color4 color) noexcept override;
 		virtual Color4 getColor() const noexcept override;
+
+		// Override of Renderable::setActive()
+		virtual void setActive(bool isActive) noexcept override;
 
 		virtual void destroy() override;
 
