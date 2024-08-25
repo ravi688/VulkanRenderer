@@ -302,6 +302,7 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 		text_string->index_mappings = memory_allocator_buf_new(text->renderer->allocator, u32);
 		text_string->color_ranges = memory_allocator_buf_new(text->renderer->allocator, char_attr_color_range_t);
 		text_string->color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		text_string->is_active = true;
 		buf_push_pseudo(tst_buffer, 1);
 	}
 
@@ -394,6 +395,17 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 	buf_clear(&text_string->glyph_offsets, NULL);
 	/* TODO: it should be buf_clear_fast() */
 	buf_clear(&text_string->index_mappings, NULL);
+
+	/* if this text string is not active then no need to render characters of this text string. */
+	if(!text_string->is_active)
+	{
+		f32 horizontal_pen = 0;
+		// glyph_offset for the pseudo (virtual) glyph at the end of a line
+		buf_push(&text_string->glyph_offsets, &horizontal_pen);
+		/* update GPU (device) side buffer if it was marked dirty */
+		vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
+		return;
+	}
 
 	font_t* font = vulkan_bitmap_text_get_font(text);
 
@@ -578,18 +590,21 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 
 static void text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char_attr_color_range_t* ranges, u32 range_count);
 
+static void text_string_refresh(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string)
+{
+	text_string_set(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
+
+	// reapply the color ranges as the above call to text_string_set() uses the default color set via vulkan_bitmap_text_string_set_color()
+	u32 range_count = buf_get_element_count(&text_string->color_ranges);
+	if(range_count > 0)
+		text_string_set_char_attr_color(text, text_string, buf_get_ptr_at_typeof(&text_string->color_ranges, char_attr_color_range_t, 0), range_count);
+}
+
 static void text_string_set_point_size(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, u32 point_size)
 {
 	text_string->point_size = point_size;
 	if(buf_get_element_count(&text_string->chars) > 0)
-	{
-		text_string_set(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
-
-		// reapply the color ranges as the above call to text_string_set() uses the default color set via vulkan_bitmap_text_string_set_color()
-		u32 range_count = buf_get_element_count(&text_string->color_ranges);
-		if(range_count > 0)
-			text_string_set_char_attr_color(text, text_string, buf_get_ptr_at_typeof(&text_string->color_ranges, char_attr_color_range_t, 0), range_count);
-	}
+		text_string_refresh(text, text_string);
 }
 
 SGE_API void vulkan_bitmap_text_set_glyph_layout_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_layout_handler_t handler, void* user_data)
@@ -753,6 +768,16 @@ static void text_string_set_color_range(vulkan_bitmap_text_t* text, vulkan_bitma
 	}	
 }
 
+SGE_API	void vulkan_bitmap_text_string_set_activeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, bool is_active)
+{
+	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
+	text_string->is_active = is_active;
+	if(!is_active)
+		text_string_set(text, text_string, "");
+	else
+		text_string_refresh(text, text_string);
+}
+
 SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, color_t color)
 {
 	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
@@ -768,6 +793,9 @@ SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vul
 
 static void text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char_attr_color_range_t* ranges, u32 range_count)
 {
+	/* if this text string is not active then no need to apply any color attributes */
+	if(!text_string->is_active)
+		return;
 DEBUG_BLOCK
 (
 	AUTO char_count = buf_get_element_count(&text_string->chars);
@@ -892,6 +920,11 @@ SGE_API u32 vulkan_bitmap_text_string_get_glyph_index_from_zcoord(vulkan_bitmap_
 SGE_API mat4_t vulkan_bitmap_text_string_get_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
 {
 	return get_text_stringH(text, handle)->transform;
+}
+
+SGE_API bool vulkan_bitmap_text_string_is_activeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
+{
+	return get_text_stringH(text, handle)->is_active;
 }
 
 SGE_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text)

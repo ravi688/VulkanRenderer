@@ -90,6 +90,7 @@ SGE_API void bitmap_text_set_render_surface_type(bitmap_text_t* text, bitmap_tex
 SGE_API void bitmap_text_string_setH(bitmap_text_t* text, bitmap_text_string_handle_t handle, const char* string);
 SGE_API void bitmap_text_string_set_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle, u32 point_size);
 SGE_API void bitmap_text_string_set_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle, mat4_t transform);
+SGE_API void bitmap_text_string_set_activeH(bitmap_text_t* text, bitmap_text_string_handle_t handle, bool is_active);
 SGE_API void bitmap_text_string_set_color(bitmap_text_t* text, bitmap_text_string_handle_t handle, color_t color);
 SGE_API void bitmap_text_string_set_char_attr_color(bitmap_text_t* text, bitmap_text_string_handle_t handle, const char_attr_color_range_t* ranges, u32 range_count);
 
@@ -101,5 +102,6 @@ SGE_API u32 bitmap_text_string_get_lengthH(bitmap_text_t* text, bitmap_text_stri
 SGE_API f32 bitmap_text_string_get_zcoord_from_glyph_index(bitmap_text_t* text, bitmap_text_string_handle_t handle, u32 index);
 SGE_API u32 bitmap_text_string_get_glyph_index_from_zcoord(bitmap_text_t* text, bitmap_text_string_handle_t handle, f32 zcoord);
 SGE_API mat4_t bitmap_text_string_get_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
+SGE_API bool bitmap_text_string_is_activeH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 
 END_CPP_COMPATIBLE
