@@ -746,6 +746,10 @@ SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text
 /* NOTE: after calling this you must call vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL); to reflect changes on the GPU side */
 static void text_string_set_color_range(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, u32 begin, u32 end, color_t color)
 {
+	/* if this text string is not active, then no color attributes should be applied as the GRD data isn't avaiable for this text string in the buffer. */
+	if(!text_string->is_active)
+		return;
+
 	const char* chars = CAST_TO(const char*, buf_get_ptr(&text_string->chars));
 	const u32* index_mappings = CAST_TO(const u32*, buf_get_ptr(&text_string->index_mappings));
 	multi_buffer_t* host_grd_buffer = vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer);
