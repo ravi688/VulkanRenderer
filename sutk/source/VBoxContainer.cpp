@@ -84,7 +84,7 @@ namespace SUTK
 		// required extra space to attain aggregate preferred height on top of the minimum height requirement
 		f32 reqDiff = prefHeight - minHeight;
 		// the factor by which reqDiff can be decreased to fit into the available space 'diff', though aggregate preferred height won't be satisfied
-		f32 factor = diff / reqDiff;
+		f32 factor = (reqDiff == 0.0f) ? 1.0f : (diff / reqDiff);
 
 		// now layout the child containers
 		f32 xpos = 0;
@@ -92,7 +92,7 @@ namespace SUTK
 		{
 			if(child->isLayoutIgnore())
 				continue;
-			
+
 			LayoutAttributes& attrs = child->getLayoutAttributes();
 			f32 height = std::min(attrs.minSize.height + factor * (attrs.prefSize.height - attrs.minSize.height), attrs.prefSize.height);
 			child->setRect({ 0, xpos, getRect().width, height });

@@ -56,7 +56,7 @@ namespace SUTK
 		// calculate aggregate minimum width and prefered width
 		std::vector<Container*> childs = getChilds();
 		f32 minWidth = 0;
-		f32 prefHeight = 0;
+		f32 prefWidth = 0;
 		for(Container* &child : childs)
 		{
 			// if this child doesn't care about Layout rules, then skip it.
@@ -65,7 +65,7 @@ namespace SUTK
 
 			LayoutAttributes& attrs = child->getLayoutAttributes();
 			minWidth += attrs.minSize.width;
-			prefHeight += attrs.prefSize.width;
+			prefWidth += attrs.prefSize.width;
 		}
 
 		// if this container is not long enough to accomodate minimimum width requirements for all of the child containers
@@ -82,9 +82,9 @@ namespace SUTK
 		// available extra space after satisfying the aggregate minimum width requirement
 		f32 diff = getRect().width - minWidth;
 		// required extra space to attain aggregate preferred width on top of the minimum width requirement
-		f32 reqDiff = prefHeight - minWidth;
+		f32 reqDiff = prefWidth - minWidth;
 		// the factor by which reqDiff can be decreased to fit into the available space 'diff', though aggregate preferred width won't be satisfied
-		f32 factor = diff / reqDiff;
+		f32 factor = (reqDiff == 0.0f) ? 1.0f : (diff / reqDiff);
 
 		// now layout the child containers
 		f32 xpos = 0;
