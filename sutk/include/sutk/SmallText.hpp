@@ -108,9 +108,13 @@ namespace SUTK
 		void clearColorRanges() noexcept;
 		void addColorRange(std::size_t pos, std::size_t len, const Color4 color) noexcept;
 		
+		// NOTE: The below two set of functions should only be used when the SmallText is active
+		// Otherwise, the actual Text object in IGfxDriver backedn might return 0 in all cases.
 		// returns column (index of a glyph) given a coordinate (absisca) along the line length.
 		LineCountType getColPosFromCoord(f32 coord) noexcept;
 		f32 getCoordFromColPos(LineCountType col) noexcept;
+
+
 		void setData(const std::string& data) noexcept;
 		const SmallTextData& getData() const noexcept { return m_data; }
 		void removeRange(std::size_t pos, std::size_t len = std::string::npos) noexcept;
@@ -128,8 +132,11 @@ namespace SUTK
 		f32 getFontSize() noexcept;
 		f32 getBaselineHeight() noexcept;
 
+		// NOTE: The below two set of functions should only be used when the SmallText is active
+		// Otherwise, the actual Text object in IGfxDriver backend might return zero in case the text object is inactive.
 		Vec2Df getBoundingRectSize() noexcept;
 		Vec2Df getAlignedPosition(Vec2Df pos) noexcept;
+
 		void setAlignment(HorizontalAlignment hAlign, VerticalAlignment vAlign) noexcept;
 	};
 }
