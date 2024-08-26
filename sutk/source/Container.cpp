@@ -3,12 +3,15 @@
 #include <sutk/assert.h> /* _assert() */
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/RenderRectOutline.hpp>
+#include <sutk/ILayoutController.hpp> // for SUTK::ILayoutController
 
 namespace SUTK
 {
-	Container::Container(SUTK::UIDriver& driver, Container* parent) : 
+	Container::Container(SUTK::UIDriver& driver, Container* parent, bool isLayoutIgnore) : 
 															UIDriverObject(driver), 
 															m_rect({0, 0, 5.0f, 5.0f}),
+															m_layoutAttr({ 0, 0 }, { std::numeric_limits<f32>::max(), std::numeric_limits<f32>::max() }, { 5.0f, 5.0f }),
+															m_isLayoutIgnore(isLayoutIgnore),
 															m_anchorRect(NULL),
 															m_parent(NULL), 
 															m_renderRectCont(NULL), 
@@ -39,6 +42,8 @@ namespace SUTK
 			// remove this container from the list of "childs" of the (old) parent container
 			bool result = com::erase_first_if(m_parent->m_containers.begin(), m_parent->m_containers.end(), [this](Container*& _container) { return _container == this; });
 			_assert(result == true);
+			// invoke onRemoveChild callback for the parent container as a child 'this' has been removed from that
+			m_parent->onRemoveChild(this);
 			m_parent = NULL;
 			// invoke onRemove callback for this container as it has now been removed from the old (parent) container
 			onRemove(this);
@@ -52,6 +57,8 @@ namespace SUTK
 			m_parent = parent;
 			// invoke onAdd callback function for this container as it has now been added into another (parent) container
 			onAdd(this);
+			// invoke onAddChild callback function for the parent container as a new child 'this' has been added into that
+			parent->onAddChild(this);
 		}
 	}
 
@@ -136,7 +143,8 @@ namespace SUTK
 			if(m_renderRectCont == NULL)
 			{
 				// create SUTK::RenderableContainer and setup its rect
-				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(this);
+				// NOTE: a Debug rect must have ignore layout flag set to 'true' to avoid its participation in layouting with other non-debug elements.
+				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(this, true);
 				m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
 				
 				// create SUTK::RenderRect and establish parent-child link with SUTK::RenderableContainer just created
@@ -158,5 +166,32 @@ namespace SUTK
 
 		if(m_renderRect != NULL)
 			m_renderRect->setColor(color);
+	}
+
+	void Container::recalculateLayoutParent() noexcept
+	{
+		Container* parent = getParent();
+		if(parent != NULL)
+		{
+			ILayoutController* layoutCtrlr = dynamic_cast<ILayoutController*>(parent);
+			if(layoutCtrlr != NULL)
+				layoutCtrlr->recalculateLayout();
+		}
+	}
+
+	void Container::setLayoutAttributes(const LayoutAttributes& attrs) noexcept
+	{
+		m_layoutAttr = attrs;
+		if(!isLayoutIgnore())
+			recalculateLayoutParent();
+	}
+
+	void Container::setLayoutIgnore(bool isIgnore) noexcept
+	{
+		// if either already ignored or realised, return.
+		if(m_isLayoutIgnore == isIgnore)
+			return;
+		recalculateLayoutParent();
+		m_isLayoutIgnore = isIgnore;
 	}
 }

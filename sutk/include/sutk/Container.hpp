@@ -9,6 +9,16 @@
 
 namespace SUTK
 {
+	struct LayoutAttributes
+	{
+		// Minimum Size Allowed for this Layout Element
+		Vec2Df minSize;
+		// Maximum Size Allowed for this Layout Element
+		Vec2Df maxSize;
+		// Prefered Size for this Layout Element
+		Vec2Df prefSize;
+	};
+
 	class Text;
 	class Container;
 	class RenderRectOutline;
@@ -19,6 +29,8 @@ namespace SUTK
 	private:
 		std::vector<Container*> m_containers;
 		Rect2Df m_rect;
+		LayoutAttributes m_layoutAttr;
+		bool m_isLayoutIgnore;
 		AnchorRect* m_anchorRect;
 		Container* m_parent;
 		RenderableContainer* m_renderRectCont;
@@ -28,7 +40,7 @@ namespace SUTK
 
 	protected:
 		// this can only be called by SUTK::UIDriver
-		Container(SUTK::UIDriver& driver, Container* parent = NULL);
+		Container(SUTK::UIDriver& driver, Container* parent = NULL, bool isLayoutIgnore = false);
 		virtual ~Container();
 
 		friend class UIDriver;
@@ -40,16 +52,35 @@ namespace SUTK
 		virtual void onAdd(Container* parent);
 		// called after removing this container from 'parent' container
 		virtual void onRemove(Container* parent);
+		// called after adding a child 'child' to this container
+		virtual void onAddChild(Container* child) { }
+		// called after removing a child 'child' from this container
+		virtual void onRemoveChild(Container* child) { }
 		// called after rect of this container has been resized
 		// isPositionChanged is set to true if position has been modified or has changed its position
 		// isSizeChanged is set to true if size has been modified
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged);
 		// called after rect of its parent container has been resized or has changed its position
 		virtual void onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged);
+
+		// This is to expose private m_rect reference to deriving classes, and let them modify
+		// it without any unindented side effects.
+		// For example, if the deriving class were to use setSize() instead, it might lead to infinite recursion
+		// if the setSize() was called from the same call-hierarchy in which onResize() was.
+		Rect2Df& getRawRectRef() { return m_rect; }
+
+		void recalculateLayoutParent() noexcept;
+
 	public:
 
 		// IMPLEMENTATION of IDebuggable
 		virtual void enableDebug(bool isEnable = true, Color4 color = Color4::green()) noexcept override;
+
+		LayoutAttributes& getLayoutAttributes() noexcept { return m_layoutAttr; }
+		const LayoutAttributes& getLayoutAttributes() const noexcept { return m_layoutAttr; }
+		void setLayoutAttributes(const LayoutAttributes& attrs) noexcept;
+		bool isLayoutIgnore() const noexcept { return m_isLayoutIgnore; }
+		void setLayoutIgnore(bool isIgnore) noexcept;
 
 		// childs getters
 		std::vector<Container*>& getChilds() noexcept { return getContainerList(); }

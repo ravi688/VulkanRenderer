@@ -15,7 +15,7 @@ namespace SUTK
 
 	protected:
 
-		RenderableContainer(UIDriver& driver, Container* parent) : Container(driver, parent), m_renderable(NULL) { }
+		RenderableContainer(UIDriver& driver, Container* parent, bool isLayoutIgnore = false) : Container(driver, parent, isLayoutIgnore), m_renderable(NULL) { }
 		
 		virtual void onAdd(Container* parent) override;
 		virtual void onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
