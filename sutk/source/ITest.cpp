@@ -10,6 +10,7 @@
 #include <sutk/tests/MouseTest.hpp>
 #include <sutk/tests/RoundRectTest.hpp>
 #include <sutk/tests/ButtonTest.hpp>
+#include <sutk/tests/VBoxTest.hpp>
 
 namespace SUTK
 {
@@ -23,7 +24,8 @@ namespace SUTK
 		{ "ANCHOR", [] () { return std::unique_ptr<ITest>(new AnchorTest()); }},
 		{ "MOUSE", [] () { return std::unique_ptr<ITest>(new MouseTest()); }},
 		{ "ROUND_RECT", [] () { return std::unique_ptr<ITest>(new RoundRectTest()); }},
-		{ "BUTTON", [] () { return std::unique_ptr<ITest>(new ButtonTest()); }}
+		{ "BUTTON", [] () { return std::unique_ptr<ITest>(new ButtonTest()); }},
+		{ "VBOX", [] () { return std::unique_ptr<ITest>(new VBoxTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)
