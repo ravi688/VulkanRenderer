@@ -27,7 +27,10 @@ namespace SUTK
 	}
 	bool SmallText::isDirty()
 	{
-		return m_isPosDirty || m_isDataDirty || m_isPointSizeDirty || m_isColorRangesDirty || m_isColorDirty;
+		// SmallText should only be updated when it is active (visible to the user),
+		// There is no use of updating it upfront, in inactive mode, as the next update is guaranteed to occur when the it goes active.
+		// So, not doing the update in inactive mode avoids redundant updates.
+		return m_isActiveDirty || ((m_isPosDirty || m_isDataDirty || m_isPointSizeDirty || m_isColorRangesDirty || m_isColorDirty) && isActive());
 	}
 	void SmallText::update()
 	{
@@ -46,6 +49,14 @@ namespace SUTK
 		{
 			getGfxDriver().setTextPointSize(getGfxDriverObjectHandle(), m_pointSize);
 			m_isPointSizeDirty = false;
+		}
+
+		// NOTE: This must be happen before the position update, 
+		// that's because 'getAlignedPosition()' only returns valid values when the text is active'
+		if(m_isActiveDirty)
+		{
+			getGfxDriver().setTextActive(getGfxDriverObjectHandle(), isActive());
+			m_isActiveDirty = false;
 		}
 
 		if(m_isDataDirty)
@@ -71,12 +82,6 @@ namespace SUTK
 		{
 			getGfxDriver().setTextColorRanges(getGfxDriverObjectHandle(), m_colorRanges.data(), static_cast<u32>(m_colorRanges.size()));
 			m_isColorRangesDirty = false;
-		}
-
-		if(m_isActiveDirty)
-		{
-			getGfxDriver().setTextActive(getGfxDriverObjectHandle(), isActive());
-			m_isActiveDirty = false;
 		}
 	}
 	void SmallText::updateNormalizedDrawOrder(f32 normalizedDrawOrder)
