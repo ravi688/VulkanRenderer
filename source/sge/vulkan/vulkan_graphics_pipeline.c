@@ -227,6 +227,20 @@ SGE_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_rende
 	return pipeline;
 }
 
+SGE_API VkRect2D vulkan_graphics_pipeline_get_scissor_rect(vulkan_graphics_pipeline_t* pipeline)
+{
+	/* if no user defined scissor exists, then return the current render area */
+	if(!pipeline->is_user_defined_scissor)
+		return pipeline->render_pass->vo_current_render_area;
+	/* else return the first scissor from the list of user defined scissors.
+	 * NOTE: we may support more than one scissors in future. */
+	else
+	{
+		_debug_assert__(pipeline->scissor_count > 0);
+		return pipeline->vo_user_defined_scissors[0];
+	}
+}
+
 SGE_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline)
 {
 	AUTO command_buffer = pipeline->renderer->vo_command_buffers[pipeline->renderer->current_frame_index];

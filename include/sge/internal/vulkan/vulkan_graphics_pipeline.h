@@ -125,6 +125,8 @@ typedef struct vulkan_graphics_pipeline_t
 
 #define VULKAN_GRAPHICS_PIPELINE(ptr) VULKAN_OBJECT_UP_CAST(vulkan_graphics_pipeline_t*, VULKAN_OBJECT_TYPE_GRAPHICS_PIPELINE, ptr)
 #define VULKAN_GRAPHICS_PIPELINE_CONST(ptr) VULKAN_OBJECT_UP_CAST_CONST(const vulkan_graphics_pipeline_t*, VULKAN_OBJECT_TYPE_GRAPHICS_PIPELINE, ptr)
+#define VULKAN_GRAPHICS_PIPELINE_CAST(ptr) VULKAN_OBJECT_TYPE_CAST(vulkan_graphics_pipeline_t*, VULKAN_OBJECT_TYPE_GRAPHICS_PIPELINE, ptr)
+#define VULKAN_GRAPHICS_PIPELINE_CAST_CONST(ptr) VULKAN_OBJECT_TYPE_CAST_CONST(const vulkan_graphics_pipeline_t*, VULKAN_OBJECT_TYPE_GRAPHICS_PIPELINE, ptr)
 
 BEGIN_CPP_COMPATIBLE
 
@@ -134,6 +136,16 @@ SGE_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_create(vulkan_rende
 SGE_API void vulkan_graphics_pipeline_create_no_alloc(vulkan_renderer_t* renderer, vulkan_graphics_pipeline_create_info_t* create_info, vulkan_graphics_pipeline_t OUT pipeline);
 SGE_API void vulkan_graphics_pipeline_destroy(vulkan_graphics_pipeline_t* pipeline);
 SGE_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline_t* pipeline);
+
+/* returns true if scissor { } block isn't defined in the viewport { } block in the V3D shader. 
+ * i.e., it returns false if scissor { } block is defined, meaning the scissor is static. */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_graphics_pipeline_is_scissor_dynamic(vulkan_graphics_pipeline_t* pipeline)
+{
+	return !pipeline->is_user_defined_scissor;
+}
+
+/* returns scissor used by the graphics pipeline */
+SGE_API VkRect2D vulkan_graphics_pipeline_get_scissor_rect(vulkan_graphics_pipeline_t* pipeline);
 
 /* logic functions */
 SGE_API void vulkan_graphics_pipeline_bind(vulkan_graphics_pipeline_t* pipeline);

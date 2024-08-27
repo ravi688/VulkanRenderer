@@ -27,6 +27,7 @@
 #include <sge/internal/vulkan/vulkan_render_object.h>
 #include <sge/internal/vulkan/vulkan_renderer.h>
 #include <sge/internal/vulkan/vulkan_render_queue.h>
+#include <sge/internal/vulkan/vulkan_graphics_pipeline.h>
 #include <sge/glsl_memory_layout.h>
 #include <glslcommon/glsl_types.h>
 #include <sge/memory_allocator.h>
@@ -155,17 +156,31 @@ SGE_API void vulkan_render_object_attach(vulkan_render_object_t* obj, void* user
 		obj->set_material(obj->user_data, obj->material);
 }
 
-SGE_API void vulkan_render_object_draw(vulkan_render_object_t* obj)
+SGE_API void vulkan_render_object_draw(vulkan_render_object_t* obj, vulkan_graphics_pipeline_t* pipeline)
 {
 	AUTO command_buffer = obj->renderer->vo_command_buffers[obj->renderer->current_frame_index];
-	if(obj->scissor_rect.has_value)
+	/* vkCmdSetScissor only works if the scissor is in the list of dynamic states. 
+	 * so we need to check here if the graphics pipeline supports dynamic scissor */
+	if(vulkan_graphics_pipeline_is_scissor_dynamic(pipeline))
 	{
-		VkRect2D vk_rect = 
-		{ 
-			.offset = { obj->scissor_rect.value.offset.x, obj->scissor_rect.value.offset.y },
-			.extent = { obj->scissor_rect.value.extent.width, obj->scissor_rect.value.extent.height }
-		};
-		vkCmdSetScissor(command_buffer, 0, 1, &vk_rect);
+		/* if this render object has got a custom scissor then use that one. */
+		if(obj->scissor_rect.has_value)
+		{
+			VkRect2D vk_rect = 
+			{ 
+				.offset = { obj->scissor_rect.value.offset.x, obj->scissor_rect.value.offset.y },
+				.extent = { obj->scissor_rect.value.extent.width, obj->scissor_rect.value.extent.height }
+			};
+			vkCmdSetScissor(command_buffer, 0, 1, &vk_rect);
+		}
+		/* otherwise, fallback to the one used by graphics pipeline. 
+		 * NOTE: this is needed, because previous vkCmdSetScissor calls modify the state of scissor and remains as that 
+		 * until another vkCmdSetScissor changes it again. */
+		else
+		{
+			VkRect2D vk_rect = vulkan_graphics_pipeline_get_scissor_rect(pipeline);
+			vkCmdSetScissor(command_buffer, 0, 1, &vk_rect);
+		}
 	}
 	obj->draw(obj->user_data);
 }
