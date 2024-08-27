@@ -339,7 +339,7 @@ SGE_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t*
 						/* bind OBJECT_SET */
 						vulkan_descriptor_set_bind(&object->object_set, VULKAN_DESCRIPTOR_SET_OBJECT, layout);
 						/* draw the object */
-						vulkan_render_object_draw(object);
+						vulkan_render_object_draw(object, pipeline);
 					}
 				}
 			}
@@ -519,7 +519,7 @@ SGE_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_c
 						vulkan_descriptor_set_bind(&object->object_set, VULKAN_DESCRIPTOR_SET_OBJECT, pipeline_layout);
 
 						// draw the object
-						vulkan_render_object_draw(object);
+						vulkan_render_object_draw(object, pipeline);
 					}
 				}
 			}

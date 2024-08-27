@@ -37,6 +37,8 @@
 	#define RENDER_OBJECT_HANDLE_INVALID VULKAN_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct vulkan_material_t vulkan_material_t;
 	typedef vulkan_material_t material_t;
+	typedef struct vulkan_graphics_pipeline_t vulkan_graphics_pipeline_t;
+	typedef vulkan_graphics_pipeline_t graphics_pipeline_t;
 #elif SGE_OPENGL_DRIVER
 	typedef struct opengl_render_object_t opengl_render_object_t;
 	typedef opengl_render_object_t render_object_t;
@@ -44,6 +46,8 @@
 	#define RENDER_OBJECT_HANDLE_INVALID OPENGL_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct opengl_material_t opengl_material_t;
 	typedef opengl_material_t material_t;
+	typedef struct opengl_graphics_pipeline_t opengl_graphics_pipeline_t;
+	typedef opengl_graphics_pipeline_t graphics_pipeline_t;
 #elif SGE_DIRECTX_DRIVER
 	typedef struct directx_render_object_t directx_render_object_t;
 	typedef directx_render_object_t render_object_t;
@@ -51,6 +55,8 @@
 	#define RENDER_OBJECT_HANDLE_INVALID DIRECTX_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct directx_material_t directx_material_t;
 	typedef directx_material_t material_t;
+	typedef struct directx_graphics_pipeline_t directx_graphics_pipeline_t;
+	typedef directx_graphics_pipeline_t graphics_pipeline_t;
 #elif SGE_METAL_DRIVER
 	typedef struct metal_render_object_t metal_render_object_t;
 	typedef metal_render_object_t metal_render_object_t;
@@ -58,6 +64,8 @@
 	#define RENDER_OBJECT_HANDLE_INVALID METAL_RENDER_OBJECT_HANDLE_INVALID
 	typedef struct metal_material_t metal_material_t;
 	typedef metal_material_t material_t;
+	typedef struct metal_graphics_pipeline_t metal_graphics_pipeline_t;
+	typedef metal_graphics_pipeline_t graphics_pipeline_t;
 #endif
 
 #include <hpml/mat4.h>
@@ -94,7 +102,7 @@ SGE_API void render_object_release_resources(render_object_t* object);
 SGE_API void render_object_set_active(render_object_t* object, bool is_active);
 SGE_API bool render_object_is_active(render_object_t* object);
 SGE_API void render_object_attach(render_object_t* object, void* user_data);
-SGE_API void render_object_draw(render_object_t* object);
+SGE_API void render_object_draw(render_object_t* object, graphics_pipeline_t* pipeline);
 SGE_API void render_object_set_material(render_object_t* object, material_t* material);
 SGE_API material_t* render_object_get_material(render_object_t* object);
 SGE_API void render_object_set_transform(render_object_t* obj, mat4_t transform);

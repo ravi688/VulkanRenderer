@@ -39,6 +39,7 @@
 #include <hpml/mat4.h>
 
 typedef struct vulkan_material_t vulkan_material_t;
+typedef struct vulkan_graphics_pipeline_t vulkan_graphics_pipeline_t;
 
 // typedef struct vulkan_object_info_t
 // {
@@ -122,7 +123,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_object_s
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_render_object_is_active(const vulkan_render_object_t* object) { return object->is_active; }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_render_queue_t* vulkan_render_object_get_queue(vulkan_render_object_t* object) { return object->queue; }
 SGE_API void vulkan_render_object_attach(vulkan_render_object_t* object, void* user_data);
-SGE_API void vulkan_render_object_draw(vulkan_render_object_t* object);
+SGE_API void vulkan_render_object_draw(vulkan_render_object_t* object, vulkan_graphics_pipeline_t* pipeline);
 SGE_API void vulkan_render_object_set_material(vulkan_render_object_t* object, vulkan_material_t* material);
 SGE_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_object_t* object);
 SGE_API void vulkan_render_object_set_transform(vulkan_render_object_t* object, mat4_t transform);

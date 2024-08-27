@@ -27,6 +27,7 @@
 #include <sge/render_object.h>
 #include <sge/sge.h>
 #include <sge/internal/vulkan/vulkan_render_object.h>
+#include <sge/internal/vulkan/vulkan_graphics_pipeline.h>
 #include <sge/alloc.h>
 
 /* constructors and destructors */
@@ -84,9 +85,9 @@ SGE_API void render_object_attach(render_object_t* object, void* user_data)
 	vulkan_render_object_attach(object, user_data);
 }
 
-SGE_API void render_object_draw(render_object_t* object)
+SGE_API void render_object_draw(render_object_t* object, graphics_pipeline_t* pipeline)
 {
-	vulkan_render_object_draw(object);
+	vulkan_render_object_draw(object, VULKAN_GRAPHICS_PIPELINE_CAST(pipeline));
 }
 SGE_API void render_object_set_material(render_object_t* obj, material_t* material)
 {
