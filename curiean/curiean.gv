@@ -1,0 +1,14 @@
+
+#pragma once
+
+digraph curiean
+{
+	SGE -> curiean;
+	HPML -> curiean;
+	SafeMemory -> curiean;
+	TemplateSystem -> curiean;
+	tgc -> curiean;
+	BufferLib -> curiean;
+	CallTrace -> curiean;
+	MeshLib -> curiean;
+}
