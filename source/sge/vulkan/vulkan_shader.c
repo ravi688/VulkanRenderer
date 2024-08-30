@@ -2261,6 +2261,7 @@ SGE_API vulkan_shader_t* vulkan_shader_compile_and_load(vulkan_renderer_t* rende
 	/* compile the source string */
 	sc_compiler_output_t output = sc_compile(&input, NULL);
 
+	vulkan_shader_t* shader = NULL;
 	/* if compilation has been successful then proceed to create vulkan_shader_t object */
 	if(output.is_success)
 	{
@@ -2270,15 +2271,16 @@ SGE_API vulkan_shader_t* vulkan_shader_compile_and_load(vulkan_renderer_t* rende
 			.data_size = output.sb_byte_count,
 			.is_vertex_attrib_from_file = true
 		};
-		AUTO shader = vulkan_shader_load(renderer, &load_info);
-		return shader;
+		shader = vulkan_shader_load(renderer, &load_info);
 	}
 	/* otherwise issue an error what gone wrong and return NULL value */
 	else
-	{
 		debug_log_error("Failed to compile source string, Reason: %s", output.log);
-		return NULL;
-	}
+
+	/* free up any memory allocated by the v3d shader compiler (vsc) */
+	sc_compiler_output_destroy(&output, NULL);
+
+	return shader;
 }
 
 SGE_API void vulkan_shader_destroy(vulkan_shader_t* shader)
