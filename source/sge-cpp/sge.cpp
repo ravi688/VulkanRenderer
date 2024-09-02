@@ -47,17 +47,18 @@ namespace SGE
 			driver_create_info.max_far_lights = requirements->maxFarLights;
 			driver_create_info.require_bitmap_text = requirements->bitmapText;
 		}
-		m_driver = renderer_init(m_allocator, &driver_create_info);
+		m_handle = renderer_init(m_allocator, &driver_create_info);
 	}
 
 	Driver::~Driver()
 	{ 
 		/* we need to wait for the device to finish any pending tasks, so that all the resources/objects will be unreferenced
 		 * , as test->terminate() destroys the test related objects etc. */
-		renderer_wait_idle(m_driver);
+		renderer_wait_idle(m_handle);
 
-		renderer_terminate(m_driver);
+		renderer_terminate(m_handle);
 		memory_allocator_destroy(m_allocator);
 		alloc_terminate();
+		m_handle = NULL;
 	}
 }
