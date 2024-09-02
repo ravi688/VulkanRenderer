@@ -107,6 +107,10 @@ TEST_ON_INITIALIZE(POINT_LIGHT_SHADOWS)
 	this->pointLight = light_create(renderer, LIGHT_TYPE_POINT);
 	light_set_position(this->pointLight, vec3_zero());
 	light_set_intensity(this->pointLight, 0.5f);
+	/* this test implements the point light shadows algo manually, 
+	 * so we do not need the internal shodow map. */
+	light_set_cast_shadow(this->pointLight, false);
+	render_scene_add_light(this->scene, this->pointLight);
 
 	this->shadowMapMaterial = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 

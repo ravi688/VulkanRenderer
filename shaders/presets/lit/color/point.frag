@@ -26,9 +26,9 @@
 
 #version 450
 
+#define USE_POINT_LIGHTS
 #include <v3d.h>
 
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight light;
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
 	vec4 color;
@@ -61,6 +61,8 @@ const float castedBias = 0.01f;
 
 void main()
 {
+	PointLightType light = pointLights.lights[0];
+	
 	vec3 dir = light.position - position;
 
 	float closestDepth = texture(shadowMap, -vec3(dir.z, dir.y, dir.x)).r;
