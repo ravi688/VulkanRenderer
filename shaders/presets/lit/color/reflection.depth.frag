@@ -26,9 +26,9 @@
 
 #version 450
 
+#define USE_FAR_LIGHTS
 #include <v3d.h>
 
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight lightInfo;
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo camera;
 
 layout(set = MATERIAL_SET, binding = TEXTURE_BINDING0) uniform samplerCube reflectionMap;
@@ -52,7 +52,6 @@ float linearize(float depth, float n, float f)
 	return n * f * 1 / t;
 }
 
-
 void main()
 {
 	mat4 camera_transform = camera.transform;
@@ -68,6 +67,6 @@ void main()
 
 	vec4 specular_color = mix(parameters.color, vec4(1, 1, 1, 1), 0.5 * dot(normalize(reflection_vector), normal) + 0.5);
 
-	float dp = 0.5 * dot(-normal, lightInfo.direction) + 0.5;
-	color = dp * specular_color * vec4(lightInfo.color, 1) * reflection_color;
+	vec4 irradiance = getFarLightIrradiance(normal);
+	color = irradiance * specular_color * reflection_color;
 }

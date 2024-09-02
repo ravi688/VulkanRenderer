@@ -26,6 +26,7 @@
 
 #version 450
 
+#define USE_FAR_LIGHTS
 #include <v3d.h>
 
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight lightInfo;
@@ -42,6 +43,5 @@ layout(location = 0) out vec4 color;
 
 void main()
 {
-	float dp = 0.5 * dot(-_normal, lightInfo.direction) + 0.5;
-	color = parameters.color * dp * vec4(lightInfo.color, 1);
+	color = parameters.color * getFarLightIrradiance(_normal);
 }
