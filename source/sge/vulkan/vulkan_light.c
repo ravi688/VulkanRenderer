@@ -95,6 +95,8 @@ static void add_fields_for_far_light(struct_descriptor_t* descriptor)
 
 static void add_fields_for_point_light(struct_descriptor_t* descriptor)
 {
+	struct_descriptor_add_field(descriptor, "projection", GLSL_TYPE_MAT4);
+	struct_descriptor_add_field(descriptor, "view", GLSL_TYPE_MAT4);
 	struct_descriptor_add_field(descriptor, "color", GLSL_TYPE_VEC3);
 	struct_descriptor_add_field(descriptor, "intensity", GLSL_TYPE_FLOAT);
 	struct_descriptor_add_field(descriptor, "position", GLSL_TYPE_VEC3);
@@ -543,16 +545,20 @@ SGE_API bool vulkan_light_is_shadow_map_dirty(vulkan_light_t* light)
 typedef struct point_light_dispatchable_data_t
 {
 	/* offset 0 */
+	ALIGN_AS(GLSL_STD140_MAT4_ALIGN) _mat4_t proj;
+	/* offset 64 */
+	ALIGN_AS(GLSL_STD140_MAT4_ALIGN) _mat4_t view;
+	/* offset 128 */
 	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t color;
-	/* offset 12 */
+	/* offset 140 */
 	ALIGN_AS(GLSL_STD140_FLOAT_ALIGN) f32 intensity;
-	/* offset 16 */
+	/* offset 144 */
 	ALIGN_AS(GLSL_STD140_VEC3_ALIGN) vec3_t position;
-	/* offset 28 */
+	/* offset 156 */
 	ALIGN_AS(GLSL_STD140_UINT_ALIGN) u32 shadow_index;
-} point_light_dispatchable_data_t ALIGN_AS(U32_NEXT_MULTIPLE(GLSL_STD140_VEC3_ALIGN, 16));
+} point_light_dispatchable_data_t ALIGN_AS(U32_NEXT_MULTIPLE(GLSL_STD140_MAT4_ALIGN, 16));
 
-#define SIZEOF_POINT_LIGHT_DISPATCHABLE_DATA_T 32 /* bytes */
+#define SIZEOF_POINT_LIGHT_DISPATCHABLE_DATA_T 160 /* bytes */
 #define STRIDE_POINT_LIGHT_DISPATCHABLE_DATA_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_POINT_LIGHT_DISPATCHABLE_DATA_T, ALIGN_OF(point_light_dispatchable_data_t))
 
 typedef struct spot_light_dispatchable_data_t
@@ -652,6 +658,8 @@ static void get_spot_light_dispatchable_data(vulkan_light_t* light, u32 shadowma
 static void get_point_light_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, point_light_dispatchable_data_t* const data)
 {
 	light = VULKAN_LIGHT(light);
+	data->proj = mat4_transpose(get_projection(light)).raw4x4f32;
+	data->view = mat4_transpose(get_view(light)).raw4x4f32;
 	data->color = light->color;
 	data->intensity = light->intensity;
 	data->position = light->position;
