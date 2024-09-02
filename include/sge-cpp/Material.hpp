@@ -1,24 +1,20 @@
 #pragma once
 
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference<>
 #include <sge/material.h> /* for material_t* */
 
 #include <string> /* for std::string */
 
 namespace SGE
 {
-	class SGE_API Material
+	class Material : public PtrReference<material_t>
 	{
-	private:
-		material_t* m_handle;
-		Material(material_t* handle) : m_handle(handle) { }
+		PTR_REFERENCE_DERIVED_CLASS(Material)
 
 		friend class MaterialLibrary;
 		friend class RenderObject;
-		
-	public:
-		Material() : m_handle(NULL) { }
-		material_t* getHandle() const noexcept { return m_handle; }
 
+	public:
 		template<typename T>
 		void set(const std::string& name, T value)
 		{

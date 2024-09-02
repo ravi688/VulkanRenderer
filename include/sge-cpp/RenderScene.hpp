@@ -4,19 +4,18 @@
 #include <sge-cpp/RenderObject.hpp> /* for SGE::RenderObject */
 #include <sge-cpp/RenderQueue.hpp> /* for SGE::RenderQueue */
 #include <sge-cpp/Camera.hpp> /* for SGE::Camera */
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 
 namespace SGE
 {
 	/* forward declaration of SGE::Driver */
 	class Driver;
 
-	class SGE_API RenderScene
+	class SGE_API RenderScene : public PtrReference<render_scene_t>
 	{
-	private:
-		render_scene_t* m_handle;
-		RenderScene(render_scene_t* handle) noexcept : m_handle(handle) { }
+		PTR_REFERENCE_DERIVED_CLASS(RenderScene);
+		
 	public:
-		RenderScene() : m_handle(NULL) { }
 		RenderScene(Driver& driver, u64 queueMask) noexcept;
 
 		void destroy() noexcept

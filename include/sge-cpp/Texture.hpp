@@ -1,18 +1,16 @@
 #pragma once
 
 #include <sge/texture.h> /* for texture_t* */
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 
 namespace SGE
 {
-	class SGE_API Texture
+	class SGE_API Texture : public PtrReference<texture_t>
 	{
-	private:
-		texture_t* m_handle;
-		Texture(texture_t* handle) : m_handle(handle) { }
+		PTR_REFERENCE_DERIVED_CLASS(Texture);
+
 		friend class BitmapGlyphAtlasTexture;
 	public:
-		texture_t* getHandle() const noexcept { return m_handle; }
-
 		void destroy() noexcept
 		{
 			texture_destroy(m_handle);

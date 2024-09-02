@@ -2,11 +2,14 @@
 
 #include <sge/camera.h>
 #include <sge-cpp/Texture.hpp>
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 
 namespace SGE
 {
-	class SGE_API Camera
+	class SGE_API Camera : public PtrReference<camera_t>
 	{
+		PTR_REFERENCE_DERIVED_CLASS(Camera);
+
 	public:
 		enum class ProjectionType : u8
 		{
@@ -30,18 +33,12 @@ namespace SGE
 		};
 
 		friend class CameraSystem;
-	private:
-		camera_t* m_handle;
-
-		Camera(camera_t* handle) noexcept : m_handle(handle) { }
-
 	public:
 
 		static camera_render_target_binding_type_t to_camera_render_target_binding_type(RenderTargetBindingType bindingType);
 		static camera_render_target_type_t to_camera_render_target_type(RenderTargetType targetType);
 		static camera_projection_type_t to_camera_projection_type(ProjectionType projectionType);
 
-		camera_t* getHandle() const noexcept { return m_handle; }
 		void setClear(color_t color, float depth) const noexcept { camera_set_clear(m_handle, color, depth); }
 		void setActive(bool isActive) const noexcept { camera_set_active(m_handle, isActive); }
 		void setRenderTarget(RenderTargetType targetType, RenderTargetBindingType bindingType, Texture texture) const noexcept

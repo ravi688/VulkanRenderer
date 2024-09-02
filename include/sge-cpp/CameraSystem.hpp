@@ -2,20 +2,17 @@
 
 #include <sge/camera_system.h>
 #include <sge-cpp/Camera.hpp>
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 
 namespace SGE
 {
-	class SGE_API CameraSystem
+	class SGE_API CameraSystem : public PtrReference<camera_system_t>
 	{
-	private:
-		camera_system_t* m_handle;
-		CameraSystem(camera_system_t* handle) noexcept : m_handle(handle) { }
+		PTR_REFERENCE_DERIVED_CLASS(CameraSystem);
 
 		friend class Driver;
 
 	public:
-		camera_system_t* getHandle() { return m_handle; }
-
 		u32 getCount() const noexcept { return camera_system_get_count(m_handle); }
 		Camera getAt(u32 index) const noexcept { return Camera(camera_system_get_at(m_handle, index)); }
 

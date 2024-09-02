@@ -4,18 +4,17 @@
 #include <sge-cpp/Material.hpp> /* for SGE::Material */
 #include <sge-cpp/BitmapText.hpp> /* for SGE::BitmapText */
 #include <sge-cpp/Mesh.hpp> // for SGE::Mesh
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 
 namespace SGE
 {
-	class SGE_API RenderObject
+	class SGE_API RenderObject : public PtrReference<render_object_t>
 	{
+		PTR_REFERENCE_DERIVED_CLASS(RenderObject);
+
 	private:
-		render_object_t* m_handle;
-		RenderObject(render_object_t* handle) noexcept : m_handle(handle) { }
 		friend class RenderScene;
 	public:
-
-		RenderObject() : m_handle(NULL) { }
 
 		enum class Type : u8
 		{
@@ -25,8 +24,6 @@ namespace SGE
 		};
 
 		static render_object_type_t to_render_object_type(Type type);
-
-		render_object_t* getHandle() const noexcept { return m_handle; }
 
 		void setActive(bool isActive) noexcept
 		{

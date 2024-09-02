@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sge/font.h> /* font_t* */
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 
 #include <string> /* for std::string */
 
@@ -9,18 +10,13 @@ namespace SGE
 	/* forward declaration for SGE::Driver */
 	class Driver;
 
-	class SGE_API Font
+	class SGE_API Font : public PtrReference<font_t>
 	{
-	private:
-		font_t* m_handle;
-		Font(font_t* handle) noexcept : m_handle(handle) { }
+		PTR_REFERENCE_DERIVED_CLASS(Font);
 
 	public:
-		Font() : m_handle(NULL) { }
 		Font(Driver& driver, const std::string& filePath) noexcept;
 		Font(Driver& driver, const void* bytes, u64 length) noexcept;
-
-		font_t* getHandle() const noexcept { return m_handle; }
 
 		u32 getBaselineSpace() const noexcept
 		{

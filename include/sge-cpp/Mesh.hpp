@@ -2,22 +2,19 @@
 
 #include <sge/mesh.h> // for mesh_t
 
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 #include <sge-cpp/Buffer.hpp> // for SGE::Buffer
 
 namespace SGE
 {
 	class Driver;
-	class SGE_API Mesh
+	class SGE_API Mesh : public PtrReference<mesh_t>
 	{
-	private:
-		mesh_t* m_handle;
-		Mesh(mesh_t* handle) noexcept : m_handle(handle) { }
+		PTR_REFERENCE_DERIVED_CLASS(Mesh)
 
 	public:
-		Mesh() noexcept : m_handle(NULL) { }
 		Mesh(Driver& driver) noexcept;
-		mesh_t* getHandle() const noexcept { return m_handle; }
-
+		
 		void destroy() noexcept;
 
 		void setInstanceCount(u32 instanceCount) noexcept
