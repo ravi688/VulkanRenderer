@@ -89,6 +89,7 @@ TEST_ON_INITIALIZE(TEXTURE_SAMPLING_ALPHA_CHANNEL)
 	render_scene_add_camera(this->scene, this->camera);
 	
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
+	render_scene_add_light(this->scene, this->light);
 
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
