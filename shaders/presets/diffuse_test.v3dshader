@@ -43,17 +43,6 @@ Shader
 		uniform sampler2D albedo; 
 	}
 
-	// [NoParse]
-	// Properties
-	// {
-	// 	vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
-	// 	{
-	// 		vec4 color;
-	// 	} parameters;
-
-	// 	fragment [MATERIAL_SET, TEXTURE_BINDING0] uniform sampler2D albedo;
-	// }
-
 	Layout
 	{
 		[Rate(per_vertex)]
@@ -71,14 +60,6 @@ Shader
 		[Attribute(texcoord)]
 		vec2 texcoord;
 	}
-
-	// [NoParse]
-	// Layout
-	// {
-	// 	per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
-	// 	per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
-	// 	per_vertex [TEXCOORD_BINDING, TEXCOORD_LOCATION] vec2 texcoord;
-	// }
 
 	RenderPass
 	{
@@ -108,7 +89,8 @@ Shader
 				#stage vertex
 
 				#version 450
-				
+
+				#define USE_FAR_LIGHTS				
 				#include <v3d.h>
 				
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
@@ -119,7 +101,8 @@ Shader
 				
 				void main()
 				{
-					vec4 clipPos = light.projection * light.view * objectInfo.transform * vec4(position, 1);
+					FarLightType light = farLights.lights[0];
+					vec4 clipPos = light.proj * light.view * objectInfo.transform * vec4(position, 1);
 					clipPos.y = -clipPos.y;
 					gl_Position = clipPos;
 				}
@@ -164,6 +147,7 @@ Shader
 
 				#version 450
 				
+				#define USE_FAR_LIGHTS
 				#include <v3d.h>
 				
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
@@ -187,13 +171,15 @@ Shader
 					_normal = normalize((objectInfo.normal * vec4(normal, 1)).xyz);
 					_texcoord = texcoord;
 				
-					_lightClipPos = light.projection * light.view * objectInfo.transform * vec4(position, 1);
+					FarLightType light = farLights.lights[0];
+					_lightClipPos = light.proj * light.view * objectInfo.transform * vec4(position, 1);
 				}
 
 				#stage fragment
 
 				#version 450
 				
+				#define USE_FAR_LIGHTS
 				#include <v3d.h>
 				
 				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
@@ -226,6 +212,7 @@ Shader
 					if(shadowedDepth > (depth + shadowBias))
 				 		shadow = minShadow;
 				
+					FarLightType light = farLights.lights[0];
 					float dp = dot(normal, -light.direction);
 					float litAmount = max(0, dp);
 					color = max(shadow * litAmount, ambient) * vec4(light.color, 1) * parameters.color * texture(albedo, texcoord);
