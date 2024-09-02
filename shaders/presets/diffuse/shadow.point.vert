@@ -26,9 +26,9 @@
 
 #version 450
 
+#define USE_POINT_LIGHTS
 #include <v3d.h>
 
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform PointLight light;
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
 layout(location = POSITION_LOCATION) in vec3 position;
@@ -36,7 +36,8 @@ layout(location = POSITION_LOCATION) in vec3 position;
 
 void main()
 {
-	vec4 clipPos = light.projection * light.view * objectInfo.transform * vec4(position, 1);
+	PointLightType light = pointLights.lights[0];
+	vec4 clipPos = light.proj * light.view * objectInfo.transform * vec4(position, 1);
 	clipPos.y = -clipPos.y;
 	gl_Position = clipPos;
 }
