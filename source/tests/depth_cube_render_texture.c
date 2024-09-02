@@ -101,6 +101,9 @@ TEST_ON_INITIALIZE(DEPTH_CUBE_RENDER_TEXTURE)
 	render_scene_add_camera(this->scene, this->offscreenCamera);
 
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
+	light_set_cast_shadow(this->light, true);
+	light_set_color(this->light, COLOR_PINK.rgb);
+	render_scene_add_light(this->scene, this->light);
 
 	this->skyboxMaterial = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 

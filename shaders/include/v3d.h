@@ -313,4 +313,16 @@ layout(buffer_layout, set = SCENE_SET, binding = FAR_LIGHT_BINDING) read_write_q
 	FarLightType lights[SGE_MAX_FAR_LIGHTS];
 } farLights;
 layout(set = SCENE_SET, binding = FAR_LIGHT_SHADOWMAP_BINDING) uniform sampler2D farLightShadowMaps[SGE_MAX_FAR_LIGHTS];
+
+vec4 getFarLightIrradiance(vec3 normal)
+{
+	vec4 irradiance = vec4(0.0, 0.0, 0.0, 1.0);
+	for(uint i = 0; i < farLights.count; i++)
+	{
+		FarLightType light = farLights.lights[i];
+		float dp = 0.5 * dot(-normal, light.direction) + 0.5;
+		irradiance += dp * vec4(light.color, 1);
+	}
+	return irradiance;
+}
 #endif
