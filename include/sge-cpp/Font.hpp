@@ -1,7 +1,7 @@
 #pragma once
 
 #include <sge/font.h> /* font_t* */
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 #include <string> /* for std::string */
 
@@ -10,7 +10,7 @@ namespace SGE
 	/* forward declaration for SGE::Driver */
 	class Driver;
 
-	class SGE_API Font : public PtrReference<font_t>
+	class SGE_API Font : public com::PtrReference<font_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(Font);
 

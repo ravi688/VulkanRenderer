@@ -1,13 +1,13 @@
 #pragma once
 
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference<>
+#include <common/PtrReference.hpp> // for com::PtrReference<>
 #include <sge/material.h> /* for material_t* */
 
 #include <string> /* for std::string */
 
 namespace SGE
 {
-	class Material : public PtrReference<material_t>
+	class Material : public com::PtrReference<material_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(Material)
 

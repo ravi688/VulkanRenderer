@@ -1,11 +1,11 @@
 #pragma once
 
 #include <sge/texture.h> /* for texture_t* */
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 namespace SGE
 {
-	class SGE_API Texture : public PtrReference<texture_t>
+	class SGE_API Texture : public com::PtrReference<texture_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(Texture);
 

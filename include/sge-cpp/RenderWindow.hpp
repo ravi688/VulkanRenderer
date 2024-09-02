@@ -5,11 +5,11 @@
 #include <utility> /* for std::pair */
 
 #include <sge-cpp/Event.hpp> /* for SGE::Event */
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 namespace SGE
 {
-	class SGE_API RenderWindow : public PtrReference<render_window_t>
+	class SGE_API RenderWindow : public com::PtrReference<render_window_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(RenderWindow);
 

@@ -2,12 +2,12 @@
 
 #include <sge/shader_library.h>
 #include <sge-cpp/Shader.hpp> /* for Shader */
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 #include <string> /* for std::string */
 
 namespace SGE
 {
-	class SGE_API ShaderLibrary : public PtrReference<shader_library_t>
+	class SGE_API ShaderLibrary : public com::PtrReference<shader_library_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(ShaderLibrary);
 		

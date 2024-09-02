@@ -11,7 +11,7 @@
 #include <sge-cpp/Font.hpp> /* for SGE::Font */
 #include <sge-cpp/RenderWindow.hpp> /* for SGE::RenderWindow */
 #include <sge-cpp/Mesh.hpp> // for SGE::Mesh
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 #include <string> /* for std::string */
 #include <string_view> /* for std::string_view */
@@ -37,7 +37,7 @@ namespace SGE
 		Requirements(bool _bitmapText) noexcept : bitmapText(_bitmapText), maxPointLights(0), maxSpotLights(0), maxFarLights(0) { }
 	};
 
-	class SGE_API Driver final : public PtrReference<renderer_t>
+	class SGE_API Driver final : public com::PtrReference<renderer_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(Driver);
 

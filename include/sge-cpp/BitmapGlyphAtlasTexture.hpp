@@ -3,14 +3,14 @@
 #include <sge/bitmap_glyph_atlas_texture.h> /* for bitmap_glyph_atlas_texture_t* */
 #include <sge-cpp/Font.hpp> /* for SGE::Font */
 
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 namespace SGE
 {
 	/* forward declaration of SGE::Driver */
 	class Driver;
 
-	class SGE_API BitmapGlyphAtlasTexture : public PtrReference<bitmap_glyph_atlas_texture_t>
+	class SGE_API BitmapGlyphAtlasTexture : public com::PtrReference<bitmap_glyph_atlas_texture_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(BitmapGlyphAtlasTexture)
 		
