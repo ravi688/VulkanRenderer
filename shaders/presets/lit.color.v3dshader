@@ -117,15 +117,7 @@ Shader
 				
 				void main()
 				{
-					vec4 totalIrradiance = vec4(0.0, 0.0, 0.0, 0.0);
-					for(uint i = 0; i < farLights.count; i++)
-					{
-						FarLightType light = farLights.lights[i];
-						float dp = 0.5 * dot(-_normal, light.direction) + 0.5;
-						totalIrradiance += dp * vec4(light.color, 1);
-					}
-
-					color = parameters.color * vec4(totalIrradiance.rgb, 1.0);
+					color = parameters.color * getFarLightIrradiance(_normal);
 				}
 			}
 		}
