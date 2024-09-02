@@ -323,6 +323,6 @@ vec4 getFarLightIrradiance(vec3 normal)
 		float dp = 0.5 * dot(-normal, light.direction) + 0.5;
 		irradiance += dp * vec4(light.color, 1);
 	}
-	return irradiance;
+	return vec4(irradiance.xyz, 1.0);
 }
 #endif
