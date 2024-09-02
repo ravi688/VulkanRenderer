@@ -26,9 +26,9 @@
 
 #version 450
 
+#define USE_FAR_LIGHTS
 #include <v3d.h>
 
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
 	vec4 color;
@@ -57,6 +57,8 @@ void main()
 	float shadow = 1.0f;
 	if(shadowedDepth > (depth + shadowBias))
  		shadow = minShadow;
+
+ 	FarLightType light = farLights.lights[0];
 
 	float dp = dot(normal, -light.direction);
 	float litAmount = max(0, dp);

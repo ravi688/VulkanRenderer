@@ -123,9 +123,13 @@ TEST_ON_INITIALIZE(DEPTH_RENDER_TEXTURE)
 	render_scene_add_camera(this->scene, this->camera3);
 
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
+	/* diffuse test shader creates its own shadow map for just one direction light
+	 * so we don't need */
+	light_set_cast_shadow(this->light, false);
 	light_set_rotation(this->light, vec3(10 DEG, -120 DEG, 0));
 	light_set_position(this->light, vec3(1, 0.6f, -3.0f));
-
+	light_set_color(this->light, COLOR_WHITE.rgb);
+	render_scene_add_light(this->scene, this->light);
 
 	this->slib = renderer_get_shader_library(renderer);
 	this->mlib = renderer_get_material_library(renderer);

@@ -26,10 +26,10 @@
 
 #version 450
 
+#define USE_FAR_LIGHTS
 #include <v3d.h>
 
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight light;
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
 
 layout(location = POSITION_LOCATION) in vec3 position;
@@ -49,5 +49,6 @@ void main()
 	_normal = normalize((objectInfo.normal * vec4(normal, 1)).xyz);
 	_texcoord = texcoord;
 
-	_lightClipPos = light.projection * light.view * objectInfo.transform * vec4(position, 1);
+	FarLightType light = farLights.lights[0];
+	_lightClipPos = light.proj * light.view * objectInfo.transform * vec4(position, 1);
 }

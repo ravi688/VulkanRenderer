@@ -200,6 +200,7 @@ SGE_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_li
 	light->is_active = true;
 	light->position = vec3_zero();
 	light->euler_rotation = vec3_zero();
+	light->rotation = mat4_identity();
 	light->color = vec3_one();
 	light->intensity = 1.0f;
 	light->type = type;
@@ -601,7 +602,26 @@ static mat4_t get_projection(vulkan_light_t* light)
 	if(light->is_cast_shadow)
 		return vulkan_camera_get_projection(get_shadow_camera(light));
 	else
-		return mat4_identity();
+	{
+		switch(light->type)
+		{
+			case VULKAN_LIGHT_TYPE_SPOT:
+			{
+				AUTO spot_light = VULKAN_OBJECT_DOWN_CAST(vulkan_spot_light_t*, VULKAN_OBJECT_TYPE_SPOT_LIGHT, light);
+				return mat4_persp_projection(-0.04f, 100, spot_light->angle, 1.0f);
+			}
+			case VULKAN_LIGHT_TYPE_POINT:
+			{
+				return mat4_persp_projection(-0.04f, 100, 90 DEG, 1.0f);
+			}
+			case VULKAN_LIGHT_TYPE_FAR:
+			{
+				return mat4_ortho_projection(-0.04f, 100, 5, 1.0f);
+			}
+			default:
+				return mat4_identity();
+		}
+	}
 }
 
 static mat4_t get_view(vulkan_light_t* light)
@@ -609,15 +629,13 @@ static mat4_t get_view(vulkan_light_t* light)
 	if(light->is_cast_shadow)
 		return vulkan_camera_get_view(get_shadow_camera(light));
 	else
-		return mat4_identity();
+		return mat4_inverse(mat4_mul(2, mat4_translation_v(light->position), light->rotation));
 }
 
 static void get_spot_light_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, spot_light_dispatchable_data_t* const data)
 {
 	vulkan_spot_light_t* spot_light = VULKAN_SPOT_LIGHT(light);
 	light = VULKAN_LIGHT(light);
-	AUTO _spot_light = OBJECT_DOWN_CAST(vulkan_spot_light_t*, VULKAN_OBJECT_TYPE_SPOT_LIGHT, light);
-	_debug_assert__(_spot_light == spot_light);
 
 	_debug_assert__(light->is_cast_shadow);
 	_debug_assert__(light->shadow_camera != NULL);
