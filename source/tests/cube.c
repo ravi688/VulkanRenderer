@@ -78,6 +78,11 @@ TEST_ON_INITIALIZE(CUBE)
 
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
 
+	light_set_cast_shadow(this->light, true);
+	light_set_color(this->light, COLOR_PINK.rgb);
+	/* add the light into the render scene */
+	render_scene_add_light(this->scene, this->light);
+
 	this->material = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
 							shader_library_load_shader(slib, 

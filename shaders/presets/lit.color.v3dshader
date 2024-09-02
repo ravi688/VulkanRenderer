@@ -39,15 +39,6 @@ Shader
 		} parameters;
 	}
 
-	// [NoParse]
-	// Properties
-	// {
-	// 	vertex fragment [MATERIAL_SET, MATERIAL_PROPERTIES_BINDING] uniform Parameters
-	// 	{
-	// 		vec4 color;
-	// 	} parameters;
-	// }
-
 	Layout
 	{
 		[Rate(per_vertex)]
@@ -60,13 +51,6 @@ Shader
 		[Attribute(normal)]
 		vec3 normal;
 	}
-
-	// [NoParse]
-	// Layout
-	// {
-	// 	per_vertex [POSITION_BINDING, POSITION_LOCATION] vec3 position;
-	// 	per_vertex [NORMAL_BINDING, NORMAL_LOCATION] vec3 normal;
-	// }
 
 	RenderPass
 	{
@@ -117,10 +101,9 @@ Shader
 				#stage fragment
 
 				#version 450
-				
+			
+				#define USE_FAR_LIGHTS
 				#include <v3d.h>
-				
-				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform DirectionalLight lightInfo;
 				
 				layout(set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 				{
@@ -134,10 +117,16 @@ Shader
 				
 				void main()
 				{
-					float dp = 0.5 * dot(-_normal, lightInfo.direction) + 0.5;
-					color = parameters.color * dp * vec4(lightInfo.color, 1);
-				}
+					vec4 totalIrradiance = vec4(0.0, 0.0, 0.0, 0.0);
+					for(uint i = 0; i < farLights.count; i++)
+					{
+						FarLightType light = farLights.lights[i];
+						float dp = 0.5 * dot(-_normal, light.direction) + 0.5;
+						totalIrradiance += dp * vec4(light.color, 1);
+					}
 
+					color = parameters.color * vec4(totalIrradiance.rgb, 1.0);
+				}
 			}
 		}
 	}
