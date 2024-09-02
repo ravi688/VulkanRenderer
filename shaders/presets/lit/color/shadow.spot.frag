@@ -26,13 +26,13 @@
 
 #version 450
 
+#define USE_SPOT_LIGHTS
 #include <v3d.h>
-
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight light;
 
 layout(location = 0) in vec3 position;
 
 void main()
 {
+	SpotLightType light = spotLights.lights[0];
  	gl_FragDepth = length(position - light.position) / (20.0 - 0.04);
 }

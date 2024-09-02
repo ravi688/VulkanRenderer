@@ -642,9 +642,6 @@ static void get_spot_light_dispatchable_data(vulkan_light_t* light, u32 shadowma
 {
 	vulkan_spot_light_t* spot_light = VULKAN_SPOT_LIGHT(light);
 	light = VULKAN_LIGHT(light);
-
-	_debug_assert__(light->is_cast_shadow);
-	_debug_assert__(light->shadow_camera != NULL);
 	data->proj = mat4_transpose(get_projection(light)).raw4x4f32;
 	data->view = mat4_transpose(get_view(light)).raw4x4f32;
 	data->color = light->color;
