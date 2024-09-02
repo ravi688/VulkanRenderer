@@ -162,6 +162,7 @@ typedef struct object_t
 	object_nationality_t nationality;
 	object_type_t type;
 	bool is_next;
+	bool is_prev;
 } object_t;
 
 #define OBJECT(typed_ptr) OBJECT_VOID(typed_ptr)
@@ -175,17 +176,44 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_init(object_t* 
 {
 	obj->nationality = nationality;
 	obj->is_next = false;
+	obj->is_prev = false;
 	obj->type = type;
 }
+/* returns the lowest multiple of x greater or equal to y*/
+static INLINE u32 lowest_multiple_of(u32 x, u32 y)
+{
+	return (x % y) + x;
+}
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
+
+#define OBJECT_STRIDE lowest_multiple_of(sizeof(object_t), sizeof(void*))
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE object_t* object_get_next(object_t* obj)
+{
+	return CAST_TO(object_t*, CAST_TO(void*, obj) + OBJECT_STRIDE);
+}
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const object_t* object_get_next_const(const object_t* obj)
+{
+	return CAST_TO(const object_t*, CAST_TO(const void*, obj) + OBJECT_STRIDE);
+}
+#pragma GCC diagnostic pop
+
 #define OBJECT_SET_BASE(typed_ptr, is_base) object_set_base(OBJECT(typed_ptr), is_base)
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_set_base(object_t* obj, bool is_base)
 {
 	obj->is_next = true;
+	object_get_next(obj)->is_prev = true;
 }
 #define OBJECT_IS_BASE(typed_ptr) object_is_base(OBJECT_CONST(typed_ptr))
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool object_is_base(const object_t* obj)
 {
 	return obj->is_next;
+}
+#define OBJECT_IS_PREV(typed_ptr) object_is_prev(OBJECT_CONST(typed_ptr))
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool object_is_prev(const object_t* obj)
+{
+	return obj->is_prev;
 }
 
 /* nationality (memory ownership) */
@@ -239,12 +267,6 @@ DEBUG_BLOCK(
 	OBJECT_SET_NATIONALITY(dst_ptr, dst_nationality);
 }
 
-/* returns the lowest multiple of x greater or equal to y*/
-static INLINE u32 lowest_multiple_of(u32 x, u32 y)
-{
-	return (x % y) + x;
-}
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 
@@ -260,7 +282,31 @@ static CAN_BE_UNUSED_FUNCTION void* object_up_cast(object_t* obj, object_type_t 
 		return NULL;
 	#endif /* not GLOBAL_DEBUG */
 
-	return object_up_cast(CAST_TO(object_t*, CAST_TO(void*, obj) + lowest_multiple_of(sizeof(object_t), sizeof(void*))), dst_type);
+	return object_up_cast(object_get_next(obj), dst_type);
+}
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE object_t* object_get_prev(object_t* obj)
+{
+	_debug_assert__(obj != NULL);
+	return CAST_TO(object_t*, CAST_TO(void*, obj) - OBJECT_STRIDE);
+}
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const object_t* object_get_prev_const(const object_t* obj)
+{
+	_debug_assert__(obj != NULL);
+	return CAST_TO(const object_t*, CAST_TO(const void*, obj) - OBJECT_STRIDE);
+}
+#define OBJECT_DOWN_CAST(dst_ptr_type, dst_object_type, src_typed_ptr)  CAST_TO(dst_ptr_type, object_down_cast(OBJECT(src_typed_ptr), dst_object_type))
+static CAN_BE_UNUSED_FUNCTION void* object_down_cast(object_t* obj, object_type_t dst_type)
+{
+	if(obj->type == dst_type)
+		return CAST_TO(void*, obj);
+	debug_assert__(obj->is_prev == true, "Object Up Cast failed, end of derivation hierarchy is reached, %s -> %s",
+										object_type_to_string(obj->type), object_type_to_string(dst_type));
+	#ifndef GLOBAL_DEBUG
+	if(!object_is_prev(obj))
+		return NULL;
+	#endif /* not GLOBAL_DEBUG */
+
+	return object_down_cast(object_get_prev(obj), dst_type);
 }
 #define OBJECT_UP_CAST_CONST(dst_ptr_type, dst_object_type, src_typed_ptr) CAST_TO(dst_ptr_type, object_up_cast_const(OBJECT_CONST(src_typed_ptr), dst_object_type))
 static CAN_BE_UNUSED_FUNCTION const void* object_up_cast_const(const object_t* obj, object_type_t dst_type)
@@ -274,7 +320,21 @@ static CAN_BE_UNUSED_FUNCTION const void* object_up_cast_const(const object_t* o
 		return NULL;
 	#endif /* not GLOBAL_DEBUG */
 
-	return object_up_cast_const(CAST_TO(const object_t*, CAST_TO(const void*, obj) + lowest_multiple_of(sizeof(object_t), sizeof(void*))), dst_type);
+	return object_up_cast_const(object_get_next_const(obj), dst_type);
+}
+#define OBJECT_DOWN_CAST_CONST(dst_ptr_type, dst_object_type, src_typed_ptr) CAST_TO(dst_ptr_type, object_down_cast_const(OBJECT_CONST(src_typed_ptr), dst_object_type))
+static CAN_BE_UNUSED_FUNCTION const void* object_down_cast_const(const object_t* obj, object_type_t dst_type)
+{
+	if(obj->type == dst_type)
+		return CAST_TO(void*, obj);
+	debug_assert__(obj->is_prev == true, "Object Up Cast failed, end of derivation hierarchy is reached, %s -> %s",
+										object_type_to_string(obj->type), object_type_to_string(dst_type));
+	#ifndef GLOBAL_DEBUG
+	if(!object_is_prev(obj))
+		return NULL;
+	#endif /* not GLOBAL_DEBUG */
+
+	return object_down_cast_const(object_get_prev_const(obj), dst_type);
 }
 
 #pragma GCC diagnostic pop
