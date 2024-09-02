@@ -2,11 +2,11 @@
 
 #include <sge/sge_buffer.h> // for mesh_t
 
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 namespace SGE
 {
-	class SGE_API Buffer : public PtrReference<sge_buffer_t>
+	class SGE_API Buffer : public com::PtrReference<sge_buffer_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(Buffer)
 

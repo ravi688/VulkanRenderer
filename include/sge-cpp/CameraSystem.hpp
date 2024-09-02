@@ -2,11 +2,11 @@
 
 #include <sge/camera_system.h>
 #include <sge-cpp/Camera.hpp>
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 namespace SGE
 {
-	class SGE_API CameraSystem : public PtrReference<camera_system_t>
+	class SGE_API CameraSystem : public com::PtrReference<camera_system_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(CameraSystem);
 

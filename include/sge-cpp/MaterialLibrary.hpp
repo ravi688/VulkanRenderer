@@ -3,12 +3,12 @@
 #include <sge/material_library.h>
 #include <sge-cpp/Material.hpp> /* for Material */
 #include <sge-cpp/Shader.hpp> /* for Shader */
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 #include <string> /* for std::string */
 
 namespace SGE
 {
-	class SGE_API MaterialLibrary : public PtrReference<material_library_t>
+	class SGE_API MaterialLibrary : public com::PtrReference<material_library_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(MaterialLibrary);
 

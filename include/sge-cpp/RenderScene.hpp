@@ -4,14 +4,14 @@
 #include <sge-cpp/RenderObject.hpp> /* for SGE::RenderObject */
 #include <sge-cpp/RenderQueue.hpp> /* for SGE::RenderQueue */
 #include <sge-cpp/Camera.hpp> /* for SGE::Camera */
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 namespace SGE
 {
 	/* forward declaration of SGE::Driver */
 	class Driver;
 
-	class SGE_API RenderScene : public PtrReference<render_scene_t>
+	class SGE_API RenderScene : public com::PtrReference<render_scene_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(RenderScene);
 		

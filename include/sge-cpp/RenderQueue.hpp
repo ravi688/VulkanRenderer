@@ -1,11 +1,11 @@
 #pragma once
 
 #include <sge/render_queue.h> /* for render_queue_t* */
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 namespace SGE
 {
-	class RenderQueue : public PtrReference<render_queue_t>
+	class RenderQueue : public com::PtrReference<render_queue_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(RenderQueue);
 		

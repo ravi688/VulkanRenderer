@@ -2,13 +2,13 @@
 
 #include <sge/mesh.h> // for mesh_t
 
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 #include <sge-cpp/Buffer.hpp> // for SGE::Buffer
 
 namespace SGE
 {
 	class Driver;
-	class SGE_API Mesh : public PtrReference<mesh_t>
+	class SGE_API Mesh : public com::PtrReference<mesh_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(Mesh)
 

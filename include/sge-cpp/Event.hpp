@@ -1,11 +1,11 @@
 #pragma once
 
 #include <sge/event.h>
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 namespace SGE
 {
-	class Event : public PtrReference<event_t>
+	class Event : public com::PtrReference<event_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(Event);
 		

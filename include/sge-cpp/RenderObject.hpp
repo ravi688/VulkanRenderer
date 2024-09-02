@@ -4,11 +4,11 @@
 #include <sge-cpp/Material.hpp> /* for SGE::Material */
 #include <sge-cpp/BitmapText.hpp> /* for SGE::BitmapText */
 #include <sge-cpp/Mesh.hpp> // for SGE::Mesh
-#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+#include <common/PtrReference.hpp> // for com::PtrReference
 
 namespace SGE
 {
-	class SGE_API RenderObject : public PtrReference<render_object_t>
+	class SGE_API RenderObject : public com::PtrReference<render_object_t>
 	{
 		PTR_REFERENCE_DERIVED_CLASS(RenderObject);
 
