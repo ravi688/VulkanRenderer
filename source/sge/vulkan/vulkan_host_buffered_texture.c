@@ -44,7 +44,6 @@ SGE_API vulkan_host_buffered_texture_t* vulkan_host_buffered_texture_create(vulk
 
 SGE_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_host_buffered_texture_create_info_t* create_info, vulkan_host_buffered_texture_t OUT texture)
 {
-	VULKAN_OBJECT_SET_BASE(texture, true);
 	VULKAN_OBJECT_MEMZERO(texture, vulkan_host_buffered_texture_t);
 	texture->renderer = renderer;
 
@@ -65,6 +64,7 @@ SGE_API void vulkan_host_buffered_texture_create_no_alloc(vulkan_renderer_t* ren
 		.final_usage = create_info->final_usage
 	};
 	VULKAN_OBJECT_INIT(BASE(texture), VULKAN_OBJECT_TYPE_TEXTURE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
+	VULKAN_OBJECT_SET_BASE(texture, true);
 	vulkan_texture_create_no_alloc(renderer, &_create_info, BASE(texture));
 
 	/* create the host buffered buffer */

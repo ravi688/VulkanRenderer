@@ -49,7 +49,6 @@ SGE_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_renderer_t
 	/* for now only one BGA texture can exists throughout the entire SGE context's lifetime */
 	COM_ASSERT_CALLED_ONCE();
 
-	VULKAN_OBJECT_SET_BASE(texture, true);
 	VULKAN_OBJECT_MEMZERO(texture, vulkan_bitmap_glyph_atlas_texture_t);
 
 	texture->renderer = renderer;
@@ -67,6 +66,7 @@ SGE_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_renderer_t
 		.final_usage = VULKAN_TEXTURE_USAGE_SAMPLED
 	};
 	VULKAN_OBJECT_INIT(BASE(texture), VULKAN_OBJECT_TYPE_HOST_BUFFERED_TEXTURE, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
+	VULKAN_OBJECT_SET_BASE(texture, true);
 	vulkan_host_buffered_texture_create_no_alloc(renderer, &hbt_create_info, BASE(texture));
 	vulkan_texture_set_usage_stage(VULKAN_TEXTURE(texture), VULKAN_TEXTURE_USAGE_STAGE_FINAL);
 

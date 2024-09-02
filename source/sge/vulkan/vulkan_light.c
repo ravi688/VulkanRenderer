@@ -161,25 +161,25 @@ SGE_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_li
 		case VULKAN_LIGHT_TYPE_DIRECTIONAL:
 		{
 			vulkan_directional_light_t* dir_light = VULKAN_DIRECTIONAL_LIGHT(light);
-			VULKAN_OBJECT_SET_BASE(dir_light, true);
 			VULKAN_OBJECT_MEMZERO(dir_light, vulkan_directional_light_t);
 			VULKAN_OBJECT_INIT(BASE(dir_light), VULKAN_OBJECT_TYPE_LIGHT, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
+			VULKAN_OBJECT_SET_BASE(dir_light, true);
 			break;
 		}
 		case VULKAN_LIGHT_TYPE_POINT:
 		{
 			vulkan_point_light_t* point_light = VULKAN_POINT_LIGHT(light);
-			VULKAN_OBJECT_SET_BASE(point_light, true);
 			VULKAN_OBJECT_MEMZERO(point_light, vulkan_point_light_t);
 			VULKAN_OBJECT_INIT(BASE(point_light), VULKAN_OBJECT_TYPE_LIGHT, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
+			VULKAN_OBJECT_SET_BASE(point_light, true);
 			break;
 		}
 		case VULKAN_LIGHT_TYPE_SPOT:
 		{
 			vulkan_spot_light_t* spot_light = VULKAN_SPOT_LIGHT(light);
-			VULKAN_OBJECT_SET_BASE(spot_light, true);
 			VULKAN_OBJECT_MEMZERO(spot_light, vulkan_spot_light_t);
 			VULKAN_OBJECT_INIT(BASE(spot_light), VULKAN_OBJECT_TYPE_LIGHT, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
+			VULKAN_OBJECT_SET_BASE(spot_light, true);
 			break;
 		}
 		case VULKAN_LIGHT_TYPE_AMBIENT:
@@ -238,6 +238,13 @@ SGE_API void vulkan_light_create_no_alloc(vulkan_renderer_t* renderer, vulkan_li
 	}
 }
 
+static vulkan_camera_t* get_shadow_camera(vulkan_light_t* light)
+{
+	_debug_assert__(light->is_cast_shadow == true);
+	_debug_assert__(light->shadow_camera != NULL);
+	return light->shadow_camera;
+}
+
 SGE_API void vulkan_light_destroy(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
@@ -275,10 +282,7 @@ SGE_API void vulkan_light_set_spot_angle(vulkan_light_t* light, float angle)
 			AUTO _light = VULKAN_SPOT_LIGHT(super);
 			_light->angle = angle;
 			if(light->is_cast_shadow)
-			{
-				_debug_assert__(light->shadow_camera != NULL);
-				vulkan_camera_set_field_of_view(light->shadow_camera, _light->angle);
-			}
+				vulkan_camera_set_field_of_view(get_shadow_camera(light), _light->angle);
 			break;
 		}
 		default:
@@ -298,9 +302,9 @@ SGE_API void vulkan_light_set_position(vulkan_light_t* light, vec3_t position)
 	{
 		_debug_assert__(light->shadow_camera != NULL);
 		if(light->type == VULKAN_LIGHT_TYPE_POINT)
-			vulkan_camera_set_position_cube(light->shadow_camera, light->position);
+			vulkan_camera_set_position_cube(get_shadow_camera(light), light->position);
 		else
-			vulkan_camera_set_position(light->shadow_camera, light->position);
+			vulkan_camera_set_position(get_shadow_camera(light), light->position);
 	}
 }
 
@@ -345,10 +349,7 @@ SGE_API void vulkan_light_set_rotation(vulkan_light_t* light, vec3_t rotation)
 	light->is_dirty = true;
 
 	if(light->is_cast_shadow)
-	{
-		_debug_assert__(light->shadow_camera != NULL);
-		vulkan_camera_set_rotation(light->shadow_camera, light->euler_rotation);
-	}
+		vulkan_camera_set_rotation(get_shadow_camera(light), light->euler_rotation);
 }
 
 static const char* get_shadow_shader_path(vulkan_light_type_t type)
@@ -406,14 +407,22 @@ static void setup_shadow_camera_properties(vulkan_camera_t* shadow_camera, vulka
 {
 	vulkan_light_t* super = light;
 	light = VULKAN_LIGHT(light);
+
+	/* clear color of the camera */
 	vulkan_camera_set_clear(shadow_camera, COLOR_RED, 1.0f);
+
+	/* position of the camera */
 	if(light->type == VULKAN_LIGHT_TYPE_POINT)
 		vulkan_camera_set_position_cube(shadow_camera, light->position);
 	else if(light->type != VULKAN_LIGHT_TYPE_FAR)
 		vulkan_camera_set_position(shadow_camera, vec3_zero());
 	else
 		vulkan_camera_set_position(shadow_camera, light->position);
+
+	/* rotation of the camera */
 	vulkan_camera_set_rotation(shadow_camera, light->euler_rotation);
+
+	/* field of view of the camera */
 	if(light->type == VULKAN_LIGHT_TYPE_POINT)
 		vulkan_camera_set_field_of_view(shadow_camera, 90 DEG);
 	else if(light->type == VULKAN_LIGHT_TYPE_SPOT)
@@ -587,14 +596,33 @@ typedef struct far_light_dispatchable_data_t
 #define SIZEOF_FAR_LIGHT_DISPATCHABLE_DATA_T 160 /* bytes */
 #define STRIDE_FAR_LIGHT_DISPATCHABLE_DATA_T_ARRAY COM_GET_STRIDE_IN_ARRAY(SIZEOF_FAR_LIGHT_DISPATCHABLE_DATA_T, ALIGN_OF(far_light_dispatchable_data_t))
 
+static mat4_t get_projection(vulkan_light_t* light)
+{
+	if(light->is_cast_shadow)
+		return vulkan_camera_get_projection(get_shadow_camera(light));
+	else
+		return mat4_identity();
+}
+
+static mat4_t get_view(vulkan_light_t* light)
+{
+	if(light->is_cast_shadow)
+		return vulkan_camera_get_view(get_shadow_camera(light));
+	else
+		return mat4_identity();
+}
+
 static void get_spot_light_dispatchable_data(vulkan_light_t* light, u32 shadowmap_index, spot_light_dispatchable_data_t* const data)
 {
 	vulkan_spot_light_t* spot_light = VULKAN_SPOT_LIGHT(light);
 	light = VULKAN_LIGHT(light);
+	AUTO _spot_light = OBJECT_DOWN_CAST(vulkan_spot_light_t*, VULKAN_OBJECT_TYPE_SPOT_LIGHT, light);
+	_debug_assert__(_spot_light == spot_light);
+
 	_debug_assert__(light->is_cast_shadow);
 	_debug_assert__(light->shadow_camera != NULL);
-	data->proj = mat4_transpose(vulkan_camera_get_projection(light->shadow_camera)).raw4x4f32;
-	data->view = mat4_transpose(vulkan_camera_get_view(light->shadow_camera)).raw4x4f32;
+	data->proj = mat4_transpose(get_projection(light)).raw4x4f32;
+	data->view = mat4_transpose(get_view(light)).raw4x4f32;
 	data->color = light->color;
 	data->intensity = light->intensity;
 	data->position = light->position;
@@ -616,8 +644,8 @@ static void get_far_light_dispatchable_data(vulkan_light_t* light, u32 shadowmap
 {
 	vulkan_far_light_t* far_light = VULKAN_FAR_LIGHT(light);
 	light = VULKAN_LIGHT(light);
-	data->proj = mat4_transpose(vulkan_camera_get_projection(light->shadow_camera)).raw4x4f32;
-	data->view = mat4_transpose(vulkan_camera_get_view(light->shadow_camera)).raw4x4f32;
+	data->proj = mat4_transpose(get_projection(light)).raw4x4f32;
+	data->view = mat4_transpose(get_view(light)).raw4x4f32;
 	data->color = light->color;
 	data->intensity = light->intensity;
 	data->direction = far_light->direction;
@@ -677,14 +705,14 @@ SGE_API void vulkan_light_begin(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	if(light->is_cast_shadow)
-		vulkan_camera_begin(light->shadow_camera);
+		vulkan_camera_begin(get_shadow_camera(light));
 }
 
 SGE_API bool vulkan_light_irradiate(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	if(light->is_cast_shadow)
-		return vulkan_camera_capture(light->shadow_camera, VULKAN_CAMERA_CLEAR_FLAG_CLEAR);
+		return vulkan_camera_capture(get_shadow_camera(light), VULKAN_CAMERA_CLEAR_FLAG_CLEAR);
 	return false;
 }
 
@@ -692,5 +720,5 @@ SGE_API void vulkan_light_end(vulkan_light_t* light)
 {
 	light = VULKAN_LIGHT(light);
 	if(light->is_cast_shadow)
-		vulkan_camera_end(light->shadow_camera);
+		vulkan_camera_end(get_shadow_camera(light));
 }
