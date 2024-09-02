@@ -38,12 +38,6 @@ Shader
 		vec3 position;
 	}
 
-	// [NoParse]
-	// Layout
-	// {
-	// 	per_vertex [POSITION_BINDING, POSIITON_LOCATION] vec3 position;
-	// }
-
 	RenderPass
 	{
 		SubPass
