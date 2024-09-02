@@ -2,10 +2,14 @@
 
 #include <sge/sge_buffer.h> // for mesh_t
 
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+
 namespace SGE
 {
-	class SGE_API Buffer
+	class SGE_API Buffer : public PtrReference<sge_buffer_t>
 	{
+		PTR_REFERENCE_DERIVED_CLASS(Buffer)
+
 	public:
 		struct Traits
 		{
@@ -13,18 +17,7 @@ namespace SGE
 			u32 elementSize;
 		};
 
-	private:
-		sge_buffer_t* m_handle;
-		Buffer(sge_buffer_t* handle) noexcept : m_handle(handle) { }
-
 		friend class Mesh;
-
-	public:
-		Buffer() noexcept : m_handle(NULL) { }
-		sge_buffer_t* getHandle() const noexcept { return m_handle; }
-
-		operator bool() const noexcept { return m_handle != NULL; }
-		operator sge_buffer_t*() noexcept { return m_handle; }
 
 		const Traits* getTraits() const noexcept 
 		{ 

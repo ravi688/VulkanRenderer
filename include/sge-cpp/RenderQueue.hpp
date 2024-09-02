@@ -1,14 +1,14 @@
 #pragma once
 
 #include <sge/render_queue.h> /* for render_queue_t* */
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 
 namespace SGE
 {
-	class RenderQueue
+	class RenderQueue : public PtrReference<render_queue_t>
 	{
-	private:
-		render_queue_t* m_handle;
-		RenderQueue(render_queue_t* handle) noexcept : m_handle(handle) { }
+		PTR_REFERENCE_DERIVED_CLASS(RenderQueue);
+		
 	public:
 		enum class Type : u8
 		{
@@ -29,6 +29,5 @@ namespace SGE
 			Queue7
 		};
 		static render_queue_type_t to_render_queue_type(Type type);
-		render_queue_t* getHandle() const noexcept { return m_handle; }
 	};
 }

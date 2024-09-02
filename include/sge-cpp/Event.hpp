@@ -1,18 +1,17 @@
 #pragma once
 
 #include <sge/event.h>
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 
 namespace SGE
 {
-	class Event
+	class Event : public PtrReference<event_t>
 	{
+		PTR_REFERENCE_DERIVED_CLASS(Event);
+		
 	public:
 		typedef event_subscription_handle_t SubscriptionHandle;
 		typedef void (*Handler)(void* publisher, void* handlerData);
-	private:
-		event_t* m_handle;
-
-		Event(event_t* event) noexcept : m_handle(event) { }
 
 		friend class RenderWindow;
 

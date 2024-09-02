@@ -5,14 +5,15 @@
 #include <utility> /* for std::pair */
 
 #include <sge-cpp/Event.hpp> /* for SGE::Event */
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 
 namespace SGE
 {
-	class SGE_API RenderWindow
+	class SGE_API RenderWindow : public PtrReference<render_window_t>
 	{
+		PTR_REFERENCE_DERIVED_CLASS(RenderWindow);
+
 	private:
-		render_window_t* m_handle;
-		RenderWindow(render_window_t* window) : m_handle(window) { }
 		friend class Driver;
 		friend RenderWindow Event::ReinterpretPublisher<RenderWindow>(void* publisher);
 	public:

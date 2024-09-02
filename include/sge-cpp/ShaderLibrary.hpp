@@ -2,20 +2,18 @@
 
 #include <sge/shader_library.h>
 #include <sge-cpp/Shader.hpp> /* for Shader */
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
 #include <string> /* for std::string */
 
 namespace SGE
 {
-	class SGE_API ShaderLibrary
+	class SGE_API ShaderLibrary : public PtrReference<shader_library_t>
 	{
-	private:
-		shader_library_t* m_handle;
-		ShaderLibrary(shader_library_t* handle) noexcept : m_handle(handle) { }
-
+		PTR_REFERENCE_DERIVED_CLASS(ShaderLibrary);
+		
 		friend class Driver;
 		
 	public:
-		shader_library_t* getHandle() const noexcept { return m_handle; }
 
 		Shader loadShader(const std::string& filePath) const noexcept
 		{

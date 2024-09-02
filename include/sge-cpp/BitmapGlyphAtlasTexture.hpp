@@ -3,18 +3,18 @@
 #include <sge/bitmap_glyph_atlas_texture.h> /* for bitmap_glyph_atlas_texture_t* */
 #include <sge-cpp/Font.hpp> /* for SGE::Font */
 
+#include <sge-cpp/PtrReference.hpp> // for SGE::PtrReference
+
 namespace SGE
 {
 	/* forward declaration of SGE::Driver */
 	class Driver;
 
-	class SGE_API BitmapGlyphAtlasTexture
+	class SGE_API BitmapGlyphAtlasTexture : public PtrReference<bitmap_glyph_atlas_texture_t>
 	{
-	private:
-		bitmap_glyph_atlas_texture_t* m_handle;
-		BitmapGlyphAtlasTexture(bitmap_glyph_atlas_texture_t* handle) noexcept : m_handle(handle) { }
+		PTR_REFERENCE_DERIVED_CLASS(BitmapGlyphAtlasTexture)
+		
 	public:
-		BitmapGlyphAtlasTexture() : m_handle(NULL) { }
 		struct CreateInfo
 		{
 			u32 width;
@@ -23,7 +23,6 @@ namespace SGE
 		};
 
 		BitmapGlyphAtlasTexture(Driver& driver, const CreateInfo& createInfo) noexcept;
-		bitmap_glyph_atlas_texture_t* getHandle() const noexcept { return m_handle; }
 
 		void destroy() noexcept 
 		{
