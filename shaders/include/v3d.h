@@ -247,6 +247,8 @@ CameraInfo\
 
 struct PointLightType
 {
+	mat4 proj;
+	mat4 view;
 	vec3 color;
 	float intensity;
 	vec3 position;
