@@ -387,7 +387,11 @@ SGE_API void vulkan_graphics_pipeline_release_resources(vulkan_graphics_pipeline
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_viewports);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_scissors);
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->vo_user_defined_scissors);
-	memory_allocator_dealloc(pipeline->renderer->allocator, CAST_TO(void*, pipeline->settings->colorblend.pAttachments));
+	if(pipeline->settings->colorblend.attachmentCount > 0)
+	{
+		_debug_assert__(pipeline->settings->colorblend.pAttachments != NULL);
+		memory_allocator_dealloc(pipeline->renderer->allocator, CAST_TO(void*, pipeline->settings->colorblend.pAttachments));
+	}
 	memory_allocator_dealloc(pipeline->renderer->allocator, pipeline->settings);
 	if(VULKAN_OBJECT_IS_INTERNAL(pipeline))
 		memory_allocator_dealloc(pipeline->renderer->allocator, pipeline);
