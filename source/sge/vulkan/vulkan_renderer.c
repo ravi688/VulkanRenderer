@@ -640,7 +640,7 @@ static vulkan_descriptor_set_layout_t create_scene_set_layout(vulkan_renderer_t*
 			.binding = VULKAN_DESCRIPTOR_BINDING_POINT_LIGHT_SHADOWMAP,
 			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.descriptorCount = u32_max(1, renderer->max_point_lights),
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		},
 		{
 			.binding = VULKAN_DESCRIPTOR_BINDING_SPOT_LIGHT,
@@ -652,7 +652,7 @@ static vulkan_descriptor_set_layout_t create_scene_set_layout(vulkan_renderer_t*
 			.binding = VULKAN_DESCRIPTOR_BINDING_SPOT_LIGHT_SHADOWMAP,
 			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.descriptorCount = u32_max(1, renderer->max_spot_lights),
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		},
 		{
 			.binding = VULKAN_DESCRIPTOR_BINDING_FAR_LIGHT,
@@ -664,7 +664,7 @@ static vulkan_descriptor_set_layout_t create_scene_set_layout(vulkan_renderer_t*
 			.binding = VULKAN_DESCRIPTOR_BINDING_FAR_LIGHT_SHADOWMAP,
 			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.descriptorCount = u32_max(1, renderer->max_far_lights),
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
 		}
 	};
 
