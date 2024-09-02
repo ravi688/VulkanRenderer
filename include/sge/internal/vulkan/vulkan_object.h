@@ -110,6 +110,8 @@ typedef enum vulkan_object_type_t
 
 #define VULKAN_OBJECT_UP_CAST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) OBJECT_UP_CAST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) 
 #define VULKAN_OBJECT_UP_CAST_CONST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) OBJECT_UP_CAST_CONST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr)
+#define VULKAN_OBJECT_DOWN_CAST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) OBJECT_DOWN_CAST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) 
+#define VULKAN_OBJECT_DOWN_CAST_CONST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr) OBJECT_DOWN_CAST_CONST(dst_ptr_type, dst_vulkan_object_type, src_typed_ptr)
 
 #define VULKAN_OBJECT_TYPE_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CAST(dst_ptr_type, CAST_TO(object_type_t, vulkan_object_type), src_typed_ptr)
 #define VULKAN_OBJECT_TYPE_CONST_CAST(dst_ptr_type, vulkan_object_type, src_typed_ptr) OBJECT_TYPE_CONST_CAST(dst_ptr_type, CAST_TO(object_type_t, vulkan_object_type), src_typed_ptr)
