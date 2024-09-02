@@ -157,7 +157,7 @@ Shader
 					fragCoord = convertToCenterOrigin(fragCoord);
 
 					float alpha = 1.0f;
-					alpha = sdf(fragCoord, center);
+					alpha = sdf(fragCoord.xy, center.xy);
 
 					color = vec4(1.0, 1.0, 1.0, alpha);
 				}
