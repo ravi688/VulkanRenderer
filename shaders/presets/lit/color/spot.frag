@@ -26,9 +26,9 @@
 
 #version 450
 
+#define USE_SPOT_LIGHTS
 #include <v3d.h>
 
-layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = LIGHT_BINDING) uniform SpotLight light;
 layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
 {
 	vec4 color;
@@ -47,7 +47,8 @@ const float bias = 0.001f;
 
 void main()
 {
-	vec4 shadowMapCoord = light.projection * light.view * vec4(position, 1.0);
+	SpotLightType light = spotLights.lights[0];
+	vec4 shadowMapCoord = light.proj * light.view * vec4(position, 1.0);
 	shadowMapCoord /= shadowMapCoord.w;
 	shadowMapCoord = shadowMapCoord * 0.5 + 0.5;
 	float closestDistance = texture(shadowMap, vec2(shadowMapCoord.x, 1 - shadowMapCoord.y)).r;
