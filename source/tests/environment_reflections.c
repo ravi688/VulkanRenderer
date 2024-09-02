@@ -101,6 +101,8 @@ TEST_ON_INITIALIZE(ENVIRONMENT_REFLECTIONS)
 	render_scene_add_camera(this->scene, this->camera);
 	
 	this->light = light_create(renderer, LIGHT_TYPE_DIRECTIONAL);
+	light_set_cast_shadow(this->light, false);
+	render_scene_add_light(this->scene, this->light);
 
 	this->skyboxMaterial = material_library_getH(mlib, 
 							material_library_create_materialH(mlib, 
