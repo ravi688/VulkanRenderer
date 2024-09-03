@@ -6,6 +6,7 @@
 
 #include <sutk/IDebuggable.hpp> // for SUTK::IDebuggable class
 #include <sutk/AnchorRect.hpp> // for SUTK::AnchorRect class
+#include <sutk/Activatable.hpp> // for SUTK::Activatable class
 
 namespace SUTK
 {
@@ -24,7 +25,7 @@ namespace SUTK
 	class RenderRectOutline;
 	class RenderableContainer;
 
-	class Container : public UIDriverObject, public IDebuggable
+	class Container : public UIDriverObject, public IDebuggable, public Activatable
 	{
 	private:
 		std::vector<Container*> m_containers;

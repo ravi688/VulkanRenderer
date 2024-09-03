@@ -59,7 +59,22 @@ namespace SUTK
 
 	protected:
 		TInputEventHandlerContainerObject(InputEventType& event) noexcept : TInputEventHandlerObject<InputEventType>(event), m_container(NULL) { }
-		TInputEventHandlerContainerObject(InputEventType& event, Container* container) noexcept : TInputEventHandlerObject<InputEventType>(event), m_container(container) { }
+		TInputEventHandlerContainerObject(InputEventType& event, Container* container) noexcept : TInputEventHandlerObject<InputEventType>(event), m_container(container)
+		{
+			if(m_container != NULL)
+			{
+				// If the container has been deactivated then sleep the subscription,
+				// Or if the container has been activated then awake the subscription
+				// This saves CPU cycles
+				m_container->getOnActiveEvent().subscribe([this](Activatable* _, bool isActive)
+				{
+					if(isActive)
+						this->awake();
+					else
+						this->sleep();
+				});
+			}
+		}
 		bool isInside(Vec2Df point) const noexcept
 		{
 			return (m_container != NULL) ? m_container->containsGlobalCoords(point) : true;
