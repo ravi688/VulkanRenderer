@@ -46,7 +46,7 @@ namespace SUTK
 		// add the camera to the scene 
 		m_scene.addCamera(camera);
 
-		m_shader = shaderLibrary.compileAndLoadShader(driver.getBuiltinFileData("/bitmap_text_shader.v3dshader").first);
+		m_shader = shaderLibrary.compileAndLoadShader(driver.getBuiltinFileData("/bitmap_text_shader.v3dshader").first, "BitmapShader");
 		auto font_data = driver.getBuiltinFileData("/Roboto-Bold.ttf");
 		m_font = driver.createFont(font_data.first.data(), font_data.second);
 
@@ -575,8 +575,60 @@ namespace SUTK
 		}
 	}
 
+	u64 SGEGfxDriver::getGeometryShaderHash(const Geometry& geometry) const noexcept
+	{
+		u64 hash = 0x754e30c7e3d13;
+		if(geometry.isArray())
+			hash ^= (static_cast<u64>(0x53) << 32);
+		if(geometry.isSDF())
+		{
+			hash |= static_cast<u32>(geometry.getSDF().getCode().size());
+			std::size_t strHash = std::hash<std::string> { } (geometry.getSDF().getCode());
+			const std::vector<SDF::ParameterData>& params = geometry.getSDF().getParams();
+			std::size_t nmHash = 0;
+			u64 pmHash = 0;
+			std::size_t totalParamLength = 0;
+			for(const SDF::ParameterData& param : params)
+			{
+				nmHash ^= std::hash<std::string> { } (param.name);
+				nmHash += totalParamLength;
+				pmHash = (static_cast<u64>(com::EnumClassToInt(param.type)) << 8) * pmHash;
+				totalParamLength += param.name.size();
+			}
+			hash ^= static_cast<u64>(strHash);
+			hash ^= static_cast<u64>(nmHash);
+		}
+		return hash;
+	}
+
+	std::string SGEGfxDriver::u64ToString(u64 hash) const noexcept
+	{
+		u8* raw = reinterpret_cast<u8*>(&hash);
+		char str[16];
+		for(u32 i = 0; i < 8; ++i)
+		{
+			auto rem = raw[i] % std::numeric_limits<char>::max();
+			str[2 * i + 0] = (static_cast<s32>(rem) + 'A') % std::numeric_limits<char>::max() + 'A';
+			_com_assert(raw[i] >= rem);
+			str[2 * i + 1] = ((static_cast<s32>(raw[i] - rem) + 'A') % std::numeric_limits<char>::max()) + 'A';
+
+			_com_assert(str[2 * i + 0] != 0);
+			_com_assert(str[2 * i + 1] != 0);
+		}
+		return std::string(str, 16);
+	}
+
 	SGE::Shader SGEGfxDriver::compileShader(const Geometry& geometry)
 	{
+		u64 hash = getGeometryShaderHash(geometry);
+		std::string hashStr = u64ToString(hash);
+
+		// check if already compiled shader exists
+		SGE::Shader shader = m_driver.getShaderLibrary().getShader(hashStr);
+		if(shader)
+			return shader;
+
+		// otherwise derive .v3dshader shader source and compile it
 		if(geometry.isSDF())
 		{
 			std::string str(m_driver.getBuiltinFileData("/sdf_template.template").first);
@@ -610,12 +662,12 @@ namespace SUTK
 			_com_assert(geometry.getSDF().getCode().size() > 0);
 			str.insert(pos, geometry.getSDF().getCode());
 
-			return m_driver.getShaderLibrary().compileAndLoadShader(str);
+			return m_driver.getShaderLibrary().compileAndLoadShader(str, hashStr);
 		}
 		else if(geometry.isArray())
-			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color_rect_array.v3dshader").first);
+			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color_rect_array.v3dshader").first, hashStr);
 		else
-			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first);
+			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first, hashStr);
 	}
 
 	static INLINE_IF_RELEASE_MODE vec2_t to_vec2(const Vec2D<f32> value)
