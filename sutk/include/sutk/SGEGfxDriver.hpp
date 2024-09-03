@@ -102,6 +102,9 @@ namespace SUTK
 
 		void updateSDFParameterValues(const Geometry& geometry, SGE::Material material) noexcept;
 
+		u64 getGeometryShaderHash(const Geometry& geometry) const noexcept;
+		std::string u64ToString(u64 hash) const noexcept;
+
 	public:
 
 		// Constructors
