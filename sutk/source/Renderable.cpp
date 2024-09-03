@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	Renderable::Renderable(UIDriver& driver, RenderableContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_isActive(true), m_drawOrder(0), m_isDrawOrderDirty(true)
+	Renderable::Renderable(UIDriver& driver, RenderableContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_drawOrder(0), m_isDrawOrderDirty(true)
 	{
 		if(container != NULL)
 			container->setRenderable(this);
