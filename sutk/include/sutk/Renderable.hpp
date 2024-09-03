@@ -3,6 +3,7 @@
 #include <sutk/defines.hpp>
 #include <sutk/UIDriver.hpp>  // for SUTK::UIDriverObject
 #include <sutk/Geometry.hpp> // for SUTK::Geometry
+#include <sutk/Activatable.hpp> // for SUTK::Activatable
 
 namespace SUTK
 {
@@ -10,11 +11,10 @@ namespace SUTK
 
 	// This abstract class should be derived by any class which models a visual element, i.e. which can be seen on the display as a graphical object
 
-	class Renderable : public UIDriverObject
+	class Renderable : public UIDriverObject, public Activatable
 	{
 	private:
 		RenderableContainer* m_container;
-		bool m_isActive;
 		u32 m_drawOrder;
 		bool m_isDrawOrderDirty;
 
@@ -40,10 +40,6 @@ namespace SUTK
 		// updates draw order (z-buffer) values to the GPU side memory.
 		// mandatory to be called in the overridng method
 		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) { m_isDrawOrderDirty = false; }
-
-		// mandatory to be called in overriding method
-		virtual void setActive(bool isActive) noexcept { m_isActive = isActive; }
-		virtual bool isActive() const noexcept { return m_isActive; }
 
 		bool isDrawOrderDirty() const noexcept { return m_isDrawOrderDirty; }
 
