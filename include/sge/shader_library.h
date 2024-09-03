@@ -29,8 +29,9 @@
 #include <sge/defines.h>
 
 #ifdef SGE_VULKAN_DRIVER
-	typedef struct vulkan_shader_library_t vulkan_shader_library_t;
+	#include <sge/internal/vulkan/vulkan_shader_library.h>
 	typedef vulkan_shader_library_t shader_library_t;
+	#define SHADER_HANDLE_INVALID VULKAN_SHADER_HANDLE_INVALID
 #elif defined(SGE_OPENGL_DRIVER)
 	typedef struct opengl_shader_library_t opengl_shader_library_t;
 	typedef opengl_shader_library_t shader_library_t;
@@ -138,7 +139,7 @@ SGE_API shader_handle_t shader_library_load_shader(shader_library_t* library, co
 		shader_handle_t, handle to the newly created shader
 		SHADER_HANDLE_INVALID, if the shader creation failed
  */
-SGE_API shader_handle_t shader_library_compile_and_load_shader(shader_library_t* library, const char* source);
+SGE_API shader_handle_t shader_library_compile_and_load_shader(shader_library_t* library, const char* source, const char* shader_name);
 
 /*
 	description: destroys a shader with identification name as 'shader_name'
