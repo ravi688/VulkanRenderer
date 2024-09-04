@@ -62,6 +62,7 @@ namespace SUTK
 		// isSizeChanged is set to true if size has been modified
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged);
 		// called after rect of its parent container has been resized or has changed its position
+		// NOTE: mandatory to be called in the overriding method
 		virtual void onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged);
 
 		// This is to expose private m_rect reference to deriving classes, and let them modify
@@ -71,6 +72,8 @@ namespace SUTK
 		Rect2Df& getRawRectRef() { return m_rect; }
 
 		void recalculateLayoutParent() noexcept;
+
+		void setParentChildRelation(Container* parent) noexcept;
 
 	public:
 
