@@ -18,7 +18,8 @@ namespace SUTK
 	MouseMoveHandlerObject::MouseMoveHandlerObject(UIDriver& driver, Container* container) noexcept : TInputEventHandlerContainerObject<IInputDriver::OnMouseMoveEvent>(driver.getInputDriver().getOnCursorMoveEvent(), container),
 																									  m_isMouseEnterEnabled(false),
 																									  m_isMouseExitEnabled(false),
-																									  m_isInside(false)
+																									  m_isInside(false),
+																									  m_inputDriver(driver.getInputDriver())
 	{
 		IInputDriver::OnMouseMoveEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, SUTK::Vec2Df position)
 		{
@@ -45,6 +46,26 @@ namespace SUTK
 			}
 		});
 		setSubscriptionID(id);
+	}
+
+	void MouseMoveHandlerObject::sleep() noexcept
+	{
+		TInputEventHandlerContainerObject::sleep();
+		if(m_isMouseExitEnabled && m_isInside)
+		{
+			onMouseExit();
+			m_isInside = false;
+		}
+	}
+
+	void MouseMoveHandlerObject::awake() noexcept
+	{
+		TInputEventHandlerContainerObject::awake();
+		if(m_isMouseEnterEnabled && isInside(m_inputDriver.getMousePosition()))
+		{
+			m_isInside = true;
+			onMouseEnter();
+		}
 	}
 
 	MouseClickHandlerObject::MouseClickHandlerObject(UIDriver& driver, Container* container) noexcept : TInputEventHandlerContainerObject<IInputDriver::OnMouseButtonEvent>(driver.getInputDriver().getOnMouseButtonEvent(), container)
