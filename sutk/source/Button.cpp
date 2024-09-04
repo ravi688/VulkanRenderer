@@ -13,6 +13,16 @@ namespace SUTK
 		m_cta.setDefault(State::Idle);
 	}
 
+	void VisualButtonRect::setActive(bool isActive) noexcept
+	{
+		RenderRectFillRound::setActive(isActive);
+		if(isActive)
+		{
+			m_cta.setDefault(State::Idle);
+			setColor(m_cta.getValue());
+		}
+	}
+
 	bool VisualButtonRect::isDirty() noexcept
 	{
 		return m_cta.isRunning() || RenderRectFillRound::isDirty();
