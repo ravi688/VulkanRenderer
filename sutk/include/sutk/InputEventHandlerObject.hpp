@@ -38,12 +38,14 @@ namespace SUTK
 		}
 
 		// Implementation of IInputEventHandlerObject
+		// Mandatory to be called by the overriding method
 		virtual void sleep() noexcept override
 		{
 			_com_assert(m_id != InputEventType::InvalidSubscriptionID);
 			m_event.deactivate(m_id);
 		}
 
+		// Mandatory to be called by the overriding method
 		virtual void awake() noexcept override
 		{
 			_com_assert(m_id != InputEventType::InvalidSubscriptionID);
@@ -109,6 +111,7 @@ namespace SUTK
 		bool m_isMouseEnterEnabled;
 		bool m_isMouseExitEnabled;
 		bool m_isInside;
+		IInputDriver& m_inputDriver;
 	protected:
 		virtual void onMouseMove(Vec2Df position) = 0;
 
@@ -122,6 +125,9 @@ namespace SUTK
 
 	public:
 		virtual ~MouseMoveHandlerObject() noexcept = default;
+
+		virtual void sleep() noexcept override;
+		virtual void awake() noexcept override;
 	};
 
 	class MouseClickHandlerObject : public TInputEventHandlerContainerObject<IInputDriver::OnMouseButtonEvent>
