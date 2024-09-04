@@ -18,9 +18,11 @@ namespace SUTK
 															m_renderRect(NULL), 
 															m_isDebug(false)
 	{
-		setParent(parent);
 		if(parent != NULL)
+		{
+			setParentChildRelation(parent);
 			m_anchorRect = new AnchorRect(*this, *parent);
+		}
 	}
 
 	Container::~Container()
@@ -29,13 +31,8 @@ namespace SUTK
 			delete m_anchorRect;
 	}
 
-	void Container::setParent(Container* parent) noexcept
+	void Container::setParentChildRelation(Container* parent) noexcept
 	{
-		// recalculate this container's rect into the local space of new parent container
-		Vec2Df screenCoords = getLocalCoordsToScreenCoords({ 0u, 0u });
-		Vec2Df localCoords = (parent != NULL) ? parent->getScreenCoordsToLocalCoords(screenCoords) : screenCoords;
-		setPosition(localCoords);
-
 		// previous parent is non-null, then remove this container from the parent
 		if(m_parent != NULL)
 		{
@@ -60,6 +57,16 @@ namespace SUTK
 			// invoke onAddChild callback function for the parent container as a new child 'this' has been added into that
 			parent->onAddChild(this);
 		}
+	}
+
+	void Container::setParent(Container* parent) noexcept
+	{
+		// recalculate this container's rect into the local space of new parent container
+		Vec2Df screenCoords = getLocalCoordsToScreenCoords({ 0u, 0u });
+		Vec2Df localCoords = (parent != NULL) ? parent->getScreenCoordsToLocalCoords(screenCoords) : screenCoords;
+		setPosition(localCoords);
+
+		setParentChildRelation(parent);
 	}
 
 	bool Container::containsGlobalCoords(Vec2Df globalCoords) const noexcept
