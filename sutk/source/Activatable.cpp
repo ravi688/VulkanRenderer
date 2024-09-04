@@ -9,9 +9,11 @@ namespace SUTK
 	}
 
 	void Activatable::setActive(bool isActive) noexcept 
-	{ 
+	{
+		bool isPublish = m_isActive ^ isActive;
 		m_isActive = isActive; 
-		if(m_onActiveEvent != NULL)
+		// Only publish the event if there is a change, otherwise don't
+		if(m_onActiveEvent != NULL && isPublish)
 			m_onActiveEvent->publish(isActive);
 	}
 

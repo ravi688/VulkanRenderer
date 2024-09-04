@@ -12,7 +12,7 @@ namespace SUTK
 																					})
 	{
 		m_transAutomaton.setTransitionDelay(0.08f);
-		m_transAutomaton.getEvent(State::Hidden).subscribe([this](void*) { ContainerUtility::RenderablesSetActive(m_container, false); });
+		m_transAutomaton.getEvent(State::Hidden).subscribe([this](void*) { ContainerUtility::SetActiveAllRecursive(m_container, false); });
 		if(!isActive)
 		{
 			_com_assert(m_transAutomaton.getState() == State::Hidden);
@@ -25,7 +25,7 @@ namespace SUTK
 
 	void ContainerController::setActive(bool isActive) noexcept
 	{
-		ContainerUtility::RenderablesSetActive(m_container, isActive);
+		ContainerUtility::SetActiveAllRecursive(m_container, isActive);
 	}
 
 	void ContainerController::setAlpha(f32 alpha) noexcept

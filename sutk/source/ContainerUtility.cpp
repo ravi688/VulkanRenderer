@@ -6,7 +6,7 @@
 
 namespace SUTK
 {
-	void ContainerUtility::RenderablesSetActive(Container* container, bool isActive) noexcept
+	void ContainerUtility::RenderableSetActive(Container* container, bool isActive) noexcept
 	{
 		auto renderCont = dynamic_cast<RenderableContainer*>(container);
 		if(renderCont != NULL)
@@ -15,6 +15,27 @@ namespace SUTK
 			_com_assert(renderable != NULL);
 			renderable->setActive(isActive);
 		}
+	}
+	void ContainerUtility::SetActiveAllRecursive(Container* container, bool isActive) noexcept
+	{
+		container->setActive(isActive);
+		RenderableSetActive(container, isActive);
+		std::vector<Container*>& childs = container->getChilds();
+		for(Container* &child : childs)
+			SetActiveAllRecursive(child, isActive);			
+	}
+
+	void ContainerUtility::ContainerSetActiveRecursive(Container* container, bool isActive) noexcept
+	{
+		container->setActive(isActive);
+		std::vector<Container*>& childs = container->getChilds();
+		for(Container* &child : childs)
+			ContainerSetActiveRecursive(child, isActive);
+	}
+
+	void ContainerUtility::RenderablesSetActive(Container* container, bool isActive) noexcept
+	{
+		RenderableSetActive(container, isActive);
 		std::vector<Container*>& childs = container->getChilds();
 		for(Container* &child : childs)
 			RenderablesSetActive(child, isActive);
