@@ -34,6 +34,8 @@ namespace SUTK
 	public:
 		VisualButtonRect(SUTK::UIDriver& driver, SUTK::RenderableContainer* container) noexcept;
 
+		virtual void setActive(bool isActive) noexcept override;
+
 		virtual bool isDirty() noexcept override;
 		virtual void update() noexcept override;
 
