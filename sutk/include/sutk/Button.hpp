@@ -66,7 +66,7 @@ namespace SUTK
 		virtual void onPress() = 0;
 		// Called once for each left-mouse-button up/release within the boundaries of Button's Rect or even outside if earlier press was within the boundaries.
 		virtual void onRelease() = 0;
-		virtual Vec2Df getBoundSize() = 0;
+		virtual Vec2Df getMinBoundSize() = 0;
 	};
 
 	class Label;
@@ -86,7 +86,7 @@ namespace SUTK
 		virtual void onHover(HoverInfo info) noexcept override;
 		virtual void onPress() noexcept override;
 		virtual void onRelease() noexcept override;
-		virtual Vec2Df getBoundSize() noexcept override;
+		virtual Vec2Df getMinBoundSize() noexcept override;
 
 		VisualButtonRect& getVisualButtonRect() noexcept { return *m_visualButton; }
 		Label& getLabel() noexcept { return *m_label; }
