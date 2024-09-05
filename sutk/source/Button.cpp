@@ -101,11 +101,11 @@ namespace SUTK
 	{
 		m_visualButton->setState(VisualButtonRect::State::Hover);
 	}
-	Vec2Df DefaultButtonGraphic::getBoundSize() noexcept
+	Vec2Df DefaultButtonGraphic::getMinBoundSize() noexcept
 	{
 		f32 xCoord = m_label->getText().getCoordFromColPos(END_OF_LINE);
 		Vec2Df size = getSize();
-		return { std::max(xCoord, size.width), size.height };
+		return { xCoord, size.height };
 	}
 
 	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic) noexcept : Container(driver, parent),
