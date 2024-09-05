@@ -50,15 +50,15 @@ namespace SUTK
 		GfxDriverObjectHandleType getGlobalTextGroup() noexcept;
 
 		template<typename ContainerType, typename... Args>
-		ContainerType* createContainer(Container* parent, Args... args)
+		ContainerType* createContainer(Container* parent, Args&&... args)
 		{
-			ContainerType* cntr = new ContainerType(*this, parent, std::forward<Args...>(args)...);
+			ContainerType* cntr = new ContainerType(*this, parent, std::forward<Args&&...>(args)...);
 			return cntr;
 		}
 		template<typename RenderableType, typename... Args>
-		RenderableType* createRenderable(RenderableContainer* parent, Args... args)
+		RenderableType* createRenderable(RenderableContainer* parent, Args&&... args)
 		{
-			RenderableType* renderable = new RenderableType(*this, parent, std::forward<Args...>(args)...);
+			RenderableType* renderable = new RenderableType(*this, parent, std::forward<Args&&...>(args)...);
 			m_renderables.push_back(renderable);
 			return renderable;
 		}
