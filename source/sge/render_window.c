@@ -37,7 +37,13 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
+#ifdef PLATFORM_WINDOWS
+#	define GLFW_EXPOSE_NATIVE_WIN32
+#elif defined(WINDOW_SYSTEM_WAYLAND)
+#	define GLFW_EXPOSE_NATIVE_WAYLAND
+#elif defined(WINDOW_SYSTEM_X11)
+#	define GLFW_EXPOSE_NATIVE_X11
+#endif
 #include <GLFW/glfw3native.h>
 #include <memory.h>
 
@@ -424,6 +430,10 @@ SGE_API u32 render_window_get_native_size(render_window_t* window)
 {
 #ifdef PLATFORM_WINDOWS
 	return sizeof(HWND);
+#elif defined(WINDOW_SYSTEM_WAYLAND)
+	return sizeof(struct wl_surface*);
+#elif defined(WINDOW_SYSTEM_X11)
+	return sizeof(Window);
 #else
 	return 0;
 #endif
@@ -433,6 +443,12 @@ SGE_API void render_window_get_native(render_window_t* window, void* const out)
 	#ifdef PLATFORM_WINDOWS
 	HWND handle = glfwGetWin32Window(CAST_TO(GLFWwindow*, window->handle));
 	memcpy(out, CAST_TO(void*, &handle), sizeof(HWND));
+	#elif defined(WINDOW_SYSTEM_WAYLAND)
+	struct wl_surface* surface = glfwGetWaylandWindow(CAST_TO(GLFWwindow*, window->handle));
+	memcpy(out, CAST_TO(void*, &surface), sizeof(surface));
+	#elif defined(WINDOW_SYSTEM_X11)
+	Window x11window = glfwGetX11Window(CAST_TO(GLFWwindow*, window->handle));
+	memcpy(out, CAST_TO(void*, &x11window), sizeof(x11window));
 	#else
 		DEBUG_LOG_WARNING("Couldn't get native handle for this platform");
 	#endif
