@@ -75,6 +75,16 @@ namespace SUTK
 		id_generator_destroy(&m_id_generator);
 	}
 
+	u32 SGEGfxDriver::getNativeWindowHandleSize()
+	{
+		return m_driver.getRenderWindow().getNativeSize();
+	}
+
+	void SGEGfxDriver::getNativeWindowHandle(void* const out)
+	{
+		m_driver.getRenderWindow().getNative(out);
+	}
+
 	void SGEGfxDriver::render(UIDriver& driver)
 	{
 		if(m_autoCmdRecordAndExecute)
