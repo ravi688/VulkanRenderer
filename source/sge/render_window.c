@@ -37,6 +37,8 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #include <memory.h>
 
 
@@ -412,4 +414,26 @@ SGE_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_
 SGE_API void render_window_get_glfw_window_ptr(render_window_t* window, void* out_ptr)
 {
 	memcpy(out_ptr, &window->handle, sizeof(void*));
+}
+
+#ifdef PLATFORM_WINDOWS
+#	include <windows.h>
+#endif
+
+SGE_API u32 render_window_get_native_size(render_window_t* window)
+{
+#ifdef PLATFORM_WINDOWS
+	return sizeof(HWND);
+#else
+	return 0;
+#endif
+}
+SGE_API void render_window_get_native(render_window_t* window, void* const out)
+{
+	#ifdef PLATFORM_WINDOWS
+	HWND handle = glfwGetWin32Window(CAST_TO(GLFWwindow*, window->handle));
+	memcpy(out, CAST_TO(void*, &handle), sizeof(HWND));
+	#else
+		DEBUG_LOG_WARNING("Couldn't get native handle for this platform");
+	#endif
 }

@@ -31,6 +31,7 @@
 #include <sge/type_system.h>
 #include <sge/object.h>
 #include <hpml/vec2.h>
+#include <common/platform.h>
 
 static const type_t TYPE_ID(render_window_t) = TYPE_ID_CREATE(1);
 
@@ -283,4 +284,11 @@ SGE_API void render_window_get_vulkan_surface(render_window_t* window, void* vk_
 // Window System specific extension
 // out_ptr: will be a double pointer (&(GLFWwindow*))
 SGE_API void render_window_get_glfw_window_ptr(render_window_t* window, void* out_ptr);
+
+/* returns the size of the native handle for this platform 
+ * for example, on windows, this will return sizeof(HWND) */
+SGE_API u32 render_window_get_native_size(render_window_t* window);
+/* populates the 'out' with bytes constituting the native handle */
+SGE_API void render_window_get_native(render_window_t* window, void* const out);
+
 END_CPP_COMPATIBLE
