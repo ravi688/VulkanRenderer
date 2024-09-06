@@ -86,6 +86,14 @@ namespace SGE
 			render_window_get_glfw_window_ptr(m_handle, &ptr);
 			return ptr;
 		}
+		u32 getNativeSize() noexcept
+		{
+			return render_window_get_native_size(m_handle);
+		}
+		void getNative(void* const out) noexcept
+		{
+			return render_window_get_native(m_handle, out);
+		}
 	};
 
 	template<> RenderWindow Event::ReinterpretPublisher<RenderWindow>(void* publisher);
