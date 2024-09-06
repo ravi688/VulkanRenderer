@@ -27,6 +27,8 @@ namespace SUTK
 	public:
 		virtual ~IGfxDriver() = default;
 		virtual void render(UIDriver& uiDriver) = 0;
+		virtual u32 getNativeWindowHandleSize() = 0;
+		virtual void getNativeWindowHandle(void* const out) = 0;
 		virtual Vec2D<DisplaySizeType> getSizeInPixels() = 0;
 		virtual Vec2Df getSizeInCentimeters() = 0;
 		virtual GfxDriverObjectHandleType createTextGroup() = 0;

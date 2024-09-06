@@ -115,6 +115,9 @@ namespace SUTK
 
 		// IGfxDriver INTERFACE IMPLEMENTATION
 
+		virtual u32 getNativeWindowHandleSize() override;
+		virtual void getNativeWindowHandle(void* const out) override;
+
 		virtual Vec2D<DisplaySizeType> getSizeInPixels() override { return m_size; }
 		virtual Vec2Df getSizeInCentimeters() override { return m_sizeCentimeters; }
 		virtual void render(UIDriver& driver) override;
