@@ -83,11 +83,12 @@ namespace SUTK
 		LayoutAttributes& getLayoutAttributes() noexcept { return m_layoutAttr; }
 		const LayoutAttributes& getLayoutAttributes() const noexcept { return m_layoutAttr; }
 		void setLayoutAttributes(const LayoutAttributes& attrs) noexcept;
-		bool isLayoutIgnore() const noexcept { return m_isLayoutIgnore; }
+		bool isLayoutIgnore() const noexcept { return m_isLayoutIgnore || (!isActive()); }
 		void setLayoutIgnore(bool isIgnore) noexcept;
 
 		// childs getters
 		std::vector<Container*>& getChilds() noexcept { return getContainerList(); }
+		const std::vector<Container*>& getChilds() const noexcept { return getContainerList(); }
 
 		// parent getters
 		Container* getParent() { return m_parent; }
