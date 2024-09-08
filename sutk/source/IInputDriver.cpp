@@ -248,4 +248,12 @@ namespace SUTK
 		return std::move(_stream);
 	}
 
+	IInputDriver::IInputDriver() noexcept : m_onCursorMoveEvent(this),
+											m_onMouseButtonEvent(this),
+											m_onScrollEvent(this),
+											m_onKeyEvent(this),
+											m_onMouseEnterExitEvent(this)
+	{
+	}
+
 }

@@ -111,7 +111,11 @@ namespace SUTK
 	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic) noexcept : Container(driver, parent),
 																									MouseMoveHandlerObject(driver, this),
 																									MouseClickHandlerObject(driver, this),
-																									m_graphic(NULL)
+																									m_graphic(NULL),
+																									m_onEnterEvent(this),
+																									m_onExitEvent(this),
+																									m_onPressEvent(this),
+																									m_onReleaseEvent(this)
 	{ 
 		if(isCreateDefaultGraphic)
 			m_graphic = driver.createContainer<DefaultButtonGraphic>(this);

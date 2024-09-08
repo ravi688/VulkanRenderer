@@ -219,7 +219,8 @@ namespace SUTK
 		OnKeyboardEvent m_onKeyEvent;
 		OnMouseEnterExitEvent m_onMouseEnterExitEvent;
 	public:
-		virtual ~IInputDriver() = default;
+		IInputDriver() noexcept;
+		virtual ~IInputDriver() noexcept = default;
 
 		OnMouseMoveEvent& getOnCursorMoveEvent() { return m_onCursorMoveEvent; }
 		OnMouseButtonEvent& getOnMouseButtonEvent() { return m_onMouseButtonEvent; }

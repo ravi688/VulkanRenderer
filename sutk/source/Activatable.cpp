@@ -20,7 +20,7 @@ namespace SUTK
 	Activatable::OnActiveEvent& Activatable::getOnActiveEvent() noexcept
 	{
 		if(m_onActiveEvent == NULL)
-			m_onActiveEvent = new OnActiveEvent(this);
+			m_onActiveEvent = new OnActiveEvent();
 		return *m_onActiveEvent;
 	}
 }
