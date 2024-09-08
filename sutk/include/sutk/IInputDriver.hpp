@@ -234,7 +234,7 @@ namespace SUTK
 		virtual bool getKeyUp(KeyCode keycode) noexcept = 0;
 
 		// Mouse
-		virtual Vec2Df getMousePosition() noexcept = 0;
+		virtual Vec2Df getMousePosition() const noexcept = 0;
 		virtual Vec2Df getMouseScrollDelta() noexcept = 0;
 		virtual bool getMouseButton(MouseButton button) noexcept = 0;
 		virtual bool getMouseButtonDown(MouseButton button) noexcept = 0;
