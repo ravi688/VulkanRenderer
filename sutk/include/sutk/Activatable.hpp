@@ -7,7 +7,7 @@ namespace SUTK
 	class Activatable
 	{
 	public:
-		typedef com::Event<Activatable, bool> OnActiveEvent;
+		typedef com::Event<com::no_publish_ptr_t, bool> OnActiveEvent;
 
 	private:
 		bool m_isActive;
@@ -15,7 +15,7 @@ namespace SUTK
 		OnActiveEvent* m_onActiveEvent;
 
 	protected:
-		Activatable() noexcept : m_isActive(true), m_onActiveEvent(NULL) { }
+		Activatable() noexcept : m_isActive(true), m_onActiveEvent() { }
 
 	public:
 		~Activatable() noexcept;

@@ -12,7 +12,7 @@ namespace SUTK
 																					})
 	{
 		m_transAutomaton.setTransitionDelay(0.08f);
-		m_transAutomaton.getEvent(State::Hidden).subscribe([this](void*) { ContainerUtility::SetActiveAllRecursive(m_container, false); });
+		m_transAutomaton.getEvent(State::Hidden).subscribe([this]() { ContainerUtility::SetActiveAllRecursive(m_container, false); });
 		if(!isActive)
 		{
 			_com_assert(m_transAutomaton.getState() == State::Hidden);
