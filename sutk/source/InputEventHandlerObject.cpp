@@ -78,6 +78,15 @@ namespace SUTK
 		setSubscriptionID(id);
 	}
 
+	MouseAnyClickHandlerObject::MouseAnyClickHandlerObject(UIDriver& driver, Container* container) noexcept : TInputEventHandlerContainerObject<IInputDriver::OnMouseButtonEvent>(driver.getInputDriver().getOnMouseButtonEvent(), container)
+	{
+		IInputDriver::OnMouseButtonEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, MouseButton button, KeyEvent event)
+		{
+			this->onMouseClick(button, event, isInside(inputDriver->getMousePosition()));
+		});
+		setSubscriptionID(id);
+	}
+
 	MouseScrollHandlerObject::MouseScrollHandlerObject(UIDriver& driver, Container* container) noexcept : TInputEventHandlerContainerObject<IInputDriver::OnMouseScrollEvent>(driver.getInputDriver().getOnScrollEvent(), container)
 	{
 		IInputDriver::OnMouseScrollEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, Vec2Df scrollDelta)

@@ -141,6 +141,17 @@ namespace SUTK
 		virtual ~MouseClickHandlerObject() noexcept = default;
 	};
 
+	class MouseAnyClickHandlerObject : public TInputEventHandlerContainerObject<IInputDriver::OnMouseButtonEvent>
+	{
+	protected:
+		virtual void onMouseClick(MouseButton button, KeyEvent action, bool isInside) = 0;
+
+		MOUSE_INPUT_HANDLER_CTOR_DECLARE(MouseAnyClickHandlerObject)
+
+	public:
+		virtual ~MouseAnyClickHandlerObject() noexcept = default;
+	};
+
 	class MouseScrollHandlerObject : public TInputEventHandlerContainerObject<IInputDriver::OnMouseScrollEvent>
 	{
 	protected:
