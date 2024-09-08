@@ -24,7 +24,7 @@ namespace SUTK
 		// Mouse
 
 		// returns mouse position relative to top-left corner of the window (in centi-meters)
-		virtual Vec2Df getMousePosition() noexcept override;
+		virtual Vec2Df getMousePosition() const noexcept override;
 		virtual Vec2Df getMouseScrollDelta() noexcept override;
 		virtual bool getMouseButton(MouseButton button) noexcept override;
 		virtual bool getMouseButtonDown(MouseButton button) noexcept override;
