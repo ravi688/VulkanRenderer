@@ -11,7 +11,7 @@ namespace SUTK
 		virtual bool getKeyUp(KeyCode keycode) noexcept override { return false; }
 
 		// Mouse
-		virtual Vec2Df getMousePosition() noexcept override { return { }; }
+		virtual Vec2Df getMousePosition() const noexcept override { return { }; }
 		virtual Vec2Df getMouseScrollDelta() noexcept override { return { }; }
 		virtual bool getMouseButton(MouseButton button) noexcept override { return false; }
 		virtual bool getMouseButtonDown(MouseButton button) noexcept override { return false; }
