@@ -7,6 +7,8 @@ namespace SUTK
 {
 	class VBoxContainer : public Container, public ILayoutController
 	{
+	private:
+		bool m_isTight;
 	protected:
 		// Overrides of Container::onAddChild, Container::onRemoveChild, and Container::onResize
 		virtual void onAddChild(Container* child) override;
@@ -18,5 +20,10 @@ namespace SUTK
 	public:
 		VBoxContainer(UIDriver& driver, Container* parent = NULL) noexcept;
 		~VBoxContainer() noexcept = default;
+
+		// resizes this container to tightly fit its child containers
+		// basically, it just removes any empty spaces
+		void tight() noexcept;
+		void setTight(bool isTight) noexcept;
 	};
 }

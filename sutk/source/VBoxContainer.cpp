@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	VBoxContainer::VBoxContainer(UIDriver& driver, Container* parent) noexcept : Container(driver, parent)
+	VBoxContainer::VBoxContainer(UIDriver& driver, Container* parent) noexcept : Container(driver, parent), m_isTight(false)
 	{
 
 	}
@@ -98,5 +98,30 @@ namespace SUTK
 			child->setRect({ 0, xpos, getRect().width, height });
 			xpos += height;
 		}
+
+		if(m_isTight)
+		{
+			// AGAIN: do not call setSize() here, otherwise you'll end up in infinite recursion!
+			getRawRectRef().setSize({ getSize().width, xpos });
+		}
+	}
+	void VBoxContainer::tight() noexcept
+	{
+		const std::vector<Container*>& childs = getChilds();
+		f32 yPos = 0;
+		for(const Container* const& child : childs)
+		{
+			if(child->isLayoutIgnore())
+				continue;
+			yPos += child->getSize().height;
+		}
+		getRawRectRef().setSize({ getSize().width, yPos });
+		Container::onResize(getRect(), false, true);
+	}
+	void VBoxContainer::setTight(bool isTight) noexcept
+	{
+		m_isTight = isTight;
+		if(isTight)
+			tight();
 	}
 }
