@@ -250,7 +250,7 @@ namespace SUTK
 	}
 
 	// Mouse
-	Vec2Df SGEInputDriver::getMousePosition() noexcept
+	Vec2Df SGEInputDriver::getMousePosition() const noexcept
 	{
 		vec2_t pos = m_window.getCursorPosition();
 		extent2d_t inches = SGE::Display::ConvertPixelsToInches({ pos.x, pos.y });
