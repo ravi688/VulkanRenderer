@@ -12,6 +12,7 @@
 #include <sutk/tests/ButtonTest.hpp>
 #include <sutk/tests/VBoxTest.hpp>
 #include <sutk/tests/HBoxTest.hpp>
+#include <sutk/tests/HPaneTest.hpp>
 
 namespace SUTK
 {
@@ -27,7 +28,8 @@ namespace SUTK
 		{ "ROUND_RECT", [] () { return std::unique_ptr<ITest>(new RoundRectTest()); }},
 		{ "BUTTON", [] () { return std::unique_ptr<ITest>(new ButtonTest()); }},
 		{ "VBOX", [] () { return std::unique_ptr<ITest>(new VBoxTest()); }},
-		{ "HBOX", [] () { return std::unique_ptr<ITest>(new HBoxTest()); }}
+		{ "HBOX", [] () { return std::unique_ptr<ITest>(new HBoxTest()); }},
+		{ "HPANE", [] () { return std::unique_ptr<ITest>(new HPaneTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)
