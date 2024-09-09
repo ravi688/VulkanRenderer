@@ -77,6 +77,14 @@ namespace SUTK
 			return contains(globalCoords);
 	}
 
+	void Container::alwaysFitInParent() noexcept
+	{
+		Container* parent = getParent();
+		if(parent != NULL)
+			setRect({ { 0.0f, 0.0f }, parent->getSize() });
+		getAnchorRect()->setRect({ 0.0f, 0.0f, 1.0f, 1.0f });
+	}
+
 	u32 Container::getDepth() const noexcept
 	{
 		if(getParent() == NULL)
