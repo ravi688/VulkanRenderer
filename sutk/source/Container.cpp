@@ -19,10 +19,7 @@ namespace SUTK
 															m_isDebug(false)
 	{
 		if(parent != NULL)
-		{
-			setParentChildRelation(parent);
-			m_anchorRect = new AnchorRect(*this, *parent);
-		}
+			setParent(parent, false);
 	}
 
 	Container::~Container()
@@ -39,6 +36,9 @@ namespace SUTK
 			// remove this container from the list of "childs" of the (old) parent container
 			bool result = com::erase_first_if(m_parent->m_containers.begin(), m_parent->m_containers.end(), [this](Container*& _container) { return _container == this; });
 			_assert(result == true);
+			_com_assert(m_anchorRect != NULL);
+			if(parent == NULL)
+				m_anchorRect->setParent(NULL);
 			// invoke onRemoveChild callback for the parent container as a child 'this' has been removed from that
 			m_parent->onRemoveChild(this);
 			m_parent = NULL;
@@ -52,6 +52,10 @@ namespace SUTK
 			// add this container into the list of "childs" of the (new) parent container
 			parent->m_containers.push_back(this);
 			m_parent = parent;
+			if(m_anchorRect == NULL)
+				m_anchorRect = new AnchorRect(this, parent);
+			else
+				m_anchorRect->setParent(parent);
 			// invoke onAdd callback function for this container as it has now been added into another (parent) container
 			onAdd(this);
 			// invoke onAddChild callback function for the parent container as a new child 'this' has been added into that
@@ -59,14 +63,12 @@ namespace SUTK
 		}
 	}
 
-	void Container::setParent(Container* parent) noexcept
+	void Container::setParent(Container* parent, bool isInvariantPos) noexcept
 	{
-		// recalculate this container's rect into the local space of new parent container
-		Vec2Df screenCoords = getLocalCoordsToScreenCoords({ 0u, 0u });
-		Vec2Df localCoords = (parent != NULL) ? parent->getScreenCoordsToLocalCoords(screenCoords) : screenCoords;
-		setPosition(localCoords);
-
-		setParentChildRelation(parent);
+		if(parent != NULL)
+			parent->add(this, isInvariantPos);
+		else if(m_parent != NULL)
+			m_parent->remove(this);
 	}
 
 	bool Container::containsGlobalCoords(Vec2Df globalCoords) const noexcept
@@ -114,16 +116,26 @@ namespace SUTK
 		_assert(parent != NULL);
 	}
 
-	void Container::add(Container* container)
+	void Container::add(Container* container, bool isInvariantPos)
 	{
 		_assert(container != NULL);
-		container->setParent(this);
+		if(isInvariantPos)
+		{
+			// recalculate this container's rect into the local space of new parent container
+			Vec2Df screenCoords = container->getLocalCoordsToScreenCoords({ 0u, 0u });
+			Vec2Df localCoords = getScreenCoordsToLocalCoords(screenCoords);
+			container->setPosition(localCoords);
+		}
+		else
+			container->setPosition({ 0.0f, 0.0f });
+
+		container->setParentChildRelation(this);
 	}
 
 	void Container::remove(Container* container)
 	{
 		_assert(container != NULL);
-		container->setParent(NULL);
+		container->setParentChildRelation(NULL);
 	}
 
 	void Container::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
@@ -208,5 +220,12 @@ namespace SUTK
 			return;
 		recalculateLayoutParent();
 		m_isLayoutIgnore = isIgnore;
+	}
+
+	void Container::setLayoutExpand() noexcept
+	{
+		auto& attr = getLayoutAttributes();
+		attr.prefSize = attr.maxSize;
+		setLayoutAttributes(attr);
 	}
 }

@@ -12,9 +12,9 @@ namespace SUTK
 	private:
 		Rect2Df m_rect;
 		Rect2Df m_constraintRect;
-		Container& m_childRect;
-		Container& m_parentRect;
-		AnchorRect(Container& childRect, Container& parentRect) noexcept;
+		Container* m_childRect;
+		Container* m_parentRect;
+		AnchorRect(Container* childRect, Container* parentRect) noexcept;
 
 		friend class Container;
 		// should be called by the parent container whenever its rect is resized or changes its position
@@ -24,6 +24,9 @@ namespace SUTK
 
 		Rect2Df getUnnormalizedAnchorRect() noexcept;
 		void recalculateConstraints() noexcept;
+
+		void setParent(Container* parent) noexcept;
+		void setChild(Container* child) noexcept;
 	public:
 
 		// getters

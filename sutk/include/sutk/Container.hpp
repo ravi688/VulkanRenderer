@@ -85,6 +85,7 @@ namespace SUTK
 		void setLayoutAttributes(const LayoutAttributes& attrs) noexcept;
 		bool isLayoutIgnore() const noexcept { return m_isLayoutIgnore || (!isActive()); }
 		void setLayoutIgnore(bool isIgnore) noexcept;
+		void setLayoutExpand() noexcept;
 
 		// childs getters
 		std::vector<Container*>& getChilds() noexcept { return getContainerList(); }
@@ -94,7 +95,7 @@ namespace SUTK
 		Container* getParent() { return m_parent; }
 		const Container* getParent() const { return m_parent; }
 		// parent setters
-		void setParent(Container* parent) noexcept;
+		void setParent(Container* parent, bool isInvariantPos = true) noexcept;
 
 		// rect getters
 		Rect2Df getRect() const { return m_rect; }
@@ -136,7 +137,7 @@ namespace SUTK
 		// addition and removal of child containers
 
 		// adds a new container as a child to this container
-		virtual void add(Container* container);
+		virtual void add(Container* container, bool isInvariantPos = true);
 		// removes an existing container from this container
 		virtual void remove(Container* container);
 	};

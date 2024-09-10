@@ -3,7 +3,7 @@
 
 namespace SUTK
 {
-	AnchorRect::AnchorRect(Container& childRect, Container& parentRect) noexcept : m_childRect(childRect), m_parentRect(parentRect)
+	AnchorRect::AnchorRect(Container* childRect, Container* parentRect) noexcept : m_childRect(childRect), m_parentRect(parentRect)
 	{
 		// NOTE: initially the anchor rect is degenerate (width and height both is zero) and has position as { 0, 0 }
 
@@ -12,7 +12,8 @@ namespace SUTK
 
 	Rect2Df AnchorRect::getUnnormalizedAnchorRect() noexcept
 	{
-		Vec2Df parentSize = m_parentRect.getSize();
+		_com_assert(m_parentRect != NULL);
+		Vec2Df parentSize = m_parentRect->getSize();
 		// calculate unnormalized anchor rect in the parent rect's local coordinates
 		Rect2Df anchorRect { m_rect.getPosition() * parentSize, m_rect.getSize() * parentSize };
 		return anchorRect;
@@ -20,16 +21,30 @@ namespace SUTK
 
 	void AnchorRect::recalculateConstraints() noexcept
 	{
+		if((m_childRect == NULL) || ((m_parentRect == NULL)))
+			return;
 		Rect2Df anchorRect = getUnnormalizedAnchorRect();
 		// signed difference is the constraint
-		m_constraintRect = anchorRect - m_childRect.getRect();
+		m_constraintRect = anchorRect - m_childRect->getRect();
+	}
+
+	void AnchorRect::setParent(Container* parent) noexcept
+	{
+		m_parentRect = parent;
+		recalculateConstraints();
+	}
+	void AnchorRect::setChild(Container* child) noexcept
+	{
+		m_childRect = child;
+		recalculateConstraints();
 	}
 
 	void AnchorRect::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
+		_com_assert(m_childRect != NULL);
 		Rect2Df anchorRect = getUnnormalizedAnchorRect();
 		Rect2Df newChildRect = anchorRect - m_constraintRect;
-		m_childRect.setRect(newChildRect);
+		m_childRect->setRect(newChildRect);
 	}
 
 	void AnchorRect::onChildResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) noexcept

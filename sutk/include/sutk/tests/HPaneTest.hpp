@@ -16,11 +16,12 @@ namespace SUTK
 	{
 	private:
 		UIDriver* m_uiDriver;
+		IInputDriver* m_inputDriver;
 		IGfxDriver* m_gfxDriver;
 		HPaneContainer* m_hPaneContainer;
 
 	public:
-		HPaneTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }
+		HPaneTest() : m_uiDriver(NULL), m_inputDriver(NULL), m_gfxDriver(NULL) { }
 
 		DriverInitializationData getInitializationData() override;
 
