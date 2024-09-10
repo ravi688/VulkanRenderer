@@ -57,15 +57,22 @@ namespace SUTK
 		std::vector<Container*> childs = getChilds();
 		f32 minHeight = 0;
 		f32 prefHeight = 0;
+		u32 expandCount = 0;
 		for(Container* &child : childs)
 		{
 			// if this child doesn't care about Layout rules, then skip it.
 			if(child->isLayoutIgnore())
 				continue;
 
-			LayoutAttributes& attrs = child->getLayoutAttributes();
+			const LayoutAttributes& attrs = child->getLayoutAttributes();
 			minHeight += attrs.minSize.height;
-			prefHeight += attrs.prefSize.height;
+			if(attrs.prefSize.height == std::numeric_limits<f32>::max())
+			{
+				++expandCount;
+				prefHeight += attrs.minSize.height;
+			}
+			else
+				prefHeight += attrs.prefSize.height;
 		}
 
 		// if this container is not long enough to accomodate minimimum height requirements for all of the child containers
@@ -86,6 +93,21 @@ namespace SUTK
 		// the factor by which reqDiff can be decreased to fit into the available space 'diff', though aggregate preferred height won't be satisfied
 		f32 factor = (reqDiff == 0.0f) ? 1.0f : (diff / reqDiff);
 
+		f32 totalHeight = 0;
+		for(Container* &child : childs)
+		{
+			if(child->isLayoutIgnore())
+				continue;
+			
+			const LayoutAttributes& attrs = child->getLayoutAttributes();
+			if(attrs.prefSize.height != std::numeric_limits<f32>::max())
+				totalHeight += std::min(attrs.minSize.height + factor * (attrs.prefSize.height - attrs.minSize.height), attrs.prefSize.height);
+			else
+				totalHeight += attrs.minSize.height;
+		}
+
+		f32 expandWidth = (getRect().height - totalHeight) / expandCount;
+
 		// now layout the child containers
 		f32 xpos = 0;
 		for(Container* &child : childs)
@@ -93,8 +115,14 @@ namespace SUTK
 			if(child->isLayoutIgnore())
 				continue;
 
-			LayoutAttributes& attrs = child->getLayoutAttributes();
-			f32 height = std::min(attrs.minSize.height + factor * (attrs.prefSize.height - attrs.minSize.height), attrs.prefSize.height);
+			const LayoutAttributes& attrs = child->getLayoutAttributes();
+
+			f32 height = 0;
+			if(attrs.prefSize.height == std::numeric_limits<f32>::max())
+				height = attrs.minSize.height + expandWidth;
+			else
+				height = std::min(attrs.minSize.height + factor * (attrs.prefSize.height - attrs.minSize.height), attrs.prefSize.height);
+
 			child->setRect({ 0, xpos, getRect().width, height });
 			xpos += height;
 		}
