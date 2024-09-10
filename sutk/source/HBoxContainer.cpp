@@ -57,15 +57,22 @@ namespace SUTK
 		std::vector<Container*> childs = getChilds();
 		f32 minWidth = 0;
 		f32 prefWidth = 0;
+		u32 expandCount = 0;
 		for(Container* &child : childs)
 		{
 			// if this child doesn't care about Layout rules, then skip it.
 			if(child->isLayoutIgnore())
 				continue;
 
-			LayoutAttributes& attrs = child->getLayoutAttributes();
+			const LayoutAttributes& attrs = child->getLayoutAttributes();
 			minWidth += attrs.minSize.width;
-			prefWidth += attrs.prefSize.width;
+			if(attrs.prefSize.width == std::numeric_limits<f32>::max())
+			{
+				++expandCount;
+				prefWidth += attrs.minSize.width;
+			}
+			else
+				prefWidth += attrs.prefSize.width;
 		}
 
 		// if this container is not long enough to accomodate minimimum width requirements for all of the child containers
@@ -86,15 +93,36 @@ namespace SUTK
 		// the factor by which reqDiff can be decreased to fit into the available space 'diff', though aggregate preferred width won't be satisfied
 		f32 factor = (reqDiff == 0.0f) ? 1.0f : (diff / reqDiff);
 
+		f32 totalWidth = 0;
+		for(Container* &child : childs)
+		{
+			if(child->isLayoutIgnore())
+				continue;
+			
+			const LayoutAttributes& attrs = child->getLayoutAttributes();
+			if(attrs.prefSize.width != std::numeric_limits<f32>::max())
+				totalWidth += std::min(attrs.minSize.width + factor * (attrs.prefSize.width - attrs.minSize.width), attrs.prefSize.width);
+			else
+				totalWidth += attrs.minSize.width;
+		}
+
+		f32 expandWidth = (getRect().width - totalWidth) / expandCount;
+
 		// now layout the child containers
 		f32 xpos = 0;
 		for(Container* &child : childs)
 		{
 			if(child->isLayoutIgnore())
 				continue;
+
+			const LayoutAttributes& attrs = child->getLayoutAttributes();
+
+			f32 width = 0;
+			if(attrs.prefSize.width == std::numeric_limits<f32>::max())
+				width = attrs.minSize.width + expandWidth;
+			else
+				width = std::min(attrs.minSize.width + factor * (attrs.prefSize.width - attrs.minSize.width), attrs.prefSize.width);
 			
-			LayoutAttributes& attrs = child->getLayoutAttributes();
-			f32 width = std::min(attrs.minSize.width + factor * (attrs.prefSize.width - attrs.minSize.width), attrs.prefSize.width);
 			child->setRect({ xpos, 0, width, getRect().height });
 			xpos += width;
 		}
