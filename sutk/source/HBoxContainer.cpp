@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	HBoxContainer::HBoxContainer(UIDriver& driver, Container* parent) noexcept : Container(driver, parent)
+	HBoxContainer::HBoxContainer(UIDriver& driver, Container* parent) noexcept : Container(driver, parent), m_isTight(false)
 	{
 
 	}
@@ -126,5 +126,24 @@ namespace SUTK
 			child->setRect({ xpos, 0, width, getRect().height });
 			xpos += width;
 		}
+	}
+	void HBoxContainer::tight() noexcept
+	{
+		const std::vector<Container*>& childs = getChilds();
+		f32 xPos = 0;
+		for(const Container* const& child : childs)
+		{
+			if(child->isLayoutIgnore())
+				continue;
+			xPos += child->getSize().width;
+		}
+		getRawRectRef().setSize({ xPos, getSize().height });
+		Container::onResize(getRect(), false, true);
+	}
+	void HBoxContainer::setTight(bool isTight) noexcept
+	{
+		m_isTight = isTight;
+		if(isTight)
+			tight();
 	}
 }
