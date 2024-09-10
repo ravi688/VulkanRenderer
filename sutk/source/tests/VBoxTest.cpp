@@ -22,7 +22,7 @@ namespace SUTK
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
 		m_vBoxContainer = m_uiDriver->createContainer<VBoxContainer>(rootContainer);
 		m_vBoxContainer->setRect({ 0, 0, 3, 5 });
-		for(u32 i = 0; i < 5; i++)
+		for(u32 i = 0; i < 6; i++)
 		{
 			RenderableContainer* renderableContainer = m_uiDriver->createContainer<RenderableContainer>(m_vBoxContainer);
 				LayoutAttributes attrs = renderableContainer->getLayoutAttributes();
@@ -42,11 +42,22 @@ namespace SUTK
 				attrs.minSize.height = 3;
 				renderableContainer->setLayoutAttributes(attrs);
 			}
+			else if(i == 4)
+			{
+				LayoutAttributes attrs = renderableContainer->getLayoutAttributes();
+				attrs.prefSize.height = attrs.maxSize.height;
+				attrs.minSize.height = 0.5f;
+				renderableContainer->setLayoutAttributes(attrs);
+			}
 			RenderRectFillRound* renderRect = m_uiDriver->createRenderRect<RenderRectFillRound>(renderableContainer);
-			renderRect->setColor(Color4::green(com::Lerp(0.5f, 1.0f, com::InverseLerp<f32>(static_cast<s32>(i), 0, 4))));
+			if(i == 4)
+				renderRect->setColor(Color4::red());
+			else
+				renderRect->setColor(Color4::green(com::Lerp(0.5f, 1.0f, com::InverseLerp<f32>(static_cast<s32>(i), 0, 5))));
 			std::cout << renderableContainer->getRect() << std::endl;
 		}
 		m_vBoxContainer->setSize({ m_vBoxContainer->getSize().width, 10.0f });
+		m_vBoxContainer->getAnchorRect()->setRect({ 0.0f, 0.0f, 1.0f, 1.0f });
 		m_vBoxContainer->enableDebug();
 	}
 
