@@ -5,6 +5,8 @@
 #include <sutk/FullWindowContainer.hpp>
 
 #include <sutk/Button.hpp>
+#include <sutk/ButtonGraphic.hpp>
+#include <sutk/Label.hpp>
 
 namespace SUTK
 {
