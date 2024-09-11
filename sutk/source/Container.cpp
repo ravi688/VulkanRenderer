@@ -87,6 +87,14 @@ namespace SUTK
 		getAnchorRect()->setRect({ 0.0f, 0.0f, 1.0f, 1.0f });
 	}
 
+	void Container::fitInParent() noexcept
+	{
+		auto parent = getParent();
+		if(parent == NULL)
+			return;
+		setRect({ Vec2Df::zero(), parent->getSize() });
+	}
+
 	u32 Container::getDepth() const noexcept
 	{
 		if(getParent() == NULL)
