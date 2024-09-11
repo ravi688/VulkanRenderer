@@ -139,7 +139,9 @@ namespace SUTK
 				handle.set(buffer);
 				handle.setTransform(mat4_translation(0.0f, yCoord, -400.0f));
 				yCoord -= 100.0f;
-				m_texture.dump("BitmapTextTest.bmp");
+				#ifdef GLOBAL_DEBUG
+					m_texture.dump("BitmapTextTest.bmp");
+				#endif
 			}
 		}
 
