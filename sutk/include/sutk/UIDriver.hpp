@@ -62,6 +62,14 @@ namespace SUTK
 			m_renderables.push_back(renderable);
 			return renderable;
 		}
+		template<typename RenderableType, typename... Args>
+		std::pair<RenderableType*, RenderableContainer*> createRenderableWithContainer(Container* parent, Args&&... args)
+		{
+			RenderableContainer* container = createContainer<RenderableContainer>(parent);
+			RenderableType* renderable = new RenderableType(*this, container, std::forward<Args&&...>(args)...);
+			m_renderables.push_back(renderable);
+			return { renderable, container };
+		}
 		Text* createText(RenderableContainer* parent);
 		template<typename RenderRectType>
 		RenderRectType* createRenderRect(RenderableContainer* container);
