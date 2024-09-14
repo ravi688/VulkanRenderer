@@ -236,4 +236,16 @@ namespace SUTK
 		attr.prefSize = attr.maxSize;
 		setLayoutAttributes(attr);
 	}
+
+	void Container::setActive(bool isActive) noexcept
+	{
+		bool oldActiveState = Activatable::isActive();
+		// Mandatory to be called, and it must precede the layout rebuilding (below code)
+		// as layout rebuild checks if the container has layout ignore flag set or not, in which 
+		// active state is also considered. 
+		Activatable::setActive(isActive);
+		// If active state is being changed then we need to rebuild the layout
+		if(oldActiveState != isActive)
+			recalculateLayoutParent();
+	}
 }

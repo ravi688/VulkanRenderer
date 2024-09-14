@@ -143,5 +143,8 @@ namespace SUTK
 		virtual void add(Container* container, bool isInvariantPos = true);
 		// removes an existing container from this container
 		virtual void remove(Container* container);
+
+		// Override of Activatable::setActive;
+		virtual void setActive(bool isActive) noexcept override;
 	};
 }
