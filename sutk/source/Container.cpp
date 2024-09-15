@@ -71,6 +71,14 @@ namespace SUTK
 			m_parent->remove(this);
 	}
 
+	Rect2Df Container::getGlobalRect() const noexcept
+	{
+		if(m_parent != NULL)
+			return m_parent->getLocalCoordsToScreenCoords(getRect());
+		else
+			return getRect();
+	}
+
 	bool Container::containsGlobalCoords(Vec2Df globalCoords) const noexcept
 	{
 		if(getParent() != NULL)

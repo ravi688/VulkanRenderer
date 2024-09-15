@@ -115,6 +115,9 @@ namespace SUTK
 		// m_scrollDelta.x represents scroll delta in x direction (horizontal)
 		Vec2Df m_scrollDelta;
 
+		// Clip Rect in global coords
+		std::optional<Rect2Df> m_clipRect;
+
 		// this can only be called by SUTK::UIDriver
 		Text(UIDriver& driver, RenderableContainer* container) noexcept;
 
@@ -152,6 +155,9 @@ namespace SUTK
 		// Implementation of IColorable::setColor() and IColorable::getColor()
 		virtual void setColor(Color4 color) noexcept override;
 		virtual Color4 getColor() const noexcept override;
+
+		void setClipRect(Rect2Df rect) noexcept;
+		Rect2Df getClipRect() const noexcept;
 
 		void setColorRanges(const std::vector<std::pair<SelectionRange<LineCountType>, Color4>>& ranges) noexcept;
 
