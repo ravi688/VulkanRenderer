@@ -115,7 +115,7 @@ namespace SUTK
 		// m_scrollDelta.x represents scroll delta in x direction (horizontal)
 		Vec2Df m_scrollDelta;
 
-		// Clip Rect in global coords
+		// Clip Rect in global coords set by the user of Text
 		std::optional<Rect2Df> m_clipRect;
 
 		// this can only be called by SUTK::UIDriver
@@ -124,6 +124,7 @@ namespace SUTK
 		friend class UIDriver;
 
 		void recalculateClipRect() noexcept;
+		f32 calculateMaxWidth() const noexcept;
 
 		// Overrides of Renderable::onContainerResize
 		virtual void onGlobalCoordDirty() noexcept override;
@@ -159,7 +160,19 @@ namespace SUTK
 		void setClipRect(Rect2Df rect) noexcept;
 		Rect2Df getClipRect() const noexcept;
 
+		// NOTE: Followings are the modification functions (which modify the text content and eventually bound size)
+		//		1. createNewLine
+		//		2. removeLine
+		//		3. removeLineRange
+		//		5. append
+		//		6. insert
+		//		7. removeRange
+		//		8. setFontSize
+		Vec2Df getBoundSize() const noexcept;
+
 		void setColorRanges(const std::vector<std::pair<SelectionRange<LineCountType>, Color4>>& ranges) noexcept;
+
+
 
 		LineText* createNewLine(Flags flags = Flags::After, LineCountType line = END_OF_TEXT) noexcept;
 		void removeLine(LineCountType line) noexcept;

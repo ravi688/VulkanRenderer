@@ -24,6 +24,22 @@ namespace SUTK
 		m_baselineHeight = getGfxDriver().getTextBaselineHeightInCentimeters(m_pointSize);
 	}
 
+	f32 Text::calculateMaxWidth() const noexcept
+	{
+		// TODO: We can find maximum in 3 * n / 2 time remember? check CLRS, mean and order statistics,
+		// However, for production ready builds, we can optimize this further,
+		// 	by grouping the lines into fixed number of lines in each group,
+		// 	this way we can limit the input size into this algo to a known size and optimal size.
+		f32 maxWidth = 0;
+		for(LineText* line : m_lines)
+		{
+			f32 width = line->getBoundingRectSize().width;
+			if(width > maxWidth)
+				maxWidth = width;
+		}
+		return maxWidth;
+	}
+
 	bool Text::isDirty()
 	{
 		if(m_isDirty)
@@ -134,6 +150,21 @@ namespace SUTK
 	{
 		_com_assert(m_clipRect.has_value());
 		return m_clipRect.value();
+	}
+
+		//		1. createNewLine
+		//		2. removeLine
+		//		3. removeLineRange
+		//		5. append
+		//		6. insert
+		//		7. removeRange
+		//		8. setFontSize
+
+	Vec2Df Text::getBoundSize() const noexcept
+	{
+		f32 maxWidth = calculateMaxWidth();
+		f32 height = (m_lines.size() > 0) ? (m_lines.back()->getPosition().y - m_lines.front()->getPosition().y + const_cast<Text*>(this)->getBaselineHeight()) : 0.0f;
+		return { maxWidth, height };
 	}
 
 	void Text::clear() noexcept
