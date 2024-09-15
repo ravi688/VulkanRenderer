@@ -99,6 +99,7 @@ namespace SUTK
 
 		// rect getters
 		Rect2Df getRect() const { return m_rect; }
+		Rect2Df getGlobalRect() const noexcept;
 		Vec2Df getPosition() const noexcept { return m_rect.getPosition(); }
 		Vec2Df getSize() const noexcept { return m_rect.getSize(); }
 		// NOTE: the localCoords must be in the same coordinate space as that of this Container's Rect

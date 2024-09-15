@@ -123,6 +123,19 @@ namespace SUTK
 		return m_color;
 	}
 
+	void Text::setClipRect(Rect2Df rect) noexcept
+	{
+		m_clipRect = rect;
+		if(m_isClippingEnabled)
+			recalculateClipRect();
+	}
+
+	Rect2Df Text::getClipRect() const noexcept
+	{
+		_com_assert(m_clipRect.has_value());
+		return m_clipRect.value();
+	}
+
 	void Text::clear() noexcept
 	{
 		// clear existing data
@@ -401,14 +414,21 @@ namespace SUTK
 
 	void Text::recalculateClipRect() noexcept
 	{
-		RenderableContainer* container = getContainer();
-		// convert the top-left corner of the container, in which this text is, to screen coordinates
-		auto position = container->getLocalCoordsToScreenCoords({ 0u, 0u });
+		Rect2Df clipRect;
+		if(m_clipRect.has_value())
+			clipRect = m_clipRect.value();
+		else
+		{
+			RenderableContainer* container = getContainer();
+			// convert the top-left corner of the container, in which this text is, to screen coordinates
+			auto position = container->getLocalCoordsToScreenCoords({ 0u, 0u });
+			clipRect = { position, container->getSize() };
+		}
 		
 		for(std::size_t i = 0; i < m_lines.size(); i++)
 		{
 			// set the clip rect, note that width and height should remain as that of its text container
-			m_lines[i]->setClipRectGlobalCoords({ position.x, position.y, container->getRect().width, container->getRect().height });
+			m_lines[i]->setClipRectGlobalCoords(clipRect);
 		}
 	}
 
