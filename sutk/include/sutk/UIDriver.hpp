@@ -32,6 +32,8 @@ namespace SUTK
 		bool m_isDummyInputDriver;
 		std::vector<Renderable*> m_renderables;
 		GfxDriverObjectHandleType m_globalTextGroup;
+		// Container for accomodating debug rectangles etc.
+		Container* m_debugRootContainer;
 
 		friend class Renderable;
 	public:
@@ -40,6 +42,8 @@ namespace SUTK
 		~UIDriver();
 
 		void render();
+
+		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }
 
 		IGfxDriver& getGfxDriver() { return m_gfxDriver; }
 		const IGfxDriver& getGfxDriver() const { return m_gfxDriver; }

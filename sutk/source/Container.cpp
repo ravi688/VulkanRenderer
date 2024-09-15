@@ -158,8 +158,8 @@ namespace SUTK
 		if(m_renderRectCont != NULL)
 		{
 			_assert(m_isDebug);
-			if(isSizeChanged)
-				m_renderRectCont->setRect({ 0, 0, newRect.width, newRect.height });
+			Vec2Df pos = getLocalCoordsToScreenCoords({ 0, 0 });
+			m_renderRectCont->setRect({ pos.x, pos.y, newRect.width, newRect.height });
 		}
 
 		if(m_anchorRect != NULL)
@@ -179,7 +179,7 @@ namespace SUTK
 			{
 				// create SUTK::RenderableContainer and setup its rect
 				// NOTE: a Debug rect must have ignore layout flag set to 'true' to avoid its participation in layouting with other non-debug elements.
-				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(this, true);
+				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(getUIDriver().getDebugRootContainer(), true);
 				m_renderRectCont->setRect({ 0, 0, getRect().width, getRect().height });
 				
 				// create SUTK::RenderRect and establish parent-child link with SUTK::RenderableContainer just created
