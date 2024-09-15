@@ -62,6 +62,17 @@ namespace SUTK
 		for(Container* child : childs)
 		{
 			Vec2Df position = child->getPosition();
+			Vec2Df bt = child->getRect().getBottomRight();
+			Vec2Df tl = child->getRect().getTopLeft();
+			std::cout << bt << std::endl;
+			if((scrollDelta.y + tl.y) > 0.0f)
+				scrollDelta.y = -tl.y;
+			else if((scrollDelta.y + bt.y) < 0.0f)
+				scrollDelta.y = 0.0f;
+			if((scrollDelta.x + tl.x) > 0.0f)
+				scrollDelta.x = -tl.x;
+			else if((scrollDelta.x + bt.x) < 0.0f)
+				scrollDelta.x = 0.0f;
 			child->setPosition(scrollDelta + position);
 		}
 	}
