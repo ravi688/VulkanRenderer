@@ -4,9 +4,9 @@
 
 namespace SUTK
 {
-	Label::Label(UIDriver& driver, Container* parent) noexcept : RenderableContainer(driver, parent)
+	Label::Label(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept : RenderableContainer(driver, parent)
 	{
-		m_text = driver.createRenderable<SmallText>(this, driver.getGlobalTextGroup());
+		m_text = driver.createRenderable<SmallText>(this, (textGroup == GFX_DRIVER_OBJECT_NULL_HANDLE) ? driver.getGlobalTextGroup() : textGroup);
 		m_text->setAlignment(HorizontalAlignment::Left, VerticalAlignment::Top);
 		set("New Label");
 	}

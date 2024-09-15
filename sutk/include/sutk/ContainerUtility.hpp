@@ -1,10 +1,12 @@
 #pragma once
 
 #include <sutk/defines.hpp>
+#include <functional> // for std::function
 
 namespace SUTK
 {
 	class Container;
+	class Renderable;
 	
 	class ContainerUtility
 	{
@@ -20,5 +22,7 @@ namespace SUTK
 		static void RenderablesSetActive(Container* container, bool isActive) noexcept;
 		// Calls IColorable::getColor() followed by IColorable::setColor() for all IColorable(s) recursively including for the one passed as the first parameter
 		static void RenderablesSetAlpha(Container* container, f32 alpha) noexcept;
+		// Calls visit() for each found Renderable object recursively
+		static void RenderablesVisit(Container* container, const std::function<void(Renderable*)>& visitor) noexcept;
 	};
 }
