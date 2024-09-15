@@ -57,4 +57,18 @@ namespace SUTK
 		for(Container* &child : childs)
 			RenderablesSetAlpha(child, alpha);
 	}
+
+	void ContainerUtility::RenderablesVisit(Container* container, const std::function<void(Renderable*)>& visitor) noexcept
+	{
+		auto renderCont = dynamic_cast<RenderableContainer*>(container);
+		if(renderCont != NULL)
+		{
+			Renderable* renderable = renderCont->getRenderable();
+			_com_assert(renderable != NULL);
+			visitor(renderable);
+		}
+		std::vector<Container*>& childs = container->getChilds();
+		for(Container* &child : childs)
+			RenderablesVisit(child, visitor);
+	}
 }

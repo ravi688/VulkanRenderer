@@ -22,6 +22,7 @@ namespace SUTK
 															m_normalizedDrawOrder(0)
 
 	{
+		_com_assert(textGroup != GFX_DRIVER_OBJECT_NULL_HANDLE);
 		setGfxDriverObjectHandle(getGfxDriver().createText(textGroup));
 		m_pointSize = getFontSize();
 	}
