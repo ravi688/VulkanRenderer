@@ -42,6 +42,7 @@ namespace SUTK
 		m_indexArrayInfo.isModified = false;
 		m_transformArrayInfo.isModified = false;
 		m_fillColorInfo.isModified = false;
+		m_fillImageInfo.isModified = false;
 		if(m_sdf != NULL)
 			m_sdf->resetModificationFlags();
 	}
@@ -199,6 +200,13 @@ namespace SUTK
 	{
 		m_fillColorInfo.color = color;
 		m_fillColorInfo.isModified = true;
+		return *this;
+	}
+
+	Geometry& Geometry::fillImage(UIDriver::ImageReference image) noexcept
+	{
+		m_fillImageInfo.image = image;
+		m_fillImageInfo.isModified = true;
 		return *this;
 	}
 }

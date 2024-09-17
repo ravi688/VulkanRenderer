@@ -47,4 +47,11 @@ namespace SUTK
 		}
 		RenderRect::update();
 	}
+
+	void RenderImage::setImage(UIDriver::ImageReference image) noexcept
+	{
+		getGeometry().fillImage(image);
+		// Recompile the geometry
+		RenderRect::setGeometryDirty(true);
+	}
 }

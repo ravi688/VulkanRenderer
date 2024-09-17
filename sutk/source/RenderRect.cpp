@@ -12,7 +12,8 @@ namespace SUTK
 																						m_isActiveDirty(false),
 																						m_isPosDirty(true),
 																						m_isSizeDirty(true),
-																						m_isColorDirty(true)
+																						m_isColorDirty(true),
+																						m_isGeometryDirty(false)
 	{
 
 	}
@@ -44,7 +45,7 @@ namespace SUTK
 			getGeometry().fillColor(getColor());
 
 		GfxDriverObjectHandleType handle = GFX_DRIVER_OBJECT_NULL_HANDLE;
-		if(m_isPosDirty || m_isSizeDirty || m_isColorDirty)
+		if(m_isPosDirty || m_isSizeDirty || m_isColorDirty || m_isGeometryDirty)
 		{
 			handle = getGfxDriverObjectHandle();
 			handle = getGeometry().compile(handle);
@@ -52,6 +53,7 @@ namespace SUTK
 			m_isPosDirty = false;
 			m_isSizeDirty = false;
 			m_isColorDirty = false;
+			m_isGeometryDirty = false;
 		}
 
 		if(m_isActiveDirty)

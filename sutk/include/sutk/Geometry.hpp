@@ -1,7 +1,7 @@
 #pragma once
 
 #include <sutk/defines.hpp>
-#include <sutk/UIDriver.hpp> // for SUTK::UIDriverObject
+#include <sutk/UIDriver.hpp> // for SUTK::UIDriverObject, and SUTK::UIDriver::ImageReference
 #include <sutk/SDF.hpp> // for SUTK::SDF
 
 #include <vector> 	// for std::vector
@@ -70,6 +70,11 @@ namespace SUTK
 			Color4 color;
 			bool isModified;
 		};
+		struct FillImageInfo
+		{
+			UIDriver::ImageReference image;
+			bool isModified;
+		};
 	private:
 		VertexPositionArrayInfo m_positionArrayInfo;
 		VertexTexCoordArrayInfo m_texcoordArrayInfo;
@@ -77,6 +82,7 @@ namespace SUTK
 		InstanceTransformArrayInfo m_transformArrayInfo;
 		std::optional<LineStrokeInfo> m_strokeInfo;
 		FillColorInfo m_fillColorInfo;
+		FillImageInfo m_fillImageInfo;
 		Topology m_topology;
 		bool m_isArray;
 		SDF* m_sdf;
@@ -110,6 +116,7 @@ namespace SUTK
 			return lineStroke({ width, color }, isDynamic);
 		}
 		Geometry& fillColor(Color4 color) noexcept;
+		Geometry& fillImage(UIDriver::ImageReference image) noexcept;
 
 		Geometry& setArray(bool isArray) noexcept { m_isArray = true; return *this; }
 		bool isArray() const noexcept { return m_isArray; }
@@ -132,6 +139,7 @@ namespace SUTK
 		const InstanceTransformArray& getInstanceTransformArray() const { return m_transformArrayInfo.array; }
 
 		Color4 getFillColor() const { return m_fillColorInfo.color; }
+		UIDriver::ImageReference getFillImage() const { return m_fillImageInfo.image; }
 
 		SDF& getSDF() { _com_assert(m_sdf != NULL); return *m_sdf; }
 		const SDF& getSDF() const { return const_cast<Geometry*>(this)->getSDF(); }
@@ -142,5 +150,6 @@ namespace SUTK
 		bool isInstanceTransformArrayModified() const noexcept { return m_transformArrayInfo.isModified; }
 		bool isLineStrokeModified() const noexcept { return m_strokeInfo.has_value() && m_strokeInfo->isModified; }
 		bool isFillColorModified() const noexcept { return m_fillColorInfo.isModified; }
+		bool isFillImageModified() const noexcept { return m_fillImageInfo.isModified; }
 	};
 }
