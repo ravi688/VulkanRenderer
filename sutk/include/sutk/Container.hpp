@@ -99,6 +99,7 @@ namespace SUTK
 
 		// rect getters
 		Rect2Df getRect() const { return m_rect; }
+		// Size of the rect remains invariant, while position of the rect is in the global coordinate space
 		Rect2Df getGlobalRect() const noexcept;
 		Vec2Df getPosition() const noexcept { return m_rect.getPosition(); }
 		Vec2Df getSize() const noexcept { return m_rect.getSize(); }
@@ -129,13 +130,28 @@ namespace SUTK
 
 		// converts global coordinates (in centimeters) to local coordinates (in centimeters) in its rect
 		Vec2Df getScreenCoordsToLocalCoords(Vec2Df screenCoords) const;
+		// overload for Rect2Df, does the exact same function (for the globalRect.pos) as the above function, however, it doesn't modify the globalRect.size
+		Rect2Df getScreenCoordsToLocalCoords(Rect2Df globalRect) const noexcept
+		{
+			Vec2Df pos = getScreenCoordsToLocalCoords(globalRect.getPosition());
+			return { pos, globalRect.getSize() };			
+		}
 		// converts local coordinates in its rect (in centimeters) to global coordinates (in centimeters)
 		Vec2Df getLocalCoordsToScreenCoords(Vec2Df localCoords) const;
-		// overload for Rect2Df, does the exact same function as the above function, however, it doesn't modify the localRect.size
+		// overload for Rect2Df, does the exact same function (for localRect.pos) as the above function, however, it doesn't modify the localRect.size
 		Rect2Df getLocalCoordsToScreenCoords(Rect2Df localRect) const
 		{ 
 			Vec2Df pos = getLocalCoordsToScreenCoords(localRect.getPosition());
 			return { pos, localRect.getSize() };
+		}
+		// Calculates rect of this container's rect relative to the passed container's rect, i.e. 'relativeTo' container
+		Rect2Df getRectRelative(Container* relativeTo) const noexcept
+		{
+			Rect2Df rect = getGlobalRect();
+			if(relativeTo != NULL)
+				return relativeTo->getScreenCoordsToLocalCoords(rect);
+			else
+				return rect;
 		}
 
 		// addition and removal of child containers
