@@ -13,6 +13,7 @@
 #include <sutk/tests/VBoxTest.hpp>
 #include <sutk/tests/HBoxTest.hpp>
 #include <sutk/tests/HPaneTest.hpp>
+#include <sutk/tests/RenderImageTest.hpp>
 
 namespace SUTK
 {
@@ -29,7 +30,8 @@ namespace SUTK
 		{ "BUTTON", [] () { return std::unique_ptr<ITest>(new ButtonTest()); }},
 		{ "VBOX", [] () { return std::unique_ptr<ITest>(new VBoxTest()); }},
 		{ "HBOX", [] () { return std::unique_ptr<ITest>(new HBoxTest()); }},
-		{ "HPANE", [] () { return std::unique_ptr<ITest>(new HPaneTest()); }}
+		{ "HPANE", [] () { return std::unique_ptr<ITest>(new HPaneTest()); }},
+		{ "RENDER_IMAGE", [] () { return std::unique_ptr<ITest>(new RenderImageTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)

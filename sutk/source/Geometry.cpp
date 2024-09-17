@@ -142,6 +142,12 @@ namespace SUTK
 		return *this;
 	}
 
+	Geometry& Geometry::vertexTexCoord(VertexTexCoord texcoord) noexcept
+	{
+		getVertexTexCoordArrayForWrite().push_back(texcoord);
+		return *this;
+	}
+
 	Geometry& Geometry::instanceTransformArray(u32 transformCount) noexcept
 	{
 		auto& array = m_transformArrayInfo.array;

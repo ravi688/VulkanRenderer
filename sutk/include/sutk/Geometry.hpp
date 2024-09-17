@@ -21,6 +21,13 @@ namespace SUTK
 			VertexPositionArray array;
 			bool isModified;
 		};
+		typedef Vec2D<f32> VertexTexCoord;
+		typedef std::vector<VertexTexCoord> VertexTexCoordArray;
+		struct VertexTexCoordArrayInfo
+		{
+			VertexTexCoordArray array;
+			bool isModified;
+		};
 		typedef u32 VertexIndex;
 		typedef std::vector<VertexIndex> VertexIndexArray;
 		struct VertexIndexArrayInfo
@@ -65,6 +72,7 @@ namespace SUTK
 		};
 	private:
 		VertexPositionArrayInfo m_positionArrayInfo;
+		VertexTexCoordArrayInfo m_texcoordArrayInfo;
 		VertexIndexArrayInfo m_indexArrayInfo;
 		InstanceTransformArrayInfo m_transformArrayInfo;
 		std::optional<LineStrokeInfo> m_strokeInfo;
@@ -91,6 +99,7 @@ namespace SUTK
 		Geometry& vertexPositionArray(u32 positionCount) noexcept;
 		Geometry& vertexPositionArray(const std::vector<VertexPosition>& positions) noexcept;
 		Geometry& vertexPosition(VertexPosition position) noexcept;
+		Geometry& vertexTexCoord(VertexTexCoord texcoord) noexcept;
 
 		Geometry& instanceTransformArray(u32 transformCount) noexcept;
 		Geometry& instanceTransform(InstanceTransform transform) noexcept;
@@ -115,6 +124,8 @@ namespace SUTK
 
 		VertexPositionArray& getVertexPositionArrayForWrite() { m_positionArrayInfo.isModified = true; return m_positionArrayInfo.array; }
 		const VertexPositionArray& getVertexPositionArray() const { return m_positionArrayInfo.array; }
+		VertexTexCoordArray& getVertexTexCoordArrayForWrite() { m_texcoordArrayInfo.isModified = true; return m_texcoordArrayInfo.array; }
+		const VertexTexCoordArray& getVertexTexCoordArray() const { return m_texcoordArrayInfo.array; }
 		VertexIndexArray& getVertexIndexArrayForWrite() { m_indexArrayInfo.isModified = true; return m_indexArrayInfo.array; }
 		const VertexIndexArray& getVertexIndexArray() const { return m_indexArrayInfo.array; }
 		InstanceTransformArray& getInstanceTransformArrayForWrite() { m_transformArrayInfo.isModified = true; return m_transformArrayInfo.array; }
@@ -127,6 +138,7 @@ namespace SUTK
 
 		bool isVertexIndexArrayModified() const noexcept { return m_indexArrayInfo.isModified; }
 		bool isVertexPositionArrayModified() const noexcept { return m_positionArrayInfo.isModified; }
+		bool isVertexTexCoordArrayModified() const noexcept { return m_texcoordArrayInfo.isModified; }
 		bool isInstanceTransformArrayModified() const noexcept { return m_transformArrayInfo.isModified; }
 		bool isLineStrokeModified() const noexcept { return m_strokeInfo.has_value() && m_strokeInfo->isModified; }
 		bool isFillColorModified() const noexcept { return m_fillColorInfo.isModified; }

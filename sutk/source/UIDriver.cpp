@@ -6,6 +6,7 @@
 #include <sutk/RenderRectOutline.hpp>
 #include <sutk/RenderRectFill.hpp>
 #include <sutk/RenderRectFillRound.hpp>
+#include <sutk/RenderImage.hpp>
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/DummyInputDriver.hpp> // for STUK::DummyInputDriver
 
@@ -119,6 +120,7 @@ namespace SUTK
 	template RenderRectOutline* UIDriver::createRenderRect<RenderRectOutline>(RenderableContainer* container);
 	template RenderRectFill* UIDriver::createRenderRect<RenderRectFill>(RenderableContainer* container);
 	template RenderRectFillRound* UIDriver::createRenderRect<RenderRectFillRound>(RenderableContainer* container);
+	template RenderImage* UIDriver::createRenderable<RenderImage>(RenderableContainer* parent);
 
 	template<>
 	Text* UIDriver::createRenderable<Text>(RenderableContainer* parent) { return createText(parent); }
@@ -131,4 +133,7 @@ namespace SUTK
 
 	template<>
 	RenderRectFillRound* UIDriver::createRenderable<RenderRectFillRound>(RenderableContainer* parent) { return createRenderRect<RenderRectFillRound>(parent); }
+
+	template<>
+	RenderImage* UIDriver::createRenderable<RenderImage>(RenderableContainer* parent) { return createRenderRect<RenderImage>(parent); }
 }
