@@ -28,13 +28,13 @@ namespace SUTK
 			delete m_anchorRect;
 	}
 
-	void Container::setParentChildRelation(Container* parent) noexcept
+	void Container::setParentChildRelation(Container* parent, std::size_t index) noexcept
 	{
 		// previous parent is non-null, then remove this container from the parent
 		if(m_parent != NULL)
 		{
 			// remove this container from the list of "childs" of the (old) parent container
-			bool result = com::erase_first_if(m_parent->m_containers.begin(), m_parent->m_containers.end(), [this](Container*& _container) { return _container == this; });
+			bool result = com::find_erase(m_parent->m_containers, this);
 			_assert(result == true);
 			_com_assert(m_anchorRect != NULL);
 			if(parent == NULL)
@@ -50,7 +50,13 @@ namespace SUTK
 		if(parent != NULL)
 		{
 			// add this container into the list of "childs" of the (new) parent container
-			parent->m_containers.push_back(this);
+			if(index == std::numeric_limits<std::size_t>::max())
+				parent->m_containers.push_back(this);
+			else
+			{
+				_com_assert(index <= parent->m_containers.size());
+				parent->m_containers.insert(std::next(parent->m_containers.begin(), index), this);
+			}
 			m_parent = parent;
 			if(m_anchorRect == NULL)
 				m_anchorRect = new AnchorRect(this, parent);
@@ -146,6 +152,22 @@ namespace SUTK
 			container->setPosition({ 0.0f, 0.0f });
 
 		container->setParentChildRelation(this);
+	}
+
+	void Container::addAt(Container* container, std::size_t index, bool isInvariantPos)
+	{
+		_assert(container != NULL);
+		if(isInvariantPos)
+		{
+			// recalculate this container's rect into the local space of new parent container
+			Vec2Df screenCoords = container->getLocalCoordsToScreenCoords({ 0u, 0u });
+			Vec2Df localCoords = getScreenCoordsToLocalCoords(screenCoords);
+			container->setPosition(localCoords);
+		}
+		else
+			container->setPosition({ 0.0f, 0.0f });
+
+		container->setParentChildRelation(this, index);
 	}
 
 	void Container::remove(Container* container)
