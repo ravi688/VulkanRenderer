@@ -5,19 +5,16 @@
 #include <sutk/ScrollContainer.hpp> // for SUTK::ScrollContainer
 #include <sutk/Renderable.hpp> // for SUTK::GfxDriverRenderable
 #include <sutk/ContainerUtility.hpp> // for SUTK::ContainerUtility::RenderablesVisit
-
-#include <concepts> // for std::is_derived_from and std::same_as concepts
+#include <sutk/Concepts.hpp> // for SUTK::ContainerT
 
 namespace SUTK
 {
-	template<typename T>
-	concept ContainerT = std::derived_from<T, SUTK::Container> || std::same_as<T, SUTK::Container>;
-
 	template<ContainerT ContainerType, typename... Args>
 	class MaskedScrollableContainer : public ContainerType, public Scrollable
 	{
 	protected:
 		MaskedScrollableContainer(UIDriver& driver, Container* parent, Args&&... args) noexcept;
+		void updateMaskFor(Container* container) const noexcept;
 		// Recursively finds all SUTK::GfxDriverRenderable objects
 		// and updates their clip rects with that of ScrollContainer's global Rect
 		void updateMask() noexcept;
@@ -32,15 +29,15 @@ namespace SUTK
 	{
 
 	}
-	
+
 	template<ContainerT ContainerType, typename... Args>
-	void MaskedScrollableContainer<ContainerType, Args...>::updateMask() noexcept
+	void MaskedScrollableContainer<ContainerType, Args...>::updateMaskFor(Container* container) const noexcept
 	{
-		ScrollContainer* scrollCont = getScrollContainer();
+		const ScrollContainer* scrollCont = getScrollContainer();
 		if(!scrollCont)
 			return;
 		Rect2Df rect = scrollCont->getGlobalRect();
-		ContainerUtility::RenderablesVisit(this, [rect](Renderable* renderable)
+		ContainerUtility::RenderablesVisit(container, [rect](Renderable* renderable)
 		{
 			GfxDriverRenderable* gfxRenderable = dynamic_cast<GfxDriverRenderable*>(renderable);
 			if(gfxRenderable != NULL)
@@ -48,6 +45,12 @@ namespace SUTK
 				gfxRenderable->setClipRectGlobalCoords(rect);
 			}
 		});
+	}
+	
+	template<ContainerT ContainerType, typename... Args>
+	void MaskedScrollableContainer<ContainerType, Args...>::updateMask() noexcept
+	{
+		updateMaskFor(this);
 	}
 
 	template<ContainerT ContainerType, typename... Args>

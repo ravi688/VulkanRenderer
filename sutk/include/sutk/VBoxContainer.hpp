@@ -15,11 +15,12 @@ namespace SUTK
 		virtual void onRemoveChild(Container* child) override;
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 
-		// Overrides of ILayoutController::recalculateLayout
-		virtual void recalculateLayout() override;
 	public:
 		VBoxContainer(UIDriver& driver, Container* parent = NULL) noexcept;
 		~VBoxContainer() noexcept = default;
+		
+		// Overrides of ILayoutController::recalculateLayout
+		virtual void recalculateLayout() override;
 
 		// resizes this container to tightly fit its child containers
 		// basically, it just removes any empty spaces
