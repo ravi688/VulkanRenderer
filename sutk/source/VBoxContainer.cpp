@@ -54,11 +54,11 @@ namespace SUTK
 		*/
 
 		// calculate aggregate minimum height and prefered height
-		std::vector<Container*> childs = getChilds();
+		std::vector<Container*>& childs = getChilds();
 		f32 minHeight = 0;
 		f32 prefHeight = 0;
 		u32 expandCount = 0;
-		for(Container* &child : childs)
+		for(Container* child : childs)
 		{
 			// if this child doesn't care about Layout rules, then skip it.
 			if(child->isLayoutIgnore())
@@ -94,7 +94,7 @@ namespace SUTK
 		f32 factor = (reqDiff == 0.0f) ? 1.0f : (diff / reqDiff);
 
 		f32 totalHeight = 0;
-		for(Container* &child : childs)
+		for(Container* child : childs)
 		{
 			if(child->isLayoutIgnore())
 				continue;
@@ -110,7 +110,7 @@ namespace SUTK
 
 		// now layout the child containers
 		f32 xpos = 0;
-		for(Container* &child : childs)
+		for(Container* child : childs)
 		{
 			if(child->isLayoutIgnore())
 				continue;
@@ -137,7 +137,7 @@ namespace SUTK
 	{
 		const std::vector<Container*>& childs = getChilds();
 		f32 yPos = 0;
-		for(const Container* const& child : childs)
+		for(Container* const& child : childs)
 		{
 			if(child->isLayoutIgnore())
 				continue;
