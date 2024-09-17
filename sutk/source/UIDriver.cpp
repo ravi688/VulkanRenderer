@@ -66,6 +66,21 @@ namespace SUTK
 		m_gfxDriver.render(*this);
 	}
 
+	UIDriver::ImageData::IDType UIDriver::lazyImageLoad(std::string_view str) noexcept
+	{
+		return m_imageData.add(std::make_pair(std::string { str }, GFX_DRIVER_OBJECT_NULL_HANDLE));
+	}
+
+	void UIDriver::lazyImageUnload(ImageData::IDType id) noexcept
+	{
+		m_imageData.remove(id);
+	}
+
+	std::string_view UIDriver::getImagePath(ImageData::IDType id) noexcept
+	{
+		return { m_imageData.get(id).first };
+	}
+
 	GfxDriverObjectHandleType UIDriver::getGlobalTextGroup() noexcept
 	{
 		if(m_globalTextGroup == GFX_DRIVER_OBJECT_NULL_HANDLE)

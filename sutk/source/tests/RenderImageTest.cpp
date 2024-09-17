@@ -19,6 +19,7 @@ namespace SUTK
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
+		UIDriver::ImageReference image = m_uiDriver->lazyImageLoad("../textures/Smile.bmp");
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
 		Container* emptyContainer = m_uiDriver->createContainer<Container>(rootContainer);
 		emptyContainer->setRect({ 1.0f, 1.0f, 7.0f, 7.0f });
@@ -34,6 +35,7 @@ namespace SUTK
 		emptyContainer->setRect({ 1.0f, 1.0f, 11.0f, 7.0f });
 		m_renderRect = m_uiDriver->createRenderRect<RenderImage>(m_renderRectContainer);
 		m_renderRect->setColor(Color4::green());
+		m_renderRect->setImage(image);
 
 		RenderableContainer* renderRectContainer2 = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
 		RenderRectFill* renderRect2 = m_uiDriver->createRenderRect<RenderRectFill>(renderRectContainer2);

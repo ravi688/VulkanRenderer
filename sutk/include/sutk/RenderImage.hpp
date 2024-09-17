@@ -12,5 +12,7 @@ namespace SUTK
 
 		// Override of RenderRect::update()
 		virtual void update() noexcept override;
+
+		void setImage(UIDriver::ImageReference image) noexcept;
 	};
 }

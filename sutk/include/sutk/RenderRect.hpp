@@ -15,6 +15,7 @@ namespace SUTK
 		bool m_isPosDirty;
 		bool m_isSizeDirty;
 		bool m_isColorDirty;
+		bool m_isGeometryDirty;
 
 	protected:
 		void setRect(const Rect2Df& rect) noexcept { m_rect = rect; }
@@ -23,6 +24,8 @@ namespace SUTK
 		bool isPosDirty() const noexcept { return m_isPosDirty; }
 		bool isSizeDirty() const noexcept { return m_isSizeDirty; }
 		bool isRectDirty() const noexcept { return isPosDirty() || isSizeDirty(); }
+
+		void setGeometryDirty(bool isDirty) noexcept { m_isGeometryDirty = isDirty; }
 
 		// Overrides of Renderable::onGlobalCoordDirty, Renderable::onContainerResize
 		virtual void onGlobalCoordDirty() noexcept override;

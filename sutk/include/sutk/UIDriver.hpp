@@ -2,6 +2,7 @@
 
 #include <sutk/defines.hpp>
 #include <sutk/IGfxDriver.hpp> // for SUTK::IGfxDriver::getSizeInCentimeters()
+#include <common/IDMap.hpp> // for com::IDMap
 
 #include <vector> // for std::vector
 #include <utility> // for std::forward
@@ -27,6 +28,9 @@ namespace SUTK
 
 	class UIDriver
 	{
+	public:
+		typedef com::IDMap<std::pair<std::string, GfxDriverObjectHandleType>> ImageData;
+		typedef ImageData::IDType ImageReference;
 	private:
 		IGfxDriver& m_gfxDriver;
 		IInputDriver* m_inputDriver;
@@ -35,6 +39,7 @@ namespace SUTK
 		GfxDriverObjectHandleType m_globalTextGroup;
 		// Container for accomodating debug rectangles etc.
 		Container* m_debugRootContainer;
+		ImageData m_imageData;
 
 		friend class Renderable;
 	public:
@@ -43,6 +48,11 @@ namespace SUTK
 		~UIDriver();
 
 		void render();
+
+		ImageData::IDType lazyImageLoad(std::string_view path) noexcept;
+		void lazyImageUnload(ImageData::IDType id) noexcept;
+
+		std::string_view getImagePath(ImageData::IDType id) noexcept;
 
 		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }
 
