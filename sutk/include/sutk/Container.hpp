@@ -73,7 +73,7 @@ namespace SUTK
 
 		void recalculateLayoutParent() noexcept;
 
-		void setParentChildRelation(Container* parent) noexcept;
+		void setParentChildRelation(Container* parent, std::size_t index = std::numeric_limits<std::size_t>::max()) noexcept;
 
 	public:
 
@@ -158,6 +158,7 @@ namespace SUTK
 
 		// adds a new container as a child to this container
 		virtual void add(Container* container, bool isInvariantPos = true);
+		virtual void addAt(Container* container, std::size_t index, bool isInvariantPos = true);
 		// removes an existing container from this container
 		virtual void remove(Container* container);
 
