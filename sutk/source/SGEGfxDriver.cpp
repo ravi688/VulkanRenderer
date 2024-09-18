@@ -807,6 +807,8 @@ namespace SUTK
 		{
 			_assert(vertexBuffer.getTraits()->elementSize == createInfo.stride);
 			// if the existing vertex buffer's capacity is not equal to that of new number of posijtions
+			// TODO: create a resizable vulkan buffer because it is inefficient to destroy and recreate upon each size change
+			// 	We should only recreate the buffer when the capacity is no longer able to hold that much elements
 			if(vertexBuffer.getTraits()->elementCount != createInfo.count)
 			{
 				// then destroy the vertex buffer at binding = 0
@@ -929,29 +931,34 @@ namespace SUTK
 			createInfo.data = (transformArray.size() == 0) ? NULL : data;
 			createInfo.stride = sizeof(vec4_t);
 			// SGE requires non-zero count to actually allocate non-zero device memory for VkBuffer
-			createInfo.count = std::max(static_cast<std::size_t>(1), transformArray.size());
+			createInfo.count = transformArray.size();
 			createInfo.binding = 5;
 
-			// createOrUpdateVertexBuffer(mesh, createInfo);
-
-			// if there is no vertex buffer then create one with binding equal to 5
 			SGE::Buffer vertexBuffer = mesh.getVertexBuffer(5);
-			if(static_cast<void*>(vertexBuffer) == NULL)
-				mesh.createAndAddVertexBuffer(createInfo);
-			else
+			// If the size of the buffer is going to be zero and there is no previous buffer created then it is better
+			// to skip this a altogether.
+			// NOTE: If we were to still proceed then we would get assertion failure in SGE, as there is no point of allocating
+			// a Vulkan Buffer of size zero.
+			if(vertexBuffer || createInfo.count)
 			{
-				_assert(vertexBuffer.getTraits()->elementSize == createInfo.stride);
-				// if the existing vertex buffer's capacity is less than that of new number of instance transforms
-				if(vertexBuffer.getTraits()->elementCount < transformArray.size())
-				{
-					// then destroy the vertex buffer at binding = 0
-					mesh.destroyVertexBuffer(5);
-					// and create a new vertex buffer for the binding = 0
+				// if there is no vertex buffer then create one with binding equal to 5
+				if(static_cast<void*>(vertexBuffer) == NULL)
 					mesh.createAndAddVertexBuffer(createInfo);
-				}
-				// otherwise, just copy the new data
 				else
-					vertexBuffer.copyData(0, reinterpret_cast<void*>(data), sizeof(vec4_t) * transformArray.size());
+				{
+					_assert(vertexBuffer.getTraits()->elementSize == createInfo.stride);
+					// if the existing vertex buffer's capacity is less than that of new number of instance transforms
+					if(vertexBuffer.getTraits()->elementCount < transformArray.size())
+					{
+						// then destroy the vertex buffer at binding = 0
+						mesh.destroyVertexBuffer(5);
+						// and create a new vertex buffer for the binding = 0
+						mesh.createAndAddVertexBuffer(createInfo);
+					}
+					// otherwise, just copy the new data
+					else
+						vertexBuffer.copyData(0, reinterpret_cast<void*>(data), sizeof(vec4_t) * transformArray.size());
+				}
 			}
 		}
 
