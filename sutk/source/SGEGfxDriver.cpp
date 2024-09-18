@@ -797,6 +797,29 @@ namespace SUTK
 		return { { mesh, shader }, static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(meshID, renderObjectID)) };
 	}
 
+	void SGEGfxDriver::createOrUpdateVertexBuffer(SGE::Mesh mesh, const SGE::Mesh::VertexBufferCreateInfo& createInfo) noexcept
+	{
+		// if there is no vertex buffer then create one with binding equal to zero
+		SGE::Buffer vertexBuffer = mesh.getVertexBuffer(createInfo.binding);
+		if(static_cast<void*>(vertexBuffer) == NULL)
+			mesh.createAndAddVertexBuffer(com::cast_away_const(createInfo));
+		else
+		{
+			_assert(vertexBuffer.getTraits()->elementSize == createInfo.stride);
+			// if the existing vertex buffer's capacity is not equal to that of new number of posijtions
+			if(vertexBuffer.getTraits()->elementCount != createInfo.count)
+			{
+				// then destroy the vertex buffer at binding = 0
+				mesh.destroyVertexBuffer(createInfo.binding);
+				// and create a new vertex buffer for the binding = 0
+				mesh.createAndAddVertexBuffer(com::cast_away_const(createInfo));
+			}
+			// otherwise, just copy the new data
+			else
+				vertexBuffer.copyData(0, reinterpret_cast<void*>(createInfo.data), createInfo.stride * createInfo.count);
+		}
+	}
+
 	GfxDriverObjectHandleType SGEGfxDriver::compileGeometry(const Geometry& geometry, GfxDriverObjectHandleType previous)
 	{
 		SGE::Mesh mesh;
@@ -883,25 +906,7 @@ namespace SUTK
 			createInfo.count = positionArray.size(),
 			createInfo.binding = 0;
 
-			// if there is no vertex buffer then create one with binding equal to zero
-			SGE::Buffer vertexBuffer = mesh.getVertexBuffer(0);
-			if(static_cast<void*>(vertexBuffer) == NULL)
-				mesh.createAndAddVertexBuffer(createInfo);
-			else
-			{
-				_assert(vertexBuffer.getTraits()->elementSize == createInfo.stride);
-				// if the existing vertex buffer's capacity is not equal to that of new number of posijtions
-				if(vertexBuffer.getTraits()->elementCount != positionArray.size())
-				{
-					// then destroy the vertex buffer at binding = 0
-					mesh.destroyVertexBuffer(0);
-					// and create a new vertex buffer for the binding = 0
-					mesh.createAndAddVertexBuffer(createInfo);
-				}
-				// otherwise, just copy the new data
-				else
-					vertexBuffer.copyData(0, reinterpret_cast<void*>(data), sizeof(vec4_t) * positionArray.size());
-			}
+			createOrUpdateVertexBuffer(mesh, createInfo);
 		}
 
 		if(geometry.isInstanceTransformArrayModified())
@@ -926,6 +931,8 @@ namespace SUTK
 			// SGE requires non-zero count to actually allocate non-zero device memory for VkBuffer
 			createInfo.count = std::max(static_cast<std::size_t>(1), transformArray.size());
 			createInfo.binding = 5;
+
+			// createOrUpdateVertexBuffer(mesh, createInfo);
 
 			// if there is no vertex buffer then create one with binding equal to 5
 			SGE::Buffer vertexBuffer = mesh.getVertexBuffer(5);

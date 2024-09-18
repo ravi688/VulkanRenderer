@@ -92,6 +92,7 @@ namespace SUTK
 		std::unordered_map<id_generator_id_type_t, SGEMeshData>::iterator
 		getMeshIterator(GfxDriverObjectHandleType handle);
 		std::pair<SGEMeshData, GfxDriverObjectHandleType> createMesh(const Geometry& geometry);
+		void createOrUpdateVertexBuffer(SGE::Mesh mesh, const SGE::Mesh::VertexBufferCreateInfo& createInfo) noexcept;
 		SGE::Shader compileShader(const Geometry& geometry);
 		// Transforms SUTK coordinates (origin at top-left, and y downwards) to SGE coordinates (origin at center, and y upwards)
 		vec3_t SUTKToSGECoordTransform(const Vec2Df position);
