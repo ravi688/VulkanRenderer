@@ -106,8 +106,9 @@ SGE_API void vulkan_buffer_release_resources(vulkan_buffer_t* buffer)
 
 SGE_API void vulkan_buffer_copy_data(vulkan_buffer_t* buffer, u32 buffer_offset, void* data, u32 data_size)
 {
-	_debug_assert__(data != NULL);
-	_debug_assert_wrn__(data_size != 0);
+	_debug_assert__((data != NULL) || (data_size == 0));
+	if(data_size == 0)
+		return;
 	_debug_assert__((buffer_offset + data_size) <= buffer->size);
 
 	void* ptr;
