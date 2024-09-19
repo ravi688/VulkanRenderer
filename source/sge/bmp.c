@@ -55,7 +55,15 @@ SGE_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, const
 {
 	CALLTRACE_BEGIN();
 	BUFFER* file_data = load_binary_from_file(file_path);
-	binary_parser_t parser = binary_parser_new(file_data->bytes, file_data->element_count); binary_parser_bind(&parser);
+	bmp_t result = bmp_load_mem(allocator, (com_immutable_data_t) { file_data->bytes, file_data->element_count });
+	buf_free(file_data);
+	CALLTRACE_RETURN(result);
+}
+
+SGE_API function_signature(bmp_t, bmp_load_mem, memory_allocator_t* allocator, com_immutable_data_t imm_data)
+{
+	CALLTRACE_BEGIN();
+	binary_parser_t parser = binary_parser_new(CAST_TO(const char*, imm_data.bytes), imm_data.size); binary_parser_bind(&parser);
 
 	/* Header */
 	PARSE_ASSERT(binary_parser_cmp_bytes(BMP_WINDOWS_HEADER_2BYTES, 2), BMP_PARSE_ERROR_WINDOWS_HEADER_INVALID);
@@ -107,7 +115,6 @@ SGE_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, const
 		--pixel_count;
 	}
 	assert((void*)dst <= ((void*)data + 4 * width * height));
-	buf_free(file_data);
 	CALLTRACE_RETURN((bmp_t) { .allocator = allocator, .data = data, .channel_count = 4, .width = width, .height = height });
 }
 
