@@ -3,10 +3,126 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 19h:0m:30s, 23/8/2024
+ * Time & Date (yy/mm/yyy) of Generation: 3h:50m:58s, 19/9/2024
  */
 
 #pragma once
+static const char* _________SHADERS_PRESETS_IMAGE_RECT_V3DSHADER = 
+"#sl version 2023\n"
+"#sb version 2023\n"
+"\n"
+"[Name(\"Image\")]\n"
+"Shader\n"
+"{\n"
+"	Properties\n"
+"	{\n"
+"		[Stage(fragment, vertex)]\n"
+"		[Set(material_set, material_properties)]\n"
+"		uniform Parameters\n"
+"		{\n"
+"			vec4 color;\n"
+"		} parameters;\n"
+"\n"
+"		[Stage(fragment)]\n"
+"		[Set(material_set, texture0)]\n"
+"		uniform sampler2D albedo;\n"
+"	}\n"
+"\n"
+"	Layout\n"
+"	{\n"
+"		[Rate(per_vertex)]\n"
+"		[MeshLayout(sge_optimal)]\n"
+"		[Attribute(position)]\n"
+"		vec3 position;\n"
+"\n"
+"		[Rate(per_vertex)]\n"
+"		[MeshLayout(sge_optimal)]\n"
+"		[Attribute(texcoord)]\n"
+"		vec2 texcoord;\n"
+"	}\n"
+"\n"
+"	RenderPass\n"
+"	{\n"
+"		SubPass\n"
+"		{\n"
+"			[NoParse]\n"
+"			GraphicsPipeline\n"
+"			{\n"
+"				rasterization\n"
+"				{\n"
+"					// in SUTK (geometry compilation) we need this to be counterclockwise\n"
+"					frontface = counterclockwise\n"
+"				}\n"
+"				colorBlend\n"
+"				{\n"
+"					attachment\n"
+"					{\n"
+"						blendenable = true\n"
+"					}\n"
+"				}\n"
+"				depthStencil\n"
+"				{\n"
+"					depthWriteEnable = true,\n"
+"					depthTestEnable = true\n"
+"				}\n"
+"			}\n"
+"\n"
+"			[NoParse]\n"
+"			GLSL\n"
+"			{\n"
+"				#stage vertex\n"
+"\n"
+"				#version 450\n"
+"				\n"
+"				#include <v3d.h>\n"
+"				\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;\n"
+"				\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform ScreenInfo\n"
+"				{\n"
+"					uvec2 resolution;\n"
+"					uvec2 dpi;\n"
+"					uvec2 size;\n"
+"					mat4 matrix;\n"
+"				} screenInfo;\n"
+"\n"
+"				layout(location = POSITION_LOCATION) in vec3 position;\n"
+"				layout(location = TEXCOORD_LOCATION) in vec2 texcoord;\n"
+"\n"
+"				layout(location = 0) out vec2 _texcoord;\n"
+"				\n"
+"				void main()\n"
+"				{\n"
+"					vec4 clipPos = screenInfo.matrix * objectInfo.transform * vec4(position, 1);\n"
+"					clipPos.y = -clipPos.y;\n"
+"					gl_Position = clipPos;\n"
+"					_texcoord = texcoord;\n"
+"				}\n"
+"\n"
+"				#stage fragment\n"
+"\n"
+"				#version 450\n"
+"				\n"
+"				#include <v3d.h>\n"
+"				\n"
+"				layout(set = MATERIAL_SET, binding = TEXTURE_BINDING0) uniform sampler2D albedo;\n"
+"				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters\n"
+"				{\n"
+"					vec4 color;\n"
+"				} parameters;\n"
+"				\n"
+"				layout(location = 0) in vec2 _texcoord;\n"
+"				layout(location = 0) out vec4 color;\n"
+"				\n"
+"				void main()\n"
+"				{\n"
+"					color = texture(albedo, _texcoord).rgba * parameters.color;\n"
+"				}\n"
+"			}\n"
+"		}\n"
+"	}\n"
+"}";
 static const char* _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER = 
 "#sl version 2023\n"
 "#sb version 2023\n"
@@ -26658,6 +26774,8 @@ static const char* _________SHADERS_INCLUDE_V3D_H =
 "\n"
 "struct PointLightType\n"
 "{\n"
+"	mat4 proj;\n"
+"	mat4 view;\n"
 "	vec3 color;\n"
 "	float intensity;\n"
 "	vec3 position;\n"
@@ -26724,6 +26842,18 @@ static const char* _________SHADERS_INCLUDE_V3D_H =
 "	FarLightType lights[SGE_MAX_FAR_LIGHTS];\n"
 "} farLights;\n"
 "layout(set = SCENE_SET, binding = FAR_LIGHT_SHADOWMAP_BINDING) uniform sampler2D farLightShadowMaps[SGE_MAX_FAR_LIGHTS];\n"
+"\n"
+"vec4 getFarLightIrradiance(vec3 normal)\n"
+"{\n"
+"	vec4 irradiance = vec4(0.0, 0.0, 0.0, 1.0);\n"
+"	for(uint i = 0; i < farLights.count; i++)\n"
+"	{\n"
+"		FarLightType light = farLights.lights[i];\n"
+"		float dp = 0.5 * dot(-normal, light.direction) + 0.5;\n"
+"		irradiance += dp * vec4(light.color, 1);\n"
+"	}\n"
+"	return vec4(irradiance.xyz, 1.0);\n"
+"}\n"
 "#endif\n"
 "";
 static const char* _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER = 
@@ -26970,7 +27100,7 @@ typedef struct shader_file_path_and_data_mapping_t
 	long long data_size;
 } shader_file_path_and_data_mapping_t;
 
-#define G_SHADER_MAPPING_COUNT 7
+#define G_SHADER_MAPPING_COUNT 8
 
 static shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT];
 static bool g_is_shader_mappings_populated = false;
@@ -26979,13 +27109,14 @@ static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_
 {
 	if(!g_is_shader_mappings_populated)
 	{
-		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER, 1816 };
-		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color_rect_array.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_RECT_ARRAY_V3DSHADER, 4056 };
-		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/no_standalone_use/sdf_template.template", _________SHADERS_PRESETS_NO_STANDALONE_USE_SDF_TEMPLATE_TEMPLATE, 3422 };
-		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
-		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Roboto-Bold.ttf", _________SUTK_FONTS_ROBOTO_BOLD_TTF, 167336 };
-		g_shader_mappings[5] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 11952 };
-		g_shader_mappings[6] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 8209 };
+		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/image_rect.v3dshader", _________SHADERS_PRESETS_IMAGE_RECT_V3DSHADER, 2278 };
+		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER, 1816 };
+		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color_rect_array.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_RECT_ARRAY_V3DSHADER, 4056 };
+		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/no_standalone_use/sdf_template.template", _________SHADERS_PRESETS_NO_STANDALONE_USE_SDF_TEMPLATE_TEMPLATE, 3422 };
+		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
+		g_shader_mappings[5] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Roboto-Bold.ttf", _________SUTK_FONTS_ROBOTO_BOLD_TTF, 167336 };
+		g_shader_mappings[6] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 12293 };
+		g_shader_mappings[7] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 8209 };
 
 		g_is_shader_mappings_populated = true;
 	}
