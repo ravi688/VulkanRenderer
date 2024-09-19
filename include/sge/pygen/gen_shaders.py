@@ -15,7 +15,7 @@ c_header_file_path='./shaders.h'
 # if a folder is specified, then which text files to consider for embedding?
 text_file_extensions = [ '.v3dshader', '.template', '.txt', '.hpp', '.cpp', '.h', '.c' ]
 # if a folder is specified, then which binary files to consider for embedding?
-binary_file_extensions = [ '.ttf' ]
+binary_file_extensions = [ '.ttf', '.bmp' ]
 bytes_per_row = 20
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
