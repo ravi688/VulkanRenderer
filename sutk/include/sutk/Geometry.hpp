@@ -85,6 +85,7 @@ namespace SUTK
 		FillImageInfo m_fillImageInfo;
 		Topology m_topology;
 		bool m_isArray;
+		bool m_isFillImage;
 		SDF* m_sdf;
 
 		void resetModificationFlags() noexcept;
@@ -116,7 +117,9 @@ namespace SUTK
 			return lineStroke({ width, color }, isDynamic);
 		}
 		Geometry& fillColor(Color4 color) noexcept;
-		Geometry& fillImage(UIDriver::ImageReference image) noexcept;
+		Geometry& fillImage(UIDriver::ImageReference image = UIDriver::InvalidImage) noexcept;
+
+		bool isFillImage() const noexcept { return m_isFillImage; }
 
 		Geometry& setArray(bool isArray) noexcept { m_isArray = true; return *this; }
 		bool isArray() const noexcept { return m_isArray; }

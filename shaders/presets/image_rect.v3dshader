@@ -87,7 +87,8 @@ Shader
 					vec4 clipPos = screenInfo.matrix * objectInfo.transform * vec4(position, 1);
 					clipPos.y = -clipPos.y;
 					gl_Position = clipPos;
-					_texcoord = texcoord;
+					float tc_y = 1 - texcoord.y;
+					_texcoord = vec2(texcoord.x, tc_y);
 				}
 
 				#stage fragment
