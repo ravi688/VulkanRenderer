@@ -4,6 +4,7 @@
 #include <common/PtrReference.hpp> // for com::PtrReference
 
 #include <string> // for std::string
+#include <span> // for std::span
 
 namespace SGE
 {
@@ -15,6 +16,7 @@ namespace SGE
 		friend class BitmapGlyphAtlasTexture;
 	public:
 		Texture(Driver& driver, texture_type_t type, const std::string& str) noexcept;
+		Texture(Driver& driver, texture_type_t type, const std::span<const u8> data) noexcept;
 		void destroy() noexcept
 		{
 			texture_destroy(m_handle);

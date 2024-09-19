@@ -128,6 +128,18 @@ SGE_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...);
 
 /*
 	description:
+		creates a texture of a type 'type' from in-memory buffer(s) (com_immutable_data_t objects)
+	params:
+		renderer: pointer to the renderer object
+		type: type of the texture, must be a valid texture_type_t
+		variable arguements: com_immutable_data_t objects
+	returns:
+		pointer to the newly created texture object
+ */
+SGE_API texture_t* texture_load_mem(renderer_t* renderer, texture_type_t type, ...);
+
+/*
+	description:
 		creates a texture of a type 'type'
 	params:
 		renderer: pointer to the renderer object
@@ -137,6 +149,18 @@ SGE_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...);
 		pointer to the newly created texture object
  */
 SGE_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths);
+
+/*
+	description:
+		creates a texture of a type 'type' from a list of in-memory buffers
+	params:
+		renderer: pointer to the renderer object
+		type: type of the texture, must be a valid texture_type_t
+		mem_datas: com_immutable_data_t objects
+	returns:
+		pointer to the newly created texture object
+ */
+SGE_API texture_t* texture_load_memv(renderer_t* renderer, texture_type_t type, va_list mem_datas);
 
 /*
 	description:
