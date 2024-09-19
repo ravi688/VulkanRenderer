@@ -2,6 +2,7 @@
 
 #include <common/PtrReference.hpp> // for com::PtrReference<>
 #include <sge/material.h> /* for material_t* */
+#include <sge-cpp/Texture.hpp> // for SGE::Texture reference type
 
 #include <string> /* for std::string */
 
@@ -33,4 +34,7 @@ namespace SGE
 
 	template<>
 	void Material::set<s32>(const std::string& name, s32 value);
+
+	template<>
+	void Material::set<Texture>(const std::string& name, Texture texture);
 }
