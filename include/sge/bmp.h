@@ -44,10 +44,12 @@ extern "C"
 #endif // __cplusplus
 
 #define bmp_load(...) define_alias_function_macro(bmp_load, __VA_ARGS__)
+#define bmp_load_mem(...) define_alias_function_macro(bmp_load_mem, __VA_ARGS__)
 #define bmp_destroy(...) define_alias_function_macro(bmp_destroy, __VA_ARGS__)
 #define bmp_write(...) define_alias_function_macro(bmp_write, __VA_ARGS__)
 
 SGE_API function_signature(bmp_t, bmp_load, memory_allocator_t* allocator, const char* file_path);
+SGE_API function_signature(bmp_t, bmp_load_mem, memory_allocator_t* allocator, com_immutable_data_t data);
 SGE_API function_signature(void, bmp_destroy, bmp_t bmp);
 SGE_API function_signature(void, bmp_write, void* data, u32 width, u32 height, u8 channel_count, const char* file_path);
 
