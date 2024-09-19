@@ -11,6 +11,7 @@
 #include <sge-cpp/Font.hpp> /* for SGE::Font */
 #include <sge-cpp/RenderWindow.hpp> /* for SGE::RenderWindow */
 #include <sge-cpp/Mesh.hpp> // for SGE::Mesh
+#include <sge-cpp/Texture.hpp> // for SGE::Texture
 #include <common/PtrReference.hpp> // for com::PtrReference
 
 #include <string> /* for std::string */
@@ -78,6 +79,7 @@ namespace SGE
 		BitmapGlyphAtlasTexture createBitmapGlyphAtlasTexture(const BitmapGlyphAtlasTexture::CreateInfo& createInfo) noexcept { return BitmapGlyphAtlasTexture(*this, createInfo); }
 		BitmapText createBitmapText(BitmapGlyphAtlasTexture texture) noexcept { return BitmapText(*this, texture); }
 		Mesh createMesh() noexcept { return Mesh(*this); }
+		Texture loadTexture(texture_type_t type, const std::string& str) noexcept { return Texture(*this, type, str); }
 
 		RenderWindow getRenderWindow() const noexcept { return RenderWindow(renderer_get_window(m_handle)); }
 	};
