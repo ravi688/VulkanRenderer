@@ -9,5 +9,6 @@ python $(pwd)/$(dirname "$0")/gen_shaders.py \
 		../../../shaders/presets/no_standalone_use/sdf_template.template \
 		../../../sutk/fonts/Calibri\ Regular.ttf \
 		../../../sutk/fonts/Roboto-Bold.ttf \
+		../../../textures/white_image.bmp \
 		../../../shaders/include/v3d.h \
 		../../../shaders/builtins/bitmap_text_shader.v3dshader

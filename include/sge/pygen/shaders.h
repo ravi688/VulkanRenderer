@@ -3,7 +3,7 @@
 /***This is computer generated file - Do not modify it***/
 
 /* This is auto generated header file (by pygen/gen_shaders.py python script). Do not modify it directly.
- * Time & Date (yy/mm/yyy) of Generation: 3h:50m:58s, 19/9/2024
+ * Time & Date (yy/mm/yyy) of Generation: 1h:48m:8s, 20/9/2024
  */
 
 #pragma once
@@ -97,7 +97,8 @@ static const char* _________SHADERS_PRESETS_IMAGE_RECT_V3DSHADER =
 "					vec4 clipPos = screenInfo.matrix * objectInfo.transform * vec4(position, 1);\n"
 "					clipPos.y = -clipPos.y;\n"
 "					gl_Position = clipPos;\n"
-"					_texcoord = texcoord;\n"
+"					float tc_y = 1 - texcoord.y;\n"
+"					_texcoord = vec2(texcoord.x, tc_y);\n"
 "				}\n"
 "\n"
 "				#stage fragment\n"
@@ -26524,6 +26525,16 @@ static const char _________SUTK_FONTS_ROBOTO_BOLD_TTF[] =
 0x0, 0x2, 0x0, 0x1a, 0x0, 0xa, 0x2, 0x3e, 0x0, 0x7a, 0x0, 0x73, 0x0, 0x74, 0x2, 0x3f, 0x2, 0x40, 0x2, 0x41, 
 0x2, 0x42, 0x2, 0x43, 0x2, 0x44, 0x0, 0x2, 0x0, 0x1, 0x0, 0x14, 0x0, 0x1d, 0x0, 0x0
 };
+static const char _________TEXTURES_WHITE_IMAGE_BMP[] = 
+{0x42, 0x4d, 0x8e, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x8a, 0x0, 0x0, 0x0, 0x7c, 0x0, 0x0, 0x0, 0x1, 0x0, 
+0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x18, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 
+0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0x0, 0x0, 0xff, 
+0x0, 0x0, 0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0x42, 0x47, 0x52, 0x73, 0x8f, 0xc2, 0xf5, 0x28, 0x51, 0xb8, 
+0x1e, 0x15, 0x1e, 0x85, 0xeb, 0x1, 0x33, 0x33, 0x33, 0x13, 0x66, 0x66, 0x66, 0x26, 0x66, 0x66, 0x66, 0x6, 0x99, 0x99, 
+0x99, 0x9, 0x3d, 0xa, 0xd7, 0x3, 0x28, 0x5c, 0x8f, 0x32, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 
+0x0, 0x0, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 
+0xff, 0x0
+};
 static const char* _________SHADERS_INCLUDE_V3D_H = 
 "/*\n"
 "	***This is computer generated notice - Do not modify it***\n"
@@ -27100,7 +27111,7 @@ typedef struct shader_file_path_and_data_mapping_t
 	long long data_size;
 } shader_file_path_and_data_mapping_t;
 
-#define G_SHADER_MAPPING_COUNT 8
+#define G_SHADER_MAPPING_COUNT 9
 
 static shader_file_path_and_data_mapping_t g_shader_mappings[G_SHADER_MAPPING_COUNT];
 static bool g_is_shader_mappings_populated = false;
@@ -27109,14 +27120,15 @@ static __attribute__((unused)) const shader_file_path_and_data_mapping_t* g_get_
 {
 	if(!g_is_shader_mappings_populated)
 	{
-		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/image_rect.v3dshader", _________SHADERS_PRESETS_IMAGE_RECT_V3DSHADER, 2278 };
+		g_shader_mappings[0] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/image_rect.v3dshader", _________SHADERS_PRESETS_IMAGE_RECT_V3DSHADER, 2326 };
 		g_shader_mappings[1] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_V3DSHADER, 1816 };
 		g_shader_mappings[2] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/solid_color_rect_array.v3dshader", _________SHADERS_PRESETS_SOLID_COLOR_RECT_ARRAY_V3DSHADER, 4056 };
 		g_shader_mappings[3] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/presets/no_standalone_use/sdf_template.template", _________SHADERS_PRESETS_NO_STANDALONE_USE_SDF_TEMPLATE_TEMPLATE, 3422 };
 		g_shader_mappings[4] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Calibri Regular.ttf", _________SUTK_FONTS_CALIBRI_REGULAR_TTF, 352736 };
 		g_shader_mappings[5] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../sutk/fonts/Roboto-Bold.ttf", _________SUTK_FONTS_ROBOTO_BOLD_TTF, 167336 };
-		g_shader_mappings[6] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 12293 };
-		g_shader_mappings[7] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 8209 };
+		g_shader_mappings[6] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../textures/white_image.bmp", _________TEXTURES_WHITE_IMAGE_BMP, 142 };
+		g_shader_mappings[7] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/include/v3d.h", _________SHADERS_INCLUDE_V3D_H, 12293 };
+		g_shader_mappings[8] = (shader_file_path_and_data_mapping_t) { "D:/4-Projects/indent/dependencies/VulkanRenderer/include/sge/pygen/../../../shaders/builtins/bitmap_text_shader.v3dshader", _________SHADERS_BUILTINS_BITMAP_TEXT_SHADER_V3DSHADER, 8209 };
 
 		g_is_shader_mappings_populated = true;
 	}
