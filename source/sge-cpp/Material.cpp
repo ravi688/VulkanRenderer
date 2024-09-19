@@ -25,4 +25,10 @@ namespace SGE
 	{
 		material_set_int(m_handle, name.c_str(), value);
 	}
+
+	template<>
+	void Material::set<Texture>(const std::string& name, Texture texture)
+	{
+		material_set_texture(m_handle, name.c_str(), texture);
+	}
 }
