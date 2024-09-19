@@ -101,6 +101,36 @@ SGE_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...)
 	return texture;
 }
 
+SGE_API texture_t* texture_load_mem(renderer_t* renderer, texture_type_t type, ...)
+{
+	va_list datas;
+	va_start(datas, type);
+	texture_t* texture = texture_load_memv(renderer, type, datas);
+	va_end(datas);
+	return texture;
+}
+
+static texture_t* _texture_create(renderer_t* renderer, texture_type_t type, vulkan_texture_data_t* data_ptr, u32 data_count)
+{
+	// create texture
+	texture_create_info_t create_info = 
+	{
+		.width = data_ptr[0].width,
+		.height = data_ptr[0].height,
+		.depth = data_ptr[0].depth,
+		.channel_count = data_ptr[0].channel_count,
+		.type = type,
+		.initial_usage = TEXTURE_USAGE_TRANSFER_DST,
+		.usage = TEXTURE_USAGE_SAMPLED,
+		.final_usage = TEXTURE_USAGE_SAMPLED
+	};
+	texture_t* texture = texture_create(renderer, &create_info);
+
+	vulkan_texture_upload_data(texture, data_count, data_ptr);
+	vulkan_texture_set_usage_stage(texture, VULKAN_TEXTURE_USAGE_STAGE_FINAL);
+	return texture;
+}
+
 SGE_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths)
 {
 	u32 file_path_count;
@@ -130,26 +160,51 @@ SGE_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_l
 		data[i].depth = 1;
 		data[i].channel_count = bmp_data[i].channel_count;
 	}
-	
-	// create texture
-	texture_create_info_t create_info = 
-	{
-		.width = data[0].width,
-		.height = data[0].height,
-		.depth = data[0].depth,
-		.channel_count = data[0].channel_count,
-		.type = type,
-		.initial_usage = TEXTURE_USAGE_TRANSFER_DST,
-		.usage = TEXTURE_USAGE_SAMPLED,
-		.final_usage = TEXTURE_USAGE_SAMPLED
-	};
-	texture_t* texture = texture_create(renderer, &create_info);
 
-	vulkan_texture_upload_data(texture, file_path_count, data);
-	vulkan_texture_set_usage_stage(texture, VULKAN_TEXTURE_USAGE_STAGE_FINAL);
+	texture_t* texture = _texture_create(renderer, type, data, file_path_count);
 	
 	// unload the loaded texture data from host memory
 	for(u32 i = 0; i < file_path_count; i++)
+		bmp_destroy(bmp_data[i]);
+
+	return texture;
+}
+
+SGE_API texture_t* texture_load_memv(renderer_t* renderer, texture_type_t type, va_list datas)
+{
+	u32 tex_count;
+	switch(type)
+	{
+		case TEXTURE_TYPE_ALBEDO:
+		case TEXTURE_TYPE_NORMAL:
+		case TEXTURE_TYPE_CUBE_COMBINED:
+			tex_count = 1;
+			break;
+		case TEXTURE_TYPE_CUBE_SEPARATED:
+			tex_count = 6;
+			break;
+		default:
+			LOG_FETAL_ERR("Unrecognized texture_type\n");
+	};
+
+	// load all the textures from disk to memory
+	vulkan_texture_data_t data[tex_count];
+	bmp_t bmp_data[tex_count];
+	for(u32 i = 0; i < tex_count; i++)
+	{
+		com_immutable_data_t im_data = va_arg(datas, com_immutable_data_t);
+		bmp_data[i] = bmp_load_mem(renderer->allocator, im_data);
+		data[i].data = bmp_data[i].data;
+		data[i].width = bmp_data[i].width;
+		data[i].height = bmp_data[i].height;
+		data[i].depth = 1;
+		data[i].channel_count = bmp_data[i].channel_count;
+	}
+
+	texture_t* texture = _texture_create(renderer, type, data, tex_count);
+	
+	// unload the loaded texture data from host memory
+	for(u32 i = 0; i < tex_count; i++)
 		bmp_destroy(bmp_data[i]);
 
 	return texture;
