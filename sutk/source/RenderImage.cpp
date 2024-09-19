@@ -18,7 +18,11 @@ namespace SUTK
 			.vertexTexCoord({ 1.0f, 0.0f })
 			.topology(Geometry::Topology::TriangleList)
 			.quad(0, 1, 2, 3)
-			.fillColor(getColor());
+			.fillColor(getColor())
+			.fillImage();
+
+		// It is necessarry whenever we modify the 'image' member of Geometry class
+		RenderRect::setGeometryDirty(true);
 
 		if(isUpdate)
 		{

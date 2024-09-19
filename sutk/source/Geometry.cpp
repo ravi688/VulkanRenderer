@@ -10,8 +10,10 @@ namespace SUTK
 													m_transformArrayInfo({ InstanceTransformArray { }, false }),
 													m_strokeInfo({ }),
 													m_fillColorInfo({Color4::white(), false }),
+													m_fillImageInfo({UIDriver::InvalidImage, false }),
 													m_topology(Topology::TriangleList),
 													m_isArray(false),
+													m_isFillImage(false),
 													m_sdf(NULL)
 	{
 
@@ -207,6 +209,7 @@ namespace SUTK
 	{
 		m_fillImageInfo.image = image;
 		m_fillImageInfo.isModified = true;
+		if(!m_isFillImage) m_isFillImage = true;
 		return *this;
 	}
 }

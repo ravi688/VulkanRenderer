@@ -19,7 +19,7 @@ namespace SUTK
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
-		UIDriver::ImageReference image = m_uiDriver->lazyImageLoad("../textures/Smile.bmp");
+		UIDriver::ImageReference image = m_uiDriver->loadImage("../textures/Smile.bmp");
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
 		Container* emptyContainer = m_uiDriver->createContainer<Container>(rootContainer);
 		emptyContainer->setRect({ 1.0f, 1.0f, 7.0f, 7.0f });
@@ -48,6 +48,7 @@ namespace SUTK
 
 	void RenderImageTest::terminate(SGE::Driver& driver)
 	{
+		// TODO: m_uiDriver->unloadImage(image);
 		delete m_uiDriver;
 		delete m_gfxDriver;
 	}

@@ -8,6 +8,7 @@
 #include <unordered_map> /* for std::unordered_map */
 
 #include <common/id_generator.h> /* for id_generator */
+#include <common/IDMap.hpp> // for com::IDMap
 
 namespace SUTK
 {	
@@ -47,6 +48,7 @@ namespace SUTK
 		SGE::Font m_font;
 		SGE::RenderScene m_scene;
 		SGE::Shader m_shader;
+		SGE::Texture m_defaultTexture;
 		id_generator_t m_id_generator;
 		GfxDriverObjectHandleType m_currentBitmapTextHandle;
 		typedef std::unordered_map<id_generator_id_type_t, SGEBitmapTextData> SGEBitmapTextTable;
@@ -59,6 +61,7 @@ namespace SUTK
 		std::unordered_map<id_generator_id_type_t, SGEMeshData> m_meshMappings;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
 		std::unordered_map<id_generator_id_type_t, SGE::RenderObject> m_renderObjectMappings;
+		com::IDMap<std::pair<std::string, SGE::Texture>> m_textureData;
 		std::unordered_map<id_generator_id_type_t, ObjectType> m_typeTable;
 		template<typename T>
 		struct CallbackHandlerData
@@ -93,6 +96,10 @@ namespace SUTK
 		getMeshIterator(GfxDriverObjectHandleType handle);
 		std::pair<SGEMeshData, GfxDriverObjectHandleType> createMesh(const Geometry& geometry);
 		void createOrUpdateVertexBuffer(SGE::Mesh mesh, const SGE::Mesh::VertexBufferCreateInfo& createInfo) noexcept;
+		SGE::Texture getTexture(GfxDriverObjectHandleType handle) noexcept;
+		// If called for the first time, then it loads a white image,
+		// Subsequent calls return the cached reference to earlier loaded white image.
+		SGE::Texture getDefaultTexture() noexcept;
 		SGE::Shader compileShader(const Geometry& geometry);
 		// Transforms SUTK coordinates (origin at top-left, and y downwards) to SGE coordinates (origin at center, and y upwards)
 		vec3_t SUTKToSGECoordTransform(const Vec2Df position);
@@ -146,6 +153,9 @@ namespace SUTK
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) override;
 		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec3Df position) override;
 		virtual void setObjectDepth(GfxDriverObjectHandleType handle, f32 depth) override;
+
+		virtual GfxDriverObjectHandleType loadTexture(const std::string& str) override;
+		virtual void unloadTexture(GfxDriverObjectHandleType handle) override;
 
 		// compiles SUTK::Geometry description into SGE objects which can eventually be renderered in SGE
 		virtual GfxDriverObjectHandleType compileGeometry(const Geometry& geometryDsc, GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) override;

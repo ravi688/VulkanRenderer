@@ -590,6 +590,8 @@ namespace SUTK
 		u64 hash = 0x754e30c7e3d13;
 		if(geometry.isArray())
 			hash ^= (static_cast<u64>(0x53) << 32);
+		if(geometry.isFillImage())
+			hash ^= (static_cast<u64>(0x71) << 32);
 		if(geometry.isSDF())
 		{
 			hash |= static_cast<u32>(geometry.getSDF().getCode().size());
@@ -676,6 +678,8 @@ namespace SUTK
 		}
 		else if(geometry.isArray())
 			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color_rect_array.v3dshader").first, hashStr);
+		else if(geometry.isFillImage())
+			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/image_rect.v3dshader").first, hashStr);
 		else
 			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first, hashStr);
 	}
@@ -822,6 +826,37 @@ namespace SUTK
 		}
 	}
 
+	GfxDriverObjectHandleType SGEGfxDriver::loadTexture(const std::string& str)
+	{
+		// TODO: Load the texture from another thread
+		return m_textureData.add({ str, { } });
+	}
+
+	void SGEGfxDriver::unloadTexture(GfxDriverObjectHandleType handle)
+	{
+		m_textureData.remove(handle);
+		// TODO : unload the texture from SGE Driver's side
+	}
+
+	SGE::Texture SGEGfxDriver::getTexture(GfxDriverObjectHandleType handle) noexcept
+	{
+		std::pair<std::string, SGE::Texture>& pair = m_textureData.get(handle);
+		// TODO: Wait on the another thread to finish loading this texture
+		if(!pair.second)
+			pair.second = m_driver.loadTexture(TEXTURE_TYPE_ALBEDO, pair.first);
+		return pair.second;
+	}
+
+	SGE::Texture SGEGfxDriver::getDefaultTexture() noexcept
+	{
+		if(!m_defaultTexture)
+		{
+			auto texture_data = m_driver.getBuiltinFileData("/white_image.bmp");
+			m_defaultTexture = m_driver.loadTexture(TEXTURE_TYPE_ALBEDO, { reinterpret_cast<const u8*>(texture_data.first.data()), texture_data.second });
+		}
+		return m_defaultTexture;
+	}
+
 	GfxDriverObjectHandleType SGEGfxDriver::compileGeometry(const Geometry& geometry, GfxDriverObjectHandleType previous)
 	{
 		SGE::Mesh mesh;
@@ -850,6 +885,16 @@ namespace SUTK
 		{
 			Color4 color = geometry.getFillColor();
 			material.set<vec4_t>("parameters.color", to_vec4(color));
+		}
+		if(geometry.isFillImageModified())
+		{
+			UIDriver::ImageReference image = geometry.getFillImage();
+			SGE::Texture texture;
+			if(image != UIDriver::InvalidImage)
+				texture = getTexture(image);
+			else
+				texture = getDefaultTexture();
+			material.set<SGE::Texture>("albedo", texture);
 		}
 
 		// if this is a SDF geometry and its parameters are modified, then we need to update the GPU side buffer
@@ -907,6 +952,20 @@ namespace SUTK
 			createInfo.stride = sizeof(vec4_t),
 			createInfo.count = positionArray.size(),
 			createInfo.binding = 0;
+
+			createOrUpdateVertexBuffer(mesh, createInfo);
+		}
+
+		if(geometry.isVertexTexCoordArrayModified() && (geometry.getFillImage() != UIDriver::InvalidImage))
+		{
+			auto& texcoordArray = geometry.getVertexTexCoordArray();
+
+			// prepare the vertex buffer create info struct
+			SGE::Mesh::VertexBufferCreateInfo createInfo = { };
+			createInfo.data = reinterpret_cast<void*>(com::cast_away_const(texcoordArray.data()));
+			createInfo.stride = sizeof(vec2_t);
+			createInfo.count = texcoordArray.size();
+			createInfo.binding = 3;
 
 			createOrUpdateVertexBuffer(mesh, createInfo);
 		}
