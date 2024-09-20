@@ -58,7 +58,10 @@ Shader
 			{
 				colorBlend
 				{
-					attachment { }
+					attachment
+					{
+						blendenable = true
+					}
 				}
 
 				depthStencil
