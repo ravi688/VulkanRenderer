@@ -29,6 +29,7 @@
 #include <sge/bmp.h>
 #include <sge/debug.h>
 #include <stdarg.h> 		// va_start, va_end, va_list
+#include <stb/stb_image.h>
 
 static vulkan_texture_usage_t get_vulkan_texture_usage(texture_usage_t usage)
 {
@@ -150,22 +151,34 @@ SGE_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_l
 
 	// load all the textures from disk to memory
 	vulkan_texture_data_t data[file_path_count];
-	bmp_t bmp_data[file_path_count];
 	for(u32 i = 0; i < file_path_count; i++)
 	{
-		bmp_data[i] = bmp_load(renderer->allocator, va_arg(file_paths, const char*));
-		data[i].data = bmp_data[i].data;
-		data[i].width = bmp_data[i].width;
-		data[i].height = bmp_data[i].height;
+		const char* file_path = va_arg(file_paths, const char*);
+		int width, height, channels;
+		stbi_set_flip_vertically_on_load(true);
+		data[i].data = stbi_load(file_path, &width, &height, &channels, STBI_rgb_alpha);
+		if(data[i].data == NULL)
+			DEBUG_LOG_FETAL_ERROR("Failed to load texture %s", file_path);
+		/* I'm not sure were is the problem, but for some reasons it feels like stb's output format is BGRA instead of RGB.
+		 * So, convert the BGRA to RGBA. */
+		u8* data_ptr = data[i].data;
+		for(int j = 0; j < (width * height * 4); j += 4)
+		{
+			AUTO t = data_ptr[j + 2];
+			data_ptr[j + 2] = data_ptr[j];
+			data_ptr[j] = t;
+		}
+		data[i].width = width;
+		data[i].height = height;
 		data[i].depth = 1;
-		data[i].channel_count = bmp_data[i].channel_count;
+		data[i].channel_count = 4;
 	}
 
 	texture_t* texture = _texture_create(renderer, type, data, file_path_count);
 	
 	// unload the loaded texture data from host memory
 	for(u32 i = 0; i < file_path_count; i++)
-		bmp_destroy(bmp_data[i]);
+		stbi_image_free(data[i].data);
 
 	return texture;
 }
