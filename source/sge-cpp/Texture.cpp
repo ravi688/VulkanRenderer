@@ -4,9 +4,10 @@
 
 namespace SGE
 {
-	Texture::Texture(Driver& driver, texture_type_t type, const std::string& str) noexcept 
+	Texture::Texture(Driver& driver, texture_type_t type, std::string_view str) noexcept 
 	{ 
-		m_handle = texture_load(driver.getHandle(), type, str.c_str());
+		std::string _str(str);
+		m_handle = texture_load(driver.getHandle(), type, _str.c_str());
 	}
 	Texture::Texture(Driver& driver, texture_type_t type, const std::span<const u8> data) noexcept
 	{
