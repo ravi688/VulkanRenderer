@@ -47,7 +47,7 @@ namespace SUTK
 
 		void render();
 
-		ImageReference loadImage(const std::string& path) noexcept;
+		ImageReference loadImage(std::string_view path) noexcept;
 		void unloadImage(ImageReference id) noexcept;
 
 		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }

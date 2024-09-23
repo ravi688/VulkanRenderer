@@ -66,7 +66,7 @@ namespace SUTK
 		m_gfxDriver.render(*this);
 	}
 
-	UIDriver::ImageReference UIDriver::loadImage(const std::string& str) noexcept
+	UIDriver::ImageReference UIDriver::loadImage(std::string_view str) noexcept
 	{
 		return getGfxDriver().loadTexture(str);
 	}

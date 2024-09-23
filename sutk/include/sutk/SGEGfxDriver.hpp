@@ -154,7 +154,7 @@ namespace SUTK
 		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec3Df position) override;
 		virtual void setObjectDepth(GfxDriverObjectHandleType handle, f32 depth) override;
 
-		virtual GfxDriverObjectHandleType loadTexture(const std::string& str) override;
+		virtual GfxDriverObjectHandleType loadTexture(std::string_view str) override;
 		virtual void unloadTexture(GfxDriverObjectHandleType handle) override;
 
 		// compiles SUTK::Geometry description into SGE objects which can eventually be renderered in SGE
