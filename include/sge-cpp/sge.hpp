@@ -79,7 +79,7 @@ namespace SGE
 		BitmapGlyphAtlasTexture createBitmapGlyphAtlasTexture(const BitmapGlyphAtlasTexture::CreateInfo& createInfo) noexcept { return BitmapGlyphAtlasTexture(*this, createInfo); }
 		BitmapText createBitmapText(BitmapGlyphAtlasTexture texture) noexcept { return BitmapText(*this, texture); }
 		Mesh createMesh() noexcept { return Mesh(*this); }
-		Texture loadTexture(texture_type_t type, const std::string& str) noexcept { return Texture(*this, type, str); }
+		Texture loadTexture(texture_type_t type, std::string_view str) noexcept { return Texture(*this, type, str); }
 		Texture loadTexture(texture_type_t type, const std::span<const u8> data) noexcept { return Texture(*this, type, data); }
 
 		RenderWindow getRenderWindow() const noexcept { return RenderWindow(renderer_get_window(m_handle)); }
