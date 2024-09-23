@@ -826,10 +826,10 @@ namespace SUTK
 		}
 	}
 
-	GfxDriverObjectHandleType SGEGfxDriver::loadTexture(const std::string& str)
+	GfxDriverObjectHandleType SGEGfxDriver::loadTexture(std::string_view str)
 	{
 		// TODO: Load the texture from another thread
-		return m_textureData.add({ str, { } });
+		return m_textureData.add({ std::string(str), { } });
 	}
 
 	void SGEGfxDriver::unloadTexture(GfxDriverObjectHandleType handle)

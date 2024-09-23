@@ -14,6 +14,7 @@
 #include <sutk/tests/HBoxTest.hpp>
 #include <sutk/tests/HPaneTest.hpp>
 #include <sutk/tests/RenderImageTest.hpp>
+#include <sutk/tests/ThemeTest.hpp>
 
 namespace SUTK
 {
@@ -31,7 +32,8 @@ namespace SUTK
 		{ "VBOX", [] () { return std::unique_ptr<ITest>(new VBoxTest()); }},
 		{ "HBOX", [] () { return std::unique_ptr<ITest>(new HBoxTest()); }},
 		{ "HPANE", [] () { return std::unique_ptr<ITest>(new HPaneTest()); }},
-		{ "RENDER_IMAGE", [] () { return std::unique_ptr<ITest>(new RenderImageTest()); }}
+		{ "RENDER_IMAGE", [] () { return std::unique_ptr<ITest>(new RenderImageTest()); }},
+		{ "THEME", [] () { return std::unique_ptr<ITest>(new ThemeTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)

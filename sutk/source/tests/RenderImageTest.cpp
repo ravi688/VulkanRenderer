@@ -11,7 +11,7 @@ namespace SUTK
 	DriverInitializationData RenderImageTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Round Rect Test (SDF)";
+		data.title = "Render Image Test";
 		return data;
 	}
 

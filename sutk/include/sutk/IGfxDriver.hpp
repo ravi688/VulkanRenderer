@@ -60,7 +60,7 @@ namespace SUTK
 			GfxDriverObjectHandleType objHandle = getTextObject(handle);
 			setObjectScissor(objHandle, rect);
 		}
-		virtual GfxDriverObjectHandleType loadTexture(const std::string& str) = 0;
+		virtual GfxDriverObjectHandleType loadTexture(std::string_view str) = 0;
 		virtual void unloadTexture(GfxDriverObjectHandleType handle) = 0;
 		virtual GfxDriverObjectHandleType compileGeometry(const Geometry& geometryDsc, GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) = 0;
 		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) = 0;

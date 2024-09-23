@@ -28,7 +28,7 @@ namespace SUTK
 	bool RenderRect::isDirty() noexcept
 	{
 		// See: SmallText.cpp:isDirty() for more understanding of why isActive() is here.
-		return m_isActiveDirty || ((isRectDirty() || m_isColorDirty) && isActive());
+		return m_isActiveDirty || ((isRectDirty() || m_isColorDirty || m_isGeometryDirty) && isActive());
 	}
 
 	void RenderRect::update() noexcept
