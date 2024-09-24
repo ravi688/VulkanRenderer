@@ -1,0 +1,13 @@
+[Name("My Theme2")]
+[Model("GlobalThemeModel")]
+Theme
+{
+    LargeButton.IdleColor = green { };
+    LargeButton.HoverColor = red { 0.5f };
+    LargeButton.PressColor = grey { };
+    SmallButton.IdleColor = green { };
+    SmallButton.HoverColor = red { 1.0f };
+    SmallButton.PressColor = grey { 1.0f };
+    Folder.Open = "../textures/Smile.bmp";
+    Folder.Close = "icons/Folder-Close.png";
+}
