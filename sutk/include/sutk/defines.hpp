@@ -472,6 +472,8 @@ namespace SUTK
 
 		static constexpr Color3 red() noexcept { return { 255, 0, 0 }; }
 		static constexpr Color3 blue() noexcept { return { 0, 0, 255 }; }
+		static constexpr Color3 pink() noexcept { return { 0xff, 0xc0, 0xcb }; }
+		static constexpr Color3 brown() noexcept { return { 0x96, 0x4B, 0x00 }; }
 		static constexpr Color3 green() noexcept { return { 0, 255, 0 }; }
 		static constexpr Color3 white() noexcept { return { 255, 255, 255 }; }
 		static constexpr Color3 black() noexcept { return { 0, 0, 0 }; }
@@ -510,6 +512,11 @@ namespace SUTK
 		Color4& alpha(u8 _alpha) & noexcept { a = _alpha; return *this; }
 		Color4&& alpha(u8 _alpha) && noexcept { a = _alpha; return std::move(*this); }
 
+		constexpr Color4 scale(f32 level = 0.5f) noexcept
+		{ 
+			return { static_cast<u8>(r * level), static_cast<u8>(g * level), static_cast<u8>(b * level), static_cast<u8>(a * level) }; 
+		}
+
 		constexpr bool equalsApprox(Color4 rhs) noexcept
 		{
 			// NOTE: we are using here std::max(<u8 value>, 1) - 1, 
@@ -533,6 +540,8 @@ namespace SUTK
 		{ 
 			return { 0, 0, static_cast<u8>(255 * level), 255 }; 
 		}
+		static constexpr Color4 pink(f32 level = 1.0f) noexcept{ return Color4(0xff, 0xc0, 0xcb, 255).scale(level); }
+		static constexpr Color4 brown(f32 level = 1.0f) noexcept { return Color4(0x96, 0x4B, 0x00, 255).scale(level); }
 		static constexpr Color4 green(f32 level = 1.0f) noexcept
 		{
 			return { 0, static_cast<u8>(255 * level), 0, 255 }; 

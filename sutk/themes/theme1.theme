@@ -1,0 +1,13 @@
+[Name("My Theme1")]
+[Model("GlobalThemeModel")]
+Theme
+{
+    LargeButton.IdleColor = green { };
+    LargeButton.HoverColor = red { };
+    LargeButton.PressColor = grey { };
+    SmallButton.IdleColor = green { };
+    SmallButton.HoverColor = red { 1.0f };
+    SmallButton.PressColor = grey { 1.0f };
+    Folder.Open = "../textures/Thalita-Torres-Office-Archive-folders.512.png";
+    Folder.Close = "icons/Folder-Close.png";
+}

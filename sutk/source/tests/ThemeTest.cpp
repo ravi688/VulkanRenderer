@@ -23,10 +23,10 @@ namespace SUTK
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
 
-		ThemeManager<std::string_view>* themeManager = new ThemeManager<std::string_view>(*m_uiDriver);
+		ThemeManager<std::string, std::string_view>* themeManager = new ThemeManager<std::string, std::string_view>(*m_uiDriver);
 		// Or
-		// ThemeManager<std::string_view>::ThemeInterface<std::string_view>* themeInt = themeManager->loadThemeInterface<std::string_view>("theme_interface.themInt")
-		ThemeInterface<std::string_view>* themeInt = themeManager->createThemeInterface("Global-Theme-Interface");
+		// ThemeManager<std::string, std::string_view>::ThemeInterface<std::string, std::string_view>* themeInt = themeManager->loadThemeInterface<std::string, std::string_view>("theme_interface.themInt")
+		ThemeInterface<std::string, std::string_view>* themeInt = themeManager->createThemeInterface("Global-Theme-Interface");
 		themeInt->define<Color4>("LargeButton::IdleColor");
 		themeInt->define<Color4>("LargeButton::HoverColor");
 		themeInt->define<Color4>("LargeButton::PressColor");
@@ -36,8 +36,10 @@ namespace SUTK
 		themeInt->define<UIDriver::ImageReference>("Folder::Open");
 		themeInt->define<UIDriver::ImageReference>("Folder::Close");
 
-		// ThemeManager<std::string_view>::Theme<std::string_view>* theme1 = themeManager->loadTheme<std::string_view>("theme1.theme")
-		Theme<std::string_view>* theme1 = themeManager->createTheme("My-Global-Theme-1", themeInt);
+		themeInt->dump();
+
+		// ThemeManager<std::string, std::string_view>::Theme<std::string, std::string_view>* theme1 = themeManager->loadTheme<std::string, std::string_view>("theme1.theme")
+		Theme<std::string, std::string_view>* theme1 = themeManager->createTheme("My-Global-Theme-1", themeInt);
 		theme1->add<Color4>("LargeButton::IdleColor", Color4::grey(0.1f));
 		theme1->add<Color4>("LargeButton::HoverColor", Color4::red(0.5f));
 		theme1->add<Color4>("LargeButton::PressColor", Color4::yellow(0.5f));
@@ -47,8 +49,8 @@ namespace SUTK
 		theme1->add<UIDriver::ImageReference>("Folder::Open", "../textures/Thalita-Torres-Office-Archive-folders.512.png");
 		theme1->add<UIDriver::ImageReference>("Folder::Close", "../textures/Folder-Close.png");
 
-		// ThemeManager<std::string_view>::Theme<std::string_view>* theme2 = themeManager->loadTheme<std::string_view>("theme2.theme")
-		Theme<std::string_view>* theme2 = themeManager->createTheme("My-Global-Theme-2", themeInt);
+		// ThemeManager<std::string, std::string_view>::Theme<std::string, std::string_view>* theme2 = themeManager->loadTheme<std::string, std::string_view>("theme2.theme")
+		Theme<std::string, std::string_view>* theme2 = themeManager->createTheme("My-Global-Theme-2", themeInt);
 		theme2->add<Color4>("LargeButton::IdleColor", Color4::grey(0.1f));
 		theme2->add<Color4>("LargeButton::HoverColor", Color4::green());
 		theme2->add<Color4>("LargeButton::PressColor", Color4::grey(0.5f));
