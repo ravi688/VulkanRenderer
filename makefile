@@ -506,6 +506,7 @@ endif
 	$(MAKE) --directory=./dependencies/MeshLib clean
 	$(MAKE) --directory=./dependencies/GLSLCommon clean
 	$(MAKE) --directory=./dependencies/Common clean
+	$(MAKE) --directory=./dependencies/PhyMacParser clean
 	$(MAKE) --directory=./shared-dependencies/BufferLib clean
 	$(MAKE) --directory=./toolchain/shader_compiler clean
 #-------------------------------------------
