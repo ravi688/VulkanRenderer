@@ -8,40 +8,15 @@
 
 #include <string_view> // for std::string_view
 #include <type_traits> // for std::is_same_v
-#include <unordered_map> // for std::unordered_map
 
 typedef struct v3d_generic_node_t v3d_generic_node_t;
 
 namespace SUTK
 {
-	template<typename _ViewType, typename Type>
-	concept ViewType = std::is_convertible<Type, _ViewType>::value && std::is_constructible<Type, const _ViewType&>::value;
-
-	template<typename T>
-	struct TransparentHash
-	{
-		using is_transparent = void;
-
-		constexpr std::size_t operator()(const T& value) const noexcept
-		{
-			return std::hash<T> { } (value);
-		}
-	};
-
-	template<typename T>
-	struct TransparentEqualTo
-	{
-		using is_transparent = void;
-		constexpr bool operator()(const T& value1, const T& value2) const noexcept
-		{
-			return std::equal_to<T> { } (value1, value2);
-		}
-	};
-
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	class Theme;
 
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	class SUTK_API ThemeInterface
 	{
 	public:
@@ -54,7 +29,7 @@ namespace SUTK
 		typedef com::Event<com::no_publish_ptr_t> EventType;
 		typedef EventType::SubscriptionID EventHandlerID;
 	private:
-		std::unordered_map<KeyType, std::pair<Type, EventType>, TransparentHash<KeyViewType>, TransparentEqualTo<KeyViewType>> m_defs;
+		com::unordered_map<KeyType, std::pair<Type, EventType>, KeyViewType> m_defs;
 		Theme<KeyType, KeyViewType>* m_currentTheme;
 	public:
 		ThemeInterface() noexcept;
@@ -72,15 +47,15 @@ namespace SUTK
 		void dump() const noexcept;
 	};
 
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	class SUTK_API Theme : public UIDriverObject
 	{
 	public:
 		using ThemeInterfaceType = ThemeInterface<KeyType, KeyViewType>;
 	private:
-		std::unordered_map<KeyType, Color4, TransparentHash<KeyViewType>, TransparentEqualTo<KeyViewType>> m_colors;
-		std::unordered_map<KeyType, UIDriver::ImageReference, TransparentHash<KeyViewType>, TransparentEqualTo<KeyViewType>> m_images;
-		// std::unordered_map<KeyType, UIDriver::FontReference, TransparentHash<KeyViewType>, TransparentEqualTo<KeyViewType>> m_fonts;
+		com::unordered_map<KeyType, Color4, KeyViewType> m_colors;
+		com::unordered_map<KeyType, UIDriver::ImageReference, KeyViewType> m_images;
+		// com::unordered_map<KeyType, UIDriver::FontReference, KeyViewType> m_fonts;
 		ThemeInterfaceType* m_interface;
 	public:
 		Theme(UIDriver& driver, ThemeInterfaceType* interface) noexcept : UIDriverObject(driver), m_interface(interface) { }
@@ -140,9 +115,9 @@ namespace SUTK
 		}
 	};
 
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	ThemeInterface<KeyType, KeyViewType>::ThemeInterface() noexcept : m_currentTheme(NULL) { }
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	template<typename ValueType>
 	void ThemeInterface<KeyType, KeyViewType>::define(const KeyViewType& key) noexcept
 	{
@@ -153,20 +128,20 @@ namespace SUTK
 		else
 			static_assert(false, "Type not supported");
 	}
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	void ThemeInterface<KeyType, KeyViewType>::undefine(const KeyViewType& key) noexcept
 	{
 		bool result = com::find_erase(m_defs, key);
 		_com_assert(result);
 	}
 
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	ThemeInterface<KeyType, KeyViewType>::Type ThemeInterface<KeyType, KeyViewType>::getType(const KeyViewType& key) noexcept
 	{
 		return com::find_value(m_defs, key).first;
 	}
 
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	template<typename ValueType>
 	ThemeInterface<KeyType, KeyViewType>::EventHandlerID ThemeInterface<KeyType, KeyViewType>::bind(const KeyViewType& key, std::function<void(ValueType&)> callback) noexcept
 	{
@@ -180,21 +155,21 @@ namespace SUTK
 		return value.second.subscribe(std::move(fn));
 	}
 
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	void ThemeInterface<KeyType, KeyViewType>::unbind(const KeyViewType& key, EventHandlerID id) noexcept
 	{
 		auto& value = com::find_value(m_defs, key);
 		value.second.unsubscribe(id);
 	}
 
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	template<typename ValueType>
 	ValueType& ThemeInterface<KeyType, KeyViewType>::getValue(Type type, const KeyViewType& key) noexcept
 	{
 		return m_currentTheme->template getValue<ValueType>(key);
 	}
 
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	void ThemeInterface<KeyType, KeyViewType>::applyTheme(Theme<KeyType, KeyViewType>* theme) noexcept
 	{
 		m_currentTheme = theme;
@@ -202,7 +177,7 @@ namespace SUTK
 			keyValuePair.second.second.publish();
 	}
 
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	void ThemeInterface<KeyType, KeyViewType>::dump() const noexcept
 	{
 		std::ostream& stream = std::cout;
@@ -221,15 +196,15 @@ namespace SUTK
 	}
 
 	// For now, the key type should be std::string_view
-	template<typename KeyType, ViewType<KeyType> KeyViewType>
+	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	class SUTK_API ThemeManager : public UIDriverObject
 	{
 	public:
 		using ThemeInterfaceType = ThemeInterface<KeyType, KeyViewType>;
 		using ThemeType = Theme<KeyType, KeyViewType>;
 	private:
-		std::unordered_map<KeyType, ThemeInterfaceType*, TransparentHash<KeyViewType>, TransparentEqualTo<KeyViewType>> m_themeInterfaces;
-		std::unordered_map<KeyType, ThemeType*, TransparentHash<KeyViewType>, TransparentEqualTo<KeyViewType>> m_themes;
+		com::unordered_map<KeyType, ThemeInterfaceType*, KeyViewType> m_themeInterfaces;
+		com::unordered_map<KeyType, ThemeType*, KeyViewType> m_themes;
 
 		template<typename T>
 		T deriveValue(v3d_generic_node_t* node, const char* str) noexcept;
