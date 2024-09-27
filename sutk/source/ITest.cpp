@@ -16,6 +16,7 @@
 #include <sutk/tests/RenderImageTest.hpp>
 #include <sutk/tests/ThemeTest.hpp>
 #include <sutk/tests/ThemeLoadTest.hpp>
+#include <sutk/tests/TransientContTest.hpp>
 
 namespace SUTK
 {
@@ -35,7 +36,8 @@ namespace SUTK
 		{ "HPANE", [] () { return std::unique_ptr<ITest>(new HPaneTest()); }},
 		{ "RENDER_IMAGE", [] () { return std::unique_ptr<ITest>(new RenderImageTest()); }},
 		{ "THEME", [] () { return std::unique_ptr<ITest>(new ThemeTest()); }},
-		{ "THEME_LOAD", [] () { return std::unique_ptr<ITest>(new ThemeLoadTest()); }}
+		{ "THEME_LOAD", [] () { return std::unique_ptr<ITest>(new ThemeLoadTest()); }},
+		{ "TRANSIENT_CONT", [] () { return std::unique_ptr<ITest>(new TransientContTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)

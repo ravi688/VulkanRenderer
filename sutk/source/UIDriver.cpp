@@ -9,8 +9,12 @@
 #include <sutk/RenderImage.hpp>
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/DummyInputDriver.hpp> // for STUK::DummyInputDriver
+#include <sutk/IRunnable.hpp> // for SUTK::IRunnable::Update
 
 #include <common/assert.h>
+#include <common/debug.h> // for debug_log_error
+
+#include <algorithm> // for std::find
 
 namespace SUTK
 {
@@ -32,6 +36,11 @@ namespace SUTK
 
 	void UIDriver::render()
 	{
+		// Update runnables
+		if(m_runnables.size() != 0)
+			for(IRunnable* &runnable : m_runnables)
+				IRunnable::Update(runnable);
+
 		bool isRecalculateDrawOrder = false;
 		u32 minDrawOrder = std::numeric_limits<u32>::max();
 		u32 maxDrawOrder = 0;
@@ -65,6 +74,24 @@ namespace SUTK
 		// now record and dispatch rendering commands (delegated that to rendering backend)
 		m_gfxDriver.render(*this);
 	}
+
+
+	void UIDriver::addRunnable(IRunnable* runnable) noexcept
+	{
+		m_runnables.push_back(runnable);
+	}
+
+	void UIDriver::removeRunnable(IRunnable* runnable) noexcept
+	{
+		auto it = std::find(m_runnables.begin(), m_runnables.end(), runnable);
+		if(it != m_runnables.end())
+		{
+			debug_log_error("Failed to remove SUTK::IRunnable: %p, as it doesn't exist in the Registry", runnable);
+			return;
+		}
+		m_runnables.erase(it);
+	}
+
 
 	UIDriver::ImageReference UIDriver::loadImage(std::string_view str) noexcept
 	{
