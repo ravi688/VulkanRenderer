@@ -24,6 +24,7 @@ namespace SUTK
 	// Forward declarations for Interface classes
 	class IGfxDriver;
 	class IInputDriver;
+	class IRunnable;
 
 	class UIDriver
 	{
@@ -38,6 +39,12 @@ namespace SUTK
 		GfxDriverObjectHandleType m_globalTextGroup;
 		// Container for accomodating debug rectangles etc.
 		Container* m_debugRootContainer;
+		// Runnables
+		// TODO: We might prefer using std::map or std::forward_list here
+		// if removal of RunnableService is frequent,
+		// that's because, erasing an element from std::vector results in 
+		// shifting elements after the erased point.
+		std::vector<IRunnable*> m_runnables;
 
 		friend class Renderable;
 	public:
@@ -46,6 +53,9 @@ namespace SUTK
 		~UIDriver();
 
 		void render();
+
+		void addRunnable(IRunnable* runnable) noexcept;
+		void removeRunnable(IRunnable* runnable) noexcept;
 
 		ImageReference loadImage(std::string_view path) noexcept;
 		void unloadImage(ImageReference id) noexcept;

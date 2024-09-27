@@ -12,15 +12,16 @@ namespace SUTK
 																					})
 	{
 		m_transAutomaton.setTransitionDelay(0.08f);
-		m_transAutomaton.getEvent(State::Hidden).subscribe([this]() { ContainerUtility::SetActiveAllRecursive(m_container, false); });
+		m_transAutomaton.getEvent(State::Hidden).subscribe([this]() { this->setActive(false); });
 		if(!isActive)
 		{
+			// Thos automatically called the handler (above subscribed)
+			m_transAutomaton.setState(State::Hidden);
 			_com_assert(m_transAutomaton.getState() == State::Hidden);
 			setAlpha(m_transAutomaton.getValue());
-			setActive(false);
 		}
 		else
-			m_transAutomaton.setDefault(State::Visible);
+			m_transAutomaton.setState(State::Visible);
 	}
 
 	void ContainerController::setActive(bool isActive) noexcept
@@ -54,6 +55,16 @@ namespace SUTK
 	void ContainerController::hide() noexcept
 	{
 		m_transAutomaton.transitionTo(State::Hidden);
+	}
+
+	void ContainerController::presentImmediate() noexcept
+	{
+		m_transAutomaton.setState(State::Visible);
+	}
+
+	void ContainerController::hideImmediate() noexcept
+	{
+		m_transAutomaton.setState(State::Hidden);
 	}
 
 }

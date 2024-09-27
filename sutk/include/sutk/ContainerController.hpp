@@ -34,5 +34,10 @@ namespace SUTK
 
 		void present() noexcept;
 		void hide() noexcept;
+
+		void presentImmediate() noexcept;
+		void hideImmediate() noexcept;
+
+		com::TransitionAutomaton<f32>& getAutomaton() noexcept { return m_transAutomaton; }
 	};
 }
