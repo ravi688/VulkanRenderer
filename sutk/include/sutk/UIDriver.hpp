@@ -70,12 +70,14 @@ namespace SUTK
 		Vec2Df getWindowSize() noexcept { return getGfxDriver().getSizeInCentimeters(); }
 		GfxDriverObjectHandleType getGlobalTextGroup() noexcept;
 
+		// TODO: create a concept to add constraint on the typename to allow only objects identical or derived from SUTK::Container object
 		template<typename ContainerType, typename... Args>
 		ContainerType* createContainer(Container* parent, Args&&... args)
 		{
 			ContainerType* cntr = new ContainerType(*this, parent, std::forward<Args&&>(args)...);
 			return cntr;
 		}
+		// TODO: create a concept to add constraint on the typename to allow only renderables derived from SUTK::Renderable object
 		template<typename RenderableType, typename... Args>
 		RenderableType* createRenderable(RenderableContainer* parent, Args&&... args)
 		{
