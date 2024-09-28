@@ -115,7 +115,7 @@ namespace SUTK
 		f32 getCoordFromColPos(LineCountType col) noexcept;
 
 
-		void setData(const std::string& data) noexcept;
+		void setData(const std::string_view data) noexcept;
 		const SmallTextData& getData() const noexcept { return m_data; }
 		void removeRange(std::size_t pos, std::size_t len = std::string::npos) noexcept;
 		void append(const std::string& data) noexcept;

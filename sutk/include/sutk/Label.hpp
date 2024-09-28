@@ -17,7 +17,7 @@ namespace SUTK
 	public:
 		Label(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
-		void set(const std::string& str) noexcept;
+		void set(const std::string_view str) noexcept;
 		void setAlignment(HorizontalAlignment hAlign, VerticalAlignment vAlign) noexcept;
 
 		SmallText& getText() { return *m_text; }
