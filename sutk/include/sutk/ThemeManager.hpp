@@ -59,6 +59,9 @@ namespace SUTK
 		ThemeInterfaceType* m_interface;
 	public:
 		Theme(UIDriver& driver, ThemeInterfaceType* interface) noexcept : UIDriverObject(driver), m_interface(interface) { }
+
+		ThemeInterfaceType* getInterface() noexcept { return m_interface; }
+
 		template<typename ValueType>
 		void add(const KeyViewType& key, ValueType&& value) noexcept
 		{
@@ -202,9 +205,16 @@ namespace SUTK
 	public:
 		using ThemeInterfaceType = ThemeInterface<KeyType, KeyViewType>;
 		using ThemeType = Theme<KeyType, KeyViewType>;
+		using ThemeInterfaceMap = com::unordered_map<KeyType, ThemeInterfaceType*, KeyViewType>;
+		using ThemeMap = com::unordered_map<KeyType, ThemeType*, KeyViewType>;
+		using ThemeInterfaceNameIterator = com::KeyIterator<typename ThemeInterfaceMap::const_iterator>;
+		using ThemeInterfaceNameIteratable = com::Iteratable<ThemeInterfaceNameIterator>;
+		using ThemeNameIterator = com::KeyIterator<typename ThemeMap::const_iterator>;
+		using ThemeNameIteratable = com::Iteratable<ThemeNameIterator>;
+
 	private:
-		com::unordered_map<KeyType, ThemeInterfaceType*, KeyViewType> m_themeInterfaces;
-		com::unordered_map<KeyType, ThemeType*, KeyViewType> m_themes;
+		ThemeInterfaceMap m_themeInterfaces;
+		ThemeMap m_themes;
 
 		template<typename T>
 		T deriveValue(v3d_generic_node_t* node, const char* str) noexcept;
@@ -217,6 +227,16 @@ namespace SUTK
 				delete keyValuePair.second;
 			for(auto& keyValuePair : m_themes)
 				delete keyValuePair.second;
+		}
+
+		ThemeInterfaceNameIteratable getThemeInterfaceNameIteratable() const noexcept
+		{
+			return { ThemeInterfaceNameIterator { m_themeInterfaces.cbegin() }, ThemeInterfaceNameIterator { m_themeInterfaces.cend() } };
+		}
+
+		ThemeNameIteratable getThemeNameIteratable() const noexcept
+		{
+			return { ThemeNameIterator { m_themes.cbegin() }, ThemeNameIterator { m_themes.cend() } };
 		}
 
 		ThemeInterfaceType* createThemeInterface(const KeyViewType& key) noexcept
