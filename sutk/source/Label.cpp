@@ -11,7 +11,7 @@ namespace SUTK
 		set("New Label");
 	}
 
-	void Label::set(const std::string& str) noexcept
+	void Label::set(const std::string_view str) noexcept
 	{
 		m_text->setData(str);
 	}

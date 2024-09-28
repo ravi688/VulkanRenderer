@@ -152,7 +152,7 @@ namespace SUTK
 			update();
 		return getGfxDriver().getTextCoordFromGlyphIndex(getGfxDriverObjectHandle(), col);
 	}
-	void SmallText::setData(const std::string& data) noexcept
+	void SmallText::setData(const std::string_view data) noexcept
 	{
 		m_data = std::string(data);
 		m_isDataDirty = true;
