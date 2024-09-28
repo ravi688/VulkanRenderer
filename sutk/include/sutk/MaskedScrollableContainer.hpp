@@ -9,10 +9,11 @@
 
 namespace SUTK
 {
-	template<ContainerT ContainerType, typename... Args>
+	template<ContainerT ContainerType>
 	class MaskedScrollableContainer : public ContainerType, public Scrollable
 	{
 	protected:
+		template<typename... Args>
 		MaskedScrollableContainer(UIDriver& driver, Container* parent, Args&&... args) noexcept;
 		void updateMaskFor(Container* container) const noexcept;
 		// Recursively finds all SUTK::GfxDriverRenderable objects
@@ -24,14 +25,15 @@ namespace SUTK
 		virtual ~MaskedScrollableContainer() noexcept = default;
 	};
 
-	template<ContainerT ContainerType, typename... Args>
-	MaskedScrollableContainer<ContainerType, Args...>::MaskedScrollableContainer(UIDriver& driver, Container* parent, Args&&... args) noexcept : ContainerType(driver, parent, std::forward(args)...), Scrollable(this)
+	template<ContainerT ContainerType>
+	template<typename... Args>
+	MaskedScrollableContainer<ContainerType>::MaskedScrollableContainer(UIDriver& driver, Container* parent, Args&&... args) noexcept : ContainerType(driver, parent, std::forward<Args&&>(args)...), Scrollable(this)
 	{
 
 	}
 
-	template<ContainerT ContainerType, typename... Args>
-	void MaskedScrollableContainer<ContainerType, Args...>::updateMaskFor(Container* container) const noexcept
+	template<ContainerT ContainerType>
+	void MaskedScrollableContainer<ContainerType>::updateMaskFor(Container* container) const noexcept
 	{
 		const ScrollContainer* scrollCont = getScrollContainer();
 		if(!scrollCont)
@@ -47,14 +49,14 @@ namespace SUTK
 		});
 	}
 	
-	template<ContainerT ContainerType, typename... Args>
-	void MaskedScrollableContainer<ContainerType, Args...>::updateMask() noexcept
+	template<ContainerT ContainerType>
+	void MaskedScrollableContainer<ContainerType>::updateMask() noexcept
 	{
 		updateMaskFor(this);
 	}
 
-	template<ContainerT ContainerType, typename... Args>
-	void MaskedScrollableContainer<ContainerType, Args...>::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
+	template<ContainerT ContainerType>
+	void MaskedScrollableContainer<ContainerType>::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		// Mandatory to be called by the overriding method
 		Container::onParentResize(newRect, isPositionChanged, isSizeChanged);

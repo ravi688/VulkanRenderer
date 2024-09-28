@@ -32,7 +32,7 @@ namespace SUTK
 		OnReleaseEvent m_onReleaseEvent;
 
 	public:
-		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true) noexcept;
+		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
 		// Overrides of onMouseEnter, onMouseExit, and onMouseMove functions
 		virtual void onMouseEnter() noexcept override;

@@ -101,9 +101,9 @@ namespace SUTK
 		return getSize();
 	}
 
-	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent) noexcept : DefaultButtonGraphicNoLabel(driver, parent)
+	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept : DefaultButtonGraphicNoLabel(driver, parent)
 	{
-		m_label = driver.createContainer<Label>(this);
+		m_label = driver.createContainer<Label>(this, textGroup);
 		// size of the label's rect should be as that of ButtonGraphic's rect
 		m_label->setRect({ { 0, 0 }, getSize() });
 		m_label->getAnchorRect()->setRect({ 0.0f, 0.0f, 1.0f, 1.0f });

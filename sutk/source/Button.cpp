@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic) noexcept : Container(driver, parent),
+	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic, GfxDriverObjectHandleType textGroup) noexcept : Container(driver, parent),
 																									MouseMoveHandlerObject(driver, this),
 																									MouseClickHandlerObject(driver, this),
 																									m_graphic(NULL),
@@ -14,7 +14,7 @@ namespace SUTK
 																									m_onReleaseEvent(this)
 	{ 
 		if(isCreateDefaultGraphic)
-			m_graphic = driver.createContainer<DefaultButtonGraphic>(this);
+			m_graphic = driver.createContainer<DefaultButtonGraphic>(this, textGroup);
 		enableMouseEnter(true);
 		enableMouseExit(true);
 	}
