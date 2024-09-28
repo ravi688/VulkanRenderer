@@ -27,6 +27,13 @@ namespace SUTK
 
 	class Container : public UIDriverObject, public IDebuggable, public Activatable
 	{
+	public:
+		enum class RecycleState : u8
+		{
+			Undefined,
+			Disposed,
+			Recycled
+		};
 	private:
 		std::vector<Container*> m_containers;
 		Rect2Df m_rect;
@@ -37,6 +44,7 @@ namespace SUTK
 		RenderableContainer* m_renderRectCont;
 		RenderRectOutline* m_renderRect;
 		bool m_isDebug;
+		RecycleState m_recycleState;
 
 
 	protected:
@@ -79,6 +87,11 @@ namespace SUTK
 
 		// IMPLEMENTATION of IDebuggable
 		virtual void enableDebug(bool isEnable = true, Color4 color = Color4::green()) noexcept override;
+
+		// Calling this with RecyckeState other than Undefined, marks it recyclable
+		void setRecycleState(RecycleState state) noexcept { m_recycleState = state; }
+		RecycleState getRecycleState() const noexcept { return m_recycleState; }
+		bool isRecyclable() const noexcept { return m_recycleState != RecycleState::Undefined; }
 
 		LayoutAttributes& getLayoutAttributes() noexcept { return m_layoutAttr; }
 		const LayoutAttributes& getLayoutAttributes() const noexcept { return m_layoutAttr; }

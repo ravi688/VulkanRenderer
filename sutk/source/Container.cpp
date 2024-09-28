@@ -16,7 +16,8 @@ namespace SUTK
 															m_parent(NULL), 
 															m_renderRectCont(NULL), 
 															m_renderRect(NULL), 
-															m_isDebug(false)
+															m_isDebug(false),
+															m_recycleState(RecycleState::Undefined)
 	{
 		if(parent != NULL)
 			setParent(parent, false);

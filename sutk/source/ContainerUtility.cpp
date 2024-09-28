@@ -18,6 +18,8 @@ namespace SUTK
 	}
 	void ContainerUtility::SetActiveAllRecursive(Container* container, bool isActive) noexcept
 	{
+		if(container->isRecyclable() && (container->getRecycleState() == Container::RecycleState::Disposed))
+			return;
 		container->setActive(isActive);
 		RenderableSetActive(container, isActive);
 		std::vector<Container*>& childs = container->getChilds();
