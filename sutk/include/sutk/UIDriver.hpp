@@ -73,13 +73,13 @@ namespace SUTK
 		template<typename ContainerType, typename... Args>
 		ContainerType* createContainer(Container* parent, Args&&... args)
 		{
-			ContainerType* cntr = new ContainerType(*this, parent, std::forward<Args&&...>(args)...);
+			ContainerType* cntr = new ContainerType(*this, parent, std::forward<Args&&>(args)...);
 			return cntr;
 		}
 		template<typename RenderableType, typename... Args>
 		RenderableType* createRenderable(RenderableContainer* parent, Args&&... args)
 		{
-			RenderableType* renderable = new RenderableType(*this, parent, std::forward<Args&&...>(args)...);
+			RenderableType* renderable = new RenderableType(*this, parent, std::forward<Args&&>(args)...);
 			m_renderables.push_back(renderable);
 			return renderable;
 		}
@@ -87,7 +87,7 @@ namespace SUTK
 		std::pair<RenderableType*, RenderableContainer*> createRenderableWithContainer(Container* parent, Args&&... args)
 		{
 			RenderableContainer* container = createContainer<RenderableContainer>(parent);
-			RenderableType* renderable = new RenderableType(*this, container, std::forward<Args&&...>(args)...);
+			RenderableType* renderable = new RenderableType(*this, container, std::forward<Args&&>(args)...);
 			m_renderables.push_back(renderable);
 			return { renderable, container };
 		}
