@@ -30,9 +30,11 @@ namespace SUTK
 		typedef EventType::SubscriptionID EventHandlerID;
 		typedef EventHandlerID BindID;
 		static constexpr BindID InvalidBindID = EventType::InvalidSubscriptionID;
+		typedef com::Event<com::no_publish_ptr_t> OnThemeChangeEvent;
 	private:
 		com::unordered_map<KeyType, std::pair<Type, EventType>, KeyViewType> m_defs;
 		Theme<KeyType, KeyViewType>* m_currentTheme;
+		OnThemeChangeEvent m_onThemeChange;
 	public:
 		ThemeInterface() noexcept;
 		template<typename ValueType>
@@ -45,6 +47,9 @@ namespace SUTK
 		template<typename ValueType>
 		ValueType& getValue(Type type, const KeyViewType& key) noexcept;
 		void applyTheme(Theme<KeyType, KeyViewType>* theme) noexcept;
+
+		// Published after publishing events for every key
+		OnThemeChangeEvent& getOnThemeChangeEvent() noexcept { return m_onThemeChange; }
 
 		void dump() const noexcept;
 	};
@@ -180,6 +185,7 @@ namespace SUTK
 		m_currentTheme = theme;
 		for(auto& keyValuePair : m_defs)
 			keyValuePair.second.second.publish();
+		m_onThemeChange.publish();
 	}
 
 	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
