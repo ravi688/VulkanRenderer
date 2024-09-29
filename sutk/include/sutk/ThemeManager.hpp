@@ -28,6 +28,8 @@ namespace SUTK
 		};
 		typedef com::Event<com::no_publish_ptr_t> EventType;
 		typedef EventType::SubscriptionID EventHandlerID;
+		typedef EventHandlerID BindID;
+		static constexpr BindID InvalidBindID = EventType::InvalidSubscriptionID;
 	private:
 		com::unordered_map<KeyType, std::pair<Type, EventType>, KeyViewType> m_defs;
 		Theme<KeyType, KeyViewType>* m_currentTheme;
