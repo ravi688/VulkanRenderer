@@ -3,6 +3,7 @@
 #include <sutk/RenderImage.hpp>
 #include <sutk/RenderRectFill.hpp>
 #include <sutk/SGEGfxDriver.hpp>
+#include <sutk/SGEInputDriver.hpp>
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
 
@@ -11,14 +12,15 @@ namespace SUTK
 	DriverInitializationData ImageAspectRatioTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Image Aspect Ratio Test";
+		data.title = "Image Aspect Ratio Test (Press B to toggle Aspect Ratio Preserve)";
 		return data;
 	}
 
 	void ImageAspectRatioTest::initialize(SGE::Driver& driver)
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
-		m_uiDriver = new UIDriver(*m_gfxDriver);
+		m_inputDriver = new SGEInputDriver(driver);
+		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
 		UIDriver::ImageReference image = m_uiDriver->loadImage("../textures/Rider.png");
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
 		m_renderRectContainer = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
@@ -29,6 +31,19 @@ namespace SUTK
 		auto attr = m_uiDriver->getImageAttributes(image);
 		m_renderRect->setPreserveAspectRatio(true);
 		m_renderRect->setAspectRatio({ attr.width, attr.height });
+
+		m_inputDriver->getOnKeyEvent().subscribe([this](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
+		{
+			static bool isSwap = true;
+			if((keycode == KeyCode::B) && (event == KeyEvent::Press))
+			{
+				if(isSwap)
+					this->m_renderRect->setPreserveAspectRatio(false);
+				else
+					this->m_renderRect->setPreserveAspectRatio(true);
+				isSwap = !isSwap;
+			}
+		});
 	}
 
 	void ImageAspectRatioTest::terminate(SGE::Driver& driver)
