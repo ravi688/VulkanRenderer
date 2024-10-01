@@ -8,6 +8,7 @@
 
 namespace SGE
 {
+	typedef texture_attributes_t TextureAttributes;
 	class Driver;
 	class SGE_API Texture : public com::PtrReference<texture_t>
 	{
@@ -17,6 +18,7 @@ namespace SGE
 	public:
 		Texture(Driver& driver, texture_type_t type, std::string_view str) noexcept;
 		Texture(Driver& driver, texture_type_t type, const std::span<const u8> data) noexcept;
+		void getAttributes(texture_attributes_t& attributes) noexcept;
 		void destroy() noexcept
 		{
 			texture_destroy(m_handle);

@@ -270,3 +270,9 @@ SGE_API void texture_release_resources(texture_t* texture)
 {
 	vulkan_texture_release_resources(texture);
 }
+
+
+SGE_API const texture_attributes_t* texture_get_attributes(const texture_t* texture)
+{
+	return vulkan_texture_get_attributes(VULKAN_TEXTURE_CAST_CONST(texture));
+}

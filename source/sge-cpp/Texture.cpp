@@ -13,4 +13,12 @@ namespace SGE
 	{
 		m_handle = texture_load_mem(driver.getHandle(), type, com_immutable_data_t { data.data(), static_cast<u32>(data.size()) });
 	}
+	void Texture::getAttributes(texture_attributes_t& attributes) noexcept
+	{
+		const texture_attributes_t* pAttributes = texture_get_attributes(m_handle);
+		attributes.width = pAttributes->width;
+		attributes.height = pAttributes->height;
+		attributes.depth = pAttributes->depth;
+		attributes.channel_count = pAttributes->channel_count;
+	}
 }

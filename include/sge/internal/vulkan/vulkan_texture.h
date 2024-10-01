@@ -28,6 +28,8 @@
 
 #include <vulkan/vulkan.h>
 #include <sge/defines.h>
+/* for texture_attributes_t */
+#include <sge/types.h>
 
 #include <sge/internal/vulkan/vulkan_image.h>			 // vulkan_image_t
 #include <sge/internal/vulkan/vulkan_image_view.h> 	 // vulkan_image_view_t
@@ -123,10 +125,17 @@ typedef struct vulkan_texture_t
 	vulkan_image_view_t* image_views;
 	u32 image_view_count;
 
-	u32 width;
-	u32 height;
-	u32 depth;
-	u8 channel_count;
+	union
+	{
+		texture_attributes_t attributes;
+		struct
+		{
+			u32 width;
+			u32 height;
+			u32 depth;
+			u8 channel_count;
+		};
+	};
 
 	vulkan_texture_type_t type;
 
@@ -199,5 +208,8 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 vulkan_texture_get_imag
 	return ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == 0) ? 1 : texture->image_view_count;
 }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_texture_usage_stage_t vulkan_texture_get_usage_stage(vulkan_texture_t* texture) { return texture->current_stage; }
+
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const texture_attributes_t* vulkan_texture_get_attributes(const vulkan_texture_t* texture) { return &texture->attributes; }
 
 END_CPP_COMPATIBLE
