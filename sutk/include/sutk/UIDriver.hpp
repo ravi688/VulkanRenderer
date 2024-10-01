@@ -31,6 +31,7 @@ namespace SUTK
 	public:
 		typedef GfxDriverObjectHandleType ImageReference;
 		static constexpr ImageReference InvalidImage = GFX_DRIVER_OBJECT_NULL_HANDLE;
+		typedef TextureAttributes ImageAttributes;
 	private:
 		IGfxDriver& m_gfxDriver;
 		IInputDriver* m_inputDriver;
@@ -59,6 +60,7 @@ namespace SUTK
 
 		ImageReference loadImage(std::string_view path) noexcept;
 		void unloadImage(ImageReference id) noexcept;
+		ImageAttributes getImageAttributes(ImageReference id) noexcept;
 
 		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }
 

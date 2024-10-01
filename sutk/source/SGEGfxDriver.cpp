@@ -832,6 +832,17 @@ namespace SUTK
 		return m_textureData.add({ std::string(str), { } });
 	}
 
+	void SGEGfxDriver::getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out)
+	{
+		SGE::Texture sgeTexture = getTexture(texture);
+		SGE::TextureAttributes attr;
+		sgeTexture.getAttributes(attr);
+		out.width = attr.width;
+		out.height = attr.height;
+		out.depth = attr.depth;
+		out.channelCount = attr.channel_count;
+	}
+
 	void SGEGfxDriver::unloadTexture(GfxDriverObjectHandleType handle)
 	{
 		m_textureData.remove(handle);
@@ -840,6 +851,9 @@ namespace SUTK
 
 	SGE::Texture SGEGfxDriver::getTexture(GfxDriverObjectHandleType handle) noexcept
 	{
+		if(handle == UIDriver::InvalidImage)
+			return getDefaultTexture();
+
 		std::pair<std::string, SGE::Texture>& pair = m_textureData.get(handle);
 		// TODO: Wait on the another thread to finish loading this texture
 		if(!pair.second)
@@ -889,11 +903,7 @@ namespace SUTK
 		if(geometry.isFillImageModified())
 		{
 			UIDriver::ImageReference image = geometry.getFillImage();
-			SGE::Texture texture;
-			if(image != UIDriver::InvalidImage)
-				texture = getTexture(image);
-			else
-				texture = getDefaultTexture();
+			SGE::Texture texture = getTexture(image);
 			material.set<SGE::Texture>("albedo", texture);
 		}
 

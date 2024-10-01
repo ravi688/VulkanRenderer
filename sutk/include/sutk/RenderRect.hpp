@@ -18,7 +18,7 @@ namespace SUTK
 		bool m_isGeometryDirty;
 
 	protected:
-		void setRect(const Rect2Df& rect) noexcept { m_rect = rect; }
+		void setRect(const Rect2Df& rect) noexcept;
 		Rect2Df getRect() const noexcept { return m_rect; }
 
 		bool isPosDirty() const noexcept { return m_isPosDirty; }

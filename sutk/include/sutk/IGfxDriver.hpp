@@ -20,6 +20,14 @@ namespace SUTK
 		Color4 color;
 	};
 
+	struct TextureAttributes
+	{
+		u32 width;
+		u32 height;
+		u32 depth;
+		u8 channelCount;
+	};
+
 	typedef std::vector<ColorRange> ColorRangeList;
 
 	class IGfxDriver
@@ -61,6 +69,7 @@ namespace SUTK
 			setObjectScissor(objHandle, rect);
 		}
 		virtual GfxDriverObjectHandleType loadTexture(std::string_view str) = 0;
+		virtual void getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out) = 0;
 		virtual void unloadTexture(GfxDriverObjectHandleType handle) = 0;
 		virtual GfxDriverObjectHandleType compileGeometry(const Geometry& geometryDsc, GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) = 0;
 		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) = 0;
