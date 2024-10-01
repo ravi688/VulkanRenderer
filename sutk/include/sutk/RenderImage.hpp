@@ -17,6 +17,7 @@ namespace SUTK
 	private:
 		AspectRatio m_aspectRatio;
 		bool m_isPreserveAspectRatio;
+		bool m_isImagePreserveAspectRatio;
 
 		Rect2Df calculateImageRectAR(Rect2Df rect) noexcept;
 		void updateImageRect(Rect2Df rect) noexcept;
@@ -34,5 +35,6 @@ namespace SUTK
 		void setImage(UIDriver::ImageReference image) noexcept;
 		void setAspectRatio(AspectRatio aspectRatio) noexcept;
 		void setPreserveAspectRatio(bool isPreserve) noexcept;
+		void preserveImageAspectRatio() noexcept;
 	};
 }
