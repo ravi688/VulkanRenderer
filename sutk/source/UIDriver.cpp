@@ -103,6 +103,13 @@ namespace SUTK
 		getGfxDriver().unloadTexture(id);
 	}
 
+	UIDriver::ImageAttributes UIDriver::getImageAttributes(ImageReference id) noexcept
+	{
+		TextureAttributes attr;
+		getGfxDriver().getTextureAttributes(id, attr);
+		return attr;
+	}
+
 	GfxDriverObjectHandleType UIDriver::getGlobalTextGroup() noexcept
 	{
 		if(m_globalTextGroup == GFX_DRIVER_OBJECT_NULL_HANDLE)

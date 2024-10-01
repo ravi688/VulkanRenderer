@@ -103,4 +103,11 @@ namespace SUTK
 		m_isPosDirty = isPositionChanged;
 		m_isSizeDirty = isSizeChanged;
 	}
+
+ 	void RenderRect::setRect(const Rect2Df& rect) noexcept 
+ 	{ 
+ 		m_rect = rect; 
+ 		m_isPosDirty = true;
+ 		m_isSizeDirty = true;
+ 	}
 }

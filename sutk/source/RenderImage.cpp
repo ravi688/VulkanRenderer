@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	RenderImage::RenderImage(UIDriver& driver, RenderableContainer* container, bool isUpdate) noexcept : RenderRect(driver, container)
+	RenderImage::RenderImage(UIDriver& driver, RenderableContainer* container, bool isUpdate) noexcept : RenderRect(driver, container), m_aspectRatio({ 1, 1 }), m_isPreserveAspectRatio(false)
 	{
 		_assert(container != NULL);
 		auto rect = container->getRect();
@@ -57,5 +57,76 @@ namespace SUTK
 		getGeometry().fillImage(image);
 		// Recompile the geometry
 		RenderRect::setGeometryDirty(true);
+		if(m_isPreserveAspectRatio)
+		{
+			UIDriver::ImageAttributes attr = getUIDriver().getImageAttributes(image);
+			setAspectRatio({ attr.width, attr.height });
+		}
+	}
+
+	void RenderImage::setAspectRatio(AspectRatio aspectRatio) noexcept
+	{
+		m_aspectRatio = aspectRatio;
+		if(m_isPreserveAspectRatio)
+			updateImageRect();
+	}
+
+	void RenderImage::setPreserveAspectRatio(bool isPreserve) noexcept
+	{
+		m_isPreserveAspectRatio = isPreserve;
+		updateImageRect();
+	}
+
+	Rect2Df RenderImage::calculateImageRectAR(Rect2Df rect) noexcept
+	{
+		Rect2Df imageRect;
+
+		// In case you aren't able to understand it, then try to visualize it.
+		auto ar = m_aspectRatio.nominator / static_cast<f32>(m_aspectRatio.denominator);
+		auto ar2 = rect.width / rect.height;
+
+		if(ar < ar2)
+		{
+			imageRect.height = rect.height;
+			imageRect.width = rect.height * ar;
+			imageRect.x = (rect.width - imageRect.width) * 0.5f;
+		}
+		else
+		{
+			imageRect.width = rect.width;
+			imageRect.height = rect.width * m_aspectRatio.denominator / static_cast<f32>(m_aspectRatio.nominator);
+			imageRect.y = (rect.height - imageRect.height) * 0.5f;
+		}
+		return imageRect;
+	}
+
+	void RenderImage::updateImageRect(Rect2Df rect) noexcept
+	{
+		Rect2Df imageRect;
+		if(!m_isPreserveAspectRatio)
+		{
+			imageRect = getContainer()->getRect();
+			imageRect.setPosition({ 0, 0 });
+		}
+		else
+			imageRect = calculateImageRectAR(rect);
+		setRect(imageRect);
+	}
+
+	void RenderImage::updateImageRect() noexcept
+	{
+		updateImageRect(getContainer()->getRect());
+	}
+
+	void RenderImage::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
+	{
+		if(!m_isPreserveAspectRatio)
+		{
+			RenderRect::onContainerResize(rect, isPositionChanged, isSizeChanged);
+			return;
+		}
+		if(!isSizeChanged)
+			return;
+		updateImageRect(rect);
 	}
 }
