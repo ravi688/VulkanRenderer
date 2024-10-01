@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	RenderImage::RenderImage(UIDriver& driver, RenderableContainer* container, bool isUpdate) noexcept : RenderRect(driver, container), m_aspectRatio({ 1, 1 }), m_isPreserveAspectRatio(false)
+	RenderImage::RenderImage(UIDriver& driver, RenderableContainer* container, bool isUpdate) noexcept : RenderRect(driver, container), m_aspectRatio({ 1, 1 }), m_isPreserveAspectRatio(false), m_isImagePreserveAspectRatio(false)
 	{
 		_assert(container != NULL);
 		auto rect = container->getRect();
@@ -57,11 +57,20 @@ namespace SUTK
 		getGeometry().fillImage(image);
 		// Recompile the geometry
 		RenderRect::setGeometryDirty(true);
-		if(m_isPreserveAspectRatio)
+		if(m_isImagePreserveAspectRatio)
+			preserveImageAspectRatio();
+	}
+
+	void RenderImage::preserveImageAspectRatio() noexcept
+	{
+		m_isImagePreserveAspectRatio = true;
+		UIDriver::ImageReference image = getGeometry().getFillImage();
+		if(image != UIDriver::InvalidImage)
 		{
 			UIDriver::ImageAttributes attr = getUIDriver().getImageAttributes(image);
 			setAspectRatio({ attr.width, attr.height });
 		}
+		setPreserveAspectRatio(true);
 	}
 
 	void RenderImage::setAspectRatio(AspectRatio aspectRatio) noexcept
