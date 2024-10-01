@@ -50,7 +50,7 @@ EXTERNAL_LIBRARIES = -L./external-dependency-libs -lshaderc_shared
 BUILD_DEFINES=
 
 DEPENDENCIES = ../../.. ../../../dependencies/GLSLCommon ../../../dependencies/Common ../../../dependencies/PhyMacParser ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
-DEPENDENCY_LIBS = ../../../dependencies/GLSLCommon/lib/glslcommon.a ../../../dependencies/Common/lib/common.a ../../../dependencies/PhyMacParser/lib/ppsr.a ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
+DEPENDENCY_LIBS = ../../../dependencies/GLSLCommon/lib/glslcommon.a ../../../dependencies/PhyMacParser/lib/ppsr.a ../../../dependencies/Common/lib/common.a ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
 SHARED_DEPENDENCIES = 
 SHARED_DEPENDENCY_LIBS = 
