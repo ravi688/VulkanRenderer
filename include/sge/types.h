@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <sge/defines.h>
+
 typedef enum text_render_space_type_t
 {
 	/* selects the 'screen projection matrix' from the camera's projection matrices */
@@ -33,4 +35,12 @@ typedef enum text_render_space_type_t
 	TEXT_RENDER_SPACE_TYPE_3D
 } text_render_space_type_t;
 
-
+/* WARNING: if you're thinking to change anything inside this struct, make sure to inspect every source file where it used.
+ * because it also used in unions as a convenient alias to older interface. */
+typedef struct texture_attributes_t
+{
+	u32 width;				// width of the texture in texels
+	u32 height;				// height of the texture in texels
+	u32 depth;
+	u8 channel_count;		// number of channels present in the texture, for now it must be 4 (RGBA)
+} texture_attributes_t;

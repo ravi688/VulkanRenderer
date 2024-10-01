@@ -204,4 +204,6 @@ SGE_API void texture_destroy(texture_t* texture);
  */
 SGE_API void texture_release_resources(texture_t* texture);
 
+SGE_API const texture_attributes_t* texture_get_attributes(const texture_t* texture);
+
 END_CPP_COMPATIBLE
