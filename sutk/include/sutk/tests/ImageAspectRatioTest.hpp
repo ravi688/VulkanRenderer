@@ -15,11 +15,12 @@ namespace SUTK
 	private:
 		UIDriver* m_uiDriver;
 		IGfxDriver* m_gfxDriver;
+		IInputDriver* m_inputDriver;
 		RenderImage* m_renderRect;
 		RenderableContainer* m_renderRectContainer;
 
 	public:
-		ImageAspectRatioTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }
+		ImageAspectRatioTest() : m_uiDriver(NULL), m_gfxDriver(NULL), m_inputDriver(NULL) { }
 
 		DriverInitializationData getInitializationData() override;
 
