@@ -17,6 +17,7 @@ namespace SUTK
 			// In centimeters
 			f32 m_scaleFactor;
 			u32 m_numKeysPressed;
+			Vec2Df m_scrollDelta;
 		protected:
 			// Overrides of SUTK::MouseScrollHandlerObject
 			virtual void onMouseScroll(SUTK::Vec2Df scrollDelta) override;
@@ -33,5 +34,6 @@ namespace SUTK
 		 	f32 getScaleFactor() const noexcept { return m_scaleFactor; }
 		 	// scrollDelta must be in centimeters
 		 	void addScrollDelta(Vec2Df scrollDelta) noexcept;
+		 	Vec2Df getScrollDelta() const noexcept { return m_scrollDelta; }
 	};
 }
