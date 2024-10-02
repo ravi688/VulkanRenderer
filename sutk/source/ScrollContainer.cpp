@@ -9,7 +9,8 @@ namespace SUTK
 																					KeyboardHandlerObject(driver),
 																					m_isInside(false),
 																					m_scaleFactor(0.5f),
-																					m_numKeysPressed(0)
+																					m_numKeysPressed(0),
+																					m_scrollDelta({ 0.0f, 0.0f })
 	{
 		enableMouseEnter(true);
 		enableMouseExit(true);
@@ -73,6 +74,7 @@ namespace SUTK
 				scrollDelta.x = -tl.x;
 			else if((scrollDelta.x + bt.x) < 0.0f)
 				scrollDelta.x = 0.0f;
+			m_scrollDelta += scrollDelta;
 			child->setPosition(scrollDelta + position);
 		}
 	}
