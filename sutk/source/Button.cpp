@@ -19,6 +19,12 @@ namespace SUTK
 		enableMouseExit(true);
 	}
 
+	void Button::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
+	{
+		Container::onResize(newRect, isPositionChanged, isSizeChanged);
+		MouseMoveHandlerObject::update();
+	}
+
 	void Button::onMouseEnter() noexcept
 	{
 		if(m_graphic != NULL)

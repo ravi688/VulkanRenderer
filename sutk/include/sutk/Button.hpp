@@ -31,6 +31,9 @@ namespace SUTK
 		OnPressEvent m_onPressEvent;
 		OnReleaseEvent m_onReleaseEvent;
 
+	protected:
+		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
+
 	public:
 		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 

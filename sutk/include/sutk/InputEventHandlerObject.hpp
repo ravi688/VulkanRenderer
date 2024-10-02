@@ -112,6 +112,10 @@ namespace SUTK
 		bool m_isMouseExitEnabled;
 		bool m_isInside;
 		IInputDriver& m_inputDriver;
+
+		// position: is the mouse position in global coordinates
+		void update(Vec2Df position) noexcept;
+
 	protected:
 		virtual void onMouseMove(Vec2Df position) = 0;
 
@@ -122,6 +126,11 @@ namespace SUTK
 
 		void enableMouseEnter(bool isEnable) noexcept { m_isMouseEnterEnabled = isEnable; }
 		void enableMouseExit(bool isEnable) noexcept { m_isMouseExitEnabled = isEnable; }
+
+		// This can be called to recalculate and recheck the mouse pointer if it is inside the rect
+		// That also means onMouseEnter() or onMouseExit() may be called.
+		// However, (for now) onMouseMove() is not called.
+		void update() noexcept;
 
 	public:
 		virtual ~MouseMoveHandlerObject() noexcept = default;
