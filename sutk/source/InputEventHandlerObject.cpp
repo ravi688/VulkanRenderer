@@ -23,29 +23,40 @@ namespace SUTK
 	{
 		IInputDriver::OnMouseMoveEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, SUTK::Vec2Df position)
 		{
-			if((!m_isInside) && isInside(position))
-			{
-				m_isInside = true;
-				if(m_isMouseEnterEnabled)
-					onMouseEnter();
-			}
-			else if(m_isInside && (!isInside(position)))
-			{
-				m_isInside = false;
-				if(m_isMouseExitEnabled)
-					onMouseExit();
-			}
-			
-			if(m_isInside)
-			{
-				// convert global coordinates to the local coordinates of the container 'container'
-				Container* container = getContainer();
-				if(container != NULL)
-					position = container->getScreenCoordsToLocalCoords(position);
-				onMouseMove(position);
-			}
+			this->update(position);
 		});
 		setSubscriptionID(id);
+	}
+
+	void MouseMoveHandlerObject::update(Vec2Df position) noexcept
+	{
+		if((!m_isInside) && isInside(position))
+		{
+			m_isInside = true;
+			if(m_isMouseEnterEnabled)
+				onMouseEnter();
+		}
+		else if(m_isInside && (!isInside(position)))
+		{
+			m_isInside = false;
+			if(m_isMouseExitEnabled)
+				onMouseExit();
+		}
+		
+		if(m_isInside)
+		{
+			// convert global coordinates to the local coordinates of the container 'container'
+			Container* container = getContainer();
+			if(container != NULL)
+				position = container->getScreenCoordsToLocalCoords(position);
+			onMouseMove(position);
+		}
+	}
+
+	void MouseMoveHandlerObject::update() noexcept
+	{
+		 Vec2Df position = m_inputDriver.getMousePosition();
+		 update(position);
 	}
 
 	void MouseMoveHandlerObject::sleep() noexcept
