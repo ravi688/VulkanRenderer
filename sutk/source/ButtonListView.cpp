@@ -13,6 +13,7 @@ namespace SUTK
 {
 	ButtonListView::ButtonListView(UIDriver& driver, Container* parent, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : VBoxContainer(driver, parent),
 																							m_textGroup(textGroup),
+																							m_buttonHandler({ }),
 																							m_buttonPool(std::bind(&ButtonListView::onButtonCreate, this),
 																										std::bind(&ButtonListView::onButtonReturn, this, std::placeholders::_1),
 																										std::bind(&ButtonListView::onButtonRecycle, this, std::placeholders::_1),
@@ -30,6 +31,9 @@ namespace SUTK
 	{
 		Button* button = getUIDriver().createContainer<Button>(this, true, m_textGroup);
 		button->setRecycleState(Container::RecycleState::Recycled);
+		button->getGraphicAs<DefaultButtonGraphic>()->getLabel().setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
+		if(m_buttonHandler.has_value())
+			(*m_buttonHandler)(button);
 		return button;
 	}
 
@@ -47,6 +51,13 @@ namespace SUTK
 		// So we need to mark it recycled first so that the button and all of its child contains can be become active
 		button->setRecycleState(Container::RecycleState::Recycled);
 		ContainerUtility::SetActiveAllRecursive(button, true);
+	}
+
+	void ButtonListView::setOnPostButtonCreateHandler(OnPostButtonCreateHandler handler) noexcept
+	{ 
+		m_buttonHandler = handler;
+		for(auto& button : m_buttonPool)
+			handler(button);
 	}
 
 	std::pair<Button*, f32> ButtonListView::addButton(const std::string_view labelStr) noexcept
