@@ -52,6 +52,18 @@ namespace SUTK
 		recalculateConstraints();
 	}
 
+	void AnchorRect::fitToChildRect() noexcept
+	{
+		_com_assert(m_childRect != NULL);
+		_com_assert(m_parentRect != NULL);
+		Rect2Df childRect = m_childRect->getRect();
+		Vec2Df size = m_parentRect->getSize();
+		Rect2Df anchorRect;
+		anchorRect.setTopLeft(childRect.getTopLeft() / size);
+		anchorRect.setBottomRight(childRect.getBottomRight() / size);
+		setRect(anchorRect);
+	}
+
 	void AnchorRect::setRect(Rect2Df rect) noexcept
 	{
 		m_rect = rect;

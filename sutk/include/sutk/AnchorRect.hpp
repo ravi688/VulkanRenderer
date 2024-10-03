@@ -32,6 +32,11 @@ namespace SUTK
 		// getters
 		Rect2Df getRect() const noexcept { return m_rect; }
 
+		// Fits the anchor rect to the child's Rect
+		// But it doesn't relcalculate if you change the child's Rect after this function call.
+		// You have to call this function again if you do so.
+		void fitToChildRect() noexcept;
+
 		// setters
 
 		void setRect(Rect2Df rect) noexcept;
