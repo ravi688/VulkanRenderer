@@ -114,6 +114,6 @@ namespace SUTK
 	{
 		f32 xCoord = m_label->getText().getCoordFromColPos(END_OF_LINE);
 		Vec2Df size = getSize();
-		return { xCoord, size.height };
+		return { xCoord + m_label->getPosition().x, size.height };
 	}
 }
