@@ -131,7 +131,7 @@ namespace SUTK
 		void alwaysFitInParent() noexcept;
 		// Resizes this container's rect to fit into its parent's rect
 		// does nothing if parent is NULL
-		void fitInParent() noexcept;
+		void fitInParent(Vec4Df margins = { }) noexcept;
 
 		// anchor rect getters
 		AnchorRect* getAnchorRect() const noexcept { return m_anchorRect; }

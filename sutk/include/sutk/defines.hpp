@@ -99,6 +99,7 @@ namespace SUTK
 		Vec2D<T> operator -(const Vec2D<T>& v) const noexcept { return { x - v.x, y - v.y }; }
 		Vec2D<T> operator *(const Vec2D<T>& v) const noexcept { return { x * v.x, y * v.y }; }
 		Vec2D<T> operator *(T s) const noexcept { return { x * s, y * s }; }
+		Vec2D<T> operator /(const Vec2D<T>& v) const noexcept { return  { x / v.x, y / v.y }; }
 		Vec2D<T>& operator +=(const Vec2D<T>& v) noexcept { x += v.x; y += v.y; return *this; }
 		Vec2D<T>& operator -=(const Vec2D<T>& v) noexcept { x -= v.x; y -= v.y; return *this; }
 
@@ -261,8 +262,16 @@ namespace SUTK
 	{
 		T x;
 		T y;
-		T width;
-		T height;
+		union
+		{
+			T width;
+			T z;
+		};
+		union
+		{
+			T height;
+			T w;
+		};
 
 		// getters
 		T getWidth() const noexcept { return width; }
@@ -567,4 +576,5 @@ namespace SUTK
 	typedef Rect2D<f32> Rect2Df;
 	typedef Vec2D<f32> Vec2Df;
 	typedef Vec3D<f32> Vec3Df;
+	typedef Rect2D<f32> Vec4Df;
 }

@@ -102,12 +102,13 @@ namespace SUTK
 		getAnchorRect()->setRect({ 0.0f, 0.0f, 1.0f, 1.0f });
 	}
 
-	void Container::fitInParent() noexcept
+	void Container::fitInParent(Vec4Df margins) noexcept
 	{
 		auto parent = getParent();
 		if(parent == NULL)
 			return;
-		setRect({ Vec2Df::zero(), parent->getSize() });
+		auto size = parent->getSize();
+		setRect({ { margins.x, margins.z }, { size.width - margins.y, size.height - margins.w } });
 	}
 
 	u32 Container::getDepth() const noexcept
