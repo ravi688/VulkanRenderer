@@ -13,4 +13,10 @@ namespace SUTK
 		updateMaskFor(button);
 		return button;
 	}
+
+	void ScrollButtonList::onParentResize(const SUTK::Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
+	{
+		MaskedScrollableContainer<ButtonListView>::onParentResize(newRect, isPositionChanged, isSizeChanged);
+		setSize({ newRect.width - getScrollContainer()->getScrollDelta().x, getSize().height });
+	}
 }
