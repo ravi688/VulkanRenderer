@@ -29,7 +29,7 @@ namespace SUTK
 	template<typename... Args>
 	MaskedScrollableContainer<ContainerType>::MaskedScrollableContainer(UIDriver& driver, Container* parent, Args&&... args) noexcept : ContainerType(driver, parent, std::forward<Args&&>(args)...), Scrollable(this)
 	{
-
+		_com_assert(dynamic_cast<ScrollContainer*>(parent) != NULL);
 	}
 
 	template<ContainerT ContainerType>
