@@ -64,6 +64,17 @@ namespace SUTK
 		setRect(anchorRect);
 	}
 
+	void AnchorRect::moveToCenterOfChild() noexcept
+	{
+		_com_assert(m_childRect != NULL);
+		_com_assert(m_parentRect != NULL);
+		Rect2Df childRect = m_childRect->getRect();
+		Vec2Df size = m_parentRect->getSize();
+		Rect2Df anchorRect;
+		anchorRect.setPosition(childRect.getCenter() / size);
+		setRect(anchorRect);
+	}
+
 	void AnchorRect::setRect(Rect2Df rect) noexcept
 	{
 		m_rect = rect;
