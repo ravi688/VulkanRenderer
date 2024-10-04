@@ -61,10 +61,15 @@ namespace SUTK
 			preserveImageAspectRatio();
 	}
 
+	UIDriver::ImageReference RenderImage::getImage() noexcept
+	{
+		return getGeometry().getFillImage();
+	}
+
 	void RenderImage::preserveImageAspectRatio() noexcept
 	{
 		m_isImagePreserveAspectRatio = true;
-		UIDriver::ImageReference image = getGeometry().getFillImage();
+		UIDriver::ImageReference image = getImage();
 		if(image != UIDriver::InvalidImage)
 		{
 			UIDriver::ImageAttributes attr = getUIDriver().getImageAttributes(image);

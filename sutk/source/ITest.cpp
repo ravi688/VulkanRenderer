@@ -18,6 +18,7 @@
 #include <sutk/tests/ThemeLoadTest.hpp>
 #include <sutk/tests/TransientContTest.hpp>
 #include <sutk/tests/ImageAspectRatioTest.hpp>
+#include <sutk/tests/ImageButtonGraphicTest.hpp>
 
 namespace SUTK
 {
@@ -39,7 +40,8 @@ namespace SUTK
 		{ "THEME", [] () { return std::unique_ptr<ITest>(new ThemeTest()); }},
 		{ "THEME_LOAD", [] () { return std::unique_ptr<ITest>(new ThemeLoadTest()); }},
 		{ "TRANSIENT_CONT", [] () { return std::unique_ptr<ITest>(new TransientContTest()); }},
-		{ "IMAGE_ASPECT_RATIO", [] () { return std::unique_ptr<ITest>(new ImageAspectRatioTest()); }}
+		{ "IMAGE_ASPECT_RATIO", [] () { return std::unique_ptr<ITest>(new ImageAspectRatioTest()); }},
+		{ "IMAGE_BUTTON_GRAPHIC", [] () { return std::unique_ptr<ITest>(new ImageButtonGraphicTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)

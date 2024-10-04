@@ -33,6 +33,7 @@ namespace SUTK
 		virtual void update() noexcept override;
 
 		void setImage(UIDriver::ImageReference image) noexcept;
+		UIDriver::ImageReference getImage() noexcept;
 		void setAspectRatio(AspectRatio aspectRatio) noexcept;
 		void setPreserveAspectRatio(bool isPreserve) noexcept;
 		void preserveImageAspectRatio() noexcept;
