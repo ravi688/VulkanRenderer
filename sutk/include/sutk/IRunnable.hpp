@@ -13,4 +13,14 @@ namespace SUTK
 
 		static void Update(IRunnable* runnable) noexcept;
 	};
+
+	class UIDriver;
+	class SUTK_API Runnable : public IRunnable
+	{
+	protected:
+		Runnable(UIDriver& driver) noexcept;
+
+		virtual bool isRunning() = 0;
+		virtual void update() = 0;
+	};
 }
