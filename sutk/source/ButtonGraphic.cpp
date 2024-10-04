@@ -80,8 +80,7 @@ namespace SUTK
 		_com_assert(parent != NULL);
 		
 		// size of this graphic should be as that of Button's rect
-		setRect({ { 0, 0 }, parent->getSize() });
-		getAnchorRect()->setRect( { 0, 0, 1, 1 });
+		alwaysFitInParent();
 
 		m_renderRect = driver.createRenderable<RenderRectFillRound>(this);
 	}
@@ -91,17 +90,11 @@ namespace SUTK
 		m_renderRect->setColor(color);
 	}
 
-	Vec2Df DefaultButtonGraphicNoLabel::getMinBoundSize() noexcept
-	{
-		return getSize();
-	}
-
 	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept : DefaultButtonGraphicNoLabel(driver, parent)
 	{
 		m_label = driver.createContainer<Label>(this, textGroup);
 		// size of the label's rect should be as that of ButtonGraphic's rect
-		m_label->setRect({ { 0, 0 }, getSize() });
-		m_label->getAnchorRect()->setRect({ 0.0f, 0.0f, 1.0f, 1.0f });
+		m_label->alwaysFitInParent();
 		m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
 	}
 
@@ -114,9 +107,12 @@ namespace SUTK
 
 	ImageButtonGraphic::ImageButtonGraphic(UIDriver& driver, Container* parent) noexcept : ColorDriverButtonGraphicContainer<RenderableContainer>(driver, parent)
 	{
-		m_imageCont = driver.createContainer<RenderableContainer>(this);
-		m_imageCont->alwaysFitInParent();
-		m_image = driver.createRenderable<RenderImage>(m_imageCont);
+		alwaysFitInParent();
+		m_image = driver.createRenderable<RenderImage>(this);
+
+		setHoverColor(Color4::white());
+		setPressColor(Color4::white());
+		setIdleColor(Color4::white());
 	}
 
 	void ImageButtonGraphic::onColorChange(Color4 color) noexcept
@@ -128,4 +124,36 @@ namespace SUTK
 	{
 		m_image->setImage(image);
 	}
+
+	ImageOverDefaultButtonGraphicProxy::ImageOverDefaultButtonGraphicProxy(UIDriver& driver, Container* parent) noexcept
+	{
+		m_defaultGraphic = driver.createContainer<DefaultButtonGraphicNoLabel>(parent);
+		m_imageGraphic = driver.createContainer<ImageButtonGraphic>(parent);
+	}
+
+	void ImageOverDefaultButtonGraphicProxy::onHover(HoverInfo info)
+	{
+		m_defaultGraphic->onHover(info);
+		m_imageGraphic->onHover(info);
+	}
+
+	void ImageOverDefaultButtonGraphicProxy::onPress()
+	{
+		m_defaultGraphic->onPress();
+		m_imageGraphic->onPress();
+	}
+
+	void ImageOverDefaultButtonGraphicProxy::onRelease()
+	{
+		m_defaultGraphic->onRelease();
+		m_imageGraphic->onRelease();
+	}
+
+	Vec2Df ImageOverDefaultButtonGraphicProxy::getMinBoundSize()
+	{
+		Vec2Df size1 = m_defaultGraphic->getMinBoundSize();
+		Vec2Df size2 = m_imageGraphic->getMinBoundSize();
+		return { std::max(size1.x, size2.x), std::max(size1.y, size2.y) };
+	}
+
 }

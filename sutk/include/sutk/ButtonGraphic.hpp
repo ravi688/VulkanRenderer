@@ -79,6 +79,8 @@ namespace SUTK
 		ColorDriverButtonGraphicContainer(UIDriver& driver, Container* parent) noexcept;
 		// Override of ContainerType::setActive();
 		void setActive(bool isActive) noexcept override;
+		// Implementation of ColorDriverButtonGraphic::getMinBoundSize()
+		virtual Vec2Df getMinBoundSize() noexcept override;
 	};
 
 	template<ContainerT ContainerType>
@@ -98,6 +100,12 @@ namespace SUTK
 		}
 	}
 
+	template<ContainerT ContainerType>
+	Vec2Df ColorDriverButtonGraphicContainer<ContainerType>::getMinBoundSize() noexcept
+	{
+		return ContainerType::getSize();
+	}
+
 	class SUTK_API DefaultButtonGraphicNoLabel : public ColorDriverButtonGraphicContainer<RenderableContainer>
 	{
 	private:
@@ -111,9 +119,6 @@ namespace SUTK
 
 	public:
 		DefaultButtonGraphicNoLabel(UIDriver& driver, Container* parent) noexcept;
-
-		// Implementation of ColorDriverButtonGraphicContainer<RenderableContainer>::getMinBoundSize()
-		virtual Vec2Df getMinBoundSize() noexcept override;
 
 		RenderRectFillRound& getRenderRect() noexcept { return *m_renderRect; }
 	};
@@ -136,7 +141,6 @@ namespace SUTK
 	class SUTK_API ImageButtonGraphic : public ColorDriverButtonGraphicContainer<RenderableContainer>
 	{
 	private:
-		RenderableContainer* m_imageCont;
 		RenderImage* m_image;
 	protected:
 		// Implementaion of ColorDriverButtonGraphicContainer<RenderableContainer>::onColorChange()
@@ -146,5 +150,27 @@ namespace SUTK
 
 		void setImage(UIDriver::ImageReference image) noexcept;
 		RenderImage& getRenderImage() noexcept { return *m_image; }
+	};
+
+	// NOTE: This class is not a SUTK::Container
+	// Don't get surprised while debugging expecting this class to be a node in the Container Hierarchy.
+	// You will find two childs in the SUTK::Button container, one for the default graphic and another one for image graphic
+	// To emphasize these facts, I've added 'Proxy' as suffix.
+	class SUTK_API ImageOverDefaultButtonGraphicProxy : public IButtonGraphic
+	{
+	private:
+		DefaultButtonGraphicNoLabel* m_defaultGraphic;
+		ImageButtonGraphic* m_imageGraphic;
+	public:
+		ImageOverDefaultButtonGraphicProxy(UIDriver& driver, Container* parent) noexcept;
+
+		// Implementation of IButtonGraphic
+		virtual void onHover(HoverInfo info) override;
+		virtual void onPress() override;
+		virtual void onRelease() override;
+		virtual Vec2Df getMinBoundSize() override;
+
+		DefaultButtonGraphicNoLabel* getDefaultGraphic() noexcept { return m_defaultGraphic; }
+		ImageButtonGraphic* getImageGraphic() noexcept { return m_imageGraphic; }
 	};
 }
