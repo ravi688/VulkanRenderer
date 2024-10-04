@@ -1,76 +1,54 @@
 #include <sutk/ButtonGraphic.hpp>
 #include <sutk/Label.hpp> // for SUTK::Label
 #include <sutk/SmallText.hpp> // for SUTK::SmallText
+#include <sutk/RenderImage.hpp> // for SUTK::RenderImage
 
 #include <common/assert.h> // for _com_assert
 
 namespace SUTK
 {
-	VisualButtonRect::VisualButtonRect(SUTK::UIDriver& driver, SUTK::RenderableContainer* container) noexcept : RenderRectFillRound(driver, container),
-																							  m_cta({ { State::Hover, Color4::grey(0.7f) },
-																							  		  { State::Press, Color4::grey(0.3f) },
-																							  		  { State::Idle, Color4::grey(1.0f) } })
+	ColorDriverButtonGraphic::ColorDriverButtonGraphic(UIDriver& driver) noexcept : Runnable(driver), m_cta({ { State::Hover, Color4::grey(0.7f) },
+																							{ State::Press, Color4::grey(0.3f) },
+																							{ State::Idle, Color4::grey(1.0f) } })
 	{
 		m_cta.setDefault(State::Idle);
 	}
 
-	void VisualButtonRect::setActive(bool isActive) noexcept
+	bool ColorDriverButtonGraphic::isRunning()
 	{
-		RenderRectFillRound::setActive(isActive);
-		if(isActive)
-		{
-			m_cta.setDefault(State::Idle);
-			setColor(m_cta.getValue());
-		}
+		return m_cta.isRunning();
 	}
-
-	bool VisualButtonRect::isDirty() noexcept
-	{
-		return m_cta.isRunning() || RenderRectFillRound::isDirty();
-	}
-	void VisualButtonRect::update() noexcept
+	void ColorDriverButtonGraphic::update()
 	{
 		if(m_cta.isRunning())
 		{
 			m_cta.update();
-			setColor(m_cta.getValue());
+			onColorChange(m_cta.getValue());
 		}
-		RenderRectFillRound::update();
 	}
 
-	void VisualButtonRect::setTransitionDelay(const f32 transitionDelay) noexcept
+	void ColorDriverButtonGraphic::setTransitionDelay(const f32 transitionDelay) noexcept
 	{
 		m_cta.setTransitionDelay(transitionDelay);
 	}
 
-	void VisualButtonRect::setHoverColor(Color4 color) noexcept
+	void ColorDriverButtonGraphic::setHoverColor(Color4 color) noexcept
 	{
 		m_cta.set(State::Hover, color);
 	}
-	void VisualButtonRect::setPressColor(Color4 color) noexcept
+	void ColorDriverButtonGraphic::setPressColor(Color4 color) noexcept
 	{
 		m_cta.set(State::Press, color);
 	}
-	void VisualButtonRect::setIdleColor(Color4 color) noexcept
+	void ColorDriverButtonGraphic::setIdleColor(Color4 color) noexcept
 	{
 		m_cta.set(State::Idle,  color);
 		m_cta.setDefault(State::Idle);
-		setColor(m_cta.getValue());
+		onColorChange(m_cta.getValue());
 	}
-	void VisualButtonRect::setState(State state) noexcept
+	void ColorDriverButtonGraphic::setState(State state) noexcept
 	{
 		m_cta.transitionTo(state);
-	}
-
-	DefaultButtonGraphicNoLabel::DefaultButtonGraphicNoLabel(UIDriver& driver, Container* parent) noexcept : RenderableContainer(driver, parent)
-	{
-		_com_assert(parent != NULL);
-		
-		// size of this graphic should be as that of Button's rect
-		setRect({ { 0, 0 }, parent->getSize() });
-		getAnchorRect()->setRect( { 0, 0, 1, 1 });
-
-		m_visualButton = driver.createRenderable<VisualButtonRect>(this);
 	}
 
 	/*						____________
@@ -81,21 +59,38 @@ namespace SUTK
 
 	 */
 
-	void DefaultButtonGraphicNoLabel::onHover(HoverInfo info) noexcept
+	void ColorDriverButtonGraphic::onHover(HoverInfo info) noexcept
 	{
 		if(info.isEnter)
-			m_visualButton->setState(VisualButtonRect::State::Hover);
+			setState(State::Hover);
 		else if(info.isExit)
-			m_visualButton->setState(VisualButtonRect::State::Idle);
+			setState(State::Idle);
 	}
-	void DefaultButtonGraphicNoLabel::onPress() noexcept
+	void ColorDriverButtonGraphic::onPress() noexcept
 	{
-		m_visualButton->setState(VisualButtonRect::State::Press);
+		setState(State::Press);
 	}
-	void DefaultButtonGraphicNoLabel::onRelease() noexcept
+	void ColorDriverButtonGraphic::onRelease() noexcept
 	{
-		m_visualButton->setState(VisualButtonRect::State::Hover);
+		setState(State::Hover);
 	}
+
+	DefaultButtonGraphicNoLabel::DefaultButtonGraphicNoLabel(UIDriver& driver, Container* parent) noexcept : ColorDriverButtonGraphicContainer<RenderableContainer>(driver, parent)
+	{
+		_com_assert(parent != NULL);
+		
+		// size of this graphic should be as that of Button's rect
+		setRect({ { 0, 0 }, parent->getSize() });
+		getAnchorRect()->setRect( { 0, 0, 1, 1 });
+
+		m_renderRect = driver.createRenderable<RenderRectFillRound>(this);
+	}
+
+	void DefaultButtonGraphicNoLabel::onColorChange(Color4 color) noexcept
+	{
+		m_renderRect->setColor(color);
+	}
+
 	Vec2Df DefaultButtonGraphicNoLabel::getMinBoundSize() noexcept
 	{
 		return getSize();
@@ -115,5 +110,22 @@ namespace SUTK
 		f32 xCoord = m_label->getText().getCoordFromColPos(END_OF_LINE);
 		Vec2Df size = getSize();
 		return { xCoord + m_label->getPosition().x, size.height };
+	}
+
+	ImageButtonGraphic::ImageButtonGraphic(UIDriver& driver, Container* parent) noexcept : ColorDriverButtonGraphicContainer<RenderableContainer>(driver, parent)
+	{
+		m_imageCont = driver.createContainer<RenderableContainer>(this);
+		m_imageCont->alwaysFitInParent();
+		m_image = driver.createRenderable<RenderImage>(m_imageCont);
+	}
+
+	void ImageButtonGraphic::onColorChange(Color4 color) noexcept
+	{
+		m_image->setColor(color);
+	}
+
+	void ImageButtonGraphic::setImage(UIDriver::ImageReference image) noexcept
+	{
+		m_image->setImage(image);
 	}
 }

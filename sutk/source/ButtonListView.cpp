@@ -72,16 +72,15 @@ namespace SUTK
 		button->setLayoutAttributes(attr);
 
 		// Setup its Visual Representation
-		auto& visualRect = button->getGraphicAs<DefaultButtonGraphic>()->getVisualButtonRect();
-		auto& label = button->getGraphicAs<DefaultButtonGraphic>()->getLabel();
+		DefaultButtonGraphic* graphic = button->getGraphicAs<DefaultButtonGraphic>();
+		auto& label = graphic->getLabel();
 		label.set(labelStr);
 		label.getText().setFontSize(9);
-		visualRect.setIdleColor(Color4::grey(0.05f));
-		visualRect.setHoverColor(Color4::grey(0.1f));
-		visualRect.setPressColor(Color4::grey(0.15f));
-		visualRect.setTransitionDelay(0.08f);
-
-		visualRect.setRoundness(0.0f);
+		graphic->setIdleColor(Color4::grey(0.05f));
+		graphic->setHoverColor(Color4::grey(0.1f));
+		graphic->setPressColor(Color4::grey(0.15f));
+		graphic->setTransitionDelay(0.08f);
+		graphic->getRenderRect().setRoundness(0.0f);
 		m_yOffset += attr.prefSize.height;
 
 		Vec2Df boundSize = button->getGraphic()->getMinBoundSize();

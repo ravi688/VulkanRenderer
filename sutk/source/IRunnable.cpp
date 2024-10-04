@@ -1,4 +1,5 @@
 #include <sutk/IRunnable.hpp>
+#include <sutk/UIDriver.hpp>
 
 #include <common/assert.h> // for _com_asssert
 
@@ -9,5 +10,10 @@ namespace SUTK
 		_com_assert(runnable != NULL);
 		if(runnable->isRunning())
 			runnable->update();
+	}
+
+	Runnable::Runnable(UIDriver& driver) noexcept
+	{
+		driver.addRunnable(this);
 	}
 }

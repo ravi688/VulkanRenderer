@@ -4,6 +4,8 @@
 #include <sutk/RenderRectFillRound.hpp> // for SUTK::RenderRectFillRound
 #include <sutk/ColorTransitionAutomaton.hpp> // for SUTK::ColorTransitionAutomaton
 #include <sutk/RenderableContainer.hpp> // for SUTK::RenderableContainer
+#include <sutk/Concepts.hpp> // for SUTK::ContainerT concept
+#include <sutk/IRunnable.hpp> // for SUTK::Runnable
 
 namespace SUTK
 {
@@ -27,8 +29,10 @@ namespace SUTK
 		virtual Vec2Df getMinBoundSize() = 0;
 	};
 
-	class SUTK_API VisualButtonRect : public RenderRectFillRound
+	class SUTK_API ColorDriverButtonGraphic : public IButtonGraphic,
+											  public Runnable
 	{
+	public:
 		// States
 		enum State : u32
 		{
@@ -37,45 +41,81 @@ namespace SUTK
 			Idle
 		};
 
+	protected:
 		ColorTransitionAutomaton m_cta;
 
-		friend class DefaultButtonGraphicNoLabel;
+		void setState(State state) noexcept;
+		// Must be implemented by the deriving class
+		virtual void onColorChange(Color4 color) noexcept = 0;
+
 	public:
-		VisualButtonRect(SUTK::UIDriver& driver, SUTK::RenderableContainer* container) noexcept;
+		ColorDriverButtonGraphic(UIDriver& driver) noexcept;
 
-		virtual void setActive(bool isActive) noexcept override;
+		// Implementation of Runnable
+		virtual bool isRunning() override;
+		virtual void update() override;
 
-		virtual bool isDirty() noexcept override;
-		virtual void update() noexcept override;
+		// Implementation of IButtonGraphic's functions onHover, onPress, and onRelease
+		virtual void onHover(HoverInfo info) noexcept override;
+		virtual void onPress() noexcept override;
+		virtual void onRelease() noexcept override;
+
+		// Redeclaration of IButtonGraphic::getMinBoundSize() virtual function
+		// Must be implemented by the deriving class
+		virtual Vec2Df getMinBoundSize() = 0;
 
 		void setTransitionDelay(const f32 transitionDelay) noexcept;
 
 		void setHoverColor(Color4 color) noexcept;
 		void setPressColor(Color4 color) noexcept;
 		void setIdleColor(Color4 color) noexcept;
-
-
-		void setState(State state) noexcept;
 	};
 
+	template<ContainerT ContainerType>
+	class SUTK_API ColorDriverButtonGraphicContainer : public ColorDriverButtonGraphic,
+													   public ContainerType
+	{
+	public:
+		ColorDriverButtonGraphicContainer(UIDriver& driver, Container* parent) noexcept;
+		// Override of ContainerType::setActive();
+		void setActive(bool isActive) noexcept override;
+	};
 
-	class SUTK_API DefaultButtonGraphicNoLabel : public RenderableContainer, public IButtonGraphic
+	template<ContainerT ContainerType>
+	ColorDriverButtonGraphicContainer<ContainerType>::ColorDriverButtonGraphicContainer(UIDriver& driver, Container* parent) noexcept : ColorDriverButtonGraphic(driver), ContainerType(driver, parent)
+	{
+
+	}
+
+	template<ContainerT ContainerType>
+	void ColorDriverButtonGraphicContainer<ContainerType>::setActive(bool isActive) noexcept
+	{
+		ContainerType::setActive(isActive);
+		if(isActive)
+		{
+			m_cta.setDefault(State::Idle);
+			onColorChange(m_cta.getValue());
+		}
+	}
+
+	class SUTK_API DefaultButtonGraphicNoLabel : public ColorDriverButtonGraphicContainer<RenderableContainer>
 	{
 	private:
-
 		// Visual Representation of the Button's existence
-		VisualButtonRect* m_visualButton;
+		RenderRectFillRound* m_renderRect;
+
+	protected:
+		// Implementation of ColorDriverButtonGraphic::onColorChange()
+		// Must be called in the overriding method
+		virtual void onColorChange(Color4 color) noexcept override;
 
 	public:
 		DefaultButtonGraphicNoLabel(UIDriver& driver, Container* parent) noexcept;
 
-		// Implementation of IButtonGraphic's functions
-		virtual void onHover(HoverInfo info) noexcept override;
-		virtual void onPress() noexcept override;
-		virtual void onRelease() noexcept override;
+		// Implementation of ColorDriverButtonGraphicContainer<RenderableContainer>::getMinBoundSize()
 		virtual Vec2Df getMinBoundSize() noexcept override;
 
-		VisualButtonRect& getVisualButtonRect() noexcept { return *m_visualButton; }
+		RenderRectFillRound& getRenderRect() noexcept { return *m_renderRect; }
 	};
 
 	class Label;
@@ -90,5 +130,21 @@ namespace SUTK
 			virtual Vec2Df getMinBoundSize() noexcept override;
 
 			Label& getLabel() noexcept { return *m_label; }
+	};
+
+	class RenderImage;
+	class SUTK_API ImageButtonGraphic : public ColorDriverButtonGraphicContainer<RenderableContainer>
+	{
+	private:
+		RenderableContainer* m_imageCont;
+		RenderImage* m_image;
+	protected:
+		// Implementaion of ColorDriverButtonGraphicContainer<RenderableContainer>::onColorChange()
+		virtual void onColorChange(Color4 color) noexcept override;
+	public:
+		ImageButtonGraphic(UIDriver& driver, Container* parent) noexcept;
+
+		void setImage(UIDriver::ImageReference image) noexcept;
+		RenderImage& getRenderImage() noexcept { return *m_image; }
 	};
 }
