@@ -51,10 +51,18 @@ namespace SUTK
 		virtual void onMouseClick(MouseButton button, KeyEvent action) noexcept override;
 
 		// Must be called in the overriding method
+		virtual void clearAllEvents() noexcept;
+
+		// Must be called in the overriding method
 		virtual void setGraphic(IButtonGraphic* graphic) noexcept;
 		IButtonGraphic* getGraphic() noexcept { return m_graphic; }
 		template<typename T> requires (std::derived_from<T, IButtonGraphic>)
 		T* getGraphicAs() noexcept { return com::iknow_down_cast<T*>(getGraphic()); }
+
+		bool hasOnEnterEvent() noexcept { return m_onEnterEvent != NULL; }
+		bool hasOnExitEvent() noexcept { return m_onExitEvent != NULL; }
+		bool hasOnPressEvent() noexcept { return m_onPressEvent != NULL; }
+		bool hasOnReleaseEvent() noexcept { return m_onReleaseEvent != NULL; }
 
 		OnEnterEvent& getOnEnterEvent() noexcept;
 		OnExitEvent& getOnExitEvent() noexcept;

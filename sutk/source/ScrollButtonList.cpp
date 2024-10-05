@@ -7,9 +7,9 @@ namespace SUTK
 
 	}
 
-	Button* ScrollButtonList::onButtonCreate() noexcept
+	Button* ScrollButtonList::onCreate() noexcept
 	{
-		auto button = MaskedScrollableContainer<ButtonListView>::onButtonCreate();
+		auto button = MaskedScrollableContainer<ButtonListView>::onCreate();
 		updateMaskFor(button);
 		return button;
 	}

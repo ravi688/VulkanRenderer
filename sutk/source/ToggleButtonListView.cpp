@@ -1,14 +1,14 @@
-#include <sutk/ButtonListView.hpp>
+#include <sutk/ToggleButtonListView.hpp>
 
 #include <sutk/SmallText.hpp>
-#include <sutk/ButtonGraphic.hpp>
+#include <sutk/ToggleButtonGraphic.hpp>
 #include <sutk/Label.hpp>
 
 #include <sutk/ContainerUtility.hpp>
 
 namespace SUTK
 {
-	ButtonListView::ButtonListView(UIDriver& driver, Container* parent, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : DynamicVListContainer<Button>(driver, parent, 0),
+	ToggleButtonListView::ToggleButtonListView(UIDriver& driver, Container* parent, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : DynamicVListContainer<ToggleButton>(driver, parent, 0),
 																																		m_textGroup(textGroup)
 	{
 		// The reason we first set the poolSize to zero (in the Constructor), and then call reserve()
@@ -16,23 +16,22 @@ namespace SUTK
 		getPool().reserve(poolSize);
 	}
 
-	Button* ButtonListView::onCreate() noexcept
+	ToggleButton* ToggleButtonListView::onCreate() noexcept
 	{
-		Button* button = getUIDriver().createContainer<Button>(this, true, m_textGroup);
+		ToggleButton* button = getUIDriver().createContainer<ToggleButton>(this, ToggleState::Off, true, m_textGroup);
 		button->setRecycleState(Container::RecycleState::Recycled);
-		button->getGraphicAs<DefaultButtonGraphic>()->getLabel().setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
 		invokeOnPostCreateHandler(button);
 		return button;
 	}
 
-	void ButtonListView::onReturn(Button* &button) noexcept
+	void ToggleButtonListView::onReturn(ToggleButton* &button) noexcept
 	{
 		button->clearAllEvents();
 		ContainerUtility::SetActiveAllRecursive(button, false);
 		button->setRecycleState(Container::RecycleState::Disposed);
 	}
 
-	void ButtonListView::onRecycle(Button* &button) noexcept
+	void ToggleButtonListView::onRecycle(ToggleButton* &button) noexcept
 	{
 		// Order of function call is important here,
 		// As the SetActiveAllRecursive() checks of recycled, but before this the button was in disposed state
@@ -41,13 +40,13 @@ namespace SUTK
 		ContainerUtility::SetActiveAllRecursive(button, true);
 	}
 
-	std::pair<Button*, f32> ButtonListView::addButton(const std::string_view labelStr) noexcept
+	std::pair<ToggleButton*, f32> ToggleButtonListView::addButton(const std::string_view labelStr) noexcept
 	{	
-		// Create the Interactive Button Object
-		std::pair<Button*, f32> result = get(0.7f);
+		// Create the Interactive ToggleButton Object
+		std::pair<ToggleButton*, f32> result = get(0.7f);
 
 		// Setup its Visual Representation
-		DefaultButtonGraphic* graphic = result.first->getGraphicAs<DefaultButtonGraphic>();
+		DefaultToggleButtonGraphic* graphic = result.first->getGraphicAs<DefaultToggleButtonGraphic>();
 		auto& label = graphic->getLabel();
 		label.set(labelStr);
 		label.getText().setFontSize(9);
