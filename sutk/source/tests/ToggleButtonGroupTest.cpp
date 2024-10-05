@@ -5,6 +5,7 @@
 #include <sutk/FullWindowContainer.hpp>
 
 #include <sutk/ToggleButtonListView.hpp>
+#include <sutk/ToggleButtonGroupView.hpp>
 #include <sutk/Label.hpp>
 
 namespace SUTK
@@ -32,6 +33,22 @@ namespace SUTK
 		m_toggleListView->addButton("Toggle Button 6");
 		m_toggleListView->fit();
 		m_toggleListView->getAnchorRect()->setRect({ 0.0f, 0.5f, 1.0f, 0.0f });
+
+		m_toggleGroupView = m_uiDriver->createContainer<ToggleButtonGroupView>(rootContainer);
+		m_toggleGroupView->setRect({ 5, 11, 3, 5 });
+		m_toggleGroupView->addButton("Toggle Button 1");
+		m_toggleGroupView->addButton("Toggle Button 2");
+		m_toggleGroupView->addButton("Toggle Button 3");
+		m_toggleGroupView->addButton("Toggle Button 4");
+		m_toggleGroupView->addButton("Toggle Button 5");
+		m_toggleGroupView->addButton("Toggle Button 6");
+		m_toggleGroupView->fit();
+		m_toggleGroupView->getAnchorRect()->setRect({ 0.0f, 0.5f, 1.0f, 0.0f });
+
+		m_toggleGroupView->getOnSelectEvent().subscribe([](u32 index)
+		{
+			std::cout << "Selected: " << index << std::endl;
+		});
 	}
 
 	void ToggleButtonGroupTest::terminate(SGE::Driver& driver)

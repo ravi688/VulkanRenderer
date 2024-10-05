@@ -3,7 +3,7 @@
 
 namespace SUTK
 {
-	ToggleButton::ToggleButton(UIDriver& driver, Container* parent, ToggleState state, bool isCreateDefaultGraphic, GfxDriverObjectHandleType textGroup) noexcept : Button(driver, parent, false), m_toggleState(state), m_toggleGraphic(NULL)
+	ToggleButton::ToggleButton(UIDriver& driver, Container* parent, ToggleState state, bool isCreateDefaultGraphic, GfxDriverObjectHandleType textGroup) noexcept : Button(driver, parent, false), m_toggleState(state), m_isOneWayToggle(false), m_toggleGraphic(NULL)
 	{
 		if(isCreateDefaultGraphic)
 			setGraphic(driver.createContainer<DefaultToggleButtonGraphic>(this, textGroup));
@@ -16,7 +16,7 @@ namespace SUTK
 
 		if(button != MouseButton::Left)
 			return;
-		if(action == KeyEvent::Press)
+		if((action == KeyEvent::Press) && (!m_isOneWayToggle || (getToggleState() != ToggleState::On)))
 			toggle();
 	}
 

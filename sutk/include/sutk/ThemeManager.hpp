@@ -3,7 +3,7 @@
 #include <sutk/defines.hpp>
 #include <sutk/UIDriver.hpp> // for UIDriverObject
 #include <common/assert.h> // for _com_assert
-#include <common/debug.h> // for DEBUG_LOG_ERROR
+#include <common/debug.h> // for DEBUG_LOG_ERROR, and debug_log_warning
 #include <common/Event.hpp> // for com::Event<>
 
 #include <string_view> // for std::string_view
@@ -47,6 +47,7 @@ namespace SUTK
 		template<typename ValueType>
 		ValueType& getValue(Type type, const KeyViewType& key) noexcept;
 		void applyTheme(Theme<KeyType, KeyViewType>* theme) noexcept;
+		Theme<KeyType, KeyViewType>* getCurrentTheme() noexcept { return m_currentTheme; }
 
 		// Published after publishing events for every key
 		OnThemeChangeEvent& getOnThemeChangeEvent() noexcept { return m_onThemeChange; }
@@ -182,6 +183,11 @@ namespace SUTK
 	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	void ThemeInterface<KeyType, KeyViewType>::applyTheme(Theme<KeyType, KeyViewType>* theme) noexcept
 	{
+		if(m_currentTheme == theme)
+		{
+			debug_log_warning("You're trying to apply the same theme again, ignored");
+			return;
+		}
 		m_currentTheme = theme;
 		for(auto& keyValuePair : m_defs)
 			keyValuePair.second.second.publish();
@@ -246,6 +252,8 @@ namespace SUTK
 		{
 			return { ThemeNameIterator { m_themes.cbegin() }, ThemeNameIterator { m_themes.cend() } };
 		}
+
+		const ThemeMap& getThemeMap() const noexcept { return m_themes; }
 
 		ThemeInterfaceType* createThemeInterface(const KeyViewType& key) noexcept
 		{
