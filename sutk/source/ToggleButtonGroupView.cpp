@@ -1,10 +1,25 @@
 #include <sutk/ToggleButtonGroupView.hpp>
 
+#include <common/debug.h> // for DEBUG_LOG_ERROR()
+
 namespace SUTK
 {
 	ToggleButtonGroupView::ToggleButtonGroupView(UIDriver& driver, Container* parent, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : ToggleButtonListView(driver, parent, poolSize, textGroup)
 	{
 
+	}
+
+	void ToggleButtonGroupView::select(u32 index) noexcept
+	{
+		auto& pool = getPool();
+		if(index >= pool.activeCount())
+		{
+			DEBUG_LOG_ERROR("Unable to select, Invalid index %u", index);
+			return;
+		}
+
+		auto it = std::next(pool.getActives().begin(), index);
+		(*it)->setToggleState(ToggleState::On);
 	}
 
 	ToggleButton* ToggleButtonGroupView::onCreate() noexcept

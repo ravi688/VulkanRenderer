@@ -18,6 +18,8 @@ namespace SUTK
 	public:
 		ToggleButtonGroupView(UIDriver& driver, Container* parent, u32 poolSize = 7, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
+		void select(u32 index) noexcept;
+
 		OnSelectEvent& getOnSelectEvent() noexcept { return m_onSelectEvent; }
 	};
 }
