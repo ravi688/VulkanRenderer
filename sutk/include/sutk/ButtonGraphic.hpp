@@ -29,7 +29,7 @@ namespace SUTK
 		virtual Vec2Df getMinBoundSize() = 0;
 	};
 
-	class SUTK_API ColorDriverButtonGraphic : public IButtonGraphic,
+	class SUTK_API ColorDriverButtonGraphic : public virtual IButtonGraphic,
 											  public Runnable
 	{
 	public:

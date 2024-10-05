@@ -38,18 +38,23 @@ namespace SUTK
 
 	public:
 		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
-		~Button() noexcept;
+		virtual ~Button() noexcept;
 
 		// Overrides of onMouseEnter, onMouseExit, and onMouseMove functions
+		// Must be called in the overriding method
 		virtual void onMouseEnter() noexcept override;
+		// Must be called in the overriding method
 		virtual void onMouseExit() noexcept override;
+		// Must be called in the overriding method
 		virtual void onMouseMove(Vec2Df position) noexcept override;
+		// Must be called in the overriding method
 		virtual void onMouseClick(MouseButton button, KeyEvent action) noexcept override;
 
-		void setGraphic(IButtonGraphic* graphic) noexcept;
+		// Must be called in the overriding method
+		virtual void setGraphic(IButtonGraphic* graphic) noexcept;
 		IButtonGraphic* getGraphic() noexcept { return m_graphic; }
-		template<typename T>
-		T* getGraphicAs() noexcept { return static_cast<T*>(getGraphic()); }
+		template<typename T> requires (std::derived_from<T, IButtonGraphic>)
+		T* getGraphicAs() noexcept { return com::iknow_down_cast<T*>(getGraphic()); }
 
 		OnEnterEvent& getOnEnterEvent() noexcept;
 		OnExitEvent& getOnExitEvent() noexcept;
