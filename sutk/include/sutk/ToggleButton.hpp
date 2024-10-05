@@ -31,6 +31,8 @@ namespace SUTK
 		template<typename T> requires (std::derived_from<T, IToggleButtonGraphic>)
 		T* getToggleGraphicAs() noexcept { return com::iknow_down_cast<T*>(getToggleGraphic()); }
 
+		OnToggleEvent& getOnToggleEvent() noexcept { return m_onToggleEvent; }
+
 		void toggle() noexcept;
 		void setToggleState(ToggleState state) noexcept;
 		ToggleState getToggleState() const noexcept { return m_toggleState; }
