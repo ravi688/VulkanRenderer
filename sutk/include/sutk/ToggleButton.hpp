@@ -15,6 +15,7 @@ namespace SUTK
 	private:
 		OnToggleEvent m_onToggleEvent;
 		ToggleState m_toggleState;
+		bool m_isOneWayToggle;
 		IToggleButtonGraphic* m_toggleGraphic;
 
 		void setToggleGraphic(IToggleButtonGraphic* graphic) noexcept;
@@ -32,6 +33,10 @@ namespace SUTK
 		T* getToggleGraphicAs() noexcept { return com::iknow_down_cast<T*>(getToggleGraphic()); }
 
 		OnToggleEvent& getOnToggleEvent() noexcept { return m_onToggleEvent; }
+
+		// If called with 'true' then this toggle can't be turned Off, by GUI input, once gets On
+		// One has to call setToggleState() manually.
+		void setOneWayToggle(bool isOneWay) noexcept { m_isOneWayToggle = isOneWay; }
 
 		void toggle() noexcept;
 		void setToggleState(ToggleState state) noexcept;

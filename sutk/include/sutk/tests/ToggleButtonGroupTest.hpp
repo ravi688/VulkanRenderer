@@ -12,6 +12,7 @@ namespace SUTK
 {
 	class IGfxDriver;
 	class ToggleButtonListView;
+	class ToggleButtonGroupView;
 
 	class ToggleButtonGroupTest : public ITest
 	{
@@ -20,6 +21,7 @@ namespace SUTK
 		IGfxDriver* m_gfxDriver;
 		IInputDriver* m_inputDriver;
 		ToggleButtonListView* m_toggleListView;
+		ToggleButtonGroupView* m_toggleGroupView;
 
 	public:
 		ToggleButtonGroupTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }

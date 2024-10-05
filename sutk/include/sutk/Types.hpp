@@ -2,7 +2,7 @@
 
 namespace SUTK
 {
-	enum class ToggleState
+	enum class ToggleState : u8
 	{
 		Off,
 		On

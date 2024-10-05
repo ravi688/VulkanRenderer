@@ -13,13 +13,13 @@ namespace SUTK
 	protected:
 		// Invoked when a button is returned to the pool
 		// Typically, this would be used to deactivate the button to make it invisible and do not consume resources
-		void onReturn(ToggleButton* &button) noexcept;
+		virtual void onReturn(ToggleButton* &button) noexcept override;
 		// Invoekd when a button is recycled (re-used) from the pool
 		// Typically, this would be used to reactivate the button
-		void onRecycle(ToggleButton* &button) noexcept;
+		virtual void onRecycle(ToggleButton* &button) noexcept override;
 		// Invoked when the pool requests a new button instance
 		// Mandatory to be called in the overriding method
-		virtual ToggleButton* onCreate() noexcept;
+		virtual ToggleButton* onCreate() noexcept override;
 	public:
 		ToggleButtonListView(UIDriver& driver, Container* parent, u32 poolSize = 7, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
