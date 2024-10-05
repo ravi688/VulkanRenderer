@@ -8,15 +8,25 @@ namespace SUTK
 																									MouseMoveHandlerObject(driver, this),
 																									MouseClickHandlerObject(driver, this),
 																									m_graphic(NULL),
-																									m_onEnterEvent(this),
-																									m_onExitEvent(this),
-																									m_onPressEvent(this),
-																									m_onReleaseEvent(this)
+																									m_onEnterEvent(NULL),
+																									m_onExitEvent(NULL),
+																									m_onPressEvent(NULL),
+																									m_onReleaseEvent(NULL)
 	{ 
 		if(isCreateDefaultGraphic)
-			m_graphic = driver.createContainer<DefaultButtonGraphic>(this, textGroup);
-		enableMouseEnter(true);
-		enableMouseExit(true);
+			setGraphic(driver.createContainer<DefaultButtonGraphic>(this, textGroup));
+	}
+
+	Button::~Button() noexcept
+	{
+		if(!m_onEnterEvent)
+			delete m_onEnterEvent;
+		if(!m_onExitEvent)
+			delete m_onExitEvent;
+		if(!m_onPressEvent)
+			delete m_onPressEvent;
+		if(!m_onReleaseEvent)
+			delete m_onReleaseEvent;
 	}
 
 	void Button::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
@@ -27,9 +37,10 @@ namespace SUTK
 
 	void Button::onMouseEnter() noexcept
 	{
+		if(m_onEnterEvent != NULL)
+			m_onEnterEvent->publish();
 		if(m_graphic != NULL)
 		{
-			m_onEnterEvent.publish();
 			HoverInfo info { };
 			info.position = getScreenCoordsToLocalCoords(getInputDriver().getMousePosition());
 			info.isEnter = true;
@@ -39,9 +50,10 @@ namespace SUTK
 
 	void Button::onMouseExit() noexcept
 	{
+		if(m_onExitEvent != NULL)
+			m_onExitEvent->publish();
 		if(m_graphic != NULL)
 		{
-			m_onExitEvent.publish();
 			HoverInfo info { };
 			info.position = getScreenCoordsToLocalCoords(getInputDriver().getMousePosition());
 			info.isExit = true;
@@ -65,15 +77,85 @@ namespace SUTK
 			return;
 		if(action == KeyEvent::Press)
 		{
-			m_onPressEvent.publish();
+			if(m_onPressEvent != NULL)
+				m_onPressEvent->publish();
 			if(m_graphic != NULL)
 				m_graphic->onPress();
 		}
 		else if(action == KeyEvent::Release)
 		{
-			m_onReleaseEvent.publish();
+			if(m_onReleaseEvent != NULL)
+				m_onReleaseEvent->publish();
 			if(m_graphic != NULL)
 				m_graphic->onRelease();
 		}
+	}
+
+	void Button::checkAndOptimizeEvents() noexcept
+	{
+		bool isEnterEnabled = isMouseEnterEnabled();
+		bool isExitEnabled = isMouseExitEnabled();
+		if(m_graphic)
+		{
+			if(!isEnterEnabled)
+				enableMouseEnter(true);
+			if(!isExitEnabled)
+				enableMouseExit(true);
+		}
+		else
+		{
+			if(!isEnterEnabled && m_onEnterEvent)
+				enableMouseEnter(true);
+			else if(isEnterEnabled && !m_onEnterEvent)
+				enableMouseEnter(false);
+
+			if(!isExitEnabled && m_onExitEvent)
+				enableMouseExit(true);
+			else if(isExitEnabled && !m_onExitEvent)
+				enableMouseExit(false);
+		}
+	}
+
+	void Button::setGraphic(IButtonGraphic* graphic) noexcept
+	{
+		m_graphic = graphic;
+		checkAndOptimizeEvents();
+	}
+
+	Button::OnEnterEvent& Button::getOnEnterEvent() noexcept
+	{ 
+		if(!m_onEnterEvent)
+		{
+			m_onEnterEvent = new OnEnterEvent(this);
+			checkAndOptimizeEvents();
+		}
+		return *m_onEnterEvent;
+	}
+	Button::OnExitEvent& Button::getOnExitEvent() noexcept
+	{ 
+		if(!m_onExitEvent)
+		{
+			m_onExitEvent = new OnExitEvent(this);
+			checkAndOptimizeEvents();
+		}
+		return *m_onExitEvent;
+	}
+	Button::OnPressEvent& Button::getOnPressEvent() noexcept
+	{ 
+		if(!m_onPressEvent)
+		{
+			m_onPressEvent = new OnPressEvent(this);
+			checkAndOptimizeEvents();
+		}
+		return *m_onPressEvent;
+	}
+	Button::OnReleaseEvent& Button::getOnReleaseEvent() noexcept
+	{ 
+		if(!m_onReleaseEvent)
+		{
+			m_onReleaseEvent = new OnReleaseEvent(this);
+			checkAndOptimizeEvents();
+		}
+		return *m_onReleaseEvent;
 	}
 }

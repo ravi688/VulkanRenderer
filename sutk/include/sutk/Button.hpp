@@ -26,16 +26,19 @@ namespace SUTK
 		typedef com::Event<Button> OnReleaseEvent;
 	private:
 		IButtonGraphic* m_graphic;
-		OnEnterEvent m_onEnterEvent;
-		OnExitEvent m_onExitEvent;
-		OnPressEvent m_onPressEvent;
-		OnReleaseEvent m_onReleaseEvent;
+		OnEnterEvent* m_onEnterEvent;
+		OnExitEvent* m_onExitEvent;
+		OnPressEvent* m_onPressEvent;
+		OnReleaseEvent* m_onReleaseEvent;
+
+		void checkAndOptimizeEvents() noexcept;
 
 	protected:
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 
 	public:
 		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
+		~Button() noexcept;
 
 		// Overrides of onMouseEnter, onMouseExit, and onMouseMove functions
 		virtual void onMouseEnter() noexcept override;
@@ -43,14 +46,14 @@ namespace SUTK
 		virtual void onMouseMove(Vec2Df position) noexcept override;
 		virtual void onMouseClick(MouseButton button, KeyEvent action) noexcept override;
 
-		void setGraphic(IButtonGraphic* graphic) noexcept { m_graphic = graphic; }
+		void setGraphic(IButtonGraphic* graphic) noexcept;
 		IButtonGraphic* getGraphic() noexcept { return m_graphic; }
 		template<typename T>
 		T* getGraphicAs() noexcept { return static_cast<T*>(getGraphic()); }
 
-		OnEnterEvent& getOnEnterEvent() noexcept { return m_onEnterEvent; }
-		OnExitEvent& getOnExitEvent() noexcept { return m_onExitEvent; }
-		OnPressEvent& getOnPressEvent() noexcept { return m_onPressEvent; }
-		OnReleaseEvent& getOnReleaseEvent() noexcept { return m_onReleaseEvent; }
+		OnEnterEvent& getOnEnterEvent() noexcept;
+		OnExitEvent& getOnExitEvent() noexcept;
+		OnPressEvent& getOnPressEvent() noexcept;
+		OnReleaseEvent& getOnReleaseEvent() noexcept;
 	};
 }

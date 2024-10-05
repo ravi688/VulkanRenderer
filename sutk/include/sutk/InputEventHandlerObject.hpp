@@ -127,6 +127,9 @@ namespace SUTK
 		void enableMouseEnter(bool isEnable) noexcept { m_isMouseEnterEnabled = isEnable; }
 		void enableMouseExit(bool isEnable) noexcept { m_isMouseExitEnabled = isEnable; }
 
+		bool isMouseEnterEnabled() const noexcept { return m_isMouseEnterEnabled; }
+		bool isMouseExitEnabled() const noexcept { return m_isMouseExitEnabled; }
+
 		// This can be called to recalculate and recheck the mouse pointer if it is inside the rect
 		// That also means onMouseEnter() or onMouseExit() may be called.
 		// However, (for now) onMouseMove() is not called.
