@@ -1,11 +1,11 @@
 #pragma once
 
-#include <sutk/Button.hpp>
 #include <sutk/DynamicVListContainer.hpp>
+#include <sutk/ToggleButton.hpp>
 
 namespace SUTK
 {
-	class SUTK_API ButtonListView : public DynamicVListContainer<Button>
+	class SUTK_API ToggleButtonListView : public DynamicVListContainer<ToggleButton>
 	{
 	private:
 		GfxDriverObjectHandleType m_textGroup;
@@ -13,16 +13,16 @@ namespace SUTK
 	protected:
 		// Invoked when a button is returned to the pool
 		// Typically, this would be used to deactivate the button to make it invisible and do not consume resources
-		virtual void onReturn(Button* &button) noexcept override;
+		void onReturn(ToggleButton* &button) noexcept;
 		// Invoekd when a button is recycled (re-used) from the pool
 		// Typically, this would be used to reactivate the button
-		virtual void onRecycle(Button* &button) noexcept override;
+		void onRecycle(ToggleButton* &button) noexcept;
 		// Invoked when the pool requests a new button instance
 		// Mandatory to be called in the overriding method
-		virtual Button* onCreate() noexcept override;
+		virtual ToggleButton* onCreate() noexcept;
 	public:
-		ButtonListView(UIDriver& driver, Container* parent, u32 poolSize = 7, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
+		ToggleButtonListView(UIDriver& driver, Container* parent, u32 poolSize = 7, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
-		std::pair<Button*, f32> addButton(const std::string_view labelStr) noexcept;
+		std::pair<ToggleButton*, f32> addButton(const std::string_view labelStr) noexcept;
 	};
 }

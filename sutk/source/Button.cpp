@@ -116,6 +116,18 @@ namespace SUTK
 		}
 	}
 
+	void Button::clearAllEvents() noexcept
+	{
+		if(hasOnPressEvent())
+			getOnPressEvent().clear();
+		if(hasOnReleaseEvent())
+			getOnReleaseEvent().clear();
+		if(hasOnEnterEvent())
+			getOnEnterEvent().clear();
+		if(hasOnExitEvent())
+			getOnExitEvent().clear();
+	}
+
 	void Button::setGraphic(IButtonGraphic* graphic) noexcept
 	{
 		m_graphic = graphic;

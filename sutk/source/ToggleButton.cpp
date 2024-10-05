@@ -20,6 +20,14 @@ namespace SUTK
 			toggle();
 	}
 
+	void ToggleButton::clearAllEvents() noexcept
+	{
+		// Mandatory to be called
+		Button::clearAllEvents();
+
+		m_onToggleEvent.clear();
+	}
+
 	void ToggleButton::setGraphic(IButtonGraphic* graphic) noexcept
 	{
 		Button::setGraphic(graphic);

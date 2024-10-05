@@ -21,6 +21,9 @@ namespace SUTK
 	public:
 		ToggleButton(UIDriver& driver, Container* parent, ToggleState state = ToggleState::Off, bool isCreateDefaultGraphic = true, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
+		// Override of Button::clearAllEvents()
+		virtual void clearAllEvents() noexcept override;
+
 		// Override of Button::setGraphic()
 		virtual void setGraphic(IButtonGraphic* graphic) noexcept override;
 
