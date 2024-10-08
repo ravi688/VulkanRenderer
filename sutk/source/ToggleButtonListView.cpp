@@ -11,9 +11,11 @@ namespace SUTK
 	ToggleButtonListView::ToggleButtonListView(UIDriver& driver, Container* parent, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : DynamicVListContainer<ToggleButton>(driver, parent, 0),
 																																		m_textGroup(textGroup)
 	{
+		lockLayout();
 		// The reason we first set the poolSize to zero (in the Constructor), and then call reserve()
 		// is that, onCreate() uses m_textGroup, so we must allowed it be initialized first.
 		getPool().reserve(poolSize);
+		unlockLayout(true);
 	}
 
 	ToggleButton* ToggleButtonListView::onCreate() noexcept

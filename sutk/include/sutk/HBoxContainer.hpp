@@ -16,7 +16,7 @@ namespace SUTK
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 
 	public:
-		HBoxContainer(UIDriver& driver, Container* parent = NULL) noexcept;
+		HBoxContainer(UIDriver& driver, Container* parent = NULL, bool isLayoutLocked = false) noexcept;
 		~HBoxContainer() noexcept = default;
 
 		// Overrides of ILayoutController::onRecalculateLayout

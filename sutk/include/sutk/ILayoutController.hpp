@@ -12,7 +12,7 @@ namespace SUTK
 		// must be implemented by the derived class
 		virtual void onRecalculateLayout() noexcept = 0;
 	public:
-		ILayoutController() noexcept;
+		ILayoutController(bool isLayoutLocked = false) noexcept;
 		virtual ~ILayoutController() noexcept = default;
 
 		void lockLayout() noexcept;
