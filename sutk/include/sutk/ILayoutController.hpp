@@ -6,11 +6,18 @@ namespace SUTK
 {
 	class SUTK_API ILayoutController
 	{
+	private:
+		bool m_isLockedLayout;
+	protected:
+		// must be implemented by the derived class
+		virtual void onRecalculateLayout() noexcept = 0;
 	public:
-		ILayoutController() noexcept = default;
+		ILayoutController() noexcept;
 		virtual ~ILayoutController() noexcept = default;
 
-		// must be implemented by the derived class
-		virtual void recalculateLayout() = 0;
+		void lockLayout() noexcept;
+		void unlockLayout(bool isRecalculate = false) noexcept;
+		bool isLockedLayout() const noexcept { return m_isLockedLayout; }
+		void recalculateLayout() noexcept;
 	};
 }

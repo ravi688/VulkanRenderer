@@ -25,7 +25,7 @@ namespace SUTK
 		// mandatory to be called
 		Container::onResize(newRect, isPositionChanged, isSizeChanged);
 	}
-	void HBoxContainer::recalculateLayout()
+	void HBoxContainer::onRecalculateLayout() noexcept
 	{
 		/*
 			Solution:

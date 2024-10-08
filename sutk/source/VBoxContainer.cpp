@@ -25,7 +25,7 @@ namespace SUTK
 		// mandatory to be called
 		Container::onResize(newRect, isPositionChanged, isSizeChanged);
 	}
-	void VBoxContainer::recalculateLayout()
+	void VBoxContainer::onRecalculateLayout() noexcept
 	{
 		/*
 			Solution:
