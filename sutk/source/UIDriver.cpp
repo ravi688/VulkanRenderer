@@ -59,7 +59,8 @@ namespace SUTK
 				maxDrawOrder = drawOrder;
 		}
 
-		_com_assert(minDrawOrder <= maxDrawOrder);
+		if(m_renderables.size() > 0)
+			_com_assert(minDrawOrder <= maxDrawOrder);
 
 		if(isRecalculateDrawOrder)
 		{
