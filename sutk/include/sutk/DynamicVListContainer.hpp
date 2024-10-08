@@ -58,7 +58,7 @@ namespace SUTK
 
 
 	template<ContainerT T>
-	DynamicVListContainer<T>::DynamicVListContainer(UIDriver& driver, Container* parent, u32 poolSize) noexcept : VBoxContainer(driver, parent),
+	DynamicVListContainer<T>::DynamicVListContainer(UIDriver& driver, Container* parent, u32 poolSize) noexcept : VBoxContainer(driver, parent, true),
 																							m_onPostCreateHandler({ }),
 																							m_pool(std::bind(&DynamicVListContainer::onCreate, this),
 																										std::bind(&DynamicVListContainer::onReturn, this, std::placeholders::_1),
@@ -69,6 +69,7 @@ namespace SUTK
 																							m_yOffset(0)
 	{
 		setRect({ 0.0f, 0.0f, 2.0f, 5.0f });
+		unlockLayout(true);
 		m_minWidth = 2.0f;
 		setTight(true);
 	}

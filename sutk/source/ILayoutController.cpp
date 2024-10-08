@@ -2,7 +2,7 @@
 
 namespace SUTK
 {
-	ILayoutController::ILayoutController() noexcept : m_isLockedLayout(false)
+	ILayoutController::ILayoutController(bool isLayoutLocked) noexcept : m_isLockedLayout(isLayoutLocked)
 	{
 
 	}
