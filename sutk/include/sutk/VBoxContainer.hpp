@@ -19,8 +19,8 @@ namespace SUTK
 		VBoxContainer(UIDriver& driver, Container* parent = NULL) noexcept;
 		~VBoxContainer() noexcept = default;
 		
-		// Overrides of ILayoutController::recalculateLayout
-		virtual void recalculateLayout() override;
+		// Overrides of ILayoutController::onRecalculateLayout
+		virtual void onRecalculateLayout() noexcept;
 
 		// resizes this container to tightly fit its child containers
 		// basically, it just removes any empty spaces

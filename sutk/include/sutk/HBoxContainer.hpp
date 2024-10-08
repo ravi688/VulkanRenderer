@@ -19,8 +19,8 @@ namespace SUTK
 		HBoxContainer(UIDriver& driver, Container* parent = NULL) noexcept;
 		~HBoxContainer() noexcept = default;
 
-		// Overrides of ILayoutController::recalculateLayout
-		virtual void recalculateLayout() override;
+		// Overrides of ILayoutController::onRecalculateLayout
+		virtual void onRecalculateLayout() noexcept override;
 		
 		// resizes this container to tightly fit its child containers
 		// basically, it just removes any empty spaces
