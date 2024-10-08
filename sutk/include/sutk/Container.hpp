@@ -159,7 +159,7 @@ namespace SUTK
 			return { pos, localRect.getSize() };
 		}
 		// Calculates rect of this container's rect relative to the passed container's rect, i.e. 'relativeTo' container
-		Rect2Df getRectRelative(Container* relativeTo) const noexcept
+		Rect2Df getRectRelativeTo(Container* relativeTo) const noexcept
 		{
 			Rect2Df rect = getGlobalRect();
 			if(relativeTo != NULL)
