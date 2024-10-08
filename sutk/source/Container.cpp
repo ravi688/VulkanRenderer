@@ -279,6 +279,14 @@ namespace SUTK
 		setLayoutAttributes(attr);
 	}
 
+	void Container::setLayoutFixed(Vec2Df fixedSize) noexcept
+	{
+		auto& attr = getLayoutAttributes();
+		attr.minSize = fixedSize;
+		attr.prefSize = fixedSize;
+		setLayoutAttributes(attr);
+	}
+
 	void Container::setActive(bool isActive) noexcept
 	{
 		bool oldActiveState = Activatable::isActive();

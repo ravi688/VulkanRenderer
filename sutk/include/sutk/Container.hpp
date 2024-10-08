@@ -99,6 +99,7 @@ namespace SUTK
 		bool isLayoutIgnore() const noexcept { return m_isLayoutIgnore || (!isActive()); }
 		void setLayoutIgnore(bool isIgnore) noexcept;
 		void setLayoutExpand() noexcept;
+		void setLayoutFixed(Vec2Df fixedSize) noexcept;
 
 		// childs getters
 		std::vector<Container*>& getChilds() noexcept { return getContainerList(); }
