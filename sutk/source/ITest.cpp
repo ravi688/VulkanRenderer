@@ -21,6 +21,7 @@
 #include <sutk/tests/ImageButtonGraphicTest.hpp>
 #include <sutk/tests/ToggleButtonTest.hpp>
 #include <sutk/tests/ToggleButtonGroupTest.hpp>
+#include <sutk/tests/ContainerTest.hpp>
 
 namespace SUTK
 {
@@ -45,7 +46,8 @@ namespace SUTK
 		{ "IMAGE_ASPECT_RATIO", [] () { return std::unique_ptr<ITest>(new ImageAspectRatioTest()); }},
 		{ "IMAGE_BUTTON_GRAPHIC", [] () { return std::unique_ptr<ITest>(new ImageButtonGraphicTest()); }},
 		{ "TOGGLE_BUTTON", [] () { return std::unique_ptr<ITest>(new ToggleButtonTest()); }},
-		{ "TOGGLE_BUTTON_GROUP", [] () { return std::unique_ptr<ITest>(new ToggleButtonGroupTest()); }}
+		{ "TOGGLE_BUTTON_GROUP", [] () { return std::unique_ptr<ITest>(new ToggleButtonGroupTest()); }},
+		{ "CONTAINER", [] () { return std::unique_ptr<ITest>(new ContainerTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)
