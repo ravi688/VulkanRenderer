@@ -1,5 +1,6 @@
 #include <sutk/ScrollContainer.hpp>
 #include <common/assert.h> // for _com_assert
+#include <common/debug.hpp> // for com::source_loc()
 
 namespace SUTK
 {
@@ -63,16 +64,16 @@ namespace SUTK
 		for(Container* child : childs)
 		{
 			Vec2Df position = child->getPosition();
-			Vec2Df bt = child->getRect().getBottomRight();
+			Vec2Df br = child->getRect().getBottomRight();
 			Vec2Df tl = child->getRect().getTopLeft();
-			std::cout << bt << std::endl;
+			std::cout << "Bottom-right: " << br << ", at " << com::source_loc() << std::endl;
 			if((scrollDelta.y + tl.y) > 0.0f)
 				scrollDelta.y = -tl.y;
-			else if((scrollDelta.y + bt.y) < 0.0f)
+			else if((scrollDelta.y + br.y) < 0.0f)
 				scrollDelta.y = 0.0f;
 			if((scrollDelta.x + tl.x) > 0.0f)
 				scrollDelta.x = -tl.x;
-			else if((scrollDelta.x + bt.x) < 0.0f)
+			else if((scrollDelta.x + br.x) < 0.0f)
 				scrollDelta.x = 0.0f;
 			m_scrollDelta += scrollDelta;
 			child->setPosition(scrollDelta + position);
