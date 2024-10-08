@@ -36,6 +36,7 @@ namespace SUTK
 		// But it doesn't relcalculate if you change the child's Rect after this function call.
 		// You have to call this function again if you do so.
 		void fitToChildRect() noexcept;
+		void fitToParentRect() noexcept;
 		void moveToCenterOfChild() noexcept;
 
 		// setters

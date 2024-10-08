@@ -64,6 +64,11 @@ namespace SUTK
 		setRect(anchorRect);
 	}
 
+	void AnchorRect::fitToParentRect() noexcept
+	{
+		setRect({ 0.0f, 0.0f, 1.0f, 1.0f });
+	}
+
 	void AnchorRect::moveToCenterOfChild() noexcept
 	{
 		_com_assert(m_childRect != NULL);
