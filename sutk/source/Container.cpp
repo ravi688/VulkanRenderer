@@ -143,39 +143,48 @@ namespace SUTK
 	void Container::add(Container* container, bool isInvariantPos)
 	{
 		_assert(container != NULL);
+		
+		// calculate this container's rect into the local space of new parent container
+		Vec2Df screenCoords;
+		if(isInvariantPos)
+			screenCoords = container->getLocalCoordsToScreenCoords({ 0u, 0u });
+		
+		container->setParentChildRelation(this);
+
 		if(isInvariantPos)
 		{
-			// recalculate this container's rect into the local space of new parent container
-			Vec2Df screenCoords = container->getLocalCoordsToScreenCoords({ 0u, 0u });
 			Vec2Df localCoords = getScreenCoordsToLocalCoords(screenCoords);
 			container->setPosition(localCoords);
 		}
-		else
-			container->setPosition({ 0.0f, 0.0f });
-
-		container->setParentChildRelation(this);
+		else container->setPosition({ 0.0f, 0.0f });
 	}
 
 	void Container::addAt(Container* container, std::size_t index, bool isInvariantPos)
 	{
 		_assert(container != NULL);
+		
+		// calculate this container's rect into the local space of new parent container
+		Vec2Df screenCoords;
+		if(isInvariantPos)
+			screenCoords = container->getLocalCoordsToScreenCoords({ 0u, 0u });
+		
+		container->setParentChildRelation(this, index);
+
 		if(isInvariantPos)
 		{
-			// recalculate this container's rect into the local space of new parent container
-			Vec2Df screenCoords = container->getLocalCoordsToScreenCoords({ 0u, 0u });
 			Vec2Df localCoords = getScreenCoordsToLocalCoords(screenCoords);
 			container->setPosition(localCoords);
 		}
-		else
-			container->setPosition({ 0.0f, 0.0f });
-
-		container->setParentChildRelation(this, index);
+		else container->setPosition({ 0.0f, 0.0f });
 	}
 
 	void Container::remove(Container* container)
 	{
+		Vec2Df screenCoords = container->getLocalCoordsToScreenCoords({ 0u, 0u });
 		_assert(container != NULL);
 		container->setParentChildRelation(NULL);
+		_com_assert(container->getParent() == NULL);
+		container->setPosition(screenCoords);
 	}
 
 	void Container::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
