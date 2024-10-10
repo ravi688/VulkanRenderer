@@ -80,6 +80,12 @@ namespace SUTK
 						interface->define<UIDriver::ImageReference>(nameSV);
 						continue;
 					}
+					typeAttr = node_find_attribute(child, str, "Font");
+					if(typeAttr)
+					{
+						interface->define<UIDriver::FontReference>(nameSV);
+						continue;
+					}
 					DEBUG_LOG_WARNING("Type either isn't recognized or not given, skipping \"%.*s\"", nameSV.length(), nameSV.data());
 				}
 				ppsr_v3d_generic_parse_result_destroy(NULL, result);
@@ -232,6 +238,33 @@ namespace SUTK
 	}
 
 	template<>
+	template<>
+	UIDriver::FontReference ThemeManager<std::string, std::string_view>::deriveValue<UIDriver::FontReference>(v3d_generic_node_t* node, const char* str) noexcept
+	{
+		// Followings are the possibilies:
+		// 1. "path/to/a/file.ttf"
+		// 2. default
+		UIDriver::FontReference font = UIDriver::InvalidFont;
+		if(node->qualifier_count == 1)
+		{
+			u32_pair_t pair = node->qualifiers[0];
+			if(com_safe_strncmp(pair.start + str, "default", U32_PAIR_DIFF(pair)) == 0)
+			{
+				// The Gfx Driver will automatically load its default font
+				font = UIDriver::InvalidFont;
+			}
+			else
+			{
+				auto filePath = std::string_view { pair.start + str, U32_PAIR_DIFF(pair) };
+				font = getUIDriver().loadFont(filePath);
+			}
+		}
+		else
+			DEBUG_LOG_ERROR("Neither file path nor \"default\" is provided");
+		return font;
+	}
+
+	template<>
 	typename ThemeManager<std::string, std::string_view>::ThemeType* ThemeManager<std::string, std::string_view>::loadTheme(const std::string_view filePath) noexcept
 	{
 		BUFFER* text = NULL;
@@ -332,6 +365,12 @@ namespace SUTK
 						{
 							UIDriver::ImageReference image = deriveValue<UIDriver::ImageReference>(child->value, str);
 							theme->add<UIDriver::ImageReference>(nameSV, std::move(image));
+							break;
+						}
+						case ThemeInterfaceType::Type::Font:
+						{
+							UIDriver::FontReference font = deriveValue<UIDriver::FontReference>(child->value, str);
+							theme->add<UIDriver::FontReference>(nameSV, std::move(font));
 							break;
 						}
 						default:
