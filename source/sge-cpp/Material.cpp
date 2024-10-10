@@ -29,6 +29,6 @@ namespace SGE
 	template<>
 	void Material::set<Texture>(const std::string& name, Texture texture)
 	{
-		material_set_texture(m_handle, name.c_str(), texture);
+		material_set_texture(m_handle, name.c_str(), static_cast<texture_t*>(texture));
 	}
 }
