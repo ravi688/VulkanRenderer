@@ -1,5 +1,7 @@
 #include <sutk/ScrollToggleButtonGroupView.hpp>
 
+#include <common/debug.hpp>
+
 namespace SUTK
 {
 	ScrollToggleButtonGroupView::ScrollToggleButtonGroupView(UIDriver& driver, Container* parent, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : MaskedScrollableContainer<ToggleButtonGroupView>(driver, parent, poolSize, textGroup)
@@ -18,5 +20,18 @@ namespace SUTK
 	{
 		MaskedScrollableContainer<ToggleButtonGroupView>::onParentResize(newRect, isPositionChanged, isSizeChanged);
 		setSize({ newRect.width - getScrollContainer()->getScrollDelta().x, getSize().height });
+	}
+
+	void ScrollToggleButtonGroupView::bringToView(u32 index) noexcept
+	{
+		auto activeCount = getPool().activeCount();
+		if(index > activeCount)
+		{
+			DEBUG_LOG_ERROR("Index (%lu) exceeds the active count (%lu)", index, activeCount);
+			return;
+		}
+		SUTK::ScrollContainer* scrollContainer = getScrollContainer();
+		f32 scroll = scrollContainer->getSize().height - (index + 1) * TOGGLE_BUTTON_HEIGHT - scrollContainer->getScrollDelta().y;
+		scrollContainer->addScrollDelta({ 0, scroll });
 	}
 }
