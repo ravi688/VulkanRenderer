@@ -45,7 +45,7 @@ namespace SUTK
 	std::pair<ToggleButton*, f32> ToggleButtonListView::addButton(const std::string_view labelStr) noexcept
 	{	
 		// Create the Interactive ToggleButton Object
-		std::pair<ToggleButton*, f32> result = get(0.7f);
+		std::pair<ToggleButton*, f32> result = get(TOGGLE_BUTTON_HEIGHT);
 
 		// Setup its Visual Representation
 		DefaultToggleButtonGraphic* graphic = result.first->getGraphicAs<DefaultToggleButtonGraphic>();
