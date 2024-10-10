@@ -104,6 +104,16 @@ namespace SUTK
 		getGfxDriver().unloadTexture(id);
 	}
 
+	UIDriver::FontReference UIDriver::loadFont(std::string_view path) noexcept
+	{
+		return getGfxDriver().loadFont(path);
+	}
+
+	void UIDriver::unloadFont(FontReference id) noexcept
+	{
+		getGfxDriver().unloadFont(id);
+	}
+
 	UIDriver::ImageAttributes UIDriver::getImageAttributes(ImageReference id) noexcept
 	{
 		TextureAttributes attr;

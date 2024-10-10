@@ -805,7 +805,7 @@ namespace SUTK
 	{
 		// if there is no vertex buffer then create one with binding equal to zero
 		SGE::Buffer vertexBuffer = mesh.getVertexBuffer(createInfo.binding);
-		if(static_cast<void*>(vertexBuffer) == NULL)
+		if(!vertexBuffer)
 			mesh.createAndAddVertexBuffer(com::cast_away_const(createInfo));
 		else
 		{
@@ -849,9 +849,21 @@ namespace SUTK
 		// TODO : unload the texture from SGE Driver's side
 	}
 
+	GfxDriverObjectHandleType SGEGfxDriver::loadFont(std::string_view str)
+	{
+		// TODO: Load the font from another thread
+		return m_fontData.add({ std::string(str), { } });
+	}
+
+	void SGEGfxDriver::unloadFont(GfxDriverObjectHandleType handle)
+	{
+		m_fontData.remove(handle);
+		// TODO : unload the font from SGE Driver's side
+	}
+
 	SGE::Texture SGEGfxDriver::getTexture(GfxDriverObjectHandleType handle) noexcept
 	{
-		if(handle == UIDriver::InvalidImage)
+		if(handle == GFX_DRIVER_OBJECT_NULL_HANDLE)
 			return getDefaultTexture();
 
 		std::pair<std::string, SGE::Texture>& pair = m_textureData.get(handle);
@@ -1011,7 +1023,7 @@ namespace SUTK
 			if(vertexBuffer || createInfo.count)
 			{
 				// if there is no vertex buffer then create one with binding equal to 5
-				if(static_cast<void*>(vertexBuffer) == NULL)
+				if(!vertexBuffer)
 					mesh.createAndAddVertexBuffer(createInfo);
 				else
 				{

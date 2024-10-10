@@ -63,7 +63,7 @@ namespace SUTK
 	private:
 		com::unordered_map<KeyType, Color4, KeyViewType> m_colors;
 		com::unordered_map<KeyType, UIDriver::ImageReference, KeyViewType> m_images;
-		// com::unordered_map<KeyType, UIDriver::FontReference, KeyViewType> m_fonts;
+		com::unordered_map<KeyType, UIDriver::FontReference, KeyViewType> m_fonts;
 		ThemeInterfaceType* m_interface;
 	public:
 		Theme(UIDriver& driver, ThemeInterfaceType* interface) noexcept : UIDriverObject(driver), m_interface(interface) { }
@@ -87,17 +87,27 @@ namespace SUTK
 				else
 					m_images.insert({ KeyType { key }, std::forward<UIDriver::ImageReference&&>(value) });
 			}
+			else if constexpr(std::is_same_v<ValueType, UIDriver::FontReference>)
+			{
+				if(m_interface->getType(key) != ThemeInterfaceType::Type::Font)
+					DEBUG_LOG_ERROR("Type mismatch");
+				else
+					m_fonts.insert({ KeyType { key }, std::forward<UIDriver::FontReference&&>(value) });
+			}
 			else
 				static_assert(false, "Type not supported");
 		}
 		template<typename ValueType>
 		void add(const KeyViewType& key, std::string_view view) noexcept
 		{
-			bool result = view.ends_with(".png") || view.ends_with(".jpg") || view.ends_with(".bmp");
-			if(result)
+			if(view.ends_with(".png") || view.ends_with(".jpg") || view.ends_with(".bmp"))
 			{
 				UIDriver::ImageReference image = getUIDriver().loadImage(view);
 				m_images.insert({ KeyType { key }, image });
+			} else if(view.ends_with(".ttf"))
+			{
+				UIDriver::FontReference font = getUIDriver().loadFont(view);
+				m_fonts.insert({ KeyType { key }, font });
 			}
 			else
 				DEBUG_LOG_ERROR("Unrecognized image file extension in path: %.*s", view.length(), view.data());
@@ -110,6 +120,8 @@ namespace SUTK
 				result = com::find_erase(m_colors, key);
 			else if constexpr(std::is_same_v<ValueType, UIDriver::ImageReference>)
 				result = com::find_erase(m_images, key);
+			else if constexpr(std::is_same_v<ValueType, UIDriver::FontReference>)
+				result = com::find_erase(m_fonts, key);
 			else
 				static_assert(false, "Type not supported");
 			_com_assert(result);
@@ -121,6 +133,8 @@ namespace SUTK
 				return com::find_value(m_colors, key);
 			else if constexpr(std::is_same_v<ValueType, UIDriver::ImageReference>)
 				return com::find_value(m_images, key);
+			else if constexpr(std::is_same_v<ValueType, UIDriver::FontReference>)
+				return com::find_value(m_fonts, key);
 			else
 				static_assert(false, "Type not supported");
 		}
@@ -136,6 +150,8 @@ namespace SUTK
 			m_defs.insert({ KeyType { key }, { Type::Color, { } } });
 		else if constexpr(std::is_same_v<ValueType, UIDriver::ImageReference>)
 			m_defs.insert({ KeyType { key }, { Type::Image, { } } });
+		else if constexpr(std::is_same_v<ValueType, UIDriver::FontReference>)
+			m_defs.insert({ KeyType { key }, { Type::Font, { } } });
 		else
 			static_assert(false, "Type not supported");
 	}

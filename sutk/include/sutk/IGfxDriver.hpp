@@ -71,6 +71,8 @@ namespace SUTK
 		virtual GfxDriverObjectHandleType loadTexture(std::string_view str) = 0;
 		virtual void getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out) = 0;
 		virtual void unloadTexture(GfxDriverObjectHandleType handle) = 0;
+		virtual GfxDriverObjectHandleType loadFont(std::string_view str) = 0;
+		virtual void unloadFont(GfxDriverObjectHandleType handle) = 0;
 		virtual GfxDriverObjectHandleType compileGeometry(const Geometry& geometryDsc, GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) = 0;
 		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) = 0;
 		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) = 0;

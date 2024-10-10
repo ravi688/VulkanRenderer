@@ -3,6 +3,7 @@
 #include <sutk/defines.hpp>
 #include <sutk/IGfxDriver.hpp> // for SUTK::IGfxDriver::getSizeInCentimeters()
 
+#include <common/Reference.hpp> // for com::Reference
 #include <vector> // for std::vector
 #include <utility> // for std::forward
 
@@ -29,9 +30,13 @@ namespace SUTK
 	class UIDriver
 	{
 	public:
-		typedef GfxDriverObjectHandleType ImageReference;
-		static constexpr ImageReference InvalidImage = GFX_DRIVER_OBJECT_NULL_HANDLE;
+		struct AuxImage { };
+		typedef com::Reference<GfxDriverObjectHandleType, GFX_DRIVER_OBJECT_NULL_HANDLE, AuxImage> ImageReference;
+		static constexpr ImageReference InvalidImage = ImageReference::Null;
 		typedef TextureAttributes ImageAttributes;
+		struct AuxFont { };
+		typedef com::Reference<GfxDriverObjectHandleType, GFX_DRIVER_OBJECT_NULL_HANDLE, AuxFont> FontReference;
+		static constexpr FontReference InvalidFont = FontReference::Null;
 	private:
 		IGfxDriver& m_gfxDriver;
 		IInputDriver* m_inputDriver;
@@ -61,6 +66,8 @@ namespace SUTK
 		ImageReference loadImage(std::string_view path) noexcept;
 		void unloadImage(ImageReference id) noexcept;
 		ImageAttributes getImageAttributes(ImageReference id) noexcept;
+		FontReference loadFont(std::string_view path) noexcept;
+		void unloadFont(FontReference id) noexcept;
 
 		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }
 

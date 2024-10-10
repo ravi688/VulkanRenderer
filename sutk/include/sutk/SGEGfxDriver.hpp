@@ -62,6 +62,7 @@ namespace SUTK
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
 		std::unordered_map<id_generator_id_type_t, SGE::RenderObject> m_renderObjectMappings;
 		com::IDMap<std::pair<std::string, SGE::Texture>> m_textureData;
+		com::IDMap<std::pair<std::string, SGE::Font>> m_fontData;
 		std::unordered_map<id_generator_id_type_t, ObjectType> m_typeTable;
 		template<typename T>
 		struct CallbackHandlerData
@@ -157,6 +158,9 @@ namespace SUTK
 		virtual GfxDriverObjectHandleType loadTexture(std::string_view str) override;
 		virtual void getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out) override;
 		virtual void unloadTexture(GfxDriverObjectHandleType handle) override;
+
+		virtual GfxDriverObjectHandleType loadFont(std::string_view str) override;
+		virtual void unloadFont(GfxDriverObjectHandleType handle) override;
 
 		// compiles SUTK::Geometry description into SGE objects which can eventually be renderered in SGE
 		virtual GfxDriverObjectHandleType compileGeometry(const Geometry& geometryDsc, GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) override;
