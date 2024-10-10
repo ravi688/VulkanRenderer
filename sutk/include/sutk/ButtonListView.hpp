@@ -7,6 +7,8 @@ namespace SUTK
 {
 	class SUTK_API ButtonListView : public DynamicVListContainer<Button>
 	{
+	public:
+		static constexpr f32 BUTTON_HEIGHT = 0.7f;
 	private:
 		GfxDriverObjectHandleType m_textGroup;
 

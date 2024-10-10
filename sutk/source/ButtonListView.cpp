@@ -44,7 +44,7 @@ namespace SUTK
 	std::pair<Button*, f32> ButtonListView::addButton(const std::string_view labelStr) noexcept
 	{	
 		// Create the Interactive Button Object
-		std::pair<Button*, f32> result = get(0.7f);
+		std::pair<Button*, f32> result = get(BUTTON_HEIGHT);
 
 		// Setup its Visual Representation
 		DefaultButtonGraphic* graphic = result.first->getGraphicAs<DefaultButtonGraphic>();
