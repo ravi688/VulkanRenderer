@@ -4,7 +4,7 @@ namespace SUTK
 {
 	ScrollToggleButtonGroupView::ScrollToggleButtonGroupView(UIDriver& driver, Container* parent, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : MaskedScrollableContainer<ToggleButtonGroupView>(driver, parent, poolSize, textGroup)
 	{
-
+		getScrollContainer()->setScaleFactor(TOGGLE_BUTTON_HEIGHT);
 	}
 
 	ToggleButton* ScrollToggleButtonGroupView::onCreate() noexcept

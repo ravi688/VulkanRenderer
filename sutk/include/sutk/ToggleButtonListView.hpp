@@ -7,6 +7,8 @@ namespace SUTK
 {
 	class SUTK_API ToggleButtonListView : public DynamicVListContainer<ToggleButton>
 	{
+	public:
+		static constexpr f32 TOGGLE_BUTTON_HEIGHT = 0.7f;
 	private:
 		GfxDriverObjectHandleType m_textGroup;
 
