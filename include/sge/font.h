@@ -116,6 +116,8 @@ typedef struct glyph_bitmap_t
 	u32 channel_count;
 } glyph_bitmap_t;
 
+typedef buffer_t /* FT_Bitmap */ ft_bitmap_list_t;
+
 typedef struct font_t
 {
 	renderer_t* renderer;
@@ -137,6 +139,11 @@ typedef struct font_t
 	u32 loaded_point_size;
 	/* cached glyph infos as we are not sure how does the FT_Load_Glyph works and how much expensive it is */
 	hash_table_t glyph_info_table;
+	/* this list keeps track of FT_Bitmap objects which were created as a target in pixel mode conversion,
+	 * and need to be deleted (by calling FT_Bitmap_Done) once we are done with it. 
+	 * since, users of font_get_glyph_bitmap() function use/reference the underlying buffer of FT_Bitmap (target) object even
+	 * after the function exists, we can only delete the bitmap objects when font is destroyed. */
+	ft_bitmap_list_t bitmap_delete_list;
 } font_t;
 
 BEGIN_CPP_COMPATIBLE

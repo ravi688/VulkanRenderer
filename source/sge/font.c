@@ -112,6 +112,7 @@ SGE_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 length,
 		font_set_char_size(font, 11);
 
 	font->glyph_info_table = hash_table_create(renderer->allocator, pair_t(utf32_t, u32), font_glyph_info_t, 128, utf32_u32_equal_to, utf32_u32_hash);
+	font->bitmap_delete_list = memory_allocator_buf_new(renderer->allocator, FT_Bitmap);
 }
 
 SGE_API font_t* font_load_and_create(renderer_t* renderer, const char* file_name)
@@ -134,6 +135,12 @@ SGE_API void font_destroy(font_t* font)
 		ttf_free(font->ttf_handle);
 	if(font->ft_handle != NULL)
 	{
+		/* delete the Bitmap objects created during the conversion */
+		buf_for_each_element_ptr(FT_Bitmap, bitmap, &font->bitmap_delete_list)
+			FT_Bitmap_Done(font->renderer->ft_library, bitmap);
+		buf_clear(&font->bitmap_delete_list, NULL);
+		buf_free(&font->bitmap_delete_list);
+
 		FT_Done_Face(font->ft_handle);
 		memory_allocator_dealloc(font->renderer->allocator, font->ft_data);
 	}
@@ -263,6 +270,8 @@ SGE_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bitmap_t
 						pixels[i] = (u8)(255 * inv);
 					}
 				}
+				/* add this target bitmap to the bitmap list so that it can later be deleted */
+				buf_push(&font->bitmap_delete_list, &target_bitmap);
 			}
 			else
 			{
