@@ -81,6 +81,11 @@ SGE_API void bitmap_text_set_font(bitmap_text_t* text, font_t* font)
 	vulkan_bitmap_text_set_font(VULKAN_BITMAP_TEXT_CAST(text), font);
 }
 
+SGE_API void bitmap_text_set_font_update_all(bitmap_text_t* text, font_t* font)
+{
+	vulkan_bitmap_text_set_font_update_all(VULKAN_BITMAP_TEXT_CAST(text), font);
+}
+
 SGE_API void bitmap_text_set_material(bitmap_text_t* text, material_t* material)
 {
 	vulkan_bitmap_text_set_material(text, material);

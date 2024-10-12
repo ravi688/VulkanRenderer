@@ -129,6 +129,16 @@ namespace SGE
 			m_handle = NULL;
 		}
 
+		void setFont(Font font) noexcept
+		{
+			bitmap_text_set_font(m_handle, static_cast<font_t*>(font));
+		}
+
+		void setFontUpdateAll(Font font) noexcept
+		{
+			bitmap_text_set_font_update_all(m_handle, static_cast<font_t*>(font));
+		}
+
 		BitmapTextString createString() const noexcept
 		{
 			auto handle = bitmap_text_string_create(m_handle);
