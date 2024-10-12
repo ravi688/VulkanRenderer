@@ -74,6 +74,26 @@ SGE_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool)
 		memory_allocator_dealloc(pool->renderer->allocator, pool);
 }
 
+SGE_API bool bitmap_glyph_pool_try_get_texcoord(bitmap_glyph_pool_t* pool, glyph_instance_id_t id, glyph_texcoord_t OUT texcoord)
+{
+	AUTO info = buffer2d_get_rect(&pool->pixels, &id);
+	if(!info)
+		return false;
+	if(texcoord != NULL)
+	{
+		irect2d_t rect = info->rect_info.rect;
+		iextent2d_t size = pool->pixels.view->size;
+		OUT texcoord = (glyph_texcoord_t)
+		{
+			.tltc = { (f32)rect.offset.x / size.width, (f32)rect.offset.y / size.height },
+			.trtc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)rect.offset.y / size.height },
+			.brtc = { (f32)(rect.offset.x + rect.extent.x) / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height },
+			.bltc = { (f32)rect.offset.x / size.width, (f32)(rect.offset.y + rect.extent.y) / size.height }
+		};
+	}
+	return true;
+}
+
 SGE_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized)
 {
 	glyph_instance_id_t id =

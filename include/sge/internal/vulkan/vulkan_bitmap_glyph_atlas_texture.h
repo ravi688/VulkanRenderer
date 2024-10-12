@@ -151,6 +151,9 @@ SGE_API bool vulkan_bitmap_glyph_atlas_texture_commit(vulkan_bitmap_glyph_atlas_
  * texcoords: the texture coordinates (list of 4 vec2(s)), filled by this function if the glyph has graphical representation
  * returns: true if the glyph has graphical representation and there are no errors */
 SGE_API bool vulkan_bitmap_glyph_atlas_texture_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord);
+/* returns true if texture coordinates corresponding to the glyph instance id exists, in which case, it populates the glyph_texcoord_t object. 
+ * texcoord: can be NULL (in which case, it will be ignored). */
+SGE_API bool vulkan_bitmap_glyph_atlas_texture_try_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, glyph_instance_id_t id, glyph_texcoord_t OUT texcoord);
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* vulkan_bitmap_glyph_atlas_texture_get_gtc_host_buffer_readonly(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {
 	return vulkan_host_buffered_buffer_get_host_buffer_readonly(&texture->glyph_texcoord_buffer);
@@ -158,6 +161,12 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE buffer_t* vulkan_bitmap_gly
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_contains_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode)
 {
 	return bitmap_glyph_pool_contains_texcoord(&texture->pool, unicode);
+}
+/* similar to vulkan_bitmap_glyph_atlas_texture_contains_texcoord but it doesn't access the font pointer inside the bitmap glyph pool object. 
+ * this is useful in function repopulate_updated_gtc_host_buffer() in vulkan_bitmap_glyph_atlas_texture.c */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_bitmap_glyph_atlas_texture_contains_texcoord2(vulkan_bitmap_glyph_atlas_texture_t* texture, glyph_instance_id_t id)
+{
+	return vulkan_bitmap_glyph_atlas_texture_try_get_texcoord(texture, id, NULL);
 }
 #ifdef GLOBAL_DEBUG
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_bitmap_glyph_atlas_texture_dump(vulkan_bitmap_glyph_atlas_texture_t* texture, const char* file_path)

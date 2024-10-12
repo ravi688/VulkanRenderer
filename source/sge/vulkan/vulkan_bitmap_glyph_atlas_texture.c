@@ -196,11 +196,12 @@ static void repopulate_updated_gtc_host_buffer(vulkan_bitmap_glyph_atlas_texture
 		glyph_instance_id_t key;
 		dictionary_get_key_at(&texture->glyph_texcoord_index_table, i, &key);
 
-		_debug_assert__(vulkan_bitmap_glyph_atlas_texture_contains_texcoord(texture, key.unicode));
+		_debug_assert__(vulkan_bitmap_glyph_atlas_texture_contains_texcoord2(texture, key));
 
 		/* update the GTC at the index */
 		glyph_texcoord_t texcoord;
-		vulkan_bitmap_glyph_atlas_texture_get_texcoord(texture, key.unicode, &texcoord);
+		bool result = vulkan_bitmap_glyph_atlas_texture_try_get_texcoord(texture, key, &texcoord);
+		_debug_assert__(result);
 		vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t glsl_texcoord =
 		{
 			.tltc = { texcoord.tltc.x, texcoord.tltc.y },
@@ -255,4 +256,9 @@ SGE_API bool vulkan_bitmap_glyph_atlas_texture_commit(vulkan_bitmap_glyph_atlas_
 SGE_API bool vulkan_bitmap_glyph_atlas_texture_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord)
 {
 	return bitmap_glyph_pool_get_texcoord(&texture->pool, unicode, texcoord, NULL);
+}
+
+SGE_API bool vulkan_bitmap_glyph_atlas_texture_try_get_texcoord(vulkan_bitmap_glyph_atlas_texture_t* texture, glyph_instance_id_t id, glyph_texcoord_t OUT texcoord)
+{
+	return bitmap_glyph_pool_try_get_texcoord(&texture->pool, id, texcoord);
 }
