@@ -84,11 +84,13 @@ SGE_API void bitmap_text_string_destroyH(bitmap_text_t* text, bitmap_text_string
 
 /* setters */
 SGE_API void bitmap_text_set_point_size(bitmap_text_t* text, u32 point_size);
+SGE_API void bitmap_text_set_font(bitmap_text_t* text, font_t* font);
 SGE_API void bitmap_text_set_material(bitmap_text_t* text, material_t* material);
 SGE_API void bitmap_text_set_render_space_type(bitmap_text_t* text, bitmap_text_render_space_type_t space_type);
 SGE_API void bitmap_text_set_render_surface_type(bitmap_text_t* text, bitmap_text_render_surface_type_t surface_type);
 SGE_API void bitmap_text_string_setH(bitmap_text_t* text, bitmap_text_string_handle_t handle, const char* string);
 SGE_API void bitmap_text_string_set_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle, u32 point_size);
+SGE_API void bitmap_text_string_set_fontH(bitmap_text_t* text, bitmap_text_string_handle_t handle, font_t* font);
 SGE_API void bitmap_text_string_set_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle, mat4_t transform);
 SGE_API void bitmap_text_string_set_activeH(bitmap_text_t* text, bitmap_text_string_handle_t handle, bool is_active);
 SGE_API void bitmap_text_string_set_color(bitmap_text_t* text, bitmap_text_string_handle_t handle, color_t color);
@@ -96,8 +98,10 @@ SGE_API void bitmap_text_string_set_char_attr_color(bitmap_text_t* text, bitmap_
 
 /* getters */
 SGE_API u32 bitmap_text_get_point_size(bitmap_text_t* text);
+SGE_API font_t* bitmap_text_get_font(bitmap_text_t* text);
 SGE_API const char* bitmap_text_string_getH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 SGE_API u32 bitmap_text_string_get_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
+SGE_API font_t* bitmap_text_string_get_fontH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 SGE_API u32 bitmap_text_string_get_lengthH(bitmap_text_t* text, bitmap_text_string_handle_t handle);
 SGE_API f32 bitmap_text_string_get_zcoord_from_glyph_index(bitmap_text_t* text, bitmap_text_string_handle_t handle, u32 index);
 SGE_API u32 bitmap_text_string_get_glyph_index_from_zcoord(bitmap_text_t* text, bitmap_text_string_handle_t handle, f32 zcoord);

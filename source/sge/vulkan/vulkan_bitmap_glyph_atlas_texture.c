@@ -95,7 +95,7 @@ SGE_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_renderer_t
 	VULKAN_OBJECT_INIT(&texture->glyph_texcoord_buffer, VULKAN_OBJECT_TYPE_HOST_BUFFERED_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_host_buffered_buffer_create_no_alloc(renderer, &buffer_create_info, &texture->glyph_texcoord_buffer);
 
-	texture->glyph_texcoord_index_table = dictionary_create(pair_t(utf32_t, u32), u32, 127, utf32_u32_equal_to);
+	texture->glyph_texcoord_index_table = dictionary_create(glyph_instance_id_t, u32, 127, glyph_instance_id_equal_to);
 
 	texture->on_resize_event = event_create(renderer->allocator, texture PARAM_IF_DEBUG("Vulkan-Glyph-Atlas-Texture-Resize"));
 	texture->on_gtc_buffer_resize_event = event_create(renderer->allocator, texture PARAM_IF_DEBUG("Vulkan-Glyph-Texcoord-Buffer-Resize"));
@@ -136,11 +136,16 @@ SGE_API void vulkan_bitmap_glyph_atlas_texture_release_resources(vulkan_bitmap_g
 
 SGE_API u32 vulkan_bitmap_glyph_atlas_texture_get_or_create_glyph(vulkan_bitmap_glyph_atlas_texture_t* texture, pair_t(utf32_t, u32) unicode)
 {
+	glyph_instance_id_t id =
+	{
+		.unicode = unicode,
+		.font_id = vulkan_bitmap_glyph_atlas_texture_get_font(texture)->id
+	};
 	/* if the BGA texture already contains the character texture coordinates then just return it. */
 	if(vulkan_bitmap_glyph_atlas_texture_contains_texcoord(texture, unicode))
 	{
 		u32 index = U32_MAX;
-		dictionary_get_value(&texture->glyph_texcoord_index_table, &unicode, &index);
+		dictionary_get_value(&texture->glyph_texcoord_index_table, &id, &index);
 		return index;
 	}
 
@@ -163,7 +168,7 @@ SGE_API u32 vulkan_bitmap_glyph_atlas_texture_get_or_create_glyph(vulkan_bitmap_
 	buf_push_n(buffer, &glsl_texcoord, SIZEOF_VULKAN_BITMAP_TEXT_GLYPH_GLSL_GLYPH_TEXCOORD_T);
 
 	/* add the index of the texture coordinate into GTI table for faster checking if the character has already rasterized */
-	dictionary_add(&texture->glyph_texcoord_index_table, &unicode, &index);
+	dictionary_add(&texture->glyph_texcoord_index_table, &id, &index);
 
 	return index;
 }
@@ -188,14 +193,14 @@ static void repopulate_updated_gtc_host_buffer(vulkan_bitmap_glyph_atlas_texture
 		/* get the index of the GTC of this ascii in the GTC buffer */
 		u32 index;
 		dictionary_get_value_at(&texture->glyph_texcoord_index_table, i, &index);
-		pair_t(utf32_t, u32) key;
+		glyph_instance_id_t key;
 		dictionary_get_key_at(&texture->glyph_texcoord_index_table, i, &key);
 
-		_debug_assert__(vulkan_bitmap_glyph_atlas_texture_contains_texcoord(texture, key));
+		_debug_assert__(vulkan_bitmap_glyph_atlas_texture_contains_texcoord(texture, key.unicode));
 
 		/* update the GTC at the index */
 		glyph_texcoord_t texcoord;
-		vulkan_bitmap_glyph_atlas_texture_get_texcoord(texture, key, &texcoord);
+		vulkan_bitmap_glyph_atlas_texture_get_texcoord(texture, key.unicode, &texcoord);
 		vulkan_bitmap_text_glyph_glsl_glyph_texcoord_t glsl_texcoord =
 		{
 			.tltc = { texcoord.tltc.x, texcoord.tltc.y },

@@ -37,12 +37,42 @@
 
 #include <sge/pygen/shaders.h>
 
+static void* allocate(void* user_data, u32 size, u32 align)
+{
+	CAN_BE_UNUSED_VARIABLE AUTO allocator = CAST_TO(memory_allocator_t*, user_data);
+	if(align == U32_MAX)
+		align = 1;
+	return memory_allocator_aligned_alloc(allocator, MEMORY_ALLOCATION_TYPE_COM_ALLOCATION_CALLBACKS, size, align);
+}
+
+static void* reallocate(void* user_data, void* old_ptr, u32 size, u32 align)
+{
+	CAN_BE_UNUSED_VARIABLE AUTO allocator = CAST_TO(memory_allocator_t*, user_data);
+	if(align == U32_MAX)
+		align = 1;
+	return memory_allocator_aligned_realloc(allocator, old_ptr, MEMORY_ALLOCATION_TYPE_COM_ALLOCATION_CALLBACKS, size, align);
+}
+
+static void deallocate(void* user_data, void* ptr)
+{
+	CAN_BE_UNUSED_VARIABLE AUTO allocator = CAST_TO(memory_allocator_t*, user_data);
+	memory_allocator_aligned_deallocate(allocator, ptr);
+}
+
 SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, sge_driver_create_info_t* _create_info)
 {
 	renderer_t* renderer = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_RENDERER, renderer_t);
 	memzero(renderer, renderer_t);
 
 	renderer->allocator = allocator;
+	renderer->alloc_callbacks = (com_allocation_callbacks_t)
+	{
+		.user_data = allocator,
+		.allocate = allocate,
+		.reallocate = reallocate,
+		.deallocate = deallocate
+	};
+	renderer->idgen = id_generator_create(0, &renderer->alloc_callbacks);
 	IF_DEBUG( renderer->debug_log_builder = string_builder_create(allocator, 2048) );
 
 	/* create and initialize the free type library */
@@ -79,6 +109,7 @@ SGE_API void renderer_terminate(renderer_t* renderer)
 	FT_Done_FreeType(renderer->ft_library);
 
 	IF_DEBUG( string_builder_destroy(renderer->debug_log_builder) );
+	id_generator_destroy(&renderer->idgen);
 	memory_allocator_dealloc(renderer->allocator, renderer);
 }
 

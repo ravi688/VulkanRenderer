@@ -76,6 +76,11 @@ SGE_API void bitmap_text_set_point_size(bitmap_text_t* text, u32 point_size)
 	vulkan_bitmap_text_set_point_size(text, point_size);
 }
 
+SGE_API void bitmap_text_set_font(bitmap_text_t* text, font_t* font)
+{
+	vulkan_bitmap_text_set_font(VULKAN_BITMAP_TEXT_CAST(text), font);
+}
+
 SGE_API void bitmap_text_set_material(bitmap_text_t* text, material_t* material)
 {
 	vulkan_bitmap_text_set_material(text, material);
@@ -127,6 +132,11 @@ SGE_API void bitmap_text_string_set_point_sizeH(bitmap_text_t* text, bitmap_text
 	vulkan_bitmap_text_string_set_point_sizeH(text, handle, point_size);
 }
 
+SGE_API void bitmap_text_string_set_fontH(bitmap_text_t* text, bitmap_text_string_handle_t handle, font_t* font)
+{
+	vulkan_bitmap_text_string_set_fontH(VULKAN_BITMAP_TEXT_CAST(text), handle, font);
+}
+
 SGE_API void bitmap_text_string_set_transformH(bitmap_text_t* text, bitmap_text_string_handle_t handle, mat4_t transform)
 {
 	vulkan_bitmap_text_string_set_transformH(text, handle, transform);
@@ -153,6 +163,11 @@ SGE_API u32 bitmap_text_get_point_size(bitmap_text_t* text)
 	return vulkan_bitmap_text_get_point_size(text);
 }
 
+SGE_API font_t* bitmap_text_get_font(bitmap_text_t* text)
+{
+	return vulkan_bitmap_text_get_font(VULKAN_BITMAP_TEXT_CAST(text));
+}
+
 SGE_API const char* bitmap_text_string_getH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
 {
 	return vulkan_bitmap_text_string_getH(text, handle);
@@ -161,6 +176,11 @@ SGE_API const char* bitmap_text_string_getH(bitmap_text_t* text, bitmap_text_str
 SGE_API u32 bitmap_text_string_get_point_sizeH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
 {
 	return vulkan_bitmap_text_string_get_point_sizeH(text, handle);
+}
+
+SGE_API font_t* bitmap_text_string_get_fontH(bitmap_text_t* text, bitmap_text_string_handle_t handle)
+{
+	return vulkan_bitmap_text_string_get_fontH(VULKAN_BITMAP_TEXT_CAST(text), handle);
 }
 
 SGE_API u32 bitmap_text_string_get_lengthH(bitmap_text_t* text, bitmap_text_string_handle_t handle)

@@ -48,7 +48,9 @@ typedef struct bitmap_glyph_pool_create_info_t
 {
 	/* size of the bitmap (in pixels) */
 	iextent2d_t size;
-	/* font to be used by the bitmap_glyph_pool_t */
+	/* font to be used by the bitmap_glyph_pool_t, it can be NULL at this time if the bitmap_glyph_pool_t will be used by vulkan_bitmap_text_t objects only.
+	 * that's because, bitmap text objects have their own ptr to font objects and they override this 'font' each time they want to rasterize a glyph or get texcoord. 
+	 * if you're using it as standalone then you must call bitmap_glyph_pool_set_font() to set the 'font' to a valid pointer before calling bitmap_glyph_pool_get_texcoord() */
 	font_t* font;
 	/* optional buffer to be used as a pixel buffer inside the bitmap_glyph_pool_t */
 	buffer_t* buffer;
@@ -85,9 +87,12 @@ SGE_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool);
 
 /* clears the pool for reuse */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_clear(bitmap_glyph_pool_t* pool) { buffer2d_clear(&pool->pixels, NULL); }
+/* sets the current font which is used by the subsequent calls to bitmap_glyph_pool_get_texcoord() */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_set_font(bitmap_glyph_pool_t* pool, font_t* font) { pool->font = font; }
 /* returns the font used by this bitmap glyph pool */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE font_t* bitmap_glyph_pool_get_font(bitmap_glyph_pool_t* pool) { return pool->font; }
-/* returns true if the glyph has graphical representation and no errors,
+/* rasterizes the glyph if it has graphical representation and not already rasterized.
+ * returns true if the glyph has graphical representation and no errors,
  * outputs the texture coordinates of the glyph represented by the unicode encoding 'unicode' and with point size 'point_size' 
  * OUT is_resized : set to true if the 2D view has been resized (eventually the underlying linear buffer) 
  * OUT is_updated : set to true if more contents (or existing content updated) are added into the underlying linear buffer.

@@ -54,9 +54,9 @@ SGE_API void bitmap_glyph_pool_create_no_alloc(renderer_t* renderer, bitmap_glyp
 		.buffer = create_info->buffer,
 		.view = create_info->view,
 		.resize_mode = BUFFER2D_RESIZE_MODE_ASPECT_RATIO_STRICT,
-		.key_size = sizeof(pair_t(utf32_t, u32)),
-		.key_hash_function = utf32_u32_hash,
-		.key_comparer = utf32_u32_equal_to
+		.key_size = sizeof(glyph_instance_id_t),
+		.key_hash_function = glyph_instance_id_hash,
+		.key_comparer = glyph_instance_id_equal_to
 	};
 	buffer2d_create_no_alloc_ext(renderer->allocator, &_create_info, &pool->pixels);
 	buffer2d_clear(&pool->pixels, NULL);
@@ -76,7 +76,12 @@ SGE_API void bitmap_glyph_pool_release_resources(bitmap_glyph_pool_t* pool)
 
 SGE_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode, glyph_texcoord_t OUT texcoord, bool OUT is_resized)
 {
-	AUTO info = buffer2d_get_rect(&pool->pixels, &unicode);
+	glyph_instance_id_t id =
+	{
+		.unicode = unicode,
+		.font_id = pool->font->id
+	};
+	AUTO info = buffer2d_get_rect(&pool->pixels, &id);
 	/* if no rect exists confiding/holding the rasterized glyph's pixels */
 	if(info == NULL)
 	{
@@ -120,13 +125,13 @@ SGE_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(ut
 		_debug_assert__(bitmap.channel_count == 1);
 
 		/* pack the glyph pixels into the font bitmap  */
-		bool _is_resized = IF_DEBUG( buffer2d_push_debug(&pool->pixels, &unicode, bitmap.pixels, bitmap.width, bitmap.height) )
-						   ELSE( buffer2d_push(&pool->pixels, &unicode, bitmap.pixels, bitmap.width, bitmap.height) );
+		bool _is_resized = IF_DEBUG( buffer2d_push_debug(&pool->pixels, &id, bitmap.pixels, bitmap.width, bitmap.height) )
+						   ELSE( buffer2d_push(&pool->pixels, &id, bitmap.pixels, bitmap.width, bitmap.height) );
 		if(is_resized != NULL)
 			OUT is_resized = _is_resized;
 
 		/* now get the reference to the packed pixel information */
-		info = buffer2d_get_rect(&pool->pixels, &unicode);
+		info = buffer2d_get_rect(&pool->pixels, &id);
 		_debug_assert__(info != NULL);
 	}
 
@@ -147,7 +152,12 @@ SGE_API bool bitmap_glyph_pool_get_texcoord(bitmap_glyph_pool_t* pool, pair_t(ut
 
 SGE_API bool bitmap_glyph_pool_contains_texcoord(bitmap_glyph_pool_t* pool, pair_t(utf32_t, u32) unicode)
 {
-	return buffer2d_get_rect(&pool->pixels, &unicode) != NULL;
+	glyph_instance_id_t id =
+	{
+		.unicode = unicode,
+		.font_id = pool->font->id
+	};
+	return buffer2d_get_rect(&pool->pixels, &id) != NULL;
 }
 
 SGE_API void bitmap_glyph_pool_dump(bitmap_glyph_pool_t* pool, const char* file_path)
