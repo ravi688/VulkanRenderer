@@ -91,6 +91,10 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_clea
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void bitmap_glyph_pool_set_font(bitmap_glyph_pool_t* pool, font_t* font) { pool->font = font; }
 /* returns the font used by this bitmap glyph pool */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE font_t* bitmap_glyph_pool_get_font(bitmap_glyph_pool_t* pool) { return pool->font; }
+/* checks if rasterized glyph corresponding to the supplied glyph instance id exists or not.
+ * if it exists, then it returns true and populates the glyph_texcoord_t object 
+ * NOTE: texcoord can be NULL, in that case populate step will not be done. */
+SGE_API bool bitmap_glyph_pool_try_get_texcoord(bitmap_glyph_pool_t* pool, glyph_instance_id_t id, glyph_texcoord_t OUT texcoord);
 /* rasterizes the glyph if it has graphical representation and not already rasterized.
  * returns true if the glyph has graphical representation and no errors,
  * outputs the texture coordinates of the glyph represented by the unicode encoding 'unicode' and with point size 'point_size' 
