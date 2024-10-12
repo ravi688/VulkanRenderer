@@ -47,16 +47,11 @@ namespace SUTK
 		m_scene.addCamera(camera);
 
 		m_shader = shaderLibrary.compileAndLoadShader(driver.getBuiltinFileData("/bitmap_text_shader.v3dshader").first, "BitmapShader");
-		auto font_data = driver.getBuiltinFileData("/Roboto-Bold.ttf");
-		m_font = driver.createFont(font_data.first.data(), font_data.second);
-
-		m_font.setCharSize(12);
 
 		SGE::BitmapGlyphAtlasTexture::CreateInfo createInfo =
 		{
 			512,
-			512,
-			m_font
+			512
 		};
 		m_bgaTexture = m_driver.createBitmapGlyphAtlasTexture(createInfo);
 
@@ -70,7 +65,8 @@ namespace SUTK
 			destroyTextGroup(it, false);
 		m_bitmapTextGroups.clear();
 		m_bgaTexture.destroy();
-		m_font.destroy();
+		if(m_defaultFont)
+			m_defaultFont.destroy();
 		m_scene.destroy();
 		id_generator_destroy(&m_id_generator);
 	}
@@ -118,7 +114,7 @@ namespace SUTK
 	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::createBitmapText(SGEBitmapTextGroup& group)
 	{
 		debug_log_info("[SGE] Creating new SGE::BitmapText object");
-		SGE::BitmapText text = m_driver.createBitmapText(m_bgaTexture);
+		SGE::BitmapText text = m_driver.createBitmapText(m_bgaTexture, group.font);
 		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Text, SGE::RenderQueue::Type::Transparent);
 		SGE::Material material = m_driver.getMaterialLibrary().createMaterial(m_shader, "BitmapTextShaderTest");
 		material.set<float>("parameters.color.r", 1.0f);
@@ -208,8 +204,15 @@ namespace SUTK
 	{
 		id_generator_id_type_t id = id_generator_get(&m_id_generator);
 		SGEBitmapTextGroup& group = m_bitmapTextGroups[id];
+		group.font = getDefaultFont();
 		group.currentBitmapTextHandle = GFX_DRIVER_OBJECT_NULL_HANDLE;
 		return static_cast<GfxDriverObjectHandleType>(id);
+	}
+
+	SGEGfxDriver::SGEBitmapTextGroup& SGEGfxDriver::getTextGroup(GfxDriverObjectHandleType handle) noexcept
+	{
+		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
+		return com::find_value(m_bitmapTextGroups, static_cast<id_generator_id_type_t>(handle));
 	}
 
 	void SGEGfxDriver::destroyTextGroup(std::unordered_map<id_generator_id_type_t, SGEBitmapTextGroup>::iterator it, bool isErase)
@@ -314,6 +317,34 @@ namespace SUTK
 	f32 SGEGfxDriver::getTextPointSize(GfxDriverObjectHandleType handle)
 	{
 		return getText(handle).getPointSize();
+	}
+
+	SGE::Font SGEGfxDriver::getDefaultFont() noexcept
+	{
+		if(!m_defaultFont)
+		{
+			auto font_data = m_driver.getBuiltinFileData("/Roboto-Bold.ttf");
+			m_defaultFont = m_driver.createFont(font_data.first.data(), font_data.second);
+			m_defaultFont.setCharSize(12);
+		}
+		return m_defaultFont;
+	}
+
+	SGE::Font SGEGfxDriver::getFont(GfxDriverObjectHandleType handle) noexcept
+	{
+		if(handle == GFX_DRIVER_OBJECT_NULL_HANDLE)
+			return getDefaultFont();
+		std::pair<std::string, SGE::Font>& pair = m_fontData.get(handle);
+		// TODO: Wait on the another thread to finish loading this font
+		if(!pair.second)
+			pair.second = m_driver.loadFont(pair.first);
+		return pair.second;
+	}
+
+	void SGEGfxDriver::setTextFont(GfxDriverObjectHandleType handle, GfxDriverObjectHandleType font)
+	{
+		SGE::Font sgeFont = getFont(font);
+		getText(handle).setFont(sgeFont);
 	}
 
 	static INLINE_IF_RELEASE_MODE color_t to_color(const Color4 _color)
@@ -1068,18 +1099,42 @@ namespace SUTK
 		return geometry;
 	}
 
-	u32 SGEGfxDriver::getTextBaselineHeightInPixels(f32 pointSize)
+	u32 SGEGfxDriver::getFontBaselineHeightInPixels(SGE::Font font, f32 pointSize) noexcept
 	{
-		f32 save = m_font.getCharSize();
-		m_font.setCharSize(pointSize);
-		u32 pixels = m_font.getFontUnitsToPixels(m_font.getBaselineSpace(), SGE::Display::GetDPI().height);
-		m_font.setCharSize(save);
+		f32 save = font.getCharSize();
+		font.setCharSize(pointSize);
+		u32 pixels = font.getFontUnitsToPixels(font.getBaselineSpace(), SGE::Display::GetDPI().height);
+		font.setCharSize(save);
 		return pixels;
 	}
 
-	f32 SGEGfxDriver::getTextBaselineHeightInCentimeters(f32 pointSize)
+	f32 SGEGfxDriver::getFontBaselineHeightInCentimeters(SGE::Font font, f32 pointSize) noexcept
 	{
-		return SGE::Display::ConvertPixelsToInches({ 0, static_cast<f32>(getTextBaselineHeightInPixels(pointSize)) }).height * CENTIMETERS_PER_INCH;
+		return SGE::Display::ConvertPixelsToInches({ 0, static_cast<f32>(getFontBaselineHeightInPixels(font, pointSize)) }).height * CENTIMETERS_PER_INCH;
+	}
+
+	u32 SGEGfxDriver::getTextBaselineHeightInPixels(GfxDriverObjectHandleType handle, f32 pointSize)
+	{
+		SGE::Font font = getText(handle).getFont();
+		return getFontBaselineHeightInPixels(font, pointSize);
+	}
+
+	f32 SGEGfxDriver::getTextBaselineHeightInCentimeters(GfxDriverObjectHandleType handle, f32 pointSize)
+	{
+		SGE::Font font = getText(handle).getFont();
+		return getFontBaselineHeightInCentimeters(font, pointSize);
+	}
+
+	u32 SGEGfxDriver::getTextGroupBaselineHeightInPixels(GfxDriverObjectHandleType handle, f32 pointSize) 
+	{
+		SGE::Font font = getText(handle).getFont();
+		return getFontBaselineHeightInPixels(font, pointSize);
+	}
+
+	f32 SGEGfxDriver::getTextGroupBaselineHeightInCentimeters(GfxDriverObjectHandleType handle, f32 pointSize) 
+	{
+		SGE::Font font = getTextGroup(handle).font;
+		return getFontBaselineHeightInCentimeters(font, pointSize);
 	}
 
 	u32 SGEGfxDriver::addOnResizeHandler(OnResizeCallbackHandler handler)
