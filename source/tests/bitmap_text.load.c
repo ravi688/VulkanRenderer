@@ -58,11 +58,14 @@ TEST_DATA(BITMAP_TEXT_LOAD)
 	camera_t* camera;
 
 	font_t* font;
+	font_t* font1;
+	font_t* font2;
 
 	bitmap_glyph_atlas_texture_t* texture;
 	bitmap_text_t* text;
 	bitmap_text_string_handle_t text_string_handle;
 	bitmap_text_string_handle_t another_string_handle;
+	bitmap_text_string_handle_t str;
 
 	render_object_t* text_object;
 	material_t* text_material;
@@ -684,6 +687,7 @@ TEST_ON_INITIALIZE(BITMAP_TEXT_LOAD)
 
 	this->font = font_load_and_create(renderer, "showcase/resource/fonts/arial.ttf");
 	font_set_char_size(this->font, 24);
+	this->font1 = font_load_and_create(renderer, "showcase/resource/fonts/Pushster-Regular.ttf");
 
 	/* bitmap text */
 	bitmap_glyph_atlas_texture_create_info_t texture_create_info = { 512, 512, this->font };
@@ -708,11 +712,11 @@ TEST_ON_INITIALIZE(BITMAP_TEXT_LOAD)
 	bitmap_text_string_setH(this->text, this->another_string_handle, "abcdefgh");
 	bitmap_text_string_setH(this->text, this->text_string_handle, "ABCDEFGH1234567890ABCDEFGH1234567890aj0w3e9r723908423740hjdslfakjsdhv;xczkjvnxz;lfkdjferwq90re873094");
 
-	AUTO str = bitmap_text_string_create(this->text);
-	bitmap_text_string_set_point_sizeH(this->text, str, 35);
-	bitmap_text_string_setH(this->text, str, "How are you?@@@$#$$%^^&&^%$#%#$");
+	this->str = bitmap_text_string_create(this->text);
+	bitmap_text_string_set_point_sizeH(this->text, this->str, 35);
+	bitmap_text_string_setH(this->text, this->str, "How are you?@@@$#$$%^^&&^%$#%#$");
 
-	bitmap_text_string_set_transformH(this->text, str, mat4_translation(0.0f, 300.0f, -400.0f));
+	bitmap_text_string_set_transformH(this->text, this->str, mat4_translation(0.0f, 300.0f, -400.0f));
 
 	#ifdef GLOBAL_DEBUG
 	bitmap_glyph_atlas_texture_dump(this->texture, "bitmap_glyph_atlas_texture.dump.bmp");
@@ -740,6 +744,9 @@ TEST_ON_TERMINATE(BITMAP_TEXT_LOAD)
 	font_destroy(this->font);
 	font_release_resources(this->font);
 
+	font_destroy(this->font1);
+	font_release_resources(this->font1);
+
 	render_scene_destroy(this->scene);
 	render_scene_release_resources(this->scene);
 }
@@ -751,7 +758,7 @@ TEST_ON_UPDATE(BITMAP_TEXT_LOAD)
 	if(kbhit())
 	{
 		char ch = getch();
-		if((ch != 'p') && (ch != 'q') && (ch != 'd') && (ch != 'u'))
+		if((ch != 'p') && (ch != 'q') && (ch != 'd') && (ch != 'u') && (ch != 'r') && (ch != 's'))
 		{
 			isScreenSpace = !isScreenSpace;
 			if(isScreenSpace)
@@ -778,6 +785,16 @@ TEST_ON_UPDATE(BITMAP_TEXT_LOAD)
 		{
 			bitmap_text_string_set_point_sizeH(this->text, this->another_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->another_string_handle) / 2);
 			bitmap_text_string_set_point_sizeH(this->text, this->text_string_handle, bitmap_text_string_get_point_sizeH(this->text, this->text_string_handle) / 2);
+		}
+		else if(ch == 'r')
+		{
+			debug_log_info("Changing font to font 1");
+			bitmap_text_string_set_fontH(this->text, this->str, this->font1);
+		}
+		else if(ch == 's')
+		{
+			debug_log_info("Changing font to font 0");
+			bitmap_text_string_set_fontH(this->text, this->str, this->font);
 		}
 		else if(ch == 'd')
 		{

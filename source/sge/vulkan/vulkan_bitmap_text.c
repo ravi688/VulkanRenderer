@@ -108,7 +108,10 @@ SGE_API void vulkan_bitmap_text_create_no_alloc(vulkan_renderer_t* renderer, vul
 	text->inuse_list = BUF_INVALID_INDEX;
 	text->render_space_type = VULKAN_BITMAP_TEXT_RENDER_SPACE_TYPE_2D;
 	text->render_surface_type = VULKAN_BITMAP_TEXT_RENDER_SURFACE_TYPE_CAMERA;
-	text->point_size = font_get_char_size(vulkan_bitmap_glyph_atlas_texture_get_font(create_info->texture));
+	text->font = create_info->font ? create_info->font : vulkan_bitmap_glyph_atlas_texture_get_font(create_info->texture);
+	if(!text->font)
+		debug_log_warning("You haven't assigned 'font' field a valid pointer to font_t object in vulkan_bitmap_text_create_info_t, and bga texture doesn't contain valid font pointer either");
+	text->point_size = font_get_char_size(text->font);
 
 	/* setup BGA texture */
 	_debug_assert__(create_info->texture != NULL);
@@ -308,12 +311,14 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 
 	_debug_assert__(text_string != NULL);
 
+	/* set the default values if created for the first time or recycled. */
 	text_string->handle = handle;
 	text_string->render_data_handle = multi_buffer_sub_buffer_create(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), 32);
 	text_string->rect.offset = offset3d(0, 0, 0);
 	text_string->rect.extent = extent2d(500, 300);
 	text_string->transform = mat4_identity();
 	text_string->point_size = text->point_size;
+	text_string->font = text->font;
 
 	/* add transform of this string to the TST buffer */
 	mat4_t transform = mat4_transpose(text_string->transform); // though we don't need this transpose as the matrix will be identity here.
@@ -407,7 +412,7 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 		return;
 	}
 
-	font_t* font = vulkan_bitmap_text_get_font(text);
+	font_t* font = text_string->font;
 
 	/* override the point size for this font */
 	u32 saved_point_size = font_get_char_size(font);
@@ -428,6 +433,11 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 		string_builder_append(builder, "TextString: %s, size: %u, texcoord list:\n{\n", data, text_string->point_size);
 		string_builder_increment_indentation(builder);
 	#endif /* DBG_VULKAN_BITMAP_TEXT_STRING_SETH */
+
+	/* backup the current font used by bga texture so that we could restore it later */
+	font_t* prev_font = vulkan_bitmap_glyph_atlas_texture_get_font(text->texture);
+	/* now we are safe to modify the font used by bga texture. */
+	vulkan_bitmap_glyph_atlas_texture_set_font(text->texture, font);
 
 	f32 horizontal_pen = 0;
 	iextent2d_t tex_size = vulkan_bitmap_glyph_atlas_texture_get_size(text->texture);
@@ -499,6 +509,9 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 			string_builder_append(builder, "}\n");
 		#endif /* DBG_VULKAN_BITMAP_TEXT_STRING_SETH */
 	}
+
+	/* restore the font earlier used by bga texture */
+	vulkan_bitmap_glyph_atlas_texture_set_font(text->texture, prev_font);
 
 	// glyph_offset for the pseudo (virtual) glyph at the end of a line
 	buf_push(&text_string->glyph_offsets, &horizontal_pen);
@@ -730,6 +743,18 @@ SGE_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* tex
 	}
 }
 
+static void text_string_set_font(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, font_t* font)
+{
+	text_string->font = font;
+	if(buf_get_element_count(&text_string->chars) > 0)
+		text_string_refresh(text, text_string);
+}
+
+SGE_API void vulkan_bitmap_text_string_set_fontH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, font_t* font)
+{
+	text_string_set_font(text, get_text_stringH(text, handle), font);
+}
+
 SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform)
 {
 	mat4_move(get_text_stringH(text, handle)->transform, transform);
@@ -795,6 +820,18 @@ SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vul
 	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
 }
 
+SGE_API void vulkan_bitmap_text_set_font(vulkan_bitmap_text_t* text, font_t* font)
+{
+	text->font = font;
+}
+
+SGE_API void vulkan_bitmap_text_set_font_update_all(vulkan_bitmap_text_t* text, font_t* font)
+{
+	vulkan_bitmap_text_set_font(text, font);
+	buf_for_each_element_ptr(vulkan_bitmap_text_string_t, text_string, &text->text_strings)
+		text_string_set_font(text, text_string, font);
+}
+
 static void text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char_attr_color_range_t* ranges, u32 range_count)
 {
 	/* if this text string is not active then no need to apply any color attributes */
@@ -842,6 +879,11 @@ SGE_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text,  
 SGE_API u32 vulkan_bitmap_text_string_get_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
 {
 	return get_text_stringH(text, handle)->point_size;
+}
+
+SGE_API font_t* vulkan_bitmap_text_string_get_fontH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
+{
+	return get_text_stringH(text, handle)->font;
 }
 
 SGE_API u32 vulkan_bitmap_text_string_get_lengthH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
@@ -933,6 +975,5 @@ SGE_API bool vulkan_bitmap_text_string_is_activeH(vulkan_bitmap_text_t* text, vu
 
 SGE_API font_t* vulkan_bitmap_text_get_font(vulkan_bitmap_text_t* text)
 {
-	_debug_assert__(text->texture != NULL);
-	return vulkan_bitmap_glyph_atlas_texture_get_font(text->texture);
+	return text->font;
 }

@@ -128,6 +128,11 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bitmap_glyph_pool_t* vulkan
 {
 	return &texture->pool;
 }
+/* see: bitmap_glyph_pool_set_font for what it does. */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_bitmap_glyph_atlas_texture_set_font(vulkan_bitmap_glyph_atlas_texture_t* texture, font_t* font)
+{
+	bitmap_glyph_pool_set_font(&texture->pool, font);
+}
 /* returns the font used by this BGA texture */
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE font_t* vulkan_bitmap_glyph_atlas_texture_get_font(vulkan_bitmap_glyph_atlas_texture_t* texture)
 {

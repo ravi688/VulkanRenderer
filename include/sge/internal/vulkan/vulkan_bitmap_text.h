@@ -98,6 +98,7 @@ typedef struct char_attr_color_range_t
 } char_attr_color_range_t;
 
 typedef buffer_t /* element_type: char_attr_color_range_t */ char_attr_color_range_buffer_t;
+typedef struct font_t font_t;
 
 typedef struct vulkan_bitmap_text_string_t
 {
@@ -130,6 +131,12 @@ typedef struct vulkan_bitmap_text_string_t
 	/* holds true, if this string is visible (active), otherwise false. 
 	 * inactive means, the characters to render associated with this string will not be part of the GRD buffer. */
 	bool is_active;
+	/* font used to rasterize the characters in this text string 
+	 *
+	 * MEMORY OPT: We can also book-keep the pointer to font_t objects in vulkan_bitmap_text_t object itself as an array of pointers, 
+	 * and only store index to a font pointer here. Since, usually we don't have much number of unique fonts, we can keep the integer only 8-bit
+	 * or 16-bit wide. Thus, saving 7 or 6 bytes of memory per text string instance as compared to the otherwise case. */
+	font_t* font;
 } vulkan_bitmap_text_string_t;
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_texture_t;
@@ -137,6 +144,10 @@ typedef struct vulkan_bitmap_glyph_atlas_texture_t vulkan_bitmap_glyph_atlas_tex
 typedef struct vulkan_bitmap_text_create_info_t
 {
 	vulkan_bitmap_glyph_atlas_texture_t* texture;
+	/* default font, which will be used by all of the text strings created from this bitmap text object. 
+	* if provided NULL, then bitmap text will try to use the font used by bga texture if it has a valid pointer to font_t object.
+	* if none of contains a valid pointer to font_t object, a warning will be issued. */
+	font_t* font;
 } vulkan_bitmap_text_create_info_t;
 
 typedef vulkan_instance_buffer_t vulkan_host_multibuffered_buffer_t;
@@ -187,6 +198,10 @@ typedef struct vulkan_bitmap_text_t
 	 * But if the client is calling vulkan_bitmap_text_string_set_point_sizeH with point size different
 	 * from this 'point size' then it will have value F32_MAX - which would indicate an invalid value. */
 	u32 point_size;
+
+	/* default font used by all the text string instances derived/inherited from this bitmap text object. 
+	 * that means, calling vulkan_bitmap_text_string_create() would create a text string with its 'font' field initialized with this default font. */
+	font_t* font;
 
 	/* render space type of this text */
 	vulkan_bitmap_text_render_space_type_t render_space_type;
@@ -267,11 +282,17 @@ SGE_API void vulkan_bitmap_text_set_render_surface_type(vulkan_bitmap_text_t* te
  * vulkan_bitmap_text_string_insertH()
  * vulkan_bitmap_text_string_removeH()
  */
+/* NOTE: it is not threadsafe */
 SGE_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char* string);
 SGE_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 point_size);
+SGE_API void vulkan_bitmap_text_string_set_fontH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, font_t* font);
 SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, mat4_t transform);
 SGE_API	void vulkan_bitmap_text_string_set_activeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, bool is_active);
 SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, color_t color);
+SGE_API void vulkan_bitmap_text_set_font(vulkan_bitmap_text_t* text, font_t* font);
+/* internally calls vulkan_bitmap_text_set_font(),
+ * and applies the passed font to all of its text string instances discarding their previous font assignments if any. */
+SGE_API void vulkan_bitmap_text_set_font_update_all(vulkan_bitmap_text_t* text, font_t* font);
 /* sets color attribute for each characters lying the range list passed to this function 
  * ranges: is the list of ranges where each range consists of 'begin' and 'end' index
  * range_count: is the number of ranges */
@@ -286,6 +307,7 @@ SGE_API void vulkan_bitmap_text_string_set_char_attr_color(vulkan_bitmap_text_t*
 SGE_API u32 vulkan_bitmap_text_get_point_size(vulkan_bitmap_text_t* text);
 SGE_API const char* vulkan_bitmap_text_string_getH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 SGE_API u32 vulkan_bitmap_text_string_get_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
+SGE_API font_t* vulkan_bitmap_text_string_get_fontH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 /* NOTE: this returns number of characters exclusive of null character at the end of 'chars' buffer */
 SGE_API u32 vulkan_bitmap_text_string_get_lengthH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle);
 SGE_API f32 vulkan_bitmap_text_string_get_zcoord_from_glyph_index(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 index);

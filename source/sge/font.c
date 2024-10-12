@@ -40,6 +40,23 @@
 
 #include <ctype.h> // isgraph
 
+SGE_API hash_t glyph_instance_id_hash(void* _id)
+{
+	glyph_instance_id_t* id = CAST_TO(glyph_instance_id_t*, _id);
+	hash_t h1 = utf32_u32_hash(&id->unicode);
+	hash_t h2 = CAST_TO(hash_t, id->font_id);
+	return h1 ^ (h2 << 32);
+}
+
+SGE_API bool glyph_instance_id_equal_to(void* _lhs, void* _rhs)
+{
+	glyph_instance_id_t* lhs = CAST_TO(glyph_instance_id_t*, _lhs);
+	glyph_instance_id_t* rhs = CAST_TO(glyph_instance_id_t*, _rhs);
+	_com_assert(sizeof(lhs->font_id) == sizeof(u32));
+	return utf32_u32_equal_to(&lhs->unicode, &rhs->unicode) && u32_equal_to(&lhs->font_id, &rhs->font_id);
+}
+
+
 SGE_API font_t* font_new(memory_allocator_t* allocator)
 {
 	font_t* font = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_FONT, font_t);
@@ -60,6 +77,7 @@ SGE_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 length,
 	_debug_assert__(length != 0);
 	memzero(font, font_t);
 	font->renderer = renderer;
+	font->id = id_generator_get(&renderer->idgen);
 	font->dpi = display_get_dpi();
 	font->loaded_point_size = 0;
 
@@ -119,6 +137,8 @@ SGE_API void font_destroy(font_t* font)
 		memory_allocator_dealloc(font->renderer->allocator, font->ft_data);
 	}
 	hash_table_free(&font->glyph_info_table);
+	id_generator_return(&font->renderer->idgen, font->id);
+	font->id = ID_GENERATOR_ID_TYPE_MAX;
 }
 
 SGE_API void font_release_resources(font_t* font)

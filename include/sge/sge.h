@@ -27,6 +27,7 @@
 #pragma once
 
 #include <sge/defines.h>
+#include <common/id_generator.h>
 
 /* API level object selection */
 #ifdef SGE_VULKAN_DRIVER
@@ -114,6 +115,8 @@ typedef struct renderer_t
 	};
 
 	memory_allocator_t* allocator;
+	com_allocation_callbacks_t alloc_callbacks;
+	id_generator_t idgen;
 	IF_DEBUG(string_builder_t* debug_log_builder;)
 	FT_Library ft_library;
 	// shader_library_t* shader_library;

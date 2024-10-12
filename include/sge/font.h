@@ -31,6 +31,7 @@
 #include <sge/comparer.h> // u32_equal_to
 #include <sge/hash_function.h> // u32_hash
 #include <sge/hash_table.h>
+#include <common/id_generator.h>
 
 typedef u32 utf32_t;
 #define utf32_equal_to u32_equal_to
@@ -39,6 +40,15 @@ typedef u32 utf32_t;
 typedef_pair_t(utf32_t, u32);
 #define utf32_u32_equal_to u64_equal_to
 #define utf32_u32_hash u64_hash
+
+typedef struct glyph_instance_id_t
+{
+	pair_t(utf32_t, u32) unicode;
+	id_generator_id_type_t font_id;
+} glyph_instance_id_t;
+
+SGE_API hash_t glyph_instance_id_hash(void* id);
+SGE_API bool glyph_instance_id_equal_to(void* lhs, void* rhs);
 
 enum
 {
@@ -109,6 +119,9 @@ typedef struct glyph_bitmap_t
 typedef struct font_t
 {
 	renderer_t* renderer;
+	/* this id is unique per font_t object currently loaded. 
+	 * it is used in bitmap_glyph_pool_t object and other places to unique identify font_t objects */
+	id_generator_id_type_t id;
 	ttf_t* ttf_handle;
 
 	struct
