@@ -33,13 +33,13 @@ SGE_API bitmap_text_t* bitmap_text_new(memory_allocator_t* allocator)
 	return vulkan_bitmap_text_new(allocator);
 }
 
-SGE_API bitmap_text_t* bitmap_text_create(renderer_t* renderer, bitmap_glyph_atlas_texture_t* texture)
+SGE_API bitmap_text_t* bitmap_text_create(renderer_t* renderer, bitmap_glyph_atlas_texture_t* texture, font_t* font)
 {
-	vulkan_bitmap_text_create_info_t vk_create_info = { .texture = texture };
+	vulkan_bitmap_text_create_info_t vk_create_info = { .texture = texture, .font = font };
 	return vulkan_bitmap_text_create(VULKAN_RENDERER(renderer), &vk_create_info);
 }
 
-SGE_API void bitmap_text_create_no_alloc(renderer_t* renderer, bitmap_glyph_atlas_texture_t* texture, bitmap_text_t OUT text)
+SGE_API void bitmap_text_create_no_alloc(renderer_t* renderer, bitmap_glyph_atlas_texture_t* texture, font_t* font, bitmap_text_t OUT text)
 {
 	vulkan_bitmap_text_create_info_t vk_create_info = { .texture = texture };
 	vulkan_bitmap_text_create_no_alloc(VULKAN_RENDERER(renderer), &vk_create_info, text);

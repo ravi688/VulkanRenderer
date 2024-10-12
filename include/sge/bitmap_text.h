@@ -57,6 +57,8 @@
 #include <hpml/mat4.h> 	// mat4_t
 #include <hpml/vec3.h> 	// vec3_t
 
+typedef struct font_t font_t;
+
 typedef enum bitmap_text_render_space_type_t
 {
 	BITMAP_TEXT_RENDER_SPACE_TYPE_2D,
@@ -72,8 +74,8 @@ typedef enum bitmap_text_render_surface_type_t
 BEGIN_CPP_COMPATIBLE
 
 SGE_API bitmap_text_t* bitmap_text_new(memory_allocator_t* allocator);
-SGE_API bitmap_text_t* bitmap_text_create(renderer_t* renderer, bitmap_glyph_atlas_texture_t* texture);
-SGE_API void bitmap_text_create_no_alloc(renderer_t* renderer, bitmap_glyph_atlas_texture_t* texture, bitmap_text_t OUT text);
+SGE_API bitmap_text_t* bitmap_text_create(renderer_t* renderer, bitmap_glyph_atlas_texture_t* texture, font_t* font);
+SGE_API void bitmap_text_create_no_alloc(renderer_t* renderer, bitmap_glyph_atlas_texture_t* texture, font_t* font, bitmap_text_t OUT text);
 SGE_API void bitmap_text_destroy(bitmap_text_t* text);
 SGE_API void bitmap_text_release_resources(bitmap_text_t* text);
 
