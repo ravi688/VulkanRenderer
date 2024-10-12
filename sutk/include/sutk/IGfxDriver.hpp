@@ -46,6 +46,7 @@ namespace SUTK
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec3Df position) = 0;
 		virtual void setTextDepth(GfxDriverObjectHandleType handle, f32 depth) = 0;
 		virtual void setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize) = 0;
+		virtual void setTextFont(GfxDriverObjectHandleType handle, GfxDriverObjectHandleType font) = 0;
 		virtual f32 getTextPointSize(GfxDriverObjectHandleType handle) = 0;
 		virtual void setTextColor(GfxDriverObjectHandleType handle, const Color4 color) = 0;
 		virtual void setTextColorRanges(GfxDriverObjectHandleType handle, const ColorRange* ranges, u32 rangeCount) = 0;
@@ -77,8 +78,10 @@ namespace SUTK
 		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) = 0;
 		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) = 0;
 
-		virtual u32 getTextBaselineHeightInPixels(f32 pointSize) = 0;
-		virtual f32 getTextBaselineHeightInCentimeters(f32 pointSize) = 0;
+		virtual u32 getTextBaselineHeightInPixels(GfxDriverObjectHandleType handle, f32 pointSize) = 0;
+		virtual f32 getTextBaselineHeightInCentimeters(GfxDriverObjectHandleType handle, f32 pointSize) = 0;
+		virtual u32 getTextGroupBaselineHeightInPixels(GfxDriverObjectHandleType handle, f32 pointSize) = 0;
+		virtual f32 getTextGroupBaselineHeightInCentimeters(GfxDriverObjectHandleType handle, f32 pointSize) = 0;
 		// the Vec2Df arguments is in centimeters (not pixels!)
 		typedef std::function<void(Vec2Df)> OnResizeCallbackHandler;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) = 0;

@@ -130,6 +130,7 @@ namespace SUTK
 		std::size_t getColumnCount() const noexcept { return static_cast<const std::string&>(m_data).size(); }
 		void setFontSize(const f32 pointSize) noexcept;
 		f32 getFontSize() noexcept;
+		void setFont(UIDriver::FontReference font) noexcept;
 		f32 getBaselineHeight() noexcept;
 
 		// NOTE: The below two set of functions should only be used when the SmallText is active

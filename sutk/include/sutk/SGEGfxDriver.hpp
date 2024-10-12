@@ -45,7 +45,7 @@ namespace SUTK
 		SGE::Driver& m_driver;
 		bool m_autoCmdRecordAndExecute;
 		SGE::BitmapGlyphAtlasTexture m_bgaTexture;
-		SGE::Font m_font;
+		SGE::Font m_defaultFont;
 		SGE::RenderScene m_scene;
 		SGE::Shader m_shader;
 		SGE::Texture m_defaultTexture;
@@ -54,6 +54,7 @@ namespace SUTK
 		typedef std::unordered_map<id_generator_id_type_t, SGEBitmapTextData> SGEBitmapTextTable;
 		struct SGEBitmapTextGroup
 		{
+			SGE::Font font;
 			SGEBitmapTextTable bitmapTextTable;
 			GfxDriverObjectHandleType currentBitmapTextHandle;
 		};
@@ -101,6 +102,8 @@ namespace SUTK
 		// If called for the first time, then it loads a white image,
 		// Subsequent calls return the cached reference to earlier loaded white image.
 		SGE::Texture getDefaultTexture() noexcept;
+		SGE::Font getFont(GfxDriverObjectHandleType handle) noexcept;
+		SGE::Font getDefaultFont() noexcept;
 		SGE::Shader compileShader(const Geometry& geometry);
 		// Transforms SUTK coordinates (origin at top-left, and y downwards) to SGE coordinates (origin at center, and y upwards)
 		vec3_t SUTKToSGECoordTransform(const Vec2Df position);
@@ -113,6 +116,10 @@ namespace SUTK
 
 		u64 getGeometryShaderHash(const Geometry& geometry) const noexcept;
 		std::string u64ToString(u64 hash) const noexcept;
+
+		u32 getFontBaselineHeightInPixels(SGE::Font font, f32 pointSize) noexcept;
+		f32 getFontBaselineHeightInCentimeters(SGE::Font font, f32 pointSize) noexcept;
+		SGEBitmapTextGroup& getTextGroup(GfxDriverObjectHandleType handle) noexcept;
 
 	public:
 
@@ -140,6 +147,7 @@ namespace SUTK
 		virtual void setTextDepth(GfxDriverObjectHandleType handle, f32 depth) override;
 		virtual void setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize) override;
 		virtual f32 getTextPointSize(GfxDriverObjectHandleType handle) override;
+		virtual void setTextFont(GfxDriverObjectHandleType handle, GfxDriverObjectHandleType font) override;
 		virtual void setTextColor(GfxDriverObjectHandleType handle, const Color4 color) override;
 		virtual void setTextColorRanges(GfxDriverObjectHandleType handle, const ColorRange* ranges, u32 rangeCount) override;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) override;
@@ -167,8 +175,10 @@ namespace SUTK
 		virtual void destroyGeometry(GfxDriverObjectHandleType geometry) override;
 		virtual GfxDriverObjectHandleType getGeometryObject(GfxDriverObjectHandleType geometry) override;
 
-		virtual u32 getTextBaselineHeightInPixels(f32 pointSize) override;
-		virtual f32 getTextBaselineHeightInCentimeters(f32 pointSize) override;
+		virtual u32 getTextBaselineHeightInPixels(GfxDriverObjectHandleType handle, f32 pointSize) override;
+		virtual f32 getTextBaselineHeightInCentimeters(GfxDriverObjectHandleType handle, f32 pointSize) override;
+		virtual u32 getTextGroupBaselineHeightInPixels(GfxDriverObjectHandleType handle, f32 pointSize) override;
+		virtual f32 getTextGroupBaselineHeightInCentimeters(GfxDriverObjectHandleType handle, f32 pointSize) override;
 		virtual u32 addOnResizeHandler(OnResizeCallbackHandler handler) override;
 		virtual void removeOnResizeHandler(u32 id) override;
 		virtual u32 addOnCloseHandler(OnCloseCallbackHandler handler) override;

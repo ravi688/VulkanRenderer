@@ -226,9 +226,13 @@ namespace SUTK
 		updatePointSize();
 		return getGfxDriver().getTextPointSize(getGfxDriverObjectHandle());
 	}
+	void SmallText::setFont(UIDriver::FontReference font) noexcept
+	{
+		getGfxDriver().setTextFont(getGfxDriverObjectHandle(), font);
+	}
 	f32 SmallText::getBaselineHeight() noexcept
 	{
-		return getGfxDriver().getTextBaselineHeightInCentimeters(m_pointSize);
+		return getGfxDriver().getTextBaselineHeightInCentimeters(getGfxDriverObjectHandle(), m_pointSize);
 	}
 
 	Vec2Df SmallText::getBoundingRectSize() noexcept

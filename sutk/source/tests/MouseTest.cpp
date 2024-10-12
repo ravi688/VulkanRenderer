@@ -28,6 +28,11 @@ namespace SUTK
 		anchor->setBottomRight({ 0, 0 });
 		m_renderRect = m_uiDriver->createRenderRect<RenderRectFill>(m_renderRectContainer);
 		m_renderRect->setColor(Color4::green());
+
+		m_inputDriver->getOnScrollEvent().subscribe([](IInputDriver*, Vec2Df delta)
+		{
+			std::cout << "Scroll: " << delta << std::endl;
+		});
 	}
 
 	void MouseTest::terminate(SGE::Driver& driver)
