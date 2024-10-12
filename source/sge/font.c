@@ -37,6 +37,7 @@
 
 #include <freetype/freetype.h>
 #include <freetype/ftimage.h>
+#include <freetype/ftbitmap.h>
 
 #include <ctype.h> // isgraph
 
@@ -235,11 +236,41 @@ SGE_API bool font_get_glyph_bitmap(font_t* font, utf32_t unicode, glyph_bitmap_t
 		if(bitmap != NULL)
 		{
 			FT_Bitmap _bitmap = font->ft_handle->glyph->bitmap;
-			_debug_assert__(_bitmap.pixel_mode == 2);
-			bitmap->pixels = _bitmap.buffer;
-			bitmap->width = _bitmap.width;
-			bitmap->height = _bitmap.rows;
-			bitmap->channel_count = 1;
+			if(_bitmap.pixel_mode != FT_PIXEL_MODE_GRAY)
+			{
+				FT_Bitmap target_bitmap;
+				FT_Bitmap_Init(&target_bitmap);
+				target_bitmap.pixel_mode = FT_PIXEL_MODE_GRAY;
+				target_bitmap.num_grays = 256;
+				AUTO result = FT_Bitmap_Convert(font->renderer->ft_library, &_bitmap, &target_bitmap, 1);
+				/* zero means success */
+				_debug_assert__(result == 0);
+				_debug_assert__(target_bitmap.pixel_mode == FT_PIXEL_MODE_GRAY);
+				_debug_assert__(target_bitmap.pitch == target_bitmap.width);
+				bitmap->pixels = target_bitmap.buffer;
+				bitmap->width = target_bitmap.width;
+				bitmap->height = target_bitmap.rows;
+				bitmap->channel_count = 1;
+				/* if number of grays aren't fully spread over 256 possible values */
+				if(target_bitmap.num_grays != 256)
+				{
+					/* then normalize the values of each pixel to 256 number of values scale. */
+					u8* pixels = CAST_TO(u8*, bitmap->pixels);
+					s32 max_gray = target_bitmap.num_grays - 1;
+					for(u32 i = 0; i < (bitmap->width * bitmap->height); ++i)
+					{
+						f32 inv = pixels[i] / (f32)max_gray;
+						pixels[i] = (u8)(255 * inv);
+					}
+				}
+			}
+			else
+			{
+				bitmap->pixels = _bitmap.buffer;
+				bitmap->width = _bitmap.width;
+				bitmap->height = _bitmap.rows;
+				bitmap->channel_count = 1;
+			}
 		}
 	}
 	IF_DEBUG (else { debug_log_fetal_error("Freetype font is NULL, couldn't render glyph %lu", unicode); return false; })
