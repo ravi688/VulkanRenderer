@@ -87,6 +87,7 @@ SGE_API void bitmap_text_string_destroyH(bitmap_text_t* text, bitmap_text_string
 /* setters */
 SGE_API void bitmap_text_set_point_size(bitmap_text_t* text, u32 point_size);
 SGE_API void bitmap_text_set_font(bitmap_text_t* text, font_t* font);
+SGE_API void bitmap_text_set_font_update_all(bitmap_text_t* text, font_t* font);
 SGE_API void bitmap_text_set_material(bitmap_text_t* text, material_t* material);
 SGE_API void bitmap_text_set_render_space_type(bitmap_text_t* text, bitmap_text_render_space_type_t space_type);
 SGE_API void bitmap_text_set_render_surface_type(bitmap_text_t* text, bitmap_text_render_surface_type_t surface_type);
