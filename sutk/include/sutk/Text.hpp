@@ -153,6 +153,8 @@ namespace SUTK
 
 		void clear() noexcept;
 
+		void setFont(UIDriver::FontReference font) noexcept;
+
 		// Implementation of IColorable::setColor() and IColorable::getColor()
 		virtual void setColor(Color4 color) noexcept override;
 		virtual Color4 getColor() const noexcept override;

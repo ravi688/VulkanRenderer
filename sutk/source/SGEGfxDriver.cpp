@@ -209,6 +209,21 @@ namespace SUTK
 		return static_cast<GfxDriverObjectHandleType>(id);
 	}
 
+	void SGEGfxDriver::setTextGroupFont(GfxDriverObjectHandleType textGroup, GfxDriverObjectHandleType font)
+	{
+		SGEBitmapTextGroup& group = getTextGroup(textGroup);
+		auto& map = group.bitmapTextTable;
+		// Try to make fewer calls to getFont() as possible
+		// because it may also lazily load the fonts from disk.
+		SGE::Font sgeFont = getFont(font);
+		for(auto& pair : map)
+		{
+			SGEBitmapTextData& data = pair.second;
+			data.text.setFontUpdateAll(sgeFont);
+		}
+		group.font = sgeFont;
+	}
+
 	SGEGfxDriver::SGEBitmapTextGroup& SGEGfxDriver::getTextGroup(GfxDriverObjectHandleType handle) noexcept
 	{
 		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);

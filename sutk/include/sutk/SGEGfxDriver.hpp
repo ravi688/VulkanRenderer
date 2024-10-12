@@ -139,6 +139,9 @@ namespace SUTK
 		virtual void render(UIDriver& driver) override;
 
 		virtual GfxDriverObjectHandleType createTextGroup() override;
+		// NOTE: It force updates all bitmap text objects and text strings created from them.
+		// Thus, it overrides every font inside the text group.
+		virtual void setTextGroupFont(GfxDriverObjectHandleType textGroup, GfxDriverObjectHandleType font) override;
 		virtual void destroyTextGroup(GfxDriverObjectHandleType textGroup) override;
 		virtual GfxDriverObjectHandleType createText(GfxDriverObjectHandleType textGroup) override;
 		virtual void destroyText(GfxDriverObjectHandleType handle) override;

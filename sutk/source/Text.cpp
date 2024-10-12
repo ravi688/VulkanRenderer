@@ -179,6 +179,11 @@ namespace SUTK
 		m_lines.clear();
 	}
 
+	void Text::setFont(UIDriver::FontReference font) noexcept
+	{
+		getGfxDriver().setTextGroupFont(m_textGroup, font);
+	}
+
 	Vec2Df Text::getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept
 	{
 		if(m_lines.size() == 0)
