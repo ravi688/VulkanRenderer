@@ -704,7 +704,7 @@ TEST_ON_INITIALIZE(BITMAP_TEXT_LOAD)
 	material_set_float(this->text_material, "parameters.color.r", 1.0f);
 	material_set_float(this->text_material, "parameters.color.g", 1.0f);
 	material_set_float(this->text_material, "parameters.color.b", 1.0f);
-	this->text = bitmap_text_create(renderer, this->texture);
+	this->text = bitmap_text_create(renderer, this->texture, NULL);
 	this->text_string_handle = bitmap_text_string_create(this->text);
 	this->another_string_handle = bitmap_text_string_create(this->text);
 	bitmap_text_string_set_point_sizeH(this->text, this->another_string_handle, 20);

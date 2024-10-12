@@ -31,6 +31,14 @@ namespace SGE
 		{
 			return bitmap_text_string_get_point_sizeH(m_bitmapTextHandle, m_handle);
 		}
+		void setFont(Font font) noexcept
+		{
+			bitmap_text_string_set_fontH(m_bitmapTextHandle, m_handle, static_cast<font_t*>(font));
+		}
+		Font getFont() noexcept
+		{
+			return Font(bitmap_text_string_get_fontH(m_bitmapTextHandle, m_handle));
+		}
 		u32 getLength() const noexcept
 		{
 			return bitmap_text_string_get_lengthH(m_bitmapTextHandle, m_handle);
@@ -110,7 +118,7 @@ namespace SGE
 
 		static bitmap_text_render_surface_type_t to_bitmap_text_render_surface_type(RenderSurfaceType type);
 
-		BitmapText(Driver& driver, BitmapGlyphAtlasTexture texture) noexcept;
+		BitmapText(Driver& driver, BitmapGlyphAtlasTexture texture, Font font = { }) noexcept;
 
 		bitmap_text_t* getHandle() const noexcept { return m_handle; }
 		

@@ -77,7 +77,7 @@ namespace SGE
 
 		RenderScene createRenderScene(u32 queueMask) noexcept { return RenderScene(*this, queueMask); }
 		BitmapGlyphAtlasTexture createBitmapGlyphAtlasTexture(const BitmapGlyphAtlasTexture::CreateInfo& createInfo) noexcept { return BitmapGlyphAtlasTexture(*this, createInfo); }
-		BitmapText createBitmapText(BitmapGlyphAtlasTexture texture) noexcept { return BitmapText(*this, texture); }
+		BitmapText createBitmapText(BitmapGlyphAtlasTexture texture, Font font = { }) noexcept { return BitmapText(*this, texture, font); }
 		Mesh createMesh() noexcept { return Mesh(*this); }
 		Texture loadTexture(texture_type_t type, std::string_view str) noexcept { return Texture(*this, type, str); }
 		Texture loadTexture(texture_type_t type, const std::span<const u8> data) noexcept { return Texture(*this, type, data); }

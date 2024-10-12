@@ -4,9 +4,9 @@
 
 namespace SGE
 {
-	BitmapText::BitmapText(Driver& driver, BitmapGlyphAtlasTexture texture) noexcept
+	BitmapText::BitmapText(Driver& driver, BitmapGlyphAtlasTexture texture, Font font) noexcept
 	{
-		m_handle = bitmap_text_create(driver.getHandle(), texture.getHandle());
+		m_handle = bitmap_text_create(driver.getHandle(), texture.getHandle(), static_cast<font_t*>(font));
 	}
 
 	bitmap_text_render_space_type_t BitmapText::to_bitmap_text_render_space_type(RenderSpaceType type)
