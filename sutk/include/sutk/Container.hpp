@@ -15,6 +15,13 @@ namespace SUTK
 		// If true, then all the fields in LayoutAttributes have range [0, 1]
 		// And the Layout Controller calculates the absolute values by multiplying the widths and heights of parent's rect with the normalized attribute values.
 		bool isNormalized;
+		// Only used by HPaneContainer::recalibrate and Container::getAbsoluteLayoutAttributes 
+		// to work around layouting of handle rectangles with other containers (external Containers) in HPaneContainers.
+		// It will only be used if isNormalized is true.
+		// The reason we need this work around is the following equation:
+		// F - ((a / I) * F + (b / I) * F) not equals to I - (a + b)
+		Vec2Df offset;
+
 		// Minimum Size Allowed for this Layout Element
 		Vec2Df minSize;
 		// Maximum Size Allowed for this Layout Element
@@ -22,8 +29,8 @@ namespace SUTK
 		// Prefered Size for this Layout Element
 		Vec2Df prefSize;
 
-		constexpr LayoutAttributes() noexcept : isNormalized(false), minSize({ 0, 0 }), maxSize({ std::numeric_limits<f32>::max(), std::numeric_limits<f32>::max() }), prefSize({ 5.0f, 5.0f }) { }
-		constexpr LayoutAttributes(bool _isNormalized, Vec2Df _minSize, Vec2Df _maxSize, Vec2Df _prefSize) noexcept : isNormalized(_isNormalized), minSize(_minSize), maxSize(_maxSize), prefSize(_prefSize) { }
+		constexpr LayoutAttributes() noexcept : isNormalized(false), minSize({ 0, 0 }), maxSize({ F32_INFINITY, F32_INFINITY }), prefSize({ 5.0f, 5.0f }) { }
+		constexpr LayoutAttributes(bool _isNormalized, Vec2Df _offset, Vec2Df _minSize, Vec2Df _maxSize, Vec2Df _prefSize) noexcept : isNormalized(_isNormalized), offset(_offset), minSize(_minSize), maxSize(_maxSize), prefSize(_prefSize) { }
 	};
 
 	class Text;
@@ -71,9 +78,12 @@ namespace SUTK
 		virtual void onAddChild(Container* child) { }
 		// called after removing a child 'child' from this container
 		virtual void onRemoveChild(Container* child) { }
+		// Called before recto fo this container has been resized
+		virtual void onBeforeResize(Rect2Df newRect, bool isPositionChanged, bool isSizeChanged) { }
 		// called after rect of this container has been resized
 		// isPositionChanged is set to true if position has been modified or has changed its position
 		// isSizeChanged is set to true if size has been modified
+		// NOTE: mandatory to be called in the overriding method
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged);
 		// called after rect of its parent container has been resized or has changed its position
 		// NOTE: mandatory to be called in the overriding method
@@ -130,9 +140,9 @@ namespace SUTK
 		bool contains(Vec2Df localCoords) const noexcept { return m_rect.contains(localCoords); }
 		bool containsGlobalCoords(Vec2Df globalCoords) const noexcept;
 		// rect setters
-		virtual void setRect(Rect2Df rect) { m_rect = rect; onResize(rect, true, true); }
-		void setPosition(Vec2Df pos) { m_rect.setPosition(pos); onResize(m_rect, true, false); }
-		void setSize(Vec2Df size) { m_rect.setSize(size); onResize(m_rect, false, true); }
+		void setRect(Rect2Df rect) noexcept;
+		void setPosition(Vec2Df pos) noexcept;
+		void setSize(Vec2Df size) noexcept;
 
 		// If called with true, then this Container's rect is always in-sync with its parent's rect,
 		// That also means, this container's rect's position will always be { 0, 0 } (in local coordinates of its parent's rect)
@@ -141,8 +151,10 @@ namespace SUTK
 		// does nothing if parent is NULL
 		void fitInParent(Vec4Df margins = { }) noexcept;
 
-		// anchor rect getters
+		// anchor rect getters and setters
 		AnchorRect* getAnchorRect() const noexcept { return m_anchorRect; }
+		void setAnchorsActive(bool isActive) noexcept { return getAnchorRect()->setActive(isActive); }
+		bool isAnchorsActive() const noexcept { return getAnchorRect()->isActive(); }
 
 		// returns the number of anscestor containers of this container
 		u32 getDepth() const noexcept;

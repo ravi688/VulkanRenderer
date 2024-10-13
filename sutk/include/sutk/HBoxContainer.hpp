@@ -9,6 +9,7 @@ namespace SUTK
 	{
 	private:
 		bool m_isTight;
+		bool m_isInsideOnResize;
 	protected:
 		// Overrides of Container::onAddChild, Container::onRemoveChild, and Container::onResize
 		virtual void onAddChild(Container* child) override;
