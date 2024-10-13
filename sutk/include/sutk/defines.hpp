@@ -46,6 +46,8 @@ namespace SUTK
 	#define DISPLAY_SIZE_TYPE_MAX std::numeric_limits<SUTK::DisplaySizeType>::max()
 
 
+	#define F32_INFINITY std::numeric_limits<f32>::max()
+
 	template<typename T>
 	struct NegativeSign { };
 
@@ -89,14 +91,15 @@ namespace SUTK
 		static Vec2D<T> down();
 
 		// operator overloads
-		bool operator ==(const Vec2D<T>& v) noexcept { return (x == v.x) && (y == v.y); }
-		bool operator !=(const Vec2D<T>& v) noexcept { return !operator==(v); }
+		bool operator ==(const Vec2D<T>& v) const noexcept { return (x == v.x) && (y == v.y); }
+		bool operator !=(const Vec2D<T>& v) const noexcept { return !operator==(v); }
 
 		Vec2D<T>& operator=(const Vec2D<T> v) noexcept { x = v.x; y = v.y; return *this; }
 
 		// arithmetic operator overloads
 		Vec2D<T> operator +(const Vec2D<T>& v) const noexcept { return { x + v.x, y + v.y }; }
 		Vec2D<T> operator -(const Vec2D<T>& v) const noexcept { return { x - v.x, y - v.y }; }
+		Vec2D<T> operator -() const noexcept { return { -x, -y }; }
 		Vec2D<T> operator *(const Vec2D<T>& v) const noexcept { return { x * v.x, y * v.y }; }
 		Vec2D<T> operator *(T s) const noexcept { return { x * s, y * s }; }
 		Vec2D<T> operator /(const Vec2D<T>& v) const noexcept { return  { x / v.x, y / v.y }; }
@@ -195,6 +198,7 @@ namespace SUTK
 		// arithmetic operator overloads
 		Vec3D<T> operator +(const Vec3D<T>& v) const noexcept { return { x + v.x, y + v.y, z + v.z }; }
 		Vec3D<T> operator -(const Vec3D<T>& v) const noexcept { return { x - v.x, y - v.y, z - v.z}; }
+		Vec3D<T> operator -() const noexcept { return { -x, -y, -z }; }
 		Vec3D<T> operator *(const Vec3D<T>& v) const noexcept { return { x * v.x, y * v.y, z * v.z }; }
 		Vec3D<T> operator *(T s) const noexcept { return { x * s, y * s, z * s }; }
 		Vec3D<T>& operator +=(const Vec3D<T>& v) noexcept { x += v.x; y += v.y; z += v.z; return *this; }

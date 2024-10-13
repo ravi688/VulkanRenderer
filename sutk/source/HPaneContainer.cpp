@@ -12,7 +12,8 @@ namespace SUTK
 																					MouseClickHandlerObject(driver, this),
 																					MouseMoveHandlerObject(driver, this),
 																					m_isHandleRect(false),
-																					m_grabbedHandle({ NULL, NULL, NULL })
+																					m_grabbedHandle({ NULL, NULL, NULL }),
+																					m_isCalibratedForFirstTime(false)
 	{
 	}
 
@@ -55,13 +56,6 @@ namespace SUTK
 			auto rect = left->getRect();
 			rect.extendRight(disp.x);
 			left->setRect(rect);
-			{
-				auto& attr = left->getLayoutAttributes();
-				f32 parentWidth = getParent()->getRect().width;
-				attr.isNormalized = true;
-				attr.prefSize.width = rect.width / parentWidth;
-				attr.minSize.width = rect.width / parentWidth;
-			}
 			
 			rect = middle->getRect();
 			rect.extendLeft(-disp.x);
@@ -71,13 +65,6 @@ namespace SUTK
 			rect = right->getRect();
 			rect.extendLeft(-disp.x);
 			right->setRect(rect);
-			{
-				auto& attr = right->getLayoutAttributes();
-				f32 parentWidth = getParent()->getRect().width;
-				attr.isNormalized = true;
-				attr.prefSize.width = rect.width / parentWidth;
-				attr.minSize.width = rect.width / parentWidth;
-			}
 		}
 	}
 
@@ -112,5 +99,52 @@ namespace SUTK
 		HBoxContainer::remove(child);
 		bool result = com::find_erase(m_externalChilds, child);
 		_com_assert(result);
+	}
+
+	void HPaneContainer::onRecalculateLayout() noexcept
+	{
+		HBoxContainer::onRecalculateLayout();
+		if(!m_isCalibratedForFirstTime)
+		{
+			m_isCalibratedForFirstTime = true;
+			recalibrate();
+		}
+	}
+
+	void HPaneContainer::recalibrate() noexcept
+	{
+		// Explanation for the offset subtraction:
+		// Suppose I is the old/previous width of this rect,
+		// and F is the new width of this rect.
+		// Then we woulld want to ensure that in the new layout, the handle rects would be consitent with their previous sizes.
+		// But the following equation doesn't hold true:
+		// F - ((a / I) * F + (b / I) * F) not equals to I - (a + b)
+		// Therefore, we need to calculate the normalized attr.minSize after subtracting the aggregate space allocated by handle rects.
+
+		Vec2Df offset = { m_handleRects.size() * HANDLE_WIDTH, 0 };
+		Vec2Df size = getRect().getSize();
+		size -= offset;
+		for(Container* & externChild : m_externalChilds)
+		{
+			auto& attr = externChild->getLayoutAttributes();
+			attr.isNormalized = true;
+			attr.offset = -offset;
+			Vec2Df childSize = externChild->getRect().getSize();
+			attr.minSize = childSize / size;
+			if(externChild != m_externalChilds.back())
+				attr.prefSize = attr.minSize;
+			else
+				attr.prefSize = { 1.0f, 1.0f };
+		}
+		// In case the function recalibrate() function is called manually by the user code
+		m_isCalibratedForFirstTime = true;
+	}
+
+	void HPaneContainer::onBeforeResize(Rect2Df newRect, bool isPositionChanged, bool isSizeChanged)
+	{
+		// The user might have changed the sizes of external Containers, therefore we need to recalculate
+		// the normalized values so that the same space allocation ratio can be maintained for the newer size.
+		if(!isLockedLayout() && m_isCalibratedForFirstTime)
+			recalibrate();
 	}
 }

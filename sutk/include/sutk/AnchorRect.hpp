@@ -14,6 +14,7 @@ namespace SUTK
 		Rect2Df m_constraintRect;
 		Container* m_childRect;
 		Container* m_parentRect;
+		bool m_isActive;
 		AnchorRect(Container* childRect, Container* parentRect) noexcept;
 
 		friend class Container;
@@ -28,6 +29,9 @@ namespace SUTK
 		void setParent(Container* parent) noexcept;
 		void setChild(Container* child) noexcept;
 	public:
+
+		void setActive(bool isActive) noexcept;
+		bool isActive() const noexcept { return m_isActive; }
 
 		// getters
 		Rect2Df getRect() const noexcept { return m_rect; }

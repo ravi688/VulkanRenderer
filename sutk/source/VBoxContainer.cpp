@@ -4,24 +4,35 @@
 
 namespace SUTK
 {
-	VBoxContainer::VBoxContainer(UIDriver& driver, Container* parent, bool isLayoutLocked) noexcept : Container(driver, parent), ILayoutController(isLayoutLocked), m_isTight(false)
+	VBoxContainer::VBoxContainer(UIDriver& driver, Container* parent, bool isLayoutLocked) noexcept : Container(driver, parent), ILayoutController(isLayoutLocked), m_isTight(false), m_isInsideOnResize(false)
 	{
 
 	}
 	void VBoxContainer::onAddChild(Container* child)
 	{
 		if(!child->isLayoutIgnore())
+		{
+			// There no sense of keeping both anchors and layout controller active, as layout controllers are responsible for laying out their childs.
+			child->setAnchorsActive(false);
 			recalculateLayout();
+		}
 	}
 	void VBoxContainer::onRemoveChild(Container* child)
 	{
 		if(!child->isLayoutIgnore())
+		{
 			recalculateLayout();
+			child->setAnchorsActive(true);
+		}
 	}
 	void VBoxContainer::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
+		// Tell the recalculateLayout() function that it has been called by onResize function,
+		// and it should not call 'setSize', 'setPosition' or 'setRect' for this container to avoid infinite recursion.
+		m_isInsideOnResize = true;
 		// call this first to pass updated rect value to Contaienr::onResize()
 		recalculateLayout();
+		m_isInsideOnResize = false;
 		// mandatory to be called
 		Container::onResize(newRect, isPositionChanged, isSizeChanged);
 	}
@@ -66,7 +77,7 @@ namespace SUTK
 
 			const LayoutAttributes& attrs = child->getAbsoluteLayoutAttributes();
 			minHeight += attrs.minSize.height;
-			if(attrs.prefSize.height == std::numeric_limits<f32>::max())
+			if(attrs.prefSize.height == F32_INFINITY)
 			{
 				++expandCount;
 				prefHeight += attrs.minSize.height;
@@ -83,7 +94,11 @@ namespace SUTK
 			// and since we are also calling recalculateLayout inside Container::onResize, it might lead to
 			// infinite recursion.
 			// Do not use --> setSize({ getSize().width, minHeight });
-			getRawRectRef().setSize({ getSize().width, minHeight });
+			Vec2Df size = { getSize().width, minHeight };
+			if(m_isInsideOnResize)
+				getRawRectRef().setSize(size);
+			else
+				setSize(size);
 		}
 
 		// available extra space after satisfying the aggregate minimum height requirement
@@ -100,7 +115,7 @@ namespace SUTK
 				continue;
 			
 			const LayoutAttributes attrs = child->getAbsoluteLayoutAttributes();
-			if(attrs.prefSize.height != std::numeric_limits<f32>::max())
+			if(attrs.prefSize.height != F32_INFINITY)
 				totalHeight += std::min(attrs.minSize.height + factor * (attrs.prefSize.height - attrs.minSize.height), attrs.prefSize.height);
 			else
 				totalHeight += attrs.minSize.height;
@@ -118,7 +133,7 @@ namespace SUTK
 			const LayoutAttributes attrs = child->getAbsoluteLayoutAttributes();
 
 			f32 height = 0;
-			if(attrs.prefSize.height == std::numeric_limits<f32>::max())
+			if(attrs.prefSize.height == F32_INFINITY)
 				height = attrs.minSize.height + expandWidth;
 			else
 				height = std::min(attrs.minSize.height + factor * (attrs.prefSize.height - attrs.minSize.height), attrs.prefSize.height);
@@ -130,7 +145,11 @@ namespace SUTK
 		if(m_isTight)
 		{
 			// AGAIN: do not call setSize() here, otherwise you'll end up in infinite recursion!
-			getRawRectRef().setSize({ getSize().width, xpos });
+			Vec2Df size = { getSize().width, xpos };
+			if(m_isInsideOnResize)
+				getRawRectRef().setSize(size);
+			else
+				setSize(size);
 		}
 	}
 	void VBoxContainer::tight() noexcept
@@ -143,8 +162,7 @@ namespace SUTK
 				continue;
 			yPos += child->getSize().height;
 		}
-		getRawRectRef().setSize({ getSize().width, yPos });
-		Container::onResize(getRect(), false, true);
+		setSize({ getSize().width, yPos });
 	}
 	void VBoxContainer::setTight(bool isTight) noexcept
 	{

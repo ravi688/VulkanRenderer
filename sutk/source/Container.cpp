@@ -10,7 +10,7 @@ namespace SUTK
 	Container::Container(SUTK::UIDriver& driver, Container* parent, bool isLayoutIgnore) : 
 															UIDriverObject(driver), 
 															m_rect({0, 0, 5.0f, 5.0f}),
-															m_layoutAttr(false, { 0, 0 }, { std::numeric_limits<f32>::max(), std::numeric_limits<f32>::max() }, { 5.0f, 5.0f }),
+															m_layoutAttr(false, { 0, 0 }, { 0, 0 }, { F32_INFINITY, F32_INFINITY }, { 5.0f, 5.0f }),
 															m_isLayoutIgnore(isLayoutIgnore),
 															m_anchorRect(NULL),
 															m_parent(NULL), 
@@ -92,6 +92,27 @@ namespace SUTK
 			return contains(getParent()->getScreenCoordsToLocalCoords(globalCoords));
 		else
 			return contains(globalCoords);
+	}
+
+	void Container::setRect(Rect2Df rect) noexcept
+	{ 
+		onBeforeResize(rect, true, true); 
+		m_rect = rect; 
+		onResize(rect, true, true); 
+	}
+
+	void Container::setPosition(Vec2Df pos) noexcept
+	{ 
+		onBeforeResize({ pos, m_rect.getSize() }, true, false); 
+		m_rect.setPosition(pos); 
+		onResize(m_rect, true, false); 
+	}
+
+	void Container::setSize(Vec2Df size) noexcept
+	{ 
+		onBeforeResize({ m_rect.getPosition(), size }, false, true); 
+		m_rect.setSize(size); 
+		onResize(m_rect, false, true); 
 	}
 
 	void Container::alwaysFitInParent() noexcept
@@ -271,9 +292,14 @@ namespace SUTK
 		LayoutAttributes absAttr { };
 		absAttr.isNormalized = false;
 		auto size = parent->getRect().getSize();
+		size += m_layoutAttr.offset;
 		absAttr.minSize = m_layoutAttr.minSize * size;
 		absAttr.maxSize = m_layoutAttr.maxSize * size;
-		absAttr.prefSize = m_layoutAttr.prefSize * size;
+		if((m_layoutAttr.prefSize == Vec2Df(1.0f, 1.0f))
+			|| (m_layoutAttr.prefSize == Vec2Df(F32_INFINITY, F32_INFINITY)))
+			absAttr.prefSize = { F32_INFINITY, F32_INFINITY };
+		else
+			absAttr.prefSize = m_layoutAttr.prefSize * size;
 		return absAttr;
 	}
 

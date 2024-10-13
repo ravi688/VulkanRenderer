@@ -3,7 +3,7 @@
 
 namespace SUTK
 {
-	AnchorRect::AnchorRect(Container* childRect, Container* parentRect) noexcept : m_childRect(childRect), m_parentRect(parentRect)
+	AnchorRect::AnchorRect(Container* childRect, Container* parentRect) noexcept : m_childRect(childRect), m_parentRect(parentRect), m_isActive(true)
 	{
 		// NOTE: initially the anchor rect is degenerate (width and height both is zero) and has position as { 0, 0 }
 
@@ -21,7 +21,7 @@ namespace SUTK
 
 	void AnchorRect::recalculateConstraints() noexcept
 	{
-		if((m_childRect == NULL) || ((m_parentRect == NULL)))
+		if((m_childRect == NULL) || (m_parentRect == NULL) || !m_isActive)
 			return;
 		Rect2Df anchorRect = getUnnormalizedAnchorRect();
 		// signed difference is the constraint
@@ -42,6 +42,7 @@ namespace SUTK
 	void AnchorRect::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
 		_com_assert(m_childRect != NULL);
+		if(!m_isActive) return;
 		Rect2Df anchorRect = getUnnormalizedAnchorRect();
 		Rect2Df newChildRect = anchorRect - m_constraintRect;
 		m_childRect->setRect(newChildRect);
@@ -50,6 +51,15 @@ namespace SUTK
 	void AnchorRect::onChildResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
 		recalculateConstraints();
+	}
+
+	void AnchorRect::setActive(bool isActive) noexcept
+	{
+		if(!(m_isActive ^ isActive))
+			return;
+		if(isActive)
+			recalculateConstraints();
+		m_isActive = isActive;
 	}
 
 	void AnchorRect::fitToChildRect() noexcept
