@@ -12,12 +12,18 @@ namespace SUTK
 {
 	struct LayoutAttributes
 	{
+		// If true, then all the fields in LayoutAttributes have range [0, 1]
+		// And the Layout Controller calculates the absolute values by multiplying the widths and heights of parent's rect with the normalized attribute values.
+		bool isNormalized;
 		// Minimum Size Allowed for this Layout Element
 		Vec2Df minSize;
 		// Maximum Size Allowed for this Layout Element
 		Vec2Df maxSize;
 		// Prefered Size for this Layout Element
 		Vec2Df prefSize;
+
+		constexpr LayoutAttributes() noexcept : isNormalized(false), minSize({ 0, 0 }), maxSize({ std::numeric_limits<f32>::max(), std::numeric_limits<f32>::max() }), prefSize({ 5.0f, 5.0f }) { }
+		constexpr LayoutAttributes(bool _isNormalized, Vec2Df _minSize, Vec2Df _maxSize, Vec2Df _prefSize) noexcept : isNormalized(_isNormalized), minSize(_minSize), maxSize(_maxSize), prefSize(_prefSize) { }
 	};
 
 	class Text;
@@ -96,6 +102,7 @@ namespace SUTK
 		LayoutAttributes& getLayoutAttributes() noexcept { return m_layoutAttr; }
 		const LayoutAttributes& getLayoutAttributes() const noexcept { return m_layoutAttr; }
 		void setLayoutAttributes(const LayoutAttributes& attrs) noexcept;
+		LayoutAttributes getAbsoluteLayoutAttributes() const noexcept;
 		bool isLayoutIgnore() const noexcept { return m_isLayoutIgnore || (!isActive()); }
 		void setLayoutIgnore(bool isIgnore) noexcept;
 		void setLayoutExpand() noexcept;

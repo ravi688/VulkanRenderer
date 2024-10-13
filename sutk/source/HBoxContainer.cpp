@@ -64,7 +64,7 @@ namespace SUTK
 			if(child->isLayoutIgnore())
 				continue;
 
-			const LayoutAttributes& attrs = child->getLayoutAttributes();
+			const LayoutAttributes attrs = child->getAbsoluteLayoutAttributes();
 			minWidth += attrs.minSize.width;
 			if(attrs.prefSize.width == std::numeric_limits<f32>::max())
 			{
@@ -99,7 +99,7 @@ namespace SUTK
 			if(child->isLayoutIgnore())
 				continue;
 			
-			const LayoutAttributes& attrs = child->getLayoutAttributes();
+			const LayoutAttributes attrs = child->getAbsoluteLayoutAttributes();
 			if(attrs.prefSize.width != std::numeric_limits<f32>::max())
 				totalWidth += std::min(attrs.minSize.width + factor * (attrs.prefSize.width - attrs.minSize.width), attrs.prefSize.width);
 			else
@@ -115,7 +115,7 @@ namespace SUTK
 			if(child->isLayoutIgnore())
 				continue;
 
-			const LayoutAttributes& attrs = child->getLayoutAttributes();
+			const LayoutAttributes attrs = child->getAbsoluteLayoutAttributes();
 
 			f32 width = 0;
 			if(attrs.prefSize.width == std::numeric_limits<f32>::max())

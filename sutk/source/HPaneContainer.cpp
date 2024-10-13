@@ -55,6 +55,13 @@ namespace SUTK
 			auto rect = left->getRect();
 			rect.extendRight(disp.x);
 			left->setRect(rect);
+			{
+				auto& attr = left->getLayoutAttributes();
+				f32 parentWidth = getParent()->getRect().width;
+				attr.isNormalized = true;
+				attr.prefSize.width = rect.width / parentWidth;
+				attr.minSize.width = rect.width / parentWidth;
+			}
 			
 			rect = middle->getRect();
 			rect.extendLeft(-disp.x);
@@ -64,6 +71,13 @@ namespace SUTK
 			rect = right->getRect();
 			rect.extendLeft(-disp.x);
 			right->setRect(rect);
+			{
+				auto& attr = right->getLayoutAttributes();
+				f32 parentWidth = getParent()->getRect().width;
+				attr.isNormalized = true;
+				attr.prefSize.width = rect.width / parentWidth;
+				attr.minSize.width = rect.width / parentWidth;
+			}
 		}
 	}
 
