@@ -10,7 +10,7 @@ namespace SUTK
 	Container::Container(SUTK::UIDriver& driver, Container* parent, bool isLayoutIgnore) : 
 															UIDriverObject(driver), 
 															m_rect({0, 0, 5.0f, 5.0f}),
-															m_layoutAttr({ 0, 0 }, { std::numeric_limits<f32>::max(), std::numeric_limits<f32>::max() }, { 5.0f, 5.0f }),
+															m_layoutAttr(false, { 0, 0 }, { std::numeric_limits<f32>::max(), std::numeric_limits<f32>::max() }, { 5.0f, 5.0f }),
 															m_isLayoutIgnore(isLayoutIgnore),
 															m_anchorRect(NULL),
 															m_parent(NULL), 
@@ -261,6 +261,20 @@ namespace SUTK
 		m_layoutAttr = attrs;
 		if(!isLayoutIgnore())
 			recalculateLayoutParent();
+	}
+
+	LayoutAttributes Container::getAbsoluteLayoutAttributes() const noexcept
+	{
+		auto parent = getParent();
+		if(!(parent && m_layoutAttr.isNormalized))
+			return m_layoutAttr;
+		LayoutAttributes absAttr { };
+		absAttr.isNormalized = false;
+		auto size = parent->getRect().getSize();
+		absAttr.minSize = m_layoutAttr.minSize * size;
+		absAttr.maxSize = m_layoutAttr.maxSize * size;
+		absAttr.prefSize = m_layoutAttr.prefSize * size;
+		return absAttr;
 	}
 
 	void Container::setLayoutIgnore(bool isIgnore) noexcept
