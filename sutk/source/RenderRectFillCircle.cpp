@@ -8,7 +8,6 @@ namespace SUTK
 		auto& geometry = getGeometry().setSDF(true);
 
 		SDF& sdf = geometry.getSDF();
-		m_roundnessID = sdf.addParameter<f32>("roundness", 0.5f);
 		m_sharpnessID = sdf.addParameter<f32>("sharpness", 1.0f);
 		m_widthID = sdf.addParameter<InvariantWidth>("width", getRect().width);
 		m_heightID = sdf.addParameter<InvariantHeight>("height", getRect().height);
@@ -17,26 +16,14 @@ namespace SUTK
 
 		const char* str = 
 
-		"float radius = roundness * height * 0.5f;\n"
-		"vec2 topLeftCOC = vec2(-width * 0.5f + radius, height * 0.5f - radius) + center.xy;\n"
-		"vec2 bottomLeftCOC = vec2(-width * 0.5f + radius, -height * 0.5f + radius) + center.xy;\n"
-		"vec2 bottomRightCOC = vec2(width * 0.5f - radius, -height * 0.5f + radius) + center.xy;\n"
-		"vec2 topRightCOC = vec2(width * 0.5f - radius, height * 0.5f - radius) + center.xy;\n"
+		"vec2 radiusVector = fragCoord.xy - center.xy;\n"
 
-		"vec2 topLeftDir = fragCoord.xy - topLeftCOC;\n"
-		"vec2 bottomLeftDir = fragCoord.xy - bottomLeftCOC;\n"
-		"vec2 bottomRightDir = fragCoord.xy - bottomRightCOC;\n"
-		"vec2 topRightDir = fragCoord.xy - topRightCOC;\n"
-
-		"float radiusSqr = radius * radius;\n"
-		"if((topLeftDir.x <= 0) && (topLeftDir.y >= 0) && (dot(topLeftDir, topLeftDir) >= radiusSqr))\n"
-		"	alpha = peekFn((dot(topLeftDir, topLeftDir) - radiusSqr) / (numGradPixels * numGradPixels), sharpness);\n"
-		"if((bottomLeftDir.x <= 0) && (bottomLeftDir.y <= 0) && (dot(bottomLeftDir, bottomLeftDir) >= radiusSqr))\n"
-		"	alpha = peekFn((dot(bottomLeftDir, bottomLeftDir) - radiusSqr) / (numGradPixels * numGradPixels), sharpness);\n"
-		"if((bottomRightDir.x >= 0) && (bottomRightDir.y <= 0) && (dot(bottomRightDir, bottomRightDir) >= radiusSqr))\n"
-		"	alpha = peekFn((dot(bottomRightDir, bottomRightDir) - radiusSqr) / (numGradPixels * numGradPixels), sharpness);\n"
-		"if((topRightDir.x >= 0) && (topRightDir.y >= 0) && (dot(topRightDir, topRightDir) >= radiusSqr))\n"
-		"	alpha = peekFn((dot(topRightDir, topRightDir) - radiusSqr) / (numGradPixels * numGradPixels), sharpness);\n";
+		"vec2 ray = normalize(radiusVector);\n"
+		"float k = sqrt(1.0 / ((ray.x * ray.x) / (width * width * 0.25) + (ray.y * ray.y) / (height * height * 0.25)));\n"
+		"vec2 point = k * ray;\n"
+		"float diff = length(radiusVector) - (length(point) - numGradPixels);\n"
+		"if(diff > 0.0f)\n"
+		"	alpha = pow(1.0 - diff / numGradPixels, sharpness);\n";
 
 		sdf.setCode(str);
 
@@ -58,12 +45,6 @@ namespace SUTK
 		}
 
 		RenderRectFill::update();
-	}
-
-	void RenderRectFillCircle::setRoundness(f32 roundness) noexcept
-	{
-		SDF& sdf = getGeometry().getSDF();
-		sdf.setParameterValue<f32>(m_roundnessID, roundness);
 	}
 
 	void RenderRectFillCircle::setSharpness(f32 sharpness) noexcept
