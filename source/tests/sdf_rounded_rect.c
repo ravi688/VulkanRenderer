@@ -44,8 +44,11 @@ TEST_DATA(SDF_ROUNDED_RECT)
 	camera_t* camera;
 
 	mesh_t* mesh;
+	mesh_t* mesh2;
 	render_object_t* sdf_object;
+	render_object_t* sdf_object2;
 	material_t* sdf_material;
+	material_t* sdf_material2;
 };
 
 
@@ -87,7 +90,7 @@ TEST_ON_INITIALIZE(SDF_ROUNDED_RECT)
 							shader_library_load_shader(slib, "shaders/presets/sdf_rounded_rect.sb"),
 							"SDFRoundedRectShader"));
 
-	material_set_vec4(this->sdf_material, "parameters.color.r", vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	material_set_vec4(this->sdf_material, "parameters.color", vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	material_set_float(this->sdf_material, "parameters.roundness", 0.5f);
 	material_set_float(this->sdf_material, "parameters.sharpness", 1.0f);
 	material_set_float(this->sdf_material, "parameters.width", 600);
@@ -97,7 +100,6 @@ TEST_ON_INITIALIZE(SDF_ROUNDED_RECT)
 	AUTO planeMeshData2 = mesh3d_plane(renderer->allocator, 200);
 	mesh3d_transform_set(planeMeshData2, mat4_mul(3, mat4_rotation_z(90 DEG), mat4_rotation_y(0 DEG), mat4_scale(1.0f, 1.0f, 3.0f)));
 	this->mesh = mesh_create(renderer, planeMeshData2);
-	mesh3d_destroy(planeMeshData2);
 
 	this->sdf_object = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
 	render_object_set_material(this->sdf_object, this->sdf_material);
@@ -107,6 +109,29 @@ TEST_ON_INITIALIZE(SDF_ROUNDED_RECT)
 	// Thus, to avoid this artefact, we need to move the plane towards +x axis by 1.0f units.
 	render_object_set_transform(this->sdf_object, mat4_translation(1.0f, 200.0f, 0.0f));
 
+	this->sdf_material2 = material_library_getH(mlib,
+							material_library_create_materialH(mlib,
+							shader_library_load_shader(slib, "shaders/presets/sdf_circle.sb"),
+							"SDFCircleShader"));
+
+	material_set_vec4(this->sdf_material2, "parameters.color", vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	material_set_float(this->sdf_material2, "parameters.sharpness", 4.0f);
+	material_set_float(this->sdf_material2, "parameters.width", 600);
+	material_set_float(this->sdf_material2, "parameters.height", 200);
+	material_set_float(this->sdf_material2, "parameters.numGradPixels", 4);
+
+	this->mesh2 = mesh_create(renderer, planeMeshData2);
+	mesh3d_destroy(planeMeshData2);
+
+	this->sdf_object2 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_GEOMETRY));
+	render_object_set_material(this->sdf_object2, this->sdf_material2);
+	render_object_attach(this->sdf_object2, this->mesh2);
+	// NOTE: Since '45 DEG' is always less than the most precise PI / 2, the quad/plane is not vertical w.r.t x-y plane
+	// Therefore, fragments in the bottom part aren't visible because of clipping (they lie past the near clip plane).
+	// Thus, to avoid this artefact, we need to move the plane towards +x axis by 1.0f units.
+	render_object_set_transform(this->sdf_object2, mat4_translation(1.0f, -200.0f, 0.0f));
+
+
 	render_scene_build_queues(this->scene);
 }
 
@@ -114,6 +139,8 @@ TEST_ON_TERMINATE(SDF_ROUNDED_RECT)
 {
 	mesh_destroy(this->mesh);
 	mesh_release_resources(this->mesh);
+	mesh_destroy(this->mesh2);
+	mesh_release_resources(this->mesh2);
 	render_scene_destroy(this->scene);
 	render_scene_release_resources(this->scene);
 }
