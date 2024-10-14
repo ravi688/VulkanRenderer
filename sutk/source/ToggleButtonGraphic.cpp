@@ -20,8 +20,7 @@ namespace SUTK
 		m_renderRectCont->setRect({ { CIRCLE_LEFT_MARGIN, CIRCLE_TOP_BOTTOM_MARGIN }, { diameter, diameter } });
 		m_renderRectCont->getAnchorRect()->setRect({ 0.0f, 0.5f, 0.0f, 0.0f });
 		m_renderRect = driver.createRenderable<RenderRectFillCircle>(m_renderRectCont);
-		m_renderRect->setRoundness(1.0f);
-		m_renderRect->setSharpness(2.0f);
+		m_renderRect->setSharpness(4.0f);
 		m_renderRect->setNumGradPixels(2.0f);
 		auto& label = getLabel();
 		label.fitInParent({ CIRCLE_LEFT_MARGIN + diameter + LABEL_MARGIN, 0.0f, 0.0f, 0.0f });
