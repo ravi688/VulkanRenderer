@@ -1,0 +1,171 @@
+#sl version 2023
+#sb version 2023
+
+[Name("SDFCircleShader")]
+Shader
+{
+	Properties
+	{
+		[Stage(fragment, vertex)]
+		[Set(material_set, material_properties)]
+		uniform Parameters
+		{
+			vec4 color;
+			float sharpness;
+			float width;
+			float height;
+			float numGradPixels;
+		} parameters;
+	}
+
+	Layout
+	{
+		[Rate(per_vertex)]
+		[MeshLayout(sge_optimal)]
+		[Attribute(position)]
+		vec3 position;
+	}
+
+	RenderPass
+	{
+		SubPass
+		{
+			[NoParse]
+			GraphicsPipeline
+			{
+				colorBlend
+				{
+					attachment
+					{
+						blendenable = true
+					}
+				}
+			}
+
+			[NoParse]
+			GLSL
+			{
+				#stage vertex
+
+				#version 450
+				
+				#include <v3d.h>
+				
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = CAMERA_SET, binding = CAMERA_PROPERTIES_BINDING) uniform CameraInfo cameraInfo;
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+				
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform ScreenInfo
+				{
+					uvec2 resolution;
+					uvec2 dpi;
+					uvec2 size;
+					mat4 matrix;
+				} screenInfo;
+
+				layout(location = POSITION_LOCATION) in vec3 position;
+				
+				void main()
+				{
+					vec4 clipPos = screenInfo.matrix * objectInfo.transform * vec4(position, 1);
+					clipPos.y = -clipPos.y;
+					gl_Position = clipPos;
+				}
+
+				#stage fragment
+
+				#version 450
+				
+				#include <v3d.h>
+
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = MATERIAL_SET, binding = MATERIAL_PROPERTIES_BINDING) uniform Parameters
+				{
+					vec4 color;
+					float sharpness;
+					float width;
+					float height;
+					float numGradPixels;
+				} parameters;
+				
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = OBJECT_SET, binding = TRANSFORM_BINDING) uniform ObjectInfo objectInfo;
+
+				layout(SGE_UNIFORM_BUFFER_LAYOUT, set = GLOBAL_SET, binding = SCREEN_BINDING) uniform ScreenInfo
+				{
+					uvec2 resolution;
+					uvec2 dpi;
+					uvec2 size;
+					mat4 matrix;
+				} screenInfo;
+
+				layout(location = 0) out vec4 color;
+				
+				vec4 convertToCenterOrigin(vec4 coord)
+				{
+					return vec4(coord.x - screenInfo.size.x * 0.5, screenInfo.size.y * 0.5 - coord.y, coord.z, coord.w);
+				}
+
+				float peekFn(float x, float sharpness)
+				{
+					return (1.0 / (sharpness * sharpness * x * x + 1));
+				}
+
+				float sqr(float x) { return x * x; }
+
+				vec2 getIntersectionPoint(vec2 ray, float a, float b)
+				{
+					// Equation of ellipse with center as (0, 0)
+					// x ^ 2 / (a * a) + y ^ 2 / (b * b) = 1
+
+					// Given a ray originating at (0,0) in the direction (radiusVector.x, radiusVector.y),
+					// we need to find its intersection point with an ellipse situated at origin with semi-major axis as a, and semi-minor axis as b.
+					//
+					// let the magnitude of the radius which ends at the intersection point be k
+					// then, 
+					// 		norm_rv = normalize(radiusVector)
+					//		r = k * norm_rv
+					//	sqr(k) * sqr(norm_rv.x) / sqr(a) + sqr(k) * sqr(norm_rv.y) / sqr(b) = 1
+					// 	sqr(k) * { sqr(norm_rv.x) / sqr(a) + sqr(norm_rv.y) / sqr(b) } = 1
+					//  sqr(k) = 1.0 / { sqr(norm_rv.x) / sqr(a) + sqr(norm_rv.y) / sqr(b) }
+					// 	k = +=sqrt(1.0 / { sqr(norm_rv.x) / sqr(a) + sqr(norm_rv.y) / sqr(b) })
+					ray = normalize(ray);
+					float k = sqrt(1.0 / (sqr(ray.x) / sqr(a) + sqr(ray.y) / sqr(b)));
+					return k * ray;
+				}
+				
+				float sdf(vec2 fragCoord, vec2 center)
+				{
+					float height = parameters.height;
+					float width = parameters.width;
+					float sharpness = parameters.sharpness;
+					float numGradPixels = parameters.numGradPixels;
+				
+					// Signed Distance Function Definition
+				
+					float alpha = 1.0f;
+				
+					vec2 radiusVector = fragCoord.xy - center.xy;
+
+					vec2 point = getIntersectionPoint(radiusVector, width * 0.5, height * 0.5);
+					float diff = length(radiusVector) - (length(point) - numGradPixels);
+					if(diff > 0.0f)
+						alpha = pow(1.0 - diff / numGradPixels, sharpness);
+
+					return alpha;
+				}
+
+				void main()
+				{
+					vec4 center = objectInfo.transform[3];
+					center = center.zyxw;
+
+					vec4 fragCoord = gl_FragCoord;
+					fragCoord = convertToCenterOrigin(fragCoord);
+
+					float alpha = 1.0f;
+					alpha = sdf(fragCoord.xy, center.xy);
+
+					color = vec4(1.0, 1.0, 1.0, alpha);
+				}
+			}
+		}
+	}
+}
