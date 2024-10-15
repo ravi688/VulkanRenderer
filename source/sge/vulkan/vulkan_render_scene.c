@@ -237,7 +237,45 @@ static u32 get_scene_set_light_shadowmap_binding(vulkan_light_type_t type)
 	return 0;
 }
 
-SGE_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 flags)
+static void render_light_shadow_maps(vulkan_render_scene_t* scene, u64 queue_mask)
+{
+	_debug_assert__(vulkan_render_scene_is_use_lights(scene));
+	u32 light_buffer_count = dictionary_get_count(&scene->light_buffer_map);
+	for(u32 i = 0; i < light_buffer_count; i++)
+	{
+		AUTO stage = CAST_TO(vulkan_light_buffer_stage_t*, dictionary_get_value_ptr_at(&scene->light_buffer_map, i));
+		/* render to shadow maps first */
+		u32 light_count = buf_get_element_count(&stage->lights);
+		for(u32 j = 0; j < light_count; j++)
+		{
+			/* get the light */
+			vulkan_light_t* light;
+			buf_get_at_s(&stage->lights, j, &light);
+	
+			/* if this light is not active then do not generate any shadow maps (i.e. do not render to the shadow depth buffer) */
+			if((!vulkan_light_is_active(light)) || (!vulkan_light_is_cast_shadow(light)))
+				continue;
+	
+			vulkan_light_begin(light);
+			while(vulkan_light_irradiate(light))
+			{
+				u32 count = dictionary_get_count(&scene->queues);
+				for(u32 k = 0; k < count; k++)
+				{
+					AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, k));
+					if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
+					vulkan_render_queue_dispatch_single_material(get_queue_at(scene, k), 
+									vulkan_light_get_shadow_material(light),
+									vulkan_light_get_shadow_camera(light),
+									scene);
+				}
+			}
+			vulkan_light_end(light);
+		}
+	}
+}
+
+static void update_light_buffers_and_shadow_map_descriptors(vulkan_render_scene_t* scene)
 {
 	u32 light_buffer_count = dictionary_get_count(&scene->light_buffer_map);
 	for(u32 i = 0; i < light_buffer_count; i++)
@@ -348,43 +386,15 @@ DEBUG_BLOCK(
 									vulkan_formatted_buffer_get_device_buffer(&stage->light_buffer));
 		}
 	}
+}
 
-	/* if this render scene uses lights then render the shadow maps */
+SGE_API void vulkan_render_scene_render(vulkan_render_scene_t* scene, u64 queue_mask, u32 flags)
+{
+	/* if this render scene uses lights then update light buffers, textures, and their descriptors; and render the shadow maps */
 	if(vulkan_render_scene_is_use_lights(scene))
 	{
-		u32 light_buffer_count = dictionary_get_count(&scene->light_buffer_map);
-		for(u32 i = 0; i < light_buffer_count; i++)
-		{
-			AUTO stage = CAST_TO(vulkan_light_buffer_stage_t*, dictionary_get_value_ptr_at(&scene->light_buffer_map, i));
-			/* render to shadow maps first */
-			u32 light_count = buf_get_element_count(&stage->lights);
-			for(u32 j = 0; j < light_count; j++)
-			{
-				/* get the light */
-				vulkan_light_t* light;
-				buf_get_at_s(&stage->lights, j, &light);
-	
-				/* if this light is not active then do not generate any shadow maps (i.e. do not render to the shadow depth buffer) */
-				if((!vulkan_light_is_active(light)) || (!vulkan_light_is_cast_shadow(light)))
-					continue;
-	
-				vulkan_light_begin(light);
-				while(vulkan_light_irradiate(light))
-				{
-					u32 count = dictionary_get_count(&scene->queues);
-					for(u32 k = 0; k < count; k++)
-					{
-						AUTO queue_type = DEREF_TO(vulkan_render_queue_type_t, dictionary_get_key_ptr_at(&scene->queues, k));
-						if((BIT64(queue_type) & queue_mask) == BIT64(queue_type))
-						vulkan_render_queue_dispatch_single_material(get_queue_at(scene, k), 
-										vulkan_light_get_shadow_material(light),
-										vulkan_light_get_shadow_camera(light),
-										scene);
-					}
-				}
-				vulkan_light_end(light);
-			}
-		}
+		update_light_buffers_and_shadow_map_descriptors(scene);
+		render_light_shadow_maps(scene, queue_mask);
 	}
 
 	/* then sample the above rendered shadow maps and render a lit scene */
