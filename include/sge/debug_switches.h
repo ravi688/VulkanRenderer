@@ -32,7 +32,9 @@
 
 /* switches */
 /* if enabled, then objects with shared materials and shaders will be drawn in the same render pass.
- * otherwise, each object will be rendered in separated (though inefficient) render passes. */
+ * otherwise, each object will be rendered in separated (though inefficient) render passes. 
+ * NOTE: if you load the same shader multiple times and try rendering objects with each loaded shader variant, then they won't be rendered into the same render pass.
+ * However, this case is still an opportunity for optimization for future. */
 #define ENABLE_OBJECT_GROUPING_IN_TRANSPARENT_QUEUE 1
 
 #define ENABLED(x) (ENABLE_##x == 1)

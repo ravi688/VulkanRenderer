@@ -430,6 +430,45 @@ static void draw_objects_with_material(vulkan_material_t* material, vulkan_pipel
 	}
 }
 
+static void draw_objects_with_material_ranges(vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, u32 material_range_count, const u32* material_ranges, vulkan_render_object_t** objects)
+{
+	for(u32 i = 0, object_index = 0; i < material_range_count; ++i)
+	{
+		vulkan_material_t* material = vulkan_render_object_get_material(objects[object_index]);
+		/* bind MATERIAL_SET */
+		vulkan_descriptor_set_bind(&material->material_set, VULKAN_DESCRIPTOR_SET_MATERIAL, layout);
+
+		/* push constants from CPU memory to the GPU memory */
+		vulkan_material_push_constants(material, layout);
+
+		/* draw all the objects */
+
+		u32 object_count = material_ranges[i];
+		for(u32 j = 0; j < object_count; j++, ++object_index)
+		{
+			vulkan_render_object_t* object = objects[object_index];
+
+			/* MOTE:
+			 * if this render object is not active then skip drawcall for it.
+			 * PERF WARNING: however, is not the efficient way of handling inactive objects.
+			 * for example, if we only have one render object associated with a unique material, and the render object is itself inactive,
+			 * then it is useless initiating render pass pertaining to that material and binding all the descriptor sets associated with the object and the material. 
+			 * 
+			 * How can we make it more efficient?
+			 *	 only run render passes which are required by active render objects.
+			 * 	 TODO: develop an algorithm for it.
+			 * */
+			if(!vulkan_render_object_is_active(object))
+				continue;
+						
+			/* bind OBJECT_SET */
+			vulkan_descriptor_set_bind(&object->object_set, VULKAN_DESCRIPTOR_SET_OBJECT, layout);
+			/* draw the object */
+			vulkan_render_object_draw(object, pipeline);
+		}
+	}
+}
+
 typedef void (*render_pass_run_callback_t)(vulkan_pipeline_layout_t*, vulkan_graphics_pipeline_t*, void*);
 #define RENDER_PASS_RUN_CALLBACK(fnptr) CAST_TO(render_pass_run_callback_t, fnptr)
 
@@ -516,14 +555,14 @@ static vulkan_render_object_t* render_object_get(vulkan_render_object_t** *objec
 
 typedef struct ordered_object_range_draw_data_t
 {
-	u32 object_count;
 	vulkan_render_object_t** objects;
-	vulkan_material_t* material;
+	u32 material_range_count;
+	const u32* material_ranges;
 } ordered_object_range_draw_data_t;
 
 static void draw_ordered_objects_with_material(vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, ordered_object_range_draw_data_t* data)
 {
-	draw_objects_with_material(data->material, layout, pipeline, data->object_count, (com_iterator_t) { &data->objects, .get = COM_ITERATOR_GET_CALLBACK(render_object_get) });
+	draw_objects_with_material_ranges(layout, pipeline, data->material_range_count, data->material_ranges, data->objects);
 }
 
 static void draw_ordered_objects(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
@@ -553,19 +592,46 @@ static void draw_ordered_objects(vulkan_render_queue_t* queue, vulkan_camera_t* 
 		}
 	}
 
+	/* sizes of ranges of materials which share the same shader object ptr */
+	u32 shader_ranges[material_range_count];
+	u32 shader_range_count = 0;
+	vulkan_shader_t* s = NULL;
 	for(u32 i = 0, obj_index = 0; i < material_range_count; ++i)
 	{
 		u32 obj_count = material_ranges[i];
+		/* material can't be null */
+		AUTO m = vulkan_render_object_get_material(objects[obj_index]);
+		_com_assert(m != NULL);
+		AUTO sh = vulkan_material_get_shader(m);
+		if(sh == s)
+		{
+			_com_assert(shader_range_count >= 1);
+			shader_ranges[shader_range_count - 1] += 1;
+		}
+		else
+		{
+			++shader_range_count;
+			shader_ranges[shader_range_count - 1] = 1;
+			s = sh;
+		}
+		obj_index += obj_count;
+	}
+
+	for(u32 i = 0, mat_index = 0, obj_index = 0; i < shader_range_count; ++i)
+	{
+		u32 mat_count = shader_ranges[i];
 		vulkan_material_t* material = vulkan_render_object_get_material(objects[obj_index]);
 		vulkan_shader_t* shader = vulkan_material_get_shader(material);
 		ordered_object_range_draw_data_t data = 
 		{
-			.object_count = obj_count,
+			.material_range_count = mat_count,
+			.material_ranges = material_ranges + mat_index,
 			.objects = objects + obj_index,
-			.material = material
 		};
 		run_render_passes_for_shader(shader, camera, scene, RENDER_PASS_RUN_CALLBACK(draw_ordered_objects_with_material), &data);
-		obj_index += obj_count;
+		for(u32 j = 0; j < mat_count; ++j)
+			obj_index += material_ranges[mat_index + j];
+		mat_index += mat_count;
 	}
 	#else /* ENABLE_OBJECT_GROUPING_IN_TRANSPARENT_QUEUE */
 	buf_for_each_element_ptr(vulkan_render_object_t*, var, queue->objects)
