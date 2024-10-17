@@ -489,28 +489,67 @@ static void run_render_passes_for_shader(vulkan_shader_t* shader, vulkan_camera_
 	}
 }
 
-static vulkan_render_object_t* forward_render_object(vulkan_render_object_t* obj) { return obj; }
-
-static void draw_one_object_with_material(vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, vulkan_render_object_t* obj)
+static vulkan_render_object_t* render_object_get(vulkan_render_object_t** *objects_ptr)
 {
-	vulkan_material_t* material = vulkan_render_object_get_material(obj);
-	draw_objects_with_material(material, layout, pipeline, 1, (com_iterator_t) { obj, .get = COM_ITERATOR_GET_CALLBACK(forward_render_object) });
+	AUTO objects = *objects_ptr;
+	AUTO obj = *objects;
+	++objects;
+	*objects_ptr = objects;
+	return obj;
 }
 
-/* renders just one object, i.e. executes render passes and issues draw calls only for this object */
-static void render_object(vulkan_render_object_t* obj, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
+typedef struct ordered_object_range_draw_data_t
 {
-	vulkan_material_t* material = vulkan_render_object_get_material(obj);
-	vulkan_shader_t* shader = vulkan_material_get_shader(material);
-	run_render_passes_for_shader(shader, camera, scene, RENDER_PASS_RUN_CALLBACK(draw_one_object_with_material), obj);
+	u32 object_count;
+	vulkan_render_object_t** objects;
+	vulkan_material_t* material;
+} ordered_object_range_draw_data_t;
+
+static void draw_ordered_objects_with_material(vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, ordered_object_range_draw_data_t* data)
+{
+	draw_objects_with_material(data->material, layout, pipeline, data->object_count, (com_iterator_t) { &data->objects, .get = COM_ITERATOR_GET_CALLBACK(render_object_get) });
 }
 
 static void draw_ordered_objects(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
-	buf_for_each_element_ptr(vulkan_render_object_t*, var, queue->objects)
+	AUTO obj_count = buf_get_element_count(queue->objects);
+	/* sizes of ranges of objects which share the same material object ptr */
+	u32 material_ranges[obj_count];
+	u32 material_range_count = 0;
+	AUTO objects = CAST_TO(vulkan_render_object_t**, buf_get_ptr(queue->objects));
+	vulkan_material_t* t = NULL;
+	for(u32 i = 0; i < obj_count; ++i)
 	{
-		vulkan_render_object_t* obj = DREF(var);
-		render_object(obj, camera, scene);
+		/* material can't be null */
+		AUTO m = vulkan_render_object_get_material(objects[i]);
+		_com_assert(m != NULL);
+		if(m == t)
+		{
+			_com_assert(material_range_count >= 1);
+			material_ranges[material_range_count - 1] += 1;
+		}
+		else
+		{
+			++material_range_count;
+			material_ranges[material_range_count - 1] = 1;
+			t = m;
+		}
+	}
+
+	/* now for each unique material, draw objects which shared it in the same randerpass. */
+	for(u32 i = 0, obj_index = 0; i < material_range_count; ++i)
+	{
+		u32 obj_count = material_ranges[i];
+		vulkan_material_t* material = vulkan_render_object_get_material(objects[obj_index]);
+		vulkan_shader_t* shader = vulkan_material_get_shader(material);
+		ordered_object_range_draw_data_t data = 
+		{
+			.object_count = obj_count,
+			.objects = objects + obj_index,
+			.material = material
+		};
+		run_render_passes_for_shader(shader, camera, scene, RENDER_PASS_RUN_CALLBACK(draw_ordered_objects_with_material), &data);
+		obj_index += obj_count;
 	}
 }
 
