@@ -212,22 +212,19 @@ SGE_API vulkan_material_t* vulkan_render_object_get_material(vulkan_render_objec
 
 SGE_API void vulkan_render_object_set_transform(vulkan_render_object_t* obj, mat4_t transform)
 {
-	mat4_t normal = mat4_inverse(transform);
+	obj->transform = transform;
+	obj->normalMatrix = mat4_inverse(transform);
 	mat4_move(transform, mat4_transpose(transform));
 	struct_descriptor_set_mat4(&obj->struct_definition, obj->transform_handle, CAST_TO(float*, &transform));
-	struct_descriptor_set_mat4(&obj->struct_definition, obj->normal_handle, CAST_TO(float*, &normal));
+	struct_descriptor_set_mat4(&obj->struct_definition, obj->normal_handle, CAST_TO(float*, &obj->normalMatrix));
 }
 
 SGE_API mat4_t vulkan_render_object_get_transform(vulkan_render_object_t* obj)
 {
-	mat4_t transform;
-	struct_descriptor_get_mat4(&obj->struct_definition, obj->transform_handle, CAST_TO(float*, &transform));
-	return transform;
+	return obj->transform;
 }
 
 SGE_API mat4_t vulkan_render_object_get_normal(vulkan_render_object_t* obj)
 {
-	mat4_t normal;
-	struct_descriptor_get_mat4(&obj->struct_definition, obj->normal_handle, CAST_TO(float*, &normal));
-	return normal;
+	return obj->normalMatrix;
 }

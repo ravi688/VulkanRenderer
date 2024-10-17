@@ -48,9 +48,12 @@ TEST_DATA(TRANSPARENT_QUEUE)
 	render_object_t* sdf_object;
 	render_object_t* sdf_object2;
 	render_object_t* sdf_object3;
+	render_object_t* sdf_object4;
 	material_t* sdf_material;
 	material_t* sdf_material2;
+	material_t* material3;
 	texture_t* texture;
+	texture_t* texture2;
 };
 
 
@@ -87,10 +90,9 @@ TEST_ON_INITIALIZE(TRANSPARENT_QUEUE)
 	/* add the camera into the render scene */
 	render_scene_add_camera(this->scene, this->camera);
 
-	this->sdf_material = material_library_getH(mlib,
-							material_library_create_materialH(mlib,
-							shader_library_load_shader(slib, "shaders/presets/unlit_texture.ui.sb"),
-							"SDFRoundedRectShader"));
+	AUTO shader = shader_library_load_shader(slib, "shaders/presets/unlit_texture.ui.sb");
+
+	this->sdf_material = material_library_getH(mlib, material_library_create_materialH(mlib, shader, "SDFRoundedRectMaterial1"));
 
 	this->texture = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Thalita-Torres-Office-Archive-folders.512.png");
 	material_set_vec4(this->sdf_material, "parameters.color", vec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -136,6 +138,18 @@ TEST_ON_INITIALIZE(TRANSPARENT_QUEUE)
 	render_object_set_transform(this->sdf_object3, mat4_mul(2, mat4_translation(1.5f, 200.0f, 50.0f), mat4_scale(200, 200, 300)));
 
 
+	this->texture2 = texture_load(renderer, TEXTURE_TYPE_ALBEDO, "textures/Folder.png");
+	this->material3 = material_library_getH(mlib, material_library_create_materialH(mlib, shader, "SDFRoundedRectMaterial2"));
+	material_set_vec4(this->material3, "parameters.color", vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	material_set_texture(this->material3, "albedo", this->texture2);
+	this->sdf_object4 = render_scene_getH(this->scene, render_scene_create_object(this->scene, RENDER_OBJECT_TYPE_MESH, RENDER_QUEUE_TYPE_TRANSPARENT));
+	render_object_set_material(this->sdf_object4, this->material3);
+	render_object_attach(this->sdf_object4, this->mesh2);
+	// NOTE: Since '45 DEG' is always less than the most precise PI / 2, the quad/plane is not vertical w.r.t x-y plane
+	// Therefore, fragments in the bottom part aren't visible because of clipping (they lie past the near clip plane).
+	// Thus, to avoid this artefact, we need to move the plane towards +x axis by 1.0f units.
+	render_object_set_transform(this->sdf_object4, mat4_mul(2, mat4_translation(1.75f, 200.0f, -50.0f), mat4_scale(200, 200, 300)));
+
 	render_scene_build_queues(this->scene);
 }
 
@@ -143,6 +157,8 @@ TEST_ON_TERMINATE(TRANSPARENT_QUEUE)
 {
 	texture_destroy(this->texture);
 	texture_release_resources(this->texture);
+	texture_destroy(this->texture2);
+	texture_release_resources(this->texture2);
 	mesh_destroy(this->mesh);
 	mesh_release_resources(this->mesh);
 	mesh_destroy(this->mesh2);
