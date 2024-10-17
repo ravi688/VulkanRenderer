@@ -77,6 +77,8 @@
 #include <sge/tests/TID-48.case4.h>
 #include <sge/tests/TID-48.case5.h>
 
+#include <sge/tests/transparent_queue.h>
+
 SGE_API test_t* test_new(memory_allocator_t* allocator)
 {
 	test_t* test = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_TEST, test_t);
@@ -129,6 +131,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 	ELSE_IF(TID_48_CASE_3);
 	ELSE_IF(TID_48_CASE_4);
 	ELSE_IF(TID_48_CASE_5);
+	ELSE_IF(TRANSPARENT_QUEUE);
 	else
 	{
 		printf 	(
@@ -170,6 +173,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 					"\tTID_48_CASE_3\n"
 					"\tTID_48_CASE_4\n"
 					"\tTID_48_CASE_5\n"
+					"\tTRANSPARENT_QUEUE\n"
 				);
 		exit(0);
 	}

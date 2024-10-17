@@ -95,6 +95,8 @@ SGE_API void vulkan_material_release_resources(vulkan_material_t* material);
 SGE_API void vulkan_material_push_constants(vulkan_material_t* material, vulkan_pipeline_layout_t* pipeline_layout);
 
 /* getters */
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_shader_t* vulkan_material_get_shader(vulkan_material_t* material) { return material->shader; }
+
 SGE_API vulkan_material_field_handle_t vulkan_material_get_field_handle(vulkan_material_t* material, const char* name);
 SGE_API float vulkan_material_get_push_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle);
 SGE_API int vulkan_material_get_push_intH(vulkan_material_t* material, vulkan_material_field_handle_t handle);

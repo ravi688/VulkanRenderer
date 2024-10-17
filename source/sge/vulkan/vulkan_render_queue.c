@@ -57,7 +57,6 @@ SGE_API vulkan_render_queue_t* vulkan_render_queue_create(vulkan_renderer_t* ren
 }
 
 typedef BUFFER subpass_shader_list_t;
-typedef BUFFER /* element_type: vulkan_render_object_t* */ render_object_list_t;
 typedef dictionary_t material_and_render_object_list_map_t;
 
 SGE_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, vulkan_render_queue_type_t type, vulkan_render_queue_t OUT queue)
@@ -73,6 +72,12 @@ SGE_API void vulkan_render_queue_create_no_alloc(vulkan_renderer_t* renderer, vu
 	queue->is_ready = false;
 	VULKAN_OBJECT_INIT(&queue->pass_graph, VULKAN_OBJECT_TYPE_RENDER_PASS_GRAPH, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
 	vulkan_render_pass_graph_create_no_alloc(renderer, &queue->pass_graph);
+
+	if(type == VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT)
+	{
+		queue->objects = memory_allocator_BUFnew(renderer->allocator, vulkan_render_object_t*);
+		vulkan_render_queue_set_draw_order_policy(queue, VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_PER_OBJECT);
+	}
 }
 
 SGE_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
@@ -116,6 +121,12 @@ SGE_API void vulkan_render_queue_destroy(vulkan_render_queue_t* queue)
 	queue->is_ready = false;
 
 	vulkan_render_pass_graph_destroy(&queue->pass_graph);
+
+	if(queue->type == VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT)
+	{
+		_com_assert(queue->objects != NULL);
+		buf_clear(queue->objects, NULL);
+	}
 }
 
 SGE_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue)
@@ -124,6 +135,12 @@ SGE_API void vulkan_render_queue_release_resources(vulkan_render_queue_t* queue)
 	dictionary_free(&queue->shader_handles);
 
 	vulkan_render_pass_graph_release_resources(&queue->pass_graph);
+
+	if(queue->type == VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT)
+	{
+		_com_assert(queue->objects != NULL);
+		buf_free(queue->objects);
+	}
 
 	if(VULKAN_OBJECT_IS_INTERNAL(queue))
 		memory_allocator_dealloc(queue->renderer->allocator, queue);
@@ -168,6 +185,9 @@ SGE_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render
 		debug_log_warning("No Material has been assigned to the render object but you're still trying to add it to a render queue, ignored");
 		return;
 	}
+
+	if(queue->type == VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT)
+		buf_push(queue->objects, &obj);
 
 	/* if this shader doesn't exists then add it */
 	if(!dictionary_contains(&queue->shader_handles, &obj->material->shader->handle))
@@ -226,6 +246,13 @@ SGE_API void vulkan_render_queue_remove_shaderH();
 
 SGE_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_render_object_t* object)
 {
+	if(queue->type == VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT)
+	{
+		bool result = buf_remove(queue->objects, &object, buf_ptr_comparer);
+		if(!result)
+			DEBUG_LOG_ERROR("Failed to remove vulkan render object (%p) from 'objects' list as it doesn't contain it", object);
+	}
+
 	material_and_render_object_list_map_t* map = dictionary_get_value_ptr(&queue->shader_handles, &object->material->shader->handle);
 	render_object_list_t* list = dictionary_get_value_ptr(map, &object->material->handle);
 	buf_ucount_t index = buf_find_index_of(list, &object, buf_ptr_comparer);
@@ -353,6 +380,184 @@ SGE_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t*
 	}
 }
 
+SGE_API void vulkan_render_queue_set_draw_order_policy(vulkan_render_queue_t* queue, vulkan_transparent_queue_draw_order_policy_t policy)
+{
+	if((queue->draw_order_policy != VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_UNDEFINED) && (queue->draw_order_policy != policy))
+	{
+		DEBUG_LOG_ERROR("You can't change the draw order policy for the queue anymore, ignoring");
+		return;
+	}
+	release_assert__(policy == VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_PER_OBJECT, "Only VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_PER_OBJECT is supported for now");
+	queue->draw_order_policy = policy;
+}
+
+typedef void (*iterator_move_next_callback_t)(void* user_data);
+#define ITERATOR_MOVE_NEXT_CALLBACK(fnptr) CAST_TO(iterator_move_next_callback_t, fnptr)
+typedef void* (*iterator_get_callback_t)(void* user_data);
+#define ITERATOR_GET_CALLBACK(fnptr) CAST_TO(iterator_get_callback_t, fnptr)
+typedef void (*iterator_reset_callback_t)(void* user_data);
+#define ITERATOR_RESET_CALLBACK(fnptr) CAST_TO(iterator_reset_callback_t, fnptr)
+
+typedef struct iterator_t
+{
+	void* user_data;
+	iterator_move_next_callback_t move_next;
+	iterator_get_callback_t get;
+	iterator_reset_callback_t reset;
+} iterator_t;
+
+void iterator_move_next(iterator_t* iterator)
+{
+	if(iterator->move_next != NULL)
+		iterator->move_next(iterator->user_data);
+}
+
+void* iterator_get(iterator_t* iterator)
+{
+	return iterator->get(iterator->user_data);
+}
+
+void iterator_reset(iterator_t* iterator)
+{
+	if(iterator->reset != NULL)
+		iterator->reset(iterator->user_data);
+}
+
+static void draw_objects_with_material(vulkan_material_t* material, vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, u32 object_count, iterator_t obj_iterator)
+{
+	/* bind MATERIAL_SET */
+	vulkan_descriptor_set_bind(&material->material_set, VULKAN_DESCRIPTOR_SET_MATERIAL, layout);
+
+	/* push constants from CPU memory to the GPU memory */
+	vulkan_material_push_constants(material, layout);
+
+	/* draw all the objects */
+
+	for(u32 m = 0; m < object_count; m++)
+	{
+		vulkan_render_object_t* object = CAST_TO(vulkan_render_object_t*, iterator_get(&obj_iterator));
+		iterator_move_next(&obj_iterator);
+
+		/* MOTE:
+		 * if this render object is not active then skip drawcall for it.
+		 * PERF WARNING: however, is not the efficient way of handling inactive objects.
+		 * for example, if we only have one render object associated with a unique material, and the render object is itself inactive,
+		 * then it is useless initiating render pass pertaining to that material and binding all the descriptor sets associated with the object and the material. 
+		 * 
+		 * How can we make it more efficient?
+		 *	 only run render passes which are required by active render objects.
+		 * 	 TODO: develop an algorithm for it.
+		 * */
+		if(!vulkan_render_object_is_active(object))
+			continue;
+						
+		/* bind OBJECT_SET */
+		vulkan_descriptor_set_bind(&object->object_set, VULKAN_DESCRIPTOR_SET_OBJECT, layout);
+		/* draw the object */
+		vulkan_render_object_draw(object, pipeline);
+	}
+}
+
+typedef void (*render_pass_run_callback_t)(vulkan_pipeline_layout_t*, vulkan_graphics_pipeline_t*, void*);
+#define RENDER_PASS_RUN_CALLBACK(fnptr) CAST_TO(render_pass_run_callback_t, fnptr)
+
+static void run_render_passes_for_shader(vulkan_shader_t* shader, vulkan_camera_t* camera, vulkan_render_scene_t* scene, render_pass_run_callback_t callback, void* user_data)
+{
+	vulkan_shader_render_pass_counter_reset(shader);
+	u32 pass_count = shader->render_pass_count;
+	for(u32 i = 0; i < pass_count; i++)
+	{
+		vulkan_render_pass_handle_t pass_handle = shader->render_passes[i].handle;
+		vulkan_render_pass_t* pass = vulkan_render_pass_pool_getH(shader->renderer->render_pass_pool, pass_handle);
+		_debug_assert__(shader->render_passes[i].subpass_count == pass->subpass_count);
+
+		vulkan_render_pass_begin(pass, 0, camera);
+
+		u32 subpass_count = pass->subpass_count;
+		for(u32 j = 0; j < subpass_count;)
+		{
+			vulkan_render_pass_handle_t prev_pass_handle = vulkan_shader_get_prev_pass_handle(shader);
+
+			if(!vulkan_shader_render_pass_is_next(shader, pass_handle))
+				continue;
+
+			vulkan_graphics_pipeline_t* pipeline = vulkan_shader_get_pipeline(shader, pass_handle, j);
+
+			_debug_assert__((pipeline != NULL) && pipeline->render_pass == pass);
+			_debug_assert__(pipeline->render_pass->handle == pass->handle);
+
+			vulkan_pipeline_layout_t* layout = vulkan_shader_get_pipeline_layout(shader, pass_handle, j);
+
+			vulkan_graphics_pipeline_bind(pipeline);
+
+			/* bind GLOBAL_SET */
+			vulkan_descriptor_set_bind(&shader->renderer->global_set, VULKAN_DESCRIPTOR_SET_GLOBAL, layout);
+
+			/* bind SCENE_SET */
+			vulkan_descriptor_set_bind(vulkan_render_scene_get_scene_set(scene), VULKAN_DESCRIPTOR_SET_SCENE, layout);
+
+			/* bind CAMERA_SET */
+			vulkan_descriptor_set_bind(&camera->sets[camera->current_shot_index], VULKAN_DESCRIPTOR_SET_CAMERA, layout);
+
+			vulkan_render_pass_descriptor_sets_t* render_pass_descriptor_sets = vulkan_camera_get_descriptor_sets(camera, prev_pass_handle, pass_handle);
+			/* bind RENDER_SET */
+			vulkan_descriptor_set_bind(&render_pass_descriptor_sets->render_set, VULKAN_DESCRIPTOR_SET_RENDER, layout);
+			/* bind SUB_RENDER_SET */
+			_debug_assert__(j < render_pass_descriptor_sets->sub_render_set_count);
+			vulkan_descriptor_set_bind(&render_pass_descriptor_sets->sub_render_sets[j], VULKAN_DESCRIPTOR_SET_SUB_RENDER, layout);
+
+			callback(layout, pipeline, user_data);
+
+			j++;
+
+			if(j < subpass_count)
+				vulkan_render_pass_next(pass);
+		}
+		vulkan_render_pass_end(pass);
+	}
+}
+
+static vulkan_render_object_t* forward_render_object(vulkan_render_object_t* obj) { return obj; }
+
+static void draw_one_object_with_material(vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, vulkan_render_object_t* obj)
+{
+	vulkan_material_t* material = vulkan_render_object_get_material(obj);
+	draw_objects_with_material(material, layout, pipeline, 1, (iterator_t) { obj, .get = ITERATOR_GET_CALLBACK(forward_render_object) });
+}
+
+/* renders just one object, i.e. executes render passes and issues draw calls only for this object */
+static void render_object(vulkan_render_object_t* obj, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
+{
+	vulkan_material_t* material = vulkan_render_object_get_material(obj);
+	vulkan_shader_t* shader = vulkan_material_get_shader(material);
+	run_render_passes_for_shader(shader, camera, scene, RENDER_PASS_RUN_CALLBACK(draw_one_object_with_material), obj);
+}
+
+static void draw_ordered_objects(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
+{
+	buf_for_each_element_ptr(vulkan_render_object_t*, var, queue->objects)
+	{
+		vulkan_render_object_t* obj = DREF(var);
+		render_object(obj, camera, scene);
+	}
+}
+
+static bool render_object_depth_greater_than(void* lhs, void* rhs, void* user_data)
+{
+	AUTO ro_lhs = DREF_TO(vulkan_render_object_t*, lhs);
+	AUTO ro_rhs = DREF_TO(vulkan_render_object_t*, rhs);
+	f32 z_lhs = vulkan_render_object_get_transform(ro_lhs).m22;
+	f32 z_rhs = vulkan_render_object_get_transform(ro_rhs).m22;
+	return z_lhs > z_rhs;
+}
+
+static void order_objects_by_back_to_front(vulkan_render_queue_t* queue)
+{
+	/* order render objects by their depth values, from small to large (ascending order) */
+	buf_sort(queue->objects, render_object_depth_greater_than, NULL);
+}
+
+
 SGE_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
 	debug_assert_wrn__(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it");
@@ -366,6 +571,13 @@ SGE_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_c
 		return;
 	}
 
+	/* if draw order policy specified, then render each object in the increasing order of their depth values. */
+	if(queue->draw_order_policy == VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_PER_OBJECT)
+	{
+		order_objects_by_back_to_front(queue);
+		draw_ordered_objects(queue, camera, scene);
+		return;	
+	}
 
 	// get the pointers to shader library and material library
 	vulkan_shader_library_t* shader_library = queue->renderer->shader_library;

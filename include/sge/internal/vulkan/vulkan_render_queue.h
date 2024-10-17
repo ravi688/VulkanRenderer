@@ -147,6 +147,23 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const char* vulkan_render_q
 
 typedef struct vulkan_render_scene_t vulkan_render_scene_t;
 
+typedef BUFFER /* element_type: vulkan_render_object_t* */ render_object_list_t;
+
+typedef enum vulkan_transparent_queue_draw_order_policy_t
+{
+	/* this is used to detect if draw order policy is being assigned for the first time or not.
+	 * this needs to be noticed that you can't set draw order policy multiple times with different values, it can't be changed once specified valid value for now. */
+	VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_UNDEFINED,
+	/* the queue draws the render objects in decreasing order of their distance from the camera in the view direction */
+	VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_PER_OBJECT,
+	/* the queue draws individual triangles in decreasing order of their mean distance from the camera in the view direction
+	 * for now, it is TODO, specyfing this would still use VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_PER_OBJECT */
+	VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_PER_TRIANGLE,	
+	/* the queue draws rasterized pixels in decreasing order of their distance from the camera in the view direction,
+	 * for now, it is TODO, specifying this would still use VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_PER_OBJECT */
+	VULKAN_TRANSPARENT_QUEUE_DRAW_ORDER_POLICY_PER_PIXEL,
+} vulkan_transparent_queue_draw_order_policy_t;
+
 typedef struct vulkan_render_queue_t
 {
 	__VULKAN_OBJECT__;
@@ -169,6 +186,11 @@ typedef struct vulkan_render_queue_t
 
 	/* render pass graph for this render queue */
 	vulkan_render_pass_graph_t pass_graph;
+
+	/* below two fields are only used when the queu type is set to VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT */
+
+	render_object_list_t* objects;
+	vulkan_transparent_queue_draw_order_policy_t draw_order_policy;
 
 } vulkan_render_queue_t;
 
@@ -279,5 +301,8 @@ SGE_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_c
 		nothing
  */
 SGE_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera, vulkan_render_scene_t* scene);
+
+/* sets the draw order policy, this is automatically called while creating the queue with type = VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT queue */
+SGE_API void vulkan_render_queue_set_draw_order_policy(vulkan_render_queue_t* queue, vulkan_transparent_queue_draw_order_policy_t policy);
 
 END_CPP_COMPATIBLE
