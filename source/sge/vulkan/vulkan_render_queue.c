@@ -489,6 +489,22 @@ static void run_render_passes_for_shader(vulkan_shader_t* shader, vulkan_camera_
 	}
 }
 
+static vulkan_render_object_t* forward_render_object(vulkan_render_object_t* obj) { return obj; }
+
+static void draw_one_object_with_material(vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, vulkan_render_object_t* obj)
+{
+	vulkan_material_t* material = vulkan_render_object_get_material(obj);
+	draw_objects_with_material(material, layout, pipeline, 1, (com_iterator_t) { obj, .get = COM_ITERATOR_GET_CALLBACK(forward_render_object) });
+}
+
+/* renders just one object, i.e. executes render passes and issues draw calls only for this object */
+static void render_object(vulkan_render_object_t* obj, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
+{
+	vulkan_material_t* material = vulkan_render_object_get_material(obj);
+	vulkan_shader_t* shader = vulkan_material_get_shader(material);
+	run_render_passes_for_shader(shader, camera, scene, RENDER_PASS_RUN_CALLBACK(draw_one_object_with_material), obj);
+}
+
 static vulkan_render_object_t* render_object_get(vulkan_render_object_t** *objects_ptr)
 {
 	AUTO objects = *objects_ptr;
@@ -512,6 +528,7 @@ static void draw_ordered_objects_with_material(vulkan_pipeline_layout_t* layout,
 
 static void draw_ordered_objects(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
+	#if ENABLED(OBJECT_GROUPING_IN_TRANSPARENT_QUEUE)
 	AUTO obj_count = buf_get_element_count(queue->objects);
 	/* sizes of ranges of objects which share the same material object ptr */
 	u32 material_ranges[obj_count];
@@ -536,7 +553,6 @@ static void draw_ordered_objects(vulkan_render_queue_t* queue, vulkan_camera_t* 
 		}
 	}
 
-	/* now for each unique material, draw objects which shared it in the same randerpass. */
 	for(u32 i = 0, obj_index = 0; i < material_range_count; ++i)
 	{
 		u32 obj_count = material_ranges[i];
@@ -551,15 +567,22 @@ static void draw_ordered_objects(vulkan_render_queue_t* queue, vulkan_camera_t* 
 		run_render_passes_for_shader(shader, camera, scene, RENDER_PASS_RUN_CALLBACK(draw_ordered_objects_with_material), &data);
 		obj_index += obj_count;
 	}
+	#else /* ENABLE_OBJECT_GROUPING_IN_TRANSPARENT_QUEUE */
+	buf_for_each_element_ptr(vulkan_render_object_t*, var, queue->objects)
+	{
+		vulkan_render_object_t* obj = DREF(var);
+		render_object(obj, camera, scene);
+	}
+	#endif /* not ENABLE_OBJECT_GROUPING_IN_TRANSPARENT_QUEUE */
 }
 
 static bool render_object_depth_greater_than(void* lhs, void* rhs, void* user_data)
 {
 	AUTO ro_lhs = DREF_TO(vulkan_render_object_t*, lhs);
 	AUTO ro_rhs = DREF_TO(vulkan_render_object_t*, rhs);
-	f32 z_lhs = vulkan_render_object_get_transform(ro_lhs).m22;
-	f32 z_rhs = vulkan_render_object_get_transform(ro_rhs).m22;
-	return z_lhs > z_rhs;
+	f32 x_lhs = vulkan_render_object_get_transform(ro_lhs).m03;
+	f32 x_rhs = vulkan_render_object_get_transform(ro_rhs).m03;
+	return x_lhs > x_rhs;
 }
 
 static void order_objects_by_back_to_front(vulkan_render_queue_t* queue)

@@ -100,6 +100,10 @@ typedef struct vulkan_render_object_t
 
 	struct_field_handle_t transform_handle;
 	struct_field_handle_t normal_handle;
+
+	/* cached transform which is set by vulkan_render_object_set_transform() */
+	mat4_t transform;
+	mat4_t normalMatrix;
 } vulkan_render_object_t;
 
 /* performs dynamic casting (expensive), use only when you don't know the source type */

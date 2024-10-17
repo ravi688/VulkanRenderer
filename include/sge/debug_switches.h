@@ -25,10 +25,17 @@
 
 #pragma once
 
-/* switches */
+/* debug switches */
 #define ENABLE_DBG_VULKAN_BITMAP_TEXT_STRING_SETH 0
 #define ENABLE_DBG_BUFFER2D_RESIZE 1
 #define ENABLE_DBG_EVENT_PUBLISH 0
+
+/* switches */
+/* if enabled, then objects with shared materials and shaders will be drawn in the same render pass.
+ * otherwise, each object will be rendered in separated (though inefficient) render passes. */
+#define ENABLE_OBJECT_GROUPING_IN_TRANSPARENT_QUEUE 1
+
+#define ENABLED(x) (ENABLE_##x == 1)
 
 #ifdef GLOBAL_DEBUG	
 #	define DBG_ENABLED(x) (ENABLE_DBG_##x == 1)
