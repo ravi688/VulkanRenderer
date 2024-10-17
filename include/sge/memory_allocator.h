@@ -282,5 +282,6 @@ void* memory_allocator_call_realloc(void* old_ptr, buf_ucount_t size, void* user
 												memory_allocator_call_realloc,			\
 												CAST_TO(void*, memory_allocator))
 #define memory_allocator_buf_new(memory_allocator, type) memory_allocator_buf_create(memory_allocator, sizeof(type), 0, 0)
+#define memory_allocator_BUFnew(memory_allocator, type) memory_allocator_BUFcreate(memory_allocator, NULL, sizeof(type), 0, 0)
 
 END_CPP_COMPATIBLE
