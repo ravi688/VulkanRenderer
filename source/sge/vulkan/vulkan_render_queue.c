@@ -281,6 +281,8 @@ DEBUG_BLOCK
 	queue->is_ready = true;
 }
 
+/* TODO: Refactor this to reuse the draw_objects_with_material() function 
+ * the reason I didn't do it now because of the debug_log_warning you might see in the body of this function. */
 SGE_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t* queue, vulkan_material_t* material, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
 	vulkan_shader_t* shader = material->shader;
