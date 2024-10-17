@@ -41,6 +41,8 @@
 #include <sge/memory_allocator.h>
 #include <sge/alloc.h>
 
+#include <common/iterator.h>
+
 SGE_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator)
 {
 	vulkan_render_queue_t* queue = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_VK_RENDER_QUEUE, vulkan_render_queue_t);
@@ -391,39 +393,7 @@ SGE_API void vulkan_render_queue_set_draw_order_policy(vulkan_render_queue_t* qu
 	queue->draw_order_policy = policy;
 }
 
-typedef void (*iterator_move_next_callback_t)(void* user_data);
-#define ITERATOR_MOVE_NEXT_CALLBACK(fnptr) CAST_TO(iterator_move_next_callback_t, fnptr)
-typedef void* (*iterator_get_callback_t)(void* user_data);
-#define ITERATOR_GET_CALLBACK(fnptr) CAST_TO(iterator_get_callback_t, fnptr)
-typedef void (*iterator_reset_callback_t)(void* user_data);
-#define ITERATOR_RESET_CALLBACK(fnptr) CAST_TO(iterator_reset_callback_t, fnptr)
-
-typedef struct iterator_t
-{
-	void* user_data;
-	iterator_move_next_callback_t move_next;
-	iterator_get_callback_t get;
-	iterator_reset_callback_t reset;
-} iterator_t;
-
-void iterator_move_next(iterator_t* iterator)
-{
-	if(iterator->move_next != NULL)
-		iterator->move_next(iterator->user_data);
-}
-
-void* iterator_get(iterator_t* iterator)
-{
-	return iterator->get(iterator->user_data);
-}
-
-void iterator_reset(iterator_t* iterator)
-{
-	if(iterator->reset != NULL)
-		iterator->reset(iterator->user_data);
-}
-
-static void draw_objects_with_material(vulkan_material_t* material, vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, u32 object_count, iterator_t obj_iterator)
+static void draw_objects_with_material(vulkan_material_t* material, vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, u32 object_count, com_iterator_t obj_iterator)
 {
 	/* bind MATERIAL_SET */
 	vulkan_descriptor_set_bind(&material->material_set, VULKAN_DESCRIPTOR_SET_MATERIAL, layout);
@@ -435,8 +405,8 @@ static void draw_objects_with_material(vulkan_material_t* material, vulkan_pipel
 
 	for(u32 m = 0; m < object_count; m++)
 	{
-		vulkan_render_object_t* object = CAST_TO(vulkan_render_object_t*, iterator_get(&obj_iterator));
-		iterator_move_next(&obj_iterator);
+		vulkan_render_object_t* object = CAST_TO(vulkan_render_object_t*, com_iterator_get(&obj_iterator));
+		com_iterator_move_next(&obj_iterator);
 
 		/* MOTE:
 		 * if this render object is not active then skip drawcall for it.
@@ -522,7 +492,7 @@ static vulkan_render_object_t* forward_render_object(vulkan_render_object_t* obj
 static void draw_one_object_with_material(vulkan_pipeline_layout_t* layout, vulkan_graphics_pipeline_t* pipeline, vulkan_render_object_t* obj)
 {
 	vulkan_material_t* material = vulkan_render_object_get_material(obj);
-	draw_objects_with_material(material, layout, pipeline, 1, (iterator_t) { obj, .get = ITERATOR_GET_CALLBACK(forward_render_object) });
+	draw_objects_with_material(material, layout, pipeline, 1, (com_iterator_t) { obj, .get = COM_ITERATOR_GET_CALLBACK(forward_render_object) });
 }
 
 /* renders just one object, i.e. executes render passes and issues draw calls only for this object */
