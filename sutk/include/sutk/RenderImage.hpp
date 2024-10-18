@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	class RenderImage : public RenderRect
+	class SUTK_API RenderImage : public RenderRect
 	{
 	public:
 		struct AspectRatio
@@ -27,7 +27,7 @@ namespace SUTK
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 	public:
 		// Constructors
-		RenderImage(UIDriver& driver, RenderableContainer* container, bool isUpdate = true) noexcept;
+		RenderImage(UIDriver& driver, RenderableContainer* container, RenderMode renderMode = RenderMode::Transparent, bool isUpdate = true) noexcept;
 
 		// Override of RenderRect::update()
 		virtual void update() noexcept override;

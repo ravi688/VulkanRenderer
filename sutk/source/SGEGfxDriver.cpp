@@ -111,11 +111,31 @@ namespace SUTK
 	}
 	#define GET_ATTACHED_OBJECT_ID(gfxDriverObjectHandle) BIT64_UNPACK32(gfxDriverObjectHandle, 1)
 
+	static constexpr SGE::RenderQueue::Type getRenderQueueTypeFromRenderMode(RenderMode renderMode) noexcept
+	{
+		auto queueType = SGE::RenderQueue::Type::Geometry;
+		switch(renderMode)
+		{
+			case RenderMode::Opaque:
+			{
+				queueType = SGE::RenderQueue::Type::Geometry;
+				break;
+			}
+			case RenderMode::Transparent:
+			{
+				queueType = SGE::RenderQueue::Type::Transparent;
+				break;
+			}
+		};
+		return queueType;
+	}
+
 	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::createBitmapText(SGEBitmapTextGroup& group)
 	{
 		debug_log_info("[SGE] Creating new SGE::BitmapText object");
 		SGE::BitmapText text = m_driver.createBitmapText(m_bgaTexture, group.font);
-		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Text, SGE::RenderQueue::Type::Transparent);
+		SGE::RenderQueue::Type queueType = getRenderQueueTypeFromRenderMode(group.renderMode);
+		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Text, queueType);
 		SGE::Material material = m_driver.getMaterialLibrary().createMaterial(m_shader, "BitmapTextShaderTest");
 		material.set<float>("parameters.color.r", 1.0f);
 		material.set<float>("parameters.color.g", 1.0f);
@@ -200,12 +220,13 @@ namespace SUTK
 		return { textData.text, group.currentBitmapTextHandle };
 	}
 
-	GfxDriverObjectHandleType SGEGfxDriver::createTextGroup()
+	GfxDriverObjectHandleType SGEGfxDriver::createTextGroup(RenderMode renderMode)
 	{
 		id_generator_id_type_t id = id_generator_get(&m_id_generator);
 		SGEBitmapTextGroup& group = m_bitmapTextGroups[id];
 		group.font = getDefaultFont();
 		group.currentBitmapTextHandle = GFX_DRIVER_OBJECT_NULL_HANDLE;
+		group.renderMode = renderMode;
 		return static_cast<GfxDriverObjectHandleType>(id);
 	}
 
@@ -817,7 +838,8 @@ namespace SUTK
 	{
 		debug_log_info("[SGE] Creating new SGE::Mesh object");
 		SGE::Mesh mesh = m_driver.createMesh();
-		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Mesh, SGE::RenderQueue::Type::Geometry);
+		SGE::RenderQueue::Type queueType = getRenderQueueTypeFromRenderMode(geometry.getRenderMode());
+		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Mesh, queueType);
 		SGE::Shader shader = compileShader(geometry);
 		SGE::Material material = m_driver.getMaterialLibrary().createMaterial(shader, "Untittled");
 		material.set<vec4_t>("parameters.color", vec4(1.0f, 1.0f, 1.0f, 1.0f));

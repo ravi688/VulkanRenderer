@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	Geometry::Geometry(UIDriver& driver) noexcept : UIDriverObject(driver), 
+	Geometry::Geometry(UIDriver& driver, RenderMode renderMode) noexcept : UIDriverObject(driver), 
 													m_positionArrayInfo({ VertexPositionArray { }, false }),
 													m_indexArrayInfo({ VertexIndexArray { }, false }),
 													m_transformArrayInfo({ InstanceTransformArray { }, false }),
@@ -14,7 +14,8 @@ namespace SUTK
 													m_topology(Topology::TriangleList),
 													m_isArray(false),
 													m_isFillImage(false),
-													m_sdf(NULL)
+													m_sdf(NULL),
+													m_renderMode(renderMode)
 	{
 
 	}

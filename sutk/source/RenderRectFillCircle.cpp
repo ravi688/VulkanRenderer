@@ -3,7 +3,7 @@
 
 namespace SUTK
 {
-	RenderRectFillCircle::RenderRectFillCircle(UIDriver& driver, RenderableContainer* container) noexcept : RenderRectFill(driver, container, false)
+	RenderRectFillCircle::RenderRectFillCircle(UIDriver& driver, RenderableContainer* container, RenderMode renderMode) noexcept : RenderRectFill(driver, container, renderMode, false)
 	{
 		auto& geometry = getGeometry().setSDF(true);
 

@@ -32,7 +32,7 @@ namespace SUTK
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 
 		// Constructors
-		RenderRect(UIDriver& driver, RenderableContainer* container) noexcept;
+		RenderRect(UIDriver& driver, RenderableContainer* container, RenderMode renderMode = RenderMode::Opaque) noexcept;
 
 	public:
 

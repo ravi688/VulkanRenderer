@@ -57,6 +57,7 @@ namespace SUTK
 			SGE::Font font;
 			SGEBitmapTextTable bitmapTextTable;
 			GfxDriverObjectHandleType currentBitmapTextHandle;
+			RenderMode renderMode;
 		};
 		std::unordered_map<id_generator_id_type_t, SGEBitmapTextGroup> m_bitmapTextGroups;
 		std::unordered_map<id_generator_id_type_t, SGEMeshData> m_meshMappings;
@@ -138,7 +139,7 @@ namespace SUTK
 		virtual Vec2Df getSizeInCentimeters() override { return m_sizeCentimeters; }
 		virtual void render(UIDriver& driver) override;
 
-		virtual GfxDriverObjectHandleType createTextGroup() override;
+		virtual GfxDriverObjectHandleType createTextGroup(RenderMode renderMode = RenderMode::Transparent) override;
 		// NOTE: It force updates all bitmap text objects and text strings created from them.
 		// Thus, it overrides every font inside the text group.
 		virtual void setTextGroupFont(GfxDriverObjectHandleType textGroup, GfxDriverObjectHandleType font) override;

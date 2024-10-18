@@ -91,7 +91,7 @@ namespace SUTK
 	private:
 		Geometry m_geometry;
 	protected:
-		GeometryRenderable(UIDriver& driver, RenderableContainer* container = NULL) noexcept : GfxDriverRenderable(driver, container), m_geometry(driver) { }
+		GeometryRenderable(UIDriver& driver, RenderableContainer* container = NULL, RenderMode renderMode = RenderMode::Opaque) noexcept : GfxDriverRenderable(driver, container), m_geometry(driver, renderMode) { }
 		virtual ~GeometryRenderable() = default;
 		Geometry& getGeometry() noexcept { return m_geometry; }
 
