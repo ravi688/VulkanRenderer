@@ -4,6 +4,7 @@
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/RenderRectOutline.hpp>
 #include <sutk/ILayoutController.hpp> // for SUTK::ILayoutController
+#include <sutk/ContainerUtility.hpp>
 
 namespace SUTK
 {
@@ -267,6 +268,11 @@ namespace SUTK
 
 		if(m_renderRect != NULL)
 			m_renderRect->setColor(color);
+	}
+
+	void Container::setLayer(UIDriver::Layer layer) noexcept
+	{
+		m_layer = layer;
 	}
 
 	void Container::recalculateLayoutParent() noexcept

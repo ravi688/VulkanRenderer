@@ -68,7 +68,7 @@ namespace SUTK
 		// rect should be in centimeters
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) = 0;
 		// position should be centimeters
-		virtual void setObjectPosition(GfxDriverObjectHandleType handle, const Vec3Df position) = 0;
+		virtual void setObjectPositionXY(GfxDriverObjectHandleType handle, const Vec2Df position) = 0;
 		virtual void setObjectDepth(GfxDriverObjectHandleType handle, f32 depth) = 0;
 		//.rect should be in centimeters
 		void setTextScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) noexcept

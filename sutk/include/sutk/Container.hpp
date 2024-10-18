@@ -105,7 +105,7 @@ namespace SUTK
 		// IMPLEMENTATION of IDebuggable
 		virtual void enableDebug(bool isEnable = true, Color4 color = Color4::green()) noexcept override;
 
-		void setLayer(UIDriver::Layer layer) noexcept { m_layer = layer; }
+		void setLayer(UIDriver::Layer layer) noexcept;
 		UIDriver::Layer getLayer() const noexcept { return m_layer; }
 
 		// Calling this with RecyckeState other than Undefined, marks it recyclable
