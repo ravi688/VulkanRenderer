@@ -482,7 +482,7 @@ static void run_render_passes_for_shader(vulkan_shader_t* shader, vulkan_camera_
 		vulkan_render_pass_t* pass = vulkan_render_pass_pool_getH(shader->renderer->render_pass_pool, pass_handle);
 		_debug_assert__(shader->render_passes[i].subpass_count == pass->subpass_count);
 
-		vulkan_render_pass_begin(pass, 0, camera);
+		vulkan_render_pass_begin(pass, VULKAN_RENDER_PASS_FRAMEBUFFER_INDEX_SWAPCHAIN, camera);
 
 		u32 subpass_count = pass->subpass_count;
 		for(u32 j = 0; j < subpass_count;)
