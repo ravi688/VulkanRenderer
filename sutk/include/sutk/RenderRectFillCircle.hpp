@@ -14,7 +14,7 @@ namespace SUTK
 		SDF::ParameterID m_heightID;
 		SDF::ParameterID m_centerID;
 	public:
-		RenderRectFillCircle(UIDriver& driver, RenderableContainer* container) noexcept;
+		RenderRectFillCircle(UIDriver& driver, RenderableContainer* container, RenderMode renderMode = RenderMode::Transparent) noexcept;
 
 		// Override update()
 		virtual void update() noexcept override;

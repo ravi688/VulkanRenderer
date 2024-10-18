@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	RenderRectOutline::RenderRectOutline(UIDriver& driver, RenderableContainer* container) noexcept : RenderRect(driver, container),
+	RenderRectOutline::RenderRectOutline(UIDriver& driver, RenderableContainer* container, RenderMode renderMode) noexcept : RenderRect(driver, container, renderMode),
 																						m_thickness(0.2f),
 																						m_isThicknessDirty(true)
 	{

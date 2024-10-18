@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	RenderRectFillArray::RenderRectFillArray(UIDriver& driver, RenderableContainer* container) noexcept : GeometryRenderable(driver, container),
+	RenderRectFillArray::RenderRectFillArray(UIDriver& driver, RenderableContainer* container, RenderMode renderMode) noexcept : GeometryRenderable(driver, container, renderMode),
 																						m_color(Color4::white()),
 																						m_isColorDirty(true),
 																						m_isActiveDirty(false),

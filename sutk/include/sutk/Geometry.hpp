@@ -87,10 +87,11 @@ namespace SUTK
 		bool m_isArray;
 		bool m_isFillImage;
 		SDF* m_sdf;
+		RenderMode m_renderMode;
 
 		void resetModificationFlags() noexcept;
 	public:
-		Geometry(UIDriver& driver) noexcept;
+		Geometry(UIDriver& driver, RenderMode renderMode = RenderMode::Opaque) noexcept;
 		~Geometry() noexcept;
 
 		GfxDriverObjectHandleType compile(GfxDriverObjectHandleType previous = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
@@ -129,6 +130,8 @@ namespace SUTK
 
 
 		// getters
+
+		RenderMode getRenderMode() const noexcept { return m_renderMode; }
 
 		Topology getTopology() const noexcept { return m_topology; }
 

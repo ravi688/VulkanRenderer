@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	RenderRectFill::RenderRectFill(UIDriver& driver, RenderableContainer* container, bool isUpdate) noexcept : RenderRect(driver, container)
+	RenderRectFill::RenderRectFill(UIDriver& driver, RenderableContainer* container, RenderMode renderMode, bool isUpdate) noexcept : RenderRect(driver, container, renderMode)
 	{
 		_assert(container != NULL);
 		auto rect = container->getRect();

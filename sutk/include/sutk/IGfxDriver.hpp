@@ -30,6 +30,12 @@ namespace SUTK
 
 	typedef std::vector<ColorRange> ColorRangeList;
 
+	enum class RenderMode : u8
+	{
+		Opaque,
+		Transparent
+	};
+
 	class IGfxDriver
 	{
 	public:
@@ -39,7 +45,7 @@ namespace SUTK
 		virtual void getNativeWindowHandle(void* const out) = 0;
 		virtual Vec2D<DisplaySizeType> getSizeInPixels() = 0;
 		virtual Vec2Df getSizeInCentimeters() = 0;
-		virtual GfxDriverObjectHandleType createTextGroup() = 0;
+		virtual GfxDriverObjectHandleType createTextGroup(RenderMode renderMode = RenderMode::Transparent) = 0;
 		virtual void setTextGroupFont(GfxDriverObjectHandleType textGroup, GfxDriverObjectHandleType font) = 0;
 		virtual void destroyTextGroup(GfxDriverObjectHandleType textGroup) = 0;
 		virtual GfxDriverObjectHandleType createText(GfxDriverObjectHandleType textGroup) = 0;

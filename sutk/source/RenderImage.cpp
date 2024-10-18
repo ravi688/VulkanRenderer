@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	RenderImage::RenderImage(UIDriver& driver, RenderableContainer* container, bool isUpdate) noexcept : RenderRect(driver, container), m_aspectRatio({ 1, 1 }), m_isPreserveAspectRatio(false), m_isImagePreserveAspectRatio(false)
+	RenderImage::RenderImage(UIDriver& driver, RenderableContainer* container, RenderMode renderMode, bool isUpdate) noexcept : RenderRect(driver, container, renderMode), m_aspectRatio({ 1, 1 }), m_isPreserveAspectRatio(false), m_isImagePreserveAspectRatio(false)
 	{
 		_assert(container != NULL);
 		auto rect = container->getRect();

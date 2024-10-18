@@ -12,7 +12,7 @@ namespace SUTK
 
 	public:
 		// Constructors
-		RenderRectOutline(UIDriver& driver, RenderableContainer* container) noexcept;
+		RenderRectOutline(UIDriver& driver, RenderableContainer* container, RenderMode renderMode = RenderMode::Opaque) noexcept;
 
 		virtual bool isDirty() noexcept override;
 		// Override of Renderable::update()
