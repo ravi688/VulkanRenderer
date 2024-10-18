@@ -37,6 +37,8 @@ namespace SUTK
 		struct AuxFont { };
 		typedef com::Reference<GfxDriverObjectHandleType, GFX_DRIVER_OBJECT_NULL_HANDLE, AuxFont> FontReference;
 		static constexpr FontReference InvalidFont = FontReference::Null;
+		typedef u32 Layer;
+		static constexpr Layer InvalidLayer = U32_MAX;
 	private:
 		IGfxDriver& m_gfxDriver;
 		IInputDriver* m_inputDriver;

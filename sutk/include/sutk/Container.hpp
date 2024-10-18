@@ -58,11 +58,12 @@ namespace SUTK
 		RenderRectOutline* m_renderRect;
 		bool m_isDebug;
 		RecycleState m_recycleState;
+		UIDriver::Layer m_layer;
 
 
 	protected:
 		// this can only be called by SUTK::UIDriver
-		Container(SUTK::UIDriver& driver, Container* parent = NULL, bool isLayoutIgnore = false);
+		Container(SUTK::UIDriver& driver, Container* parent = NULL, bool isLayoutIgnore = false, UIDriver::Layer layer = UIDriver::InvalidLayer);
 		virtual ~Container();
 
 		friend class UIDriver;
@@ -103,6 +104,9 @@ namespace SUTK
 
 		// IMPLEMENTATION of IDebuggable
 		virtual void enableDebug(bool isEnable = true, Color4 color = Color4::green()) noexcept override;
+
+		void setLayer(UIDriver::Layer layer) noexcept { m_layer = layer; }
+		UIDriver::Layer getLayer() const noexcept { return m_layer; }
 
 		// Calling this with RecyckeState other than Undefined, marks it recyclable
 		void setRecycleState(RecycleState state) noexcept { m_recycleState = state; }

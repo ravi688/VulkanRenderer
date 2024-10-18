@@ -8,7 +8,7 @@
 namespace SUTK
 {
 	// It is an abstract class and it should never be instantiated without a deriving class
-	template<ContainerT ContainerType, typename... Args>
+	template<ContainerT ContainerType>
 	class SUTK_API TransientContainer : public ContainerType
 	{
 	private:
@@ -22,7 +22,8 @@ namespace SUTK
 		// been added.
 		void restoreState() noexcept;
 	public:
-		TransientContainer(UIDriver& driver, Container* parent, bool isShow, Args... args) noexcept;
+		template<typename... Args>
+		TransientContainer(UIDriver& driver, Container* parent, bool isShow, Args&&... args) noexcept;
 		virtual ~TransientContainer() noexcept;
 
 		bool isHidden() noexcept { return m_isHidden; }
@@ -35,20 +36,21 @@ namespace SUTK
 		ContainerController& getController() noexcept { return m_controller; }
 	};
 
-	template<ContainerT ContainerType, typename... Args>
-	TransientContainer<ContainerType, Args...>::TransientContainer(UIDriver& driver, Container* parent, bool isShow, Args... args) noexcept : ContainerType(driver, parent, std::forward(args)...), m_controller(this), m_isHidden(!isShow)
+	template<ContainerT ContainerType>
+	template<typename... Args>
+	TransientContainer<ContainerType>::TransientContainer(UIDriver& driver, Container* parent, bool isShow, Args&&... args) noexcept : ContainerType(driver, parent, std::forward<Args&&>(args)...), m_controller(this), m_isHidden(!isShow)
 	{
 		driver.addRunnable(&m_controller);
 	}
 
-	template<ContainerT ContainerType, typename... Args>
-	TransientContainer<ContainerType, Args...>::~TransientContainer() noexcept
+	template<ContainerT ContainerType>
+	TransientContainer<ContainerType>::~TransientContainer() noexcept
 	{
 		ContainerType::getUIDriver().removeRunnable(&m_controller);
 	}
 
-	template<ContainerT ContainerType, typename... Args>
-	void TransientContainer<ContainerType, Args...>::restoreState() noexcept
+	template<ContainerT ContainerType>
+	void TransientContainer<ContainerType>::restoreState() noexcept
 	{
 		if(m_isHidden)
 			m_controller.hideImmediate();
@@ -56,15 +58,15 @@ namespace SUTK
 			m_controller.presentImmediate();
 	}
 
-	template<ContainerT ContainerType, typename... Args>
-	void TransientContainer<ContainerType, Args...>::show() noexcept
+	template<ContainerT ContainerType>
+	void TransientContainer<ContainerType>::show() noexcept
 	{
 		m_controller.present();
 		m_isHidden = false;
 	}
 
-	template<ContainerT ContainerType, typename... Args>
-	void TransientContainer<ContainerType, Args...>::hide() noexcept
+	template<ContainerT ContainerType>
+	void TransientContainer<ContainerType>::hide() noexcept
 	{
 		m_controller.hide();
 		m_isHidden = true;

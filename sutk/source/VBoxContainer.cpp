@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	VBoxContainer::VBoxContainer(UIDriver& driver, Container* parent, bool isLayoutLocked) noexcept : Container(driver, parent), ILayoutController(isLayoutLocked), m_isTight(false), m_isInsideOnResize(false)
+	VBoxContainer::VBoxContainer(UIDriver& driver, Container* parent, bool isLayoutLocked, bool isLayoutIgnore, UIDriver::Layer layer) noexcept : Container(driver, parent, isLayoutIgnore, layer), ILayoutController(isLayoutLocked), m_isTight(false), m_isInsideOnResize(false)
 	{
 
 	}
