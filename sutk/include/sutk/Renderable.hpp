@@ -18,6 +18,8 @@ namespace SUTK
 		u32 m_drawOrder;
 		bool m_isDrawOrderDirty;
 
+		friend class Container;
+
 	protected:
 		friend class RenderableContainer;
 		// Rendering Geometries (or Text) requires conversion from local coordinates to global coordinates (target rendering backend, SGE)

@@ -45,7 +45,7 @@ namespace SUTK
 		void setWidth(f32 width) noexcept { m_minWidth = width; }
 		
 	public:
-		DynamicVListContainer(UIDriver& driver, Container* parent, u32 poolSize = 7) noexcept;
+		DynamicVListContainer(UIDriver& driver, Container* parent, bool isLayoutIgnore = false, UIDriver::Layer layer = UIDriver::InvalidLayer, u32 poolSize = 7) noexcept;
 
 		void setOnPostCreateHandler(OnPostCreateHandler handler) noexcept;
 
@@ -58,7 +58,7 @@ namespace SUTK
 
 
 	template<ContainerT T>
-	DynamicVListContainer<T>::DynamicVListContainer(UIDriver& driver, Container* parent, u32 poolSize) noexcept : VBoxContainer(driver, parent, true),
+	DynamicVListContainer<T>::DynamicVListContainer(UIDriver& driver, Container* parent, bool isLayoutIgnore, UIDriver::Layer layer, u32 poolSize) noexcept : VBoxContainer(driver, parent, true, isLayoutIgnore, layer),
 																							m_onPostCreateHandler({ }),
 																							m_pool(std::bind(&DynamicVListContainer::onCreate, this),
 																										std::bind(&DynamicVListContainer::onReturn, this, std::placeholders::_1),

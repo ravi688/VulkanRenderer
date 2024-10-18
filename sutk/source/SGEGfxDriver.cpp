@@ -494,11 +494,11 @@ namespace SUTK
 		it->second.setScissor(irect2d(ioffset2d(rectPosition.x, rectPosition.y), iextent2d(rectSize.width, rectSize.height)));
 	}
 
-	void SGEGfxDriver::setObjectPosition(GfxDriverObjectHandleType handle, const Vec3Df position)
+	void SGEGfxDriver::setObjectPositionXY(GfxDriverObjectHandleType handle, const Vec2Df position)
 	{
 		auto it = getRenderObjectIterator(handle);
-		vec3_t pos = SUTKToSGECoordTransform(position.xy);
-		pos.x = position.z;
+		vec3_t pos = SUTKToSGECoordTransform(position);
+		pos.x = it->second.getPosition().x;
 		it->second.setPosition(pos);
 	}
 
