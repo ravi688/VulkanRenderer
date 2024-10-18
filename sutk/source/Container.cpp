@@ -7,7 +7,7 @@
 
 namespace SUTK
 {
-	Container::Container(SUTK::UIDriver& driver, Container* parent, bool isLayoutIgnore) : 
+	Container::Container(SUTK::UIDriver& driver, Container* parent, bool isLayoutIgnore, UIDriver::Layer layer) : 
 															UIDriverObject(driver), 
 															m_rect({0, 0, 5.0f, 5.0f}),
 															m_layoutAttr(false, { 0, 0 }, { 0, 0 }, { F32_INFINITY, F32_INFINITY }, { 5.0f, 5.0f }),
@@ -17,7 +17,8 @@ namespace SUTK
 															m_renderRectCont(NULL), 
 															m_renderRect(NULL), 
 															m_isDebug(false),
-															m_recycleState(RecycleState::Undefined)
+															m_recycleState(RecycleState::Undefined),
+															m_layer(layer)
 	{
 		if(parent != NULL)
 			setParent(parent, false);
@@ -134,6 +135,8 @@ namespace SUTK
 
 	u32 Container::getDepth() const noexcept
 	{
+		if(getLayer() != UIDriver::InvalidLayer)
+			return getLayer();
 		if(getParent() == NULL)
 			return 0;
 		return getParent()->getDepth() + 1u;
