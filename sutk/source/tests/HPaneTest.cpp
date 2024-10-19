@@ -21,7 +21,7 @@ namespace SUTK
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
+		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_hPaneContainer = m_uiDriver->createContainer<HPaneContainer>(rootContainer);
 		m_hPaneContainer->alwaysFitInParent();
 		// m_hPaneContainer->enableDebug();

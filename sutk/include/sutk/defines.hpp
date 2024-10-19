@@ -464,6 +464,9 @@ namespace SUTK
 	typedef u64 GfxDriverObjectHandleType;
 	#define GFX_DRIVER_OBJECT_NULL_HANDLE U64_MAX
 
+	typedef u32 Layer;
+	static constexpr Layer InvalidLayer = U32_MAX;
+
 	struct Color3
 	{
 		u8 r;

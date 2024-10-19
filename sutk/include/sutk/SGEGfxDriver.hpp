@@ -15,6 +15,7 @@ namespace SUTK
 	struct SGEBitmapTextData
 	{
 		SGE::BitmapText text;
+		SGE::RenderObject object;
 		// holds total aggregate number of characters in 'text' (BitmapText), i.e. sum over all text strings's sizes created out of this 'text'
 		u32 charCount;
 	};
@@ -58,6 +59,7 @@ namespace SUTK
 			SGEBitmapTextTable bitmapTextTable;
 			GfxDriverObjectHandleType currentBitmapTextHandle;
 			RenderMode renderMode;
+			f32 depth;
 		};
 		std::unordered_map<id_generator_id_type_t, SGEBitmapTextGroup> m_bitmapTextGroups;
 		std::unordered_map<id_generator_id_type_t, SGEMeshData> m_meshMappings;
@@ -143,6 +145,7 @@ namespace SUTK
 		// NOTE: It force updates all bitmap text objects and text strings created from them.
 		// Thus, it overrides every font inside the text group.
 		virtual void setTextGroupFont(GfxDriverObjectHandleType textGroup, GfxDriverObjectHandleType font) override;
+		virtual void setTextGroupDepth(GfxDriverObjectHandleType textGroup, f32 depth) override;
 		virtual void destroyTextGroup(GfxDriverObjectHandleType textGroup) override;
 		virtual GfxDriverObjectHandleType createText(GfxDriverObjectHandleType textGroup) override;
 		virtual void destroyText(GfxDriverObjectHandleType handle) override;

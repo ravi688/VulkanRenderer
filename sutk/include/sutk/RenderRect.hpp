@@ -30,6 +30,7 @@ namespace SUTK
 		// Overrides of Renderable::onGlobalCoordDirty, Renderable::onContainerResize
 		virtual void onGlobalCoordDirty() noexcept override;
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
+		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) noexcept;
 
 		// Constructors
 		RenderRect(UIDriver& driver, RenderableContainer* container, RenderMode renderMode = RenderMode::Opaque) noexcept;
@@ -39,7 +40,6 @@ namespace SUTK
 		// Implementation of Renderable
 		virtual bool isDirty() noexcept;
 		virtual void update() noexcept;
-		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) noexcept;
 
 		virtual void setActive(bool isActive) noexcept override;
 

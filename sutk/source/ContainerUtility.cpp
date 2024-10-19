@@ -51,9 +51,12 @@ namespace SUTK
 			Renderable* renderable = renderCont->getRenderable();
 			_com_assert(renderable != NULL);
 			IColorable* colorable = dynamic_cast<IColorable*>(renderable);
-			Color4 color = colorable->getColor();
-			color.alpha(alpha * 255);
-			colorable->setColor(color);
+			if(colorable)
+			{
+				Color4 color = colorable->getColor();
+				color.alpha(alpha * 255);
+				colorable->setColor(color);
+			}
 		}
 		std::vector<Container*>& childs = container->getChilds();
 		for(Container* &child : childs)

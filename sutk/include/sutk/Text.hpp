@@ -126,15 +126,17 @@ namespace SUTK
 		void recalculateClipRect() noexcept;
 		f32 calculateMaxWidth() const noexcept;
 
-		// Overrides of Renderable::onContainerResize
-		virtual void onGlobalCoordDirty() noexcept override;
-		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 
 		std::pair<s32, s32> getUnclippedLineRange() noexcept;
 		void updateLinePositions() noexcept;
 		LineCountType getNumChars(const CursorPosition<LineCountType>& position) noexcept;
 		void addColorRange(const SelectionRange<LineCountType>& range, Color4 color) noexcept;
 
+	protected:
+		// Overrides of Renderable::onContainerResize
+		virtual void onGlobalCoordDirty() noexcept override;
+		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
+		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) override;
 	public:
 
 		Vec2Df getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
@@ -149,7 +151,6 @@ namespace SUTK
 		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;
 		virtual void update() override;
-		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) override;
 
 		void clear() noexcept;
 

@@ -113,21 +113,14 @@ namespace SUTK
 
 	static constexpr SGE::RenderQueue::Type getRenderQueueTypeFromRenderMode(RenderMode renderMode) noexcept
 	{
-		auto queueType = SGE::RenderQueue::Type::Geometry;
 		switch(renderMode)
 		{
 			case RenderMode::Opaque:
-			{
-				queueType = SGE::RenderQueue::Type::Geometry;
-				break;
-			}
+				return SGE::RenderQueue::Type::Geometry;
 			case RenderMode::Transparent:
-			{
-				queueType = SGE::RenderQueue::Type::Transparent;
-				break;
-			}
+				return SGE::RenderQueue::Type::Transparent;
 		};
-		return queueType;
+		return SGE::RenderQueue::Type::Geometry;
 	}
 
 	std::pair<SGE::BitmapText, GfxDriverObjectHandleType> SGEGfxDriver::createBitmapText(SGEBitmapTextGroup& group)
@@ -140,14 +133,21 @@ namespace SUTK
 		material.set<float>("parameters.color.r", 1.0f);
 		material.set<float>("parameters.color.g", 1.0f);
 		material.set<float>("parameters.color.b", 1.0f);
+		// TEXT_RENDER_SURFACE_TYPE_SCREEN
+		material.set<s32>("parameters.surface_type", 1);
+		// TEXT_RENDER_SPACE_TYPE_2D
+		material.set<s32>("parameters.space_type", 0);
 		object.setMaterial(material);
 		object.attach(text);
+		auto pos = object.getPosition();
+		pos.x = group.depth;
+		object.setPosition(pos);
 		// rebuild render pass graph as new objects have been added into the render scene 
 		m_scene.buildQueues();
 		
 		// add bitmap text into the bitmap text mappings table
 		id_generator_id_type_t bitmapTextID = id_generator_get(&m_id_generator);
-		group.bitmapTextTable.insert({ bitmapTextID, { text, 0u } });
+		group.bitmapTextTable.insert({ bitmapTextID, { text, object, 0u } });
 
 		// add corresponding render object into the render object mappings table
 		id_generator_id_type_t renderObjectID = id_generator_get(&m_id_generator);
@@ -227,6 +227,7 @@ namespace SUTK
 		group.font = getDefaultFont();
 		group.currentBitmapTextHandle = GFX_DRIVER_OBJECT_NULL_HANDLE;
 		group.renderMode = renderMode;
+		group.depth = 0.0f;
 		return static_cast<GfxDriverObjectHandleType>(id);
 	}
 
@@ -243,6 +244,21 @@ namespace SUTK
 			data.text.setFontUpdateAll(sgeFont);
 		}
 		group.font = sgeFont;
+	}
+
+	void SGEGfxDriver::setTextGroupDepth(GfxDriverObjectHandleType textGroup, f32 depth)
+	{
+		SGEBitmapTextGroup& group = getTextGroup(textGroup);
+		auto& map = group.bitmapTextTable;
+		for(auto& pair : map)
+		{
+			SGEBitmapTextData& data = pair.second;
+			SGE::RenderObject object = data.object;
+			vec3_t pos = object.getPosition();
+			pos.x = depth;
+			object.setPosition(pos);
+		}
+		group.depth = depth;
 	}
 
 	SGEGfxDriver::SGEBitmapTextGroup& SGEGfxDriver::getTextGroup(GfxDriverObjectHandleType handle) noexcept

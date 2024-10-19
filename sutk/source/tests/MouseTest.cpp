@@ -20,13 +20,13 @@ namespace SUTK
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
+		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_renderRectContainer = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
 		m_renderRectContainer->setRect({ 1.0f, 1.0f, 1.0f, 1.0f });
 		AnchorRect* anchor = m_renderRectContainer->getAnchorRect();
 		anchor->setTopLeft({ 0, 0 });
 		anchor->setBottomRight({ 0, 0 });
-		m_renderRect = m_uiDriver->createRenderRect<RenderRectFill>(m_renderRectContainer);
+		m_renderRect = m_uiDriver->createRenderable<RenderRectFill>(m_renderRectContainer);
 		m_renderRect->setColor(Color4::green());
 
 		m_inputDriver->getOnScrollEvent().subscribe([](IInputDriver*, Vec2Df delta)

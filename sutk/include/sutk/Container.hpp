@@ -2,7 +2,7 @@
 
 #include <sutk/defines.hpp> /* for Rect2D */
 #include <vector> /* for std::vector */
-#include <sutk/UIDriver.hpp>
+#include <sutk/UIDriverObject.hpp> // for SUTK::UIDriverObject
 
 #include <sutk/IDebuggable.hpp> // for SUTK::IDebuggable class
 #include <sutk/AnchorRect.hpp> // for SUTK::AnchorRect class
@@ -38,7 +38,7 @@ namespace SUTK
 	class RenderRectOutline;
 	class RenderableContainer;
 
-	class Container : public UIDriverObject, public IDebuggable, public Activatable
+	class SUTK_API Container : public UIDriverObject, public IDebuggable, public Activatable
 	{
 	public:
 		enum class RecycleState : u8
@@ -58,12 +58,12 @@ namespace SUTK
 		RenderRectOutline* m_renderRect;
 		bool m_isDebug;
 		RecycleState m_recycleState;
-		UIDriver::Layer m_layer;
+		Layer m_layer;
 
 
 	protected:
 		// this can only be called by SUTK::UIDriver
-		Container(SUTK::UIDriver& driver, Container* parent = NULL, bool isLayoutIgnore = false, UIDriver::Layer layer = UIDriver::InvalidLayer);
+		Container(SUTK::UIDriver& driver, Container* parent = NULL, bool isLayoutIgnore = false, Layer layer = InvalidLayer);
 		virtual ~Container();
 
 		friend class UIDriver;
@@ -105,8 +105,8 @@ namespace SUTK
 		// IMPLEMENTATION of IDebuggable
 		virtual void enableDebug(bool isEnable = true, Color4 color = Color4::green()) noexcept override;
 
-		void setLayer(UIDriver::Layer layer) noexcept;
-		UIDriver::Layer getLayer() const noexcept { return m_layer; }
+		void setLayer(Layer layer) noexcept;
+		Layer getLayer() const noexcept { return m_layer; }
 
 		// Calling this with RecyckeState other than Undefined, marks it recyclable
 		void setRecycleState(RecycleState state) noexcept { m_recycleState = state; }

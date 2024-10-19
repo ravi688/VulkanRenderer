@@ -6,6 +6,7 @@
 #include <sutk/RenderableContainer.hpp> // for SUTK::RenderableContainer
 #include <sutk/Concepts.hpp> // for SUTK::ContainerT concept
 #include <sutk/IRunnable.hpp> // for SUTK::Runnable
+#include <sutk/UIDriverObject.hpp> // for SUTK::UIDriverObject
 
 namespace SUTK
 {
@@ -156,7 +157,7 @@ namespace SUTK
 	// Don't get surprised while debugging expecting this class to be a node in the Container Hierarchy.
 	// You will find two childs in the SUTK::Button container, one for the default graphic and another one for image graphic
 	// To emphasize these facts, I've added 'Proxy' as suffix.
-	class SUTK_API ImageOverDefaultButtonGraphicProxy : public IButtonGraphic
+	class SUTK_API ImageOverDefaultButtonGraphicProxy : public UIDriverObject, public IButtonGraphic
 	{
 	private:
 		DefaultButtonGraphicNoLabel* m_defaultGraphic;

@@ -74,7 +74,7 @@ namespace SUTK
 				pos = getAlignedPosition(m_pos);
 				pos = getContainer()->getLocalCoordsToScreenCoords(pos);
 			}
-			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), { pos.x, pos.y, m_normalizedDrawOrder });
+			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), { pos.x, pos.y, 0.0f });
 			m_isPosDirty = false;
 		}
 
@@ -89,11 +89,6 @@ namespace SUTK
 	{
 		// mandatory to be called in the overriding function
 		Renderable::updateNormalizedDrawOrder(normalizedDrawOrder);
-
-		GfxDriverObjectHandleType handle = getGfxDriverObjectHandle();
-		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
-
-		getGfxDriver().setTextDepth(handle, normalizedDrawOrder);
 
 		m_normalizedDrawOrder = normalizedDrawOrder;
 	}

@@ -22,10 +22,10 @@ namespace SUTK
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
 		UIDriver::ImageReference image = m_uiDriver->loadImage("../textures/Rider.png");
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
+		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_renderRectContainer = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
 		m_renderRectContainer->alwaysFitInParent();
-		m_renderRect = m_uiDriver->createRenderRect<RenderImage>(m_renderRectContainer);
+		m_renderRect = m_uiDriver->createRenderable<RenderImage>(m_renderRectContainer);
 		m_renderRect->setColor(Color4::white());
 		m_renderRect->setImage(image);
 		auto attr = m_uiDriver->getImageAttributes(image);

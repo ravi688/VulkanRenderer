@@ -20,10 +20,10 @@ namespace SUTK
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
+		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_textContainer = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
 		m_textContainer->setRect({ 1.0f, 0, 7, 7 });
-		m_text = m_uiDriver->createText(m_textContainer);
+		m_text = m_uiDriver->createRenderable<Text>(m_textContainer);
 		m_text->append("#include <iostream>\n");
 		m_text->append("int main()\n");
 		m_text->append("{\n");

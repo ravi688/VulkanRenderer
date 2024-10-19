@@ -6,7 +6,7 @@
 
 namespace SUTK
 {
-	FullWindowContainer::FullWindowContainer(UIDriver& driver) noexcept : Container(driver, NULL)
+	FullWindowContainer::FullWindowContainer(UIDriver& driver, Container* parent) noexcept : Container(driver, parent)
 	{
 		auto size = getGfxDriver().getSizeInCentimeters();
 		setRect({0, 0, size.width, size.height });

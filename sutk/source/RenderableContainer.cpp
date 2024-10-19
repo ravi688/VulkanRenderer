@@ -3,7 +3,7 @@
 
 namespace SUTK
 {
-	RenderableContainer::RenderableContainer(UIDriver& driver, Container* parent, bool isLayoutIgnore, UIDriver::Layer layer) noexcept : Container(driver, parent, isLayoutIgnore, layer), m_renderable(NULL)
+	RenderableContainer::RenderableContainer(UIDriver& driver, Container* parent, bool isLayoutIgnore, Layer layer) noexcept : Container(driver, parent, isLayoutIgnore, layer), m_renderable(NULL)
 	{
 
 	}
