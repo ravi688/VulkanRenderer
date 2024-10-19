@@ -8,7 +8,7 @@
 
 namespace SUTK
 {
-	Container::Container(SUTK::UIDriver& driver, Container* parent, bool isLayoutIgnore, Layer layer) : 
+	Container::Container(SUTK::UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) : 
 															UIDriverObject(driver), 
 															m_rect({0, 0, 5.0f, 5.0f}),
 															m_layoutAttr(false, { 0, 0 }, { 0, 0 }, { F32_INFINITY, F32_INFINITY }, { 5.0f, 5.0f }),
@@ -245,7 +245,7 @@ namespace SUTK
 			{
 				// create SUTK::RenderableContainer and setup its rect
 				// NOTE: a Debug rect must have ignore layout flag set to 'true' to avoid its participation in layouting with other non-debug elements.
-				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(getUIDriver().getDebugRootContainer(), true);
+				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(getUIDriver().getDebugRootContainer(), com::Bool::True());
 				Vec2Df pos = getLocalCoordsToScreenCoords({ 0, 0 });
 				m_renderRectCont->setRect({ pos.x, pos.y, getRect().width, getRect().height });
 				
@@ -312,7 +312,7 @@ namespace SUTK
 		return absAttr;
 	}
 
-	void Container::setLayoutIgnore(bool isIgnore) noexcept
+	void Container::setLayoutIgnore(com::Bool isIgnore) noexcept
 	{
 		// if either already ignored or realised, return.
 		if(m_isLayoutIgnore == isIgnore)

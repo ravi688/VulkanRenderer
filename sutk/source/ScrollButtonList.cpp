@@ -2,7 +2,7 @@
 
 namespace SUTK
 {
-	ScrollButtonList::ScrollButtonList(UIDriver& driver, Container* parent, bool isLayoutIgnore, Layer layer, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : MaskedScrollableContainer<ButtonListView>(driver, parent, isLayoutIgnore, layer, poolSize, textGroup)
+	ScrollButtonList::ScrollButtonList(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : MaskedScrollableContainer<ButtonListView>(driver, parent, isLayoutIgnore, layer, poolSize, textGroup)
 	{
 
 	}

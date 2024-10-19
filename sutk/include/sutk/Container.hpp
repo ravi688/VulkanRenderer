@@ -51,7 +51,7 @@ namespace SUTK
 		std::vector<Container*> m_containers;
 		Rect2Df m_rect;
 		LayoutAttributes m_layoutAttr;
-		bool m_isLayoutIgnore;
+		com::Bool m_isLayoutIgnore;
 		AnchorRect* m_anchorRect;
 		Container* m_parent;
 		RenderableContainer* m_renderRectCont;
@@ -63,7 +63,7 @@ namespace SUTK
 
 	protected:
 		// this can only be called by SUTK::UIDriver
-		Container(SUTK::UIDriver& driver, Container* parent = NULL, bool isLayoutIgnore = false, Layer layer = InvalidLayer);
+		Container(SUTK::UIDriver& driver, Container* parent = NULL, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer);
 		virtual ~Container();
 
 		friend class UIDriver;
@@ -117,8 +117,8 @@ namespace SUTK
 		const LayoutAttributes& getLayoutAttributes() const noexcept { return m_layoutAttr; }
 		void setLayoutAttributes(const LayoutAttributes& attrs) noexcept;
 		LayoutAttributes getAbsoluteLayoutAttributes() const noexcept;
-		bool isLayoutIgnore() const noexcept { return m_isLayoutIgnore || (!isActive()); }
-		void setLayoutIgnore(bool isIgnore) noexcept;
+		com::Bool isLayoutIgnore() const noexcept { return m_isLayoutIgnore || com::Bool(!isActive()); }
+		void setLayoutIgnore(com::Bool isIgnore) noexcept;
 		void setLayoutExpand() noexcept;
 		void setLayoutFixed(Vec2Df fixedSize) noexcept;
 
