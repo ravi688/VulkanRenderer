@@ -6,7 +6,7 @@
 
 namespace SUTK
 {
-	void ContainerUtility::RenderableSetActive(Container* container, bool isActive) noexcept
+	void ContainerUtility::RenderableSetActive(Container* container, com::Bool isActive) noexcept
 	{
 		auto renderCont = dynamic_cast<RenderableContainer*>(container);
 		if(renderCont != NULL)
@@ -16,7 +16,7 @@ namespace SUTK
 			renderable->setActive(isActive);
 		}
 	}
-	void ContainerUtility::SetActiveAllRecursive(Container* container, bool isActive) noexcept
+	void ContainerUtility::SetActiveAllRecursive(Container* container, com::Bool isActive) noexcept
 	{
 		if(container->isRecyclable() && (container->getRecycleState() == Container::RecycleState::Disposed))
 			return;
@@ -27,7 +27,7 @@ namespace SUTK
 			SetActiveAllRecursive(child, isActive);			
 	}
 
-	void ContainerUtility::ContainerSetActiveRecursive(Container* container, bool isActive) noexcept
+	void ContainerUtility::ContainerSetActiveRecursive(Container* container, com::Bool isActive) noexcept
 	{
 		container->setActive(isActive);
 		std::vector<Container*>& childs = container->getChilds();
@@ -35,7 +35,7 @@ namespace SUTK
 			ContainerSetActiveRecursive(child, isActive);
 	}
 
-	void ContainerUtility::RenderablesSetActive(Container* container, bool isActive) noexcept
+	void ContainerUtility::RenderablesSetActive(Container* container, com::Bool isActive) noexcept
 	{
 		RenderableSetActive(container, isActive);
 		std::vector<Container*>& childs = container->getChilds();

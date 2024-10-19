@@ -256,13 +256,13 @@ namespace SUTK
 			else
 			{
 				_com_assert(m_renderRect != NULL);
-				m_renderRect->setActive(true);
+				m_renderRect->setActive(com::Bool::True());
 			}
 			m_isDebug = true;
 		}
 		else if(m_renderRect != NULL)
 		{
-			m_renderRect->setActive(false);
+			m_renderRect->setActive(com::Bool::False());
 			m_isDebug = false;
 		}
 
@@ -336,9 +336,9 @@ namespace SUTK
 		setLayoutAttributes(attr);
 	}
 
-	void Container::setActive(bool isActive) noexcept
+	void Container::setActive(com::Bool isActive) noexcept
 	{
-		bool oldActiveState = Activatable::isActive();
+		com::Bool oldActiveState = Activatable::isActive();
 		// Mandatory to be called, and it must precede the layout rebuilding (below code)
 		// as layout rebuild checks if the container has layout ignore flag set or not, in which 
 		// active state is also considered. 

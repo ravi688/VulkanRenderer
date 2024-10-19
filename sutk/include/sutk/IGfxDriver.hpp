@@ -59,13 +59,13 @@ namespace SUTK
 		virtual void setTextColor(GfxDriverObjectHandleType handle, const Color4 color) = 0;
 		virtual void setTextColorRanges(GfxDriverObjectHandleType handle, const ColorRange* ranges, u32 rangeCount) = 0;
 		virtual void setTextData(GfxDriverObjectHandleType handle, const std::string& data) = 0;
-		virtual void setTextActive(GfxDriverObjectHandleType handle, bool isActive) = 0;
+		virtual void setTextActive(GfxDriverObjectHandleType handle, com::Bool isActive) = 0;
 		virtual LineCountType getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord) = 0;
 		virtual f32 getTextCoordFromGlyphIndex(GfxDriverObjectHandleType handle, LineCountType col) = 0;
 		virtual GfxDriverObjectHandleType getTextObject(GfxDriverObjectHandleType handle) = 0;
 
 		virtual GfxDriverObjectHandleType getObject(GfxDriverObjectHandleType handle) = 0;
-		virtual void setObjectActive(GfxDriverObjectHandleType handle, bool isActive) = 0;
+		virtual void setObjectActive(GfxDriverObjectHandleType handle, com::Bool isActive) = 0;
 		// rect should be in centimeters
 		virtual void setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect) = 0;
 		// position should be centimeters

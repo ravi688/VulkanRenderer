@@ -200,6 +200,6 @@ namespace SUTK
 		virtual void remove(Container* container);
 
 		// Override of Activatable::setActive;
-		virtual void setActive(bool isActive) noexcept override;
+		virtual void setActive(com::Bool isActive) noexcept override;
 	};
 }

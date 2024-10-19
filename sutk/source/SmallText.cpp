@@ -103,7 +103,7 @@ namespace SUTK
 		return m_color;
 	}
 
-	void SmallText::setActive(bool isActive) noexcept
+	void SmallText::setActive(com::Bool isActive) noexcept
 	{
 		// mandatory to be called
 		Renderable::setActive(isActive);
