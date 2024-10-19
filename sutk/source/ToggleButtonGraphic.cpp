@@ -39,7 +39,7 @@ namespace SUTK
 
 	void DefaultToggleButtonGraphic::onToggle(ToggleState state)
 	{
-		bool isActive = state != ToggleState::Off;
+		com::Bool isActive(state != ToggleState::Off);
 		if(isActive)
 			m_renderRectCont->setRecycleState(Container::RecycleState::Recycled);
 		ContainerUtility::SetActiveAllRecursive(m_renderRectCont, isActive);

@@ -12,7 +12,7 @@ namespace SUTK
 																					})
 	{
 		m_transAutomaton.setTransitionDelay(0.08f);
-		m_transAutomaton.getEvent(State::Hidden).subscribe([this]() { this->setActive(false); });
+		m_transAutomaton.getEvent(State::Hidden).subscribe([this]() { this->setActive(com::Bool::False()); });
 		if(!isActive)
 		{
 			// Thos automatically called the handler (above subscribed)
@@ -24,7 +24,7 @@ namespace SUTK
 			m_transAutomaton.setState(State::Visible);
 	}
 
-	void ContainerController::setActive(bool isActive) noexcept
+	void ContainerController::setActive(com::Bool isActive) noexcept
 	{
 		ContainerUtility::SetActiveAllRecursive(m_container, isActive);
 	}
@@ -47,7 +47,7 @@ namespace SUTK
 
 	void ContainerController::present() noexcept
 	{
-		setActive(true);
+		setActive(com::Bool::True());
 		std::cout << "Present" << std::endl;
 		m_transAutomaton.transitionTo(State::Visible);
 	}

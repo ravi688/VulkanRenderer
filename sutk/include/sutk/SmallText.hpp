@@ -101,7 +101,7 @@ namespace SUTK
 		virtual Color4 getColor() const noexcept override;
 
 		// Override of Renderable::setActive()
-		virtual void setActive(bool isActive) noexcept override;
+		virtual void setActive(com::Bool isActive) noexcept override;
 
 		virtual void destroy() override;
 

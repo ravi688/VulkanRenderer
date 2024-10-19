@@ -79,7 +79,7 @@ namespace SUTK
 	public:
 		ColorDriverButtonGraphicContainer(UIDriver& driver, Container* parent) noexcept;
 		// Override of ContainerType::setActive();
-		virtual void setActive(bool isActive) noexcept override;
+		virtual void setActive(com::Bool isActive) noexcept override;
 		// Implementation of ColorDriverButtonGraphic::getMinBoundSize()
 		virtual Vec2Df getMinBoundSize() noexcept override;
 	};
@@ -91,7 +91,7 @@ namespace SUTK
 	}
 
 	template<ContainerT ContainerType>
-	void ColorDriverButtonGraphicContainer<ContainerType>::setActive(bool isActive) noexcept
+	void ColorDriverButtonGraphicContainer<ContainerType>::setActive(com::Bool isActive) noexcept
 	{
 		ContainerType::setActive(isActive);
 		if(isActive)

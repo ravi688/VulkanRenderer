@@ -441,11 +441,11 @@ namespace SUTK
 		bitmapTextData.charCount += textString.getLength();
 	}
 
-	void SGEGfxDriver::setTextActive(GfxDriverObjectHandleType handle, bool isActive)
+	void SGEGfxDriver::setTextActive(GfxDriverObjectHandleType handle, com::Bool isActive)
 	{
 		auto it = getSubTextIterator(handle);
 		SGE::BitmapTextString& textString = it->second.textString;
-		textString.setActive(isActive);
+		textString.setActive(static_cast<bool>(isActive));
 	}
 
 	LineCountType SGEGfxDriver::getTextGlyphIndexFromCoord(GfxDriverObjectHandleType handle, f32 coord)
@@ -496,10 +496,10 @@ namespace SUTK
 		return GFX_DRIVER_OBJECT_NULL_HANDLE;
 	}
 
-	void SGEGfxDriver::setObjectActive(GfxDriverObjectHandleType handle, bool isActive)
+	void SGEGfxDriver::setObjectActive(GfxDriverObjectHandleType handle, com::Bool isActive)
 	{
 		auto it = getRenderObjectIterator(handle);
-		it->second.setActive(isActive);
+		it->second.setActive(static_cast<bool>(isActive));
 	}
 
 	void SGEGfxDriver::setObjectScissor(GfxDriverObjectHandleType handle, const Rect2Df rect)

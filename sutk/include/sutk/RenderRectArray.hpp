@@ -29,7 +29,7 @@ namespace SUTK
 		virtual void update();
 
 		// Overrides of Renderable::setActive
-		virtual void setActive(bool isActive) noexcept override;
+		virtual void setActive(com::Bool isActive) noexcept override;
 
 		const std::vector<Rect2Df>& getRects() const noexcept { return m_rects; }
 		std::vector<Rect2Df>& getRectsForWrite() noexcept;

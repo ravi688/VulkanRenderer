@@ -29,7 +29,7 @@ namespace SUTK
 	void ToggleButtonListView::onReturn(ToggleButton* &button) noexcept
 	{
 		button->clearAllEvents();
-		ContainerUtility::SetActiveAllRecursive(button, false);
+		ContainerUtility::SetActiveAllRecursive(button, com::Bool::False());
 		button->setRecycleState(Container::RecycleState::Disposed);
 	}
 
@@ -39,7 +39,7 @@ namespace SUTK
 		// As the SetActiveAllRecursive() checks of recycled, but before this the button was in disposed state
 		// So we need to mark it recycled first so that the button and all of its child contains can be become active
 		button->setRecycleState(Container::RecycleState::Recycled);
-		ContainerUtility::SetActiveAllRecursive(button, true);
+		ContainerUtility::SetActiveAllRecursive(button, com::Bool::True());
 	}
 
 	std::pair<ToggleButton*, f32> ToggleButtonListView::addButton(const std::string_view labelStr) noexcept

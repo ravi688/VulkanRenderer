@@ -24,7 +24,7 @@ namespace SUTK
 		com::TransitionAutomaton<f32> m_transAutomaton;
 
 
-		void setActive(bool isActive) noexcept;
+		void setActive(com::Bool isActive) noexcept;
 		void setAlpha(f32 alpha) noexcept;
 	public:
 		ContainerController(Container* container, bool isActive = true) noexcept;

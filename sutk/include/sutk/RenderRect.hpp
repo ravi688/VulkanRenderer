@@ -41,7 +41,7 @@ namespace SUTK
 		virtual bool isDirty() noexcept;
 		virtual void update() noexcept;
 
-		virtual void setActive(bool isActive) noexcept override;
+		virtual void setActive(com::Bool isActive) noexcept override;
 
 		Color4 getColor() const noexcept { return m_color; }
 		void setColor(const Color4 color) noexcept;

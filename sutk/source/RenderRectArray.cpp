@@ -70,7 +70,7 @@ namespace SUTK
 		}
 	}
 
-	void RenderRectFillArray::setActive(bool isActive) noexcept
+	void RenderRectFillArray::setActive(com::Bool isActive) noexcept
 	{
 		// mandatory to call
 		GeometryRenderable::setActive(isActive);
