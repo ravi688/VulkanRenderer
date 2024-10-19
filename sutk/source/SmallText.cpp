@@ -89,7 +89,7 @@ namespace SUTK
 	{
 		// mandatory to be called in the overriding function
 		Renderable::updateNormalizedDrawOrder(normalizedDrawOrder);
-
+		getGfxDriver().setTextDepth(getGfxDriverObjectHandle(), normalizedDrawOrder);
 		m_normalizedDrawOrder = normalizedDrawOrder;
 	}
 	void SmallText::setColor(Color4 color) noexcept

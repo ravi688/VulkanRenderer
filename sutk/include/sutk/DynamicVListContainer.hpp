@@ -58,7 +58,7 @@ namespace SUTK
 
 
 	template<ContainerT T>
-	DynamicVListContainer<T>::DynamicVListContainer(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer, u32 poolSize) noexcept : VBoxContainer(driver, parent, true, isLayoutIgnore, layer),
+	DynamicVListContainer<T>::DynamicVListContainer(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer, u32 poolSize) noexcept : VBoxContainer(driver, parent, /*isLayoutLocked: */ true, isLayoutIgnore, layer),
 																							m_onPostCreateHandler({ }),
 																							m_pool(std::bind(&DynamicVListContainer::onCreate, this),
 																										std::bind(&DynamicVListContainer::onReturn, this, std::placeholders::_1),
