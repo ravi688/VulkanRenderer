@@ -2,6 +2,7 @@
 #pragma once
 
 #include <common/defines.hpp>
+#include <common/Bool.hpp> // It might not be used in this header file, but I placed it here so that every source file will get this when it includes this header.
 
 #ifdef SUTK_STATIC_LIBRARY
 #	define SUTK_API

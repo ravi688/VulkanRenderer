@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	ToggleButtonGroupView::ToggleButtonGroupView(UIDriver& driver, Container* parent, bool isLayoutIgnore, Layer layer, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : ToggleButtonListView(driver, parent, isLayoutIgnore, layer, poolSize, textGroup)
+	ToggleButtonGroupView::ToggleButtonGroupView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : ToggleButtonListView(driver, parent, isLayoutIgnore, layer, poolSize, textGroup)
 	{
 
 	}

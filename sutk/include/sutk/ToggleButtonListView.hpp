@@ -23,7 +23,7 @@ namespace SUTK
 		// Mandatory to be called in the overriding method
 		virtual ToggleButton* onCreate() noexcept override;
 	public:
-		ToggleButtonListView(UIDriver& driver, Container* parent, bool isLayoutIgnore = false, Layer layer = InvalidLayer, u32 poolSize = 7, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
+		ToggleButtonListView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer, u32 poolSize = 7, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
 		std::pair<ToggleButton*, f32> addButton(const std::string_view labelStr) noexcept;
 	};

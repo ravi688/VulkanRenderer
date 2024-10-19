@@ -16,7 +16,7 @@ namespace SUTK
 		// Override of ToggleButtonListView::onRecycle()
 		virtual void onRecycle(ToggleButton* &button) noexcept override;
 	public:
-		ToggleButtonGroupView(UIDriver& driver, Container* parent, bool isLayoutIgnore = false, Layer layer = InvalidLayer, u32 poolSize = 7, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
+		ToggleButtonGroupView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer, u32 poolSize = 7, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 
 		void select(u32 index) noexcept;
 

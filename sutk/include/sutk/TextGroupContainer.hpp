@@ -10,7 +10,7 @@ namespace SUTK
 	class SUTK_API TextGroupContainer : public RenderableContainer
 	{
 	public:
-		TextGroupContainer(UIDriver& driver, Container* parent = NULL, bool isLayoutIgnore = false, Layer layer = InvalidLayer) noexcept;
+		TextGroupContainer(UIDriver& driver, Container* parent = NULL, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer) noexcept;
 
 		TextGroup* getTextGroup() noexcept;
 	};

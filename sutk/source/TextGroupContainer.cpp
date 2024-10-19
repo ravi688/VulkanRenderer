@@ -3,7 +3,7 @@
 
 namespace SUTK
 {
-	TextGroupContainer::TextGroupContainer(UIDriver& driver, Container* parent, bool isLayoutIgnore, Layer layer) noexcept : RenderableContainer(driver, parent, isLayoutIgnore, layer)
+	TextGroupContainer::TextGroupContainer(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : RenderableContainer(driver, parent, isLayoutIgnore, layer)
 	{
 		TextGroup* textGroup = driver.createRenderable<TextGroup>(this);
 		setRenderable(textGroup);

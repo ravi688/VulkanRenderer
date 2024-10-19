@@ -8,7 +8,7 @@
 
 namespace SUTK
 {
-	ButtonListView::ButtonListView(UIDriver& driver, Container* parent, bool isLayoutIgnore, Layer layer, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : DynamicVListContainer<Button>(driver, parent, isLayoutIgnore, layer, 0),
+	ButtonListView::ButtonListView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : DynamicVListContainer<Button>(driver, parent, isLayoutIgnore, layer, 0),
 																																		m_textGroup(textGroup)
 	{
 		// The reason we first set the poolSize to zero (in the Constructor), and then call reserve()
