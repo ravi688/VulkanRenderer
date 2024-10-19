@@ -355,10 +355,20 @@ namespace SUTK
 
 	void SGEGfxDriver::setTextDepth(GfxDriverObjectHandleType handle, f32 depth)
 	{
-		SGE::BitmapTextString textString = getText(handle);
-		vec3_t pos = textString.getPosition();
+		// Since all text strings (SGE::BitmapTextString) are derived from the same SGE::BitmapText object
+		// And that SGE::BitmapTextObject is attached to a single SGE::RenderObject,
+		// The ordering of drawing is only decided by the depth of SGE::RenderObject object.
+		// Also, for this reason, we can't individually assign depth values to each text string object to define draw order in them.
+		// Therefore, we need to consider all the text strings in the plane of the SGE::RenderObject.
+		// And assign the last set depth (of any text string derived from the same SGE::BitmapText object) to this SGE::RenderObject's depth.
+
+		auto it = getSubTextIterator(handle);
+		SGEBitmapTextStringData& data = it->second;
+		auto it2 = getRenderObjectIterator(data.textHandle);
+		SGE::RenderObject object = it2->second;
+		vec3_t pos = object.getPosition();
 		pos.x = depth;
-		textString.setPosition(pos);
+		object.setPosition(pos);
 	}
 
 	void SGEGfxDriver::setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize)

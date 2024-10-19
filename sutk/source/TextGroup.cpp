@@ -6,10 +6,4 @@ namespace SUTK
 	{
 		setGfxDriverObjectHandle(getGfxDriver().createTextGroup(RenderMode::Transparent));
 	}
-
-	void TextGroup::updateNormalizedDrawOrder(f32 normalizedDrawOrder)
-	{
-		GfxDriverRenderable::updateNormalizedDrawOrder(normalizedDrawOrder);
-		getGfxDriver().setTextGroupDepth(getGfxDriverObjectHandle(), normalizedDrawOrder);
-	}
 }

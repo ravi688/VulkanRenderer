@@ -18,7 +18,7 @@ namespace SUTK
 
 	Button* ButtonListView::onCreate() noexcept
 	{
-		Button* button = getUIDriver().createContainer<Button>(this, true, m_textGroup);
+		Button* button = getUIDriver().createContainer<Button>(this, /* isCreateDefaultGraphic: */ true, m_textGroup);
 		button->setRecycleState(Container::RecycleState::Recycled);
 		button->getGraphicAs<DefaultButtonGraphic>()->getLabel().setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
 		invokeOnPostCreateHandler(button);
