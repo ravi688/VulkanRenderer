@@ -10,7 +10,7 @@ namespace SUTK
 
 		friend class UIDriver;
 
-		FullWindowContainer(UIDriver& driver) noexcept;
+		FullWindowContainer(UIDriver& driver, Container* parent) noexcept;
 
 	};
 }

@@ -125,7 +125,7 @@ namespace SUTK
 		m_image->setImage(image);
 	}
 
-	ImageOverDefaultButtonGraphicProxy::ImageOverDefaultButtonGraphicProxy(UIDriver& driver, Container* parent) noexcept
+	ImageOverDefaultButtonGraphicProxy::ImageOverDefaultButtonGraphicProxy(UIDriver& driver, Container* parent) noexcept : UIDriverObject(driver)
 	{
 		m_defaultGraphic = driver.createContainer<DefaultButtonGraphicNoLabel>(parent);
 		m_imageGraphic = driver.createContainer<ImageButtonGraphic>(parent);

@@ -20,7 +20,7 @@ namespace SUTK
 {
 	UIDriver::UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept: m_gfxDriver(gfxDriver), m_inputDriver(&inputDriver), m_isDummyInputDriver(false), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
 	{
-		m_debugRootContainer = createContainer<FullWindowContainer>(NULL);
+		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
 	}
 
 	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), m_inputDriver(new DummyInputDriver{ }), m_isDummyInputDriver(true), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
@@ -68,7 +68,7 @@ namespace SUTK
 			for(auto it = m_renderables.begin(); it != m_renderables.end(); it++)
 			{
 				Renderable* renderable = (*it);
-				renderable->updateNormalizedDrawOrder((maxDrawOrder == minDrawOrder) ? 0.0f : ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 40.0f));
+				renderable->updateNormalizedDrawOrder((maxDrawOrder == minDrawOrder) ? 0.0f : ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 99.0f));
 			}
 		}
 
@@ -125,70 +125,10 @@ namespace SUTK
 	{
 		if(m_globalTextGroup == GFX_DRIVER_OBJECT_NULL_HANDLE)
 		{
-			m_globalTextGroup = getGfxDriver().createTextGroup();
+			m_globalTextGroup = getGfxDriver().createTextGroup(RenderMode::Transparent);
+			getGfxDriver().setTextGroupDepth(m_globalTextGroup, 0.0f);
 			_com_assert(m_globalTextGroup != GFX_DRIVER_OBJECT_NULL_HANDLE);
 		}
 		return m_globalTextGroup;
 	}
-
-	// Containers
-
-	template<>
-	Container* UIDriver::createContainer<Container>(Container* parent)
-	{
-		Container* cntr = new Container(*this, parent);
-		return cntr;
-	}
-
-	template<>
-	FullWindowContainer* UIDriver::createContainer<FullWindowContainer>(Container* parent)
-	{
-		FullWindowContainer* cntr = new FullWindowContainer(*this);
-		return cntr;
-	}
-
-	template<>
-	RenderableContainer* UIDriver::createContainer<RenderableContainer>(Container* parent)
-	{
-		RenderableContainer* rectCntr = new RenderableContainer(*this, parent);
-		return rectCntr;
-	}
-
-
-	// Renderables 
-
-	Text* UIDriver::createText(RenderableContainer* container)
-	{
-		_assert(container != NULL);
-		Text* text = new Text(*this, container);
-		return text;
-	}
-
-	template<typename RenderRectType>
-	RenderRectType* UIDriver::createRenderRect(RenderableContainer* container)
-	{
-		_assert(container != NULL);
-		RenderRectType* rect = new RenderRectType(*this, container);
-		return rect;
-	}
-
-	template RenderRectOutline* UIDriver::createRenderRect<RenderRectOutline>(RenderableContainer* container);
-	template RenderRectFill* UIDriver::createRenderRect<RenderRectFill>(RenderableContainer* container);
-	template RenderRectFillRound* UIDriver::createRenderRect<RenderRectFillRound>(RenderableContainer* container);
-	template RenderImage* UIDriver::createRenderable<RenderImage>(RenderableContainer* parent);
-
-	template<>
-	Text* UIDriver::createRenderable<Text>(RenderableContainer* parent) { return createText(parent); }
-
-	template<>
-	RenderRectOutline* UIDriver::createRenderable<RenderRectOutline>(RenderableContainer* parent) { return createRenderRect<RenderRectOutline>(parent); }
-
-	template<>
-	RenderRectFill* UIDriver::createRenderable<RenderRectFill>(RenderableContainer* parent) { return createRenderRect<RenderRectFill>(parent); }
-
-	template<>
-	RenderRectFillRound* UIDriver::createRenderable<RenderRectFillRound>(RenderableContainer* parent) { return createRenderRect<RenderRectFillRound>(parent); }
-
-	template<>
-	RenderImage* UIDriver::createRenderable<RenderImage>(RenderableContainer* parent) { return createRenderRect<RenderImage>(parent); }
 }

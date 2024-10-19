@@ -20,12 +20,12 @@ namespace SUTK
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
+		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 
 		Container* c1 = m_uiDriver->createContainer<Container>(rootContainer);
 		c1->enableDebug();
 		c1->setPosition({ 1, 1 });
-		Container* c2 = m_uiDriver->createContainer<Container>(NULL);
+		Container* c2 = m_uiDriver->createContainer<Container>(com::null_pointer<Container>());
 		c2->setRect({ 2, 2, 6, 6 });
 		c2->setParent(c1);
 		c2->getAnchorRect()->fitToParentRect();

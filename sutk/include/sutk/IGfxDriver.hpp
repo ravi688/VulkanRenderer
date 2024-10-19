@@ -47,6 +47,7 @@ namespace SUTK
 		virtual Vec2Df getSizeInCentimeters() = 0;
 		virtual GfxDriverObjectHandleType createTextGroup(RenderMode renderMode = RenderMode::Transparent) = 0;
 		virtual void setTextGroupFont(GfxDriverObjectHandleType textGroup, GfxDriverObjectHandleType font) = 0;
+		virtual void setTextGroupDepth(GfxDriverObjectHandleType textGroup, f32 depth) = 0;
 		virtual void destroyTextGroup(GfxDriverObjectHandleType textGroup) = 0;
 		virtual GfxDriverObjectHandleType createText(GfxDriverObjectHandleType textGroup) = 0;
 		virtual void destroyText(GfxDriverObjectHandleType handle) = 0;

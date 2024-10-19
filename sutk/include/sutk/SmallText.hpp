@@ -87,6 +87,7 @@ namespace SUTK
 	protected:
 		virtual void onGlobalCoordDirty() noexcept override;
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept;
+		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) override;
 	public:
 
 		SmallText(UIDriver& driver, RenderableContainer* container, GfxDriverObjectHandleType textGroup, Color4 color = SUTK::Color4::white()) noexcept;
@@ -94,7 +95,6 @@ namespace SUTK
 		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;
 		virtual void update() override;
-		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) override;
 
 		// Implementation of IColorable::setColor() and IColorable::getColor()
 		virtual void setColor(Color4 color) noexcept override;

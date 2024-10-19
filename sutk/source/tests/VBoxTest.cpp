@@ -19,7 +19,7 @@ namespace SUTK
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
+		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_vBoxContainer = m_uiDriver->createContainer<VBoxContainer>(rootContainer);
 		m_vBoxContainer->setRect({ 0, 0, 3, 5 });
 		for(u32 i = 0; i < 6; i++)
@@ -49,7 +49,7 @@ namespace SUTK
 				attrs.minSize.height = 0.5f;
 				renderableContainer->setLayoutAttributes(attrs);
 			}
-			RenderRectFillRound* renderRect = m_uiDriver->createRenderRect<RenderRectFillRound>(renderableContainer);
+			RenderRectFillRound* renderRect = m_uiDriver->createRenderable<RenderRectFillRound>(renderableContainer);
 			if(i == 4)
 				renderRect->setColor(Color4::red());
 			else

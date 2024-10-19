@@ -23,11 +23,11 @@ namespace SUTK
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
+		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 
 		m_button = m_uiDriver->createContainer<Button>(rootContainer, false);
 		m_button->setRect({ 1, 1, 4, 2 });
-		m_buttonGraphic = m_uiDriver->createContainer<ImageOverDefaultButtonGraphicProxy>(m_button);
+		m_buttonGraphic = m_uiDriver->createObject<ImageOverDefaultButtonGraphicProxy>(m_button);
 		m_button->setGraphic(m_buttonGraphic);
 		ImageButtonGraphic* imageGraphic = m_buttonGraphic->getImageGraphic();
 		UIDriver::ImageReference imageRef = m_uiDriver->loadImage("../textures/Rider.png");

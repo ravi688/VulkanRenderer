@@ -21,7 +21,7 @@ namespace SUTK
 		TestContainer(UIDriver& driver, Container* parent) : TransientContainer(driver, parent, false)
 		{
 			UIDriver::ImageReference image = driver.loadImage("../textures/Smile.bmp");
-			m_image = driver.createRenderRect<RenderImage>(this);
+			m_image = driver.createRenderable<RenderImage>(this);
 			m_image->setColor(Color4::green());
 			m_image->setImage(image);
 
@@ -47,7 +47,7 @@ namespace SUTK
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
+		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		Container* emptyContainer = m_uiDriver->createContainer<Container>(rootContainer);
 		emptyContainer->setRect({ 1.0f, 1.0f, 7.0f, 7.0f });
 		AnchorRect* anchor = emptyContainer->getAnchorRect();

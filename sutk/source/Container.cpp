@@ -8,7 +8,7 @@
 
 namespace SUTK
 {
-	Container::Container(SUTK::UIDriver& driver, Container* parent, bool isLayoutIgnore, UIDriver::Layer layer) : 
+	Container::Container(SUTK::UIDriver& driver, Container* parent, bool isLayoutIgnore, Layer layer) : 
 															UIDriverObject(driver), 
 															m_rect({0, 0, 5.0f, 5.0f}),
 															m_layoutAttr(false, { 0, 0 }, { 0, 0 }, { F32_INFINITY, F32_INFINITY }, { 5.0f, 5.0f }),
@@ -136,7 +136,7 @@ namespace SUTK
 
 	u32 Container::getDepth() const noexcept
 	{
-		if(getLayer() != UIDriver::InvalidLayer)
+		if(getLayer() != InvalidLayer)
 			return getLayer();
 		if(getParent() == NULL)
 			return 0;
@@ -270,7 +270,7 @@ namespace SUTK
 			m_renderRect->setColor(color);
 	}
 
-	void Container::setLayer(UIDriver::Layer layer) noexcept
+	void Container::setLayer(Layer layer) noexcept
 	{
 		m_layer = layer;
 	}

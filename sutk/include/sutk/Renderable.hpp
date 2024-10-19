@@ -13,6 +13,8 @@ namespace SUTK
 
 	class Renderable : public UIDriverObject, public Activatable
 	{
+		friend class UIDriver;
+
 	private:
 		RenderableContainer* m_container;
 		u32 m_drawOrder;
@@ -30,6 +32,9 @@ namespace SUTK
 		virtual void onGlobalCoordDirty() noexcept { }
 		// This function onContainerResize is called whenever the container containing this renderable changes its size or local position.
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept { }
+		// updates draw order (z-buffer) values to the GPU side memory.
+		// mandatory to be called in the overridng method
+		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) { m_isDrawOrderDirty = false; }
 
 	public:
 		Renderable(UIDriver& driver, RenderableContainer* container = NULL) noexcept;
@@ -39,9 +44,6 @@ namespace SUTK
 		virtual bool isDirty() = 0;
 		// updates (copies CPU side data to) GPU side data, and it may also create or recreate exisiting GPU Driver objects 
 		virtual void update() = 0;
-		// updates draw order (z-buffer) values to the GPU side memory.
-		// mandatory to be called in the overridng method
-		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) { m_isDrawOrderDirty = false; }
 
 		bool isDrawOrderDirty() const noexcept { return m_isDrawOrderDirty; }
 
@@ -68,7 +70,6 @@ namespace SUTK
 		GfxDriverObjectHandleType m_handle;
 
 	protected:
-		GfxDriverObjectHandleType getGfxDriverObjectHandle() const { return m_handle; }
 		void setGfxDriverObjectHandle(GfxDriverObjectHandleType handle) { m_handle = handle; }
 
 	public:
@@ -86,6 +87,8 @@ namespace SUTK
 		// sets the clip rect in the local coordinates of the parent container of its renderable container
 		// if parent is NULL then it does it in the local coordinates of its renderable container
 		void setClipRect(const Rect2Df rect) noexcept;
+		
+		GfxDriverObjectHandleType getGfxDriverObjectHandle() const { return m_handle; }
 	};
 
 	class GeometryRenderable : public GfxDriverRenderable

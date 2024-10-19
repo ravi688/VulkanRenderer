@@ -22,7 +22,7 @@ namespace SUTK
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(NULL);
+		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_button = m_uiDriver->createContainer<ToggleButton>(rootContainer);
 		m_button->setRect({ 5, 5, 3, 1 });
 		DefaultToggleButtonGraphic* graphic = m_button->getGraphicAs<DefaultToggleButtonGraphic>();

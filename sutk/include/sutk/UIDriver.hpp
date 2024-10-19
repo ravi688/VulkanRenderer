@@ -2,6 +2,7 @@
 
 #include <sutk/defines.hpp>
 #include <sutk/IGfxDriver.hpp> // for SUTK::IGfxDriver::getSizeInCentimeters()
+#include <sutk/Concepts.hpp> // for SUTK::ContainerT concept
 
 #include <common/Reference.hpp> // for com::Reference
 #include <vector> // for std::vector
@@ -37,8 +38,6 @@ namespace SUTK
 		struct AuxFont { };
 		typedef com::Reference<GfxDriverObjectHandleType, GFX_DRIVER_OBJECT_NULL_HANDLE, AuxFont> FontReference;
 		static constexpr FontReference InvalidFont = FontReference::Null;
-		typedef u32 Layer;
-		static constexpr Layer InvalidLayer = U32_MAX;
 	private:
 		IGfxDriver& m_gfxDriver;
 		IInputDriver* m_inputDriver;
@@ -81,66 +80,31 @@ namespace SUTK
 		Vec2Df getWindowSize() noexcept { return getGfxDriver().getSizeInCentimeters(); }
 		GfxDriverObjectHandleType getGlobalTextGroup() noexcept;
 
-		// TODO: create a concept to add constraint on the typename to allow only objects identical or derived from SUTK::Container object
-		template<typename ContainerType, typename... Args>
-		ContainerType* createContainer(Container* parent, Args&&... args)
+		template<UIDriverObjectT ObjectType, typename... Args>
+		ObjectType* createObject(Args&&... args) noexcept
 		{
-			ContainerType* cntr = new ContainerType(*this, parent, std::forward<Args&&>(args)...);
-			return cntr;
+			ObjectType* obj = new ObjectType(*this, std::forward<Args&&>(args)...);
+			return obj;
+		}
+
+		// TODO: create a concept to add constraint on the typename to allow only objects identical or derived from SUTK::Container object
+		template<ContainerT ContainerType, ContainerT ParentContainerType, typename... Args>
+		ContainerType* createContainer(ParentContainerType* parent, Args&&... args)
+		{
+			return createObject<ContainerType>(parent, std::forward<Args&&>(args)...);
 		}
 		// TODO: create a concept to add constraint on the typename to allow only renderables derived from SUTK::Renderable object
-		template<typename RenderableType, typename... Args>
-		RenderableType* createRenderable(RenderableContainer* parent, Args&&... args)
+		template<RenderableT RenderableType, RenderableContainerT RenderableContainerType, typename... Args>
+		RenderableType* createRenderable(RenderableContainerType* parent, Args&&... args)
 		{
-			RenderableType* renderable = new RenderableType(*this, parent, std::forward<Args&&>(args)...);
-			m_renderables.push_back(renderable);
-			return renderable;
+			return createObject<RenderableType>(parent, std::forward<Args&&>(args)...);
 		}
-		template<typename RenderableType, typename... Args>
-		std::pair<RenderableType*, RenderableContainer*> createRenderableWithContainer(Container* parent, Args&&... args)
+		template<RenderableT RenderableType, ContainerT ParentContainerType, typename... Args>
+		std::pair<RenderableType*, RenderableContainer*> createRenderableWithContainer(ParentContainerType* parent, Args&&... args)
 		{
 			RenderableContainer* container = createContainer<RenderableContainer>(parent);
-			RenderableType* renderable = new RenderableType(*this, container, std::forward<Args&&>(args)...);
-			m_renderables.push_back(renderable);
+			RenderableType* renderable = createRenderable<RenderableType>(container, std::forward<Args&&>(args)...);
 			return { renderable, container };
 		}
-		Text* createText(RenderableContainer* parent);
-		template<typename RenderRectType>
-		RenderRectType* createRenderRect(RenderableContainer* container);
-	};
-
-	// declarations for the template specializations for Containers (non-renderable)
-	template<>
-	Container* UIDriver::createContainer<Container>(Container* parent);
-	template<>
-	FullWindowContainer* UIDriver::createContainer<FullWindowContainer>(Container* parent);
-	template<>
-	RenderableContainer* UIDriver::createContainer<RenderableContainer>(Container* parent);
-
-	// declarations for the template specializations for Renderables (renderable)
-	template<>
-	Text* UIDriver::createRenderable<Text>(RenderableContainer* parent);
-	template<>
-	RenderRectOutline* UIDriver::createRenderable<RenderRectOutline>(RenderableContainer* parent);
-	template<>
-	RenderRectFill* UIDriver::createRenderable<RenderRectFill>(RenderableContainer* parent);
-	template<>
-	RenderRectFillRound* UIDriver::createRenderable<RenderRectFillRound>(RenderableContainer* parent);
-	template<>
-	RenderImage* UIDriver::createRenderable<RenderImage>(RenderableContainer* parent);
-
-	class UIDriverObject
-	{
-	private:
-		UIDriver& m_uiDriver;
-	protected:
-		UIDriverObject(UIDriver& uiDriver) : m_uiDriver(uiDriver) { }
-	public:
-		UIDriver& getUIDriver() { return m_uiDriver; }
-		const UIDriver& getUIDriver() const { return m_uiDriver; }
-		IGfxDriver& getGfxDriver() { return getUIDriver().getGfxDriver(); }
-		const IGfxDriver& getGfxDriver() const { return getUIDriver().getGfxDriver(); }
-		IInputDriver& getInputDriver() { return getUIDriver().getInputDriver(); }
-		const IInputDriver& getInputDriver() const { return getUIDriver().getInputDriver(); }
 	};
 }

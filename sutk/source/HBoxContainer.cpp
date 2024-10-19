@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	HBoxContainer::HBoxContainer(UIDriver& driver, Container* parent, bool isLayoutLocked, bool isLayoutIgnore, UIDriver::Layer layer) noexcept : Container(driver, parent, isLayoutIgnore, layer), ILayoutController(isLayoutLocked), m_isTight(false), m_isInsideOnResize(false)
+	HBoxContainer::HBoxContainer(UIDriver& driver, Container* parent, bool isLayoutLocked, bool isLayoutIgnore, Layer layer) noexcept : Container(driver, parent, isLayoutIgnore, layer), ILayoutController(isLayoutLocked), m_isTight(false), m_isInsideOnResize(false)
 	{
 
 	}

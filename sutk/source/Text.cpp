@@ -20,7 +20,7 @@ namespace SUTK
 
 	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_textGroup(GFX_DRIVER_OBJECT_NULL_HANDLE), m_baselineHeight(0), m_isDirty(false), m_isClippingEnabled(false), m_color(SUTK::Color4::yellow()), m_pointSize(12)
 	{
-		m_textGroup = getGfxDriver().createTextGroup();
+		m_textGroup = getGfxDriver().createTextGroup(RenderMode::Transparent);
 		m_baselineHeight = getGfxDriver().getTextGroupBaselineHeightInCentimeters(m_textGroup, m_pointSize);
 	}
 
@@ -65,7 +65,7 @@ namespace SUTK
 	void Text::updateNormalizedDrawOrder(f32 normalizedDrawOrder)
 	{
 		Renderable::updateNormalizedDrawOrder(normalizedDrawOrder);
-		// Do nothing as individual lines are themselves derived from Renderable and the UI driver will call their updateNormalizedDrawOrder anyway.
+		getGfxDriver().setTextGroupDepth(m_textGroup, normalizedDrawOrder);
 	}
 
 	LineCountType Text::getNumChars(const CursorPosition<LineCountType>& position) noexcept

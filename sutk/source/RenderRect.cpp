@@ -38,7 +38,7 @@ namespace SUTK
 			// auto& gfxDriver = getGfxDriver();
 			// GfxDriverObjectHandleType objHandle = gfxDriver.getGeometryObject(m_handle);
 			// auto position = getContainer()->getLocalCoordsToScreenCoords(getRect().getPosition());
-			// gfxDriver.setObjectPosition(objHandle, position);
+			// gfxDriver.setObjectPositionXY(objHandle, position);
 		}
 
 		if(m_isColorDirty)

@@ -8,7 +8,7 @@
 
 namespace SUTK
 {
-	ToggleButtonListView::ToggleButtonListView(UIDriver& driver, Container* parent, bool isLayoutIgnore, UIDriver::Layer layer, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : DynamicVListContainer<ToggleButton>(driver, parent, isLayoutIgnore, layer, 0),
+	ToggleButtonListView::ToggleButtonListView(UIDriver& driver, Container* parent, bool isLayoutIgnore, Layer layer, u32 poolSize, GfxDriverObjectHandleType textGroup) noexcept : DynamicVListContainer<ToggleButton>(driver, parent, isLayoutIgnore, layer, 0),
 																																		m_textGroup(textGroup)
 	{
 		lockLayout();
