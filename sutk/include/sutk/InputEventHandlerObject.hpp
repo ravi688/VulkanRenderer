@@ -67,7 +67,7 @@ namespace SUTK
 			{
 				// If the container has been deactivated then sleep the subscription,
 				// Or if the container has been activated then awake the subscription
-				// This saves CPU cycles
+				// This saves CPU cycles, as well as avoids receiving input events in disabled state.
 				m_container->getOnActiveEvent().subscribe([this](com::Bool isActive)
 				{
 					if(isActive)
