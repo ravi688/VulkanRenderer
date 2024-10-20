@@ -28,6 +28,8 @@ namespace SUTK
 	class IInputDriver;
 	class IRunnable;
 
+	class OrderedInputEventsDispatcher;
+
 	class UIDriver
 	{
 	public:
@@ -52,6 +54,7 @@ namespace SUTK
 		// that's because, erasing an element from std::vector results in 
 		// shifting elements after the erased point.
 		std::vector<IRunnable*> m_runnables;
+		OrderedInputEventsDispatcher* m_orderedEventsDispatcher;
 
 		friend class Renderable;
 	public:
@@ -71,6 +74,7 @@ namespace SUTK
 		void unloadFont(FontReference id) noexcept;
 
 		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }
+		OrderedInputEventsDispatcher& getOrderedInputEventsDispatcher() noexcept { return *m_orderedEventsDispatcher; }
 
 		IGfxDriver& getGfxDriver() { return m_gfxDriver; }
 		const IGfxDriver& getGfxDriver() const { return m_gfxDriver; }
