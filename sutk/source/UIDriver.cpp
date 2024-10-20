@@ -10,6 +10,7 @@
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/DummyInputDriver.hpp> // for STUK::DummyInputDriver
 #include <sutk/IRunnable.hpp> // for SUTK::IRunnable::Update
+#include <sutk/OrderedInputEventsDispatcher.hpp> // for SUTK::OrderedInputEventsDispatcher
 
 #include <common/assert.h>
 #include <common/debug.h> // for debug_log_error
@@ -21,15 +22,18 @@ namespace SUTK
 	UIDriver::UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept: m_gfxDriver(gfxDriver), m_inputDriver(&inputDriver), m_isDummyInputDriver(false), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
 	{
 		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
+		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
 	}
 
 	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), m_inputDriver(new DummyInputDriver{ }), m_isDummyInputDriver(true), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
 	{
-		
+		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
+		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
 	}
 
 	UIDriver::~UIDriver()
 	{
+		delete m_orderedEventsDispatcher;
 		if(m_isDummyInputDriver)
 			delete m_inputDriver;
 	}

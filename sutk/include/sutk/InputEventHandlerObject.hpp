@@ -2,6 +2,7 @@
 
 #include <sutk/defines.hpp> // for SUTK_API
 #include <sutk/IInputDriver.hpp> // for SUTK::MouseButton and SUTK::KeyEvent
+#include <sutk/OrderedInputEventsDispatcher.hpp>
 #include <sutk/Container.hpp> // for SUTK::Container
 
 namespace SUTK
@@ -105,7 +106,7 @@ namespace SUTK
 		className(UIDriver& driver) noexcept : className(driver, NULL) { }\
 		className(UIDriver& driver, Container* container) noexcept;\
 
-	class MouseMoveHandlerObject : public TInputEventHandlerContainerObject<IInputDriver::OnMouseMoveEvent>
+	class MouseMoveHandlerObject : public TInputEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseMoveEvent>
 	{
 	private:
 		bool m_isMouseEnterEnabled;
@@ -142,7 +143,7 @@ namespace SUTK
 		virtual void awake() noexcept override;
 	};
 
-	class MouseClickHandlerObject : public TInputEventHandlerContainerObject<IInputDriver::OnMouseButtonEvent>
+	class MouseClickHandlerObject : public TInputEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseButtonEvent>
 	{
 	protected:
 		virtual void onMouseClick(MouseButton button, KeyEvent action) = 0;
@@ -164,7 +165,7 @@ namespace SUTK
 		virtual ~MouseAnyClickHandlerObject() noexcept = default;
 	};
 
-	class MouseScrollHandlerObject : public TInputEventHandlerContainerObject<IInputDriver::OnMouseScrollEvent>
+	class MouseScrollHandlerObject : public TInputEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseScrollEvent>
 	{
 	protected:
 		virtual void onMouseScroll(Vec2Df scrollDelta) = 0;
