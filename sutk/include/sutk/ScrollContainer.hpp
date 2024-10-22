@@ -8,11 +8,9 @@ namespace SUTK
 {
 	class ScrollContainer : public SUTK::Container,
 							public SUTK::MouseScrollHandlerObject,
-							public SUTK::MouseMoveHandlerObject,
 							public SUTK::KeyboardHandlerObject
 	{
 		private:
-			bool m_isInside;
 			SUTK::ModifierKeys m_modifiers;
 			// In centimeters
 			f32 m_scaleFactor;
@@ -21,10 +19,6 @@ namespace SUTK
 		protected:
 			// Overrides of SUTK::MouseScrollHandlerObject
 			virtual bool onMouseScroll(SUTK::Vec2Df scrollDelta) override;
-			// Overrides of SUTK::MouseMoveHandlerObject
-			virtual bool onMouseMove(SUTK::Vec2Df position) override { return true; }
-			virtual bool onMouseEnter() noexcept override;
-			virtual bool onMouseExit() noexcept override;
 			// Overrides of SUTK::KeyboardHandlerObject
 			virtual void onKey(SUTK::KeyCode keycode, SUTK::KeyEvent event, SUTK::ModifierKeys modifiers) override;
 		 public:

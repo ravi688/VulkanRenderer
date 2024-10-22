@@ -40,13 +40,9 @@ namespace SUTK
 		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 		virtual ~Button() noexcept;
 
-		// Overrides of onMouseEnter, onMouseExit, and onMouseMove functions
+		// Override of onMouseMove function
 		// Must be called in the overriding method
-		virtual bool onMouseEnter() noexcept override;
-		// Must be called in the overriding method
-		virtual bool onMouseExit() noexcept override;
-		// Must be called in the overriding method
-		virtual bool onMouseMove(Vec2Df position) noexcept override;
+		virtual bool onMouseMove(MouseMoveEvent event, Vec2Df position) noexcept override;
 		// Must be called in the overriding method
 		virtual bool onMouseClick(MouseButton button, KeyEvent action) noexcept override;
 

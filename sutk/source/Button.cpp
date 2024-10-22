@@ -35,41 +35,40 @@ namespace SUTK
 		MouseMoveHandlerObject::update();
 	}
 
-	bool Button::onMouseEnter() noexcept
+	bool Button::onMouseMove(MouseMoveEvent event, Vec2Df position) noexcept
 	{
-		if(m_onEnterEvent != NULL)
-			m_onEnterEvent->publish();
-		if(m_graphic != NULL)
+		if(event == MouseMoveEvent::Move)
 		{
-			HoverInfo info { };
-			info.position = getScreenCoordsToLocalCoords(getInputDriver().getMousePosition());
-			info.isEnter = true;
-			m_graphic->onHover(info);
+			if(m_graphic != NULL)
+			{
+				HoverInfo info { };
+				info.position = position;
+				m_graphic->onHover(info);
+			}
 		}
-		return true;
-	}
-
-	bool Button::onMouseExit() noexcept
-	{
-		if(m_onExitEvent != NULL)
-			m_onExitEvent->publish();
-		if(m_graphic != NULL)
+		else if(event == MouseMoveEvent::Exit)
 		{
-			HoverInfo info { };
-			info.position = getScreenCoordsToLocalCoords(getInputDriver().getMousePosition());
-			info.isExit = true;
-			m_graphic->onHover(info);
+			if(m_onExitEvent != NULL)
+				m_onExitEvent->publish();
+			if(m_graphic != NULL)
+			{
+				HoverInfo info { };
+				info.position = getScreenCoordsToLocalCoords(getInputDriver().getMousePosition());
+				info.isExit = true;
+				m_graphic->onHover(info);
+			}
 		}
-		return true;
-	}
-
-	bool Button::onMouseMove(Vec2Df position) noexcept
-	{
-		if(m_graphic != NULL)
-		{
-			HoverInfo info { };
-			info.position = position;
-			m_graphic->onHover(info);
+		else if(event == MouseMoveEvent::Enter)
+		{			
+			if(m_onEnterEvent != NULL)
+				m_onEnterEvent->publish();
+			if(m_graphic != NULL)
+			{
+				HoverInfo info { };
+				info.position = getScreenCoordsToLocalCoords(getInputDriver().getMousePosition());
+				info.isEnter = true;
+				m_graphic->onHover(info);
+			}
 		}
 		return true;
 	}
