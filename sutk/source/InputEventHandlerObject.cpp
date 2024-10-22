@@ -79,7 +79,7 @@ namespace SUTK
 																									  m_isMouseExitEnabled(false),
 																									  m_isInside(false)
 	{
-		IInputDriver::OnMouseMoveEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, SUTK::Vec2Df position)
+		OrderedInputEventsDispatcher::OnMouseMoveEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, SUTK::Vec2Df position)
 		{
 			return this->update(position);
 		}, container ? container->getDepth() : std::numeric_limits<u32>::max());
@@ -137,7 +137,7 @@ namespace SUTK
 
 	MouseClickHandlerObject::MouseClickHandlerObject(UIDriver& driver, Container* container) noexcept : TMouseEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseButtonEvent>(driver.getInputDriver(), driver.getOrderedInputEventsDispatcher().getOnMouseButtonEvent(), container)
 	{
-		IInputDriver::OnMouseButtonEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, MouseButton button, KeyEvent event)
+		OrderedInputEventsDispatcher::OnMouseButtonEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, MouseButton button, KeyEvent event)
 		{
 			if(isInside(inputDriver->getMousePosition()))
 				return onMouseClick(button, event);
@@ -157,7 +157,7 @@ namespace SUTK
 
 	MouseScrollHandlerObject::MouseScrollHandlerObject(UIDriver& driver, Container* container) noexcept : TMouseEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseScrollEvent>(driver.getInputDriver(), driver.getOrderedInputEventsDispatcher().getOnScrollEvent(), container)
 	{
-		IInputDriver::OnMouseScrollEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, Vec2Df scrollDelta)
+		OrderedInputEventsDispatcher::OnMouseScrollEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, Vec2Df scrollDelta)
 		{
 			if(isInside(inputDriver->getMousePosition()))
 				return onMouseScroll(scrollDelta);
