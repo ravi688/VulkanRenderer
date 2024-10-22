@@ -273,6 +273,13 @@ namespace SUTK
 	void Container::setLayer(Layer layer) noexcept
 	{
 		m_layer = layer;
+		// Visit each Renderable recursively and update its draw order
+		ContainerUtility::RenderablesVisit(this, [](Renderable* renderable)
+		{
+			Container* container = renderable->getContainer();
+			_com_assert(container != com::null_pointer<Container>());
+				renderable->setDrawOrder(container->getDepth());
+		});
 	}
 
 	void Container::recalculateLayoutParent() noexcept
