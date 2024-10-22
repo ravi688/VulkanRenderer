@@ -54,30 +54,12 @@ namespace SUTK
 		}
 	};
 
-	template<typename InputEventType>
-	class TInputEventHandlerContainerObject : public TInputEventHandlerObject<InputEventType>
+	class InputEventContainerAux
 	{
 	private:
 		Container* m_container;
-
 	protected:
-		TInputEventHandlerContainerObject(InputEventType& event) noexcept : TInputEventHandlerObject<InputEventType>(event), m_container(NULL) { }
-		TInputEventHandlerContainerObject(InputEventType& event, Container* container) noexcept : TInputEventHandlerObject<InputEventType>(event), m_container(container)
-		{
-			if(m_container != NULL)
-			{
-				// If the container has been deactivated then sleep the subscription,
-				// Or if the container has been activated then awake the subscription
-				// This saves CPU cycles, as well as avoids receiving input events in disabled state.
-				m_container->getOnActiveEvent().subscribe([this](com::Bool isActive)
-				{
-					if(isActive)
-						this->awake();
-					else
-						this->sleep();
-				});
-			}
-		}
+		InputEventContainerAux(Container* container = NULL) noexcept : m_container(container) { }
 		// point: is in global coordinates
 		bool isInside(Vec2Df point) const noexcept
 		{
@@ -92,6 +74,28 @@ namespace SUTK
 			if(container != NULL)
 				localCoords = container->getScreenCoordsToLocalCoords(localCoords);
 			return localCoords;
+		}
+	};
+
+	template<typename InputEventType>
+	class TInputEventHandlerContainerObject : public InputEventContainerAux, public TInputEventHandlerObject<InputEventType>
+	{
+	protected:
+		TInputEventHandlerContainerObject(InputEventType& event, Container* container = NULL) noexcept : InputEventContainerAux(container), TInputEventHandlerObject<InputEventType>(event)
+		{
+			if(container != NULL)
+			{
+				// If the container has been deactivated then sleep the subscription,
+				// Or if the container has been activated then awake the subscription
+				// This saves CPU cycles, as well as avoids receiving input events in disabled state.
+				container->getOnActiveEvent().subscribe([this](com::Bool isActive)
+				{
+					if(isActive)
+						this->awake();
+					else
+						this->sleep();
+				});
+			}
 		}
 	};
 
@@ -111,6 +115,18 @@ namespace SUTK
 			Vec2Df position = m_inputDriver.getMousePosition();
 			return TInputEventHandlerContainerObject<InputEventType>::isInside(position);
 		}
+	};
+
+	class SUTK_API MouseEventsBlockerObject : public InputEventContainerAux
+	{
+	private:
+		UIDriver& m_uiDriver;
+		OrderedInputEventsDispatcher::OnMouseMoveEvent::SubscriptionID m_mouseMoveID;
+		OrderedInputEventsDispatcher::OnMouseButtonEvent::SubscriptionID m_mouseButtonID;
+		OrderedInputEventsDispatcher::OnMouseScrollEvent::SubscriptionID m_mouseScrollID;
+	public:
+		MouseEventsBlockerObject(UIDriver& driver, Container* container) noexcept;
+		virtual ~MouseEventsBlockerObject() noexcept;
 	};
 
 	// The onMouseEnter and onMouseExit are called only for the render window's entire rect
