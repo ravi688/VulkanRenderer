@@ -3,6 +3,65 @@
 
 namespace SUTK
 {
+	MouseEventsBlockerObject::MouseEventsBlockerObject(UIDriver& driver, Container* container) noexcept : InputEventContainerAux(container), m_uiDriver(driver)
+	{
+		_com_assert(container != NULL);
+
+		OrderedInputEventsDispatcher& eventsDispatcher = driver.getOrderedInputEventsDispatcher();
+
+		m_mouseMoveID = eventsDispatcher.getOnCursorMoveEvent().subscribe([this](IInputDriver* inputDriver, Vec2Df pos)
+		{
+			if(isInside(pos))
+				// Block containers from receiving this event being behind this container (parents/anscestors)
+				return true;
+			return false;
+		}, container->getDepth());
+		m_mouseButtonID = eventsDispatcher.getOnMouseButtonEvent().subscribe([this](IInputDriver* inputDriver, MouseButton button, KeyEvent event)
+		{
+			Vec2Df pos = this->m_uiDriver.getInputDriver().getMousePosition();
+			if(isInside(pos))
+				// Block containers from receiving this event being behind this container (parents/anscestors)
+				return true;
+			return false;
+		}, container->getDepth());
+		m_mouseScrollID = eventsDispatcher.getOnScrollEvent().subscribe([this](IInputDriver* inputDriver, Vec2Df delta)
+		{
+			Vec2Df pos = this->m_uiDriver.getInputDriver().getMousePosition();
+			if(isInside(pos))
+				// Block containers from receiving this event being behind this container (parents/anscestors)
+				return true;
+			return false;
+		}, container->getDepth());
+
+		// If the container has been deactivated then sleep the subscription,
+		// Or if the container has been activated then awake the subscription
+		// This saves CPU cycles, as well as avoids receiving input events in disabled state.
+		container->getOnActiveEvent().subscribe([this](com::Bool isActive)
+		{
+			OrderedInputEventsDispatcher& eventsDispatcher = this->m_uiDriver.getOrderedInputEventsDispatcher();
+			if(isActive)
+			{
+				eventsDispatcher.getOnCursorMoveEvent().activate(this->m_mouseMoveID);
+				eventsDispatcher.getOnMouseButtonEvent().activate(this->m_mouseButtonID);
+				eventsDispatcher.getOnScrollEvent().activate(this->m_mouseScrollID);
+			}
+			else
+			{
+				eventsDispatcher.getOnCursorMoveEvent().deactivate(this->m_mouseMoveID);
+				eventsDispatcher.getOnMouseButtonEvent().deactivate(this->m_mouseButtonID);
+				eventsDispatcher.getOnScrollEvent().deactivate(this->m_mouseScrollID);
+			}
+		});
+	}
+
+	MouseEventsBlockerObject::~MouseEventsBlockerObject() noexcept
+	{
+		OrderedInputEventsDispatcher& eventsDispatcher = m_uiDriver.getOrderedInputEventsDispatcher();
+		eventsDispatcher.getOnCursorMoveEvent().unsubscribe(m_mouseMoveID);
+		eventsDispatcher.getOnMouseButtonEvent().unsubscribe(m_mouseButtonID);
+		eventsDispatcher.getOnScrollEvent().unsubscribe(m_mouseScrollID);
+	}
+
 	MouseEnterExitHandlerObject::MouseEnterExitHandlerObject(UIDriver& driver) noexcept : TInputEventHandlerObject<IInputDriver::OnMouseEnterExitEvent>(driver.getInputDriver().getOnMouseEnterExitEvent())
 	{
 		IInputDriver::OnMouseEnterExitEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, bool isEnter)
