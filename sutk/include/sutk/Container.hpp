@@ -105,6 +105,8 @@ namespace SUTK
 		// IMPLEMENTATION of IDebuggable
 		virtual void enableDebug(bool isEnable = true, Color4 color = Color4::green()) noexcept override;
 
+		// Calling setLayer might be expensive if this container's height in the tree is large
+		// Instead pass the layer number in the constructor while constructing this Container.
 		void setLayer(Layer layer) noexcept;
 		Layer getLayer() const noexcept { return m_layer; }
 

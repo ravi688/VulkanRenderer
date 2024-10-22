@@ -129,6 +129,8 @@ namespace SUTK
 	{
 		m_defaultGraphic = driver.createContainer<DefaultButtonGraphicNoLabel>(parent);
 		m_imageGraphic = driver.createContainer<ImageButtonGraphic>(parent);
+		// Draw the image graphic on top of the default button graphic no label.
+		m_imageGraphic->setLayer(m_defaultGraphic->getDepth() + 1);
 	}
 
 	void ImageOverDefaultButtonGraphicProxy::onHover(HoverInfo info)
