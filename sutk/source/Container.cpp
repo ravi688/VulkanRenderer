@@ -238,6 +238,7 @@ namespace SUTK
 
 	void Container::enableDebug(bool isEnable, Color4 color) noexcept
 	{
+		#ifdef CONTAINER_DEBUG
 		if(isEnable)
 		{
 			// only create SUTK::RenderableContainer and SUTK::RenderRect once in the life-time of this Container
@@ -268,6 +269,7 @@ namespace SUTK
 
 		if(m_renderRect != NULL)
 			m_renderRect->setColor(color);
+		#endif
 	}
 
 	void Container::setLayer(Layer layer) noexcept
