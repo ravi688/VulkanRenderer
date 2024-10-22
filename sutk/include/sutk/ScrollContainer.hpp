@@ -20,11 +20,11 @@ namespace SUTK
 			Vec2Df m_scrollDelta;
 		protected:
 			// Overrides of SUTK::MouseScrollHandlerObject
-			virtual void onMouseScroll(SUTK::Vec2Df scrollDelta) override;
+			virtual bool onMouseScroll(SUTK::Vec2Df scrollDelta) override;
 			// Overrides of SUTK::MouseMoveHandlerObject
-			virtual void onMouseMove(SUTK::Vec2Df position) override { }
-			virtual void onMouseEnter() noexcept override;
-			virtual void onMouseExit() noexcept override;
+			virtual bool onMouseMove(SUTK::Vec2Df position) override { return true; }
+			virtual bool onMouseEnter() noexcept override;
+			virtual bool onMouseExit() noexcept override;
 			// Overrides of SUTK::KeyboardHandlerObject
 			virtual void onKey(SUTK::KeyCode keycode, SUTK::KeyEvent event, SUTK::ModifierKeys modifiers) override;
 		 public:

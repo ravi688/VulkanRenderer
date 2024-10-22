@@ -9,15 +9,16 @@ namespace SUTK
 			setGraphic(driver.createContainer<DefaultToggleButtonGraphic>(this, textGroup));
 	}
 	
-	void ToggleButton::onMouseClick(MouseButton button, KeyEvent action) noexcept
+	bool ToggleButton::onMouseClick(MouseButton button, KeyEvent action) noexcept
 	{
 		// Mandatory to be called
 		Button::onMouseClick(button, action);
 
 		if(button != MouseButton::Left)
-			return;
+			return true;
 		if((action == KeyEvent::Press) && (!m_isOneWayToggle || (getToggleState() != ToggleState::On)))
 			toggle();
+		return true;
 	}
 
 	void ToggleButton::clearAllEvents() noexcept

@@ -26,8 +26,8 @@ namespace SUTK
 		Vec2Df m_prevPos;
 		bool m_isCalibratedForFirstTime;
 	protected:
-		virtual void onMouseClick(MouseButton button, KeyEvent action) override;
-		virtual void onMouseMove(Vec2Df position) override;
+		virtual bool onMouseClick(MouseButton button, KeyEvent action) override;
+		virtual bool onMouseMove(Vec2Df position) override;
 
 		virtual void add(Container* child, bool isInvariantPos = true) override;
 		virtual void remove(Container* child) override;
