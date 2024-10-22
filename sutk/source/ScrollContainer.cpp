@@ -6,15 +6,11 @@ namespace SUTK
 {
 	ScrollContainer::ScrollContainer(UIDriver& driver, Container* parent) noexcept : Container(driver, parent),
 																					MouseScrollHandlerObject(driver, this),
-																					MouseMoveHandlerObject(driver, this),
 																					KeyboardHandlerObject(driver),
-																					m_isInside(false),
 																					m_scaleFactor(0.5f),
 																					m_numKeysPressed(0),
 																					m_scrollDelta({ 0.0f, 0.0f })
 	{
-		enableMouseEnter(true);
-		enableMouseExit(true);
 	}
 
 	bool ScrollContainer::onMouseScroll(SUTK::Vec2Df scrollDelta)
@@ -37,18 +33,6 @@ namespace SUTK
 		
 		// Apply the scroll delta values
 		addScrollDelta(deltaInCentimeters);
-		return true;
-	}
-
-	bool ScrollContainer::onMouseEnter() noexcept
-	{
-		m_isInside = true;
-		return true;
-	}
-
-	bool ScrollContainer::onMouseExit() noexcept
-	{
-		m_isInside = false;
 		return true;
 	}
 

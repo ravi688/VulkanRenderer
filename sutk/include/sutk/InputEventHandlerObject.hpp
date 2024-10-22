@@ -84,6 +84,33 @@ namespace SUTK
 			return (m_container != NULL) ? m_container->containsGlobalCoords(point) : true;
 		}
 		Container* getContainer() noexcept { return m_container; }
+		Container* getContainer() const noexcept { return m_container; }
+		Vec2Df globalToLocalCoords(Vec2Df localCoords) const noexcept
+		{
+			// convert global coordinates to the local coordinates of the container 'container'
+			Container* container = getContainer();
+			if(container != NULL)
+				localCoords = container->getScreenCoordsToLocalCoords(localCoords);
+			return localCoords;
+		}
+	};
+
+	template<typename InputEventType>
+	class TMouseEventHandlerContainerObject : public TInputEventHandlerContainerObject<InputEventType>
+	{
+	protected:
+		// There is a problem if we keep this into private scope and expose a protected getter 'getInputDriver()' function for it.
+		// If a class derives from UIDriverObject and from this also, then the call to 'getInputDriver()' would be ambiguous.
+		// Right now I can't figure out a solution for it.
+		IInputDriver& m_inputDriver;
+		TMouseEventHandlerContainerObject(IInputDriver& inputDriver, InputEventType& event) noexcept : TInputEventHandlerContainerObject<InputEventType>(event), m_inputDriver(inputDriver) { }
+		TMouseEventHandlerContainerObject(IInputDriver& inputDriver, InputEventType& event, Container* container) noexcept : TInputEventHandlerContainerObject<InputEventType>(event, container), m_inputDriver(inputDriver) { }
+
+		bool isMousePosInside() noexcept
+		{
+			Vec2Df position = m_inputDriver.getMousePosition();
+			return TInputEventHandlerContainerObject<InputEventType>::isInside(position);
+		}
 	};
 
 	// The onMouseEnter and onMouseExit are called only for the render window's entire rect
@@ -107,24 +134,27 @@ namespace SUTK
 		className(UIDriver& driver) noexcept : className(driver, NULL) { }\
 		className(UIDriver& driver, Container* container) noexcept;\
 
-	class MouseMoveHandlerObject : public TInputEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseMoveEvent>
+	enum MouseMoveEvent
+	{
+		Enter,
+		Exit,
+		Move
+	};
+
+	class MouseMoveHandlerObject : public TMouseEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseMoveEvent>
 	{
 	private:
 		bool m_isMouseEnterEnabled;
 		bool m_isMouseExitEnabled;
 		bool m_isInside;
-		IInputDriver& m_inputDriver;
 
 		// position: is the mouse position in global coordinates
 		bool update(Vec2Df position) noexcept;
 
 	protected:
-		virtual bool onMouseMove(Vec2Df position) = 0;
+		virtual bool onMouseMove(MouseMoveEvent event, Vec2Df position) = 0;
 
 		MOUSE_INPUT_HANDLER_CTOR_DECLARE(MouseMoveHandlerObject)
-
-		virtual bool onMouseEnter() noexcept { return false; }
-		virtual bool onMouseExit() noexcept { return false; }
 
 		void enableMouseEnter(bool isEnable) noexcept { m_isMouseEnterEnabled = isEnable; }
 		void enableMouseExit(bool isEnable) noexcept { m_isMouseExitEnabled = isEnable; }
@@ -146,7 +176,7 @@ namespace SUTK
 		virtual void awake() noexcept override;
 	};
 
-	class MouseClickHandlerObject : public TInputEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseButtonEvent>
+	class MouseClickHandlerObject : public TMouseEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseButtonEvent>
 	{
 	protected:
 		virtual bool onMouseClick(MouseButton button, KeyEvent action) = 0;
@@ -157,7 +187,7 @@ namespace SUTK
 		virtual ~MouseClickHandlerObject() noexcept = default;
 	};
 
-	class MouseAnyClickHandlerObject : public TInputEventHandlerContainerObject<IInputDriver::OnMouseButtonEvent>
+	class MouseAnyClickHandlerObject : public TMouseEventHandlerContainerObject<IInputDriver::OnMouseButtonEvent>
 	{
 	protected:
 		virtual void onMouseClick(MouseButton button, KeyEvent action, bool isInside) = 0;
@@ -168,7 +198,7 @@ namespace SUTK
 		virtual ~MouseAnyClickHandlerObject() noexcept = default;
 	};
 
-	class MouseScrollHandlerObject : public TInputEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseScrollEvent>
+	class MouseScrollHandlerObject : public TMouseEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseScrollEvent>
 	{
 	protected:
 		virtual bool onMouseScroll(Vec2Df scrollDelta) = 0;

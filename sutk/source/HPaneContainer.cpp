@@ -42,30 +42,33 @@ namespace SUTK
 		return true;
 	}
 
-	bool HPaneContainer::onMouseMove(Vec2Df position)
+	bool HPaneContainer::onMouseMove(MouseMoveEvent event, Vec2Df position)
 	{
-		if(m_grabbedHandle[0])
+		if(event == MouseMoveEvent::Move)
 		{
-			Vec2Df pos = getInputDriver().getMousePosition();
-			auto disp = pos - m_prevPos;
-			m_prevPos = pos;
+			if(m_grabbedHandle[0])
+			{
+				Vec2Df pos = getInputDriver().getMousePosition();
+				auto disp = pos - m_prevPos;
+				m_prevPos = pos;
 
-			auto left = m_grabbedHandle[1];
-			auto middle = m_grabbedHandle[0];
-			auto right = m_grabbedHandle[2];
+				auto left = m_grabbedHandle[1];
+				auto middle = m_grabbedHandle[0];
+				auto right = m_grabbedHandle[2];
 
-			auto rect = left->getRect();
-			rect.extendRight(disp.x);
-			left->setRect(rect);
+				auto rect = left->getRect();
+				rect.extendRight(disp.x);
+				left->setRect(rect);
 			
-			rect = middle->getRect();
-			rect.extendLeft(-disp.x);
-			rect.extendRight(disp.x);
-			middle->setRect(rect);
+				rect = middle->getRect();
+				rect.extendLeft(-disp.x);
+				rect.extendRight(disp.x);
+				middle->setRect(rect);
 
-			rect = right->getRect();
-			rect.extendLeft(-disp.x);
-			right->setRect(rect);
+				rect = right->getRect();
+				rect.extendLeft(-disp.x);
+				right->setRect(rect);
+			}
 		}
 		return true;
 	}
