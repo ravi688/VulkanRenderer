@@ -78,6 +78,7 @@ namespace SUTK
 				});
 			}
 		}
+		// point: is in global coordinates
 		bool isInside(Vec2Df point) const noexcept
 		{
 			return (m_container != NULL) ? m_container->containsGlobalCoords(point) : true;
@@ -115,21 +116,23 @@ namespace SUTK
 		IInputDriver& m_inputDriver;
 
 		// position: is the mouse position in global coordinates
-		void update(Vec2Df position) noexcept;
+		bool update(Vec2Df position) noexcept;
 
 	protected:
-		virtual void onMouseMove(Vec2Df position) = 0;
+		virtual bool onMouseMove(Vec2Df position) = 0;
 
 		MOUSE_INPUT_HANDLER_CTOR_DECLARE(MouseMoveHandlerObject)
 
-		virtual void onMouseEnter() noexcept { }
-		virtual void onMouseExit() noexcept { }
+		virtual bool onMouseEnter() noexcept { return false; }
+		virtual bool onMouseExit() noexcept { return false; }
 
 		void enableMouseEnter(bool isEnable) noexcept { m_isMouseEnterEnabled = isEnable; }
 		void enableMouseExit(bool isEnable) noexcept { m_isMouseExitEnabled = isEnable; }
 
 		bool isMouseEnterEnabled() const noexcept { return m_isMouseEnterEnabled; }
 		bool isMouseExitEnabled() const noexcept { return m_isMouseExitEnabled; }
+
+		bool isMousePosInside() noexcept;
 
 		// This can be called to recalculate and recheck the mouse pointer if it is inside the rect
 		// That also means onMouseEnter() or onMouseExit() may be called.
@@ -146,7 +149,7 @@ namespace SUTK
 	class MouseClickHandlerObject : public TInputEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseButtonEvent>
 	{
 	protected:
-		virtual void onMouseClick(MouseButton button, KeyEvent action) = 0;
+		virtual bool onMouseClick(MouseButton button, KeyEvent action) = 0;
 
 		MOUSE_INPUT_HANDLER_CTOR_DECLARE(MouseClickHandlerObject)
 
@@ -168,7 +171,7 @@ namespace SUTK
 	class MouseScrollHandlerObject : public TInputEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseScrollEvent>
 	{
 	protected:
-		virtual void onMouseScroll(Vec2Df scrollDelta) = 0;
+		virtual bool onMouseScroll(Vec2Df scrollDelta) = 0;
 
 		MOUSE_INPUT_HANDLER_CTOR_DECLARE(MouseScrollHandlerObject)
 

@@ -35,7 +35,7 @@ namespace SUTK
 		MouseMoveHandlerObject::update();
 	}
 
-	void Button::onMouseEnter() noexcept
+	bool Button::onMouseEnter() noexcept
 	{
 		if(m_onEnterEvent != NULL)
 			m_onEnterEvent->publish();
@@ -46,9 +46,10 @@ namespace SUTK
 			info.isEnter = true;
 			m_graphic->onHover(info);
 		}
+		return true;
 	}
 
-	void Button::onMouseExit() noexcept
+	bool Button::onMouseExit() noexcept
 	{
 		if(m_onExitEvent != NULL)
 			m_onExitEvent->publish();
@@ -59,9 +60,10 @@ namespace SUTK
 			info.isExit = true;
 			m_graphic->onHover(info);
 		}
+		return true;
 	}
 
-	void Button::onMouseMove(Vec2Df position) noexcept
+	bool Button::onMouseMove(Vec2Df position) noexcept
 	{
 		if(m_graphic != NULL)
 		{
@@ -69,12 +71,13 @@ namespace SUTK
 			info.position = position;
 			m_graphic->onHover(info);
 		}
+		return true;
 	}
 
-	void Button::onMouseClick(MouseButton button, KeyEvent action) noexcept
+	bool Button::onMouseClick(MouseButton button, KeyEvent action) noexcept
 	{
 		if(button != MouseButton::Left)
-			return;
+			return true;
 		if(action == KeyEvent::Press)
 		{
 			if(m_onPressEvent != NULL)
@@ -89,6 +92,7 @@ namespace SUTK
 			if(m_graphic != NULL)
 				m_graphic->onRelease();
 		}
+		return true;
 	}
 
 	void Button::checkAndOptimizeEvents() noexcept

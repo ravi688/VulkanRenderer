@@ -17,15 +17,18 @@ namespace SUTK
 		enableMouseExit(true);
 	}
 
-	void ScrollContainer::onMouseScroll(SUTK::Vec2Df scrollDelta)
+	bool ScrollContainer::onMouseScroll(SUTK::Vec2Df scrollDelta)
 	{
-		if(!m_isInside)
-			return;
+		if(!isMousePosInside())
+		{
+			std::cout << "Not Inside" << std::endl;
+			return true;
+		}
 		
 		// If more than 1 key is pressed then we definitely do nothing
 		// If only one key is pressed then it must be only shift, otherwise do nothing
 		if((m_numKeysPressed > 1) || ((m_numKeysPressed == 1) && !m_modifiers.shift()))
-			return;
+			return true;
 
 		// Calculate the scroll delta in centimeters and the direction of the scroll
 		auto deltaInCentimeters = scrollDelta * m_scaleFactor;
@@ -34,16 +37,19 @@ namespace SUTK
 		
 		// Apply the scroll delta values
 		addScrollDelta(deltaInCentimeters);
+		return true;
 	}
 
-	void ScrollContainer::onMouseEnter() noexcept
+	bool ScrollContainer::onMouseEnter() noexcept
 	{
 		m_isInside = true;
+		return true;
 	}
 
-	void ScrollContainer::onMouseExit() noexcept
+	bool ScrollContainer::onMouseExit() noexcept
 	{
 		m_isInside = false;
+		return true;
 	}
 
 	void ScrollContainer::onKey(SUTK::KeyCode keycode, SUTK::KeyEvent event, SUTK::ModifierKeys modifiers)

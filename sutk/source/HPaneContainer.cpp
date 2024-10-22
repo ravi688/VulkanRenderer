@@ -17,10 +17,10 @@ namespace SUTK
 	{
 	}
 
-	void HPaneContainer::onMouseClick(MouseButton button, KeyEvent action)
+	bool HPaneContainer::onMouseClick(MouseButton button, KeyEvent action)
 	{
 		if(button != MouseButton::Left)
-			return;
+			return true;
 
 		if(action == KeyEvent::Press)
 		{
@@ -39,9 +39,10 @@ namespace SUTK
 		}
 		else
 			m_grabbedHandle = { NULL, NULL, NULL };
+		return true;
 	}
 
-	void HPaneContainer::onMouseMove(Vec2Df position)
+	bool HPaneContainer::onMouseMove(Vec2Df position)
 	{
 		if(m_grabbedHandle[0])
 		{
@@ -66,6 +67,7 @@ namespace SUTK
 			rect.extendLeft(-disp.x);
 			right->setRect(rect);
 		}
+		return true;
 	}
 
 	void HPaneContainer::add(Container* child, bool isInvariantPos)

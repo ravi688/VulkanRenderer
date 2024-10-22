@@ -23,25 +23,25 @@ namespace SUTK
 	{
 		IInputDriver::OnMouseMoveEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, SUTK::Vec2Df position)
 		{
-			this->update(position);
-			return false;
+			return this->update(position);
 		}, container ? container->getDepth() : std::numeric_limits<u32>::max());
 		setSubscriptionID(id);
 	}
 
-	void MouseMoveHandlerObject::update(Vec2Df position) noexcept
+	bool MouseMoveHandlerObject::update(Vec2Df position) noexcept
 	{
+		bool isBlock = false;
 		if((!m_isInside) && isInside(position))
 		{
 			m_isInside = true;
 			if(m_isMouseEnterEnabled)
-				onMouseEnter();
+				isBlock |= onMouseEnter();
 		}
 		else if(m_isInside && (!isInside(position)))
 		{
 			m_isInside = false;
 			if(m_isMouseExitEnabled)
-				onMouseExit();
+				isBlock |= onMouseExit();
 		}
 		
 		if(m_isInside)
@@ -50,8 +50,15 @@ namespace SUTK
 			Container* container = getContainer();
 			if(container != NULL)
 				position = container->getScreenCoordsToLocalCoords(position);
-			onMouseMove(position);
+			isBlock |= onMouseMove(position);
 		}
+		return isBlock;
+	}
+
+	bool MouseMoveHandlerObject::isMousePosInside() noexcept
+	{
+		Vec2Df position = m_inputDriver.getMousePosition();
+		return isInside(position);
 	}
 
 	void MouseMoveHandlerObject::update() noexcept
@@ -85,7 +92,7 @@ namespace SUTK
 		IInputDriver::OnMouseButtonEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, MouseButton button, KeyEvent event)
 		{
 			if(isInside(inputDriver->getMousePosition()))
-				onMouseClick(button, event);
+				return onMouseClick(button, event);
 			return false;
 		}, container ? container->getDepth() : std::numeric_limits<u32>::max());
 		setSubscriptionID(id);
@@ -105,7 +112,7 @@ namespace SUTK
 		IInputDriver::OnMouseScrollEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, Vec2Df scrollDelta)
 		{
 			if(isInside(inputDriver->getMousePosition()))
-				onMouseScroll(scrollDelta);
+				return onMouseScroll(scrollDelta);
 			return false;
 		}, container ? container->getDepth() : std::numeric_limits<u32>::max());
 		setSubscriptionID(id);

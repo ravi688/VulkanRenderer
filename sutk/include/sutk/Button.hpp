@@ -42,13 +42,13 @@ namespace SUTK
 
 		// Overrides of onMouseEnter, onMouseExit, and onMouseMove functions
 		// Must be called in the overriding method
-		virtual void onMouseEnter() noexcept override;
+		virtual bool onMouseEnter() noexcept override;
 		// Must be called in the overriding method
-		virtual void onMouseExit() noexcept override;
+		virtual bool onMouseExit() noexcept override;
 		// Must be called in the overriding method
-		virtual void onMouseMove(Vec2Df position) noexcept override;
+		virtual bool onMouseMove(Vec2Df position) noexcept override;
 		// Must be called in the overriding method
-		virtual void onMouseClick(MouseButton button, KeyEvent action) noexcept override;
+		virtual bool onMouseClick(MouseButton button, KeyEvent action) noexcept override;
 
 		// Must be called in the overriding method
 		virtual void clearAllEvents() noexcept;
