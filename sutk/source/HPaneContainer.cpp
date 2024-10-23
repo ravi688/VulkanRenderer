@@ -36,6 +36,7 @@ namespace SUTK
 					m_grabbedHandle[2] = handle.second.right;
 					m_prevPos = pos;
 					MouseMoveHandlerObject::awake();
+					MouseMoveHandlerObject::grabExclusiveAccess();
 					break;
 				}
 			}
@@ -44,7 +45,10 @@ namespace SUTK
 		{
 			// If the handle was grabbed, only then call sleep()
 			if(m_grabbedHandle[0])
+			{
+				MouseMoveHandlerObject::releaseExclusiveAccess();
 				MouseMoveHandlerObject::sleep();
+			}
 			m_grabbedHandle = { NULL, NULL, NULL };
 		}
 		return true;
