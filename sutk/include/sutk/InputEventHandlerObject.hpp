@@ -162,6 +162,7 @@ namespace SUTK
 	private:
 		bool m_isMouseEnterEnabled;
 		bool m_isMouseExitEnabled;
+		bool m_isMouseMoveOutsideEnabled;
 		bool m_isInside;
 
 		// position: is the mouse position in global coordinates
@@ -174,9 +175,11 @@ namespace SUTK
 
 		void enableMouseEnter(bool isEnable) noexcept { m_isMouseEnterEnabled = isEnable; }
 		void enableMouseExit(bool isEnable) noexcept { m_isMouseExitEnabled = isEnable; }
+		void enableMouseMoveOutside(bool isEnable) noexcept { m_isMouseMoveOutsideEnabled = isEnable; }
 
 		bool isMouseEnterEnabled() const noexcept { return m_isMouseEnterEnabled; }
 		bool isMouseExitEnabled() const noexcept { return m_isMouseExitEnabled; }
+		bool isMouseMoveOutsideEnabled() const noexcept { return m_isMouseMoveOutsideEnabled; }
 
 		bool isMousePosInside() noexcept;
 
