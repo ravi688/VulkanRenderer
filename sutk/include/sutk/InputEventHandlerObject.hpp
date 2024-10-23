@@ -52,6 +52,18 @@ namespace SUTK
 			_com_assert(m_id != InputEventType::InvalidSubscriptionID);
 			m_event.activate(m_id);
 		}
+
+		void grabExclusiveAccess() noexcept
+		{
+			_com_assert(m_id != InputEventType::InvalidSubscriptionID);
+			m_event.grabExclusiveAccess(m_id);
+		}
+
+		void releaseExclusiveAccess() noexcept
+		{
+			_com_assert(m_event.getExclusiveAccessID() == m_id);
+			m_event.releaseExclusiveAccess(m_id);
+		}
 	};
 
 	class InputEventContainerAux
