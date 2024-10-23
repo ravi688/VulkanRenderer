@@ -15,6 +15,8 @@ namespace SUTK
 																					m_grabbedHandle({ NULL, NULL, NULL }),
 																					m_isCalibratedForFirstTime(false)
 	{
+		enableMouseMoveOutside(true);
+		MouseMoveHandlerObject::sleep();
 	}
 
 	bool HPaneContainer::onMouseClick(MouseButton button, KeyEvent action)
@@ -33,12 +35,18 @@ namespace SUTK
 					m_grabbedHandle[1] = handle.second.left;
 					m_grabbedHandle[2] = handle.second.right;
 					m_prevPos = pos;
+					MouseMoveHandlerObject::awake();
 					break;
 				}
 			}
 		}
 		else
+		{
+			// If the handle was grabbed, only then call sleep()
+			if(m_grabbedHandle[0])
+				MouseMoveHandlerObject::sleep();
 			m_grabbedHandle = { NULL, NULL, NULL };
+		}
 		return true;
 	}
 

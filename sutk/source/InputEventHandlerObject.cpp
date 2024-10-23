@@ -77,6 +77,7 @@ namespace SUTK
 	MouseMoveHandlerObject::MouseMoveHandlerObject(UIDriver& driver, Container* container) noexcept : TMouseEventHandlerContainerObject<OrderedInputEventsDispatcher::OnMouseMoveEvent>(driver.getInputDriver(), driver.getOrderedInputEventsDispatcher().getOnCursorMoveEvent(), container),
 																									  m_isMouseEnterEnabled(false),
 																									  m_isMouseExitEnabled(false),
+																									  m_isMouseMoveOutsideEnabled(false),
 																									  m_isInside(false)
 	{
 		OrderedInputEventsDispatcher::OnMouseMoveEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, SUTK::Vec2Df position)
@@ -100,7 +101,7 @@ namespace SUTK
 			if(m_isMouseExitEnabled)
 				return onMouseMove(MouseMoveEvent::Exit, globalToLocalCoords(position));
 		}
-		else if(m_isInside)
+		else if(m_isInside || m_isMouseMoveOutsideEnabled)
 			return onMouseMove(MouseMoveEvent::Move, globalToLocalCoords(position));
 		return false;
 	}
