@@ -305,4 +305,6 @@ SGE_API void vulkan_render_queue_dispatch_single_material(vulkan_render_queue_t*
 /* sets the draw order policy, this is automatically called while creating the queue with type = VULKAN_RENDER_QUEUE_TYPE_TRANSPARENT queue */
 SGE_API void vulkan_render_queue_set_draw_order_policy(vulkan_render_queue_t* queue, vulkan_transparent_queue_draw_order_policy_t policy);
 
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_render_queue_is_ready(const vulkan_render_queue_t* queue) { return queue->is_ready; }
+
 END_CPP_COMPATIBLE

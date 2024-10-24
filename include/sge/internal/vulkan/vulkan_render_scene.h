@@ -38,6 +38,7 @@
 
 typedef enum vulkan_render_scene_preset_type_t
 {
+	/* default preset creates background, geometry, alpha tested, geometry last, and overlay queues */
 	VULKAN_RENDER_SCENE_PRESET_TYPE_DEFAULT = 0,
 	VULKAN_RENDER_SCENE_PRESET_TYPE_GEOMETRY_ONLY,
 	VULKAN_RENDER_SCENE_PRESET_TYPE_ALPHA_TESTED_ONLY,
