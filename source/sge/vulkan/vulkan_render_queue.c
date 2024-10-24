@@ -239,6 +239,9 @@ SGE_API void vulkan_render_queue_add(vulkan_render_queue_t* queue, vulkan_render
 				buf_push(&lists[j], &obj->material->shader->handle);
 		}
 	}
+
+	/* build & optimize the render graph again. */
+	queue->is_ready = false;
 }
 
 // TODO
@@ -260,8 +263,13 @@ SGE_API void vulkan_render_queue_removeH(vulkan_render_queue_t* queue, vulkan_re
 	buf_ucount_t index = buf_find_index_of(list, &object, buf_ptr_comparer);
 	if(index == BUF_INVALID_INDEX)
 		LOG_WRN("remove failed, render object isn't found in the queue\n");
-	buf_remove_at(list, index, NULL);
-	object->queue = NULL;
+	else
+	{
+		buf_remove_at(list, index, NULL);
+		object->queue = NULL;
+		/* build & optimize the render graph again. */
+		queue->is_ready = false;
+	}
 }
 
 SGE_API void vulkan_render_queue_build(vulkan_render_queue_t* queue)
@@ -660,9 +668,6 @@ static void order_objects_by_back_to_front(vulkan_render_queue_t* queue)
 
 SGE_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_camera_t* camera, vulkan_render_scene_t* scene)
 {
-	debug_assert_wrn__(queue->is_ready, "Render Queue isn't ready but you are still trying to dispatch it");
-
-
 	/* if the camera is rendering only depth values then use the builtin depth shader and depth render pass */
 	if(vulkan_camera_is_depth_render_only(camera))
 	{
@@ -678,6 +683,10 @@ SGE_API void vulkan_render_queue_dispatch(vulkan_render_queue_t* queue, vulkan_c
 		draw_ordered_objects(queue, camera, scene);
 		return;	
 	}
+
+	/* build and optimize the render graph again if the queue is dirty. */
+	if(!queue->is_ready)
+		vulkan_render_queue_build(queue);
 
 	// get the pointers to shader library and material library
 	vulkan_shader_library_t* shader_library = queue->renderer->shader_library;

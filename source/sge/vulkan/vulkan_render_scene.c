@@ -475,8 +475,11 @@ SGE_API void vulkan_render_scene_build_queues(vulkan_render_scene_t* scene)
 	for(u32 i = 0; i < count; i++)
 	{
 		AUTO queue = get_queue_at(scene, i);
-		debug_log_info("Queue type: %s", vulkan_render_queue_type_str(queue->type));
-		vulkan_render_queue_build(queue);
+		if(vulkan_render_queue_is_ready(queue))
+		{
+			debug_log_info("Queue type: %s", vulkan_render_queue_type_str(queue->type));
+			vulkan_render_queue_build(queue);
+		}
 	}
 }
 
