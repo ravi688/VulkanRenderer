@@ -124,6 +124,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void vulkan_render_scene_re
 	if(!result)
 		DEBUG_LOG_WARNING("You're trying to remove vulkan_camera_t from vulkan_render_scene_t which doesn't exists in it"); 
 }
+/* this also calls vulkan_render_scene_set_use_lights() with 'true' upon adding the first light. */
 SGE_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vulkan_light_t* light);
 SGE_API void vulkan_render_scene_remove_light(vulkan_render_scene_t* scene, vulkan_light_t* light);
 

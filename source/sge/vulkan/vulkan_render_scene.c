@@ -504,6 +504,9 @@ static vulkan_light_buffer_stage_t* get_light_buffer_stage(vulkan_render_scene_t
 
 SGE_API void vulkan_render_scene_add_light(vulkan_render_scene_t* scene, vulkan_light_t* light)
 { 
+	if(!vulkan_render_scene_is_use_lights(scene))
+		vulkan_render_scene_set_use_lights(scene, true);
+
 	/* if no formatted buffer exists for this light type, i.e. light->type, then create a new one.
 	 * otherwise, use the existing one. */
 	vulkan_light_buffer_stage_t* stage;
