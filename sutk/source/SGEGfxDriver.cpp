@@ -54,8 +54,6 @@ namespace SUTK
 			512
 		};
 		m_bgaTexture = m_driver.createBitmapGlyphAtlasTexture(createInfo);
-
-		m_scene.buildQueues();
 	}
 	
 	SGEGfxDriver::~SGEGfxDriver()
@@ -142,8 +140,6 @@ namespace SUTK
 		auto pos = object.getPosition();
 		pos.x = group.depth;
 		object.setPosition(pos);
-		// rebuild render pass graph as new objects have been added into the render scene 
-		m_scene.buildQueues();
 		
 		// add bitmap text into the bitmap text mappings table
 		id_generator_id_type_t bitmapTextID = id_generator_get(&m_id_generator);
@@ -877,8 +873,6 @@ namespace SUTK
 		}
 		object.setMaterial(material);
 		object.attach(mesh);
-		// rebuild render pass graph as new objects have been added into the render scene 
-		m_scene.buildQueues();
 		
 		// add mesh into the mesh mappings table
 		id_generator_id_type_t meshID = id_generator_get(&m_id_generator);
