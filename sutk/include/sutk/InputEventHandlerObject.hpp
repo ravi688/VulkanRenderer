@@ -19,6 +19,9 @@ namespace SUTK
 		virtual void sleep() = 0;
 		// subscribes this handler to corresponding input event, increases the overhead
 		virtual void awake() = 0;
+		// puts the event handler in sleep for either the current or the next event dispatch
+		// and automatically awakes for the subsequent event dispatches.
+		// This is used in MaskedScrollableContainer to correctly block events around the masked area.
 		virtual void tempSleep() = 0;
 	};
 
