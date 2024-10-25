@@ -7,6 +7,7 @@ namespace SUTK
 {
 	class Container;
 	class Renderable;
+	class IInputEventHandlerObject;
 	
 	class ContainerUtility
 	{
@@ -24,5 +25,10 @@ namespace SUTK
 		static void RenderablesSetAlpha(Container* container, f32 alpha) noexcept;
 		// Calls visit() for each found Renderable object recursively
 		static void RenderablesVisit(Container* container, const std::function<void(Renderable*)>& visitor) noexcept;
+
+		typedef void (*IInputEventHandlerObjectsVisitor)(std::vector<IInputEventHandlerObject*>& eventHandlerObj);
+
+		static void IInputEventHandlerObjectsVisit(Container* container, IInputEventHandlerObjectsVisitor visitor) noexcept;
+		static void IInputEventHandlerObjectsVisit(Container* container, IInputEventHandlerObjectsVisitor visitor, bool isIncludeItself) noexcept;
 	};
 }

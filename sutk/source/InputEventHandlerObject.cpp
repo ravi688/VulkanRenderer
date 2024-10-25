@@ -3,7 +3,7 @@
 
 namespace SUTK
 {
-	MouseEventsBlockerObject::MouseEventsBlockerObject(UIDriver& driver, Container* container) noexcept : InputEventContainerAux(container), m_uiDriver(driver)
+	MouseEventsBlockerObject::MouseEventsBlockerObject(UIDriver& driver, Container* container, Layer layer) noexcept : InputEventContainerAux(container), m_uiDriver(driver)
 	{
 		_com_assert(container != NULL);
 
@@ -15,7 +15,7 @@ namespace SUTK
 				// Block containers from receiving this event being behind this container (parents/anscestors)
 				return true;
 			return false;
-		}, container->getDepth());
+		}, (layer == InvalidLayer) ? container->getDepth() : layer);
 		m_mouseButtonID = eventsDispatcher.getOnMouseButtonEvent().subscribe([this](IInputDriver* inputDriver, MouseButton button, KeyEvent event)
 		{
 			Vec2Df pos = this->m_uiDriver.getInputDriver().getMousePosition();
@@ -23,7 +23,7 @@ namespace SUTK
 				// Block containers from receiving this event being behind this container (parents/anscestors)
 				return true;
 			return false;
-		}, container->getDepth());
+		}, (layer == InvalidLayer) ? container->getDepth() : layer);
 		m_mouseScrollID = eventsDispatcher.getOnScrollEvent().subscribe([this](IInputDriver* inputDriver, Vec2Df delta)
 		{
 			Vec2Df pos = this->m_uiDriver.getInputDriver().getMousePosition();
@@ -31,7 +31,7 @@ namespace SUTK
 				// Block containers from receiving this event being behind this container (parents/anscestors)
 				return true;
 			return false;
-		}, container->getDepth());
+		}, (layer == InvalidLayer) ? container->getDepth() : layer);
 
 		// If the container has been deactivated then sleep the subscription,
 		// Or if the container has been activated then awake the subscription

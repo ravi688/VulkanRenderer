@@ -5,12 +5,13 @@
 #include <sutk/ScrollContainer.hpp> // for SUTK::ScrollContainer
 #include <sutk/Renderable.hpp> // for SUTK::GfxDriverRenderable
 #include <sutk/ContainerUtility.hpp> // for SUTK::ContainerUtility::RenderablesVisit
+#include <sutk/InputEventHandlerObject.hpp> // for SUTK::MouseEventsBlockerObject
 #include <sutk/Concepts.hpp> // for SUTK::ContainerT
 
 namespace SUTK
 {
 	template<ContainerT ContainerType>
-	class MaskedScrollableContainer : public ContainerType, public Scrollable
+	class MaskedScrollableContainer : public ContainerType, public MouseEventsBlockerObject, public Scrollable
 	{
 	protected:
 		template<typename... Args>
@@ -21,13 +22,14 @@ namespace SUTK
 		void updateMask() noexcept;
 
 		virtual void onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
+		virtual bool isInside(Vec2Df point) const noexcept override;
 	public:
 		virtual ~MaskedScrollableContainer() noexcept = default;
 	};
 
 	template<ContainerT ContainerType>
 	template<typename... Args>
-	MaskedScrollableContainer<ContainerType>::MaskedScrollableContainer(UIDriver& driver, Container* parent, Args&&... args) noexcept : ContainerType(driver, parent, std::forward<Args&&>(args)...), Scrollable(this)
+	MaskedScrollableContainer<ContainerType>::MaskedScrollableContainer(UIDriver& driver, Container* parent, Args&&... args) noexcept : ContainerType(driver, parent, std::forward<Args&&>(args)...), MouseEventsBlockerObject(driver, this, this->getDepth() + 10000), Scrollable(this)
 	{
 		_com_assert(dynamic_cast<ScrollContainer*>(parent) != NULL);
 	}
@@ -61,5 +63,24 @@ namespace SUTK
 		// Mandatory to be called by the overriding method
 		Container::onParentResize(newRect, isPositionChanged, isSizeChanged);
 		updateMask();
+	}
+
+	template<ContainerT ContainerType>
+	bool MaskedScrollableContainer<ContainerType>::isInside(Vec2Df point) const noexcept
+	{
+		bool isInsideOfOuterRect = MouseEventsBlockerObject::isInside(point);
+		const ScrollContainer* scrollCont = getScrollContainer();
+		if(!scrollCont || !isInsideOfOuterRect)
+			return isInsideOfOuterRect;
+		Rect2Df rect = scrollCont->getGlobalRect();
+		if(!rect.contains(point))
+		{
+			ContainerUtility::IInputEventHandlerObjectsVisit(com::cast_away_const(this), [](std::vector<IInputEventHandlerObject*>& eventHandlerObject)
+			{
+				for(auto& eventHandlerObject : eventHandlerObject)
+					eventHandlerObject->tempSleep();
+			}, false);
+		}
+		return false;
 	}
 }

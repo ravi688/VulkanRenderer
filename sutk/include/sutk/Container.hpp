@@ -37,6 +37,7 @@ namespace SUTK
 	class Container;
 	class RenderRectOutline;
 	class RenderableContainer;
+	class IInputEventHandlerObject;
 
 	class SUTK_API Container : public UIDriverObject, public IDebuggable, public Activatable
 	{
@@ -49,6 +50,7 @@ namespace SUTK
 		};
 	private:
 		std::vector<Container*> m_containers;
+		std::vector<IInputEventHandlerObject*>* m_inputEventHandlers;
 		Rect2Df m_rect;
 		LayoutAttributes m_layoutAttr;
 		com::Bool m_isLayoutIgnore;
@@ -68,8 +70,8 @@ namespace SUTK
 
 		friend class UIDriver;
 
-		std::vector<Container*>& getContainerList() { return m_containers; }
-		const std::vector<Container*>& getContainerList() const { return m_containers; }
+		std::vector<Container*>& getContainerList() noexcept { return m_containers; }
+		const std::vector<Container*>& getContainerList() const noexcept { return m_containers; }
 
 		// called after adding this container to 'parent' container
 		virtual void onAdd(Container* parent);
@@ -128,11 +130,17 @@ namespace SUTK
 		std::vector<Container*>& getChilds() noexcept { return getContainerList(); }
 		const std::vector<Container*>& getChilds() const noexcept { return getContainerList(); }
 
+
 		// parent getters
 		Container* getParent() { return m_parent; }
 		const Container* getParent() const { return m_parent; }
 		// parent setters
 		void setParent(Container* parent, bool isInvariantPos = true) noexcept;
+
+		// input event handler objects getter (a workaround for a problem with virtual inheritance from IInputEventHandlerObject involving multiple virtual function overrids)
+		bool hasInputEventHandlers() const noexcept { return m_inputEventHandlers != NULL; }
+		std::vector<IInputEventHandlerObject*>& getInputEventHandlers() noexcept;
+		const std::vector<IInputEventHandlerObject*>& getInputEventHandlers() const noexcept;
 
 		// rect getters
 		Rect2Df getRect() const { return m_rect; }

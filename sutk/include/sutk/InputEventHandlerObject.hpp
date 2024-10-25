@@ -12,11 +12,14 @@ namespace SUTK
 	class IInputEventHandlerObject
 	{
 	public:
+		IInputEventHandlerObject() = default;
+		virtual ~IInputEventHandlerObject() = default;
 
 		// unsubscribes this handler from the corresponding input event, thus reduces overhead
 		virtual void sleep() = 0;
 		// subscribes this handler to corresponding input event, increases the overhead
 		virtual void awake() = 0;
+		virtual void tempSleep() = 0;
 	};
 
 	template<typename InputEventType>
@@ -53,6 +56,12 @@ namespace SUTK
 			m_event.activate(m_id);
 		}
 
+		virtual void tempSleep() noexcept override
+		{
+			if constexpr(InputEventType::IsOrderedEventType)
+				m_event.tempDeactivate(m_id);
+		}
+		
 		void grabExclusiveAccess() noexcept
 		{
 			_com_assert(m_id != InputEventType::InvalidSubscriptionID);
@@ -73,7 +82,7 @@ namespace SUTK
 	protected:
 		InputEventContainerAux(Container* container = NULL) noexcept : m_container(container) { }
 		// point: is in global coordinates
-		bool isInside(Vec2Df point) const noexcept
+		virtual bool isInside(Vec2Df point) const noexcept
 		{
 			return (m_container != NULL) ? m_container->containsGlobalCoords(point) : true;
 		}
@@ -107,7 +116,13 @@ namespace SUTK
 					else
 						this->sleep();
 				});
+				container->getInputEventHandlers().push_back(this);
 			}
+		}
+		~TInputEventHandlerContainerObject() noexcept
+		{
+			if(getContainer())
+				com::find_erase(getContainer()->getInputEventHandlers(), this);
 		}
 	};
 
@@ -137,7 +152,9 @@ namespace SUTK
 		OrderedInputEventsDispatcher::OnMouseButtonEvent::SubscriptionID m_mouseButtonID;
 		OrderedInputEventsDispatcher::OnMouseScrollEvent::SubscriptionID m_mouseScrollID;
 	public:
-		MouseEventsBlockerObject(UIDriver& driver, Container* container) noexcept;
+		// If layer remains InvalidLayer then it internally uses container->getDepth() as key into the OrderedEvent
+		// Otherwise, 'layer' overrides this behaviour.
+		MouseEventsBlockerObject(UIDriver& driver, Container* container, Layer layer = InvalidLayer) noexcept;
 		virtual ~MouseEventsBlockerObject() noexcept;
 	};
 

@@ -3,6 +3,8 @@
 #include <sutk/Renderable.hpp>
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/IColorable.hpp>
+#include <sutk/InputEventHandlerObject.hpp> // for dynamic_cast to work
+#include <sutk/Button.hpp>
 
 namespace SUTK
 {
@@ -75,5 +77,24 @@ namespace SUTK
 		std::vector<Container*>& childs = container->getChilds();
 		for(Container* &child : childs)
 			RenderablesVisit(child, visitor);
+	}
+
+	void ContainerUtility::IInputEventHandlerObjectsVisit(Container* container, IInputEventHandlerObjectsVisitor visitor) noexcept
+	{
+		if(container->hasInputEventHandlers())
+			visitor(container->getInputEventHandlers());
+		std::vector<Container*>& childs = container->getChilds();
+		for(Container* &child : childs)
+			IInputEventHandlerObjectsVisit(child, visitor);
+	}
+
+	void ContainerUtility::IInputEventHandlerObjectsVisit(Container* container, IInputEventHandlerObjectsVisitor visitor, bool isIncludeItself) noexcept
+	{
+		if(isIncludeItself)
+			if(container->hasInputEventHandlers())
+				visitor(container->getInputEventHandlers());
+		std::vector<Container*>& childs = container->getChilds();
+		for(Container* &child : childs)
+			IInputEventHandlerObjectsVisit(child, visitor);
 	}
 }

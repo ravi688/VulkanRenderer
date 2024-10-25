@@ -10,6 +10,7 @@ namespace SUTK
 {
 	Container::Container(SUTK::UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) : 
 															UIDriverObject(driver), 
+															m_inputEventHandlers(NULL),
 															m_rect({0, 0, 5.0f, 5.0f}),
 															m_layoutAttr(false, { 0, 0 }, { 0, 0 }, { F32_INFINITY, F32_INFINITY }, { 5.0f, 5.0f }),
 															m_isLayoutIgnore(isLayoutIgnore),
@@ -27,8 +28,22 @@ namespace SUTK
 
 	Container::~Container()
 	{
+		if(!m_inputEventHandlers)
+			delete m_inputEventHandlers;
 		if(m_anchorRect != NULL)
 			delete m_anchorRect;
+	}
+
+	std::vector<IInputEventHandlerObject*>& Container::getInputEventHandlers() noexcept
+	{
+		if(!m_inputEventHandlers)
+			m_inputEventHandlers = new std::vector<IInputEventHandlerObject*>();
+		return *m_inputEventHandlers;
+	}
+
+	const std::vector<IInputEventHandlerObject*>& Container::getInputEventHandlers() const noexcept
+	{
+		return com::cast_away_const(this)->getInputEventHandlers();
 	}
 
 	void Container::setParentChildRelation(Container* parent, std::size_t index) noexcept
