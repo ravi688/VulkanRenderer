@@ -1,6 +1,7 @@
 #include <sutk/SGEGfxDriver.hpp>
 #include <sutk/Geometry.hpp> // for SGE::Geometry
 #include <sge-cpp/Display.hpp>
+#include <common/TimeTaken.hpp> // for com::TimeTaken
 
 #include <utility> /* for std::pair */
 #include <sstream> // for std::ostringstream
@@ -702,27 +703,27 @@ namespace SUTK
 		return hash;
 	}
 
-	std::string SGEGfxDriver::u64ToString(u64 hash) const noexcept
+	void SGEGfxDriver::u64ToString(u64 hash, std::array<char, 16>& buffer) const noexcept
 	{
 		u8* raw = reinterpret_cast<u8*>(&hash);
-		char str[16];
 		for(u32 i = 0; i < 8; ++i)
 		{
 			auto rem = raw[i] % std::numeric_limits<char>::max();
-			str[2 * i + 0] = (static_cast<s32>(rem) + 'A') % std::numeric_limits<char>::max() + 'A';
+			buffer[2 * i + 0] = (static_cast<s32>(rem) + 'A') % std::numeric_limits<char>::max() + 'A';
 			_com_assert(raw[i] >= rem);
-			str[2 * i + 1] = ((static_cast<s32>(raw[i] - rem) + 'A') % std::numeric_limits<char>::max()) + 'A';
+			buffer[2 * i + 1] = ((static_cast<s32>(raw[i] - rem) + 'A') % std::numeric_limits<char>::max()) + 'A';
 
-			_com_assert(str[2 * i + 0] != 0);
-			_com_assert(str[2 * i + 1] != 0);
+			_com_assert(buffer[2 * i + 0] != 0);
+			_com_assert(buffer[2 * i + 1] != 0);
 		}
-		return std::string(str, 16);
 	}
 
 	SGE::Shader SGEGfxDriver::compileShader(const Geometry& geometry)
 	{
 		u64 hash = getGeometryShaderHash(geometry);
-		std::string hashStr = u64ToString(hash);
+		std::array<char, 16> buffer;
+		u64ToString(hash, buffer);
+		std::string_view hashStr { buffer.data(), buffer.size() };
 
 		// check if already compiled shader exists
 		SGE::Shader shader = m_driver.getShaderLibrary().getShader(hashStr);
@@ -862,7 +863,13 @@ namespace SUTK
 		SGE::Mesh mesh = m_driver.createMesh();
 		SGE::RenderQueue::Type queueType = getRenderQueueTypeFromRenderMode(geometry.getRenderMode());
 		SGE::RenderObject object = m_scene.createObject(SGE::RenderObject::Type::Mesh, queueType);
-		SGE::Shader shader = compileShader(geometry);
+		double elapsedTime;
+		SGE::Shader shader;
+		{
+			com::TimeTaken<double> _(elapsedTime);
+			shader = compileShader(geometry);
+		}
+		std::cout << "Time taken to compile Shader: " << elapsedTime << " milliseconds" << std::endl;
 		SGE::Material material = m_driver.getMaterialLibrary().createMaterial(shader, "Untittled");
 		material.set<vec4_t>("parameters.color", vec4(1.0f, 1.0f, 1.0f, 1.0f));
 		if(geometry.isArray())
