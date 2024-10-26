@@ -118,7 +118,7 @@ namespace SUTK
 		void updateSDFParameterValues(const Geometry& geometry, SGE::Material material) noexcept;
 
 		u64 getGeometryShaderHash(const Geometry& geometry) const noexcept;
-		void u64ToString(u64 hash, std::array<char, 16>& buffer) const noexcept;
+		void u64ToString(u64 hash, std::array<char, 17>& buffer) const noexcept;
 
 		u32 getFontBaselineHeightInPixels(SGE::Font font, f32 pointSize) noexcept;
 		f32 getFontBaselineHeightInCentimeters(SGE::Font font, f32 pointSize) noexcept;

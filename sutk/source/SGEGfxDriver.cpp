@@ -703,7 +703,7 @@ namespace SUTK
 		return hash;
 	}
 
-	void SGEGfxDriver::u64ToString(u64 hash, std::array<char, 16>& buffer) const noexcept
+	void SGEGfxDriver::u64ToString(u64 hash, std::array<char, 17>& buffer) const noexcept
 	{
 		u8* raw = reinterpret_cast<u8*>(&hash);
 		for(u32 i = 0; i < 8; ++i)
@@ -716,14 +716,15 @@ namespace SUTK
 			_com_assert(buffer[2 * i + 0] != 0);
 			_com_assert(buffer[2 * i + 1] != 0);
 		}
+		buffer[16] = 0;
 	}
 
 	SGE::Shader SGEGfxDriver::compileShader(const Geometry& geometry)
 	{
 		u64 hash = getGeometryShaderHash(geometry);
-		std::array<char, 16> buffer;
+		std::array<char, 17> buffer;
 		u64ToString(hash, buffer);
-		std::string_view hashStr { buffer.data(), buffer.size() };
+		std::string_view hashStr { buffer.data(), buffer.size() - 1 };
 
 		// check if already compiled shader exists
 		SGE::Shader shader = m_driver.getShaderLibrary().getShader(hashStr);
