@@ -22,9 +22,10 @@ namespace SGE
 			return Shader(shader);
 		}
 
-		Shader compileAndLoadShader(const std::string_view source, const std::string& name) const noexcept
+		// name: should be null-terminated
+		Shader compileAndLoadShader(const std::string_view source, const std::string_view name) const noexcept
 		{
-			auto handle = shader_library_compile_and_load_shader(m_handle, source.data(), name.c_str());
+			auto handle = shader_library_compile_and_load_shader(m_handle, source.data(), name.data());
 			shader_t* shader = shader_library_getH(m_handle, handle);
 			return Shader(shader);
 		}
@@ -36,9 +37,15 @@ namespace SGE
 			return Shader(shader);
 		}
 
-		Shader getShader(const std::string& name) noexcept
+		Shader getShader(const std::string& name) noexcept 
 		{
-			shader_handle_t handle = shader_library_get_handle(m_handle, name.c_str());
+			return getShader(static_cast<const std::string_view>(name));
+		}
+
+		// name: should be null-terminated
+		Shader getShader(const std::string_view name) noexcept
+		{
+			shader_handle_t handle = shader_library_get_handle(m_handle, name.data());
 			if(handle == SHADER_HANDLE_INVALID)
 				return Shader { };
 			else
