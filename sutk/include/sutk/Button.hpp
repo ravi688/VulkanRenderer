@@ -53,7 +53,7 @@ namespace SUTK
 		virtual void setGraphic(IButtonGraphic* graphic) noexcept;
 		IButtonGraphic* getGraphic() noexcept { return m_graphic; }
 		template<typename T> requires (std::derived_from<T, IButtonGraphic>)
-		T* getGraphicAs() noexcept { return com::iknow_down_cast<T*>(getGraphic()); }
+		T* getGraphicAs() noexcept { return dynamic_cast<T*>(getGraphic()); }
 
 		bool hasOnEnterEvent() noexcept { return m_onEnterEvent != NULL; }
 		bool hasOnExitEvent() noexcept { return m_onExitEvent != NULL; }
