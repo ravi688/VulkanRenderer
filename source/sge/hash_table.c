@@ -107,7 +107,7 @@ static bool is_equal(void* lhs, void* rhs)
 	return pair->first->is_equal(CAST_TO(void*, DREF_TO(u8*, (void**)lhs)), pair->second);
 }
 
-SGE_API void hash_table_add(hash_table_t* table, void* key, void* value)
+SGE_API void* hash_table_add_get(hash_table_t* table, void* key, void* value)
 {	/* get handle to the bucket */
 	sub_buffer_handle_t bucket_handle = get_bucket_handle(table, key);
 
@@ -116,13 +116,19 @@ SGE_API void hash_table_add(hash_table_t* table, void* key, void* value)
 	if(sub_buffer_find_index_of(&table->buffer, bucket_handle, &pair, is_equal) != BUF_INVALID_INDEX)
 	{
 		debug_log_warning("Failed to add key value pair as a key with the same hash already exists in the hash table");
-		return;
+		return NULL;
 	}
 
 	/* create key value pair in the heap memory */
 	void* key_value_pair = create_key_value_pair(table, key, value);
 	/* add the key value pair into the bucket */
 	sub_buffer_push(&table->buffer, bucket_handle, &key_value_pair);
+	return key_value_pair + table->key_size;
+}
+
+SGE_API void hash_table_add(hash_table_t* table, void* key, void* value)
+{
+	hash_table_add_get(table, key, value);
 }
 
 static void** __hash_table_get_value(hash_table_t* table, void* key)

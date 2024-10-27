@@ -78,6 +78,7 @@
 #include <sge/tests/TID-48.case5.h>
 
 #include <sge/tests/transparent_queue.h>
+#include <sge/tests/shader_cache.h>
 
 SGE_API test_t* test_new(memory_allocator_t* allocator)
 {
@@ -132,6 +133,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 	ELSE_IF(TID_48_CASE_4);
 	ELSE_IF(TID_48_CASE_5);
 	ELSE_IF(TRANSPARENT_QUEUE);
+	ELSE_IF(SHADER_CACHE);
 	else
 	{
 		printf 	(
@@ -174,6 +176,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 					"\tTID_48_CASE_4\n"
 					"\tTID_48_CASE_5\n"
 					"\tTRANSPARENT_QUEUE\n"
+					"\tSHADER_CACHE\n"
 				);
 		exit(0);
 	}

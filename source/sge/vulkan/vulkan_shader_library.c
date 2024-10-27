@@ -30,7 +30,6 @@
 #include <sge/memory_allocator.h>
 #include <sge/alloc.h>
 #include <sge/debug.h>
-#include <sge/sge.h>
 #include <string.h>
 
 /* constructors & destructors */
@@ -139,25 +138,9 @@ SGE_API vulkan_shader_handle_t vulkan_shader_library_load_shader(vulkan_shader_l
 	return vulkan_shader_library_add(library, vulkan_shader_load(library->renderer, load_info), shader_name);
 }
 
-static buffer_t* load_file(const char* file_path, void* user_data)
-{
-	AUTO renderer = CAST_TO(vulkan_renderer_t*, user_data);
-	const char* source_str = renderer_get_builtin_file_data(renderer->renderer, file_path, NULL);
-	buffer_t* buffer = memory_allocator_BUFcreate_r(renderer->allocator, NULL, CAST_TO(void*, source_str), sizeof(char), strlen(source_str) + 1, 0);
-	return buffer;
-}
-
-static void close_file(buffer_t* data, void* user_data)
-{
-	buf_free(data);
-}
-
 SGE_API vulkan_shader_handle_t vulkan_shader_library_compile_and_load_shader(vulkan_shader_library_t* library, const char* source, const char* shader_name)
 {
-	source = memory_allocator_duplicate_str(library->renderer->allocator, source);
-	AUTO handle = vulkan_shader_library_add(library, vulkan_shader_compile_and_load(library->renderer, source, load_file, close_file, CAST_TO(void*, library->renderer)), shader_name);
-	memory_allocator_dealloc(library->renderer->allocator, CAST_TO(void*, source));
-	return handle;
+	return vulkan_shader_library_add(library, vulkan_shader_compile_and_load(library->renderer, source), shader_name);
 }
 
 static bool vulkan_shader_library_remove(vulkan_shader_library_t* library, const char* vulkan_shader_name)

@@ -62,6 +62,8 @@ SGE_API void hash_table_free(hash_table_t* table);
 
 /* clears the hash table and ready to be used again */
 SGE_API void hash_table_clear(hash_table_t* table);
+/* adds a key value pair and returns pointer to the value */
+SGE_API void* hash_table_add_get(hash_table_t* table, void* key, void* value);
 /* adds a key value pair */
 SGE_API void hash_table_add(hash_table_t* table, void* key, void* value);
 /* removes a key value pair, returns true if success otherwise false (not found) */

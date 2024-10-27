@@ -96,6 +96,8 @@ typedef struct sge_driver_create_info_t
 	u32 max_far_lights;
 } sge_driver_create_info_t;
 
+typedef struct shader_cache_t shader_cache_t;
+
 typedef struct renderer_t
 {
 	union
@@ -119,9 +121,7 @@ typedef struct renderer_t
 	id_generator_t idgen;
 	IF_DEBUG(string_builder_t* debug_log_builder;)
 	FT_Library ft_library;
-	// shader_library_t* shader_library;
-	// material_library_t* material_library;
-	// render_pass_pool_t* render_pass_pool;
+	shader_cache_t* shader_cache;
 } renderer_t;
 
 BEGIN_CPP_COMPATIBLE
@@ -148,6 +148,9 @@ SGE_API void renderer_begin_frame(renderer_t* renderer);
 SGE_API void renderer_end_frame(renderer_t* renderer);
 
 SGE_API void renderer_wait_idle(renderer_t* renderer);
+
+/* setters */
+SGE_API void renderer_set_shader_cache_path(renderer_t* renderer, const char* path);
 
 /* getters */
 SGE_API const char* renderer_get_builtin_file_data(renderer_t* renderer, const char* virtual_file_path, u64 OUT data_size);

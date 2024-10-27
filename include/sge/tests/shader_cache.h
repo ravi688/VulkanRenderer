@@ -5,7 +5,7 @@
 	such as toolchains written by the same author) is a software to render 
 	2D & 3D geometries by writing C/C++ code and shaders.
 
-	File: hash_function.h is a part of VulkanRenderer
+	File: text_mesh.h is a part of VulkanRenderer
 
 	Copyright (C) 2021 - 2024  Author: Ravi Prakash Singh
 
@@ -23,29 +23,14 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
+
 #pragma once
 
-#include <sge/defines.h>
 
-typedef u64 hash_t;
-typedef hash_t (*hash_function_t)(void* key);
+#include <sge/test.h>
 
 BEGIN_CPP_COMPATIBLE
 
-/* WARNING: this only works for string's having length upto 2^16 - 1 characters. Use large_string_hash instead. */
-SGE_API hash_t string_hash(void* v);
-SGE_API hash_t large_string_hash(void* v);
-SGE_API hash_t ptr_hash(void* v);
-SGE_API hash_t s8_hash(void* v);
-#define char_hash(void_ptr) s8_hash(void_ptr)
-SGE_API hash_t s16_hash(void* v);
-SGE_API hash_t s32_hash(void* v);
-SGE_API hash_t s64_hash(void* v);
-SGE_API hash_t u8_hash(void* v);
-SGE_API hash_t u16_hash(void* v);
-SGE_API hash_t u32_hash(void* v);
-SGE_API hash_t u64_hash(void* v);
-SGE_API hash_t float_hash(void* v);
-SGE_API hash_t double_hash(void* v);
+TEST_DECLARE(SHADER_CACHE);
 
 END_CPP_COMPATIBLE

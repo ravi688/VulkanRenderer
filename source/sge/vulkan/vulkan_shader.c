@@ -47,6 +47,7 @@
 #include <sge/alloc.h>
 #include <sge/dictionary.h>
 #include <sge/render_window.h>
+#include <sge/sge.h>
 
 #include <shader_compiler/compiler/compiler.h> /* for sc_compile() and udat_layout_t */
 
@@ -2241,15 +2242,25 @@ SGE_API vulkan_shader_t* vulkan_shader_load(vulkan_renderer_t* renderer, vulkan_
 	return shader;
 }
 
-SGE_API vulkan_shader_t* vulkan_shader_compile_and_load(vulkan_renderer_t* renderer, const char* source, sc_file_load_callback_t file_load_callback, sc_file_close_callback_t file_close_callback, void* user_data)
+SGE_API bool vulkan_shader_compile_v(vulkan_renderer_t* renderer, 
+									const char* source, 
+									sc_file_load_callback_t file_load_callback, 
+									sc_file_close_callback_t file_close_callback, 
+									void* user_data1, 
+									void (*callback)(const void* sb_bytes, u32 sb_size, const char* log, void* user_data), 
+									void* user_data2)
 {
+	/* this is needed as vulkan_shader_compile_and_load calls sc_compile down the call hierarchy which in turn calls remove_comments() causing the original 'source' string to be modified if passed as it is.
+	* therefore, we create a duplicate of the original source string and pass the duplicate one. */
+	source = memory_allocator_duplicate_str(renderer->allocator, source);
+
 	/* prepare input data */
 	const char* include_path = "/";
 	sc_compiler_input_t input = 
 	{
 		.file_load_callback = file_load_callback,
 		.file_close_callback = file_close_callback,
-		.user_data = user_data,
+		.user_data = user_data1,
 		.src = source,
 		.src_len = strlen(source),
 		.src_path = "",
@@ -2261,26 +2272,80 @@ SGE_API vulkan_shader_t* vulkan_shader_compile_and_load(vulkan_renderer_t* rende
 	/* compile the source string */
 	sc_compiler_output_t output = sc_compile(&input, NULL);
 
-	vulkan_shader_t* shader = NULL;
 	/* if compilation has been successful then proceed to create vulkan_shader_t object */
 	if(output.is_success)
-	{
-		vulkan_shader_load_info_t load_info = 
-		{
-			.data = output.sb_bytes,
-			.data_size = output.sb_byte_count,
-			.is_vertex_attrib_from_file = true
-		};
-		shader = vulkan_shader_load(renderer, &load_info);
-	}
-	/* otherwise issue an error what gone wrong and return NULL value */
+		callback(output.sb_bytes, output.sb_byte_count, output.log, user_data2);
 	else
-		debug_log_error("Failed to compile source string, Reason: %s", output.log);
+		callback(NULL, 0, output.log, user_data2);
 
+	/* we need to backup the value of is_success field, who knows the sc_compiler_output_destroy modifies it? */
+	bool is_success = output.is_success;
 	/* free up any memory allocated by the v3d shader compiler (vsc) */
 	sc_compiler_output_destroy(&output, NULL);
+	memory_allocator_dealloc(renderer->allocator, CAST_TO(void*, source));
 
+	return is_success;
+}
+
+static buffer_t* load_file(const char* file_path, void* user_data)
+{
+	AUTO renderer = CAST_TO(vulkan_renderer_t*, user_data);
+	const char* source_str = renderer_get_builtin_file_data(renderer->renderer, file_path, NULL);
+	buffer_t* buffer = memory_allocator_BUFcreate_r(renderer->allocator, NULL, CAST_TO(void*, source_str), sizeof(char), strlen(source_str) + 1, 0);
+	return buffer;
+}
+
+static void close_file(buffer_t* data, void* user_data)
+{
+	buf_free(data);
+}
+
+SGE_API bool vulkan_shader_compile(vulkan_renderer_t* renderer,
+									const char* source,
+									void (*callback)(const void* sb_bytes, u32 sb_size, const char* log, void* user_data),
+									void* user_data)
+{
+	return vulkan_shader_compile_v(renderer, source, load_file, close_file, CAST_TO(void*, renderer), callback, user_data);
+}
+
+typedef struct load_shader_user_data_t
+{
+	vulkan_renderer_t* renderer;
+	vulkan_shader_t** shader_ptr;
+} load_shader_user_data_t;
+
+static void load_shader(const void* sb_bytes, u32 sb_size, const char* log, void* user_data)
+{
+	if(!sb_bytes)
+	{
+		debug_log_error("Failed to compile source string, Reason: %s", log);
+		return;
+	}
+	vulkan_shader_load_info_t load_info = 
+	{
+		.data = sb_bytes,
+		.data_size = sb_size,
+		.is_vertex_attrib_from_file = true
+	};
+	load_shader_user_data_t* ud = CAST_TO(load_shader_user_data_t*, user_data);
+	*(ud->shader_ptr) = vulkan_shader_load(ud->renderer, &load_info);
+}
+
+SGE_API vulkan_shader_t* vulkan_shader_compile_and_load_v(vulkan_renderer_t* renderer, const char* source, sc_file_load_callback_t file_load_callback, sc_file_close_callback_t file_close_callback, void* user_data)
+{
+	vulkan_shader_t* shader = NULL;
+	load_shader_user_data_t ud = 
+	{
+		.renderer = renderer,
+		.shader_ptr = &shader
+	};
+	vulkan_shader_compile_v(renderer, source, file_load_callback, file_close_callback, user_data, load_shader, &ud);
 	return shader;
+}
+
+SGE_API vulkan_shader_t* vulkan_shader_compile_and_load(vulkan_renderer_t* renderer, const char* source)
+{
+	return vulkan_shader_compile_and_load_v(renderer, source, load_file, close_file, CAST_TO(void*, renderer));
 }
 
 SGE_API void vulkan_shader_destroy(vulkan_shader_t* shader)

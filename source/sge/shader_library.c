@@ -41,6 +41,8 @@
 #include <sge/internal/vulkan/vulkan_mesh.h>
 #include <sge/glsl_memory_layout.h>
 #include <sge/alloc.h>
+#include <sge/hash_function.h>
+#include <sge/shader_cache.h>
 
 #include <disk_manager/file_reader.h>
 #include <string.h> 		// strcpy
@@ -985,6 +987,119 @@ SGE_API shader_handle_t shader_library_load_shader(shader_library_t* library, co
 SGE_API shader_handle_t shader_library_compile_and_load_shader(shader_library_t* library, const char* source, const char* shader_name)
 {
 	return vulkan_shader_library_compile_and_load_shader(library, source, shader_name);
+}
+
+SGE_API shader_handle_t shader_library_compile_and_load_shader_f(shader_library_t* library, const char* file_path, const char* shader_name)
+{
+	buffer_t* data = load_text_from_file(file_path);
+	if(!data)
+		return SHADER_HANDLE_INVALID;
+	shader_handle_t handle = shader_library_compile_and_load_shader(library, CAST_TO(const char*, buf_get_ptr(data)), shader_name);
+	buf_free(data);
+	return handle;
+}
+
+static u64 v3d_source_hash_function(const char* source, const char* name)
+{
+	u64 hash1 = large_string_hash(&source);
+	u64 hash2 = string_hash(&name);
+	return hash1 ^ hash2;
+}
+
+typedef struct shader_compile_user_data_t
+{
+	shader_library_t* library;
+	shader_handle_t* handle_ptr;
+	u64 hash;
+	shader_cache_flags_t flags;
+	const char* shader_name;
+} shader_compile_user_data_t;
+
+static void load_shader_and_add_entry(const void* sb_bytes, u32 sb_size, const char* log, void* user_data)
+{
+	if(!sb_bytes)
+	{
+		debug_log_error("Failed to compile source string, Reason: %s", log);
+		return;
+	}
+
+	AUTO ud = CAST_TO(shader_compile_user_data_t*, user_data);
+
+	/* load the shader binary */
+	vulkan_shader_load_info_t load_info = 
+	{
+		.data = sb_bytes,
+		.data_size = sb_size,
+		.is_vertex_attrib_from_file = true
+	};
+	shader_handle_t handle = vulkan_shader_library_load_shader(ud->library, &load_info, ud->shader_name);
+
+	/* if load is successful it into the shader cache */
+	if(handle != SHADER_HANDLE_INVALID)
+	{
+		*(ud->handle_ptr) = handle;
+		if(HAS_FLAG(ud->flags, SHADER_CACHE_WRITE_BIT))
+		{
+			com_immutable_data_t data = 
+			{
+				.bytes = sb_bytes,
+				.size = sb_size
+			};
+			bool result = shader_cache_try_add(RENDERER(ud->library->renderer)->shader_cache, ud->hash, data);
+			_com_assert(result);
+		}
+	}
+}
+
+SGE_API shader_handle_t shader_library_compile_and_load_shader_sc(shader_library_t* library, const char* source, const char* shader_name, shader_cache_flags_t flags, u64 (*hash_function)(const char*, const char*, void*), void* user_data)
+{
+	if(!HAS_FLAG(flags, SHADER_CACHE_LOOKUP_BIT))
+		return shader_library_compile_and_load_shader(library, source, shader_name);
+
+	/* get the hash of the source */
+	u64 hash = hash_function ? hash_function(source, shader_name, user_data) : v3d_source_hash_function(source, shader_name);
+
+	/* if no entry exists of the hash the compile the source to shader binary and add it into shader cache. */
+	AUTO handle = shader_library_load_cached_shader(library, hash, shader_name);
+	if(handle == SHADER_HANDLE_INVALID)
+	{
+		shader_compile_user_data_t ud = 
+		{
+			.library = library,
+			.handle_ptr = &handle,
+			.hash = hash,
+			.flags = flags,
+			.shader_name = shader_name
+		};
+		vulkan_shader_compile(library->renderer, source, load_shader_and_add_entry, &ud);
+	}
+	return handle;
+}
+
+SGE_API shader_handle_t shader_library_compile_and_load_shader_scf(shader_library_t* library, const char* file_path, const char* shader_name, shader_cache_flags_t flags, u64 (*hash_function)(const char*, const char*, void*), void* user_data)
+{
+	buffer_t* data = load_text_from_file(file_path);
+	if(!data)
+		return SHADER_HANDLE_INVALID;
+	shader_handle_t handle = shader_library_compile_and_load_shader_sc(library, CAST_TO(const char*, buf_get_ptr(data)), shader_name, flags, hash_function, user_data);
+	buf_free(data);
+	return handle;
+}
+
+SGE_API shader_handle_t shader_library_load_cached_shader(shader_library_t* library, u64 hash, const char* shader_name)
+{
+	com_readonly_data_t data;
+	if(shader_cache_try_get(RENDERER(library->renderer)->shader_cache, hash, &data))
+	{
+		vulkan_shader_load_info_t load_info = 
+		{
+			.data = data.bytes,
+			.data_size = data.size,
+			.is_vertex_attrib_from_file = true
+		};
+		return vulkan_shader_library_load_shader(library, &load_info, shader_name);
+	}
+	return SHADER_HANDLE_INVALID;
 }
 
 SGE_API bool shader_library_destroy_shader(shader_library_t* library, const char* shader_name)

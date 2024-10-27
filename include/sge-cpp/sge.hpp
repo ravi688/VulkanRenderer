@@ -61,6 +61,12 @@ namespace SGE
 		void endFrame() { renderer_end_frame(m_handle); }
 		void waitIdle() { renderer_wait_idle(m_handle); }
 
+		// shaderCachePath: must be null-terminated
+		void setShaderCachePath(const std::string_view shaderCachePath) noexcept
+		{
+			renderer_set_shader_cache_path(m_handle, shaderCachePath.data());
+		}
+
 		const std::pair<std::string_view, u64> getBuiltinFileData(const std::string_view virtualFilePath) const noexcept
 		{
 			u64 data_size = 0;

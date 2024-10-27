@@ -91,6 +91,12 @@ typedef enum shader_library_shader_preset_t
 	SHADER_LIBRARY_SHADER_PRESET_BUMPED_SPECULAR_OVERLAY
 } shader_library_shader_preset_t;
 
+typedef enum shader_cache_flags_t
+{
+	SHADER_CACHE_LOOKUP_BIT = BIT8(0),
+	SHADER_CACHE_WRITE_BIT = BIT8(1)
+} shader_cache_flags_t;
+
 BEGIN_CPP_COMPATIBLE
 
 /* constructors & destructors */
@@ -133,13 +139,30 @@ SGE_API shader_handle_t shader_library_load_shader(shader_library_t* library, co
 	description: compiles .v3dshader source and creates a shader from that with identification name 'shader_name'
 	params:
 		library: ptr to the shader_library_t object
-		source: file path to load from
+		source: .v3dshader shader source string
 		shader_name: identification name of the created shader
 	returns:
 		shader_handle_t, handle to the newly created shader
 		SHADER_HANDLE_INVALID, if the shader creation failed
  */
 SGE_API shader_handle_t shader_library_compile_and_load_shader(shader_library_t* library, const char* source, const char* shader_name);
+
+/*
+	description: compiles .v3dshader source and creates a shader from that with identification name 'shader_name'
+	params:
+		library: ptr to the shader_library_t object
+		source: path to a file containing .v3dshader source
+		shader_name: identification name of the created shader
+	returns:
+		shader_handle_t, handle to the newly created shader
+		SHADER_HANDLE_INVALID, if the shader creation failed
+ */
+SGE_API shader_handle_t shader_library_compile_and_load_shader_f(shader_library_t* library, const char* file_path, const char* shader_name);
+
+SGE_API shader_handle_t shader_library_compile_and_load_shader_sc(shader_library_t* library, const char* source, const char* shader_name, shader_cache_flags_t flags, u64 (*hash_function)(const char*, const char*, void*), void* user_data);
+SGE_API shader_handle_t shader_library_compile_and_load_shader_scf(shader_library_t* library, const char* file_path, const char* shader_name, shader_cache_flags_t flags, u64 (*hash_function)(const char*, const char*, void*), void* user_data);
+
+SGE_API shader_handle_t shader_library_load_cached_shader(shader_library_t* library, u64 hash, const char* shader_name);
 
 /*
 	description: destroys a shader with identification name as 'shader_name'

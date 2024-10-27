@@ -32,10 +32,13 @@
 #include <sge/material_library.h>
 #include <sge/render_pass_pool.h>
 #include <sge/string_builder.h>
+#include <sge/shader_cache.h>
 
 #include <freetype/freetype.h>
 
 #include <sge/pygen/shaders.h>
+
+#define SHADER_CACHE_DEFAULT_PATH "./shader_cache.sc"
 
 static void* allocate(void* user_data, u32 size, u32 align)
 {
@@ -80,6 +83,9 @@ SGE_API renderer_t* renderer_init(memory_allocator_t* allocator, sge_driver_crea
 	if(error != 0)
 		debug_log_error("Failed to initialize free type library");
 
+	renderer->shader_cache = shader_cache_create(renderer->allocator);
+	shader_cache_set_path(renderer->shader_cache, SHADER_CACHE_DEFAULT_PATH);
+
 	// create the renderer
 	vulkan_renderer_create_info_t create_info = 
 	{
@@ -104,6 +110,8 @@ SGE_API void renderer_terminate(renderer_t* renderer)
 {
 	// terminate the renderer
 	vulkan_renderer_destroy(renderer->vulkan_handle);
+
+	shader_cache_destroy(renderer->shader_cache);
 
 	/* destroy free type library context */
 	FT_Done_FreeType(renderer->ft_library);
@@ -137,6 +145,11 @@ SGE_API void renderer_end_frame(renderer_t* renderer)
 SGE_API void renderer_wait_idle(renderer_t* renderer)
 {
 	vulkan_renderer_wait_idle(renderer->vulkan_handle);
+}
+
+SGE_API void renderer_set_shader_cache_path(renderer_t* renderer, const char* path)
+{
+	shader_cache_set_path(renderer->shader_cache, path);
 }
 
 /* getters */

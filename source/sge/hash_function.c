@@ -42,6 +42,21 @@ SGE_API hash_t string_hash(void* v)
 	return CAST_TO(hash_t, BIT64_PACK32(BIT32_PACK16(hash1, hash2), hash3));
 }
 
+SGE_API hash_t large_string_hash(void* v)
+{
+	const char* str = DEREF_TO(const char*, v);
+	u32 _dbg_hash = strlen(str);
+	u16 hash1 = CAST_TO(u16, _dbg_hash % U16_MAX);
+	u16 hash2 = CAST_TO(u16, _dbg_hash >> 2);
+	u32 hash3 = 0;
+	for(u16 i = 0; i < hash1; i++)
+	{
+		hash2 ^= CAST_TO(u16, str[i]);
+		hash3 += str[i];
+	}
+	return CAST_TO(hash_t, BIT64_PACK32(BIT32_PACK16(hash1, hash2), hash3));
+}
+
 SGE_API hash_t ptr_hash(void* v)
 {
 	return CAST_TO(hash_t, CAST_TO(u64, DREF_TO(char* const, v)));
