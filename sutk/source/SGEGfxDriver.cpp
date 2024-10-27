@@ -731,6 +731,10 @@ namespace SUTK
 		if(shader)
 			return shader;
 
+		shader = m_driver.getShaderLibrary().loadCachedShader(hash, hashStr);
+		if(shader)
+			return shader;
+
 		// otherwise derive .v3dshader shader source and compile it
 		if(geometry.isSDF())
 		{
@@ -765,14 +769,14 @@ namespace SUTK
 			_com_assert(geometry.getSDF().getCode().size() > 0);
 			str.insert(pos, geometry.getSDF().getCode());
 
-			return m_driver.getShaderLibrary().compileAndLoadShader(str, hashStr);
+			return m_driver.getShaderLibrary().compileAndLoadShader(str, hashStr, SHADER_CACHE_WRITE_BIT, hash);
 		}
 		else if(geometry.isArray())
-			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color_rect_array.v3dshader").first, hashStr);
+			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color_rect_array.v3dshader").first, hashStr, SHADER_CACHE_WRITE_BIT, hash);
 		else if(geometry.isFillImage())
-			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/image_rect.v3dshader").first, hashStr);
+			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/image_rect.v3dshader").first, hashStr, SHADER_CACHE_WRITE_BIT, hash);
 		else
-			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first, hashStr);
+			return m_driver.getShaderLibrary().compileAndLoadShader(m_driver.getBuiltinFileData("/solid_color.v3dshader").first, hashStr, SHADER_CACHE_WRITE_BIT, hash);
 	}
 
 	static INLINE_IF_RELEASE_MODE vec2_t to_vec2(const Vec2D<f32> value)
