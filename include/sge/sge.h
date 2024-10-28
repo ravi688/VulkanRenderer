@@ -147,8 +147,10 @@ SGE_API void renderer_begin_frame(renderer_t* renderer);
  */
 SGE_API void renderer_end_frame(renderer_t* renderer);
 
-SGE_API void renderer_wait_idle(renderer_t* renderer);
+SGE_API void renderer_dispatch_frame(renderer_t* renderer);
 
+SGE_API void renderer_wait_idle(renderer_t* renderer);
+SGE_API void renderer_poll_events(renderer_t* renderer);
 /* setters */
 SGE_API void renderer_set_shader_cache_path(renderer_t* renderer, const char* path);
 

@@ -745,7 +745,7 @@ SGE_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer)
 	vulkan_command_buffer_end(renderer->vo_command_buffers[current_frame_index]);
 }
 
-SGE_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
+SGE_API void vulkan_renderer_dispatch_frame(vulkan_renderer_t* renderer)
 {
 	u32 current_frame_index = renderer->current_frame_index;
 	VkCommandBuffer cb = renderer->vo_command_buffers[current_frame_index];
@@ -765,7 +765,6 @@ SGE_API void vulkan_renderer_update(vulkan_renderer_t* renderer)
 						renderer->swapchain->vo_handle,
 						renderer->swapchain->current_image_index,
 						renderer->render_present_sync_primitives.vo_render_finished_semaphores[current_frame_index]);
-	render_window_poll_events(renderer->window);
 	renderer->current_frame_index = (1u + renderer->current_frame_index) % renderer->max_frames_in_flight;
 }
 

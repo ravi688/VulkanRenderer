@@ -55,11 +55,13 @@ namespace SGE
 				com::OptionalReference<const Requirements> requirements = { });
 		~Driver();
 
-		void update() { renderer_update(m_handle); }
-		bool isRunning() { return renderer_is_running(m_handle); }
-		void beginFrame() { renderer_begin_frame(m_handle); }
-		void endFrame() { renderer_end_frame(m_handle); }
-		void waitIdle() { renderer_wait_idle(m_handle); }
+		void update() noexcept { renderer_update(m_handle); }
+		bool isRunning() noexcept { return renderer_is_running(m_handle); }
+		void beginFrame() noexcept { renderer_begin_frame(m_handle); }
+		void endFrame() noexcept { renderer_end_frame(m_handle); }
+		void dispatchFrame() noexcept { renderer_dispatch_frame(m_handle); }
+		void waitIdle() noexcept { renderer_wait_idle(m_handle); }
+		void pollEvents() noexcept { renderer_poll_events(m_handle); }
 
 		// shaderCachePath: must be null-terminated
 		void setShaderCachePath(const std::string_view shaderCachePath) noexcept

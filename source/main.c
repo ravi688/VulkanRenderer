@@ -171,7 +171,9 @@ int main(int argc, const char** argv)
 		/* dispatch command buffers for this frame for execution 
 		 * NOTE: if frame pipelining is disabled while creating the driver then call to renderer_update will block the execution
 		 * on host until rendering commands for this frame finish their execution */
-		renderer_update(driver);
+		renderer_dispatch_frame(driver);
+
+		renderer_poll_events(driver);
 	}
 
 	/* we need to wait for the device to finish any pending tasks, so that all the resources/objects will be unreferenced

@@ -33,6 +33,7 @@
 #include <sge/render_pass_pool.h>
 #include <sge/string_builder.h>
 #include <sge/shader_cache.h>
+#include <sge/render_window.h>
 
 #include <freetype/freetype.h>
 
@@ -123,7 +124,8 @@ SGE_API void renderer_terminate(renderer_t* renderer)
 
 SGE_API void renderer_update(renderer_t* renderer)
 {
-	vulkan_renderer_update(renderer->vulkan_handle);
+	vulkan_renderer_dispatch_frame(renderer->vulkan_handle);
+	renderer_poll_events(renderer);
 }
 
 SGE_API bool renderer_is_running(renderer_t* renderer)
@@ -142,9 +144,19 @@ SGE_API void renderer_end_frame(renderer_t* renderer)
 	vulkan_renderer_end_frame(renderer->vulkan_handle);
 }
 
+SGE_API void renderer_dispatch_frame(renderer_t* renderer)
+{
+	vulkan_renderer_dispatch_frame(renderer->vulkan_handle);
+}
+
 SGE_API void renderer_wait_idle(renderer_t* renderer)
 {
 	vulkan_renderer_wait_idle(renderer->vulkan_handle);
+}
+
+SGE_API void renderer_poll_events(renderer_t* renderer)
+{
+	render_window_poll_events(renderer->vulkan_handle->window);
 }
 
 SGE_API void renderer_set_shader_cache_path(renderer_t* renderer, const char* path)

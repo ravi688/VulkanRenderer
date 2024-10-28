@@ -197,16 +197,14 @@ BEGIN_CPP_COMPATIBLE
 SGE_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t* create_info);
 SGE_API void vulkan_renderer_destroy(vulkan_renderer_t* renderer);
 
-/* submits the recorded command buffer to the graphics queue and performs presentation */
-SGE_API void vulkan_renderer_update(vulkan_renderer_t* renderer);
-
 SGE_API bool vulkan_renderer_is_running(vulkan_renderer_t* renderer);
 
 /* begins the command buffer recording */
 SGE_API void vulkan_renderer_begin_frame(vulkan_renderer_t* renderer);
 /* ends the command buffer recording */
 SGE_API void vulkan_renderer_end_frame(vulkan_renderer_t* renderer);
-
+/* submits the recorded command buffer to the graphics queue and performs presentation */
+SGE_API void vulkan_renderer_dispatch_frame(vulkan_renderer_t* renderer);
 SGE_API void vulkan_renderer_wait_idle(vulkan_renderer_t* renderer);
 
 SGE_API render_window_t* vulkan_renderer_get_window(vulkan_renderer_t* renderer);
