@@ -47,7 +47,14 @@ namespace SUTK
 		// add the camera to the scene 
 		m_scene.addCamera(camera);
 
-		m_shader = shaderLibrary.compileAndLoadShader(driver.getBuiltinFileData("/bitmap_text_shader.v3dshader").first, "BitmapShader");
+		std::string_view source = driver.getBuiltinFileData("/bitmap_text_shader.v3dshader").first;
+		double elapsedTime;
+		SGE::Shader shader;
+		{
+			com::TimeTaken<double> _(elapsedTime);
+			m_shader = shaderLibrary.compileAndLoadShader(source, "BitmapShader", SHADER_CACHE_WRITE_BIT | SHADER_CACHE_LOOKUP_BIT, std::hash<std::string_view> { } (source));
+		}
+		std::cout << "Time taken to bitmap Shader: " << elapsedTime << " milliseconds" << std::endl;
 
 		SGE::BitmapGlyphAtlasTexture::CreateInfo createInfo =
 		{
