@@ -1053,14 +1053,14 @@ static void load_shader_and_add_entry(const void* sb_bytes, u32 sb_size, const c
 
 SGE_API shader_handle_t shader_library_compile_and_load_shader_sc(shader_library_t* library, const char* source, const char* shader_name, shader_cache_flags_t flags, u64 (*hash_function)(const char*, const char*, void*), void* user_data)
 {
-	if(!HAS_FLAG(flags, SHADER_CACHE_LOOKUP_BIT))
+	if(!flags)
 		return shader_library_compile_and_load_shader(library, source, shader_name);
 
 	/* get the hash of the source */
 	u64 hash = hash_function ? hash_function(source, shader_name, user_data) : v3d_source_hash_function(source, shader_name);
 
 	/* if no entry exists of the hash the compile the source to shader binary and add it into shader cache. */
-	AUTO handle = shader_library_load_cached_shader(library, hash, shader_name);
+	AUTO handle = HAS_FLAG(flags, SHADER_CACHE_LOOKUP_BIT) ? shader_library_load_cached_shader(library, hash, shader_name) : SHADER_HANDLE_INVALID;
 	if(handle == SHADER_HANDLE_INVALID)
 	{
 		shader_compile_user_data_t ud = 
