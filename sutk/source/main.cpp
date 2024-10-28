@@ -32,7 +32,9 @@ int main(int argc, char** argv)
 		driver.endFrame();
 
 		// dispatch the command buffers for execution
-		driver.update();
+		driver.dispatchFrame();
+
+		driver.pollEvents();
 
 		// update the scene
 		auto end = std::chrono::high_resolution_clock::now();

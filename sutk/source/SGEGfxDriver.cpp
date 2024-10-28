@@ -104,7 +104,7 @@ namespace SUTK
 			// end command buffer recording
 			m_driver.endFrame();
 			// dispatch the command buffers for execution on GPU
-			m_driver.update();
+			m_driver.dispatchFrame();
 		}
 	}
 
