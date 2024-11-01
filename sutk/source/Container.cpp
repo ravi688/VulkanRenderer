@@ -146,7 +146,7 @@ namespace SUTK
 		if(parent == NULL)
 			return;
 		auto size = parent->getSize();
-		setRect({ { margins.x, margins.z }, { size.width - margins.y, size.height - margins.w } });
+		setRect({ { margins.x, margins.z }, { size.width - margins.y - margins.x, size.height - margins.w - margins.z } });
 	}
 
 	u32 Container::getDepth() const noexcept
