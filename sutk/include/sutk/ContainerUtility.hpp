@@ -25,6 +25,8 @@ namespace SUTK
 		static void RenderablesSetAlpha(Container* container, f32 alpha) noexcept;
 		// Calls visit() for each found Renderable object recursively
 		static void RenderablesVisit(Container* container, const std::function<void(Renderable*)>& visitor) noexcept;
+		static void ContainersWalkUpUntil(Container* container, const std::function<bool(Container*)>& visitor) noexcept;
+		static GfxDriverObjectHandleType findTextGroupHandle(Container* container) noexcept;
 
 		typedef void (*IInputEventHandlerObjectsVisitor)(std::vector<IInputEventHandlerObject*>& eventHandlerObj);
 

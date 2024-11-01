@@ -5,6 +5,7 @@
 #include <sutk/IColorable.hpp>
 #include <sutk/InputEventHandlerObject.hpp> // for dynamic_cast to work
 #include <sutk/Button.hpp>
+#include <sutk/TextGroupContainer.hpp> // for dynamic_cast to work
 
 namespace SUTK
 {
@@ -77,6 +78,31 @@ namespace SUTK
 		std::vector<Container*>& childs = container->getChilds();
 		for(Container* &child : childs)
 			RenderablesVisit(child, visitor);
+	}
+
+	void ContainerUtility::ContainersWalkUpUntil(Container* container, const std::function<bool(Container*)>& visitor) noexcept
+	{
+		if(container == NULL) return;
+		if(!visitor(container))
+			return;
+		ContainersWalkUpUntil(container->getParent(), visitor);
+	}
+
+	GfxDriverObjectHandleType ContainerUtility::findTextGroupHandle(Container* container) noexcept
+	{
+		GfxDriverObjectHandleType handle = GFX_DRIVER_OBJECT_NULL_HANDLE;
+		ContainerUtility::ContainersWalkUpUntil(container, [&handle](Container* container)
+		{
+			TextGroupContainer* textGroupContainer = dynamic_cast<TextGroupContainer*>(container);
+			if(textGroupContainer)
+			{
+				handle = textGroupContainer->getGfxDriverObjectHandle();
+				// Stop walk up
+				return false;
+			}
+			return true;
+		});
+		return handle;
 	}
 
 	void ContainerUtility::IInputEventHandlerObjectsVisit(Container* container, IInputEventHandlerObjectsVisitor visitor) noexcept

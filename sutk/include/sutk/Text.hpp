@@ -152,6 +152,8 @@ namespace SUTK
 		virtual bool isDirty() override;
 		virtual void update() override;
 
+		virtual void setActive(com::Bool isActive) noexcept override;
+
 		void clear() noexcept;
 
 		void setFont(UIDriver::FontReference font) noexcept;

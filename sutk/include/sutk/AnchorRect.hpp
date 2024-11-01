@@ -42,6 +42,7 @@ namespace SUTK
 		void fitToChildRect() noexcept;
 		void fitToParentRect() noexcept;
 		void moveToCenterOfChild() noexcept;
+		void moveToRightMiddleOfParent() noexcept;
 
 		// setters
 

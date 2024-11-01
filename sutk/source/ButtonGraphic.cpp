@@ -98,6 +98,14 @@ namespace SUTK
 		m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
 	}
 
+	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent) noexcept : DefaultButtonGraphicNoLabel(driver, parent)
+	{
+		m_label = driver.createContainer<Label>(this);
+		// size of the label's rect should be as that of ButtonGraphic's rect
+		m_label->alwaysFitInParent();
+		m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
+	}
+
 	Vec2Df DefaultButtonGraphic::getMinBoundSize() noexcept
 	{
 		f32 xCoord = m_label->getText().getCoordFromColPos(END_OF_LINE);

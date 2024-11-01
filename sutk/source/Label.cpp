@@ -3,6 +3,7 @@
 #include <sutk/SmallText.hpp> // for SUTK::SmallText::setData()
 #include <sutk/TextGroupContainer.hpp> // for SUTK::TextGroupContainer::getTextGroup()
 #include <sutk/TextGroup.hpp> // for SUTK::TextGroup::getGfxDriverObjectHandle()
+#include <sutk/ContainerUtility.hpp> // for SUTK::ContainerUtility::findTextGroupHandle()
 
 namespace SUTK
 {
@@ -13,7 +14,7 @@ namespace SUTK
 		set("New Label");
 	}
 
-	Label::Label(UIDriver& driver, TextGroupContainer* textGroupParent) noexcept : Label(driver, textGroupParent, textGroupParent->getTextGroup()->getGfxDriverObjectHandle())
+	Label::Label(UIDriver& driver, Container* parent) noexcept : Label(driver, parent, ContainerUtility::findTextGroupHandle(parent))
 	{
 
 	}

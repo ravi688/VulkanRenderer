@@ -9,6 +9,11 @@ namespace SUTK
 		setRenderable(textGroup);
 	}
 
+	GfxDriverObjectHandleType TextGroupContainer::getGfxDriverObjectHandle() noexcept
+	{
+		return getTextGroup()->getGfxDriverObjectHandle();
+	}
+
  	TextGroup* TextGroupContainer::getTextGroup() noexcept
  	{ 
  		return com::iknow_down_cast<TextGroup*>(getRenderable()); 

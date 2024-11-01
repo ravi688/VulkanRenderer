@@ -37,7 +37,8 @@ namespace SUTK
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 
 	public:
-		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
+		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic, GfxDriverObjectHandleType textGroup) noexcept;
+		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true) noexcept;
 		virtual ~Button() noexcept;
 
 		// Override of onMouseMove function

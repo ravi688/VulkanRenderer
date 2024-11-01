@@ -17,6 +17,19 @@ namespace SUTK
 			setGraphic(driver.createContainer<DefaultButtonGraphic>(this, textGroup));
 	}
 
+	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic) noexcept : Container(driver, parent),
+																									MouseMoveHandlerObject(driver, this),
+																									MouseClickHandlerObject(driver, this),
+																									m_graphic(NULL),
+																									m_onEnterEvent(NULL),
+																									m_onExitEvent(NULL),
+																									m_onPressEvent(NULL),
+																									m_onReleaseEvent(NULL)
+	{ 
+		if(isCreateDefaultGraphic)
+			setGraphic(driver.createContainer<DefaultButtonGraphic>(this));
+	}
+
 	Button::~Button() noexcept
 	{
 		if(!m_onEnterEvent)

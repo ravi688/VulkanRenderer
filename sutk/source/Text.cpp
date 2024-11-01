@@ -167,6 +167,13 @@ namespace SUTK
 		return { maxWidth, height };
 	}
 
+	void Text::setActive(com::Bool isActive) noexcept
+	{
+		Renderable::setActive(isActive);
+		for(LineText* &lineText : m_lines)
+			lineText->setActive(isActive);
+	}
+
 	void Text::clear() noexcept
 	{
 		// clear existing data

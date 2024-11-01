@@ -12,6 +12,7 @@ namespace SUTK
 	public:
 		TextGroupContainer(UIDriver& driver, Container* parent = NULL, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer) noexcept;
 
+		GfxDriverObjectHandleType getGfxDriverObjectHandle() noexcept;
 		TextGroup* getTextGroup() noexcept;
 	};
 }

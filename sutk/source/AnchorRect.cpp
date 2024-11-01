@@ -90,6 +90,13 @@ namespace SUTK
 		setRect(anchorRect);
 	}
 
+	void AnchorRect::moveToRightMiddleOfParent() noexcept
+	{
+		Rect2Df anchorRect;
+		anchorRect.setPosition({ 1.0f, 0.5f });
+		setRect(anchorRect);
+	}
+
 	void AnchorRect::setRect(Rect2Df rect) noexcept
 	{
 		m_rect = rect;
