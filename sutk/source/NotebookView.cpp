@@ -109,7 +109,7 @@ namespace SUTK
 		tabView->setLabel(labelStr);
 		LayoutAttributes attr = tabView->getLayoutAttributes();
 		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
-		attr.prefSize.width = tabView->getSize().width;
+		attr.prefSize.width = std::max(TAB_VIEW_MIN_WIDTH, tabView->getSize().width);
 		tabView->setLayoutAttributes(attr);
 		m_tabContainer->unlockLayout(true);
 

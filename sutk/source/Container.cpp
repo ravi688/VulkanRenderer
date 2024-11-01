@@ -313,6 +313,7 @@ namespace SUTK
 	void Container::setLayoutAttributes(const LayoutAttributes& attrs) noexcept
 	{
 		m_layoutAttr = attrs;
+		_com_assert(attrs.minSize <= attrs.prefSize);
 		if(!isLayoutIgnore())
 			recalculateLayoutParent();
 	}

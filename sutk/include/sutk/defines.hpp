@@ -107,6 +107,16 @@ namespace SUTK
 		Vec2D<T>& operator +=(const Vec2D<T>& v) noexcept { x += v.x; y += v.y; return *this; }
 		Vec2D<T>& operator -=(const Vec2D<T>& v) noexcept { x -= v.x; y -= v.y; return *this; }
 
+		// relational operator overloads
+		bool operator >=(const Vec2D<T>& v) const noexcept
+		{
+			return (x >= v.x) && (y >= v.y);
+		}
+		bool operator <=(const Vec2D<T>& v) const noexcept
+		{
+			return (x <= v.x) && (y <= v.y);
+		}
+
 		// implicit conversion operator overloads
 		template<typename U>
 		operator Vec2D<U>()
