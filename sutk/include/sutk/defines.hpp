@@ -467,6 +467,9 @@ namespace SUTK
 
 	typedef u32 Layer;
 	static constexpr Layer InvalidLayer = U32_MAX;
+	// Any layer should not exceed this layer
+	// Therefore, always create layers by subdividing this value.
+	static constexpr Layer MaxLayer = 1000000;
 
 	struct Color3
 	{

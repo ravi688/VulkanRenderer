@@ -22,12 +22,14 @@ namespace SUTK
 	UIDriver::UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept: m_gfxDriver(gfxDriver), m_inputDriver(&inputDriver), m_isDummyInputDriver(false), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
 	{
 		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
+		m_debugRootContainer->setLayer(MaxLayer);
 		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
 	}
 
 	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), m_inputDriver(new DummyInputDriver{ }), m_isDummyInputDriver(true), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
 	{
 		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
+		m_debugRootContainer->setLayer(MaxLayer);
 		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
 	}
 
