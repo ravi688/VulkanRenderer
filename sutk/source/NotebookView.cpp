@@ -19,7 +19,7 @@
 namespace SUTK
 {
 
-	NotebookPage::NotebookPage(TabView* tabView, Container* container) noexcept : m_data(NULL), m_tabView(tabView), m_container(container) { }
+	NotebookPage::NotebookPage(Container* container) noexcept : m_data(NULL), m_tabView(com::null_pointer<TabView>()), m_container(container) { }
 	NotebookPage::~NotebookPage() noexcept
 	{
 		if(m_data != com::null_pointer<void>())
@@ -29,6 +29,23 @@ namespace SUTK
 			m_dataDeleter = NULL;
 		}
 	}
+
+	NotebookPage* NotebookPage::getNext() noexcept
+	{
+		auto next = m_tabView->getNext();
+		if(next)
+			return next->getPage();
+		return com::null_pointer<NotebookPage>();
+	}
+
+	NotebookPage* NotebookPage::getPrev() noexcept
+	{
+		auto prev = m_tabView->getPrev();
+		if(prev)
+			return prev->getPage();
+		return com::null_pointer<NotebookPage>();
+	}
+
 	void NotebookPage::setLabel(const std::string_view str) noexcept
 	{
 		m_tabView->setLabel(str);
@@ -58,7 +75,7 @@ namespace SUTK
 		unlockLayout();
 	}
 
-	TabView::TabView(UIDriver& driver, Container* parent) noexcept : Button(driver, parent, /* isCreateDefaultGraphic: */ true)
+	TabView::TabView(UIDriver& driver, Container* parent) noexcept : Button(driver, parent, /* isCreateDefaultGraphic: */ true), m_next(com::null_pointer<TabView>()), m_prev(com::null_pointer<TabView>())
 	{
 		m_graphic = getGraphicAs<DefaultButtonGraphic>();
 		Label& label = m_graphic->getLabel();
@@ -96,8 +113,12 @@ namespace SUTK
 		
 	}
 
-	NotebookPage* NotebookView::createPage(const std::string_view labelStr) noexcept
+	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
 	{
+		// If the supplied page is null_pointer then create the page after the current being viewed page.
+		if(!afterPage)
+			afterPage = m_currentPage;
+
 		// Create Container for the page
 		Container* container = getUIDriver().createContainer<Container>(m_pageContainer);
 		container->alwaysFitInParent();
@@ -106,6 +127,18 @@ namespace SUTK
 		// Create TabView for the page
 		m_tabContainer->lockLayout();
 		TabView* tabView = getUIDriver().createContainer<TabView>(m_tabContainer);
+		if(afterPage)
+		{
+			TabView* afterPageTabView = afterPage->getTabView();
+			TabView* afterPageNext = afterPageTabView->m_next;
+			if(afterPageNext)
+			{
+				afterPageNext->m_prev = tabView;
+				tabView->m_next = afterPageNext;
+			}
+			tabView->m_prev = afterPageTabView;
+			afterPageTabView->m_next = tabView;
+		}
 		tabView->setLabel(labelStr);
 		LayoutAttributes attr = tabView->getLayoutAttributes();
 		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
@@ -114,7 +147,9 @@ namespace SUTK
 		m_tabContainer->unlockLayout(true);
 
 		// Create Page
-		NotebookPage* page = new NotebookPage(tabView, container);
+		NotebookPage* page = new NotebookPage(container);
+		tabView->m_page = page;
+		page->m_tabView = tabView;
 
 		tabView->getOnReleaseEvent().subscribe([this, page](SUTK::Button* button) noexcept
 		{

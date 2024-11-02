@@ -20,17 +20,14 @@ namespace SUTK
 		void (*m_dataDeleter)(void*);
 		TabView* m_tabView;
 		Container* m_container;
-		NotebookPage* m_next;
-		NotebookPage* m_prev;
-
-		NotebookPage* getNext() noexcept { return m_next; }
-		const NotebookPage* getNext() const noexcept { return m_next; }
-		NotebookPage* getPrev() noexcept { return m_prev; }
-		const NotebookPage* getPrev() const noexcept { return m_prev; }
 
 		TabView* getTabView() noexcept { return m_tabView; }
+		NotebookPage* getNext() noexcept;
+		const NotebookPage* getNext() const noexcept { return com::cast_away_const(this)->getNext(); }
+		NotebookPage* getPrev() noexcept;
+		const NotebookPage* getPrev() const noexcept { return com::cast_away_const(this)->getPrev(); }
 	public:
-		NotebookPage(TabView* tabView, Container* container) noexcept;
+		NotebookPage(Container* container) noexcept;
 		~NotebookPage() noexcept;
 		void setLabel(const std::string_view str) noexcept;
 		Container* getContainer() noexcept { return m_container; }
@@ -69,12 +66,24 @@ namespace SUTK
 
 	class SUTK_API TabView : public Button
 	{
+		friend class NotebookView;
 	private:
 		DefaultButtonGraphic* m_graphic;
 		Button* m_closeButton;
 		ImageButtonGraphic* m_closeButtonGraphic;
+		NotebookPage* m_page;
+		TabView* m_next;
+		TabView* m_prev;
+
 	public:
 		TabView(UIDriver& driver, Container* parent) noexcept;
+
+		// Getters
+		TabView* getNext() noexcept { return m_next; }
+		const TabView* getNext() const noexcept { return m_next; }
+		TabView* getPrev() noexcept { return m_prev; }
+		const TabView* getPrev() const noexcept { return m_prev; }
+		NotebookPage* getPage() noexcept { return m_page; }
 
 		void setLabel(const std::string_view str) noexcept;
 
@@ -95,7 +104,7 @@ namespace SUTK
 		NotebookPage* m_currentPage;
 	public:
 		NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::False, Layer layer = InvalidLayer) noexcept;
-		NotebookPage* createPage(const std::string_view labelStr) noexcept;
+		NotebookPage* createPage(const std::string_view labelStr, NotebookPage* afterPage = com::null_pointer<NotebookPage>()) noexcept;
 		void viewPage(NotebookPage* page) noexcept;
 		void removePage(NotebookPage* page) noexcept;
 		template<typename T, com::CompareFunction<T> EqualTo = std::equal_to<T>>
