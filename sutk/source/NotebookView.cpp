@@ -52,8 +52,8 @@ namespace SUTK
 	}
 
 	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer),
-																																					m_head(NULL),
-																																					m_currentPage(NULL)
+																																					m_head(com::null_pointer<NotebookPage>()),
+																																					m_currentPage(com::null_pointer<NotebookPage>())
 	{
 		// Create Tab Container
 		m_textGroupContainer = driver.createContainer<TextGroupContainer>(this, com::False, getDepth() + 10000);
@@ -113,6 +113,20 @@ namespace SUTK
 		
 	}
 
+	u32 getIndexOfPage(const NotebookPage* page) noexcept
+	{
+		if(!page)
+			return U32_MAX;
+		u32 index = 0;
+		TabView* tab = page->m_tabView->m_prev;
+		while(tab)
+		{
+			tab = tab->m_prev;
+			++index;
+		}
+		return index;
+	}
+
 	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
 	{
 		// If the supplied page is null_pointer then create the page after the current being viewed page.
@@ -126,7 +140,7 @@ namespace SUTK
 
 		// Create TabView for the page
 		m_tabContainer->lockLayout();
-		TabView* tabView = getUIDriver().createContainer<TabView>(m_tabContainer);
+		TabView* tabView = getUIDriver().createContainer<TabView>(com::null_pointer<Container>());
 		if(afterPage)
 		{
 			TabView* afterPageTabView = afterPage->getTabView();
@@ -139,6 +153,11 @@ namespace SUTK
 			tabView->m_prev = afterPageTabView;
 			afterPageTabView->m_next = tabView;
 		}
+		u32 insertIndex = getIndexOfPage(afterPage);
+		if(insertIndex != U32_MAX)
+			m_tabContainer->addAt(tabView, insertIndex);
+		else
+			m_tabContainer->add(tabView);
 		tabView->setLabel(labelStr);
 		LayoutAttributes attr = tabView->getLayoutAttributes();
 		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
@@ -151,10 +170,18 @@ namespace SUTK
 		tabView->m_page = page;
 		page->m_tabView = tabView;
 
+		if(insertIndex == U32_MAX)
+			m_head = page;
+
 		tabView->getOnReleaseEvent().subscribe([this, page](SUTK::Button* button) noexcept
 		{
 			this->viewPage(page);
 		});
+
+		// It is guaranteed to have a page set as currently being viewed page
+		if(!m_currentPage)
+			viewPage(page);
+
 		return page;
 	}
 

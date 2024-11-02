@@ -15,6 +15,7 @@ namespace SUTK
 	class NotebookPage
 	{
 		friend class NotebookView;
+		friend u32 getIndexOfPage(const NotebookPage* page) noexcept;
 	private:
 		void* m_data;
 		void (*m_dataDeleter)(void*);
@@ -67,6 +68,7 @@ namespace SUTK
 	class SUTK_API TabView : public Button
 	{
 		friend class NotebookView;
+		friend u32 getIndexOfPage(const NotebookPage* page) noexcept;
 	private:
 		DefaultButtonGraphic* m_graphic;
 		Button* m_closeButton;
