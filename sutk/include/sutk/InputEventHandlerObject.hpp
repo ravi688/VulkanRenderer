@@ -25,8 +25,15 @@ namespace SUTK
 		virtual void tempSleep() = 0;
 	};
 
+	class SUTK_API IOrderedInputEventHandlerObject : public IInputEventHandlerObject
+	{
+	public:
+		virtual ~IOrderedInputEventHandlerObject() = default;
+		virtual void updateOrder() = 0;
+	};
+
 	template<typename InputEventType>
-	class TInputEventHandlerObject : public IInputEventHandlerObject
+	class TInputEventHandlerObject : public std::conditional<InputEventType::IsOrderedEventType, IOrderedInputEventHandlerObject, IInputEventHandlerObject>::type
 	{
 	protected:
 		InputEventType& m_event;
@@ -129,21 +136,62 @@ namespace SUTK
 		}
 	};
 
+	template<typename T>
+	concept OrderedInputEvent = T::IsOrderedEventType;
+
+	template<OrderedInputEvent InputEventType>
+	class TOrderedInputEventHandlerContainerObject : public TInputEventHandlerContainerObject<InputEventType>
+	{
+	protected:		
+		TOrderedInputEventHandlerContainerObject(InputEventType& event, Container* container = com::null_pointer<Container>()) noexcept : TInputEventHandlerContainerObject<InputEventType>(event, container) { }
+		virtual void updateOrder() noexcept override
+		{
+			if(TInputEventHandlerContainerObject<InputEventType>::getContainer())
+				TInputEventHandlerContainerObject<InputEventType>::getEvent().updateKey(TInputEventHandlerContainerObject<InputEventType>::getSubscriptionID(), TInputEventHandlerContainerObject<InputEventType>::getContainer()->getDepth());
+		}
+	};
+
+	template<bool isOrdered, typename InputEventType>
+	struct GetEventHandlerContainerObjectType
+	{
+		using type = TInputEventHandlerContainerObject<InputEventType>;
+	};
+
 	template<typename InputEventType>
-	class TMouseEventHandlerContainerObject : public TInputEventHandlerContainerObject<InputEventType>
+	struct GetEventHandlerContainerObjectType<true, InputEventType>
+	{
+		using type = TOrderedInputEventHandlerContainerObject<InputEventType>;
+	};
+
+	// Why can't we just use the following?
+	//	typename SelectedType = typename std::conditional<InputEventType::IsOrderedEventType, 
+	//																TOrderedInputEventHandlerContainerObject<InputEventType>,
+	//																TInputEventHandlerContainerObject<InputEventType>>::type
+	// That's because, in the above case, TOrderedInputEventHandlerContainerObject<InputEventType> is being evaluated no matter the condition evaluates to true or false.
+	// The std::conditional just selects between the types corresponding to either true and false. Both the expressions would still be evaluated.
+	// To override this behaviour, we need to keep TOrderedInputEventHandlerContainerObject<InputEventType> inside another template and then select that template based on InputEventType::IsOrderedEventType
+	template<typename InputEventType, typename SelectedType = typename GetEventHandlerContainerObjectType<InputEventType::IsOrderedEventType, InputEventType>::type>
+	class TInputEventHandlerContainerObjectAutoSelect : public SelectedType
+ 	{
+ 	protected:
+ 		TInputEventHandlerContainerObjectAutoSelect(InputEventType& event, Container* container = com::null_pointer<Container>()) noexcept : SelectedType(event, container) { }
+ 	};
+
+	template<typename InputEventType>
+	class TMouseEventHandlerContainerObject : public TInputEventHandlerContainerObjectAutoSelect<InputEventType>
 	{
 	protected:
 		// There is a problem if we keep this into private scope and expose a protected getter 'getInputDriver()' function for it.
 		// If a class derives from UIDriverObject and from this also, then the call to 'getInputDriver()' would be ambiguous.
 		// Right now I can't figure out a solution for it.
 		IInputDriver& m_inputDriver;
-		TMouseEventHandlerContainerObject(IInputDriver& inputDriver, InputEventType& event) noexcept : TInputEventHandlerContainerObject<InputEventType>(event), m_inputDriver(inputDriver) { }
-		TMouseEventHandlerContainerObject(IInputDriver& inputDriver, InputEventType& event, Container* container) noexcept : TInputEventHandlerContainerObject<InputEventType>(event, container), m_inputDriver(inputDriver) { }
+		TMouseEventHandlerContainerObject(IInputDriver& inputDriver, InputEventType& event) noexcept : TInputEventHandlerContainerObjectAutoSelect<InputEventType>(event), m_inputDriver(inputDriver) { }
+		TMouseEventHandlerContainerObject(IInputDriver& inputDriver, InputEventType& event, Container* container) noexcept : TInputEventHandlerContainerObjectAutoSelect<InputEventType>(event, container), m_inputDriver(inputDriver) { }
 
 		bool isMousePosInside() noexcept
 		{
 			Vec2Df position = m_inputDriver.getMousePosition();
-			return TInputEventHandlerContainerObject<InputEventType>::isInside(position);
+			return TInputEventHandlerContainerObjectAutoSelect<InputEventType>::isInside(position);
 		}
 	};
 

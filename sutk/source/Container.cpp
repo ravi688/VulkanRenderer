@@ -5,6 +5,7 @@
 #include <sutk/RenderRectOutline.hpp>
 #include <sutk/ILayoutController.hpp> // for SUTK::ILayoutController
 #include <sutk/ContainerUtility.hpp>
+#include <sutk/InputEventHandlerObject.hpp> // for dynamic_cast to work for SUTK::IOrderedInputEventHandlerObject
 
 namespace SUTK
 {
@@ -84,6 +85,17 @@ namespace SUTK
 			onAdd(this);
 			// invoke onAddChild callback function for the parent container as a new child 'this' has been added into that
 			parent->onAddChild(this);
+		}
+
+		if(hasInputEventHandlers())
+		{
+			std::vector<IInputEventHandlerObject*>& handlers = getInputEventHandlers();
+			for(auto& handler : handlers)
+			{
+				auto _handler = dynamic_cast<IOrderedInputEventHandlerObject*>(handler);
+				if(_handler)
+					_handler->updateOrder();
+			}
 		}
 	}
 
