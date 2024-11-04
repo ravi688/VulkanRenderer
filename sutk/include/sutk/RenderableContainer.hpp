@@ -23,6 +23,6 @@ namespace SUTK
 
 	public:
 		void setRenderable(Renderable* renderable) noexcept;
-		Renderable* getRenderable() noexcept { return m_renderable; }
+		virtual Renderable* getRenderable() noexcept { return m_renderable; }
 	};
 }

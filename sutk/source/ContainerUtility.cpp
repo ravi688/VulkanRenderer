@@ -88,6 +88,15 @@ namespace SUTK
 		ContainersWalkUpUntil(container->getParent(), visitor);
 	}
 
+	void ContainerUtility::ContainersVisit(Container* container, const std::function<void(Container*)>& visitor) noexcept
+	{
+		if(!container) return;
+		visitor(container);
+		std::vector<Container*>& childs = container->getChilds();
+		for(auto& child : childs)
+			ContainersVisit(child, visitor);
+	}
+
 	GfxDriverObjectHandleType ContainerUtility::findTextGroupHandle(Container* container) noexcept
 	{
 		GfxDriverObjectHandleType handle = GFX_DRIVER_OBJECT_NULL_HANDLE;

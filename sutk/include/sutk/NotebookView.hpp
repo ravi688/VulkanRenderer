@@ -32,6 +32,7 @@ namespace SUTK
 		~NotebookPage() noexcept;
 		void setLabel(const std::string_view str) noexcept;
 		Container* getContainer() noexcept { return m_container; }
+		u32 getIndex() const noexcept;
 		template<typename T, typename... Args>
 		void attachData(Args&&... args) noexcept;
 		template<typename T>
@@ -86,6 +87,7 @@ namespace SUTK
 		TabView* getPrev() noexcept { return m_prev; }
 		const TabView* getPrev() const noexcept { return m_prev; }
 		NotebookPage* getPage() noexcept { return m_page; }
+		u32 getIndex() const noexcept;
 
 		void setLabel(const std::string_view str) noexcept;
 

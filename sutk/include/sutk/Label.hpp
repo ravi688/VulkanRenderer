@@ -15,13 +15,23 @@ namespace SUTK
 	{
 	private:
 		SmallText* m_text;
+		HorizontalAlignment m_hAlign;
+		VerticalAlignment m_vAlign;
+		GfxDriverObjectHandleType m_textGroup;
+		com::Bool m_isReassociateOnParentChange;
+		void createTextFirstTime() noexcept;
+		void tryReassociate() noexcept;
+	protected:
+		virtual void onAnscestorChange(Container* anscestor) noexcept override;
 	public:
 		Label(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept;
 		Label(UIDriver& driver, Container* parent) noexcept;
 
+		void setReassociateOnParentChange(com::Bool isReassociate, com::Bool isApplyNow = com::False) noexcept;
 		void set(const std::string_view str) noexcept;
 		void setAlignment(HorizontalAlignment hAlign, VerticalAlignment vAlign) noexcept;
 
-		SmallText& getText() { return *m_text; }
+		virtual Renderable* getRenderable() noexcept override;
+		SmallText& getText() noexcept;
 	};
 }

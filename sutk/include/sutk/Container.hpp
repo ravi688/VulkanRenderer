@@ -91,6 +91,9 @@ namespace SUTK
 		// called after rect of its parent container has been resized or has changed its position
 		// NOTE: mandatory to be called in the overriding method
 		virtual void onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged);
+		// called after if any container up in the hierarchy changes its parent container - that parent container is passed into this function as 'anscestor'
+		// NOTE: The 'anscestor' may be NULL if the "parent" container is removed and there was no substitute for it.
+		virtual void onAnscestorChange(Container* anscestor) noexcept { }
 
 		// This is to expose private m_rect reference to deriving classes, and let them modify
 		// it without any unindented side effects.

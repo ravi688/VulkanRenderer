@@ -74,6 +74,10 @@ namespace SUTK
 			else
 			{
 				_com_assert(index <= parent->m_containers.size());
+				DEBUG_BLOCK(
+					if(index == parent->m_containers.size())
+						_com_assert(std::next(parent->m_containers.begin(), index) == parent->m_containers.end());
+				);
 				parent->m_containers.insert(std::next(parent->m_containers.begin(), index), this);
 			}
 			m_parent = parent;
@@ -86,6 +90,11 @@ namespace SUTK
 			// invoke onAddChild callback function for the parent container as a new child 'this' has been added into that
 			parent->onAddChild(this);
 		}
+
+		ContainerUtility::ContainersVisit(this, [parent](Container* container) noexcept
+			{
+				container->onAnscestorChange(parent);
+			});
 
 		if(hasInputEventHandlers())
 		{

@@ -51,6 +51,11 @@ namespace SUTK
 		m_tabView->setLabel(str);
 	}
 
+	u32 NotebookPage::getIndex() const noexcept
+	{
+		return m_tabView->getIndex();
+	}
+
 	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer),
 																																					m_head(com::null_pointer<NotebookPage>()),
 																																					m_currentPage(com::null_pointer<NotebookPage>())
@@ -103,6 +108,18 @@ namespace SUTK
 		setSize({ size.width + TAB_LABEL_CLOSE_BUTTON_SPACING + CLOSE_BUTTON_RIGHT_MARGIN + CLOSE_BUTTON_WIDTH, getSize().height });
 	}
 
+	u32 TabView::getIndex() const noexcept
+	{
+		u32 index = 0;
+		TabView* tab = m_prev;
+		while(tab)
+		{
+			tab = tab->m_prev;
+			++index;
+		}
+		return index;
+	}
+
 	void TabView::unselectedState() noexcept
 	{
 
@@ -111,20 +128,6 @@ namespace SUTK
 	void TabView::selectedState() noexcept
 	{
 		
-	}
-
-	u32 getIndexOfPage(const NotebookPage* page) noexcept
-	{
-		if(!page)
-			return U32_MAX;
-		u32 index = 0;
-		TabView* tab = page->m_tabView->m_prev;
-		while(tab)
-		{
-			tab = tab->m_prev;
-			++index;
-		}
-		return index;
 	}
 
 	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
@@ -153,11 +156,7 @@ namespace SUTK
 			tabView->m_prev = afterPageTabView;
 			afterPageTabView->m_next = tabView;
 		}
-		u32 insertIndex = getIndexOfPage(afterPage);
-		if(insertIndex != U32_MAX)
-			m_tabContainer->addAt(tabView, insertIndex);
-		else
-			m_tabContainer->add(tabView);
+		m_tabContainer->addAt(tabView, tabView->getIndex());
 		tabView->setLabel(labelStr);
 		LayoutAttributes attr = tabView->getLayoutAttributes();
 		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
@@ -170,7 +169,7 @@ namespace SUTK
 		tabView->m_page = page;
 		page->m_tabView = tabView;
 
-		if(insertIndex == U32_MAX)
+		if(!tabView->getPrev())
 			m_head = page;
 
 		tabView->getOnReleaseEvent().subscribe([this, page](SUTK::Button* button) noexcept
