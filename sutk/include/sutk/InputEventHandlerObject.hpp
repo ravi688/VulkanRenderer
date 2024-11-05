@@ -23,6 +23,9 @@ namespace SUTK
 		// and automatically awakes for the subsequent event dispatches.
 		// This is used in MaskedScrollableContainer to correctly block events around the masked area.
 		virtual void tempSleep() = 0;
+
+		virtual void dump() const noexcept = 0;
+		virtual void dumpID() const noexcept = 0;
 	};
 
 	class SUTK_API IOrderedInputEventHandlerObject : public IInputEventHandlerObject
@@ -71,7 +74,18 @@ namespace SUTK
 			if constexpr(InputEventType::IsOrderedEventType)
 				m_event.tempDeactivate(m_id);
 		}
+
+		virtual void dump() const noexcept override
+		{
+			if constexpr(InputEventType::IsOrderedEventType)
+				m_event.dump();
+		}
 		
+		virtual void dumpID() const noexcept override
+		{
+			std::cout << m_id << std::endl;
+		}
+
 		void grabExclusiveAccess() noexcept
 		{
 			_com_assert(m_id != InputEventType::InvalidSubscriptionID);
