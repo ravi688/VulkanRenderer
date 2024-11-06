@@ -16,6 +16,11 @@ namespace SGE
 		friend class RenderScene;
 	public:
 
+		void destroy() noexcept
+		{
+			render_object_destroy(m_handle);
+		}
+
 		enum class Type : u8
 		{
 			Mesh,
