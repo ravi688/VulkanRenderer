@@ -153,6 +153,28 @@ namespace SUTK
 		onResize(m_rect, false, true); 
 	}
 
+	void Container::moveRight(f32 amount) noexcept
+	{
+		Vec2Df pos = getPosition();
+		pos.x += amount;
+		setPosition(pos);
+	}
+
+	void Container::moveLeft(f32 amount) noexcept
+	{
+		Vec2Df pos = getPosition();
+		pos.x -= amount;
+		setPosition(pos);
+	}
+
+	void Container::extendRight(f32 amount) noexcept
+	{
+		Rect2Df rect = getRect();
+		rect.extendRight(amount);
+		// Calling setRect() might be expensive
+		setSize(rect.getSize());
+	}
+
 	void Container::alwaysFitInParent() noexcept
 	{
 		Container* parent = getParent();

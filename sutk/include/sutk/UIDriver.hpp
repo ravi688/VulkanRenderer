@@ -7,6 +7,7 @@
 #include <common/Reference.hpp> // for com::Reference
 #include <vector> // for std::vector
 #include <utility> // for std::forward
+#include <chrono> // for std::chrono
 
 namespace SUTK
 {
@@ -56,12 +57,17 @@ namespace SUTK
 		std::vector<IRunnable*> m_runnables;
 		OrderedInputEventsDispatcher* m_orderedEventsDispatcher;
 
+		com::Bool m_isCalledFirstTime;
+		std::chrono::time_point<std::chrono::steady_clock> m_prevTime;
+		f32 m_deltaTime;
+
 		friend class Renderable;
 	public:
 		UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept;
 		UIDriver(IGfxDriver& gfxDriver) noexcept;
 		~UIDriver();
 
+		com::Bool isDirty() noexcept;
 		void render();
 
 		void addRunnable(IRunnable* runnable) noexcept;
@@ -72,6 +78,8 @@ namespace SUTK
 		ImageAttributes getImageAttributes(ImageReference id) noexcept;
 		FontReference loadFont(std::string_view path) noexcept;
 		void unloadFont(FontReference id) noexcept;
+
+		f32 getDeltaTime() const noexcept { return m_deltaTime; }
 
 		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }
 		OrderedInputEventsDispatcher& getOrderedInputEventsDispatcher() noexcept { return *m_orderedEventsDispatcher; }

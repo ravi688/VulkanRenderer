@@ -4,6 +4,7 @@
 #include <sutk/VBoxContainer.hpp> // for SUTK::VBoxContainer
 #include <sutk/Button.hpp> // for SUTK::Button
 #include <sutk/Label.hpp> // for SUTK::Label::set()
+#include <sutk/IRunnable.hpp> // for SUTK::Runnable
 
 #include <common/Concepts.hpp> // for com::CompareFunction
 
@@ -97,7 +98,7 @@ namespace SUTK
 
 	class HBoxContainer;
 
-	class SUTK_API NotebookView : public VBoxContainer
+	class SUTK_API NotebookView : public VBoxContainer, public Runnable
 	{
 	private:
 		// TextGroup for TabView(s)
@@ -106,8 +107,31 @@ namespace SUTK
 		Container* m_pageContainer;
 		NotebookPage* m_head;
 		NotebookPage* m_currentPage;
+		com::Bool m_isRunning;
+		com::Bool m_isStartAnimBatch;
+		f32 m_animDuration;
+
+		struct AnimContext
+		{
+			TabView* tabView;
+			u32 tabIndex;
+			f32 dstTabWidth;
+			f32 curTabWidth;
+		};
+
+		std::vector<AnimContext> m_animContexts;
+
+		void dispatchAnimNewTab(TabView* tabView) noexcept;
+
 	public:
 		NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::False, Layer layer = InvalidLayer) noexcept;
+
+		// Implementation of Runnable
+		virtual bool isRunning();
+		virtual void update();
+
+		void setAnimDuration(f32 duration) noexcept { m_animDuration = duration; }
+
 		NotebookPage* createPage(const std::string_view labelStr, NotebookPage* afterPage = com::null_pointer<NotebookPage>()) noexcept;
 		void viewPage(NotebookPage* page) noexcept;
 		void removePage(NotebookPage* page) noexcept;

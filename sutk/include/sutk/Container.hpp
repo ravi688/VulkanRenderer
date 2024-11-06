@@ -161,6 +161,10 @@ namespace SUTK
 		void setPosition(Vec2Df pos) noexcept;
 		void setSize(Vec2Df size) noexcept;
 
+		void moveRight(f32 amount) noexcept;
+		void moveLeft(f32 amount) noexcept;
+		void extendRight(f32 amount) noexcept;
+
 		// If called with true, then this Container's rect is always in-sync with its parent's rect,
 		// That also means, this container's rect's position will always be { 0, 0 } (in local coordinates of its parent's rect)
 		void alwaysFitInParent() noexcept;

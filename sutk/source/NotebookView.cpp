@@ -6,6 +6,8 @@
 #include <sutk/ButtonGraphic.hpp> // for SUTK::ImageButtonGraphic
 #include <sutk/HBoxContainer.hpp> // for SUTK::HBoxContainer
 
+#include <thread>
+
 #define TAB_VIEW_MIN_WIDTH 3.0f
 #define TAB_BAR_HEIGHT 0.8f
 #define TAB_LABEL_LEFT_MARGIN 0.2f
@@ -15,6 +17,10 @@
 #define CLOSE_BUTTON_RIGHT_MARGIN 0.2f
 #define CLOSE_BUTTON_WIDTH 0.5f
 #define CLOSE_BUTTON_HEIGHT 0.5f
+
+
+#define TAB_VIEW_ANIM_START_WIDTH 0.4f
+#define DEFAULT_NEW_TAB_ANIM_DURATION 0.4f
 
 namespace SUTK
 {
@@ -54,30 +60,6 @@ namespace SUTK
 	u32 NotebookPage::getIndex() const noexcept
 	{
 		return m_tabView->getIndex();
-	}
-
-	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer),
-																																					m_head(com::null_pointer<NotebookPage>()),
-																																					m_currentPage(com::null_pointer<NotebookPage>())
-	{
-		// Create Tab Container
-		m_textGroupContainer = driver.createContainer<TextGroupContainer>(this, com::False, getDepth() + 10000);
-		LayoutAttributes attr = m_textGroupContainer->getLayoutAttributes();
-		attr.minSize.height = TAB_BAR_HEIGHT;
-		attr.prefSize = attr.minSize;
-		m_textGroupContainer->setLayoutAttributes(attr);
-		m_tabContainer = driver.createContainer<HBoxContainer>(m_textGroupContainer);
-		m_tabContainer->alwaysFitInParent();
-
-		// Create Container for holding page container
-		m_pageContainer = driver.createContainer<Container>(this);
-		attr = m_pageContainer->getLayoutAttributes();
-		attr.prefSize = attr.maxSize;
-		_com_assert((attr.prefSize.height == F32_INFINITY) && (attr.prefSize.width == F32_INFINITY));
-		m_pageContainer->setLayoutAttributes(attr);
-		m_pageContainer->enableDebug(true, Color4::yellow());
-
-		unlockLayout();
 	}
 
 	TabView::TabView(UIDriver& driver, Container* parent) noexcept : Button(driver, parent, /* isCreateDefaultGraphic: */ true), m_next(com::null_pointer<TabView>()), m_prev(com::null_pointer<TabView>())
@@ -130,6 +112,103 @@ namespace SUTK
 		
 	}
 
+	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), Runnable(driver),
+																																					m_head(com::null_pointer<NotebookPage>()),
+																																					m_currentPage(com::null_pointer<NotebookPage>()),
+																																					m_isRunning(com::False),
+																																					m_isStartAnimBatch(com::False),
+																																					m_animDuration(DEFAULT_NEW_TAB_ANIM_DURATION)
+	{
+		// Create Tab Container
+		m_textGroupContainer = driver.createContainer<TextGroupContainer>(this, com::False, getDepth() + 10000);
+		LayoutAttributes attr = m_textGroupContainer->getLayoutAttributes();
+		attr.minSize.height = TAB_BAR_HEIGHT;
+		attr.prefSize = attr.minSize;
+		m_textGroupContainer->setLayoutAttributes(attr);
+		m_tabContainer = driver.createContainer<HBoxContainer>(m_textGroupContainer);
+		m_tabContainer->alwaysFitInParent();
+
+		// Create Container for holding page container
+		m_pageContainer = driver.createContainer<Container>(this);
+		attr = m_pageContainer->getLayoutAttributes();
+		attr.prefSize = attr.maxSize;
+		_com_assert((attr.prefSize.height == F32_INFINITY) && (attr.prefSize.width == F32_INFINITY));
+		m_pageContainer->setLayoutAttributes(attr);
+		m_pageContainer->enableDebug(true, Color4::yellow());
+
+		unlockLayout();
+	}
+
+	bool NotebookView::isRunning()
+	{
+		return static_cast<bool>(m_isRunning || m_isStartAnimBatch);
+	}
+
+	void NotebookView::update()
+	{
+		if(m_isStartAnimBatch)
+		{
+			m_tabContainer->lockLayout();
+			for(auto& ctx : m_animContexts)
+			{
+				f32 width = ctx.tabView->getSize().width;
+				std::vector<Container*>& childs = m_tabContainer->getChilds();
+				ctx.tabIndex = ctx.tabView->getIndex();
+				for(std::size_t i = ctx.tabIndex + 1; i < childs.size(); ++i)
+					childs[i]->moveLeft(width);
+				ctx.tabView->setSize({ ctx.curTabWidth, ctx.tabView->getSize().height });
+			}
+			m_isStartAnimBatch = com::False;
+			m_isRunning = com::True;
+		}
+
+		com::Bool isUnlockLayout = com::True;
+
+		std::vector<Container*>& childs = m_tabContainer->getChilds();
+		for(auto& ctx : m_animContexts)
+		{
+			f32 deltaWidth = (ctx.dstTabWidth / m_animDuration) * getUIDriver().getDeltaTime();
+			f32 safeDeltaWidth = ctx.dstTabWidth - ctx.curTabWidth;
+			if(deltaWidth >= safeDeltaWidth)
+			{
+				m_isRunning = com::False;
+				deltaWidth = safeDeltaWidth;
+				ctx.curTabWidth = ctx.dstTabWidth;
+			}
+			else 
+			{
+				ctx.curTabWidth += deltaWidth;
+				isUnlockLayout = com::False;
+			}
+
+			for(std::size_t i = ctx.tabIndex + 1; i < childs.size(); ++i)
+				childs[i]->moveRight(deltaWidth);
+			ctx.tabView->extendRight(deltaWidth);
+		}
+		if(isUnlockLayout)
+		{
+			m_tabContainer->unlockLayout(true);
+			m_animContexts.clear();
+		}
+	}
+
+	void NotebookView::dispatchAnimNewTab(TabView* tabView) noexcept
+	{
+		if(m_isRunning)
+		{
+			m_tabContainer->unlockLayout(true);
+			m_animContexts.clear();
+			m_isRunning = com::False;
+		}
+
+		AnimContext ctx;
+		ctx.tabView = tabView;
+		ctx.dstTabWidth = tabView->getSize().width;
+		ctx.curTabWidth = TAB_VIEW_ANIM_START_WIDTH;
+		m_animContexts.push_back(ctx);
+		m_isStartAnimBatch = com::True;
+	}
+
 	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
 	{
 		// If the supplied page is null_pointer then create the page after the current being viewed page.
@@ -162,7 +241,12 @@ namespace SUTK
 		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
 		attr.prefSize.width = std::max(TAB_VIEW_MIN_WIDTH, tabView->getSize().width);
 		tabView->setLayoutAttributes(attr);
+		// Recalculate the layout to set the position and sizes of the tab views correctly
 		m_tabContainer->unlockLayout(true);
+
+		// <Begin> Initialize Animation Start state and Setup Animation Context
+		dispatchAnimNewTab(tabView);
+		// <End>
 
 		// Create Page
 		NotebookPage* page = new NotebookPage(container);

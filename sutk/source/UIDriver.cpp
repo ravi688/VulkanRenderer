@@ -19,14 +19,26 @@
 
 namespace SUTK
 {
-	UIDriver::UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept: m_gfxDriver(gfxDriver), m_inputDriver(&inputDriver), m_isDummyInputDriver(false), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
+	UIDriver::UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept: m_gfxDriver(gfxDriver), 
+																					m_inputDriver(&inputDriver), 
+																					m_isDummyInputDriver(false), 
+																					m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE),
+																					m_isCalledFirstTime(com::True),
+																					m_prevTime(std::chrono::steady_clock::now()),
+																					m_deltaTime(0)
 	{
 		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_debugRootContainer->setLayer(MaxLayer);
 		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
 	}
 
-	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), m_inputDriver(new DummyInputDriver{ }), m_isDummyInputDriver(true), m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE)
+	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), 
+														m_inputDriver(new DummyInputDriver{ }), 
+														m_isDummyInputDriver(true), 
+														m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE),
+														m_isCalledFirstTime(com::True),
+														m_prevTime(std::chrono::steady_clock::now()),
+														m_deltaTime(0)
 	{
 		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_debugRootContainer->setLayer(MaxLayer);
@@ -38,6 +50,20 @@ namespace SUTK
 		delete m_orderedEventsDispatcher;
 		if(m_isDummyInputDriver)
 			delete m_inputDriver;
+	}
+
+	com::Bool UIDriver::isDirty() noexcept
+	{
+		if(m_isCalledFirstTime)
+		{
+			m_prevTime = std::chrono::steady_clock::now();
+			m_isCalledFirstTime = com::False;
+		}
+		std::chrono::time_point<std::chrono::steady_clock> nowTime = std::chrono::steady_clock::now();
+		m_deltaTime = std::chrono::duration_cast<std::chrono::duration<f32, std::ratio<1, 1>>>(nowTime - m_prevTime).count();
+		m_prevTime = nowTime;
+		// For now return true to render at every single iteration even though UI might not be dirty
+		return com::True;
 	}
 
 	void UIDriver::render()
