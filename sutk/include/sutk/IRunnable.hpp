@@ -17,8 +17,11 @@ namespace SUTK
 	class UIDriver;
 	class SUTK_API Runnable : public IRunnable
 	{
+	private:
+		UIDriver& m_uiDriver;
 	protected:
 		Runnable(UIDriver& driver) noexcept;
+		~Runnable() noexcept;
 
 		virtual bool isRunning() = 0;
 		virtual void update() = 0;

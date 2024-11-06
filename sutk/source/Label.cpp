@@ -22,6 +22,15 @@ namespace SUTK
 
 	}
 
+	Label::~Label() noexcept
+	{
+		if(m_text)
+		{
+			_com_assert(m_textGroup != GFX_DRIVER_OBJECT_NULL_HANDLE);
+			getUIDriver().destroyRenderable<SmallText>(m_text);
+		}
+	}
+
 	void Label::onAnscestorChange(Container* _) noexcept
 	{
 		RenderableContainer::onAnscestorChange(_);

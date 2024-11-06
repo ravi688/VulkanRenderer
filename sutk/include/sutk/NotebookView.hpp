@@ -81,6 +81,7 @@ namespace SUTK
 
 	public:
 		TabView(UIDriver& driver, Container* parent) noexcept;
+		~TabView() noexcept;
 
 		// Getters
 		TabView* getNext() noexcept { return m_next; }
@@ -131,6 +132,8 @@ namespace SUTK
 		virtual void update();
 
 		void setAnimDuration(f32 duration) noexcept { m_animDuration = duration; }
+
+		NotebookPage* getCurrentPage() noexcept { return m_currentPage; }
 
 		NotebookPage* createPage(const std::string_view labelStr, NotebookPage* afterPage = com::null_pointer<NotebookPage>()) noexcept;
 		void viewPage(NotebookPage* page) noexcept;

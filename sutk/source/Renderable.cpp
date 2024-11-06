@@ -8,9 +8,14 @@ namespace SUTK
 	{
 		if(container != NULL)
 			container->setRenderable(this);
-		driver.m_renderables.push_back(this);
+		driver.addRenderable(this);
 
 		setDrawOrder((container == NULL) ? 0 : container->getDepth());
+	}
+
+	Renderable::~Renderable() noexcept
+	{
+		getUIDriver().removeRenderable(this);
 	}
 
 	void GfxDriverRenderable::setClipRectGlobalCoords(const Rect2Df rect) noexcept

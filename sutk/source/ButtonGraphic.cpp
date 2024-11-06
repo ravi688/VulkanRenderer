@@ -106,6 +106,11 @@ namespace SUTK
 		m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
 	}
 
+	DefaultButtonGraphic::~DefaultButtonGraphic() noexcept
+	{
+		getUIDriver().destroyContainer<Label>(m_label);
+	}
+
 	Vec2Df DefaultButtonGraphic::getMinBoundSize() noexcept
 	{
 		f32 xCoord = m_label->getText().getCoordFromColPos(END_OF_LINE);
@@ -121,6 +126,11 @@ namespace SUTK
 		setHoverColor(Color4::white());
 		setPressColor(Color4::white());
 		setIdleColor(Color4::white());
+	}
+
+	ImageButtonGraphic::~ImageButtonGraphic() noexcept
+	{
+		getUIDriver().destroyRenderable<RenderImage>(m_image);
 	}
 
 	void ImageButtonGraphic::onColorChange(Color4 color) noexcept

@@ -34,6 +34,7 @@ namespace SUTK
 
 		// Constructors
 		RenderRect(UIDriver& driver, RenderableContainer* container, RenderMode renderMode = RenderMode::Opaque) noexcept;
+		~RenderRect() noexcept;
 
 	public:
 

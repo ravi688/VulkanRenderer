@@ -6,8 +6,6 @@
 #include <sutk/ButtonGraphic.hpp> // for SUTK::ImageButtonGraphic
 #include <sutk/HBoxContainer.hpp> // for SUTK::HBoxContainer
 
-#include <thread>
-
 #define TAB_VIEW_MIN_WIDTH 3.0f
 #define TAB_BAR_HEIGHT 0.8f
 #define TAB_LABEL_LEFT_MARGIN 0.2f
@@ -81,6 +79,13 @@ namespace SUTK
 								 CLOSE_BUTTON_WIDTH, CLOSE_BUTTON_HEIGHT });
 		m_closeButton->getAnchorRect()->moveToRightMiddleOfParent();
 		m_closeButtonGraphic = driver.createContainer<ImageButtonGraphic>(m_closeButton);
+	}
+
+	TabView::~TabView() noexcept
+	{
+		auto& driver = getUIDriver();
+		driver.destroyContainer<Button>(m_closeButton);
+		driver.destroyContainer<ImageButtonGraphic>(m_closeButtonGraphic);
 	}
 
 	void TabView::setLabel(const std::string_view str) noexcept
@@ -270,6 +275,7 @@ namespace SUTK
 
 	void NotebookView::viewPage(NotebookPage* page) noexcept
 	{
+		// Deactivate the current page
 		if(m_currentPage != com::null_pointer<NotebookPage>())
 		{
 			Container* container = m_currentPage->getContainer();
@@ -280,18 +286,43 @@ namespace SUTK
 			TabView* tabView = m_currentPage->getTabView();
 			tabView->unselectedState();
 		}
-		// Activate the requested page's container
-		Container* container = page->getContainer();
-		if(!container->isActive())
-			ContainerUtility::SetActiveAllRecursive(container, com::True);
-		// Move the associated tabView into selected state
-		TabView* tabView = page->getTabView();
-		tabView->selectedState();
+		
+		// Active the requested page
+		if(page)
+		{
+			// Activate the requested page's container
+			Container* container = page->getContainer();
+			if(!container->isActive())
+				ContainerUtility::SetActiveAllRecursive(container, com::True);
+			// Move the associated tabView into selected state
+			TabView* tabView = page->getTabView();
+			tabView->selectedState();
+		}
+
 		m_currentPage = page;
 	}
 
 	void NotebookView::removePage(NotebookPage* page) noexcept
 	{
+		if(!page)
+		{
+			debug_log_warning("(null) value is passed, no page/tab is removed");
+			return;
+		}
+		
+		viewPage(page->getPrev() ? page->getPrev() : page->getNext());
 
+		auto& driver = getUIDriver();
+		TabView* tabView = page->m_tabView;
+		if(tabView->m_prev)
+			tabView->m_prev->m_next = tabView->m_next;
+		else
+			m_head = page->getNext();
+		if(tabView->m_next)
+			tabView->m_next->m_prev = tabView->m_prev;
+		m_tabContainer->remove(tabView);
+		driver.destroyContainer<Container>(page->m_container);
+		driver.destroyContainer<TabView>(page->m_tabView);
+		delete page;
 	}
 }

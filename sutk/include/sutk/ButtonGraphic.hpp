@@ -132,6 +132,7 @@ namespace SUTK
 		public:
 			DefaultButtonGraphic(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept;
 			DefaultButtonGraphic(UIDriver& driver, Container* parent) noexcept;
+			~DefaultButtonGraphic() noexcept;
 
 			// Overrides
 			virtual Vec2Df getMinBoundSize() noexcept override;
@@ -149,6 +150,7 @@ namespace SUTK
 		virtual void onColorChange(Color4 color) noexcept override;
 	public:
 		ImageButtonGraphic(UIDriver& driver, Container* parent) noexcept;
+		~ImageButtonGraphic() noexcept;
 
 		void setImage(UIDriver::ImageReference image) noexcept;
 		RenderImage& getRenderImage() noexcept { return *m_image; }

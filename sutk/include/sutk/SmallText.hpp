@@ -91,6 +91,7 @@ namespace SUTK
 	public:
 
 		SmallText(UIDriver& driver, RenderableContainer* container, GfxDriverObjectHandleType textGroup, Color4 color = SUTK::Color4::white()) noexcept;
+		~SmallText() noexcept;
 
 		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;

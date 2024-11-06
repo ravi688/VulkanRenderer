@@ -62,6 +62,11 @@ namespace SUTK
 		f32 m_deltaTime;
 
 		friend class Renderable;
+
+		// Only meant to be used by Renderable
+		void addRenderable(Renderable* renderable) noexcept;
+		void removeRenderable(Renderable* renderable) noexcept;
+
 	public:
 		UIDriver(IGfxDriver& gfxDriver, IInputDriver& inputDriver) noexcept;
 		UIDriver(IGfxDriver& gfxDriver) noexcept;
@@ -99,18 +104,36 @@ namespace SUTK
 			return obj;
 		}
 
-		// TODO: create a concept to add constraint on the typename to allow only objects identical or derived from SUTK::Container object
+		template<UIDriverObjectT ObjectType>
+		void destroyObject(ObjectType* obj) noexcept
+		{
+			delete obj;
+		}
+
 		template<ContainerT ContainerType, ContainerT ParentContainerType, typename... Args>
-		ContainerType* createContainer(ParentContainerType* parent, Args&&... args)
+		ContainerType* createContainer(ParentContainerType* parent, Args&&... args) noexcept
 		{
 			return createObject<ContainerType>(parent, std::forward<Args&&>(args)...);
 		}
-		// TODO: create a concept to add constraint on the typename to allow only renderables derived from SUTK::Renderable object
+
+		template<ContainerT ContainerType>
+		void destroyContainer(ContainerType* container) noexcept
+		{
+			destroyObject<ContainerType>(container);
+		}
+
 		template<RenderableT RenderableType, RenderableContainerT RenderableContainerType, typename... Args>
-		RenderableType* createRenderable(RenderableContainerType* parent, Args&&... args)
+		RenderableType* createRenderable(RenderableContainerType* parent, Args&&... args) noexcept
 		{
 			return createObject<RenderableType>(parent, std::forward<Args&&>(args)...);
 		}
+
+		template<RenderableT RenderableType>
+		void destroyRenderable(RenderableType* renderable) noexcept
+		{
+			destroyObject<RenderableType>(renderable);
+		}
+
 		template<RenderableT RenderableType, ContainerT ParentContainerType, typename... Args>
 		std::pair<RenderableType*, RenderableContainer*> createRenderableWithContainer(ParentContainerType* parent, Args&&... args)
 		{

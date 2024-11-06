@@ -17,9 +17,11 @@ namespace SUTK
 															m_isLayoutIgnore(isLayoutIgnore),
 															m_anchorRect(NULL),
 															m_parent(NULL), 
+															#ifdef CONTAINER_DEBUG
 															m_renderRectCont(NULL), 
 															m_renderRect(NULL), 
 															m_isDebug(false),
+															#endif
 															m_recycleState(RecycleState::Undefined),
 															m_layer(layer)
 	{
@@ -29,7 +31,19 @@ namespace SUTK
 
 	Container::~Container()
 	{
-		if(!m_inputEventHandlers)
+		if(m_parent)
+			m_parent->remove(this);
+		
+		#ifdef CONTAINER_DEBUG
+		if(m_renderRectCont)
+		{
+			getUIDriver().destroyContainer<RenderableContainer>(m_renderRectCont);
+			_com_assert(m_renderRect != com::null_pointer<RenderRectOutline>());
+			getUIDriver().destroyRenderable<RenderRectOutline>(m_renderRect);
+		}
+		#endif
+
+		if(m_inputEventHandlers)
 			delete m_inputEventHandlers;
 		if(m_anchorRect != NULL)
 			delete m_anchorRect;
@@ -278,6 +292,7 @@ namespace SUTK
 
 	void Container::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
+		#ifdef CONTAINER_DEBUG
 		// if this container is resized and update the renderRect's size as well
 		if(m_renderRectCont != NULL)
 		{
@@ -285,6 +300,7 @@ namespace SUTK
 			Vec2Df pos = getLocalCoordsToScreenCoords({ 0, 0 });
 			m_renderRectCont->setRect({ pos.x, pos.y, newRect.width, newRect.height });
 		}
+		#endif
 
 		if(m_anchorRect != NULL)
 			m_anchorRect->onChildResize(newRect, isPositionChanged, isSizeChanged);

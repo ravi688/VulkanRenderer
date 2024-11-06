@@ -52,6 +52,19 @@ namespace SUTK
 			delete m_inputDriver;
 	}
 
+	void UIDriver::addRenderable(Renderable* renderable) noexcept
+	{
+		m_renderables.push_back(renderable);
+	}
+
+	void UIDriver::removeRenderable(Renderable* renderable) noexcept
+	{
+		auto it = std::find(m_renderables.begin(), m_renderables.end(), renderable);
+		if(it != m_renderables.end())
+			m_renderables.erase(it);
+		else debug_log_error("Failed to remove SUTK::Renderable: %p, as it doesn't exist in the Registry", renderable);
+	}
+
 	com::Bool UIDriver::isDirty() noexcept
 	{
 		if(m_isCalledFirstTime)
@@ -118,11 +131,8 @@ namespace SUTK
 	{
 		auto it = std::find(m_runnables.begin(), m_runnables.end(), runnable);
 		if(it != m_runnables.end())
-		{
-			debug_log_error("Failed to remove SUTK::IRunnable: %p, as it doesn't exist in the Registry", runnable);
-			return;
-		}
-		m_runnables.erase(it);
+			m_runnables.erase(it);
+		else debug_log_error("Failed to remove SUTK::IRunnable: %p, as it doesn't exist in the Registry", runnable);
 	}
 
 

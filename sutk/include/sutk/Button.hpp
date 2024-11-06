@@ -30,22 +30,22 @@ namespace SUTK
 		OnExitEvent* m_onExitEvent;
 		OnPressEvent* m_onPressEvent;
 		OnReleaseEvent* m_onReleaseEvent;
+		com::Bool m_isGraphicOwner;
 
 		void checkAndOptimizeEvents() noexcept;
 
 	protected:
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
+		// Override of onMouseMove function
+		// Must be called in the overriding method
+		virtual bool onMouseMove(MouseMoveEvent event, Vec2Df position) override;
+		// Must be called in the overriding method
+		virtual bool onMouseClick(MouseButton button, KeyEvent action) override;
 
 	public:
 		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic, GfxDriverObjectHandleType textGroup) noexcept;
 		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true) noexcept;
 		virtual ~Button() noexcept;
-
-		// Override of onMouseMove function
-		// Must be called in the overriding method
-		virtual bool onMouseMove(MouseMoveEvent event, Vec2Df position) noexcept override;
-		// Must be called in the overriding method
-		virtual bool onMouseClick(MouseButton button, KeyEvent action) noexcept override;
 
 		// Must be called in the overriding method
 		virtual void clearAllEvents() noexcept;

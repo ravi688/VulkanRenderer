@@ -18,6 +18,12 @@ namespace SUTK
 
 	}
 
+	RenderRect::~RenderRect() noexcept
+	{
+		if(getGfxDriverObjectHandle() != GFX_DRIVER_OBJECT_NULL_HANDLE)
+			getUIDriver().getGfxDriver().destroyGeometry(getGfxDriverObjectHandle());
+	}
+
 	void RenderRect::setActive(com::Bool isActive) noexcept
 	{
 		// mandatory to call

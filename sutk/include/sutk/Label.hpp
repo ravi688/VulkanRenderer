@@ -26,6 +26,7 @@ namespace SUTK
 	public:
 		Label(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept;
 		Label(UIDriver& driver, Container* parent) noexcept;
+		~Label() noexcept;
 
 		void setReassociateOnParentChange(com::Bool isReassociate, com::Bool isApplyNow = com::False) noexcept;
 		void set(const std::string_view str) noexcept;

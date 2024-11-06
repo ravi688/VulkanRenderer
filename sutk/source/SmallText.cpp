@@ -26,6 +26,12 @@ namespace SUTK
 		setGfxDriverObjectHandle(getGfxDriver().createText(textGroup));
 		m_pointSize = getFontSize();
 	}
+
+	SmallText::~SmallText() noexcept
+	{
+		getGfxDriver().destroyText(getGfxDriverObjectHandle());
+	}
+
 	bool SmallText::isDirty()
 	{
 		// SmallText should only be updated when it is active (visible to the user),

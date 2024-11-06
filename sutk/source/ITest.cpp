@@ -23,6 +23,7 @@
 #include <sutk/tests/ToggleButtonGroupTest.hpp>
 #include <sutk/tests/ContainerTest.hpp>
 #include <sutk/tests/FontTest.hpp>
+#include <sutk/tests/NotebookTest.hpp>
 
 namespace SUTK
 {
@@ -49,7 +50,8 @@ namespace SUTK
 		{ "TOGGLE_BUTTON", [] () { return std::unique_ptr<ITest>(new ToggleButtonTest()); }},
 		{ "TOGGLE_BUTTON_GROUP", [] () { return std::unique_ptr<ITest>(new ToggleButtonGroupTest()); }},
 		{ "CONTAINER", [] () { return std::unique_ptr<ITest>(new ContainerTest()); }},
-		{ "FONT", [] () { return std::unique_ptr<ITest>(new FontTest()); }}
+		{ "FONT", [] () { return std::unique_ptr<ITest>(new FontTest()); }},
+		{ "NOTEBOOK", [] () { return std::unique_ptr<ITest>(new NotebookTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)

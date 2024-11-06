@@ -38,7 +38,7 @@ namespace SUTK
 
 	public:
 		Renderable(UIDriver& driver, RenderableContainer* container = NULL) noexcept;
-		virtual ~Renderable() = default;
+		virtual ~Renderable() noexcept;
 
 		// returns true, if GPU side data is out of sync with respect to the CPU side data, otherwise false 
 		virtual bool isDirty() = 0;

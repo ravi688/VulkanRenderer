@@ -24,10 +24,14 @@ namespace SUTK
 																									m_onEnterEvent(NULL),
 																									m_onExitEvent(NULL),
 																									m_onPressEvent(NULL),
-																									m_onReleaseEvent(NULL)
+																									m_onReleaseEvent(NULL),
+																									m_isGraphicOwner(com::False)
 	{ 
 		if(isCreateDefaultGraphic)
+		{
 			setGraphic(driver.createContainer<DefaultButtonGraphic>(this));
+			m_isGraphicOwner = com::True;
+		}
 	}
 
 	Button::~Button() noexcept
@@ -40,6 +44,8 @@ namespace SUTK
 			delete m_onPressEvent;
 		if(!m_onReleaseEvent)
 			delete m_onReleaseEvent;
+		if(m_isGraphicOwner)
+			getUIDriver().destroyContainer<DefaultButtonGraphic>(com::iknow_down_cast<DefaultButtonGraphic*>(m_graphic));
 	}
 
 	void Button::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
@@ -48,7 +54,7 @@ namespace SUTK
 		MouseMoveHandlerObject::update();
 	}
 
-	bool Button::onMouseMove(MouseMoveEvent event, Vec2Df position) noexcept
+	bool Button::onMouseMove(MouseMoveEvent event, Vec2Df position)
 	{
 		if(event == MouseMoveEvent::Move)
 		{
@@ -86,7 +92,7 @@ namespace SUTK
 		return true;
 	}
 
-	bool Button::onMouseClick(MouseButton button, KeyEvent action) noexcept
+	bool Button::onMouseClick(MouseButton button, KeyEvent action)
 	{
 		if(button != MouseButton::Left)
 			return true;

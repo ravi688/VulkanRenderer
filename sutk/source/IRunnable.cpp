@@ -12,8 +12,12 @@ namespace SUTK
 			runnable->update();
 	}
 
-	Runnable::Runnable(UIDriver& driver) noexcept
+	Runnable::Runnable(UIDriver& driver) noexcept : m_uiDriver(driver)
 	{
 		driver.addRunnable(this);
+	}
+	Runnable::~Runnable() noexcept
+	{
+		m_uiDriver.removeRunnable(this);
 	}
 }

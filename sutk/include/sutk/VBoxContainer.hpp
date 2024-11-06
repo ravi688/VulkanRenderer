@@ -16,13 +16,12 @@ namespace SUTK
 		virtual void onRemoveChild(Container* child) override;
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 
+		// Overrides of ILayoutController::onRecalculateLayout
+		virtual void onRecalculateLayout() noexcept;
 	public:
 		VBoxContainer(UIDriver& driver, Container* parent = NULL, bool isLayoutLocked = false, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer) noexcept;
 		~VBoxContainer() noexcept = default;
 		
-		// Overrides of ILayoutController::onRecalculateLayout
-		virtual void onRecalculateLayout() noexcept;
-
 		// resizes this container to tightly fit its child containers
 		// basically, it just removes any empty spaces
 		void tight() noexcept;

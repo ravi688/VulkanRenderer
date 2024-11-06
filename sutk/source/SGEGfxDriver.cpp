@@ -323,6 +323,8 @@ namespace SUTK
 
 	void SGEGfxDriver::destroyText(GfxDriverObjectHandleType handle)
 	{
+		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
+		
 		auto it = getSubTextIterator(handle);
 		SGE::BitmapTextString subText = it->second.textString;
 		subText.destroy();
@@ -1155,6 +1157,7 @@ namespace SUTK
 
 	void SGEGfxDriver::destroyGeometry(GfxDriverObjectHandleType geometry)
 	{
+		_com_assert(geometry != GFX_DRIVER_OBJECT_NULL_HANDLE);
 		// erase the mesh object
 		auto it = getMeshIterator(geometry);
 		it->second.mesh.destroy();
@@ -1164,8 +1167,8 @@ namespace SUTK
 
 		// erase the corresponding render object also 
 		auto it2 = getRenderObjectIterator(geometry);
-		// SGE::RenderObject object = *it2;
-		// TODO: object.destroy()
+		SGE::RenderObject object = it2->second;
+		object.destroy();
 		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_RENDER_OBJECT_ID(geometry)));
 		m_renderObjectMappings.erase(it2);
 	}

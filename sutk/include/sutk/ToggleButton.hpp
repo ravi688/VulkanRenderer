@@ -11,7 +11,7 @@ namespace SUTK
 	public:
 		typedef com::Event<com::no_publish_ptr_t, ToggleState> OnToggleEvent;
 	protected:
-		virtual bool onMouseClick(MouseButton button, KeyEvent action) noexcept override;
+		virtual bool onMouseClick(MouseButton button, KeyEvent action) override;
 	private:
 		OnToggleEvent m_onToggleEvent;
 		ToggleState m_toggleState;

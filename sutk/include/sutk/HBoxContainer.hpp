@@ -16,12 +16,12 @@ namespace SUTK
 		virtual void onRemoveChild(Container* child) override;
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 
+		// Overrides of ILayoutController::onRecalculateLayout
+		virtual void onRecalculateLayout() noexcept override;
+
 	public:
 		HBoxContainer(UIDriver& driver, Container* parent = NULL, bool isLayoutLocked = false, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer) noexcept;
 		~HBoxContainer() noexcept = default;
-
-		// Overrides of ILayoutController::onRecalculateLayout
-		virtual void onRecalculateLayout() noexcept override;
 		
 		// resizes this container to tightly fit its child containers
 		// basically, it just removes any empty spaces

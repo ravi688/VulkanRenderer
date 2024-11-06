@@ -56,9 +56,13 @@ namespace SUTK
 		com::Bool m_isLayoutIgnore;
 		AnchorRect* m_anchorRect;
 		Container* m_parent;
+
+		#ifdef CONTAINER_DEBUG
 		RenderableContainer* m_renderRectCont;
 		RenderRectOutline* m_renderRect;
 		bool m_isDebug;
+		#endif
+		
 		RecycleState m_recycleState;
 		Layer m_layer;
 
