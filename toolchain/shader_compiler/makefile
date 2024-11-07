@@ -46,14 +46,14 @@ STATIC_LIB_NAME = shader_compiler.a
 DYNAMIC_LIB_NAME = shader_compiler.dll
 EXECUTABLE_NAME = vsc
 EXTERNAL_INCLUDES = -Iinclude/shader_compiler
-EXTERNAL_LIBRARIES = -L./external-dependency-libs -lshaderc_shared
+EXTERNAL_LIBRARIES =
 BUILD_DEFINES=
 
 DEPENDENCIES = ../../.. ../../../dependencies/GLSLCommon ../../../dependencies/Common ../../../dependencies/PhyMacParser ../../../dependencies/MeshLib/dependencies/DiskManager ../../../shared-dependencies/BufferLib ../../../dependencies/SafeMemory/shared-dependencies/CallTrace
 DEPENDENCY_LIBS = ../../../dependencies/GLSLCommon/lib/glslcommon.a ../../../dependencies/PhyMacParser/lib/ppsr.a ../../../dependencies/Common/lib/common.a ../../../dependencies/MeshLib/dependencies/DiskManager/lib/diskmanager.a ../../../shared-dependencies/BufferLib/lib/bufferlib.a ../../../dependencies/SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
 DEPENDENCIES_DIR = ./dependencies
-SHARED_DEPENDENCIES = 
-SHARED_DEPENDENCY_LIBS = 
+SHARED_DEPENDENCIES =
+SHARED_DEPENDENCY_LIBS =
 SHARED_DEPENDENCIES_DIR = ./shared-dependencies
 UNPACKED_OBJECTS_DIR = ./unpacked
 
@@ -64,13 +64,13 @@ endif
 
 # Windows
 ifeq ($(PLATFORM),Windows)
-# 	EXTERNAL_LIBRARIES += -L${VK_SDK_PATH}/lib/ -lvulkan-1  -L./external-dependency-libs/win -lglfw3 -lfreetype.dll -lgdi32
+ 	EXTERNAL_LIBRARIES += -L./external-dependency-libs -lshaderc_shared
 	EXTERNAL_INCLUDES += -I${VK_SDK_PATH}/include/
 endif
 
 # Linux
 ifeq ($(PLATFORM),Linux)
-# 	EXTERNAL_LIBRARIES += -L${VULKAN_SDK}/lib/ -lvulkan -L./external-dependency-libs/linux -lglfw3 -lfreetype -lz -lpng -lbrotlidec -lm
+ 	EXTERNAL_LIBRARIES +=  $(shell pkg-config shaderc --libs)
 	EXTERNAL_INCLUDES += -I${VULKAN_SDK}/include/
 endif
 

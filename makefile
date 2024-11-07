@@ -49,7 +49,7 @@ DYNAMIC_LIB_NAME = sge.dll
 EXECUTABLE_NAME = main
 MAIN_SOURCE_LANG = c
 MAIN_SOURCES=source/main.c
-EXTERNAL_LIBRARIES = -L./external-dependency-libs -L./toolchain/shader_compiler/external-dependency-libs -lshaderc_shared
+EXTERNAL_LIBRARIES = -L./external-dependency-libs
 EXTERNAL_INCLUDES = -I./dependencies/ -I./shared-dependencies -I./include/freetype
 DEPENDENCIES = ../toolchain/shader_compiler ECS MeshLib GLSLCommon Common MeshLib/dependencies/DiskManager HPML SafeMemory SafeMemory/shared-dependencies/CallTrace  TemplateSystem MeshLib/dependencies/DiskManager ttf2mesh ../shared-dependencies/BufferLib
 DEPENDENCY_LIBS = ../toolchain/shader_compiler/lib/shader_compiler.a PhyMacParser/lib/ppsr.a ECS/lib/ecs.a MeshLib/lib/meshlib.a GLSLCommon/lib/glslcommon.a Common/lib/common.a MeshLib/dependencies/DiskManager/lib/diskmanager.a HPML/lib/hpml.a SafeMemory/lib/safemem.a ttf2mesh/lib/ttf2mesh.a ../shared-dependencies/BufferLib/lib/bufferlib.a SafeMemory/shared-dependencies/CallTrace/lib/calltrace.a
@@ -63,12 +63,14 @@ UNPACKED_OBJECTS_DIR = ./unpacked
 # Windows
 ifeq ($(PLATFORM),Windows)
 	EXTERNAL_LIBRARIES += -L${VK_SDK_PATH}/lib/ -lvulkan-1  -L./external-dependency-libs/win -lglfw3 -lfreetype.dll -lgdi32
+	EXTERNAL_LIBRARIES += -L./toolchain/shader_compiler/external-dependency-libs -lshaderc_shared
 	EXTERNAL_INCLUDES += -I${VK_SDK_PATH}/include/
 endif
 
 # Linux
 ifeq ($(PLATFORM),Linux)
 	EXTERNAL_LIBRARIES += -L${VULKAN_SDK}/lib/ -lvulkan -L./external-dependency-libs/linux -lglfw3 -lfreetype -lz -lpng -lbrotlidec -lm
+	EXTERNAL_LIBRARIES += $(shell pkg-config shaderc --libs)
 	EXTERNAL_INCLUDES += -I${VULKAN_SDK}/include/
 endif
 
