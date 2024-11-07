@@ -55,6 +55,7 @@ SGE_API void multi_buffer_create(u32 element_size, u32 capacity, multi_buffer_t*
 {
 	_debug_assert__(out_multi_buffer != NULL);
 	out_multi_buffer->buffer = buf_create(element_size, capacity, 0);
+	out_multi_buffer->id_gen = id_generator_create(0, NULL);
 	out_multi_buffer->sub_buffers = buf_create(sizeof(sub_buffer_t), 1, 0);
 }
 
@@ -62,6 +63,7 @@ SGE_API void multi_buffer_free(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	buf_free(&multi_buffer->buffer);
+	id_generator_destroy(&multi_buffer->id_gen);
 	buf_free(&multi_buffer->sub_buffers);
 }
 
@@ -78,10 +80,25 @@ SGE_API buf_ucount_t multi_buffer_get_capacity(multi_buffer_t* multi_buffer)
 	return buf_get_capacity(&multi_buffer->buffer);
 }
 
+SGE_API buf_ucount_t multi_buffer_get_total_count(multi_buffer_t* multi_buffer)
+{
+	buf_ucount_t count = 0;
+	u32 total_count = buf_get_element_count(&multi_buffer->sub_buffers);
+	for(u32 i = 0; i < total_count; i++)
+	{
+		AUTO sub_buffer = buf_get_ptr_at_typeof(&multi_buffer->sub_buffers, sub_buffer_t, i);
+		if(sub_buffer->is_free)
+			continue;
+		count += sub_buffer->count;
+	}
+	return count;
+}
+
 SGE_API buf_ucount_t multi_buffer_get_sub_buffer_count(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
-	return buf_get_element_count(&multi_buffer->sub_buffers);
+	_com_assert(buf_get_element_count(&multi_buffer->sub_buffers) >= id_generator_get_returned_count(&multi_buffer->id_gen));
+	return buf_get_element_count(&multi_buffer->sub_buffers) - id_generator_get_returned_count(&multi_buffer->id_gen);
 }
 
 // logic functions
@@ -89,7 +106,24 @@ SGE_API void multi_buffer_clear(multi_buffer_t* multi_buffer)
 {
 	check_pre_condition(multi_buffer);
 	buf_clear(&multi_buffer->buffer, NULL);
+	id_generator_reset(&multi_buffer->id_gen, 0);
 	buf_clear(&multi_buffer->sub_buffers, NULL);
+}
+SGE_API void multi_buffer_flatcopy_to(multi_buffer_t* multi_buffer, void* dst_ptr)
+{
+	u32 total_count = buf_get_element_count(&multi_buffer->sub_buffers);
+	void* ptr = buf_get_ptr(&multi_buffer->buffer);
+	u32 stride = buf_get_element_size(&multi_buffer->buffer);
+	for(u32 i = 0; i < total_count; i++)
+	{
+		AUTO sub_buffer = buf_get_ptr_at_typeof(&multi_buffer->sub_buffers, sub_buffer_t, i);
+		if(sub_buffer->is_free)
+			continue;
+		u32 num_bytes = sub_buffer->count * stride;
+		if(num_bytes == 0) continue;
+		memcopyv(dst_ptr, ptr + sub_buffer->ptr * stride, u8, num_bytes);
+		dst_ptr += num_bytes;
+	}
 }
 
 // sub buffer
@@ -101,9 +135,19 @@ SGE_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* multi
 	BUFFER* sub_buffers = &multi_buffer->sub_buffers;
 	BUFFER* buffer = &multi_buffer->buffer;
 
-	// create a new sub_buffer_t instance
-	buf_push_pseudo(sub_buffers, 1);
-	sub_buffer_t* sub_buffer = buf_peek_ptr(sub_buffers);
+	sub_buffer_t* sub_buffer;
+	AUTO id = id_generator_get(&multi_buffer->id_gen);
+	if(id < buf_get_element_count(sub_buffers))
+		sub_buffer = buf_get_ptr_at_typeof(sub_buffers, sub_buffer_t, id);
+	else
+	{
+		// create a new sub_buffer_t instance
+		buf_push_pseudo(sub_buffers, 1);
+		sub_buffer = buf_peek_ptr(sub_buffers);
+		sub_buffer->is_free = true;
+	}
+	_com_assert(sub_buffer->is_free);
+	sub_buffer->is_free = false;
 
 	// set the ptr to current element count in the master buffer
 	sub_buffer->ptr = buf_get_element_count(buffer);
@@ -117,12 +161,29 @@ SGE_API sub_buffer_handle_t multi_buffer_sub_buffer_create(multi_buffer_t* multi
 	sub_buffer->count = 0;
 
 	// return the index of the newly created sub_buffer in the sub_buffers buffer as a handle to it
-	return buf_get_element_count(sub_buffers) - 1;
+	return id;
 }
 
 SGE_API void multi_buffer_sub_buffer_destroy(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
-	assert_not_implemented();
+	check_pre_condition(multi_buffer);
+	sub_buffer_t* sub_buffer = get_sub_buffer(multi_buffer, handle);
+	_com_assert(!sub_buffer->is_free);
+	buf_remove_pseudo(&multi_buffer->buffer, sub_buffer->ptr, sub_buffer->capacity);
+	id_generator_return(&multi_buffer->id_gen, handle);
+	sub_buffer->is_free = true;
+	if(sub_buffer->capacity > 0)
+	{
+		BUFFER* sub_buffers = &multi_buffer->sub_buffers;
+		// update the pointers of the sub_buffers to the new location
+		for(sub_buffer_handle_t i = handle + 1; i < buf_get_element_count(sub_buffers); i++)
+		{
+			AUTO sub_buffer = buf_get_ptr_at_typeof(sub_buffers, sub_buffer_t, i);
+			if(sub_buffer->is_free)
+				continue;
+			sub_buffer->ptr -= sub_buffer->capacity;
+		}
+	}
 }
 
 // logic functions
@@ -255,6 +316,6 @@ static void check_pre_condition(multi_buffer_t* multi_buffer)
 static void check_handle(multi_buffer_t* multi_buffer, sub_buffer_handle_t handle)
 {
 	_debug_assert__(handle < buf_get_element_count(&multi_buffer->sub_buffers));
-	_debug_assert__(handle != BUF_INVALID_INDEX);
+	_debug_assert__(handle != SUB_BUFFER_HANDLE_INVALID);
 }
 #endif /*GLOBAL_DEBUG*/

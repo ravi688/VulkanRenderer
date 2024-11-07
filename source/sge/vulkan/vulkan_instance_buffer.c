@@ -98,11 +98,7 @@ SGE_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_bu
 
 	multi_buffer_t* host_buffer = &instance_buffer->host_buffer;
 	vulkan_buffer_t* device_buffer = &instance_buffer->device_buffer;
-	u32 sub_buffer_count = multi_buffer_get_sub_buffer_count(host_buffer);
-
-	u32 count = 0;
-	for(u32 i = 0; i < sub_buffer_count; i++)
-		count += sub_buffer_get_count(host_buffer, i);
+	u32 count = multi_buffer_get_total_count(host_buffer);
 
 	bool _is_resized = false;
 
@@ -137,13 +133,7 @@ SGE_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_bu
 
 	// copy the elements from all the sub buffers to the device buffer contiguously (no gaps, as there could be due to capacities of the sub buffers)
 	void* ptr = vulkan_buffer_map(device_buffer);
-	for(u32 i = 0; i < sub_buffer_count; i++)
-	{
-		u32 num_bytes = sub_buffer_get_count(host_buffer, i) * device_buffer->stride;
-		if(num_bytes == 0) continue;
-		memcopyv(ptr, sub_buffer_get_ptr(host_buffer, i), u8, num_bytes);
-		ptr += num_bytes;
-	}
+	multi_buffer_flatcopy_to(host_buffer, ptr);
 	vulkan_buffer_unmap(device_buffer);
 	if(is_resized != NULL)
 		OUT is_resized = _is_resized;

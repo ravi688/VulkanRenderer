@@ -30,21 +30,27 @@
 #include <sge/defines.h>
 #include <sge/comparer.h> // comparer_t
 
+#include <common/id_generator.h>
+
 typedef struct sub_buffer_t
 {
 	buf_ucount_t ptr;
 	buf_ucount_t capacity;
 	buf_ucount_t count;
+	bool is_free;
 } sub_buffer_t;
+
+typedef buffer_t /* sub_buffer_t */ sub_buffer_list_t;
 
 typedef struct multi_buffer_t
 {
 	BUFFER buffer;			// contains contiguous memory for all the sub-buffers
-	BUFFER /*sub_buffer_t*/ sub_buffers;
+	id_generator_t id_gen;
+	sub_buffer_list_t sub_buffers;
 } multi_buffer_t;
 
-typedef buf_ucount_t sub_buffer_handle_t;
-#define SUB_BUFFER_HANDLE_INVALID BUF_INVALID_INDEX
+typedef id_generator_id_type_t sub_buffer_handle_t;
+#define SUB_BUFFER_HANDLE_INVALID ID_GENERATOR_ID_TYPE_MAX
 
 BEGIN_CPP_COMPATIBLE
 
@@ -55,11 +61,13 @@ SGE_API void multi_buffer_free(multi_buffer_t* buffer);
 // getters
 SGE_API buf_ucount_t multi_buffer_get_count(multi_buffer_t* buffer);
 SGE_API buf_ucount_t multi_buffer_get_capacity(multi_buffer_t* buffer);
+SGE_API buf_ucount_t multi_buffer_get_total_count(multi_buffer_t* multi_buffer);
 SGE_API buf_ucount_t multi_buffer_get_sub_buffer_count(multi_buffer_t* buffer);
 
 
 // logic functions
 SGE_API void multi_buffer_clear(multi_buffer_t* buffer);
+SGE_API void multi_buffer_flatcopy_to(multi_buffer_t* buffer, void* dst_ptr);
 
 // sub buffer
 
