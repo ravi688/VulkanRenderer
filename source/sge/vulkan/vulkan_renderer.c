@@ -216,6 +216,23 @@ static void destroy_fences(vulkan_renderer_t* renderer, VkFence* fences, u32 cou
 #	define PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION "VK_KHR_win32_surface"
 #endif
 
+static const char* getPlatformSpecificExtension()
+{
+	#ifdef PLATFORM_LINUX
+	if (strcmp(getenv("XDG_SESSION_TYPE"), "wayland") == 0)
+		return "VK_KHR_wayland_surface";
+	else if (strcmp(getenv("XDG_SESSION_TYPE"), "x11") == 0)
+		return "VK_KHR_xcb_surface";
+	else
+	{
+		/* Unable to detect Windowing system */
+		_debug_assert__(false);
+		return "";
+	}
+	#endif
+	return PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION;
+}
+
 static struct_descriptor_t create_screen_info_struct(memory_allocator_t* allocator)
 {
 	struct_descriptor_t screen_info_struct;
@@ -309,7 +326,7 @@ SGE_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t*
 	renderer->max_far_lights = create_info->max_far_lights;
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
-	const char* extensions[3] = { "VK_KHR_surface", PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION };
+	const char* extensions[3] = { "VK_KHR_surface", getPlatformSpecificExtension() };
 	#ifdef ENABLE_VULKAN_VALIDATION_LAYERS
 	const char* layers[] = { "VK_LAYER_KHRONOS_validation", "VK_LAYER_KHRONOS_synchronization2" };
 	#endif /* ENABLE_VULKAN_VALIDATION_LAYERS */
