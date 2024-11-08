@@ -17,7 +17,7 @@ namespace SUTK
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 
 		// Overrides of ILayoutController::onRecalculateLayout
-		virtual void onRecalculateLayout() noexcept;
+		virtual void onRecalculateLayout() noexcept override;;
 	public:
 		VBoxContainer(UIDriver& driver, Container* parent = NULL, bool isLayoutLocked = false, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer) noexcept;
 		~VBoxContainer() noexcept = default;

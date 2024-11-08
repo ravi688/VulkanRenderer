@@ -222,7 +222,7 @@ namespace SUTK
 		lineNo = std::max(lineNo, 0);
 		_assert(lineNo >= 0);
 		LineCountType colNo = m_lines[lineNo]->getColPosFromCoord(coords.x - m_scrollDelta.x);
-		return { lineNo, colNo };
+		return { static_cast<LineCountType>(lineNo), colNo };
 	}
 
 	// this creates a new line before line pointed by current cursor

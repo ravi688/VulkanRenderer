@@ -63,7 +63,7 @@ namespace SUTK
 
 		// Redeclaration of IButtonGraphic::getMinBoundSize() virtual function
 		// Must be implemented by the deriving class
-		virtual Vec2Df getMinBoundSize() = 0;
+		virtual Vec2Df getMinBoundSize() override = 0;
 
 		void setTransitionDelay(const f32 transitionDelay) noexcept;
 

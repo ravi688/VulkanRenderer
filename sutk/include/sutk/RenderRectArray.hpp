@@ -16,8 +16,8 @@ namespace SUTK
 		bool m_isRectsDirty;
 
 		// overrides of Renderable::onGlobalCoordDirty(), and onContainerResize
-		void onGlobalCoordDirty() noexcept override;
-		void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept;
+		virtual void onGlobalCoordDirty() noexcept override;
+		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 
 
 	public:
@@ -25,8 +25,8 @@ namespace SUTK
 		RenderRectFillArray(UIDriver& driver, RenderableContainer* container, RenderMode renderMode = RenderMode::Opaque) noexcept;
 
 		// Implementation of Renderable
-		virtual bool isDirty();
-		virtual void update();
+		virtual bool isDirty() override;
+		virtual void update() override;
 
 		// Overrides of Renderable::setActive
 		virtual void setActive(com::Bool isActive) noexcept override;
@@ -34,8 +34,8 @@ namespace SUTK
 		const std::vector<Rect2Df>& getRects() const noexcept { return m_rects; }
 		std::vector<Rect2Df>& getRectsForWrite() noexcept;
 
-		virtual Color4 getColor() const noexcept { return m_color; }
+		virtual Color4 getColor() const noexcept override { return m_color; }
 		// it must be called in the overriding method
-		virtual void setColor(const Color4 color) noexcept;
+		virtual void setColor(const Color4 color) noexcept override;
 	};
 }

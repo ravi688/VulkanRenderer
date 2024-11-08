@@ -20,6 +20,8 @@ namespace SUTK
 	{
 
 	public:
+		virtual ~ITest() = default;
+
 		static std::unique_ptr<ITest> Create(const std::string& testName);
 
 		virtual DriverInitializationData getInitializationData()

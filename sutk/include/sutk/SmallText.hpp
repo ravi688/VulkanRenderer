@@ -86,7 +86,7 @@ namespace SUTK
 
 	protected:
 		virtual void onGlobalCoordDirty() noexcept override;
-		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept;
+		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) override;
 	public:
 

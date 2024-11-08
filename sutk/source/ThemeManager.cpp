@@ -143,8 +143,9 @@ namespace SUTK
 
 	static f32 u32_pair_to_f32(const char* str, u32_pair_t pair)
 	{
-		char buf[U32_PAIR_DIFF(pair) + 1] = { };
+		char buf[U32_PAIR_DIFF(pair) + 1];
 		memcpy(buf, pair.start + str, U32_PAIR_DIFF(pair));
+		buf[U32_PAIR_DIFF(pair)] = 0;
 		return std::strtof(buf, NULL);
 	}
 

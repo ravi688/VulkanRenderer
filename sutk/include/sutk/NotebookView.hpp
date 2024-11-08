@@ -139,17 +139,17 @@ namespace SUTK
 		void viewPage(NotebookPage* page) noexcept;
 		void removePage(NotebookPage* page) noexcept;
 		template<typename T, com::CompareFunction<T> EqualTo = std::equal_to<T>>
-		NotebookPage* findPage(const T& data) const noexcept;
+		NotebookPage* findPage(const T& data) noexcept;
 	};
 
 	template<typename T, com::CompareFunction<T> EqualTo>
-	NotebookPage* NotebookView::findPage(const T& data) const noexcept
+	NotebookPage* NotebookView::findPage(const T& data) noexcept
 	{
-		const NotebookPage* page = m_head;
+		NotebookPage* page = m_head;
 		EqualTo isEqual { };
 		while(page != com::null_pointer<NotebookPage>())
 		{
-			if(isEqual(*page->getData<T>, data))
+			if(isEqual(*page->getData<T>(), data))
 				return page;
 			page = page->getNext();
 		}
