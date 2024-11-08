@@ -191,11 +191,11 @@ static INLINE u32 lowest_multiple_of(u32 x, u32 y)
 #define OBJECT_STRIDE lowest_multiple_of(sizeof(object_t), sizeof(void*))
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE object_t* object_get_next(object_t* obj)
 {
-	return CAST_TO(object_t*, CAST_TO(void*, obj) + OBJECT_STRIDE);
+	return CAST_TO(object_t*, CAST_TO(u8*, obj) + OBJECT_STRIDE);
 }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const object_t* object_get_next_const(const object_t* obj)
 {
-	return CAST_TO(const object_t*, CAST_TO(const void*, obj) + OBJECT_STRIDE);
+	return CAST_TO(const object_t*, CAST_TO(const u8*, obj) + OBJECT_STRIDE);
 }
 #pragma GCC diagnostic pop
 
@@ -245,7 +245,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE void object_memzero(void* p
 {
 	_debug_assert__((ptr != NULL) && (size != 0));
 	_debug_assert__(size >= sizeof(object_t));
-	memset(ptr + sizeof(object_t), 0, size - sizeof(object_t));
+	memset(CAST_TO(u8*, ptr) + sizeof(object_t), 0, size - sizeof(object_t));
 }
 #pragma GCC diagnostic pop
 
@@ -287,12 +287,12 @@ static CAN_BE_UNUSED_FUNCTION void* object_up_cast(object_t* obj, object_type_t 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE object_t* object_get_prev(object_t* obj)
 {
 	_debug_assert__(obj != NULL);
-	return CAST_TO(object_t*, CAST_TO(void*, obj) - OBJECT_STRIDE);
+	return CAST_TO(object_t*, CAST_TO(u8*, obj) - OBJECT_STRIDE);
 }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE const object_t* object_get_prev_const(const object_t* obj)
 {
 	_debug_assert__(obj != NULL);
-	return CAST_TO(const object_t*, CAST_TO(const void*, obj) - OBJECT_STRIDE);
+	return CAST_TO(const object_t*, CAST_TO(const u8*, obj) - OBJECT_STRIDE);
 }
 #define OBJECT_DOWN_CAST(dst_ptr_type, dst_object_type, src_typed_ptr)  CAST_TO(dst_ptr_type, object_down_cast(OBJECT(src_typed_ptr), dst_object_type))
 static CAN_BE_UNUSED_FUNCTION void* object_down_cast(object_t* obj, object_type_t dst_type)
