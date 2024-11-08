@@ -153,7 +153,7 @@ static inline u32 clamp_u32(u32 value, u32 min, u32 max)
 
 static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, render_window_t* window)
 {
-	if(surface_capabilities->currentExtent.width == U32_MAX)			// if it is already set
+	if(surface_capabilities->currentExtent.width != U32_MAX)			// if it is already set
 		return surface_capabilities->currentExtent;
 	u32 width, height;
 	render_window_get_framebuffer_extent(window, &width, &height);
@@ -215,6 +215,23 @@ static void destroy_fences(vulkan_renderer_t* renderer, VkFence* fences, u32 cou
 #elif defined(PLATFORM_WINDOWS)
 #	define PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION "VK_KHR_win32_surface"
 #endif
+
+static const char* getPlatformSpecificExtension()
+{
+	#ifdef PLATFORM_LINUX
+	if (strcmp(getenv("XDG_SESSION_TYPE"), "wayland") == 0)
+		return "VK_KHR_wayland_surface";
+	else if (strcmp(getenv("XDG_SESSION_TYPE"), "x11") == 0)
+		return "VK_KHR_xcb_surface";
+	else
+	{
+		/* Unable to detect Windowing system */
+		_debug_assert__(false);
+		return "";
+	}
+	#endif
+	return PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION;
+}
 
 static struct_descriptor_t create_screen_info_struct(memory_allocator_t* allocator)
 {
@@ -309,7 +326,7 @@ SGE_API vulkan_renderer_t* vulkan_renderer_create(vulkan_renderer_create_info_t*
 	renderer->max_far_lights = create_info->max_far_lights;
 
 	// create a vulkan instance with extensions VK_KHR_surface, VK_KHR_win32_surface
-	const char* extensions[3] = { "VK_KHR_surface", PLATFORM_SPECIFIC_VK_SURFACE_EXTENSION };
+	const char* extensions[3] = { "VK_KHR_surface", getPlatformSpecificExtension() };
 	#ifdef ENABLE_VULKAN_VALIDATION_LAYERS
 	const char* layers[] = { "VK_LAYER_KHRONOS_validation", "VK_LAYER_KHRONOS_synchronization2" };
 	#endif /* ENABLE_VULKAN_VALIDATION_LAYERS */
@@ -497,11 +514,11 @@ DEBUG_BLOCK
 	{
 		{ 
 			.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 
-			.descriptorCount = u32_max(20, renderer->max_point_lights + renderer->max_spot_lights + renderer->max_far_lights)
+			.descriptorCount = u32_max(40, renderer->max_point_lights + renderer->max_spot_lights + renderer->max_far_lights)
 		},
 		{ 
 			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 
-			.descriptorCount = u32_max(40, renderer->max_point_lights + renderer->max_spot_lights + renderer->max_far_lights)
+			.descriptorCount = u32_max(100, renderer->max_point_lights + renderer->max_spot_lights + renderer->max_far_lights)
 		},
 		{ .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = 10 }
 	};
