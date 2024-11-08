@@ -34,6 +34,15 @@ namespace SUTK
 		// Mandatory to be called in the overriding method
 		virtual T* onCreate() noexcept = 0;
 
+		// This is needed to fix linker error on Mingw64 compiler.
+		// When compiled on (Linux) GCC without this, it linked fine.
+		// But on windows I don't know what the hell is going on!
+		// TODO: Remove this in future (if I find a fix for it)
+		virtual void onRecalculateLayout() noexcept override
+		{
+			VBoxContainer::onRecalculateLayout();
+		}
+
 		PoolType& getPool() noexcept { return m_pool; }
 
 		// Following set of functions must be called by the deriving class to correctly present ListContainer
