@@ -153,7 +153,7 @@ static inline u32 clamp_u32(u32 value, u32 min, u32 max)
 
 static VkExtent2D find_extent(VkSurfaceCapabilitiesKHR* surface_capabilities, render_window_t* window)
 {
-	if(surface_capabilities->currentExtent.width == U32_MAX)			// if it is already set
+	if(surface_capabilities->currentExtent.width != U32_MAX)			// if it is already set
 		return surface_capabilities->currentExtent;
 	u32 width, height;
 	render_window_get_framebuffer_extent(window, &width, &height);
