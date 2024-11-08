@@ -514,11 +514,11 @@ DEBUG_BLOCK
 	{
 		{ 
 			.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 
-			.descriptorCount = u32_max(20, renderer->max_point_lights + renderer->max_spot_lights + renderer->max_far_lights)
+			.descriptorCount = u32_max(40, renderer->max_point_lights + renderer->max_spot_lights + renderer->max_far_lights)
 		},
 		{ 
 			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 
-			.descriptorCount = u32_max(40, renderer->max_point_lights + renderer->max_spot_lights + renderer->max_far_lights)
+			.descriptorCount = u32_max(100, renderer->max_point_lights + renderer->max_spot_lights + renderer->max_far_lights)
 		},
 		{ .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = 10 }
 	};
