@@ -7,7 +7,12 @@ namespace SUTK
 	Renderable::Renderable(UIDriver& driver, RenderableContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_drawOrder(0), m_isDrawOrderDirty(true)
 	{
 		if(container != NULL)
+		{
+			// NOTE: We can't call RenderableContainer::getRenderable() here because it is virtual, and can be overriden
+			// And in that override, one may instantiate this Renderable() which will lead to non-terminating recursion!
+			com_assert(COM_DESCRIPTION(!container->m_renderable), "Only one Renderable is allowed per RenderableContainer");
 			container->setRenderable(this);
+		}
 		driver.addRenderable(this);
 
 		setDrawOrder((container == NULL) ? 0 : container->getDepth());
@@ -15,6 +20,11 @@ namespace SUTK
 
 	Renderable::~Renderable() noexcept
 	{
+		if(getContainer())
+		{
+			getContainer()->setRenderable(com::null_pointer<Renderable>());
+			m_container = com::null_pointer<RenderableContainer>();
+		}
 		getUIDriver().removeRenderable(this);
 	}
 

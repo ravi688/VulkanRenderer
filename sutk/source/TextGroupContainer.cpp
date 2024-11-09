@@ -3,10 +3,9 @@
 
 namespace SUTK
 {
-	TextGroupContainer::TextGroupContainer(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : RenderableContainer(driver, parent, isLayoutIgnore, layer)
+	TextGroupContainer::TextGroupContainer(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : RenderableContainer(driver, parent, isLayoutIgnore, layer), m_textGroup(com::null_pointer<TextGroup>())
 	{
-		TextGroup* textGroup = driver.createRenderable<TextGroup>(this);
-		setRenderable(textGroup);
+		m_textGroup = driver.createRenderable<TextGroup>(this);
 	}
 
 	GfxDriverObjectHandleType TextGroupContainer::getGfxDriverObjectHandle() noexcept
@@ -16,6 +15,6 @@ namespace SUTK
 
  	TextGroup* TextGroupContainer::getTextGroup() noexcept
  	{ 
- 		return com::iknow_down_cast<TextGroup*>(getRenderable()); 
+ 		return m_textGroup;
  	}
 }

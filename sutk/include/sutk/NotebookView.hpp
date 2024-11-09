@@ -8,6 +8,7 @@
 
 #include <common/Concepts.hpp> // for com::CompareFunction
 
+#include <optional> // for std::optional
 
 namespace SUTK
 {
@@ -20,6 +21,7 @@ namespace SUTK
 	private:
 		void* m_data;
 		void (*m_dataDeleter)(void*);
+		std::optional<std::function<void(NotebookPage*)>> m_onPageRemove;
 		TabView* m_tabView;
 		Container* m_container;
 
@@ -31,6 +33,7 @@ namespace SUTK
 	public:
 		NotebookPage(Container* container) noexcept;
 		~NotebookPage() noexcept;
+		void setOnRemove(std::function<void(NotebookPage*)> onPageRemove) noexcept { m_onPageRemove = onPageRemove; }
 		void setLabel(const std::string_view str) noexcept;
 		Container* getContainer() noexcept { return m_container; }
 		u32 getIndex() const noexcept;

@@ -84,8 +84,8 @@ namespace SUTK
 	TabView::~TabView() noexcept
 	{
 		auto& driver = getUIDriver();
-		driver.destroyContainer<Button>(m_closeButton);
 		driver.destroyContainer<ImageButtonGraphic>(m_closeButtonGraphic);
+		driver.destroyContainer<Button>(m_closeButton);
 	}
 
 	void TabView::setLabel(const std::string_view str) noexcept
@@ -320,7 +320,8 @@ namespace SUTK
 			m_head = page->getNext();
 		if(tabView->m_next)
 			tabView->m_next->m_prev = tabView->m_prev;
-		m_tabContainer->remove(tabView);
+		if(page->m_onPageRemove.has_value())
+			page->m_onPageRemove.value() (page);
 		driver.destroyContainer<Container>(page->m_container);
 		driver.destroyContainer<TabView>(page->m_tabView);
 		delete page;

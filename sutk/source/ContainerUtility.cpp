@@ -97,6 +97,23 @@ namespace SUTK
 			ContainersVisit(child, visitor);
 	}
 
+	void ContainerUtility::ContainersDestroyRecursive(Container* container) noexcept
+	{
+		ContainersVisitChildEnd(container, [](Container* container) noexcept
+		{
+			container->getUIDriver().destroyContainer<Container>(container);
+		});
+	}
+
+	void ContainerUtility::ContainersVisitChildEnd(Container* container, const std::function<void(Container*)>& visitor) noexcept
+	{
+		if(!container) return;
+		std::vector<Container*>& childs = container->getChilds();
+		while(childs.size() > 0)
+			ContainersVisitChildEnd(childs.back(), visitor);
+		visitor(container);
+	}
+
 	GfxDriverObjectHandleType ContainerUtility::findTextGroupHandle(Container* container) noexcept
 	{
 		GfxDriverObjectHandleType handle = GFX_DRIVER_OBJECT_NULL_HANDLE;

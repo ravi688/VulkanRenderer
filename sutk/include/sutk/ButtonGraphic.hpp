@@ -120,6 +120,7 @@ namespace SUTK
 
 	public:
 		DefaultButtonGraphicNoLabel(UIDriver& driver, Container* parent) noexcept;
+		~DefaultButtonGraphicNoLabel() noexcept;
 
 		RenderRectFillRound& getRenderRect() noexcept { return *m_renderRect; }
 	};

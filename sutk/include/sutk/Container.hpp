@@ -70,7 +70,6 @@ namespace SUTK
 	protected:
 		// this can only be called by SUTK::UIDriver
 		Container(SUTK::UIDriver& driver, Container* parent = NULL, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer);
-		virtual ~Container();
 
 		friend class UIDriver;
 
@@ -110,6 +109,7 @@ namespace SUTK
 		void setParentChildRelation(Container* parent, std::size_t index = std::numeric_limits<std::size_t>::max()) noexcept;
 
 	public:
+		virtual ~Container();
 
 		// IMPLEMENTATION of IDebuggable
 		virtual void enableDebug(bool isEnable = true, Color4 color = Color4::green()) noexcept override;
@@ -136,6 +136,7 @@ namespace SUTK
 		// childs getters
 		std::vector<Container*>& getChilds() noexcept { return getContainerList(); }
 		const std::vector<Container*>& getChilds() const noexcept { return getContainerList(); }
+		std::size_t getChildCount() const noexcept { return getChilds().size(); }
 
 
 		// parent getters

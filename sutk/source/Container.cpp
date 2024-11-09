@@ -31,15 +31,18 @@ namespace SUTK
 
 	Container::~Container()
 	{
+		com_assert(COM_DESCRIPTION(getChildCount() == 0), "You must destroy child containers first!");
+		
 		if(m_parent)
 			m_parent->remove(this);
 		
 		#ifdef CONTAINER_DEBUG
 		if(m_renderRectCont)
 		{
-			getUIDriver().destroyContainer<RenderableContainer>(m_renderRectCont);
+			// Renderable should be destroyed first.
 			_com_assert(m_renderRect != com::null_pointer<RenderRectOutline>());
 			getUIDriver().destroyRenderable<RenderRectOutline>(m_renderRect);
+			getUIDriver().destroyContainer<RenderableContainer>(m_renderRectCont);
 		}
 		#endif
 

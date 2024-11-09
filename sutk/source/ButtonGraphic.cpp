@@ -85,6 +85,11 @@ namespace SUTK
 		m_renderRect = driver.createRenderable<RenderRectFillRound>(this);
 	}
 
+	DefaultButtonGraphicNoLabel::~DefaultButtonGraphicNoLabel() noexcept
+	{
+		getUIDriver().destroyRenderable<RenderRectFillRound>(m_renderRect);
+	}
+
 	void DefaultButtonGraphicNoLabel::onColorChange(Color4 color) noexcept
 	{
 		m_renderRect->setColor(color);

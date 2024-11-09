@@ -7,6 +7,10 @@ namespace SUTK
 	{
 
 	}
+	RenderableContainer::~RenderableContainer() noexcept
+	{
+		com_assert(COM_DESCRIPTION(!getRenderable()), "You must destroy Renderable before RenderableContainer!");
+	}
 	void RenderableContainer::onAdd(Container* parent)
 	{
 		Container::onAdd(parent);

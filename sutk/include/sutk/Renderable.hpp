@@ -14,16 +14,15 @@ namespace SUTK
 	class Renderable : public UIDriverObject, public Activatable
 	{
 		friend class UIDriver;
+		friend class Container;
+		friend class RenderableContainer;
 
 	private:
 		RenderableContainer* m_container;
 		u32 m_drawOrder;
 		bool m_isDrawOrderDirty;
 
-		friend class Container;
-
 	protected:
-		friend class RenderableContainer;
 		// Rendering Geometries (or Text) requires conversion from local coordinates to global coordinates (target rendering backend, SGE)
 		// So, whenever any of the Anscestor containers change their position, the old transformed coordinates become invalid (dirty),
 		// and this requires to walk recursively up the container tree to finally calculate the new global coordiantes with possibly same
