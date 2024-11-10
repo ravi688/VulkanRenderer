@@ -326,7 +326,7 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 	_debug_assert__(sizeof(buf_ucount_t) == sizeof(handle));
 	buf_set_at(tst_buffer, handle, &glsl_transform);
 
-	/* update the device side buffer */
+	/* update the device side buffer of the text string transform buffer (tst buffer) */
 
 	bool is_resized = false;
 	bool is_updated = vulkan_host_buffered_buffer_commit(&text->text_string_transform_buffer, &is_resized);
@@ -352,6 +352,12 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 
 SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle)
 {
+	if(text->inuse_list == BUF_INVALID_INDEX)
+	{
+		debug_log_error("Invalid operation (text string destroy), bitmap text's inuse linked list is empty");
+		return;
+	}
+
 	vulkan_bitmap_text_string_list_t* text_strings = &text->text_strings;
 
 	/* find the string with handle 'handle' in the inuse list */
