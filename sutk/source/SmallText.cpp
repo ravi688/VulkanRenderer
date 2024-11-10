@@ -30,6 +30,7 @@ namespace SUTK
 	SmallText::~SmallText() noexcept
 	{
 		getGfxDriver().destroyText(getGfxDriverObjectHandle());
+		setGfxDriverObjectHandle(GFX_DRIVER_OBJECT_NULL_HANDLE);
 	}
 
 	bool SmallText::isDirty()
