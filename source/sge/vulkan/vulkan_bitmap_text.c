@@ -370,12 +370,13 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 	}
 
 	/* fails if the string with handle 'handle doesn't exists */
-	_debug_assert__(_handle != BUF_INVALID_INDEX);
+	debug_assert__(_handle != BUF_INVALID_INDEX, "You're trying to destroy a bitmap text string which doesn't even exist in bitmap text");
 
 	AUTO text_string = buf_get_ptr_at_typeof(text_strings, vulkan_bitmap_text_string_t, handle);
 
 	/* reset this string to be reused later */
 	multi_buffer_sub_buffer_destroy(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), text_string->render_data_handle);
+	buf_remove_at(vulkan_host_buffered_buffer_get_host_buffer(&text->text_string_transform_buffer), handle, NULL);
 	text_string->render_data_handle = SUB_BUFFER_HANDLE_INVALID;
 	buf_clear(&text_string->chars, NULL);
 	buf_clear(&text_string->glyph_offsets, NULL);
@@ -394,6 +395,11 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 	/* add to the free list */
 	text_string->next = text->free_list;
 	text->free_list = handle;
+
+	/* update GPU (device) side buffer of the glyph render data buffer if it was marked dirty */
+	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
+	/* update GPU (device) side buffer of the text string transform buffer if it was marked dirty */
+	vulkan_host_buffered_buffer_commit(&text->text_string_transform_buffer, NULL);
 }
 
 /* setters */
