@@ -1087,7 +1087,7 @@ namespace SUTK
 			createOrUpdateVertexBuffer(mesh, createInfo);
 		}
 
-		if(geometry.isVertexTexCoordArrayModified() && (geometry.getFillImage() != UIDriver::InvalidImage))
+		if(geometry.isVertexTexCoordArrayModified())
 		{
 			auto& texcoordArray = geometry.getVertexTexCoordArray();
 
