@@ -298,9 +298,6 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 		buf_push_pseudo(&text->text_strings, 1);
 		text_string = buf_get_ptr_at_typeof(&text->text_strings, vulkan_bitmap_text_string_t, handle);
 		text_string->chars = memory_allocator_buf_new(text->renderer->allocator, s8);
-		/* vulkan_bitmap_text_string_get_lengthH function returns text_string->chars's element count - 1
-		 * therefore, the number of characters in 'chars' must be greater than or equal to 1 (including the null character) */
-		buf_push_null(&text_string->chars);
 		text_string->glyph_offsets = memory_allocator_buf_new(text->renderer->allocator, f32);
 		text_string->index_mappings = memory_allocator_buf_new(text->renderer->allocator, u32);
 		text_string->color_ranges = memory_allocator_buf_new(text->renderer->allocator, char_attr_color_range_t);
@@ -319,6 +316,9 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 	text_string->transform = mat4_identity();
 	text_string->point_size = text->point_size;
 	text_string->font = text->font;
+	/* vulkan_bitmap_text_string_get_lengthH function returns text_string->chars's element count - 1
+	 * therefore, the number of characters in 'chars' must be greater than or equal to 1 (including the null character) */
+	buf_push_null(&text_string->chars);
 
 	/* add transform of this string to the TST buffer */
 	mat4_t transform = mat4_transpose(text_string->transform); // though we don't need this transpose as the matrix will be identity here.
