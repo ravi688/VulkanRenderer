@@ -376,7 +376,6 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 
 	/* reset this string to be reused later */
 	multi_buffer_sub_buffer_destroy(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), text_string->render_data_handle);
-	buf_remove_at(vulkan_host_buffered_buffer_get_host_buffer(&text->text_string_transform_buffer), handle, NULL);
 	text_string->render_data_handle = SUB_BUFFER_HANDLE_INVALID;
 	buf_clear(&text_string->chars, NULL);
 	buf_clear(&text_string->glyph_offsets, NULL);
@@ -390,7 +389,7 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 	if(prev_text_string != NULL)
 		prev_text_string->next = text_string->next;
 	else
-		text->inuse_list = BUF_INVALID_INDEX;
+		text->inuse_list = text_string->next;
 
 	/* add to the free list */
 	text_string->next = text->free_list;
@@ -398,8 +397,6 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 
 	/* update GPU (device) side buffer of the glyph render data buffer if it was marked dirty */
 	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
-	/* update GPU (device) side buffer of the text string transform buffer if it was marked dirty */
-	vulkan_host_buffered_buffer_commit(&text->text_string_transform_buffer, NULL);
 }
 
 /* setters */
