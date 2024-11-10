@@ -104,8 +104,6 @@ namespace SUTK
 		// Override of Renderable::setActive()
 		virtual void setActive(com::Bool isActive) noexcept override;
 
-		virtual void destroy() override;
-
 		void clearColorRanges() noexcept;
 		void addColorRange(std::size_t pos, std::size_t len, const Color4 color) noexcept;
 		

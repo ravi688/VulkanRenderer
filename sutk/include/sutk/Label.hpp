@@ -30,6 +30,7 @@ namespace SUTK
 
 		void setReassociateOnParentChange(com::Bool isReassociate, com::Bool isApplyNow = com::False) noexcept;
 		void set(const std::string_view str) noexcept;
+		const std::string& get() noexcept;
 		void setAlignment(HorizontalAlignment hAlign, VerticalAlignment vAlign) noexcept;
 
 		virtual Renderable* getRenderable() noexcept override;

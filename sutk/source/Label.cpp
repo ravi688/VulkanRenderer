@@ -83,6 +83,14 @@ namespace SUTK
 		m_text->setData(str);
 	}
 
+	const std::string& Label::get() noexcept
+	{
+		if(!m_text)
+			createTextFirstTime();
+		const std::string& str = m_text->getData();
+		return str;
+	}
+
 	void Label::setAlignment(HorizontalAlignment hAlign, VerticalAlignment vAlign) noexcept
 	{
 		if(!m_text)

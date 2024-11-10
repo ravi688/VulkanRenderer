@@ -116,18 +116,6 @@ namespace SUTK
 		Renderable::setActive(isActive);
 		m_isActiveDirty = true;
 	}
-
-	void SmallText::destroy()
-	{
-		_com_assert(getGfxDriverObjectHandle() != GFX_DRIVER_OBJECT_NULL_HANDLE);
-		getGfxDriver().destroyText(getGfxDriverObjectHandle());
-		setGfxDriverObjectHandle(GFX_DRIVER_OBJECT_NULL_HANDLE);
-		m_isPosDirty = false;
-		m_isDataDirty = false;
-		m_isPointSizeDirty = false;
-		m_isColorRangesDirty = false;
-		m_isColorDirty = false;
-	}
 	void SmallText::clearColorRanges() noexcept
 	{
 		m_colorRanges.clear();

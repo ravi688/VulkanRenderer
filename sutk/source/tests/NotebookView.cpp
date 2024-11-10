@@ -18,10 +18,15 @@ namespace SUTK
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_inputDriver = new SGEInputDriver(driver);
-		m_uiDriver = new UIDriver(*m_gfxDriver);
+		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_notebookView = m_uiDriver->createContainer<NotebookView>(rootContainer);
 		m_notebookView->alwaysFitInParent();
+
+		m_notebookView->getOnPageSelectEvent().subscribe([](NotebookView* notebook, NotebookPage* page) noexcept
+		{
+			std::cout << "Selected: " << page->getLabel() << std::endl;
+		});
 
 		m_inputDriver->getOnKeyEvent().subscribe([this](IInputDriver*, KeyCode keyCode, KeyEvent keyEvent, ModifierKeys modifierKeys) noexcept
 		{
@@ -37,6 +42,7 @@ namespace SUTK
 				}
 				else if(keyCode == KeyCode::D)
 					this->m_notebookView->removePage(this->m_notebookView->getCurrentPage());
+				this->m_notebookView->dump();
 			}
 		});
 	}

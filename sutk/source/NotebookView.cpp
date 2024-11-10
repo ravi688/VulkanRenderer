@@ -55,6 +55,11 @@ namespace SUTK
 		m_tabView->setLabel(str);
 	}
 
+	const std::string& NotebookPage::getLabel() const noexcept
+	{
+		return m_tabView->getLabel();
+	}
+
 	u32 NotebookPage::getIndex() const noexcept
 	{
 		return m_tabView->getIndex();
@@ -95,6 +100,11 @@ namespace SUTK
 		setSize({ size.width + TAB_LABEL_CLOSE_BUTTON_SPACING + CLOSE_BUTTON_RIGHT_MARGIN + CLOSE_BUTTON_WIDTH, getSize().height });
 	}
 
+	const std::string& TabView::getLabel() noexcept
+	{
+		return m_graphic->getLabel().get();
+	}
+
 	u32 TabView::getIndex() const noexcept
 	{
 		u32 index = 0;
@@ -120,6 +130,7 @@ namespace SUTK
 	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), Runnable(driver),
 																																					m_head(com::null_pointer<NotebookPage>()),
 																																					m_currentPage(com::null_pointer<NotebookPage>()),
+																																					m_onPageSelectEvent(this),
 																																					m_isRunning(com::False),
 																																					m_isStartAnimBatch(com::False),
 																																					m_animDuration(DEFAULT_NEW_TAB_ANIM_DURATION)
@@ -264,11 +275,10 @@ namespace SUTK
 		tabView->getOnReleaseEvent().subscribe([this, page](SUTK::Button* button) noexcept
 		{
 			this->viewPage(page);
+			this->m_onPageSelectEvent.publish(page);
 		});
 
-		// It is guaranteed to have a page set as currently being viewed page
-		if(!m_currentPage)
-			viewPage(page);
+		viewPage(page);
 
 		return page;
 	}
@@ -325,5 +335,17 @@ namespace SUTK
 		driver.destroyContainer<Container>(page->m_container);
 		driver.destroyContainer<TabView>(page->m_tabView);
 		delete page;
+	}
+
+	void NotebookView::dump() noexcept
+	{
+		std::cout << "Dump (Notebook): \n"
+				  << "Current Selected: " << (m_currentPage ? m_currentPage->getTabView()->getLabel() : "<null>") << "\n";
+		NotebookPage* page = m_head;
+		while(page != com::null_pointer<NotebookPage>())
+		{
+			std::cout << page->getTabView()->getLabel() << std::endl;
+			page = page->getNext();
+		}
 	}
 }

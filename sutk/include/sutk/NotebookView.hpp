@@ -7,6 +7,7 @@
 #include <sutk/IRunnable.hpp> // for SUTK::Runnable
 
 #include <common/Concepts.hpp> // for com::CompareFunction
+#include <common/Event.hpp> // for com::Event
 
 #include <optional> // for std::optional
 
@@ -35,6 +36,7 @@ namespace SUTK
 		~NotebookPage() noexcept;
 		void setOnRemove(std::function<void(NotebookPage*)> onPageRemove) noexcept { m_onPageRemove = onPageRemove; }
 		void setLabel(const std::string_view str) noexcept;
+		const std::string& getLabel() const noexcept;
 		Container* getContainer() noexcept { return m_container; }
 		u32 getIndex() const noexcept;
 		template<typename T, typename... Args>
@@ -95,6 +97,7 @@ namespace SUTK
 		u32 getIndex() const noexcept;
 
 		void setLabel(const std::string_view str) noexcept;
+		const std::string& getLabel() noexcept;
 
 		void unselectedState() noexcept;
 		void selectedState() noexcept;
@@ -104,6 +107,8 @@ namespace SUTK
 
 	class SUTK_API NotebookView : public VBoxContainer, public Runnable
 	{
+	public:
+		typedef com::Event<NotebookView, NotebookPage*> OnPageSelectEvent;
 	private:
 		// TextGroup for TabView(s)
 		TextGroupContainer* m_textGroupContainer;
@@ -111,6 +116,7 @@ namespace SUTK
 		Container* m_pageContainer;
 		NotebookPage* m_head;
 		NotebookPage* m_currentPage;
+		OnPageSelectEvent m_onPageSelectEvent;
 		com::Bool m_isRunning;
 		com::Bool m_isStartAnimBatch;
 		f32 m_animDuration;
@@ -134,6 +140,8 @@ namespace SUTK
 		virtual bool isRunning();
 		virtual void update();
 
+		OnPageSelectEvent& getOnPageSelectEvent() noexcept { return m_onPageSelectEvent; }
+
 		void setAnimDuration(f32 duration) noexcept { m_animDuration = duration; }
 
 		NotebookPage* getCurrentPage() noexcept { return m_currentPage; }
@@ -143,6 +151,8 @@ namespace SUTK
 		void removePage(NotebookPage* page) noexcept;
 		template<typename T, com::CompareFunction<T> EqualTo = std::equal_to<T>>
 		NotebookPage* findPage(const T& data) noexcept;
+
+		void dump() noexcept;
 	};
 
 	template<typename T, com::CompareFunction<T> EqualTo>
