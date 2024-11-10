@@ -6,6 +6,7 @@ namespace SUTK
 {
 	Geometry::Geometry(UIDriver& driver, RenderMode renderMode) noexcept : UIDriverObject(driver), 
 													m_positionArrayInfo({ VertexPositionArray { }, false }),
+													m_texcoordArrayInfo({ VertexTexCoordArray { }, false }),
 													m_indexArrayInfo({ VertexIndexArray { }, false }),
 													m_transformArrayInfo({ InstanceTransformArray { }, false }),
 													m_strokeInfo({ }),
