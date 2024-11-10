@@ -98,7 +98,7 @@ SGE_API bool vulkan_instance_buffer_commit(vulkan_instance_buffer_t* instance_bu
 
 	multi_buffer_t* host_buffer = &instance_buffer->host_buffer;
 	vulkan_buffer_t* device_buffer = &instance_buffer->device_buffer;
-	u32 count = multi_buffer_get_total_count(host_buffer);
+	u32 count = multi_buffer_get_combined_sub_buffers_count(host_buffer);
 
 	bool _is_resized = false;
 

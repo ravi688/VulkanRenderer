@@ -80,6 +80,8 @@
 #include <sge/tests/transparent_queue.h>
 #include <sge/tests/shader_cache.h>
 
+#include <sge/tests/multi_buffer.h>
+
 SGE_API test_t* test_new(memory_allocator_t* allocator)
 {
 	test_t* test = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_TEST, test_t);
@@ -134,6 +136,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 	ELSE_IF(TID_48_CASE_5);
 	ELSE_IF(TRANSPARENT_QUEUE);
 	ELSE_IF(SHADER_CACHE);
+	ELSE_IF(MULTI_BUFFER);
 	else
 	{
 		printf 	(
@@ -177,6 +180,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 					"\tTID_48_CASE_5\n"
 					"\tTRANSPARENT_QUEUE\n"
 					"\tSHADER_CACHE\n"
+					"\tMULTI_BUFFER\n"
 				);
 		exit(0);
 	}

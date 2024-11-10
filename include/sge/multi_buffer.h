@@ -34,9 +34,15 @@
 
 typedef struct sub_buffer_t
 {
+	/* offset at which the contents of this sub buffer starts in the master buffer */
 	buf_ucount_t ptr;
+	/* maximum elements which this sub pass can hold without resize
+	 * it changes (doubles) as more elements are pushed into this sub buffer. */
 	buf_ucount_t capacity;
+	/* current number of elements in the sub buffer,
+	 * layed out starting at 'offset' in the master buffer. */
 	buf_ucount_t count;
+	/* set to true if multi_buffer_sub_buffer_destroy() is called for this sub buffer */
 	bool is_free;
 } sub_buffer_t;
 
@@ -61,7 +67,7 @@ SGE_API void multi_buffer_free(multi_buffer_t* buffer);
 // getters
 SGE_API buf_ucount_t multi_buffer_get_count(multi_buffer_t* buffer);
 SGE_API buf_ucount_t multi_buffer_get_capacity(multi_buffer_t* buffer);
-SGE_API buf_ucount_t multi_buffer_get_total_count(multi_buffer_t* multi_buffer);
+SGE_API buf_ucount_t multi_buffer_get_combined_sub_buffers_count(multi_buffer_t* multi_buffer);
 SGE_API buf_ucount_t multi_buffer_get_sub_buffer_count(multi_buffer_t* buffer);
 
 
