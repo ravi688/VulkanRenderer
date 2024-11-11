@@ -31,24 +31,28 @@
 	#include <sge/internal/vulkan/vulkan_bitmap_text.h>
 	typedef vulkan_bitmap_text_t bitmap_text_t;
 	typedef vulkan_bitmap_text_string_handle_t bitmap_text_string_handle_t;
+	#define BITMAP_TEXT_STRING_HANDLE_INVALID VULKAN_BITMAP_TEXT_STRING_HANDLE_INVALID
 	typedef vulkan_bitmap_glyph_atlas_texture_t bitmap_glyph_atlas_texture_t;
 	typedef vulkan_material_t material_t;
 #elif defined(SGE_OPENGL_DRIVER)
 	#include <sge/internal/opengl/opengl_bitmap_text.h>
 	typedef opengl_bitmap_text_t bitmap_text_t;
 	typedef opengl_bitmap_text_string_handle_t bitmap_text_string_handle_t;
+	#define BITMAP_TEXT_STRING_HANDLE_INVALID OPENGL_BITMAP_TEXT_STRING_HANDLE_INVALID
 	typedef opengl_bitmap_glyph_atlas_texture_t bitmap_glyph_atlas_texture_t;
 	typedef opengl_material_t material_t;
 #elif defined(SGE_DIRECTX_DRIVER)
 	#include <sge/internal/directx/directx_bitmap_text.h>
 	typedef directx_bitmap_text_t bitmap_text_t;
 	typedef directx_bitmap_text_string_handle_t bitmap_text_string_handle_t;
+	#define BITMAP_TEXT_STRING_HANDLE_INVALID DIRECTX_BITMAP_TEXT_STRING_HANDLE_INVALID
 	typedef directx_bitmap_glyph_atlas_texture_t bitmap_glyph_atlas_texture_t;
 	typedef directx_material_t material_t;
 #elif defined(SGE_METAL_DRIVER)
 	#include <sge/internal/metal/metal_bitmap_text.h>
 	typedef metal_bitmap_text_t bitmap_text_t;
 	typedef metal_bitmap_text_string_handle_t bitmap_text_string_handle_t;
+	#define BITMAP_TEXT_STRING_HANDLE_INVALID METAL_BITMAP_TEXT_STRING_HANDLE_INVALID
 	typedef metal_bitmap_glyph_atlas_texture_t bitmap_glyph_atlas_texture_t;
 	typedef metal_material_t material_t;
 #endif

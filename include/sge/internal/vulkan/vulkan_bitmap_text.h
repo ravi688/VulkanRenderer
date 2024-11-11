@@ -84,6 +84,7 @@ typedef buffer_t vulkan_bitmap_text_char_buffer_t;
 typedef buffer_t /* element_type: f32 */ f32_buffer_t;
 typedef buffer_t /* element_type: u32 */ u32_buffer_t;
 typedef buf_ucount_t vulkan_bitmap_text_string_handle_t;
+#define VULKAN_BITMAP_TEXT_STRING_HANDLE_INVALID BUF_INVALID_INDEX
 typedef dictionary_t vulkan_bitmap_glyph_sub_buffer_handle_table_t;
 
 /* the range also takes whitespaces into account */

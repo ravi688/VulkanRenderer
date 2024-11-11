@@ -17,7 +17,7 @@ namespace SGE
 		BitmapTextString(bitmap_text_t* bitmapText, bitmap_text_string_handle_t handle) : m_bitmapTextHandle(bitmapText),  m_handle(handle) { }
 		friend class BitmapText;
 	public:
-		BitmapTextString() : m_bitmapTextHandle(NULL), m_handle(0) { }
+		BitmapTextString() : m_bitmapTextHandle(NULL), m_handle(BITMAP_TEXT_STRING_HANDLE_INVALID) { }
 		bitmap_text_string_handle_t getHandle() const noexcept { return m_handle; }
 		void set(const std::string& str) const noexcept
 		{
@@ -85,9 +85,11 @@ namespace SGE
 			return vec3(m.m03, m.m13, m.m23);
 		}
 
-		void destroy() const noexcept
+		void destroy() noexcept
 		{
 			bitmap_text_string_destroyH(m_bitmapTextHandle, m_handle);
+			m_handle = BITMAP_TEXT_STRING_HANDLE_INVALID;
+			m_bitmapTextHandle = NULL;
 		}
 	};
 
