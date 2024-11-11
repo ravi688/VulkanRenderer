@@ -5,6 +5,7 @@
 #include <sutk/Concepts.hpp> // for SUTK::ContainerT concept
 
 #include <common/Reference.hpp> // for com::Reference
+#include <common/UnorderedEraseSafeVectorProxy.hpp> // for com::UnorderedEraseSafeVectorProxy<>
 #include <vector> // for std::vector
 #include <utility> // for std::forward
 #include <chrono> // for std::chrono
@@ -50,11 +51,7 @@ namespace SUTK
 		// Container for accomodating debug rectangles etc.
 		Container* m_debugRootContainer;
 		// Runnables
-		// TODO: We might prefer using std::map or std::forward_list here
-		// if removal of RunnableService is frequent,
-		// that's because, erasing an element from std::vector results in 
-		// shifting elements after the erased point.
-		std::vector<IRunnable*> m_runnables;
+		com::UnorderedEraseSafeVectorProxy<IRunnable*> m_runnables;
 		OrderedInputEventsDispatcher* m_orderedEventsDispatcher;
 
 		com::Bool m_isCalledFirstTime;

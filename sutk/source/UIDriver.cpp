@@ -83,8 +83,7 @@ namespace SUTK
 	{
 		// Update runnables
 		if(m_runnables.size() != 0)
-			for(IRunnable* &runnable : m_runnables)
-				IRunnable::Update(runnable);
+			m_runnables.traverse(IRunnable::Update);
 
 		bool isRecalculateDrawOrder = false;
 		u32 minDrawOrder = std::numeric_limits<u32>::max();
@@ -129,8 +128,8 @@ namespace SUTK
 
 	void UIDriver::removeRunnable(IRunnable* runnable) noexcept
 	{
-		auto it = std::find(m_runnables.begin(), m_runnables.end(), runnable);
-		if(it != m_runnables.end())
+		auto it = m_runnables.find(runnable);
+		if(m_runnables.isValidIterator(it))
 			m_runnables.erase(it);
 		else debug_log_error("Failed to remove SUTK::IRunnable: %p, as it doesn't exist in the Registry", runnable);
 	}
