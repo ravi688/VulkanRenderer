@@ -208,14 +208,17 @@ namespace SUTK
 		}
 	}
 
+	void NotebookView::abortTabAnim() noexcept
+	{
+		m_tabContainer->unlockLayout(true);
+		m_animContexts.clear();
+		m_isRunning = com::False;
+	}
+
 	void NotebookView::dispatchAnimNewTab(TabView* tabView) noexcept
 	{
 		if(m_isRunning)
-		{
-			m_tabContainer->unlockLayout(true);
-			m_animContexts.clear();
-			m_isRunning = com::False;
-		}
+			abortTabAnim();
 
 		AnimContext ctx;
 		ctx.tabView = tabView;
@@ -319,6 +322,9 @@ namespace SUTK
 			debug_log_warning("(null) value is passed, no page/tab is removed");
 			return;
 		}
+
+		if(m_isRunning)
+			abortTabAnim();
 		
 		viewPage(page->getPrev() ? page->getPrev() : page->getNext());
 

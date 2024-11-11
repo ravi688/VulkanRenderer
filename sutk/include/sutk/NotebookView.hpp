@@ -131,6 +131,7 @@ namespace SUTK
 
 		std::vector<AnimContext> m_animContexts;
 
+		void abortTabAnim() noexcept;
 		void dispatchAnimNewTab(TabView* tabView) noexcept;
 
 	public:
