@@ -123,16 +123,20 @@ namespace SUTK
 
 		struct AnimContext
 		{
+			typedef com::Event<com::no_publish_ptr_t, TabView*> OnEndEvent;
 			TabView* tabView;
 			u32 tabIndex;
 			f32 dstTabWidth;
 			f32 curTabWidth;
+			f32 speed;
+			OnEndEvent onEndEvent;
 		};
 
 		std::vector<AnimContext> m_animContexts;
 
 		void abortTabAnim() noexcept;
 		void dispatchAnimNewTab(TabView* tabView) noexcept;
+		AnimContext& dispatchAnimRemoveTab(TabView* tabView) noexcept;
 
 	public:
 		NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::False, Layer layer = InvalidLayer) noexcept;

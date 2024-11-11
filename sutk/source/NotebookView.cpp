@@ -167,6 +167,8 @@ namespace SUTK
 			m_tabContainer->lockLayout();
 			for(auto& ctx : m_animContexts)
 			{
+				if(ctx.speed < 0)
+					continue;
 				f32 width = ctx.tabView->getSize().width;
 				std::vector<Container*>& childs = m_tabContainer->getChilds();
 				ctx.tabIndex = ctx.tabView->getIndex();
@@ -183,11 +185,10 @@ namespace SUTK
 		std::vector<Container*>& childs = m_tabContainer->getChilds();
 		for(auto& ctx : m_animContexts)
 		{
-			f32 deltaWidth = (ctx.dstTabWidth / m_animDuration) * getUIDriver().getDeltaTime();
+			f32 deltaWidth = ctx.speed * getUIDriver().getDeltaTime();
 			f32 safeDeltaWidth = ctx.dstTabWidth - ctx.curTabWidth;
-			if(deltaWidth >= safeDeltaWidth)
+			if(std::abs(deltaWidth) >= std::abs(safeDeltaWidth))
 			{
-				m_isRunning = com::False;
 				deltaWidth = safeDeltaWidth;
 				ctx.curTabWidth = ctx.dstTabWidth;
 			}
@@ -202,14 +203,13 @@ namespace SUTK
 			ctx.tabView->extendRight(deltaWidth);
 		}
 		if(isUnlockLayout)
-		{
-			m_tabContainer->unlockLayout(true);
-			m_animContexts.clear();
-		}
+			abortTabAnim();
 	}
 
 	void NotebookView::abortTabAnim() noexcept
 	{
+		for(auto& ctx : m_animContexts)
+			ctx.onEndEvent.publish(ctx.tabView);
 		m_tabContainer->unlockLayout(true);
 		m_animContexts.clear();
 		m_isRunning = com::False;
@@ -224,8 +224,23 @@ namespace SUTK
 		ctx.tabView = tabView;
 		ctx.dstTabWidth = tabView->getSize().width;
 		ctx.curTabWidth = TAB_VIEW_ANIM_START_WIDTH;
+		ctx.speed = ctx.dstTabWidth / m_animDuration;
 		m_animContexts.push_back(ctx);
 		m_isStartAnimBatch = com::True;
+	}
+
+	NotebookView::AnimContext& NotebookView::dispatchAnimRemoveTab(TabView* tabView) noexcept
+	{
+		if(m_isRunning)
+			abortTabAnim();
+		AnimContext ctx;
+		ctx.tabView = tabView;
+		ctx.dstTabWidth = TAB_VIEW_ANIM_START_WIDTH;
+		ctx.curTabWidth = tabView->getSize().width;
+		ctx.speed = -ctx.curTabWidth / m_animDuration;
+		m_animContexts.push_back(ctx);
+		m_isStartAnimBatch = com::True;
+		return m_animContexts.back();
 	}
 
 	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
@@ -323,24 +338,25 @@ namespace SUTK
 			return;
 		}
 
-		if(m_isRunning)
-			abortTabAnim();
-		
-		viewPage(page->getPrev() ? page->getPrev() : page->getNext());
+		dispatchAnimRemoveTab(page->getTabView()).onEndEvent.subscribe([this](TabView* tab)
+		{
+			NotebookPage* page = tab->getPage();
+			viewPage(page->getPrev() ? page->getPrev() : page->getNext());
 
-		auto& driver = getUIDriver();
-		TabView* tabView = page->m_tabView;
-		if(tabView->m_prev)
-			tabView->m_prev->m_next = tabView->m_next;
-		else
-			m_head = page->getNext();
-		if(tabView->m_next)
-			tabView->m_next->m_prev = tabView->m_prev;
-		if(page->m_onPageRemove.has_value())
-			page->m_onPageRemove.value() (page);
-		driver.destroyContainer<Container>(page->m_container);
-		driver.destroyContainer<TabView>(page->m_tabView);
-		delete page;
+			auto& driver = getUIDriver();
+			TabView* tabView = page->m_tabView;
+			if(tabView->m_prev)
+				tabView->m_prev->m_next = tabView->m_next;
+			else
+				m_head = page->getNext();
+			if(tabView->m_next)
+				tabView->m_next->m_prev = tabView->m_prev;
+			if(page->m_onPageRemove.has_value())
+				page->m_onPageRemove.value() (page);
+			driver.destroyContainer<Container>(page->m_container);
+			driver.destroyContainer<TabView>(page->m_tabView);
+			delete page;
+		});
 	}
 
 	void NotebookView::dump() noexcept
