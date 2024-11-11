@@ -340,25 +340,28 @@ namespace SUTK
 			debug_log_warning("(null) value is passed, no page/tab is removed");
 			return;
 		}
+		
+		viewPage(page->getPrev() ? page->getPrev() : page->getNext());
 
-		dispatchAnimRemoveTab(page->getTabView()).onEndEvent.subscribe([this](TabView* tab)
+		// NOTE: The following doubly-linked list manipulation preserves the "backward" links for the tabView which needs to be destroyed.
+		// So that, the index (by calling getIndex() on the TabView) could still be calculated accurately!
+		auto& driver = getUIDriver();
+		TabView* tabView = page->m_tabView;
+		if(tabView->m_prev)
+			tabView->m_prev->m_next = tabView->m_next;
+		else
+			m_head = page->getNext();
+		if(tabView->m_next)
+			tabView->m_next->m_prev = tabView->m_prev;
+		if(page->m_onPageRemove.has_value())
+			page->m_onPageRemove.value() (page);
+		driver.destroyContainer<Container>(page->m_container);
+		delete page;
+		tabView->m_page = com::null_pointer<NotebookPage>();
+
+		dispatchAnimRemoveTab(tabView).onEndEvent.subscribe([this](TabView* tabView)
 		{
-			NotebookPage* page = tab->getPage();
-			viewPage(page->getPrev() ? page->getPrev() : page->getNext());
-
-			auto& driver = getUIDriver();
-			TabView* tabView = page->m_tabView;
-			if(tabView->m_prev)
-				tabView->m_prev->m_next = tabView->m_next;
-			else
-				m_head = page->getNext();
-			if(tabView->m_next)
-				tabView->m_next->m_prev = tabView->m_prev;
-			if(page->m_onPageRemove.has_value())
-				page->m_onPageRemove.value() (page);
-			driver.destroyContainer<Container>(page->m_container);
-			driver.destroyContainer<TabView>(page->m_tabView);
-			delete page;
+			this->getUIDriver().destroyContainer<TabView>(tabView);
 		});
 	}
 
