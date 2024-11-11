@@ -120,6 +120,7 @@ namespace SUTK
 
 		// this can only be called by SUTK::UIDriver
 		Text(UIDriver& driver, RenderableContainer* container) noexcept;
+		~Text() noexcept;
 
 		friend class UIDriver;
 

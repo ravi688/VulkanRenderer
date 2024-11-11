@@ -24,6 +24,14 @@ namespace SUTK
 		m_baselineHeight = getGfxDriver().getTextGroupBaselineHeightInCentimeters(m_textGroup, m_pointSize);
 	}
 
+	Text::~Text() noexcept
+	{
+		auto& driver = getUIDriver();
+		for(LineText* line : m_lines)
+			driver.destroyObject<LineText>(line);
+		driver.getGfxDriver().destroyTextGroup(m_textGroup);
+	}
+
 	f32 Text::calculateMaxWidth() const noexcept
 	{
 		// TODO: We can find maximum in 3 * n / 2 time remember? check CLRS, mean and order statistics,
@@ -249,7 +257,7 @@ namespace SUTK
 			m_lines[i]->addPosition({ 0, getBaselineHeight() });
 
 		// insert the line at which the cursor points to
-		LineText* lineText = new LineText(getUIDriver(), m_textGroup);
+		LineText* lineText = getUIDriver().createObject<LineText>(m_textGroup);
 		m_lines.insert(std::next(m_lines.begin(), cursorPosition.getLine()), lineText);
 
 		lineText->setFontSize(m_pointSize);

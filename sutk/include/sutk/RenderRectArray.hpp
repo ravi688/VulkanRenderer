@@ -23,6 +23,7 @@ namespace SUTK
 	public:
 		// Constructors
 		RenderRectFillArray(UIDriver& driver, RenderableContainer* container, RenderMode renderMode = RenderMode::Opaque) noexcept;
+		~RenderRectFillArray() noexcept;
 
 		// Implementation of Renderable
 		virtual bool isDirty() override;

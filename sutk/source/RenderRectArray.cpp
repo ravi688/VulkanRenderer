@@ -28,6 +28,12 @@ namespace SUTK
 		update();
 	}
 
+	RenderRectFillArray::~RenderRectFillArray() noexcept
+	{
+		if(getGfxDriverObjectHandle() != GFX_DRIVER_OBJECT_NULL_HANDLE)
+			getUIDriver().getGfxDriver().destroyGeometry(getGfxDriverObjectHandle());
+	}
+
 	bool RenderRectFillArray::isDirty()
 	{
 		return m_isRectsDirty || m_isColorDirty || m_isActiveDirty;

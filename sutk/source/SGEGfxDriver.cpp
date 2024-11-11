@@ -274,7 +274,12 @@ namespace SUTK
 	void SGEGfxDriver::destroyTextGroup(std::unordered_map<id_generator_id_type_t, SGEBitmapTextGroup>::iterator it, bool isErase)
 	{
 		for(auto pair : it->second.bitmapTextTable)
+		{
+			// Destroy the SGE::BitmapText object
 			pair.second.text.destroy();
+			// Destroy the corresponding SGE::RenderObject object
+			pair.second.object.destroy();
+		}
 		it->second.bitmapTextTable.clear();
 		if(isErase)
 			m_bitmapTextGroups.erase(it);
