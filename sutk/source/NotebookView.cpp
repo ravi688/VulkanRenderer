@@ -209,7 +209,10 @@ namespace SUTK
 	void NotebookView::abortTabAnim() noexcept
 	{
 		for(auto& ctx : m_animContexts)
+		{
 			ctx.onEndEvent.publish(ctx.tabView);
+			ctx.onEndEvent.clear();
+		}
 		m_tabContainer->unlockLayout(true);
 		m_animContexts.clear();
 		m_isRunning = com::False;
