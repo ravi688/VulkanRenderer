@@ -105,10 +105,18 @@ namespace SUTK
 
 	class HBoxContainer;
 
-	class SUTK_API NotebookView : public VBoxContainer, public Runnable
+	class SUTK_API NotebookView : public VBoxContainer, public Runnable, public GlobalMouseMoveHandlerObject
 	{
 	public:
 		typedef com::Event<NotebookView, NotebookPage*> OnPageSelectEvent;
+	private:
+		struct TabRearrangeContext
+		{
+			TabView* grabbedTabView;
+			Vec2Df positionOffset;
+			com::Bool isMoved;
+			Layer layer;
+		};
 	private:
 		// TextGroup for TabView(s)
 		TextGroupContainer* m_textGroupContainer;
@@ -117,6 +125,7 @@ namespace SUTK
 		NotebookPage* m_head;
 		NotebookPage* m_currentPage;
 		OnPageSelectEvent m_onPageSelectEvent;
+		TabRearrangeContext m_tabRearrangeContext;
 		com::Bool m_isRunning;
 		com::Bool m_isStartAnimBatch;
 		f32 m_animDuration;
@@ -137,6 +146,9 @@ namespace SUTK
 		void abortTabAnim() noexcept;
 		void dispatchAnimNewTab(TabView* tabView) noexcept;
 		AnimContext& dispatchAnimRemoveTab(TabView* tabView) noexcept;
+
+	protected:
+		virtual void onMouseMove(Vec2Df pos) noexcept override;
 
 	public:
 		NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::False, Layer layer = InvalidLayer) noexcept;

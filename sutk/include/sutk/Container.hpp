@@ -155,6 +155,7 @@ namespace SUTK
 		// Size of the rect remains invariant, while position of the rect is in the global coordinate space
 		Rect2Df getGlobalRect() const noexcept;
 		Vec2Df getPosition() const noexcept { return m_rect.getPosition(); }
+		Vec2Df getGlobalPosition() const noexcept;
 		Vec2Df getSize() const noexcept { return m_rect.getSize(); }
 		// NOTE: the localCoords must be in the same coordinate space as that of this Container's Rect
 		// i.e. the localCoords must be in the space of ThisContainer::getParent() container.

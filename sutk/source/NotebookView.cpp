@@ -127,7 +127,7 @@ namespace SUTK
 		
 	}
 
-	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), Runnable(driver),
+	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), Runnable(driver), GlobalMouseMoveHandlerObject(driver),
 																																					m_head(com::null_pointer<NotebookPage>()),
 																																					m_currentPage(com::null_pointer<NotebookPage>()),
 																																					m_onPageSelectEvent(this),
@@ -136,6 +136,7 @@ namespace SUTK
 																																					m_animDuration(DEFAULT_NEW_TAB_ANIM_DURATION)
 	{
 		// Create Tab Container
+		// NOTE: the 'getDepth() + 10000' is need to keep the tabs always on top of the pages (pages can be also be scrolled up and overlap with the tabs!)
 		m_textGroupContainer = driver.createContainer<TextGroupContainer>(this, com::False, getDepth() + 10000);
 		LayoutAttributes attr = m_textGroupContainer->getLayoutAttributes();
 		attr.minSize.height = TAB_BAR_HEIGHT;
@@ -153,6 +154,20 @@ namespace SUTK
 		m_pageContainer->enableDebug(true, Color4::yellow());
 
 		unlockLayout();
+		this->GlobalMouseMoveHandlerObject::sleep();
+	}
+
+	void NotebookView::onMouseMove(Vec2Df pos) noexcept
+	{
+		TabView* tabView = this->m_tabRearrangeContext.grabbedTabView;
+		if(!m_tabRearrangeContext.isMoved)
+		{
+			m_tabRearrangeContext.layer = tabView->getLayer();
+			tabView->setLayer(MaxLayer);
+			m_tabRearrangeContext.isMoved = com::True;
+		}
+		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
+		tabView->setPosition(pos);
 	}
 
 	bool NotebookView::isRunning()
@@ -296,10 +311,25 @@ namespace SUTK
 		if(!tabView->getPrev())
 			m_head = page;
 
-		tabView->getOnReleaseEvent().subscribe([this, page](SUTK::Button* button) noexcept
+		tabView->getOnPressEvent().subscribe([this, page](SUTK::Button* button) noexcept
 		{
 			this->viewPage(page);
 			this->m_onPageSelectEvent.publish(page);
+
+			this->m_tabRearrangeContext.grabbedTabView = page->getTabView();
+			Vec2Df mousePos = getUIDriver().getInputDriver().getMousePosition();
+			this->m_tabRearrangeContext.positionOffset = page->getTabView()->getGlobalPosition() - mousePos;
+			this->m_tabRearrangeContext.isMoved = com::False;
+			this->m_tabContainer->lockLayout();
+			
+			this->GlobalMouseMoveHandlerObject::awake();
+		});
+		tabView->getOnReleaseEvent().subscribe([this, page](SUTK::Button* button) noexcept
+		{
+			this->m_tabRearrangeContext.grabbedTabView->setLayer(m_tabRearrangeContext.layer);
+			this->m_tabRearrangeContext.grabbedTabView = com::null_pointer<TabView>();
+			this->m_tabContainer->unlockLayout(static_cast<bool>(this->m_tabRearrangeContext.isMoved));
+			this->GlobalMouseMoveHandlerObject::sleep();
 		});
 
 		viewPage(page);

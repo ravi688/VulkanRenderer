@@ -141,6 +141,14 @@ namespace SUTK
 			return getRect();
 	}
 
+	Vec2Df Container::getGlobalPosition() const noexcept
+	{
+		if(m_parent != NULL)
+			return m_parent->getLocalCoordsToScreenCoords(getPosition());
+		else
+			return getPosition();
+	}
+
 	bool Container::containsGlobalCoords(Vec2Df globalCoords) const noexcept
 	{
 		if(getParent() != NULL)
