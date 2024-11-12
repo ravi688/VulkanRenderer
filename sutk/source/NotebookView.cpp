@@ -167,13 +167,15 @@ namespace SUTK
 			m_tabContainer->lockLayout();
 			for(auto& ctx : m_animContexts)
 			{
+				ctx.tabIndex = ctx.tabView->getIndex();
 				if(ctx.speed < 0)
 					continue;
-				f32 width = ctx.tabView->getSize().width;
+				ctx.dstTabWidth = ctx.tabView->getSize().width;
+				f32 offset = ctx.dstTabWidth - ctx.curTabWidth;
+				ctx.speed = offset / m_animDuration;
 				std::vector<Container*>& childs = m_tabContainer->getChilds();
-				ctx.tabIndex = ctx.tabView->getIndex();
 				for(std::size_t i = ctx.tabIndex + 1; i < childs.size(); ++i)
-					childs[i]->moveLeft(width);
+					childs[i]->moveLeft(offset);
 				ctx.tabView->setSize({ ctx.curTabWidth, ctx.tabView->getSize().height });
 			}
 			m_isStartAnimBatch = com::False;
@@ -223,11 +225,12 @@ namespace SUTK
 		if(m_isRunning)
 			abortTabAnim();
 
+		// NOTE: we can't initialize the dstTabWidth here becuase this createPage() may be called even if the layout hasn't been build
+		// for the first time, therefore we might end up working with incorrect values.
 		AnimContext ctx;
 		ctx.tabView = tabView;
-		ctx.dstTabWidth = tabView->getSize().width;
 		ctx.curTabWidth = TAB_VIEW_ANIM_START_WIDTH;
-		ctx.speed = ctx.dstTabWidth / m_animDuration;
+		ctx.speed = 1.0f;
 		m_animContexts.push_back(ctx);
 		m_isStartAnimBatch = com::True;
 	}
@@ -240,7 +243,7 @@ namespace SUTK
 		ctx.tabView = tabView;
 		ctx.dstTabWidth = TAB_VIEW_ANIM_START_WIDTH;
 		ctx.curTabWidth = tabView->getSize().width;
-		ctx.speed = -ctx.curTabWidth / m_animDuration;
+		ctx.speed = (ctx.dstTabWidth - ctx.curTabWidth) / m_animDuration;
 		m_animContexts.push_back(ctx);
 		m_isStartAnimBatch = com::True;
 		return m_animContexts.back();
