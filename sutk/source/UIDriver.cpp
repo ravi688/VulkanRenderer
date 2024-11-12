@@ -112,7 +112,8 @@ namespace SUTK
 			for(auto it = m_renderables.begin(); it != m_renderables.end(); it++)
 			{
 				Renderable* renderable = (*it);
-				renderable->updateNormalizedDrawOrder((maxDrawOrder == minDrawOrder) ? 0.0f : ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 99.0f));
+				if(renderable->isDrawOrderDirty())
+					renderable->updateNormalizedDrawOrder((maxDrawOrder == minDrawOrder) ? 0.0f : ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 99.0f));
 			}
 		}
 
