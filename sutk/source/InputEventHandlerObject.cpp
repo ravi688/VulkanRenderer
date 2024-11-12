@@ -62,14 +62,11 @@ namespace SUTK
 		eventsDispatcher.getOnScrollEvent().unsubscribe(m_mouseScrollID);
 	}
 
-	MouseEnterExitHandlerObject::MouseEnterExitHandlerObject(UIDriver& driver) noexcept : TInputEventHandlerObject<IInputDriver::OnMouseEnterExitEvent>(driver.getInputDriver().getOnMouseEnterExitEvent())
+	GlobalMouseMoveHandlerObject::GlobalMouseMoveHandlerObject(UIDriver& driver) noexcept : TInputEventHandlerObject<IInputDriver::OnMouseMoveEvent>(driver.getInputDriver().getOnCursorMoveEvent())
 	{
-		IInputDriver::OnMouseEnterExitEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, bool isEnter)
+		IInputDriver::OnMouseMoveEvent::SubscriptionID id = getEvent().subscribe([this](IInputDriver* inputDriver, Vec2Df pos) noexcept
 		{
-			if(isEnter)
-				onMouseEnter();
-			else
-				onMouseExit();
+			onMouseMove(pos);
 		});
 		setSubscriptionID(id);
 	}

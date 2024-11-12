@@ -223,21 +223,16 @@ namespace SUTK
 		virtual ~MouseEventsBlockerObject() noexcept;
 	};
 
-	// The onMouseEnter and onMouseExit are called only for the render window's entire rect
-	// Therefore, this class is not derived from TInputEventHandlerContainerObject
-	// If you want to get callbacks on mouse enter and exit across the boundaries of a specific Container
-	// then derive your class from MouseMoveHandlerObject and call at least once the enableMouseEnter and enableMouseExit with 'true' values
-	// to enable the callbacks.
-	class MouseEnterExitHandlerObject : public TInputEventHandlerObject<IInputDriver::OnMouseEnterExitEvent>
+	class GlobalMouseMoveHandlerObject : public TInputEventHandlerObject<IInputDriver::OnMouseMoveEvent>
 	{
 	protected:
-		virtual void onMouseEnter() = 0;
-		virtual void onMouseExit() = 0;
+		// Must be implemented by the deriving class
+		virtual void onMouseMove(Vec2Df pos) noexcept = 0;
 
-		MouseEnterExitHandlerObject(UIDriver& driver) noexcept;
+		GlobalMouseMoveHandlerObject(UIDriver& driver) noexcept;
 
 	public:
-		virtual ~MouseEnterExitHandlerObject() noexcept = default;
+		virtual ~GlobalMouseMoveHandlerObject() noexcept = default;
 	};
 
 	#define MOUSE_INPUT_HANDLER_CTOR_DECLARE(className)\
