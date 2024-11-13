@@ -326,7 +326,9 @@ namespace SUTK
 		});
 		tabView->getOnReleaseEvent().subscribe([this, page](SUTK::Button* button) noexcept
 		{
-			this->m_tabRearrangeContext.grabbedTabView->setLayer(m_tabRearrangeContext.layer);
+			_com_assert(this->m_tabRearrangeContext.grabbedTabView != com::null_pointer<TabView>());
+			if(this->m_tabRearrangeContext.isMoved)
+				this->m_tabRearrangeContext.grabbedTabView->setLayer(m_tabRearrangeContext.layer);
 			this->m_tabRearrangeContext.grabbedTabView = com::null_pointer<TabView>();
 			this->m_tabContainer->unlockLayout(static_cast<bool>(this->m_tabRearrangeContext.isMoved));
 			this->GlobalMouseMoveHandlerObject::sleep();
