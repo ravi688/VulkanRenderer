@@ -11,10 +11,15 @@ namespace SUTK
 																									m_onEnterEvent(NULL),
 																									m_onExitEvent(NULL),
 																									m_onPressEvent(NULL),
-																									m_onReleaseEvent(NULL)
+																									m_onReleaseEvent(NULL),
+																									m_isGraphicOwner(com::False),
+																									m_isPressed(com::False)
 	{ 
 		if(isCreateDefaultGraphic)
+		{
 			setGraphic(driver.createContainer<DefaultButtonGraphic>(this, textGroup));
+			m_isGraphicOwner = com::True;
+		}
 	}
 
 	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic) noexcept : Container(driver, parent),
@@ -25,7 +30,8 @@ namespace SUTK
 																									m_onExitEvent(NULL),
 																									m_onPressEvent(NULL),
 																									m_onReleaseEvent(NULL),
-																									m_isGraphicOwner(com::False)
+																									m_isGraphicOwner(com::False),
+																									m_isPressed(com::False)
 	{ 
 		if(isCreateDefaultGraphic)
 		{
@@ -98,13 +104,15 @@ namespace SUTK
 			return true;
 		if(action == KeyEvent::Press)
 		{
+			m_isPressed = com::True;
 			if(m_onPressEvent != NULL)
 				m_onPressEvent->publish();
 			if(m_graphic != NULL)
 				m_graphic->onPress();
 		}
-		else if(action == KeyEvent::Release)
+		else if(m_isPressed && (action == KeyEvent::Release))
 		{
+			m_isPressed = com::False;
 			if(m_onReleaseEvent != NULL)
 				m_onReleaseEvent->publish();
 			if(m_graphic != NULL)

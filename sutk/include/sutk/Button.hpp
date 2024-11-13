@@ -31,6 +31,7 @@ namespace SUTK
 		OnPressEvent* m_onPressEvent;
 		OnReleaseEvent* m_onReleaseEvent;
 		com::Bool m_isGraphicOwner;
+		com::Bool m_isPressed;
 
 		void checkAndOptimizeEvents() noexcept;
 
