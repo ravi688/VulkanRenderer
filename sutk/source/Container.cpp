@@ -64,6 +64,28 @@ namespace SUTK
 		return com::cast_away_const(this)->getInputEventHandlers();
 	}
 
+	void Container::updateEventsOrder() noexcept
+	{
+		com_assert(COM_DESCRIPTION(hasInputEventHandlers()), "First check by calling hasInputEventHandlers() and then only call updateEventsOrder()");
+		std::vector<IInputEventHandlerObject*>& handlers = getInputEventHandlers();
+		for(auto& handler : handlers)
+		{
+			auto _handler = dynamic_cast<IOrderedInputEventHandlerObject*>(handler);
+			if(_handler)
+				_handler->updateOrder();
+		}
+	}
+
+	void Container::updateEventsOrderRecursive() noexcept
+	{
+		if(hasInputEventHandlers())
+			updateEventsOrder();
+		std::vector<Container*>& childs = getChilds();
+		for(Container* &child : childs)
+			if(child->hasInputEventHandlers())
+				child->updateEventsOrder();
+	}
+
 	void Container::setParentChildRelation(Container* parent, std::size_t index) noexcept
 	{
 		// previous parent is non-null, then remove this container from the parent
@@ -113,16 +135,7 @@ namespace SUTK
 				container->onAnscestorChange(parent);
 			});
 
-		if(hasInputEventHandlers())
-		{
-			std::vector<IInputEventHandlerObject*>& handlers = getInputEventHandlers();
-			for(auto& handler : handlers)
-			{
-				auto _handler = dynamic_cast<IOrderedInputEventHandlerObject*>(handler);
-				if(_handler)
-					_handler->updateOrder();
-			}
-		}
+		updateEventsOrderRecursive();
 	}
 
 	void Container::setParent(Container* parent, bool isInvariantPos) noexcept
@@ -367,6 +380,7 @@ namespace SUTK
 			_com_assert(container != com::null_pointer<Container>());
 				renderable->setDrawOrder(container->getDepth());
 		});
+		updateEventsOrderRecursive();
 	}
 
 	void Container::recalculateLayoutParent() noexcept

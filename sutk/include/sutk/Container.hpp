@@ -106,6 +106,12 @@ namespace SUTK
 
 		void recalculateLayoutParent() noexcept;
 
+		// Updates order of event handlers for this Container only
+		// You need to guard call to this function by hasInputEventHandlers()
+		void updateEventsOrder() noexcept;
+		// Updates order of event handlers for this Container and its child containers recursively.
+		// Call to this function need not be guarded by hasInputEventHandlers() as it is internally guarded already.
+		void updateEventsOrderRecursive() noexcept;
 		void setParentChildRelation(Container* parent, std::size_t index = std::numeric_limits<std::size_t>::max()) noexcept;
 
 	public:
