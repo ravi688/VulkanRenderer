@@ -328,12 +328,7 @@ namespace SUTK
 	void TabAnimGroup::onWhenAllEnd() noexcept
 	{
 		std::cout << "All ended" << std::endl;
-		m_tabLayoutController->unlockLayout();
-	}
-	void TabAnimGroup::onStepAll() noexcept
-	{
-		// Recalculate hBox layout when all of the children containers are done with their size/pos changes for this step.
-		m_tabLayoutController->recalculateLayout();
+		m_tabLayoutController->unlockLayout(true);
 	}
 	TabAnimGroup::TabAnimGroup(UIDriver& driver, ILayoutController* tabLayoutController) noexcept : AnimGroup(driver), m_tabLayoutController(tabLayoutController)
 	{
