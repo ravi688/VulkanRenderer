@@ -32,6 +32,8 @@ namespace SUTK
 
 	class OrderedInputEventsDispatcher;
 
+	class AnimationEngine;
+
 	class UIDriver
 	{
 	public:
@@ -53,6 +55,7 @@ namespace SUTK
 		// Runnables
 		com::UnorderedEraseSafeVectorProxy<IRunnable*> m_runnables;
 		OrderedInputEventsDispatcher* m_orderedEventsDispatcher;
+		AnimationEngine* m_animationEngine;
 
 		com::Bool m_isCalledFirstTime;
 		std::chrono::time_point<std::chrono::steady_clock> m_prevTime;
@@ -85,6 +88,7 @@ namespace SUTK
 
 		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }
 		OrderedInputEventsDispatcher& getOrderedInputEventsDispatcher() noexcept { return *m_orderedEventsDispatcher; }
+		AnimationEngine& getAnimationEngine() noexcept { return *m_animationEngine; }
 
 		IGfxDriver& getGfxDriver() { return m_gfxDriver; }
 		const IGfxDriver& getGfxDriver() const { return m_gfxDriver; }

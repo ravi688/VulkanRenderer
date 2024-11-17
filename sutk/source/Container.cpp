@@ -397,7 +397,6 @@ namespace SUTK
 	void Container::setLayoutAttributes(const LayoutAttributes& attrs) noexcept
 	{
 		m_layoutAttr = attrs;
-		_com_assert(attrs.minSize <= attrs.prefSize);
 		if(!isLayoutIgnore())
 			recalculateLayoutParent();
 	}
@@ -443,6 +442,13 @@ namespace SUTK
 		attr.minSize = fixedSize;
 		attr.prefSize = fixedSize;
 		setLayoutAttributes(attr);
+	}
+
+	void Container::swapChildren(u32 index1, u32 index2) noexcept
+	{
+		_com_assert(index1 < getChildCount());
+		_com_assert(index2 < getChildCount());
+		std::swap(m_containers[index1], m_containers[index2]);
 	}
 
 	void Container::setActive(com::Bool isActive) noexcept

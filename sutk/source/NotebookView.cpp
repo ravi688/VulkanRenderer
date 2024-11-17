@@ -16,9 +16,10 @@
 #define CLOSE_BUTTON_WIDTH 0.5f
 #define CLOSE_BUTTON_HEIGHT 0.5f
 
+#define TAB_VIEW_MIDDLE_SPREAD 0.1f
 
 #define TAB_VIEW_ANIM_START_WIDTH 0.0f
-#define DEFAULT_NEW_TAB_ANIM_DURATION 0.4f
+#define DEFAULT_NEW_TAB_ANIM_DURATION 2.5f
 
 namespace SUTK
 {
@@ -105,18 +106,6 @@ namespace SUTK
 		return m_graphic->getLabel().get();
 	}
 
-	u32 TabView::getIndex() const noexcept
-	{
-		u32 index = 0;
-		TabView* tab = m_prev;
-		while(tab)
-		{
-			tab = tab->m_prev;
-			++index;
-		}
-		return index;
-	}
-
 	void TabView::unselectedState() noexcept
 	{
 
@@ -127,7 +116,7 @@ namespace SUTK
 		
 	}
 
-	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), Runnable(driver), GlobalMouseMoveHandlerObject(driver),
+	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), GlobalMouseMoveHandlerObject(driver),
 																																					m_head(com::null_pointer<NotebookPage>()),
 																																					m_currentPage(com::null_pointer<NotebookPage>()),
 																																					m_onPageSelectEvent(this),
@@ -145,6 +134,8 @@ namespace SUTK
 		m_tabContainer = driver.createContainer<HBoxContainer>(m_textGroupContainer);
 		m_tabContainer->alwaysFitInParent();
 
+		m_tabAnimGroup = driver.createObject<TabAnimGroup>(m_tabContainer);
+
 		// Create Container for holding page container
 		m_pageContainer = driver.createContainer<Container>(this);
 		attr = m_pageContainer->getLayoutAttributes();
@@ -157,111 +148,239 @@ namespace SUTK
 		this->GlobalMouseMoveHandlerObject::sleep();
 	}
 
+	NotebookView::~NotebookView() noexcept
+	{
+		delete m_tabAnimGroup;
+	}
+
 	void NotebookView::onMouseMove(Vec2Df pos) noexcept
 	{
-		TabView* tabView = this->m_tabRearrangeContext.grabbedTabView;
-		if(!m_tabRearrangeContext.isMoved)
-		{
-			m_tabRearrangeContext.layer = tabView->getLayer();
-			tabView->setLayer(MaxLayer);
-			m_tabRearrangeContext.isMoved = com::True;
-		}
-		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
-		tabView->setPosition(pos);
+		// TabView* tabView = this->m_tabRearrangeContext.grabbedTabView;
+		// if(!m_tabRearrangeContext.isMoved)
+		// {
+		// 	m_tabRearrangeContext.layer = tabView->getLayer();
+		// 	tabView->setLayer(MaxLayer);
+		// 	m_tabRearrangeContext.isMoved = com::True;
+		// }
+		// pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
+		// tabView->setPosition(pos);
+		// TabView* next = tabView->getNext();
+		// if(next)
+		// {
+		// 	f32 middle = next->getPosition().x + next->getSize().width * 0.5f + TAB_VIEW_MIDDLE_SPREAD;
+		// 	if(((pos.x + tabView->getSize().width) > middle) && !isRunning())
+		// 	{
+		// 		std::cout << "Swapping with next tab" << std::endl;
+		// 		TabView* nextTab = next;
+		// 		tabView->m_next = nextTab->m_next;
+		// 		if(nextTab->m_next)
+		// 			nextTab->m_next->m_prev = tabView;
+				
+		// 		if(tabView->m_prev)
+		// 			tabView->m_prev->m_next = nextTab;
+		// 		nextTab->m_prev = tabView->m_prev;
+
+		// 		nextTab->m_next = tabView;
+		// 		tabView->m_prev = nextTab;
+		// 		dispatchAnimTabShift(next, /* isLeft: */ com::True).onEndEvent.subscribe([tabView](TabView* nextTab) noexcept
+		// 		{
+		// 		});
+		// 	}
+		// }
+		// TabView* prev = tabView->getPrev();
+		// if(prev)
+		// {
+		// 	f32 middle = prev->getPosition().x + prev->getSize().width * 0.5f;
+		// 	if((pos.x < middle) && !isRunning())
+		// 	{
+		// 		std::cout << "Swapping with prev tab" << std::endl;
+		// 		TabView* prevTab = prev;
+		// 		prevTab->m_next = tabView->m_next;
+		// 		if(tabView->m_next)
+		// 			tabView->m_next->m_prev = prevTab;
+
+		// 		if(prevTab->m_prev)
+		// 			prevTab->m_prev->m_next = tabView;
+		// 		tabView->m_prev = prevTab->m_prev;
+
+		// 		tabView->m_next = prevTab;
+		// 		prevTab->m_prev = tabView;
+		// 		dispatchAnimTabShift(prev, /* isRight: */ com::False).onEndEvent.subscribe([tabView](TabView* prevTab) noexcept
+		// 		{
+		// 		});
+		// 	}
+		// }
 	}
 
-	bool NotebookView::isRunning()
+	class TabInsertAnimation : public AnimationEngine::AnimContextBase
 	{
-		return static_cast<bool>(m_isRunning || m_isStartAnimBatch);
+		friend class TabAnimGroup;
+	private:
+		TabView* m_tab;
+		u32 m_index;
+	protected:
+		virtual void onStart() noexcept override
+		{
+			AnimContextBase::onStart();
+			m_index = m_tab->getIndex();
+			f32 dstTabWidth = m_tab->getSize().width;
+			f32 offset = dstTabWidth - TAB_VIEW_ANIM_START_WIDTH;
+			setSpeed(offset / DEFAULT_NEW_TAB_ANIM_DURATION);
+			setLength(offset);
+			Container* tabContainer = m_tab->getParent();
+			std::vector<Container*>& childs = tabContainer->getChilds();
+			for(std::size_t i = m_index + 1; i < childs.size(); ++i)
+				childs[i]->moveLeft(offset);
+			m_tab->setSize({ TAB_VIEW_ANIM_START_WIDTH, m_tab->getSize().height });
+			LayoutAttributes& attr = m_tab->getLayoutAttributes();
+			attr.prefSize = m_tab->getSize();
+		}
+		virtual void onStep(f32 deltaValue) noexcept override
+		{
+			m_index = m_tab->getIndex();
+			Container* tabContainer = m_tab->getParent();
+			std::vector<Container*>& childs = tabContainer->getChilds();
+			for(std::size_t i = m_index + 1; i < childs.size(); ++i)
+				childs[i]->moveRight(deltaValue);
+			m_tab->extendRight(deltaValue);
+			LayoutAttributes& attr = m_tab->getLayoutAttributes();
+			attr.prefSize = m_tab->getSize();
+		}
+	public:
+		TabInsertAnimation(UIDriver& driver, TabAnimGroup* group, TabView* tab) noexcept : AnimContextBase(driver, group), m_tab(tab) { }
+	};
+
+	class TabRemoveAnimation : public AnimationEngine::AnimContextBase
+	{
+		friend class TabAnimGroup;
+	private:
+		TabView* m_tab;
+		u32 m_index;
+	protected:
+		virtual void onStart() noexcept override
+		{
+			AnimContextBase::onStart();
+			m_index = m_tab->getIndex();
+			f32 dstTabWidth = TAB_VIEW_ANIM_START_WIDTH;
+			f32 offset = dstTabWidth - m_tab->getSize().width;
+			setSpeed(offset / DEFAULT_NEW_TAB_ANIM_DURATION);
+			setLength(offset);
+		}
+		virtual void onStep(f32 deltaValue) noexcept override
+		{
+			m_index = m_tab->getIndex();
+			Container* tabContainer = m_tab->getParent();
+			std::vector<Container*>& childs = tabContainer->getChilds();
+			for(std::size_t i = m_index + 1; i < childs.size(); ++i)
+				childs[i]->moveRight(deltaValue);
+			m_tab->extendRight(deltaValue);
+			LayoutAttributes& attr = m_tab->getLayoutAttributes();
+			attr.prefSize = m_tab->getSize();
+		}
+		virtual void onEnd() noexcept override
+		{
+			auto node = m_tab->getNext();
+			while(node)
+			{
+				_com_assert(node->m_index > 0);
+				node->m_index -= 1;
+				node = node->getNext();
+			}
+			m_tab->getUIDriver().destroyContainer<TabView>(m_tab);
+			AnimContextBase::onEnd();
+		}
+	public:
+		TabRemoveAnimation(UIDriver& driver, TabAnimGroup* group, TabView* tab) noexcept : AnimContextBase(driver, group), m_tab(tab) { }
+	};
+
+	void TabAnimGroup::onPresent(AnimationEngine::AnimContextBase* animContext) noexcept
+	{
+		if(auto insertAnim = dynamic_cast<TabInsertAnimation*>(animContext))
+		{
+			TabView* insertTab = insertAnim->m_tab;
+			for(TabRemoveAnimation* removeAnim : m_inFlightRemoves)
+				if(removeAnim->m_tab->m_index >= insertTab->m_index)
+				{
+					removeAnim->m_tab->m_index += 1;
+					break;
+				}
+			m_inFlightInserts.push_back(insertAnim);
+		}
+		else if(auto removeAnim = dynamic_cast<TabRemoveAnimation*>(animContext))
+		{
+			TabView* removeTab = removeAnim->m_tab;
+			for(TabInsertAnimation* insertAnim : m_inFlightInserts)
+				if(insertAnim->m_tab == removeTab)
+				{
+					insertAnim->abort();
+					break;
+				}
+			m_inFlightRemoves.push_back(removeAnim);
+		}
 	}
-
-	void NotebookView::update()
+	void TabAnimGroup::onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept
 	{
-		if(m_isStartAnimBatch)
-		{
-			m_tabContainer->lockLayout();
-			for(auto& ctx : m_animContexts)
-			{
-				ctx.tabIndex = ctx.tabView->getIndex();
-				if(ctx.speed < 0)
-					continue;
-				ctx.dstTabWidth = ctx.tabView->getSize().width;
-				f32 offset = ctx.dstTabWidth - ctx.curTabWidth;
-				ctx.speed = offset / m_animDuration;
-				std::vector<Container*>& childs = m_tabContainer->getChilds();
-				for(std::size_t i = ctx.tabIndex + 1; i < childs.size(); ++i)
-					childs[i]->moveLeft(offset);
-				ctx.tabView->setSize({ ctx.curTabWidth, ctx.tabView->getSize().height });
-			}
-			m_isStartAnimBatch = com::False;
-			m_isRunning = com::True;
-		}
+		if(auto insertAnim = dynamic_cast<TabInsertAnimation*>(animContext))
+			com::find_erase(m_inFlightInserts, insertAnim);
+		else if(auto removeAnim = dynamic_cast<TabRemoveAnimation*>(animContext))
+			com::find_erase(m_inFlightRemoves, removeAnim);
+	}
+	void TabAnimGroup::onWhenAnyStart() noexcept
+	{
+		std::cout << "Any started" << std::endl;
+		if(!m_tabLayoutController->isLockedLayout())
+			m_tabLayoutController->lockLayout();
+	}
+	void TabAnimGroup::onWhenAllEnd() noexcept
+	{
+		std::cout << "All ended" << std::endl;
+		m_tabLayoutController->unlockLayout();
+	}
+	void TabAnimGroup::onStepAll() noexcept
+	{
+		// Recalculate hBox layout when all of the children containers are done with their size/pos changes for this step.
+		m_tabLayoutController->recalculateLayout();
+	}
+	TabAnimGroup::TabAnimGroup(UIDriver& driver, ILayoutController* tabLayoutController) noexcept : AnimGroup(driver), m_tabLayoutController(tabLayoutController)
+	{
 
-		com::Bool isUnlockLayout = com::True;
-
-		std::vector<Container*>& childs = m_tabContainer->getChilds();
-		for(auto& ctx : m_animContexts)
-		{
-			f32 deltaWidth = ctx.speed * getUIDriver().getDeltaTime();
-			f32 safeDeltaWidth = ctx.dstTabWidth - ctx.curTabWidth;
-			if(std::abs(deltaWidth) >= std::abs(safeDeltaWidth))
-			{
-				deltaWidth = safeDeltaWidth;
-				ctx.curTabWidth = ctx.dstTabWidth;
-			}
-			else 
-			{
-				ctx.curTabWidth += deltaWidth;
-				isUnlockLayout = com::False;
-			}
-
-			for(std::size_t i = ctx.tabIndex + 1; i < childs.size(); ++i)
-				childs[i]->moveRight(deltaWidth);
-			ctx.tabView->extendRight(deltaWidth);
-		}
-		if(isUnlockLayout)
-			abortTabAnim();
 	}
 
 	void NotebookView::abortTabAnim() noexcept
 	{
-		for(auto& ctx : m_animContexts)
-		{
-			ctx.onEndEvent.publish(ctx.tabView);
-			ctx.onEndEvent.clear();
-		}
-		m_tabContainer->unlockLayout(true);
-		m_animContexts.clear();
-		m_isRunning = com::False;
+		// for(auto& ctx : m_animContexts)
+		// {
+		// 	ctx.onEndEvent.publish(ctx.tabView);
+		// 	ctx.onEndEvent.clear();
+		// }
+		// m_tabContainer->unlockLayout(true);
+		// m_animContexts.clear();
+		// m_isRunning = com::False;
 	}
 
 	void NotebookView::dispatchAnimNewTab(TabView* tabView) noexcept
 	{
-		if(m_isRunning)
-			abortTabAnim();
-
-		// NOTE: we can't initialize the dstTabWidth here becuase this createPage() may be called even if the layout hasn't been build
-		// for the first time, therefore we might end up working with incorrect values.
-		AnimContext ctx;
-		ctx.tabView = tabView;
-		ctx.curTabWidth = TAB_VIEW_ANIM_START_WIDTH;
-		ctx.speed = 1.0f;
-		m_animContexts.push_back(ctx);
-		m_isStartAnimBatch = com::True;
+		getUIDriver().getAnimationEngine().dispatchAnimation<TabInsertAnimation>(m_tabAnimGroup, tabView);
 	}
 
-	NotebookView::AnimContext& NotebookView::dispatchAnimRemoveTab(TabView* tabView) noexcept
+	void NotebookView::dispatchAnimRemoveTab(TabView* tabView) noexcept
 	{
-		if(m_isRunning)
-			abortTabAnim();
-		AnimContext ctx;
-		ctx.tabView = tabView;
-		ctx.dstTabWidth = TAB_VIEW_ANIM_START_WIDTH;
-		ctx.curTabWidth = tabView->getSize().width;
-		ctx.speed = (ctx.dstTabWidth - ctx.curTabWidth) / m_animDuration;
-		m_animContexts.push_back(ctx);
-		m_isStartAnimBatch = com::True;
-		return m_animContexts.back();
+		getUIDriver().getAnimationEngine().dispatchAnimation<TabRemoveAnimation>(m_tabAnimGroup, tabView);		// if(m_isRunning)
+	}
+
+	void  NotebookView::dispatchAnimTabShift(TabView* tabView, com::Bool isLeft) noexcept
+	{
+		// if(m_isRunning)
+			// abortTabAnim();
+		// AnimContext ctx { };
+		// ctx.tabView = tabView;
+		// ctx.curTabPos = tabView->getPosition().x;
+		// ctx.dstTabPos = ctx.curTabPos + (isLeft ? -tabView->getPrev()->getSize().width : tabView->getNext()->getSize().width);
+		// ctx.speed = (ctx.dstTabPos - ctx.curTabPos) / m_animDuration;
+		// ctx.isTabRearrange = com::True;
+		// m_animContexts.push_back(ctx);
+		// m_isStartAnimBatch = com::True;
+		// return m_animContexts.back();
 	}
 
 	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
@@ -289,7 +408,16 @@ namespace SUTK
 			}
 			tabView->m_prev = afterPageTabView;
 			afterPageTabView->m_next = tabView;
+			tabView->m_index = afterPageTabView->getIndex() + 1;
+			auto node = afterPageNext;
+			while(node)
+			{
+				node->m_index += 1;
+				node = node->m_next;
+			}
 		}
+		else
+			tabView->m_index = 0;
 		m_tabContainer->addAt(tabView, tabView->getIndex());
 		tabView->setLabel(labelStr);
 		LayoutAttributes attr = tabView->getLayoutAttributes();
@@ -309,7 +437,10 @@ namespace SUTK
 		page->m_tabView = tabView;
 
 		if(!tabView->getPrev())
+		{
+			_com_assert(tabView->m_index == 0);
 			m_head = page;
+		}
 
 		tabView->getOnPressEvent().subscribe([this, page](SUTK::Button* button) noexcept
 		{
@@ -319,6 +450,7 @@ namespace SUTK
 			this->m_tabRearrangeContext.grabbedTabView = page->getTabView();
 			Vec2Df mousePos = getUIDriver().getInputDriver().getMousePosition();
 			this->m_tabRearrangeContext.positionOffset = page->getTabView()->getGlobalPosition() - mousePos;
+			this->m_tabRearrangeContext.tabIndex = page->getTabView()->getIndex();
 			this->m_tabRearrangeContext.isMoved = com::False;
 			this->m_tabContainer->lockLayout();
 			
@@ -328,7 +460,12 @@ namespace SUTK
 		{
 			_com_assert(this->m_tabRearrangeContext.grabbedTabView != com::null_pointer<TabView>());
 			if(this->m_tabRearrangeContext.isMoved)
+			{
 				this->m_tabRearrangeContext.grabbedTabView->setLayer(m_tabRearrangeContext.layer);
+				auto index = page->getTabView()->getIndex();
+				if(this->m_tabRearrangeContext.tabIndex != index)
+					this->m_tabContainer->swapChildren(this->m_tabRearrangeContext.tabIndex, index);
+			}
 			this->m_tabRearrangeContext.grabbedTabView = com::null_pointer<TabView>();
 			this->m_tabContainer->unlockLayout(static_cast<bool>(this->m_tabRearrangeContext.isMoved));
 			this->GlobalMouseMoveHandlerObject::sleep();
@@ -394,10 +531,7 @@ namespace SUTK
 		delete page;
 		tabView->m_page = com::null_pointer<NotebookPage>();
 
-		dispatchAnimRemoveTab(tabView).onEndEvent.subscribe([this](TabView* tabView)
-		{
-			this->getUIDriver().destroyContainer<TabView>(tabView);
-		});
+		dispatchAnimRemoveTab(tabView);
 	}
 
 	void NotebookView::dump() noexcept

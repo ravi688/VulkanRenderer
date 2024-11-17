@@ -76,11 +76,11 @@ namespace SUTK
 				continue;
 
 			const LayoutAttributes attrs = child->getAbsoluteLayoutAttributes();
-			minWidth += attrs.minSize.width;
+			minWidth += std::min(attrs.minSize.width, attrs.prefSize.width);
 			if(attrs.prefSize.width == F32_INFINITY)
 			{
 				++expandCount;
-				prefWidth += attrs.minSize.width;
+				prefWidth += std::min(attrs.minSize.width, attrs.prefSize.width);
 			}
 			else
 				prefWidth += attrs.prefSize.width;
@@ -116,9 +116,9 @@ namespace SUTK
 			
 			const LayoutAttributes attrs = child->getAbsoluteLayoutAttributes();
 			if(attrs.prefSize.width != F32_INFINITY)
-				totalWidth += std::min(attrs.minSize.width + factor * (attrs.prefSize.width - attrs.minSize.width), attrs.prefSize.width);
+				totalWidth += std::min(std::min(attrs.minSize.width, attrs.prefSize.width) + factor * (attrs.prefSize.width - std::min(attrs.minSize.width, attrs.prefSize.width)), attrs.prefSize.width);
 			else
-				totalWidth += attrs.minSize.width;
+				totalWidth += std::min(attrs.minSize.width, attrs.prefSize.width);
 		}
 
 		f32 expandWidth = (getRect().width - totalWidth) / expandCount;
@@ -134,9 +134,9 @@ namespace SUTK
 
 			f32 width = 0;
 			if(attrs.prefSize.width == F32_INFINITY)
-				width = attrs.minSize.width + expandWidth;
+				width = std::min(attrs.minSize.width, attrs.prefSize.width) + expandWidth;
 			else
-				width = std::min(attrs.minSize.width + factor * (attrs.prefSize.width - attrs.minSize.width), attrs.prefSize.width);
+				width = std::min(std::min(attrs.minSize.width, attrs.prefSize.width) + factor * (attrs.prefSize.width - std::min(attrs.minSize.width, attrs.prefSize.width)), attrs.prefSize.width);
 			
 			child->setRect({ xpos, 0, width, getRect().height });
 			xpos += width;

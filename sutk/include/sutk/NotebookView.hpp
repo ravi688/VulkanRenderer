@@ -4,7 +4,7 @@
 #include <sutk/VBoxContainer.hpp> // for SUTK::VBoxContainer
 #include <sutk/Button.hpp> // for SUTK::Button
 #include <sutk/Label.hpp> // for SUTK::Label::set()
-#include <sutk/IRunnable.hpp> // for SUTK::Runnable
+#include <sutk/AnimationEngine.hpp>
 
 #include <common/Concepts.hpp> // for com::CompareFunction
 #include <common/Event.hpp> // for com::Event
@@ -75,6 +75,8 @@ namespace SUTK
 	class SUTK_API TabView : public Button
 	{
 		friend class NotebookView;
+		friend class TabAnimGroup;
+		friend class TabRemoveAnimation;
 		friend u32 getIndexOfPage(const NotebookPage* page) noexcept;
 	private:
 		DefaultButtonGraphic* m_graphic;
@@ -83,6 +85,7 @@ namespace SUTK
 		NotebookPage* m_page;
 		TabView* m_next;
 		TabView* m_prev;
+		u32 m_index;
 
 	public:
 		TabView(UIDriver& driver, Container* parent) noexcept;
@@ -94,7 +97,7 @@ namespace SUTK
 		TabView* getPrev() noexcept { return m_prev; }
 		const TabView* getPrev() const noexcept { return m_prev; }
 		NotebookPage* getPage() noexcept { return m_page; }
-		u32 getIndex() const noexcept;
+		u32 getIndex() const noexcept { return m_index; }
 
 		void setLabel(const std::string_view str) noexcept;
 		const std::string& getLabel() noexcept;
@@ -105,7 +108,26 @@ namespace SUTK
 
 	class HBoxContainer;
 
-	class SUTK_API NotebookView : public VBoxContainer, public Runnable, public GlobalMouseMoveHandlerObject
+	class TabRemoveAnimation;
+	class TabInsertAnimation;
+
+	class TabAnimGroup : public AnimationEngine::AnimGroup
+	{
+	private:
+		ILayoutController* m_tabLayoutController;
+		std::vector<TabRemoveAnimation*> m_inFlightRemoves;
+		std::vector<TabInsertAnimation*> m_inFlightInserts;	
+	protected:
+		virtual void onPresent(AnimationEngine::AnimContextBase* animContext) noexcept override;
+		virtual void onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept override;
+		virtual void onWhenAnyStart() noexcept override;
+		virtual void onWhenAllEnd() noexcept override;
+		virtual void onStepAll() noexcept override;
+	public:
+		TabAnimGroup(UIDriver& driver, ILayoutController* tabLayoutController) noexcept;
+	};
+
+	class SUTK_API NotebookView : public VBoxContainer, public GlobalMouseMoveHandlerObject
 	{
 	public:
 		typedef com::Event<NotebookView, NotebookPage*> OnPageSelectEvent;
@@ -114,6 +136,7 @@ namespace SUTK
 		{
 			TabView* grabbedTabView;
 			Vec2Df positionOffset;
+			u32 tabIndex;
 			com::Bool isMoved;
 			Layer layer;
 		};
@@ -124,38 +147,25 @@ namespace SUTK
 		Container* m_pageContainer;
 		NotebookPage* m_head;
 		NotebookPage* m_currentPage;
+		TabAnimGroup* m_tabAnimGroup;
 		OnPageSelectEvent m_onPageSelectEvent;
 		TabRearrangeContext m_tabRearrangeContext;
 		com::Bool m_isRunning;
 		com::Bool m_isStartAnimBatch;
 		f32 m_animDuration;
 
-		struct AnimContext
-		{
-			typedef com::Event<com::no_publish_ptr_t, TabView*> OnEndEvent;
-			TabView* tabView;
-			u32 tabIndex;
-			f32 dstTabWidth;
-			f32 curTabWidth;
-			f32 speed;
-			OnEndEvent onEndEvent;
-		};
-
-		std::vector<AnimContext> m_animContexts;
 
 		void abortTabAnim() noexcept;
 		void dispatchAnimNewTab(TabView* tabView) noexcept;
-		AnimContext& dispatchAnimRemoveTab(TabView* tabView) noexcept;
+		void dispatchAnimRemoveTab(TabView* tabView) noexcept;
+		void dispatchAnimTabShift(TabView* tabView, com::Bool isLeft) noexcept;
 
 	protected:
 		virtual void onMouseMove(Vec2Df pos) noexcept override;
 
 	public:
 		NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::False, Layer layer = InvalidLayer) noexcept;
-
-		// Implementation of Runnable
-		virtual bool isRunning();
-		virtual void update();
+		~NotebookView() noexcept;
 
 		OnPageSelectEvent& getOnPageSelectEvent() noexcept { return m_onPageSelectEvent; }
 

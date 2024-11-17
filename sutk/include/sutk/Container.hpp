@@ -228,6 +228,8 @@ namespace SUTK
 		// removes an existing container from this container
 		virtual void remove(Container* container);
 
+		void swapChildren(u32 index1, u32 index2) noexcept;
+
 		// Override of Activatable::setActive;
 		virtual void setActive(com::Bool isActive) noexcept override;
 	};

@@ -23,6 +23,8 @@ namespace SUTK
 		Runnable(UIDriver& driver) noexcept;
 		~Runnable() noexcept;
 
+		UIDriver& getRunnableUIDriver() noexcept { return m_uiDriver; }
+
 		virtual bool isRunning() = 0;
 		virtual void update() = 0;
 	};

@@ -11,6 +11,7 @@
 #include <sutk/DummyInputDriver.hpp> // for STUK::DummyInputDriver
 #include <sutk/IRunnable.hpp> // for SUTK::IRunnable::Update
 #include <sutk/OrderedInputEventsDispatcher.hpp> // for SUTK::OrderedInputEventsDispatcher
+#include <sutk/AnimationEngine.hpp> // for SUTK::AnimationEngine
 
 #include <common/assert.h>
 #include <common/debug.h> // for debug_log_error
@@ -30,6 +31,7 @@ namespace SUTK
 		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_debugRootContainer->setLayer(MaxLayer);
 		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
+		m_animationEngine = new AnimationEngine(*this);
 	}
 
 	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), 
@@ -43,11 +45,13 @@ namespace SUTK
 		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_debugRootContainer->setLayer(MaxLayer);
 		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
+		m_animationEngine = new AnimationEngine(*this);
 	}
 
 	UIDriver::~UIDriver()
 	{
 		delete m_orderedEventsDispatcher;
+		delete m_animationEngine;
 		if(m_isDummyInputDriver)
 			delete m_inputDriver;
 	}

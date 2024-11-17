@@ -320,6 +320,16 @@ namespace SUTK
 			return static_cast<Vec2D<f32>>(getPosition()) + static_cast<Vec2D<f32>>(getSize()) * 0.5;
 		}
 
+		f32 getRight() const noexcept
+		{
+			return width + x;
+		}
+
+		f32 getLeft() const noexcept
+		{
+			return x;
+		}
+
 		Vec2D<T> getTopLeft() const noexcept
 		{
 			return getPosition();
