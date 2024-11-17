@@ -217,19 +217,17 @@ namespace SUTK
 		friend class TabAnimGroup;
 	private:
 		TabView* m_tab;
-		u32 m_index;
 	protected:
 		virtual void onStart() noexcept override
 		{
 			AnimContextBase::onStart();
-			m_index = m_tab->getIndex();
 			f32 dstTabWidth = m_tab->getSize().width;
 			f32 offset = dstTabWidth - TAB_VIEW_ANIM_START_WIDTH;
 			setSpeed(offset / DEFAULT_NEW_TAB_ANIM_DURATION);
 			setLength(offset);
 			Container* tabContainer = m_tab->getParent();
 			std::vector<Container*>& childs = tabContainer->getChilds();
-			for(std::size_t i = m_index + 1; i < childs.size(); ++i)
+			for(std::size_t i = m_tab->getIndex() + 1; i < childs.size(); ++i)
 				childs[i]->moveLeft(offset);
 			m_tab->setSize({ TAB_VIEW_ANIM_START_WIDTH, m_tab->getSize().height });
 			LayoutAttributes& attr = m_tab->getLayoutAttributes();
@@ -237,10 +235,9 @@ namespace SUTK
 		}
 		virtual void onStep(f32 deltaValue) noexcept override
 		{
-			m_index = m_tab->getIndex();
 			Container* tabContainer = m_tab->getParent();
 			std::vector<Container*>& childs = tabContainer->getChilds();
-			for(std::size_t i = m_index + 1; i < childs.size(); ++i)
+			for(std::size_t i = m_tab->getIndex() + 1; i < childs.size(); ++i)
 				childs[i]->moveRight(deltaValue);
 			m_tab->extendRight(deltaValue);
 			LayoutAttributes& attr = m_tab->getLayoutAttributes();
@@ -255,12 +252,10 @@ namespace SUTK
 		friend class TabAnimGroup;
 	private:
 		TabView* m_tab;
-		u32 m_index;
 	protected:
 		virtual void onStart() noexcept override
 		{
 			AnimContextBase::onStart();
-			m_index = m_tab->getIndex();
 			f32 dstTabWidth = TAB_VIEW_ANIM_START_WIDTH;
 			f32 offset = dstTabWidth - m_tab->getSize().width;
 			setSpeed(offset / DEFAULT_NEW_TAB_ANIM_DURATION);
@@ -268,10 +263,9 @@ namespace SUTK
 		}
 		virtual void onStep(f32 deltaValue) noexcept override
 		{
-			m_index = m_tab->getIndex();
 			Container* tabContainer = m_tab->getParent();
 			std::vector<Container*>& childs = tabContainer->getChilds();
-			for(std::size_t i = m_index + 1; i < childs.size(); ++i)
+			for(std::size_t i = m_tab->getIndex() + 1; i < childs.size(); ++i)
 				childs[i]->moveRight(deltaValue);
 			m_tab->extendRight(deltaValue);
 			LayoutAttributes& attr = m_tab->getLayoutAttributes();
