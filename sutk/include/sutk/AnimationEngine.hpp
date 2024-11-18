@@ -76,7 +76,8 @@ namespace SUTK
 				}
 				else m_curValue += deltaValue;
 				onStep(deltaValue);
-				m_group->step();
+				if(m_group)
+					m_group->step();
 				return com::Bool { m_curValue == m_endValue };
 			}
 

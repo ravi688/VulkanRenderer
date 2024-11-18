@@ -77,6 +77,7 @@ namespace SUTK
 		friend class NotebookView;
 		friend class TabAnimGroup;
 		friend class TabRemoveAnimation;
+		friend class TabShiftAnimation;
 		friend u32 getIndexOfPage(const NotebookPage* page) noexcept;
 	private:
 		DefaultButtonGraphic* m_graphic;
@@ -98,6 +99,7 @@ namespace SUTK
 		const TabView* getPrev() const noexcept { return m_prev; }
 		NotebookPage* getPage() noexcept { return m_page; }
 		u32 getIndex() const noexcept { return m_index; }
+		u32 getLinkedListIndex() const noexcept;
 
 		void setLabel(const std::string_view str) noexcept;
 		const std::string& getLabel() noexcept;

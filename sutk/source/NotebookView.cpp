@@ -19,7 +19,8 @@
 #define TAB_VIEW_MIDDLE_SPREAD 0.1f
 
 #define TAB_VIEW_ANIM_START_WIDTH 0.0f
-#define DEFAULT_NEW_TAB_ANIM_DURATION 2.5f
+#define DEFAULT_NEW_TAB_ANIM_DURATION 0.28f
+#define TAB_SHIFT_ANIM_DURATION 0.2f
 
 namespace SUTK
 {
@@ -94,6 +95,18 @@ namespace SUTK
 		driver.destroyContainer<Button>(m_closeButton);
 	}
 
+	u32 TabView::getLinkedListIndex() const noexcept
+	{
+		u32 index = 0;
+		auto node = getPrev();
+		while(node)
+		{
+			++index;
+			node = node->getPrev();
+		}
+		return index;
+	}
+
 	void TabView::setLabel(const std::string_view str) noexcept
 	{
 		m_graphic->getLabel().set(str);
@@ -151,65 +164,6 @@ namespace SUTK
 	NotebookView::~NotebookView() noexcept
 	{
 		delete m_tabAnimGroup;
-	}
-
-	void NotebookView::onMouseMove(Vec2Df pos) noexcept
-	{
-		// TabView* tabView = this->m_tabRearrangeContext.grabbedTabView;
-		// if(!m_tabRearrangeContext.isMoved)
-		// {
-		// 	m_tabRearrangeContext.layer = tabView->getLayer();
-		// 	tabView->setLayer(MaxLayer);
-		// 	m_tabRearrangeContext.isMoved = com::True;
-		// }
-		// pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
-		// tabView->setPosition(pos);
-		// TabView* next = tabView->getNext();
-		// if(next)
-		// {
-		// 	f32 middle = next->getPosition().x + next->getSize().width * 0.5f + TAB_VIEW_MIDDLE_SPREAD;
-		// 	if(((pos.x + tabView->getSize().width) > middle) && !isRunning())
-		// 	{
-		// 		std::cout << "Swapping with next tab" << std::endl;
-		// 		TabView* nextTab = next;
-		// 		tabView->m_next = nextTab->m_next;
-		// 		if(nextTab->m_next)
-		// 			nextTab->m_next->m_prev = tabView;
-				
-		// 		if(tabView->m_prev)
-		// 			tabView->m_prev->m_next = nextTab;
-		// 		nextTab->m_prev = tabView->m_prev;
-
-		// 		nextTab->m_next = tabView;
-		// 		tabView->m_prev = nextTab;
-		// 		dispatchAnimTabShift(next, /* isLeft: */ com::True).onEndEvent.subscribe([tabView](TabView* nextTab) noexcept
-		// 		{
-		// 		});
-		// 	}
-		// }
-		// TabView* prev = tabView->getPrev();
-		// if(prev)
-		// {
-		// 	f32 middle = prev->getPosition().x + prev->getSize().width * 0.5f;
-		// 	if((pos.x < middle) && !isRunning())
-		// 	{
-		// 		std::cout << "Swapping with prev tab" << std::endl;
-		// 		TabView* prevTab = prev;
-		// 		prevTab->m_next = tabView->m_next;
-		// 		if(tabView->m_next)
-		// 			tabView->m_next->m_prev = prevTab;
-
-		// 		if(prevTab->m_prev)
-		// 			prevTab->m_prev->m_next = tabView;
-		// 		tabView->m_prev = prevTab->m_prev;
-
-		// 		tabView->m_next = prevTab;
-		// 		prevTab->m_prev = tabView;
-		// 		dispatchAnimTabShift(prev, /* isRight: */ com::False).onEndEvent.subscribe([tabView](TabView* prevTab) noexcept
-		// 		{
-		// 		});
-		// 	}
-		// }
 	}
 
 	class TabInsertAnimation : public AnimationEngine::AnimContextBase
@@ -287,6 +241,62 @@ namespace SUTK
 		TabRemoveAnimation(UIDriver& driver, TabAnimGroup* group, TabView* tab) noexcept : AnimContextBase(driver, group), m_tab(tab) { }
 	};
 
+	class TabShiftAnimation : public AnimationEngine::AnimContextBase
+	{
+		friend class TabAnimGroup;
+	private:
+		TabView* m_tab;
+		com::Bool m_isLeft;
+	protected:
+		virtual void onStart() noexcept override
+		{
+			AnimContextBase::onStart();
+			f32 offset = m_isLeft ? (m_tab->getPrev() ? -m_tab->getPrev()->getSize().width : 0) : (m_tab->getNext() ? m_tab->getNext()->getSize().width : 0);
+			setSpeed(offset / TAB_SHIFT_ANIM_DURATION);
+			setLength(offset);
+		}
+		virtual void onStep(f32 deltaValue) noexcept override
+		{
+			m_tab->moveRight(deltaValue);
+		}
+		virtual void onEnd() noexcept override
+		{
+			if(m_isLeft)
+			{
+				TabView* tabView = m_tab->getPrev();
+				_com_assert(tabView != com::null_pointer<TabView>());
+				TabView* nextTab = m_tab;
+				if(tabView->m_prev)
+					tabView->m_prev->m_next = nextTab;
+				nextTab->m_prev = tabView->m_prev;
+				nextTab->m_next = tabView;
+				tabView->m_prev = nextTab;
+			}
+			else
+			{
+				TabView* tabView = m_tab->getNext();
+				_com_assert(tabView != com::null_pointer<TabView>());
+				TabView* prevTab = m_tab;
+				if(tabView->m_next)
+					tabView->m_next->m_prev = prevTab;
+				prevTab->m_next = tabView->m_next;
+				tabView->m_next = prevTab;
+				prevTab->m_prev = tabView;
+			}
+
+			u32 index = m_tab->getLinkedListIndex();
+			u32 swapIndex = m_isLeft ? (index + 1) : (index - 1);
+			Container* tabContainer = m_tab->getParent();
+			tabContainer->swapChildren(swapIndex, index);
+			dynamic_cast<TabView*>(tabContainer->getChilds()[swapIndex])->m_index = swapIndex;
+			m_tab->m_index = index;
+
+			AnimContextBase::onEnd();
+		}
+	public:
+		TabShiftAnimation(UIDriver& driver, TabView* tab, com::Bool isLeft) noexcept : AnimContextBase(driver), m_tab(tab), m_isLeft(isLeft) { }
+	};
+
 	void TabAnimGroup::onPresent(AnimationEngine::AnimContextBase* animContext) noexcept
 	{
 		if(auto insertAnim = dynamic_cast<TabInsertAnimation*>(animContext))
@@ -335,6 +345,47 @@ namespace SUTK
 
 	}
 
+	void NotebookView::onMouseMove(Vec2Df pos) noexcept
+	{
+		TabView* tabView = this->m_tabRearrangeContext.grabbedTabView;
+		if(!m_tabRearrangeContext.isMoved)
+		{
+			m_tabRearrangeContext.layer = tabView->getLayer();
+			tabView->setLayer(MaxLayer);
+			m_tabRearrangeContext.isMoved = com::True;
+		}
+		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
+		tabView->setPosition(pos);
+		TabView* next = tabView->getNext();
+		if(next)
+		{
+			f32 middle = next->getPosition().x + next->getSize().width * 0.5f;
+			if((pos.x + tabView->getSize().width) > middle)
+			{
+				std::cout << "Swapping with next tab" << std::endl;
+				TabView* nextTab = next;
+				tabView->m_next = nextTab->m_next;
+				if(nextTab->m_next)
+					nextTab->m_next->m_prev = tabView;
+				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(nextTab, /* isLeft: */ com::True);
+			}
+		}
+		TabView* prev = tabView->getPrev();
+		if(prev)
+		{
+			f32 middle = prev->getPosition().x + prev->getSize().width * 0.5f;
+			if(pos.x < middle)
+			{
+				std::cout << "Swapping with prev tab" << std::endl;
+				TabView* prevTab = prev;
+				tabView->m_prev = prevTab->m_prev;
+				if(prevTab->m_prev)
+					prevTab->m_prev->m_next = tabView;
+				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(prevTab, /* isLeft: */ com::False);
+			}
+		}
+	}
+
 	void NotebookView::abortTabAnim() noexcept
 	{
 		// for(auto& ctx : m_animContexts)
@@ -370,6 +421,13 @@ namespace SUTK
 		// m_animContexts.push_back(ctx);
 		// m_isStartAnimBatch = com::True;
 		// return m_animContexts.back();
+	}
+
+	static TabView* GetLinkedListRoot(TabView* node) noexcept
+	{
+		while(node && node->getPrev())
+			node = node->getPrev();
+		return node;
 	}
 
 	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
@@ -439,7 +497,6 @@ namespace SUTK
 			this->m_tabRearrangeContext.grabbedTabView = page->getTabView();
 			Vec2Df mousePos = getUIDriver().getInputDriver().getMousePosition();
 			this->m_tabRearrangeContext.positionOffset = page->getTabView()->getGlobalPosition() - mousePos;
-			this->m_tabRearrangeContext.tabIndex = page->getTabView()->getIndex();
 			this->m_tabRearrangeContext.isMoved = com::False;
 			this->m_tabContainer->lockLayout();
 			
@@ -451,9 +508,7 @@ namespace SUTK
 			if(this->m_tabRearrangeContext.isMoved)
 			{
 				this->m_tabRearrangeContext.grabbedTabView->setLayer(m_tabRearrangeContext.layer);
-				auto index = page->getTabView()->getIndex();
-				if(this->m_tabRearrangeContext.tabIndex != index)
-					this->m_tabContainer->swapChildren(this->m_tabRearrangeContext.tabIndex, index);
+				this->m_head = GetLinkedListRoot(this->m_tabRearrangeContext.grabbedTabView)->getPage();
 			}
 			this->m_tabRearrangeContext.grabbedTabView = com::null_pointer<TabView>();
 			this->m_tabContainer->unlockLayout(static_cast<bool>(this->m_tabRearrangeContext.isMoved));
