@@ -129,6 +129,24 @@ namespace SUTK
 		TabAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept;
 	};
 
+	class TabShiftAnimation;
+
+	class TabShiftAnimGroup : public AnimationEngine::AnimGroup
+	{
+	private:
+		NotebookView* m_notebook;
+		std::vector<TabShiftAnimation*> m_inFlightLeftShifts;
+		std::vector<TabShiftAnimation*> m_inFlightRightShifts;	
+		com::Bool m_isAborting;
+	protected:
+		virtual void onPresent(AnimationEngine::AnimContextBase* animContext) noexcept override;
+		virtual void onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept override;
+	public:
+		TabShiftAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept;
+
+		void abort() noexcept;
+	};
+
 	class SUTK_API NotebookView : public VBoxContainer, public GlobalMouseMoveHandlerObject
 	{
 		friend class TabAnimGroup;
@@ -151,6 +169,7 @@ namespace SUTK
 		NotebookPage* m_head;
 		NotebookPage* m_currentPage;
 		TabAnimGroup* m_tabAnimGroup;
+		TabShiftAnimGroup* m_tabShiftAnimGroup;
 		OnPageSelectEvent m_onPageSelectEvent;
 		TabRearrangeContext m_tabRearrangeContext;
 		com::Bool m_isRunning;

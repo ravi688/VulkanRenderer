@@ -19,8 +19,8 @@
 #define TAB_VIEW_MIDDLE_SPREAD 0.1f
 
 #define TAB_VIEW_ANIM_START_WIDTH 0.0f
-#define DEFAULT_NEW_TAB_ANIM_DURATION 0.28f
-#define TAB_SHIFT_ANIM_DURATION 0.2f
+#define DEFAULT_NEW_TAB_ANIM_DURATION 2.5f
+#define TAB_SHIFT_ANIM_DURATION 2.5f
 
 namespace SUTK
 {
@@ -148,6 +148,7 @@ namespace SUTK
 		m_tabContainer->alwaysFitInParent();
 
 		m_tabAnimGroup = driver.createObject<TabAnimGroup>(this);
+		m_tabShiftAnimGroup = driver.createObject<TabShiftAnimGroup>(this);
 
 		// Create Container for holding page container
 		m_pageContainer = driver.createContainer<Container>(this);
@@ -163,6 +164,8 @@ namespace SUTK
 
 	NotebookView::~NotebookView() noexcept
 	{
+		getUIDriver().destroyObject<TabAnimGroup>(m_tabAnimGroup);
+		getUIDriver().destroyObject<TabShiftAnimGroup>(m_tabShiftAnimGroup);
 		delete m_tabAnimGroup;
 	}
 
@@ -294,7 +297,7 @@ namespace SUTK
 			AnimContextBase::onEnd();
 		}
 	public:
-		TabShiftAnimation(UIDriver& driver, TabView* tab, com::Bool isLeft) noexcept : AnimContextBase(driver), m_tab(tab), m_isLeft(isLeft) { }
+		TabShiftAnimation(UIDriver& driver, TabShiftAnimGroup* group, TabView* tab, com::Bool isLeft) noexcept : AnimContextBase(driver, group), m_tab(tab), m_isLeft(isLeft) { }
 		com::Bool isLeft() const noexcept { return m_isLeft; }
 		com::Bool isRight() const noexcept { return !m_isLeft; }
 	};
@@ -347,43 +350,39 @@ namespace SUTK
 
 	}
 
-	// void TabShiftAnimGroup::onPresent(AnimationEngine::AnimContextBase* animContext) noexcept
-	// {
-	// 	auto shiftAnim = dynamic_cast<TabShiftAnimation*>(animContext)
-	// 	if(shiftAnim->isLeft())
-	// 	{
-	// 		for(TabShiftAnimation* anim : m_inFlightRemoves)
-	// 			if(anim->m_tab->m_index >= shiftAnim->m_tab->m_index)
-	// 			{
-	// 				anim->m_tab->m_index += 1;
-	// 				break;
-	// 			}
-	// 		m_inFlightLeftShifts.push_back(shiftAnim);
-	// 	}
-	// 	else
-	// 	{
-	// 		TabView* removeTab = removeAnim->m_tab;
-	// 		for(TabShiftAnimation* insertAnim : m_inFlightInserts)
-	// 			if(insertAnim->m_tab == removeTab)
-	// 			{
-	// 				insertAnim->abort();
-	// 				break;
-	// 			}
-	// 		m_inFlightRightShifts.push_back(shiftAnim);
-	// 	}
-	// }
-	// void TabShiftAnimGroup::onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept
-	// {
-	// 	auto shiftAnim = dynamic_cast<TabShiftAnimation*>(animContext)
-	// 	if(shiftAnim->isLeft())
-	// 		com::find_erase(m_inFlightLeftShifts, shiftAnim);
-	// 	else
-	// 		com::find_erase(m_inFlightRightShifts, shiftAnim);
-	// }
-	// TabShiftAnimGroup::TabShiftAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept : AnimGroup(driver), m_notebook(notebook)
-	// {
+	void TabShiftAnimGroup::onPresent(AnimationEngine::AnimContextBase* animContext) noexcept
+	{
+		auto shiftAnim = dynamic_cast<TabShiftAnimation*>(animContext);
+		if(shiftAnim->isLeft())
+			m_inFlightLeftShifts.push_back(shiftAnim);
+		else
+			m_inFlightRightShifts.push_back(shiftAnim);
+	}
+	void TabShiftAnimGroup::onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept
+	{
+		if(m_isAborting)
+			return;
+		auto shiftAnim = dynamic_cast<TabShiftAnimation*>(animContext);
+		if(shiftAnim->isLeft())
+			com::find_erase(m_inFlightLeftShifts, shiftAnim);
+		else
+			com::find_erase(m_inFlightRightShifts, shiftAnim);
+	}
+	TabShiftAnimGroup::TabShiftAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept : AnimGroup(driver), m_notebook(notebook), m_isAborting(com::False)
+	{
 
-	// }
+	}
+	void TabShiftAnimGroup::abort() noexcept
+	{
+		m_isAborting = com::True;
+		for(auto animation : m_inFlightLeftShifts)
+			animation->abort();
+		m_inFlightLeftShifts.clear();
+		for(auto animation : m_inFlightRightShifts)
+			animation->abort();
+		m_inFlightRightShifts.clear();
+		m_isAborting = com::False;
+	}
 
 	void NotebookView::onMouseMove(Vec2Df pos) noexcept
 	{
@@ -407,7 +406,7 @@ namespace SUTK
 				tabView->m_next = nextTab->m_next;
 				if(nextTab->m_next)
 					nextTab->m_next->m_prev = tabView;
-				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(nextTab, /* isLeft: */ com::True);
+				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(m_tabShiftAnimGroup, nextTab, /* isLeft: */ com::True);
 			}
 		}
 		TabView* prev = tabView->getPrev();
@@ -421,7 +420,7 @@ namespace SUTK
 				tabView->m_prev = prevTab->m_prev;
 				if(prevTab->m_prev)
 					prevTab->m_prev->m_next = tabView;
-				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(prevTab, /* isLeft: */ com::False);
+				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(m_tabShiftAnimGroup, prevTab, /* isLeft: */ com::False);
 			}
 		}
 	}
@@ -548,6 +547,9 @@ namespace SUTK
 			if(this->m_tabRearrangeContext.isMoved)
 			{
 				this->m_tabRearrangeContext.grabbedTabView->setLayer(m_tabRearrangeContext.layer);
+				// NOTE: abort should be called first to get the final changes, 
+				// otherwise, GetLinkedListRoot() would return wrong result.
+				this->m_tabShiftAnimGroup->abort();
 				this->m_head = GetLinkedListRoot(this->m_tabRearrangeContext.grabbedTabView)->getPage();
 			}
 			this->m_tabRearrangeContext.grabbedTabView = com::null_pointer<TabView>();
