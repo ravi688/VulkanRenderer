@@ -112,11 +112,12 @@ namespace SUTK
 
 	class TabRemoveAnimation;
 	class TabInsertAnimation;
+	class NotebookView;
 
 	class TabAnimGroup : public AnimationEngine::AnimGroup
 	{
 	private:
-		ILayoutController* m_tabLayoutController;
+		NotebookView* m_notebook;
 		std::vector<TabRemoveAnimation*> m_inFlightRemoves;
 		std::vector<TabInsertAnimation*> m_inFlightInserts;	
 	protected:
@@ -125,11 +126,12 @@ namespace SUTK
 		virtual void onWhenAnyStart() noexcept override;
 		virtual void onWhenAllEnd() noexcept override;
 	public:
-		TabAnimGroup(UIDriver& driver, ILayoutController* tabLayoutController) noexcept;
+		TabAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept;
 	};
 
 	class SUTK_API NotebookView : public VBoxContainer, public GlobalMouseMoveHandlerObject
 	{
+		friend class TabAnimGroup;
 	public:
 		typedef com::Event<NotebookView, NotebookPage*> OnPageSelectEvent;
 	private:
