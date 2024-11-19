@@ -1,6 +1,7 @@
 Github-Repo-Sync:
     tags:
         - Github-Repo-Sync
+    stage: .pre
     script:
         - echo "Hello World"
 
