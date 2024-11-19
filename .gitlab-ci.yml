@@ -5,10 +5,11 @@ Github-Repo-Sync:
     script:
         - echo "Hello World"
         - git fetch origin
-        - git remote remove github
-        - git remote add github git@github.com:ravi688/VulkanRenderer.git
+        - git remote -v | grep -w github || git remote add foo git@github.com:ravi688/VulkanRenderer.git
+        - git remote set-url github git@github.com:ravi688/VulkanRenderer.git
         - git fetch github
         - git checkout -B github/VulkanRenderer/main
+        - git pull origin main --ff
         - git branch -u github/main
         - git rebase origin/main
         - git push github HEAD:main
