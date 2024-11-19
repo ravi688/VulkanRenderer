@@ -9,7 +9,7 @@ Github-Repo-Sync:
         - git remote add github git@github.com:ravi688/VulkanRenderer.git
         - git fetch github
         - git checkout -b github/VulkanRenderer/main
-        - git branch -u github main
+        - git branch -u github/main
         - git rebase origin/main
         - git push github HEAD:main
 
