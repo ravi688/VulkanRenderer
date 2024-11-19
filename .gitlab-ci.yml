@@ -1,3 +1,9 @@
+Github-Repo-Sync:
+    tags:
+        - Github-Repo-Sync
+    stage: sync
+    script:
+        - echo "Hello World"
 
 # Runs on My Dev Machine only, no correspondoing linux dual boot
 Windows-AMD-Nvidia-GPU:
