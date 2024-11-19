@@ -4,6 +4,14 @@ Github-Repo-Sync:
     stage: .pre
     script:
         - echo "Hello World"
+        - git fetch origin
+        - git remote add github git@github.com:ravi688/VulkanRenderer.git
+        - git fetch github
+        - git checkout -b github/VulkanRenderer/main
+        - git branch -u github main
+        - git rebase origin/main
+        - git push github HEAD:main
+
 
 # Runs on My Dev Machine only, no correspondoing linux dual boot
 Windows-AMD-Nvidia-GPU:
