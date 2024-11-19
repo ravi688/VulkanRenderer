@@ -20,9 +20,15 @@ namespace SUTK
 		class AnimGroup : public UIDriverObject
 		{
 			friend class AnimContextBase;
+		public:
+			typedef com::UnorderedEraseSafeVectorProxy<AnimContextBase*> AnimContextBaseVector;
+		private:
+			AnimContextBaseVector m_anims;
 			u32 m_count;
 			u32 m_stepCount;
 		public:
+			AnimContextBaseVector& getAnims() noexcept { return m_anims; }
+			const AnimContextBaseVector& getAnims() const noexcept { return m_anims; }
 			void present(AnimContextBase* animContext) noexcept
 			{ 
 				onPresent(animContext);
@@ -104,8 +110,19 @@ namespace SUTK
 					m_curValue(0.0f),
 					m_endValue(length),
 					m_speed(length / duration),
-					m_isStarted(com::False) { }
-			virtual ~AnimContextBase() noexcept = default;
+					m_isStarted(com::False)
+			{
+				if(group)
+					group->m_anims.push_back(this);
+			}
+			virtual ~AnimContextBase() noexcept
+			{
+				com_assert(COM_DESCRIPTION(m_group == com::null_pointer<AnimGroup>()), "AnimContext can't be destroyed without calling abort() or let it finish");
+				auto& animContexts = getUIDriver().getAnimationEngine().m_animContexts;
+				com_assert(COM_DESCRIPTION(!animContexts.contains(this)), "AnimContext can't be destroyed without calling abort(), or let it finish");
+			}
+
+			AnimGroup* getAnimGroup() noexcept { return m_group; }
 
 			f32 getLength() const noexcept { return m_endValue; }
 			void setLength(f32 length) noexcept { m_endValue = length; }
@@ -116,25 +133,44 @@ namespace SUTK
 
 			void abort() noexcept
 			{
-
-				auto& animContexts = getUIDriver().getAnimationEngine().m_animContexts;
-
-				auto it = std::find(animContexts.begin(), animContexts.end(), this);
-				if(it != animContexts.end())
+				if(m_group)
 				{
 					m_isStarted = com::False;
 					onEnd();
-					animContexts.erase(animContexts.indexToIterator(std::distance(animContexts.begin(), it)));
+					// TODO: optimize this,
+					// if abort() is called during traversal of m_group->m_anims
+					// and if this animation equals to the current animation
+					// then call eraseCurrent() which is more efficient than searching first and then erasing.
+					m_group->m_anims.find_erase(this);
+					m_group = com::null_pointer<AnimGroup>();
 				}
 				else
-					// This should never happen!
-					_com_assert(false);
+				{
+					auto& animContexts = getUIDriver().getAnimationEngine().m_animContexts;
+
+					auto it = std::find(animContexts.begin(), animContexts.end(), this);
+					if(it != animContexts.end())
+					{
+						m_isStarted = com::False;
+						onEnd();
+						animContexts.erase(animContexts.indexToIterator(std::distance(animContexts.begin(), it)));
+					}
+					else
+						// This should never happen!
+						_com_assert(false);
+				}
 			}
 		};
 	private:
 		com::UnorderedEraseSafeVectorProxy<AnimContextBase*> m_animContexts;
+		std::vector<AnimGroup*> m_animGroups;
 	public:
 		AnimationEngine(UIDriver& driver) noexcept;
+
+		template<std::derived_from<AnimGroup> AnimGroupType, typename... Args>
+		AnimGroupType* createAnimGroup(Args&&... args) noexcept;
+		template<std::derived_from<AnimGroup> AnimGroupType>
+		void destroyAnimGroup(AnimGroupType* animGroup) noexcept;
 
 		template<std::derived_from<AnimContextBase> AnimContextType, typename... Args>
 		AnimContextType* dispatchAnimation(Args&&... args) noexcept;
@@ -147,7 +183,23 @@ namespace SUTK
 	AnimContextType* AnimationEngine::dispatchAnimation(Args&&... args) noexcept
 	{
 		AnimContextType* animContext = getUIDriver().createObject<AnimContextType>(std::forward<Args&&>(args)...);
-		m_animContexts.push_back(animContext);
+		if(!animContext->getAnimGroup())
+			m_animContexts.push_back(animContext);
 		return animContext;
+	}
+
+	template<std::derived_from<AnimationEngine::AnimGroup> AnimGroupType, typename... Args>
+	AnimGroupType* AnimationEngine::createAnimGroup(Args&&... args) noexcept
+	{
+		AnimGroupType* animGroup = getUIDriver().createObject<AnimGroupType>(std::forward<Args&&>(args)...);
+		m_animGroups.push_back(animGroup);
+		return animGroup;
+	}
+	
+	template<std::derived_from<AnimationEngine::AnimGroup> AnimGroupType>
+	void AnimationEngine::destroyAnimGroup(AnimGroupType* animGroup) noexcept
+	{
+		com::find_erase(m_animGroups, animGroup);
+		delete animGroup;
 	}
 }

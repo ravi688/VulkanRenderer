@@ -147,8 +147,8 @@ namespace SUTK
 		m_tabContainer = driver.createContainer<HBoxContainer>(m_textGroupContainer);
 		m_tabContainer->alwaysFitInParent();
 
-		m_tabAnimGroup = driver.createObject<TabAnimGroup>(this);
-		m_tabShiftAnimGroup = driver.createObject<TabShiftAnimGroup>(this);
+		m_tabAnimGroup = driver.getAnimationEngine().createAnimGroup<TabAnimGroup>(this);
+		m_tabShiftAnimGroup = driver.getAnimationEngine().createAnimGroup<TabShiftAnimGroup>(this);
 
 		// Create Container for holding page container
 		m_pageContainer = driver.createContainer<Container>(this);
@@ -164,8 +164,8 @@ namespace SUTK
 
 	NotebookView::~NotebookView() noexcept
 	{
-		getUIDriver().destroyObject<TabAnimGroup>(m_tabAnimGroup);
-		getUIDriver().destroyObject<TabShiftAnimGroup>(m_tabShiftAnimGroup);
+		getUIDriver().getAnimationEngine().destroyAnimGroup<TabAnimGroup>(m_tabAnimGroup);
+		getUIDriver().getAnimationEngine().destroyAnimGroup<TabShiftAnimGroup>(m_tabShiftAnimGroup);
 		delete m_tabAnimGroup;
 	}
 
@@ -350,38 +350,17 @@ namespace SUTK
 
 	}
 
-	void TabShiftAnimGroup::onPresent(AnimationEngine::AnimContextBase* animContext) noexcept
-	{
-		auto shiftAnim = dynamic_cast<TabShiftAnimation*>(animContext);
-		if(shiftAnim->isLeft())
-			m_inFlightLeftShifts.push_back(shiftAnim);
-		else
-			m_inFlightRightShifts.push_back(shiftAnim);
-	}
-	void TabShiftAnimGroup::onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept
-	{
-		if(m_isAborting)
-			return;
-		auto shiftAnim = dynamic_cast<TabShiftAnimation*>(animContext);
-		if(shiftAnim->isLeft())
-			com::find_erase(m_inFlightLeftShifts, shiftAnim);
-		else
-			com::find_erase(m_inFlightRightShifts, shiftAnim);
-	}
 	TabShiftAnimGroup::TabShiftAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept : AnimGroup(driver), m_notebook(notebook), m_isAborting(com::False)
 	{
 
 	}
 	void TabShiftAnimGroup::abort() noexcept
 	{
-		m_isAborting = com::True;
-		for(auto animation : m_inFlightLeftShifts)
-			animation->abort();
-		m_inFlightLeftShifts.clear();
-		for(auto animation : m_inFlightRightShifts)
-			animation->abort();
-		m_inFlightRightShifts.clear();
-		m_isAborting = com::False;
+		auto& animations = getAnims();
+		animations.traverse([](AnimationEngine::AnimContextBase* anim) noexcept
+		{
+			anim->abort();
+		});
 	}
 
 	void NotebookView::onMouseMove(Vec2Df pos) noexcept

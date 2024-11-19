@@ -138,9 +138,6 @@ namespace SUTK
 		std::vector<TabShiftAnimation*> m_inFlightLeftShifts;
 		std::vector<TabShiftAnimation*> m_inFlightRightShifts;	
 		com::Bool m_isAborting;
-	protected:
-		virtual void onPresent(AnimationEngine::AnimContextBase* animContext) noexcept override;
-		virtual void onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept override;
 	public:
 		TabShiftAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept;
 
