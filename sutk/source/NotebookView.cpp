@@ -228,7 +228,7 @@ namespace SUTK
 			LayoutAttributes& attr = m_tab->getLayoutAttributes();
 			attr.prefSize = m_tab->getSize();
 		}
-		virtual void onEnd() noexcept override
+		virtual void onEnd(com::Bool isAborted) noexcept override
 		{
 			auto node = m_tab->getNext();
 			while(node)
@@ -238,7 +238,7 @@ namespace SUTK
 				node = node->getNext();
 			}
 			m_tab->getUIDriver().destroyContainer<TabView>(m_tab);
-			AnimContextBase::onEnd();
+			AnimContextBase::onEnd(isAborted);
 		}
 	public:
 		TabRemoveAnimation(UIDriver& driver, TabAnimGroup* group, TabView* tab) noexcept : AnimContextBase(driver, group), m_tab(tab) { }
@@ -262,7 +262,7 @@ namespace SUTK
 		{
 			m_tab->moveRight(deltaValue);
 		}
-		virtual void onEnd() noexcept override
+		virtual void onEnd(com::Bool isAborted) noexcept override
 		{
 			if(m_isLeft)
 			{
@@ -294,7 +294,10 @@ namespace SUTK
 			dynamic_cast<TabView*>(tabContainer->getChilds()[swapIndex])->m_index = swapIndex;
 			m_tab->m_index = index;
 
-			AnimContextBase::onEnd();
+			if(!isAborted)
+				dynamic_cast<TabShiftAnimGroup*>(getAnimGroup())->getNotebook()->checkForTabSwap();
+
+			AnimContextBase::onEnd(isAborted);
 		}
 	public:
 		TabShiftAnimation(UIDriver& driver, TabShiftAnimGroup* group, TabView* tab, com::Bool isLeft) noexcept : AnimContextBase(driver, group), m_tab(tab), m_isLeft(isLeft) { }
@@ -350,6 +353,14 @@ namespace SUTK
 
 	}
 
+	void TabShiftAnimGroup::onPresent(AnimationEngine::AnimContextBase* animContext) noexcept
+	{
+
+	}
+	void TabShiftAnimGroup::onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept
+	{
+
+	}
 	TabShiftAnimGroup::TabShiftAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept : AnimGroup(driver), m_notebook(notebook), m_isAborting(com::False)
 	{
 
@@ -363,18 +374,11 @@ namespace SUTK
 		});
 	}
 
-	void NotebookView::onMouseMove(Vec2Df pos) noexcept
+	void NotebookView::checkForTabSwap() noexcept
 	{
-		TabView* tabView = this->m_tabRearrangeContext.grabbedTabView;
-		if(!m_tabRearrangeContext.isMoved)
-		{
-			m_tabRearrangeContext.layer = tabView->getLayer();
-			tabView->setLayer(MaxLayer);
-			m_tabRearrangeContext.isMoved = com::True;
-		}
-		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
-		tabView->setPosition(pos);
+		TabView* tabView = m_tabRearrangeContext.grabbedTabView;
 		TabView* next = tabView->getNext();
+		auto pos = tabView->getPosition();
 		if(next)
 		{
 			f32 middle = next->getPosition().x + next->getSize().width * 0.5f;
@@ -402,6 +406,20 @@ namespace SUTK
 				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(m_tabShiftAnimGroup, prevTab, /* isLeft: */ com::False);
 			}
 		}
+	}
+
+	void NotebookView::onMouseMove(Vec2Df pos) noexcept
+	{
+		TabView* tabView = this->m_tabRearrangeContext.grabbedTabView;
+		if(!m_tabRearrangeContext.isMoved)
+		{
+			m_tabRearrangeContext.layer = tabView->getLayer();
+			tabView->setLayer(MaxLayer);
+			m_tabRearrangeContext.isMoved = com::True;
+		}
+		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
+		tabView->setPosition(pos);
+		checkForTabSwap();
 	}
 
 	void NotebookView::abortTabAnim() noexcept

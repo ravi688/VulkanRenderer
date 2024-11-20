@@ -97,7 +97,7 @@ namespace SUTK
 			// Must be implemented by deriving class
 			virtual void onStep(f32 deltaValue) noexcept = 0;
 			// Must be called in the end of the overriding method
-			virtual void onEnd() noexcept
+			virtual void onEnd(com::Bool isAborted) noexcept
 			{ 
 				if(m_group)
 					m_group->absent(this);
@@ -136,7 +136,7 @@ namespace SUTK
 				if(m_group)
 				{
 					m_isStarted = com::False;
-					onEnd();
+					onEnd(com::True);
 					// TODO: optimize this,
 					// if abort() is called during traversal of m_group->m_anims
 					// and if this animation equals to the current animation
@@ -152,7 +152,7 @@ namespace SUTK
 					if(it != animContexts.end())
 					{
 						m_isStarted = com::False;
-						onEnd();
+						onEnd(com::True);
 						animContexts.erase(animContexts.indexToIterator(std::distance(animContexts.begin(), it)));
 					}
 					else

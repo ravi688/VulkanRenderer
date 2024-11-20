@@ -127,6 +127,7 @@ namespace SUTK
 		virtual void onWhenAllEnd() noexcept override;
 	public:
 		TabAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept;
+		NotebookView* getNotebook() noexcept { return m_notebook; }
 	};
 
 	class TabShiftAnimation;
@@ -138,9 +139,13 @@ namespace SUTK
 		std::vector<TabShiftAnimation*> m_inFlightLeftShifts;
 		std::vector<TabShiftAnimation*> m_inFlightRightShifts;	
 		com::Bool m_isAborting;
+	protected:
+		virtual void onPresent(AnimationEngine::AnimContextBase* animContext) noexcept override;
+		virtual void onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept override;
 	public:
 		TabShiftAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept;
 
+		NotebookView* getNotebook() noexcept { return m_notebook; }
 		void abort() noexcept;
 	};
 
@@ -185,6 +190,7 @@ namespace SUTK
 	public:
 		NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::False, Layer layer = InvalidLayer) noexcept;
 		~NotebookView() noexcept;
+		void checkForTabSwap() noexcept;
 
 		OnPageSelectEvent& getOnPageSelectEvent() noexcept { return m_onPageSelectEvent; }
 

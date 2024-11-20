@@ -28,7 +28,7 @@ namespace SUTK
 			if(ctx->step(getRunnableUIDriver().getDeltaTime()))
 			{
 				ctx->m_isStarted = com::False;
-				ctx->onEnd();
+				ctx->onEnd(com::False);
 				// Now this animation has been completed, and should be now be destroyed
 				this->m_animContexts.eraseCurrent();
 				delete ctx;
@@ -50,7 +50,7 @@ namespace SUTK
 				if(ctx->step(ctx->getUIDriver().getDeltaTime()))
 				{
 					ctx->m_isStarted = com::False;
-					ctx->onEnd();
+					ctx->onEnd(com::False);
 					// Now this animation has been completed, and should be now be destroyed
 					ctx->m_group->getAnims().eraseCurrent();
 					ctx->m_group = com::null_pointer<AnimGroup>();
