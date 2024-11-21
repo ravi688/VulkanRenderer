@@ -103,6 +103,7 @@ namespace SUTK
 		NotebookPage* m_page;
 		u32 m_index;
 		Vec2Df m_pos;
+		com::Bool m_isPosSynced;
 	public:
 		Tab(NotebookView* notebook, const std::string_view labelStr, Tab* after = com::null_pointer<Tab>()) noexcept;
 		~Tab() noexcept;

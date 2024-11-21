@@ -473,7 +473,7 @@ namespace SUTK
 		return node;
 	}
 
-	Tab::Tab(NotebookView* notebook, const std::string_view labelStr, Tab* after) noexcept : m_pos(Vec2Df::zero())
+	Tab::Tab(NotebookView* notebook, const std::string_view labelStr, Tab* after) noexcept : m_pos(Vec2Df::zero()), m_isPosSynced(com::False)
 	{
 		notebook->getTabContainer()->lockLayout();
 		TabView* tabView = notebook->getUIDriver().createContainer<TabView>(com::null_pointer<Container>());
@@ -513,7 +513,11 @@ namespace SUTK
 	}
 	void Tab::syncPos() noexcept
 	{
-		m_pos = m_tabView->getPosition();
+		if(!m_isPosSynced)
+		{
+			m_pos = m_tabView->getPosition();
+			m_isPosSynced = com::True;
+		}
 	}
 	void Tab::setPage(NotebookPage* page) noexcept
 	{
