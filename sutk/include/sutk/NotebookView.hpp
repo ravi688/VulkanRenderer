@@ -13,20 +13,21 @@
 
 namespace SUTK
 {
-	class TabView;
+	class Tab;
 
 	class NotebookPage
 	{
 		friend class NotebookView;
+		friend class Tab;
 		friend u32 getIndexOfPage(const NotebookPage* page) noexcept;
 	private:
 		void* m_data;
 		void (*m_dataDeleter)(void*);
 		std::optional<std::function<void(NotebookPage*)>> m_onPageRemove;
-		TabView* m_tabView;
+		Tab* m_tab;
 		Container* m_container;
 
-		TabView* getTabView() noexcept { return m_tabView; }
+		Tab* getTab() noexcept { return m_tab; }
 		NotebookPage* getNext() noexcept;
 		const NotebookPage* getNext() const noexcept { return com::cast_away_const(this)->getNext(); }
 		NotebookPage* getPrev() noexcept;
@@ -74,38 +75,42 @@ namespace SUTK
 
 	class SUTK_API TabView : public Button
 	{
-		friend class NotebookView;
-		friend class TabAnimGroup;
-		friend class TabRemoveAnimation;
-		friend class TabShiftAnimation;
-		friend u32 getIndexOfPage(const NotebookPage* page) noexcept;
 	private:
 		DefaultButtonGraphic* m_graphic;
 		Button* m_closeButton;
 		ImageButtonGraphic* m_closeButtonGraphic;
-		NotebookPage* m_page;
-		TabView* m_next;
-		TabView* m_prev;
-		u32 m_index;
-
 	public:
 		TabView(UIDriver& driver, Container* parent) noexcept;
 		~TabView() noexcept;
-
-		// Getters
-		TabView* getNext() noexcept { return m_next; }
-		const TabView* getNext() const noexcept { return m_next; }
-		TabView* getPrev() noexcept { return m_prev; }
-		const TabView* getPrev() const noexcept { return m_prev; }
-		NotebookPage* getPage() noexcept { return m_page; }
-		u32 getIndex() const noexcept { return m_index; }
-		u32 getLinkedListIndex() const noexcept;
 
 		void setLabel(const std::string_view str) noexcept;
 		const std::string& getLabel() noexcept;
 
 		void unselectedState() noexcept;
 		void selectedState() noexcept;
+	};
+
+	class NotebookView;
+
+	class SUTK_API Tab : public com::LinkedListNodeBase<Tab>
+	{
+		friend class NotebookView;
+		friend class TabAnimGroup;
+		friend class TabRemoveAnimation;
+		friend class TabShiftAnimation;
+	private:
+		TabView* m_tabView;
+		NotebookPage* m_page;
+		u32 m_index;
+	public:
+		Tab(NotebookView* notebook, const std::string_view labelStr, Tab* after = com::null_pointer<Tab>()) noexcept;
+		~Tab() noexcept;
+		void setPage(NotebookPage* page) noexcept;
+		// Getters
+		TabView* getTabView() noexcept { return m_tabView; }
+		NotebookPage* getPage() noexcept { return m_page; }
+		u32 getIndex() const noexcept { return m_index; }
+		u32 getLinkedListIndex() const noexcept;
 	};
 
 	class HBoxContainer;
@@ -157,7 +162,7 @@ namespace SUTK
 	private:
 		struct TabRearrangeContext
 		{
-			TabView* grabbedTabView;
+			Tab* grabbedTab;
 			Vec2Df positionOffset;
 			u32 tabIndex;
 			com::Bool isMoved;
@@ -180,9 +185,9 @@ namespace SUTK
 
 
 		void abortTabAnim() noexcept;
-		void dispatchAnimNewTab(TabView* tabView) noexcept;
-		void dispatchAnimRemoveTab(TabView* tabView) noexcept;
-		void dispatchAnimTabShift(TabView* tabView, com::Bool isLeft) noexcept;
+		void dispatchAnimNewTab(Tab* tab) noexcept;
+		void dispatchAnimRemoveTab(Tab* tab) noexcept;
+		void dispatchAnimTabShift(Tab* tab, com::Bool isLeft) noexcept;
 
 	protected:
 		virtual void onMouseMove(Vec2Df pos) noexcept override;
@@ -191,6 +196,8 @@ namespace SUTK
 		NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::False, Layer layer = InvalidLayer) noexcept;
 		~NotebookView() noexcept;
 		void checkForTabSwap() noexcept;
+
+		HBoxContainer* getTabContainer() noexcept { return m_tabContainer; }
 
 		OnPageSelectEvent& getOnPageSelectEvent() noexcept { return m_onPageSelectEvent; }
 
