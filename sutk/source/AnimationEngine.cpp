@@ -19,15 +19,11 @@ namespace SUTK
 		{
 			// Publish on start event for the first time (first frame of the animation)
 			if(!ctx->m_isStarted)
-			{
-				ctx->m_isStarted = com::True;
 				ctx->onStart();
-			}
 
 			// Feed delta time to the stepping function (this also calls onStep() override in AnimContextBase)
 			if(ctx->step(getRunnableUIDriver().getDeltaTime()))
 			{
-				ctx->m_isStarted = com::False;
 				ctx->onEnd(com::False);
 				// Now this animation has been completed, and should be now be destroyed
 				this->m_animContexts.eraseCurrent();
@@ -41,15 +37,11 @@ namespace SUTK
 			{
 				// Publish on start event for the first time (first frame of the animation)
 				if(!ctx->m_isStarted)
-				{
-					ctx->m_isStarted = com::True;
 					ctx->onStart();
-				}
 
 				// Feed delta time to the stepping function (this also calls onStep() override in AnimContextBase)
 				if(ctx->step(ctx->getUIDriver().getDeltaTime()))
 				{
-					ctx->m_isStarted = com::False;
 					ctx->onEnd(com::False);
 					// Now this animation has been completed, and should be now be destroyed
 					ctx->m_group->getAnims().eraseCurrent();

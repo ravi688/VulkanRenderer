@@ -91,6 +91,7 @@ namespace SUTK
 			// Must be called in the overriding method
 			virtual void onStart() noexcept
 			{
+				m_isStarted = com::True;
 				if(m_group)
 					m_group->present(this);
 			}
@@ -99,8 +100,12 @@ namespace SUTK
 			// Must be called in the end of the overriding method
 			virtual void onEnd(com::Bool isAborted) noexcept
 			{ 
-				if(m_group)
+				if(m_group && m_isStarted)
+				{
+					std::cout << "Absent has been called" << std::endl;
 					m_group->absent(this);
+				}
+				m_isStarted = com::False;
 			}
 
 		public:
@@ -129,13 +134,10 @@ namespace SUTK
 			f32 getSpeed() const noexcept { return m_speed; }
 			void setSpeed(f32 speed) noexcept { m_speed = speed; }
 
-			com::Bool isStarted() noexcept { return m_isStarted; }
-
 			void abort() noexcept
 			{
 				if(m_group)
 				{
-					m_isStarted = com::False;
 					onEnd(com::True);
 					// TODO: optimize this,
 					// if abort() is called during traversal of m_group->m_anims
@@ -151,7 +153,6 @@ namespace SUTK
 					auto it = std::find(animContexts.begin(), animContexts.end(), this);
 					if(it != animContexts.end())
 					{
-						m_isStarted = com::False;
 						onEnd(com::True);
 						animContexts.erase(animContexts.indexToIterator(std::distance(animContexts.begin(), it)));
 					}

@@ -102,9 +102,12 @@ namespace SUTK
 		TabView* m_tabView;
 		NotebookPage* m_page;
 		u32 m_index;
+		Vec2Df m_pos;
 	public:
 		Tab(NotebookView* notebook, const std::string_view labelStr, Tab* after = com::null_pointer<Tab>()) noexcept;
 		~Tab() noexcept;
+		Vec2Df getPos() const noexcept { return m_pos; }
+		void syncPos() noexcept;
 		void setPage(NotebookPage* page) noexcept;
 		// Getters
 		TabView* getTabView() noexcept { return m_tabView; }
@@ -184,11 +187,11 @@ namespace SUTK
 		f32 m_animDuration;
 
 
-		void abortTabAnim() noexcept;
 		void dispatchAnimNewTab(Tab* tab) noexcept;
 		void dispatchAnimRemoveTab(Tab* tab) noexcept;
-		void dispatchAnimTabShift(Tab* tab, com::Bool isLeft) noexcept;
 
+		void swapWithNext(Tab* tab) noexcept;
+		void swapWithPrev(Tab* tab) noexcept;
 	protected:
 		virtual void onMouseMove(Vec2Df pos) noexcept override;
 

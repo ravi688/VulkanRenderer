@@ -19,8 +19,8 @@
 #define TAB_VIEW_MIDDLE_SPREAD 0.1f
 
 #define TAB_VIEW_ANIM_START_WIDTH 0.0f
-#define DEFAULT_NEW_TAB_ANIM_DURATION 2.5f
-#define TAB_SHIFT_ANIM_DURATION 2.5f
+#define DEFAULT_NEW_TAB_ANIM_DURATION 0.28f
+#define TAB_SHIFT_ANIM_DURATION 0.2f
 
 namespace SUTK
 {
@@ -277,6 +277,7 @@ namespace SUTK
 	class TabShiftAnimation : public AnimationEngine::AnimContextBase
 	{
 		friend class TabAnimGroup;
+		friend class TabShiftAnimGroup;
 	private:
 		Tab* m_tab;
 		com::Bool m_isLeft;
@@ -284,7 +285,8 @@ namespace SUTK
 		virtual void onStart() noexcept override
 		{
 			AnimContextBase::onStart();
-			f32 offset = m_isLeft ? (m_tab->getPrev() ? -m_tab->getPrev()->getTabView()->getSize().width : 0) : (m_tab->getNext() ? m_tab->getNext()->getTabView()->getSize().width : 0);
+			f32 offset = m_tab->getPos().x - m_tab->getTabView()->getPosition().x;
+			std::cout << "offset: " << offset << std::endl;
 			setSpeed(offset / TAB_SHIFT_ANIM_DURATION);
 			setLength(offset);
 		}
@@ -294,33 +296,7 @@ namespace SUTK
 		}
 		virtual void onEnd(com::Bool isAborted) noexcept override
 		{
-			Tab* swapTab;;
-			if(m_isLeft)
-			{
-				_com_assert(m_tab->getPrev() != com::null_pointer<Tab>());
-				swapTab = m_tab->getPrev();
-				RemoveLinkedListNode(swapTab);
-				InsertLinkedListNodeAfter(swapTab, /* After: */ m_tab);
-			}
-			else
-			{
-				_com_assert(m_tab->getNext() != com::null_pointer<Tab>());
-				swapTab = m_tab->getNext();
-				RemoveLinkedListNode(swapTab);
-				InsertLinkedListNodeBefore(swapTab, /* Before: */ m_tab);
-			}
-
-			u32 index = GetLinkedListNodeIndex(m_tab);
-			u32 swapIndex = m_isLeft ? (index + 1) : (index - 1);
-			m_tab->m_index = index;
-			swapTab->m_index = swapIndex;
-
-			Container* tabContainer = m_tab->getTabView()->getParent();
-			tabContainer->swapChildren(swapIndex, index);
-
-			if(!isAborted)
-				dynamic_cast<TabShiftAnimGroup*>(getAnimGroup())->getNotebook()->checkForTabSwap();
-
+			std::cout << "Animation Ended" << std::endl;
 			AnimContextBase::onEnd(isAborted);
 		}
 	public:
@@ -379,7 +355,17 @@ namespace SUTK
 
 	void TabShiftAnimGroup::onPresent(AnimationEngine::AnimContextBase* animContext) noexcept
 	{
-
+		auto anim2 = com::iknow_down_cast<TabShiftAnimation*>(animContext);
+		auto& anims = getAnims();
+		for(auto& anim : anims)
+		{
+			auto anim1 = com::iknow_down_cast<TabShiftAnimation*>(anim);
+			if((anim2->m_tab == anim1->m_tab) && (anim != animContext))
+			{
+				anim1->abort();
+				break;
+			}
+		}
 	}
 	void TabShiftAnimGroup::onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept
 	{
@@ -398,6 +384,23 @@ namespace SUTK
 		});
 	}
 
+	void NotebookView::swapWithNext(Tab* tab) noexcept
+	{
+		auto nextTab = tab->getNext();
+		std::cout << "Swaping: " << tab->m_pos << ", " << nextTab->m_pos << std::endl;
+		nextTab->m_pos = tab->m_pos;
+		tab->m_pos.x += nextTab->getTabView()->getSize().width;
+		std::swap(tab->m_index, nextTab->m_index);
+		m_tabContainer->swapChildren(tab->m_index, nextTab->m_index);
+		RemoveLinkedListNode(tab);
+		InsertLinkedListNodeAfter(tab, /* After: */ nextTab);
+	}
+
+	void NotebookView::swapWithPrev(Tab* tab) noexcept
+	{
+		swapWithNext(tab->getPrev());
+	}
+
 	void NotebookView::checkForTabSwap() noexcept
 	{
 		Tab* tab = m_tabRearrangeContext.grabbedTab;
@@ -406,29 +409,30 @@ namespace SUTK
 		auto pos = tabView->getPosition();
 		if(next)
 		{
-			f32 middle = next->getTabView()->getPosition().x + next->getTabView()->getSize().width * 0.5f;
-			if((pos.x + tabView->getSize().width) > middle)
+			auto nextPosX = next->getPos().x;
+			auto nextWidth = next->getTabView()->getSize().width;
+			f32 middle = nextPosX + nextWidth * 0.5f + 0.1f;
+			if(((pos.x + tabView->getSize().width) > middle) && (pos.x < (nextPosX + nextWidth)))
 			{
 				std::cout << "Swapping with next tab" << std::endl;
-				Tab* nextTab = next;
-				tab->m_next = nextTab->m_next;
-				if(nextTab->m_next)
-					nextTab->m_next->m_prev = tab;
-				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(m_tabShiftAnimGroup, nextTab, /* isLeft: */ com::True);
+				swapWithNext(tab);
+				if(tab->getNext())
+					tab->getNext()->syncPos();
+				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(m_tabShiftAnimGroup, next, /* isLeft: */ com::True);
 			}
 		}
 		Tab* prev = tab->getPrev();
 		if(prev)
 		{
-			f32 middle = prev->getTabView()->getPosition().x + prev->getTabView()->getSize().width * 0.5f;
-			if(pos.x < middle)
+			auto prevPosX = prev->getPos().x;
+			f32 middle = prevPosX + prev->getTabView()->getSize().width * 0.5f - 0.1f;
+			if((pos.x < middle) && (pos.x > prevPosX))
 			{
 				std::cout << "Swapping with prev tab" << std::endl;
-				Tab* prevTab = prev;
-				tab->m_prev = prevTab->m_prev;
-				if(prevTab->m_prev)
-					prevTab->m_prev->m_next = tab;
-				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(m_tabShiftAnimGroup, prevTab, /* isLeft: */ com::False);
+				swapWithPrev(tab);
+				if(tab->getPrev())
+					tab->getPrev()->syncPos();
+				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(m_tabShiftAnimGroup, prev, /* isLeft: */ com::False);
 			}
 		}
 	}
@@ -441,22 +445,14 @@ namespace SUTK
 			m_tabRearrangeContext.layer = tabView->getLayer();
 			tabView->setLayer(MaxLayer);
 			m_tabRearrangeContext.isMoved = com::True;
+			if(m_tabRearrangeContext.grabbedTab->getNext())
+				m_tabRearrangeContext.grabbedTab->getNext()->syncPos();
+			if(m_tabRearrangeContext.grabbedTab->getPrev())
+				m_tabRearrangeContext.grabbedTab->getPrev()->syncPos();
 		}
 		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
 		tabView->setPosition(pos);
 		checkForTabSwap();
-	}
-
-	void NotebookView::abortTabAnim() noexcept
-	{
-		// for(auto& ctx : m_animContexts)
-		// {
-		// 	ctx.onEndEvent.publish(ctx.tabView);
-		// 	ctx.onEndEvent.clear();
-		// }
-		// m_tabContainer->unlockLayout(true);
-		// m_animContexts.clear();
-		// m_isRunning = com::False;
 	}
 
 	void NotebookView::dispatchAnimNewTab(Tab* tab) noexcept
@@ -469,21 +465,6 @@ namespace SUTK
 		getUIDriver().getAnimationEngine().dispatchAnimation<TabRemoveAnimation>(m_tabAnimGroup, tab);		// if(m_isRunning)
 	}
 
-	void  NotebookView::dispatchAnimTabShift(Tab* tab, com::Bool isLeft) noexcept
-	{
-		// if(m_isRunning)
-			// abortTabAnim();
-		// AnimContext ctx { };
-		// ctx.tabView = tabView;
-		// ctx.curTabPos = tabView->getPosition().x;
-		// ctx.dstTabPos = ctx.curTabPos + (isLeft ? -tabView->getPrev()->getSize().width : tabView->getNext()->getSize().width);
-		// ctx.speed = (ctx.dstTabPos - ctx.curTabPos) / m_animDuration;
-		// ctx.isTabRearrange = com::True;
-		// m_animContexts.push_back(ctx);
-		// m_isStartAnimBatch = com::True;
-		// return m_animContexts.back();
-	}
-
 	template<typename T>
 	static T* GetLinkedListRoot(T* node) noexcept
 	{
@@ -492,7 +473,7 @@ namespace SUTK
 		return node;
 	}
 
-	Tab::Tab(NotebookView* notebook, const std::string_view labelStr, Tab* after) noexcept
+	Tab::Tab(NotebookView* notebook, const std::string_view labelStr, Tab* after) noexcept : m_pos(Vec2Df::zero())
 	{
 		notebook->getTabContainer()->lockLayout();
 		TabView* tabView = notebook->getUIDriver().createContainer<TabView>(com::null_pointer<Container>());
@@ -529,6 +510,10 @@ namespace SUTK
 		}
 		RemoveLinkedListNode(this);
 		m_tabView->getUIDriver().destroyContainer<TabView>(m_tabView);
+	}
+	void Tab::syncPos() noexcept
+	{
+		m_pos = m_tabView->getPosition();
 	}
 	void Tab::setPage(NotebookPage* page) noexcept
 	{
@@ -573,6 +558,7 @@ namespace SUTK
 			this->m_onPageSelectEvent.publish(page);
 
 			this->m_tabRearrangeContext.grabbedTab = page->getTab();
+			page->getTab()->syncPos();
 			Vec2Df mousePos = getUIDriver().getInputDriver().getMousePosition();
 			this->m_tabRearrangeContext.positionOffset = page->getTab()->getTabView()->getGlobalPosition() - mousePos;
 			this->m_tabRearrangeContext.isMoved = com::False;
