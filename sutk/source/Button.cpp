@@ -51,7 +51,7 @@ namespace SUTK
 		if(!m_onReleaseEvent)
 			delete m_onReleaseEvent;
 		if(m_isGraphicOwner)
-			getUIDriver().destroyContainer<DefaultButtonGraphic>(com::iknow_down_cast<DefaultButtonGraphic*>(m_graphic));
+			getUIDriver().destroyContainer<DefaultButtonGraphic>(dynamic_cast<DefaultButtonGraphic*>(m_graphic));
 	}
 
 	void Button::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
