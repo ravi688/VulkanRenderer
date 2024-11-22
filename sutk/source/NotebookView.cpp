@@ -228,14 +228,17 @@ namespace SUTK
 	};
 
 	template<typename T>
-	static void RemoveLinkedListNode(T* node) noexcept
+	static void RemoveLinkedListNode(T* node, com::Bool isSetNull = com::True) noexcept
 	{
 		if(node->getPrev())
 			node->getPrev()->setNext(node->getNext());
 		if(node->getNext())
 			node->getNext()->setPrev(node->getPrev());
-		node->setNext(com::null_pointer<T>());
-		node->setPrev(com::null_pointer<T>());
+		if(isSetNull)
+		{
+			node->setNext(com::null_pointer<T>());
+			node->setPrev(com::null_pointer<T>());
+		}
 	}
 
 	template<typename T>
@@ -536,20 +539,20 @@ namespace SUTK
 	}
 	void TabBar::destroyTab(Tab* tab) noexcept
 	{
-		getUIDriver().destroyContainer<TabView>(tab->m_tabView);
-		delete tab;
-	}
-	void TabBar::removeTab(Tab* tab) noexcept
-	{
 		auto node = tab->getNext();
 		while(node)
 		{
 			node->m_index -= 1;
 			node = node->getNext();
 		}
+		getUIDriver().destroyContainer<TabView>(tab->m_tabView);
+		delete tab;
+	}
+	void TabBar::removeTab(Tab* tab) noexcept
+	{
 		if(!tab->getPrev())
 			m_root = tab->getNext();
-		RemoveLinkedListNode(tab);
+		RemoveLinkedListNode(tab, /* Do not set next and prev ptrs to NULL */ com::False);
 	}
 
 	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
