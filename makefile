@@ -40,6 +40,11 @@ ifneq (,$(findstring Linux,$(PLATFORM_DETECT)))
 	PLATFORM := Linux
 endif
 
+# FreeBSD
+ifneq (,$(findstring FreeBSD,$(PLATFORM_DETECT)))
+	PLATFORM := FreeBSD
+endif
+
 #-------------------------------------------
 #		Project Configuration
 #-------------------------------------------
