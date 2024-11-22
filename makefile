@@ -70,7 +70,7 @@ endif
 # Linux
 ifeq ($(PLATFORM),Linux)
 	EXTERNAL_LIBRARIES += -L${VULKAN_SDK}/lib/ -lvulkan -L./external-dependency-libs/linux -lglfw3 -lfreetype -lz -lpng -lbrotlidec -lm
-	EXTERNAL_LIBRARIES += $(shell pkg-config shaderc --libs)
+	EXTERNAL_LIBRARIES += $(shell pkg-config shaderc_combined --libs)
 	EXTERNAL_INCLUDES += -I${VULKAN_SDK}/include/
 endif
 
