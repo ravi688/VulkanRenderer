@@ -2,6 +2,7 @@
 
 #include <sutk/defines.hpp> // for SUTK_API
 #include <sutk/VBoxContainer.hpp> // for SUTK::VBoxContainer
+#include <sutk/HBoxContainer.hpp> // for SUTK::HBoxContainer
 #include <sutk/Button.hpp> // for SUTK::Button
 #include <sutk/Label.hpp> // for SUTK::Label::set()
 #include <sutk/AnimationEngine.hpp>
@@ -27,7 +28,6 @@ namespace SUTK
 		Tab* m_tab;
 		Container* m_container;
 
-		Tab* getTab() noexcept { return m_tab; }
 		NotebookPage* getNext() noexcept;
 		const NotebookPage* getNext() const noexcept { return com::cast_away_const(this)->getNext(); }
 		NotebookPage* getPrev() noexcept;
@@ -35,6 +35,7 @@ namespace SUTK
 	public:
 		NotebookPage(Container* container) noexcept;
 		~NotebookPage() noexcept;
+		Tab* getTab() noexcept { return m_tab; }
 		void setOnRemove(std::function<void(NotebookPage*)> onPageRemove) noexcept { m_onPageRemove = onPageRemove; }
 		void setLabel(const std::string_view str) noexcept;
 		const std::string& getLabel() const noexcept;
@@ -98,26 +99,38 @@ namespace SUTK
 		friend class TabAnimGroup;
 		friend class TabRemoveAnimation;
 		friend class TabShiftAnimation;
+		friend class TabBar;
 	private:
 		TabView* m_tabView;
 		NotebookPage* m_page;
 		u32 m_index;
 		Vec2Df m_pos;
-		com::Bool m_isPosSynced;
 	public:
-		Tab(NotebookView* notebook, const std::string_view labelStr, Tab* after = com::null_pointer<Tab>()) noexcept;
-		~Tab() noexcept;
-		Vec2Df getPos() const noexcept { return m_pos; }
-		void syncPos() noexcept;
+		// Setters
 		void setPage(NotebookPage* page) noexcept;
 		// Getters
+		Vec2Df getPos() const noexcept { return m_pos; }
 		TabView* getTabView() noexcept { return m_tabView; }
 		NotebookPage* getPage() noexcept { return m_page; }
 		u32 getIndex() const noexcept { return m_index; }
 		u32 getLinkedListIndex() const noexcept;
 	};
 
-	class HBoxContainer;
+	class SUTK_API TabBar : public HBoxContainer
+	{
+		friend class NotebookView;
+	private:
+		Tab* m_root;
+	protected:
+		virtual void onRecalculateLayout() noexcept override;
+	public:
+		TabBar(UIDriver& driver, Container* parent) noexcept;
+
+		Tab* createTab(const std::string_view labelStr, Tab* after = com::null_pointer<Tab>()) noexcept;
+		void destroyTab(Tab* tab) noexcept;
+		void removeTab(Tab* tab) noexcept;
+		Tab* getRootTab() noexcept { return m_root; }
+	};
 
 	class TabRemoveAnimation;
 	class TabInsertAnimation;
@@ -175,9 +188,8 @@ namespace SUTK
 	private:
 		// TextGroup for TabView(s)
 		TextGroupContainer* m_textGroupContainer;
-		HBoxContainer* m_tabContainer;
+		TabBar* m_tabBar;
 		Container* m_pageContainer;
-		NotebookPage* m_head;
 		NotebookPage* m_currentPage;
 		TabAnimGroup* m_tabAnimGroup;
 		TabShiftAnimGroup* m_tabShiftAnimGroup;
@@ -201,12 +213,13 @@ namespace SUTK
 		~NotebookView() noexcept;
 		void checkForTabSwap() noexcept;
 
-		HBoxContainer* getTabContainer() noexcept { return m_tabContainer; }
+		TabBar* getTabBar() noexcept { return m_tabBar; }
 
 		OnPageSelectEvent& getOnPageSelectEvent() noexcept { return m_onPageSelectEvent; }
 
 		void setAnimDuration(f32 duration) noexcept { m_animDuration = duration; }
 
+		NotebookPage* getRootPage() noexcept { return getTabBar()->getRootTab() ? getTabBar()->getRootTab()->getPage() : com::null_pointer<NotebookPage>(); }
 		NotebookPage* getCurrentPage() noexcept { return m_currentPage; }
 
 		NotebookPage* createPage(const std::string_view labelStr, NotebookPage* afterPage = com::null_pointer<NotebookPage>()) noexcept;
@@ -221,7 +234,7 @@ namespace SUTK
 	template<typename T, com::CompareFunction<T> EqualTo>
 	NotebookPage* NotebookView::findPage(const T& data) noexcept
 	{
-		NotebookPage* page = m_head;
+		NotebookPage* page = getRootPage();
 		EqualTo isEqual { };
 		while(page != com::null_pointer<NotebookPage>())
 		{

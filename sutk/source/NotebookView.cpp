@@ -4,7 +4,6 @@
 #include <sutk/TextGroupContainer.hpp>
 #include <sutk/ContainerUtility.hpp>
 #include <sutk/ButtonGraphic.hpp> // for SUTK::ImageButtonGraphic
-#include <sutk/HBoxContainer.hpp> // for SUTK::HBoxContainer
 
 #define TAB_VIEW_MIN_WIDTH 3.0f
 #define TAB_BAR_HEIGHT 0.8f
@@ -118,7 +117,6 @@ namespace SUTK
 	}
 
 	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), GlobalMouseMoveHandlerObject(driver),
-																																					m_head(com::null_pointer<NotebookPage>()),
 																																					m_currentPage(com::null_pointer<NotebookPage>()),
 																																					m_onPageSelectEvent(this),
 																																					m_isRunning(com::False),
@@ -132,8 +130,8 @@ namespace SUTK
 		attr.minSize.height = TAB_BAR_HEIGHT;
 		attr.prefSize = attr.minSize;
 		m_textGroupContainer->setLayoutAttributes(attr);
-		m_tabContainer = driver.createContainer<HBoxContainer>(m_textGroupContainer);
-		m_tabContainer->alwaysFitInParent();
+		m_tabBar = driver.createContainer<TabBar>(m_textGroupContainer);
+		m_tabBar->alwaysFitInParent();
 
 		m_tabAnimGroup = driver.getAnimationEngine().createAnimGroup<TabAnimGroup>(this);
 		m_tabShiftAnimGroup = driver.getAnimationEngine().createAnimGroup<TabShiftAnimGroup>(this);
@@ -199,6 +197,7 @@ namespace SUTK
 		friend class TabAnimGroup;
 	private:
 		Tab* m_tab;
+		TabBar* m_tabBar;
 	protected:
 		virtual void onStart() noexcept override
 		{
@@ -221,11 +220,11 @@ namespace SUTK
 		}
 		virtual void onEnd(com::Bool isAborted) noexcept override
 		{
-			delete m_tab;
+			m_tabBar->destroyTab(m_tab);
 			AnimContextBase::onEnd(isAborted);
 		}
 	public:
-		TabRemoveAnimation(UIDriver& driver, TabAnimGroup* group, Tab* tab) noexcept : AnimContextBase(driver, group), m_tab(tab) { }
+		TabRemoveAnimation(UIDriver& driver, TabAnimGroup* group, Tab* tab, TabBar* tabBar) noexcept : AnimContextBase(driver, group), m_tab(tab), m_tabBar(tabBar) { }
 	};
 
 	template<typename T>
@@ -235,6 +234,8 @@ namespace SUTK
 			node->getPrev()->setNext(node->getNext());
 		if(node->getNext())
 			node->getNext()->setPrev(node->getPrev());
+		node->setNext(com::null_pointer<T>());
+		node->setPrev(com::null_pointer<T>());
 	}
 
 	template<typename T>
@@ -340,13 +341,13 @@ namespace SUTK
 	void TabAnimGroup::onWhenAnyStart() noexcept
 	{
 		std::cout << "Any started" << std::endl;
-		if(!m_notebook->m_tabContainer->isLockedLayout())
-			m_notebook->m_tabContainer->lockLayout();
+		if(!m_notebook->getTabBar()->isLockedLayout())
+			m_notebook->getTabBar()->lockLayout();
 	}
 	void TabAnimGroup::onWhenAllEnd() noexcept
 	{
 		std::cout << "All ended" << std::endl;
-		m_notebook->m_tabContainer->unlockLayout(true);
+		m_notebook->getTabBar()->unlockLayout(true);
 	}
 	TabAnimGroup::TabAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept : AnimGroup(driver), m_notebook(notebook)
 	{
@@ -391,7 +392,7 @@ namespace SUTK
 		nextTab->m_pos = tab->m_pos;
 		tab->m_pos.x += nextTab->getTabView()->getSize().width;
 		std::swap(tab->m_index, nextTab->m_index);
-		m_tabContainer->swapChildren(tab->m_index, nextTab->m_index);
+		getTabBar()->swapChildren(tab->m_index, nextTab->m_index);
 		RemoveLinkedListNode(tab);
 		InsertLinkedListNodeAfter(tab, /* After: */ nextTab);
 	}
@@ -416,8 +417,6 @@ namespace SUTK
 			{
 				std::cout << "Swapping with next tab" << std::endl;
 				swapWithNext(tab);
-				if(tab->getNext())
-					tab->getNext()->syncPos();
 				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(m_tabShiftAnimGroup, next, /* isLeft: */ com::True);
 			}
 		}
@@ -430,8 +429,6 @@ namespace SUTK
 			{
 				std::cout << "Swapping with prev tab" << std::endl;
 				swapWithPrev(tab);
-				if(tab->getPrev())
-					tab->getPrev()->syncPos();
 				getUIDriver().getAnimationEngine().dispatchAnimation<TabShiftAnimation>(m_tabShiftAnimGroup, prev, /* isLeft: */ com::False);
 			}
 		}
@@ -445,10 +442,6 @@ namespace SUTK
 			m_tabRearrangeContext.layer = tabView->getLayer();
 			tabView->setLayer(MaxLayer);
 			m_tabRearrangeContext.isMoved = com::True;
-			if(m_tabRearrangeContext.grabbedTab->getNext())
-				m_tabRearrangeContext.grabbedTab->getNext()->syncPos();
-			if(m_tabRearrangeContext.grabbedTab->getPrev())
-				m_tabRearrangeContext.grabbedTab->getPrev()->syncPos();
 		}
 		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
 		tabView->setPosition(pos);
@@ -462,7 +455,7 @@ namespace SUTK
 
 	void NotebookView::dispatchAnimRemoveTab(Tab* tab) noexcept
 	{
-		getUIDriver().getAnimationEngine().dispatchAnimation<TabRemoveAnimation>(m_tabAnimGroup, tab);		// if(m_isRunning)
+		getUIDriver().getAnimationEngine().dispatchAnimation<TabRemoveAnimation>(m_tabAnimGroup, tab, getTabBar());		// if(m_isRunning)
 	}
 
 	template<typename T>
@@ -473,50 +466,19 @@ namespace SUTK
 		return node;
 	}
 
-	Tab::Tab(NotebookView* notebook, const std::string_view labelStr, Tab* after) noexcept : m_pos(Vec2Df::zero()), m_isPosSynced(com::False)
+	template<typename T, com::concepts::UnaryVisitor<T*> VisitorType>
+	static void TraverseLinkedListBiDirect(T* node, VisitorType visitor) noexcept
 	{
-		notebook->getTabContainer()->lockLayout();
-		TabView* tabView = notebook->getUIDriver().createContainer<TabView>(com::null_pointer<Container>());
-		if(after)
+		auto left = node->getPrev();
+		while(left)
 		{
-			InsertLinkedListNodeAfter(this, after);
-			m_index = after->getIndex() + 1;
-			auto node = getNext();
-			while(node)
-			{
-				node->m_index += 1;
-				node = node->getNext();
-			}
+			visitor(left);
+			left = left->getPrev();
 		}
-		else
-			m_index = 0;
-		notebook->getTabContainer()->addAt(tabView, m_index);
-		tabView->setLabel(labelStr);
-		LayoutAttributes attr = tabView->getLayoutAttributes();
-		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
-		attr.prefSize.width = std::max(TAB_VIEW_MIN_WIDTH, tabView->getSize().width);
-		tabView->setLayoutAttributes(attr);
-		// Recalculate the layout to set the position and sizes of the tab views correctly
-		notebook->getTabContainer()->unlockLayout(true);	
-		m_tabView = tabView;
-	}
-	Tab::~Tab() noexcept
-	{
-		auto node = getNext();
 		while(node)
 		{
-			node->m_index -= 1;
+			visitor(node);
 			node = node->getNext();
-		}
-		RemoveLinkedListNode(this);
-		m_tabView->getUIDriver().destroyContainer<TabView>(m_tabView);
-	}
-	void Tab::syncPos() noexcept
-	{
-		if(!m_isPosSynced)
-		{
-			m_pos = m_tabView->getPosition();
-			m_isPosSynced = com::True;
 		}
 	}
 	void Tab::setPage(NotebookPage* page) noexcept
@@ -524,6 +486,70 @@ namespace SUTK
 		m_page = page;
 		if(page)
 			page->m_tab = this;
+	}
+
+	TabBar::TabBar(UIDriver& driver, Container* parent) noexcept : HBoxContainer(driver, parent), m_root(com::null_pointer<Tab>())
+	{
+	}
+
+	void TabBar::onRecalculateLayout() noexcept
+	{
+		HBoxContainer::onRecalculateLayout();
+		if(!getRootTab())
+			return;
+		// Sync position of Tab with that of TabView
+		TraverseLinkedListBiDirect(getRootTab(), [](auto node) noexcept
+		{
+			node->m_pos = node->getTabView()->getPosition();
+		});
+	}
+	Tab* TabBar::createTab(const std::string_view labelStr, Tab* after) noexcept
+	{
+		lockLayout();
+		Tab* tab = new Tab();
+		TabView* tabView = getUIDriver().createContainer<TabView>(com::null_pointer<Container>());
+		tab->m_tabView = tabView;
+		if(after)
+		{
+			InsertLinkedListNodeAfter(tab, after);
+			tab->m_index = after->getIndex() + 1;
+			auto node = tab->getNext();
+			while(node)
+			{
+				node->m_index += 1;
+				node = node->getNext();
+			}
+		}
+		else
+			tab->m_index = 0;
+		if(!tab->getPrev())
+			m_root = tab;
+		addAt(tabView, tab->m_index);
+		tabView->setLabel(labelStr);
+		LayoutAttributes attr = tabView->getLayoutAttributes();
+		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
+		attr.prefSize.width = std::max(TAB_VIEW_MIN_WIDTH, tabView->getSize().width);
+		tabView->setLayoutAttributes(attr);
+		// Recalculate the layout to set the position and sizes of the tab views correctly
+		unlockLayout(true);	
+		return tab;
+	}
+	void TabBar::destroyTab(Tab* tab) noexcept
+	{
+		getUIDriver().destroyContainer<TabView>(tab->m_tabView);
+		delete tab;
+	}
+	void TabBar::removeTab(Tab* tab) noexcept
+	{
+		auto node = tab->getNext();
+		while(node)
+		{
+			node->m_index -= 1;
+			node = node->getNext();
+		}
+		if(!tab->getPrev())
+			m_root = tab->getNext();
+		RemoveLinkedListNode(tab);
 	}
 
 	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
@@ -538,21 +564,14 @@ namespace SUTK
 		container->setActive(com::False);
 
 		// Create TabView for the page
-		Tab* tab = new Tab(this, labelStr, afterPage ? afterPage->getTab() : com::null_pointer<Tab>());
-
-		// <Begin> Initialize Animation Start state and Setup Animation Context
-		dispatchAnimNewTab(tab);
-		// <End>
-
+		Tab* tab = getTabBar()->createTab(labelStr, afterPage ? afterPage->getTab() : com::null_pointer<Tab>());
 		// Create Page
 		NotebookPage* page = new NotebookPage(container);
 		tab->setPage(page);
 
-		if(!tab->getPrev())
-		{
-			_com_assert(tab->m_index == 0);
-			m_head = page;
-		}
+		// <Begin> Initialize Animation Start state and Setup Animation Context
+		dispatchAnimNewTab(tab);
+		// <End>
 
 		TabView* tabView = tab->getTabView();
 
@@ -562,11 +581,10 @@ namespace SUTK
 			this->m_onPageSelectEvent.publish(page);
 
 			this->m_tabRearrangeContext.grabbedTab = page->getTab();
-			page->getTab()->syncPos();
 			Vec2Df mousePos = getUIDriver().getInputDriver().getMousePosition();
 			this->m_tabRearrangeContext.positionOffset = page->getTab()->getTabView()->getGlobalPosition() - mousePos;
 			this->m_tabRearrangeContext.isMoved = com::False;
-			this->m_tabContainer->lockLayout();
+			this->getTabBar()->lockLayout();
 			
 			this->GlobalMouseMoveHandlerObject::awake();
 		});
@@ -579,10 +597,10 @@ namespace SUTK
 				// NOTE: abort should be called first to get the final changes, 
 				// otherwise, GetLinkedListRoot() would return wrong result.
 				this->m_tabShiftAnimGroup->abort();
-				this->m_head = GetLinkedListRoot(this->m_tabRearrangeContext.grabbedTab)->getPage();
+				this->m_tabBar->m_root = GetLinkedListRoot(this->m_tabRearrangeContext.grabbedTab);
 			}
 			this->m_tabRearrangeContext.grabbedTab = com::null_pointer<Tab>();
-			this->m_tabContainer->unlockLayout(static_cast<bool>(this->m_tabRearrangeContext.isMoved));
+			this->getTabBar()->unlockLayout(static_cast<bool>(this->m_tabRearrangeContext.isMoved));
 			this->GlobalMouseMoveHandlerObject::sleep();
 			this->dump();
 		});
@@ -633,18 +651,12 @@ namespace SUTK
 		
 		viewPage(page->getPrev() ? page->getPrev() : page->getNext());
 
-		// NOTE: The following doubly-linked list manipulation preserves the "backward" links for the tabView which needs to be destroyed.
-		// So that, the index (by calling getIndex() on the TabView) could still be calculated accurately!
-		auto& driver = getUIDriver();
-
 		Tab* tab = page->getTab();
-		if(!tab->getPrev())
-			m_head = page->getNext();
-		RemoveLinkedListNode(tab);
+		getTabBar()->removeTab(tab);
 		
 		if(page->m_onPageRemove.has_value())
 			page->m_onPageRemove.value() (page);
-		driver.destroyContainer<Container>(page->m_container);
+		getUIDriver().destroyContainer<Container>(page->m_container);
 		delete page;
 		tab->setPage(com::null_pointer<NotebookPage>());
 
@@ -657,7 +669,7 @@ namespace SUTK
 	{
 		std::cout << "Dump (Notebook): \n"
 				  << "Current Selected: " << (m_currentPage ? m_currentPage->getTab()->getTabView()->getLabel() : "<null>") << "\n";
-		NotebookPage* page = m_head;
+		NotebookPage* page = getRootPage();
 		while(page != com::null_pointer<NotebookPage>())
 		{
 			std::cout << page->getTab()->getTabView()->getLabel() << ", index = " << page->getTab()->getIndex() << std::endl;
