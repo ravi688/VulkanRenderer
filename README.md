@@ -146,9 +146,17 @@ There are only C and C++ interface headers for now. <br>
    ```
 6. You might also need to install the followings:
    ```
+   $ sudo apt-get install libshader-dev
+   $ sudo apt-get install libgl-dev
+   $ sudo apt-get install spirv-tools
+   $ sudo apt-get install libvulkan-dev 
    $ sudo apt-get install libz-dev
    $ sudo apt-get install libpng-dev
    $ sudo apt-get install libbrotli-dev
+   ```
+7. On wayland you would need the following package:
+   ```
+   $ sudo apt-get install libwayland-dev
    ```
 
 ### Runtime requirements
