@@ -36,6 +36,11 @@ ifneq (,$(findstring Linux,$(PLATFORM_DETECT)))
 	PLATFORM := Linux
 endif
 
+# FreeBSD
+ifneq (,$(findstring FreeBSD,$(PLATFORM_DETECT)))
+	PLATFORM := FreeBSD
+endif
+
 #-------------------------------------------
 #		Project Configuration
 #-------------------------------------------
@@ -318,7 +323,7 @@ DELETE_UPACKED_OBJECTS:
 ifeq (Windows,$(PLATFORM))
 	$(RM) $(subst /,\ $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
 endif
-ifeq (Linux,$(PLATFORM))
+ifneq (,$(findstring $(PLATFORM),Linux-FreeBSD))
 	$(RM) $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o)
 endif
 	$(RM_DIR) $(UNPACKED_OBJECTS_DIR)
@@ -350,7 +355,7 @@ ifeq (Windows,$(PLATFORM))
 	$(RM) $(subst /,\, $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
 	$(RM_DIR) $(subst /,\, $(UNPACKED_OBJECTS_DIR))
 endif
-ifeq (Linux,$(PLATFORM))
+ifneq (,$(findstring $(PLATFORM),Linux-FreeBSD))
 	$(RM) $(OBJECTS)
 	$(RM) $(__EXECUTABLE_NAME)
 	$(RM) $(TARGET_STATIC_LIB)
