@@ -92,6 +92,7 @@ namespace SUTK
 	};
 
 	class NotebookView;
+	class TabBar;
 
 	class SUTK_API Tab : public com::LinkedListNodeBase<Tab>
 	{
@@ -101,6 +102,7 @@ namespace SUTK
 		friend class TabShiftAnimation;
 		friend class TabBar;
 	private:
+		TabBar* m_tabBar;
 		TabView* m_tabView;
 		NotebookPage* m_page;
 		u32 m_index;
@@ -108,8 +110,11 @@ namespace SUTK
 	public:
 		// Setters
 		void setPage(NotebookPage* page) noexcept;
+		// NOTE: this function must be used to change the lable of the tab. Do not use getTabView()->setLabel()
+		void setLabel(const std::string_view str) noexcept;
 		// Getters
 		Vec2Df getPos() const noexcept { return m_pos; }
+		TabBar* getTabBar() noexcept { return m_tabBar; }
 		TabView* getTabView() noexcept { return m_tabView; }
 		NotebookPage* getPage() noexcept { return m_page; }
 		u32 getIndex() const noexcept { return m_index; }

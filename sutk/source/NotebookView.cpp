@@ -53,7 +53,7 @@ namespace SUTK
 
 	void NotebookPage::setLabel(const std::string_view str) noexcept
 	{
-		m_tab->getTabView()->setLabel(str);
+		m_tab->setLabel(str);
 	}
 
 	const std::string& NotebookPage::getLabel() const noexcept
@@ -490,6 +490,20 @@ namespace SUTK
 		if(page)
 			page->m_tab = this;
 	}
+	void Tab::setLabel(const std::string_view str) noexcept
+	{
+		com_assert(COM_DESCRIPTION(!m_tabBar->isLockedLayout()), "Undefined behaviour, You can't change label of a tab while some tab animations are going on (the layout is locked)");
+		// NOTE: Calling setLabel() resizes the tabView to fit the label, which results in layout recalculation
+		// Since, we call setLayoutAttributes() further, it would trigger another layout recalculation.
+		// Therefore, we are better off locking the layout first and then we are finished, unlock it at the end.
+		m_tabBar->lockLayout();
+		m_tabView->setLabel(str);
+		LayoutAttributes attr = m_tabView->getLayoutAttributes();
+		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
+		attr.prefSize.width = std::max(TAB_VIEW_MIN_WIDTH, m_tabView->getSize().width);
+		m_tabView->setLayoutAttributes(attr);
+		m_tabBar->unlockLayout(true);
+	}
 
 	TabBar::TabBar(UIDriver& driver, Container* parent) noexcept : HBoxContainer(driver, parent), m_root(com::null_pointer<Tab>())
 	{
@@ -510,6 +524,7 @@ namespace SUTK
 	{
 		lockLayout();
 		Tab* tab = new Tab();
+		tab->m_tabBar = this;
 		TabView* tabView = getUIDriver().createContainer<TabView>(com::null_pointer<Container>());
 		tab->m_tabView = tabView;
 		if(after)
@@ -528,13 +543,9 @@ namespace SUTK
 		if(!tab->getPrev())
 			m_root = tab;
 		addAt(tabView, tab->m_index);
-		tabView->setLabel(labelStr);
-		LayoutAttributes attr = tabView->getLayoutAttributes();
-		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
-		attr.prefSize.width = std::max(TAB_VIEW_MIN_WIDTH, tabView->getSize().width);
-		tabView->setLayoutAttributes(attr);
-		// Recalculate the layout to set the position and sizes of the tab views correctly
-		unlockLayout(true);	
+		// Unlock the layout but do not recalculate, because we are further calling setLabel() which does recalculates at the end
+		unlockLayout();
+		tab->setLabel(labelStr);
 		return tab;
 	}
 	void TabBar::destroyTab(Tab* tab) noexcept
