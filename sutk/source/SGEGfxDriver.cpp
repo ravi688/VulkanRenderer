@@ -949,7 +949,7 @@ namespace SUTK
 	GfxDriverObjectHandleType SGEGfxDriver::loadTexture(const std::span<const u8> data)
 	{
 		SGE::Texture texture = m_driver.loadTexture(TEXTURE_TYPE_ALBEDO, data);
-		return m_textureData.add( { { }, texture });		
+		return m_textureData.add( { { }, texture });
 	}
 
 	void SGEGfxDriver::getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out)
