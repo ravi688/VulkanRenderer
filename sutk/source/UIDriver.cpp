@@ -150,6 +150,11 @@ namespace SUTK
 		return getGfxDriver().loadTexture(span);
 	}
 
+	UIDriver::ImageReference UIDriver::loadImage(const u8* pixelData, u32 width, u32 height, u32 numChannels) noexcept
+	{
+		return getGfxDriver().loadTexture(pixelData, width, height, numChannels);
+	}
+
 	void UIDriver::unloadImage(ImageReference id) noexcept
 	{
 		getGfxDriver().unloadTexture(id);

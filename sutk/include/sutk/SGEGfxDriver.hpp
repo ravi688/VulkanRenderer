@@ -172,6 +172,7 @@ namespace SUTK
 
 		virtual GfxDriverObjectHandleType loadTexture(std::string_view str) override;
 		virtual GfxDriverObjectHandleType loadTexture(const std::span<const u8> data) override;
+		virtual GfxDriverObjectHandleType loadTexture(const u8* pixels, u32 width, u32 height, u32 numChannels) override;
 		virtual void getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out) override;
 		virtual void unloadTexture(GfxDriverObjectHandleType handle) override;
 

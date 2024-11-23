@@ -80,6 +80,7 @@ namespace SUTK
 		}
 		virtual GfxDriverObjectHandleType loadTexture(std::string_view str) = 0;
 		virtual GfxDriverObjectHandleType loadTexture(const std::span<const u8> data) = 0;
+		virtual GfxDriverObjectHandleType loadTexture(const u8* pixels, u32 width, u32 height, u32 numChannels) = 0;
 		virtual void getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out) = 0;
 		virtual void unloadTexture(GfxDriverObjectHandleType handle) = 0;
 		virtual GfxDriverObjectHandleType loadFont(std::string_view str) = 0;

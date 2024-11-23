@@ -952,6 +952,12 @@ namespace SUTK
 		return m_textureData.add( { { }, texture });
 	}
 
+	GfxDriverObjectHandleType SGEGfxDriver::loadTexture(const u8* pixels, u32 width, u32 height, u32 numChannels)
+	{
+		SGE::Texture texture = m_driver.loadTexture(TEXTURE_TYPE_ALBEDO, pixels, width, height, numChannels);
+		return m_textureData.add( { { }, texture });
+	}
+
 	void SGEGfxDriver::getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out)
 	{
 		SGE::Texture sgeTexture = getTexture(texture);

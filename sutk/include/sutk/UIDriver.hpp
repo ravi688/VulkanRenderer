@@ -80,6 +80,7 @@ namespace SUTK
 
 		ImageReference loadImage(std::string_view path) noexcept;
 		ImageReference loadImage(const std::span<const u8> span) noexcept;
+		ImageReference loadImage(const u8* pixelData, u32 width, u32 height, u32 numChannels) noexcept;
 		void unloadImage(ImageReference id) noexcept;
 		ImageAttributes getImageAttributes(ImageReference id) noexcept;
 		FontReference loadFont(std::string_view path) noexcept;

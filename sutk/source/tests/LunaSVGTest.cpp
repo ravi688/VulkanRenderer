@@ -23,8 +23,12 @@ namespace SUTK
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
-		BUFFER* data = load_binary_from_file("../textures/Smile.bmp");
-		UIDriver::ImageReference image = m_uiDriver->loadImage(com::GetSpanFromBuffer<const u8>(data));
+		BUFFER* data = load_text_from_file("svg_files/close-cross-symbol-in-a-circle-svgrepo-com.svg");
+		auto svgDoc = lunasvg::Document::loadFromData(static_cast<const char*>(buf_get_ptr(data)));
+		auto svgRenderResult = svgDoc->renderToBitmap();
+		_com_assert(!svgRenderResult.isNull());
+		svgRenderResult.convertToRGBA();
+		UIDriver::ImageReference image = m_uiDriver->loadImage(svgRenderResult.data(), svgRenderResult.width(), svgRenderResult.height(), 4);
 		buf_free(data);
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		Container* emptyContainer = m_uiDriver->createContainer<Container>(rootContainer);
