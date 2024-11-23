@@ -146,7 +146,7 @@ There are only C and C++ interface headers for now. <br>
    ```
 6. You might also need to install the followings:
    ```
-   $ sudo apt-get install libshader-dev
+   $ sudo apt-get install libshaderc-dev
    $ sudo apt-get install libgl-dev
    $ sudo apt-get install spirv-tools
    $ sudo apt-get install libvulkan-dev 
@@ -158,6 +158,19 @@ There are only C and C++ interface headers for now. <br>
    ```
    $ sudo apt-get install libwayland-dev
    ```
+
+### Requirements for building on FreeBSD
+Currently you can't build the codebase in FreeBSD environment. There are many issues right now.
+For now, you would need to do the following:
+- The shell must be changed to /sh/bash, FreeBSD uses a different shell by default
+- You will need gcc and g++ compilers supporting C++20, FreeBSD uses LLVM/Clang by default
+- Install the following packages
+```
+	pkg install gmake # for GNU make
+	pkg install shaderc # for shaderc libraries and glslc
+	pkg install pkgconf # for pkg-config
+```
+
 
 ### Runtime requirements
 
