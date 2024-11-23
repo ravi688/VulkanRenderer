@@ -25,7 +25,9 @@ cmake -S $LUNASVG_REPO_PATH -B $LUNASVG_CMAKE_BUILD_PATH -DCMAKE_INSTALL_PREFIX=
 echo "Running make"
 make --directory=$LUNASVG_CMAKE_BUILD_PATH install -j4
 
-PKG_CONFIG_PC_PATH=`echo $PKG_CONFIG_PATH | cut -d':' -f1`
+# NOTE: here we need to use `pkg-config --variable pc_path pkg-config` instead of PKG_CONFIG_PATH, because on linux I've found it to be null
+PKG_CONFIG_PC_PATH=`pkg-config --variable pc_path pkg-config | cut -d ':' -f1`
+mkdir -p $PKG_CONFIG_PC_PATH
 
 echo "Writing to ${PKG_CONFIG_PC_PATH}/liblunasvg.pc"
 echo "prefix=/usr
