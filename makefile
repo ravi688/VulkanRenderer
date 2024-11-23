@@ -461,7 +461,7 @@ DELETE_UPACKED_OBJECTS:
 ifeq (Windows,$(PLATFORM))
 	$(RM) $(subst /,\ $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
 endif
-ifeq (Linux,$(PLATFORM))
+ifneq (,$(findstring $(PLATFORM),Linux-FreeBSD))
 	$(RM) $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o)
 endif
 	$(RM_DIR) $(UNPACKED_OBJECTS_DIR)
@@ -494,7 +494,7 @@ ifeq (Windows,$(PLATFORM))
 	$(RM) $(subst /,\, $(wildcard $(UNPACKED_OBJECTS_DIR)/*.o))
 	$(RM_DIR) $(subst /,\, $(UNPACKED_OBJECTS_DIR))
 endif
-ifeq (Linux,$(PLATFORM))
+ifneq (,$(findstring $(PLATFORM),Linux-FreeBSD))
 	$(RM) $(OBJECTS)
 	$(RM) $(MAIN_OBJECT)
 	$(RM) $(__EXECUTABLE_NAME)
