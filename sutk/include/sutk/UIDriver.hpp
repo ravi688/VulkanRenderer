@@ -79,6 +79,7 @@ namespace SUTK
 		void removeRunnable(IRunnable* runnable) noexcept;
 
 		ImageReference loadImage(std::string_view path) noexcept;
+		ImageReference loadImage(const std::span<const u8> span) noexcept;
 		void unloadImage(ImageReference id) noexcept;
 		ImageAttributes getImageAttributes(ImageReference id) noexcept;
 		FontReference loadFont(std::string_view path) noexcept;

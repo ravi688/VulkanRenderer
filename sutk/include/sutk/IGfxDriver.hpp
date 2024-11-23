@@ -3,6 +3,7 @@
 #include <sutk/defines.hpp> /* for Vec2D, Rect2D, DisplaySizeType, GfxDriverObjectHandleType etc. */
 
 #include <functional> /* for std::function */
+#include <span> // for std::span<>
 
 namespace SUTK
 {
@@ -78,6 +79,7 @@ namespace SUTK
 			setObjectScissor(objHandle, rect);
 		}
 		virtual GfxDriverObjectHandleType loadTexture(std::string_view str) = 0;
+		virtual GfxDriverObjectHandleType loadTexture(const std::span<const u8> data) = 0;
 		virtual void getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out) = 0;
 		virtual void unloadTexture(GfxDriverObjectHandleType handle) = 0;
 		virtual GfxDriverObjectHandleType loadFont(std::string_view str) = 0;

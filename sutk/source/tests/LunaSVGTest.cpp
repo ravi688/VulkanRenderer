@@ -6,6 +6,10 @@
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
 
+#include <lunasvg/lunasvg.h>
+
+#include <disk_manager/file_reader.h>
+
 namespace SUTK
 {
 	DriverInitializationData LunaSVGTest::getInitializationData()
@@ -19,7 +23,9 @@ namespace SUTK
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver);
-		UIDriver::ImageReference image = m_uiDriver->loadImage("../textures/Smile.bmp");
+		BUFFER* data = load_binary_from_file("../textures/Smile.bmp");
+		UIDriver::ImageReference image = m_uiDriver->loadImage(com::GetSpanFromBuffer<const u8>(data));
+		buf_free(data);
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		Container* emptyContainer = m_uiDriver->createContainer<Container>(rootContainer);
 		emptyContainer->setRect({ 1.0f, 1.0f, 7.0f, 7.0f });
