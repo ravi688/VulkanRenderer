@@ -23,4 +23,18 @@ fi
 echo "Running cmake to generate makefile"
 cmake -S $LUNASVG_REPO_PATH -B $LUNASVG_CMAKE_BUILD_PATH -DCMAKE_INSTALL_PREFIX=/usr
 echo "Running make"
-make --directory=$LUNASVG_CMAKE_BUILD_PATH install
+make --directory=$LUNASVG_CMAKE_BUILD_PATH install -j4
+
+PKG_CONFIG_PC_PATH=`echo $PKG_CONFIG_PATH | cut -d':' -f1`
+
+echo "Writing to ${PKG_CONFIG_PC_PATH}/liblunasvg.pc"
+echo "prefix=/usr
+includedir=\${prefix}/include
+libdir=\${prefix}/lib
+
+Name: lunasvg
+Description: LunaSVG (pkg config setup by Ravi Prakash Singh)
+URL: https://github.com/sammycage/lunasvg.git
+Version: 1.0.0
+Libs: -L\${libdir} -llunasvg
+Cflags: -I\${includedir}" > "${PKG_CONFIG_PC_PATH}/liblunasvg.pc"
