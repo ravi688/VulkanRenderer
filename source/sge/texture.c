@@ -183,20 +183,7 @@ SGE_API texture_t* texture_load_pixelsv(renderer_t* renderer, texture_type_t typ
 
 SGE_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths)
 {
-	u32 file_path_count;
-	switch(type)
-	{
-		case TEXTURE_TYPE_ALBEDO:
-		case TEXTURE_TYPE_NORMAL:
-		case TEXTURE_TYPE_CUBE_COMBINED:
-			file_path_count = 1;
-			break;
-		case TEXTURE_TYPE_CUBE_SEPARATED:
-			file_path_count = 6;
-			break;
-		default:
-			LOG_FETAL_ERR("Unrecognized texture_type\n");
-	};
+	AUTO file_path_count = get_texture_count_from_texture_type(type);
 
 	// load all the textures from disk to memory
 	vulkan_texture_data_t data[file_path_count];
@@ -234,21 +221,8 @@ SGE_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_l
 
 SGE_API texture_t* texture_load_memv(renderer_t* renderer, texture_type_t type, va_list datas)
 {
-	u32 tex_count;
-	switch(type)
-	{
-		case TEXTURE_TYPE_ALBEDO:
-		case TEXTURE_TYPE_NORMAL:
-		case TEXTURE_TYPE_CUBE_COMBINED:
-			tex_count = 1;
-			break;
-		case TEXTURE_TYPE_CUBE_SEPARATED:
-			tex_count = 6;
-			break;
-		default:
-			LOG_FETAL_ERR("Unrecognized texture_type\n");
-	};
-
+	AUTO tex_count = get_texture_count_from_texture_type(type);
+	
 	// load all the textures from disk to memory
 	vulkan_texture_data_t data[tex_count];
 	bmp_t bmp_data[tex_count];
