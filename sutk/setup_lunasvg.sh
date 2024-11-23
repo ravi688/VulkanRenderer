@@ -21,7 +21,7 @@ if [ -d $LUNASVG_CMAKE_BUILD_PATH ]; then
 	cmake --build $LUNASVG_CMAKE_BUILD_PATH --target clean
 fi
 echo "Running cmake to generate makefile"
-cmake -S $LUNASVG_REPO_PATH -B $LUNASVG_CMAKE_BUILD_PATH -DCMAKE_INSTALL_PREFIX=/usr
+cmake -S $LUNASVG_REPO_PATH -B $LUNASVG_CMAKE_BUILD_PATH -DCMAKE_INSTALL_PREFIX=/usr/share/liblunasvg
 echo "Running make"
 make --directory=$LUNASVG_CMAKE_BUILD_PATH install -j4
 
@@ -30,7 +30,7 @@ PKG_CONFIG_PC_PATH=`pkg-config --variable pc_path pkg-config | cut -d ':' -f1`
 mkdir -p $PKG_CONFIG_PC_PATH
 
 echo "Writing to ${PKG_CONFIG_PC_PATH}/liblunasvg.pc"
-echo "prefix=/usr
+echo "prefix=/usr/share/liblunasvg
 includedir=\${prefix}/include
 libdir=\${prefix}/lib
 
