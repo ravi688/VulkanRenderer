@@ -18,6 +18,7 @@ namespace SGE
 	public:
 		Texture(Driver& driver, texture_type_t type, std::string_view str) noexcept;
 		Texture(Driver& driver, texture_type_t type, const std::span<const u8> data) noexcept;
+		Texture(Driver& driver, texture_type_t type, const u8* pixelData, u32 width, u32 height, u32 channels) noexcept;
 		void getAttributes(texture_attributes_t& attributes) noexcept;
 		void destroy() noexcept
 		{

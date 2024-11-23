@@ -132,6 +132,55 @@ static texture_t* _texture_create(renderer_t* renderer, texture_type_t type, vul
 	return texture;
 }
 
+static u32 get_texture_count_from_texture_type(texture_type_t type)
+{
+	u32 texture_count;
+	switch(type)
+	{
+		case TEXTURE_TYPE_ALBEDO:
+		case TEXTURE_TYPE_NORMAL:
+		case TEXTURE_TYPE_CUBE_COMBINED:
+			texture_count = 1;
+			break;
+		case TEXTURE_TYPE_CUBE_SEPARATED:
+			texture_count = 6;
+			break;
+		default:
+			LOG_FETAL_ERR("Unrecognized texture_type\n");
+	};
+	return texture_count;
+}
+
+SGE_API texture_t* texture_load_pixels(renderer_t* renderer, texture_type_t type, ...)
+{
+	va_list datas;
+	va_start(datas, type);
+	texture_t* texture = texture_load_pixelsv(renderer, type, datas);
+	va_end(datas);
+	return texture;
+}
+
+SGE_API texture_t* texture_load_pixelsv(renderer_t* renderer, texture_type_t type, va_list pixelDatas)
+{
+	AUTO texture_count = get_texture_count_from_texture_type(type);
+	// load all the textures from disk to memory
+	vulkan_texture_data_t data[texture_count];
+	for(u32 i = 0; i < texture_count; i++)
+	{
+		AUTO pixel_data = va_arg(pixelDatas, const immutable_texture_pixel_data_t*);
+		data[i].data = CAST_TO(void*, pixel_data->pixels);
+		data[i].width = pixel_data->width;
+		data[i].height = pixel_data->height;
+		data[i].depth = 1;
+		data[i].channel_count = 4;
+		com_assert(COM_DESCRIPTION(pixel_data->num_channels == 4), "For now number of channels in a texture must be 4, we will add support for variable number of channels later");
+	}
+
+	texture_t* texture = _texture_create(renderer, type, data, texture_count);
+
+	return texture;
+}
+
 SGE_API texture_t* texture_loadv(renderer_t* renderer, texture_type_t type, va_list file_paths)
 {
 	u32 file_path_count;

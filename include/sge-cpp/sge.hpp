@@ -89,6 +89,7 @@ namespace SGE
 		Mesh createMesh() noexcept { return Mesh(*this); }
 		Texture loadTexture(texture_type_t type, std::string_view str) noexcept { return Texture(*this, type, str); }
 		Texture loadTexture(texture_type_t type, const std::span<const u8> data) noexcept { return Texture(*this, type, data); }
+		Texture loadTexture(texture_type_t type, const u8* pixelData, u32 width, u32 height, u32 channels) noexcept { return Texture(*this, type, pixelData, width, height, channels); }
 
 		RenderWindow getRenderWindow() const noexcept { return RenderWindow(renderer_get_window(m_handle)); }
 	};

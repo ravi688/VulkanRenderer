@@ -138,6 +138,38 @@ SGE_API texture_t* texture_load(renderer_t* renderer, texture_type_t type, ...);
  */
 SGE_API texture_t* texture_load_mem(renderer_t* renderer, texture_type_t type, ...);
 
+typedef struct immutable_texture_pixel_data_t
+{
+	const u8* pixels;
+	const u32 width;
+	const u32 height;
+	const u32 num_channels;
+} immutable_texture_pixel_data_t;
+
+/*
+	description:
+		creates a texture of a type 'type' from in-memory buffer(s) of pixel data
+	params:
+		renderer: pointer to the renderer object
+		type: type of the texture, must be a valid texture_type_t
+		variable arguements: pointers immutable_texture_pixel_data_t object
+	returns:
+		pointer to the newly created texture object
+ */
+SGE_API texture_t* texture_load_pixels(renderer_t* renderer, texture_type_t type, ...);
+
+/*
+	description:
+		creates a texture of a type 'type' from in-memory buffer(s) of pixel data
+	params:
+		renderer: pointer to the renderer object
+		type: type of the texture, must be a valid texture_type_t
+		va_list: pointers immutable_texture_pixel_data_t object
+	returns:
+		pointer to the newly created texture object
+ */
+SGE_API texture_t* texture_load_pixelsv(renderer_t* renderer, texture_type_t type, va_list pixelDatas);
+
 /*
 	description:
 		creates a texture of a type 'type'
