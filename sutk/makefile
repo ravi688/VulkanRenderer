@@ -25,7 +25,7 @@ ifneq (,$(findstring Linux,$(PLATFORM_DETECT)))
 endif
 
 # FreeBSD
-ifneq (,$(findstring FreeBSD,$(PLATFORM_DETECT))
+ifneq (,$(findstring FreeBSD,$(PLATFORM_DETECT)))
 	PLATFORM := FreeBSD
 endif
 
