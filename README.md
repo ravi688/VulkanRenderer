@@ -171,6 +171,20 @@ For now, you would need to do the following:
 	pkg install pkgconf # for pkg-config
 ```
 
+#### For Building SUTK (Spectrum UI Toolkit library), you will need cmake
+##### On Linux
+```
+   apt install cmake
+```
+##### On Windows (MSYS)
+```
+   pacman -S cmake
+```
+##### On FreeBSD
+```
+   pkg install cmake
+```
+
 
 ### Runtime requirements
 
@@ -279,6 +293,21 @@ supported tests:
    ```
    $make -s clean
    ```
+
+### Building SUTK (Spectrum UI Toolkit)
+#### On Windows (MSYS)
+```
+$ cd sutk
+$ ./setup_lunasvg.sh
+$ make -s build-debug -j6
+```
+#### On Linux (Debian)
+```
+$ cd sutk
+$ chmod +x ./setup_lunasvg.sh
+$ sudo ./setup_lunasvg.sh
+$ make -s build-debug -j6
+```
 
 ## Features
 
