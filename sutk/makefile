@@ -38,8 +38,8 @@ DYNAMIC_LIB_NAME = sutk.dll
 EXECUTABLE_NAME = sutk
 MAIN_SOURCE_LANG = cpp
 MAIN_SOURCES= source/main.cpp
-EXTERNAL_INCLUDES =
-EXTERNAL_LIBRARIES = -L../toolchain/shader_compiler/external-dependency-libs -lshaderc_shared
+EXTERNAL_INCLUDES = $(shell pkg-config liblunasvg --cflags)
+EXTERNAL_LIBRARIES = -L../toolchain/shader_compiler/external-dependency-libs -lshaderc_shared $(shell pkg-config liblunasvg --libs)
 BUILD_DEFINES= -DSGE_VULKAN_DRIVER # TODO: no vulkan, opengl or directx defines should be required, the SGE library must keep the underlying API details into .c files
 
 DEPENDENCIES = 	../.. \

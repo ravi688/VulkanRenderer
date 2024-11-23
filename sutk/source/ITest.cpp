@@ -14,6 +14,7 @@
 #include <sutk/tests/HBoxTest.hpp>
 #include <sutk/tests/HPaneTest.hpp>
 #include <sutk/tests/RenderImageTest.hpp>
+#include <sutk/tests/LunaSVGTest.hpp>
 #include <sutk/tests/ThemeTest.hpp>
 #include <sutk/tests/ThemeLoadTest.hpp>
 #include <sutk/tests/TransientContTest.hpp>
@@ -51,7 +52,8 @@ namespace SUTK
 		{ "TOGGLE_BUTTON_GROUP", [] () { return std::unique_ptr<ITest>(new ToggleButtonGroupTest()); }},
 		{ "CONTAINER", [] () { return std::unique_ptr<ITest>(new ContainerTest()); }},
 		{ "FONT", [] () { return std::unique_ptr<ITest>(new FontTest()); }},
-		{ "NOTEBOOK", [] () { return std::unique_ptr<ITest>(new NotebookTest()); }}
+		{ "NOTEBOOK", [] () { return std::unique_ptr<ITest>(new NotebookTest()); }},
+		{ "LUNASVG", [] () { return std::unique_ptr<ITest>(new LunaSVGTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)
