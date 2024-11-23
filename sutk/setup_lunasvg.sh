@@ -3,7 +3,7 @@
 
 # example: BUILD_PATH=<my build path> ./<this script>.sh
 
-LUNASVG_GIT_REPO_PATH=https://github.com/sammycage/lunasvg.git
+LUNASVG_GIT_REPO_PATH=https://github.com/ravi688/lunasvg.git
 if [ -z $BUILD_PATH ]; then
 	BUILD_PATH=./setup_lunasvg.build.dir
 fi
