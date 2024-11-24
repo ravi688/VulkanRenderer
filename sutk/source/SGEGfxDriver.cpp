@@ -8,6 +8,8 @@
 
 #include <hpml/affine_transformation.h>
 
+#include <disk_manager/file_reader.h> // for load_text_from_file()
+
 #define BITMAP_TEXT_OVERLOAD_THRESHOLD 500 // 800 number of characters rewrite can be assumed to have near to zero latency
 
 namespace SUTK
@@ -876,7 +878,7 @@ namespace SUTK
 		}
 	}
 
-	std::pair<SGEMeshData, GfxDriverObjectHandleType> SGEGfxDriver::createMesh(const Geometry& geometry)
+	std::pair<SGEMeshData*, GfxDriverObjectHandleType> SGEGfxDriver::createMesh(const Geometry& geometry)
 	{
 		debug_log_info("[SGE] Creating new SGE::Mesh object");
 		SGE::Mesh mesh = m_driver.createMesh();
@@ -912,7 +914,7 @@ namespace SUTK
 
 		static_assert(sizeof(GfxDriverObjectHandleType) == sizeof(u64));
 
-		return { { mesh, shader }, static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(meshID, renderObjectID)) };
+		return { &m_meshMappings[meshID], static_cast<GfxDriverObjectHandleType>(BIT64_PACK32(meshID, renderObjectID)) };
 	}
 
 	void SGEGfxDriver::createOrUpdateVertexBuffer(SGE::Mesh mesh, const SGE::Mesh::VertexBufferCreateInfo& createInfo) noexcept
@@ -960,13 +962,33 @@ namespace SUTK
 
 	void SGEGfxDriver::getTextureAttributes(GfxDriverObjectHandleType texture, TextureAttributes& out)
 	{
-		SGE::Texture sgeTexture = getTexture(texture);
-		SGE::TextureAttributes attr;
-		sgeTexture.getAttributes(attr);
-		out.width = attr.width;
-		out.height = attr.height;
-		out.depth = attr.depth;
-		out.channelCount = attr.channel_count;
+		auto& texturePackage = m_textureData.get(texture);
+		com::Bool isSVG { texturePackage.path.ends_with(".svg") };
+		if(isSVG)
+		{
+			// If SVG document hasn't been created for this new svg data then create it
+			if(!texturePackage.svg.svgDocument)
+			{
+				BUFFER* data = load_text_from_file(texturePackage.path.c_str());
+				texturePackage.svg.svgDocument = lunasvg::Document::loadFromData(static_cast<const char*>(buf_get_ptr(data)));
+				buf_free(data);
+			}
+			auto& doc = texturePackage.svg.svgDocument;
+			out.width = doc->width();
+			out.height = doc->height();
+			out.depth = 1;
+			out.channelCount = 4;
+		}
+		else
+		{
+			SGE::Texture sgeTexture = getTexture(texture);
+			SGE::TextureAttributes attr;
+			sgeTexture.getAttributes(attr);
+			out.width = attr.width;
+			out.height = attr.height;
+			out.depth = attr.depth;
+			out.channelCount = attr.channel_count;
+		}
 	}
 
 	void SGEGfxDriver::unloadTexture(GfxDriverObjectHandleType handle)
@@ -987,16 +1009,97 @@ namespace SUTK
 		// TODO : unload the font from SGE Driver's side
 	}
 
-	SGE::Texture SGEGfxDriver::getTexture(GfxDriverObjectHandleType handle) noexcept
+	// This algorithm is expected to be 30% faster than regular 2*n number of comparisons algorithm as it computes the minimum and maximum in just 3/2 * n number of comparisons
+	static Vec2Df CalculateGeometryBounds(const std::vector<vec4_t>& vertices) noexcept
+	{
+		f32 minX = F32_INFINITY, maxX = F32_NEG_INFINITY, minY = F32_INFINITY, maxY = F32_NEG_INFINITY;
+		std::size_t count = vertices.size();
+		if(!count)
+			return { 0, 0 };
+		std::size_t i;
+		if(com::IsOdd(count))
+		{
+			minX = vertices[0].z;
+			minY = vertices[0].y;
+			i = 1;
+		}
+		else i = 0;
+		for(; i < count; i += 2)
+		{
+			auto minMax = com::GetMinMax(vertices[i].z, vertices[i + 1].z);
+			if(minX > minMax.first)
+				minX = minMax.first;
+			if(maxX < minMax.second)
+				maxX = minMax.second;
+			minMax = com::GetMinMax(vertices[i].y, vertices[i + 1].y);
+			if(minY > minMax.first)
+				minY = minMax.first;
+			if(maxY < minMax.second)
+				maxY = minMax.second;
+		}
+		_com_assert(i == count);
+		return { maxX - minX, maxY - minY };
+	}
+
+	// NOTE: 'handle' is the same as UIDriver::ImageReference
+	SGE::Texture SGEGfxDriver::getTexture(GfxDriverObjectHandleType handle, SGEMeshData* meshData) noexcept
 	{
 		if(handle == GFX_DRIVER_OBJECT_NULL_HANDLE)
 			return getDefaultTexture();
 
-		std::pair<std::string, SGE::Texture>& pair = m_textureData.get(handle);
+		auto& texturePackage = m_textureData.get(handle);
+		com::Bool isSVG { texturePackage.path.ends_with(".svg") };
+		if(meshData)
+			meshData->isVectorImageApplied = isSVG;
+		if(isSVG)
+		{
+			// If SVG document hasn't been created for this new svg data then create it
+			if(!texturePackage.svg.svgDocument)
+			{
+				BUFFER* data = load_text_from_file(texturePackage.path.c_str());
+				texturePackage.svg.svgDocument = lunasvg::Document::loadFromData(static_cast<const char*>(buf_get_ptr(data)));
+				buf_free(data);
+			}
+			Vec2D<s32> textureSizeInt;
+			if(meshData)
+			{
+				// Calculate the required texture size for pixel perfect appearance
+				auto textureSize = CalculateGeometryBounds(meshData->vertexTransformCache);
+				textureSizeInt = { static_cast<s32>(textureSize.x), static_cast<s32>(textureSize.y) };
+				auto& doc = texturePackage.svg.svgDocument;
+				if((textureSizeInt.x == doc->width()) && (textureSizeInt.y == doc->height()))
+					textureSizeInt = { -1 , -1 };
+			}
+			else
+				// See the lunasvg document. When we pass -1 values, lunasvg uses the default intrinsic dimensions of the svg file.
+				textureSizeInt = { -1 , - 1 };
+			// First check if a texture of the same size has already been rendered, if yes then use it
+			com::OptionalReference<SGE::Texture> texture = com::try_find_value(texturePackage.svg.renders, textureSizeInt);
+			if(texture.has_value())
+				return texture.value();
+			else
+			{
+				// Otherwise, render a new texture with the calculated size
+				std::cout << "Rendering new texture, with size: " << textureSizeInt << ", from svg document" << std::endl;
+				auto bitmap = texturePackage.svg.svgDocument->renderToBitmap(textureSizeInt.x, textureSizeInt.y);
+				if(bitmap.isNull())
+				{
+					DEBUG_LOG_ERROR("Failed to render svg file %s", texturePackage.path.c_str());
+					return getDefaultTexture();
+				}
+				bitmap.convertToRGBA();
+				if(meshData)
+					_com_assert((bitmap.width() == textureSizeInt.x) && (bitmap.height() == textureSizeInt.y));
+				SGE::Texture texture = m_driver.loadTexture(TEXTURE_TYPE_ALBEDO, bitmap.data(), bitmap.width(), bitmap.height(), 4);
+				// Now insert this into 'renders' list so that we can reuse it next if size matches.
+				texturePackage.svg.renders.insert({ textureSizeInt, texture });
+				return texture;
+			}
+		}
 		// TODO: Wait on the another thread to finish loading this texture
-		if(!pair.second)
-			pair.second = m_driver.loadTexture(TEXTURE_TYPE_ALBEDO, pair.first);
-		return pair.second;
+		if(!texturePackage.texture)
+			texturePackage.texture = m_driver.loadTexture(TEXTURE_TYPE_ALBEDO, texturePackage.path);
+		return texturePackage.texture;
 	}
 
 	SGE::Texture SGEGfxDriver::getDefaultTexture() noexcept
@@ -1013,22 +1116,25 @@ namespace SUTK
 	{
 		SGE::Mesh mesh;
 		SGE::Material material;
+		SGEMeshData* meshData;
 		GfxDriverObjectHandleType newHandle;
 
 		// if handle to the old compiled geometry has been provided, then we should use that one
 		// and no need to create new set of SGE objects
 		if(previous != GFX_DRIVER_OBJECT_NULL_HANDLE)
 		{
-			 mesh = getMeshIterator(previous)->second.mesh;
+			 meshData = &getMeshIterator(previous)->second;
+			 mesh = meshData->mesh;
 			 material = getRenderObjectIterator(previous)->second.getMaterial();
 			 newHandle = previous;
 		}
 		// otherwise, create new compiled geometry objects.
 		else
 		{
-			std::pair<SGEMeshData, GfxDriverObjectHandleType> result = createMesh(geometry);
+			std::pair<SGEMeshData*, GfxDriverObjectHandleType> result = createMesh(geometry);
 			newHandle = result.second;
-			mesh = result.first.mesh;
+			meshData = result.first;
+			mesh = result.first->mesh;
 			material = getRenderObjectIterator(result.second)->second.getMaterial();
 		}
 
@@ -1037,12 +1143,6 @@ namespace SUTK
 		{
 			Color4 color = geometry.getFillColor();
 			material.set<vec4_t>("parameters.color", to_vec4(color));
-		}
-		if(geometry.isFillImageModified())
-		{
-			UIDriver::ImageReference image = geometry.getFillImage();
-			SGE::Texture texture = getTexture(image);
-			material.set<SGE::Texture>("albedo", texture);
 		}
 
 		// if this is a SDF geometry and its parameters are modified, then we need to update the GPU side buffer
@@ -1083,25 +1183,34 @@ namespace SUTK
 		// NOTE: if a geometry need to be replicated (i.e. it is an array),
 		// it should be obvious that the original geometry information need to be updated whenever instance buffer data is modified
 		// that is to avoid vertices still using the previous window size while calculating SGE's coords from SUTK's coords.
-		if(geometry.isVertexPositionArrayModified() || (geometry.isArray() && geometry.isInstanceTransformArrayModified()))
+		com::Bool isVertexDataModified { geometry.isVertexPositionArrayModified() || (geometry.isArray() && geometry.isInstanceTransformArrayModified()) };
+		if(isVertexDataModified)
 		{
 			// convert vertex position array into SGE's coordinates and strides.
 			auto& positionArray = geometry.getVertexPositionArray();
-			vec4_t data[positionArray.size()];
+			meshData->vertexTransformCache.clear();
+			meshData->vertexTransformCache.reserve(positionArray.size());
 			for(u32 i = 0; i < positionArray.size(); ++i)
 			{
 				auto pos = SUTKToSGECoordTransform(positionArray[i]);
-				data[i] = { pos.x, pos.y, pos.z, 0.0f };
+				meshData->vertexTransformCache.push_back({ pos.x, pos.y, pos.z, 0.0f });
 			}
 
 			// prepare the vertex buffer create info struct
 			SGE::Mesh::VertexBufferCreateInfo createInfo = { };
-			createInfo.data = data,
+			createInfo.data = meshData->vertexTransformCache.data(),
 			createInfo.stride = sizeof(vec4_t),
 			createInfo.count = positionArray.size(),
 			createInfo.binding = 0;
 
 			createOrUpdateVertexBuffer(mesh, createInfo);
+		}
+
+		if(geometry.isFillImageModified() || (meshData->isVectorImageApplied && isVertexDataModified))
+		{
+			UIDriver::ImageReference image = geometry.getFillImage();
+			SGE::Texture texture = getTexture(image, meshData);
+			material.set<SGE::Texture>("albedo", texture);
 		}
 
 		if(geometry.isVertexTexCoordArrayModified())

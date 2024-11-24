@@ -19,6 +19,7 @@ namespace SUTK
 			.topology(Geometry::Topology::TriangleList)
 			.quad(0, 1, 2, 3)
 			.fillColor(getColor())
+			// Set white (default) image
 			.fillImage();
 
 		// It is necessarry whenever we modify the 'image' member of Geometry class

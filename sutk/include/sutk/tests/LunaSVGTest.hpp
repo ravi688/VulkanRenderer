@@ -15,11 +15,12 @@ namespace SUTK
 	private:
 		UIDriver* m_uiDriver;
 		IGfxDriver* m_gfxDriver;
+		IInputDriver* m_inputDriver;
 		RenderImage* m_renderRect;
 		RenderableContainer* m_renderRectContainer;
 
 	public:
-		LunaSVGTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }
+		LunaSVGTest() : m_uiDriver(NULL), m_gfxDriver(NULL), m_inputDriver(NULL) { }
 
 		DriverInitializationData getInitializationData() override;
 

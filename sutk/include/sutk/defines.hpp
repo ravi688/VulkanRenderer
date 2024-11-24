@@ -48,6 +48,7 @@ namespace SUTK
 
 
 	#define F32_INFINITY std::numeric_limits<f32>::max()
+	#define F32_NEG_INFINITY std::numeric_limits<f32>::min()
 
 	template<typename T>
 	struct NegativeSign { };
@@ -106,6 +107,10 @@ namespace SUTK
 		Vec2D<T> operator /(const Vec2D<T>& v) const noexcept { return  { x / v.x, y / v.y }; }
 		Vec2D<T>& operator +=(const Vec2D<T>& v) noexcept { x += v.x; y += v.y; return *this; }
 		Vec2D<T>& operator -=(const Vec2D<T>& v) noexcept { x -= v.x; y -= v.y; return *this; }
+		Vec2D<T>& operator *=(const Vec2D<T>& v) noexcept { x *= v.x; y *= v.y; return *this; }
+		Vec2D<T>& operator *=(const T& v) noexcept { x *= v; y *= v; return *this; }
+		Vec2D<T>& operator /=(const Vec2D<T>& v) noexcept { x /= v.x; y /= v.y; return *this; }
+		Vec2D<T>& operator /=(const T& v) noexcept { x /= v; y /= v; return *this; }
 
 		// relational operator overloads
 		bool operator >=(const Vec2D<T>& v) const noexcept
@@ -214,6 +219,10 @@ namespace SUTK
 		Vec3D<T> operator *(T s) const noexcept { return { x * s, y * s, z * s }; }
 		Vec3D<T>& operator +=(const Vec3D<T>& v) noexcept { x += v.x; y += v.y; z += v.z; return *this; }
 		Vec3D<T>& operator -=(const Vec3D<T>& v) noexcept { x -= v.x; y -= v.y; z -= v.z; return *this; }
+		Vec3D<T>& operator *=(const Vec3D<T>& v) noexcept { x *= v.x; y *= v.y; z *= v.z; return *this; }
+		Vec3D<T>& operator *=(const T& v) noexcept { x *= v; y *= v; z *= v; return *this; }
+		Vec3D<T>& operator /=(const Vec3D<T>& v) noexcept { x /= v.x; y /= v.y; z /= v.z; return *this; }
+		Vec3D<T>& operator /=(const T& v) noexcept { x /= v; y /= v; z /= v; return *this; }
 
 		// implicit conversion operator overloads
 		template<typename U>
@@ -608,4 +617,24 @@ namespace SUTK
 	typedef Vec2D<f32> Vec2Df;
 	typedef Vec3D<f32> Vec3Df;
 	typedef Rect2D<f32> Vec4Df;
+
+	template<std::integral T>
+	struct Vec2DHash
+	{
+		constexpr std::size_t operator()(const Vec2D<T>& value) const noexcept
+		{
+			std::size_t hash1 = std::hash<T> { } (value.x);
+			std::size_t hash2 = std::hash<T> { } (value.y);
+			return hash1 ^ hash2;
+		}
+	};
+
+	template<std::integral T>
+	struct Vec2DEqualTo
+	{
+		constexpr bool operator()(const Vec2D<T>& value1, const Vec2D<T>& value2) const noexcept
+		{
+			return value1 == value2;
+		}
+	};
 }

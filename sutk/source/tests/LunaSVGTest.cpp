@@ -3,33 +3,25 @@
 #include <sutk/RenderImage.hpp>
 #include <sutk/RenderRectFill.hpp>
 #include <sutk/SGEGfxDriver.hpp>
+#include <sutk/SGEInputDriver.hpp>
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
-
-#include <lunasvg/lunasvg.h>
-
-#include <disk_manager/file_reader.h>
 
 namespace SUTK
 {
 	DriverInitializationData LunaSVGTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "LunaSVG Test";
+		data.title = "LunaSVG Test (press B to increase size, press C to decrease size)";
 		return data;
 	}
 
 	void LunaSVGTest::initialize(SGE::Driver& driver)
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
-		m_uiDriver = new UIDriver(*m_gfxDriver);
-		BUFFER* data = load_text_from_file("svg_files/close-cross-symbol-in-a-circle-svgrepo-com.svg");
-		auto svgDoc = lunasvg::Document::loadFromData(static_cast<const char*>(buf_get_ptr(data)));
-		auto svgRenderResult = svgDoc->renderToBitmap();
-		_com_assert(!svgRenderResult.isNull());
-		svgRenderResult.convertToRGBA();
-		UIDriver::ImageReference image = m_uiDriver->loadImage(svgRenderResult.data(), svgRenderResult.width(), svgRenderResult.height(), 4);
-		buf_free(data);
+		m_inputDriver = new SGEInputDriver(driver);
+		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
+		UIDriver::ImageReference image = m_uiDriver->loadImage("svg_files/close-cross-symbol-in-a-circle-svgrepo-com.svg");
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		Container* emptyContainer = m_uiDriver->createContainer<Container>(rootContainer);
 		emptyContainer->setRect({ 1.0f, 1.0f, 7.0f, 7.0f });
@@ -54,6 +46,22 @@ namespace SUTK
 		anchor2->setTopLeft({ 0.0f, 0.0f });
 		anchor2->setBottomRight({ 1.0f, 1.0f });
 		renderRect2->setColor(Color4::red());
+
+		m_inputDriver->getOnKeyEvent().subscribe([this](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
+		{
+			if((keycode == KeyCode::B) && (event == KeyEvent::Press))
+			{
+				auto size = m_renderRectContainer->getSize();
+				size *= 1.2f;
+				m_renderRectContainer->setSize(size);
+			}
+			else if((keycode == KeyCode::C) && (event == KeyEvent::Press))
+			{
+				auto size = m_renderRectContainer->getSize();
+				size /= 1.2f;
+				m_renderRectContainer->setSize(size);
+			}
+		});
 	}
 
 	void LunaSVGTest::terminate(SGE::Driver& driver)

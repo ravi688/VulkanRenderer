@@ -10,6 +10,8 @@
 #include <common/id_generator.h> /* for id_generator */
 #include <common/IDMap.hpp> // for com::IDMap
 
+#include <lunasvg/lunasvg.h> // for lunasvg::Document namespace
+
 namespace SUTK
 {	
 	struct SGEBitmapTextData
@@ -31,6 +33,8 @@ namespace SUTK
 	{
 		SGE::Mesh mesh;
 		SGE::Shader shader;
+		std::vector<vec4_t> vertexTransformCache;
+		com::Bool isVectorImageApplied;
 	};
 
 	enum class ObjectType : u8
@@ -65,7 +69,19 @@ namespace SUTK
 		std::unordered_map<id_generator_id_type_t, SGEMeshData> m_meshMappings;
 		std::unordered_map<GfxDriverObjectHandleType, SGEBitmapTextStringData> m_bitmapTextStringMappings;
 		std::unordered_map<id_generator_id_type_t, SGE::RenderObject> m_renderObjectMappings;
-		com::IDMap<std::pair<std::string, SGE::Texture>> m_textureData;
+		struct SVGRenderData
+		{
+			std::unique_ptr<lunasvg::Document> svgDocument;
+			std::unordered_map<Vec2D<s32>, SGE::Texture, Vec2DHash<s32>, Vec2DEqualTo<s32>> renders;
+		};
+		struct TexturePackage
+		{
+			std::string path;
+			SGE::Texture texture;
+			SVGRenderData svg;
+		};
+
+		com::IDMap<TexturePackage> m_textureData;
 		com::IDMap<std::pair<std::string, SGE::Font>> m_fontData;
 		std::unordered_map<id_generator_id_type_t, ObjectType> m_typeTable;
 		template<typename T>
@@ -99,9 +115,10 @@ namespace SUTK
 		SGE::BitmapTextString getText(GfxDriverObjectHandleType handle);
 		std::unordered_map<id_generator_id_type_t, SGEMeshData>::iterator
 		getMeshIterator(GfxDriverObjectHandleType handle);
-		std::pair<SGEMeshData, GfxDriverObjectHandleType> createMesh(const Geometry& geometry);
+		std::pair<SGEMeshData*, GfxDriverObjectHandleType> createMesh(const Geometry& geometry);
 		void createOrUpdateVertexBuffer(SGE::Mesh mesh, const SGE::Mesh::VertexBufferCreateInfo& createInfo) noexcept;
-		SGE::Texture getTexture(GfxDriverObjectHandleType handle) noexcept;
+		// param: sizeHint is needed for vector images
+		SGE::Texture getTexture(GfxDriverObjectHandleType handle, SGEMeshData* meshData = com::null_pointer<SGEMeshData>()) noexcept;
 		// If called for the first time, then it loads a white image,
 		// Subsequent calls return the cached reference to earlier loaded white image.
 		SGE::Texture getDefaultTexture() noexcept;
