@@ -9,5 +9,6 @@ Theme
     SmallButton.HoverColor = red { 1.0f };
     SmallButton.PressColor = grey { 1.0f };
     Folder.Open = "../textures/Smile.bmp";
+    Folder.Open.VG = "svg_files/apple-svgrepo-com.svg";
     Folder.Close = "icons/Folder-Close.png";
 }

@@ -48,6 +48,22 @@ namespace SUTK
 		m_renderRect = m_uiDriver->createRenderable<RenderImage>(m_renderRectContainer);
 		themeInt->bind<UIDriver::ImageReference>("Folder.Open", std::bind(&RenderImage::setImage, m_renderRect, std::placeholders::_1));
 
+		Container* emptyContainer1 = m_uiDriver->createContainer<Container>(rootContainer);
+		emptyContainer1->setRect({ 1.0f, 1.0f, 7.0f, 7.0f });
+		AnchorRect* anchor1 = emptyContainer1->getAnchorRect();
+		anchor1->setTopLeft({ 0, 0 });
+		anchor1->setBottomRight({ 1, 1 });
+		RenderableContainer* renderRectContainer1 = m_uiDriver->createContainer<RenderableContainer>(emptyContainer1);
+		renderRectContainer1->setRect({ 7.0f, 1.0f, 5, 5 });
+		anchor1 = renderRectContainer1->getAnchorRect();
+		anchor1->setTopLeft({ 1, 1 });
+		anchor1->setBottomRight({ 1, 1 });
+		emptyContainer1->setRect({ 1.0f, 1.0f, 9.0f, 7.0f });
+		emptyContainer1->setRect({ 1.0f, 1.0f, 11.0f, 7.0f });
+		RenderImage* renderImage = m_uiDriver->createRenderable<RenderImage>(renderRectContainer1);
+		themeInt->bind<UIDriver::ImageReference>("Folder.Open.VG", std::bind(&RenderImage::setImage, renderImage, std::placeholders::_1));
+		renderImage->setColor(Color4::white());
+
 		RenderableContainer* renderRectContainer2 = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
 		RenderRectFill* renderRect2 = m_uiDriver->createRenderable<RenderRectFill>(renderRectContainer2);
 		renderRectContainer2->setRect({ 5.0f, 10.0f, 5.0f, 5.0f });

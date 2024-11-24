@@ -9,5 +9,6 @@ Theme
     SmallButton.HoverColor = red { 1.0f };
     SmallButton.PressColor = grey { 1.0f };
     Folder.Open = "../textures/Thalita-Torres-Office-Archive-folders.512.png";
+    Folder.Open.VG = "svg_files/close-cross-symbol-in-a-circle-svgrepo-com.svg";
     Folder.Close = "icons/Folder-Close.png";
 }

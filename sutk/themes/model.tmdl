@@ -16,5 +16,7 @@ ThemeModel
 	[Image]
 	Folder.Open;
 	[Image]
+	Folder.Open.VG;
+	[Image]
 	Folder.Close;
 }
