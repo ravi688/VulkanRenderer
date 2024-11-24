@@ -148,6 +148,10 @@ namespace SUTK
 		// parent getters
 		Container* getParent() { return m_parent; }
 		const Container* getParent() const { return m_parent; }
+		template<std::derived_from<Container> ParentType>
+		ParentType* getParentAs() noexcept { return dynamic_cast<ParentType*>(getParent()); }
+		template<std::derived_from<Container> ParentType>
+		const ParentType* getParentAs() const noexcept { return dynamic_cast<const ParentType*>(getParent()); }
 		// parent setters
 		void setParent(Container* parent, bool isInvariantPos = true) noexcept;
 
