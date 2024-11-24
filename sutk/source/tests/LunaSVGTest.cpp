@@ -12,7 +12,7 @@ namespace SUTK
 	DriverInitializationData LunaSVGTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "LunaSVG Test (press B to increase size, press C to decrease size)";
+		data.title = "LunaSVG Test (for first cross, press B to increase size, press C to decrease size, for second cross press A and D)";
 		return data;
 	}
 
@@ -40,14 +40,15 @@ namespace SUTK
 		m_renderRect->setImage(image);
 
 		RenderableContainer* renderRectContainer2 = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
-		RenderRectFill* renderRect2 = m_uiDriver->createRenderable<RenderRectFill>(renderRectContainer2);
+		RenderImage* renderRect2 = m_uiDriver->createRenderable<RenderImage>(renderRectContainer2);
 		renderRectContainer2->setRect({ 5.0f, 10.0f, 5.0f, 5.0f });
 		AnchorRect* anchor2 = renderRectContainer2->getAnchorRect();
 		anchor2->setTopLeft({ 0.0f, 0.0f });
 		anchor2->setBottomRight({ 1.0f, 1.0f });
 		renderRect2->setColor(Color4::red());
+		renderRect2->setImage(image);
 
-		m_inputDriver->getOnKeyEvent().subscribe([this](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
+		m_inputDriver->getOnKeyEvent().subscribe([this, renderRectContainer2](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
 		{
 			if((keycode == KeyCode::B) && (event == KeyEvent::Press))
 			{
@@ -60,6 +61,18 @@ namespace SUTK
 				auto size = m_renderRectContainer->getSize();
 				size /= 1.2f;
 				m_renderRectContainer->setSize(size);
+			}
+			else if((keycode == KeyCode::A) && (event == KeyEvent::Press))
+			{
+				auto size = renderRectContainer2->getSize();
+				size *= 1.2f;
+				renderRectContainer2->setSize(size);
+			}
+			else if((keycode == KeyCode::D) && (event == KeyEvent::Press))
+			{
+				auto size = renderRectContainer2->getSize();
+				size /= 1.2f;
+				renderRectContainer2->setSize(size);
 			}
 		});
 	}
