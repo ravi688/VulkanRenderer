@@ -97,18 +97,15 @@ namespace SUTK
 		for(auto it = m_renderables.begin(); it != m_renderables.end(); it++)
 		{
 			Renderable* renderable = *it;
+			if(!isRerender && renderable->isRedraw())
+			{
+				isRerender = com::True;
+				renderable->setRedraw(com::False);
+			}
 			if(renderable->isDirty())
-			{
 				renderable->update();
-				if(!isRerender)
-					isRerender = com::True;
-			}
 			if(renderable->isDrawOrderDirty())
-			{
 				isRecalculateDrawOrder = true;
-				if(!isRerender)
-					isRerender = com::True;
-			}
 			u32 drawOrder = renderable->getDrawOrder();
 			if(drawOrder < minDrawOrder)
 				minDrawOrder = drawOrder;

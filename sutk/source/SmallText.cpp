@@ -219,6 +219,7 @@ namespace SUTK
 	void SmallText::setFont(UIDriver::FontReference font) noexcept
 	{
 		getGfxDriver().setTextFont(getGfxDriverObjectHandle(), font);
+		redraw();
 	}
 	f32 SmallText::getBaselineHeight() noexcept
 	{
