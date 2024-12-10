@@ -129,7 +129,6 @@ namespace SUTK
 
 		if(isRerender)
 		{
-			std::cout << "Rendering" << std::endl;
 			// now record and dispatch rendering commands (delegated that to rendering backend)
 			m_gfxDriver.render(*this);
 		}
