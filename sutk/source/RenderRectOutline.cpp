@@ -67,6 +67,7 @@ namespace SUTK
 			array[5] = static_cast<Vec2Df>(bottomRight) - upLeft;
 			array[6] = static_cast<Vec2Df>(bottomLeft) + upRight;
 			array[7] = static_cast<Vec2Df>(bottomLeft) - upRight;
+			m_isThicknessDirty = false;
 		}
 
 		RenderRect::update();
