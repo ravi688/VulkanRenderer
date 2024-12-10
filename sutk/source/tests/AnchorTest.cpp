@@ -7,10 +7,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData AnchorTest::getInitializationData()
+	ITest::TestInitializationData AnchorTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Anchor Test";
+		data.driverInitializationData.title = "Anchor Test";
 		return data;
 	}
 

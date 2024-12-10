@@ -11,10 +11,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData ImageButtonGraphicTest::getInitializationData()
+	ITest::TestInitializationData ImageButtonGraphicTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Image Button Graphic Test";
+		data.driverInitializationData.title = "Image Button Graphic Test";
 		return data;
 	}
 

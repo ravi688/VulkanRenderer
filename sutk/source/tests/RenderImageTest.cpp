@@ -8,10 +8,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData RenderImageTest::getInitializationData()
+	ITest::TestInitializationData RenderImageTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Render Image Test";
+		data.driverInitializationData.title = "Render Image Test";
 		return data;
 	}
 

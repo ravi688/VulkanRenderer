@@ -7,10 +7,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData RoundRectTest::getInitializationData()
+	ITest::TestInitializationData RoundRectTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Round Rect Test (SDF)";
+		data.driverInitializationData.title = "Round Rect Test (SDF)";
 		return data;
 	}
 

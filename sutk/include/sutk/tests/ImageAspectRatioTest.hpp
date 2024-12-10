@@ -22,7 +22,7 @@ namespace SUTK
 	public:
 		ImageAspectRatioTest() : m_uiDriver(NULL), m_gfxDriver(NULL), m_inputDriver(NULL) { }
 
-		DriverInitializationData getInitializationData() override;
+		TestInitializationData getInitializationData() override;
 
 		void initialize(SGE::Driver& driver) override;
 

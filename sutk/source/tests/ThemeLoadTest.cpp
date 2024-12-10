@@ -10,10 +10,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData ThemeLoadTest::getInitializationData()
+	ITest::TestInitializationData ThemeLoadTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Theme Load Test (press B to toggle themes)";
+		data.driverInitializationData.title = "Theme Load Test (press B to toggle themes)";
 		return data;
 	}
 

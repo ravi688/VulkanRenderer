@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sge-cpp/sge.hpp>
+#include <common/Bool.hpp> // for com::Bool
 
 #include <memory>
 
@@ -24,9 +25,17 @@ namespace SUTK
 
 		static std::unique_ptr<ITest> Create(const std::string& testName);
 
-		virtual DriverInitializationData getInitializationData()
+		struct TestInitializationData
 		{
-			DriverInitializationData data = {
+			DriverInitializationData driverInitializationData;
+			com::Bool isBeginEndDispatchFrame;
+		};
+
+		virtual TestInitializationData getInitializationData()
+		{
+			TestInitializationData data;
+			data.driverInitializationData = 
+			{
 				SGE::GPUType::Discrete,
 				800,
 				800,
@@ -34,6 +43,8 @@ namespace SUTK
 				false,
 				true
 			};
+			// By default do not call beginFrame() before render(), and endFrame() after render(); and then dispatchFrame()
+			data.isBeginEndDispatchFrame = com::False;
 			return data;
 		}
 		virtual void initialize(SGE::Driver& driver) { }

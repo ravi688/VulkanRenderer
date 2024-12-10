@@ -18,9 +18,7 @@ namespace SUTK
 	{
 		return {static_cast<DisplaySizeType>(pair.first), static_cast<DisplaySizeType>(pair.second)};
 	}
-	SGEGfxDriver::SGEGfxDriver(SGE::Driver& driver, bool autoCmdRecordAndExecute) : m_driver(driver), 
-																					m_autoCmdRecordAndExecute(autoCmdRecordAndExecute),
-																					m_id_generator(id_generator_create(0, NULL))
+	SGEGfxDriver::SGEGfxDriver(SGE::Driver& driver) : m_driver(driver), m_id_generator(id_generator_create(0, NULL))
 	{
 		driver.getRenderWindow().getOnResizeEvent().subscribe(
 					[](void* publisher, void* handlerData)
@@ -91,9 +89,8 @@ namespace SUTK
 
 	void SGEGfxDriver::render(UIDriver& driver)
 	{
-		if(m_autoCmdRecordAndExecute)
-			// begin command buffer recording
-			m_driver.beginFrame();
+		// begin command buffer recording
+		m_driver.beginFrame();
 
 		// update device side memory of the BGA texture
 		m_bgaTexture.commit(NULL);
@@ -101,13 +98,10 @@ namespace SUTK
 		// record commands
 		m_scene.render(RENDER_SCENE_ALL_QUEUES, RENDER_SCENE_CLEAR);
 
-		if(m_autoCmdRecordAndExecute)
-		{
-			// end command buffer recording
-			m_driver.endFrame();
-			// dispatch the command buffers for execution on GPU
-			m_driver.dispatchFrame();
-		}
+		// end command buffer recording
+		m_driver.endFrame();
+		// dispatch the command buffers for execution on GPU
+		m_driver.dispatchFrame();
 	}
 
 	#define GET_RENDER_OBJECT_ID(gfxDriverObjectHandle) get_render_object_id(gfxDriverObjectHandle)

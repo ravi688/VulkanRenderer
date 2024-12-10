@@ -10,10 +10,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData ToggleButtonGroupTest::getInitializationData()
+	ITest::TestInitializationData ToggleButtonGroupTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Toggle Button Group Test";
+		data.driverInitializationData.title = "Toggle Button Group Test";
 		return data;
 	}
 

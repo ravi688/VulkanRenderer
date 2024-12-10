@@ -29,7 +29,7 @@ namespace SUTK
 	public:
 		BitmapTextTest() = default;
 
-		DriverInitializationData getInitializationData() override;
+		TestInitializationData getInitializationData() override;
 
 		void initialize(SGE::Driver& driver) override;
 

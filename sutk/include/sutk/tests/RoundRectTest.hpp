@@ -21,7 +21,7 @@ namespace SUTK
 	public:
 		RoundRectTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }
 
-		DriverInitializationData getInitializationData() override;
+		TestInitializationData getInitializationData() override;
 
 		void initialize(SGE::Driver& driver) override;
 

@@ -10,10 +10,11 @@
 
 namespace SUTK
 {
-	DriverInitializationData BitmapTextTest::getInitializationData()
+	ITest::TestInitializationData BitmapTextTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Bitmap Text Test";
+		data.driverInitializationData.title = "Bitmap Text Test";
+		data.isBeginEndDispatchFrame = com::True;
 		return data;
 	}
 

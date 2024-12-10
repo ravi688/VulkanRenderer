@@ -8,10 +8,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData MouseTest::getInitializationData()
+	ITest::TestInitializationData MouseTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Mouse Test";
+		data.driverInitializationData.title = "Mouse Test";
 		return data;
 	}
 

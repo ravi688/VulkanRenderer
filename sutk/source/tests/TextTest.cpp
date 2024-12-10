@@ -9,10 +9,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData TextTest::getInitializationData()
+	ITest::TestInitializationData TextTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Text Test";
+		data.driverInitializationData.title = "Text Test";
 		return data;
 	}
 

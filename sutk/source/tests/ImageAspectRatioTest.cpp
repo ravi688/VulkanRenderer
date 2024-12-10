@@ -9,10 +9,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData ImageAspectRatioTest::getInitializationData()
+	ITest::TestInitializationData ImageAspectRatioTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Image Aspect Ratio Test (Press B to toggle Aspect Ratio Preserve)";
+		data.driverInitializationData.title = "Image Aspect Ratio Test (Press B to toggle Aspect Ratio Preserve)";
 		return data;
 	}
 

@@ -144,7 +144,7 @@ namespace SUTK
 	public:
 
 		// Constructors
-		SGEGfxDriver(SGE::Driver& driver, bool autoCmdRecordAndExecute = false);
+		SGEGfxDriver(SGE::Driver& driver);
 		// Destructor
 		~SGEGfxDriver();
 

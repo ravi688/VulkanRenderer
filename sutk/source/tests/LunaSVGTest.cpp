@@ -9,10 +9,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData LunaSVGTest::getInitializationData()
+	ITest::TestInitializationData LunaSVGTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "LunaSVG Test (for first cross, press B to increase size, press C to decrease size, for second cross press A and D)";
+		data.driverInitializationData.title = "LunaSVG Test (for first cross, press B to increase size, press C to decrease size, for second cross press A and D)";
 		return data;
 	}
 

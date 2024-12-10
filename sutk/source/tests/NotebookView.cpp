@@ -7,10 +7,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData NotebookTest::getInitializationData()
+	ITest::TestInitializationData NotebookTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Notebook Test";
+		data.driverInitializationData.title = "Notebook Test";
 		return data;
 	}
 

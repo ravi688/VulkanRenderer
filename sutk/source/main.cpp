@@ -16,7 +16,8 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	SUTK::DriverInitializationData data = test->getInitializationData();
+	auto testInitData = test->getInitializationData();
+	SUTK::DriverInitializationData& data = testInitData.driverInitializationData;
 
 	SGE::Driver driver(data.gpuType, data.width, data.height, data.title, data.fullScreen, data.resizable, SGE::Requirements { /* require bitmap text: */ true });
 	test->initialize(driver);
@@ -25,14 +26,19 @@ int main(int argc, char** argv)
 
 	while(driver.isRunning())
 	{
-		// begin command buffer recording
-		driver.beginFrame();
+		if(testInitData.isBeginEndDispatchFrame)
+		{
+			// begin command buffer recording
+			driver.beginFrame();
+		}
 		test->render(driver);
-		// end command buffer recording 
-		driver.endFrame();
-
-		// dispatch the command buffers for execution
-		driver.dispatchFrame();
+		if(testInitData.isBeginEndDispatchFrame)
+		{
+			// end command buffer recording 
+			driver.endFrame();
+			// dispatch the command buffers for execution
+			driver.dispatchFrame();
+		}
 
 		driver.pollEvents();
 

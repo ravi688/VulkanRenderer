@@ -89,6 +89,7 @@ namespace SUTK
 		if(m_runnables.size() != 0)
 			m_runnables.traverse(IRunnable::Update);
 
+		com::Bool isRerender = com::False;
 		bool isRecalculateDrawOrder = false;
 		u32 minDrawOrder = std::numeric_limits<u32>::max();
 		u32 maxDrawOrder = 0;
@@ -97,9 +98,17 @@ namespace SUTK
 		{
 			Renderable* renderable = *it;
 			if(renderable->isDirty())
+			{
 				renderable->update();
+				if(!isRerender)
+					isRerender = com::True;
+			}
 			if(renderable->isDrawOrderDirty())
+			{
 				isRecalculateDrawOrder = true;
+				if(!isRerender)
+					isRerender = com::True;
+			}
 			u32 drawOrder = renderable->getDrawOrder();
 			if(drawOrder < minDrawOrder)
 				minDrawOrder = drawOrder;
@@ -121,8 +130,12 @@ namespace SUTK
 			}
 		}
 
-		// now record and dispatch rendering commands (delegated that to rendering backend)
-		m_gfxDriver.render(*this);
+		if(isRerender)
+		{
+			std::cout << "Rendering" << std::endl;
+			// now record and dispatch rendering commands (delegated that to rendering backend)
+			m_gfxDriver.render(*this);
+		}
 	}
 
 

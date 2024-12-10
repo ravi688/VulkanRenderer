@@ -35,10 +35,10 @@ namespace SUTK
 
 namespace SUTK
 {
-	DriverInitializationData TransientContTest::getInitializationData()
+	ITest::TestInitializationData TransientContTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Transient Container Test";
+		data.driverInitializationData.title = "Transient Container Test";
 		return data;
 	}
 

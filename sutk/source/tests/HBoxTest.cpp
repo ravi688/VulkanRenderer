@@ -8,10 +8,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData HBoxTest::getInitializationData()
+	ITest::TestInitializationData HBoxTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Horizontal Box Container Test";
+		data.driverInitializationData.title = "Horizontal Box Container Test";
 		return data;
 	}
 

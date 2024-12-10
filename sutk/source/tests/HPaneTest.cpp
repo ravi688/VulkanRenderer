@@ -9,10 +9,10 @@
 
 namespace SUTK
 {
-	DriverInitializationData HPaneTest::getInitializationData()
+	ITest::TestInitializationData HPaneTest::getInitializationData()
 	{
 		auto data = ITest::getInitializationData();
-		data.title = "Horizontal Pane Container Test";
+		data.driverInitializationData.title = "Horizontal Pane Container Test";
 		return data;
 	}
 
