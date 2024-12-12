@@ -48,7 +48,7 @@ namespace SUTK
 
 
 	#define F32_INFINITY std::numeric_limits<f32>::max()
-	#define F32_NEG_INFINITY std::numeric_limits<f32>::min()
+	#define F32_NEG_INFINITY std::numeric_limits<f32>::lowest()
 
 	template<typename T>
 	struct NegativeSign { };
