@@ -66,6 +66,8 @@ namespace SUTK
 		return m_tab->getIndex();
 	}
 
+	UIDriver::ImageReference TabView::s_closeIcon = UIDriver::InvalidImage;
+
 	TabView::TabView(UIDriver& driver, Container* parent) noexcept : Button(driver, parent, /* isCreateDefaultGraphic: */ true)
 	{
 		m_graphic = getGraphicAs<DefaultButtonGraphic>();
@@ -85,6 +87,9 @@ namespace SUTK
 								 CLOSE_BUTTON_WIDTH, CLOSE_BUTTON_HEIGHT });
 		m_closeButton->getAnchorRect()->moveToRightMiddleOfParent();
 		m_closeButtonGraphic = driver.createContainer<ImageButtonGraphic>(m_closeButton);
+		if(!s_closeIcon)
+			s_closeIcon = driver.loadImage("svg_files/close-square-svgrepo-com.svg");
+		m_closeButtonGraphic->setImage(s_closeIcon);
 	}
 
 	TabView::~TabView() noexcept

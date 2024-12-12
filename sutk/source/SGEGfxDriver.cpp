@@ -1014,17 +1014,22 @@ namespace SUTK
 		if(com::IsOdd(count))
 		{
 			minX = vertices[0].z;
+			maxX = minX;
 			minY = vertices[0].y;
+			maxY = minY;
 			i = 1;
 		}
 		else i = 0;
 		for(; i < count; i += 2)
 		{
+			// 3 Comparisons
 			auto minMax = com::GetMinMax(vertices[i].z, vertices[i + 1].z);
 			if(minX > minMax.first)
 				minX = minMax.first;
 			if(maxX < minMax.second)
 				maxX = minMax.second;
+
+			// 3 Comparisons
 			minMax = com::GetMinMax(vertices[i].y, vertices[i + 1].y);
 			if(minY > minMax.first)
 				minY = minMax.first;
@@ -1203,8 +1208,10 @@ namespace SUTK
 		if(geometry.isFillImageModified() || (meshData->isVectorImageApplied && isVertexDataModified))
 		{
 			UIDriver::ImageReference image = geometry.getFillImage();
-			SGE::Texture texture = getTexture(image, meshData);
-			material.set<SGE::Texture>("albedo", texture);
+			SGE::Texture texture = getTexture(image.getHandle(), meshData);
+			SGE::Texture prevTexture = material.get<SGE::Texture>("albedo");
+			if(prevTexture != texture)
+				material.set<SGE::Texture>("albedo", texture);
 		}
 
 		if(geometry.isVertexTexCoordArrayModified())

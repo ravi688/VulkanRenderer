@@ -74,6 +74,30 @@ namespace SUTK
 				size /= 1.2f;
 				renderRectContainer2->setSize(size);
 			}
+			else if((keycode == KeyCode::RightArrow) && ((event == KeyEvent::Press) || (event == KeyEvent::Repeat)))
+			{
+				auto pos = m_renderRectContainer->getPosition();
+				pos += Vec2Df::right() * 0.1f;
+				m_renderRectContainer->setPosition(pos);
+			}
+			else if((keycode == KeyCode::LeftArrow) && ((event == KeyEvent::Press) || (event == KeyEvent::Repeat)))
+			{
+				auto pos = m_renderRectContainer->getPosition();
+				pos += Vec2Df::left() * 0.1f;
+				m_renderRectContainer->setPosition(pos);
+			}
+			else if((keycode == KeyCode::UpArrow) && ((event == KeyEvent::Press) || (event == KeyEvent::Repeat)))
+			{
+				auto pos = m_renderRectContainer->getPosition();
+				pos += Vec2Df::up() * 0.5f;
+				m_renderRectContainer->setPosition(pos);
+			}
+			else if((keycode == KeyCode::DownArrow) && ((event == KeyEvent::Press) || (event == KeyEvent::Repeat)))
+			{
+				auto pos = m_renderRectContainer->getPosition();
+				pos += Vec2Df::down() * 0.5f;
+				m_renderRectContainer->setPosition(pos);
+			}
 		});
 	}
 

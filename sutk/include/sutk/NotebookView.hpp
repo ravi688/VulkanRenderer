@@ -80,6 +80,7 @@ namespace SUTK
 		DefaultButtonGraphic* m_graphic;
 		Button* m_closeButton;
 		ImageButtonGraphic* m_closeButtonGraphic;
+		static UIDriver::ImageReference s_closeIcon;
 	public:
 		TabView(UIDriver& driver, Container* parent) noexcept;
 		~TabView() noexcept;

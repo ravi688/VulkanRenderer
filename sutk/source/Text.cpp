@@ -196,7 +196,7 @@ namespace SUTK
 
 	void Text::setFont(UIDriver::FontReference font) noexcept
 	{
-		getGfxDriver().setTextGroupFont(m_textGroup, font);
+		getGfxDriver().setTextGroupFont(m_textGroup, font.getHandle());
 	}
 
 	Vec2Df Text::getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept

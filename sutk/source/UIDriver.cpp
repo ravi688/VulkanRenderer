@@ -166,7 +166,7 @@ namespace SUTK
 
 	void UIDriver::unloadImage(ImageReference id) noexcept
 	{
-		getGfxDriver().unloadTexture(id);
+		getGfxDriver().unloadTexture(id.getHandle());
 	}
 
 	UIDriver::FontReference UIDriver::loadFont(std::string_view path) noexcept
@@ -176,13 +176,13 @@ namespace SUTK
 
 	void UIDriver::unloadFont(FontReference id) noexcept
 	{
-		getGfxDriver().unloadFont(id);
+		getGfxDriver().unloadFont(id.getHandle());
 	}
 
 	UIDriver::ImageAttributes UIDriver::getImageAttributes(ImageReference id) noexcept
 	{
 		TextureAttributes attr;
-		getGfxDriver().getTextureAttributes(id, attr);
+		getGfxDriver().getTextureAttributes(id.getHandle(), attr);
 		return attr;
 	}
 
