@@ -1210,6 +1210,7 @@ namespace SUTK
 			UIDriver::ImageReference image = geometry.getFillImage();
 			SGE::Texture texture = getTexture(image.getHandle(), meshData);
 			SGE::Texture prevTexture = material.get<SGE::Texture>("albedo");
+			// Only update the descriptor if previously written texture is different from the current one about to be written
 			if(prevTexture != texture)
 				material.set<SGE::Texture>("albedo", texture);
 		}
