@@ -198,14 +198,34 @@ SGE_API void vulkan_texture_set_usage_stage(vulkan_texture_t* texture, vulkan_te
 /* uploads the data to the GPU local memory */
 SGE_API void vulkan_texture_upload_data(vulkan_texture_t* texture, u32 data_count, vulkan_texture_data_t* data);
 
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_texture_is_cube(vulkan_texture_t* texture)
+{
+	return HAS_FLAG(texture->type, VULKAN_TEXTURE_TYPE_CUBE);
+}
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_texture_is_3d(vulkan_texture_t* texture)
+{
+	return (texture->width > 1) && (texture->height > 1) && (texture->depth > 1);
+}
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_texture_is_2d(vulkan_texture_t* texture)
+{
+	return texture->depth == 1;
+}
+
+static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE bool vulkan_texture_is_1d(vulkan_texture_t* texture)
+{
+	return (texture->height == 1) && (texture->depth == 1);
+}
+
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_image_view_t* vulkan_texture_get_image_views(vulkan_texture_t* texture)
 {
-	return ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == 0) ? &texture->image_view : texture->image_views;
+	return vulkan_texture_is_cube(texture) ? texture->image_views : &texture->image_view;
 }
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 vulkan_texture_get_image_view_count(vulkan_texture_t* texture)
 {
-	return ((texture->type & VULKAN_TEXTURE_TYPE_CUBE) == 0) ? 1 : texture->image_view_count;
+	return vulkan_texture_is_cube(texture) ? texture->image_view_count : 1;
 }
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE vulkan_texture_usage_stage_t vulkan_texture_get_usage_stage(vulkan_texture_t* texture) { return texture->current_stage; }
 

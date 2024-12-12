@@ -4,7 +4,7 @@
 #include <sge/material.h> /* for material_t* */
 #include <sge-cpp/Texture.hpp> // for SGE::Texture reference type
 
-#include <string> /* for std::string */
+#include <string_view> // std::string_view
 
 namespace SGE
 {
@@ -17,24 +17,40 @@ namespace SGE
 
 	public:
 		template<typename T>
-		void set(const std::string& name, T value)
+		void set(const std::string_view str, T value) noexcept
 		{
-			debug_log_error("Setter for this type is not defined");
+			static_assert(false, "Please specialize set<> for this type");
+		}
+		template<typename T>
+		T get(const std::string_view str) noexcept
+		{
+			static_assert(false, "Please specialize set<> for this type");
 		}
 	};
 
-	template<>
-	void Material::set<float>(const std::string& name, float value);
+
+	// Specializations for Setters
 
 	template<>
-	void Material::set<vec2_t>(const std::string& name, vec2_t value);
+	void Material::set<float>(const std::string_view str, float value) noexcept;
 
 	template<>
-	void Material::set<vec4_t>(const std::string& name, vec4_t value);
+	void Material::set<vec2_t>(const std::string_view str, vec2_t value) noexcept;
 
 	template<>
-	void Material::set<s32>(const std::string& name, s32 value);
+	void Material::set<vec4_t>(const std::string_view str, vec4_t value) noexcept;
 
 	template<>
-	void Material::set<Texture>(const std::string& name, Texture texture);
+	void Material::set<s32>(const std::string_view str, s32 value) noexcept;
+
+	template<>
+	void Material::set<u32>(const std::string_view str, u32 value) noexcept;
+
+	template<>
+	void Material::set<Texture>(const std::string_view str, Texture texture) noexcept;
+
+	// Specializations for Getters
+
+	template<>
+	Texture Material::get<Texture>(const std::string_view str) noexcept;
 }

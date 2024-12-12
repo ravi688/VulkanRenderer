@@ -122,10 +122,15 @@ SGE_API void* vulkan_buffer_map(vulkan_buffer_t* buffer)
 	_debug_assert_wrn__(buffer->size != 0);
 	void* ptr;
 	vkMapMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory, 0, buffer->size, 0, &ptr);
+	IF_DEBUG(buffer->dbg_is_mapped = true);
 	return ptr;
 }
 
 SGE_API void vulkan_buffer_unmap(vulkan_buffer_t* buffer)
 {
-	vkUnmapMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory);
+	DEBUG_IF(buffer->dbg_is_mapped)
+		vkUnmapMemory(buffer->renderer->logical_device->vo_handle, buffer->vo_memory);
+	DEBUG_ELSE(
+		debug_log_error("Failed to unmap vulkan buffer as it hasn't already been mapped");
+		);
 }

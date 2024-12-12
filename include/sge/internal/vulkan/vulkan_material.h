@@ -53,8 +53,10 @@ typedef struct vulkan_material_field_handle_t
 
 typedef struct vulkan_uniform_resource_t
 {
-	bool has_buffer;
-	vulkan_buffer_t buffer;
+	/* this is created internally in the vulkan_material_t class */
+	vulkan_buffer_t* buffer;
+	/* pointer to texture object is cached here so that it can be returned when vulkan_material_get_texture() is called */
+	vulkan_texture_t* texture;
 	u16 index;					// index of this resource in the list of resouce descriptors of this material
 } vulkan_uniform_resource_t;
 
@@ -124,7 +126,7 @@ SGE_API vec3_t vulkan_material_get_vec3H(vulkan_material_t* material, vulkan_mat
 SGE_API vec4_t vulkan_material_get_vec4H(vulkan_material_t* material, vulkan_material_field_handle_t handle);
 SGE_API mat2_t vulkan_material_get_mat2H(vulkan_material_t* material, vulkan_material_field_handle_t handle);
 SGE_API mat4_t vulkan_material_get_mat4H(vulkan_material_t* material, vulkan_material_field_handle_t handle);
-SGE_API vulkan_texture_t* vulkan_material_get_texture2dH(vulkan_material_t* material, vulkan_material_field_handle_t handle);
+SGE_API vulkan_texture_t* vulkan_material_get_textureH(vulkan_material_t* material, vulkan_material_field_handle_t handle);
 
 SGE_API float vulkan_material_get_float(vulkan_material_t* material, const char* name);
 SGE_API int vulkan_material_get_int(vulkan_material_t* material, const char* name);
@@ -134,7 +136,7 @@ SGE_API vec3_t vulkan_material_get_vec3(vulkan_material_t* material, const char*
 SGE_API vec4_t vulkan_material_get_vec4(vulkan_material_t* material, const char* name);
 SGE_API mat2_t vulkan_material_get_mat2(vulkan_material_t* material, const char* name);
 SGE_API mat4_t vulkan_material_get_mat4(vulkan_material_t* material, const char* name);
-SGE_API vulkan_texture_t* vulkan_material_get_texture2d(vulkan_material_t* material, const char* name);
+SGE_API vulkan_texture_t* vulkan_material_get_texture(vulkan_material_t* material, const char* name);
 
 /* setters */
 SGE_API void vulkan_material_set_push_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle, float value);

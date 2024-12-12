@@ -42,6 +42,20 @@ SGE_API vulkan_material_t* vulkan_material_new(memory_allocator_t* allocator)
 	return material;
 }
 
+static bool is_sampler_type(glsl_type_t type)
+{
+	switch(type)
+	{
+		case GLSL_TYPE_SAMPLER_1D:
+		case GLSL_TYPE_SAMPLER_2D:
+		case GLSL_TYPE_SAMPLER_3D:
+		case GLSL_TYPE_SAMPLER_CUBE:
+			return true;
+		default:
+			return false;
+	}
+}
+
 static u16 calculate_uniform_resource_count(vulkan_shader_t* shader)
 {
 	_debug_assert__(shader != NULL);
@@ -49,9 +63,36 @@ static u16 calculate_uniform_resource_count(vulkan_shader_t* shader)
 	u16 count = shader->material_set_binding_count;
 	u16 uniform_count = 0;
 	for(u16 i = 0; i < count; i++)
-		if(shader->material_set_bindings[i].handle.type == GLSL_TYPE_UNIFORM_BUFFER)
+	{
+		AUTO type = shader->material_set_bindings[i].handle.type;
+		if((type == GLSL_TYPE_UNIFORM_BUFFER) || is_sampler_type(type))
 			++uniform_count;
+	}
 	return uniform_count;
+}
+
+/* types of bindings which define a material, 
+ * for example, buffer objects hold data about the material's variables
+ * 	and textures hold data about the materials' appearance
+ * With that concept, we do not classify subpassInput bindings as material resource.
+ * A material resource is something which can be set by calling one of the material setters. 
+
+ * There can be other such types but for now we only support uniform samplers, push constants, storage buffers, and uniform buffers */
+static bool is_material_resource(vulkan_shader_resource_description_t* binding)
+{
+	switch(binding->handle.type)
+	{
+		case GLSL_TYPE_SAMPLER_1D:
+		case GLSL_TYPE_SAMPLER_2D:
+		case GLSL_TYPE_SAMPLER_3D:
+		case GLSL_TYPE_SAMPLER_CUBE:
+		case GLSL_TYPE_PUSH_CONSTANT:
+		case GLSL_TYPE_UNIFORM_BUFFER:
+		case GLSL_TYPE_STORAGE_BUFFER:
+			return true;
+		default:
+			return false;
+	}
 }
 
 static void setup_material_resources(vulkan_material_t* material)
@@ -66,37 +107,32 @@ static void setup_material_resources(vulkan_material_t* material)
 	for(u16 i = 0, j = 0; i < material->shader->material_set_binding_count; i++)
 	{
 		vulkan_shader_resource_description_t* binding = &bindings[i];
-		if(vulkan_shader_resource_description_is_attribute(binding) || binding->is_opaque || binding->is_push_constant)
-			continue;
-
-		_debug_assert__(j < count);
-
-		vulkan_uniform_resource_t* resource = &uniform_resources[j];
-		j++;
-		if(binding->handle.type == GLSL_TYPE_UNIFORM_BUFFER)
+		if(is_material_resource(binding))
 		{
+			_debug_assert__(j < count);
+
+			vulkan_uniform_resource_t* resource = &uniform_resources[j];
 			resource->index = i;
-			/* if this uniform interface block has a fixed size then create vulkan uniform buffer for it */
-			if(!struct_descriptor_is_variable_sized(&binding->handle))
+			if(binding->handle.type == GLSL_TYPE_UNIFORM_BUFFER)
 			{
-				u32 size = struct_descriptor_sizeof(&binding->handle);
-				vulkan_buffer_create_info_t create_info =
+				/* if this uniform interface block has a fixed size then create vulkan uniform buffer for it */
+				if(!struct_descriptor_is_variable_sized(&binding->handle))
 				{
-					.size = size,
-					.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-				};
-				VULKAN_OBJECT_INIT(&resource->buffer, VULKAN_OBJECT_TYPE_BUFFER, VULKAN_OBJECT_NATIONALITY_EXTERNAL);
-				vulkan_buffer_create_no_alloc(material->renderer, &create_info, &resource->buffer);
-				resource->has_buffer = true;
-				vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, &resource->buffer);
+					u32 size = struct_descriptor_sizeof(&binding->handle);
+					vulkan_buffer_create_info_t create_info =
+					{
+						.size = size,
+						.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+					};
+					resource->buffer = vulkan_buffer_create(material->renderer, &create_info);
+					vulkan_descriptor_set_write_uniform_buffer(&material->material_set, binding->binding_number, resource->buffer);
+				}
+				/* otherwise don't create vulkan uniform buffer for it */
 			}
-			/* otherwise don't create vulkan uniform buffer for it */
-		}
-		else
-		{
-			resource->has_buffer = false;
-			resource->index = 0xFFFF;
+			else
+				resource->index = 0xFFFF;
+			j++;
 		}
 	}
 	material->uniform_resources = uniform_resources;
@@ -135,16 +171,16 @@ SGE_API void vulkan_material_destroy(vulkan_material_t* material)
 {
 	vulkan_descriptor_set_destroy(&material->material_set);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
-		if(material->uniform_resources[i].has_buffer)
-			vulkan_buffer_destroy(&material->uniform_resources[i].buffer);
+		if(material->uniform_resources[i].buffer)
+			vulkan_buffer_destroy(material->uniform_resources[i].buffer);
 }
 
 SGE_API void vulkan_material_release_resources(vulkan_material_t* material)
 {
 	vulkan_descriptor_set_release_resources(&material->material_set);
 	for(u16 i = 0; i < material->uniform_resource_count; i++)
-		if(material->uniform_resources[i].index != 0xFFFF)
-			vulkan_buffer_release_resources(&material->uniform_resources[i].buffer);
+		if(material->uniform_resources[i].buffer)
+			vulkan_buffer_release_resources(material->uniform_resources[i].buffer);
 	if(material->uniform_resource_count != 0)
 		memory_allocator_dealloc(material->renderer->allocator, material->uniform_resources);
 	if(VULKAN_OBJECT_IS_INTERNAL(material))
@@ -386,17 +422,25 @@ SGE_API mat4_t vulkan_material_get_push_mat4(vulkan_material_t* material, const 
 
 static void unmap_descriptor(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
-	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.uniform_index].buffer);
 	struct_descriptor_t* descriptor = &(material->shader->material_set_bindings[handle.index].handle);
-	struct_descriptor_unmap(descriptor);
-	vulkan_buffer_unmap(buffer);
+	vulkan_buffer_t* buffer = material->uniform_resources[handle.uniform_index].buffer;
+	if(buffer)
+	{
+		struct_descriptor_unmap(descriptor);
+		vulkan_buffer_unmap(buffer);
+	}
+	else
+		debug_log_error("Failed to unmap struct descriptor as the field handle doesn't point to a valid to a valid vulkan buffer");
 }
 
 static struct_descriptor_t* map_descriptor(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
-	vulkan_buffer_t* buffer = &(material->uniform_resources[handle.uniform_index].buffer);
 	struct_descriptor_t* descriptor = &(material->shader->material_set_bindings[handle.index].handle);
-	struct_descriptor_map(descriptor, vulkan_buffer_map(buffer));
+	vulkan_buffer_t* buffer = material->uniform_resources[handle.uniform_index].buffer;
+	if(buffer)
+		struct_descriptor_map(descriptor, vulkan_buffer_map(buffer));
+	else
+		debug_log_error("Failed to map struct descriptor to vulkan buffer as the field handle doesn't point to valid vulkan buffer");
 	return descriptor;
 }
 
@@ -470,8 +514,50 @@ SGE_API void vulkan_material_set_textureH(vulkan_material_t* material, vulkan_ma
 {
 	_debug_assert__(handle.index < material->shader->material_set_binding_count);
 	vulkan_shader_resource_description_t descriptor = material->shader->material_set_bindings[handle.index];
+	AUTO type = descriptor.handle.type;
+	if((type != GLSL_TYPE_SAMPLER_2D) && (type != GLSL_TYPE_SAMPLER_3D) && (type != GLSL_TYPE_SAMPLER_CUBE))
+	{
+		debug_log_error("You're trying to write a texture to a non-texture type descriptor");
+		return;
+	}
+	else
+	{
+		switch(type)
+		{
+			case GLSL_TYPE_SAMPLER_CUBE:
+				if(!vulkan_texture_is_cube(texture))
+				{
+					debug_log_error("You're trying to write a non-cube texture to a descriptor of type sampler cube");
+					return;
+				}
+				break;
+			case GLSL_TYPE_SAMPLER_3D:
+				if(!vulkan_texture_is_3d(texture))
+				{
+					debug_log_error("You're trying to write a non-3d texture to a descriptor of type sampler 3D");
+					return;
+				}
+				break;
+			case GLSL_TYPE_SAMPLER_2D:
+				if(!vulkan_texture_is_2d(texture))
+				{
+					debug_log_error("You're trying to write a non-2d texture to a descriptor of type sampler 2D");
+					return;
+				}
+				break;
+			case GLSL_TYPE_SAMPLER_1D:
+				if(!vulkan_texture_is_1d(texture))
+				{
+					debug_log_fetal_error("You're tyring to write an invalid texture to a descriptor of type sampler 1D as none of the samplerCube, sampler3D, sampler2D, or sampler1D match");
+					return;
+				}
+				break;
+			default: break;
+		}
+	}
 	// _debug_assert__(descriptor.set_number < 1); 	//for now we are just using one descriptor set and multiple bindings
 	vulkan_descriptor_set_write_texture(&material->material_set, descriptor.binding_number, texture);
+	material->uniform_resources[handle.uniform_index].texture = texture;
 }
 
 SGE_API float vulkan_material_get_floatH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
@@ -530,10 +616,11 @@ SGE_API mat4_t vulkan_material_get_mat4H(vulkan_material_t* material, vulkan_mat
 	return value;
 }
 
-SGE_API vulkan_texture_t* vulkan_material_get_texture2dH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
+SGE_API vulkan_texture_t* vulkan_material_get_textureH(vulkan_material_t* material, vulkan_material_field_handle_t handle)
 {
-	LOG_WRN("material_get_texture2dH isn't defined, for now it will return NULL\n");
-	return NULL;
+	_debug_assert__(handle.index < material->shader->material_set_binding_count);
+	_com_assert(handle.uniform_index < material->uniform_resource_count);
+	return material->uniform_resources[handle.uniform_index].texture;
 }
 
 /* functions accepting strings */
@@ -637,9 +724,9 @@ SGE_API mat4_t vulkan_material_get_mat4(vulkan_material_t* material, const char*
 	return vulkan_material_get_mat4H(material, vulkan_material_get_field_handle(material, name));
 }
 
-SGE_API vulkan_texture_t* vulkan_material_get_texture2d(vulkan_material_t* material, const char* name)
+SGE_API vulkan_texture_t* vulkan_material_get_texture(vulkan_material_t* material, const char* name)
 {
-	return vulkan_material_get_texture2dH(material, vulkan_material_get_field_handle(material, name));
+	return vulkan_material_get_textureH(material, vulkan_material_get_field_handle(material, name));
 }
 
 /* returns true if 'name' has anything after '.', called field, otherwise returns false */
@@ -763,9 +850,8 @@ SGE_API void vulkan_material_set_buffer(vulkan_material_t* material, const char*
 			.vo_usage_flags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			.vo_memory_property_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		};
-		vulkan_buffer_create_no_alloc(material->renderer, &create_info, &uniform->buffer);
-		buffer = &uniform->buffer;
-		uniform->has_buffer = true;
+		uniform->buffer = vulkan_buffer_create(material->renderer, &create_info);
+		buffer = uniform->buffer;
 	}
 
 	/* write the descriptor */

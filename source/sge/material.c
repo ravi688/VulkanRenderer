@@ -308,9 +308,9 @@ SGE_API mat4_t material_get_mat4H(material_t* material, material_field_handle_t 
 	return vulkan_material_get_mat4H(material, handle);
 }
 
-SGE_API texture_t* material_get_texture2dH(material_t* material, material_field_handle_t handle)
+SGE_API texture_t* material_get_textureH(material_t* material, material_field_handle_t handle)
 {
-	return vulkan_material_get_texture2dH(material, handle);
+	return vulkan_material_get_textureH(material, handle);
 }
 
 /* functions accepting strings */
@@ -399,7 +399,7 @@ SGE_API mat4_t material_get_mat4(material_t* material, const char* name)
 	return vulkan_material_get_mat4(material, name);
 }
 
-SGE_API texture_t* material_get_texture2d(material_t* material, const char* name)
+SGE_API texture_t* material_get_texture(material_t* material, const char* name)
 {
-	return vulkan_material_get_texture2d(material, name);
+	return vulkan_material_get_texture(material, name);
 }

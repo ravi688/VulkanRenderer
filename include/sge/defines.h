@@ -67,18 +67,20 @@ typedef struct memory_allocator_t memory_allocator_t;
 #	define ELSE(x)
 #	define PARAM_IF_DEBUG(x) , x
 #	define debug_if(x) if(x)
-#	define debug_else 	else
+#	define debug_else(x) else { x }
 #	define debug_else_if(x) else debug_if(x)
 #else
 #	define IF_DEBUG_MODE(x)
 #	define ELSE(x) x
 #	define PARAM_IF_DEBUG(x)
 #	define debug_if(x)
-#	define debug_else
+#	define debug_else(x)
 #	define debug_else_if(x)
 #endif /* GLOBAL_DEBUG */
 
 #define IF_DEBUG(x) IF_DEBUG_MODE(x)
+#define DEBUG_IF(x) debug_if(x)
+#define DEBUG_ELSE(x) debug_else(x)
 
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 max(u32 v1, u32 v2) { return (v1 > v2) ? v1 : v2; }
 

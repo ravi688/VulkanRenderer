@@ -206,10 +206,7 @@ SGE_API struct_field_handle_t struct_descriptor_get_field_handle(const struct_de
 	AUTO field = get_field(CAST_TO(struct_descriptor_t*, descriptor), name, (ptr == NULL) ? strlen(name) : (ptr - name));
 
 	if(field == NULL)
-	{
-		debug_log_warning("Returning STRUCT_FIELD_INVALID_HANDLE, name: %s", name);
 		return STRUCT_FIELD_INVALID_HANDLE;
-	}
 
 	/* if this field is not a record then just return it's offset and size */
 	if(field->record == NULL)
@@ -274,218 +271,194 @@ SGE_API u32 struct_descriptor_get_array_size(struct_descriptor_t* descriptor, co
 	return field->array_size;
 }
 
-#ifndef GLOBAL_DEBUG
-#	define check_precondition(descriptor, handle)
-#else
-	static void check_precondition(struct_descriptor_t* descriptor, struct_field_handle_t handle);
-#endif
-
 #define cpy_data_from(descriptor, handle, data) __cpy_data_from(descriptor, handle, data)
 #define cpy_data_to(descriptor, handle, data) __cpy_data_to(descriptor, handle, data)
 
 static inline void __cpy_data_from(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const data)
 {
 	/* the struct_descriptor_t object must be mapped to some memory first */
-	_debug_assert__(descriptor->ptr != NULL);
-	memcopyv(descriptor->ptr + BIT64_UNPACK32(handle, 1), data, u8, BIT64_UNPACK32(handle, 0));
+	if(!descriptor->ptr)
+	{
+		debug_log_error("Unhandled error, Failed to copy data from source, Struct descriptor isn't mapped");
+		return;
+	}
+	if(handle != STRUCT_FIELD_INVALID_HANDLE)
+		memcopyv(descriptor->ptr + BIT64_UNPACK32(handle, 1), data, u8, BIT64_UNPACK32(handle, 0));
+	else
+		debug_log_error("Unhandled error, Failed to copy data from source, Struct field handle is invalid");
 }
 
 static inline void __cpy_data_to(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const data)
 {
 	/* the struct_descriptor_t object must be mapped to some memory first */
-	_debug_assert__(descriptor->ptr != NULL);
-	memcopyv(data, descriptor->ptr + BIT64_UNPACK32(handle, 1), u8, BIT64_UNPACK32(handle, 0));
+	if(!descriptor->ptr)
+	{
+		debug_log_error("Unhandled error, Failed to copy data at destination, Struct descriptor isn't mapped");
+		return;
+	}
+	if(handle != STRUCT_FIELD_INVALID_HANDLE)
+		memcopyv(data, descriptor->ptr + BIT64_UNPACK32(handle, 1), u8, BIT64_UNPACK32(handle, 0));
+	else
+		debug_log_error("Unhandled error, Failed to copy data at destination, Struct field handle is invalid");
 }
 
 SGE_API void struct_descriptor_set_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, const void* const in)
 {
-	check_precondition(descriptor, handle);
 	cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const int* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const uint* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_set_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, const float* const in)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_from(descriptor, handle, in);
 }
 
 SGE_API void struct_descriptor_get_value(struct_descriptor_t* descriptor, struct_field_handle_t handle, void* const out)
 {
-	check_precondition(descriptor, handle);
 	cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_float(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_int(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_uint(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_vec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_vec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_vec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_ivec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_ivec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_ivec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, int* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_uvec4(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_uvec3(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_uvec2(struct_descriptor_t* descriptor, struct_field_handle_t handle, uint* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_mat4(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_mat3(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
 SGE_API void struct_descriptor_get_mat2(struct_descriptor_t* descriptor, struct_field_handle_t handle, float* const out)
 {
-	check_precondition(descriptor, handle);
 	__cpy_data_to(descriptor, handle, out);
 }
 
@@ -647,14 +620,3 @@ SGE_API struct_descriptor_t struct_descriptor_clone(struct_descriptor_t* descrip
 	_struct_descriptor_clone(descriptor, &clone);
 	return clone;
 }
-
-
-#ifdef GLOBAL_DEBUG
-static void check_precondition(struct_descriptor_t* descriptor, struct_field_handle_t handle)
-{
-	_debug_assert__(descriptor != NULL);
-	_debug_assert__(descriptor->ptr != NULL);
-	_debug_assert__(descriptor->fields != NULL);
-	// _debug_assert__(handle < descriptor->field_count);
-}
-#endif

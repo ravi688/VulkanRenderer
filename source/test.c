@@ -82,6 +82,8 @@
 
 #include <sge/tests/multi_buffer.h>
 
+#include <sge/tests/material_get_set.h>
+
 SGE_API test_t* test_new(memory_allocator_t* allocator)
 {
 	test_t* test = memory_allocator_alloc_obj(allocator, MEMORY_ALLOCATION_TYPE_OBJ_TEST, test_t);
@@ -137,6 +139,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 	ELSE_IF(TRANSPARENT_QUEUE);
 	ELSE_IF(SHADER_CACHE);
 	ELSE_IF(MULTI_BUFFER);
+	ELSE_IF(MATERIAL_GET_SET);
 	else
 	{
 		printf 	(
@@ -181,6 +184,7 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 					"\tTRANSPARENT_QUEUE\n"
 					"\tSHADER_CACHE\n"
 					"\tMULTI_BUFFER\n"
+					"\tMATERIAL_GET_SET\n"
 				);
 		exit(0);
 	}

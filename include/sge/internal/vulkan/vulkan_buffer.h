@@ -78,6 +78,7 @@ typedef struct vulkan_buffer_t
 		};
 		vulkan_buffer_traits_t traits;
 	};
+	IF_DEBUG (bool dbg_is_mapped;)
 } vulkan_buffer_t;
 
 typedef vulkan_buffer_t* vulkan_buffer_ptr_t;

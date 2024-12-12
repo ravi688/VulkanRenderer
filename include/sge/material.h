@@ -140,7 +140,7 @@ SGE_API vec3_t material_get_vec3H(material_t* material, material_field_handle_t 
 SGE_API vec4_t material_get_vec4H(material_t* material, material_field_handle_t handle);
 SGE_API mat2_t material_get_mat2H(material_t* material, material_field_handle_t handle);
 SGE_API mat4_t material_get_mat4H(material_t* material, material_field_handle_t handle);
-SGE_API texture_t* material_get_texture2dH(material_t* material, material_field_handle_t handle);
+SGE_API texture_t* material_get_textureH(material_t* material, material_field_handle_t handle);
 
 SGE_API float material_get_float(material_t* material, const char* name);
 SGE_API int material_get_int(material_t* material, const char* name);
@@ -150,6 +150,6 @@ SGE_API vec3_t material_get_vec3(material_t* material, const char* name);
 SGE_API vec4_t material_get_vec4(material_t* material, const char* name);
 SGE_API mat2_t material_get_mat2(material_t* material, const char* name);
 SGE_API mat4_t material_get_mat4(material_t* material, const char* name);
-SGE_API texture_t* material_get_texture2d(material_t* material, const char* name);
+SGE_API texture_t* material_get_texture(material_t* material, const char* name);
 
 END_CPP_COMPATIBLE
