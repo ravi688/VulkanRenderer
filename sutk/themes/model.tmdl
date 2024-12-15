@@ -19,4 +19,8 @@ ThemeModel
 	Folder.Open.VG;
 	[Image]
 	Folder.Close;
+	[Float]
+	AnotherButton.AlphaValue;
+	[String]
+	Label.Value;
 }

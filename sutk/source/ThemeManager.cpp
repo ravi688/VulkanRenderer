@@ -2,6 +2,7 @@
 
 #include <common/string.h> // for com_safe_strncmp()
 #include <common/debug.h> // for DEBUG_LOG_ERROR()
+#include <common/utility.h> // for com_verify_float_str()
 #include <disk_manager/file_reader.h> // for load_text_from_file()
 #include <phymac_parser/v3d_generic.h> // for ppsr_v3d_generic_parse()
 
@@ -84,6 +85,18 @@ namespace SUTK
 					if(typeAttr)
 					{
 						interface->define<UIDriver::FontReference>(nameSV);
+						continue;
+					}
+					typeAttr = node_find_attribute(child, str, "Float");
+					if(typeAttr)
+					{
+						interface->define<f32>(nameSV);
+						continue;
+					}
+					typeAttr = node_find_attribute(child, str, "String");
+					if(typeAttr)
+					{
+						interface->define<std::string>(nameSV);
 						continue;
 					}
 					DEBUG_LOG_WARNING("Type either isn't recognized or not given, skipping \"%.*s\"", nameSV.length(), nameSV.data());
@@ -266,6 +279,52 @@ namespace SUTK
 	}
 
 	template<>
+	template<>
+	f32 ThemeManager<std::string, std::string_view>::deriveValue<f32>(v3d_generic_node_t* node, const char* str) noexcept
+	{
+		// Followings are the possibilies:
+		// 1. 2.4f
+		// 2. 2.4
+		// 2. 24
+		f32 flt = 0;
+		if(node->qualifier_count == 1)
+		{
+			u32_pair_t pair = node->qualifiers[0];
+			auto len = U32_PAIR_DIFF(pair);
+			char buffer[len + 1];
+			memcpy(buffer, pair.start + str, len);
+			buffer[len] = 0;
+			if(!com_verify_float_str(buffer))
+			{
+				DEBUG_LOG_ERROR("Float value %*.s seems invalid, using 0 as default", len, pair.start + str);
+				flt = 0;
+			}
+			else
+				flt = std::strtof(buffer, NULL);
+		}
+		else
+			DEBUG_LOG_ERROR("No value is provided");
+		return flt;
+	}
+
+	template<>
+	template<>
+	std::string ThemeManager<std::string, std::string_view>::deriveValue<std::string>(v3d_generic_node_t* node, const char* str) noexcept
+	{
+		// Followings are the possibilies:
+		// 1. "some string here"
+		// 2. ""
+		if(node->qualifier_count == 1)
+		{
+			u32_pair_t pair = node->qualifiers[0];
+			return std::string { std::string_view { pair.start + str, U32_PAIR_DIFF(pair) } };
+		}
+		else
+			DEBUG_LOG_ERROR("No value is provided");
+		return std::string { };
+	}
+
+	template<>
 	typename ThemeManager<std::string, std::string_view>::ThemeType* ThemeManager<std::string, std::string_view>::loadTheme(const std::string_view filePath) noexcept
 	{
 		BUFFER* text = NULL;
@@ -372,6 +431,18 @@ namespace SUTK
 						{
 							UIDriver::FontReference font = deriveValue<UIDriver::FontReference>(child->value, str);
 							theme->add<UIDriver::FontReference>(nameSV, std::move(font));
+							break;
+						}
+						case ThemeInterfaceType::Type::Float:
+						{
+							f32 flt = deriveValue<f32>(child->value, str);
+							theme->add<f32>(nameSV, std::move(flt));
+							break;
+						}
+						case ThemeInterfaceType::Type::String:
+						{
+							std::string stdstr = deriveValue<std::string>(child->value, str);
+							theme->add<std::string>(nameSV, std::move(stdstr));
 							break;
 						}
 						default:

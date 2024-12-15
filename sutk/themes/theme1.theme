@@ -11,4 +11,8 @@ Theme
     Folder.Open = "../textures/Thalita-Torres-Office-Archive-folders.512.png";
     Folder.Open.VG = "svg_files/close-cross-symbol-in-a-circle-svgrepo-com.svg";
     Folder.Close = "icons/Folder-Close.png";
+    [Float]
+    AnotherButton.AlphaValue = 0.7f;
+    [String]
+    Label.Value = "Hello World From Theme 1";
 }

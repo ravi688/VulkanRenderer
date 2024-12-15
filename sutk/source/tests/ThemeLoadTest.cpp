@@ -7,6 +7,7 @@
 #include <sutk/RenderableContainer.hpp>
 #include <sutk/FullWindowContainer.hpp>
 #include <sutk/ThemeManager.hpp>
+#include <sutk/Label.hpp>
 
 namespace SUTK
 {
@@ -72,6 +73,32 @@ namespace SUTK
 		anchor2->setBottomRight({ 1.0f, 1.0f });
 		themeInt->bind<Color4>("LargeButton.HoverColor", std::bind(&RenderRectFill::setColor, renderRect2, std::placeholders::_1));
 		renderRect2->setColor(Color4::red());
+
+		RenderableContainer* renderRectContainer3 = m_uiDriver->createContainer<RenderableContainer>(rootContainer);
+		RenderRectFill* renderRect3 = m_uiDriver->createRenderable<RenderRectFill>(renderRectContainer3);
+		renderRectContainer3->setRect({ 11.0f, 10.0f, 5.0f, 5.0f });
+		AnchorRect* anchor3 = renderRectContainer3->getAnchorRect();
+		anchor3->setTopLeft({ 0.0f, 0.0f });
+		anchor3->setBottomRight({ 1.0f, 1.0f });
+		themeInt->bind<f32>("AnotherButton.AlphaValue", [renderRect3](f32 value) noexcept
+			{ 
+				auto color = renderRect3->getColor(); 
+				std::cout << "Float value: " << value << std::endl;
+				color.alpha(value * 255);
+				renderRect3->setColor(color);
+			});
+		renderRect3->setColor(Color4::yellow());
+
+		Label* label = m_uiDriver->createContainer<Label>(rootContainer);
+		label->setRect({ 11.0f, 8.0f, 5.0f, 5.0f });
+		AnchorRect* anchor4 = label->getAnchorRect();
+		anchor4->setTopLeft({ 0.0f, 0.0f });
+		anchor4->setBottomRight({ 1.0f, 1.0f });
+		themeInt->bind<std::string>("Label.Value", [label](const std::string& value) noexcept
+			{
+				std::cout << "String value: " << value << std::endl;
+				label->set(value);
+			});
 
 		themeInt->applyTheme(theme1);
 
