@@ -8,6 +8,7 @@
 
 #include <string_view> // for std::string_view
 #include <type_traits> // for std::is_same_v
+#include <optional> // for std::optional<>
 
 typedef struct v3d_generic_node_t v3d_generic_node_t;
 
@@ -44,14 +45,19 @@ namespace SUTK
 		template<typename ValueType>
 		void define(const KeyViewType& key) noexcept;
 		void undefine(const KeyViewType& key) noexcept;
-		Type getType(const KeyViewType& key) noexcept;
+		std::optional<Type> getKeyType(const KeyViewType& key) noexcept;
 		template<typename ValueType>
-		EventHandlerID bind(const KeyViewType& key, ValueChangeCallback<ValueType> callback) noexcept;
-		void unbind(const KeyViewType& key, EventHandlerID id) noexcept;
+		BindID bind(const KeyViewType& key, ValueChangeCallback<ValueType> callback) noexcept;
+		void unbind(const KeyViewType& key, BindID id) noexcept;
 		template<typename ValueType>
 		const ValueType& getValue(Type type, const KeyViewType& key) noexcept;
 		void applyTheme(Theme<KeyType, KeyViewType>* theme) noexcept;
 		Theme<KeyType, KeyViewType>* getCurrentTheme() noexcept { return m_currentTheme; }
+		com::Bool verifyKey(const KeyViewType& key, Type type) noexcept
+		{
+			auto value = try_find_value(m_defs, key);
+			return com::Bool { value && (value->first == type) };
+		}
 
 		// Published after publishing events for every key
 		OnThemeChangeEvent& getOnThemeChangeEvent() noexcept { return m_onThemeChange; }
@@ -64,60 +70,83 @@ namespace SUTK
 	{
 	public:
 		using ThemeInterfaceType = ThemeInterface<KeyType, KeyViewType>;
+		using ThemeInterfaceList = std::vector<ThemeInterfaceType*>;
 	private:
 		com::unordered_map<KeyType, Color4, KeyViewType> m_colors;
 		com::unordered_map<KeyType, UIDriver::ImageReference, KeyViewType> m_images;
 		com::unordered_map<KeyType, UIDriver::FontReference, KeyViewType> m_fonts;
 		com::unordered_map<KeyType, f32> m_floats;
 		com::unordered_map<KeyType, std::string> m_strings;
-		ThemeInterfaceType* m_interface;
+		ThemeInterfaceList m_interfaces;
 	public:
-		Theme(UIDriver& driver, ThemeInterfaceType* interface) noexcept : UIDriverObject(driver), m_interface(interface) { }
+		Theme(UIDriver& driver, std::initializer_list<ThemeInterfaceType*> interfaces) noexcept : UIDriverObject(driver), m_interfaces(interfaces) { }
+		Theme(UIDriver& driver, std::vector<ThemeInterfaceType*> interfaces) noexcept : UIDriverObject(driver), m_interfaces(interfaces) { }
+		Theme(UIDriver& driver, ThemeInterfaceType* interface) noexcept : Theme(driver, { interface }) { }
 
-		ThemeInterfaceType* getInterface() noexcept { return m_interface; }
+		ThemeInterfaceList& getInterfaces() noexcept { return m_interfaces; }
+
+		void apply() noexcept
+		{
+			for(auto& interface : m_interfaces)
+				interface->applyTheme(this);
+		}
+
+		com::Bool verifyKey(const KeyViewType& key, ThemeInterfaceType::Type type) noexcept
+		{
+			for(auto& interface : m_interfaces)
+				if(interface->verifyKey(key, type))
+					return com::True;
+			DEBUG_LOG_ERROR("Either the key doesn't exist or type mismatch has been occurred");
+			return com::False;
+		}
+
+		std::optional<typename ThemeInterfaceType::Type> getKeyType(const KeyViewType& key) noexcept
+		{
+			for(auto& interface : m_interfaces)
+				if(auto value = interface->getKeyType(key))
+					return value;
+			return { };
+		}
+
+		template<typename ValueType>
+		constexpr ThemeInterfaceType::Type getTypeEnum() noexcept
+		{
+			if constexpr(std::is_same_v<ValueType, Color4>)
+				return ThemeInterfaceType::Type::Color;
+			else if constexpr(std::is_same_v<ValueType, UIDriver::ImageReference>)
+				return ThemeInterfaceType::Type::Image;
+			else if constexpr(std::is_same_v<ValueType, UIDriver::FontReference>)
+				return ThemeInterfaceType::Type::Font;
+			else if constexpr(std::is_same_v<ValueType, f32>)
+				return ThemeInterfaceType::Type::Float;
+			else if constexpr(std::is_same_v<ValueType, std::string>)
+				return ThemeInterfaceType::Type::String;
+			else
+				static_assert(false, "Type not supported");
+		}
 
 		template<typename ValueType>
 		void add(const KeyViewType& key, ValueType&& value) noexcept
 		{
+			if(!verifyKey(key, getTypeEnum<ValueType>()))
+			{
+				DEBUG_LOG_ERROR("Failed to add value into the theme");
+				return;
+			}
 			if constexpr(std::is_same_v<ValueType, Color4>)
-			{
-				if(m_interface->getType(key) != ThemeInterfaceType::Type::Color)
-					DEBUG_LOG_ERROR("Type mismatch");
-				else
 					m_colors.insert({ KeyType { key }, std::forward<Color4&&>(value) });
-			}
 			else if constexpr(std::is_same_v<ValueType, UIDriver::ImageReference>)
-			{
-				if(m_interface->getType(key) != ThemeInterfaceType::Type::Image)
-					DEBUG_LOG_ERROR("Type mismatch");
-				else
 					m_images.insert({ KeyType { key }, std::forward<UIDriver::ImageReference&&>(value) });
-			}
 			else if constexpr(std::is_same_v<ValueType, UIDriver::FontReference>)
-			{
-				if(m_interface->getType(key) != ThemeInterfaceType::Type::Font)
-					DEBUG_LOG_ERROR("Type mismatch");
-				else
 					m_fonts.insert({ KeyType { key }, std::forward<UIDriver::FontReference&&>(value) });
-			}
 			else if constexpr(std::is_same_v<ValueType, f32>)
-			{
-				if(m_interface->getType(key) != ThemeInterfaceType::Type::Float)
-					DEBUG_LOG_ERROR("Type mismatch");
-				else
 					m_floats.insert({ KeyType { key }, std::forward<f32&&>(value) });
-			}
 			else if constexpr(std::is_same_v<ValueType, std::string>)
-			{
-				if(m_interface->getType(key) != ThemeInterfaceType::Type::String)
-					DEBUG_LOG_ERROR("Type mismatch");
-				else
 					m_strings.insert({ KeyType { key }, std::forward<std::string&&>(value) });
-			}
 			else
 				static_assert(false, "Type not supported");
 		}
-		template<typename ValueType> requires(std::same_as<ValueType, std::string>)
+		template<typename ValueType> requires(com::SameAsAny<ValueType, UIDriver::ImageReference, UIDriver::FontReference>)
 		void add(const KeyViewType& key, std::string_view view) noexcept
 		{
 			if(view.ends_with(".png") || view.ends_with(".jpg") || view.ends_with(".bmp"))
@@ -195,30 +224,41 @@ namespace SUTK
 	}
 
 	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
-	ThemeInterface<KeyType, KeyViewType>::Type ThemeInterface<KeyType, KeyViewType>::getType(const KeyViewType& key) noexcept
+	std::optional<typename ThemeInterface<KeyType, KeyViewType>::Type> ThemeInterface<KeyType, KeyViewType>::getKeyType(const KeyViewType& key) noexcept
 	{
-		return com::find_value(m_defs, key).first;
+		auto value = com::try_find_value(m_defs, key);
+		if(value)
+			return { value->first };
+		return { };
 	}
 
 	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
 	template<typename ValueType>
-	ThemeInterface<KeyType, KeyViewType>::EventHandlerID ThemeInterface<KeyType, KeyViewType>::bind(const KeyViewType& key, ValueChangeCallback<ValueType> callback) noexcept
+	ThemeInterface<KeyType, KeyViewType>::BindID ThemeInterface<KeyType, KeyViewType>::bind(const KeyViewType& key, ValueChangeCallback<ValueType> callback) noexcept
 	{
-		auto& value = com::find_value(m_defs, key);
-		auto fn = [_callback = std::move(callback), key, this]()
+		auto value = com::try_find_value(m_defs, key);
+		if(value)
 		{
-			_callback(this->m_currentTheme->template getValue<ValueType>(key));
-		};
-		if(m_currentTheme)
-			fn();
-		return value.second.subscribe(std::move(fn));
+			auto fn = [_callback = std::move(callback), key, this]()
+			{
+				_callback(this->m_currentTheme->template getValue<ValueType>(key));
+			};
+			if(m_currentTheme)
+				fn();
+			return value->second.subscribe(std::move(fn));
+		}
+		else DEBUG_LOG_ERROR("Failed to bind, no such key exists");
+		return ThemeInterface<KeyType, KeyViewType>::InvalidBindID;
 	}
 
 	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
-	void ThemeInterface<KeyType, KeyViewType>::unbind(const KeyViewType& key, EventHandlerID id) noexcept
+	void ThemeInterface<KeyType, KeyViewType>::unbind(const KeyViewType& key, BindID id) noexcept
 	{
-		auto& value = com::find_value(m_defs, key);
-		value.second.unsubscribe(id);
+		auto value = com::try_find_value(m_defs, key);
+		if(value)
+			value->second.unsubscribe(id);
+		else
+			DEBUG_LOG_ERROR("Failed to unbind, no such key exists");
 	}
 
 	template<typename KeyType, com::ViewType<KeyType> KeyViewType>
@@ -329,8 +369,13 @@ namespace SUTK
 
 		ThemeType* createTheme(const KeyViewType& key, ThemeInterfaceType* interface) noexcept
 		{
+			return createTheme(key, std::initializer_list { interface });
+		}
+		template<typename InitVectorType> requires(com::SameAsAny<InitVectorType, std::initializer_list<ThemeInterfaceType*>, std::vector<ThemeInterfaceType*>>)
+		ThemeType* createTheme(const KeyViewType& key, InitVectorType& interfaces) noexcept
+		{
 			_com_assert(!m_themes.contains(key));
-			ThemeType* theme = new ThemeType(getUIDriver(), interface);
+			ThemeType* theme = new ThemeType(getUIDriver(), std::forward<InitVectorType&&>(interfaces));
 			m_themes.insert({ KeyType { key }, theme });
 			return theme;
 		}

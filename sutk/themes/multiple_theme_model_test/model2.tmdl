@@ -1,0 +1,8 @@
+[Name("Theme Model 2")]
+ThemeModel
+{
+	[Float]
+	AnotherButton.AlphaValue;
+	[String]
+	Label.Value;
+}

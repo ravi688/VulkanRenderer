@@ -1,0 +1,19 @@
+[Name("My Theme 2")]
+[Model("Theme Model 1")]
+[Model("Theme Model 2")]
+Theme
+{
+    LargeButton.IdleColor = green { };
+    LargeButton.HoverColor = red { 0.5f };
+    LargeButton.PressColor = grey { };
+    SmallButton.IdleColor = green { };
+    SmallButton.HoverColor = red { 1.0f };
+    SmallButton.PressColor = grey { 1.0f };
+    Folder.Open = "../textures/Smile.bmp";
+    Folder.Open.VG = "svg_files/apple-svgrepo-com.svg";
+    Folder.Close = "icons/Folder-Close.png";
+    [Float]
+    AnotherButton.AlphaValue = 0.05f;
+    [String]
+    Label.Value = "Hello World From Theme 2";
+}

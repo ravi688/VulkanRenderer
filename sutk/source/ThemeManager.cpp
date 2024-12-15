@@ -336,7 +336,7 @@ namespace SUTK
 		ppsr_v3d_generic_parse_result_t result = ppsr_v3d_generic_parse(NULL, str, buf_get_element_count(text) - 1);
 		ThemeType* theme = NULL;
 		std::string_view strView { };
-		v3d_generic_node_t* themeModelNode = NULL;
+		v3d_generic_node_t* themeNode = NULL;
 		if(result.result != PPSR_SUCCESS)
 		{
 			DEBUG_LOG_ERROR("Unable to parse the file at %.*s", filePath.length(), filePath.data());
@@ -348,15 +348,15 @@ namespace SUTK
 			goto HANDLE_FAILURE;
 		}
 
-		themeModelNode = result.root->childs[0];
-		if(themeModelNode->qualifier_count == 0)
+		themeNode = result.root->childs[0];
+		if(themeNode->qualifier_count == 0)
 		{
-			DEBUG_LOG_ERROR("Anonymous root block is not allowed, it must be named \"ThemeModel\"");
+			DEBUG_LOG_ERROR("Anonymous root block is not allowed, it must be named \"Theme\"");
 			goto HANDLE_FAILURE;
 		}
 
 		{
-			u32_pair_t name = themeModelNode->qualifiers[0];
+			u32_pair_t name = themeNode->qualifiers[0];
 			if(com_safe_strncmp(name.start + str, "Theme", U32_PAIR_DIFF(name)))
 			{
 				DEBUG_LOG_ERROR("Expected \"Theme\" but given \"%*.s\"", U32_PAIR_DIFF(name), name.start + str);
@@ -365,41 +365,48 @@ namespace SUTK
 		}
 
 		{
-			v3d_generic_attribute_t* nameAttr = node_find_attribute(themeModelNode, str, "Name");
+			v3d_generic_attribute_t* nameAttr = node_find_attribute(themeNode, str, "Name");
 			if(!nameAttr)
 			{
 				DEBUG_LOG_ERROR("[Name] attribute is expected on \"Theme\" block, but not given");
 				goto HANDLE_FAILURE;
 			}
-			v3d_generic_attribute_t* modelAttr = node_find_attribute(themeModelNode, str, "Model");
-			if(!modelAttr)
+			std::vector<ThemeInterfaceType*> interfaces;
+			using UserData = struct { std::vector<ThemeInterfaceType*>* interfaces; ThemeManager<std::string, std::string_view>* thisPtr; };
+			UserData userData = { &interfaces, this };
+			node_foreach_attribute_name(themeNode, str, "Model", [](v3d_generic_attribute_t* modelAttr, const char* start, void* user_data) noexcept -> bool
+			{
+				auto* ud = static_cast<UserData*>(user_data);
+				if(modelAttr->argument_count == 1)
+				{
+					auto themeInterfaceName = std::string_view { modelAttr->arguments[0].start + start, U32_PAIR_DIFF(modelAttr->arguments[0]) };
+					if(!ud->thisPtr->containsThemeInterface(themeInterfaceName))
+					{
+						DEBUG_LOG_ERROR("No Theme interface/model with name \"%.*s\" is found", themeInterfaceName.length(), themeInterfaceName.data());
+						return false;
+					}
+					ud->interfaces->push_back(ud->thisPtr->getThemeInterface(themeInterfaceName));
+					return true;
+				}
+				else
+				{
+					DEBUG_LOG_ERROR("Arguments mismatch, \"Model\" attribute accepts one argument (string), but either not given or more provided");
+					return false;
+				}
+				return true;
+			}, &userData);
+			if(!interfaces.size())
 			{
 				DEBUG_LOG_ERROR("[Model] attribute is expected on \"Theme\" block, but not given");
-				goto HANDLE_FAILURE;
-			}
-			ThemeInterfaceType* interface = NULL;
-			if(modelAttr->argument_count == 1)
-			{
-				auto themeInterfaceName = std::string_view { modelAttr->arguments[0].start + str, U32_PAIR_DIFF(modelAttr->arguments[0]) };
-				if(!containsThemeInterface(themeInterfaceName))
-				{
-					DEBUG_LOG_ERROR("No Theme interface/model with name \"%.*s\" is found", themeInterfaceName.length(), themeInterfaceName.data());
-					goto HANDLE_FAILURE;
-				}
-				interface = getThemeInterface(themeInterfaceName);
-			}
-			else
-			{
-				DEBUG_LOG_ERROR("Arguments mismatch, \"Model\" attribute accepts one argument (string), but either not given or more provided");
 				goto HANDLE_FAILURE;
 			}
 			if(nameAttr->argument_count == 1)
 			{
 				strView = std::string_view { nameAttr->arguments[0].start + str, U32_PAIR_DIFF(nameAttr->arguments[0]) };
-				theme = createTheme(strView, interface);
-				for(u32 i = 0; i < themeModelNode->child_count; ++i)
+				theme = createTheme(strView, interfaces);
+				for(u32 i = 0; i < themeNode->child_count; ++i)
 				{
-					v3d_generic_node_t* child = themeModelNode->childs[i];
+					v3d_generic_node_t* child = themeNode->childs[i];
 					if(!child->qualifier_count)
 					{
 						DEBUG_LOG_ERROR("Anonymous (empty names) aren't allowed");
@@ -412,42 +419,43 @@ namespace SUTK
 						DEBUG_LOG_ERROR("No value has been assigned to \"%.*s\"", nameSV.length(), nameSV.data());
 						goto HANDLE_FAILURE;
 					}
-					ThemeInterfaceType::Type type = interface->getType(nameSV);
-					switch(type)
+					std::optional<ThemeInterfaceType::Type> type = theme->getKeyType(nameSV);
+					if(!type)
+						DEBUG_LOG_WARNING("Couldn't find a key into any of the theme models which the theme implements, skipping \"%.*s\"", nameSV.length(), nameSV.data());
+					else
 					{
-						case ThemeInterfaceType::Type::Color:
+						switch(*type)
 						{
-							Color4 color = deriveValue<Color4>(child->value, str);
-							theme->add<Color4>(nameSV, std::move(color));
-							break;
-						}
-						case ThemeInterfaceType::Type::Image:
-						{
-							UIDriver::ImageReference image = deriveValue<UIDriver::ImageReference>(child->value, str);
-							theme->add<UIDriver::ImageReference>(nameSV, std::move(image));
-							break;
-						}
-						case ThemeInterfaceType::Type::Font:
-						{
-							UIDriver::FontReference font = deriveValue<UIDriver::FontReference>(child->value, str);
-							theme->add<UIDriver::FontReference>(nameSV, std::move(font));
-							break;
-						}
-						case ThemeInterfaceType::Type::Float:
-						{
-							f32 flt = deriveValue<f32>(child->value, str);
-							theme->add<f32>(nameSV, std::move(flt));
-							break;
-						}
-						case ThemeInterfaceType::Type::String:
-						{
-							std::string stdstr = deriveValue<std::string>(child->value, str);
-							theme->add<std::string>(nameSV, std::move(stdstr));
-							break;
-						}
-						default:
-						{
-							DEBUG_LOG_WARNING("Type either isn't recognized or not given, skipping \"%.*s\"", nameSV.length(), nameSV.data());
+							case ThemeInterfaceType::Type::Color:
+							{
+								Color4 color = deriveValue<Color4>(child->value, str);
+								theme->add<Color4>(nameSV, std::move(color));
+								break;
+							}
+							case ThemeInterfaceType::Type::Image:
+							{
+								UIDriver::ImageReference image = deriveValue<UIDriver::ImageReference>(child->value, str);
+								theme->add<UIDriver::ImageReference>(nameSV, std::move(image));
+								break;
+							}
+							case ThemeInterfaceType::Type::Font:
+							{
+								UIDriver::FontReference font = deriveValue<UIDriver::FontReference>(child->value, str);
+								theme->add<UIDriver::FontReference>(nameSV, std::move(font));
+								break;
+							}
+							case ThemeInterfaceType::Type::Float:
+							{
+								f32 flt = deriveValue<f32>(child->value, str);
+								theme->add<f32>(nameSV, std::move(flt));
+								break;
+							}
+							case ThemeInterfaceType::Type::String:
+							{
+								std::string stdstr = deriveValue<std::string>(child->value, str);
+								theme->add<std::string>(nameSV, std::move(stdstr));
+								break;
+							}
 						}
 					}
 				}

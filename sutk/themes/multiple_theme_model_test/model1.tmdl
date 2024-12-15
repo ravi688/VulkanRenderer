@@ -1,0 +1,22 @@
+[Name("Theme Model 1")]
+ThemeModel
+{
+	[Color]
+	LargeButton.IdleColor;
+	[Color]
+	LargeButton.HoverColor;
+	[Color]
+	LargeButton.PressColor;
+	[Color]
+	SmallButton.IdleColor;
+	[Color]
+	SmallButton.HoverColor;
+	[Color]
+	SmallButton.PressColor;
+	[Image]
+	Folder.Open;
+	[Image]
+	Folder.Open.VG;
+	[Image]
+	Folder.Close;
+}
