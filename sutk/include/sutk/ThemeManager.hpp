@@ -79,9 +79,9 @@ namespace SUTK
 		com::unordered_map<KeyType, std::string> m_strings;
 		ThemeInterfaceList m_interfaces;
 	public:
-		Theme(UIDriver& driver, std::initializer_list<ThemeInterfaceType*> interfaces) noexcept : UIDriverObject(driver), m_interfaces(interfaces) { }
-		Theme(UIDriver& driver, std::vector<ThemeInterfaceType*> interfaces) noexcept : UIDriverObject(driver), m_interfaces(interfaces) { }
-		Theme(UIDriver& driver, ThemeInterfaceType* interface) noexcept : Theme(driver, { interface }) { }
+		Theme(UIDriver& driver, std::vector<ThemeInterfaceType*>& interfaces) noexcept : UIDriverObject(driver), m_interfaces(interfaces) { }
+		Theme(UIDriver& driver, std::vector<ThemeInterfaceType*>&& interfaces) noexcept : UIDriverObject(driver), m_interfaces(std::move(interfaces)) { }
+		Theme(UIDriver& driver, ThemeInterfaceType* interface) noexcept : Theme(driver, std::vector { interface }) { }
 
 		ThemeInterfaceList& getInterfaces() noexcept { return m_interfaces; }
 
@@ -369,10 +369,10 @@ namespace SUTK
 
 		ThemeType* createTheme(const KeyViewType& key, ThemeInterfaceType* interface) noexcept
 		{
-			return createTheme(key, std::initializer_list { interface });
+			return createTheme(key, std::vector { interface });
 		}
-		template<typename InitVectorType> requires(com::SameAsAny<InitVectorType, std::initializer_list<ThemeInterfaceType*>, std::vector<ThemeInterfaceType*>>)
-		ThemeType* createTheme(const KeyViewType& key, InitVectorType& interfaces) noexcept
+		template<typename InitVectorType> requires(std::same_as<InitVectorType, std::vector<ThemeInterfaceType*>>)
+		ThemeType* createTheme(const KeyViewType& key, InitVectorType&& interfaces) noexcept
 		{
 			_com_assert(!m_themes.contains(key));
 			ThemeType* theme = new ThemeType(getUIDriver(), std::forward<InitVectorType&&>(interfaces));
