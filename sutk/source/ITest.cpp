@@ -26,6 +26,7 @@
 #include <sutk/tests/FontTest.hpp>
 #include <sutk/tests/NotebookTest.hpp>
 #include <sutk/tests/MultipleThemeModelTest.hpp>
+#include <sutk/tests/BaseThemeTest.hpp>
 
 namespace SUTK
 {
@@ -55,7 +56,8 @@ namespace SUTK
 		{ "FONT", [] () { return std::unique_ptr<ITest>(new FontTest()); }},
 		{ "NOTEBOOK", [] () { return std::unique_ptr<ITest>(new NotebookTest()); }},
 		{ "LUNASVG", [] () { return std::unique_ptr<ITest>(new LunaSVGTest()); }},
-		{ "MULTIPLE_THEME_MODEL", [] () { return std::unique_ptr<ITest>(new MultipleThemeModelTest()); }}
+		{ "MULTIPLE_THEME_MODEL", [] () { return std::unique_ptr<ITest>(new MultipleThemeModelTest()); }},
+		{ "BASE_THEME", [] () { return std::unique_ptr<ITest>(new BaseThemeTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)

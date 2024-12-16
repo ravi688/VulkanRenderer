@@ -1,6 +1,7 @@
 [Name("My Theme 1")]
 [Model("Theme Model 1")]
 [Model("Theme Model 2")]
+[Model("Theme Model 3")]
 Theme
 {
     LargeButton.IdleColor = green { };
@@ -16,4 +17,12 @@ Theme
     AnotherButton.AlphaValue = 0.7f;
     [String]
     Label.Value = "Hello World From Theme 1";
+    [Float]
+    AnotherLabel.Color.r = 1.0f;
+    [Float]
+    AnotherLabel.Color.g = 0.0f;
+    [Float]
+    AnotherLabel.Color.b = 1.0f;
+    [Float]
+    AnotherLabel.Color.a = 1.0f;
 }

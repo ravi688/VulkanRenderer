@@ -1,0 +1,9 @@
+[Name("My Theme 5")]
+[Base("My Theme 1")]
+Theme
+{
+    [Float]
+    AnotherButton.AlphaValue = 0.8f;
+    [String]
+    Label.Value = "Hello World From Theme 5";
+}

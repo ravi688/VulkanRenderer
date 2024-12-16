@@ -380,30 +380,52 @@ namespace SUTK
 				if(modelAttr->argument_count == 1)
 				{
 					auto themeInterfaceName = std::string_view { modelAttr->arguments[0].start + start, U32_PAIR_DIFF(modelAttr->arguments[0]) };
-					if(!ud->thisPtr->containsThemeInterface(themeInterfaceName))
-					{
+					if(ud->thisPtr->containsThemeInterface(themeInterfaceName))
+						ud->interfaces->push_back(ud->thisPtr->getThemeInterface(themeInterfaceName));
+					else
 						DEBUG_LOG_ERROR("No Theme interface/model with name \"%.*s\" is found", themeInterfaceName.length(), themeInterfaceName.data());
-						return false;
-					}
-					ud->interfaces->push_back(ud->thisPtr->getThemeInterface(themeInterfaceName));
-					return true;
 				}
 				else
-				{
 					DEBUG_LOG_ERROR("Arguments mismatch, \"Model\" attribute accepts one argument (string), but either not given or more provided");
-					return false;
-				}
 				return true;
 			}, &userData);
-			if(!interfaces.size())
-			{
-				DEBUG_LOG_ERROR("[Model] attribute is expected on \"Theme\" block, but not given");
-				goto HANDLE_FAILURE;
-			}
 			if(nameAttr->argument_count == 1)
 			{
+				v3d_generic_attribute_t* baseAttr = node_find_attribute(themeNode, str, "Base");
+				ThemeType* baseTheme = com::null_pointer<ThemeType>();
+				if(baseAttr)
+				{
+					auto baseThemeName = std::string_view { baseAttr->arguments[0].start + str, U32_PAIR_DIFF(baseAttr->arguments[0]) };
+					dumpThemes();
+					std::cout << "Base Theme: " << baseThemeName << std::endl;
+					if((baseTheme = getTheme(baseThemeName)))
+					{
+						auto& baseInterfaces = baseTheme->getInterfaces();
+						for(auto& baseInterface : baseInterfaces)
+							interfaces.push_back(baseInterface);
+					}
+					else DEBUG_LOG_ERROR("The theme derives from a non-existent theme %*.s as base theme", baseThemeName.length(), baseThemeName.data());
+				}
+				else if(!interfaces.size())
+				{
+					DEBUG_LOG_ERROR("Either [Model] attribute is expected on \"Theme\" block or it must be derived from another Theme, using [Base] attribute, which implements a Theme Model");
+					goto HANDLE_FAILURE;
+				}
 				strView = std::string_view { nameAttr->arguments[0].start + str, U32_PAIR_DIFF(nameAttr->arguments[0]) };
 				theme = createTheme(strView, interfaces);
+				if(baseTheme)
+				{
+					for(auto& keyValuePair : baseTheme->getColors())
+						theme->add<Color4>(keyValuePair.first, keyValuePair.second);
+					for(auto& keyValuePair : baseTheme->getImages())
+						theme->add<UIDriver::ImageReference>(keyValuePair.first, keyValuePair.second);
+					for(auto& keyValuePair : baseTheme->getFonts())
+						theme->add<UIDriver::FontReference>(keyValuePair.first, keyValuePair.second);
+					for(auto& keyValuePair : baseTheme->getFloats())
+						theme->add<f32>(keyValuePair.first, keyValuePair.second);
+					for(auto& keyValuePair : baseTheme->getStrings())
+						theme->add<std::string>(keyValuePair.first, keyValuePair.second);
+				}
 				for(u32 i = 0; i < themeNode->child_count; ++i)
 				{
 					v3d_generic_node_t* child = themeNode->childs[i];
@@ -416,8 +438,8 @@ namespace SUTK
 					std::string_view nameSV = std::string_view { name.start + str, U32_PAIR_DIFF(name) };
 					if(!child->has_value)
 					{
-						DEBUG_LOG_ERROR("No value has been assigned to \"%.*s\"", nameSV.length(), nameSV.data());
-						goto HANDLE_FAILURE;
+						DEBUG_LOG_ERROR("No value has been assigned to \"%.*s\", skipped", nameSV.length(), nameSV.data());
+						continue;
 					}
 					std::optional<ThemeInterfaceType::Type> type = theme->getKeyType(nameSV);
 					if(!type)
@@ -429,31 +451,31 @@ namespace SUTK
 							case ThemeInterfaceType::Type::Color:
 							{
 								Color4 color = deriveValue<Color4>(child->value, str);
-								theme->add<Color4>(nameSV, std::move(color));
+								theme->addOrSet<Color4>(nameSV, std::move(color));
 								break;
 							}
 							case ThemeInterfaceType::Type::Image:
 							{
 								UIDriver::ImageReference image = deriveValue<UIDriver::ImageReference>(child->value, str);
-								theme->add<UIDriver::ImageReference>(nameSV, std::move(image));
+								theme->addOrSet<UIDriver::ImageReference>(nameSV, std::move(image));
 								break;
 							}
 							case ThemeInterfaceType::Type::Font:
 							{
 								UIDriver::FontReference font = deriveValue<UIDriver::FontReference>(child->value, str);
-								theme->add<UIDriver::FontReference>(nameSV, std::move(font));
+								theme->addOrSet<UIDriver::FontReference>(nameSV, std::move(font));
 								break;
 							}
 							case ThemeInterfaceType::Type::Float:
 							{
 								f32 flt = deriveValue<f32>(child->value, str);
-								theme->add<f32>(nameSV, std::move(flt));
+								theme->addOrSet<f32>(nameSV, std::move(flt));
 								break;
 							}
 							case ThemeInterfaceType::Type::String:
 							{
 								std::string stdstr = deriveValue<std::string>(child->value, str);
-								theme->add<std::string>(nameSV, std::move(stdstr));
+								theme->addOrSet<std::string>(nameSV, std::move(stdstr));
 								break;
 							}
 						}

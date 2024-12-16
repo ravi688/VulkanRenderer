@@ -529,6 +529,12 @@ namespace SUTK
 		static constexpr Color3 yellow() noexcept { return { 255, 255, 0 }; }
 	};
 
+	static CAN_BE_UNUSED_FUNCTION std::ostream& operator <<(std::ostream& stream, Color3 value) noexcept
+	{
+		stream << "{ " << static_cast<u32>(value.r) << ", " << static_cast<u32>(value.g) << ", " << static_cast<u32>(value.b) << " }";
+		return stream;
+	}
+
 
 	struct Color4
 	{
@@ -612,6 +618,12 @@ namespace SUTK
 			return { static_cast<u8>(255 * level), static_cast<u8>(255 * level), static_cast<u8>(255 * level), 255 }; 
 		}
 	};
+
+	static CAN_BE_UNUSED_FUNCTION std::ostream& operator <<(std::ostream& stream, Color4 value) noexcept
+	{
+		stream << "{ " << static_cast<u32>(value.r) << ", " << static_cast<u32>(value.g) << ", " << static_cast<u32>(value.b) << ", " << static_cast<u32>(value.b) << " }";
+		return stream;
+	}
 
 	typedef Rect2D<f32> Rect2Df;
 	typedef Vec2D<f32> Vec2Df;

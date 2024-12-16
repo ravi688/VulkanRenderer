@@ -1,0 +1,13 @@
+[Name("My Theme 6")]
+[Base("My Theme 5")]
+[Model("Theme Model 3")]
+Theme
+{
+    [String]
+    Label.Value = "Hello World From Theme 6";
+
+    [Float]
+    AnotherLabel.Color.b = 0.5f;
+    AnotherLabel.Color.r = 0.0f;
+    AnotherLabel.Color.g = 1.0f;
+}

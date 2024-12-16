@@ -1,0 +1,5 @@
+[Name("My Theme 4")]
+[Base("My Theme 1")]
+Theme
+{
+}

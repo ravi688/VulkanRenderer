@@ -1,0 +1,12 @@
+[Name("Theme Model 3")]
+ThemeModel
+{
+	[Float]
+	AnotherLabel.Color.r;
+	[Float]
+	AnotherLabel.Color.g;
+	[Float]
+	AnotherLabel.Color.b;
+	[Float]
+	AnotherLabel.Color.a;
+}
