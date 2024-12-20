@@ -6,6 +6,7 @@
 
 #include <common/Reference.hpp> // for com::Reference
 #include <common/UnorderedEraseSafeVectorProxy.hpp> // for com::UnorderedEraseSafeVectorProxy<>
+#include <common/Utility.hpp> // for com::BinaryFileLoadResult
 #include <vector> // for std::vector
 #include <utility> // for std::forward
 #include <chrono> // for std::chrono
@@ -33,6 +34,7 @@ namespace SUTK
 	class OrderedInputEventsDispatcher;
 
 	class AnimationEngine;
+	class BuiltinThemeManager;
 
 	class UIDriver
 	{
@@ -56,6 +58,7 @@ namespace SUTK
 		com::UnorderedEraseSafeVectorProxy<IRunnable*> m_runnables;
 		OrderedInputEventsDispatcher* m_orderedEventsDispatcher;
 		AnimationEngine* m_animationEngine;
+		BuiltinThemeManager* m_themeManager;
 
 		com::Bool m_isCalledFirstTime;
 		std::chrono::time_point<std::chrono::steady_clock> m_prevTime;
@@ -80,10 +83,13 @@ namespace SUTK
 
 		ImageReference loadImage(std::string_view path) noexcept;
 		ImageReference loadImage(const std::span<const u8> span) noexcept;
+		ImageReference loadImage(std::span<const std::byte> span) noexcept { return loadImage(std::span<const u8> { reinterpret_cast<const u8*>(span.data()), span.size() }); }
 		ImageReference loadImage(const u8* pixelData, u32 width, u32 height, u32 numChannels) noexcept;
+		ImageReference loadImage(com::BinaryFileLoadResult result) noexcept;
 		void unloadImage(ImageReference id) noexcept;
 		ImageAttributes getImageAttributes(ImageReference id) noexcept;
 		FontReference loadFont(std::string_view path) noexcept;
+		FontReference loadFont(com::BinaryFileLoadResult result) noexcept;
 		void unloadFont(FontReference id) noexcept;
 
 		f32 getDeltaTime() const noexcept { return m_deltaTime; }
@@ -91,6 +97,7 @@ namespace SUTK
 		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }
 		OrderedInputEventsDispatcher& getOrderedInputEventsDispatcher() noexcept { return *m_orderedEventsDispatcher; }
 		AnimationEngine& getAnimationEngine() noexcept { return *m_animationEngine; }
+		BuiltinThemeManager& getBuiltinThemeManager() noexcept { return *m_themeManager; }
 
 		IGfxDriver& getGfxDriver() { return m_gfxDriver; }
 		const IGfxDriver& getGfxDriver() const { return m_gfxDriver; }

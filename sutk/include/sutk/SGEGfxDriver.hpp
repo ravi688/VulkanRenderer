@@ -194,6 +194,7 @@ namespace SUTK
 		virtual void unloadTexture(GfxDriverObjectHandleType handle) override;
 
 		virtual GfxDriverObjectHandleType loadFont(std::string_view str) override;
+		virtual GfxDriverObjectHandleType loadFont(std::span<const std::byte> bytes) override;
 		virtual void unloadFont(GfxDriverObjectHandleType handle) override;
 
 		// compiles SUTK::Geometry description into SGE objects which can eventually be renderered in SGE

@@ -12,6 +12,7 @@
 #include <sutk/IRunnable.hpp> // for SUTK::IRunnable::Update
 #include <sutk/OrderedInputEventsDispatcher.hpp> // for SUTK::OrderedInputEventsDispatcher
 #include <sutk/AnimationEngine.hpp> // for SUTK::AnimationEngine
+#include <sutk/BuiltinThemeManager.hpp> // for SUTK::BuiltinThemeManager
 
 #include <common/assert.h>
 #include <common/debug.h> // for debug_log_error
@@ -32,26 +33,19 @@ namespace SUTK
 		m_debugRootContainer->setLayer(MaxLayer);
 		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
 		m_animationEngine = new AnimationEngine(*this);
+		m_themeManager = new BuiltinThemeManager(*this);
 	}
 
-	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : m_gfxDriver(gfxDriver), 
-														m_inputDriver(new DummyInputDriver{ }), 
-														m_isDummyInputDriver(true), 
-														m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE),
-														m_isCalledFirstTime(com::True),
-														m_prevTime(std::chrono::steady_clock::now()),
-														m_deltaTime(0)
+	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : UIDriver(gfxDriver, *new DummyInputDriver{ })
 	{
-		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
-		m_debugRootContainer->setLayer(MaxLayer);
-		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
-		m_animationEngine = new AnimationEngine(*this);
+		m_isDummyInputDriver = true;
 	}
 
 	UIDriver::~UIDriver()
 	{
 		delete m_orderedEventsDispatcher;
 		delete m_animationEngine;
+		delete m_themeManager;
 		if(m_isDummyInputDriver)
 			delete m_inputDriver;
 	}
@@ -164,6 +158,12 @@ namespace SUTK
 		return getGfxDriver().loadTexture(pixelData, width, height, numChannels);
 	}
 
+	UIDriver::ImageReference UIDriver::loadImage(com::BinaryFileLoadResult result) noexcept
+	{
+		_com_assert(result);
+		return loadImage(result.span());
+	}
+
 	void UIDriver::unloadImage(ImageReference id) noexcept
 	{
 		getGfxDriver().unloadTexture(id.getHandle());
@@ -172,6 +172,12 @@ namespace SUTK
 	UIDriver::FontReference UIDriver::loadFont(std::string_view path) noexcept
 	{
 		return getGfxDriver().loadFont(path);
+	}
+
+	UIDriver::FontReference UIDriver::loadFont(com::BinaryFileLoadResult result) noexcept
+	{
+		_com_assert(result);
+		return getGfxDriver().loadFont(result.span());
 	}
 
 	void UIDriver::unloadFont(FontReference id) noexcept

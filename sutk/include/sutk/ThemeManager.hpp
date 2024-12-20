@@ -5,6 +5,7 @@
 #include <common/assert.h> // for _com_assert
 #include <common/debug.h> // for DEBUG_LOG_ERROR, and debug_log_warning
 #include <common/Event.hpp> // for com::Event<>
+#include <common/Utility.hpp> // for com::BinaryFileLoadCallback, com::BinaryFileLoadResult and com::LoadBinaryFile
 
 #include <string_view> // for std::string_view
 #include <type_traits> // for std::is_same_v
@@ -400,10 +401,13 @@ namespace SUTK
 
 		template<typename T>
 		T deriveValue(v3d_generic_node_t* node, const char* str) noexcept;
+		template<typename T>
+		requires(com::SameAsAny<T, UIDriver::ImageReference, UIDriver::FontReference>)
+		T deriveValue(v3d_generic_node_t* node, const char* str, std::optional<com::BinaryFileLoadCallback> fileLoadCallback = { }) noexcept;
 
 	public:
 		ThemeManager(UIDriver& driver) noexcept : UIDriverObject(driver) { }
-		~ThemeManager() noexcept
+		virtual ~ThemeManager() noexcept
 		{
 			for(auto& keyValuePair : m_themeInterfaces)
 				delete keyValuePair.second;
@@ -431,6 +435,9 @@ namespace SUTK
 			return themeInterface;
 		}
 		ThemeInterfaceType* loadThemeInterface(const std::string_view filePath) noexcept;
+		// NOTE: themeIntefaceStr is different file path!
+		// themeIntefaceStr is just an in-memory string
+		ThemeInterfaceType* loadThemeInterfaceStr(const std::string_view themeIntefaceStr) noexcept;
 		bool containsThemeInterface(const KeyViewType& key) const noexcept
 		{
 			return m_themeInterfaces.contains(key);
@@ -458,7 +465,10 @@ namespace SUTK
 			m_themes.insert({ KeyType { key }, theme });
 			return theme;
 		}
-		ThemeType* loadTheme(const std::string_view filePath) noexcept;
+		// The reason we don't provide a default value for file load callback here is that if we provide 'LoadBinaryFile' then it will be immediately
+		// called for each file path in the theme file. But we want to allow the IGfxDriver's implementa to lazily load the imagse and fonts.
+		ThemeType* loadTheme(const std::string_view filePath, std::optional<com::BinaryFileLoadCallback> fileLoadCallback = { }) noexcept;
+		ThemeType* loadThemeStr(const std::string_view themeStr, std::optional<com::BinaryFileLoadCallback> fileLoadCallback = { }) noexcept;
 		ThemeType* getTheme(const KeyViewType& key) noexcept
 		{
 			auto value = com::try_find_value(m_themes, key);

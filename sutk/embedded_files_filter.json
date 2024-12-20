@@ -1,0 +1,10 @@
+{
+	"text_files": [
+		".tmdl",
+		".theme",
+		".svg"
+	],
+	"binary_files": [
+		".ttf"
+	]
+}

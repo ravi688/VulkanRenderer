@@ -997,6 +997,12 @@ namespace SUTK
 		return m_fontData.add({ std::string(str), { } });
 	}
 
+	GfxDriverObjectHandleType SGEGfxDriver::loadFont(std::span<const std::byte> bytes)
+	{
+		SGE::Font font = m_driver.createFont(bytes);
+		return m_fontData.add({ { }, font });
+	}
+
 	void SGEGfxDriver::unloadFont(GfxDriverObjectHandleType handle)
 	{
 		m_fontData.remove(handle);

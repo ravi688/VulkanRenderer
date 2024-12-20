@@ -88,7 +88,7 @@ namespace SUTK
 		m_closeButton->getAnchorRect()->moveToRightMiddleOfParent();
 		m_closeButtonGraphic = driver.createContainer<ImageButtonGraphic>(m_closeButton);
 		if(!s_closeIcon)
-			s_closeIcon = driver.loadImage("svg_files/close-square-svgrepo-com.svg");
+			s_closeIcon = driver.loadImage("dependencies/VulkanRenderer/sutk/svg_files/close-square-svgrepo-com.svg");
 		m_closeButtonGraphic->setImage(s_closeIcon);
 	}
 

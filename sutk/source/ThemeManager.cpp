@@ -9,23 +9,15 @@
 namespace SUTK
 {
 	template<>
-	typename ThemeManager<std::string, std::string_view>::ThemeInterfaceType* ThemeManager<std::string, std::string_view>::loadThemeInterface(const std::string_view filePath) noexcept
+	typename ThemeManager<std::string, std::string_view>::ThemeInterfaceType* ThemeManager<std::string, std::string_view>::loadThemeInterfaceStr(const std::string_view themeInterfaceStr) noexcept
 	{
-		BUFFER* text = NULL;
-		{
-			std::string str { filePath };
-			text = load_text_from_file(str.c_str());
-		}
-		char* str = reinterpret_cast<char*>(buf_get_ptr(text));
-		ppsr_v3d_generic_parse_result_t result = ppsr_v3d_generic_parse(NULL, str, buf_get_element_count(text) - 1);
+		const char* str = themeInterfaceStr.data();
+		ppsr_v3d_generic_parse_result_t result = ppsr_v3d_generic_parse(NULL, themeInterfaceStr.data(), themeInterfaceStr.length());
 		ThemeInterfaceType* interface = NULL;
 		std::string_view strView { };
 		v3d_generic_node_t* themeModelNode = NULL;
 		if(result.result != PPSR_SUCCESS)
-		{
-			DEBUG_LOG_ERROR("Unable to parse the file at %.*s", filePath.length(), filePath.data());
 			goto HANDLE_FAILURE;
-		}
 		if(result.root->child_count == 0)
 		{
 			DEBUG_LOG_ERROR("Parse is empty, perhaps the file was empty?");
@@ -102,7 +94,6 @@ namespace SUTK
 					DEBUG_LOG_WARNING("Type either isn't recognized or not given, skipping \"%.*s\"", nameSV.length(), nameSV.data());
 				}
 				ppsr_v3d_generic_parse_result_destroy(NULL, result);
-				buf_free(text);
 				return interface;
 			}
 			else
@@ -116,8 +107,24 @@ namespace SUTK
 		if(interface)
 			destroyThemeInterface(strView);
 		ppsr_v3d_generic_parse_result_destroy(NULL, result);
-		buf_free(text);
 		return NULL;
+	}
+
+	// NOTE: specialization must always come before instantiation otherwise we will get 'specialization after instantiation error'
+	template<>
+	typename ThemeManager<std::string, std::string_view>::ThemeInterfaceType* ThemeManager<std::string, std::string_view>::loadThemeInterface(const std::string_view filePath) noexcept
+	{
+		BUFFER* text = NULL;
+		{
+			std::string str { filePath };
+			text = load_text_from_file(str.c_str());
+		}
+		char* str = reinterpret_cast<char*>(buf_get_ptr(text));
+		auto* themeInterface = loadThemeInterfaceStr(std::string_view  { str, strlen(str) });
+		if(!themeInterface)
+			DEBUG_LOG_ERROR("Unable to parse the file at %.*s", filePath.length(), filePath.data());
+		buf_free(text);
+		return themeInterface;
 	}
 
 	static const char* gColorMnemonics[] =
@@ -224,9 +231,17 @@ namespace SUTK
 		return color;
 	}
 
+	static com::BinaryFileLoadResult InvokeFileLoadCallbackDBG(const std::string_view filePath, com::BinaryFileLoadCallback loadHandler) noexcept
+	{
+		com::BinaryFileLoadResult result = loadHandler(filePath);
+		if(!result)
+			DEBUG_LOG_ERROR("Failed to load file \"%*.s\"", filePath.length(), filePath.data());
+		return result;
+	}
+
 	template<>
 	template<>
-	UIDriver::ImageReference ThemeManager<std::string, std::string_view>::deriveValue<UIDriver::ImageReference>(v3d_generic_node_t* node, const char* str) noexcept
+	UIDriver::ImageReference ThemeManager<std::string, std::string_view>::deriveValue<UIDriver::ImageReference>(v3d_generic_node_t* node, const char* str, std::optional<com::BinaryFileLoadCallback> fileLoadCallback) noexcept
 	{
 		// Followings are the possibilies:
 		// 1. "path/to/a/file.png"
@@ -243,7 +258,15 @@ namespace SUTK
 			else
 			{
 				auto filePath = std::string_view { pair.start + str, U32_PAIR_DIFF(pair) };
-				image = getUIDriver().loadImage(filePath);
+				if(fileLoadCallback)
+				{
+					if(com::BinaryFileLoadResult result = InvokeFileLoadCallbackDBG(filePath, *fileLoadCallback))
+					{
+						image = getUIDriver().loadImage(std::move(result));
+						result.destroy();
+					}
+				}
+				else image = getUIDriver().loadImage(filePath);
 			}
 		}
 		else
@@ -253,7 +276,7 @@ namespace SUTK
 
 	template<>
 	template<>
-	UIDriver::FontReference ThemeManager<std::string, std::string_view>::deriveValue<UIDriver::FontReference>(v3d_generic_node_t* node, const char* str) noexcept
+	UIDriver::FontReference ThemeManager<std::string, std::string_view>::deriveValue<UIDriver::FontReference>(v3d_generic_node_t* node, const char* str, std::optional<com::BinaryFileLoadCallback> fileLoadCallback) noexcept
 	{
 		// Followings are the possibilies:
 		// 1. "path/to/a/file.ttf"
@@ -270,7 +293,15 @@ namespace SUTK
 			else
 			{
 				auto filePath = std::string_view { pair.start + str, U32_PAIR_DIFF(pair) };
-				font = getUIDriver().loadFont(filePath);
+				if(fileLoadCallback)
+				{
+					if(com::BinaryFileLoadResult result = InvokeFileLoadCallbackDBG(filePath, *fileLoadCallback))
+					{
+						font = getUIDriver().loadFont(std::move(result));
+						result.destroy();
+					}
+				}
+				else font = getUIDriver().loadFont(filePath);
 			}
 		}
 		else
@@ -325,23 +356,15 @@ namespace SUTK
 	}
 
 	template<>
-	typename ThemeManager<std::string, std::string_view>::ThemeType* ThemeManager<std::string, std::string_view>::loadTheme(const std::string_view filePath) noexcept
+	typename ThemeManager<std::string, std::string_view>::ThemeType* ThemeManager<std::string, std::string_view>::loadThemeStr(const std::string_view themeStr, std::optional<com::BinaryFileLoadCallback> fileLoadCallback) noexcept
 	{
-		BUFFER* text = NULL;
-		{
-			std::string str { filePath };
-			text = load_text_from_file(str.c_str());
-		}
-		char* str = reinterpret_cast<char*>(buf_get_ptr(text));
-		ppsr_v3d_generic_parse_result_t result = ppsr_v3d_generic_parse(NULL, str, buf_get_element_count(text) - 1);
+		const char* str = themeStr.data();
+		ppsr_v3d_generic_parse_result_t result = ppsr_v3d_generic_parse(NULL, themeStr.data(), themeStr.length());
 		ThemeType* theme = NULL;
 		std::string_view strView { };
 		v3d_generic_node_t* themeNode = NULL;
 		if(result.result != PPSR_SUCCESS)
-		{
-			DEBUG_LOG_ERROR("Unable to parse the file at %.*s", filePath.length(), filePath.data());
 			goto HANDLE_FAILURE;
-		}
 		if(result.root->child_count == 0)
 		{
 			DEBUG_LOG_ERROR("Parse is empty, perhaps the file was empty?");
@@ -456,13 +479,13 @@ namespace SUTK
 							}
 							case ThemeInterfaceType::Type::Image:
 							{
-								UIDriver::ImageReference image = deriveValue<UIDriver::ImageReference>(child->value, str);
+								UIDriver::ImageReference image = deriveValue<UIDriver::ImageReference>(child->value, str, fileLoadCallback);
 								theme->addOrSet<UIDriver::ImageReference>(nameSV, std::move(image));
 								break;
 							}
 							case ThemeInterfaceType::Type::Font:
 							{
-								UIDriver::FontReference font = deriveValue<UIDriver::FontReference>(child->value, str);
+								UIDriver::FontReference font = deriveValue<UIDriver::FontReference>(child->value, str, fileLoadCallback);
 								theme->addOrSet<UIDriver::FontReference>(nameSV, std::move(font));
 								break;
 							}
@@ -482,7 +505,6 @@ namespace SUTK
 					}
 				}
 				ppsr_v3d_generic_parse_result_destroy(NULL, result);
-				buf_free(text);
 				return theme;
 			}
 			else
@@ -496,7 +518,23 @@ namespace SUTK
 		if(theme)
 			destroyTheme(strView);
 		ppsr_v3d_generic_parse_result_destroy(NULL, result);
-		buf_free(text);
 		return NULL;
+	}
+
+	// NOTE: We can't put this function 'loadTheme' before 'loadThemeStr', otherwise we will get 'specialization after instantiation error'
+	template<>
+	typename ThemeManager<std::string, std::string_view>::ThemeType* ThemeManager<std::string, std::string_view>::loadTheme(const std::string_view filePath, std::optional<com::BinaryFileLoadCallback> fileLoadCallback) noexcept
+	{
+		BUFFER* text = NULL;
+		{
+			std::string str { filePath };
+			text = load_text_from_file(str.c_str());
+		}
+		char* str = reinterpret_cast<char*>(buf_get_ptr(text));
+		auto* theme = loadThemeStr(std::string_view { str, strlen(str) }, fileLoadCallback);
+		if(!theme)
+			DEBUG_LOG_ERROR("Unable to parse the file at %.*s", filePath.length(), filePath.data());
+		buf_free(text);
+		return theme;
 	}
 }
