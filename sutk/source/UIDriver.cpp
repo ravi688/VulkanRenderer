@@ -27,13 +27,19 @@ namespace SUTK
 																					m_globalTextGroup(GFX_DRIVER_OBJECT_NULL_HANDLE),
 																					m_isCalledFirstTime(com::True),
 																					m_prevTime(std::chrono::steady_clock::now()),
-																					m_deltaTime(0)
+																					m_deltaTime(0),
+																					// Render for the first time to let the human user see black screen or anything other color IGfxDriver implementation might want to display for the first time.
+																					m_isRenderThisFrame(com::True)
 	{
 		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_debugRootContainer->setLayer(MaxLayer);
 		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
 		m_animationEngine = new AnimationEngine(*this);
 		m_themeManager = new BuiltinThemeManager(*this);
+		gfxDriver.addOnResizeHandler([this](Vec2Df) noexcept
+		{
+			this->m_isRenderThisFrame = com::True;
+		});
 	}
 
 	UIDriver::UIDriver(IGfxDriver& gfxDriver) noexcept : UIDriver(gfxDriver, *new DummyInputDriver{ })
@@ -83,7 +89,7 @@ namespace SUTK
 		if(m_runnables.size() != 0)
 			m_runnables.traverse(IRunnable::Update);
 
-		com::Bool isRerender = com::False;
+		com::Bool isRerender = m_isRenderThisFrame;
 		bool isRecalculateDrawOrder = false;
 		u32 minDrawOrder = std::numeric_limits<u32>::max();
 		u32 maxDrawOrder = 0;
@@ -125,6 +131,7 @@ namespace SUTK
 		{
 			// now record and dispatch rendering commands (delegated that to rendering backend)
 			m_gfxDriver.render(*this);
+			m_isRenderThisFrame = com::False;
 		}
 	}
 

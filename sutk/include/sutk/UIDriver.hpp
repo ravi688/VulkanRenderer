@@ -64,6 +64,10 @@ namespace SUTK
 		std::chrono::time_point<std::chrono::steady_clock> m_prevTime;
 		f32 m_deltaTime;
 
+		// It should be set com::True if the current frame needs to be drawn
+		// Generally, it should remain set to com::False unless some UI component/widget has been marked as dirty or updated its appearance
+		com::Bool m_isRenderThisFrame;
+
 		friend class Renderable;
 
 		// Only meant to be used by Renderable
