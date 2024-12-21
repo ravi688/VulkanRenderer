@@ -21,6 +21,7 @@ namespace SUTK
 		virtual void onAdd(Container* parent) override;
 		virtual void onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
+		virtual void onAnscestorChange(Container* anscestor) noexcept override;
 
 	public:
 		void setRenderable(Renderable* renderable) noexcept;

@@ -9,6 +9,12 @@
 #include <sutk/BuiltinThemeManager.hpp>
 #include <sutk/Label.hpp>
 
+#include <sutk/Button.hpp>
+#include <sutk/ToggleButton.hpp>
+#include <sutk/ButtonListView.hpp>
+#include <sutk/ToggleButtonListView.hpp>
+#include <sutk/NotebookView.hpp>
+
 namespace SUTK
 {
 	ITest::TestInitializationData DarkLightThemeTest::getInitializationData()
@@ -32,10 +38,52 @@ namespace SUTK
 
 		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 
-		// Create a Button
-		// Create a Toggle Button
-		// Create a Button List
-		// Create a Toggle Button List
+		f32 pos = 0.1f;
+		// Button
+		Button* button = m_uiDriver->createContainer<Button>(rootContainer);
+		pos += button->getSize().width + 0.1f;
+		// Toggle Button
+		ToggleButton* togButton = m_uiDriver->createContainer<ToggleButton>(rootContainer);
+		togButton->setPosition({ pos, 0.0f });
+		pos += togButton->getSize().width + 0.1f;
+		// Button List View
+		ButtonListView* buttonList = m_uiDriver->createContainer<ButtonListView>(rootContainer);
+		buttonList->setPosition({ pos, 0.0f });
+		for(u32 i = 0; i < 4; ++i)
+			buttonList->addButton(std::format("Button {}", i));
+		pos += buttonList->getSize().width + 0.1f;
+		// Toggle Button List View
+		ToggleButtonListView* togButtonList = m_uiDriver->createContainer<ToggleButtonListView>(rootContainer);
+		togButtonList->setPosition({ pos, 0.0f });
+		for(u32 i = 0; i < 4; ++i)
+			togButtonList->addButton(std::format("Button {}", i));
+		pos += togButtonList->getSize().width + 0.1f;
+		pos = 0.1f;
+		f32 posY = 5.5f;
+		// Notebook
+		NotebookView* notebook = m_uiDriver->createContainer<NotebookView>(rootContainer);
+		notebook->setRect({ { pos, posY }, { 10, 5 } });
+		for(u32 i = 0; i < 3; ++i)
+			notebook->createPage(std::format("Tab {}", i));
+		m_inputDriver->getOnKeyEvent().subscribe([notebook](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
+		{
+			static auto i = 3;
+			if((keycode == KeyCode::N) && (event == KeyEvent::Press))
+			{
+				notebook->createPage(std::format("Tab {}", i));
+				i++;
+			}
+		});
+		m_inputDriver->getOnKeyEvent().subscribe([notebook](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
+		{
+			static auto i = 3;
+			if((keycode == KeyCode::R) && (event == KeyEvent::Press))
+			{
+				notebook->removePage(notebook->getCurrentPage());
+				i++;
+			}
+		});
+
 		// Create a Notebook
 		// Create a Label
 		// Create a Panel
@@ -65,8 +113,8 @@ namespace SUTK
 
 	void DarkLightThemeTest::render(SGE::Driver& driver)
 	{
-		// SUTK::UIDriver::render() should only be called when there is an update in the UI or screen resize
-		m_uiDriver->render();
+		if(m_uiDriver->isDirty())
+			m_uiDriver->render();
 	}
 
 	void DarkLightThemeTest::update(SGE::Driver& driver, float deltaTime)

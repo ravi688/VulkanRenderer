@@ -35,6 +35,10 @@ namespace SUTK
 		virtual void onGlobalCoordDirty() noexcept { }
 		// This function onContainerResize is called whenever the container containing this renderable changes its size or local position.
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept { }
+		// This function is called by RenderableContainer whenever its own onAnscestorChange() is invoked
+		// i.e. this function is called whenever the RenderableContainer's anscestor is changed
+		// The new anscestor is passed into this function.
+		virtual void onAnscestorChange(Container* anscestor) noexcept;
 		// updates draw order (z-buffer) values to the GPU side memory.
 		// mandatory to be called in the overridng method
 		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) { m_isDrawOrderDirty = false; }

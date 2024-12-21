@@ -2,6 +2,7 @@
 #include <sutk/Label.hpp> // for SUTK::Label
 #include <sutk/SmallText.hpp> // for SUTK::SmallText
 #include <sutk/RenderImage.hpp> // for SUTK::RenderImage
+#include <sutk/Constants.hpp>
 
 #include <common/assert.h> // for _com_assert
 
@@ -95,20 +96,14 @@ namespace SUTK
 		m_renderRect->setColor(color);
 	}
 
-	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept : DefaultButtonGraphicNoLabel(driver, parent)
+	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup) noexcept : DefaultButtonGraphicNoLabel(driver, parent)
 	{
 		m_label = driver.createContainer<Label>(this, textGroup);
 		// size of the label's rect should be as that of ButtonGraphic's rect
-		m_label->alwaysFitInParent();
+		m_label->fitInParent({ Constants::Defaults::Button::LeftMargin, Constants::Defaults::Button::RightMargin, 0.0f, 0.0f });
 		m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
-	}
-
-	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent) noexcept : DefaultButtonGraphicNoLabel(driver, parent)
-	{
-		m_label = driver.createContainer<Label>(this);
-		// size of the label's rect should be as that of ButtonGraphic's rect
-		m_label->alwaysFitInParent();
-		m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
+		m_label->set("New Button");
+		m_label->getText().setColor(Color4::black());
 	}
 
 	DefaultButtonGraphic::~DefaultButtonGraphic() noexcept
@@ -120,7 +115,7 @@ namespace SUTK
 	{
 		f32 xCoord = m_label->getText().getCoordFromColPos(END_OF_LINE);
 		Vec2Df size = getSize();
-		return { xCoord + m_label->getPosition().x, size.height };
+		return { xCoord + m_label->getPosition().x + Constants::Defaults::Button::RightMargin, size.height };
 	}
 
 	ImageButtonGraphic::ImageButtonGraphic(UIDriver& driver, Container* parent) noexcept : ColorDriverButtonGraphicContainer<RenderableContainer>(driver, parent)

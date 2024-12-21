@@ -1,10 +1,11 @@
 #include <sutk/Button.hpp>
 
 #include <sutk/ButtonGraphic.hpp>
+#include <sutk/Constants.hpp> // for SUTK::Constants::Defaults
 
 namespace SUTK
 {
-	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic, GfxDriverObjectHandleType textGroup) noexcept : Container(driver, parent),
+	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic, std::optional<GfxDriverObjectHandleType> textGroup) noexcept : Container(driver, parent),
 																									MouseMoveHandlerObject(driver, this),
 																									MouseClickHandlerObject(driver, this),
 																									m_graphic(NULL),
@@ -15,27 +16,10 @@ namespace SUTK
 																									m_isGraphicOwner(com::False),
 																									m_isPressed(com::False)
 	{ 
+		setRect({ Vec2Df::zero(), Constants::Defaults::Button::TotalSize });
 		if(isCreateDefaultGraphic)
 		{
 			setGraphic(driver.createContainer<DefaultButtonGraphic>(this, textGroup));
-			m_isGraphicOwner = com::True;
-		}
-	}
-
-	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic) noexcept : Container(driver, parent),
-																									MouseMoveHandlerObject(driver, this),
-																									MouseClickHandlerObject(driver, this),
-																									m_graphic(NULL),
-																									m_onEnterEvent(NULL),
-																									m_onExitEvent(NULL),
-																									m_onPressEvent(NULL),
-																									m_onReleaseEvent(NULL),
-																									m_isGraphicOwner(com::False),
-																									m_isPressed(com::False)
-	{ 
-		if(isCreateDefaultGraphic)
-		{
-			setGraphic(driver.createContainer<DefaultButtonGraphic>(this));
 			m_isGraphicOwner = com::True;
 		}
 	}

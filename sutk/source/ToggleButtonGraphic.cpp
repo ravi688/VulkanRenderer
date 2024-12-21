@@ -3,37 +3,34 @@
 #include <sutk/Label.hpp>
 #include <sutk/SmallText.hpp>
 #include <sutk/ContainerUtility.hpp>
-
-#define CIRCLE_THINKNESS 0.1f
-#define CIRCLE_TOP_BOTTOM_MARGIN 0.2f
-#define CIRCLE_LEFT_MARGIN 0.2f
-
-#define LABEL_MARGIN 0.25f
+#include <sutk/Constants.hpp>
 
 namespace SUTK
 {
-	DefaultToggleButtonGraphic::DefaultToggleButtonGraphic(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept : DefaultButtonGraphic(driver, parent, textGroup)
+	DefaultToggleButtonGraphic::DefaultToggleButtonGraphic(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup) noexcept : DefaultButtonGraphic(driver, parent, textGroup)
 	{
 		m_renderRectCont = driver.createContainer<RenderableContainer>(this);
 		m_renderRectCont->setRecycleState(Container::RecycleState::Recycled);
-		f32 diameter = getSize().height - CIRCLE_TOP_BOTTOM_MARGIN * 2;
-		m_renderRectCont->setRect({ { CIRCLE_LEFT_MARGIN, CIRCLE_TOP_BOTTOM_MARGIN }, { diameter, diameter } });
+		f32 diameter = getSize().height - Constants::Defaults::ToggleButton::CircleTopBottomMargin * 2;
+		m_renderRectCont->setRect({ { Constants::Defaults::Button::LeftMargin, Constants::Defaults::ToggleButton::CircleTopBottomMargin }, { diameter, diameter } });
 		m_renderRectCont->getAnchorRect()->setRect({ 0.0f, 0.5f, 0.0f, 0.0f });
 		m_renderRect = driver.createRenderable<RenderRectFillCircle>(m_renderRectCont);
 		m_renderRect->setSharpness(4.0f);
 		m_renderRect->setNumGradPixels(2.0f);
+		m_renderRect->setColor(Color4::blue());
 		auto& label = getLabel();
-		label.fitInParent({ CIRCLE_LEFT_MARGIN + diameter + LABEL_MARGIN, 0.0f, 0.0f, 0.0f });
+		label.fitInParent({ Constants::Defaults::Button::LeftMargin + diameter + Constants::Defaults::ToggleButton::CircleLabelSpacing, Constants::Defaults::Button::RightMargin, 0.0f, 0.0f });
 		label.getText().setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
+		label.set("New Toggle");
 	}
 	void DefaultToggleButtonGraphic::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		DefaultButtonGraphic::onResize(newRect, isPositionChanged, isSizeChanged);
 		if(isSizeChanged)
 		{
-			f32 diameter = getSize().height - CIRCLE_TOP_BOTTOM_MARGIN * 2;
-			m_renderRectCont->setRect({ { CIRCLE_LEFT_MARGIN, CIRCLE_TOP_BOTTOM_MARGIN }, { diameter, diameter } });
-			getLabel().fitInParent({ CIRCLE_LEFT_MARGIN + diameter + LABEL_MARGIN, 0.0f, 0.0f, 0.0f });
+			f32 diameter = getSize().height - Constants::Defaults::ToggleButton::CircleTopBottomMargin * 2;
+			m_renderRectCont->setRect({ { Constants::Defaults::Button::LeftMargin, Constants::Defaults::ToggleButton::CircleTopBottomMargin }, { diameter, diameter } });
+			getLabel().fitInParent({ Constants::Defaults::Button::LeftMargin + diameter + Constants::Defaults::ToggleButton::CircleLabelSpacing, Constants::Defaults::Button::RightMargin, 0.0f, 0.0f });
 		}
 	}
 

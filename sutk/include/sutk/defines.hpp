@@ -85,6 +85,9 @@ namespace SUTK
 		constexpr Vec2D() noexcept : x(0), y(0) { }
 		constexpr Vec2D(T _x, T _y) noexcept : x(_x), y(_y) { }
 
+		constexpr T getWidth() const noexcept { return x; }
+		constexpr T getHeight() const noexcept { return y; }
+
 		// static methods
 		static Vec2D<T> zero();
 		static Vec2D<T> left();

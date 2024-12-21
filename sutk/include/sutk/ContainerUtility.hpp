@@ -26,6 +26,7 @@ namespace SUTK
 		// Calls visit() for each found Renderable object recursively
 		static void RenderablesVisit(Container* container, const std::function<void(Renderable*)>& visitor) noexcept;
 		static void ContainersWalkUpUntil(Container* container, const std::function<bool(Container*)>& visitor) noexcept;
+		// This recursively visits each container (childs) and including the container passed as the first parameter
 		static void ContainersVisit(Container* container, const std::function<void(Container*)>& visitor) noexcept;
 		static void ContainersDestroyRecursive(Container* container) noexcept;
 		static void ContainersVisitChildEnd(Container* container, const std::function<void(Container*)>& visitor) noexcept;

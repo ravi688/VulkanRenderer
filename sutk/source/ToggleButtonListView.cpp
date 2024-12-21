@@ -5,6 +5,7 @@
 #include <sutk/Label.hpp>
 
 #include <sutk/ContainerUtility.hpp>
+#include <sutk/Constants.hpp> // for SUTK::Constants
 
 namespace SUTK
 {
@@ -45,17 +46,12 @@ namespace SUTK
 	std::pair<ToggleButton*, f32> ToggleButtonListView::addButton(const std::string_view labelStr) noexcept
 	{	
 		// Create the Interactive ToggleButton Object
-		std::pair<ToggleButton*, f32> result = get(TOGGLE_BUTTON_HEIGHT);
+		std::pair<ToggleButton*, f32> result = get(Constants::Defaults::ButtonListView::ButtonHeight);
 
 		// Setup its Visual Representation
 		DefaultToggleButtonGraphic* graphic = result.first->getGraphicAs<DefaultToggleButtonGraphic>();
 		auto& label = graphic->getLabel();
 		label.set(labelStr);
-		label.getText().setFontSize(9);
-		graphic->setIdleColor(Color4::grey(0.05f));
-		graphic->setHoverColor(Color4::grey(0.1f));
-		graphic->setPressColor(Color4::grey(0.15f));
-		graphic->setTransitionDelay(0.08f);
 		graphic->getRenderRect().setRoundness(0.0f);
 
 		Vec2Df boundSize = result.first->getGraphic()->getMinBoundSize();

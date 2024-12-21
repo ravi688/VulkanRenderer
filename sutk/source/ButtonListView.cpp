@@ -5,6 +5,7 @@
 #include <sutk/Label.hpp>
 
 #include <sutk/ContainerUtility.hpp>
+#include <sutk/Constants.hpp>
 
 namespace SUTK
 {
@@ -44,17 +45,12 @@ namespace SUTK
 	std::pair<Button*, f32> ButtonListView::addButton(const std::string_view labelStr) noexcept
 	{	
 		// Create the Interactive Button Object
-		std::pair<Button*, f32> result = get(BUTTON_HEIGHT);
+		std::pair<Button*, f32> result = get(Constants::Defaults::ButtonListView::ButtonHeight);
 
 		// Setup its Visual Representation
 		DefaultButtonGraphic* graphic = result.first->getGraphicAs<DefaultButtonGraphic>();
 		auto& label = graphic->getLabel();
 		label.set(labelStr);
-		label.getText().setFontSize(9);
-		graphic->setIdleColor(Color4::grey(0.05f));
-		graphic->setHoverColor(Color4::grey(0.1f));
-		graphic->setPressColor(Color4::grey(0.15f));
-		graphic->setTransitionDelay(0.08f);
 		graphic->getRenderRect().setRoundness(0.0f);
 
 		Vec2Df boundSize = result.first->getGraphic()->getMinBoundSize();

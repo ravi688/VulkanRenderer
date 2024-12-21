@@ -28,6 +28,7 @@
 #include <sutk/tests/MultipleThemeModelTest.hpp>
 #include <sutk/tests/BaseThemeTest.hpp>
 #include <sutk/tests/DarkLightThemeTest.hpp>
+#include <sutk/tests/PanelTest.hpp>
 
 namespace SUTK
 {
@@ -59,7 +60,8 @@ namespace SUTK
 		{ "LUNASVG", [] () { return std::unique_ptr<ITest>(new LunaSVGTest()); }},
 		{ "MULTIPLE_THEME_MODEL", [] () { return std::unique_ptr<ITest>(new MultipleThemeModelTest()); }},
 		{ "BASE_THEME", [] () { return std::unique_ptr<ITest>(new BaseThemeTest()); }},
-		{ "DARK_LIGHT_THEME", [] () { return std::unique_ptr<ITest>(new DarkLightThemeTest()); }}
+		{ "DARK_LIGHT_THEME", [] () { return std::unique_ptr<ITest>(new DarkLightThemeTest()); }},
+		{ "PANEL", [] () { return std::unique_ptr<ITest>(new PanelTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)

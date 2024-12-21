@@ -54,9 +54,9 @@ namespace SUTK
 	}
 
 	void RenderImageTest::render(SGE::Driver& driver)
-	{
-		// SUTK::UIDriver::render() should only be called when there is an update in the UI or screen resize
-		m_uiDriver->render();
+	{	
+		if(m_uiDriver->isDirty())
+			m_uiDriver->render();
 	}
 
 	void RenderImageTest::update(SGE::Driver& driver, float deltaTime)

@@ -38,4 +38,10 @@ namespace SUTK
 		if(m_renderable != NULL)
 			m_renderable->onContainerResize(newRect, isPositionChanged, isSizeChanged);
 	}
+
+	void RenderableContainer::onAnscestorChange(Container* anscestor) noexcept
+	{
+		if(m_renderable != NULL)
+			m_renderable->onAnscestorChange(anscestor);
+	}
 }

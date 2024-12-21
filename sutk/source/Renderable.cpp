@@ -28,6 +28,11 @@ namespace SUTK
 		getUIDriver().removeRenderable(this);
 	}
 
+	void Renderable::onAnscestorChange(Container* anscestor) noexcept
+	{
+		setDrawOrder(getContainer()->getDepth());
+	}
+
 	void GfxDriverRenderable::setClipRectGlobalCoords(const Rect2Df rect) noexcept
 	{
 		auto handle = getGfxDriverObjectHandle();

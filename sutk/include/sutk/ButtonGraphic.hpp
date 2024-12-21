@@ -131,8 +131,7 @@ namespace SUTK
 		private:		
 			Label* m_label;
 		public:
-			DefaultButtonGraphic(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept;
-			DefaultButtonGraphic(UIDriver& driver, Container* parent) noexcept;
+			DefaultButtonGraphic(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup = { }) noexcept;
 			~DefaultButtonGraphic() noexcept;
 
 			// Overrides

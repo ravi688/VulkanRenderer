@@ -2,6 +2,7 @@
 
 #include <sutk/VBoxContainer.hpp> // for SUTK::VBoxContainer
 #include <sutk/Concepts.hpp> // for SUTK::ContainerT
+#include <sutk/Constants.hpp> // for SUTK::Constants
 #include <functional> // for std::function
 #include <optional> // for std::optional
 #include <common/DynamicPool.hpp> // for com::DynamicPool
@@ -12,16 +13,15 @@ namespace SUTK
 	class SUTK_API DynamicVListContainer : public VBoxContainer
 	{
 	public:
-		// Margin of 1 centimeters in the width of this container
-		static constexpr auto MARGIN = 1.0f;
 		typedef std::function<void(T*)> OnPostCreateHandler;
 		typedef com::DynamicPool<T*> PoolType;
 	private:
 		// This must come before m_pool, see: onCreate
 		std::optional<OnPostCreateHandler> m_onPostCreateHandler;
 		PoolType m_pool;
-		f32 m_minWidth;
+		f32 m_width;
 		f32 m_yOffset;
+		com::Bool m_isResizeOnSetWidth { com::True };
 
 	protected:
 		// Invoked when a button is returned to the pool
@@ -41,13 +41,14 @@ namespace SUTK
 		void invokeOnPostCreateHandler(T* obj) noexcept;
 		std::pair<T*, f32> get(f32 height = 0.7f) noexcept;
 
-		f32 getWidth() const noexcept { return m_minWidth; }
-		void setWidth(f32 width) noexcept { m_minWidth = width; }
+		f32 getWidth() const noexcept { return m_width; }
+		void setWidth(f32 width) noexcept { m_width = width; if(m_isResizeOnSetWidth) fit(); }
 		
 	public:
 		DynamicVListContainer(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer, u32 poolSize = 7) noexcept;
 
 		void setOnPostCreateHandler(OnPostCreateHandler handler) noexcept;
+		void setResizeOnSetWidth(com::Bool isResizeOnSetWidth) noexcept { m_isResizeOnSetWidth = isResizeOnSetWidth; }
 
 		// Call this to resize the DynamicVListContainer to fit all the buttons
 		// Not calling this might need to visual artefacts
@@ -65,12 +66,11 @@ namespace SUTK
 																										std::bind(&DynamicVListContainer::onRecycle, this, std::placeholders::_1),
 																										true,
 																										poolSize),
-																							m_minWidth(0),
+																							m_width(Constants::Defaults::DynamicVListContainer::Width),
 																							m_yOffset(0)
 	{
-		setRect({ 0.0f, 0.0f, 2.0f, 5.0f });
+		setRect({ 0.0f, 0.0f, m_width, Constants::Defaults::DynamicVListContainer::Height });
 		unlockLayout(true);
-		m_minWidth = 2.0f;
 		setTight(true);
 	}
 
@@ -105,7 +105,7 @@ namespace SUTK
 	template<ContainerT T>
 	void DynamicVListContainer<T>::fit() noexcept
 	{
-		setSize({ m_minWidth + MARGIN, getSize().height });
+		setSize({ m_width, getSize().height });
 	}
 
 	template<ContainerT T>

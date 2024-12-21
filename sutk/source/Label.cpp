@@ -7,19 +7,21 @@
 
 namespace SUTK
 {
-	Label::Label(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept : RenderableContainer(driver, parent), 
+	Label::Label(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup) noexcept : RenderableContainer(driver, parent), 
 																										m_text(com::null_pointer<SmallText>()),
 																										m_hAlign(HorizontalAlignment::Left),
 																										m_vAlign(VerticalAlignment::Top),
-																										m_textGroup((textGroup == GFX_DRIVER_OBJECT_NULL_HANDLE) ? getUIDriver().getGlobalTextGroup() : textGroup),
 																										m_isReassociateOnParentChange(com::True)
 	{
-
-	}
-
-	Label::Label(UIDriver& driver, Container* parent) noexcept : Label(driver, parent, ContainerUtility::findTextGroupHandle(parent))
-	{
-
+		if(textGroup)
+			m_textGroup = (*textGroup == GFX_DRIVER_OBJECT_NULL_HANDLE) ? getUIDriver().getGlobalTextGroup() : *textGroup;
+		else
+		{
+			m_textGroup = ContainerUtility::findTextGroupHandle(parent);
+			// findTextGroupHandle() might still return GFX_DRIVER_OBJECT_NULL_HANDLE
+			if(m_textGroup == GFX_DRIVER_OBJECT_NULL_HANDLE)
+				m_textGroup = getUIDriver().getGlobalTextGroup();
+		}
 	}
 
 	Label::~Label() noexcept

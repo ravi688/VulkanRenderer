@@ -4,6 +4,7 @@
 #include <sutk/TextTraits.hpp>
 
 #include <string> // for std::string
+#include <optional> // for std::optional<>
 
 namespace SUTK
 {
@@ -24,8 +25,8 @@ namespace SUTK
 	protected:
 		virtual void onAnscestorChange(Container* anscestor) noexcept override;
 	public:
-		Label(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept;
-		Label(UIDriver& driver, Container* parent) noexcept;
+		// If no textGroup is provided, then it searches of any textGroup (TextGroupContainer) in the Container hierarchy
+		Label(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup = { }) noexcept;
 		~Label() noexcept;
 
 		void setReassociateOnParentChange(com::Bool isReassociate, com::Bool isApplyNow = com::False) noexcept;

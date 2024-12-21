@@ -4,6 +4,7 @@
 #include <sutk/TextGroupContainer.hpp>
 #include <sutk/ContainerUtility.hpp>
 #include <sutk/ButtonGraphic.hpp> // for SUTK::ImageButtonGraphic
+#include <sutk/Panel.hpp> // for SUTK::Panel
 
 #define TAB_VIEW_MIN_WIDTH 3.0f
 #define TAB_BAR_HEIGHT 0.8f
@@ -74,12 +75,7 @@ namespace SUTK
 		Label& label = m_graphic->getLabel();
 		label.setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
 		label.fitInParent({ TAB_LABEL_LEFT_MARGIN, TAB_LABEL_CLOSE_BUTTON_SPACING + CLOSE_BUTTON_RIGHT_MARGIN + CLOSE_BUTTON_WIDTH, TAB_LABEL_TOP_MARGIN, TAB_LABEL_BOTTOM_MARGIN  });
-		label.enableDebug();
 		m_graphic->getAnchorRect()->fitToParentRect();
-		m_graphic->setIdleColor(Color4::grey(0.05f));
-		m_graphic->setHoverColor(Color4::grey(0.1f));
-		m_graphic->setPressColor(Color4::grey(0.15f));
-		m_graphic->setTransitionDelay(0.08f);
 
 		m_closeButton = driver.createContainer<Button>(this, /* isCreateDefaultGraphic: */ false);
 		m_closeButton->setRect({ getSize().width - CLOSE_BUTTON_WIDTH - CLOSE_BUTTON_RIGHT_MARGIN, 
@@ -88,7 +84,7 @@ namespace SUTK
 		m_closeButton->getAnchorRect()->moveToRightMiddleOfParent();
 		m_closeButtonGraphic = driver.createContainer<ImageButtonGraphic>(m_closeButton);
 		if(!s_closeIcon)
-			s_closeIcon = driver.loadImage("dependencies/VulkanRenderer/sutk/svg_files/close-square-svgrepo-com.svg");
+			s_closeIcon = driver.loadImage("svg_files/close-square-svgrepo-com.svg");
 		m_closeButtonGraphic->setImage(s_closeIcon);
 	}
 
@@ -129,25 +125,28 @@ namespace SUTK
 																																					m_animDuration(DEFAULT_NEW_TAB_ANIM_DURATION)
 	{
 		// Create Tab Container
-		// NOTE: the 'getDepth() + 10000' is need to keep the tabs always on top of the pages (pages can be also be scrolled up and overlap with the tabs!)
+		// NOTE: the 'getDepth() + 10000' is needed to keep the tabs always on top of the pages (pages can be also be scrolled up and overlap with the tabs!)
 		m_textGroupContainer = driver.createContainer<TextGroupContainer>(this, com::False, getDepth() + 10000);
 		LayoutAttributes attr = m_textGroupContainer->getLayoutAttributes();
 		attr.minSize.height = TAB_BAR_HEIGHT;
 		attr.prefSize = attr.minSize;
 		m_textGroupContainer->setLayoutAttributes(attr);
-		m_tabBar = driver.createContainer<TabBar>(m_textGroupContainer);
+		m_tabBarBGPanel = driver.createContainer<Panel>(m_textGroupContainer);
+		m_tabBarBGPanel->alwaysFitInParent();
+		m_tabBarBGPanel->setColor(Color4::grey(0.8f));
+		m_tabBar = driver.createContainer<TabBar>(m_tabBarBGPanel);
 		m_tabBar->alwaysFitInParent();
 
 		m_tabAnimGroup = driver.getAnimationEngine().createAnimGroup<TabAnimGroup>(this);
 		m_tabShiftAnimGroup = driver.getAnimationEngine().createAnimGroup<TabShiftAnimGroup>(this);
 
 		// Create Container for holding page container
-		m_pageContainer = driver.createContainer<Container>(this);
+		m_pageContainer = driver.createContainer<Panel>(this);
 		attr = m_pageContainer->getLayoutAttributes();
 		attr.prefSize = attr.maxSize;
 		_com_assert((attr.prefSize.height == F32_INFINITY) && (attr.prefSize.width == F32_INFINITY));
 		m_pageContainer->setLayoutAttributes(attr);
-		m_pageContainer->enableDebug(true, Color4::yellow());
+		m_pageContainer->setColor(Color4::grey(0.6f));
 
 		unlockLayout();
 		this->GlobalMouseMoveHandlerObject::sleep();
@@ -155,6 +154,7 @@ namespace SUTK
 
 	NotebookView::~NotebookView() noexcept
 	{
+		getUIDriver().destroyContainer<Panel>(m_tabBarBGPanel);
 		getUIDriver().getAnimationEngine().destroyAnimGroup<TabAnimGroup>(m_tabAnimGroup);
 		getUIDriver().getAnimationEngine().destroyAnimGroup<TabShiftAnimGroup>(m_tabShiftAnimGroup);
 		delete m_tabAnimGroup;

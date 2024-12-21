@@ -177,6 +177,8 @@ namespace SUTK
 		void abort() noexcept;
 	};
 
+	class Panel;
+	
 	class SUTK_API NotebookView : public VBoxContainer, public GlobalMouseMoveHandlerObject
 	{
 		friend class TabAnimGroup;
@@ -194,8 +196,9 @@ namespace SUTK
 	private:
 		// TextGroup for TabView(s)
 		TextGroupContainer* m_textGroupContainer;
+		Panel* m_tabBarBGPanel;
 		TabBar* m_tabBar;
-		Container* m_pageContainer;
+		Panel* m_pageContainer;
 		NotebookPage* m_currentPage;
 		TabAnimGroup* m_tabAnimGroup;
 		TabShiftAnimGroup* m_tabShiftAnimGroup;

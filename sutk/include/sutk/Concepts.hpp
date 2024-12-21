@@ -11,7 +11,7 @@ namespace SUTK
 	template<typename T>
 	concept ContainerT = std::derived_from<T, Container> || std::same_as<T, Container>;
 	template<typename T>
-	concept RenderableContainerT = std::derived_from<T, RenderableContainer> || std::same_as<T, RenderableContainer>;
+	concept RenderableContainerT = std::is_base_of<RenderableContainer, T>::value;
 	template<typename T>
 	concept RenderableT = std::derived_from<T, Renderable> || std::same_as<T, Renderable>;
 	template<typename T>
