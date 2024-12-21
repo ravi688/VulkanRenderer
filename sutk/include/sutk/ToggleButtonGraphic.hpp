@@ -13,7 +13,7 @@ namespace SUTK
 
 	class RenderRectFillCircle;
 	class RenderableContainer;
-	class SUTK_API DefaultToggleButtonGraphic : public DefaultButtonGraphic, public IToggleButtonGraphic
+	class SUTK_API DefaultToggleButtonGraphic final : public DefaultButtonGraphic, public IToggleButtonGraphic
 	{
 	private:
 		// Visual representation of Toggle State
@@ -23,6 +23,7 @@ namespace SUTK
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 	public:
 		DefaultToggleButtonGraphic(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup) noexcept;
+		~DefaultToggleButtonGraphic() noexcept;
 
 		virtual void onToggle(ToggleState state) override;
 

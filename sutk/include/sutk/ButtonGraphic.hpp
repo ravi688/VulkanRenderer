@@ -132,7 +132,7 @@ namespace SUTK
 			Label* m_label;
 		public:
 			DefaultButtonGraphic(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup = { }) noexcept;
-			~DefaultButtonGraphic() noexcept;
+			virtual ~DefaultButtonGraphic() noexcept;
 
 			// Overrides
 			virtual Vec2Df getMinBoundSize() noexcept override;

@@ -154,10 +154,13 @@ namespace SUTK
 
 	NotebookView::~NotebookView() noexcept
 	{
+		m_pageContainer->destroyAllChilds();
+		getUIDriver().destroyContainer<Panel>(m_pageContainer);
+		getUIDriver().destroyContainer<TabBar>(m_tabBar);
 		getUIDriver().destroyContainer<Panel>(m_tabBarBGPanel);
+		getUIDriver().destroyContainer<TextGroupContainer>(m_textGroupContainer);
 		getUIDriver().getAnimationEngine().destroyAnimGroup<TabAnimGroup>(m_tabAnimGroup);
 		getUIDriver().getAnimationEngine().destroyAnimGroup<TabShiftAnimGroup>(m_tabShiftAnimGroup);
-		delete m_tabAnimGroup;
 	}
 
 	class TabInsertAnimation : public AnimationEngine::AnimContextBase
@@ -474,7 +477,7 @@ namespace SUTK
 		return node;
 	}
 
-	template<typename T, com::concepts::UnaryVisitor<T*> VisitorType>
+	template<com::concepts::LinkedListNode T, com::concepts::UnaryVisitor<T*> VisitorType>
 	static void TraverseLinkedListBiDirect(T* node, VisitorType visitor) noexcept
 	{
 		auto left = node->getPrev();
@@ -483,6 +486,15 @@ namespace SUTK
 			visitor(left);
 			left = left->getPrev();
 		}
+		while(node)
+		{
+			visitor(node);
+			node = node->getNext();
+		}
+	}
+	template<com::concepts::LinkedListNode T, com::concepts::UnaryVisitor<T*> VisitorType>
+	static void TraverseLinkedList(T* node, VisitorType visitor) noexcept
+	{
 		while(node)
 		{
 			visitor(node);
@@ -512,6 +524,16 @@ namespace SUTK
 
 	TabBar::TabBar(UIDriver& driver, Container* parent) noexcept : HBoxContainer(driver, parent), m_root(com::null_pointer<Tab>())
 	{
+	}
+
+	TabBar::~TabBar() noexcept
+	{
+		TraverseLinkedList(getRootTab(), [](Tab* tab) noexcept
+		{
+			auto* tabView = tab->getTabView();
+			tabView->getUIDriver().destroyContainer<TabView>(tabView);
+			delete tab;
+		});
 	}
 
 	void TabBar::onRecalculateLayout() noexcept

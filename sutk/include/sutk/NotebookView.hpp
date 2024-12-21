@@ -131,6 +131,7 @@ namespace SUTK
 		virtual void onRecalculateLayout() noexcept override;
 	public:
 		TabBar(UIDriver& driver, Container* parent) noexcept;
+		~TabBar() noexcept;
 
 		Tab* createTab(const std::string_view labelStr, Tab* after = com::null_pointer<Tab>()) noexcept;
 		void destroyTab(Tab* tab) noexcept;

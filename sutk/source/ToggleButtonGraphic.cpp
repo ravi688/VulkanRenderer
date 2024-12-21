@@ -23,6 +23,11 @@ namespace SUTK
 		label.getText().setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
 		label.set("New Toggle");
 	}
+	DefaultToggleButtonGraphic::~DefaultToggleButtonGraphic() noexcept
+	{
+		getUIDriver().destroyRenderable<RenderRectFillCircle>(m_renderRect);
+		getUIDriver().destroyContainer<RenderableContainer>(m_renderRectCont);
+	}
 	void DefaultToggleButtonGraphic::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		DefaultButtonGraphic::onResize(newRect, isPositionChanged, isSizeChanged);

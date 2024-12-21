@@ -10,14 +10,25 @@ namespace SUTK
 {
 	class IGfxDriver;
 
+	class FullWindowContainer;
+	class Button;
+	class ToggleButton;
+	class ButtonListView;
+	class ToggleButtonListView;
+	class NotebookView;
+
 	class DarkLightThemeTest : public ITest
 	{
 	private:
 		UIDriver* m_uiDriver;
 		IGfxDriver* m_gfxDriver;
 		IInputDriver* m_inputDriver;
-		RenderImage* m_renderRect;
-		RenderableContainer* m_renderRectContainer;
+		FullWindowContainer* m_fullWindowContainer;
+		Button* m_button;
+		ToggleButton* m_toggleButton;
+		ButtonListView* m_buttonListView;
+		ToggleButtonListView* m_toggleButtonListView;
+		NotebookView* m_notebookView;
 
 	public:
 		DarkLightThemeTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }

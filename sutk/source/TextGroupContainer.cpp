@@ -7,6 +7,10 @@ namespace SUTK
 	{
 		m_textGroup = driver.createRenderable<TextGroup>(this);
 	}
+	TextGroupContainer::~TextGroupContainer() noexcept
+	{
+		getUIDriver().destroyRenderable<TextGroup>(m_textGroup);
+	}
 
 	GfxDriverObjectHandleType TextGroupContainer::getGfxDriverObjectHandle() noexcept
 	{

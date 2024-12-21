@@ -36,24 +36,24 @@ namespace SUTK
 		// 	2. Light Theme, the name of this theme is "sutk.light"
 		BuiltinThemeManager& themeManager = m_uiDriver->getBuiltinThemeManager();
 
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
+		FullWindowContainer* rootContainer = m_fullWindowContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 
 		f32 pos = 0.1f;
 		// Button
-		Button* button = m_uiDriver->createContainer<Button>(rootContainer);
+		Button* button = m_button = m_uiDriver->createContainer<Button>(rootContainer);
 		pos += button->getSize().width + 0.1f;
 		// Toggle Button
-		ToggleButton* togButton = m_uiDriver->createContainer<ToggleButton>(rootContainer);
+		ToggleButton* togButton = m_toggleButton = m_uiDriver->createContainer<ToggleButton>(rootContainer);
 		togButton->setPosition({ pos, 0.0f });
 		pos += togButton->getSize().width + 0.1f;
 		// Button List View
-		ButtonListView* buttonList = m_uiDriver->createContainer<ButtonListView>(rootContainer);
+		ButtonListView* buttonList = m_buttonListView = m_uiDriver->createContainer<ButtonListView>(rootContainer);
 		buttonList->setPosition({ pos, 0.0f });
 		for(u32 i = 0; i < 4; ++i)
 			buttonList->addButton(std::format("Button {}", i));
 		pos += buttonList->getSize().width + 0.1f;
 		// Toggle Button List View
-		ToggleButtonListView* togButtonList = m_uiDriver->createContainer<ToggleButtonListView>(rootContainer);
+		ToggleButtonListView* togButtonList = m_toggleButtonListView = m_uiDriver->createContainer<ToggleButtonListView>(rootContainer);
 		togButtonList->setPosition({ pos, 0.0f });
 		for(u32 i = 0; i < 4; ++i)
 			togButtonList->addButton(std::format("Button {}", i));
@@ -61,7 +61,7 @@ namespace SUTK
 		pos = 0.1f;
 		f32 posY = 5.5f;
 		// Notebook
-		NotebookView* notebook = m_uiDriver->createContainer<NotebookView>(rootContainer);
+		NotebookView* notebook = m_notebookView = m_uiDriver->createContainer<NotebookView>(rootContainer);
 		notebook->setRect({ { pos, posY }, { 10, 5 } });
 		for(u32 i = 0; i < 3; ++i)
 			notebook->createPage(std::format("Tab {}", i));
@@ -84,12 +84,6 @@ namespace SUTK
 			}
 		});
 
-		// Create a Notebook
-		// Create a Label
-		// Create a Panel
-		// Create a RenderRect
-		// Create a RenderRoundFill
-
 		m_inputDriver->getOnKeyEvent().subscribe([themeManagerPtr = &themeManager](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
 		{
 			static bool isSwap = true;
@@ -106,7 +100,12 @@ namespace SUTK
 
 	void DarkLightThemeTest::terminate(SGE::Driver& driver)
 	{
-		// TODO: m_uiDriver->unloadImage(image);
+		m_uiDriver->destroyContainer<Button>(m_button);
+		m_uiDriver->destroyContainer<ToggleButton>(m_toggleButton);
+		m_uiDriver->destroyContainer<ButtonListView>(m_buttonListView);
+		m_uiDriver->destroyContainer<ToggleButtonListView>(m_toggleButtonListView);
+		m_uiDriver->destroyContainer<NotebookView>(m_notebookView);
+		m_uiDriver->destroyContainer<FullWindowContainer>(m_fullWindowContainer);
 		delete m_uiDriver;
 		delete m_gfxDriver;
 	}

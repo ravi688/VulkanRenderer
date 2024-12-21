@@ -241,5 +241,7 @@ namespace SUTK
 
 		// Override of Activatable::setActive;
 		virtual void setActive(com::Bool isActive) noexcept override;
+
+		void destroyAllChilds() noexcept;
 	};
 }

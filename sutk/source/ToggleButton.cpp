@@ -8,7 +8,15 @@ namespace SUTK
 	{
 		setSize(Constants::Defaults::ToggleButton::Size);
 		if(isCreateDefaultGraphic)
-			setGraphic(driver.createContainer<DefaultToggleButtonGraphic>(this, textGroup));
+		{
+			m_defaultToggleGraphic = driver.createContainer<DefaultToggleButtonGraphic>(this, textGroup);
+			setGraphic(m_defaultToggleGraphic);
+		}
+	}
+	ToggleButton::~ToggleButton() noexcept
+	{
+		if(m_defaultToggleGraphic)
+			getUIDriver().destroyContainer<DefaultToggleButtonGraphic>(m_defaultToggleGraphic);
 	}
 	
 	bool ToggleButton::onMouseClick(MouseButton button, KeyEvent action)

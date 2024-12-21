@@ -22,8 +22,11 @@ namespace SUTK
 		// Invoked when the pool requests a new button instance
 		// Mandatory to be called in the overriding method
 		virtual ToggleButton* onCreate() noexcept override;
+		// Implementation of DynamicVListContainer::onDestroy()
+		virtual void onDestroy(ToggleButton* &button) noexcept override;
 	public:
 		ToggleButtonListView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer, u32 poolSize = 7, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
+		~ToggleButtonListView() noexcept;
 
 		std::pair<ToggleButton*, f32> addButton(const std::string_view labelStr) noexcept;
 	};

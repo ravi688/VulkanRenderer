@@ -17,6 +17,11 @@ namespace SUTK
 		getPool().reserve(poolSize);
 	}
 
+	ButtonListView::~ButtonListView() noexcept
+	{
+		getPool().clear();
+	}
+
 	Button* ButtonListView::onCreate() noexcept
 	{
 		Button* button = getUIDriver().createContainer<Button>(this, /* isCreateDefaultGraphic: */ true, m_textGroup);
@@ -24,6 +29,11 @@ namespace SUTK
 		button->getGraphicAs<DefaultButtonGraphic>()->getLabel().setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
 		invokeOnPostCreateHandler(button);
 		return button;
+	}
+
+	void ButtonListView::onDestroy(Button* &button) noexcept
+	{
+		getUIDriver().destroyContainer<Button>(button);
 	}
 
 	void ButtonListView::onReturn(Button* &button) noexcept

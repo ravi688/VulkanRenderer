@@ -19,6 +19,11 @@ namespace SUTK
 		unlockLayout(true);
 	}
 
+	ToggleButtonListView::~ToggleButtonListView() noexcept
+	{
+		getPool().clear();
+	}
+
 	ToggleButton* ToggleButtonListView::onCreate() noexcept
 	{
 		ToggleButton* button = getUIDriver().createContainer<ToggleButton>(this, ToggleState::Off, true, m_textGroup);
@@ -32,6 +37,11 @@ namespace SUTK
 		button->clearAllEvents();
 		ContainerUtility::SetActiveAllRecursive(button, com::Bool::False());
 		button->setRecycleState(Container::RecycleState::Disposed);
+	}
+
+	void ToggleButtonListView::onDestroy(ToggleButton* &button) noexcept
+	{
+		getUIDriver().destroyContainer<ToggleButton>(button);
 	}
 
 	void ToggleButtonListView::onRecycle(ToggleButton* &button) noexcept

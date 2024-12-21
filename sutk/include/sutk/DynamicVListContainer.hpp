@@ -26,13 +26,19 @@ namespace SUTK
 	protected:
 		// Invoked when a button is returned to the pool
 		// Typically, this would be used to deactivate the button to make it invisible and do not consume resources
+		// It must be implemented by the deriving class
 		virtual void onReturn(T* &button) noexcept = 0;
 		// Invoekd when a button is recycled (re-used) from the pool
 		// Typically, this would be used to reactivate the button
+		// It must be implemented by the deriving class
 		virtual void onRecycle(T* &button) noexcept = 0;
 		// Invoked when the pool requests a new button instance
-		// Mandatory to be called in the overriding method
+		// It must be implemented by the deriving class
 		virtual T* onCreate() noexcept = 0;
+		// Invoked for every created object (by onCreate()) when this DynamicVListContainer is destroyed
+		// Typically, this would be used to perform cleanup, i.e. destroy the created objects
+		// It must be implemented by the deriving class
+		virtual void onDestroy(T* &button) noexcept = 0;
 
 		PoolType& getPool() noexcept { return m_pool; }
 
@@ -46,6 +52,7 @@ namespace SUTK
 		
 	public:
 		DynamicVListContainer(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer, u32 poolSize = 7) noexcept;
+		~DynamicVListContainer() noexcept;
 
 		void setOnPostCreateHandler(OnPostCreateHandler handler) noexcept;
 		void setResizeOnSetWidth(com::Bool isResizeOnSetWidth) noexcept { m_isResizeOnSetWidth = isResizeOnSetWidth; }
@@ -62,6 +69,7 @@ namespace SUTK
 	DynamicVListContainer<T>::DynamicVListContainer(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer, u32 poolSize) noexcept : VBoxContainer(driver, parent, /*isLayoutLocked: */ true, isLayoutIgnore, layer),
 																							m_onPostCreateHandler({ }),
 																							m_pool(std::bind(&DynamicVListContainer::onCreate, this),
+																										std::bind(&DynamicVListContainer::onDestroy, this, std::placeholders::_1),
 																										std::bind(&DynamicVListContainer::onReturn, this, std::placeholders::_1),
 																										std::bind(&DynamicVListContainer::onRecycle, this, std::placeholders::_1),
 																										true,
@@ -72,6 +80,14 @@ namespace SUTK
 		setRect({ 0.0f, 0.0f, m_width, Constants::Defaults::DynamicVListContainer::Height });
 		unlockLayout(true);
 		setTight(true);
+	}
+
+	template<ContainerT T>
+	DynamicVListContainer<T>::~DynamicVListContainer() noexcept
+	{
+		// The reason we don't call getPool().clear() here is that the implementation of onDestroy() is defined inside the deriving class
+		// But calling getPool().clear() here would invoke onDestroy() but the deriving class object would have been destroyed resulting in seg-fault.
+		COM_ASSERT(COM_DESCRIPTION(getPool().size() == 0), "Please call getPool().clear() to destroy all the objects in the class inheriting from DynamicVListContainer");
 	}
 
 	template<ContainerT T>

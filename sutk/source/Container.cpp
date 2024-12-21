@@ -462,4 +462,14 @@ namespace SUTK
 		if(oldActiveState != isActive)
 			recalculateLayoutParent();
 	}
+
+	void Container::destroyAllChilds() noexcept
+	{
+		auto& childs = getChilds();
+		// WARNING: We don't need to call childs.pop_back() here,
+		// Because destroying a child container automatically removes its own reference from the child vector!
+		while(childs.size() > 0)
+			getUIDriver().destroyContainer<Container>(childs.back());
+		childs.clear();
+	}
 }

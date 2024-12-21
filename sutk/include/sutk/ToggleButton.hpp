@@ -6,6 +6,7 @@
 namespace SUTK
 {
 	class IToggleButtonGraphic;
+	class DefaultToggleButtonGraphic;
 	class SUTK_API ToggleButton : public Button
 	{
 	public:
@@ -17,10 +18,14 @@ namespace SUTK
 		ToggleState m_toggleState;
 		bool m_isOneWayToggle;
 		IToggleButtonGraphic* m_toggleGraphic;
+		DefaultToggleButtonGraphic* m_defaultToggleGraphic { };
 
+		// WARN: Do not use this for changing button graphic for this toggle button
+		// Instead use setGraphic() function, which is also public
 		void setToggleGraphic(IToggleButtonGraphic* graphic) noexcept;
 	public:
 		ToggleButton(UIDriver& driver, Container* parent, ToggleState state = ToggleState::Off, bool isCreateDefaultGraphic = true, std::optional<GfxDriverObjectHandleType> textGroup = { }) noexcept;
+		~ToggleButton() noexcept;
 
 		// Override of Button::clearAllEvents()
 		virtual void clearAllEvents() noexcept override;
