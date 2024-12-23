@@ -7,7 +7,7 @@
 
 namespace SUTK
 {
-	DefaultToggleButtonGraphic::DefaultToggleButtonGraphic(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup) noexcept : DefaultButtonGraphic(driver, parent, textGroup)
+	DefaultToggleButtonGraphic::DefaultToggleButtonGraphic(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept : DefaultButtonGraphic(driver, parent, textGroup)
 	{
 		m_renderRectCont = driver.createContainer<RenderableContainer>(this);
 		m_renderRectCont->setRecycleState(Container::RecycleState::Recycled);

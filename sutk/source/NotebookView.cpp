@@ -480,16 +480,20 @@ namespace SUTK
 	template<com::concepts::LinkedListNode T, com::concepts::UnaryVisitor<T*> VisitorType>
 	static void TraverseLinkedListBiDirect(T* node, VisitorType visitor) noexcept
 	{
-		auto left = node->getPrev();
+		auto* left = node->getPrev();
 		while(left)
 		{
+			// NOTE: we need to pointer to the previous node before even calling 'visitor', that's because the visitor might delete the node object
+			// Therefore, dereferencing the deleted node won't be possible later
+			auto* nextLeft = left->getPrev();
 			visitor(left);
-			left = left->getPrev();
+			left = nextLeft;
 		}
 		while(node)
 		{
+			auto* nextRight = node->getNext();
 			visitor(node);
-			node = node->getNext();
+			node = nextRight;
 		}
 	}
 	template<com::concepts::LinkedListNode T, com::concepts::UnaryVisitor<T*> VisitorType>
@@ -497,8 +501,9 @@ namespace SUTK
 	{
 		while(node)
 		{
+			auto* nextNode = node->getNext();
 			visitor(node);
-			node = node->getNext();
+			node = nextNode;
 		}
 	}
 	void Tab::setPage(NotebookPage* page) noexcept
@@ -528,6 +533,10 @@ namespace SUTK
 
 	TabBar::~TabBar() noexcept
 	{
+		// WARN: lockLayout() is important here!
+		// Lock the layout to avoid unnecessary layout calculations
+		// It also avoids accessing the already destroyed Tab objects
+		lockLayout();
 		TraverseLinkedList(getRootTab(), [](Tab* tab) noexcept
 		{
 			auto* tabView = tab->getTabView();

@@ -24,7 +24,7 @@ namespace SUTK
 		// Instead use setGraphic() function, which is also public
 		void setToggleGraphic(IToggleButtonGraphic* graphic) noexcept;
 	public:
-		ToggleButton(UIDriver& driver, Container* parent, ToggleState state = ToggleState::Off, bool isCreateDefaultGraphic = true, std::optional<GfxDriverObjectHandleType> textGroup = { }) noexcept;
+		ToggleButton(UIDriver& driver, Container* parent, ToggleState state = ToggleState::Off, bool isCreateDefaultGraphic = true, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 		~ToggleButton() noexcept;
 
 		// Override of Button::clearAllEvents()

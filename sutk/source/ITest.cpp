@@ -29,6 +29,8 @@
 #include <sutk/tests/BaseThemeTest.hpp>
 #include <sutk/tests/DarkLightThemeTest.hpp>
 #include <sutk/tests/PanelTest.hpp>
+#include <sutk/tests/LabelTest.hpp>
+#include <sutk/tests/PassiveLabelTest.hpp>
 
 namespace SUTK
 {
@@ -61,7 +63,9 @@ namespace SUTK
 		{ "MULTIPLE_THEME_MODEL", [] () { return std::unique_ptr<ITest>(new MultipleThemeModelTest()); }},
 		{ "BASE_THEME", [] () { return std::unique_ptr<ITest>(new BaseThemeTest()); }},
 		{ "DARK_LIGHT_THEME", [] () { return std::unique_ptr<ITest>(new DarkLightThemeTest()); }},
-		{ "PANEL", [] () { return std::unique_ptr<ITest>(new PanelTest()); }}
+		{ "PANEL", [] () { return std::unique_ptr<ITest>(new PanelTest()); }},
+		{ "LABEL", [] () { return std::unique_ptr<ITest>(new LabelTest()); }},
+		{ "PASSIVE_LABEL", [] () { return std::unique_ptr<ITest>(new PassiveLabelTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)

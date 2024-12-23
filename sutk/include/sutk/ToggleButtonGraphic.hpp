@@ -22,7 +22,7 @@ namespace SUTK
 	protected:
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 	public:
-		DefaultToggleButtonGraphic(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup) noexcept;
+		DefaultToggleButtonGraphic(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 		~DefaultToggleButtonGraphic() noexcept;
 
 		virtual void onToggle(ToggleState state) override;

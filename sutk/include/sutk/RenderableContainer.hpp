@@ -15,7 +15,7 @@ namespace SUTK
 
 	protected:
 
-		RenderableContainer(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer) noexcept;
+		RenderableContainer(UIDriver& driver, Container* parent = nullptr, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer) noexcept;
 		~RenderableContainer() noexcept;
 		
 		virtual void onAdd(Container* parent) override;

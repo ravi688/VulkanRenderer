@@ -31,8 +31,6 @@ namespace SUTK
 																					// Render for the first time to let the human user see black screen or anything other color IGfxDriver implementation might want to display for the first time.
 																					m_isRenderThisFrame(com::True)
 	{
-		m_debugRootContainer = createContainer<FullWindowContainer>(com::null_pointer<Container>());
-		m_debugRootContainer->setLayer(MaxLayer);
 		m_orderedEventsDispatcher = new OrderedInputEventsDispatcher(*m_inputDriver);
 		m_animationEngine = new AnimationEngine(*this);
 		m_themeManager = new BuiltinThemeManager(*this);
@@ -113,18 +111,22 @@ namespace SUTK
 				maxDrawOrder = drawOrder;
 		}
 
-		if(m_renderables.size() > 0)
-			_com_assert(minDrawOrder <= maxDrawOrder);
-
 		if(isRecalculateDrawOrder)
 		{
-			f32 normalizeFactor = 1.0f / static_cast<f32>(maxDrawOrder - minDrawOrder);
+			_com_assert(minDrawOrder <= maxDrawOrder);
+			u32 drawOrderRange = maxDrawOrder - minDrawOrder;
+			com::Bool isDrawOrderRangeChanged { m_drawOrderRange != drawOrderRange };
+			f32 normalizeFactor = 1.0f / static_cast<f32>(m_drawOrderRange);
 			for(auto it = m_renderables.begin(); it != m_renderables.end(); it++)
 			{
 				Renderable* renderable = (*it);
-				if(renderable->isDrawOrderDirty())
-					renderable->updateNormalizedDrawOrder((maxDrawOrder == minDrawOrder) ? 0.0f : ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 99.0f));
+				if(isDrawOrderRangeChanged || renderable->isDrawOrderDirty())
+				{
+					auto normDrawOrder = m_drawOrderRange ? ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 99.0f) : 0;
+					renderable->updateNormalizedDrawOrder(normDrawOrder);
+				}
 			}
+			m_drawOrderRange = drawOrderRange;
 		}
 
 		if(isRerender)

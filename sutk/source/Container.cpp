@@ -344,7 +344,7 @@ namespace SUTK
 			{
 				// create SUTK::RenderableContainer and setup its rect
 				// NOTE: a Debug rect must have ignore layout flag set to 'true' to avoid its participation in layouting with other non-debug elements.
-				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(getUIDriver().getDebugRootContainer(), com::Bool::True());
+				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(com::null_pointer<Container>(), com::Bool::True());
 				Vec2Df pos = getLocalCoordsToScreenCoords({ 0, 0 });
 				m_renderRectCont->setRect({ pos.x, pos.y, getRect().width, getRect().height });
 				

@@ -1,81 +1,79 @@
 #include <sutk/Label.hpp>
 #include <sutk/UIDriver.hpp> // for SUTK::UIDriver::createRenderable etc.
 #include <sutk/SmallText.hpp> // for SUTK::SmallText::setData()
-#include <sutk/TextGroupContainer.hpp> // for SUTK::TextGroupContainer::getTextGroup()
-#include <sutk/TextGroup.hpp> // for SUTK::TextGroup::getGfxDriverObjectHandle()
-#include <sutk/ContainerUtility.hpp> // for SUTK::ContainerUtility::findTextGroupHandle()
 
 namespace SUTK
 {
-	Label::Label(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup) noexcept : RenderableContainer(driver, parent), 
+	Label::Label(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept : RenderableContainer(driver, parent), 
 																										m_text(com::null_pointer<SmallText>()),
 																										m_hAlign(HorizontalAlignment::Left),
-																										m_vAlign(VerticalAlignment::Top),
-																										m_isReassociateOnParentChange(com::True)
+																										m_vAlign(VerticalAlignment::Top)
 	{
-		if(textGroup)
-			m_textGroup = (*textGroup == GFX_DRIVER_OBJECT_NULL_HANDLE) ? getUIDriver().getGlobalTextGroup() : *textGroup;
-		else
-		{
-			m_textGroup = ContainerUtility::findTextGroupHandle(parent);
-			// findTextGroupHandle() might still return GFX_DRIVER_OBJECT_NULL_HANDLE
-			if(m_textGroup == GFX_DRIVER_OBJECT_NULL_HANDLE)
-				m_textGroup = getUIDriver().getGlobalTextGroup();
-		}
+		setTextGroup(textGroup);
 	}
 
 	Label::~Label() noexcept
 	{
 		if(m_text)
-		{
-			_com_assert(m_textGroup != GFX_DRIVER_OBJECT_NULL_HANDLE);
 			getUIDriver().destroyRenderable<SmallText>(m_text);
-		}
-	}
-
-	void Label::onAnscestorChange(Container* _) noexcept
-	{
-		RenderableContainer::onAnscestorChange(_);
-		if(m_isReassociateOnParentChange)
-			tryReassociate();
-		if(!m_text)
-		{
-			GfxDriverObjectHandleType textGroup = ContainerUtility::findTextGroupHandle(getParent());
-			m_textGroup = (textGroup == GFX_DRIVER_OBJECT_NULL_HANDLE) ? getUIDriver().getGlobalTextGroup() : textGroup;
-		}
-	}
-
-	void Label::tryReassociate() noexcept
-	{
-		com_assert_wrn(COM_DESCRIPTION(false), "tryReassociate should not be called for now as the feature hasn't been fully implemented yet");
-		GfxDriverObjectHandleType textGroup = ContainerUtility::findTextGroupHandle(getParent());
-		textGroup = (textGroup == GFX_DRIVER_OBJECT_NULL_HANDLE) ? getUIDriver().getGlobalTextGroup() : textGroup;
-		if(m_text && (textGroup != m_textGroup))
-		{
-			// TODO:
-			// Create a new one
-			//	text = getUIDriver().createRenderable<SmallText>(this, textGroup);
-			//	text->setAlignment(m_text->getHorizontalAlign(), m_text->getVerticalAlign());
-			//	text->setData(m_text->getData());
-			// Destroy the old SmallText renderable
-			//	getUIDriver().destroyRenderable<SmallText>(m_text);
-			//	m_text = text;
-			m_textGroup = textGroup;
-		}
+		if(m_ownedTextGroup != GFX_DRIVER_OBJECT_NULL_HANDLE)
+			getGfxDriver().destroyTextGroup(m_ownedTextGroup);
 	}
 
 	void Label::createTextFirstTime() noexcept
 	{
+		setTextGroupForce(m_textGroup);
 		m_text = getUIDriver().createRenderable<SmallText>(this, m_textGroup);
 		m_text->setAlignment(m_hAlign, m_vAlign);
 		m_text->setData("New Label");
 	}
 
-	void Label::setReassociateOnParentChange(com::Bool isReassociate, com::Bool isApplyNow) noexcept
+	void Label::setTextGroupForce(GfxDriverObjectHandleType textGroup) noexcept
 	{
-		m_isReassociateOnParentChange = isReassociate;
-		if(m_isReassociateOnParentChange && isApplyNow)
-			tryReassociate();
+		com::Bool isDifferent { textGroup != m_textGroup };
+		// If the provided Text Group is invalid then create an owned Text Group if not already, and use that one
+		if(textGroup == GFX_DRIVER_OBJECT_NULL_HANDLE)
+		{
+			if(m_ownedTextGroup == GFX_DRIVER_OBJECT_NULL_HANDLE)
+				m_ownedTextGroup = getGfxDriver().createTextGroup(RenderMode::Transparent);
+			textGroup = m_ownedTextGroup;
+		}
+		// Recreate SmallText if new text group doesn't match with old text group
+		if(isDifferent)
+		{
+			debug_log_info("Recreating Small Text due to reassociation");
+
+			// Disassociate old SmallText renderable from this Renderable Container
+			setRenderable(com::null_pointer<Renderable>());
+
+			// Create a new SmallText
+			SmallText* text = getUIDriver().createRenderable<SmallText>(this, textGroup);
+			text->setAlignment(m_text->getHorizontalAlignment(), m_text->getVerticalAlignment());
+			text->setData(m_text->getData());
+			text->setColor(m_text->getColor());
+			text->setFontSize(m_text->getFontSize());
+			text->setActive(m_text->isActive());
+			text->setFont(m_text->getFont());
+
+			// Destroy the old SmallText renderable
+			getUIDriver().destroyRenderable<SmallText>(m_text);
+
+			m_text = text;
+			// Update Renderable also, otherwise the new SubText renderable won't be able to get callbacks on this RenderableContainer (Label)
+			setRenderable(m_text);
+		}
+		m_textGroup = textGroup;
+	}
+
+	void Label::setTextGroup(GfxDriverObjectHandleType textGroup) noexcept
+	{
+		// If no SmallText object has already been created then we don't need to instantiate any objects, in the favor of lazy instantiation
+		if(!m_text)
+		{
+			m_textGroup = textGroup;
+			return;
+		}
+		setTextGroupForce(textGroup);
 	}
 
 	void Label::set(const std::string_view str) noexcept

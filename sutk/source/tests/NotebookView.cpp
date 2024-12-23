@@ -19,7 +19,7 @@ namespace SUTK
 		m_gfxDriver = new SGEGfxDriver(driver);
 		m_inputDriver = new SGEInputDriver(driver);
 		m_uiDriver = new UIDriver(*m_gfxDriver, *m_inputDriver);
-		FullWindowContainer* rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
+		FullWindowContainer* rootContainer = m_rootContainer = m_uiDriver->createContainer<FullWindowContainer>(com::null_pointer<Container>());
 		m_notebookView = m_uiDriver->createContainer<NotebookView>(rootContainer);
 		m_notebookView->alwaysFitInParent();
 
@@ -27,6 +27,16 @@ namespace SUTK
 		{
 			std::cout << "Selected: " << page->getLabel() << std::endl;
 		});
+
+		for(u32 i = 0; i < 3; ++i)
+		{
+			Container* container = m_notebookView->createPage(std::format("My Page {}", i))->getContainer();
+			Label* label = m_uiDriver->createContainer<Label>();
+			label->enableDebug(true, Color4::red());
+			label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
+			label->set(std::format("This is Page {}", i));
+			m_labels.push_back(label);
+		}
 
 		m_inputDriver->getOnKeyEvent().subscribe([this](IInputDriver*, KeyCode keyCode, KeyEvent keyEvent, ModifierKeys modifierKeys) noexcept
 		{
@@ -38,7 +48,12 @@ namespace SUTK
 					++counter;
 					char buffer[128];
 					sprintf(buffer, "New Page (%u)", counter);
-					this->m_notebookView->createPage(buffer);
+					auto* container = this->m_notebookView->createPage(buffer)->getContainer();
+					Label* label = m_uiDriver->createContainer<Label>();
+					label->enableDebug(true, Color4::red());
+					label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
+					label->set(std::format("This is Page {}", counter + 3));
+					m_labels.push_back(label);
 				}
 				else if(keyCode == KeyCode::D)
 					this->m_notebookView->removePage(this->m_notebookView->getCurrentPage());
@@ -49,6 +64,10 @@ namespace SUTK
 
 	void NotebookTest::terminate(SGE::Driver& driver)
 	{
+		for(auto* &value : m_labels)
+			m_uiDriver->destroyContainer<Label>(value);
+		m_uiDriver->destroyContainer<NotebookView>(m_notebookView);
+		m_uiDriver->destroyContainer<FullWindowContainer>(m_rootContainer);
 		delete m_uiDriver;
 		delete m_inputDriver;
 		delete m_gfxDriver;

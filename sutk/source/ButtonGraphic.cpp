@@ -96,7 +96,7 @@ namespace SUTK
 		m_renderRect->setColor(color);
 	}
 
-	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent, std::optional<GfxDriverObjectHandleType> textGroup) noexcept : DefaultButtonGraphicNoLabel(driver, parent)
+	DefaultButtonGraphic::DefaultButtonGraphic(UIDriver& driver, Container* parent, GfxDriverObjectHandleType textGroup) noexcept : DefaultButtonGraphicNoLabel(driver, parent)
 	{
 		m_label = driver.createContainer<Label>(this, textGroup);
 		// size of the label's rect should be as that of ButtonGraphic's rect

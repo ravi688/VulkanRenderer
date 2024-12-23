@@ -213,6 +213,7 @@ namespace SUTK
 		SGEBitmapTextData& textData = getBitmapTextIterator(textGroup, group.currentBitmapTextHandle)->second;
 		if(textData.charCount > BITMAP_TEXT_OVERLOAD_THRESHOLD)
 		{
+			debug_log_info("BITMAP_TEXT_OVERLOAD_THRESHOLD exceeded");
 			auto pair = createBitmapText(group);
 			group.currentBitmapTextHandle = pair.second;
 			return pair;
@@ -327,8 +328,18 @@ namespace SUTK
 		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
 		
 		auto it = getSubTextIterator(handle);
-		SGE::BitmapTextString subText = it->second.textString;
-		subText.destroy();
+
+		SGE::BitmapTextString textString = it->second.textString;
+		
+		// Get reference to the BitampTextData which was used to create this Text String object
+		SGEBitmapTextData& bitmapTextData = getBitmapTextIterator(it->second.textGroup, it->second.textHandle)->second;
+		_assert(bitmapTextData.charCount >= textString.getLength());
+		// And decrement the charCount of the BitmapText by the length of string data held by this Text String object
+		// NOTE: If we don't do this then the charCount will always been increasing even if we create and destroy the same Text String object again and again
+		// Which we don't want.
+		bitmapTextData.charCount -= textString.getLength();
+
+		textString.destroy();
 		id_generator_return(&m_id_generator, static_cast<id_generator_id_type_t>(GET_ATTACHED_OBJECT_ID(handle)));
 		m_bitmapTextStringMappings.erase(it);
 		removeIDFromTypeTable(GET_ATTACHED_OBJECT_ID(handle));

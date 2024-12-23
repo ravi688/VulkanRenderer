@@ -33,6 +33,7 @@ namespace SUTK
 	
 		// implict conversion operators
 		operator const std::string&() const { return m_data; }
+		operator const std::string_view() const { return m_data; }
 
 		// equality comparison operators
 		bool operator ==(const SmallTextData& data) { return m_data == data.m_data; }
@@ -73,6 +74,8 @@ namespace SUTK
 		Color4 m_color;
 		std::vector<ColorRange> m_colorRanges;
 		Vec2Df m_pos;
+		// Automtically initialized to FontInvalid (a.k.a GFX_DRIVER_OBJECT_NULL_HANDLE)
+		UIDriver::FontReference m_font {};
 		f32 m_pointSize;
 		HorizontalAlignment m_horizontalAlignment;
 		VerticalAlignment m_verticalAlignment;
@@ -130,6 +133,7 @@ namespace SUTK
 		void setFontSize(const f32 pointSize) noexcept;
 		f32 getFontSize() noexcept;
 		void setFont(UIDriver::FontReference font) noexcept;
+		UIDriver::FontReference getFont() noexcept { return m_font; }
 		f32 getBaselineHeight() noexcept;
 
 		// NOTE: The below two set of functions should only be used when the SmallText is active
@@ -138,5 +142,8 @@ namespace SUTK
 		Vec2Df getAlignedPosition(Vec2Df pos) noexcept;
 
 		void setAlignment(HorizontalAlignment hAlign, VerticalAlignment vAlign) noexcept;
+		std::pair<HorizontalAlignment, VerticalAlignment> getAlignment() const noexcept { return { m_horizontalAlignment, m_verticalAlignment }; }
+		HorizontalAlignment getHorizontalAlignment() const noexcept { return m_horizontalAlignment; }
+		VerticalAlignment getVerticalAlignment() const noexcept { return m_verticalAlignment; }
 	};
 }

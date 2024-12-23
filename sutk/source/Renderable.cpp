@@ -30,6 +30,7 @@ namespace SUTK
 
 	void Renderable::onAnscestorChange(Container* anscestor) noexcept
 	{
+		std::cout << "Draw Order Set: " << getContainer()->getDepth() << std::endl;
 		setDrawOrder(getContainer()->getDepth());
 	}
 

@@ -52,8 +52,6 @@ namespace SUTK
 		bool m_isDummyInputDriver;
 		std::vector<Renderable*> m_renderables;
 		GfxDriverObjectHandleType m_globalTextGroup;
-		// Container for accomodating debug rectangles etc.
-		Container* m_debugRootContainer;
 		// Runnables
 		com::UnorderedEraseSafeVectorProxy<IRunnable*> m_runnables;
 		OrderedInputEventsDispatcher* m_orderedEventsDispatcher;
@@ -63,6 +61,9 @@ namespace SUTK
 		com::Bool m_isCalledFirstTime;
 		std::chrono::time_point<std::chrono::steady_clock> m_prevTime;
 		f32 m_deltaTime;
+		// Caches the draw order range calculated in the last draw order recalculation
+		// This value is used to determine if new draw order range is different from the last calculated one
+		u32 m_drawOrderRange { U32_MAX };
 
 		// It should be set com::True if the current frame needs to be drawn
 		// Generally, it should remain set to com::False unless some UI component/widget has been marked as dirty or updated its appearance
@@ -98,7 +99,6 @@ namespace SUTK
 
 		f32 getDeltaTime() const noexcept { return m_deltaTime; }
 
-		Container* getDebugRootContainer() noexcept { return m_debugRootContainer; }
 		OrderedInputEventsDispatcher& getOrderedInputEventsDispatcher() noexcept { return *m_orderedEventsDispatcher; }
 		AnimationEngine& getAnimationEngine() noexcept { return *m_animationEngine; }
 		BuiltinThemeManager& getBuiltinThemeManager() noexcept { return *m_themeManager; }
@@ -124,10 +124,10 @@ namespace SUTK
 			delete obj;
 		}
 
-		template<ContainerT ContainerType, ContainerT ParentContainerType, typename... Args>
-		ContainerType* createContainer(ParentContainerType* parent, Args&&... args) noexcept
+		template<ContainerT ContainerType, typename... Args>
+		ContainerType* createContainer(Args&&... args) noexcept
 		{
-			return createObject<ContainerType>(parent, std::forward<Args&&>(args)...);
+			return createObject<ContainerType>(std::forward<Args&&>(args)...);
 		}
 
 		template<ContainerT ContainerType>

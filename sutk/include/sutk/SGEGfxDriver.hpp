@@ -158,6 +158,8 @@ namespace SUTK
 		virtual Vec2Df getSizeInCentimeters() override { return m_sizeCentimeters; }
 		virtual void render(UIDriver& driver) override;
 
+		// NOTE: Creating a Text Group object just creates a new entry, but doesn't create any SGE::BitmapText objects
+		// until you call createText() for the first time with this Text Group object
 		virtual GfxDriverObjectHandleType createTextGroup(RenderMode renderMode = RenderMode::Transparent) override;
 		// NOTE: It force updates all bitmap text objects and text strings created from them.
 		// Thus, it overrides every font inside the text group.

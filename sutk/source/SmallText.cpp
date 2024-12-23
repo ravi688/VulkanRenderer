@@ -24,6 +24,7 @@ namespace SUTK
 	{
 		_com_assert(textGroup != GFX_DRIVER_OBJECT_NULL_HANDLE);
 		setGfxDriverObjectHandle(getGfxDriver().createText(textGroup));
+		getGfxDriver().setTextFont(getGfxDriverObjectHandle(), m_font.getHandle());
 		m_pointSize = getFontSize();
 	}
 
@@ -219,6 +220,7 @@ namespace SUTK
 	void SmallText::setFont(UIDriver::FontReference font) noexcept
 	{
 		getGfxDriver().setTextFont(getGfxDriverObjectHandle(), font.getHandle());
+		m_font = font;
 		redraw();
 	}
 	f32 SmallText::getBaselineHeight() noexcept

@@ -5,7 +5,7 @@
 
 namespace SUTK
 {
-	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic, std::optional<GfxDriverObjectHandleType> textGroup) noexcept : Container(driver, parent),
+	Button::Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic, GfxDriverObjectHandleType textGroup) noexcept : Container(driver, parent),
 																									MouseMoveHandlerObject(driver, this),
 																									MouseClickHandlerObject(driver, this),
 																									m_graphic(NULL),

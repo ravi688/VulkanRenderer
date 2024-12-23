@@ -31,7 +31,7 @@ namespace SUTK
 		// So, whenever any of the Anscestor containers change their position, the old transformed coordinates become invalid (dirty),
 		// and this requires to walk recursively up the container tree to finally calculate the new global coordiantes with possibly same
 		// local coordinates.
-		// This function onGlobalCoordDirty is called when any of the Anscestor containers change their local position.
+		// This function onGlobalCoordDirty is called when any of the Anscestor containers change their local position or any of the anscestors themselves get changed (setParent() calls)
 		virtual void onGlobalCoordDirty() noexcept { }
 		// This function onContainerResize is called whenever the container containing this renderable changes its size or local position.
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept { }

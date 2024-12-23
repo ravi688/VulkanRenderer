@@ -42,6 +42,9 @@ namespace SUTK
 	void RenderableContainer::onAnscestorChange(Container* anscestor) noexcept
 	{
 		if(m_renderable != NULL)
+		{
 			m_renderable->onAnscestorChange(anscestor);
+			m_renderable->onGlobalCoordDirty();
+		}
 	}
 }

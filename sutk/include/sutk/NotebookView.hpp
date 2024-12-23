@@ -179,6 +179,7 @@ namespace SUTK
 	};
 
 	class Panel;
+	class TextGroupContainer;
 	
 	class SUTK_API NotebookView : public VBoxContainer, public GlobalMouseMoveHandlerObject
 	{

@@ -46,7 +46,7 @@ namespace SUTK
 		virtual bool onMouseClick(MouseButton button, KeyEvent action) override;
 
 	public:
-		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true, std::optional<GfxDriverObjectHandleType> textGroup = { }) noexcept;
+		Button(UIDriver& driver, Container* parent, bool isCreateDefaultGraphic = true, GfxDriverObjectHandleType textGroup = GFX_DRIVER_OBJECT_NULL_HANDLE) noexcept;
 		virtual ~Button() noexcept;
 
 		// Must be called in the overriding method

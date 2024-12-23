@@ -55,6 +55,12 @@ namespace SUTK
 		virtual void setTextPosition(GfxDriverObjectHandleType handle, Vec3Df position) = 0;
 		virtual void setTextDepth(GfxDriverObjectHandleType handle, f32 depth) = 0;
 		virtual void setTextPointSize(GfxDriverObjectHandleType handle, f32 pointSize) = 0;
+		// NOTE: IGfxDriver doesn't provide any getters for font of a text,
+		// Any IGfxDriver implementaion is free to choose any font when creating a text and won't provide any getters for it.
+		// Thus, the font used while creation of the text is implementation-defined and can't be queried.
+		// To make it defined, it is required to call IGfxDriver::setFont(). 
+		// NOTE: It is allowed to pass GFX_DRIVER_OBJECT_NULL_HANDLE in IGfxDriver::setFont(),
+		// In that case, the implementation would use the "implementation defined" font which would remain uniform across all functions of IGfxDriver
 		virtual void setTextFont(GfxDriverObjectHandleType handle, GfxDriverObjectHandleType font) = 0;
 		virtual f32 getTextPointSize(GfxDriverObjectHandleType handle) = 0;
 		virtual void setTextColor(GfxDriverObjectHandleType handle, const Color4 color) = 0;
