@@ -25,6 +25,8 @@ namespace SUTK
 
 		// Called by UIDriver to reset the redraw flag
 		void setRedraw(com::Bool isRedraw) noexcept { m_isRedraw = isRedraw; }
+		// This must never be called outside of Renderable (at least for now)
+		void setDrawOrder(u32 drawOrder) { m_drawOrder = drawOrder;  m_isDrawOrderDirty = true; }
 
 	protected:
 		// Rendering Geometries (or Text) requires conversion from local coordinates to global coordinates (target rendering backend, SGE)
@@ -54,7 +56,6 @@ namespace SUTK
 
 		bool isDrawOrderDirty() const noexcept { return m_isDrawOrderDirty; }
 
-		void setDrawOrder(u32 drawOrder) { m_drawOrder = drawOrder;  m_isDrawOrderDirty = true; }
 		u32 getDrawOrder() const noexcept { return m_drawOrder; }
 
 		com::Bool isRedraw() const noexcept { return com::Bool { m_isRedraw || com::cast_away_const(this)->isDirty() || isDrawOrderDirty() }; }

@@ -13,6 +13,8 @@ namespace SUTK
 	private:
 		Renderable* m_renderable;
 
+		// This must never be called outside of the RenderableContainer and Renderable class
+		void setRenderable(Renderable* renderable) noexcept;
 	protected:
 
 		RenderableContainer(UIDriver& driver, Container* parent = nullptr, com::Bool isLayoutIgnore = com::Bool::False(), Layer layer = InvalidLayer) noexcept;
@@ -22,9 +24,8 @@ namespace SUTK
 		virtual void onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 		virtual void onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged) override;
 		virtual void onAnscestorChange(Container* anscestor) noexcept override;
-
+		
 	public:
-		void setRenderable(Renderable* renderable) noexcept;
 		virtual Renderable* getRenderable() noexcept { return m_renderable; }
 	};
 }

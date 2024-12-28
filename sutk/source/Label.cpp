@@ -43,24 +43,29 @@ namespace SUTK
 		{
 			debug_log_info("Recreating Small Text due to reassociation");
 
-			// Disassociate old SmallText renderable from this Renderable Container
-			setRenderable(com::null_pointer<Renderable>());
+			// Save clonable data before destroying the m_text renderable (SmallText)
+			auto hAlign = m_text->getHorizontalAlignment();
+			auto vAlign = m_text->getVerticalAlignment();
+			auto data = m_text->getData();
+			auto color = m_text->getColor();
+			auto fontSize = m_text->getFontSize();
+			auto isActive = m_text->isActive();
+			auto font = m_text->getFont();
+
+			// Destroy the old SmallText renderable first as we can't associate a new Renderable to a RenderableContainer
+			// already associated with its old Renderable (SmallText)
+			getUIDriver().destroyRenderable<SmallText>(m_text);
 
 			// Create a new SmallText
 			SmallText* text = getUIDriver().createRenderable<SmallText>(this, textGroup);
-			text->setAlignment(m_text->getHorizontalAlignment(), m_text->getVerticalAlignment());
-			text->setData(m_text->getData());
-			text->setColor(m_text->getColor());
-			text->setFontSize(m_text->getFontSize());
-			text->setActive(m_text->isActive());
-			text->setFont(m_text->getFont());
-
-			// Destroy the old SmallText renderable
-			getUIDriver().destroyRenderable<SmallText>(m_text);
+			text->setAlignment(hAlign, vAlign);
+			text->setData(data);
+			text->setColor(color);
+			text->setFontSize(fontSize);
+			text->setActive(isActive);
+			text->setFont(font);
 
 			m_text = text;
-			// Update Renderable also, otherwise the new SubText renderable won't be able to get callbacks on this RenderableContainer (Label)
-			setRenderable(m_text);
 		}
 		m_textGroup = textGroup;
 	}

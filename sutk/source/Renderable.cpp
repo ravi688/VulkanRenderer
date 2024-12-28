@@ -10,7 +10,7 @@ namespace SUTK
 		{
 			// NOTE: We can't call RenderableContainer::getRenderable() here because it is virtual, and can be overriden
 			// And in that override, one may instantiate this Renderable() which will lead to non-terminating recursion!
-			com_assert(COM_DESCRIPTION(!container->m_renderable), "Only one Renderable is allowed per RenderableContainer");
+			com_assert(COM_DESCRIPTION(!container->m_renderable), "Only one Renderable is allowed per RenderableContainer, destroy the previous one first!");
 			container->setRenderable(this);
 		}
 		driver.addRenderable(this);
@@ -30,7 +30,6 @@ namespace SUTK
 
 	void Renderable::onAnscestorChange(Container* anscestor) noexcept
 	{
-		std::cout << "Draw Order Set: " << getContainer()->getDepth() << std::endl;
 		setDrawOrder(getContainer()->getDepth());
 	}
 
