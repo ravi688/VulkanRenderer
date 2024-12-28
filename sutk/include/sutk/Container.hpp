@@ -181,9 +181,10 @@ namespace SUTK
 		void moveLeft(f32 amount) noexcept;
 		void extendRight(f32 amount) noexcept;
 
-		// If called with true, then this Container's rect is always in-sync with its parent's rect,
-		// That also means, this container's rect's position will always be { 0, 0 } (in local coordinates of its parent's rect)
-		void alwaysFitInParent() noexcept;
+		// If called, then this Container's rect is always in-sync with its parent's rect,
+		// That also means, this container's rect's position will always be { margins.x, margins.z } (in local coordinates of its parent's rect)
+		// NOTE: internally calls fitInParent() first and then anchors all four corners to that of its parent
+		void alwaysFitInParent(Vec4Df margins = { }) noexcept;
 		// Resizes this container's rect to fit into its parent's rect
 		// does nothing if parent is NULL
 		// NOTE:

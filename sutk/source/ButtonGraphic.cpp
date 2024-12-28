@@ -100,7 +100,7 @@ namespace SUTK
 	{
 		m_label = driver.createContainer<Label>(this, textGroup);
 		// size of the label's rect should be as that of ButtonGraphic's rect
-		m_label->fitInParent({ Constants::Defaults::Button::LeftMargin, Constants::Defaults::Button::RightMargin, 0.0f, 0.0f });
+		m_label->alwaysFitInParent({ Constants::Defaults::Button::LeftMargin, Constants::Defaults::Button::RightMargin, 0.0f, 0.0f });
 		m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
 		m_label->set("New Button");
 		m_label->getText().setColor(Color4::black());
