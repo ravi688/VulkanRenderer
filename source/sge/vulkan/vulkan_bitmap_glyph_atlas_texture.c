@@ -46,9 +46,6 @@ SGE_API vulkan_bitmap_glyph_atlas_texture_t* vulkan_bitmap_glyph_atlas_texture_c
 
 SGE_API void vulkan_bitmap_glyph_atlas_texture_create_no_alloc(vulkan_renderer_t* renderer, vulkan_bitmap_glyph_atlas_texture_create_info_t* create_info, vulkan_bitmap_glyph_atlas_texture_t OUT texture)
 {
-	/* for now only one BGA texture can exists throughout the entire SGE context's lifetime */
-	COM_ASSERT_CALLED_ONCE();
-
 	VULKAN_OBJECT_MEMZERO(texture, vulkan_bitmap_glyph_atlas_texture_t);
 
 	texture->renderer = renderer;
