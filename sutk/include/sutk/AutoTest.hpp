@@ -3,6 +3,7 @@
 #include <common/Bool.hpp> // for com::Bool
 #include <string> // for std::string
 #include <source_location> // for std::source_location
+#include <format> // for std::format()
 
 namespace SUTK
 {
@@ -15,10 +16,14 @@ namespace SUTK::AutoTests
 	// Holds Result of a AutoTest, Object of this types are returned by 'run' function in AutoTest class
 	struct TestResult
 	{
+		static constexpr TestResult passed() { return { com::True }; };
+		static constexpr TestResult failed(std::string_view str, std::source_location loc = std::source_location::current()) { return { com::False, loc, std::string { str } }; }
 		// By Default com::False
 		com::Bool isPassed { };
 		// If isPassed holds com::False then this must hold information about the test failure location
 		std::source_location failureLocation { };
+		// Contains extra information about the failure
+		std::string whatFailed { };
 	};
 
 	// Abstract class from which any Test which is supposed to be run without human in the loop must derive.
@@ -44,3 +49,5 @@ namespace SUTK::AutoTests
 		com::Bool isUIDriverRequired() const noexcept { return m_isUIDriverRequired; }
 	};
 }
+
+#define EXPECT_EQ(var, expected) do { auto _var = (var); decltype(_var) _expected=(expected); if(_var != _expected) return TestResult::failed(std::format("Expected {} but got {}", _expected, _var)); } while(false)

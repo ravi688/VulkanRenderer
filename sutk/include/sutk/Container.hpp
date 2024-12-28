@@ -201,6 +201,8 @@ namespace SUTK
 
 		// returns the number of anscestor containers of this container
 		u32 getDepth() const noexcept;
+		// returns max of grand children's depth
+		u32 getMaxChildDistance() const noexcept;
 
 		// coordinate conversion functions
 

@@ -23,7 +23,7 @@ namespace SGE
 	Driver::Driver(GPUType type,
 				u32 width,
 				u32 height,
-				const std::string& title,
+				const std::string_view title,
 				bool fullScreen,
 				bool resizable,
 				com::OptionalReference<const Requirements> requirements)
@@ -37,7 +37,9 @@ namespace SGE
 		driver_create_info.gpu_type = getSGEGPUType(type);
 		driver_create_info.width = width;
 		driver_create_info.height = height;
-		driver_create_info.title = title.c_str();
+		// Make sure we have null-terminated string; std::string_view may not be null-terminated
+		std::string titleStr { title };
+		driver_create_info.title = titleStr.c_str();
 		driver_create_info.full_screen = fullScreen;
 		driver_create_info.resizable = resizable;
 		if(requirements.has_value())

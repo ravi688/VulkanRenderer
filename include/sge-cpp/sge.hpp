@@ -49,7 +49,7 @@ namespace SGE
 		Driver(GPUType type = GPUType::Discrete, 
 				u32 width = 800, 
 				u32 height = 800, 
-				const std::string& title = "SGE",
+				const std::string_view title = "SGE",
 				bool fullScreen = false,
 				bool resizable = true,
 				com::OptionalReference<const Requirements> requirements = { });
@@ -78,6 +78,7 @@ namespace SGE
 
 		Font loadFont(const std::string& filePath) noexcept { return Font(*this, filePath); }
 		Font createFont(const void* bytes, u64 length) noexcept { return Font(*this, bytes, length); }
+		Font createFont(std::span<const std::byte> bytes) noexcept { return createFont(bytes.data(), bytes.size()); }
 
 		MaterialLibrary getMaterialLibrary() const noexcept { return MaterialLibrary(renderer_get_material_library(m_handle)); }
 		ShaderLibrary getShaderLibrary() const noexcept { return ShaderLibrary(renderer_get_shader_library(m_handle)); }

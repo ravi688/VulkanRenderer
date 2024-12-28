@@ -107,7 +107,7 @@ int main()
 		if(!result.isPassed)
 		{
 			failCount += 1;
-			std::cout << ", Check Location=" << result.failureLocation;
+			std::cout << ": " << result.whatFailed <<", at: " << result.failureLocation;
 		}
 		std::cout << std::endl;
 		i += 1;

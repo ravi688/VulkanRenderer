@@ -238,6 +238,18 @@ namespace SUTK
 		return getParent()->getDepth() + 1u;
 	}
 
+	u32 Container::getMaxChildDistance() const noexcept
+	{
+		u32 max = 0;
+		for(const auto* child : getChilds())
+		{
+			auto depth = child->getMaxChildDistance() + 1;
+			if(max < depth)
+				max = depth;
+		}
+		return max;
+	}
+
 	Vec2Df Container::getScreenCoordsToLocalCoords(Vec2Df screenCoords) const
 	{
 		return screenCoords - getLocalCoordsToScreenCoords({ 0u, 0u });
