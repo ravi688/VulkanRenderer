@@ -37,7 +37,10 @@ STATIC_LIB_NAME = sutk.a
 DYNAMIC_LIB_NAME = sutk.dll
 EXECUTABLE_NAME = sutk
 MAIN_SOURCE_LANG = cpp
-MAIN_SOURCES= source/main.cpp
+#The sources which needs to be included when building primary executable
+MAIN_SOURCES:=source/main.cpp
+#The sources which needs to be included when building test executasble
+TEST_SOURCES:=source/AutoTest.cpp $(wildcard source/tests/auto_tests/*.cpp)
 EXTERNAL_INCLUDES = $(shell pkg-config libplutovg --cflags) $(shell pkg-config liblunasvg --cflags)
 EXTERNAL_LIBRARIES = -L../toolchain/shader_compiler/external-dependency-libs -lshaderc_shared \
 					 $(shell pkg-config liblunasvg --libs) \
@@ -95,15 +98,17 @@ __SHARED_DEPENDENCIES = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPEND
 __SHARED_DEPENDENCY_LIBS = $(addprefix $(SHARED_DEPENDENCIES_DIR)/, $(SHARED_DEPENDENCY_LIBS))
 ifdef COMSPEC
 __EXECUTABLE_NAME = $(addsuffix .exe, $(basename $(EXECUTABLE_NAME)))
+__TEST_EXECUTABLE_NAME=$(addsuffix .exe, $(join $(basename $(EXECUTABLE_NAME)),.test))
 else
 __EXECUTABLE_NAME = $(basename $(EXECUTABLE_NAME))
+__TEST_EXECUTABLE_NAME=$(join $(basename $(EXECUTABLE_NAME)),.test)
 endif
 .PHONY: all
 .PHONY: init
 all: dgraph release
 
 %.gv:
-	echo digraph $(PROJECT_NAME) { $(PROJECT_NAME); } > $@
+	echo digraph $(PROJECT_NAME) "{ $(PROJECT_NAME); }" > $@
 	@echo [Log] $@ created successfully!
 
 $(DEPENDENCIES_DIR) $(SHARED_DEPENDENCIES_DIR):
@@ -164,15 +169,19 @@ TARGET_LIB_DIR = ./lib
 TARGET_STATIC_LIB = $(join $(TARGET_LIB_DIR)/, $(STATIC_LIB_NAME))
 TARGET_DYNAMIC_LIB = $(join $(TARGET_LIB_DIR)/, $(DYNAMIC_LIB_NAME))
 TARGET = $(__EXECUTABLE_NAME)
+TEST_TARGET=$(__TEST_EXECUTABLE_NAME)
 
 #Dependencies
 DEPENDENCY_INCLUDES = $(addsuffix /include, $(__DEPENDENCIES))
 SHARED_DEPENDENCY_INCLUDES = $(addsuffix /include, $(__SHARED_DEPENDENCIES))
 
 MAIN_OBJECT=$(addsuffix .o, $(wildcard $(MAIN_SOURCES)))
+TEST_OBJECT=$(addsuffix .o, $(wildcard $(TEST_SOURCES)))
+#The sources which needs to be excluded when building libraries (static or dynamic)
+EXCLUDE_SOURCES=$(MAIN_SOURCES) $(TEST_SOURCES)
 INCLUDES= -I./include $(EXTERNAL_INCLUDES) $(addprefix -I, $(DEPENDENCY_INCLUDES) $(SHARED_DEPENDENCY_INCLUDES))
-C_SOURCES=$(wildcard source/*.c source/*/*.c)
-CPP_SOURCES=$(wildcard source/*.cpp source/*/*.cpp)
+C_SOURCES=$(filter-out $(EXCLUDE_SOURCES), $(wildcard source/*.c source/*/*.c))
+CPP_SOURCES=$(filter-out $(EXCLUDE_SOURCES), $(wildcard source/*.cpp source/*/*.cpp source/*/*/*.cpp))
 SOURCES= $(C_SOURCES) $(CPP_SOURCES)
 OBJECTS= $(addsuffix .o, $(SOURCES))
 LIBS = $(EXTERNAL_LIBRARIES)
@@ -181,10 +190,15 @@ LIBS = $(EXTERNAL_LIBRARIES)
 DEBUG_DEFINES =  -DGLOBAL_DEBUG -DDEBUG -DLOG_DEBUG -DCONTAINER_DEBUG
 RELEASE_DEFINES =  -DGLOBAL_RELEASE -DRELEASE -DLOG_RELEASE
 DEFINES = $(BUILD_DEFINES)
-
+ifeq ($(XDG_SESSION_TYPE),wayland)
+	DEFINES+=-DWINDOW_SYSTEM_WAYLAND
+endif
+ifeq ($(XDG_SESSION_TYPE),x11)
+	DEFINES+=-DWINDOW_SYSTEM_X11
+endif
 COMPILER_FLAGS= -m64
 C_COMPILER_FLAGS = $(COMPILER_FLAGS)
-CPP_COMPILER_FLAGS = $(COMPILER_FLAGS) -std=c++20
+CPP_COMPILER_FLAGS = $(COMPILER_FLAGS) -std=c++20 -fconcepts-diagnostics-depth=2
 LINKER_FLAGS= -m64
 LINKER=g++
 DYNAMIC_LIBRARY_COMPILATION_FLAG = -shared
@@ -251,7 +265,10 @@ TARGET_DYNAMIC_IMPORT_LIB = $(addprefix $(dir $(TARGET_DYNAMIC_LIB)), $(addprefi
 .PHONY: lib-static-dynamic-release
 .PHONY: release
 .PHONY: debug
+.PHONY: test-release
+.PHONY: test-debug
 .PHONY: $(TARGET)
+.PHONY: $(TEST_TARGET)
 .PHONY: bin-clean
 .PHONY: PRINT_MESSAGE1
 
@@ -291,12 +308,24 @@ lib-dynamic-packed-debug: $(TARGET_DYNAMIC_PACKED_LIB)
 
 release: DEFINES += $(RELEASE_DEFINES) -DBUILD_EXECUTABLE
 release: __STATIC_LIB_COMMAND = lib-static-release
+release: COMPILER_FLAGS += $(RELEASE_COMPILER_FLAGS)
+release: LINKER_FLAGS += $(RELEASE_LINKER_FLAGS)
 release: $(TARGET)
+test-release: DEFINES += $(RELEASE_DEFINES) -DBUILD_TEST
+test-release: __STATIC_LIB_COMMAND = lib-static-release
+test-release: COMPILER_FLAGS += $(RELEASE_COMPILER_FLAGS)
+test-release: LINKER_FLAGS += $(RELEASE_LINKER_FLAGS)
+test-release: $(TEST_TARGET)
 debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_EXECUTABLE
 debug: __STATIC_LIB_COMMAND = lib-static-debug
 debug: COMPILER_FLAGS += $(DEBUG_COMPILER_FLAGS)
 debug: LINKER_FLAGS += $(DEBUG_LINKER_FLAGS)
 debug: $(TARGET)
+test-debug: DEFINES += $(DEBUG_DEFINES) -DBUILD_TEST
+test-debug: __STATIC_LIB_COMMAND = lib-static-debug
+test-debug: COMPILER_FLAGS += $(DEBUG_COMPILER_FLAGS)
+test-debug: LINKER_FLAGS += $(DEBUG_LINKER_FLAGS)
+test-debug: $(TEST_TARGET)
 
 
 %.c.o : %.c
@@ -321,33 +350,40 @@ PRINT_STATIC_INFO:
 PRINT_DYNAMIC_INFO:
 	@echo [Log] Building $(TARGET_DYNAMIC_LIB) ...
 
-$(TARGET_STATIC_LIB) : PRINT_STATIC_INFO $(filter-out $(MAIN_OBJECT), $(OBJECTS)) | $(TARGET_LIB_DIR)
+$(TARGET_STATIC_LIB) : PRINT_STATIC_INFO $(OBJECTS) | $(TARGET_LIB_DIR)
 	$(ARCHIVER) $(ARCHIVER_FLAGS) $@ $(filter-out $<, $^)
 	@echo [Log] $@ built successfully!
 
-$(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(filter-out $(MAIN_OBJECT), $(OBJECTS)) | $(TARGET_LIB_DIR)
+$(TARGET_DYNAMIC_LIB) : PRINT_DYNAMIC_INFO $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(OBJECTS) | $(TARGET_LIB_DIR)
 	@echo [Log] Linking $@ ...
-	$(LINKER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(filter-out $(MAIN_OBJECT), $(OBJECTS))  $(LIBS)\
+	$(LINKER) $(LINKER_FLAGS) $(DYNAMIC_LIBRARY_COMPILATION_FLAG) $(OBJECTS)  $(LIBS)\
 	$(addprefix -L, $(dir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	-o $@ $(DYNAMIC_IMPORT_LIBRARY_FLAG)$(TARGET_DYNAMIC_IMPORT_LIB)
 	@echo [Log] $@ and lib$(notdir $@.a) built successfully!
 
-$(TARGET): $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB) $(MAIN_OBJECT)
-	@echo [Log] Linking $@ ...
-	$(LINKER) $(LINKER_FLAGS) $(MAIN_OBJECT) \
-	$(addprefix -L, $(dir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
+build-all-static-libraries: $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS) $(TARGET_STATIC_LIB)
+ALL_STATIC_LIBRARIES=$(addprefix -L, $(dir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) \
 	$(addprefix -l:, $(notdir $(TARGET_STATIC_LIB) $(__DEPENDENCY_LIBS) $(__SHARED_DEPENDENCY_LIBS))) $(LIBS) \
-	-o $@
+
+$(TARGET): build-all-static-libraries $(MAIN_OBJECT)
+	@echo [Log] Linking $@ ...
+	$(LINKER) $(LINKER_FLAGS) $(MAIN_OBJECT) $(ALL_STATIC_LIBRARIES) -o $@
 	@echo [Log] $(PROJECT_NAME) built successfully!
 
+$(TEST_TARGET): build-all-static-libraries $(TEST_OBJECT)
+	@echo [Log] Linking $@ ...
+	$(LINKER) $(LINKER_FLAGS) $(TEST_OBJECT) $(ALL_STATIC_LIBRARIES) -o $@
+	@echo [Log] $(TEST_TARGET) built successfully!
 RM := rm -f
 RM_DIR := rm -rf
 
 bin-clean:
 	$(RM) $(OBJECTS)
 	$(RM) $(MAIN_OBJECT)
+	$(RM) $(TEST_OBJECT)
 	$(RM) $(__EXECUTABLE_NAME)
+	$(RM) $(__TEST_EXECUTABLE_NAME)
 	$(RM) $(TARGET_STATIC_LIB)
 	$(RM) $(TARGET_DYNAMIC_LIB)
 	$(RM) $(TARGET_DYNAMIC_IMPORT_LIB)
