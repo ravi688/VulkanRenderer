@@ -89,7 +89,7 @@ int main()
 		std::cout << "No tests to run" << std::endl;
 		return 0;
 	}
-	std::size_t failCount = 0;
+	std::vector<std::pair<std::size_t, SUTK::AutoTests::TestResult>> failedTests;
 	for(std::size_t i = 0; auto& test : *tests)
 	{
 		std::cout << std::format("[{}] Running: ", i)  << test->getName() << std::endl;
@@ -106,15 +106,24 @@ int main()
 		// If test failed then print the location of the check which led to the failure
 		if(!result.isPassed)
 		{
-			failCount += 1;
+			failedTests.push_back({ i, std::move(result) });
 			std::cout << ": " << result.whatFailed <<", at: " << result.failureLocation;
 		}
 		std::cout << std::endl;
 		i += 1;
 	}
-	if(failCount == 0)
+	if(failedTests.size() == 0)
 		std::cout << "All tests passed" << std::endl;
 	else
-		std::cout << "Number of Failed Tests: " << failCount << std::endl;
-	return static_cast<int>(failCount);
+	{
+		std::cout << "Number of Failed Tests: " << failedTests.size() << std::endl;
+		for(const auto& result : failedTests)
+			std::cout << std::format("[{}] {}: {}", 
+							result.first, 
+							(*tests)[result.first]->getName(), 
+							result.second.whatFailed)
+					   << ", at " << result.second.failureLocation << "\n";
+		std::cout << std::flush;
+	}
+	return static_cast<int>(failedTests.size());
 }
