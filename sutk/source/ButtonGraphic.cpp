@@ -103,7 +103,7 @@ namespace SUTK
 		m_label->alwaysFitInParent({ Constants::Defaults::Button::LeftMargin, Constants::Defaults::Button::RightMargin, 0.0f, 0.0f });
 		m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
 		m_label->set("New Button");
-		m_label->getText().setColor(Color4::black());
+		m_label->setColor(Color4::black());
 	}
 
 	DefaultButtonGraphic::~DefaultButtonGraphic() noexcept
@@ -113,7 +113,7 @@ namespace SUTK
 
 	Vec2Df DefaultButtonGraphic::getMinBoundSize() noexcept
 	{
-		f32 xCoord = m_label->getText().getCoordFromColPos(END_OF_LINE);
+		f32 xCoord = m_label->getHorizontalBound();
 		Vec2Df size = getSize();
 		return { xCoord + m_label->getPosition().x + Constants::Defaults::Button::RightMargin, size.height };
 	}

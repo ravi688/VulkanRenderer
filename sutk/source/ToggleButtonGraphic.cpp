@@ -20,7 +20,7 @@ namespace SUTK
 		m_renderRect->setColor(Color4::blue());
 		auto& label = getLabel();
 		label.fitInParent({ Constants::Defaults::Button::LeftMargin + diameter + Constants::Defaults::ToggleButton::CircleLabelSpacing, Constants::Defaults::Button::RightMargin, 0.0f, 0.0f });
-		label.getText().setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
+		label.setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
 		label.set("New Toggle");
 	}
 	DefaultToggleButtonGraphic::~DefaultToggleButtonGraphic() noexcept

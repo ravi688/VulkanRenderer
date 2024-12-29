@@ -70,6 +70,13 @@ namespace SUTK
 		m_textGroup = textGroup;
 	}
 
+	SmallText& Label::getText() noexcept
+	{
+		if(!m_text)
+			createTextFirstTime();
+		return *m_text;
+	}
+
 	void Label::setTextGroup(GfxDriverObjectHandleType textGroup) noexcept
 	{
 		// If no SmallText object has already been created then we don't need to instantiate any objects, in the favor of lazy instantiation
@@ -112,10 +119,23 @@ namespace SUTK
 		return &getText();
 	}
 
-	SmallText& Label::getText() noexcept
+	f32 Label::getHorizontalBound() const noexcept
 	{
-		if(!m_text)
-			createTextFirstTime();
-		return *m_text;
+		return const_cast<Label*>(this)->getText().getCoordFromColPos(END_OF_LINE);
+	}
+
+	void Label::setColor(Color4 color) noexcept
+	{
+		getText().setColor(color);
+	}
+
+	Color4 Label::getColor() const noexcept
+	{
+		return const_cast<Label*>(this)->getText().getColor();
+	}
+
+	void Label::setFont(UIDriver::FontReference font) noexcept
+	{
+		getText().setFont(font);
 	}
 }

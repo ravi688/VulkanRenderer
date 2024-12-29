@@ -66,7 +66,7 @@ namespace SUTK
 
 		UIDriver::FontReference font = m_font = this->m_uiDriver->loadFont("../showcase/resource/fonts/Pushster-Regular.ttf");
 
-		m_label3->getText().setFont(font);
+		m_label3->setFont(font);
 
 		m_txtGrpContainer1 = m_uiDriver->createContainer<TextGroupContainer>(rootContainer);
 		m_txtGrpContainer1->enableDebug(true, Color4::white());

@@ -33,12 +33,12 @@ namespace SUTK
 			if(action == KeyEvent::Press)
 			{
 				std::cout << "Key Pressed" << std::endl;
-				this->m_label->getText().setFont(font1);
+				this->m_label->setFont(font1);
 			}
 			else
 			{
 				std::cout << "Key Released" << std::endl;
-				this->m_label->getText().setFont(font2);
+				this->m_label->setFont(font2);
 			}
 		});
 	}

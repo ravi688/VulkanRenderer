@@ -132,33 +132,32 @@ namespace SUTK
 		anchor5->setBottomRight({ 1.0f, 1.0f });
 		label2->set("Another Label");
 
-		auto smallTextPtr = &label2->getText();
-		themeInt3->bind<f32>("AnotherLabel.Color.r", [smallTextPtr](f32 value) noexcept
+		themeInt3->bind<f32>("AnotherLabel.Color.r", [label2](f32 value) noexcept
 			{
-				auto color = smallTextPtr->getColor();
+				auto color = label2->getColor();
 				std::cout<< "Before Color: " << color << std::endl;
 				color.r = value * 255;
 				std::cout << "color.r: " << static_cast<u32>(color.r) << std::endl;
 				std::cout<< "After Color: " << color << std::endl;
-				smallTextPtr->setColor(color);
+				label2->setColor(color);
 			});
-		themeInt3->bind<f32>("AnotherLabel.Color.g", [smallTextPtr](f32 value) noexcept
+		themeInt3->bind<f32>("AnotherLabel.Color.g", [label2](f32 value) noexcept
 			{
-				auto color = smallTextPtr->getColor();
+				auto color = label2->getColor();
 				color.g = value * 255;
-				smallTextPtr->setColor(color);
+				label2->setColor(color);
 			});
-		themeInt3->bind<f32>("AnotherLabel.Color.b", [smallTextPtr](f32 value) noexcept
+		themeInt3->bind<f32>("AnotherLabel.Color.b", [label2](f32 value) noexcept
 			{
-				auto color = smallTextPtr->getColor();
+				auto color = label2->getColor();
 				color.b = value * 255;
-				smallTextPtr->setColor(color);
+				label2->setColor(color);
 			});
-		themeInt3->bind<f32>("AnotherLabel.Color.a", [smallTextPtr](f32 value) noexcept
+		themeInt3->bind<f32>("AnotherLabel.Color.a", [label2](f32 value) noexcept
 			{
-				auto color = smallTextPtr->getColor();
+				auto color = label2->getColor();
 				color.a = value * 255;
-				smallTextPtr->setColor(color);
+				label2->setColor(color);
 			});
 
 		theme1->dump();

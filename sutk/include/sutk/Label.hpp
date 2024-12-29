@@ -2,6 +2,7 @@
 
 #include <sutk/RenderableContainer.hpp> // for SUTK::RenderableContainer
 #include <sutk/TextTraits.hpp>
+#include <sutk/UIDriver.hpp> // for SUTK::UIDriver::FontReference
 
 #include <string> // for std::string
 
@@ -24,6 +25,8 @@ namespace SUTK
 		// Use setTextGroup() instead.
 		// WARN: If you call this function directly then it would create an internal Text Group instance if GFX_DRIVER_OBJECT_NULL_HANDLE is passed.
 		void setTextGroupForce(GfxDriverObjectHandleType textGroup) noexcept;
+		// Must not be called outside of this Label class
+		SmallText& getText() noexcept;
 	protected:
 		// Allowed to be called inside the Derived Classes
 		void setTextGroup(GfxDriverObjectHandleType textGroup) noexcept;
@@ -35,6 +38,12 @@ namespace SUTK
 		void setAlignment(HorizontalAlignment hAlign, VerticalAlignment vAlign) noexcept;
 
 		virtual Renderable* getRenderable() noexcept override;
-		SmallText& getText() noexcept;
+
+		// We need to provide these functions on-behalf of owned SmallText object, we can be recreated at any time, as we can't expose reference to it
+		// to prevent the user code storing the reference.
+		f32 getHorizontalBound() const noexcept;
+		void setColor(Color4 color) noexcept;
+		Color4 getColor() const noexcept;
+		void setFont(UIDriver::FontReference font) noexcept;
 	};
 }

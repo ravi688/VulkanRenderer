@@ -77,7 +77,7 @@ namespace SUTK
 			}
 		});
 		auto& label =  m_button->getGraphicAs<DefaultButtonGraphic>()->getLabel();
-		label.getText().setColor(Color4::black());
+		label.setColor(Color4::black());
 		label.set("Toggle");
 	}
 
