@@ -31,6 +31,7 @@
 #include <sutk/tests/PanelTest.hpp>
 #include <sutk/tests/LabelTest.hpp>
 #include <sutk/tests/PassiveLabelTest.hpp>
+#include <sutk/tests/DrawOrderTest.hpp>
 
 namespace SUTK
 {
@@ -65,7 +66,8 @@ namespace SUTK
 		{ "DARK_LIGHT_THEME", [] () { return std::unique_ptr<ITest>(new DarkLightThemeTest()); }},
 		{ "PANEL", [] () { return std::unique_ptr<ITest>(new PanelTest()); }},
 		{ "LABEL", [] () { return std::unique_ptr<ITest>(new LabelTest()); }},
-		{ "PASSIVE_LABEL", [] () { return std::unique_ptr<ITest>(new PassiveLabelTest()); }}
+		{ "PASSIVE_LABEL", [] () { return std::unique_ptr<ITest>(new PassiveLabelTest()); }},
+		{ "DRAW_ORDER", [] () { return std::unique_ptr<ITest>(new DrawOrderTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)
