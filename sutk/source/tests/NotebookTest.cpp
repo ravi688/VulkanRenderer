@@ -14,6 +14,35 @@ namespace SUTK
 		return data;
 	}
 
+	class TestNotebookPage : public NotebookPage
+	{
+	private:
+		Label* m_label;
+	protected:
+		virtual void onActivate() noexcept
+		{
+			std::cout << std::format("Page {} is activated", getLabel()) << std::endl;
+		}
+		virtual void onDeactivate() noexcept
+		{
+			std::cout << std::format("Page {} is deactivated", getLabel()) << std::endl;
+		}
+	public:
+		TestNotebookPage(UIDriver& driver, Container* container) noexcept : NotebookPage(driver, container)
+		{
+			m_label = getUIDriver().createContainer<Label>(container);
+			m_label->enableDebug(true, Color4::red());
+			m_label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
+			static std::size_t i = 0;
+			m_label->set(std::format("This is Page {}", i++));
+			m_label->setColor(Color4::black());
+		}
+		~TestNotebookPage() noexcept
+		{
+			getUIDriver().destroyContainer<Label>(m_label);
+		}
+	};
+
 	void NotebookTest::initialize(SGE::Driver& driver)
 	{
 		m_gfxDriver = new SGEGfxDriver(driver);
@@ -29,14 +58,7 @@ namespace SUTK
 		});
 
 		for(u32 i = 0; i < 3; ++i)
-		{
-			Container* container = m_notebookView->createPage(std::format("My Page {}", i))->getContainer();
-			Label* label = m_uiDriver->createContainer<Label>();
-			label->enableDebug(true, Color4::red());
-			label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
-			label->set(std::format("This is Page {}", i));
-			m_labels.push_back(label);
-		}
+			m_notebookView->createPage<TestNotebookPage>(std::format("My Page {}", i));
 
 		m_inputDriver->getOnKeyEvent().subscribe([this](IInputDriver*, KeyCode keyCode, KeyEvent keyEvent, ModifierKeys modifierKeys) noexcept
 		{
@@ -48,12 +70,7 @@ namespace SUTK
 					++counter;
 					char buffer[128];
 					sprintf(buffer, "New Page (%u)", counter);
-					auto* container = this->m_notebookView->createPage(buffer)->getContainer();
-					Label* label = m_uiDriver->createContainer<Label>();
-					label->enableDebug(true, Color4::red());
-					label->setAlignment(HorizontalAlignment::Middle, VerticalAlignment::Middle);
-					label->set(std::format("This is Page {}", counter + 3));
-					m_labels.push_back(label);
+					this->m_notebookView->createPage<TestNotebookPage>(buffer);
 				}
 				else if(keyCode == KeyCode::D)
 					this->m_notebookView->removePage(this->m_notebookView->getCurrentPage());

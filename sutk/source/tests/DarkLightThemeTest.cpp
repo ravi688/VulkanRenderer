@@ -64,13 +64,13 @@ namespace SUTK
 		NotebookView* notebook = m_notebookView = m_uiDriver->createContainer<NotebookView>(rootContainer);
 		notebook->setRect({ { pos, posY }, { 10, 5 } });
 		for(u32 i = 0; i < 3; ++i)
-			notebook->createPage(std::format("Tab {}", i));
+			notebook->createPage<NotebookPage>(std::format("Tab {}", i));
 		m_inputDriver->getOnKeyEvent().subscribe([notebook](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
 		{
 			static auto i = 3;
 			if((keycode == KeyCode::N) && (event == KeyEvent::Press))
 			{
-				notebook->createPage(std::format("Tab {}", i));
+				notebook->createPage<NotebookPage>(std::format("Tab {}", i));
 				i++;
 			}
 		});

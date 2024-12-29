@@ -100,10 +100,14 @@ namespace SUTK
 				isRerender = com::True;
 				renderable->setRedraw(com::False);
 			}
-			if(renderable->isDirty())
+			// Only update Renderables which are active and dirty
+			if(renderable->isActive() && renderable->isDirty())
 				renderable->update();
+			// If at least Renderable's draw order is dirty then normalized draw orders need to be re-calculated
+			// and passed to the GPU driver
 			if(!isRecalculateDrawOrder && renderable->isDrawOrderDirty())
 				isRecalculateDrawOrder = com::True;
+			// Keep track of minimum and maximum draw order values
 			u32 drawOrder = renderable->getDrawOrder();
 			if(drawOrder < minDrawOrder)
 				minDrawOrder = drawOrder;

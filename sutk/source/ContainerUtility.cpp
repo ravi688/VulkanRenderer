@@ -69,11 +69,10 @@ namespace SUTK
 	void ContainerUtility::RenderablesVisit(Container* container, const std::function<void(Renderable*)>& visitor) noexcept
 	{
 		auto renderCont = dynamic_cast<RenderableContainer*>(container);
-		if(renderCont != NULL)
+		if(renderCont)
 		{
-			Renderable* renderable = renderCont->getRenderable();
-			_com_assert(renderable != NULL);
-			visitor(renderable);
+			if(Renderable* renderable = renderCont->getRenderable())
+					visitor(renderable);
 		}
 		std::vector<Container*>& childs = container->getChilds();
 		for(Container* &child : childs)

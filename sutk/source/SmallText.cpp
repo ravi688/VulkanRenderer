@@ -15,7 +15,6 @@ namespace SUTK
 															m_isPointSizeDirty(false), 
 															m_isColorDirty(true), 
 															m_isColorRangesDirty(false), 
-															m_isActiveDirty(false),
 															m_color(color),
 															m_horizontalAlignment(HorizontalAlignment::Invalid),
 															m_verticalAlignment(VerticalAlignment::Invalid),
@@ -36,10 +35,7 @@ namespace SUTK
 
 	bool SmallText::isDirty()
 	{
-		// SmallText should only be updated when it is active (visible to the user),
-		// There is no use of updating it upfront, in inactive mode, as the next update is guaranteed to occur when the it goes active.
-		// So, not doing the update in inactive mode avoids redundant updates.
-		return m_isActiveDirty || ((m_isPosDirty || m_isDataDirty || m_isPointSizeDirty || m_isColorRangesDirty || m_isColorDirty) && isActive());
+		return m_isPosDirty || m_isDataDirty || m_isPointSizeDirty || m_isColorRangesDirty || m_isColorDirty;
 	}
 	void SmallText::update()
 	{
@@ -60,14 +56,6 @@ namespace SUTK
 			m_isPointSizeDirty = false;
 		}
 
-		// NOTE: This must be happen before the position update, 
-		// that's because 'getAlignedPosition()' only returns valid values when the text is active'
-		if(m_isActiveDirty)
-		{
-			getGfxDriver().setTextActive(getGfxDriverObjectHandle(), isActive());
-			m_isActiveDirty = false;
-		}
-
 		if(m_isDataDirty)
 		{
 			getGfxDriver().setTextData(getGfxDriverObjectHandle(), m_data);
@@ -76,6 +64,8 @@ namespace SUTK
 
 		if(m_isPosDirty)
 		{
+			// This must be set false before calling getAlignedPosition() to avoid non-terminating recursion
+			m_isPosDirty = false;
 			Vec2Df pos = m_pos;
 			if(getContainer() != NULL)
 			{
@@ -83,7 +73,6 @@ namespace SUTK
 				pos = getContainer()->getLocalCoordsToScreenCoords(pos);
 			}
 			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), { pos.x, pos.y, 0.0f });
-			m_isPosDirty = false;
 		}
 
 		// should be updated after character array has been updated with setTextData().
@@ -115,7 +104,8 @@ namespace SUTK
 	{
 		// mandatory to be called
 		Renderable::setActive(isActive);
-		m_isActiveDirty = true;
+		// Activatation or Deactivation updates must happen immediately
+		getGfxDriver().setTextActive(getGfxDriverObjectHandle(), isActive);
 	}
 	void SmallText::clearColorRanges() noexcept
 	{
@@ -131,15 +121,15 @@ namespace SUTK
 	}
 	LineCountType SmallText::getColPosFromCoord(f32 coord) noexcept
 	{
-		// SmallText::getCoordFromColPos function does all the calculations based on the most recent data in SGE
-		if(m_isDataDirty)
+		// Ensure GPU side data is updated so that we get correct output from getTextGlyphIndexFromCoord()
+		if(isDirty())
 			update();
 		return getGfxDriver().getTextGlyphIndexFromCoord(getGfxDriverObjectHandle(), coord);
 	}
 	f32 SmallText::getCoordFromColPos(LineCountType col) noexcept
 	{
-		// SmallText::getCoordFromColPos function does all the calculations based on the most recent data in SGE
-		if(m_isDataDirty)
+		// Ensure GPU side data is updated so that we get correct output from getTextGlyphIndexFromCoord()
+		if(isDirty())
 			update();
 		return getGfxDriver().getTextCoordFromGlyphIndex(getGfxDriverObjectHandle(), col);
 	}

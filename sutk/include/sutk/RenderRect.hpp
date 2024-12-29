@@ -11,7 +11,6 @@ namespace SUTK
 	private:
 		Rect2Df m_rect;
 		Color4 m_color;
-		bool m_isActiveDirty;
 		bool m_isPosDirty;
 		bool m_isSizeDirty;
 		bool m_isColorDirty;

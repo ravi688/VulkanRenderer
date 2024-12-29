@@ -9,7 +9,6 @@ namespace SUTK
 	RenderRect::RenderRect(UIDriver& driver, RenderableContainer* container, RenderMode renderMode) noexcept : GeometryRenderable(driver, container, renderMode), 
 																						m_rect { 0, 0, 2.0f, 2.0f }, 
 																						m_color(Color4::white()), 
-																						m_isActiveDirty(false),
 																						m_isPosDirty(true),
 																						m_isSizeDirty(true),
 																						m_isColorDirty(true),
@@ -28,13 +27,17 @@ namespace SUTK
 	{
 		// mandatory to call
 		GeometryRenderable::setActive(isActive);
-		m_isActiveDirty = true;
+		// Activation and Deactivation Updates must happen immediately
+		if(auto handle = getGfxDriverObjectHandle(); handle != GFX_DRIVER_OBJECT_NULL_HANDLE)
+		{
+			GfxDriverObjectHandleType obj = getGfxDriver().getGeometryObject(handle);
+			getGfxDriver().setObjectActive(obj, isActive);
+		}
 	}
 
 	bool RenderRect::isDirty() noexcept
 	{
-		// See: SmallText.cpp:isDirty() for more understanding of why isActive() is here.
-		return m_isActiveDirty || ((isRectDirty() || m_isColorDirty || m_isGeometryDirty) && isActive());
+		return isRectDirty() || m_isColorDirty || m_isGeometryDirty;
 	}
 
 	void RenderRect::update() noexcept
@@ -60,18 +63,6 @@ namespace SUTK
 			m_isSizeDirty = false;
 			m_isColorDirty = false;
 			m_isGeometryDirty = false;
-		}
-
-		if(m_isActiveDirty)
-		{
-			if(handle == GFX_DRIVER_OBJECT_NULL_HANDLE)
-			{
-				handle = getGfxDriverObjectHandle();
-				_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
-			}
-			GfxDriverObjectHandleType obj = getGfxDriver().getGeometryObject(handle);
-			getGfxDriver().setObjectActive(obj, isActive());
-			m_isActiveDirty = false;
 		}
 	}
 

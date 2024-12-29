@@ -16,60 +16,38 @@ namespace SUTK
 {
 	class Tab;
 
-	class NotebookPage
+	// Customized Pages can be created by deriving from this class and passing the type of the derived class 
+	// in the template argument list of createPage<>() function
+	class SUTK_API NotebookPage : public UIDriverObject
 	{
 		friend class NotebookView;
 		friend class Tab;
-		friend u32 getIndexOfPage(const NotebookPage* page) noexcept;
 	private:
-		void* m_data;
-		void (*m_dataDeleter)(void*);
-		std::optional<std::function<void(NotebookPage*)>> m_onPageRemove;
 		Tab* m_tab;
 		Container* m_container;
 
+		Tab* getTab() noexcept { return m_tab; }
+		Container* getContainer() noexcept { return m_container; }
+		u32 getIndex() const noexcept;
+	protected:
+		// Called whenever this page gets activated, i.e. the tab associated with this page has been selected
+		virtual void onActivate() noexcept { };
+		// Called whenver this page gets deactivated, i.e. any other tab has now been selected
+		virtual void onDeactivate() noexcept { };
+	public:
+		NotebookPage(UIDriver& driver, Container* container) noexcept;
+		virtual ~NotebookPage() noexcept;
+
+		// Getters for pointer to the next and previous NotebookPage objects
 		NotebookPage* getNext() noexcept;
 		const NotebookPage* getNext() const noexcept { return com::cast_away_const(this)->getNext(); }
 		NotebookPage* getPrev() noexcept;
 		const NotebookPage* getPrev() const noexcept { return com::cast_away_const(this)->getPrev(); }
-	public:
-		NotebookPage(Container* container) noexcept;
-		~NotebookPage() noexcept;
-		Tab* getTab() noexcept { return m_tab; }
-		void setOnRemove(std::function<void(NotebookPage*)> onPageRemove) noexcept { m_onPageRemove = onPageRemove; }
+		
+		// Getters and Setters
 		void setLabel(const std::string_view str) noexcept;
 		const std::string& getLabel() const noexcept;
-		Container* getContainer() noexcept { return m_container; }
-		u32 getIndex() const noexcept;
-		template<typename T, typename... Args>
-		void attachData(Args&&... args) noexcept;
-		template<typename T>
-		T* getData() noexcept;
-		template<typename T>
-		const T* getData() noexcept;
 	};
-
-	template<typename T, typename... Args>
-	void NotebookPage::attachData(Args&&... args) noexcept
-	{
-		_com_assert(m_data != com::null_pointer<void>());
-		m_data = new T(std::forward<Args&&>(args)...);
-		m_dataDeleter = [](void* data) noexcept { delete static_cast<T*>(data); };
-	}
-
-	template<typename T>
-	T* NotebookPage::getData() noexcept
-	{
-		_com_assert_wrn(m_data != com::null_pointer<void>());
-		return static_cast<T*>(m_data);
-	}
-
-	template<typename T>
-	const T* NotebookPage::getData() noexcept
-	{
-		_com_assert_wrn(m_data != com::null_pointer<const void>());
-		return static_cast<const T*>(m_data);
-	}
 
 	class ImageButtonGraphic;
 	class DefaultButtonGraphic;
@@ -178,6 +156,9 @@ namespace SUTK
 		void abort() noexcept;
 	};
 
+	template<typename T>
+	concept NotebookPageType = std::derived_from<T, NotebookPage>;
+
 	class Panel;
 	class TextGroupContainer;
 	
@@ -200,7 +181,7 @@ namespace SUTK
 		TextGroupContainer* m_textGroupContainer;
 		Panel* m_tabBarBGPanel;
 		TabBar* m_tabBar;
-		Panel* m_pageContainer;
+		Panel* m_pageContainerParent;
 		NotebookPage* m_currentPage;
 		TabAnimGroup* m_tabAnimGroup;
 		TabShiftAnimGroup* m_tabShiftAnimGroup;
@@ -216,6 +197,11 @@ namespace SUTK
 
 		void swapWithNext(Tab* tab) noexcept;
 		void swapWithPrev(Tab* tab) noexcept;
+
+		// Below methods are being used inside createPage<> method
+		Tab* createTab(const std::string_view labelStr, NotebookPage* page, Tab* afterTab) noexcept;
+		Container* createPageContainer() noexcept;
+		void setupTabEvents(Tab* tab, NotebookPage* page) noexcept;
 	protected:
 		virtual void onMouseMove(Vec2Df pos) noexcept override;
 
@@ -233,26 +219,28 @@ namespace SUTK
 		NotebookPage* getRootPage() noexcept { return getTabBar()->getRootTab() ? getTabBar()->getRootTab()->getPage() : com::null_pointer<NotebookPage>(); }
 		NotebookPage* getCurrentPage() noexcept { return m_currentPage; }
 
-		NotebookPage* createPage(const std::string_view labelStr, NotebookPage* afterPage = com::null_pointer<NotebookPage>()) noexcept;
+		template<NotebookPageType T>
+		T* createPage(const std::string_view labelStr, NotebookPage* afterPage = com::null_pointer<NotebookPage>()) noexcept;
 		void viewPage(NotebookPage* page) noexcept;
 		void removePage(NotebookPage* page) noexcept;
-		template<typename T, com::CompareFunction<T> EqualTo = std::equal_to<T>>
-		NotebookPage* findPage(const T& data) noexcept;
 
 		void dump() noexcept;
 	};
 
-	template<typename T, com::CompareFunction<T> EqualTo>
-	NotebookPage* NotebookView::findPage(const T& data) noexcept
+	template<NotebookPageType T>
+	T* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
 	{
-		NotebookPage* page = getRootPage();
-		EqualTo isEqual { };
-		while(page != com::null_pointer<NotebookPage>())
-		{
-			if(isEqual(*page->getData<T>(), data))
-				return page;
-			page = page->getNext();
-		}
-		return com::null_pointer<NotebookPage>();
+		// Create Container for the page
+		Container* container = createPageContainer();
+		// Create Page
+		T* page = getUIDriver().createObject<T>(container);
+		// Create Tab for the page
+		Tab* tab = createTab(labelStr, page, afterPage ? afterPage->getTab() : com::null_pointer<Tab>());
+		// Subscribe to tab select and deselect events to activate or deactivate the associate page
+		setupTabEvents(tab, page);
+		// Newly created page should be activated
+		viewPage(page);
+		dump();
+		return page;
 	}
 }

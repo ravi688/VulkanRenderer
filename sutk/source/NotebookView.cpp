@@ -25,15 +25,9 @@
 namespace SUTK
 {
 
-	NotebookPage::NotebookPage(Container* container) noexcept : m_data(NULL), m_tab(com::null_pointer<Tab>()), m_container(container) { }
+	NotebookPage::NotebookPage(UIDriver& driver, Container* container) noexcept : UIDriverObject(driver), m_tab(com::null_pointer<Tab>()), m_container(container) { }
 	NotebookPage::~NotebookPage() noexcept
 	{
-		if(m_data != com::null_pointer<void>())
-		{
-			(*m_dataDeleter)(m_data);
-			m_data = com::null_pointer<void>();
-			m_dataDeleter = NULL;
-		}
 	}
 
 	NotebookPage* NotebookPage::getNext() noexcept
@@ -141,12 +135,12 @@ namespace SUTK
 		m_tabShiftAnimGroup = driver.getAnimationEngine().createAnimGroup<TabShiftAnimGroup>(this);
 
 		// Create Container for holding page container
-		m_pageContainer = driver.createContainer<Panel>(this);
-		attr = m_pageContainer->getLayoutAttributes();
+		m_pageContainerParent = driver.createContainer<Panel>(this);
+		attr = m_pageContainerParent->getLayoutAttributes();
 		attr.prefSize = attr.maxSize;
 		_com_assert((attr.prefSize.height == F32_INFINITY) && (attr.prefSize.width == F32_INFINITY));
-		m_pageContainer->setLayoutAttributes(attr);
-		m_pageContainer->setColor(Color4::grey(0.6f));
+		m_pageContainerParent->setLayoutAttributes(attr);
+		m_pageContainerParent->setColor(Color4::grey(0.6f));
 
 		unlockLayout();
 		this->GlobalMouseMoveHandlerObject::sleep();
@@ -154,8 +148,13 @@ namespace SUTK
 
 	NotebookView::~NotebookView() noexcept
 	{
-		m_pageContainer->destroyAllChilds();
-		getUIDriver().destroyContainer<Panel>(m_pageContainer);
+		// NOTE: We need to traverse the linked list bi-directionally as the current page might not be the head node
+		com::TraverseLinkedListBiDirect(m_currentPage, [](NotebookPage* page) noexcept
+		{
+			page->getUIDriver().destroyObject<NotebookPage>(page);
+		});
+		m_pageContainerParent->destroyAllChilds();
+		getUIDriver().destroyContainer<Panel>(m_pageContainerParent);
 		getUIDriver().destroyContainer<TabBar>(m_tabBar);
 		getUIDriver().destroyContainer<Panel>(m_tabBarBGPanel);
 		getUIDriver().destroyContainer<TextGroupContainer>(m_textGroupContainer);
@@ -477,35 +476,6 @@ namespace SUTK
 		return node;
 	}
 
-	template<com::concepts::LinkedListNode T, com::concepts::UnaryVisitor<T*> VisitorType>
-	static void TraverseLinkedListBiDirect(T* node, VisitorType visitor) noexcept
-	{
-		auto* left = node->getPrev();
-		while(left)
-		{
-			// NOTE: we need to pointer to the previous node before even calling 'visitor', that's because the visitor might delete the node object
-			// Therefore, dereferencing the deleted node won't be possible later
-			auto* nextLeft = left->getPrev();
-			visitor(left);
-			left = nextLeft;
-		}
-		while(node)
-		{
-			auto* nextRight = node->getNext();
-			visitor(node);
-			node = nextRight;
-		}
-	}
-	template<com::concepts::LinkedListNode T, com::concepts::UnaryVisitor<T*> VisitorType>
-	static void TraverseLinkedList(T* node, VisitorType visitor) noexcept
-	{
-		while(node)
-		{
-			auto* nextNode = node->getNext();
-			visitor(node);
-			node = nextNode;
-		}
-	}
 	void Tab::setPage(NotebookPage* page) noexcept
 	{
 		m_page = page;
@@ -537,7 +507,7 @@ namespace SUTK
 		// Lock the layout to avoid unnecessary layout calculations
 		// It also avoids accessing the already destroyed Tab objects
 		lockLayout();
-		TraverseLinkedList(getRootTab(), [](Tab* tab) noexcept
+		com::TraverseLinkedList(getRootTab(), [](Tab* tab) noexcept
 		{
 			auto* tabView = tab->getTabView();
 			tabView->getUIDriver().destroyContainer<TabView>(tabView);
@@ -551,7 +521,7 @@ namespace SUTK
 		if(!getRootTab())
 			return;
 		// Sync position of Tab with that of TabView
-		TraverseLinkedListBiDirect(getRootTab(), [](auto node) noexcept
+		com::TraverseLinkedListBiDirect(getRootTab(), [](auto node) noexcept
 		{
 			node->m_pos = node->getTabView()->getPosition();
 		});
@@ -602,27 +572,31 @@ namespace SUTK
 		RemoveLinkedListNode(tab, /* Do not set next and prev ptrs to NULL */ com::False);
 	}
 
-	NotebookPage* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
+	Tab* NotebookView::createTab(const std::string_view labelStr, NotebookPage* page, Tab* afterTab) noexcept
 	{
 		// If the supplied page is null_pointer then create the page after the current being viewed page.
-		if(!afterPage)
-			afterPage = m_currentPage;
+		if(!afterTab)
+			afterTab = m_currentPage ? m_currentPage->getTab() : com::null_pointer<Tab>();
 
-		// Create Container for the page
-		Container* container = getUIDriver().createContainer<Container>(m_pageContainer);
-		container->alwaysFitInParent();
-		container->setActive(com::False);
-
-		// Create TabView for the page
-		Tab* tab = getTabBar()->createTab(labelStr, afterPage ? afterPage->getTab() : com::null_pointer<Tab>());
-		// Create Page
-		NotebookPage* page = new NotebookPage(container);
-		tab->setPage(page);
-
+		// Create TabView
+		Tab* tab = getTabBar()->createTab(labelStr, afterTab);
 		// <Begin> Initialize Animation Start state and Setup Animation Context
 		dispatchAnimNewTab(tab);
 		// <End>
+		tab->setPage(page);
+		return tab;
+	}
 
+	Container* NotebookView::createPageContainer() noexcept
+	{
+		Container* container = getUIDriver().createContainer<Container>(m_pageContainerParent);
+		container->alwaysFitInParent();
+		container->setActive(com::False);
+		return container;
+	}
+
+	void NotebookView::setupTabEvents(Tab* tab, NotebookPage* page) noexcept
+	{
 		TabView* tabView = tab->getTabView();
 
 		tabView->getOnPressEvent().subscribe([this, page](SUTK::Button* button) noexcept
@@ -654,12 +628,6 @@ namespace SUTK
 			this->GlobalMouseMoveHandlerObject::sleep();
 			this->dump();
 		});
-
-		viewPage(page);
-
-		dump();
-
-		return page;
 	}
 
 	void NotebookView::viewPage(NotebookPage* page) noexcept
@@ -667,6 +635,7 @@ namespace SUTK
 		// Deactivate the current page
 		if(m_currentPage != com::null_pointer<NotebookPage>())
 		{
+			m_currentPage->onDeactivate();
 			Container* container = m_currentPage->getContainer();
 			// Deactivate the current page's container
 			if(container->isActive())
@@ -676,7 +645,7 @@ namespace SUTK
 			tabView->unselectedState();
 		}
 		
-		// Active the requested page
+		// Activate the requested page
 		if(page)
 		{
 			// Activate the requested page's container
@@ -686,6 +655,7 @@ namespace SUTK
 			// Move the associated tabView into selected state
 			TabView* tabView = page->getTab()->getTabView();
 			tabView->selectedState();
+			page->onActivate();
 		}
 
 		m_currentPage = page;
@@ -704,10 +674,12 @@ namespace SUTK
 		Tab* tab = page->getTab();
 		getTabBar()->removeTab(tab);
 		
-		if(page->m_onPageRemove.has_value())
-			page->m_onPageRemove.value() (page);
-		getUIDriver().destroyContainer<Container>(page->m_container);
-		delete page;
+		// Save pointer to the Page's Container object before destroying the NotebookPage object
+		// This makes sure any Container object instantiated inside the NotebookPage (in the derived class) is destroyed
+		Container* pageContainer = page->m_container;
+		getUIDriver().destroyObject<NotebookPage>(page);
+		// Now destroy the Page Container
+		getUIDriver().destroyContainer<Container>(pageContainer);
 		tab->setPage(com::null_pointer<NotebookPage>());
 
 		dispatchAnimRemoveTab(tab);

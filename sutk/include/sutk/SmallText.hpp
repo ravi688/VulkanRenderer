@@ -69,7 +69,6 @@ namespace SUTK
 		bool m_isPointSizeDirty;
 		bool m_isColorDirty;
 		bool m_isColorRangesDirty;
-		bool m_isActiveDirty;
 		SmallTextData m_data;
 		Color4 m_color;
 		std::vector<ColorRange> m_colorRanges;

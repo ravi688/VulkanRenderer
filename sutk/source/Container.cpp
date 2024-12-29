@@ -358,6 +358,7 @@ namespace SUTK
 				m_renderRectCont = getUIDriver().createContainer<RenderableContainer>(com::null_pointer<Container>(), com::Bool::True());
 				Vec2Df pos = getLocalCoordsToScreenCoords({ 0, 0 });
 				m_renderRectCont->setRect({ pos.x, pos.y, getRect().width, getRect().height });
+				m_renderRectCont->setLayer(MaxLayer);
 				
 				// create SUTK::RenderRect and establish parent-child link with SUTK::RenderableContainer just created
 				m_renderRect = getUIDriver().createRenderable<RenderRectOutline>(m_renderRectCont);
