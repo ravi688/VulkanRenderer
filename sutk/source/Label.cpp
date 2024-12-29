@@ -138,4 +138,9 @@ namespace SUTK
 	{
 		getText().setFont(font);
 	}
+
+	void Label::setFontSize(f32 fontSize) noexcept
+	{
+		getText().setFontSize(fontSize);
+	}
 }

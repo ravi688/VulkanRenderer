@@ -45,5 +45,6 @@ namespace SUTK
 		void setColor(Color4 color) noexcept;
 		Color4 getColor() const noexcept;
 		void setFont(UIDriver::FontReference font) noexcept;
+		void setFontSize(f32 fontSize) noexcept;
 	};
 }
