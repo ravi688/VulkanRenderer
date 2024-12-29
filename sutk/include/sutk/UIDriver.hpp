@@ -61,9 +61,11 @@ namespace SUTK
 		com::Bool m_isCalledFirstTime;
 		std::chrono::time_point<std::chrono::steady_clock> m_prevTime;
 		f32 m_deltaTime;
-		// Caches the draw order range calculated in the last draw order recalculation
-		// This value is used to determine if new draw order range is different from the last calculated one
-		u32 m_drawOrderRange { U32_MAX };
+
+		// These two values hold max and min draw order values used in previou frame,
+		// and are used to determine if we need to recalcualte normalized draw order (depth values) for each Renderable in the next frame (current)
+		u32 m_maxDrawOrder { U32_MAX };
+		u32 m_minDrawOrder { U32_MAX };
 
 		// It should be set com::True if the current frame needs to be drawn
 		// Generally, it should remain set to com::False unless some UI component/widget has been marked as dirty or updated its appearance

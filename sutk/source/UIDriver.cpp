@@ -88,7 +88,7 @@ namespace SUTK
 			m_runnables.traverse(IRunnable::Update);
 
 		com::Bool isRerender = m_isRenderThisFrame;
-		bool isRecalculateDrawOrder = false;
+		com::Bool isRecalculateDrawOrder = com::False;
 		u32 minDrawOrder = std::numeric_limits<u32>::max();
 		u32 maxDrawOrder = 0;
 		// update GPU side data
@@ -102,8 +102,8 @@ namespace SUTK
 			}
 			if(renderable->isDirty())
 				renderable->update();
-			if(renderable->isDrawOrderDirty())
-				isRecalculateDrawOrder = true;
+			if(!isRecalculateDrawOrder && renderable->isDrawOrderDirty())
+				isRecalculateDrawOrder = com::True;
 			u32 drawOrder = renderable->getDrawOrder();
 			if(drawOrder < minDrawOrder)
 				minDrawOrder = drawOrder;
@@ -114,19 +114,30 @@ namespace SUTK
 		if(isRecalculateDrawOrder)
 		{
 			_com_assert(minDrawOrder <= maxDrawOrder);
+			// Proof:
+			//
+			// let x1 = minDrawOrder
+			// let x2 = maxDrawOrder
+			//
+			// k - (x1 + lambda1)  				   k - x1
+			// ----------------------------  !=  -----------
+			// x2 - x2 + (lambda2- lambda1) 	   x2 - x1
+			//
+			// Both the sides will be equal only when lambda1 and lambda2 are both zero
+			com::Bool isDrawOrderRangeChanged { (m_maxDrawOrder != maxDrawOrder) || (m_minDrawOrder != minDrawOrder) };
 			u32 drawOrderRange = maxDrawOrder - minDrawOrder;
-			com::Bool isDrawOrderRangeChanged { m_drawOrderRange != drawOrderRange };
-			f32 normalizeFactor = 1.0f / static_cast<f32>(m_drawOrderRange);
+			f32 normalizeFactor = 1.0f / static_cast<f32>(drawOrderRange);
 			for(auto it = m_renderables.begin(); it != m_renderables.end(); it++)
 			{
 				Renderable* renderable = (*it);
 				if(isDrawOrderRangeChanged || renderable->isDrawOrderDirty())
 				{
-					auto normDrawOrder = m_drawOrderRange ? ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 99.0f) : 0;
+					auto normDrawOrder = drawOrderRange ? ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 99.0f) : 0;
 					renderable->updateNormalizedDrawOrder(normDrawOrder);
 				}
 			}
-			m_drawOrderRange = drawOrderRange;
+			m_maxDrawOrder = maxDrawOrder;
+			m_minDrawOrder = minDrawOrder;
 		}
 
 		if(isRerender)

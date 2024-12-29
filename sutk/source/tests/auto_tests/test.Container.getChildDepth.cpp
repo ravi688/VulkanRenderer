@@ -46,6 +46,9 @@ namespace SUTK::AutoTests
 			EXPECT_EQ(cnt5->getMaxChildDistance(), 1);
 			EXPECT_EQ(cnt6->getMaxChildDistance(), 0);
 
+			cnt2->setLayer(0);
+			EXPECT_EQ(cnt2->getDepth(), 0);
+
 			driver->destroyContainer(cnt7);
 			driver->destroyContainer(cnt6);
 			driver->destroyContainer(cnt5);

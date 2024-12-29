@@ -43,20 +43,34 @@ namespace SUTK::AutoTests
 
 			DummyRenderable* r4 = driver->createRenderable<DummyRenderable>(c4);
 			EXPECT_EQ(r4->getDrawOrder(), 2);
+			EXPECT_EQ(r4->isDrawOrderDirty(), true);
 			DummyRenderable* r5 = driver->createRenderable<DummyRenderable>(c5);
 			EXPECT_EQ(r5->getDrawOrder(), 2);
+			EXPECT_EQ(r5->isDrawOrderDirty(), true);
 			DummyRenderable* r8 = driver->createRenderable<DummyRenderable>(c8);
 			EXPECT_EQ(r8->getDrawOrder(), 4);
+			EXPECT_EQ(r8->isDrawOrderDirty(), true);
 			DummyRenderable* r9 = driver->createRenderable<DummyRenderable>(c9);
 			EXPECT_EQ(r9->getDrawOrder(), 5);
+			EXPECT_EQ(r9->isDrawOrderDirty(), true);
 			DummyRenderable* r10 = driver->createRenderable<DummyRenderable>(c10);
 			EXPECT_EQ(r10->getDrawOrder(), 5);
+			EXPECT_EQ(r10->isDrawOrderDirty(), true);
 
 			EXPECT_EQ(r4->getDrawOrder(), 2);
 			EXPECT_EQ(r5->getDrawOrder(), 2);
 			EXPECT_EQ(r8->getDrawOrder(), 4);
 			EXPECT_EQ(r9->getDrawOrder(), 5);
 			EXPECT_EQ(r10->getDrawOrder(), 5);
+
+			// Calls updateNormalizedDrawOrder()
+			driver->render();
+
+			EXPECT_EQ(r4->isDrawOrderDirty(), false);
+			EXPECT_EQ(r5->isDrawOrderDirty(), false);
+			EXPECT_EQ(r8->isDrawOrderDirty(), false);
+			EXPECT_EQ(r9->isDrawOrderDirty(), false);
+			EXPECT_EQ(r10->isDrawOrderDirty(), false);
 
 			c1->setLayer(1000);
 
@@ -65,6 +79,12 @@ namespace SUTK::AutoTests
 			EXPECT_EQ(r8->getDrawOrder(), 1004);
 			EXPECT_EQ(r9->getDrawOrder(), 1005);
 			EXPECT_EQ(r10->getDrawOrder(), 1005);
+
+			EXPECT_EQ(r4->isDrawOrderDirty(), true);
+			EXPECT_EQ(r5->isDrawOrderDirty(), true);
+			EXPECT_EQ(r8->isDrawOrderDirty(), true);
+			EXPECT_EQ(r9->isDrawOrderDirty(), true);
+			EXPECT_EQ(r10->isDrawOrderDirty(), true);
 
 			c2->setParent(com::null_pointer<Container>());
 
