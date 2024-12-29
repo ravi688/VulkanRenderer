@@ -36,11 +36,13 @@ namespace SUTK
 
 	bool RenderRectFillArray::isDirty()
 	{
-		return m_isRectsDirty || m_isColorDirty || m_isActiveDirty;
+		return GeometryRenderable::isDirty() || m_isRectsDirty || m_isColorDirty || m_isActiveDirty;
 	}
 
 	void RenderRectFillArray::update()
 	{
+		// Mandatory to be called in the overriding method
+		GeometryRenderable::update();
 		if(m_isActiveDirty)
 		{
 			auto handle = getGfxDriverObjectHandle();

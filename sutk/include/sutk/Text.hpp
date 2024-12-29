@@ -100,7 +100,6 @@ namespace SUTK
 		// distance between two consecutive base lines in centimeters
 		f32 m_baselineHeight;
 
-		bool m_isDirty;
 		bool m_isClippingEnabled;
 
 		// data and rendering attributes

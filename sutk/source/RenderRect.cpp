@@ -37,11 +37,13 @@ namespace SUTK
 
 	bool RenderRect::isDirty() noexcept
 	{
-		return isRectDirty() || m_isColorDirty || m_isGeometryDirty;
+		return GeometryRenderable::isDirty() || isRectDirty() || m_isColorDirty || m_isGeometryDirty;
 	}
 
 	void RenderRect::update() noexcept
 	{
+		// Mandatory to be called in the overriding method
+		GeometryRenderable::update();
 		if(m_isPosDirty)
 		{
 			// auto& gfxDriver = getGfxDriver();

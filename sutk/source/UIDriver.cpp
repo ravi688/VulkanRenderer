@@ -95,17 +95,17 @@ namespace SUTK
 		for(auto it = m_renderables.begin(); it != m_renderables.end(); it++)
 		{
 			Renderable* renderable = *it;
-			if(!isRerender && renderable->isRedraw())
+			if(!isRerender && renderable->isActiveForThisFrame() && renderable->isRedraw())
 			{
 				isRerender = com::True;
 				renderable->setRedraw(com::False);
 			}
 			// Only update Renderables which are active and dirty
-			if(renderable->isActive() && renderable->isDirty())
+			if(renderable->isActiveForThisFrame() && renderable->isDirty())
 				renderable->update();
 			// If at least Renderable's draw order is dirty then normalized draw orders need to be re-calculated
 			// and passed to the GPU driver
-			if(!isRecalculateDrawOrder && renderable->isDrawOrderDirty())
+			if(!isRecalculateDrawOrder && renderable->isActiveForThisFrame() && renderable->isDrawOrderDirty())
 				isRecalculateDrawOrder = com::True;
 			// Keep track of minimum and maximum draw order values
 			u32 drawOrder = renderable->getDrawOrder();
@@ -134,7 +134,7 @@ namespace SUTK
 			for(auto it = m_renderables.begin(); it != m_renderables.end(); it++)
 			{
 				Renderable* renderable = (*it);
-				if(isDrawOrderRangeChanged || renderable->isDrawOrderDirty())
+				if(isDrawOrderRangeChanged || (renderable->isActiveForThisFrame() && renderable->isDrawOrderDirty()))
 				{
 					auto normDrawOrder = drawOrderRange ? ((1.0f - static_cast<f32>(renderable->getDrawOrder() - minDrawOrder) * normalizeFactor) * 99.0f) : 0;
 					renderable->updateNormalizedDrawOrder(normDrawOrder);

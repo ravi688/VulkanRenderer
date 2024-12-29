@@ -33,6 +33,23 @@ namespace SUTK
 		setDrawOrder(getContainer()->getDepth());
 	}
 
+	void Renderable::setActive(com::Bool isActive) noexcept
+	{
+		if(Activatable::isActive() != isActive)
+			m_isActiveDirty = com::True;
+		Activatable::setActive(isActive);
+	}
+
+	bool Renderable::isDirty()
+	{
+		return static_cast<bool>(m_isActiveDirty);
+	}
+
+	void Renderable::update()
+	{
+		m_isActiveDirty = com::False;
+	}
+
 	void GfxDriverRenderable::setClipRectGlobalCoords(const Rect2Df rect) noexcept
 	{
 		auto handle = getGfxDriverObjectHandle();

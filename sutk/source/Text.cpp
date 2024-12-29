@@ -18,7 +18,7 @@ namespace SUTK
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfText() { return { END_OF_TEXT, END_OF_LINE }; }
 	template<> CursorPosition<LineCountType> CursorPosition<LineCountType>::EndOfLine(LineCountType line) { return { line, END_OF_LINE }; }
 
-	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_textGroup(GFX_DRIVER_OBJECT_NULL_HANDLE), m_baselineHeight(0), m_isDirty(false), m_isClippingEnabled(false), m_color(SUTK::Color4::yellow()), m_pointSize(12)
+	Text::Text(UIDriver& driver, RenderableContainer* container) noexcept : Renderable(driver, container), m_textGroup(GFX_DRIVER_OBJECT_NULL_HANDLE), m_baselineHeight(0), m_isClippingEnabled(false), m_color(SUTK::Color4::yellow()), m_pointSize(12)
 	{
 		m_textGroup = getGfxDriver().createTextGroup(RenderMode::Transparent);
 		m_baselineHeight = getGfxDriver().getTextGroupBaselineHeightInCentimeters(m_textGroup, m_pointSize);
@@ -50,7 +50,7 @@ namespace SUTK
 
 	bool Text::isDirty()
 	{
-		if(m_isDirty)
+		if(Renderable::isDirty())
 			return true;
 
 		for(std::size_t i = 0; i < m_lines.size(); i++)
@@ -62,6 +62,8 @@ namespace SUTK
 
 	void Text::update()
 	{
+		// Mandatory to be called in the overriding method
+		Renderable::update();
 		for(std::size_t i = 0; i < m_lines.size(); i++)
 		{
 			LineText* line = m_lines[i];

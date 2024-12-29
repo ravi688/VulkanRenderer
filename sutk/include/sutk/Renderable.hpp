@@ -21,6 +21,8 @@ namespace SUTK
 		RenderableContainer* m_container;
 		u32 m_drawOrder;
 		bool m_isDrawOrderDirty;
+		// Initially it is set to false
+		com::Bool m_isActiveDirty { };
 		com::Bool m_isRedraw;
 
 		// Called by UIDriver to reset the redraw flag
@@ -49,12 +51,25 @@ namespace SUTK
 		Renderable(UIDriver& driver, RenderableContainer* container = NULL) noexcept;
 		virtual ~Renderable() noexcept;
 
+		// Override of Activatable::setActive()
+		virtual void setActive(com::Bool isActive) noexcept;
+
 		// returns true, if GPU side data is out of sync with respect to the CPU side data, otherwise false 
-		virtual bool isDirty() = 0;
+		// Must be called in the overriding method
+		virtual bool isDirty();
 		// updates (copies CPU side data to) GPU side data, and it may also create or recreate exisiting GPU Driver objects 
-		virtual void update() = 0;
+		// Must be called in the overriding method
+		virtual void update();
 
 		bool isDrawOrderDirty() const noexcept { return m_isDrawOrderDirty; }
+		com::Bool isActiveDirty() const noexcept { return m_isActiveDirty; }
+		// Example:
+		// 	In Frame 0:
+		//		setActive(com::False)
+		//		isActiveForThisFrame() -> returns com::True
+		// In Frame 1:
+		//		isActiveForThisFrame() -> returns com::False, given that update() has been called
+		com::Bool isActiveForThisFrame() const noexcept { return isActiveDirty() || isActive(); }
 
 		u32 getDrawOrder() const noexcept { return m_drawOrder; }
 
@@ -87,10 +102,6 @@ namespace SUTK
 		GfxDriverRenderable(UIDriver& driver, RenderableContainer* container = NULL) noexcept : Renderable(driver, container), m_handle(GFX_DRIVER_OBJECT_NULL_HANDLE) { }
 		virtual ~GfxDriverRenderable() = default;
 
-		// Implementation of Renderable
-		virtual bool isDirty() = 0;
-		virtual void update() = 0;
-
 		virtual void destroy() { }
 
 		void setClipRectGlobalCoords(const Rect2Df rect) noexcept;
@@ -110,9 +121,5 @@ namespace SUTK
 		GeometryRenderable(UIDriver& driver, RenderableContainer* container = NULL, RenderMode renderMode = RenderMode::Opaque) noexcept : GfxDriverRenderable(driver, container), m_geometry(driver, renderMode) { }
 		virtual ~GeometryRenderable() = default;
 		Geometry& getGeometry() noexcept { return m_geometry; }
-
-		// Implementation of GfxDriverRenderable
-		virtual bool isDirty() = 0;
-		virtual void update() = 0;
 	};
 }

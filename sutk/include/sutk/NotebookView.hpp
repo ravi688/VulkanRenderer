@@ -219,21 +219,29 @@ namespace SUTK
 		NotebookPage* getRootPage() noexcept { return getTabBar()->getRootTab() ? getTabBar()->getRootTab()->getPage() : com::null_pointer<NotebookPage>(); }
 		NotebookPage* getCurrentPage() noexcept { return m_currentPage; }
 
-		template<NotebookPageType T>
-		T* createPage(const std::string_view labelStr, NotebookPage* afterPage = com::null_pointer<NotebookPage>()) noexcept;
+		template<NotebookPageType T = NotebookPage, typename... Args>
+		T* createPage(const std::string_view labelStr, Args&&... args) noexcept;
+		template<NotebookPageType T = NotebookPage, typename... Args>
+		T* createPageAfter(const std::string_view labelStr, NotebookPage* afterPage, Args&&... args) noexcept;
 		void viewPage(NotebookPage* page) noexcept;
 		void removePage(NotebookPage* page) noexcept;
 
 		void dump() noexcept;
 	};
+	
+	template<NotebookPageType T, typename... Args>
+	T* NotebookView::createPage(const std::string_view labelStr, Args&&... args) noexcept
+	{
+		return createPageAfter<T, Args...>(labelStr, com::null_pointer<NotebookPage>(), std::forward<Args&&>(args)...);
+	}
 
-	template<NotebookPageType T>
-	T* NotebookView::createPage(const std::string_view labelStr, NotebookPage* afterPage) noexcept
+	template<NotebookPageType T, typename... Args>
+	T* NotebookView::createPageAfter(const std::string_view labelStr, NotebookPage* afterPage, Args&&... args) noexcept
 	{
 		// Create Container for the page
 		Container* container = createPageContainer();
 		// Create Page
-		T* page = getUIDriver().createObject<T>(container);
+		T* page = getUIDriver().createObject<T>(container, std::forward<Args&&>(args)...);
 		// Create Tab for the page
 		Tab* tab = createTab(labelStr, page, afterPage ? afterPage->getTab() : com::null_pointer<Tab>());
 		// Subscribe to tab select and deselect events to activate or deactivate the associate page

@@ -21,8 +21,8 @@ namespace SUTK
 	public:
 		~Activatable() noexcept;
 
-		// mandatory to be called in overriding method
 		com::Bool isActive() const noexcept { return m_isActive; }
+		// mandatory to be called in overriding method
 		virtual void setActive(com::Bool isActive) noexcept;
 
 		// if called for the first time then it allocates memory for OnActiveEvent object

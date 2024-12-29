@@ -35,10 +35,13 @@ namespace SUTK
 
 	bool SmallText::isDirty()
 	{
-		return m_isPosDirty || m_isDataDirty || m_isPointSizeDirty || m_isColorRangesDirty || m_isColorDirty;
+		return GfxDriverRenderable::isDirty() || m_isPosDirty || m_isDataDirty || m_isPointSizeDirty || m_isColorRangesDirty || m_isColorDirty;
 	}
 	void SmallText::update()
 	{
+		// Mandatory to be called in the overriding method
+		GfxDriverRenderable::update();
+		
 		// NOTE: Order of function calls are important here
 
 		// should be updated before any updates to character array
@@ -64,8 +67,6 @@ namespace SUTK
 
 		if(m_isPosDirty)
 		{
-			// This must be set false before calling getAlignedPosition() to avoid non-terminating recursion
-			m_isPosDirty = false;
 			Vec2Df pos = m_pos;
 			if(getContainer() != NULL)
 			{
@@ -73,6 +74,7 @@ namespace SUTK
 				pos = getContainer()->getLocalCoordsToScreenCoords(pos);
 			}
 			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), { pos.x, pos.y, 0.0f });
+			m_isPosDirty = false;
 		}
 
 		// should be updated after character array has been updated with setTextData().
@@ -122,14 +124,16 @@ namespace SUTK
 	LineCountType SmallText::getColPosFromCoord(f32 coord) noexcept
 	{
 		// Ensure GPU side data is updated so that we get correct output from getTextGlyphIndexFromCoord()
-		if(isDirty())
+		// NOTE: Data (chars) and PointSize both affect the value returned by getTextGlyphIndexFromCoord()
+		if(m_isDataDirty || m_isPointSizeDirty)
 			update();
 		return getGfxDriver().getTextGlyphIndexFromCoord(getGfxDriverObjectHandle(), coord);
 	}
 	f32 SmallText::getCoordFromColPos(LineCountType col) noexcept
 	{
 		// Ensure GPU side data is updated so that we get correct output from getTextGlyphIndexFromCoord()
-		if(isDirty())
+		// NOTE: Data (chars) and PointSize both affect the value returned by getTextGlyphIndexFromCoord()
+		if(m_isDataDirty || m_isPointSizeDirty)
 			update();
 		return getGfxDriver().getTextCoordFromGlyphIndex(getGfxDriverObjectHandle(), col);
 	}
