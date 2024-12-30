@@ -130,8 +130,6 @@ static void setup_material_resources(vulkan_material_t* material)
 				}
 				/* otherwise don't create vulkan uniform buffer for it */
 			}
-			else
-				resource->index = 0xFFFF;
 			j++;
 		}
 	}
