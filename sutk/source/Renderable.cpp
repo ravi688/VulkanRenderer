@@ -4,7 +4,7 @@
 
 namespace SUTK
 {
-	Renderable::Renderable(UIDriver& driver, RenderableContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_drawOrder(0), m_isDrawOrderDirty(true), m_isRedraw(com::False)
+	Renderable::Renderable(UIDriver& driver, RenderableContainer* container) noexcept : UIDriverObject(driver), m_container(container), m_drawOrder(0), m_isDrawOrderDirty(true)
 	{
 		if(container != NULL)
 		{
@@ -38,15 +38,18 @@ namespace SUTK
 		if(Activatable::isActive() != isActive)
 			m_isActiveDirty = com::True;
 		Activatable::setActive(isActive);
+		m_isDrawOrderDirty = true;
 	}
 
 	bool Renderable::isDirty()
 	{
-		return static_cast<bool>(m_isActiveDirty);
+		return static_cast<bool>(m_isActiveDirty) || isActiveDirty();
 	}
 
 	void Renderable::update()
 	{
+		if(m_isActiveDirty)
+			onActiveUpdate(isActive());
 		m_isActiveDirty = com::False;
 	}
 

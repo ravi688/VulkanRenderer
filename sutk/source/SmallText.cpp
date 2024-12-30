@@ -9,18 +9,15 @@
 namespace SUTK
 {
 	SmallText::SmallText(UIDriver& driver, RenderableContainer* container, GfxDriverObjectHandleType textGroup, Color4 color) noexcept : 
-															GfxDriverRenderable(driver, container), 
-															m_isPosDirty(true), 
-															m_isDataDirty(false), 
-															m_isPointSizeDirty(false), 
-															m_isColorDirty(true), 
-															m_isColorRangesDirty(false), 
+															GfxDriverRenderable(driver, container),  
 															m_color(color),
 															m_horizontalAlignment(HorizontalAlignment::Invalid),
 															m_verticalAlignment(VerticalAlignment::Invalid),
 															m_normalizedDrawOrder(0)
 
 	{
+		m_dirtyTable.isColorDirty = true;
+		m_dirtyTable.isPosDirty = true;
 		_com_assert(textGroup != GFX_DRIVER_OBJECT_NULL_HANDLE);
 		setGfxDriverObjectHandle(getGfxDriver().createText(textGroup));
 		getGfxDriver().setTextFont(getGfxDriverObjectHandle(), m_font.getHandle());
@@ -35,37 +32,29 @@ namespace SUTK
 
 	bool SmallText::isDirty()
 	{
-		return GfxDriverRenderable::isDirty() || m_isPosDirty || m_isDataDirty || m_isPointSizeDirty || m_isColorRangesDirty || m_isColorDirty;
+		return GfxDriverRenderable::isDirty() || m_dirtyTable.isAny();
 	}
 	void SmallText::update()
 	{
 		// Mandatory to be called in the overriding method
 		GfxDriverRenderable::update();
-		
+		auto dirtyTable = m_dirtyTable;
+		m_dirtyTable.clear();
 		// NOTE: Order of function calls are important here
 
 		// should be updated before any updates to character array
 		// this is because calling setTextColor() sets internal variable to 'm_color'
 		// and it uses that variable in subsequent calls to setTextData()
-		if(m_isColorDirty)
-		{
+		if(dirtyTable.isColorDirty)
 			getGfxDriver().setTextColor(getGfxDriverObjectHandle(), m_color);
-			m_isColorDirty = false;
-		}
 
-		if(m_isPointSizeDirty)
-		{
+		if(dirtyTable.isPointSizeDirty)
 			getGfxDriver().setTextPointSize(getGfxDriverObjectHandle(), m_pointSize);
-			m_isPointSizeDirty = false;
-		}
 
-		if(m_isDataDirty)
-		{
+		if(dirtyTable.isDataDirty)
 			getGfxDriver().setTextData(getGfxDriverObjectHandle(), m_data);
-			m_isDataDirty = false;
-		}
 
-		if(m_isPosDirty)
+		if(dirtyTable.isPosDirty)
 		{
 			Vec2Df pos = m_pos;
 			if(getContainer() != NULL)
@@ -74,27 +63,28 @@ namespace SUTK
 				pos = getContainer()->getLocalCoordsToScreenCoords(pos);
 			}
 			getGfxDriver().setTextPosition(getGfxDriverObjectHandle(), { pos.x, pos.y, 0.0f });
-			m_isPosDirty = false;
 		}
 
 		// should be updated after character array has been updated with setTextData().
-		if(m_isColorRangesDirty)
-		{
+		if(dirtyTable.isColorRangesDirty)
 			getGfxDriver().setTextColorRanges(getGfxDriverObjectHandle(), m_colorRanges.data(), static_cast<u32>(m_colorRanges.size()));
-			m_isColorRangesDirty = false;
-		}
 	}
 	void SmallText::updateNormalizedDrawOrder(f32 normalizedDrawOrder)
 	{
 		// mandatory to be called in the overriding function
-		Renderable::updateNormalizedDrawOrder(normalizedDrawOrder);
+		GfxDriverRenderable::updateNormalizedDrawOrder(normalizedDrawOrder);
 		getGfxDriver().setTextDepth(getGfxDriverObjectHandle(), normalizedDrawOrder);
 		m_normalizedDrawOrder = normalizedDrawOrder;
+	}
+	void SmallText::onActiveUpdate(com::Bool isActive) noexcept
+	{
+		// Activatation or Deactivation updates must happen immediately
+		getGfxDriver().setTextActive(getGfxDriverObjectHandle(), isActive);
 	}
 	void SmallText::setColor(Color4 color) noexcept
 	{
 		m_color = color;
-		m_isColorDirty = true;
+		m_dirtyTable.isColorDirty = true;
 	}
 
 	Color4 SmallText::getColor() const noexcept
@@ -102,30 +92,23 @@ namespace SUTK
 		return m_color;
 	}
 
-	void SmallText::setActive(com::Bool isActive) noexcept
-	{
-		// mandatory to be called
-		Renderable::setActive(isActive);
-		// Activatation or Deactivation updates must happen immediately
-		getGfxDriver().setTextActive(getGfxDriverObjectHandle(), isActive);
-	}
 	void SmallText::clearColorRanges() noexcept
 	{
 		m_colorRanges.clear();
-		m_isColorRangesDirty = true;
+		m_dirtyTable.isColorRangesDirty = true;
 	}
 	void SmallText::addColorRange(std::size_t pos, std::size_t len, const Color4 color) noexcept
 	{
 		if(len == std::string::npos)
 			len = getColumnCount();
 		m_colorRanges.push_back(ColorRange { static_cast<LineCountType>(pos), static_cast<LineCountType>(pos + len), color });
-		m_isColorRangesDirty = true;
+		m_dirtyTable.isColorRangesDirty = true;
 	}
 	LineCountType SmallText::getColPosFromCoord(f32 coord) noexcept
 	{
 		// Ensure GPU side data is updated so that we get correct output from getTextGlyphIndexFromCoord()
 		// NOTE: Data (chars) and PointSize both affect the value returned by getTextGlyphIndexFromCoord()
-		if(m_isDataDirty || m_isPointSizeDirty)
+		if(isDirty())
 			update();
 		return getGfxDriver().getTextGlyphIndexFromCoord(getGfxDriverObjectHandle(), coord);
 	}
@@ -133,89 +116,83 @@ namespace SUTK
 	{
 		// Ensure GPU side data is updated so that we get correct output from getTextGlyphIndexFromCoord()
 		// NOTE: Data (chars) and PointSize both affect the value returned by getTextGlyphIndexFromCoord()
-		if(m_isDataDirty || m_isPointSizeDirty)
+		if(isDirty())
 			update();
 		return getGfxDriver().getTextCoordFromGlyphIndex(getGfxDriverObjectHandle(), col);
 	}
 	void SmallText::setData(const std::string_view data) noexcept
 	{
 		m_data = std::string(data);
-		m_isDataDirty = true;
+		m_dirtyTable.isDataDirty = true;
 	}
 	void SmallText::append(const std::string& data) noexcept
 	{
 		if(data.empty())
 			return;
 		m_data += data;
-		m_isDataDirty = true;
+		m_dirtyTable.isDataDirty = true;
 	}
 	void SmallText::removeRange(std::size_t pos, std::size_t len) noexcept
 	{
 		if(len == 0)
 			return;
 		m_data.removeRange(pos, len);
-		m_isDataDirty = true;
+		m_dirtyTable.isDataDirty = true;
 	}
 	void SmallText::insert(LineCountType col, const std::string& data) noexcept
 	{
 		if(data.empty())
 			return;
 		m_data.insert(col, data);
-		m_isDataDirty = true;
+		m_dirtyTable.isDataDirty = true;
 	}
 	void SmallText::setPosition(Vec2Df pos) noexcept
 	{
 		m_pos = pos;
-		m_isPosDirty = true;
+		m_dirtyTable.isPosDirty = true;
 	}
 	void SmallText::addPosition(Vec2Df pos) noexcept
 	{
 		m_pos += pos;
-		m_isPosDirty = true;
+		m_dirtyTable.isPosDirty = true;
 	}
 	void SmallText::subPosition(Vec2Df pos) noexcept
 	{
 		m_pos -= pos;
-		m_isPosDirty = true;
+		m_dirtyTable.isPosDirty = true;
 	}
 	void SmallText::clear() noexcept
 	{
 		m_data.clear();
-		m_isDataDirty = true;
-	}
-	void SmallText::updatePointSize() noexcept
-	{
-		if(m_isPointSizeDirty)
-		{
-			getGfxDriver().setTextPointSize(getGfxDriverObjectHandle(), m_pointSize);
-			m_isPointSizeDirty = false;
-		}
+		m_dirtyTable.isDataDirty = true;
 	}
 	void SmallText::onGlobalCoordDirty() noexcept
 	{
 		_com_assert(getContainer() != NULL);
-		m_isPosDirty = true;
+		m_dirtyTable.isPosDirty = true;
 	}
 	void SmallText::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
 		if(isSizeChanged)
-			m_isPosDirty = true;
+			m_dirtyTable.isPosDirty = true;
 	}
 	void SmallText::setFontSize(const f32 pointSize) noexcept
 	{
-		m_isPointSizeDirty = true;
+		m_dirtyTable.isPointSizeDirty = true;
 		m_pointSize = pointSize;
 	}
 	f32 SmallText::getFontSize() noexcept
 	{
-		updatePointSize();
+		if(isDirty()) update();
 		return getGfxDriver().getTextPointSize(getGfxDriverObjectHandle());
 	}
 	void SmallText::setFont(UIDriver::FontReference font) noexcept
 	{
 		getGfxDriver().setTextFont(getGfxDriverObjectHandle(), font.getHandle());
 		m_font = font;
-		redraw();
+		// Setting m_isDataDirty to true would cause isDirty() to return true in UIDriver's render method which will the entire frame again
+		// It needs to be noted that the data is not dirty, we just want the frame to be redrawn.
+		m_dirtyTable.isDataDirty = true;
 	}
 	f32 SmallText::getBaselineHeight() noexcept
 	{
@@ -287,6 +264,6 @@ namespace SUTK
 	{
 		m_horizontalAlignment = hAlign;
 		m_verticalAlignment = vAlign;
-		m_isPosDirty = true;
+		m_dirtyTable.isPosDirty = true;
 	}
 }

@@ -137,6 +137,7 @@ namespace SUTK
 		virtual void onGlobalCoordDirty() noexcept override;
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) override;
+		virtual void onActiveUpdate(com::Bool isActive) noexcept override;
 	public:
 
 		Vec2Df getLocalPositionFromCursorPosition(const CursorPosition<LineCountType>& cursor) noexcept;
@@ -151,8 +152,6 @@ namespace SUTK
 		// Implementation of Renderable::isDirty() and Renderable::update()
 		virtual bool isDirty() override;
 		virtual void update() override;
-
-		virtual void setActive(com::Bool isActive) noexcept override;
 
 		void clear() noexcept;
 

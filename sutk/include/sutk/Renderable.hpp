@@ -23,10 +23,7 @@ namespace SUTK
 		bool m_isDrawOrderDirty;
 		// Initially it is set to false
 		com::Bool m_isActiveDirty { };
-		com::Bool m_isRedraw;
 
-		// Called by UIDriver to reset the redraw flag
-		void setRedraw(com::Bool isRedraw) noexcept { m_isRedraw = isRedraw; }
 		// This must never be called outside of Renderable (at least for now)
 		void setDrawOrder(u32 drawOrder) { m_drawOrder = drawOrder;  m_isDrawOrderDirty = true; }
 
@@ -46,13 +43,17 @@ namespace SUTK
 		// updates draw order (z-buffer) values to the GPU side memory.
 		// mandatory to be called in the overridng method
 		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) { m_isDrawOrderDirty = false; }
+		// This function onActiveUpdate() is called inside Renderable::update() whenever isActiveDirty() returns true
+		// A deriving class can override this method to responde to activate and deactivate status changes. 
+		// isActive: new value
+		virtual void onActiveUpdate(com::Bool isActive) noexcept { }
 
 	public:
 		Renderable(UIDriver& driver, RenderableContainer* container = NULL) noexcept;
 		virtual ~Renderable() noexcept;
 
 		// Override of Activatable::setActive()
-		virtual void setActive(com::Bool isActive) noexcept;
+		virtual void setActive(com::Bool isActive) noexcept override final;
 
 		// returns true, if GPU side data is out of sync with respect to the CPU side data, otherwise false 
 		// Must be called in the overriding method
@@ -72,9 +73,6 @@ namespace SUTK
 		com::Bool isActiveForThisFrame() const noexcept { return isActiveDirty() || isActive(); }
 
 		u32 getDrawOrder() const noexcept { return m_drawOrder; }
-
-		com::Bool isRedraw() const noexcept { return com::Bool { m_isRedraw || com::cast_away_const(this)->isDirty() || isDrawOrderDirty() }; }
-		void redraw() noexcept { m_isRedraw = com::True; }
 
 		bool ensureUpdated() noexcept
 		{ 

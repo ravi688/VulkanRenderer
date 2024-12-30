@@ -7,7 +7,6 @@ namespace SUTK
 	RenderRectFillArray::RenderRectFillArray(UIDriver& driver, RenderableContainer* container, RenderMode renderMode) noexcept : GeometryRenderable(driver, container, renderMode),
 																						m_color(Color4::white()),
 																						m_isColorDirty(true),
-																						m_isActiveDirty(false),
 																						m_isRectsDirty(false)
 	{
 		_com_assert(container != NULL);
@@ -36,22 +35,13 @@ namespace SUTK
 
 	bool RenderRectFillArray::isDirty()
 	{
-		return GeometryRenderable::isDirty() || m_isRectsDirty || m_isColorDirty || m_isActiveDirty;
+		return GeometryRenderable::isDirty() || m_isRectsDirty || m_isColorDirty;
 	}
 
 	void RenderRectFillArray::update()
 	{
 		// Mandatory to be called in the overriding method
 		GeometryRenderable::update();
-		if(m_isActiveDirty)
-		{
-			auto handle = getGfxDriverObjectHandle();
-			_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
-			auto obj = getGfxDriver().getGeometryObject(handle);
-			getGfxDriver().setObjectActive(obj, isActive());
-			m_isActiveDirty = false;
-		}
-
 		if(m_isRectsDirty)
 		{
 			Geometry::InstanceTransformArray& transformArray = getGeometry().getInstanceTransformArrayForWrite();
@@ -62,7 +52,6 @@ namespace SUTK
 				transformArray.push_back(_rect);
 			}
 		}
-
 		if(m_isColorDirty)
 		{
 			getGeometry().fillColor(getColor());
@@ -76,13 +65,6 @@ namespace SUTK
 			m_isRectsDirty = false;
 			m_isColorDirty = false;
 		}
-	}
-
-	void RenderRectFillArray::setActive(com::Bool isActive) noexcept
-	{
-		// mandatory to call
-		GeometryRenderable::setActive(isActive);
-		m_isActiveDirty = true;
 	}
 
 	std::vector<Rect2Df>& RenderRectFillArray::getRectsForWrite() noexcept
@@ -105,5 +87,24 @@ namespace SUTK
 	void RenderRectFillArray::onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept
 	{
 		m_isRectsDirty = true;
+	}
+
+	void RenderRectFillArray::updateNormalizedDrawOrder(f32 normalizedDrawOrder) noexcept
+	{
+		// mandatory to be called in the overriding function
+		GeometryRenderable::updateNormalizedDrawOrder(normalizedDrawOrder);
+
+		GfxDriverObjectHandleType handle = getGfxDriverObjectHandle();
+		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
+		handle = getGfxDriver().getGeometryObject(handle);
+		getGfxDriver().setObjectDepth(handle, normalizedDrawOrder);
+	}
+
+	void RenderRectFillArray::onActiveUpdate(com::Bool isActive) noexcept
+	{
+		auto handle = getGfxDriverObjectHandle();
+		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
+		auto obj = getGfxDriver().getGeometryObject(handle);
+		getGfxDriver().setObjectActive(obj, isActive);
 	}
 }

@@ -23,18 +23,6 @@ namespace SUTK
 			getUIDriver().getGfxDriver().destroyGeometry(getGfxDriverObjectHandle());
 	}
 
-	void RenderRect::setActive(com::Bool isActive) noexcept
-	{
-		// mandatory to call
-		GeometryRenderable::setActive(isActive);
-		// Activation and Deactivation Updates must happen immediately
-		if(auto handle = getGfxDriverObjectHandle(); handle != GFX_DRIVER_OBJECT_NULL_HANDLE)
-		{
-			GfxDriverObjectHandleType obj = getGfxDriver().getGeometryObject(handle);
-			getGfxDriver().setObjectActive(obj, isActive);
-		}
-	}
-
 	bool RenderRect::isDirty() noexcept
 	{
 		return GeometryRenderable::isDirty() || isRectDirty() || m_isColorDirty || m_isGeometryDirty;
@@ -71,12 +59,22 @@ namespace SUTK
 	void RenderRect::updateNormalizedDrawOrder(f32 normalizedDrawOrder) noexcept
 	{
 		// mandatory to be called in the overriding function
-		Renderable::updateNormalizedDrawOrder(normalizedDrawOrder);
+		GeometryRenderable::updateNormalizedDrawOrder(normalizedDrawOrder);
 
 		GfxDriverObjectHandleType handle = getGfxDriverObjectHandle();
 		_com_assert(handle != GFX_DRIVER_OBJECT_NULL_HANDLE);
 		handle = getGfxDriver().getGeometryObject(handle);
 		getGfxDriver().setObjectDepth(handle, normalizedDrawOrder);
+	}
+
+	void RenderRect::onActiveUpdate(com::Bool isActive) noexcept
+	{
+		// Activation and Deactivation Updates must happen immediately
+		if(auto handle = getGfxDriverObjectHandle(); handle != GFX_DRIVER_OBJECT_NULL_HANDLE)
+		{
+			GfxDriverObjectHandleType obj = getGfxDriver().getGeometryObject(handle);
+			getGfxDriver().setObjectActive(obj, isActive);
+		}
 	}
 
 	void RenderRect::setColor(Color4 color) noexcept

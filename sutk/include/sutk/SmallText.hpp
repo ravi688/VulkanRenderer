@@ -64,11 +64,31 @@ namespace SUTK
 	class SUTK_API SmallText : public GfxDriverRenderable, public IColorable
 	{
 	private:
-		bool m_isPosDirty;
-		bool m_isDataDirty;
-		bool m_isPointSizeDirty;
-		bool m_isColorDirty;
-		bool m_isColorRangesDirty;
+		struct DirtyTable
+		{
+			bool isPosDirty;
+			bool isDataDirty;
+			bool isPointSizeDirty;
+			bool isColorDirty;
+			bool isColorRangesDirty;
+			void clear() noexcept
+			{
+				isPosDirty = false;
+				isDataDirty = false;
+				isPointSizeDirty = false;
+				isColorDirty = false;
+				isColorRangesDirty = false;
+			}
+			bool isAny() noexcept
+			{
+				return isPosDirty
+				|| isDataDirty
+				|| isPointSizeDirty
+				|| isColorDirty
+				|| isColorRangesDirty;
+			}
+		};
+		DirtyTable m_dirtyTable {};
 		SmallTextData m_data;
 		Color4 m_color;
 		std::vector<ColorRange> m_colorRanges;
@@ -90,6 +110,7 @@ namespace SUTK
 		virtual void onGlobalCoordDirty() noexcept override;
 		virtual void onContainerResize(Rect2Df rect, bool isPositionChanged, bool isSizeChanged) noexcept override;
 		virtual void updateNormalizedDrawOrder(f32 normalizedDrawOrder) override;
+		virtual void onActiveUpdate(com::Bool isActive) noexcept override;
 	public:
 
 		SmallText(UIDriver& driver, RenderableContainer* container, GfxDriverObjectHandleType textGroup, Color4 color = SUTK::Color4::white()) noexcept;
@@ -102,9 +123,6 @@ namespace SUTK
 		// Implementation of IColorable::setColor() and IColorable::getColor()
 		virtual void setColor(Color4 color) noexcept override;
 		virtual Color4 getColor() const noexcept override;
-
-		// Override of Renderable::setActive()
-		virtual void setActive(com::Bool isActive) noexcept override;
 
 		void clearColorRanges() noexcept;
 		void addColorRange(std::size_t pos, std::size_t len, const Color4 color) noexcept;

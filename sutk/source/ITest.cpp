@@ -32,6 +32,7 @@
 #include <sutk/tests/LabelTest.hpp>
 #include <sutk/tests/PassiveLabelTest.hpp>
 #include <sutk/tests/DrawOrderTest.hpp>
+#include <sutk/tests/LabelActiveToggleTest.hpp>
 
 namespace SUTK
 {
@@ -67,7 +68,8 @@ namespace SUTK
 		{ "PANEL", [] () { return std::unique_ptr<ITest>(new PanelTest()); }},
 		{ "LABEL", [] () { return std::unique_ptr<ITest>(new LabelTest()); }},
 		{ "PASSIVE_LABEL", [] () { return std::unique_ptr<ITest>(new PassiveLabelTest()); }},
-		{ "DRAW_ORDER", [] () { return std::unique_ptr<ITest>(new DrawOrderTest()); }}
+		{ "DRAW_ORDER", [] () { return std::unique_ptr<ITest>(new DrawOrderTest()); }},
+		{ "LABEL_ACTIVE_TOGGLE", [] () { return std::unique_ptr<ITest>(new LabelActiveToggleTest()); }}
 	};
 
 	std::unique_ptr<ITest> ITest::Create(const std::string& testName)

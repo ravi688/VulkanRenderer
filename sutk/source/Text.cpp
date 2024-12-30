@@ -78,6 +78,12 @@ namespace SUTK
 		getGfxDriver().setTextGroupDepth(m_textGroup, normalizedDrawOrder);
 	}
 
+	void Text::onActiveUpdate(com::Bool isActive) noexcept
+	{
+		for(LineText* &lineText : m_lines)
+			lineText->setActive(isActive);
+	}
+
 	LineCountType Text::getNumChars(const CursorPosition<LineCountType>& position) noexcept
 	{
 		std::size_t count = 0;
@@ -175,13 +181,6 @@ namespace SUTK
 		f32 maxWidth = calculateMaxWidth();
 		f32 height = (m_lines.size() > 0) ? (m_lines.back()->getPosition().y - m_lines.front()->getPosition().y + const_cast<Text*>(this)->getBaselineHeight()) : 0.0f;
 		return { maxWidth, height };
-	}
-
-	void Text::setActive(com::Bool isActive) noexcept
-	{
-		Renderable::setActive(isActive);
-		for(LineText* &lineText : m_lines)
-			lineText->setActive(isActive);
 	}
 
 	void Text::clear() noexcept
