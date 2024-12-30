@@ -99,6 +99,7 @@ typedef struct char_attr_color_range_t
 } char_attr_color_range_t;
 
 typedef buffer_t /* element_type: char_attr_color_range_t */ char_attr_color_range_buffer_t;
+typedef buffer_t /* element_type: vulkan_bitmap_text_glsl_glyph_render_data_t */ vulkan_bitmap_glyph_render_data_stage_buffer_t;
 typedef struct font_t font_t;
 
 typedef struct vulkan_bitmap_text_string_t
@@ -118,6 +119,12 @@ typedef struct vulkan_bitmap_text_string_t
 	/* populated when vulkan_bitmap_text_string_set_char_attr_color is called,
 	 * and used for applying the color ranges again whenever set_point_size is called. */
 	char_attr_color_range_buffer_t color_ranges;
+	/* populated when text_string_set is called which is also called by vulkan_bitmap_text_string_setH() and vulkan_bitmap_text_string_set_point_sizeH() or other such functions
+	 * basically any function which would cause bitmap text's grd buffer (common to all text strings) to be modified.
+	 * This stage buffer is used to preserve the grd values so that the bitmap text's grd buffer could be patched again when this text string gets active again.
+	 * When this text string is set inactive, then the glyph render data(s) associated with this text string are removed from the bitmap text's grd buffer,
+	 * while grd_stage_buffer still preserves the grd values to patch the bitmap text's grd buffer again.  */
+	vulkan_bitmap_glyph_render_data_stage_buffer_t grd_stage_buffer;
 	/* a rectangle in a 3D space
 	 * holds the position and the extents of the text */
 	struct { offset3d_t offset; extent2d_t extent; } rect;

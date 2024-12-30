@@ -81,7 +81,8 @@ TEST_ON_SGE_INITIALIZE(BITMAP_TEXT)
 		.window_width = 800,
 		.window_height = 800,
 		.is_resizable = true,
-		.is_fullscreen = false
+		.is_fullscreen = false,
+		.require_bitmap_text = true
 	};
 }
 

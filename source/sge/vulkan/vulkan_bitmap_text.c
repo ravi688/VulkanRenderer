@@ -205,6 +205,7 @@ SGE_API void vulkan_bitmap_text_destroy(vulkan_bitmap_text_t* text)
 		buf_free(&text_string->glyph_offsets);
 		buf_free(&text_string->index_mappings);
 		buf_free(&text_string->color_ranges);
+		buf_free(&text_string->grd_stage_buffer);
 	}
 	buf_clear(&text->text_strings, NULL);
 
@@ -301,6 +302,7 @@ SGE_API vulkan_bitmap_text_string_handle_t vulkan_bitmap_text_string_create(vulk
 		text_string->glyph_offsets = memory_allocator_buf_new(text->renderer->allocator, f32);
 		text_string->index_mappings = memory_allocator_buf_new(text->renderer->allocator, u32);
 		text_string->color_ranges = memory_allocator_buf_new(text->renderer->allocator, char_attr_color_range_t);
+		text_string->grd_stage_buffer = memory_allocator_buf_new(text->renderer->allocator, vulkan_bitmap_text_glsl_glyph_render_data_t);
 		text_string->color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		text_string->is_active = true;
 		buf_push_pseudo(tst_buffer, 1);
@@ -381,6 +383,7 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 	buf_clear(&text_string->glyph_offsets, NULL);
 	buf_clear(&text_string->index_mappings, NULL);
 	buf_clear(&text_string->color_ranges, NULL);
+	buf_clear(&text_string->grd_stage_buffer, NULL);
 	text_string->rect.offset = offset3d(0.0f, 0.0f, 0.0f);
 	text_string->rect.extent = extent2d(500, 300);
 	text_string->transform = mat4_identity();
@@ -399,27 +402,45 @@ SGE_API void vulkan_bitmap_text_string_destroyH(vulkan_bitmap_text_t* text, vulk
 	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
 }
 
-/* setters */
-static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char* data)
+static void text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char_attr_color_range_t* ranges, u32 range_count);
+
+static void text_string_update_gpu_side_buffers(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string)
+{
+	_debug_assert__(text_string->is_active);
+	multi_buffer_t* grd_host_buffer = vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer);
+	/* clear the render data for this text string */
+	multi_buffer_sub_buffer_clear(grd_host_buffer, text_string->render_data_handle);
+	buf_for_each_element_ptr(vulkan_bitmap_text_glsl_glyph_render_data_t, var, &text_string->grd_stage_buffer)
+	{
+		multi_buffer_sub_buffer_push_n(grd_host_buffer, 
+										text_string->render_data_handle, 
+										(void*)var,
+										SIZEOF_VULKAN_BITMAP_TEXT_GLSL_GLYPH_RENDER_DATA_T);
+	}
+	/* reapply the color ranges */
+	u32 range_count = buf_get_element_count(&text_string->color_ranges);
+	if(range_count > 0)
+		text_string_set_char_attr_color(text, text_string, buf_get_ptr_at_typeof(&text_string->color_ranges, char_attr_color_range_t, 0), range_count);
+	/* update GPU (device) side buffer if it was marked dirty */
+	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
+}
+
+static void text_string_clear_gpu_side_buffers(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string)
 {
 	/* clear the render data for this text string */
 	multi_buffer_sub_buffer_clear(vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer), text_string->render_data_handle);
+	/* update GPU (device) side buffer if it was marked dirty */
+	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
+}
+
+static void text_string_build_cpu_side_buffers(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char* data)
+{
 	/* clear the previous glyph offsets for this text string */
 	/* TODO: it should be buf_clear_fast() */
 	buf_clear(&text_string->glyph_offsets, NULL);
 	/* TODO: it should be buf_clear_fast() */
 	buf_clear(&text_string->index_mappings, NULL);
-
-	/* if this text string is not active then no need to render characters of this text string. */
-	if(!text_string->is_active)
-	{
-		f32 horizontal_pen = 0;
-		// glyph_offset for the pseudo (virtual) glyph at the end of a line
-		buf_push(&text_string->glyph_offsets, &horizontal_pen);
-		/* update GPU (device) side buffer if it was marked dirty */
-		vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
-		return;
-	}
+	buf_clear(&text_string->grd_stage_buffer, NULL);
 
 	font_t* font = text_string->font;
 
@@ -554,9 +575,7 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 	/* final (post-processed) glyph counts */
 	u32 final_count = is_changed ? buf_get_element_count(&text->glyph_layout_data_buffer) : len;
 
-	multi_buffer_t* grd_host_buffer = vulkan_instance_buffer_get_host_buffer(&text->glyph_render_data_buffer);
-
-	for(u32 i = 0; i < final_count; i++)
+	for(u32 i = 0, j = 0; i < final_count; i++)
 	{
 		AUTO glyph_data = is_changed ? buf_get_ptr_at_typeof(&text->glyph_layout_data_buffer, vulkan_bitmap_text_glyph_layout_data_t, i) : NULL;
 		u32 index = is_changed ? glyph_data->index : i;
@@ -591,42 +610,28 @@ static void text_string_set(vulkan_bitmap_text_t* text, vulkan_bitmap_text_strin
 			.colr = text_string->color
 		};
 
-		u32 mapped_index = sub_buffer_get_count(grd_host_buffer, text_string->render_data_handle);
-		buf_push(&text_string->index_mappings, &mapped_index);
-
-		multi_buffer_sub_buffer_push_n(grd_host_buffer, 
-										text_string->render_data_handle, 
-										(void*)&data,
-										SIZEOF_VULKAN_BITMAP_TEXT_GLSL_GLYPH_RENDER_DATA_T);
+		buf_push(&text_string->index_mappings, &j);
+		/* push the glyph render data for this text string into its staging buffer,
+		 * this is important because update_gpu_side_data() uses this data to populate the global gpu-side glyph render data buffer */
+		buf_push(&text_string->grd_stage_buffer, &data);
+		++j;
 	}
 
 	/* clear the glyph layout data buffer for the next set call */
 	buf_clear(&text->glyph_layout_data_buffer, NULL);
-
-	/* update GPU (device) side buffer if it was marked dirty */
-	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
-
-	/* update the GPU (device) side buffers if they were marked dirty */
-	// vulkan_bitmap_glyph_atlas_texture_commit(text->texture, NULL);
 }
 
-static void text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char_attr_color_range_t* ranges, u32 range_count);
-
-static void text_string_refresh(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string)
+static void text_string_rebuild_cpu_buffers_and_upload_to_gpu(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string)
 {
-	text_string_set(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
-
-	// reapply the color ranges as the above call to text_string_set() uses the default color set via vulkan_bitmap_text_string_set_color()
-	u32 range_count = buf_get_element_count(&text_string->color_ranges);
-	if(range_count > 0)
-		text_string_set_char_attr_color(text, text_string, buf_get_ptr_at_typeof(&text_string->color_ranges, char_attr_color_range_t, 0), range_count);
+	text_string_build_cpu_side_buffers(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
+	text_string_update_gpu_side_buffers(text, text_string);
 }
 
 static void text_string_set_point_size(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, u32 point_size)
 {
 	text_string->point_size = point_size;
 	if(buf_get_element_count(&text_string->chars) > 0)
-		text_string_refresh(text, text_string);
+		text_string_rebuild_cpu_buffers_and_upload_to_gpu(text, text_string);
 }
 
 SGE_API void vulkan_bitmap_text_set_glyph_layout_handler(vulkan_bitmap_text_t* text, vulkan_bitmap_text_glyph_layout_handler_t handler, void* user_data)
@@ -723,7 +728,9 @@ SGE_API void vulkan_bitmap_text_string_setH(vulkan_bitmap_text_t* text,  vulkan_
 	/* null character at the end of the string, as we are using strlen inside text_string_set */
 	buf_push_null(&text_string->chars);
 
-	text_string_set(text, text_string, string);
+	text_string_build_cpu_side_buffers(text, text_string, string);
+	if(text_string->is_active)
+		text_string_update_gpu_side_buffers(text, text_string);
 }
 
 SGE_API void vulkan_bitmap_text_string_set_point_sizeH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, u32 point_size)
@@ -756,7 +763,7 @@ static void text_string_set_font(vulkan_bitmap_text_t* text, vulkan_bitmap_text_
 {
 	text_string->font = font;
 	if(buf_get_element_count(&text_string->chars) > 0)
-		text_string_refresh(text, text_string);
+		text_string_rebuild_cpu_buffers_and_upload_to_gpu(text, text_string);
 }
 
 SGE_API void vulkan_bitmap_text_string_set_fontH(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, font_t* font)
@@ -781,8 +788,7 @@ SGE_API void vulkan_bitmap_text_string_set_transformH(vulkan_bitmap_text_t* text
 static void text_string_set_color_range(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, u32 begin, u32 end, color_t color)
 {
 	/* if this text string is not active, then no color attributes should be applied as the GRD data isn't avaiable for this text string in the buffer. */
-	if(!text_string->is_active)
-		return;
+	_debug_assert__(text_string->is_active);
 
 	const char* chars = CAST_TO(const char*, buf_get_ptr(&text_string->chars));
 	const u32* index_mappings = CAST_TO(const u32*, buf_get_ptr(&text_string->index_mappings));
@@ -811,9 +817,9 @@ SGE_API	void vulkan_bitmap_text_string_set_activeH(vulkan_bitmap_text_t* text, v
 	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
 	text_string->is_active = is_active;
 	if(!is_active)
-		text_string_set(text, text_string, "");
+		text_string_clear_gpu_side_buffers(text, text_string);
 	else
-		text_string_refresh(text, text_string);
+		text_string_update_gpu_side_buffers(text, text_string);
 }
 
 SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, color_t color)
@@ -821,12 +827,14 @@ SGE_API void vulkan_bitmap_text_string_set_color(vulkan_bitmap_text_t* text, vul
 	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
 	text_string->color = vec4(color.r, color.g, color.b, color.a);
 
-	/* update colors on the CPU (host) side buffer */
-	AUTO char_count = buf_get_element_count(&text_string->chars);
-	text_string_set_color_range(text, text_string, 0, char_count, color);
-
-	/* update GPU (device) side buffer if it was marked dirty */
-	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
+	/* discard the old color ranges, and use this single color spaning the entire range of characters in the text string */
+	char_attr_color_range_t range =
+	{
+		.begin = 0,
+		.end = buf_get_element_count(&text_string->chars) - 1,
+		.color = color
+	};
+	vulkan_bitmap_text_string_set_char_attr_color(text, handle, &range, 1);
 }
 
 SGE_API void vulkan_bitmap_text_set_font(vulkan_bitmap_text_t* text, font_t* font)
@@ -841,11 +849,11 @@ SGE_API void vulkan_bitmap_text_set_font_update_all(vulkan_bitmap_text_t* text, 
 		text_string_set_font(text, text_string, font);
 }
 
+/* NOTE: after calling this function, you must call vulkan_instance_buffer_commit() on text->glyph_render_data_buffer */
 static void text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, const char_attr_color_range_t* ranges, u32 range_count)
 {
-	/* if this text string is not active then no need to apply any color attributes */
-	if(!text_string->is_active)
-		return;
+	/* this string must be active so that bitmap's GRD buffer would containe GRD values for this text string */
+	_debug_assert__(text_string->is_active);
 DEBUG_BLOCK
 (
 	AUTO char_count = buf_get_element_count(&text_string->chars);
@@ -859,15 +867,21 @@ DEBUG_BLOCK
 		_debug_assert__(range.begin <= range.end);
 		text_string_set_color_range(text, text_string, range.begin, range.end, range.color);
 	}
-	/* update GPU (device) side buffer if it was marked dirty */
-	vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
 }
 
 SGE_API void vulkan_bitmap_text_string_set_char_attr_color(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_handle_t handle, const char_attr_color_range_t* ranges, const u32 range_count)
 {
 	vulkan_bitmap_text_string_t* text_string = get_text_stringH(text, handle);
 
-	text_string_set_char_attr_color(text, text_string, ranges, range_count);
+	if(text_string->is_active)
+	{
+		/* updates the color data for each glyph to mapped buffer backing the GPU side buffer (GRD buffer) */
+		text_string_set_char_attr_color(text, text_string, ranges, range_count);
+		/* update GPU (device) side buffer if it was marked dirty */
+		vulkan_instance_buffer_commit(&text->glyph_render_data_buffer, NULL);
+	}
+
+	/* preserve the set color range values so that we can patch the bitmap's GRD buffer after the text string becomes active */
 
 	/* TODO: this should be buf_clear_fast */
 	buf_clear(&text_string->color_ranges, NULL);
