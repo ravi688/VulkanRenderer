@@ -83,13 +83,21 @@ namespace SUTK
 		notebook->setRect({ { pos, posY }, { 10, 5 } });
 		for(u32 i = 0; i < 3; ++i)
 			notebook->createPage<NotebookPage>(std::format("Tab {}", i));
-		m_inputDriver->getOnKeyEvent().subscribe([notebook](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
+		m_inputDriver->getOnKeyEvent().subscribe([notebook, scrollButtonList, scrollTogButtonList](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
 		{
 			static auto i = 3;
-			if((keycode == KeyCode::N) && (event == KeyEvent::Press))
+			if(event == KeyEvent::Press)
 			{
-				notebook->createPage<NotebookPage>(std::format("Tab {}", i));
-				i++;
+				if(keycode == KeyCode::N)
+				{
+					notebook->createPage<NotebookPage>(std::format("Tab {}", i));
+					i++;
+				}
+				else if(keycode == KeyCode::T)
+				{
+					scrollButtonList->addButton("New Button");
+					scrollTogButtonList->addButton("New Tog Button");
+				}
 			}
 		});
 		m_inputDriver->getOnKeyEvent().subscribe([notebook](IInputDriver* driver, KeyCode keycode, KeyEvent event, ModifierKeys)
