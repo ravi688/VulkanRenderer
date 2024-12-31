@@ -10,11 +10,15 @@ namespace SUTK
 {
 	class IGfxDriver;
 
+	class ScrollContainer;
+
 	class FullWindowContainer;
 	class Button;
 	class ToggleButton;
 	class ButtonListView;
 	class ToggleButtonListView;
+	class ScrollButtonList;
+	class ScrollToggleButtonGroupView;
 	class NotebookView;
 
 	class DarkLightThemeTest : public ITest
@@ -29,6 +33,10 @@ namespace SUTK
 		ButtonListView* m_buttonListView;
 		ToggleButtonListView* m_toggleButtonListView;
 		NotebookView* m_notebookView;
+		ScrollContainer* m_scrollContainer1;
+		ScrollContainer* m_scrollContainer2;
+		ScrollButtonList* m_scrollButtonList;
+		ScrollToggleButtonGroupView* m_scrollToggleButtonGroupView;
 
 	public:
 		DarkLightThemeTest() : m_uiDriver(NULL), m_gfxDriver(NULL) { }

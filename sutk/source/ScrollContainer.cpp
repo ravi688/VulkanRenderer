@@ -56,7 +56,6 @@ namespace SUTK
 			Vec2Df position = child->getPosition();
 			Vec2Df br = child->getRect().getBottomRight();
 			Vec2Df tl = child->getRect().getTopLeft();
-			std::cout << "Bottom-right: " << br << ", at " << com::source_loc() << std::endl;
 			if((scrollDelta.y + tl.y) > 0.0f)
 				scrollDelta.y = -tl.y;
 			else if((scrollDelta.y + br.y) < 0.0f)
