@@ -87,7 +87,7 @@ namespace SUTK
 		if(m_runnables.size() != 0)
 			m_runnables.traverse(IRunnable::Update);
 
-		com::Bool isRerender = m_isRenderThisFrame;
+		com::Bool isRerender = m_isRenderThisFrame || com::Bool { m_prevRenderablesCount != m_renderables.size() };
 		com::Bool isRecalculateDrawOrder = com::False;
 		u32 minDrawOrder = std::numeric_limits<u32>::max();
 		u32 maxDrawOrder = 0;
@@ -151,6 +151,7 @@ namespace SUTK
 			// now record and dispatch rendering commands (delegated that to rendering backend)
 			m_gfxDriver.render(*this);
 			m_isRenderThisFrame = com::False;
+			m_prevRenderablesCount = m_renderables.size();
 		}
 	}
 

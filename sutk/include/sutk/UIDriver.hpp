@@ -66,6 +66,13 @@ namespace SUTK
 		// and are used to determine if we need to recalcualte normalized draw order (depth values) for each Renderable in the next frame (current)
 		u32 m_maxDrawOrder { U32_MAX };
 		u32 m_minDrawOrder { U32_MAX };
+		// Number renderables in the last frame renderered,
+		// We need to keep track of this detect change in the number of renderables so that we could re-render the frame
+		// to reflect destruction of the destroyed Renderables.
+		// It should be noted that it is possible that there is change in number of renderables 
+		// but no Renderable is marked dirty or their draw order is dirty,
+		// So, in that case, change in number of renderables would tell us we need to re-render the frame. 
+		u32 m_prevRenderablesCount { };
 
 		// It should be set com::True if the current frame needs to be drawn
 		// Generally, it should remain set to com::False unless some UI component/widget has been marked as dirty or updated its appearance
