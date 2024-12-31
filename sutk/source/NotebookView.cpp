@@ -128,7 +128,9 @@ namespace SUTK
 		m_tabBarBGPanel = driver.createContainer<Panel>(m_textGroupContainer);
 		m_tabBarBGPanel->alwaysFitInParent();
 		m_tabBarBGPanel->setColor(Color4::grey(0.8f));
-		m_tabBar = driver.createContainer<TabBar>(m_tabBarBGPanel);
+		m_tabBarContainer = driver.createContainer<ScrollContainer>(m_tabBarBGPanel);
+		m_tabBarContainer->alwaysFitInParent();
+		m_tabBar = driver.createContainer<ScrollableTabBar>(m_tabBarContainer);
 		m_tabBar->alwaysFitInParent();
 
 		m_tabAnimGroup = driver.getAnimationEngine().createAnimGroup<TabAnimGroup>(this);
@@ -156,6 +158,7 @@ namespace SUTK
 		m_pageContainerParent->destroyAllChilds();
 		getUIDriver().destroyContainer<Panel>(m_pageContainerParent);
 		getUIDriver().destroyContainer<TabBar>(m_tabBar);
+		getUIDriver().destroyContainer<ScrollContainer>(m_tabBarContainer);
 		getUIDriver().destroyContainer<Panel>(m_tabBarBGPanel);
 		getUIDriver().destroyContainer<TextGroupContainer>(m_textGroupContainer);
 		getUIDriver().getAnimationEngine().destroyAnimGroup<TabAnimGroup>(m_tabAnimGroup);
@@ -451,6 +454,7 @@ namespace SUTK
 		{
 			m_tabRearrangeContext.layer = tabView->getLayer();
 			tabView->setLayer(MaxLayer);
+			m_tabBar->restoreMaskFor(tabView);
 			m_tabRearrangeContext.isMoved = com::True;
 		}
 		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
@@ -618,6 +622,7 @@ namespace SUTK
 			if(this->m_tabRearrangeContext.isMoved)
 			{
 				this->m_tabRearrangeContext.grabbedTab->getTabView()->setLayer(m_tabRearrangeContext.layer);
+				this->m_tabBar->updateMaskFor(this->m_tabRearrangeContext.grabbedTab->getTabView());
 				// NOTE: abort should be called first to get the final changes, 
 				// otherwise, GetLinkedListRoot() would return wrong result.
 				this->m_tabShiftAnimGroup->abort();

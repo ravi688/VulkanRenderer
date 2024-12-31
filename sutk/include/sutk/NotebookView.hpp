@@ -6,6 +6,7 @@
 #include <sutk/Button.hpp> // for SUTK::Button
 #include <sutk/Label.hpp> // for SUTK::Label::set()
 #include <sutk/AnimationEngine.hpp>
+#include <sutk/MaskedScrollableContainer.hpp>
 
 #include <common/Concepts.hpp> // for com::CompareFunction
 #include <common/Event.hpp> // for com::Event
@@ -117,6 +118,8 @@ namespace SUTK
 		Tab* getRootTab() noexcept { return m_root; }
 	};
 
+	typedef MaskedScrollableContainer<TabBar> ScrollableTabBar;
+
 	class TabRemoveAnimation;
 	class TabInsertAnimation;
 	class NotebookView;
@@ -180,7 +183,8 @@ namespace SUTK
 		// TextGroup for TabView(s)
 		TextGroupContainer* m_textGroupContainer;
 		Panel* m_tabBarBGPanel;
-		TabBar* m_tabBar;
+		ScrollContainer* m_tabBarContainer;
+		ScrollableTabBar* m_tabBar;
 		Panel* m_pageContainerParent;
 		NotebookPage* m_currentPage;
 		TabAnimGroup* m_tabAnimGroup;
