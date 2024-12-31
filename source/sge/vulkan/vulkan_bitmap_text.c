@@ -624,7 +624,8 @@ static void text_string_build_cpu_side_buffers(vulkan_bitmap_text_t* text, vulka
 static void text_string_rebuild_cpu_buffers_and_upload_to_gpu(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string)
 {
 	text_string_build_cpu_side_buffers(text, text_string, CAST_TO(const char*, buf_get_ptr(&text_string->chars)));
-	text_string_update_gpu_side_buffers(text, text_string);
+	if(text_string->is_active)
+		text_string_update_gpu_side_buffers(text, text_string);
 }
 
 static void text_string_set_point_size(vulkan_bitmap_text_t* text, vulkan_bitmap_text_string_t* text_string, u32 point_size)
