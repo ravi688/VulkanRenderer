@@ -58,9 +58,11 @@ namespace SUTK
 
 	class ImageButtonGraphic;
 	class DefaultButtonGraphic;
+	class NotebookView;
 
 	class SUTK_API TabView : public Button
 	{
+		friend class NotebookView;
 	private:
 		DefaultButtonGraphic* m_graphic;
 		Button* m_closeButton;
@@ -73,6 +75,8 @@ namespace SUTK
 		Color4 m_pressColor;
 		Color4 m_idleColor;
 		static UIDriver::ImageReference s_closeIcon;
+
+		Button* getCloseButton() noexcept { return m_closeButton; }
 	public:
 		TabView(UIDriver& driver, Container* parent) noexcept;
 		~TabView() noexcept;
@@ -84,7 +88,6 @@ namespace SUTK
 		void selectedState() noexcept;
 	};
 
-	class NotebookView;
 	class TabBar;
 
 	class SUTK_API Tab : public com::LinkedListNodeBase<Tab>

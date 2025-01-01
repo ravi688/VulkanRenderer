@@ -672,6 +672,10 @@ namespace SUTK
 			this->GlobalMouseMoveHandlerObject::sleep();
 			this->dump();
 		});
+		tabView->getCloseButton()->getOnReleaseEvent().subscribe([this, page](Button* button) noexcept
+		{
+			this->removePage(page);
+		});
 	}
 
 	void NotebookView::viewPage(NotebookPage* page) noexcept
