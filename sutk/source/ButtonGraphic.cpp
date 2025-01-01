@@ -47,6 +47,18 @@ namespace SUTK
 		m_cta.setDefault(State::Idle);
 		onColorChange(m_cta.getValue());
 	}
+	Color4 ColorDriverButtonGraphic::getHoverColor() const noexcept
+	{
+		return m_cta.get(State::Hover);
+	}
+	Color4 ColorDriverButtonGraphic::getPressColor() const noexcept
+	{
+		return m_cta.get(State::Press);
+	}
+	Color4 ColorDriverButtonGraphic::getIdleColor() const noexcept
+	{
+		return m_cta.get(State::Idle);
+	}
 	void ColorDriverButtonGraphic::setState(State state) noexcept
 	{
 		m_cta.transitionTo(state);

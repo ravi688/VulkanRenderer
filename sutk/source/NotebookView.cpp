@@ -5,6 +5,7 @@
 #include <sutk/ContainerUtility.hpp>
 #include <sutk/ButtonGraphic.hpp> // for SUTK::ImageButtonGraphic
 #include <sutk/Panel.hpp> // for SUTK::Panel
+#include <sutk/Constants.hpp>
 
 #define TAB_VIEW_MIN_WIDTH 3.0f
 #define TAB_BAR_HEIGHT 0.8f
@@ -66,6 +67,9 @@ namespace SUTK
 	TabView::TabView(UIDriver& driver, Container* parent) noexcept : Button(driver, parent, /* isCreateDefaultGraphic: */ true)
 	{
 		m_graphic = getGraphicAs<DefaultButtonGraphic>();
+		m_hoverColor = m_graphic->getHoverColor();
+		m_pressColor = m_graphic->getPressColor();
+		m_idleColor = m_graphic->getIdleColor();
 		Label& label = m_graphic->getLabel();
 		label.setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
 		label.fitInParent({ TAB_LABEL_LEFT_MARGIN, TAB_LABEL_CLOSE_BUTTON_SPACING + CLOSE_BUTTON_RIGHT_MARGIN + CLOSE_BUTTON_WIDTH, TAB_LABEL_TOP_MARGIN, TAB_LABEL_BOTTOM_MARGIN  });
@@ -103,12 +107,18 @@ namespace SUTK
 
 	void TabView::unselectedState() noexcept
 	{
-
+		auto* graphic = getGraphicAs<DefaultButtonGraphic>();
+		graphic->setHoverColor(m_hoverColor);
+		graphic->setPressColor(m_pressColor);
+		graphic->setIdleColor(m_idleColor);
 	}
 
 	void TabView::selectedState() noexcept
 	{
-		
+		auto* graphic = getGraphicAs<DefaultButtonGraphic>();
+		graphic->setIdleColor(Constants::Defaults::Notebook::TabSelectColor);
+		graphic->setHoverColor(Constants::Defaults::Notebook::TabSelectColor);
+		graphic->setPressColor(Constants::Defaults::Notebook::TabSelectColor);
 	}
 
 	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), GlobalMouseMoveHandlerObject(driver),

@@ -70,6 +70,9 @@ namespace SUTK
 		void setHoverColor(Color4 color) noexcept;
 		void setPressColor(Color4 color) noexcept;
 		void setIdleColor(Color4 color) noexcept;
+		Color4 getHoverColor() const noexcept;
+		Color4 getPressColor() const noexcept;
+		Color4 getIdleColor() const noexcept;
 	};
 
 	template<ContainerT ContainerType>

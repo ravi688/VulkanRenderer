@@ -511,6 +511,7 @@ namespace SUTK
 
 		constexpr Color3() noexcept : r(255), g(255), b(255) { }
 		constexpr Color3(u8 _r, u8 _g, u8 _b) noexcept : r(_r), g(_g), b(_b) { }
+		constexpr Color3(u32 hex) noexcept : Color3(BIT32_UNPACK8(hex, 2), BIT32_UNPACK8(hex, 1), BIT32_UNPACK8(hex, 0)) { }
 
 		bool operator ==(Color3& rhs) const noexcept
 		{
@@ -556,6 +557,7 @@ namespace SUTK
 		constexpr Color4() noexcept : r(255), g(255), b(255), a(255) { }
 		constexpr Color4(u8 _r, u8 _g, u8 _b, u8 _a) noexcept : r(_r), g(_g), b(_b), a(_a) { }
 		constexpr Color4(u8 _r, u8 _g, u8 _b) noexcept : Color4(_r, _g, _b, 255) { }
+		constexpr Color4(u32 hex) noexcept : Color4(BIT32_UNPACK8(hex, 3), BIT32_UNPACK8(hex, 2), BIT32_UNPACK8(hex, 1), BIT32_UNPACK8(hex, 0)) { }
 
 		bool operator ==(Color4& rhs) const noexcept
 		{

@@ -59,6 +59,13 @@ namespace SUTK
 		DefaultButtonGraphic* m_graphic;
 		Button* m_closeButton;
 		ImageButtonGraphic* m_closeButtonGraphic;
+		// Preserve hover and press color of the m_graphic
+		// Since we modify those when the tab is selected
+		// we would need to restore them to their initial values
+		// using these preserved values.
+		Color4 m_hoverColor;
+		Color4 m_pressColor;
+		Color4 m_idleColor;
 		static UIDriver::ImageReference s_closeIcon;
 	public:
 		TabView(UIDriver& driver, Container* parent) noexcept;

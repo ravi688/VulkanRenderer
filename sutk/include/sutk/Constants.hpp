@@ -35,6 +35,11 @@ namespace SUTK
 				static constexpr f32 CircleTopBottomMargin { 0.2f };
 				static constexpr f32 CircleLabelSpacing { 0.1f };
 			}
+
+			namespace Notebook
+			{
+				static constexpr Color4 TabSelectColor { 0x749bafffu };
+			}
 		}
 	}
 }
