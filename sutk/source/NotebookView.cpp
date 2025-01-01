@@ -62,6 +62,15 @@ namespace SUTK
 		return m_tab->getIndex();
 	}
 
+	void NotebookPage::setActive(com::Bool isActive) noexcept
+	{
+		ContainerUtility::SetActiveAllRecursive(getContainer(), isActive);
+		if(isActive)
+			onActivate();
+		else
+			onDeactivate();
+	}
+
 	UIDriver::ImageReference TabView::s_closeIcon = UIDriver::InvalidImage;
 
 	TabView::TabView(UIDriver& driver, Container* parent) noexcept : Button(driver, parent, /* isCreateDefaultGraphic: */ true)
@@ -122,7 +131,6 @@ namespace SUTK
 	}
 
 	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), GlobalMouseMoveHandlerObject(driver),
-																																					m_currentPage(com::null_pointer<NotebookPage>()),
 																																					m_onPageSelectEvent(this),
 																																					m_isRunning(com::False),
 																																					m_isStartAnimBatch(com::False),
@@ -161,7 +169,7 @@ namespace SUTK
 	NotebookView::~NotebookView() noexcept
 	{
 		// NOTE: We need to traverse the linked list bi-directionally as the current page might not be the head node
-		com::TraverseLinkedListBiDirect(m_currentPage, [](NotebookPage* page) noexcept
+		com::TraverseLinkedListBiDirect(m_tabBar->getSelectedTab()->getPage(), [](NotebookPage* page) noexcept
 		{
 			page->getUIDriver().destroyObject<NotebookPage>(page);
 		});
@@ -542,6 +550,9 @@ namespace SUTK
 	}
 	Tab* TabBar::createTab(const std::string_view labelStr, Tab* after) noexcept
 	{
+		// If the supplied tab is null_pointer then create the tab after the currently selected tab.
+		if(!after)
+			after = m_selectedTab;
 		lockLayout();
 		Tab* tab = new Tab();
 		tab->m_tabBar = this;
@@ -581,17 +592,35 @@ namespace SUTK
 	}
 	void TabBar::removeTab(Tab* tab) noexcept
 	{
+		// If a Selected tab is being removed then we must set m_selectedTab to null
+		if(tab == m_selectedTab)
+			m_selectedTab = com::null_pointer<Tab>();
 		if(!tab->getPrev())
 			m_root = tab->getNext();
 		RemoveLinkedListNode(tab, /* Do not set next and prev ptrs to NULL */ com::False);
 	}
+	void TabBar::selectTab(Tab* tab) noexcept
+	{
+		// Deactivate the current page
+		if(m_selectedTab != com::null_pointer<Tab>())
+		{
+			// Move the associated tabView into unselected state
+			m_selectedTab->getTabView()->unselectedState();
+			m_selectedTab->getPage()->setActive(com::False);
+		}
+		// Activate the requested page
+		if(tab)
+		{
+			m_selectedTab = tab;
+			// Move the associated tabView into selected state
+			tab->getTabView()->selectedState();
+			// Activate the requested page's container
+			tab->getPage()->setActive(com::True);
+		}
+	}
 
 	Tab* NotebookView::createTab(const std::string_view labelStr, NotebookPage* page, Tab* afterTab) noexcept
 	{
-		// If the supplied page is null_pointer then create the page after the current being viewed page.
-		if(!afterTab)
-			afterTab = m_currentPage ? m_currentPage->getTab() : com::null_pointer<Tab>();
-
 		// Create TabView
 		Tab* tab = getTabBar()->createTab(labelStr, afterTab);
 		// <Begin> Initialize Animation Start state and Setup Animation Context
@@ -647,33 +676,12 @@ namespace SUTK
 
 	void NotebookView::viewPage(NotebookPage* page) noexcept
 	{
-		// Deactivate the current page
-		if(m_currentPage != com::null_pointer<NotebookPage>())
-		{
-			m_currentPage->onDeactivate();
-			Container* container = m_currentPage->getContainer();
-			// Deactivate the current page's container
-			if(container->isActive())
-				ContainerUtility::SetActiveAllRecursive(container, com::False);
-			// Move the associated tabView into unselected state
-			TabView* tabView = m_currentPage->getTab()->getTabView();
-			tabView->unselectedState();
-		}
-		
-		// Activate the requested page
-		if(page)
-		{
-			// Activate the requested page's container
-			Container* container = page->getContainer();
-			if(!container->isActive())
-				ContainerUtility::SetActiveAllRecursive(container, com::True);
-			// Move the associated tabView into selected state
-			TabView* tabView = page->getTab()->getTabView();
-			tabView->selectedState();
-			page->onActivate();
-		}
+		m_tabBar->selectTab(page->getTab());
+	}
 
-		m_currentPage = page;
+	static NotebookPage* GetAdjacentPage(NotebookPage* page) noexcept
+	{
+		return page->getPrev() ? page->getPrev() : page->getNext();
 	}
 
 	void NotebookView::removePage(NotebookPage* page) noexcept
@@ -684,8 +692,12 @@ namespace SUTK
 			return;
 		}
 		
-		viewPage(page->getPrev() ? page->getPrev() : page->getNext());
+		// View an adjacent page if exists
+		if(auto* adjPage = GetAdjacentPage(page))
+			viewPage(adjPage);
 
+		// Remove the tab from TabBar, but note that it doesn't deletes it from the memory until animation has been finished
+		// See next lines of code: dispatchAnimRemoveTab
 		Tab* tab = page->getTab();
 		getTabBar()->removeTab(tab);
 		
@@ -705,7 +717,7 @@ namespace SUTK
 	void NotebookView::dump() noexcept
 	{
 		std::cout << "Dump (Notebook): \n"
-				  << "Current Selected: " << (m_currentPage ? m_currentPage->getTab()->getTabView()->getLabel() : "<null>") << "\n";
+				  << "Current Selected: " << (getCurrentPage() ? getCurrentPage()->getTab()->getTabView()->getLabel() : "<null>") << "\n";
 		NotebookPage* page = getRootPage();
 		while(page != com::null_pointer<NotebookPage>())
 		{

@@ -23,6 +23,7 @@ namespace SUTK
 	{
 		friend class NotebookView;
 		friend class Tab;
+		friend class TabBar;
 	private:
 		Tab* m_tab;
 		Container* m_container;
@@ -30,6 +31,11 @@ namespace SUTK
 		Tab* getTab() noexcept { return m_tab; }
 		Container* getContainer() noexcept { return m_container; }
 		u32 getIndex() const noexcept;
+		// NOTE: It is not the same as Activatable::setActive(), infact NotebookPage is not even derived from Activatable (directly or indirectly)
+		// Calling this with com::True would activate (show) the page and invoke onActivate() virtual function
+		// Calling this with com::False would deactivate (hide) the page and invoek onDeactivate() virtual function
+		// WARN: User code isn't allowed to call this method, that's why it is marked as private
+		void setActive(com::Bool isActive) noexcept;
 	protected:
 		// Called whenever this page gets activated, i.e. the tab associated with this page has been selected
 		virtual void onActivate() noexcept { };
@@ -94,6 +100,8 @@ namespace SUTK
 		NotebookPage* m_page;
 		u32 m_index;
 		Vec2Df m_pos;
+		// Do not allow a Tab object to be constructed outside of TabBar which is a friend of this class
+		Tab() = default;
 	public:
 		// Setters
 		void setPage(NotebookPage* page) noexcept;
@@ -113,6 +121,8 @@ namespace SUTK
 		friend class NotebookView;
 	private:
 		Tab* m_root;
+		// This can never be null if m_root is not null
+		Tab* m_selectedTab;
 	protected:
 		virtual void onRecalculateLayout() noexcept override;
 	public:
@@ -122,7 +132,9 @@ namespace SUTK
 		Tab* createTab(const std::string_view labelStr, Tab* after = com::null_pointer<Tab>()) noexcept;
 		void destroyTab(Tab* tab) noexcept;
 		void removeTab(Tab* tab) noexcept;
+		void selectTab(Tab* tab) noexcept;
 		Tab* getRootTab() noexcept { return m_root; }
+		Tab* getSelectedTab() noexcept { return m_selectedTab; }
 	};
 
 	typedef MaskedScrollableContainer<TabBar> ScrollableTabBar;
@@ -193,7 +205,6 @@ namespace SUTK
 		ScrollContainer* m_tabBarContainer;
 		ScrollableTabBar* m_tabBar;
 		Panel* m_pageContainerParent;
-		NotebookPage* m_currentPage;
 		TabAnimGroup* m_tabAnimGroup;
 		TabShiftAnimGroup* m_tabShiftAnimGroup;
 		OnPageSelectEvent m_onPageSelectEvent;
@@ -228,7 +239,7 @@ namespace SUTK
 		void setAnimDuration(f32 duration) noexcept { m_animDuration = duration; }
 
 		NotebookPage* getRootPage() noexcept { return getTabBar()->getRootTab() ? getTabBar()->getRootTab()->getPage() : com::null_pointer<NotebookPage>(); }
-		NotebookPage* getCurrentPage() noexcept { return m_currentPage; }
+		NotebookPage* getCurrentPage() noexcept { return getTabBar()->getSelectedTab() ? getTabBar()->getSelectedTab()->getPage() : com::null_pointer<NotebookPage>(); }
 
 		template<NotebookPageType T = NotebookPage, typename... Args>
 		T* createPage(const std::string_view labelStr, Args&&... args) noexcept;
