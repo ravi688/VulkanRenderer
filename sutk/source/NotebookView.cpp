@@ -168,11 +168,13 @@ namespace SUTK
 
 	NotebookView::~NotebookView() noexcept
 	{
-		// NOTE: We need to traverse the linked list bi-directionally as the current page might not be the head node
-		com::TraverseLinkedListBiDirect(m_tabBar->getSelectedTab()->getPage(), [](NotebookPage* page) noexcept
+		if(m_tabBar->getRootTab())
 		{
-			page->getUIDriver().destroyObject<NotebookPage>(page);
-		});
+			com::TraverseLinkedList(m_tabBar->getRootTab()->getPage(), [](NotebookPage* page) noexcept
+			{
+				page->getUIDriver().destroyObject<NotebookPage>(page);
+			});
+		}
 		m_pageContainerParent->destroyAllChilds();
 		getUIDriver().destroyContainer<Panel>(m_pageContainerParent);
 		getUIDriver().destroyContainer<TabBar>(m_tabBar);
