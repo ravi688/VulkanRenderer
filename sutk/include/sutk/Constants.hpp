@@ -38,7 +38,17 @@ namespace SUTK
 
 			namespace Notebook
 			{
-				static constexpr Color4 TabSelectColor { 0x749bafffu };
+				namespace Tab
+				{
+					static constexpr Color4 SelectColor { 0x749bafffu };
+					static constexpr f32 CloseButtonSize { 0.5f };
+					static constexpr f32 LeftMargin { 0.2f };
+					static constexpr f32 RightMargin { 0.2f };
+					static constexpr f32 LabelCloseSpacing { };
+					static constexpr f32 LabelMaxSize { 8 }; // 8 centimeters
+					static constexpr f32 LabelMinSize { 3 }; // 3 centimeters
+					static constexpr f32 Height { 0.8f }; // 0.8 centimeters
+				}
 			}
 		}
 	}

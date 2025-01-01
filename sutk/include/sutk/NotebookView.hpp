@@ -7,6 +7,7 @@
 #include <sutk/Label.hpp> // for SUTK::Label::set()
 #include <sutk/AnimationEngine.hpp>
 #include <sutk/MaskedScrollableContainer.hpp>
+#include <sutk/TabButtonGraphic.hpp> // for SUTK::TabButtonGraphic
 
 #include <common/Concepts.hpp> // for com::CompareFunction
 #include <common/Event.hpp> // for com::Event
@@ -56,17 +57,13 @@ namespace SUTK
 		const std::string& getLabel() const noexcept;
 	};
 
-	class ImageButtonGraphic;
-	class DefaultButtonGraphic;
 	class NotebookView;
 
 	class SUTK_API TabView : public Button
 	{
 		friend class NotebookView;
 	private:
-		DefaultButtonGraphic* m_graphic;
-		Button* m_closeButton;
-		ImageButtonGraphic* m_closeButtonGraphic;
+		TabButtonGraphic* m_graphic;
 		// Preserve hover and press color of the m_graphic
 		// Since we modify those when the tab is selected
 		// we would need to restore them to their initial values
@@ -74,9 +71,8 @@ namespace SUTK
 		Color4 m_hoverColor;
 		Color4 m_pressColor;
 		Color4 m_idleColor;
-		static UIDriver::ImageReference s_closeIcon;
 
-		Button* getCloseButton() noexcept { return m_closeButton; }
+		Button* getCloseButton() noexcept { return m_graphic->getCloseButton(); }
 	public:
 		TabView(UIDriver& driver, Container* parent) noexcept;
 		~TabView() noexcept;

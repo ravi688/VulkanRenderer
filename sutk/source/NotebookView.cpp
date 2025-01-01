@@ -4,20 +4,11 @@
 #include <sutk/TextGroupContainer.hpp>
 #include <sutk/ContainerUtility.hpp>
 #include <sutk/ButtonGraphic.hpp> // for SUTK::ImageButtonGraphic
+#include <sutk/TabButtonGraphic.hpp> // for SUTK::TabButtonGraphic
 #include <sutk/Panel.hpp> // for SUTK::Panel
 #include <sutk/Constants.hpp>
 
 #define TAB_VIEW_MIN_WIDTH 3.0f
-#define TAB_BAR_HEIGHT 0.8f
-#define TAB_LABEL_LEFT_MARGIN 0.2f
-#define TAB_LABEL_TOP_MARGIN 0.2f
-#define TAB_LABEL_BOTTOM_MARGIN 0.2f
-#define TAB_LABEL_CLOSE_BUTTON_SPACING 0.1f
-#define CLOSE_BUTTON_RIGHT_MARGIN 0.2f
-#define CLOSE_BUTTON_WIDTH 0.5f
-#define CLOSE_BUTTON_HEIGHT 0.5f
-
-#define TAB_VIEW_MIDDLE_SPREAD 0.1f
 
 #define TAB_VIEW_ANIM_START_WIDTH 0.0f
 #define DEFAULT_NEW_TAB_ANIM_DURATION 0.28f
@@ -71,42 +62,21 @@ namespace SUTK
 			onDeactivate();
 	}
 
-	UIDriver::ImageReference TabView::s_closeIcon = UIDriver::InvalidImage;
-
-	TabView::TabView(UIDriver& driver, Container* parent) noexcept : Button(driver, parent, /* isCreateDefaultGraphic: */ true)
+	TabView::TabView(UIDriver& driver, Container* parent) noexcept : Button(driver, parent, /* isCreateDefaultGraphic: */ false)
 	{
-		m_graphic = getGraphicAs<DefaultButtonGraphic>();
-		m_hoverColor = m_graphic->getHoverColor();
-		m_pressColor = m_graphic->getPressColor();
-		m_idleColor = m_graphic->getIdleColor();
-		Label& label = m_graphic->getLabel();
-		label.setAlignment(HorizontalAlignment::Left, VerticalAlignment::Middle);
-		label.fitInParent({ TAB_LABEL_LEFT_MARGIN, TAB_LABEL_CLOSE_BUTTON_SPACING + CLOSE_BUTTON_RIGHT_MARGIN + CLOSE_BUTTON_WIDTH, TAB_LABEL_TOP_MARGIN, TAB_LABEL_BOTTOM_MARGIN  });
-		m_graphic->getAnchorRect()->fitToParentRect();
-
-		m_closeButton = driver.createContainer<Button>(this, /* isCreateDefaultGraphic: */ false);
-		m_closeButton->setRect({ getSize().width - CLOSE_BUTTON_WIDTH - CLOSE_BUTTON_RIGHT_MARGIN, 
-								(getSize().height - CLOSE_BUTTON_HEIGHT) * 0.5f,
-								 CLOSE_BUTTON_WIDTH, CLOSE_BUTTON_HEIGHT });
-		m_closeButton->getAnchorRect()->moveToRightMiddleOfParent();
-		m_closeButtonGraphic = driver.createContainer<ImageButtonGraphic>(m_closeButton);
-		if(!s_closeIcon)
-			s_closeIcon = driver.loadImage("svg_files/close-square-svgrepo-com.svg");
-		m_closeButtonGraphic->setImage(s_closeIcon);
+		m_graphic = driver.createContainer<TabButtonGraphic>(this);
+		setGraphic(m_graphic);
 	}
 
 	TabView::~TabView() noexcept
 	{
-		auto& driver = getUIDriver();
-		driver.destroyContainer<ImageButtonGraphic>(m_closeButtonGraphic);
-		driver.destroyContainer<Button>(m_closeButton);
+		getUIDriver().destroyContainer<TabButtonGraphic>(m_graphic);
 	}
 
 	void TabView::setLabel(const std::string_view str) noexcept
 	{
 		m_graphic->getLabel().set(str);
-		SUTK::Vec2Df size = m_graphic->getMinBoundSize();
-		setSize({ size.width + TAB_LABEL_CLOSE_BUTTON_SPACING + CLOSE_BUTTON_RIGHT_MARGIN + CLOSE_BUTTON_WIDTH, getSize().height });
+		setSize({ m_graphic->getMinBoundSize().width, getSize().height });
 	}
 
 	const std::string& TabView::getLabel() noexcept
@@ -116,18 +86,12 @@ namespace SUTK
 
 	void TabView::unselectedState() noexcept
 	{
-		auto* graphic = getGraphicAs<DefaultButtonGraphic>();
-		graphic->setHoverColor(m_hoverColor);
-		graphic->setPressColor(m_pressColor);
-		graphic->setIdleColor(m_idleColor);
+		m_graphic->unselectedState();
 	}
 
 	void TabView::selectedState() noexcept
 	{
-		auto* graphic = getGraphicAs<DefaultButtonGraphic>();
-		graphic->setIdleColor(Constants::Defaults::Notebook::TabSelectColor);
-		graphic->setHoverColor(Constants::Defaults::Notebook::TabSelectColor);
-		graphic->setPressColor(Constants::Defaults::Notebook::TabSelectColor);
+		m_graphic->selectedState();
 	}
 
 	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), GlobalMouseMoveHandlerObject(driver),
@@ -140,7 +104,7 @@ namespace SUTK
 		// NOTE: the 'getDepth() + 10000' is needed to keep the tabs always on top of the pages (pages can be also be scrolled up and overlap with the tabs!)
 		m_textGroupContainer = driver.createContainer<TextGroupContainer>(this, com::False, getDepth() + 10000);
 		LayoutAttributes attr = m_textGroupContainer->getLayoutAttributes();
-		attr.minSize.height = TAB_BAR_HEIGHT;
+		attr.minSize.height = Constants::Defaults::Notebook::Tab::Height;
 		attr.prefSize = attr.minSize;
 		m_textGroupContainer->setLayoutAttributes(attr);
 		m_tabBarBGPanel = driver.createContainer<Panel>(m_textGroupContainer);
