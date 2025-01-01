@@ -204,8 +204,13 @@ namespace SUTK
 			for(std::size_t i = m_tab->getIndex() + 1; i < childs.size(); ++i)
 				childs[i]->moveLeft(offset);
 			tabView->setSize({ TAB_VIEW_ANIM_START_WIDTH, tabView->getSize().height });
-			LayoutAttributes& attr = tabView->getLayoutAttributes();
+			// Insertion animation would still work fine if you remove these layout attribute updates
+			// Because the layout controller is locked anyway, however, if the layout controller isn't locked
+			// then we would need to update the layout attributes to agree with the Layout Controller.
+			// For this reasons, it is important to write code which works in theoretical scenarios.
+			LayoutAttributes attr = tabView->getLayoutAttributes();
 			attr.prefSize = tabView->getSize();
+			tabView->setLayoutAttributes(attr);
 		}
 		virtual void onStep(f32 deltaValue) noexcept override
 		{
@@ -215,8 +220,9 @@ namespace SUTK
 			for(std::size_t i = m_tab->getIndex() + 1; i < childs.size(); ++i)
 				childs[i]->moveRight(deltaValue);
 			tabView->extendRight(deltaValue);
-			LayoutAttributes& attr = tabView->getLayoutAttributes();
+			LayoutAttributes attr = tabView->getLayoutAttributes();
 			attr.prefSize = tabView->getSize();
+			tabView->setLayoutAttributes(attr);
 		}
 	public:
 		TabInsertAnimation(UIDriver& driver, TabAnimGroup* group, Tab* tab) noexcept : AnimContextBase(driver, group), m_tab(tab) { }
@@ -245,8 +251,9 @@ namespace SUTK
 			for(std::size_t i = m_tab->getIndex() + 1; i < childs.size(); ++i)
 				childs[i]->moveRight(deltaValue);
 			tabView->extendRight(deltaValue);
-			LayoutAttributes& attr = tabView->getLayoutAttributes();
+			LayoutAttributes attr = tabView->getLayoutAttributes();
 			attr.prefSize = tabView->getSize();
+			tabView->setLayoutAttributes(attr);
 		}
 		virtual void onEnd(com::Bool isAborted) noexcept override
 		{

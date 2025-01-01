@@ -2,6 +2,7 @@
 
 #include <sutk/defines.hpp> /* for Rect2D */
 #include <vector> /* for std::vector */
+#include <optional>
 #include <sutk/UIDriverObject.hpp> // for SUTK::UIDriverObject
 
 #include <sutk/IDebuggable.hpp> // for SUTK::IDebuggable class
@@ -52,7 +53,7 @@ namespace SUTK
 		std::vector<Container*> m_containers;
 		std::vector<IInputEventHandlerObject*>* m_inputEventHandlers;
 		Rect2Df m_rect;
-		LayoutAttributes m_layoutAttr;
+		std::optional<LayoutAttributes> m_layoutAttr;
 		com::Bool m_isLayoutIgnore;
 		AnchorRect* m_anchorRect;
 		Container* m_parent;
@@ -130,8 +131,7 @@ namespace SUTK
 		RecycleState getRecycleState() const noexcept { return m_recycleState; }
 		bool isRecyclable() const noexcept { return m_recycleState != RecycleState::Undefined; }
 
-		LayoutAttributes& getLayoutAttributes() noexcept { return m_layoutAttr; }
-		const LayoutAttributes& getLayoutAttributes() const noexcept { return m_layoutAttr; }
+		LayoutAttributes getLayoutAttributes() const noexcept;
 		void setLayoutAttributes(const LayoutAttributes& attrs) noexcept;
 		LayoutAttributes getAbsoluteLayoutAttributes() const noexcept;
 		com::Bool isLayoutIgnore() const noexcept { return m_isLayoutIgnore || com::Bool(!isActive()); }

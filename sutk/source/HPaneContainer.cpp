@@ -130,6 +130,7 @@ namespace SUTK
 
 	void HPaneContainer::recalibrate() noexcept
 	{
+		lockLayout();
 		// Explanation for the offset subtraction:
 		// Suppose I is the old/previous width of this rect,
 		// and F is the new width of this rect.
@@ -143,7 +144,7 @@ namespace SUTK
 		size -= offset;
 		for(Container* & externChild : m_externalChilds)
 		{
-			auto& attr = externChild->getLayoutAttributes();
+			auto attr = externChild->getLayoutAttributes();
 			attr.isNormalized = true;
 			attr.offset = -offset;
 			Vec2Df childSize = externChild->getRect().getSize();
@@ -152,9 +153,11 @@ namespace SUTK
 				attr.prefSize = attr.minSize;
 			else
 				attr.prefSize = { 1.0f, 1.0f };
+			externChild->setLayoutAttributes(attr);
 		}
 		// In case the function recalibrate() function is called manually by the user code
 		m_isCalibratedForFirstTime = true;
+		unlockLayout();
 	}
 
 	void HPaneContainer::onBeforeResize(Rect2Df newRect, bool isPositionChanged, bool isSizeChanged)

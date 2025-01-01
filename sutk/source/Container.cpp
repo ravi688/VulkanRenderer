@@ -13,7 +13,6 @@ namespace SUTK
 															UIDriverObject(driver), 
 															m_inputEventHandlers(NULL),
 															m_rect({0, 0, 5.0f, 5.0f}),
-															m_layoutAttr(false, { 0, 0 }, { 0, 0 }, { F32_INFINITY, F32_INFINITY }, { 5.0f, 5.0f }),
 															m_isLayoutIgnore(isLayoutIgnore),
 															m_anchorRect(NULL),
 															m_parent(NULL), 
@@ -413,22 +412,41 @@ namespace SUTK
 			recalculateLayoutParent();
 	}
 
+	LayoutAttributes Container::getLayoutAttributes() const noexcept
+	{
+		if(!m_layoutAttr)
+		{
+			auto size = getSize();
+			LayoutAttributes attr =
+			{ 
+				/*.isNormalized = */false, 
+				/*.offset = */{ 0, 0 }, 
+				/*.minSize = */size, 
+				/*.maxSize = */{ F32_INFINITY, F32_INFINITY }, 
+				/*.prefSize = */size
+			};
+			return attr;
+		}
+		return *m_layoutAttr;
+	}
+
 	LayoutAttributes Container::getAbsoluteLayoutAttributes() const noexcept
 	{
 		auto parent = getParent();
-		if(!(parent && m_layoutAttr.isNormalized))
-			return m_layoutAttr;
+		auto lytAttr = getLayoutAttributes();
+		if(!(parent && lytAttr.isNormalized))
+			return lytAttr;
 		LayoutAttributes absAttr { };
 		absAttr.isNormalized = false;
 		auto size = parent->getRect().getSize();
-		size += m_layoutAttr.offset;
-		absAttr.minSize = m_layoutAttr.minSize * size;
-		absAttr.maxSize = m_layoutAttr.maxSize * size;
-		if((m_layoutAttr.prefSize == Vec2Df(1.0f, 1.0f))
-			|| (m_layoutAttr.prefSize == Vec2Df(F32_INFINITY, F32_INFINITY)))
+		size += lytAttr.offset;
+		absAttr.minSize = lytAttr.minSize * size;
+		absAttr.maxSize = lytAttr.maxSize * size;
+		if((lytAttr.prefSize == Vec2Df(1.0f, 1.0f))
+			|| (lytAttr.prefSize == Vec2Df(F32_INFINITY, F32_INFINITY)))
 			absAttr.prefSize = { F32_INFINITY, F32_INFINITY };
 		else
-			absAttr.prefSize = m_layoutAttr.prefSize * size;
+			absAttr.prefSize = lytAttr.prefSize * size;
 		return absAttr;
 	}
 
@@ -443,14 +461,14 @@ namespace SUTK
 
 	void Container::setLayoutExpand() noexcept
 	{
-		auto& attr = getLayoutAttributes();
+		auto attr = getLayoutAttributes();
 		attr.prefSize = attr.maxSize;
 		setLayoutAttributes(attr);
 	}
 
 	void Container::setLayoutFixed(Vec2Df fixedSize) noexcept
 	{
-		auto& attr = getLayoutAttributes();
+		auto attr = getLayoutAttributes();
 		attr.minSize = fixedSize;
 		attr.prefSize = fixedSize;
 		setLayoutAttributes(attr);
