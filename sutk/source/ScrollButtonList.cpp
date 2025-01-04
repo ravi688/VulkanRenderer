@@ -7,13 +7,6 @@ namespace SUTK
 
 	}
 
-	Button* ScrollButtonList::onCreate() noexcept
-	{
-		auto button = MaskedScrollableContainer<ButtonListView>::onCreate();
-		updateMaskFor(button);
-		return button;
-	}
-
 	void ScrollButtonList::onParentResize(const SUTK::Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		MaskedScrollableContainer<ButtonListView>::onParentResize(newRect, isPositionChanged, isSizeChanged);

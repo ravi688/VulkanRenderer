@@ -9,13 +9,6 @@ namespace SUTK
 		getScrollContainer()->setScaleFactor(TOGGLE_BUTTON_HEIGHT);
 	}
 
-	ToggleButton* ScrollToggleButtonGroupView::onCreate() noexcept
-	{
-		auto button = MaskedScrollableContainer<ToggleButtonGroupView>::onCreate();
-		updateMaskFor(button);
-		return button;
-	}
-
 	void ScrollToggleButtonGroupView::onParentResize(const SUTK::Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		MaskedScrollableContainer<ToggleButtonGroupView>::onParentResize(newRect, isPositionChanged, isSizeChanged);
