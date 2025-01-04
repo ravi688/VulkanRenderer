@@ -66,8 +66,8 @@ namespace SUTK
 	{
 		_com_assert(m_childRect != NULL);
 		_com_assert(m_parentRect != NULL);
-		Rect2Df childRect = m_childRect->getRect();
-		Vec2Df size = m_parentRect->getSize();
+		const Rect2Df childRect = m_childRect->getRect();
+		const Vec2Df size = m_parentRect->getSize();
 		Rect2Df anchorRect;
 		anchorRect.setTopLeft(childRect.getTopLeft() / size);
 		anchorRect.setBottomRight(childRect.getBottomRight() / size);
@@ -83,10 +83,10 @@ namespace SUTK
 	{
 		_com_assert(m_childRect != NULL);
 		_com_assert(m_parentRect != NULL);
-		Rect2Df childRect = m_childRect->getRect();
-		Vec2Df size = m_parentRect->getSize();
+		// Create Rect of zero size (area)
 		Rect2Df anchorRect;
-		anchorRect.setPosition(childRect.getCenter() / size);
+		// Change its position
+		anchorRect.setPosition(m_childRect->getRect().getCenter() / m_parentRect->getSize());
 		setRect(anchorRect);
 	}
 

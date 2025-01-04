@@ -3,7 +3,7 @@
 #include <common/Bool.hpp> // for com::Bool
 #include <string> // for std::string
 #include <source_location> // for std::source_location
-#include <format> // for std::format()
+#include <sstream> // for std::stringstream
 
 namespace SUTK
 {
@@ -48,6 +48,14 @@ namespace SUTK::AutoTests
 		const std::string& getName() const noexcept { return m_name; }
 		com::Bool isUIDriverRequired() const noexcept { return m_isUIDriverRequired; }
 	};
+
+	// It's a template!
+	std::string GenerateFailureDescription(auto expected, auto got)
+	{
+		std::stringstream stream;
+		stream << "Expected " << expected << " but got " << got;
+		return stream.str();
+	}
 }
 
-#define EXPECT_EQ(var, expected) do { auto _var = (var); decltype(_var) _expected=(expected); if(_var != _expected) return TestResult::failed(std::format("Expected {} but got {}", _expected, _var)); } while(false)
+#define EXPECT_EQ(var, expected) do { auto _var = (var); decltype(_var) _expected=(expected); if(_var != _expected) return SUTK::AutoTests::TestResult::failed(SUTK::AutoTests::GenerateFailureDescription(_expected, _var)); } while(false)
