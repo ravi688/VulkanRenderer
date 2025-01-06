@@ -81,8 +81,7 @@ namespace SUTK
 			updateEventsOrder();
 		std::vector<Container*>& childs = getChilds();
 		for(Container* &child : childs)
-			if(child->hasInputEventHandlers())
-				child->updateEventsOrder();
+				child->updateEventsOrderRecursive();
 	}
 
 	void Container::setParentChildRelation(Container* parent, std::size_t index) noexcept
@@ -214,7 +213,6 @@ namespace SUTK
 
 	void Container::alwaysFitInParent(Vec4Df margins) noexcept
 	{
-		Container* parent = getParent();
 		fitInParent(margins);
 		getAnchorRect()->setRect({ 0.0f, 0.0f, 1.0f, 1.0f });
 	}
