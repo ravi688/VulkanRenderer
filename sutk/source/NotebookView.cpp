@@ -488,8 +488,8 @@ namespace SUTK
 		m_tabBar->lockLayout();
 		m_tabView->setLabel(str);
 		LayoutAttributes attr = m_tabView->getLayoutAttributes();
-		attr.minSize.width = TAB_VIEW_MIN_WIDTH;
 		attr.prefSize.width = std::max(TAB_VIEW_MIN_WIDTH, m_tabView->getSize().width);
+		attr.minSize.width = attr.prefSize.width;
 		m_tabView->setLayoutAttributes(attr);
 		m_tabBar->unlockLayout(true);
 	}

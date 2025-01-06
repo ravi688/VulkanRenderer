@@ -75,9 +75,15 @@ namespace SUTK
 				else if(keyCode == KeyCode::D)
 					this->m_notebookView->removePage(this->m_notebookView->getCurrentPage());
 				else if(keyCode == KeyCode::R)
-					this->m_notebookView->getRootPage()->getNext()->setLabel("Hello World, This is New Year");
+				{
+					if(this->m_notebookView->getRootPage())
+						this->m_notebookView->getRootPage()->getNext()->setLabel("Hello World, This is New Year");
+				}
 				else if(keyCode == KeyCode::T)
-					this->m_notebookView->getRootPage()->getNext()->setLabel("I really wanna solve world's greatest challenges!");
+				{
+					if(this->m_notebookView->getRootPage())
+						this->m_notebookView->getRootPage()->getNext()->setLabel("I really wanna solve world's greatest challenges!");
+				}
 				this->m_notebookView->dump();
 			}
 		});
