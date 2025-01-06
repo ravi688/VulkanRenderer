@@ -113,7 +113,9 @@ namespace SUTK
 		m_tabBarContainer = driver.createContainer<ScrollContainer>(m_tabBarBGPanel);
 		m_tabBarContainer->alwaysFitInParent();
 		m_tabBar = driver.createContainer<ScrollableTabBar>(m_tabBarContainer);
-		m_tabBar->alwaysFitInParent();
+		m_tabBar->fitInParent();
+		// The height of the tabBar must match with that of its parent (The ScrollContainer)
+		m_tabBar->getAnchorRect()->setRect({ 0, 0, 0, 1 });
 
 		m_tabAnimGroup = driver.getAnimationEngine().createAnimGroup<TabAnimGroup>(this);
 		m_tabShiftAnimGroup = driver.getAnimationEngine().createAnimGroup<TabShiftAnimGroup>(this);
@@ -492,7 +494,7 @@ namespace SUTK
 		m_tabBar->unlockLayout(true);
 	}
 
-	TabBar::TabBar(UIDriver& driver, Container* parent) noexcept : HBoxContainer(driver, parent), m_root(com::null_pointer<Tab>())
+	TabBar::TabBar(UIDriver& driver, Container* parent) noexcept : HBoxContainer(driver, parent), m_root(com::null_pointer<Tab>()), m_selectedTab(com::null_pointer<Tab>())
 	{
 	}
 
