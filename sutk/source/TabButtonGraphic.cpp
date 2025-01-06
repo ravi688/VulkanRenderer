@@ -28,6 +28,7 @@ namespace SUTK
 		if(!s_closeIcon)
 			s_closeIcon = driver.loadImage("svg_files/close-square-svgrepo-com.svg");
 		m_closeButtonGraphic->setImage(s_closeIcon);
+		m_closeButton->setGraphic(m_closeButtonGraphic);
 		
 		m_hoverColor = getHoverColor();
 		m_pressColor = getPressColor();
