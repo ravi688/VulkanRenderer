@@ -358,7 +358,10 @@ namespace SUTK
 	void TabAnimGroup::onStepAll() noexcept
 	{
 		auto* tabBar = m_notebook->getTabBar();
-		tabBar->scrollToTab(tabBar->getSelectedTab());
+		// onStepAll() is called even for the last (only one is left) stepped animation and that animation might destroy the only tab left in the TabBar
+		// Causing tabBar->getSelectedTab() to return nullptr, so we need to check for null here.
+		if(tabBar->getSelectedTab())
+			tabBar->scrollToTab(tabBar->getSelectedTab());
 	}
 	TabAnimGroup::TabAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept : AnimGroup(driver), m_notebook(notebook)
 	{

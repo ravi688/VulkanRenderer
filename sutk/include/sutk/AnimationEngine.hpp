@@ -56,6 +56,8 @@ namespace SUTK
 			// Called when all the animations in this group have ended
 			virtual void onWhenAllEnd() noexcept { }
 			// Called after when onStep() is invoked over all animations in this group
+			// NOTE: It is called even if the last stepped animation is ended resulting in zero animation count.
+			// So, if you're destroy some objects in onEnd() of an Animation then make sure to check of nulls.
 			virtual void onStepAll() noexcept { }
 		};
 		class AnimContextBase : public UIDriverObject
