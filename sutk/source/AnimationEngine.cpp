@@ -33,6 +33,8 @@ namespace SUTK
 		for(AnimGroup* group : m_animGroups)
 		{
 			auto& anims = group->getAnims();
+			if(!anims.size())
+				continue;
 			anims.traverse([](AnimContextBase* ctx) noexcept
 			{
 				// Publish on start event for the first time (first frame of the animation)
@@ -49,6 +51,7 @@ namespace SUTK
 					delete ctx;
 				}
 			});
+			group->onStepAll();
 		}
 	}
 }

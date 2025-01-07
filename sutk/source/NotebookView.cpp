@@ -355,6 +355,11 @@ namespace SUTK
 		std::cout << "All ended" << std::endl;
 		m_notebook->getTabBar()->unlockLayout(true);
 	}
+	void TabAnimGroup::onStepAll() noexcept
+	{
+		auto* tabBar = m_notebook->getTabBar();
+		tabBar->scrollToTab(tabBar->getSelectedTab());
+	}
 	TabAnimGroup::TabAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept : AnimGroup(driver), m_notebook(notebook)
 	{
 

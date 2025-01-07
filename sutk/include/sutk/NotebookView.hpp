@@ -162,6 +162,7 @@ namespace SUTK
 		virtual void onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept override;
 		virtual void onWhenAnyStart() noexcept override;
 		virtual void onWhenAllEnd() noexcept override;
+		virtual void onStepAll() noexcept override;
 	public:
 		TabAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept;
 		NotebookView* getNotebook() noexcept { return m_notebook; }

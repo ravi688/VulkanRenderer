@@ -20,15 +20,13 @@ namespace SUTK
 		class AnimGroup : public UIDriverObject
 		{
 			friend class AnimContextBase;
+			friend class AnimationEngine;
 		public:
 			typedef com::UnorderedEraseSafeVectorProxy<AnimContextBase*> AnimContextBaseVector;
 		private:
 			AnimContextBaseVector m_anims;
 			u32 m_count;
 			u32 m_stepCount;
-		public:
-			AnimContextBaseVector& getAnims() noexcept { return m_anims; }
-			const AnimContextBaseVector& getAnims() const noexcept { return m_anims; }
 			void present(AnimContextBase* animContext) noexcept
 			{ 
 				onPresent(animContext);
@@ -43,22 +41,21 @@ namespace SUTK
 				if(!m_count)
 					onWhenAllEnd();
 			}
-			void step() noexcept
-			{
-				m_stepCount += 1;
-				if(m_stepCount == m_count)
-				{
-					onStepAll();
-					m_stepCount = 0;
-				}
-			}
+		public:
+			AnimContextBaseVector& getAnims() noexcept { return m_anims; }
+			const AnimContextBaseVector& getAnims() const noexcept { return m_anims; }
 		protected:
 			AnimGroup(UIDriver& driver) noexcept : UIDriverObject(driver), m_count(0), m_stepCount(0) { }
 			virtual ~AnimGroup() noexcept = default;
+			// Called whenever a new animation is added into this group
 			virtual void onPresent(AnimContextBase* animContext) noexcept { }
+			// Called whenever a animation in this group is ended (either voluntarily or by abort)
 			virtual void onAbsent(AnimContextBase* animContext) noexcept { }
+			// Called whenever a new animation is added (started)
 			virtual void onWhenAnyStart() noexcept { }
+			// Called when all the animations in this group have ended
 			virtual void onWhenAllEnd() noexcept { }
+			// Called after when onStep() is invoked over all animations in this group
 			virtual void onStepAll() noexcept { }
 		};
 		class AnimContextBase : public UIDriverObject
@@ -82,8 +79,6 @@ namespace SUTK
 				}
 				else m_curValue += deltaValue;
 				onStep(deltaValue);
-				if(m_group)
-					m_group->step();
 				return com::Bool { m_curValue == m_endValue };
 			}
 
