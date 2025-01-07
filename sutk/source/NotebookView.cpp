@@ -594,6 +594,19 @@ namespace SUTK
 		}
 	}
 
+	void ScrollableTabBar::scrollToTab(Tab* tab) noexcept
+	{
+		ScrollContainer* scrollCont = getScrollContainer();
+		// Get rectangle of TabView in the local space of ScrollContainer
+		auto rect = tab->getTabView()->getRectRelativeTo(scrollCont);
+		// If the TabView is hiding on the right side of the ScrollContainer then scroll to left
+		if(f32 distance = rect.getRight() - scrollCont->getSize().width; distance > 0)
+			scrollCont->addScrollDelta(Vec2Df::left() * distance);
+		// else If the TabView is hiding on the left side of the ScrollContainer then scroll to right
+		else if(f32 distance = rect.getLeft() - scrollCont->getPosition().x; distance < 0)
+			scrollCont->addScrollDelta(Vec2Df::left() * distance);
+	}
+
 	Tab* NotebookView::createTab(const std::string_view labelStr, NotebookPage* page, Tab* afterTab) noexcept
 	{
 		// Create TabView
@@ -656,6 +669,8 @@ namespace SUTK
 	void NotebookView::viewPage(NotebookPage* page) noexcept
 	{
 		m_tabBar->selectTab(page->getTab());
+		// The tab associated with this page must be in the view
+		m_tabBar->scrollToTab(page->getTab());
 	}
 
 	static NotebookPage* GetAdjacentPage(NotebookPage* page) noexcept

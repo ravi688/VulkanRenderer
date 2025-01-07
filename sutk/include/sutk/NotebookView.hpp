@@ -136,7 +136,16 @@ namespace SUTK
 		Tab* getSelectedTab() noexcept { return m_selectedTab; }
 	};
 
-	typedef MaskedScrollableContainer<TabBar> ScrollableTabBar;
+	class SUTK_API ScrollableTabBar : public MaskedScrollableContainer<TabBar>
+	{
+		using MaskedScrollableContainer::MaskedScrollableContainer;
+	public:
+		// Brings (instantaneously) TabView associated with the Tab under the area of ScrollContainer of this ScrollableTabBar.
+		// If the Tab is hiding on the right side of the ScrollContainer, then the Tab is brought into view on the Right side
+		// If the Tab is hiding on the left side of the ScrollContainer, then the Tab is brought into view on the Left side
+		// No action is taken if the Tab is already into view.
+		void scrollToTab(Tab* tab) noexcept;
+	};
 
 	class TabRemoveAnimation;
 	class TabInsertAnimation;
@@ -231,7 +240,7 @@ namespace SUTK
 		~NotebookView() noexcept;
 		void checkForTabSwap() noexcept;
 
-		TabBar* getTabBar() noexcept { return m_tabBar; }
+		ScrollableTabBar* getTabBar() noexcept { return m_tabBar; }
 
 		OnPageSelectEvent& getOnPageSelectEvent() noexcept { return m_onPageSelectEvent; }
 
