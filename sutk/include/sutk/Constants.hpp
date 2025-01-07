@@ -46,6 +46,14 @@ namespace SUTK
 					static constexpr f32 RightMargin { 0.2f };
 					static constexpr f32 LabelCloseSpacing { };
 					static constexpr f32 Height { 0.8f }; // 0.8 centimeters
+					static constexpr f32 MinWidth { 3.0f };
+				}
+
+				namespace TabBar
+				{
+					static constexpr f32 TabShiftAnimDuration { 0.2f };
+					static constexpr f32 TabViewAnimStartWidth { 0.0f };
+					static constexpr f32 NewTabAnimDuration { 0.28f };
 				}
 			}
 		}

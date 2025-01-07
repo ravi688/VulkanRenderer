@@ -8,6 +8,7 @@
 #include <sutk/AnimationEngine.hpp>
 #include <sutk/MaskedScrollableContainer.hpp>
 #include <sutk/TabButtonGraphic.hpp> // for SUTK::TabButtonGraphic
+#include <sutk/Constants.hpp> // for SUTK::Constants::Defaults
 
 #include <common/Concepts.hpp> // for com::CompareFunction
 #include <common/Event.hpp> // for com::Event
@@ -57,11 +58,11 @@ namespace SUTK
 		const std::string& getLabel() const noexcept;
 	};
 
-	class NotebookView;
+	class TabBar;
 
 	class SUTK_API TabView : public Button
 	{
-		friend class NotebookView;
+		friend class TabBar;
 	private:
 		TabButtonGraphic* m_graphic;
 		// Preserve hover and press color of the m_graphic
@@ -84,7 +85,9 @@ namespace SUTK
 		void selectedState() noexcept;
 	};
 
-	class TabBar;
+	class NotebookView;
+	class TabRemoveAnimation;
+	class TabInsertAnimation;
 
 	class SUTK_API Tab : public com::LinkedListNodeBase<Tab>
 	{
@@ -115,46 +118,10 @@ namespace SUTK
 		u32 getLinkedListIndex() const noexcept;
 	};
 
-	class SUTK_API TabBar : public HBoxContainer
-	{
-		friend class NotebookView;
-	private:
-		Tab* m_root;
-		// This can never be null if m_root is not null
-		Tab* m_selectedTab;
-	protected:
-		virtual void onRecalculateLayout() noexcept override;
-	public:
-		TabBar(UIDriver& driver, Container* parent) noexcept;
-		~TabBar() noexcept;
-
-		Tab* createTab(const std::string_view labelStr, Tab* after = com::null_pointer<Tab>()) noexcept;
-		void destroyTab(Tab* tab) noexcept;
-		void removeTab(Tab* tab) noexcept;
-		void selectTab(Tab* tab) noexcept;
-		Tab* getRootTab() noexcept { return m_root; }
-		Tab* getSelectedTab() noexcept { return m_selectedTab; }
-	};
-
-	class SUTK_API ScrollableTabBar : public MaskedScrollableContainer<TabBar>
-	{
-		using MaskedScrollableContainer::MaskedScrollableContainer;
-	public:
-		// Brings (instantaneously) TabView associated with the Tab under the area of ScrollContainer of this ScrollableTabBar.
-		// If the Tab is hiding on the right side of the ScrollContainer, then the Tab is brought into view on the Right side
-		// If the Tab is hiding on the left side of the ScrollContainer, then the Tab is brought into view on the Left side
-		// No action is taken if the Tab is already into view.
-		void scrollToTab(Tab* tab) noexcept;
-	};
-
-	class TabRemoveAnimation;
-	class TabInsertAnimation;
-	class NotebookView;
-
 	class TabAnimGroup : public AnimationEngine::AnimGroup
 	{
 	private:
-		NotebookView* m_notebook;
+		TabBar* m_tabBar;
 		std::vector<TabRemoveAnimation*> m_inFlightRemoves;
 		std::vector<TabInsertAnimation*> m_inFlightInserts;	
 	protected:
@@ -162,10 +129,20 @@ namespace SUTK
 		virtual void onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept override;
 		virtual void onWhenAnyStart() noexcept override;
 		virtual void onWhenAllEnd() noexcept override;
+	public:
+		TabAnimGroup(UIDriver& driver, TabBar* tabBar) noexcept;
+	};
+
+	class ScrollableTabBar;
+
+	class ScrollTabAnimGroup : public TabAnimGroup
+	{
+	private:
+		ScrollableTabBar* m_scrollableTabBar;
+	protected:
 		virtual void onStepAll() noexcept override;
 	public:
-		TabAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept;
-		NotebookView* getNotebook() noexcept { return m_notebook; }
+		ScrollTabAnimGroup(UIDriver& driver, ScrollableTabBar* tabBar) noexcept;
 	};
 
 	class TabShiftAnimation;
@@ -173,7 +150,7 @@ namespace SUTK
 	class TabShiftAnimGroup : public AnimationEngine::AnimGroup
 	{
 	private:
-		NotebookView* m_notebook;
+		TabBar* m_tabBar;
 		std::vector<TabShiftAnimation*> m_inFlightLeftShifts;
 		std::vector<TabShiftAnimation*> m_inFlightRightShifts;	
 		com::Bool m_isAborting;
@@ -181,23 +158,18 @@ namespace SUTK
 		virtual void onPresent(AnimationEngine::AnimContextBase* animContext) noexcept override;
 		virtual void onAbsent(AnimationEngine::AnimContextBase* animContext) noexcept override;
 	public:
-		TabShiftAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept;
+		TabShiftAnimGroup(UIDriver& driver, TabBar* tabBar) noexcept;
 
-		NotebookView* getNotebook() noexcept { return m_notebook; }
 		void abort() noexcept;
 	};
 
-	template<typename T>
-	concept NotebookPageType = std::derived_from<T, NotebookPage>;
-
-	class Panel;
-	class TextGroupContainer;
-	
-	class SUTK_API NotebookView : public VBoxContainer, public GlobalMouseMoveHandlerObject
+	class SUTK_API TabBar : public HBoxContainer, public GlobalMouseMoveHandlerObject
 	{
+		friend class NotebookView;
 		friend class TabAnimGroup;
 	public:
-		typedef com::Event<NotebookView, NotebookPage*> OnPageSelectEvent;
+		using OnSelectEvent = com::Event<com::no_publish_ptr_t, Tab*>;
+		using OnRemoveEvent = com::Event<com::no_publish_ptr_t, Tab*>;
 	private:
 		struct TabRearrangeContext
 		{
@@ -207,21 +179,22 @@ namespace SUTK
 			com::Bool isMoved;
 			Layer layer;
 		};
-	private:
-		// TextGroup for TabView(s)
-		TextGroupContainer* m_textGroupContainer;
-		Panel* m_tabBarBGPanel;
-		ScrollContainer* m_tabBarContainer;
-		ScrollableTabBar* m_tabBar;
-		Panel* m_pageContainerParent;
-		TabAnimGroup* m_tabAnimGroup;
-		TabShiftAnimGroup* m_tabShiftAnimGroup;
-		OnPageSelectEvent m_onPageSelectEvent;
-		TabRearrangeContext m_tabRearrangeContext;
-		com::Bool m_isRunning;
-		com::Bool m_isStartAnimBatch;
-		f32 m_animDuration;
+		
+		Tab* m_root;
+		// This can never be null if m_root is not null
+		Tab* m_selectedTab;
+		OnSelectEvent m_onSelectEvent;
+		OnRemoveEvent m_onRemoveEvent;
 
+		// Memory Data Variables associated with Tab Animations
+		// <begin>
+		TabAnimGroup* m_tabAnimGroup;
+		com::Bool m_isTabAnimGroupOwner { com::False };
+		TabShiftAnimGroup* m_tabShiftAnimGroup;
+		TabRearrangeContext m_tabRearrangeContext;
+		com::Bool m_isStartAnimBatch { com::False };
+		f32 m_animDuration { Constants::Defaults::Notebook::TabBar::NewTabAnimDuration };
+		// <end>
 
 		void dispatchAnimNewTab(Tab* tab) noexcept;
 		void dispatchAnimRemoveTab(Tab* tab) noexcept;
@@ -229,26 +202,82 @@ namespace SUTK
 		void swapWithNext(Tab* tab) noexcept;
 		void swapWithPrev(Tab* tab) noexcept;
 
+		TabView* createTabView(Tab* tab) noexcept;
+
+	protected:
+		TabAnimGroup* getTabAnimGroup() noexcept { return m_tabAnimGroup; }
+		// override of HBoxContainer::onRecalculateLayout()
+		virtual void onRecalculateLayout() noexcept override;
+		// Override of GlobalMouseMoveHandlerObject::onMouseMove()
+		virtual void onMouseMove(Vec2Df pos) noexcept override;
+		virtual void onTabPullOut(Tab* tab) noexcept { }
+		virtual void onTabPutBack(Tab* tab) noexcept { }
+	public:
+		TabBar(UIDriver& driver, Container* parent, std::optional<TabAnimGroup*> tabAnimGroup = { }) noexcept;
+		~TabBar() noexcept;
+
+		void checkForTabSwap() noexcept;
+
+		Tab* createTab(const std::string_view labelStr, Tab* after = com::null_pointer<Tab>()) noexcept;
+		void destroyTab(Tab* tab) noexcept;
+		void removeTab(Tab* tab) noexcept;
+		void selectTab(Tab* tab) noexcept;
+
+		// Setters
+		void setAnimDuration(f32 duration) noexcept { m_animDuration = duration; }
+
+		// Getters
+		OnSelectEvent& getOnSelectEvent() noexcept { return m_onSelectEvent; }
+		OnRemoveEvent& getOnRemoveEvent() noexcept { return m_onRemoveEvent; }
+		Tab* getRootTab() noexcept { return m_root; }
+		Tab* getSelectedTab() noexcept { return m_selectedTab; }
+	};
+
+	class SUTK_API ScrollableTabBar : public MaskedScrollableContainer<TabBar>
+	{
+		using BaseType = MaskedScrollableContainer<TabBar>;
+	protected:
+		virtual void onTabPullOut(Tab* tab) noexcept override;
+		virtual void onTabPutBack(Tab* tab) noexcept override;
+	public:
+		ScrollableTabBar(UIDriver& driver, Container* parent) noexcept;
+		~ScrollableTabBar() noexcept;
+		// Brings (instantaneously) TabView associated with the Tab under the area of ScrollContainer of this ScrollableTabBar.
+		// If the Tab is hiding on the right side of the ScrollContainer, then the Tab is brought into view on the Right side
+		// If the Tab is hiding on the left side of the ScrollContainer, then the Tab is brought into view on the Left side
+		// No action is taken if the Tab is already into view.
+		void scrollToTab(Tab* tab) noexcept;
+	};
+
+
+	template<typename T>
+	concept NotebookPageType = std::derived_from<T, NotebookPage>;
+
+	class Panel;
+	class TextGroupContainer;
+	
+	class SUTK_API NotebookView : public VBoxContainer
+	{
+	public:
+		typedef com::Event<NotebookView, NotebookPage*> OnPageSelectEvent;
+	private:
+		// TextGroup for TabView(s)
+		TextGroupContainer* m_textGroupContainer;
+		Panel* m_tabBarBGPanel;
+		ScrollContainer* m_tabBarContainer;
+		ScrollableTabBar* m_tabBar;
+		Panel* m_pageContainerParent;
+		OnPageSelectEvent m_onPageSelectEvent;
+		com::Bool m_isRunning;
+
 		// Below methods are being used inside createPage<> method
 		Tab* createTab(const std::string_view labelStr, NotebookPage* page, Tab* afterTab) noexcept;
 		Container* createPageContainer() noexcept;
 		void setupTabEvents(Tab* tab, NotebookPage* page) noexcept;
-	protected:
-		virtual void onMouseMove(Vec2Df pos) noexcept override;
 
 	public:
 		NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore = com::False, Layer layer = InvalidLayer) noexcept;
 		~NotebookView() noexcept;
-		void checkForTabSwap() noexcept;
-
-		ScrollableTabBar* getTabBar() noexcept { return m_tabBar; }
-
-		OnPageSelectEvent& getOnPageSelectEvent() noexcept { return m_onPageSelectEvent; }
-
-		void setAnimDuration(f32 duration) noexcept { m_animDuration = duration; }
-
-		NotebookPage* getRootPage() noexcept { return getTabBar()->getRootTab() ? getTabBar()->getRootTab()->getPage() : com::null_pointer<NotebookPage>(); }
-		NotebookPage* getCurrentPage() noexcept { return getTabBar()->getSelectedTab() ? getTabBar()->getSelectedTab()->getPage() : com::null_pointer<NotebookPage>(); }
 
 		template<NotebookPageType T = NotebookPage, typename... Args>
 		T* createPage(const std::string_view labelStr, Args&&... args) noexcept;
@@ -258,6 +287,12 @@ namespace SUTK
 		void removePage(NotebookPage* page) noexcept;
 
 		void dump() noexcept;
+
+		// Getters
+		ScrollableTabBar* getTabBar() noexcept { return m_tabBar; }
+		OnPageSelectEvent& getOnPageSelectEvent() noexcept { return m_onPageSelectEvent; }
+		NotebookPage* getRootPage() noexcept { return getTabBar()->getRootTab() ? getTabBar()->getRootTab()->getPage() : com::null_pointer<NotebookPage>(); }
+		NotebookPage* getCurrentPage() noexcept { return getTabBar()->getSelectedTab() ? getTabBar()->getSelectedTab()->getPage() : com::null_pointer<NotebookPage>(); }
 	};
 	
 	template<NotebookPageType T, typename... Args>
@@ -275,8 +310,6 @@ namespace SUTK
 		T* page = getUIDriver().createObject<T>(container, std::forward<Args&&>(args)...);
 		// Create Tab for the page
 		Tab* tab = createTab(labelStr, page, afterPage ? afterPage->getTab() : com::null_pointer<Tab>());
-		// Subscribe to tab select and deselect events to activate or deactivate the associate page
-		setupTabEvents(tab, page);
 		// Newly created page should be activated
 		viewPage(page);
 		dump();

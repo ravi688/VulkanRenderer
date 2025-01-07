@@ -8,12 +8,6 @@
 #include <sutk/Panel.hpp> // for SUTK::Panel
 #include <sutk/Constants.hpp>
 
-#define TAB_VIEW_MIN_WIDTH 3.0f
-
-#define TAB_VIEW_ANIM_START_WIDTH 0.0f
-#define DEFAULT_NEW_TAB_ANIM_DURATION 0.28f
-#define TAB_SHIFT_ANIM_DURATION 0.2f
-
 namespace SUTK
 {
 
@@ -94,11 +88,8 @@ namespace SUTK
 		m_graphic->selectedState();
 	}
 
-	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer), GlobalMouseMoveHandlerObject(driver),
-																																					m_onPageSelectEvent(this),
-																																					m_isRunning(com::False),
-																																					m_isStartAnimBatch(com::False),
-																																					m_animDuration(DEFAULT_NEW_TAB_ANIM_DURATION)
+	NotebookView::NotebookView(UIDriver& driver, Container* parent, com::Bool isLayoutIgnore, Layer layer) noexcept : VBoxContainer(driver, parent, /* isLockLayout: */ true, isLayoutIgnore, layer),
+																													m_onPageSelectEvent(this)
 	{
 		// Create Tab Container
 		// NOTE: the 'getDepth() + 10000' is needed to keep the tabs always on top of the pages (pages can be also be scrolled up and overlap with the tabs!)
@@ -116,9 +107,21 @@ namespace SUTK
 		m_tabBar->fitInParent();
 		// The height of the tabBar must match with that of its parent (The ScrollContainer)
 		m_tabBar->getAnchorRect()->setRect({ 0, 0, 0, 1 });
-
-		m_tabAnimGroup = driver.getAnimationEngine().createAnimGroup<TabAnimGroup>(this);
-		m_tabShiftAnimGroup = driver.getAnimationEngine().createAnimGroup<TabShiftAnimGroup>(this);
+		m_tabBar->getOnSelectEvent().subscribe([this](Tab* tab) noexcept
+		{
+			this->m_onPageSelectEvent.publish(tab->getPage());
+		});
+		m_tabBar->getOnRemoveEvent().subscribe([this](Tab* tab) noexcept
+		{
+			auto* page = tab->getPage();
+			// Save pointer to the Page's Container object before destroying the NotebookPage object
+			// This makes sure any Container object instantiated inside the NotebookPage (in the derived class) is destroyed
+			Container* pageContainer = page->m_container;
+			getUIDriver().destroyObject<NotebookPage>(page);
+			// Now destroy the Page Container
+			getUIDriver().destroyContainer<Container>(pageContainer);
+			tab->setPage(com::null_pointer<NotebookPage>());
+		});
 
 		// Create Container for holding page container
 		m_pageContainerParent = driver.createContainer<Panel>(this);
@@ -129,7 +132,6 @@ namespace SUTK
 		m_pageContainerParent->setColor(Color4::grey(0.6f));
 
 		unlockLayout();
-		this->GlobalMouseMoveHandlerObject::sleep();
 	}
 
 	NotebookView::~NotebookView() noexcept
@@ -147,8 +149,6 @@ namespace SUTK
 		getUIDriver().destroyContainer<ScrollContainer>(m_tabBarContainer);
 		getUIDriver().destroyContainer<Panel>(m_tabBarBGPanel);
 		getUIDriver().destroyContainer<TextGroupContainer>(m_textGroupContainer);
-		getUIDriver().getAnimationEngine().destroyAnimGroup<TabAnimGroup>(m_tabAnimGroup);
-		getUIDriver().getAnimationEngine().destroyAnimGroup<TabShiftAnimGroup>(m_tabShiftAnimGroup);
 	}
 
 	class TabInsertAnimation : public AnimationEngine::AnimContextBase
@@ -162,14 +162,14 @@ namespace SUTK
 			AnimContextBase::onStart();
 			TabView* tabView = m_tab->getTabView();
 			f32 dstTabWidth = tabView->getSize().width;
-			f32 offset = dstTabWidth - TAB_VIEW_ANIM_START_WIDTH;
-			setSpeed(offset / DEFAULT_NEW_TAB_ANIM_DURATION);
+			f32 offset = dstTabWidth - Constants::Defaults::Notebook::TabBar::TabViewAnimStartWidth;
+			setSpeed(offset / Constants::Defaults::Notebook::TabBar::NewTabAnimDuration);
 			setLength(offset);
 			Container* tabContainer = tabView->getParent();
 			std::vector<Container*>& childs = tabContainer->getChilds();
 			for(std::size_t i = m_tab->getIndex() + 1; i < childs.size(); ++i)
 				childs[i]->moveLeft(offset);
-			tabView->setSize({ TAB_VIEW_ANIM_START_WIDTH, tabView->getSize().height });
+			tabView->setSize({ Constants::Defaults::Notebook::TabBar::TabViewAnimStartWidth, tabView->getSize().height });
 			// Insertion animation would still work fine if you remove these layout attribute updates
 			// Because the layout controller is locked anyway, however, if the layout controller isn't locked
 			// then we would need to update the layout attributes to agree with the Layout Controller.
@@ -204,9 +204,9 @@ namespace SUTK
 		virtual void onStart() noexcept override
 		{
 			AnimContextBase::onStart();
-			f32 dstTabWidth = TAB_VIEW_ANIM_START_WIDTH;
+			f32 dstTabWidth = Constants::Defaults::Notebook::TabBar::TabViewAnimStartWidth;
 			f32 offset = dstTabWidth - m_tab->getTabView()->getSize().width;
-			setSpeed(offset / DEFAULT_NEW_TAB_ANIM_DURATION);
+			setSpeed(offset / Constants::Defaults::Notebook::TabBar::NewTabAnimDuration);
 			setLength(offset);
 		}
 		virtual void onStep(f32 deltaValue) noexcept override
@@ -230,57 +230,6 @@ namespace SUTK
 		TabRemoveAnimation(UIDriver& driver, TabAnimGroup* group, Tab* tab, TabBar* tabBar) noexcept : AnimContextBase(driver, group), m_tab(tab), m_tabBar(tabBar) { }
 	};
 
-	template<typename T>
-	static void RemoveLinkedListNode(T* node, com::Bool isSetNull = com::True) noexcept
-	{
-		if(node->getPrev())
-			node->getPrev()->setNext(node->getNext());
-		if(node->getNext())
-			node->getNext()->setPrev(node->getPrev());
-		if(isSetNull)
-		{
-			node->setNext(com::null_pointer<T>());
-			node->setPrev(com::null_pointer<T>());
-		}
-	}
-
-	template<typename T>
-	static void InsertLinkedListNodeAfter(T* node, T* after) noexcept
-	{
-		if(auto afterNext = after->getNext())
-		{
-			afterNext->setPrev(node);
-			node->setNext(afterNext);
-		}
-		node->setPrev(after);	
-		after->setNext(node);
-	}
-
-	template<typename T>
-	static void InsertLinkedListNodeBefore(T* node, T* before) noexcept
-	{
-		if(auto beforePrev = before->getPrev())
-		{
-			beforePrev->setNext(node);
-			node->setPrev(beforePrev);
-		}
-		node->setNext(before);
-		before->setPrev(node);
-	}
-
-	template<typename T>
-	u32 GetLinkedListNodeIndex(const T* node) noexcept
-	{
-		u32 index = 0;
-		node = node->getPrev();
-		while(node)
-		{
-			++index;
-			node = node->getPrev();
-		}
-		return index;
-	}
-
 	class TabShiftAnimation : public AnimationEngine::AnimContextBase
 	{
 		friend class TabAnimGroup;
@@ -294,7 +243,7 @@ namespace SUTK
 			AnimContextBase::onStart();
 			f32 offset = m_tab->getPos().x - m_tab->getTabView()->getPosition().x;
 			std::cout << "offset: " << offset << std::endl;
-			setSpeed(offset / TAB_SHIFT_ANIM_DURATION);
+			setSpeed(offset / Constants::Defaults::Notebook::TabBar::TabShiftAnimDuration);
 			setLength(offset);
 		}
 		virtual void onStep(f32 deltaValue) noexcept override
@@ -347,25 +296,30 @@ namespace SUTK
 	void TabAnimGroup::onWhenAnyStart() noexcept
 	{
 		std::cout << "Any started" << std::endl;
-		if(!m_notebook->getTabBar()->isLockedLayout())
-			m_notebook->getTabBar()->lockLayout();
+		if(!m_tabBar->isLockedLayout())
+			m_tabBar->lockLayout();
 	}
 	void TabAnimGroup::onWhenAllEnd() noexcept
 	{
 		std::cout << "All ended" << std::endl;
-		m_notebook->getTabBar()->unlockLayout(true);
+		m_tabBar->unlockLayout(true);
 	}
-	void TabAnimGroup::onStepAll() noexcept
+	TabAnimGroup::TabAnimGroup(UIDriver& driver, TabBar* tabBar) noexcept : AnimGroup(driver), m_tabBar(tabBar)
 	{
-		auto* tabBar = m_notebook->getTabBar();
+
+	}
+
+	ScrollTabAnimGroup::ScrollTabAnimGroup(UIDriver& driver, ScrollableTabBar* tabBar) noexcept : TabAnimGroup(driver, tabBar), m_scrollableTabBar(tabBar)
+	{
+
+	}
+	void ScrollTabAnimGroup::onStepAll() noexcept
+	{
+		auto* tabBar = m_scrollableTabBar;
 		// onStepAll() is called even for the last (only one is left) stepped animation and that animation might destroy the only tab left in the TabBar
 		// Causing tabBar->getSelectedTab() to return nullptr, so we need to check for null here.
 		if(tabBar->getSelectedTab())
 			tabBar->scrollToTab(tabBar->getSelectedTab());
-	}
-	TabAnimGroup::TabAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept : AnimGroup(driver), m_notebook(notebook)
-	{
-
 	}
 
 	void TabShiftAnimGroup::onPresent(AnimationEngine::AnimContextBase* animContext) noexcept
@@ -386,7 +340,7 @@ namespace SUTK
 	{
 
 	}
-	TabShiftAnimGroup::TabShiftAnimGroup(UIDriver& driver, NotebookView* notebook) noexcept : AnimGroup(driver), m_notebook(notebook), m_isAborting(com::False)
+	TabShiftAnimGroup::TabShiftAnimGroup(UIDriver& driver, TabBar* tabBar) noexcept : AnimGroup(driver), m_tabBar(tabBar), m_isAborting(com::False)
 	{
 
 	}
@@ -399,24 +353,115 @@ namespace SUTK
 		});
 	}
 
-	void NotebookView::swapWithNext(Tab* tab) noexcept
+	void Tab::setPage(NotebookPage* page) noexcept
+	{
+		m_page = page;
+		if(page)
+			page->m_tab = this;
+	}
+	void Tab::setLabel(const std::string_view str) noexcept
+	{
+		com_assert(COM_DESCRIPTION(!m_tabBar->isLockedLayout()), "Undefined behaviour, You can't change label of a tab while some tab animations are going on (the layout is locked)");
+		// NOTE: Calling setLabel() resizes the tabView to fit the label, which results in layout recalculation
+		// Since, we call setLayoutAttributes() further, it would trigger another layout recalculation.
+		// Therefore, we are better off locking the layout first and then we are finished, unlock it at the end.
+		m_tabBar->lockLayout();
+		m_tabView->setLabel(str);
+		LayoutAttributes attr = m_tabView->getLayoutAttributes();
+		attr.prefSize.width = std::max(Constants::Defaults::Notebook::Tab::MinWidth, m_tabView->getSize().width);
+		attr.minSize.width = attr.prefSize.width;
+		m_tabView->setLayoutAttributes(attr);
+		m_tabBar->unlockLayout(true);
+	}
+
+	TabBar::TabBar(UIDriver& driver, Container* parent, std::optional<TabAnimGroup*> tabAnimGroup) noexcept : HBoxContainer(driver, parent), 
+																GlobalMouseMoveHandlerObject(driver), 
+																m_root(com::null_pointer<Tab>()), 
+																m_selectedTab(com::null_pointer<Tab>())
+	{
+		if(tabAnimGroup)
+			m_tabAnimGroup = tabAnimGroup.value();
+		else
+		{
+			m_isTabAnimGroupOwner = com::True;
+			m_tabAnimGroup = driver.getAnimationEngine().createAnimGroup<TabAnimGroup>(this);
+		}
+		m_tabShiftAnimGroup = driver.getAnimationEngine().createAnimGroup<TabShiftAnimGroup>(this);
+		this->GlobalMouseMoveHandlerObject::sleep();
+	}
+
+	TabBar::~TabBar() noexcept
+	{
+		// WARN: lockLayout() is important here!
+		// Lock the layout to avoid unnecessary layout calculations
+		// It also avoids accessing the already destroyed Tab objects
+		lockLayout();
+		com::TraverseLinkedList(getRootTab(), [](Tab* tab) noexcept
+		{
+			auto* tabView = tab->getTabView();
+			tabView->getUIDriver().destroyContainer<TabView>(tabView);
+			delete tab;
+		});
+		if(m_isTabAnimGroupOwner)
+			getUIDriver().getAnimationEngine().destroyAnimGroup<TabAnimGroup>(m_tabAnimGroup);
+		getUIDriver().getAnimationEngine().destroyAnimGroup<TabShiftAnimGroup>(m_tabShiftAnimGroup);
+	}
+
+	void TabBar::onRecalculateLayout() noexcept
+	{
+		HBoxContainer::onRecalculateLayout();
+		if(!getRootTab())
+			return;
+		// Sync position of Tab with that of TabView
+		com::TraverseLinkedListBiDirect(getRootTab(), [](auto node) noexcept
+		{
+			node->m_pos = node->getTabView()->getPosition();
+		});
+	}
+
+	void TabBar::onMouseMove(Vec2Df pos) noexcept
+	{
+		TabView* tabView = m_tabRearrangeContext.grabbedTab->getTabView();
+		if(!m_tabRearrangeContext.isMoved)
+		{
+			m_tabRearrangeContext.layer = tabView->getLayer();
+			tabView->setLayer(MaxLayer);
+			onTabPullOut(m_tabRearrangeContext.grabbedTab);
+			m_tabRearrangeContext.isMoved = com::True;
+		}
+		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
+		tabView->setPosition(pos);
+		checkForTabSwap();
+	}
+
+	void TabBar::dispatchAnimNewTab(Tab* tab) noexcept
+	{
+		getUIDriver().getAnimationEngine().dispatchAnimation<TabInsertAnimation>(m_tabAnimGroup, tab);
+	}
+
+	void TabBar::dispatchAnimRemoveTab(Tab* tab) noexcept
+	{
+		getUIDriver().getAnimationEngine().dispatchAnimation<TabRemoveAnimation>(m_tabAnimGroup, tab, this);
+	}
+
+	void TabBar::swapWithNext(Tab* tab) noexcept
 	{
 		auto nextTab = tab->getNext();
 		std::cout << "Swaping: " << tab->m_pos << ", " << nextTab->m_pos << std::endl;
 		nextTab->m_pos = tab->m_pos;
 		tab->m_pos.x += nextTab->getTabView()->getSize().width;
 		std::swap(tab->m_index, nextTab->m_index);
-		getTabBar()->swapChildren(tab->m_index, nextTab->m_index);
-		RemoveLinkedListNode(tab);
-		InsertLinkedListNodeAfter(tab, /* After: */ nextTab);
+		swapChildren(tab->m_index, nextTab->m_index);
+		com::RemoveLinkedListNode(tab);
+		com::InsertLinkedListNodeAfter(tab, /* After: */ nextTab);
 	}
 
-	void NotebookView::swapWithPrev(Tab* tab) noexcept
+	void TabBar::swapWithPrev(Tab* tab) noexcept
 	{
 		swapWithNext(tab->getPrev());
 	}
 
-	void NotebookView::checkForTabSwap() noexcept
+	void TabBar::checkForTabSwap() noexcept
 	{
 		Tab* tab = m_tabRearrangeContext.grabbedTab;
 		TabView* tabView = tab->getTabView();
@@ -448,89 +493,45 @@ namespace SUTK
 		}
 	}
 
-	void NotebookView::onMouseMove(Vec2Df pos) noexcept
+	TabView* TabBar::createTabView(Tab* tab) noexcept
 	{
-		TabView* tabView = this->m_tabRearrangeContext.grabbedTab->getTabView();
-		if(!m_tabRearrangeContext.isMoved)
+		auto* tabView = getUIDriver().createContainer<TabView>(com::null_pointer<Container>());
+		tab->m_tabView = tabView;
+		tabView->getOnPressEvent().subscribe([this, tab](SUTK::Button* button) noexcept
 		{
-			m_tabRearrangeContext.layer = tabView->getLayer();
-			tabView->setLayer(MaxLayer);
-			m_tabBar->restoreMaskFor(tabView);
-			m_tabRearrangeContext.isMoved = com::True;
-		}
-		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
-		tabView->setPosition(pos);
-		checkForTabSwap();
-	}
+			this->selectTab(tab);
 
-	void NotebookView::dispatchAnimNewTab(Tab* tab) noexcept
-	{
-		getUIDriver().getAnimationEngine().dispatchAnimation<TabInsertAnimation>(m_tabAnimGroup, tab);
-	}
-
-	void NotebookView::dispatchAnimRemoveTab(Tab* tab) noexcept
-	{
-		getUIDriver().getAnimationEngine().dispatchAnimation<TabRemoveAnimation>(m_tabAnimGroup, tab, getTabBar());		// if(m_isRunning)
-	}
-
-	template<typename T>
-	static T* GetLinkedListRoot(T* node) noexcept
-	{
-		while(node && node->getPrev())
-			node = node->getPrev();
-		return node;
-	}
-
-	void Tab::setPage(NotebookPage* page) noexcept
-	{
-		m_page = page;
-		if(page)
-			page->m_tab = this;
-	}
-	void Tab::setLabel(const std::string_view str) noexcept
-	{
-		com_assert(COM_DESCRIPTION(!m_tabBar->isLockedLayout()), "Undefined behaviour, You can't change label of a tab while some tab animations are going on (the layout is locked)");
-		// NOTE: Calling setLabel() resizes the tabView to fit the label, which results in layout recalculation
-		// Since, we call setLayoutAttributes() further, it would trigger another layout recalculation.
-		// Therefore, we are better off locking the layout first and then we are finished, unlock it at the end.
-		m_tabBar->lockLayout();
-		m_tabView->setLabel(str);
-		LayoutAttributes attr = m_tabView->getLayoutAttributes();
-		attr.prefSize.width = std::max(TAB_VIEW_MIN_WIDTH, m_tabView->getSize().width);
-		attr.minSize.width = attr.prefSize.width;
-		m_tabView->setLayoutAttributes(attr);
-		m_tabBar->unlockLayout(true);
-	}
-
-	TabBar::TabBar(UIDriver& driver, Container* parent) noexcept : HBoxContainer(driver, parent), m_root(com::null_pointer<Tab>()), m_selectedTab(com::null_pointer<Tab>())
-	{
-	}
-
-	TabBar::~TabBar() noexcept
-	{
-		// WARN: lockLayout() is important here!
-		// Lock the layout to avoid unnecessary layout calculations
-		// It also avoids accessing the already destroyed Tab objects
-		lockLayout();
-		com::TraverseLinkedList(getRootTab(), [](Tab* tab) noexcept
-		{
-			auto* tabView = tab->getTabView();
-			tabView->getUIDriver().destroyContainer<TabView>(tabView);
-			delete tab;
+			this->m_tabRearrangeContext.grabbedTab = tab;
+			Vec2Df mousePos = getUIDriver().getInputDriver().getMousePosition();
+			this->m_tabRearrangeContext.positionOffset = tab->getTabView()->getGlobalPosition() - mousePos;
+			this->m_tabRearrangeContext.isMoved = com::False;
+			this->lockLayout();
+			
+			this->GlobalMouseMoveHandlerObject::awake();
 		});
+		tabView->getOnReleaseEvent().subscribe([this, tab](SUTK::Button* button) noexcept
+		{
+			_com_assert(this->m_tabRearrangeContext.grabbedTab != com::null_pointer<Tab>());
+			if(this->m_tabRearrangeContext.isMoved)
+			{
+				this->m_tabRearrangeContext.grabbedTab->getTabView()->setLayer(m_tabRearrangeContext.layer);
+				this->onTabPutBack(this->m_tabRearrangeContext.grabbedTab);
+				// NOTE: abort should be called first to get the final changes, 
+				// otherwise, GetLinkedListRoot() would return wrong result.
+				this->m_tabShiftAnimGroup->abort();
+				this->m_root = GetLinkedListRoot(this->m_tabRearrangeContext.grabbedTab);
+			}
+			this->m_tabRearrangeContext.grabbedTab = com::null_pointer<Tab>();
+			this->unlockLayout(static_cast<bool>(this->m_tabRearrangeContext.isMoved));
+			this->GlobalMouseMoveHandlerObject::sleep();
+		});
+		tabView->getCloseButton()->getOnReleaseEvent().subscribe([this, tab](Button* button) noexcept
+		{
+			this->removeTab(tab);
+		});
+		return tabView;
 	}
 
-	void TabBar::onRecalculateLayout() noexcept
-	{
-		HBoxContainer::onRecalculateLayout();
-		if(!getRootTab())
-			return;
-		// Sync position of Tab with that of TabView
-		com::TraverseLinkedListBiDirect(getRootTab(), [](auto node) noexcept
-		{
-			node->m_pos = node->getTabView()->getPosition();
-		});
-	}
 	Tab* TabBar::createTab(const std::string_view labelStr, Tab* after) noexcept
 	{
 		// If the supplied tab is null_pointer then create the tab after the currently selected tab.
@@ -539,11 +540,10 @@ namespace SUTK
 		lockLayout();
 		Tab* tab = new Tab();
 		tab->m_tabBar = this;
-		TabView* tabView = getUIDriver().createContainer<TabView>(com::null_pointer<Container>());
-		tab->m_tabView = tabView;
+		TabView* tabView = createTabView(tab);
 		if(after)
 		{
-			InsertLinkedListNodeAfter(tab, after);
+			com::InsertLinkedListNodeAfter(tab, after);
 			tab->m_index = after->getIndex() + 1;
 			auto node = tab->getNext();
 			while(node)
@@ -560,6 +560,9 @@ namespace SUTK
 		// Unlock the layout but do not recalculate, because we are further calling setLabel() which does recalculates at the end
 		unlockLayout();
 		tab->setLabel(labelStr);
+		// <Begin> Initialize Animation Start state and Setup Animation Context
+		dispatchAnimNewTab(tab);
+		// <End>
 		return tab;
 	}
 	void TabBar::destroyTab(Tab* tab) noexcept
@@ -573,14 +576,26 @@ namespace SUTK
 		getUIDriver().destroyContainer<TabView>(tab->m_tabView);
 		delete tab;
 	}
+	static Tab* GetAdjacentTab(Tab* tab) noexcept
+	{
+		return tab->getPrev() ? tab->getPrev() : tab->getNext();
+	}
 	void TabBar::removeTab(Tab* tab) noexcept
 	{
+		// Select an adjacent tab if exists
+		if(auto* adjTab = GetAdjacentTab(tab))
+			selectTab(adjTab);
+
+		m_onRemoveEvent.publish(tab);
+
+		dispatchAnimRemoveTab(tab);
+
 		// If a Selected tab is being removed then we must set m_selectedTab to null
 		if(tab == m_selectedTab)
 			m_selectedTab = com::null_pointer<Tab>();
 		if(!tab->getPrev())
 			m_root = tab->getNext();
-		RemoveLinkedListNode(tab, /* Do not set next and prev ptrs to NULL */ com::False);
+		com::RemoveLinkedListNode(tab, /* Do not set next and prev ptrs to NULL */ com::False);
 	}
 	void TabBar::selectTab(Tab* tab) noexcept
 	{
@@ -600,6 +615,20 @@ namespace SUTK
 			// Activate the requested page's container
 			tab->getPage()->setActive(com::True);
 		}
+		m_onSelectEvent.publish(tab);
+	}
+
+	ScrollableTabBar::ScrollableTabBar(UIDriver& driver, Container* parent) noexcept : BaseType(driver, parent,
+											driver.getAnimationEngine().createAnimGroup<ScrollTabAnimGroup>(this))
+	{
+
+	}
+
+	ScrollableTabBar::~ScrollableTabBar() noexcept
+	{
+		auto* animGroup = dynamic_cast<ScrollTabAnimGroup*>(getTabAnimGroup());
+		_com_assert(!com::is_nullptr(animGroup));
+		getUIDriver().getAnimationEngine().destroyAnimGroup<ScrollTabAnimGroup>(animGroup);
 	}
 
 	void ScrollableTabBar::scrollToTab(Tab* tab) noexcept
@@ -615,13 +644,20 @@ namespace SUTK
 			scrollCont->addScrollDelta(Vec2Df::left() * distance);
 	}
 
+	void ScrollableTabBar::onTabPullOut(Tab* tab) noexcept
+	{
+		restoreMaskFor(tab->getTabView());
+	}
+
+	void ScrollableTabBar::onTabPutBack(Tab* tab) noexcept
+	{
+		updateMaskFor(tab->getTabView());
+	}
+
 	Tab* NotebookView::createTab(const std::string_view labelStr, NotebookPage* page, Tab* afterTab) noexcept
 	{
 		// Create TabView
 		Tab* tab = getTabBar()->createTab(labelStr, afterTab);
-		// <Begin> Initialize Animation Start state and Setup Animation Context
-		dispatchAnimNewTab(tab);
-		// <End>
 		tab->setPage(page);
 		return tab;
 	}
@@ -634,56 +670,11 @@ namespace SUTK
 		return container;
 	}
 
-	void NotebookView::setupTabEvents(Tab* tab, NotebookPage* page) noexcept
-	{
-		TabView* tabView = tab->getTabView();
-
-		tabView->getOnPressEvent().subscribe([this, page](SUTK::Button* button) noexcept
-		{
-			this->viewPage(page);
-			this->m_onPageSelectEvent.publish(page);
-
-			this->m_tabRearrangeContext.grabbedTab = page->getTab();
-			Vec2Df mousePos = getUIDriver().getInputDriver().getMousePosition();
-			this->m_tabRearrangeContext.positionOffset = page->getTab()->getTabView()->getGlobalPosition() - mousePos;
-			this->m_tabRearrangeContext.isMoved = com::False;
-			this->getTabBar()->lockLayout();
-			
-			this->GlobalMouseMoveHandlerObject::awake();
-		});
-		tabView->getOnReleaseEvent().subscribe([this, page](SUTK::Button* button) noexcept
-		{
-			_com_assert(this->m_tabRearrangeContext.grabbedTab != com::null_pointer<Tab>());
-			if(this->m_tabRearrangeContext.isMoved)
-			{
-				this->m_tabRearrangeContext.grabbedTab->getTabView()->setLayer(m_tabRearrangeContext.layer);
-				this->m_tabBar->updateMaskFor(this->m_tabRearrangeContext.grabbedTab->getTabView());
-				// NOTE: abort should be called first to get the final changes, 
-				// otherwise, GetLinkedListRoot() would return wrong result.
-				this->m_tabShiftAnimGroup->abort();
-				this->m_tabBar->m_root = GetLinkedListRoot(this->m_tabRearrangeContext.grabbedTab);
-			}
-			this->m_tabRearrangeContext.grabbedTab = com::null_pointer<Tab>();
-			this->getTabBar()->unlockLayout(static_cast<bool>(this->m_tabRearrangeContext.isMoved));
-			this->GlobalMouseMoveHandlerObject::sleep();
-			this->dump();
-		});
-		tabView->getCloseButton()->getOnReleaseEvent().subscribe([this, page](Button* button) noexcept
-		{
-			this->removePage(page);
-		});
-	}
-
 	void NotebookView::viewPage(NotebookPage* page) noexcept
 	{
 		m_tabBar->selectTab(page->getTab());
 		// The tab associated with this page must be in the view
 		m_tabBar->scrollToTab(page->getTab());
-	}
-
-	static NotebookPage* GetAdjacentPage(NotebookPage* page) noexcept
-	{
-		return page->getPrev() ? page->getPrev() : page->getNext();
 	}
 
 	void NotebookView::removePage(NotebookPage* page) noexcept
@@ -693,26 +684,7 @@ namespace SUTK
 			debug_log_warning("(null) value is passed, no page/tab is removed");
 			return;
 		}
-		
-		// View an adjacent page if exists
-		if(auto* adjPage = GetAdjacentPage(page))
-			viewPage(adjPage);
-
-		// Remove the tab from TabBar, but note that it doesn't deletes it from the memory until animation has been finished
-		// See next lines of code: dispatchAnimRemoveTab
-		Tab* tab = page->getTab();
-		getTabBar()->removeTab(tab);
-		
-		// Save pointer to the Page's Container object before destroying the NotebookPage object
-		// This makes sure any Container object instantiated inside the NotebookPage (in the derived class) is destroyed
-		Container* pageContainer = page->m_container;
-		getUIDriver().destroyObject<NotebookPage>(page);
-		// Now destroy the Page Container
-		getUIDriver().destroyContainer<Container>(pageContainer);
-		tab->setPage(com::null_pointer<NotebookPage>());
-
-		dispatchAnimRemoveTab(tab);
-
+		getTabBar()->removeTab(page->getTab());
 		dump();
 	}
 
