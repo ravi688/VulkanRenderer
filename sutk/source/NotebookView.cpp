@@ -110,6 +110,7 @@ namespace SUTK
 		m_tabBar->getOnSelectEvent().subscribe([this](Tab* tab) noexcept
 		{
 			this->m_onPageSelectEvent.publish(tab->getPage());
+			this->m_tabBar->scrollToTab(tab);
 		});
 		m_tabBar->getOnRemoveEvent().subscribe([this](Tab* tab) noexcept
 		{

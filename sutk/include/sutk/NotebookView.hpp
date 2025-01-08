@@ -309,7 +309,7 @@ namespace SUTK
 		// Create Page
 		T* page = getUIDriver().createObject<T>(container, std::forward<Args&&>(args)...);
 		// Create Tab for the page
-		Tab* tab = createTab(labelStr, page, afterPage ? afterPage->getTab() : com::null_pointer<Tab>());
+		createTab(labelStr, page, afterPage ? afterPage->getTab() : com::null_pointer<Tab>());
 		// Newly created page should be activated
 		viewPage(page);
 		dump();
