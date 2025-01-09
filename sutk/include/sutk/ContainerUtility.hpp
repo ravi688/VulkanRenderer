@@ -36,5 +36,9 @@ namespace SUTK
 
 		static void IInputEventHandlerObjectsVisit(Container* container, IInputEventHandlerObjectsVisitor visitor) noexcept;
 		static void IInputEventHandlerObjectsVisit(Container* container, IInputEventHandlerObjectsVisitor visitor, bool isIncludeItself) noexcept;
+	
+		// Sets the anchors to { 0, 0, 0, 0 }, i.e. top left
+		// Should be called only when container is set to isLayoutIgnore(com::False)
+		static void EnsureTopLeftAnchors(Container* container);
 	};
 }
