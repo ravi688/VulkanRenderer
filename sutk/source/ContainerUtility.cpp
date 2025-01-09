@@ -6,6 +6,7 @@
 #include <sutk/InputEventHandlerObject.hpp> // for dynamic_cast to work
 #include <sutk/Button.hpp>
 #include <sutk/TextGroupContainer.hpp> // for dynamic_cast to work
+#include <sutk/AnchorRect.hpp>
 
 namespace SUTK
 {
@@ -147,5 +148,13 @@ namespace SUTK
 		std::vector<Container*>& childs = container->getChilds();
 		for(Container* &child : childs)
 			IInputEventHandlerObjectsVisit(child, visitor);
+	}
+
+	void ContainerUtility::EnsureTopLeftAnchors(Container* cont)
+	{
+		_com_assert(!cont->isLayoutIgnore());
+		auto* anchors = cont->getAnchorRect();
+		if(anchors->getRect() != Rect2Df::zero())
+			anchors->setRect(Rect2Df::zero());
 	}
 }

@@ -1,5 +1,5 @@
 #include <sutk/HBoxContainer.hpp>
-
+#include <sutk/ContainerUtility.hpp>
 #include <common/assert.h>
 
 namespace SUTK
@@ -8,31 +8,28 @@ namespace SUTK
 	{
 
 	}
+
 	void HBoxContainer::onAddChild(Container* child)
 	{
 		if(!child->isLayoutIgnore())
-		{
-			// There no sense of keeping both anchors and layout controller active, as layout controllers are responsible for laying out their childs.
-			child->setAnchorsActive(false);
 			recalculateLayout();
-		}
 	}
 	void HBoxContainer::onRemoveChild(Container* child)
 	{
 		if(!child->isLayoutIgnore())
-		{
 			recalculateLayout();
-			child->setAnchorsActive(true);
-		}
 	}
 	void HBoxContainer::onResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
-		// Tell the recalculateLayout() function that it has been called by onResize function,
-		// and it should not call 'setSize', 'setPosition' or 'setRect' for this container to avoid infinite recursion.
-		m_isInsideOnResize = true;
-		// call this first to pass updated rect value to Contaienr::onResize()
-		recalculateLayout();
-		m_isInsideOnResize = false;
+		if(isSizeChanged)
+		{
+			// Tell the recalculateLayout() function that it has been called by onResize function,
+			// and it should not call 'setSize', 'setPosition' or 'setRect' for this container to avoid infinite recursion.
+			m_isInsideOnResize = true;
+			// call this first to pass updated rect value to Contaienr::onResize()
+			recalculateLayout();
+			m_isInsideOnResize = false;
+		}
 		// mandatory to be called
 		Container::onResize(newRect, isPositionChanged, isSizeChanged);
 	}
@@ -74,6 +71,8 @@ namespace SUTK
 			// if this child doesn't care about Layout rules, then skip it.
 			if(child->isLayoutIgnore())
 				continue;
+
+			ContainerUtility::EnsureTopLeftAnchors(child);
 
 			const LayoutAttributes attrs = child->getAbsoluteLayoutAttributes();
 			minWidth += std::min(attrs.minSize.width, attrs.prefSize.width);
