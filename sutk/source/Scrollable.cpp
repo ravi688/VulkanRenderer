@@ -7,5 +7,6 @@ namespace SUTK
 	Scrollable::Scrollable(Container* container) noexcept
 	{
 		m_scrollContainer = dynamic_cast<ScrollContainer*>(container->getParent());
+		_COM_ASSERT(m_scrollContainer);
 	}
 }
