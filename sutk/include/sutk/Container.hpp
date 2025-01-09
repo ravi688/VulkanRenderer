@@ -196,8 +196,6 @@ namespace SUTK
 
 		// anchor rect getters and setters
 		AnchorRect* getAnchorRect() const noexcept { return m_anchorRect; }
-		void setAnchorsActive(bool isActive) noexcept { return getAnchorRect()->setActive(isActive); }
-		bool isAnchorsActive() const noexcept { return getAnchorRect()->isActive(); }
 
 		// returns the number of anscestor containers of this container
 		u32 getDepth() const noexcept;

@@ -28,10 +28,14 @@ namespace SUTK
 
 		void setParent(Container* parent) noexcept;
 		void setChild(Container* child) noexcept;
+
+		// DO NOT CALL THESE TWO FUNCTIONS; IT IS A BAD DESIGN
+		// ANCHORS CAN'T BE DEACTIVATED AS THEY DEFINE THE LOCAL SPACES
+		// TODO: REMOVE THESE IN FUTURE
+		COM_DEPRECATED_STR("Concept of deactivating anchors should be removed") void setActive(bool isActive) noexcept;
+		COM_DEPRECATED_STR("Concept of deactivating anchors should be removed") bool isActive() const noexcept { return m_isActive; }
 	public:
 
-		void setActive(bool isActive) noexcept;
-		bool isActive() const noexcept { return m_isActive; }
 
 		// getters
 		Rect2Df getRect() const noexcept { return m_rect; }

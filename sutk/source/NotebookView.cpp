@@ -670,13 +670,11 @@ namespace SUTK
 	void ScrollableTabBar::onTabPullOut(Tab* tab) noexcept
 	{
 		restoreMaskFor(tab->getTabView());
-		tab->getTabView()->getAnchorRect()->setActive(false);
 	}
 
 	void ScrollableTabBar::onTabPutBack(Tab* tab) noexcept
 	{
 		updateMaskFor(tab->getTabView());
-		tab->getTabView()->getAnchorRect()->setActive(true);
 		m_isAutoScroll = com::False;
 	}
 
