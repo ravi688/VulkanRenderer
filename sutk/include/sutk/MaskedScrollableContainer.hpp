@@ -1,18 +1,18 @@
 #pragma once
 
 #include <sutk/defines.hpp>
-#include <sutk/Scrollable.hpp> // for SUTK::Scrollable
 #include <sutk/ScrollContainer.hpp> // for SUTK::ScrollContainer
+#include <sutk/ScrollableContainer.hpp> // for SUTK::ScrollableContainer<>
 #include <sutk/Renderable.hpp> // for SUTK::GfxDriverRenderable
 #include <sutk/ContainerUtility.hpp> // for SUTK::ContainerUtility::RenderablesVisit
 #include <sutk/InputEventHandlerObject.hpp> // for SUTK::MouseEventsBlockerObject
-#include <sutk/Concepts.hpp> // for SUTK::ContainerT
 
 namespace SUTK
 {
-	template<ContainerT ContainerType>
-	class MaskedScrollableContainer : public ContainerType, public MouseEventsBlockerObject, public Scrollable
+	template<ContainerT ContainerType, typename ScrollableContainerType = ScrollableContainer<ContainerType>>
+	class SUTK_API MaskedScrollableContainer : public ScrollableContainerType, public MouseEventsBlockerObject
 	{
+		using BaseType = ScrollableContainerType;
 	protected:
 		void setMaskFor(Container* container, Rect2Df rect) const noexcept;
 		// Recursively finds all SUTK::GfxDriverRenderable objects
@@ -38,15 +38,15 @@ namespace SUTK
 		void restoreMaskFor(Container* container) noexcept;
 	};
 
-	template<ContainerT ContainerType>
+	template<ContainerT ContainerType, typename ScrollableContainerType>
 	template<typename... Args>
-	MaskedScrollableContainer<ContainerType>::MaskedScrollableContainer(UIDriver& driver, Container* parent, Args&&... args) noexcept : ContainerType(driver, parent, std::forward<Args&&>(args)...), MouseEventsBlockerObject(driver, this, this->getDepth() + 10000), Scrollable(this)
+	MaskedScrollableContainer<ContainerType, ScrollableContainerType>::MaskedScrollableContainer(UIDriver& driver, Container* parent, Args&&... args) noexcept : BaseType(driver, parent, std::forward<Args&&>(args)...), MouseEventsBlockerObject(driver, this, this->getDepth() + 10000)
 	{
 		_com_assert(dynamic_cast<ScrollContainer*>(parent) != NULL);
 	}
 
-	template<ContainerT ContainerType>
-	void MaskedScrollableContainer<ContainerType>::setMaskFor(Container* container, Rect2Df rect) const noexcept
+	template<ContainerT ContainerType, typename ScrollableContainerType>
+	void MaskedScrollableContainer<ContainerType, ScrollableContainerType>::setMaskFor(Container* container, Rect2Df rect) const noexcept
 	{
 		ContainerUtility::RenderablesVisit(container, [rect](Renderable* renderable)
 		{
@@ -57,58 +57,58 @@ namespace SUTK
 			}
 		});
 	}
-	template<ContainerT ContainerType>
-	void MaskedScrollableContainer<ContainerType>::updateMaskFor(Container* container) const noexcept
+	template<ContainerT ContainerType, typename ScrollableContainerType>
+	void MaskedScrollableContainer<ContainerType, ScrollableContainerType>::updateMaskFor(Container* container) const noexcept
 	{
-		const ScrollContainer* scrollCont = getScrollContainer();
+		const ScrollContainer* scrollCont = BaseType::getScrollContainer();
 		if(!scrollCont)
 			return;
 		Rect2Df rect = scrollCont->getGlobalRect();
 		setMaskFor(container, rect);
 	}
 	
-	template<ContainerT ContainerType>
-	void MaskedScrollableContainer<ContainerType>::updateMask() noexcept
+	template<ContainerT ContainerType, typename ScrollableContainerType>
+	void MaskedScrollableContainer<ContainerType, ScrollableContainerType>::updateMask() noexcept
 	{
 		updateMaskFor(this);
 	}
 
-	template<ContainerT ContainerType>
-	void MaskedScrollableContainer<ContainerType>::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
+	template<ContainerT ContainerType, typename ScrollableContainerType>
+	void MaskedScrollableContainer<ContainerType, ScrollableContainerType>::onParentResize(const Rect2Df& newRect, bool isPositionChanged, bool isSizeChanged)
 	{
 		// Mandatory to be called by the overriding method
-		ContainerType::onParentResize(newRect, isPositionChanged, isSizeChanged);
+		BaseType::onParentResize(newRect, isPositionChanged, isSizeChanged);
 		updateMask();
 	}
 
-	template<ContainerT ContainerType>
-	void MaskedScrollableContainer<ContainerType>::onAddChild(Container* child)
+	template<ContainerT ContainerType, typename ScrollableContainerType>
+	void MaskedScrollableContainer<ContainerType, ScrollableContainerType>::onAddChild(Container* child)
 	{
-		ContainerType::onAddChild(child);
+		BaseType::onAddChild(child);
 		updateMaskFor(child);
 	}
 
-	template<ContainerT ContainerType>
-	void MaskedScrollableContainer<ContainerType>::restoreMaskFor(Container* container) noexcept
+	template<ContainerT ContainerType, typename ScrollableContainerType>
+	void MaskedScrollableContainer<ContainerType, ScrollableContainerType>::restoreMaskFor(Container* container) noexcept
 	{
 		// Restore visible area to the entire window for this removed child
 		// as it is now no longer affected by Scrolling and Masking.
-		Vec2Df size = ContainerType::getUIDriver().getWindowSize();
+		Vec2Df size = BaseType::getUIDriver().getWindowSize();
 		setMaskFor(container, { {0, 0}, size });
 	}
 
-	template<ContainerT ContainerType>
-	void MaskedScrollableContainer<ContainerType>::onRemoveChild(Container* child)
+	template<ContainerT ContainerType, typename ScrollableContainerType>
+	void MaskedScrollableContainer<ContainerType, ScrollableContainerType>::onRemoveChild(Container* child)
 	{
 		restoreMaskFor(child);
-		ContainerType::onRemoveChild(child);
+		BaseType::onRemoveChild(child);
 	}
 
-	template<ContainerT ContainerType>
-	bool MaskedScrollableContainer<ContainerType>::isInside(Vec2Df point) const noexcept
+	template<ContainerT ContainerType, typename ScrollableContainerType>
+	bool MaskedScrollableContainer<ContainerType, ScrollableContainerType>::isInside(Vec2Df point) const noexcept
 	{
 		bool isInsideOfOuterRect = MouseEventsBlockerObject::isInside(point);
-		const ScrollContainer* scrollCont = getScrollContainer();
+		const ScrollContainer* scrollCont = BaseType::getScrollContainer();
 		if(!scrollCont || !isInsideOfOuterRect)
 			return isInsideOfOuterRect;
 		Rect2Df rect = scrollCont->getGlobalRect();
