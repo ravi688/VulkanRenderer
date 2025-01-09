@@ -48,6 +48,16 @@ namespace SUTK
 		}
 	}
 
+	com::Bool ScrollContainer::isLeftScrollable() noexcept
+	{
+		return com::True;
+	}
+
+	com::Bool ScrollContainer::isRightScrollable() noexcept
+	{
+		return com::Bool { m_scrollDelta.x < Vec2Df::zero().x };
+	}
+
 	void ScrollContainer::addScrollDelta(Vec2Df scrollDelta) noexcept
 	{
 		std::vector<Container*> childs = getChilds();

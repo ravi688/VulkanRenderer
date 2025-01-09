@@ -104,6 +104,7 @@ namespace SUTK
 		m_tabBarContainer = driver.createContainer<ScrollContainer>(m_tabBarBGPanel);
 		m_tabBarContainer->alwaysFitInParent();
 		m_tabBar = driver.createContainer<ScrollableTabBar>(m_tabBarContainer);
+		m_tabBar->enableDebug();
 		m_tabBar->fitInParent();
 		// The height of the tabBar must match with that of its parent (The ScrollContainer)
 		m_tabBar->getAnchorRect()->setRect({ 0, 0, 0, 1 });
@@ -430,8 +431,7 @@ namespace SUTK
 			onTabPullOut(m_tabRearrangeContext.grabbedTab);
 			m_tabRearrangeContext.isMoved = com::True;
 		}
-		pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(pos);
-		tabView->setPosition(pos);
+		updateGrabbedTabViewPos();
 		checkForTabSwap();
 	}
 
@@ -460,6 +460,13 @@ namespace SUTK
 	void TabBar::swapWithPrev(Tab* tab) noexcept
 	{
 		swapWithNext(tab->getPrev());
+	}
+
+	void TabBar::updateGrabbedTabViewPos() noexcept
+	{
+		TabView* tabView = m_tabRearrangeContext.grabbedTab->getTabView();
+		auto pos = m_tabRearrangeContext.positionOffset + tabView->getParent()->getScreenCoordsToLocalCoords(getUIDriver().getInputDriver().getMousePosition());
+		tabView->setPosition(pos);
 	}
 
 	void TabBar::checkForTabSwap() noexcept
@@ -620,7 +627,8 @@ namespace SUTK
 	}
 
 	ScrollableTabBar::ScrollableTabBar(UIDriver& driver, Container* parent) noexcept : BaseType(driver, parent,
-											driver.getAnimationEngine().createAnimGroup<ScrollTabAnimGroup>(this))
+											driver.getAnimationEngine().createAnimGroup<ScrollTabAnimGroup>(this)),
+											Runnable(driver)
 	{
 
 	}
@@ -645,14 +653,50 @@ namespace SUTK
 			scrollCont->addScrollDelta(Vec2Df::left() * distance);
 	}
 
+	void ScrollableTabBar::onMouseMove(Vec2Df pos) noexcept
+	{
+		BaseType::onMouseMove(pos);
+		Tab* tab = getGrabbedTab();
+		_com_assert(tab != com::null_pointer<Tab>());
+		auto* scrollCont = getScrollContainer();
+		auto rect = tab->getTabView()->getRectRelativeTo(scrollCont);
+		com::Bool isLeft { (rect.x < 0) && scrollCont->getScrollDelta().x };
+		com::Bool isRight { (rect.getRight() > scrollCont->getSize().width) && (getRect().getRight() > scrollCont->getSize().width) };
+		m_isAutoScroll = isLeft ^ isRight;
+		if(m_isAutoScroll)
+			m_autoScrollDir = isLeft ? 1 : -1;
+	}
+
 	void ScrollableTabBar::onTabPullOut(Tab* tab) noexcept
 	{
 		restoreMaskFor(tab->getTabView());
+		tab->getTabView()->getAnchorRect()->setActive(false);
 	}
 
 	void ScrollableTabBar::onTabPutBack(Tab* tab) noexcept
 	{
 		updateMaskFor(tab->getTabView());
+		tab->getTabView()->getAnchorRect()->setActive(true);
+		m_isAutoScroll = com::False;
+	}
+
+	bool ScrollableTabBar::isRunning()
+	{
+		return static_cast<bool>(m_isAutoScroll);
+	}
+
+	void ScrollableTabBar::update()
+	{
+		auto* scrollCont = getScrollContainer();
+		if(scrollCont->isScrollableTowards(m_autoScrollDir))
+		{
+			auto dt = getUIDriver().getDeltaTime();
+			auto delta = Vec2Df::right() * m_autoScrollDir * dt * 5.0f;
+			scrollCont->addScrollDelta(delta);
+			updateGrabbedTabViewPos();
+			checkForTabSwap();
+		}
+		else m_isAutoScroll = com::False;
 	}
 
 	Tab* NotebookView::createTab(const std::string_view labelStr, NotebookPage* page, Tab* afterTab) noexcept

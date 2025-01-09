@@ -206,9 +206,12 @@ namespace SUTK
 
 	protected:
 		TabAnimGroup* getTabAnimGroup() noexcept { return m_tabAnimGroup; }
+		Tab* getGrabbedTab() noexcept { return m_tabRearrangeContext.grabbedTab; }
+		void updateGrabbedTabViewPos() noexcept;
 		// override of HBoxContainer::onRecalculateLayout()
 		virtual void onRecalculateLayout() noexcept override;
 		// Override of GlobalMouseMoveHandlerObject::onMouseMove()
+		// Must be called in the deriving class
 		virtual void onMouseMove(Vec2Df pos) noexcept override;
 		virtual void onTabPullOut(Tab* tab) noexcept { }
 		virtual void onTabPutBack(Tab* tab) noexcept { }
@@ -233,12 +236,18 @@ namespace SUTK
 		Tab* getSelectedTab() noexcept { return m_selectedTab; }
 	};
 
-	class SUTK_API ScrollableTabBar : public MaskedScrollableContainer<TabBar>
+	class SUTK_API ScrollableTabBar : public MaskedScrollableContainer<TabBar>, public Runnable
 	{
 		using BaseType = MaskedScrollableContainer<TabBar>;
+	private:
+		com::Bool m_isAutoScroll { com::False };
+		f32 m_autoScrollDir { 0 };
 	protected:
+		virtual void onMouseMove(Vec2Df pos) noexcept override;
 		virtual void onTabPullOut(Tab* tab) noexcept override;
 		virtual void onTabPutBack(Tab* tab) noexcept override;
+		virtual bool isRunning() override;
+		virtual void update() override;
 	public:
 		ScrollableTabBar(UIDriver& driver, Container* parent) noexcept;
 		~ScrollableTabBar() noexcept;

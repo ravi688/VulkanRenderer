@@ -120,9 +120,17 @@ namespace SUTK
 		{
 			return (x >= v.x) && (y >= v.y);
 		}
+		bool operator >(const Vec2D<T>& v) const noexcept
+		{
+			return (x > v.x) && (y > v.y);
+		}
 		bool operator <=(const Vec2D<T>& v) const noexcept
 		{
 			return (x <= v.x) && (y <= v.y);
+		}
+		bool operator <(const Vec2D<T>& v) const noexcept
+		{
+			return (x < v.x) && (y < v.y);
 		}
 
 		// implicit conversion operator overloads
@@ -308,6 +316,12 @@ namespace SUTK
 		constexpr Rect2D(T _x, T _y, T _width, T _height) noexcept : x(_x), y(_y), width(_width), height(_height) { }
 		constexpr Rect2D(Vec2D<T> pos, Vec2D<T> size) noexcept : x(pos.x), y(pos.y), width(size.width), height(size.height) { }
 
+
+		Vec2D<T> getPosition() const noexcept { return { x, y }; }
+		Vec2D<T> getSize() const noexcept { return { width, height }; }
+
+		static Rect2D<T> zero();
+
 		// (u + du) - Constraint
 		// du + r
 		// Constraint: u - r
@@ -324,8 +338,8 @@ namespace SUTK
 			return { x + rect.x, y + rect.y, width + rect.width, height + rect.height };
 		}
 
-		Vec2D<T> getPosition() const noexcept { return { x, y }; }
-		Vec2D<T> getSize() const noexcept { return { width, height }; }
+		bool operator ==(const Rect2D<T>& r) noexcept { return (r.getSize() == getSize()) && (r.getPosition() == getPosition()); }
+		bool operator !=(const Rect2D<T>& r) noexcept { return !operator==(r); }
 
 		Vec2D<T> getCenter() const noexcept
 		{
@@ -479,6 +493,9 @@ namespace SUTK
 			return operator <<(std::ostringstream(), *this).str();
 		}
 	};
+
+	template<typename T>
+	Rect2D<T> Rect2D<T>::zero() { return { 0, 0, 0, 0 }; }
 
 	template<typename T>
 	std::ostream&& operator <<(std::ostream&& stream, const Rect2D<T>& rect)

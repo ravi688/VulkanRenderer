@@ -24,6 +24,11 @@ namespace SUTK
 		 public:
 		 	ScrollContainer(UIDriver& driver, Container* parent = NULL) noexcept;
 
+		 	// direction: 1 means towards right, -1 means towards left
+		 	com::Bool isScrollableTowards(f32 direction) noexcept { return (direction > 0) ? isRightScrollable() : isLeftScrollable(); }
+		 	com::Bool isLeftScrollable() noexcept;
+		 	com::Bool isRightScrollable() noexcept;
+
 		 	void setScaleFactor(f32 scaleFactor) noexcept { m_scaleFactor = scaleFactor; }
 		 	f32 getScaleFactor() const noexcept { return m_scaleFactor; }
 		 	// scrollDelta must be in centimeters
