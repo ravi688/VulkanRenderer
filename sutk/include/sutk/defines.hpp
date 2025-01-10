@@ -66,6 +66,60 @@ namespace SUTK
 	template<>
 	struct NegativeSign<f64> { static constexpr f64 value = -1.0; }; 
 
+	// Enumeration to represent cardination directions or sides of a rectangular object
+	enum class CardinalDir : u8
+	{
+		Left,
+		Right,
+		Up,
+		Down,
+		Top = Up,
+		Bottom = Down,
+		West = Left,
+		East = Right,
+		North = Up,
+		South = Down
+	};
+
+	enum class CardinalDirBits : u8
+	{
+		Left = BIT8(com::EnumClassToInt(CardinalDir::Left)),
+		Right = BIT8(com::EnumClassToInt(CardinalDir::Right)),
+		Up = BIT8(com::EnumClassToInt(CardinalDir::Up)),
+		Down = BIT8(com::EnumClassToInt(CardinalDir::Down)),
+		Top = BIT8(com::EnumClassToInt(CardinalDir::Top)),
+		Bottom = BIT8(com::EnumClassToInt(CardinalDir::Bottom)),
+		West = BIT8(com::EnumClassToInt(CardinalDir::West)),
+		East = BIT8(com::EnumClassToInt(CardinalDir::East)),
+		North = BIT8(com::EnumClassToInt(CardinalDir::North)),
+		South = BIT8(com::EnumClassToInt(CardinalDir::South))
+	};
+
+	// Enumeration to represent sides of a rectangular object
+	using RectEdge = CardinalDir;
+	using RectEdgeBits = CardinalDirBits;
+
+	template<typename T>
+	struct Compass4D
+	{
+		T left;
+		T right;
+		union
+		{
+			struct
+			{
+				T top;
+				T bottom;
+			};
+			struct
+			{
+				T up;
+				T down;
+			};
+		};
+	};
+
+	SUTK_API std::ostream& operator<<(std::ostream& stream, CardinalDir cd) noexcept;
 
 	template<typename T>
 	union Vec2D
@@ -295,17 +349,27 @@ namespace SUTK
 	template<typename T>
 	struct Rect2D
 	{
-		T x;
-		T y;
+		union
+		{
+			T x;
+			T left;
+		};
+		union
+		{
+			T y;
+			T right;
+		};
 		union
 		{
 			T width;
 			T z;
+			T top;
 		};
 		union
 		{
 			T height;
 			T w;
+			T bottom;
 		};
 
 		// getters
@@ -354,6 +418,16 @@ namespace SUTK
 		f32 getLeft() const noexcept
 		{
 			return x;
+		}
+
+		f32 getTop() const noexcept
+		{
+			return y;
+		}
+
+		f32 getBottom() const noexcept
+		{
+			return height + y;
 		}
 
 		Vec2D<T> getTopLeft() const noexcept
@@ -493,6 +567,9 @@ namespace SUTK
 			return operator <<(std::ostringstream(), *this).str();
 		}
 	};
+
+	template<typename T>
+	using RectMargins = Rect2D<T>;
 
 	template<typename T>
 	Rect2D<T> Rect2D<T>::zero() { return { 0, 0, 0, 0 }; }
@@ -648,6 +725,7 @@ namespace SUTK
 	}
 
 	typedef Rect2D<f32> Rect2Df;
+	typedef RectMargins<f32> RectMarginsf;
 	typedef Vec2D<f32> Vec2Df;
 	typedef Vec3D<f32> Vec3Df;
 	typedef Rect2D<f32> Vec4Df;

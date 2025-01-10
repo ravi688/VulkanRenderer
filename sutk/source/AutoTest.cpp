@@ -112,6 +112,7 @@ int main()
 		std::cout << std::endl;
 		i += 1;
 	}
+	std::cout << "Total number of tests ran: " << tests->size() << "\n";
 	if(failedTests.size() == 0)
 		std::cout << "All tests passed" << std::endl;
 	else

@@ -686,7 +686,7 @@ namespace SUTK
 	void ScrollableTabBar::update()
 	{
 		auto* scrollCont = getScrollContainer();
-		if(scrollCont->isScrollableTowards(m_autoScrollDir))
+		if(scrollCont->isScrollableHorziontal(m_autoScrollDir))
 		{
 			auto dt = getUIDriver().getDeltaTime();
 			auto delta = Vec2Df::right() * m_autoScrollDir * dt * 5.0f;
