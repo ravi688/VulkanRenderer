@@ -86,6 +86,12 @@ namespace SUTK
 		return cp;
 	}
 
+	com::Bool ScrollContainer::isScrollable() const noexcept
+	{
+		auto cp = getScrollableCompass();
+		return cp.up || cp.down || cp.left || cp.right;
+	}
+
 	com::Bool ScrollContainer::isScrollableHorziontal(f32 direction) const noexcept
 	{
 		auto cp = getScrollableCompass();

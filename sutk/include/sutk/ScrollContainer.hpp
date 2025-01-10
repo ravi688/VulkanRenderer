@@ -29,6 +29,9 @@ namespace SUTK
 		 public:
 		 	ScrollContainer(UIDriver& driver, Container* parent = NULL) noexcept;
 
+		 	// Same as isScrollableHorziontal() || isScrollableVertical()
+		 	// But a bit more efficient than separately calling isScrollableHorziontal() and isScrollableVertical().  
+		 	com::Bool isScrollable() const noexcept;
 		 	// direction: +ve means towards right, -ve means towards left
 		 	com::Bool isScrollableHorziontal(f32 direction) const noexcept;
 		 	// direction: +ve means downwards, -ve means upwards
