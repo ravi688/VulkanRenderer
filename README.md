@@ -37,19 +37,19 @@ There are only C and C++ interface headers for now. <br>
 3. **MINGW 11.2.0** (tested on this, but might also work with previous versions), you can check if it is already installed in your machine by running <br>
    
    ```
-   $gcc --version
+   $ gcc --version
    ```
    
    OR
    
    ```
-   $g++ --version
+   $ g++ --version
    ```
    
    If this isn't already installed, run the following in MSYS2 MinGW shell
    
    ```
-   $pacman -S gcc
+   $ pacman -S gcc
    ```
 
 4. **GNU Make 4.3**, you can check if it is already installed, though it already comes with mingw64 binutils package, by running 
@@ -87,8 +87,8 @@ There are only C and C++ interface headers for now. <br>
    ```
 8. **Vulkan Headers**
    ```
-   meson wrap install vulkan-headers
-   meson wrap install glfw
+   $ meson wrap install vulkan-headers
+   $ meson wrap install glfw
    ```
 
 ### Requirements for building on Linux (Debian)
@@ -170,8 +170,8 @@ There are only C and C++ interface headers for now. <br>
    ```
 8. **Vulkan Headers**
    ```
-   meson wrap install vulkan-headers
-   meson wrap install glfw
+   $ meson wrap install vulkan-headers
+   $ meson wrap install glfw
    ```
 
 ### Requirements for building on FreeBSD
@@ -181,23 +181,23 @@ For now, you would need to do the following:
 - You will need gcc and g++ compilers supporting C++20, FreeBSD uses LLVM/Clang by default
 - Install the following packages
 ```
-	pkg install gmake # for GNU make
-	pkg install shaderc # for shaderc libraries and glslc
-	pkg install pkgconf # for pkg-config
+	$ pkg install gmake # for GNU make
+	$ pkg install shaderc # for shaderc libraries and glslc
+	$ pkg install pkgconf # for pkg-config
 ```
 
 #### For Building SUTK (Spectrum UI Toolkit library), you will need cmake
 ##### On Linux
 ```
-   apt install cmake
+  $  apt install cmake
 ```
 ##### On Windows (MSYS)
 ```
-   pacman -S cmake
+   $ pacman -S cmake
 ```
 ##### On FreeBSD
 ```
-   pkg install cmake
+   $ pkg install cmake
 ```
 
 
@@ -219,7 +219,7 @@ $ make -f build_shaders.makefile all
 1. Clone the repository by running the following command <br>
    
    ```
-   $git clone https://github.com/ravi688/VulkanRenderer.git
+   $ git clone https://github.com/ravi688/VulkanRenderer.git
    ```
 
 2. Change the working directory to `VulkanRenderer`
@@ -235,11 +235,11 @@ $ make -f build_shaders.makefile all
    ```
 5. Verify Installation by running pkg-config as follows
    ```
-   pkg-config sge_static --cflags --libs
+   $ pkg-config sge_static --cflags --libs
    ```
    OR
    ```
-   pkg-config sge_shared --cflags --libs
+   $ pkg-config sge_shared --cflags --libs
    ```
    It must print include header and link libraries directories which you can pass into your gcc or clang compiler/linker.
 
@@ -259,12 +259,12 @@ sge_static = sge_static_dep
 ### Test Run (Optional)
 There are several tests which you can try running by just passing arguments:
 ```
-$./build/main_test CUBE
+$ ./build/main_test CUBE
 ```
 The above set of commands would launch a window in which a white cube will be spinning.
 If you want to see all the possible test cases, you may launch the execution without any arguments and it would just print the list of possible test cases:
 ```
-$./build/main
+$ ./build/main
 supported tests:
         DEPTH_RENDER_TEXTURE
         DEPTH_RENDER_TEXTURE_LOAD
@@ -307,7 +307,7 @@ $ meson setup build --wipe
 ```
 ### Cleaning Shaders
 ```
-make -f build_shaders.makefile clean
+$ make -f build_shaders.makefile clean
 ```
 
 ### Building SUTK (Spectrum UI Toolkit)
