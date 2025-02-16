@@ -31,3 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if !defined(SC_RELEASE) && !defined(SC_DEBUG)
+#   warning "None of SC_RELEASE && SC_DEBUG is defined; using SC_DEBUG"
+#   define SC_DEBUG
+#endif
+

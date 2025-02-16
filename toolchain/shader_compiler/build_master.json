@@ -11,12 +11,14 @@
     "install_header_dirs" : ["include/shader_compiler"],
     "include_dirs": "include",
     "debug_defines" : [
+        "-DSC_DEBUG",
         "-DHPML_DEBUG_MODE",
         "-DGLOBAL_DEBUG",
         "-DDEBUG",
         "-DLOG_DEBUG"
     ],
     "release_defines" : [
+        "-DSC_RELEASE",
         "-DHPML_RELEASE_MODE",
         "-DGLOBAL_RELEASE",
         "-DRELEASE",

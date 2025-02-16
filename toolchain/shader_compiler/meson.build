@@ -61,12 +61,12 @@ defines_bm_internal__ = [
 
 # Release Build Defines
 release_defines_bm_internal__ = [
-'-DHPML_RELEASE_MODE', '-DGLOBAL_RELEASE', '-DRELEASE', '-DLOG_RELEASE'
+'-DSC_RELEASE', '-DHPML_RELEASE_MODE', '-DGLOBAL_RELEASE', '-DRELEASE', '-DLOG_RELEASE'
 ] 
 
 # Debug Build Defines
 debug_defines_bm_internal__ = [
-'-DHPML_DEBUG_MODE', '-DGLOBAL_DEBUG', '-DDEBUG', '-DLOG_DEBUG'
+'-DSC_DEBUG', '-DHPML_DEBUG_MODE', '-DGLOBAL_DEBUG', '-DDEBUG', '-DLOG_DEBUG'
 ]
 
 # Source files (common to all targets)
