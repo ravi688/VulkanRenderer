@@ -76,10 +76,19 @@ There are only C and C++ interface headers for now. <br>
    $ pacman -S git
    ```
 
-6. **glslc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
+6. **glslc** and **shaderc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
    
    ```
    $ pacman -S mingw-w64-x86_64-shaderc
+   ```
+7. **Freetype2**, run the following in MSYS2 MinGW shell <br>
+   ```
+   $ pacman -S mingw-w64-x86_64-freetype
+   ```
+8. **Vulkan Headers**
+   ```
+   meson wrap install vulkan-headers
+   meson wrap install glfw
    ```
 
 ### Requirements for building on Linux (Debian)
@@ -153,10 +162,16 @@ There are only C and C++ interface headers for now. <br>
    $ sudo apt-get install libz-dev
    $ sudo apt-get install libpng-dev
    $ sudo apt-get install libbrotli-dev
+   $ sudo apt-get install libfreetype-dev
    ```
 7. On wayland you would need the following package:
    ```
    $ sudo apt-get install libwayland-dev
+   ```
+8. **Vulkan Headers**
+   ```
+   meson wrap install vulkan-headers
+   meson wrap install glfw
    ```
 
 ### Requirements for building on FreeBSD
