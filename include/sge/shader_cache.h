@@ -1,7 +1,7 @@
 #pragma once
 
 #include <sge/defines.h>
-#include <sge/hash_table.h>
+#include <common/hash_table.h>
 #include <stdio.h> /* for file handling */
 
 #define SHADER_CACHE_PATH_MAX_LENGTH 255

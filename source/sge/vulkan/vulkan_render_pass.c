@@ -35,7 +35,7 @@
 #include <sge/render_window.h>
 #include <sge/assert.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <sge/debug.h>
 
 vulkan_render_pass_create_info_t* vulkan_render_pass_create_info_new(memory_allocator_t* allocator)

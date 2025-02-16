@@ -30,7 +30,8 @@
 #include <sge/internal/vulkan/vulkan_descriptor_set.h>
 #include <sge/internal/vulkan/vulkan_renderer.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <sge/debug.h>
+#include <common/alloc.h>
 #include <bufferlib/buffer.h>
 
 

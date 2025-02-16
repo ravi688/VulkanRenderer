@@ -31,9 +31,9 @@
 #include <sge/internal/vulkan/vulkan_object.h>
 #include <sge/internal/vulkan/vulkan_host_buffered_buffer.h>
 #include <sge/bitmap_glyph_pool.h>
-#include <hpml/vec2.h> /* vec2_t */
-#include <sge/dictionary.h>
 #include <glslcommon/glsl_types.h>
+#include <hpml/vec2.h> /* vec2_t */
+#include <common/dictionary.h>
 
 typedef struct vulkan_bitmap_glyph_atlas_texture_create_info_t
 {

@@ -34,8 +34,9 @@
 #include <sge/internal/vulkan/vulkan_buffer.h>
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
 #include <sge/assert.h>
+#include <sge/debug.h>
+#include <common/alloc.h>
 
 static VkImageViewType get_view_type(vulkan_image_view_type_t type);
 static u32 get_layer_count(vulkan_image_view_type_t type);

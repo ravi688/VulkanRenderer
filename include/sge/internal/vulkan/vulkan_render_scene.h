@@ -34,7 +34,7 @@
 #include <sge/internal/vulkan/vulkan_object.h>
 #include <sge/internal/vulkan/vulkan_descriptor_set.h> /* for vulkan_descriptor_set_t */
 #include <sge/internal/vulkan/vulkan_formatted_buffer.h>
-#include <sge/dictionary.h>
+#include <common/dictionary.h>
 
 typedef enum vulkan_render_scene_preset_type_t
 {

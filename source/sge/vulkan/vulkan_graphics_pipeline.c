@@ -33,7 +33,7 @@
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/render_window.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <disk_manager/file_reader.h>
 
 SGE_API vulkan_graphics_pipeline_t* vulkan_graphics_pipeline_new(memory_allocator_t* allocator)

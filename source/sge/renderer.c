@@ -26,7 +26,7 @@
 
 #include <sge/sge.h>
 #include <sge/internal/vulkan/vulkan_renderer.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 #include <sge/shader_library.h>
 #include <sge/material_library.h>

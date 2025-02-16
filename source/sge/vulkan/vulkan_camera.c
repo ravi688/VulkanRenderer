@@ -40,7 +40,7 @@
 #include <sge/glsl_memory_layout.h>
 #include <sge/render_window.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <sge/assert.h>
 #include <sge/debug.h>
 

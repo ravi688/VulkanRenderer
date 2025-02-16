@@ -26,8 +26,8 @@
 #pragma once
 
 #include <sge/defines.h>			// stdbool.h
-#include <sge/alloc.h>				// memset
 #include <sge/assert.h> 			// _debug_assert__
+#include <common/alloc.h>				// memset
 
 typedef enum object_nationality_t
 {

@@ -26,7 +26,7 @@
 
 #include <sge/string.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 #include <string.h>
 

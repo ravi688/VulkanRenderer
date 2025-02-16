@@ -30,7 +30,7 @@
 #include <sge/internal/vulkan/vulkan_vertex_buffer_layout_description.h>
 
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <bufferlib/buffer.h>
 
 #define create_buffer(allocator, type) __create_buffer(allocator, sizeof(type))

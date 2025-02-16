@@ -50,7 +50,7 @@
 #include <sge/internal/vulkan/vulkan_framebuffer.h> 		// vulkan_framebuffer_t
 #include <sge/internal/vulkan/vulkan_object.h>
 #include <sge/event.h>
-#include <sge/dictionary.h>
+#include <common/dictionary.h>
 
 #include <hpml/vec3.h>
 #include <hpml/vec2.h>

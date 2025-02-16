@@ -29,7 +29,7 @@
 #include <sge/internal/vulkan/vulkan_swapchain.h>
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <sge/assert.h>
 
 SGE_API vulkan_pipeline_layout_t* vulkan_pipeline_layout_new(memory_allocator_t* allocator)

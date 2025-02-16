@@ -31,8 +31,10 @@
 #include <sge/internal/vulkan/vulkan_types.h>
 #include <sge/internal/vulkan/vulkan_shader_resource_description.h>
 #include <sge/assert.h>
+#include <sge/debug.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
+#include <common/pair.h>
 
 SGE_API vulkan_material_t* vulkan_material_new(memory_allocator_t* allocator)
 {

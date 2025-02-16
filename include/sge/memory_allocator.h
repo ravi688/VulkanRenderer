@@ -155,8 +155,8 @@ typedef struct memory_allocator_create_info_t
 
 } memory_allocator_create_info_t;
 
-#include <sge/dictionary.h>
-#include <sge/alloc.h>
+#include <common/dictionary.h>
+#include <common/alloc.h>
 
 /* memory_allocation_map_t holds list of memory allocations and maps one-to-one each allocation with its memory address */
 typedef dictionary_t memory_allocation_map_t;

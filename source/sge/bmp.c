@@ -29,7 +29,7 @@
 #include <disk_manager/file_reader.h>
 #include <meshlib/parsers/binary.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <sge/debug.h>
 #include <stdio.h> // FILE
 #include <stb/stb_image_write.h>

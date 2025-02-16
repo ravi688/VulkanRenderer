@@ -32,9 +32,10 @@
 #include <sge/internal/vulkan/vulkan_material_library.h>
 #include <sge/internal/vulkan/vulkan_camera_system.h>
 #include <sge/glsl_memory_layout.h>
-#include <glslcommon/glsl_types.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <sge/debug.h>
+#include <glslcommon/glsl_types.h>
+#include <common/alloc.h>
 
 #include <hpml/vec4.h>
 #include <hpml/affine_transformation.h>

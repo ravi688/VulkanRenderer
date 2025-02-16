@@ -28,7 +28,7 @@
 
 #include <sge/defines.h>
 #include <bufferlib/buffer.h> // buffer_t
-#include <sge/hash_table.h> // hash_table_t, comparer_t, hash_function_t
+#include <common/hash_table.h> // hash_table_t, comparer_t, hash_function_t
 #include <sge/buffer2d_view.h> // buffer2d_view_t, isize2d_t, ioffset2d_t
 #include <sge/rect.h> 			// irect2d_t
 #include <sge/object.h>

@@ -36,9 +36,9 @@
 
 #include <sge/sge.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
-
 #include <sge/assert.h>
+#include <sge/debug.h>
+#include <common/alloc.h>
 
 /* constructors & destructors */
 SGE_API vulkan_render_scene_t* vulkan_render_scene_new(memory_allocator_t* allocator)

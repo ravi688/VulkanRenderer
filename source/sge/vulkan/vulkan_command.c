@@ -28,7 +28,7 @@
 #include <sge/assert.h>
 
 #include <stdarg.h>
-#include <sge/alloc.h>	 // memcopyv
+#include <common/alloc.h>	 // memcopyv
 
 SGE_API void vulkan_command_image_layout_transition(VkCommandBuffer cb, VkImage image,
 		VkImageSubresourceRange* subresource,

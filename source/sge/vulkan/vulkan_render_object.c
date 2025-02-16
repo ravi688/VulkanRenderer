@@ -29,10 +29,11 @@
 #include <sge/internal/vulkan/vulkan_render_queue.h>
 #include <sge/internal/vulkan/vulkan_graphics_pipeline.h>
 #include <sge/glsl_memory_layout.h>
-#include <glslcommon/glsl_types.h>
-#include <sge/memory_allocator.h>
-#include <sge/alloc.h>
 #include <sge/assert.h>
+#include <sge/debug.h>
+#include <sge/memory_allocator.h>
+#include <glslcommon/glsl_types.h>
+#include <common/alloc.h>
 
 typedef struct vulkan_mesh_t vulkan_mesh_t;
 SGE_API void vulkan_mesh_draw_indexed(vulkan_mesh_t* mesh);

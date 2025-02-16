@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/ravi688/HPML.git
+revision = head
+depth = 1
+
+[provide]
+hpml = hpml_static_dep

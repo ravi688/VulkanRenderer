@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/ravi688/GLSLCommon.git
+revision = head
+depth = 1
+
+[provide]
+glslcommon = glslcommon_static_dep

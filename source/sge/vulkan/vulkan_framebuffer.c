@@ -31,7 +31,7 @@
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/render_window.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 SGE_API vulkan_framebuffer_t* vulkan_framebuffer_new(memory_allocator_t* allocator)
 {

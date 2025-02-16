@@ -40,14 +40,15 @@
 #include <sge/glsl_memory_layout.h>
 #include <glslcommon/glsl_types.h>
 #include <disk_manager/file_reader.h>
-#include <common/binary_reader.h>
 #include <sge/assert.h>
 #include <sge/debug.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
-#include <sge/dictionary.h>
 #include <sge/render_window.h>
 #include <sge/sge.h>
+
+#include <common/binary_reader.h>
+#include <common/alloc.h>
+#include <common/dictionary.h>
 
 #include <shader_compiler/compiler/compiler.h> /* for sc_compile() and udat_layout_t */
 

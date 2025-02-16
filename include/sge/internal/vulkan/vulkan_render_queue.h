@@ -86,11 +86,12 @@
 #include <sge/defines.h>
 
 #include <sge/string.h> 		// for string_t
-#include <sge/dictionary.h> 	// for dictionary_t
 
 #include <sge/internal/vulkan/vulkan_handles.h>
 #include <sge/internal/vulkan/vulkan_render_pass_graph.h>
 #include <sge/internal/vulkan/vulkan_object.h>
+
+#include <common/dictionary.h> 	// for dictionary_t
 
 typedef struct vulkan_render_object_t vulkan_render_object_t;
 typedef struct vulkan_camera_t vulkan_camera_t;

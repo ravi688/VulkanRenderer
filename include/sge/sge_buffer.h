@@ -1,7 +1,7 @@
 #pragma once
 
 #include <sge/defines.h>
-#include <sge/alloc.h> /* for memcopy */
+#include <common/alloc.h> /* for memcopy */
 
 #ifdef SGE_VULKAN_DRIVER
 	#include <sge/internal/vulkan/vulkan_buffer.h>

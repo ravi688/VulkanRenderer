@@ -24,9 +24,10 @@
 */
 
 #include <sge/buffer2d.h>
-#include <sge/hash_table.h>
 #include <sge/bmp.h>
 #include <sge/memory_allocator.h>
+#include <common/hash_table.h>
+#include <common/pair.h>
 
 static rect2d_info_key_t generate_rect2d_info_key(buffer2d_t* buffer)
 {
@@ -72,12 +73,13 @@ SGE_API void buffer2d_create_no_alloc(memory_allocator_t* allocator, buffer2d_cr
 	
 	buffer->is_backed_buffer_owner = false,
 	buffer->resize_mode = create_info->resize_mode,
-	buffer->filled_rects = __hash_table_create(allocator, create_info->key_size,
+	buffer->filled_rects = __hash_table_create(create_info->key_size,
 									sizeof(filled_rect_info_t),
 									128,
+									128,
 									create_info->key_comparer,
-									create_info->key_hash_function),
-	buffer->vacant_rects = hash_table_create(allocator, rect2d_info_key_t, rect2d_info_t, 512, u32_equal_to, u32_hash),
+									create_info->key_hash_function, NULL),
+	buffer->vacant_rects = hash_table_create(rect2d_info_key_t, rect2d_info_t, 512, 512, u32_equal_to, u32_hash, NULL),
 	buffer->counter = 0;
 
 	/* create 2d view if not supplied by the user */

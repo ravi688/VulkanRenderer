@@ -28,18 +28,15 @@
 
 #include <common/defines.h>
 #include <sge/debug_switches.h>
+#include <sge/api_defines.h>
+#include <sge/debug.h>
+
+#if !defined(SGE_RELEASE) && !defined(SGE_DEBUG)
+#	warning "None of SGE_RELEASE && SGE_DEBUG is defined; using SGE_DEBUG"
+#	define SGE_DEBUG
+#endif
 
 #define INTERNAL
-
-#ifdef SGE_STATIC_LIBRARY
-#	define SGE_API
-#elif SGE_DYNAMIC_LIBRARY
-#	define SGE_API __declspec(dllimport)
-#elif BUILD_DYNAMIC_LIBRARY
-#	define SGE_API __declspec(dllexport)
-#else
-#	define SGE_API
-#endif
 
 #ifdef SGE_VULKAN_DRIVER
 	typedef struct vulkan_renderer_t vulkan_renderer_t;
@@ -87,20 +84,7 @@ static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u32 max(u32 v1, u32 v2) { r
 
 #define DYNAMIC_CAST(target_type, ptr) CAST_TO(target_type, ptr)
 
-#define typedef_pair_t(T1, T2) struct __pair_##T1##_##T2##_t { T1 first; T2 second; }
-#define pair_t(T1, T2) struct __pair_##T1##_##T2##_t
-#define make_pair_t(T1, T2) (pair_t(T1, T2))
-
-#define typedef_tuple2_t(T1, T2) struct __tuple_##T1##_##T2##_t { T1 first; T2 second; }
-#define tuple2_t(T1, T2) struct __tuple_##T1##_##T2##_t
-#define make_tuple2(T1, T2) (tuple2_t(T1, T2))
-
-#define typedef_tuple3_t(T1, T2, T3) struct __tuple_##T1##_##T2##_##T3##_t { T1 first; T2 second; T3 third; }
-#define tuple3_t(T1, T2, T3) struct __tuple_##T1##_##T2##_##T3##_t
-#define make_tuple3(T1, T2, T3) (tuple3_t(T1, T2))
-
 #define SIZEOF_ARRAY(array) (sizeof(array) / sizeof((array)[0]))
-#define DREF_VOID_PTR(ptr) CAST_TO(void*, DREF_TO(u8*, (void**)(ptr)))
 
 #define U32_TO_U64(src) _u32_to_u64(sizeof(src), src)
 static CAN_BE_UNUSED_FUNCTION INLINE_IF_RELEASE_MODE u64 _u32_to_u64(u32 src_size, u32 src)

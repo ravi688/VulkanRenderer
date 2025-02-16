@@ -55,7 +55,7 @@
 #include <sge/assert.h>
 
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 #define __UVS_ARE_NOT_FOUND__ "mesh3d_t::uvs are not found, make sure to call mesh3d_uvs_new(count) first\n"
 #define __NORMALS_ARE_NOT_FOUND__ "mesh3d_t::normals are not found, make sure to call mesh3d_normals_new(count) first\n"

@@ -32,8 +32,9 @@
 #include <sge/internal/vulkan/vulkan_result.h>
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
 #include <sge/assert.h>
+#include <sge/debug.h>
+#include <common/alloc.h>
 
 SGE_API vulkan_texture_t* vulkan_texture_new(memory_allocator_t* allocator)
 {

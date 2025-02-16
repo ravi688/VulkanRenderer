@@ -25,7 +25,7 @@
 
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 static void* VKAPI_CALL vulkan_allocation(void* user_data, size_t size, size_t align, VkSystemAllocationScope allocation_scope)
 {

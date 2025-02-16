@@ -31,7 +31,8 @@
 #include <sge/internal/vulkan/vulkan_types.h> 			// vulkan_shader_type_t
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <sge/debug.h>
+#include <common/alloc.h>
 
 static VkDescriptorSetLayout get_null_set_layout(vulkan_renderer_t* renderer)
 {

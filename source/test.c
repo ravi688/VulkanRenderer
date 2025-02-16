@@ -26,7 +26,7 @@
 
 #include <sge/test.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <sge/assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -79,8 +79,6 @@
 
 #include <sge/tests/transparent_queue.h>
 #include <sge/tests/shader_cache.h>
-
-#include <sge/tests/multi_buffer.h>
 
 #include <sge/tests/material_get_set.h>
 
@@ -138,7 +136,6 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 	ELSE_IF(TID_48_CASE_5);
 	ELSE_IF(TRANSPARENT_QUEUE);
 	ELSE_IF(SHADER_CACHE);
-	ELSE_IF(MULTI_BUFFER);
 	ELSE_IF(MATERIAL_GET_SET);
 	else
 	{
@@ -183,7 +180,6 @@ SGE_API test_t* test_create(memory_allocator_t* allocator, const char* name)
 					"\tTID_48_CASE_5\n"
 					"\tTRANSPARENT_QUEUE\n"
 					"\tSHADER_CACHE\n"
-					"\tMULTI_BUFFER\n"
 					"\tMATERIAL_GET_SET\n"
 				);
 		exit(0);

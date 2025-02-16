@@ -27,7 +27,7 @@
 #include <sge/font.h>
 #include <sge/mesh3d.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <disk_manager/file_reader.h>
 #include <disk_manager/file_writer.h>
 #include <ttf2mesh.h>
@@ -111,7 +111,7 @@ SGE_API void font_create_no_alloc(renderer_t* renderer, void* bytes, u64 length,
 	else
 		font_set_char_size(font, 11);
 
-	font->glyph_info_table = hash_table_create(renderer->allocator, pair_t(utf32_t, u32), font_glyph_info_t, 128, utf32_u32_equal_to, utf32_u32_hash);
+	font->glyph_info_table = hash_table_create(pair_t(utf32_t, u32), font_glyph_info_t, 128, 128, utf32_u32_equal_to, utf32_u32_hash, NULL);
 	font->bitmap_delete_list = memory_allocator_buf_new(renderer->allocator, FT_Bitmap);
 }
 
