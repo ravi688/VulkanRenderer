@@ -29,7 +29,8 @@
     },
     "targets": [
         {
-            "name": "shader_compiler_test",
+            "name": "vsc",
+            "description" : "V3D Shader Compiler (VSC) for SGE"
             "is_executable": true,
             "sources": [
                 "source/main.c"
