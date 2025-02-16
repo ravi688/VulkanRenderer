@@ -168,32 +168,32 @@ message('pkg config path: ' + pkgconfig_install_path_bm_internal__)
 #--------------------------------BUILD TARGETS----------------------------------
 pkgmod = import('pkgconfig')
 
-# -------------- Target: shader_compiler_test ------------------
-shader_compiler_test_sources_bm_internal__ = [
+# -------------- Target: vsc ------------------
+vsc_sources_bm_internal__ = [
 'source/main.c'
 ]
-shader_compiler_test_include_dirs_bm_internal__ = [
+vsc_include_dirs_bm_internal__ = [
 
 ]
-shader_compiler_test_dependencies_bm_internal__ = [
+vsc_dependencies_bm_internal__ = [
 
 ]
-shader_compiler_test_link_args_bm_internal__ = {
+vsc_link_args_bm_internal__ = {
 'windows' : [],
 'linux' : [],
 'darwin' : []
 }
-shader_compiler_test_defines_bm_internal__ = [
+vsc_defines_bm_internal__ = [
 
 ]
-shader_compiler_test = executable('shader_compiler_test',
-	shader_compiler_test_sources_bm_internal__ + sources_bm_internal__,
-	dependencies: dependencies_bm_internal__ + shader_compiler_test_dependencies_bm_internal__,
-	include_directories: [inc_bm_internal__, shader_compiler_test_include_dirs_bm_internal__],
+vsc = executable('vsc',
+	vsc_sources_bm_internal__ + sources_bm_internal__,
+	dependencies: dependencies_bm_internal__ + vsc_dependencies_bm_internal__,
+	include_directories: [inc_bm_internal__, vsc_include_dirs_bm_internal__],
 	install: false,
-	c_args: shader_compiler_test_defines_bm_internal__ + project_build_mode_defines_bm_internal__,
-	cpp_args: shader_compiler_test_defines_bm_internal__ + project_build_mode_defines_bm_internal__, 
-	link_args: shader_compiler_test_link_args_bm_internal__[host_machine.system()],
+	c_args: vsc_defines_bm_internal__ + project_build_mode_defines_bm_internal__,
+	cpp_args: vsc_defines_bm_internal__ + project_build_mode_defines_bm_internal__, 
+	link_args: vsc_link_args_bm_internal__[host_machine.system()],
 	gnu_symbol_visibility: 'hidden'
 )
 

@@ -26,11 +26,11 @@
 #include <shader_compiler/compiler/codegen/glsl.h>
 #include <shader_compiler/utilities/string.h>
 #include <shader_compiler/utilities/misc.h>
-#include <shader_compiler/shaderc/shaderc.h>
 #include <shader_compiler/debug.h>
 #include <shader_compiler/assert.h>
 #include <phymac_parser/string.h>
 #include <disk_manager/file_reader.h>
+#include <shaderc/shaderc.h>
 #include <stdlib.h>
 #include <string.h>
 

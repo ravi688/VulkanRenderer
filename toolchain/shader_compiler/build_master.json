@@ -30,7 +30,7 @@
     "targets": [
         {
             "name": "vsc",
-            "description" : "V3D Shader Compiler (VSC) for SGE"
+            "description" : "V3D Shader Compiler (VSC) for SGE",
             "is_executable": true,
             "sources": [
                 "source/main.c"
