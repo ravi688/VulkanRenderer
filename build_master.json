@@ -57,12 +57,16 @@
         {
             "name" : "sge_static",
             "description" : "Static Library for SGE",
-            "is_static_library" : true
+            "is_static_library" : true,
+            "build_defines" : [ "-DSGE_BUILD_STATIC_LIBRARY" ],
+            "use_defines" : [ "-DSGE_USE_STATIC_LIBRARY" ]
         },
         {
             "name" : "sge_shared",
             "description" : "Shared Library for SGE",
-            "is_shared_library" : true
+            "is_shared_library" : true,
+            "build_defines" : [ "-DSGE_BUILD_DYNAMIC_LIBRARY" ],
+            "use_defines" : [ "-DSGE_USE_DYNAMIC_LIBRARY" ]
         }
     ],
     "sources" : [

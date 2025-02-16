@@ -227,10 +227,10 @@ sge_static_link_args_bm_internal__ = {
 'darwin' : []
 }
 sge_static_build_defines_bm_internal__ = [
-
+'-DSGE_BUILD_STATIC_LIBRARY'
 ]
 sge_static_use_defines_bm_internal__ = [
-
+'-DSGE_USE_STATIC_LIBRARY'
 ]
 sge_static = static_library('sge_static',
 	sge_static_sources_bm_internal__ + sources_bm_internal__,
@@ -272,10 +272,10 @@ sge_shared_link_args_bm_internal__ = {
 'darwin' : []
 }
 sge_shared_build_defines_bm_internal__ = [
-
+'-DSGE_BUILD_DYNAMIC_LIBRARY'
 ]
 sge_shared_use_defines_bm_internal__ = [
-
+'-DSGE_USE_DYNAMIC_LIBRARY'
 ]
 sge_shared = shared_library('sge_shared',
 	sge_shared_sources_bm_internal__ + sources_bm_internal__,
