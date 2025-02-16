@@ -41,12 +41,16 @@
         {
             "name" : "shader_compiler_static",
             "description" : "Static Library for V3D Shader Compiler",
-            "is_static_library" : true
+            "is_static_library" : true,
+            "build_defines" : [ "-DSC_BUILD_STATIC_LIBRARY" ],
+            "use_defines" : [ "-DSC_USE_STATIC_LIBRARY" ]
         },
         {
             "name" : "shader_compiler_shared",
             "description" : "Shared Library for V3D Shader Compiler",
-            "is_shared_library" : true
+            "is_shared_library" : true,
+            "build_defines" : [ "-DSC_BUILD_DYNAMIC_LIBRARY" ],
+            "use_defines" : [ "-DSC_USE_DYNAMIC_LIBRARY" ]
         }
     ],
     "sources" : [

@@ -213,10 +213,10 @@ shader_compiler_static_link_args_bm_internal__ = {
 'darwin' : []
 }
 shader_compiler_static_build_defines_bm_internal__ = [
-
+'-DSC_BUILD_STATIC_LIBRARY'
 ]
 shader_compiler_static_use_defines_bm_internal__ = [
-
+'-DSC_USE_STATIC_LIBRARY'
 ]
 shader_compiler_static = static_library('shader_compiler_static',
 	shader_compiler_static_sources_bm_internal__ + sources_bm_internal__,
@@ -258,10 +258,10 @@ shader_compiler_shared_link_args_bm_internal__ = {
 'darwin' : []
 }
 shader_compiler_shared_build_defines_bm_internal__ = [
-
+'-DSC_BUILD_DYNAMIC_LIBRARY'
 ]
 shader_compiler_shared_use_defines_bm_internal__ = [
-
+'-DSC_USE_DYNAMIC_LIBRARY'
 ]
 shader_compiler_shared = shared_library('shader_compiler_shared',
 	shader_compiler_shared_sources_bm_internal__ + sources_bm_internal__,
