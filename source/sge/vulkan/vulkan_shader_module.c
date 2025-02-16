@@ -30,8 +30,9 @@
 #include <disk_manager/file_reader.h>
 
 #include <sge/assert.h>
+#include <sge/debug.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 static VkShaderModule get_shader_module(vulkan_renderer_t* renderer, void* spirv, u32 length);
 static VkPipelineShaderStageCreateInfo get_pipeline_shader_stage_create_info(VkShaderModule shader_module, vulkan_shader_type_t vulkan_shader_type, const char* entry_point);

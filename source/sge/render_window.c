@@ -32,7 +32,7 @@
 #include <sge/internal/vulkan/vulkan_instance.h>
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <stdio.h>
 
 #define GLFW_INCLUDE_VULKAN

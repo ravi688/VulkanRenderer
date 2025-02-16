@@ -27,7 +27,7 @@
 #include <shader_compiler/assert.h> 		// assert()
 #include <shader_compiler/debug.h>
 #include <shader_compiler/utilities/string.h>
-#include <sge/dictionary.h>
+#include <common/dictionary.h>
 
 #include <stddef.h> 			// offsetof
 #include <stdio.h>

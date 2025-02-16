@@ -36,11 +36,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-INLINE static u32 min(u32 v1, u32 v2)
-{
-	return (v1 < v2) ? v1 : v2;
-}
-
 CAN_BE_UNUSED_FUNCTION static int safe_strncmp(const char* str1, const char* const str2, u32 len)
 {
 	int result = strncmp(str1, str2, min(strlen(str2), len));

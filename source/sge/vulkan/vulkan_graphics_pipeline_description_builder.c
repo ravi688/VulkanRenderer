@@ -27,6 +27,7 @@
 #include <sge/internal/vulkan/vulkan_graphics_pipeline_description.h>
 #include <sge/memory_allocator.h>
 #include <sge/assert.h>
+#include <sge/debug.h>
 
 SGE_API vulkan_graphics_pipeline_description_builder_t* vulkan_graphics_pipeline_description_builder_create(memory_allocator_t* allocator)
 {

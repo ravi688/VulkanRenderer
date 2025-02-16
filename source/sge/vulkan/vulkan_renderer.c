@@ -45,7 +45,7 @@
 #include <sge/debug.h>
 #include <sge/assert.h>
 #include <sge/defines.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <sge/sge.h>
 #include <sge/memory_allocator.h>
 

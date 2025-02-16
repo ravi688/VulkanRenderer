@@ -29,8 +29,9 @@
 #include <sge/internal/vulkan/vulkan_to_string.h>
 #include <sge/internal/vulkan/vulkan_renderer.h>
 #include <sge/assert.h>
+#include <sge/debug.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <string.h> 		// strcmp
 
 // constructors and destructors

@@ -26,7 +26,7 @@
 #include <sge/string_builder.h>
 #include <sge/assert.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <stdarg.h>
 #include <stdio.h>
 

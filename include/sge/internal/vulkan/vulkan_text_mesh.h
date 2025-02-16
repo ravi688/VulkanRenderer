@@ -104,7 +104,7 @@
 #include <hpml/vec3.h>
 #include <hpml/mat4.h>
 #include <bufferlib/buffer.h>
-#include <sge/dictionary.h>
+#include <common/dictionary.h>
 #include <sge/internal/vulkan/vulkan_host_buffered_buffer.h>
 #include <sge/internal/vulkan/vulkan_text_types.h>
 #include <sge/internal/vulkan/vulkan_object.h>

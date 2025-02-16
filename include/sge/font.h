@@ -28,10 +28,11 @@
 
 #include <sge/defines.h>
 #include <sge/rect.h> 	// iextent2d_t
-#include <sge/comparer.h> // u32_equal_to
-#include <sge/hash_function.h> // u32_hash
-#include <sge/hash_table.h>
+#include <common/comparer.h> // u32_equal_to
+#include <common/hash_function.h> // u32_hash
+#include <common/hash_table.h>
 #include <common/id_generator.h>
+#include <common/pair.h>
 
 typedef u32 utf32_t;
 #define utf32_equal_to u32_equal_to

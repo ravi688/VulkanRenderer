@@ -35,7 +35,7 @@
 #include <sge/internal/vulkan/vulkan_subpass_create_info_builder.h>
 #include <sge/internal/vulkan/vulkan_shader_resource_description_builder.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <sge/assert.h>
 #include <sge/debug.h>
 #include <string.h>

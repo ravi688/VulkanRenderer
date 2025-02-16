@@ -1,0 +1,77 @@
+{
+    "project_name": "SGE",
+    "description" : "Low level 2D and 3D Rendering Framework",
+    "canonical_name": "sge",
+    "dependencies" : [
+        "shader_compiler",
+        "common",
+        "glslcommon",
+        "hpml", 
+        "meshlib",
+        "vulkanheaders",
+        "freetype2",
+        "glfw3",
+        "ttf2mesh",
+        "shaderc"
+    ],
+    "install_header_dirs" : ["include/sge", "include/sge-cpp"],
+    "include_dirs": "include",
+    "defines" : [
+        "-DSGE_VULKAN_DRIVER"
+    ],
+    "debug_defines" : [
+        "-DGLOBAL_DEBUG",
+        "-DDEBUG",
+        "-DSGE_DEBUG",
+        "-DLOG_DEBUG"
+    ],
+    "release_defines" : [
+        "-DGLOBAL_RELEASE",
+        "-DRELEASE",
+        "-DSGE_RELEASE",
+        "-DLOG_RELEASE"
+    ],
+    "vars" :
+    {
+        "test_sources" : "run_command('find', 'source/tests', '-maxdepth', '1', '-type', 'f', check : false).stdout().strip().split()",
+        "sge_sources" : "run_command('find', 'source/sge', '-maxdepth', '3', '-type', 'f', check : false).stdout().strip().split()",
+        "sge_cpp_sources" : "run_command('find', 'source/sge-cpp', '-maxdepth', '3', '-type', 'f', check : false).stdout().strip().split()",
+        "stb_sources" : "run_command('find', 'source/stb', '-maxdepth', '1', '-type', 'f', check : false).stdout().strip().split()",
+        "vulkan_sdk_path" : "run_command(find_program('python'), '-c', 'import os; print(os.environ[\"VK_SDK_PATH\"])', check : false).stdout().strip()",
+        "vulkan_libs_path" : "vulkan_sdk_path + '/Lib/'"
+    },
+    "windows_link_args" : ["link_dir: $vulkan_libs_path", "-lvulkan-1"],
+    "linux_link_args" : ["link_dir: $vulkan_libs_path", "-lvulkan-1"],
+    "targets": [
+        {
+            "name": "main_test",
+            "description" : "Test Executable for SGE",
+            "is_executable": true,
+            "sources": [
+                "source/main.c",
+                "source/test.c",
+                "source/legal/legal.c",
+                "$test_sources"
+            ]
+        },
+        {
+            "name" : "sge_static",
+            "description" : "Static Library for SGE",
+            "is_static_library" : true,
+            "build_defines" : [ "-DSGE_BUILD_STATIC_LIBRARY" ],
+            "use_defines" : [ "-DSGE_USE_STATIC_LIBRARY" ]
+        },
+        {
+            "name" : "sge_shared",
+            "description" : "Shared Library for SGE",
+            "is_shared_library" : true,
+            "build_defines" : [ "-DSGE_BUILD_DYNAMIC_LIBRARY" ],
+            "use_defines" : [ "-DSGE_USE_DYNAMIC_LIBRARY" ]
+        }
+    ],
+    "sources" : [
+        "$sge_sources",
+        "$sge_cpp_sources",
+        "$stb_sources"
+    ]
+}

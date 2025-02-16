@@ -28,7 +28,7 @@
 
 #include <sge/internal/vulkan/vulkan_buffer.h>
 #include <sge/internal/vulkan/vulkan_object.h>
-#include <sge/multi_buffer.h>
+#include <common/multi_buffer.h>
 
 typedef struct vulkan_renderer_t vulkan_renderer_t;
 

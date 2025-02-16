@@ -1,0 +1,29 @@
+{
+    "project_name": "Disassembler",
+    "canonical_name": "disasm",
+    "description" : "Disassembler for V3D Shader Binary compiled using VSC",
+    "dependencies" : [
+        "glslcommon",
+        "vulkanheaders"
+    ],
+    "include_dirs": "include",
+    "debug_defines" : [
+        "-DDISASM_DEBUG"
+    ],
+    "release_defines" : [
+        "-DDISASM_RELEASE"
+    ],
+    "targets": [
+        {
+            "name": "v3d_disasm",
+            "is_executable": true,
+            "is_install" : true,
+            "sources": [
+                "source/main.c"
+            ]
+        }
+    ],
+    "sources" : [
+        "source/disasm.c"
+    ]
+}

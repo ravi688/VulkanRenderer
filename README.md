@@ -76,10 +76,19 @@ There are only C and C++ interface headers for now. <br>
    $ pacman -S git
    ```
 
-6. **glslc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
+6. **glslc** and **shaderc**, glslc can be installed as follows, run the following in MSYS2 MinGW shell <br>
    
    ```
    $ pacman -S mingw-w64-x86_64-shaderc
+   ```
+7. **Freetype2**, run the following in MSYS2 MinGW shell <br>
+   ```
+   $ pacman -S mingw-w64-x86_64-freetype
+   ```
+8. **Vulkan Headers**
+   ```
+   meson wrap install vulkan-headers
+   meson wrap install glfw
    ```
 
 ### Requirements for building on Linux (Debian)
@@ -153,10 +162,16 @@ There are only C and C++ interface headers for now. <br>
    $ sudo apt-get install libz-dev
    $ sudo apt-get install libpng-dev
    $ sudo apt-get install libbrotli-dev
+   $ sudo apt-get install libfreetype-dev
    ```
 7. On wayland you would need the following package:
    ```
    $ sudo apt-get install libwayland-dev
+   ```
+8. **Vulkan Headers**
+   ```
+   meson wrap install vulkan-headers
+   meson wrap install glfw
    ```
 
 ### Requirements for building on FreeBSD
@@ -194,7 +209,12 @@ For now, you would need to do the following:
 4. Disk space - No data as of now
 5. Better to have Vulkan LunarG SDK installed for additional debugging and vulkan configuration (validation layers), but it is not a requirement because the static library and headers are already included in the repository and would be updated as new updates will come in future.
 
-### Building steps
+### Building Shaders
+```
+$ make -f build_shaders.makefile all
+```
+
+### Building and Installing SGE
 
 1. Clone the repository by running the following command <br>
    
@@ -202,55 +222,49 @@ For now, you would need to do the following:
    $git clone https://github.com/ravi688/VulkanRenderer.git
    ```
 
-2. Change the working directory to `VulkanRenderer` and setup all the dependency git submodules by running the following command
+2. Change the working directory to `VulkanRenderer`
+3. Start building by running the following commands
    
    ```
-   $cd VulkanRenderer
-   $make -s setup
+   $ meson setup build --buildtype=debug
+   $ meson compile -C build
    ```
-
-3. Start building by running the following command
-   
+4. Install SGE as a Library (Usable via pkg-conf)
    ```
-   $make -s build
+   $ meson install -C build
    ```
-   
+5. Verify Installation by running pkg-config as follows
+   ```
+   pkg-config sge_static --cflags --libs
+   ```
    OR
-   
    ```
-   $make -s build-debug
+   pkg-config sge_shared --cflags --libs
    ```
-   
-   For release mode
-   
-   ```
-   $make -s build-release
-   ```
+   It must print include header and link libraries directories which you can pass into your gcc or clang compiler/linker.
 
-### Building executable manually (Optional)
+### Using SGE as a meson dependency wrap
+Create a wrap file `sge_static.wrap` (for static library) in your meson project's `subprojects` directory.
+Populate it with the following content:
+```yaml
+[wrap-git]
+url = https://github.com/ravi688/VulkanRenderer.git
+revision = head
+depth = 1
 
-1. Change the working directory to `VulkanRenderer` and build the `main` executable by running the following command
-   
-   ```
-   $make -s debug
-   ```
-
-2. Now run the `main` executable by running the following command
-   
-   ```
-   $./main
-   ```
+[provide]
+sge_static = sge_static_dep
+```
 
 ### Test Run (Optional)
 There are several tests which you can try running by just passing arguments:
 ```
-$cd <build directory>
-$./main CUBE
+$./build/main_test CUBE
 ```
 The above set of commands would launch a window in which a white cube will be spinning.
 If you want to see all the possible test cases, you may launch the execution without any arguments and it would just print the list of possible test cases:
 ```
-$./main
+$./build/main
 supported tests:
         DEPTH_RENDER_TEXTURE
         DEPTH_RENDER_TEXTURE_LOAD
@@ -286,13 +300,15 @@ supported tests:
         TID_48_CASE_5
 ```
 
-### Cleaning everything  (Optional)
-
-1. Change the working directory to `VulkanRenderer` and run the following command
-   
-   ```
-   $make -s clean
-   ```
+### Cleaning SGE
+Change the working directory to `VulkanRenderer` and run the following command
+```
+$ meson setup build --wipe
+```
+### Cleaning Shaders
+```
+make -f build_shaders.makefile clean
+```
 
 ### Building SUTK (Spectrum UI Toolkit)
 #### On Windows (MSYS)

@@ -26,7 +26,7 @@
 #pragma once
 
 #include <sge/defines.h>
-#include <sge/dictionary.h> // dictionary_t
+#include <common/dictionary.h> // dictionary_t
 #include <sge/internal/vulkan/vulkan_object.h>
 
 typedef struct mesh3d_t mesh3d_t;

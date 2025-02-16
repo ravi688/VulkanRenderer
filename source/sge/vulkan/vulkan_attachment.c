@@ -29,7 +29,7 @@
 #include <sge/internal/vulkan/vulkan_renderer.h>
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <sge/assert.h>
 
 // TODO: remove it after debugging

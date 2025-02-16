@@ -39,8 +39,8 @@
 #include <sge/assert.h>
 #include <sge/debug.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
 
+#include <common/alloc.h>
 #include <common/iterator.h>
 
 SGE_API vulkan_render_queue_t* vulkan_render_queue_new(memory_allocator_t* allocator)

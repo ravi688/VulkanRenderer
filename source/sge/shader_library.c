@@ -40,9 +40,10 @@
 #include <sge/internal/vulkan/vulkan_renderer.h>
 #include <sge/internal/vulkan/vulkan_mesh.h>
 #include <sge/glsl_memory_layout.h>
-#include <sge/alloc.h>
-#include <sge/hash_function.h>
 #include <sge/shader_cache.h>
+#include <sge/debug.h>
+#include <common/alloc.h>
+#include <common/hash_function.h>
 
 #include <disk_manager/file_reader.h>
 #include <string.h> 		// strcpy

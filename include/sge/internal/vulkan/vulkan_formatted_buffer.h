@@ -5,7 +5,7 @@
 #include <sge/internal/vulkan/vulkan_object.h>
 #include <sge/internal/vulkan/vulkan_host_buffered_buffer.h>
 #include <vulkan/vulkan_core.h> /* for VkBufferUsageFlags */
-#include <sge/dictionary.h>
+#include <common/dictionary.h>
 
 typedef struct struct_descriptor_t struct_descriptor_t;
 typedef struct vulkan_host_buffered_buffer_t vulkan_host_buffered_buffer_t;

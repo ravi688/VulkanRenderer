@@ -29,7 +29,7 @@
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/assert.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 SGE_API vulkan_image_t* vulkan_image_new(memory_allocator_t* allocator)
 {

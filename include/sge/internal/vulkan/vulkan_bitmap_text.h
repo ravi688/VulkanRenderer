@@ -32,7 +32,7 @@
 #include <sge/internal/vulkan/vulkan_mesh.h>
 #include <sge/internal/vulkan/vulkan_text_types.h>
 #include <sge/internal/vulkan/vulkan_object.h>
-#include <sge/dictionary.h>
+#include <common/dictionary.h>
 #include <sge/types.h>
 #include <sge/event.h> // event_subscription_handle_t
 #include <sge/rect.h> // rect2d_t

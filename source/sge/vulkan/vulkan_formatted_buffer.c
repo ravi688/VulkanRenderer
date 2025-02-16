@@ -3,6 +3,7 @@
 #include <sge/internal/vulkan/vulkan_renderer.h>
 #include <sge/memory_allocator.h>
 #include <sge/struct_descriptor.h>
+#include <common/pair.h>
 
 SGE_API vulkan_formatted_buffer_t* vulkan_formatted_buffer_new(memory_allocator_t* allocator)
 {

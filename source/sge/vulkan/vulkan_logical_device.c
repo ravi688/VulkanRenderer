@@ -30,8 +30,9 @@
 #include <sge/internal/vulkan/vulkan_renderer.h>
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/assert.h>
+#include <sge/debug.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 SGE_API vulkan_logical_device_t* vulkan_logical_device_new(memory_allocator_t* allocator)
 {

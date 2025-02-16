@@ -30,7 +30,7 @@
 #include <sge/internal/vulkan/vulkan_render_pass.h>
 #include <sge/internal/vulkan/vulkan_renderer.h>
 #include <sge/internal/vulkan/vulkan_attachment.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <sge/debug.h>
 
 /* constructors & destructors */

@@ -28,7 +28,7 @@
 #include <sge/assert.h>
 #include <sge/debug.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 #include <string.h>
 #include <bufferlib/buffer.h>
 

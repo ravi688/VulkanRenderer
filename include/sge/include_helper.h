@@ -175,12 +175,12 @@
 #endif
 
 #ifdef SGE_INCLUDE_DATA_STRUCTURES
-#	include <sge/dictionary.h>
+#	include <common/dictionary.h>
 #	include <sge/string.h>
-#	include <sge/hash_table.h>
+#	include <common/hash_table.h>
 #	include <sge/buffer2d_view.h>
 #	include <sge/buffer2d.h>
-# 	include <sge/multi_buffer.h>
+# 	include <common/multi_buffer.h>
 #   include <sge/string_builder.h>
 #  	include <bufferlib/buffer.h>
 #endif

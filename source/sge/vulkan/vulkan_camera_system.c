@@ -33,7 +33,7 @@
 #include <sge/internal/vulkan/vulkan_render_pass_create_info_builder.h>
 #include <sge/internal/vulkan/vulkan_subpass_create_info_builder.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 
 SGE_API vulkan_camera_system_t* vulkan_camera_system_new(memory_allocator_t* allocator)

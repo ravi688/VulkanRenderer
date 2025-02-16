@@ -1,0 +1,59 @@
+{
+    "project_name": "ShaderCompiler",
+    "canonical_name": "shader_compiler",
+    "description" : "V3D Shader Compiler for SGE",
+    "dependencies" : [
+        "common",
+        "ppsr",
+        "glslcommon", 
+        "vulkanheaders"
+    ],
+    "install_header_dirs" : ["include/shader_compiler"],
+    "include_dirs": "include",
+    "debug_defines" : [
+        "-DSC_DEBUG",
+        "-DHPML_DEBUG_MODE",
+        "-DGLOBAL_DEBUG",
+        "-DDEBUG",
+        "-DLOG_DEBUG"
+    ],
+    "release_defines" : [
+        "-DSC_RELEASE",
+        "-DHPML_RELEASE_MODE",
+        "-DGLOBAL_RELEASE",
+        "-DRELEASE",
+        "-DLOG_RELEASE"
+    ],
+    "windows_link_args" : [ "link_dir: './external-dependency-libs'", "-lshaderc_shared" ],
+    "vars" :
+    {
+        "sc_sources" : "run_command('find', 'source', '-type', 'f', check : false).stdout().strip().split()"
+    },
+    "targets": [
+        {
+            "name": "vsc",
+            "description" : "V3D Shader Compiler (VSC) for SGE",
+            "is_executable": true,
+            "sources": [
+                "source/main.c"
+            ]
+        },
+        {
+            "name" : "shader_compiler_static",
+            "description" : "Static Library for V3D Shader Compiler",
+            "is_static_library" : true,
+            "build_defines" : [ "-DSC_BUILD_STATIC_LIBRARY" ],
+            "use_defines" : [ "-DSC_USE_STATIC_LIBRARY" ]
+        },
+        {
+            "name" : "shader_compiler_shared",
+            "description" : "Shared Library for V3D Shader Compiler",
+            "is_shared_library" : true,
+            "build_defines" : [ "-DSC_BUILD_DYNAMIC_LIBRARY" ],
+            "use_defines" : [ "-DSC_USE_DYNAMIC_LIBRARY" ]
+        }
+    ],
+    "sources" : [
+        "$sc_sources"
+    ]
+}

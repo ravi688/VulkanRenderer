@@ -27,13 +27,10 @@
 #pragma once
 
 #include <common/defines.h>
+#include <disassembler/api_defines.h>
 
-#ifdef DISASM_STATIC_LIBRARY
-#	define DISASM_API
-#elif DISASM_DYNAMIC_LIBRARY
-#	define DISASM_API __declspec(dllimport)
-#elif BUILD_DYNAMIC_LIBRARY
-#	define DISASM_API __declspec(dllexport)
-#else
-#	define DISASM_API
+#if !defined(DISASM_RELEASE) && !defined(DISASM_DEBUG)
+#   warning "None of DISASM_RELEASE && DISASM_DEBUG is defined; using DISASM_DEBUG"
+#   define DISASM_DEBUG
 #endif
+

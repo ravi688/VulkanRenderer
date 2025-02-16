@@ -30,7 +30,7 @@
 #include <sge/mesh.h>
 #include <sge/mesh3d.h>
 #include <sge/assert.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 static VkIndexType get_vulkan_index_from_stride(u32 stride);
 

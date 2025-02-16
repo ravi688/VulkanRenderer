@@ -31,7 +31,7 @@
 #include <sge/internal/vulkan/vulkan_queue.h>
 #include <sge/internal/vulkan/vulkan_allocator.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <common/alloc.h>
 
 static void create_swapchain(vulkan_swapchain_t* swapchain, vulkan_swapchain_create_info_t* create_info);
 static void destroy_swapchain(vulkan_swapchain_t* swapchain);

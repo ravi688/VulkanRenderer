@@ -36,7 +36,7 @@
 #define SGE_INCLUDE_CORE
 #include <sge/sge.h>
 
-#include <sge/hash_table.h>
+#include <common/hash_table.h>
 #include <sge/bmp.h>
 #include <sge/color.h>
 #include <sge/buffer2d.h>
@@ -45,9 +45,9 @@
 #include <sge/bitmap_text.h>
 #include <sge/conio.h>
 
-#include <freetype/ft2build.h>
-#include <freetype/freetype/freetype.h>
-#include <freetype/freetype/ftimage.h>
+#include <ft2build.h>
+#include <freetype/freetype.h>
+#include <freetype/ftimage.h>
 
 #include <disk_manager/file_reader.h>
 
@@ -103,7 +103,7 @@ static void test_hash_table()
 {
 	/* hash table test */
 
-	hash_table_t _table = hash_table_create(NULL, u64, u32, 5, u64_equal_to, u64_hash);
+	hash_table_t _table = hash_table_create(u64, u32, 5, 5, u64_equal_to, u64_hash, NULL);
 	u64 key = 40;
 	u32 _value = 500;
 	hash_table_add(&_table, &key, &_value);
@@ -120,7 +120,7 @@ static void test_hash_table()
 	hash_table_foreach(&_table, print_key_value_pair_i, NULL);
 	hash_table_free(&_table);
 
-	hash_table_t table = hash_table_create(NULL, const char*, u32, 5, string_equal_to, string_hash);
+	hash_table_t table = hash_table_create(const char*, u32, 5, 5, string_equal_to, string_hash, NULL);
 	const char* str = "Hello World";
 	u32 value = 100;
 	hash_table_add(&table, &str, &value); value = 200;

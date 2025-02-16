@@ -31,7 +31,8 @@
 #include <sge/internal/vulkan/vulkan_buffer.h>
 #include <sge/internal/vulkan/vulkan_pipeline_layout.h>
 #include <sge/memory_allocator.h>
-#include <sge/alloc.h>
+#include <sge/debug.h>
+#include <common/alloc.h>
 
 SGE_API vulkan_descriptor_set_t* vulkan_descriptor_set_new(memory_allocator_t* allocator)
 {

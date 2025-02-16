@@ -884,7 +884,7 @@ enum
 	MARK_ID_FIELD_COUNT = MARK_ID_FIELD_COUNT_0
 };
 
-#include <sge/dictionary.h> /* dictionary_t */
+#include <common/dictionary.h> /* dictionary_t */
 #include <common/static_string.h> /* static_string_64_t */
 
 /* TODO: replace this typedef with a real hash_table_t implementation in the SGE project */
