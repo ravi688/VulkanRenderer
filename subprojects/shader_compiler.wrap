@@ -1,5 +1,5 @@
 [wrap-path]
-path = toolchain/shader_compiler
+path = ../toolchain/shader_compiler
 
 [provide]
 shader_compiler = shader_compiler_static_dep
