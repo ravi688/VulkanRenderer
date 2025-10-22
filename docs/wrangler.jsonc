@@ -1,0 +1,9 @@
+{
+        "name": "sge",
+        "compatibility_date": "2025-10-22",
+        "assets":
+        {
+                "directory": "./site"
+        }
+}
+
